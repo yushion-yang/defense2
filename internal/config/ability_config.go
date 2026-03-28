@@ -1,6 +1,8 @@
 // ability_config.go — 能力配置数据结构与加载。
 // 从 config/abilities/abilities.json 加载能力定义表。
-// 塔配置通过 abilities 数组中的 type 字段关联到此表。
+// 每个能力有 base 和 potential 两组参数，运行时通过强度计算实际值:
+//
+//	effective[key] = base[key] + potential[key] * (strength / 100)
 package config
 
 import (
@@ -10,11 +12,13 @@ import (
 
 // AbilityDef 单个能力的完整定义。
 type AbilityDef struct {
+	Type        string             `json:"type"`        // 能力类型标识（与 map key 一致）
 	Label       string             `json:"label"`       // 显示名称（如"减速"、"弹射"）
-	Description string             `json:"description"` // 简短描述（如"命中减速32%持续1.4s"）
-	Icon        string             `json:"icon"`        // 图标名称（对应 assets/icons/ 下的文件）
+	Description string             `json:"description"` // 描述模板（支持 {key} 占位符）
+	Icon        string             `json:"icon"`        // 图标名称（对应 assets/icons/）
 	Category    string             `json:"category"`    // 分类（combat/control/aura/zone/economy）
-	Params      map[string]float64 `json:"params"`      // 能力参数（键值对，具体含义由各能力实现解读）
+	Base        map[string]float64 `json:"base"`        // 基础参数（强度0时的底线值）
+	Potential   map[string]float64 `json:"potential"`   // 潜力参数（强度100时 = base + potential）
 }
 
 // AbilityTable 能力定义表（abilityType → AbilityDef）。
@@ -37,12 +41,62 @@ func LoadAbilityTable() (AbilityTable, error) {
 	return table, nil
 }
 
-// GetParam 从能力定义中安全获取参数，不存在时返回 defaultVal。
-func (d *AbilityDef) GetParam(key string, defaultVal float64) float64 {
-	if d == nil || d.Params == nil {
+// CalcParam 根据强度计算某个参数的实际值。
+// 公式: base[key] + potential[key] * (strength / 100)
+// 参数不存在时返回 defaultVal。
+func (d *AbilityDef) CalcParam(key string, strength float64, defaultVal float64) float64 {
+	if d == nil {
 		return defaultVal
 	}
-	if v, ok := d.Params[key]; ok {
+	base, hasBase := d.Base[key]
+	pot, hasPot := d.Potential[key]
+	if !hasBase && !hasPot {
+		return defaultVal
+	}
+	return base + pot*(strength/100.0)
+}
+
+// CalcAllParams 根据强度计算所有参数的实际值。
+// 返回新 map，不修改原始 Base/Potential。
+func (d *AbilityDef) CalcAllParams(strength float64) map[string]float64 {
+	if d == nil {
+		return nil
+	}
+	// 收集所有参数 key
+	keys := make(map[string]bool)
+	for k := range d.Base {
+		keys[k] = true
+	}
+	for k := range d.Potential {
+		keys[k] = true
+	}
+
+	result := make(map[string]float64, len(keys))
+	for k := range keys {
+		base := d.Base[k]
+		pot := d.Potential[k]
+		result[k] = base + pot*(strength/100.0)
+	}
+	return result
+}
+
+// GetBase 获取基础参数值（不含战力缩放）。
+func (d *AbilityDef) GetBase(key string, defaultVal float64) float64 {
+	if d == nil || d.Base == nil {
+		return defaultVal
+	}
+	if v, ok := d.Base[key]; ok {
+		return v
+	}
+	return defaultVal
+}
+
+// GetPotential 获取潜力参数值。
+func (d *AbilityDef) GetPotential(key string, defaultVal float64) float64 {
+	if d == nil || d.Potential == nil {
+		return defaultVal
+	}
+	if v, ok := d.Potential[key]; ok {
 		return v
 	}
 	return defaultVal
