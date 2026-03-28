@@ -40,7 +40,7 @@ func TestFindNearestEnemyNoneInRange(t *testing.T) {
 
 func TestProjectileFireAndMove(t *testing.T) {
 	pp := projectile.NewPool(16)
-	pp.Fire(0, 0, 100, 0, 10, 200, 4)
+	pp.Fire(0, 0, 100, 0, 10, 200, 4, nil, "")
 
 	if pp.Count != 1 {
 		t.Fatalf("expected 1 projectile, got %d", pp.Count)
@@ -61,7 +61,7 @@ func TestTickProjectileHits(t *testing.T) {
 	tp := tower.NewPool(1) // empty tower pool (no abilities to resolve)
 
 	pp := projectile.NewPool(16)
-	pp.Fire(95, 0, 100, 0, 15, 200, 4)
+	pp.Fire(95, 0, 100, 0, 15, 200, 4, nil, "")
 	pp.Update(0.01)
 
 	kills := pipeline.TickProjectileHits(pp, ep, tp)

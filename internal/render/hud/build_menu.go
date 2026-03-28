@@ -1,5 +1,5 @@
-// build_menu.go — 底部建塔菜单面板渲染。
-// 横排显示可建造的塔类型，高亮当前选中项，灰显金币不足的选项。
+// build_menu.go — Card-style build menu at the bottom of the screen.
+// Shows tower cards with selection highlight and affordability indicators.
 package hud
 
 import (
@@ -7,87 +7,146 @@ import (
 	"image/color"
 
 	"defense2/internal/core/tower"
+	"defense2/internal/render"
+	"defense2/internal/render/draw"
+	"defense2/internal/render/theme"
 
 	"github.com/hajimehoshi/ebiten/v2"
-	"github.com/hajimehoshi/ebiten/v2/ebitenutil"
 	"github.com/hajimehoshi/ebiten/v2/vector"
 )
 
-// BuildMenuData 建塔菜单所需的运行时数据。
+// BuildMenuData holds the runtime data the build menu needs to render.
 type BuildMenuData struct {
-	TowerDefs   []tower.TowerDef // 可建造的塔类型列表
-	SelectedIdx int              // 当前选中的塔索引
-	Gold        int              // 玩家当前金币（用于判断是否买得起）
+	TowerDefs   []tower.TowerDef // buildable tower types
+	SelectedIdx int              // currently selected tower index
+	Gold        int              // player's current gold
 }
 
-// DrawBuildMenu 渲染底部建塔选择面板。
-func DrawBuildMenu(screen *ebiten.Image, d BuildMenuData) {
-	L := Layout
+// buildMenuMetrics computes the panel geometry from the card count.
+type buildMenuMetrics struct {
+	panelX, panelY, panelW, panelH float32
+	cardStartX, cardStartY         float32
+}
 
-	// 面板背景
-	vector.DrawFilledRect(screen, L.BuildMenuX, L.BuildMenuY, L.BuildMenuW, L.BuildMenuH,
-		color.RGBA{R: 0, G: 0, B: 0, A: 140}, false)
+func calcBuildMenuMetrics(cardCount int) buildMenuMetrics {
+	const (
+		cardW   = float32(theme.BuildCardW)
+		cardH   = float32(theme.BuildCardH)
+		cardGap = float32(theme.BuildCardGap)
+		pad     = float32(8)
+		radius  = float32(theme.BuildMenuRadius)
+	)
+
+	n := float32(cardCount)
+	innerW := n*cardW + (n-1)*cardGap
+	panelW := innerW + pad*2
+	panelH := cardH + pad*2
+
+	panelX := (float32(theme.CanvasW) - panelW) / 2
+	panelY := float32(theme.CanvasH) - panelH - float32(theme.BottomMargin)
+
+	return buildMenuMetrics{
+		panelX:     panelX,
+		panelY:     panelY,
+		panelW:     panelW,
+		panelH:     panelH,
+		cardStartX: panelX + pad,
+		cardStartY: panelY + pad,
+	}
+}
+
+// DrawBuildMenu renders the card-style build menu panel.
+func DrawBuildMenu(screen *ebiten.Image, d BuildMenuData) {
+	fm := render.GlobalFont()
+	if fm == nil {
+		return
+	}
+	if len(d.TowerDefs) == 0 {
+		return
+	}
+
+	m := calcBuildMenuMetrics(len(d.TowerDefs))
+
+	const (
+		cardW   = float32(theme.BuildCardW)
+		cardH   = float32(theme.BuildCardH)
+		cardGap = float32(theme.BuildCardGap)
+		cardR   = float32(theme.BuildCardRadius)
+	)
+
+	// Panel background
+	draw.RoundRect(screen, m.panelX, m.panelY, m.panelW, m.panelH,
+		float32(theme.BuildMenuRadius), theme.BuildMenuBg)
 
 	for i, def := range d.TowerDefs {
-		x := L.BuildMenuX + float32(i)*(L.SlotW+L.SlotGap) + L.SlotGap
-		y := L.BuildMenuY + 4
+		cx := m.cardStartX + float32(i)*(cardW+cardGap)
+		cy := m.cardStartY
+		affordable := d.Gold >= def.Cost
 
-		// 槽位背景
-		bgClr := color.RGBA{R: 40, G: 40, B: 40, A: 200}
+		// Card background
+		cardBg := theme.BuildCardNormal
 		if i == d.SelectedIdx {
-			bgClr = color.RGBA{R: 60, G: 80, B: 60, A: 220}
+			cardBg = theme.BuildCardSelected
 		}
-		vector.DrawFilledRect(screen, x, y, L.SlotW, L.SlotH, bgClr, false)
+		if !affordable {
+			// Reduce alpha for unaffordable
+			cardBg = color.RGBA{R: cardBg.R, G: cardBg.G, B: cardBg.B, A: cardBg.A / 2}
+		}
+		draw.RoundRect(screen, cx, cy, cardW, cardH, cardR, cardBg)
 
-		// 选中边框
+		// Selection border
 		if i == d.SelectedIdx {
-			strokeRect(screen, x, y, L.SlotW, L.SlotH, 2,
-				color.RGBA{R: 120, G: 220, B: 120, A: 255})
+			draw.StrokeRoundRect(screen, cx, cy, cardW, cardH, cardR, 1.5, theme.BuildCardSelBorder)
 		}
 
-		// 塔颜色方块图标
-		iconX := x + 8
-		iconY := y + 8
-		iconSize := float32(16)
+		// Tower color square (12x12) centered horizontally, in upper part
+		squareSize := float32(12)
+		squareX := cx + (cardW-squareSize)/2
+		squareY := cy + 6
 		tClr := color.RGBA{R: def.Color[0], G: def.Color[1], B: def.Color[2], A: 255}
-		vector.DrawFilledRect(screen, iconX, iconY, iconSize, iconSize, tClr, false)
+		vector.DrawFilledRect(screen, squareX, squareY, squareSize, squareSize, tClr, false)
 
-		// 塔名
-		ebitenutil.DebugPrintAt(screen, def.Label, int(iconX+iconSize+4), int(iconY))
+		// Tower name centered below icon
+		nameCX := float64(cx) + float64(cardW)/2
+		nameY := float64(squareY) + float64(squareSize) + 3
+		fm.DrawCenteredText(screen, def.Label, nameCX, nameY, theme.FontMD, color.White)
 
-		// 价格（金币不足时变暗）
-		priceClr := "$%d"
-		if d.Gold < def.Cost {
-			priceClr = "($%d)" // 加括号表示买不起
-		}
-		priceTxt := fmt.Sprintf(priceClr, def.Cost)
-		ebitenutil.DebugPrintAt(screen, priceTxt, int(iconX), int(iconY+iconSize+4))
+		// Cost centered at bottom
+		costTxt := fmt.Sprintf("$%d", def.Cost)
+		costY := float64(cy) + float64(cardH) - 14
+		fm.DrawCenteredText(screen, costTxt, nameCX, costY, theme.FontSM, theme.BuildCostColor)
 
-		// 快捷键提示
+		// Keyboard hint in top-right
 		keyTxt := fmt.Sprintf("[%d]", i+1)
-		ebitenutil.DebugPrintAt(screen, keyTxt, int(x+L.SlotW-24), int(y+4))
+		keyX := float64(cx) + float64(cardW) - 4
+		keyY := float64(cy) + 3
+		fm.DrawRightText(screen, keyTxt, keyX, keyY, 9, theme.TextMuted)
 	}
 }
 
-// BuildMenuHitTest 检测点击是否落在某个塔槽内，返回槽索引或 -1。
+// BuildMenuHitTest returns the tower card index hit by (px, py), or -1.
 func BuildMenuHitTest(px, py float32, count int) int {
-	L := Layout
-	if py < L.BuildMenuY || py > L.BuildMenuY+L.BuildMenuH {
+	if count <= 0 {
 		return -1
 	}
+
+	m := calcBuildMenuMetrics(count)
+
+	const (
+		cardW   = float32(theme.BuildCardW)
+		cardH   = float32(theme.BuildCardH)
+		cardGap = float32(theme.BuildCardGap)
+	)
+
+	if py < m.cardStartY || py > m.cardStartY+cardH {
+		return -1
+	}
+
 	for i := 0; i < count; i++ {
-		x := L.BuildMenuX + float32(i)*(L.SlotW+L.SlotGap) + L.SlotGap
-		if px >= x && px <= x+L.SlotW {
+		cx := m.cardStartX + float32(i)*(cardW+cardGap)
+		if px >= cx && px <= cx+cardW {
 			return i
 		}
 	}
 	return -1
-}
-
-// strokeRect 画一个矩形边框。
-func strokeRect(screen *ebiten.Image, x, y, w, h, width float32, clr color.RGBA) {
-	vector.StrokeLine(screen, x, y, x+w, y, width, clr, false)
-	vector.StrokeLine(screen, x+w, y, x+w, y+h, width, clr, false)
-	vector.StrokeLine(screen, x+w, y+h, x, y+h, width, clr, false)
-	vector.StrokeLine(screen, x, y+h, x, y, width, clr, false)
 }

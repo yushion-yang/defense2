@@ -1,59 +1,173 @@
-// top_bar.go — 顶部状态栏渲染。
-// 显示金币、生命值、波次进度、击杀数和 FPS 调试信息。
+// top_bar.go — Centered pill-shaped top status bar.
+// Displays resources on the left, action buttons on the right.
 package hud
 
 import (
 	"fmt"
 	"image/color"
 
-	"defense2/internal/core/game"
+	"defense2/internal/render"
+	"defense2/internal/render/draw"
+	"defense2/internal/render/theme"
 
 	"github.com/hajimehoshi/ebiten/v2"
-	"github.com/hajimehoshi/ebiten/v2/ebitenutil"
 	"github.com/hajimehoshi/ebiten/v2/vector"
 )
 
-// TopBarData 顶部栏所需的运行时数据。
+// TopBarData holds the runtime data the top bar needs to render.
 type TopBarData struct {
-	Gold     int // 当前金币
-	Lives    int // 剩余生命值
-	Wave     int // 当前波次号
-	MaxWaves int // 总波次数
-	Kills    int // 累计击杀数
-	Enemies  int // 场上存活敌人数
+	Gold      int  // current gold
+	Lives     int  // remaining lives
+	Wave      int  // current wave number
+	MaxWaves  int  // total waves
+	Kills     int  // cumulative kills
+	Enemies   int  // alive enemies on field
+	Speed     int  // game speed multiplier (1 or 2)
+	BuildMode bool // whether build mode is active
 }
 
-// DrawTopBar 渲染顶部半透明信息栏。
+// topBarBtn describes a button inside the top bar.
+type topBarBtn struct {
+	label string
+	w     float32
+	tone  color.RGBA
+}
+
+// DrawTopBar renders the centered pill-shaped top bar.
 func DrawTopBar(screen *ebiten.Image, d TopBarData) {
-	L := Layout
+	fm := render.GlobalFont()
+	if fm == nil {
+		return
+	}
 
-	// 半透明背景
-	vector.DrawFilledRect(screen, 0, L.TopBarY, float32(game.ScreenWidth), L.TopBarH,
-		color.RGBA{R: 0, G: 0, B: 0, A: 160}, false)
+	const (
+		pillY      = float32(theme.TopBarY)
+		pillW      = float32(theme.TopBarW)
+		pillH      = float32(theme.TopBarH)
+		pillR      = float32(theme.TopBarRadius)
+		btnH       = float32(theme.TopBarBtnH)
+		btnGap     = float32(theme.TopBarBtnGap)
+		btnR       = float32(theme.BtnRadius)
+		dividerOff = float32(theme.TopBarDividerOffset)
+	)
+	pillX := topBarX
 
-	y := int(L.TopBarY) + 6
+	// ── Pill background + border ──
+	draw.RoundRect(screen, pillX, pillY, pillW, pillH, pillR, theme.HUDTopBarBg)
+	draw.StrokeRoundRect(screen, pillX, pillY, pillW, pillH, pillR, 1, theme.HUDTopBarBorder)
 
-	// 金币（黄色）
-	goldTxt := fmt.Sprintf("Gold: %d", d.Gold)
-	ebitenutil.DebugPrintAt(screen, goldTxt, 12, y)
+	// ── Left section: resources ──
+	resX := float64(pillX) + 16
+	resY := float64(pillY) + 12 // vertically centered baseline
 
-	// 生命值（红色文字用白色代替，DebugPrint 不支持彩色）
-	livesTxt := fmt.Sprintf("Lives: %d", d.Lives)
-	ebitenutil.DebugPrintAt(screen, livesTxt, 120, y)
+	// Heart icon + lives
+	draw.FilledCircle(screen, float32(resX)+6, float32(resY)+2, 6, theme.ResHearts)
+	resX += 16
+	livesTxt := fmt.Sprintf("%d", d.Lives)
+	fm.DrawText(screen, livesTxt, resX, resY-5, theme.FontTopBar, color.White)
+	resX += fm.MeasureText(livesTxt, theme.FontTopBar) + 10
 
-	// 波次
-	waveTxt := fmt.Sprintf("Wave: %d/%d", d.Wave, d.MaxWaves)
-	ebitenutil.DebugPrintAt(screen, waveTxt, 230, y)
+	// Coin icon + gold
+	draw.FilledCircle(screen, float32(resX)+6, float32(resY)+2, 6, theme.ResGold)
+	resX += 16
+	goldTxt := fmt.Sprintf("%d", d.Gold)
+	fm.DrawText(screen, goldTxt, resX, resY-5, theme.FontTopBar, color.White)
+	resX += fm.MeasureText(goldTxt, theme.FontTopBar) + 10
 
-	// 击杀
-	killTxt := fmt.Sprintf("Kills: %d", d.Kills)
-	ebitenutil.DebugPrintAt(screen, killTxt, 360, y)
+	// Wave icon + wave/maxWaves
+	draw.FilledCircle(screen, float32(resX)+5, float32(resY)+2, 5, theme.ResWaves)
+	resX += 14
+	waveTxt := fmt.Sprintf("%d/%d", d.Wave, d.MaxWaves)
+	fm.DrawText(screen, waveTxt, resX, resY-5, theme.FontTopBar, color.White)
 
-	// 场上敌人
-	enemyTxt := fmt.Sprintf("Enemies: %d", d.Enemies)
-	ebitenutil.DebugPrintAt(screen, enemyTxt, 470, y)
+	// ── Divider ──
+	divX := pillX + dividerOff
+	divY1 := pillY + 6
+	divY2 := pillY + pillH - 6
+	vector.StrokeLine(screen, divX, divY1, divX, divY2, 1, theme.HUDTopBarDivider, false)
 
-	// FPS（右侧）
-	fpsTxt := fmt.Sprintf("TPS:%.0f", ebiten.ActualTPS())
-	ebitenutil.DebugPrintAt(screen, fpsTxt, game.ScreenWidth-80, y)
+	// ── Right section: buttons ──
+	buildTone := theme.ToneSecondary
+	if d.BuildMode {
+		buildTone = theme.TonePrimary
+	}
+	speedLabel := "x1"
+	if d.Speed == 2 {
+		speedLabel = "x2"
+	}
+
+	buttons := []topBarBtn{
+		{"造塔", theme.BtnBuildW, buildTone},
+		{"开波", theme.BtnStartW, theme.TonePrimary},
+		{speedLabel, theme.BtnSpeedW, theme.ToneAccent},
+		{"菜单", theme.BtnMenuW, theme.ToneSecondary},
+	}
+
+	// Calculate total button width to right-align within the pill.
+	var totalBtnW float32
+	for i, b := range buttons {
+		totalBtnW += b.w
+		if i > 0 {
+			totalBtnW += btnGap
+		}
+	}
+
+	btnX := pillX + pillW - 12 - totalBtnW
+	btnY := pillY + (pillH-btnH)/2
+
+	for _, b := range buttons {
+		draw.RoundRect(screen, btnX, btnY, b.w, btnH, btnR, b.tone)
+		// Centered label
+		cx := float64(btnX) + float64(b.w)/2
+		cy := float64(btnY) + float64(btnH)/2 - 6
+		fm.DrawCenteredText(screen, b.label, cx, cy, theme.FontMD, color.White)
+		btnX += b.w + btnGap
+	}
+}
+
+// TopBarHitTest returns the button name hit by (px, py), or "" if none.
+func TopBarHitTest(px, py float32) string {
+	const (
+		pillY  = float32(theme.TopBarY)
+		pillW  = float32(theme.TopBarW)
+		pillH  = float32(theme.TopBarH)
+		btnH   = float32(theme.TopBarBtnH)
+		btnGap = float32(theme.TopBarBtnGap)
+	)
+	pillX := topBarX
+
+	// Quick bounds check on pill.
+	if px < pillX || px > pillX+pillW || py < pillY || py > pillY+pillH {
+		return ""
+	}
+
+	type btnDef struct {
+		name string
+		w    float32
+	}
+	buttons := []btnDef{
+		{"build", theme.BtnBuildW},
+		{"start", theme.BtnStartW},
+		{"speed", theme.BtnSpeedW},
+		{"menu", theme.BtnMenuW},
+	}
+
+	var totalBtnW float32
+	for i, b := range buttons {
+		totalBtnW += b.w
+		if i > 0 {
+			totalBtnW += btnGap
+		}
+	}
+
+	btnX := pillX + pillW - 12 - totalBtnW
+	btnY := pillY + (pillH-btnH)/2
+
+	for _, b := range buttons {
+		if px >= btnX && px <= btnX+b.w && py >= btnY && py <= btnY+btnH {
+			return b.name
+		}
+		btnX += b.w + btnGap
+	}
+	return ""
 }
