@@ -17,9 +17,11 @@ import (
 	"defense2/internal/core/game"
 	"defense2/internal/core/gamemap"
 	"defense2/internal/core/hero"
+	"defense2/internal/core/persistence"
 	"defense2/internal/core/pipeline"
 	"defense2/internal/core/projectile"
 	"defense2/internal/core/tower"
+	"defense2/internal/core/tutorial"
 	"defense2/internal/core/warden"
 	"defense2/internal/loader"
 	"defense2/internal/render"
@@ -63,9 +65,11 @@ type StageScene struct {
 	appliedEvents   []event.Event         // 已应用的事件列表
 	killRewardBonus int                   // 额外击杀金币（事件增益）
 	buildDiscount   float64               // 建造折扣比例（事件增益）
-	lastWave        int                   // 上一帧的波次号
-	notification    string                // 屏幕中央通知文本
-	notifyTimer     float64               // 通知剩余时间（秒）
+	tutorial        *tutorial.Tutorial        // 新手教程
+	progressMgr     *persistence.ProgressManager // 持久化进度管理器
+	lastWave        int                          // 上一帧的波次号
+	notification    string                       // 屏幕中央通知文本
+	notifyTimer     float64                      // 通知剩余时间（秒）
 }
 
 // NewStageScene 创建游戏主场景，加载 map_01 地图。
@@ -94,7 +98,17 @@ func NewStageScene(sw Switcher) *StageScene {
 		}
 	}
 
-	return &StageScene{
+	// 初始化持久化
+	store, _ := persistence.DefaultStorage()
+	pm := persistence.NewProgressManager(store)
+
+	// 教程（已完成则不再显示）
+	tut := tutorial.DefaultTutorial()
+	if pm.Progress().TutorialDone {
+		tut.Skip()
+	}
+
+	s := &StageScene{
 		switcher:      sw,
 		gameMap:        gm,
 		enemies:        enemy.DefaultPool(),
@@ -106,11 +120,18 @@ func NewStageScene(sw Switcher) *StageScene {
 		heroUnit:       hero.DefaultHero(heroX, heroY),
 		wardenUnit:     warden.NewWarden(1, "使者", "envoy"),
 		eventPool:      event.NewPool(event.DefaultAllyEvents()),
+		tutorial:       tut,
+		progressMgr:    pm,
 		lives:          20,
 		gold:           200,
 		towerDefs:      loadTowerDefsOrFallback(),
 		selectedDef:    0,
 	}
+
+	// 触发教程首步
+	tut.OnEvent("gameStart")
+
+	return s
 }
 
 // Update 每帧逻辑更新：根据游戏状态分发输入处理和游戏逻辑。
@@ -216,6 +237,7 @@ func (s *StageScene) tryPlaceTower(px, py float64) {
 	center := gm.CellCenter(row, col)
 	s.towers.Place(row, col, center.X, center.Y, def)
 	s.gold -= def.Cost
+	s.tutorial.OnEvent("towerBuilt")
 }
 
 // trySellTower 尝试出售像素位置上的塔。
@@ -255,6 +277,9 @@ func (s *StageScene) updatePlaying() {
 
 	// 1. 生成敌人
 	s.spawner.Update(s.enemies, dt)
+	if s.spawner.Wave > prevWave {
+		s.tutorial.OnEvent("waveStarted")
+	}
 
 	// 2. 敌人状态效果（减速、流血等）
 	pipeline.TickEnemyStatusEffects(s.enemies, dt)
@@ -288,6 +313,9 @@ func (s *StageScene) updatePlaying() {
 	s.kills += kills
 	killGold := s.econ.KillGold() + s.killRewardBonus
 	s.gold += kills * killGold
+	if kills > 0 {
+		s.tutorial.OnEvent("enemyKilled")
+	}
 
 	// 英雄/战灵击杀奖励
 	if kills > 0 {
@@ -305,6 +333,7 @@ func (s *StageScene) updatePlaying() {
 		s.wardenUnit.OnWaveClear()
 		s.heroUnit.AwardXP(10)
 		s.showNotify(fmt.Sprintf("Wave %d clear! +$%d bonus +$%d interest", prevWave, bonus, interest))
+		s.tutorial.OnEvent("waveCleared")
 
 		// 检查是否是事件奖励波次
 		for _, rw := range event.RewardWaves() {
@@ -315,12 +344,18 @@ func (s *StageScene) updatePlaying() {
 		}
 	}
 
-	// 10. 胜负判定
-	if s.lives <= 0 {
+	// 10. 胜负判定 + 持久化结果
+	if s.lives <= 0 && s.state == statePlaying {
 		s.state = stateDefeat
+		s.progressMgr.RecordGameResult(s.gameMap.Config.ID, s.kills, false)
 	}
-	if s.spawner.IsClear(s.enemies) {
+	if s.spawner.IsClear(s.enemies) && s.state == statePlaying {
 		s.state = stateVictory
+		s.progressMgr.RecordGameResult(s.gameMap.Config.ID, s.kills, true)
+		// 教程完成后持久化标记
+		if s.tutorial.IsComplete() {
+			s.progressMgr.SetTutorialDone()
+		}
 	}
 }
 
@@ -426,6 +461,11 @@ func (s *StageScene) Draw(screen *ebiten.Image) {
 		sellValue = s.econ.SellRefund(s.hoveredTower.Cost)
 	}
 	hud.DrawInfoPanel(screen, s.hoveredTower, sellValue)
+
+	// 教程提示（顶部偏下位置）
+	if msg := s.tutorial.CurrentMessage(); msg != "" {
+		ebitenutil.DebugPrintAt(screen, msg, game.ScreenWidth/2-100, 36)
+	}
 
 	// 屏幕中央通知
 	if s.notifyTimer > 0 {
