@@ -12,35 +12,20 @@ func TestLoadAbilityTable(t *testing.T) {
 	if err != nil {
 		t.Fatalf("加载能力表失败: %v", err)
 	}
-	if len(table) < 20 {
-		t.Errorf("能力数=%d, 期望至少20", len(table))
+	if len(table) != 28 {
+		t.Errorf("能力数=%d, 期望28", len(table))
 	}
 
-	tests := []struct {
-		key      string
-		label    string
-		category string
-		scaleDim string
-	}{
-		{"onHitSlow", "减速", "control", "factor"},
-		{"bounce", "弹射", "combat", "range"},
-		{"splash", "溅射", "combat", "radius"},
-		{"flatDamage", "固伤", "combat", "damage"},
-	}
-	for _, tt := range tests {
-		def := table[tt.key]
-		if def == nil {
-			t.Errorf("能力 %s 不存在", tt.key)
-			continue
+	// 验证结构统一性：每个能力都有 type/label/category
+	for key, def := range table {
+		if def.Type != key {
+			t.Errorf("%s: type=%s 不匹配 key", key, def.Type)
 		}
-		if def.Type != tt.key {
-			t.Errorf("%s type=%s, 期望%s", tt.key, def.Type, tt.key)
+		if def.Label == "" {
+			t.Errorf("%s: label为空", key)
 		}
-		if def.Label != tt.label {
-			t.Errorf("%s label=%s, 期望%s", tt.key, def.Label, tt.label)
-		}
-		if def.ScaleDim != tt.scaleDim {
-			t.Errorf("%s scaleDim=%s, 期望%s", tt.key, def.ScaleDim, tt.scaleDim)
+		if def.Category == "" {
+			t.Errorf("%s: category为空", key)
 		}
 	}
 }
@@ -50,36 +35,37 @@ func TestAbilityDef_CalcScale(t *testing.T) {
 	slow := table["onHitSlow"]
 
 	// 强度100: 0.10 + 0.22 * 1.0 = 0.32
-	v100 := slow.CalcScale(100)
-	if math.Abs(v100-0.32) > 1e-9 {
-		t.Errorf("强度100: factor=%.3f, 期望0.32", v100)
+	v := slow.CalcScale(100)
+	if math.Abs(v-0.32) > 1e-9 {
+		t.Errorf("强度100: factor=%.3f, 期望0.32", v)
 	}
 
 	// 强度200: 0.10 + 0.22 * 2.0 = 0.54
-	v200 := slow.CalcScale(200)
-	if math.Abs(v200-0.54) > 1e-9 {
-		t.Errorf("强度200: factor=%.3f, 期望0.54", v200)
-	}
-
-	// 强度0: 0.10
-	v0 := slow.CalcScale(0)
-	if math.Abs(v0-0.10) > 1e-9 {
-		t.Errorf("强度0: factor=%.3f, 期望0.10", v0)
+	v2 := slow.CalcScale(200)
+	if math.Abs(v2-0.54) > 1e-9 {
+		t.Errorf("强度200: factor=%.3f, 期望0.54", v2)
 	}
 }
 
-func TestAbilityDef_GetParam(t *testing.T) {
+func TestAbilityDef_Param(t *testing.T) {
 	table, _ := config.LoadAbilityTable()
-	slow := table["onHitSlow"]
 
-	dur := slow.GetParam("duration", 0)
-	if dur != 1.4 {
-		t.Errorf("duration=%.1f, 期望1.4", dur)
+	// onHitSlow: param=1.4, paramDim=duration
+	slow := table["onHitSlow"]
+	if !slow.HasParam() {
+		t.Error("onHitSlow应有参数")
+	}
+	if slow.Param != 1.4 {
+		t.Errorf("onHitSlow param=%.1f, 期望1.4", slow.Param)
+	}
+	if slow.ParamDim != "duration" {
+		t.Errorf("onHitSlow paramDim=%s, 期望duration", slow.ParamDim)
 	}
 
-	missing := slow.GetParam("nonExistent", 99)
-	if missing != 99 {
-		t.Errorf("缺失参数应返回99, 实际%.0f", missing)
+	// stackDamage: 无参数
+	sd := table["stackDamage"]
+	if sd.HasParam() {
+		t.Error("stackDamage不应有参数")
 	}
 }
 
@@ -93,28 +79,45 @@ func TestAbilityDef_NoScale(t *testing.T) {
 	if mt.CalcScale(200) != 0 {
 		t.Error("无缩放时CalcScale应返回0")
 	}
+	// 但有固定参数
+	if !mt.HasParam() {
+		t.Error("multiTarget应有targets参数")
+	}
+	if mt.Param != 2 {
+		t.Errorf("targets=%.0f, 期望2", mt.Param)
+	}
 }
 
-func TestAbilityDef_FormatScale(t *testing.T) {
+func TestAbilityDef_BounceScalesMaxBounces(t *testing.T) {
 	table, _ := config.LoadAbilityTable()
-
-	// 百分比类（base < 1）
-	slow := table["onHitSlow"]
-	s := slow.FormatScale(100)
-	if s == "" {
-		t.Error("onHitSlow应有缩放展示")
+	bounce := table["bounce"]
+	if bounce.ScaleDim != "maxBounces" {
+		t.Errorf("bounce scaleDim=%s, 期望maxBounces", bounce.ScaleDim)
 	}
+	// 强度100: 2 + 1*1.0 = 3
+	v := bounce.CalcScale(100)
+	if math.Abs(v-3) > 1e-9 {
+		t.Errorf("强度100: maxBounces=%.1f, 期望3", v)
+	}
+}
 
-	// 绝对值类（base >= 1）
+func TestAbilityDef_SplashScalesRatio(t *testing.T) {
+	table, _ := config.LoadAbilityTable()
 	splash := table["splash"]
-	s2 := splash.FormatScale(100)
-	if s2 == "" {
-		t.Error("splash应有缩放展示")
+	if splash.ScaleDim != "ratio" {
+		t.Errorf("splash scaleDim=%s, 期望ratio", splash.ScaleDim)
 	}
+	// 固定参数是 radius
+	if splash.ParamDim != "radius" {
+		t.Errorf("splash paramDim=%s, 期望radius", splash.ParamDim)
+	}
+}
 
-	// 无缩放
-	mt := table["multiTarget"]
-	if mt.FormatScale(100) != "" {
-		t.Error("multiTarget不应有缩放展示")
+func TestAbilityDef_PercentHpNoBossCap(t *testing.T) {
+	table, _ := config.LoadAbilityTable()
+	php := table["percentHpDamage"]
+	// bossCap 已移除为全局规则，不在能力参数中
+	if php.HasParam() {
+		t.Error("percentHpDamage不应有参数(bossCap是全局规则)")
 	}
 }

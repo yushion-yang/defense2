@@ -1,6 +1,10 @@
 // ability_config.go — 能力配置数据结构与加载。
-// 每个能力只有一个可提升维度（scaleDim），其余参数为固定常量。
+// 每个能力结构完全统一，可直接转化为表格:
+//
+//	type | label | icon | category | scaleDim | base | potential | param | paramDim
+//
 // 运行时公式: scaledValue = base + potential * (strength / 100)
+// param 为固定常量，paramDim 标识其含义，各能力按 type 分发处理。
 package config
 
 import (
@@ -8,16 +12,17 @@ import (
 	"fmt"
 )
 
-// AbilityDef 单个能力的完整定义。
+// AbilityDef 单个能力的完整定义（结构完全统一）。
 type AbilityDef struct {
-	Type      string             `json:"type"`      // 能力类型标识
-	Label     string             `json:"label"`     // 显示名称
-	Icon      string             `json:"icon"`      // 图标名称
-	Category  string             `json:"category"`  // 分类（combat/control/aura/zone/economy）
-	ScaleDim  string             `json:"scaleDim"`  // 可提升维度名（如"factor"/"chance"/"dps"，空=无缩放）
-	Base      float64            `json:"base"`      // 缩放维度的基础值
-	Potential float64            `json:"potential"` // 缩放维度的潜力值
-	Params    map[string]float64 `json:"params"`    // 固定常量参数
+	Type      string  `json:"type"`      // 能力类型标识
+	Label     string  `json:"label"`     // 显示名称
+	Icon      string  `json:"icon"`      // 图标名称
+	Category  string  `json:"category"`  // 分类（combat/control/aura/zone/economy）
+	ScaleDim  string  `json:"scaleDim"`  // 可提升维度名（空=无缩放，运行时按 type 解读）
+	Base      float64 `json:"base"`      // 缩放维度的基础值
+	Potential float64 `json:"potential"` // 缩放维度的潜力值
+	Param     float64 `json:"param"`     // 固定常量参数值（0=无）
+	ParamDim  string  `json:"paramDim"`  // 固定参数的含义标识（空=无，运行时按 type 解读）
 }
 
 // AbilityTable 能力定义表（abilityType → AbilityDef）。
@@ -50,33 +55,26 @@ func (d *AbilityDef) CalcScale(strength float64) float64 {
 	return d.Base + d.Potential*(strength/100.0)
 }
 
-// GetParam 获取固定常量参数，不存在时返回 defaultVal。
-func (d *AbilityDef) GetParam(key string, defaultVal float64) float64 {
-	if d == nil || d.Params == nil {
-		return defaultVal
-	}
-	if v, ok := d.Params[key]; ok {
-		return v
-	}
-	return defaultVal
-}
-
 // HasScale 是否有可缩放维度。
 func (d *AbilityDef) HasScale() bool {
 	return d != nil && d.ScaleDim != ""
 }
 
-// FormatScale 格式化缩放维度为 "base+(scaled)=total" 字符串。
-// 用于 HUD 展示。无缩放返回空。
+// HasParam 是否有固定参数。
+func (d *AbilityDef) HasParam() bool {
+	return d != nil && d.ParamDim != ""
+}
+
+// FormatScale 格式化缩放维度为 HUD 展示字符串。
+// base < 1 时用百分比格式，否则用绝对值格式。无缩放返回空。
 func (d *AbilityDef) FormatScale(strength float64) string {
 	if !d.HasScale() {
 		return ""
 	}
 	scaled := d.Potential * (strength / 100.0)
 	total := d.Base + scaled
-	// 根据数值大小选择格式
-	if d.Base >= 1 {
-		return fmt.Sprintf("%s %.0f+(%.0f)=%.0f", d.ScaleDim, d.Base, scaled, total)
+	if d.Base < 1 {
+		return fmt.Sprintf("%s %.0f%%+(%.0f%%)=%.0f%%", d.ScaleDim, d.Base*100, scaled*100, total*100)
 	}
-	return fmt.Sprintf("%s %.0f%%+(%.0f%%)=%.0f%%", d.ScaleDim, d.Base*100, scaled*100, total*100)
+	return fmt.Sprintf("%s %.0f+(%.0f)=%.0f", d.ScaleDim, d.Base, scaled, total)
 }
