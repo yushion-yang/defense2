@@ -1,9 +1,4 @@
 {
-  "_meta": {
-    "description": "统一塔池（redesign Phase 3）— 9 座塔",
-    "version": "2.0",
-    "towerCount": 8
-  },
   "laser": {
     "label": "激光炮台",
     "shortLabel": "激光",

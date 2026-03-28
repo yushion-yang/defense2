@@ -1,9 +1,0 @@
-{
-  "label": "木桩",
-  "color": "#78716c",
-  "hpScale": 10000,
-  "speedScale": 0,
-  "rewardScale": 0,
-  "radius": 24,
-  "description": "训练用木桩，不移动，超高生命值，用于测试DPS输出"
-}

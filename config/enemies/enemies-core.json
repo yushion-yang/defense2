@@ -1,21 +1,4 @@
 {
-  "_meta": {
-    "description": "Core enemy archetypes (Phase 1 simplification). Deleted types migrated to archetype + buff template combos.",
-    "migration": {
-      "berserker": "normal + berserk buff template",
-      "regenerator": "tank + regen buff template",
-      "elite": "tank + armorBuff + shielded stats via wave scaling",
-      "boss": "tank + bossPhase + bossReflect boss templates (use boss-templates.json)",
-      "mirror": "stealth + revive buff template",
-      "devoter": "tank + healAura buff template (onDeath variant)",
-      "reflector": "normal + reflect buff template",
-      "timewarp": "buffer + timewarp buff template",
-      "ironhide": "armored + damageReduce buff template",
-      "colossus": "tank + regen + damageReduce buff templates",
-      "steadfast": "runner + corruptImmune buff template (slowImmune variant)",
-      "ironwill": "armored + corruptImmune buff template (stunImmune variant)"
-    }
-  },
   "normal": {
     "label": "步兵",
     "color": "#ef4444",

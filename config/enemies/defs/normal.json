@@ -1,9 +1,0 @@
-{
-  "label": "步兵",
-  "color": "#ef4444",
-  "hpScale": 1.18,
-  "speedScale": 1.04,
-  "rewardScale": 0.82,
-  "radius": 18,
-  "description": "最基础的战场单位，各项属性均衡，没有特殊能力，以数量取胜"
-}

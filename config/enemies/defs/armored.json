@@ -1,9 +1,0 @@
-{
-  "label": "护甲兵",
-  "color": "#78716c",
-  "hpScale": 1.4,
-  "speedScale": 0.85,
-  "rewardScale": 1.1,
-  "radius": 20,
-  "description": "身披重甲的坚固单位，血量较高且行动迟缓，以数量和硬度拖延防线"
-}

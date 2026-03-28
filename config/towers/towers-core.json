@@ -1,9 +1,4 @@
 {
-  "_meta": {
-    "coreMechanic": "无专属机制——基础泛用塔",
-    "description": "9 座核心塔。每局可用。",
-    "designNotes": "SVG 位于 assets/towers/core/。"
-  },
   "laser": {
     "label": "激光炮台",
     "shortLabel": "激光",

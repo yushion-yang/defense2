@@ -1,9 +1,0 @@
-{
-  "label": "虫群",
-  "color": "#fde047",
-  "hpScale": 0.5,
-  "speedScale": 2.08,
-  "rewardScale": 0.6,
-  "radius": 12,
-  "description": "体型最小的蜂拥单位，单体极其脆弱但速度最快、数量最多，成群涌来容易压垮单体火力"
-}

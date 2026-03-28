@@ -1,9 +1,4 @@
 {
-  "_meta": {
-    "description": "战灵配置",
-    "count": 5,
-    "levelThresholds": [0, 100, 250, 450, 700]
-  },
   "prince": {
     "name": "小王子",
     "description": "多个移动实体冲撞穿透敌人，留下延烧路径。击杀成长。",
@@ -11,16 +6,68 @@
     "icon": "mechanic-prince",
     "entityCount": 1,
     "levels": [
-      { "level": 1, "damage": 30,  "attackInterval": 3.0, "aoeRadius": 20, "effectDps": 10, "effectDuration": 2,   "moveSpeed": 600 },
-      { "level": 2, "damage": 50,  "attackInterval": 2.5, "aoeRadius": 24, "effectDps": 16, "effectDuration": 2.5, "moveSpeed": 650 },
-      { "level": 3, "damage": 80,  "attackInterval": 2.0, "aoeRadius": 28, "effectDps": 24, "effectDuration": 3,   "moveSpeed": 700 },
-      { "level": 4, "damage": 120, "attackInterval": 1.5, "aoeRadius": 32, "effectDps": 35, "effectDuration": 3.5, "moveSpeed": 750 },
-      { "level": 5, "damage": 160, "attackInterval": 1.2, "aoeRadius": 36, "effectDps": 48, "effectDuration": 4.0, "moveSpeed": 800 }
+      {
+        "level": 1,
+        "damage": 30,
+        "attackInterval": 3.0,
+        "aoeRadius": 20,
+        "effectDps": 10,
+        "effectDuration": 2,
+        "moveSpeed": 600
+      },
+      {
+        "level": 2,
+        "damage": 50,
+        "attackInterval": 2.5,
+        "aoeRadius": 24,
+        "effectDps": 16,
+        "effectDuration": 2.5,
+        "moveSpeed": 650
+      },
+      {
+        "level": 3,
+        "damage": 80,
+        "attackInterval": 2.0,
+        "aoeRadius": 28,
+        "effectDps": 24,
+        "effectDuration": 3,
+        "moveSpeed": 700
+      },
+      {
+        "level": 4,
+        "damage": 120,
+        "attackInterval": 1.5,
+        "aoeRadius": 32,
+        "effectDps": 35,
+        "effectDuration": 3.5,
+        "moveSpeed": 750
+      },
+      {
+        "level": 5,
+        "damage": 160,
+        "attackInterval": 1.2,
+        "aoeRadius": 36,
+        "effectDps": 48,
+        "effectDuration": 4.0,
+        "moveSpeed": 800
+      }
     ],
     "mechanics": {
-      "attackPattern": { "name": "冲撞穿透", "desc": "向敌群密集方向冲刺，穿透路径上所有敌人。", "icon": "💨" },
+      "attackPattern": {
+        "name": "冲撞穿透",
+        "desc": "向敌群密集方向冲刺，穿透路径上所有敌人。",
+        "icon": "💨"
+      },
       "specials": [
-        { "name": "火焰轨迹", "desc": "冲撞路径留下燃烧地带。", "icon": "🔥", "paramKeys": ["effectDps", "effectDuration"] }
+        {
+          "name": "火焰轨迹",
+          "desc": "冲撞路径留下燃烧地带。",
+          "icon": "🔥",
+          "paramKeys": [
+            "effectDps",
+            "effectDuration"
+          ]
+        }
       ],
       "exclusive": null,
       "strengthDesc": "强度 → 冲撞伤害 + 轨迹灼伤增强。",
@@ -38,17 +85,66 @@
     "icon": "mechanic-core",
     "entityCount": 1,
     "levels": [
-      { "level": 1, "damage": 25,  "attackInterval": 1.2,  "range": 160, "moveSpeed": 360, "aoeRadius": 0 },
-      { "level": 2, "damage": 40,  "attackInterval": 1.0,  "range": 180, "moveSpeed": 400, "aoeRadius": 0 },
-      { "level": 3, "damage": 65,  "attackInterval": 0.85, "range": 200, "moveSpeed": 460, "aoeRadius": 50 },
-      { "level": 4, "damage": 100, "attackInterval": 0.7,  "range": 220, "moveSpeed": 520, "aoeRadius": 65 },
-      { "level": 5, "damage": 150, "attackInterval": 0.6,  "range": 240, "moveSpeed": 580, "aoeRadius": 80 }
+      {
+        "level": 1,
+        "damage": 25,
+        "attackInterval": 1.2,
+        "range": 160,
+        "moveSpeed": 360,
+        "aoeRadius": 0
+      },
+      {
+        "level": 2,
+        "damage": 40,
+        "attackInterval": 1.0,
+        "range": 180,
+        "moveSpeed": 400,
+        "aoeRadius": 0
+      },
+      {
+        "level": 3,
+        "damage": 65,
+        "attackInterval": 0.85,
+        "range": 200,
+        "moveSpeed": 460,
+        "aoeRadius": 50
+      },
+      {
+        "level": 4,
+        "damage": 100,
+        "attackInterval": 0.7,
+        "range": 220,
+        "moveSpeed": 520,
+        "aoeRadius": 65
+      },
+      {
+        "level": 5,
+        "damage": 150,
+        "attackInterval": 0.6,
+        "range": 240,
+        "moveSpeed": 580,
+        "aoeRadius": 80
+      }
     ],
     "mechanics": {
-      "attackPattern": { "name": "巡逻射击", "desc": "围绕敌群轨道飞行，自动锁定高威胁目标。", "icon": "🛰️" },
+      "attackPattern": {
+        "name": "巡逻射击",
+        "desc": "围绕敌群轨道飞行，自动锁定高威胁目标。",
+        "icon": "🛰️"
+      },
       "specials": [
-        { "name": "智能攻击模式", "desc": "根据战场自动切换AoE/破甲/处决/控制。", "icon": "🧠", "paramKeys": [] },
-        { "name": "双发射击", "desc": "Lv3起每次攻击发射两发。", "icon": "⚡", "paramKeys": [] }
+        {
+          "name": "智能攻击模式",
+          "desc": "根据战场自动切换AoE/破甲/处决/控制。",
+          "icon": "🧠",
+          "paramKeys": []
+        },
+        {
+          "name": "双发射击",
+          "desc": "Lv3起每次攻击发射两发。",
+          "icon": "⚡",
+          "paramKeys": []
+        }
       ],
       "exclusive": null,
       "strengthDesc": "强度 → 攻击力 + 移动速度 + AoE范围增强。",
@@ -66,16 +162,69 @@
     "icon": "warden-chain",
     "entityCount": 0,
     "levels": [
-      { "level": 1, "damage": 15, "attackInterval": 2.0, "moveSpeed": 0, "range": 9999, "aoeRadius": 0, "effectDuration": 0, "effectDps": 0 },
-      { "level": 2, "damage": 25, "attackInterval": 1.6, "moveSpeed": 0, "range": 9999, "aoeRadius": 0, "effectDuration": 0, "effectDps": 0 },
-      { "level": 3, "damage": 40, "attackInterval": 1.2, "moveSpeed": 0, "range": 9999, "aoeRadius": 0, "effectDuration": 0, "effectDps": 0 },
-      { "level": 4, "damage": 55, "attackInterval": 1.0, "moveSpeed": 0, "range": 9999, "aoeRadius": 0, "effectDuration": 0, "effectDps": 0 },
-      { "level": 5, "damage": 75, "attackInterval": 0.8, "moveSpeed": 0, "range": 9999, "aoeRadius": 0, "effectDuration": 0, "effectDps": 0 }
+      {
+        "level": 1,
+        "damage": 15,
+        "attackInterval": 2.0,
+        "moveSpeed": 0,
+        "range": 9999,
+        "aoeRadius": 0,
+        "effectDuration": 0,
+        "effectDps": 0
+      },
+      {
+        "level": 2,
+        "damage": 25,
+        "attackInterval": 1.6,
+        "moveSpeed": 0,
+        "range": 9999,
+        "aoeRadius": 0,
+        "effectDuration": 0,
+        "effectDps": 0
+      },
+      {
+        "level": 3,
+        "damage": 40,
+        "attackInterval": 1.2,
+        "moveSpeed": 0,
+        "range": 9999,
+        "aoeRadius": 0,
+        "effectDuration": 0,
+        "effectDps": 0
+      },
+      {
+        "level": 4,
+        "damage": 55,
+        "attackInterval": 1.0,
+        "moveSpeed": 0,
+        "range": 9999,
+        "aoeRadius": 0,
+        "effectDuration": 0,
+        "effectDps": 0
+      },
+      {
+        "level": 5,
+        "damage": 75,
+        "attackInterval": 0.8,
+        "moveSpeed": 0,
+        "range": 9999,
+        "aoeRadius": 0,
+        "effectDuration": 0,
+        "effectDps": 0
+      }
     ],
     "mechanics": {
-      "attackPattern": { "name": "能量弹", "desc": "定时对随机敌人发射能量弹。", "icon": "⚡" },
+      "attackPattern": {
+        "name": "能量弹",
+        "desc": "定时对随机敌人发射能量弹。",
+        "icon": "⚡"
+      },
       "specials": [],
-      "exclusive": { "name": "串联体", "desc": "全场塔自动串联，每座塔+10强度。", "icon": "🔗" },
+      "exclusive": {
+        "name": "串联体",
+        "desc": "全场塔自动串联，每座塔+10强度。",
+        "icon": "🔗"
+      },
       "strengthDesc": "强度 → 能量弹伤害增强。串联给塔加强度是额外效果。",
       "counterTip": "适合多塔阵型，塔越密强度越高。"
     },
@@ -91,14 +240,63 @@
     "icon": "warden-skystrike",
     "entityCount": 0,
     "levels": [
-      { "level": 1, "damage": 40,  "attackInterval": 5.0, "moveSpeed": 0, "range": 9999, "aoeRadius": 60,  "effectDuration": 0, "effectDps": 0 },
-      { "level": 2, "damage": 70,  "attackInterval": 4.0, "moveSpeed": 0, "range": 9999, "aoeRadius": 75,  "effectDuration": 0, "effectDps": 0 },
-      { "level": 3, "damage": 110, "attackInterval": 3.0, "moveSpeed": 0, "range": 9999, "aoeRadius": 90,  "effectDuration": 0, "effectDps": 0 },
-      { "level": 4, "damage": 160, "attackInterval": 2.5, "moveSpeed": 0, "range": 9999, "aoeRadius": 110, "effectDuration": 0, "effectDps": 0 },
-      { "level": 5, "damage": 220, "attackInterval": 2.0, "moveSpeed": 0, "range": 9999, "aoeRadius": 130, "effectDuration": 0, "effectDps": 0 }
+      {
+        "level": 1,
+        "damage": 40,
+        "attackInterval": 5.0,
+        "moveSpeed": 0,
+        "range": 9999,
+        "aoeRadius": 60,
+        "effectDuration": 0,
+        "effectDps": 0
+      },
+      {
+        "level": 2,
+        "damage": 70,
+        "attackInterval": 4.0,
+        "moveSpeed": 0,
+        "range": 9999,
+        "aoeRadius": 75,
+        "effectDuration": 0,
+        "effectDps": 0
+      },
+      {
+        "level": 3,
+        "damage": 110,
+        "attackInterval": 3.0,
+        "moveSpeed": 0,
+        "range": 9999,
+        "aoeRadius": 90,
+        "effectDuration": 0,
+        "effectDps": 0
+      },
+      {
+        "level": 4,
+        "damage": 160,
+        "attackInterval": 2.5,
+        "moveSpeed": 0,
+        "range": 9999,
+        "aoeRadius": 110,
+        "effectDuration": 0,
+        "effectDps": 0
+      },
+      {
+        "level": 5,
+        "damage": 220,
+        "attackInterval": 2.0,
+        "moveSpeed": 0,
+        "range": 9999,
+        "aoeRadius": 130,
+        "effectDuration": 0,
+        "effectDps": 0
+      }
     ],
     "mechanics": {
-      "attackPattern": { "name": "天降打击", "desc": "定时对敌群最密集区域发动AoE打击。", "icon": "☄️" },
+      "attackPattern": {
+        "name": "天降打击",
+        "desc": "定时对敌群最密集区域发动AoE打击。",
+        "icon": "☄️"
+      },
       "specials": [],
       "exclusive": null,
       "strengthDesc": "强度 → 打击伤害 + AoE范围增大。",
@@ -116,16 +314,55 @@
     "icon": "warden-envoy",
     "entityCount": 1,
     "levels": [
-      { "level": 1, "possessDuration": 8,  "cooldown": 5,   "permanentStrengthGrant": 10, "range": 9999 },
-      { "level": 2, "possessDuration": 10, "cooldown": 4,   "permanentStrengthGrant": 12, "range": 9999 },
-      { "level": 3, "possessDuration": 12, "cooldown": 3.5, "permanentStrengthGrant": 14, "range": 9999 },
-      { "level": 4, "possessDuration": 14, "cooldown": 3,   "permanentStrengthGrant": 16, "range": 9999 },
-      { "level": 5, "possessDuration": 16, "cooldown": 2.5, "permanentStrengthGrant": 18, "range": 9999 }
+      {
+        "level": 1,
+        "possessDuration": 8,
+        "cooldown": 5,
+        "permanentStrengthGrant": 10,
+        "range": 9999
+      },
+      {
+        "level": 2,
+        "possessDuration": 10,
+        "cooldown": 4,
+        "permanentStrengthGrant": 12,
+        "range": 9999
+      },
+      {
+        "level": 3,
+        "possessDuration": 12,
+        "cooldown": 3.5,
+        "permanentStrengthGrant": 14,
+        "range": 9999
+      },
+      {
+        "level": 4,
+        "possessDuration": 14,
+        "cooldown": 3,
+        "permanentStrengthGrant": 16,
+        "range": 9999
+      },
+      {
+        "level": 5,
+        "possessDuration": 16,
+        "cooldown": 2.5,
+        "permanentStrengthGrant": 18,
+        "range": 9999
+      }
     ],
     "mechanics": {
-      "attackPattern": { "name": "附身增强", "desc": "跳入炮塔附身，赋予永久强度并共享自身强度。", "icon": "👁️" },
+      "attackPattern": {
+        "name": "附身增强",
+        "desc": "跳入炮塔附身，赋予永久强度并共享自身强度。",
+        "icon": "👁️"
+      },
       "specials": [
-        { "name": "智能跳跃", "desc": "优先跳到周围敌人最多的塔。", "icon": "🏃", "paramKeys": [] }
+        {
+          "name": "智能跳跃",
+          "desc": "优先跳到周围敌人最多的塔。",
+          "icon": "🏃",
+          "paramKeys": []
+        }
       ],
       "exclusive": null,
       "strengthDesc": "通波成长自身强度，附身期间共享超出100的部分给宿主。",
