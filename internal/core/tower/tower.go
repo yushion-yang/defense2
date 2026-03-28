@@ -2,6 +2,11 @@
 // 定义已放置塔的核心属性：位置、攻击参数、能力列表等。
 package tower
 
+import (
+	"defense2/internal/core/enemy"
+	"defense2/internal/core/strength"
+)
+
 // StrengthBuyCost 购买 10 点强度的金币花费。
 const StrengthBuyCost = 10
 
@@ -78,11 +83,11 @@ type Tower struct {
 	Branch string // 分支特化标识（空=未特化，一次性选择）
 
 	// 战力系统（塔的独立战力数据，不与 Damage 字段混用）
-	Strength    interface{} // *strength.StrengthData（用 interface{} 避免循环导入）
-	StrengthCfg interface{} // *strength.StrengthConfig（同上）
+	Strength    *strength.StrengthData   // 战力运行时数据
+	StrengthCfg *strength.StrengthConfig // 战力绑定配置
 
 	// 索敌锁定
-	Target interface{} // 当前锁定目标（*enemy.Enemy，用 interface{} 避免循环导入）
+	Target *enemy.Enemy // 当前锁定目标
 }
 
 // BuyStrength 花费金币购买 10 点永久强度。返回实际花费。

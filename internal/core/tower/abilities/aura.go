@@ -41,9 +41,7 @@ func (a *DamageUpAura) OnTick(t *tower.Tower, ctx *tower.TickContext) *tower.Tic
 			// 通过战力系统临时加成（15%基础伤害折算为战力值）
 			bonus := other.BaseDamage * 0.15
 			ensureTowerStrength(other)
-			if sd, ok := other.Strength.(*strength.StrengthData); ok {
-				sd.SetTemp(srcKey, bonus)
-			}
+			other.Strength.SetTemp(srcKey, bonus)
 		}
 	})
 	return nil
@@ -103,9 +101,7 @@ func (a *CritAura) OnTick(t *tower.Tower, ctx *tower.TickContext) *tower.TickRes
 		if distBetweenTowers(t, other) <= auraRadius {
 			bonus := other.BaseDamage * 0.10
 			ensureTowerStrength(other)
-			if sd, ok := other.Strength.(*strength.StrengthData); ok {
-				sd.SetTemp(srcKey, bonus)
-			}
+			other.Strength.SetTemp(srcKey, bonus)
 		}
 	})
 	return nil
@@ -130,12 +126,10 @@ func (a *SoloBoost) OnTick(t *tower.Tower, ctx *tower.TickContext) *tower.TickRe
 	})
 	srcKey := fmt.Sprintf("soloBoost_%s_%d_%d", t.Key, t.Row, t.Col)
 	ensureTowerStrength(t)
-	if sd, ok := t.Strength.(*strength.StrengthData); ok {
-		if alone {
-			sd.SetTemp(srcKey, t.BaseDamage*0.30)
-		} else {
-			sd.RemoveTemp(srcKey)
-		}
+	if alone {
+		t.Strength.SetTemp(srcKey, t.BaseDamage*0.30)
+	} else {
+		t.Strength.RemoveTemp(srcKey)
 	}
 	return nil
 }

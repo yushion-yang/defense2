@@ -778,8 +778,8 @@ func (s *StageScene) tryUpgradeTower() {
 	spent := t.BuyStrength()
 	s.gold -= spent
 	// 通过战力系统增加永久强度
-	if sd, ok := t.Strength.(*strength.StrengthData); ok {
-		sd.AddPermanent(10)
+	if t.Strength != nil {
+		t.Strength.AddPermanent(10)
 	}
 	s.audioMgr.PlaySafe(gameAudio.SFXUpgrade)
 	s.showNotify(fmt.Sprintf("强度+10 (-$%d)", spent))
@@ -897,7 +897,7 @@ func (s *StageScene) tryPlaceTower(px, py float64) bool {
 	if placed != nil {
 		sd := strength.NewStrengthData()
 		placed.Strength = sd
-		if sj, ok := def.StrengthCfg.(*config.StrengthJSON); ok && sj != nil {
+		if sj := def.StrengthJSON; sj != nil {
 			cfg := strengthConfigFromJSON(sj)
 			placed.StrengthCfg = cfg
 			// 从战力配置提取潜力值到塔字段

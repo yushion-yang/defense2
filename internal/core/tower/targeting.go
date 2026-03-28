@@ -12,15 +12,15 @@ import (
 // 优先沿用已锁定的目标（存活且在射程内），否则重新选最近的。
 func AcquireTarget(t *Tower, pool *enemy.Pool) *enemy.Enemy {
 	// 检查已锁定目标是否仍然有效
-	if t.Target != nil {
-		if e, ok := t.Target.(*enemy.Enemy); ok && e.Active {
-			dx := e.X - t.X
-			dy := e.Y - t.Y
-			if math.Hypot(dx, dy) <= t.Range {
-				return e
-			}
+	if t.Target != nil && t.Target.Active {
+		dx := t.Target.X - t.X
+		dy := t.Target.Y - t.Y
+		if math.Hypot(dx, dy) <= t.Range {
+			return t.Target
 		}
-		// 目标失效，清除锁定
+		// 目标超出射程，清除锁定
+		t.Target = nil
+	} else {
 		t.Target = nil
 	}
 

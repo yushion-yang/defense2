@@ -5,7 +5,6 @@ package pipeline
 
 import (
 	"defense2/internal/core/enemy"
-	"defense2/internal/core/strength"
 	"defense2/internal/core/tower"
 )
 
@@ -53,8 +52,8 @@ func TickTowerAbilities(towers *tower.Pool, enemies *enemy.Pool, dt float64) int
 // 公式: effectiveAttr = base + potential * (effectiveStrength / 100)
 // 无战力配置时回退到基础值。
 func resetTowerStats(t *tower.Tower) {
-	cfg, _ := t.StrengthCfg.(*strength.StrengthConfig)
-	sd, _ := t.Strength.(*strength.StrengthData)
+	cfg := t.StrengthCfg
+	sd := t.Strength
 
 	if cfg == nil || sd == nil {
 		// 无战力系统，使用基础值

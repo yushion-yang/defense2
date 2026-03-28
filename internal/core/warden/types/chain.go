@@ -63,9 +63,7 @@ func (b *ChainBehavior) Tick(w *warden.Warden, ctx *warden.TickContext) {
 	ctx.Towers.Each(func(t *tower.Tower) {
 		if !s.BoostedSet[t] {
 			ensureStrength(t)
-			if sd, ok := t.Strength.(*strength.StrengthData); ok {
-				sd.SetTemp(fmt.Sprintf("chain_warden_%d", w.ID), s.TowerBonus)
-			}
+			t.Strength.SetTemp(fmt.Sprintf("chain_warden_%d", w.ID), s.TowerBonus)
 			s.BoostedSet[t] = true
 		}
 	})

@@ -2,7 +2,10 @@
 // 固定大小数组实现零分配对象池，支持放置、出售、遍历和按格查找。
 package tower
 
-import "defense2/internal/core/game"
+import (
+	"defense2/internal/config"
+	"defense2/internal/core/game"
+)
 
 // Pool 固定大小的塔对象池。
 type Pool struct {
@@ -130,8 +133,8 @@ type TowerDef struct {
 	PierceTargets int
 	PierceDecay   float64
 
-	// 战力绑定配置（从 JSON 解析的强类型结构，由 stage 转换为 StrengthConfig）
-	StrengthCfg interface{} // *config.StrengthJSON（用 interface{} 避免循环导入）
+	// 战力绑定配置（从 JSON 解析的强类型结构）
+	StrengthJSON *config.StrengthJSON
 }
 
 // BaseTowerDefs 返回 4 种基础塔定义。

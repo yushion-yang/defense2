@@ -63,8 +63,8 @@ func DrawInfoPanel(screen *ebiten.Image, t *tower.Tower, sellValue int) {
 	panel.AddSpace(topPad - innerPad)
 
 	// 提取战力数据（从 Tower 的 interface{} 字段做类型断言）
-	sd, _ := t.Strength.(*strength.StrengthData)
-	cfg, _ := t.StrengthCfg.(*strength.StrengthConfig)
+	sd := t.Strength
+	cfg := t.StrengthCfg
 	var effStr float64
 	if sd != nil {
 		effStr = sd.Effective()

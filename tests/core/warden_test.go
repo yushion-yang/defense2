@@ -85,12 +85,11 @@ func TestEnvoyPossess(t *testing.T) {
 
 	// 附身后塔的 Damage 不再直接改变，改为通过战力系统增强
 	// 检查塔的 Strength 是否被设置了临时加成
-	sd, ok := placed.Strength.(*strength.StrengthData)
-	if !ok || sd == nil {
+	if placed.Strength == nil {
 		t.Fatal("附身后塔应有 StrengthData")
 	}
 	// envoy DamageBonus=5, 所以战力应为 100(base) + 5(temp) = 105
-	if math.Abs(sd.Effective()-105) > 1e-9 {
-		t.Fatalf("附身后塔战力应为 105，实际 %.0f", sd.Effective())
+	if math.Abs(placed.Strength.Effective()-105) > 1e-9 {
+		t.Fatalf("附身后塔战力应为 105，实际 %.0f", placed.Strength.Effective())
 	}
 }

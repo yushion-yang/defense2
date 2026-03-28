@@ -6,7 +6,6 @@ package warden
 import (
 	"defense2/internal/core/enemy"
 	"defense2/internal/core/projectile"
-	"defense2/internal/core/strength"
 	"defense2/internal/core/tower"
 )
 
@@ -73,12 +72,7 @@ func (w *Warden) CalcStrength(towers *tower.Pool) {
 		if t.Strength == nil {
 			return
 		}
-		sd, ok := t.Strength.(*strength.StrengthData)
-		if !ok || sd == nil {
-			return
-		}
-		overflow := sd.Overflow() // max(0, effective - 100)
-		total += overflow
+		total += t.Strength.Overflow() // max(0, effective - 100)
 	})
 	w.PerceivedStrength = total
 	if total > w.PeakStrength {
