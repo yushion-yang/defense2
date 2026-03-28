@@ -9,8 +9,8 @@ import (
 	"defense2/internal/core/gamemap"
 )
 
-// makeEnemy 创建测试用敌人
-func makeEnemy(hp, maxHP float64) *enemy.Enemy {
+// makePipelineEnemy 创建测试用敌人
+func makePipelineEnemy(hp, maxHP float64) *enemy.Enemy {
 	return &enemy.Enemy{
 		HP:     hp,
 		MaxHP:  maxHP,
@@ -65,7 +65,7 @@ func TestDamageTypeColor(t *testing.T) {
 // ============================================================
 
 func TestPipeline_BasicDamage(t *testing.T) {
-	e := makeEnemy(100, 100)
+	e := makePipelineEnemy(100, 100)
 	r := combat.ProcessDamage(combat.DamageInput{
 		Target:    e,
 		RawDamage: 30,
@@ -82,7 +82,7 @@ func TestPipeline_BasicDamage(t *testing.T) {
 }
 
 func TestPipeline_Kill(t *testing.T) {
-	e := makeEnemy(50, 100)
+	e := makePipelineEnemy(50, 100)
 	r := combat.ProcessDamage(combat.DamageInput{
 		Target:    e,
 		RawDamage: 60,
@@ -98,7 +98,7 @@ func TestPipeline_Kill(t *testing.T) {
 // ── 步骤1: 免疫检查 ──
 
 func TestPipeline_Invincible(t *testing.T) {
-	e := makeEnemy(100, 100)
+	e := makePipelineEnemy(100, 100)
 	e.IsInvincible = true
 
 	r := combat.ProcessDamage(combat.DamageInput{
@@ -114,7 +114,7 @@ func TestPipeline_Invincible(t *testing.T) {
 }
 
 func TestPipeline_PureBypassesInvincible(t *testing.T) {
-	e := makeEnemy(100, 100)
+	e := makePipelineEnemy(100, 100)
 	e.IsInvincible = true
 
 	r := combat.ProcessDamage(combat.DamageInput{
@@ -131,7 +131,7 @@ func TestPipeline_PureBypassesInvincible(t *testing.T) {
 }
 
 func TestPipeline_Untargetable(t *testing.T) {
-	e := makeEnemy(100, 100)
+	e := makePipelineEnemy(100, 100)
 	e.IsUntargetable = true
 
 	r := combat.ProcessDamage(combat.DamageInput{
@@ -146,7 +146,7 @@ func TestPipeline_Untargetable(t *testing.T) {
 // ── 步骤2: Boss百分比HP上限 ──
 
 func TestPipeline_BossPercentCap(t *testing.T) {
-	e := makeEnemy(10000, 10000)
+	e := makePipelineEnemy(10000, 10000)
 	e.Boss = true
 
 	r := combat.ProcessDamage(combat.DamageInput{
@@ -162,7 +162,7 @@ func TestPipeline_BossPercentCap(t *testing.T) {
 }
 
 func TestPipeline_NonBossNoPercentCap(t *testing.T) {
-	e := makeEnemy(10000, 10000)
+	e := makePipelineEnemy(10000, 10000)
 	// 非Boss
 
 	r := combat.ProcessDamage(combat.DamageInput{
@@ -180,7 +180,7 @@ func TestPipeline_NonBossNoPercentCap(t *testing.T) {
 // ── 步骤3+4: 增伤/减伤 ──
 
 func TestPipeline_AttackerDamageUp(t *testing.T) {
-	e := makeEnemy(100, 100)
+	e := makePipelineEnemy(100, 100)
 	r := combat.ProcessDamage(combat.DamageInput{
 		Target:           e,
 		RawDamage:        10,
@@ -192,7 +192,7 @@ func TestPipeline_AttackerDamageUp(t *testing.T) {
 }
 
 func TestPipeline_TrueDamageIgnoresModifiers(t *testing.T) {
-	e := makeEnemy(100, 100)
+	e := makePipelineEnemy(100, 100)
 	r := combat.ProcessDamage(combat.DamageInput{
 		Target:           e,
 		RawDamage:        10,
@@ -209,7 +209,7 @@ func TestPipeline_TrueDamageIgnoresModifiers(t *testing.T) {
 // ── 步骤4.5: 伤害上限 ──
 
 func TestPipeline_DamageCap(t *testing.T) {
-	e := makeEnemy(1000, 1000)
+	e := makePipelineEnemy(1000, 1000)
 	e.DamageCap = 60 // 铁甲怪
 
 	r := combat.ProcessDamage(combat.DamageInput{
@@ -222,7 +222,7 @@ func TestPipeline_DamageCap(t *testing.T) {
 }
 
 func TestPipeline_DamageCapPercent(t *testing.T) {
-	e := makeEnemy(1000, 1000)
+	e := makePipelineEnemy(1000, 1000)
 	e.DamageCapPercent = 0.08 // 巨人 8%maxHP = 80
 
 	r := combat.ProcessDamage(combat.DamageInput{
@@ -235,7 +235,7 @@ func TestPipeline_DamageCapPercent(t *testing.T) {
 }
 
 func TestPipeline_DamageCapDisabledBySilence(t *testing.T) {
-	e := makeEnemy(1000, 1000)
+	e := makePipelineEnemy(1000, 1000)
 	e.DamageCap = 60
 	e.Silenced = true
 
@@ -251,7 +251,7 @@ func TestPipeline_DamageCapDisabledBySilence(t *testing.T) {
 // ── 步骤5: 护盾吸收 ──
 
 func TestPipeline_ShieldAbsorption(t *testing.T) {
-	e := makeEnemy(100, 100)
+	e := makePipelineEnemy(100, 100)
 	e.ShieldHP = 30
 
 	r := combat.ProcessDamage(combat.DamageInput{
@@ -267,7 +267,7 @@ func TestPipeline_ShieldAbsorption(t *testing.T) {
 }
 
 func TestPipeline_MultiShield(t *testing.T) {
-	e := makeEnemy(100, 100)
+	e := makePipelineEnemy(100, 100)
 	enemy.AddShield(e, 20, 5.0, "aura1")
 	enemy.AddShield(e, 30, 10.0, "aura2")
 
@@ -285,7 +285,7 @@ func TestPipeline_MultiShield(t *testing.T) {
 }
 
 func TestPipeline_PureBypassesShield(t *testing.T) {
-	e := makeEnemy(100, 100)
+	e := makePipelineEnemy(100, 100)
 	e.ShieldHP = 50
 
 	r := combat.ProcessDamage(combat.DamageInput{
@@ -307,7 +307,7 @@ func TestPipeline_PureBypassesShield(t *testing.T) {
 // ── 步骤7: 阈值触发 ──
 
 func TestPipeline_Thresholds(t *testing.T) {
-	e := makeEnemy(100, 100)
+	e := makePipelineEnemy(100, 100)
 	enemy.AddThreshold(e, "berserk", 0.5)
 	enemy.AddThreshold(e, "phase2", 0.3)
 
@@ -342,7 +342,7 @@ func TestPipeline_Thresholds(t *testing.T) {
 // ── 步骤8: 最低伤害保底 ──
 
 func TestPipeline_MinimumDamage(t *testing.T) {
-	e := makeEnemy(100, 100)
+	e := makePipelineEnemy(100, 100)
 	e.DamageCap = 0.5 // 上限0.5
 
 	r := combat.ProcessDamage(combat.DamageInput{
@@ -358,7 +358,7 @@ func TestPipeline_MinimumDamage(t *testing.T) {
 // ── QuickDamage 快捷函数 ──
 
 func TestQuickDamage(t *testing.T) {
-	e := makeEnemy(100, 100)
+	e := makePipelineEnemy(100, 100)
 	dmg, killed := combat.QuickDamage(e, 30, combat.DmgPhysical)
 	if math.Abs(dmg-30) > 1e-9 {
 		t.Errorf("QuickDamage=%.1f, 期望30", dmg)
@@ -371,7 +371,7 @@ func TestQuickDamage(t *testing.T) {
 // ── 护盾系统测试 ──
 
 func TestShield_TickExpire(t *testing.T) {
-	e := makeEnemy(100, 100)
+	e := makePipelineEnemy(100, 100)
 	enemy.AddShield(e, 50, 2.0, "test")
 
 	enemy.TickShields(e, 1.0)
@@ -386,7 +386,7 @@ func TestShield_TickExpire(t *testing.T) {
 }
 
 func TestShield_TotalHP(t *testing.T) {
-	e := makeEnemy(100, 100)
+	e := makePipelineEnemy(100, 100)
 	e.ShieldHP = 20
 	enemy.AddShield(e, 30, 10, "a")
 	enemy.AddShield(e, 40, 10, "b")

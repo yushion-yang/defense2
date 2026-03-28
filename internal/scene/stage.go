@@ -1205,14 +1205,14 @@ func (s *StageScene) updatePlaying() {
 		if s.session.Status == gamemode.StatusVictory {
 			s.state = stateVictory
 			s.audioMgr.PlaySafe(gameAudio.SFXVictory)
-			s.progressMgr.RecordGameResult(s.gameMap.Config.ID, s.kills, true)
+			s.progressMgr.RecordGameResult(s.modeID, s.gameMap.Config.ID, s.kills, true)
 			if s.tutorial.IsComplete() {
 				s.progressMgr.SetTutorialDone()
 			}
 		} else if s.session.Status == gamemode.StatusDefeat {
 			s.state = stateDefeat
 			s.audioMgr.PlaySafe(gameAudio.SFXDefeat)
-			s.progressMgr.RecordGameResult(s.gameMap.Config.ID, s.kills, false)
+			s.progressMgr.RecordGameResult(s.modeID, s.gameMap.Config.ID, s.kills, false)
 		}
 	}
 }

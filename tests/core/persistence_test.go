@@ -27,14 +27,14 @@ func TestProgressManagerRecordWin(t *testing.T) {
 	s := newMemStorage()
 	pm := persistence.NewProgressManager(s)
 
-	pm.RecordGameResult("map_01", 50, true)
+	pm.RecordGameResult("campaign", "map_01", 50, true)
 	p := pm.Progress()
 
 	if p.TotalWins != 1 {
 		t.Fatalf("预期 1 胜，实际 %d", p.TotalWins)
 	}
-	if p.HighScores["map_01"] != 50 {
-		t.Fatalf("预期最高分 50，实际 %d", p.HighScores["map_01"])
+	if p.HighScores["campaign_map_01"] != 50 {
+		t.Fatalf("预期最高分 50，实际 %d", p.HighScores["campaign_map_01"])
 	}
 	// 通关 map_01 应解锁 map_02
 	if !pm.IsMapUnlocked("map_02") {
@@ -46,7 +46,7 @@ func TestProgressManagerRecordLoss(t *testing.T) {
 	s := newMemStorage()
 	pm := persistence.NewProgressManager(s)
 
-	pm.RecordGameResult("map_01", 30, false)
+	pm.RecordGameResult("campaign", "map_01", 30, false)
 	p := pm.Progress()
 
 	if p.TotalGames != 1 {
