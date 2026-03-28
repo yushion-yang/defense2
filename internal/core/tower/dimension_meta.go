@@ -45,9 +45,8 @@ var DimensionRegistry = map[string]DimensionMeta{
 	"damageDecay": {Scale: ScaleInverseRatio, Floor: 0.10},
 
 	// 不缩放
-	"type":        {Scale: ScaleNone},
-	"unlockLevel": {Scale: ScaleNone},
-	"range":       {Scale: ScaleNone},
+	"type":  {Scale: ScaleNone},
+	"range": {Scale: ScaleNone},
 }
 
 // ScaleValue 按维度规则缩放单个数值。

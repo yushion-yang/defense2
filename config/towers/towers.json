@@ -110,14 +110,8 @@
     "projectileSpeed": 600,
     "bounceConfig": {
       "baseBounces": 2,
-      "bouncesPerLevel": {
-        "2": 0,
-        "3": 0,
-        "4": 0
-      },
       "range": 125,
-      "damageDecay": 0.8,
-      "damageDecayLv4": 0.9
+      "damageDecay": 0.8
     },
     "abilities": [
       {
