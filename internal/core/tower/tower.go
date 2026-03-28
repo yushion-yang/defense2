@@ -3,7 +3,7 @@
 package tower
 
 // StrengthBuyCost 购买 10 点强度的金币花费。
-const StrengthBuyCost = 30
+const StrengthBuyCost = 10
 
 // AttackStyle 攻击方式标识。
 type AttackStyle = string
