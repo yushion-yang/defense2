@@ -133,8 +133,12 @@ type TowerDef struct {
 	PierceTargets int
 	PierceDecay   float64
 
-	// 战力绑定配置（从 JSON 解析的强类型结构）
-	StrengthJSON *config.StrengthJSON
+	// 战力基础值+潜力值（从 JSON 扁平字段）
+	PotentialDamage float64
+	PotentialSpeed  float64
+	PotentialRange  float64
+	// 战力效果绑定
+	StrengthEffects *config.StrengthEffectsJSON
 }
 
 // BaseTowerDefs 返回 4 种基础塔定义。

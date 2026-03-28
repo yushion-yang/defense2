@@ -10,8 +10,7 @@
     "buildCost": 70,
     "attackStyle": "laser",
     "baseRange": 200,
-    "baseDamage": 22,
-    "baseFireRate": 0.92,
+    "baseDamage": 8,
     "projectileSpeed": 9999,
     "abilities": [
       "instantHit"
@@ -22,20 +21,10 @@
       "color": "#f43f5e",
       "glow": "#fda4af"
     },
-    "strength": {
-      "attackDamage": {
-        "base": 8,
-        "potential": 14
-      },
-      "attackSpeed": {
-        "base": 0.37,
-        "potential": 0.55
-      },
-      "range": {
-        "base": 200,
-        "potential": 0
-      }
-    }
+    "potentialDamage": 14,
+    "baseAttackSpeed": 0.37,
+    "potentialAttackSpeed": 0.55,
+    "potentialRange": 0
   },
   "freeze": {
     "label": "冰冻炮台",
@@ -49,31 +38,20 @@
     "description": "伤害较低，但可减速敌人，为后排主力争取输出时间。",
     "buildCost": 65,
     "baseRange": 170,
-    "baseDamage": 10,
-    "baseFireRate": 0.68,
+    "baseDamage": 4,
     "projectileSpeed": 380,
     "abilities": [
       "onHitSlow",
       "multiTarget"
     ],
-    "strength": {
-      "attackDamage": {
-        "base": 4,
-        "potential": 6
-      },
-      "attackSpeed": {
-        "base": 0.27,
-        "potential": 0.41
-      },
-      "range": {
-        "base": 170,
-        "potential": 0
-      },
-      "effects": {
-        "slowFactor": {
-          "base": 0.1,
-          "potential": 0.58
-        }
+    "potentialDamage": 6,
+    "baseAttackSpeed": 0.27,
+    "potentialAttackSpeed": 0.41,
+    "potentialRange": 0,
+    "strengthEffects": {
+      "slowFactor": {
+        "base": 0.1,
+        "potential": 0.58
       }
     }
   },
@@ -89,8 +67,7 @@
     "description": "发射链式闪电，自动弹射到附近目标。",
     "buildCost": 75,
     "baseRange": 150,
-    "baseDamage": 20,
-    "baseFireRate": 0.85,
+    "baseDamage": 7,
     "projectileSpeed": 600,
     "bounceConfig": {
       "baseBounces": 2,
@@ -101,20 +78,10 @@
       "stun",
       "bounce"
     ],
-    "strength": {
-      "attackDamage": {
-        "base": 7,
-        "potential": 13
-      },
-      "attackSpeed": {
-        "base": 0.34,
-        "potential": 0.51
-      },
-      "range": {
-        "base": 150,
-        "potential": 0
-      }
-    }
+    "potentialDamage": 13,
+    "baseAttackSpeed": 0.34,
+    "potentialAttackSpeed": 0.51,
+    "potentialRange": 0
   },
   "hunter": {
     "label": "猎手塔",
@@ -129,8 +96,7 @@
     "buildCost": 82,
     "attackStyle": "projectile",
     "baseRange": 140,
-    "baseDamage": 18,
-    "baseFireRate": 1.4,
+    "baseDamage": 6,
     "projectileSpeed": 380,
     "beam": null,
     "abilities": [
@@ -138,20 +104,10 @@
       "stackDamage",
       "executionBonus"
     ],
-    "strength": {
-      "attackDamage": {
-        "base": 6,
-        "potential": 12
-      },
-      "attackSpeed": {
-        "base": 0.56,
-        "potential": 0.84
-      },
-      "range": {
-        "base": 140,
-        "potential": 0
-      }
-    }
+    "potentialDamage": 12,
+    "baseAttackSpeed": 0.56,
+    "potentialAttackSpeed": 0.84,
+    "potentialRange": 0
   },
   "en-04": {
     "label": "光束照射塔",
@@ -166,8 +122,7 @@
     ],
     "buildCost": 60,
     "baseRange": 140,
-    "baseDamage": 12,
-    "baseFireRate": 0.8,
+    "baseDamage": 6,
     "projectileSpeed": 9999,
     "attackStyle": "wideBeam",
     "abilities": [
@@ -178,20 +133,10 @@
       "width": 6,
       "color": "#93c5fd"
     },
-    "strength": {
-      "attackDamage": {
-        "base": 6,
-        "potential": 12
-      },
-      "attackSpeed": {
-        "base": 0.4,
-        "potential": 0.6
-      },
-      "range": {
-        "base": 140,
-        "potential": 0
-      }
-    }
+    "potentialDamage": 12,
+    "baseAttackSpeed": 0.4,
+    "potentialAttackSpeed": 0.6,
+    "potentialRange": 0
   },
   "en-05": {
     "label": "能量散弹塔",
@@ -206,8 +151,7 @@
     ],
     "buildCost": 55,
     "baseRange": 125,
-    "baseDamage": 8,
-    "baseFireRate": 1.1,
+    "baseDamage": 5,
     "projectileSpeed": 400,
     "attackStyle": "scatter",
     "abilities": [
@@ -217,20 +161,10 @@
       "pellets": 3,
       "spreadAngle": 60
     },
-    "strength": {
-      "attackDamage": {
-        "base": 5,
-        "potential": 10
-      },
-      "attackSpeed": {
-        "base": 0.35,
-        "potential": 0.55
-      },
-      "range": {
-        "base": 125,
-        "potential": 0
-      }
-    }
+    "potentialDamage": 10,
+    "baseAttackSpeed": 0.35,
+    "potentialAttackSpeed": 0.55,
+    "potentialRange": 0
   },
   "en-08": {
     "label": "湮灭射线塔",
@@ -245,28 +179,17 @@
     ],
     "buildCost": 75,
     "baseRange": 180,
-    "baseDamage": 30,
-    "baseFireRate": 2.5,
+    "baseDamage": 12,
     "projectileSpeed": 1200,
     "attackStyle": "charge",
     "abilities": [],
-    "strength": {
-      "attackDamage": {
-        "base": 12,
-        "potential": 20
-      },
-      "attackSpeed": {
-        "base": 1,
-        "potential": 1.5
-      },
-      "range": {
-        "base": 180,
-        "potential": 0
-      }
-    },
     "chargeConfig": {
       "damageMultiplier": 3
-    }
+    },
+    "potentialDamage": 20,
+    "baseAttackSpeed": 1,
+    "potentialAttackSpeed": 1.5,
+    "potentialRange": 0
   },
   "wl-02": {
     "label": "旋风刃",
@@ -280,26 +203,15 @@
     ],
     "buildCost": 60,
     "baseRange": 80,
-    "baseDamage": 10,
-    "baseFireRate": 0.5,
+    "baseDamage": 7,
     "projectileSpeed": 0,
     "attackStyle": "spin_aoe",
     "innerDamageBonus": 1.5,
     "innerRadiusRatio": 0.5,
     "abilities": [],
-    "strength": {
-      "attackDamage": {
-        "base": 7,
-        "potential": 11
-      },
-      "attackSpeed": {
-        "base": 0.3,
-        "potential": 0.5
-      },
-      "range": {
-        "base": 80,
-        "potential": 0
-      }
-    }
+    "potentialDamage": 11,
+    "baseAttackSpeed": 0.3,
+    "potentialAttackSpeed": 0.5,
+    "potentialRange": 0
   }
 }

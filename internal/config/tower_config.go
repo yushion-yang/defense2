@@ -14,12 +14,21 @@ import (
 
 // TowerJSON 塔的 JSON 配置原始结构（与 JS 版 JSON 字段一致）。
 type TowerJSON struct {
-	Label          string              `json:"label"`          // 塔全名
-	ShortLabel     string              `json:"shortLabel"`     // 塔简称（HUD 显示用）
-	BuildCost      int                 `json:"buildCost"`      // 建造费用（金币）
-	BaseRange      float64             `json:"baseRange"`      // 基础攻击范围（像素）
-	BaseDamage     float64             `json:"baseDamage"`     // 基础单发伤害
-	BaseFireRate   float64             `json:"baseFireRate"`   // 基础射击间隔（秒/次，越小越快）
+	Label     string `json:"label"`     // 塔全名
+	ShortLabel string `json:"shortLabel"` // 塔简称（HUD 显示用）
+	BuildCost int    `json:"buildCost"` // 建造费用（金币）
+
+	// 基础属性 + 潜力属性（战力缩放）
+	BaseDamage         float64 `json:"baseDamage"`         // 基础伤害（强度0时的底线）
+	PotentialDamage    float64 `json:"potentialDamage"`    // 潜力伤害（强度100时 = base+potential）
+	BaseAttackSpeed    float64 `json:"baseAttackSpeed"`    // 基础攻速（次/秒）
+	PotentialAttackSpeed float64 `json:"potentialAttackSpeed"` // 潜力攻速
+	BaseRange          float64 `json:"baseRange"`          // 基础射程（像素）
+	PotentialRange     float64 `json:"potentialRange"`     // 潜力射程
+
+	// 战力效果绑定（能力参数的强度缩放，如减速倍率）
+	StrengthEffects *StrengthEffectsJSON `json:"strengthEffects"`
+
 	Tags           []string            `json:"tags"`           // 标签列表（如 "energy"、"laser"）
 	Abilities      []string            `json:"abilities"`      // 能力 key 列表（引用 abilities.json）
 	BounceConfig   *BounceConfigJSON   `json:"bounceConfig"`   // 弹射配置（electric 塔）
@@ -33,8 +42,6 @@ type TowerJSON struct {
 	InnerRadiusRatio float64            `json:"innerRadiusRatio"` // spin_aoe 内圈比例
 	PierceConfig     *PierceConfigJSON  `json:"pierceConfig"`     // pierce 穿刺配置
 
-	// 战力系统配置
-	Strength *StrengthJSON `json:"strength"` // 战力绑定（基础值+潜力值）
 	PoisonConfig *PoisonConfigJSON `json:"poisonConfig"` // aura_dot 持续毒伤配置
 }
 
@@ -68,18 +75,10 @@ type PoisonConfigJSON struct {
 	Interval float64 `json:"interval"` // 伤害间隔（秒）
 }
 
-// StrengthJSON 战力绑定配置（基础值+潜力值）。
-type StrengthJSON struct {
-	AttackDamage *BindingJSON         `json:"attackDamage"` // 攻击力绑定
-	AttackSpeed  *BindingJSON         `json:"attackSpeed"`  // 攻速绑定
-	Range        *BindingJSON         `json:"range"`        // 射程绑定
-	Effects      *StrengthEffectsJSON `json:"effects"`      // 能力效果绑定
-}
-
-// BindingJSON 单个属性的基础值+潜力值。
+// BindingJSON 基础值+潜力值（用于 effects 内的嵌套绑定）。
 type BindingJSON struct {
-	Base      float64 `json:"base"`      // 基础值（强度0时的最低值）
-	Potential float64 `json:"potential"` // 潜力值（强度100时 base+potential）
+	Base      float64 `json:"base"`      // 基础值
+	Potential float64 `json:"potential"` // 潜力值
 }
 
 // StrengthEffectsJSON 能力效果的战力绑定。

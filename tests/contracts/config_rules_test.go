@@ -82,10 +82,10 @@ func TestTowerConfigFields(t *testing.T) {
 			},
 		},
 		{
-			name: "baseFireRate 合理范围",
+			name: "baseAttackSpeed 合理范围",
 			check: func(key string, t2 *config.TowerJSON) error {
-				if t2.BaseFireRate < 0.18 || t2.BaseFireRate > 99 {
-					return fmt.Errorf("塔 %s 的 baseFireRate=%.2f 超出 [0.18,99]", key, t2.BaseFireRate)
+				if t2.BaseAttackSpeed < 0 || t2.BaseAttackSpeed > 20 {
+					return fmt.Errorf("塔 %s 的 baseAttackSpeed=%.2f 超出 [0,20]", key, t2.BaseAttackSpeed)
 				}
 				return nil
 			},

@@ -16,10 +16,10 @@ var defaultTowerColor = [3]uint8{80, 140, 220}
 
 // TowerJSONToDef 将单个 JSON 塔配置转为运行时 TowerDef。
 func TowerJSONToDef(key string, t *config.TowerJSON) tower.TowerDef {
-	// 攻击速度 = 1 / fireRate（fireRate 是秒/次，转为次/秒）
-	attackSpeed := 1.0
-	if t.BaseFireRate > 0 {
-		attackSpeed = 1.0 / t.BaseFireRate
+	// 攻速直接从 JSON 读取（次/秒），base+potential 在强度100时叠加
+	attackSpeed := t.BaseAttackSpeed + t.PotentialAttackSpeed
+	if attackSpeed <= 0 {
+		attackSpeed = 1.0
 	}
 
 	// 能力列表（直接从 JSON 字符串数组获取）
@@ -47,8 +47,8 @@ func TowerJSONToDef(key string, t *config.TowerJSON) tower.TowerDef {
 	def := tower.TowerDef{
 		Key:             key,
 		Label:           label,
-		Range:           t.BaseRange,
-		Damage:          t.BaseDamage,
+		Range:           t.BaseRange + t.PotentialRange,       // 强度100时的默认值
+		Damage:          t.BaseDamage + t.PotentialDamage,     // 强度100时的默认值
 		AttackSpeed:     attackSpeed,
 		Cost:            t.BuildCost,
 		Abilities:       abilities,
@@ -93,8 +93,11 @@ func TowerJSONToDef(key string, t *config.TowerJSON) tower.TowerDef {
 		}
 	}
 
-	// 战力绑定配置
-	def.StrengthJSON = t.Strength
+	// 战力潜力值和效果绑定
+	def.PotentialDamage = t.PotentialDamage
+	def.PotentialSpeed = t.PotentialAttackSpeed
+	def.PotentialRange = t.PotentialRange
+	def.StrengthEffects = t.StrengthEffects
 
 	return def
 }

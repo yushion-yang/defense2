@@ -897,23 +897,27 @@ func (s *StageScene) tryPlaceTower(px, py float64) bool {
 	if placed != nil {
 		sd := strength.NewStrengthData()
 		placed.Strength = sd
-		if sj := def.StrengthJSON; sj != nil {
-			cfg := strengthConfigFromJSON(sj)
-			placed.StrengthCfg = cfg
-			// 从战力配置提取潜力值到塔字段
-			if b := cfg.ResolveBinding("attackDamage"); b != nil {
-				placed.BaseDamage = b.Base
-				placed.PotentialDamage = b.Potential
-			}
-			if b := cfg.ResolveBinding("attackSpeed"); b != nil {
-				placed.BaseSpeed = b.Base
-				placed.PotentialSpeed = b.Potential
-			}
-			if b := cfg.ResolveBinding("range"); b != nil {
-				placed.BaseRange = b.Base
-				placed.PotentialRange = b.Potential
-			}
+		// 从扁平字段构建战力配置
+		bindings := map[string]strength.BindingPair{
+			"attackDamage": {Base: placed.BaseDamage, Potential: def.PotentialDamage},
+			"attackSpeed":  {Base: placed.BaseSpeed, Potential: def.PotentialSpeed},
+			"range":        {Base: placed.BaseRange, Potential: def.PotentialRange},
 		}
+		// effects 绑定
+		if eff := def.StrengthEffects; eff != nil {
+			addEffectBinding(bindings, "effects.slowFactor", eff.SlowFactor)
+			addEffectBinding(bindings, "effects.percentHp", eff.PercentHp)
+			addEffectBinding(bindings, "effects.executionThreshold", eff.ExecutionThreshold)
+			addEffectBinding(bindings, "effects.splashRadius", eff.SplashRadius)
+			addEffectBinding(bindings, "effects.burnDps", eff.BurnDps)
+			addEffectBinding(bindings, "effects.bleedDps", eff.BleedDps)
+			addEffectBinding(bindings, "effects.stunDuration", eff.StunDuration)
+			addEffectBinding(bindings, "effects.bounceRange", eff.BounceRange)
+		}
+		placed.StrengthCfg = strength.NewStrengthConfig(bindings)
+		placed.PotentialDamage = def.PotentialDamage
+		placed.PotentialSpeed = def.PotentialSpeed
+		placed.PotentialRange = def.PotentialRange
 	}
 	s.gold -= cost
 	s.session.OnTowerBuilt()
@@ -1711,26 +1715,9 @@ func loadTowerDefsOrFallback() []tower.TowerDef {
 	return defs
 }
 
-// strengthConfigFromJSON 将强类型 StrengthJSON 转为 strength.StrengthConfig。
-func strengthConfigFromJSON(sj *config.StrengthJSON) *strength.StrengthConfig {
-	bindings := make(map[string]strength.BindingPair)
-	addBinding := func(path string, b *config.BindingJSON) {
-		if b != nil {
-			bindings[path] = strength.BindingPair{Base: b.Base, Potential: b.Potential}
-		}
+// addEffectBinding 将 BindingJSON 添加到绑定 map（非 nil 时）。
+func addEffectBinding(bindings map[string]strength.BindingPair, path string, b *config.BindingJSON) {
+	if b != nil {
+		bindings[path] = strength.BindingPair{Base: b.Base, Potential: b.Potential}
 	}
-	addBinding("attackDamage", sj.AttackDamage)
-	addBinding("attackSpeed", sj.AttackSpeed)
-	addBinding("range", sj.Range)
-	if sj.Effects != nil {
-		addBinding("effects.slowFactor", sj.Effects.SlowFactor)
-		addBinding("effects.percentHp", sj.Effects.PercentHp)
-		addBinding("effects.executionThreshold", sj.Effects.ExecutionThreshold)
-		addBinding("effects.splashRadius", sj.Effects.SplashRadius)
-		addBinding("effects.burnDps", sj.Effects.BurnDps)
-		addBinding("effects.bleedDps", sj.Effects.BleedDps)
-		addBinding("effects.stunDuration", sj.Effects.StunDuration)
-		addBinding("effects.bounceRange", sj.Effects.BounceRange)
-	}
-	return strength.NewStrengthConfig(bindings)
 }

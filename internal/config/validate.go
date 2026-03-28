@@ -54,11 +54,11 @@ func ValidateTowerDef(t *TowerJSON) []ValidationError {
 		})
 	}
 
-	if t.BaseFireRate < 0.18 || t.BaseFireRate > 99 {
+	if t.BaseAttackSpeed < 0 || t.BaseAttackSpeed > 20 {
 		errs = append(errs, ValidationError{
-			Field:   "baseFireRate",
-			Value:   t.BaseFireRate,
-			Message: "射击间隔必须在 0.18-99 范围内",
+			Field:   "baseAttackSpeed",
+			Value:   t.BaseAttackSpeed,
+			Message: "基础攻速必须在 0-20 范围内",
 		})
 	}
 
