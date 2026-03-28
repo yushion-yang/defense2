@@ -11,32 +11,32 @@ import (
 
 // TowerJSON 塔的 JSON 配置原始结构（与 JS 版 JSON 字段一致）。
 type TowerJSON struct {
-	Label         string          `json:"label"`
-	ShortLabel    string          `json:"shortLabel"`
-	Faction       string          `json:"faction"`
-	BuildCost     int             `json:"buildCost"`
-	BaseRange     float64         `json:"baseRange"`
-	BaseDamage    float64         `json:"baseDamage"`
-	BaseFireRate  float64         `json:"baseFireRate"` // 秒/次（越小越快）
-	Tags          []string        `json:"tags"`
-	Abilities     []TowerAbilJSON `json:"abilities"`
+	Label        string          `json:"label"`         // 塔全名
+	ShortLabel   string          `json:"shortLabel"`    // 塔简称（HUD 显示用）
+	Faction      string          `json:"faction"`       // 所属阵营（为空时继承文件级 faction）
+	BuildCost    int             `json:"buildCost"`     // 建造费用（金币）
+	BaseRange    float64         `json:"baseRange"`     // 基础攻击范围（像素）
+	BaseDamage   float64         `json:"baseDamage"`    // 基础单发伤害
+	BaseFireRate float64         `json:"baseFireRate"`  // 基础射击间隔（秒/次，越小越快）
+	Tags         []string        `json:"tags"`          // 标签列表（如 "energy"、"laser"）
+	Abilities    []TowerAbilJSON `json:"abilities"`     // 该塔拥有的能力列表
 }
 
 // TowerAbilJSON 塔能力的 JSON 原始结构。
 type TowerAbilJSON struct {
-	Name string `json:"name"`
+	Name string `json:"name"` // 能力注册名称（对应 ability.Registry 中的键）
 }
 
-// TowerFileData 塔配置文件内容（key→塔定义 + _meta 元数据）。
+// TowerFileData 塔配置文件的完整解析结果。
 type TowerFileData struct {
-	Meta   TowerFileMeta          // _meta 字段
-	Towers map[string]*TowerJSON  // key → 塔定义
+	Meta   TowerFileMeta         // 文件级元数据（_meta 字段）
+	Towers map[string]*TowerJSON // 塔定义映射（key → 塔配置）
 }
 
-// TowerFileMeta 塔配置文件的元数据。
+// TowerFileMeta 塔配置文件的元数据（来自 JSON 的 _meta 字段）。
 type TowerFileMeta struct {
-	Faction     string `json:"faction"`
-	FactionName string `json:"factionName"`
+	Faction     string `json:"faction"`     // 该文件所有塔的默认阵营
+	FactionName string `json:"factionName"` // 阵营中文名称
 }
 
 // LoadTowerFile 加载一个塔配置 JSON 文件。

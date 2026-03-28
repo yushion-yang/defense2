@@ -15,12 +15,12 @@ import (
 
 // TopBarData 顶部栏所需的运行时数据。
 type TopBarData struct {
-	Gold     int
-	Lives    int
-	Wave     int
-	MaxWaves int
-	Kills    int
-	Enemies  int
+	Gold     int // 当前金币
+	Lives    int // 剩余生命值
+	Wave     int // 当前波次号
+	MaxWaves int // 总波次数
+	Kills    int // 累计击杀数
+	Enemies  int // 场上存活敌人数
 }
 
 // DrawTopBar 渲染顶部半透明信息栏。

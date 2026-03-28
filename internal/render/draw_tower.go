@@ -16,8 +16,8 @@ import (
 
 // TowerRenderer 管理塔的 SVG 图像渲染。
 type TowerRenderer struct {
-	cache   *svg.Cache
-	assetFS AssetReader
+	cache   *svg.Cache  // SVG 解析结果缓存，避免重复光栅化
+	assetFS AssetReader // 嵌入式资源文件读取器
 }
 
 // AssetReader 读取嵌入式资源文件的接口。

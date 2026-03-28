@@ -10,7 +10,7 @@ import (
 
 // Cache SVG 解析结果缓存（键为 "path:WxH"）。
 type Cache struct {
-	images map[string]*ebiten.Image
+	images map[string]*ebiten.Image // 缓存映射（"path:WxH" → 已光栅化的图像）
 }
 
 // NewCache 创建空缓存。

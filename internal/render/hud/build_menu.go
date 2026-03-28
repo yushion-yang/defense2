@@ -15,9 +15,9 @@ import (
 
 // BuildMenuData 建塔菜单所需的运行时数据。
 type BuildMenuData struct {
-	TowerDefs   []tower.TowerDef
-	SelectedIdx int
-	Gold        int
+	TowerDefs   []tower.TowerDef // 可建造的塔类型列表
+	SelectedIdx int              // 当前选中的塔索引
+	Gold        int              // 玩家当前金币（用于判断是否买得起）
 }
 
 // DrawBuildMenu 渲染底部建塔选择面板。
