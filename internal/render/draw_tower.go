@@ -1,36 +1,99 @@
+// draw_tower.go — 塔渲染。
+// 优先使用 SVG 图像渲染塔，回退到彩色方块。支持放塔预览。
 package render
 
 import (
+	"fmt"
 	"image/color"
 	"math"
 
 	"defense2/internal/core/tower"
+	"defense2/internal/render/svg"
 
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/hajimehoshi/ebiten/v2/vector"
 )
 
-// DrawTowers renders all active towers.
-func DrawTowers(screen *ebiten.Image, pool *tower.Pool) {
+// TowerRenderer 管理塔的 SVG 图像渲染。
+type TowerRenderer struct {
+	cache   *svg.Cache
+	assetFS AssetReader
+}
+
+// AssetReader 读取嵌入式资源文件的接口。
+type AssetReader interface {
+	ReadFile(name string) ([]byte, error)
+}
+
+// NewTowerRenderer 创建塔渲染器。
+func NewTowerRenderer(assetFS AssetReader) *TowerRenderer {
+	return &TowerRenderer{
+		cache:   svg.NewCache(),
+		assetFS: assetFS,
+	}
+}
+
+const towerSpriteSize = 40 // 塔 SVG 渲染尺寸（像素）
+
+// DrawTowers 渲染所有已放置的塔。
+func (tr *TowerRenderer) DrawTowers(screen *ebiten.Image, pool *tower.Pool) {
 	pool.Each(func(t *tower.Tower) {
 		cx := float32(t.X)
 		cy := float32(t.Y)
 
-		// Base square with tower color
-		size := float32(20)
-		clr := color.RGBA{R: t.Color[0], G: t.Color[1], B: t.Color[2], A: 255}
-		if clr.R == 0 && clr.G == 0 && clr.B == 0 {
-			clr = color.RGBA{R: 80, G: 140, B: 220, A: 255}
+		// 尝试加载 SVG 图像
+		img := tr.loadTowerImage(t)
+		if img != nil {
+			// 以塔中心为原点绘制 SVG
+			opts := &ebiten.DrawImageOptions{}
+			w, h := img.Bounds().Dx(), img.Bounds().Dy()
+			opts.GeoM.Translate(-float64(w)/2, -float64(h)/2)
+			opts.GeoM.Translate(float64(cx), float64(cy))
+			screen.DrawImage(img, opts)
+		} else {
+			// 回退：彩色方块
+			size := float32(20)
+			clr := color.RGBA{R: t.Color[0], G: t.Color[1], B: t.Color[2], A: 255}
+			if clr.R == 0 && clr.G == 0 && clr.B == 0 {
+				clr = color.RGBA{R: 80, G: 140, B: 220, A: 255}
+			}
+			vector.DrawFilledRect(screen, cx-size/2, cy-size/2, size, size, clr, false)
 		}
-		vector.DrawFilledRect(screen, cx-size/2, cy-size/2, size, size, clr, false)
 
-		// Range circle (subtle)
-		rangeClr := color.RGBA{R: clr.R, G: clr.G, B: clr.B, A: 40}
+		// 射程圆（半透明）
+		rangeClr := color.RGBA{R: t.Color[0], G: t.Color[1], B: t.Color[2], A: 30}
 		drawCircleOutline(screen, cx, cy, float32(t.Range), 1, rangeClr)
 	})
 }
 
-// DrawTowerRangePreview draws a range circle for tower placement preview.
+// loadTowerImage 尝试加载塔的 SVG 图像。
+// 路径约定：assets/towers/{faction}/tower-{key}.svg
+func (tr *TowerRenderer) loadTowerImage(t *tower.Tower) *ebiten.Image {
+	if tr.assetFS == nil {
+		return nil
+	}
+	faction := t.Faction
+	if faction == "" {
+		faction = "core"
+	}
+	path := fmt.Sprintf("assets/towers/%s/tower-%s.svg", faction, t.Key)
+	cached := tr.cache.Get(path, towerSpriteSize, towerSpriteSize)
+	if cached != nil {
+		return cached
+	}
+
+	data, err := tr.assetFS.ReadFile(path)
+	if err != nil {
+		return nil // SVG 不存在，回退到方块
+	}
+	img, err := tr.cache.GetOrParse(path, data, towerSpriteSize, towerSpriteSize)
+	if err != nil {
+		return nil
+	}
+	return img
+}
+
+// DrawTowerRangePreview 绘制放塔预览（射程圆 + 方块影子）。
 func DrawTowerRangePreview(screen *ebiten.Image, cx, cy float32, r float64, valid bool) {
 	clr := color.RGBA{R: 100, G: 200, B: 100, A: 80}
 	if !valid {
@@ -46,6 +109,7 @@ func DrawTowerRangePreview(screen *ebiten.Image, cx, cy float32, r float64, vali
 	vector.DrawFilledRect(screen, cx-size/2, cy-size/2, size, size, fillClr, false)
 }
 
+// drawCircleOutline 用 48 段线段近似绘制圆形轮廓。
 func drawCircleOutline(screen *ebiten.Image, cx, cy, r, width float32, clr color.RGBA) {
 	const segments = 48
 	for i := 0; i < segments; i++ {

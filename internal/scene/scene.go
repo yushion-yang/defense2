@@ -1,14 +1,16 @@
+// scene.go — 场景接口定义。
+// 定义所有游戏场景的通用接口和场景切换器接口。
 package scene
 
 import "github.com/hajimehoshi/ebiten/v2"
 
-// Scene defines the interface for all game scenes.
+// Scene 游戏场景接口，所有场景（标题、游戏、结算等）必须实现。
 type Scene interface {
-	Update() error
-	Draw(screen *ebiten.Image)
+	Update() error            // 每帧逻辑更新
+	Draw(screen *ebiten.Image) // 每帧渲染
 }
 
-// Switcher allows scenes to request a transition.
+// Switcher 场景切换器接口，允许场景请求跳转到另一个场景。
 type Switcher interface {
-	SwitchScene(next Scene)
+	SwitchScene(next Scene) // 将下一帧切换到指定场景
 }

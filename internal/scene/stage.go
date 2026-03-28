@@ -51,10 +51,11 @@ type StageScene struct {
 	kills        int               // 累计击杀数
 	towerDefs    []tower.TowerDef  // 可建造的塔类型列表
 	selectedDef  int               // 当前选中的塔类型索引
-	hoveredTower *tower.Tower      // 鼠标悬停的已放置塔（用于信息面板）
-	lastWave     int               // 上一帧的波次号（用于检测波次完成）
-	notification string            // 屏幕中央短暂通知文本
-	notifyTimer  float64           // 通知剩余显示时间（秒）
+	hoveredTower  *tower.Tower           // 鼠标悬停的已放置塔（用于信息面板）
+	towerRenderer *render.TowerRenderer // 塔 SVG 渲染器
+	lastWave      int                   // 上一帧的波次号（用于检测波次完成）
+	notification  string                // 屏幕中央短暂通知文本
+	notifyTimer   float64              // 通知剩余显示时间（秒）
 }
 
 // NewStageScene 创建游戏主场景，加载 map_01 地图。
@@ -72,17 +73,18 @@ func NewStageScene(sw Switcher) *StageScene {
 	}
 	gm := gamemap.NewGameMap(cfg)
 	return &StageScene{
-		switcher:    sw,
-		gameMap:     gm,
-		enemies:     enemy.DefaultPool(),
-		spawner:     enemy.NewSpawner(gm.Waypoints, cfg.Waves),
-		towers:      tower.DefaultPool(),
-		projectiles: projectile.DefaultPool(),
-		econ:        economy.DefaultConfig(),
-		lives:       20,
-		gold:        200,
-		towerDefs:   loadTowerDefsOrFallback(),
-		selectedDef: 0,
+		switcher:      sw,
+		gameMap:        gm,
+		enemies:        enemy.DefaultPool(),
+		spawner:        enemy.NewSpawner(gm.Waypoints, cfg.Waves),
+		towers:         tower.DefaultPool(),
+		projectiles:    projectile.DefaultPool(),
+		econ:           economy.DefaultConfig(),
+		towerRenderer:  render.NewTowerRenderer(config.GetAssetFS()),
+		lives:          20,
+		gold:           200,
+		towerDefs:      loadTowerDefsOrFallback(),
+		selectedDef:    0,
 	}
 }
 
@@ -275,8 +277,8 @@ func (s *StageScene) Draw(screen *ebiten.Image) {
 	// 地图
 	render.DrawMap(screen, s.gameMap)
 
-	// 塔
-	render.DrawTowers(screen, s.towers)
+	// 塔（优先 SVG 渲染，回退到彩色方块）
+	s.towerRenderer.DrawTowers(screen, s.towers)
 
 	// 敌人
 	render.DrawEnemies(screen, s.enemies)

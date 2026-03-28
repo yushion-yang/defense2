@@ -1,3 +1,5 @@
+// draw_enemy.go — 敌人渲染。
+// 将存活敌人绘制为红色圆形，受伤时显示血条。
 package render
 
 import (
@@ -9,27 +11,27 @@ import (
 	"github.com/hajimehoshi/ebiten/v2/vector"
 )
 
-// DrawEnemies renders all active enemies as circles with HP bars.
+// DrawEnemies 渲染所有存活敌人（圆形本体 + 血条）。
 func DrawEnemies(screen *ebiten.Image, pool *enemy.Pool) {
 	pool.Each(func(e *enemy.Enemy) {
 		cx := float32(e.X)
 		cy := float32(e.Y)
 		r := float32(e.Radius)
 
-		// Body
+		// 敌人本体（红色圆形）
 		bodyColor := color.RGBA{R: 200, G: 60, B: 60, A: 255}
 		vector.DrawFilledCircle(screen, cx, cy, r, bodyColor, false)
 
-		// HP bar (above enemy)
+		// 血条（仅在受伤时显示，位于敌人上方）
 		if e.HP < e.MaxHP {
 			barW := r * 2.5
 			barH := float32(3)
 			barX := cx - barW/2
 			barY := cy - r - 6
 
-			// Background
+			// 背景条（深红）
 			vector.DrawFilledRect(screen, barX, barY, barW, barH, color.RGBA{R: 60, G: 20, B: 20, A: 200}, false)
-			// Fill
+			// 血量填充（绿色）
 			fill := barW * float32(e.HP/e.MaxHP)
 			vector.DrawFilledRect(screen, barX, barY, fill, barH, color.RGBA{R: 60, G: 200, B: 60, A: 255}, false)
 		}

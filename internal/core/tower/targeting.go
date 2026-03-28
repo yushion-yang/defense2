@@ -1,3 +1,5 @@
+// targeting.go — 塔索敌逻辑。
+// 在塔射程范围内查找最近的存活敌人。
 package tower
 
 import (
@@ -6,7 +8,7 @@ import (
 	"defense2/internal/core/enemy"
 )
 
-// FindNearestEnemy returns the closest active enemy within tower's range, or nil.
+// FindNearestEnemy 返回塔射程内最近的存活敌人，无目标时返回 nil。
 func FindNearestEnemy(t *Tower, pool *enemy.Pool) *enemy.Enemy {
 	var best *enemy.Enemy
 	bestDist := math.MaxFloat64

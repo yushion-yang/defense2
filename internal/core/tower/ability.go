@@ -1,3 +1,6 @@
+// ability.go — 塔能力系统核心。
+// 定义能力接口、命中效果结构体、全局能力注册表。
+// 具体能力实现在 abilities/ 子包中通过 init() 自注册。
 package tower
 
 import (
@@ -5,65 +8,65 @@ import (
 	"defense2/internal/core/projectile"
 )
 
-// HitResult describes the effects of an ability when a projectile hits.
+// HitResult 描述弹射物命中时触发的能力效果。
 type HitResult struct {
-	BonusDamage float64
-	Splash      *SplashEffect
-	Slow        *SlowEffect
-	Stun        *StunEffect
-	Bleed       *BleedEffect
-	Bounce      *BounceEffect
-	IsCrit      bool
+	BonusDamage float64      // 额外伤害
+	Splash      *SplashEffect // 溅射效果（可选）
+	Slow        *SlowEffect   // 减速效果（可选）
+	Stun        *StunEffect   // 眩晕效果（可选）
+	Bleed       *BleedEffect  // 流血效果（可选）
+	Bounce      *BounceEffect // 弹射效果（可选）
+	IsCrit      bool          // 是否暴击
 }
 
-// SplashEffect deals damage to nearby enemies.
+// SplashEffect 范围溅射伤害。
 type SplashEffect struct {
-	Radius float64
-	Ratio  float64 // fraction of projectile damage
+	Radius float64 // 溅射半径（像素）
+	Ratio  float64 // 伤害比例（相对弹射物伤害，0.4 = 40%）
 }
 
-// SlowEffect reduces enemy speed.
+// SlowEffect 减速效果。
 type SlowEffect struct {
-	Factor   float64 // speed multiplier (0.5 = 50% speed)
-	Duration float64
+	Factor   float64 // 速度倍率（0.5 表示减至 50% 速度）
+	Duration float64 // 持续时间（秒）
 }
 
-// StunEffect freezes enemy movement.
+// StunEffect 眩晕效果（冻结敌人移动）。
 type StunEffect struct {
-	Duration float64
+	Duration float64 // 持续时间（秒）
 }
 
-// BleedEffect deals damage over time.
+// BleedEffect 持续流血伤害。
 type BleedEffect struct {
-	DPS      float64 // damage per second
-	Duration float64
+	DPS      float64 // 每秒伤害
+	Duration float64 // 持续时间（秒）
 }
 
-// BounceEffect causes projectile to chain to nearby enemies.
+// BounceEffect 弹射链效果（弹射物跳跃到附近敌人）。
 type BounceEffect struct {
-	MaxBounces  int
-	Range       float64
-	DamageDecay float64
+	MaxBounces  int     // 最大弹射次数
+	Range       float64 // 弹射搜索范围（像素）
+	DamageDecay float64 // 每次弹射的伤害衰减比例
 }
 
-// Ability is the interface for tower abilities.
+// Ability 塔能力接口。
 type Ability interface {
-	// Name returns the unique ability identifier.
+	// Name 返回能力唯一标识符。
 	Name() string
-	// OnHit is called when a projectile from this tower hits an enemy.
+	// OnHit 在弹射物命中敌人时调用，返回触发的效果（无效果返回 nil）。
 	OnHit(t *Tower, p *projectile.Projectile, e *enemy.Enemy) *HitResult
 }
 
-// Registry holds all registered abilities.
+// Registry 全局能力注册表（能力名 → 能力实例）。
 var Registry = map[string]Ability{}
 
-// Register adds an ability to the global registry.
+// Register 向全局注册表添加一个能力。
 func Register(a Ability) {
 	Registry[a.Name()] = a
 }
 
-// TowerAbility links an ability name to tower-specific parameters.
+// TowerAbility 塔与能力的绑定关系，支持自定义参数。
 type TowerAbility struct {
-	Name   string             `json:"name"`
-	Params map[string]float64 `json:"params,omitempty"`
+	Name   string             `json:"name"`             // 能力名称
+	Params map[string]float64 `json:"params,omitempty"` // 自定义参数（可选）
 }

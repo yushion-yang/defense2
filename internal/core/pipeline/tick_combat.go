@@ -1,3 +1,5 @@
+// tick_combat.go — 战斗管线。
+// 包含塔索敌射击、弹射物碰撞检测+能力触发、敌人状态效果处理三个子管线。
 package pipeline
 
 import (
@@ -8,10 +10,10 @@ import (
 	"defense2/internal/core/tower"
 )
 
-const projectileSpeed = 300.0
-const projectileRadius = 4.0
+const projectileSpeed = 300.0 // 弹射物飞行速度（像素/秒）
+const projectileRadius = 4.0  // 弹射物碰撞半径（像素）
 
-// TickTowerCombat handles tower targeting and firing.
+// TickTowerCombat 塔战斗子管线：索敌 → 冷却检查 → 发射弹射物。
 func TickTowerCombat(towers *tower.Pool, enemies *enemy.Pool, projectiles *projectile.Pool, dt float64) {
 	towers.Each(func(t *tower.Tower) {
 		t.FireTimer -= dt
@@ -25,12 +27,12 @@ func TickTowerCombat(towers *tower.Pool, enemies *enemy.Pool, projectiles *proje
 		}
 
 		projectiles.Fire(t.X, t.Y, target.X, target.Y, t.Damage, projectileSpeed, projectileRadius)
-		t.FireTimer = 1.0 / t.AttackSpeed
+		t.FireTimer = 1.0 / t.AttackSpeed // 冷却时间 = 1 / 攻速
 	})
 }
 
-// TickProjectileHits checks projectile-enemy collisions and applies abilities.
-// Returns total kills this tick.
+// TickProjectileHits 弹射物碰撞子管线：检测碰撞 → 触发能力 → 扣血 → 击杀。
+// 返回本帧击杀数。
 func TickProjectileHits(projectiles *projectile.Pool, enemies *enemy.Pool, towers *tower.Pool) int {
 	kills := 0
 	projectiles.Each(func(p *projectile.Projectile) {
@@ -39,16 +41,15 @@ func TickProjectileHits(projectiles *projectile.Pool, enemies *enemy.Pool, tower
 			dy := p.Y - e.Y
 			dist := math.Hypot(dx, dy)
 			if dist > p.Radius+e.Radius {
-				return
+				return // 未碰撞
 			}
 
 			totalDamage := p.Damage
 
-			// Find the tower that fired this projectile and resolve abilities
+			// 查找发射该弹射物的塔并触发能力
+			// TODO: 后续用弹射物标记来源塔 ID，目前简化处理
 			var srcTower *tower.Tower
 			towers.Each(func(t *tower.Tower) {
-				// Simple: find closest tower to projectile origin
-				// In a real system we'd tag projectiles with tower ID
 				if srcTower == nil {
 					srcTower = t
 				}
@@ -80,25 +81,29 @@ func TickProjectileHits(projectiles *projectile.Pool, enemies *enemy.Pool, tower
 	return kills
 }
 
-// applyHitEffects applies status effects from a HitResult onto the target and nearby enemies.
+// applyHitEffects 将能力效果（减速、眩晕、流血、溅射）施加到目标及周围敌人。
 func applyHitEffects(r *tower.HitResult, target *enemy.Enemy, p *projectile.Projectile, enemies *enemy.Pool) {
+	// 减速
 	if r.Slow != nil {
 		target.SlowTimer = r.Slow.Duration
 		target.SlowFactor = r.Slow.Factor
 		target.Speed = target.BaseSpeed * r.Slow.Factor
 	}
+	// 眩晕
 	if r.Stun != nil {
 		target.StunTimer = r.Stun.Duration
 	}
+	// 流血
 	if r.Bleed != nil {
 		target.BleedTimer = r.Bleed.Duration
 		target.BleedDPS = r.Bleed.DPS
 	}
+	// 溅射：对目标周围敌人造成比例伤害
 	if r.Splash != nil {
 		splashDamage := p.Damage * r.Splash.Ratio
 		enemies.Each(func(e *enemy.Enemy) {
 			if e == target {
-				return
+				return // 跳过已命中的目标
 			}
 			dx := e.X - target.X
 			dy := e.Y - target.Y
@@ -112,7 +117,7 @@ func applyHitEffects(r *tower.HitResult, target *enemy.Enemy, p *projectile.Proj
 	}
 }
 
-// TickEnemyStatusEffects processes all enemy status effects.
+// TickEnemyStatusEffects 敌人状态效果子管线：处理所有敌人的减速/流血，击杀血量归零的敌人。
 func TickEnemyStatusEffects(enemies *enemy.Pool, dt float64) {
 	enemies.Each(func(e *enemy.Enemy) {
 		enemy.TickStatusEffects(e, dt)

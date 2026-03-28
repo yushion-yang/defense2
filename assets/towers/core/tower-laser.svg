@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128">
+<!-- platform -->
+<ellipse cx="64" cy="74" rx="32" ry="9" fill="#475569" opacity="0.35"/>
+<ellipse cx="64" cy="68" rx="28" ry="16" fill="#475569" stroke="#94a3b8" stroke-width="1.5"/>
+<rect x="56" y="36" width="16" height="24" rx="2" fill="#1e293b" stroke="#94a3b8" stroke-width="1"/><polygon points="64,26 72,40 64,54 56,40" fill="#38bdf8" opacity="0.7"/><line x1="64" y1="22" x2="64" y2="30" stroke="#93c5fd" stroke-width="2"/><circle cx="64" cy="40" r="5" fill="#38bdf8" opacity="0.5"/>
+</svg>

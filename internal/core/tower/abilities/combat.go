@@ -1,3 +1,5 @@
+// combat.go — 战斗类能力实现。
+// 包含溅射（splash）和暴击（crit）两种能力，通过 init() 自注册到全局注册表。
 package abilities
 
 import (
@@ -13,17 +15,17 @@ func init() {
 	tower.Register(&CritAbility{})
 }
 
-// SplashAbility deals area damage around the hit target.
+// SplashAbility 溅射能力：命中时对周围敌人造成范围伤害。
 type SplashAbility struct{}
 
 func (a *SplashAbility) Name() string { return "splash" }
 func (a *SplashAbility) OnHit(_ *tower.Tower, _ *projectile.Projectile, _ *enemy.Enemy) *tower.HitResult {
 	return &tower.HitResult{
-		Splash: &tower.SplashEffect{Radius: 50, Ratio: 0.4},
+		Splash: &tower.SplashEffect{Radius: 50, Ratio: 0.4}, // 50像素半径，40%伤害
 	}
 }
 
-// CritAbility has a chance to deal bonus damage.
+// CritAbility 暴击能力：25% 概率造成 80% 额外伤害。
 type CritAbility struct{}
 
 func (a *CritAbility) Name() string { return "crit" }

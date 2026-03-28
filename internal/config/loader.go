@@ -1,3 +1,5 @@
+// loader.go — 配置加载器。
+// 从嵌入式文件系统读取 JSON 配置并反序列化为 Go 结构体。
 package config
 
 import (
@@ -6,15 +8,28 @@ import (
 	"fmt"
 )
 
-// dataFS holds the embedded config filesystem. Must be set via SetDataFS before loading.
+// dataFS 持有嵌入式配置文件系统的引用。
 var dataFS *embed.FS
 
-// SetDataFS sets the embedded filesystem for config loading.
+// assetFS 持有嵌入式资源文件系统的引用（SVG、音频等）。
+var assetFS *embed.FS
+
+// SetDataFS 注入配置文件系统。
 func SetDataFS(fs *embed.FS) {
 	dataFS = fs
 }
 
-// LoadMap loads a map config by its ID (e.g. "map_01").
+// SetAssetFS 注入资源文件系统。
+func SetAssetFS(fs *embed.FS) {
+	assetFS = fs
+}
+
+// GetAssetFS 返回资源文件系统引用。
+func GetAssetFS() *embed.FS {
+	return assetFS
+}
+
+// LoadMap 按地图 ID（如 "map_01"）加载地图配置。
 func LoadMap(id string) (*MapConfig, error) {
 	if dataFS == nil {
 		return nil, fmt.Errorf("load map %s: dataFS not initialized", id)

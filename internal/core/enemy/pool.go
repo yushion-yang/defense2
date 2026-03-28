@@ -1,28 +1,30 @@
+// pool.go — 敌人对象池。
+// 固定大小数组实现零分配对象池，通过 Active 标记复用槽位。
 package enemy
 
 import "defense2/internal/core/game"
 
-// Pool is a fixed-size enemy pool.
+// Pool 固定大小的敌人对象池。
 type Pool struct {
-	enemies []Enemy
-	Count   int
+	enemies []Enemy // 预分配的敌人槽位数组
+	Count   int     // 当前存活敌人数量
 }
 
-// NewPool creates an enemy pool with the given capacity.
+// NewPool 创建指定容量的敌人对象池。
 func NewPool(cap int) *Pool {
 	return &Pool{
 		enemies: make([]Enemy, cap),
 	}
 }
 
-// DefaultPool creates a pool with default capacity.
+// DefaultPool 创建默认容量（MaxEnemies=256）的敌人对象池。
 func DefaultPool() *Pool {
 	return NewPool(game.MaxEnemies)
 }
 
-// Spawn activates an enemy slot with the given parameters.
-// pathIndex is typically 1 (enemy spawns at waypoint[0], moves toward [1]).
-// Returns a pointer to the spawned enemy, or nil if pool is full.
+// Spawn 激活一个空闲槽位并初始化敌人属性。
+// pathIndex 通常为 1（敌人从 waypoint[0] 出生，朝 waypoint[1] 移动）。
+// 池满时返回 nil。
 func (p *Pool) Spawn(x, y, hp, speed, radius float64, pathIndex int) *Enemy {
 	for i := range p.enemies {
 		if !p.enemies[i].Active {
@@ -49,7 +51,7 @@ func (p *Pool) Spawn(x, y, hp, speed, radius float64, pathIndex int) *Enemy {
 	return nil
 }
 
-// Kill deactivates an enemy.
+// Kill 将敌人标记为非存活（回收槽位）。
 func (p *Pool) Kill(e *Enemy) {
 	if e.Active {
 		e.Active = false
@@ -57,7 +59,7 @@ func (p *Pool) Kill(e *Enemy) {
 	}
 }
 
-// Each iterates over all active enemies.
+// Each 遍历所有存活敌人并执行回调。
 func (p *Pool) Each(fn func(e *Enemy)) {
 	for i := range p.enemies {
 		if p.enemies[i].Active {
@@ -66,7 +68,7 @@ func (p *Pool) Each(fn func(e *Enemy)) {
 	}
 }
 
-// ClearAll deactivates all enemies.
+// ClearAll 清空所有敌人（重置对象池）。
 func (p *Pool) ClearAll() {
 	for i := range p.enemies {
 		p.enemies[i].Active = false

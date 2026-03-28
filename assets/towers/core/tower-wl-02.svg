@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128">
+  <!-- wl-02 旋风刃：窄风柱底座 + 绿色风刃环 -->
+  <defs>
+    <linearGradient id="wl02base" x1="50%" y1="0%" x2="50%" y2="100%">
+      <stop offset="0%" stop-color="#4ade80"/>
+      <stop offset="100%" stop-color="#166534"/>
+    </linearGradient>
+    <radialGradient id="wl02glow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#86efac" stop-opacity="0.5"/>
+      <stop offset="60%" stop-color="#4ade80" stop-opacity="0.2"/>
+      <stop offset="100%" stop-color="#4ade80" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <!-- 风场光晕 -->
+  <circle cx="64" cy="64" r="50" fill="url(#wl02glow)"/>
+  <!-- 底座（窄风柱） -->
+  <ellipse cx="64" cy="102" rx="18" ry="8" fill="#166534" opacity="0.7"/>
+  <rect x="54" y="60" width="20" height="44" rx="4" fill="url(#wl02base)"/>
+  <!-- 风刃环（三片弧形刃） -->
+  <g opacity="0.85">
+    <path d="M64,24 A40,40 0 0,1 98,52" fill="none" stroke="#4ade80" stroke-width="5" stroke-linecap="round"/>
+    <path d="M64,24 A40,40 0 0,0 30,52" fill="none" stroke="#4ade80" stroke-width="5" stroke-linecap="round"/>
+    <path d="M38,80 A40,40 0 0,0 90,80" fill="none" stroke="#86efac" stroke-width="4" stroke-linecap="round"/>
+  </g>
+  <!-- 中心亮核 -->
+  <circle cx="64" cy="52" r="10" fill="#bbf7d0" opacity="0.8"/>
+  <circle cx="64" cy="52" r="5" fill="#fff" opacity="0.5"/>
+</svg>

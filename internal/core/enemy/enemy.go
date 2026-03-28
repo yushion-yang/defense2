@@ -1,26 +1,29 @@
+// enemy.go — 敌人实体定义。
+// 定义敌人的核心属性（位置、血量、速度、状态效果等）及状态效果处理逻辑。
 package enemy
 
-// Enemy represents a single enemy entity.
+// Enemy 单个敌人实体。
 type Enemy struct {
-	X, Y       float64
-	HP         float64
-	MaxHP      float64
-	Speed      float64
-	BaseSpeed  float64
-	Radius     float64
-	PathIndex  int
-	ReachedEnd bool
-	Active     bool
-	StunTimer  float64
-	SlowTimer  float64
-	SlowFactor float64 // speed multiplier when slowed (0.5 = half speed)
-	BleedTimer float64
-	BleedDPS   float64
+	X, Y       float64 // 当前像素位置
+	HP         float64 // 当前血量
+	MaxHP      float64 // 最大血量
+	Speed      float64 // 当前移动速度（像素/秒，受减速影响）
+	BaseSpeed  float64 // 基础移动速度（无减速时的速度）
+	Radius     float64 // 碰撞半径（像素）
+	PathIndex  int     // 当前目标路径点索引
+	ReachedEnd bool    // 是否已到达路径终点（基地）
+	Active     bool    // 是否存活（对象池复用标记）
+	StunTimer  float64 // 眩晕剩余时间（秒），>0 时无法移动
+	SlowTimer  float64 // 减速剩余时间（秒）
+	SlowFactor float64 // 减速倍率（0.5 表示半速）
+	BleedTimer float64 // 流血剩余时间（秒）
+	BleedDPS   float64 // 流血每秒伤害
 }
 
-// TickStatusEffects updates enemy status effects.
+// TickStatusEffects 处理敌人身上的状态效果（减速、流血）。
+// 眩晕在 movement.go 中处理。
 func TickStatusEffects(e *Enemy, dt float64) {
-	// Slow
+	// 减速：倒计时归零后恢复基础速度
 	if e.SlowTimer > 0 {
 		e.SlowTimer -= dt
 		e.Speed = e.BaseSpeed * e.SlowFactor
@@ -29,12 +32,9 @@ func TickStatusEffects(e *Enemy, dt float64) {
 		}
 	}
 
-	// Bleed
+	// 流血：持续扣血
 	if e.BleedTimer > 0 {
 		e.BleedTimer -= dt
 		e.HP -= e.BleedDPS * dt
 	}
-
-	// Stun
-	// (handled in movement.go)
 }

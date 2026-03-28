@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128">
+  <!-- en-05 能量散弹塔：粗壮圆柱 + 喇叭散弹口 -->
+  <defs>
+    <linearGradient id="en05base" x1="50%" y1="0%" x2="50%" y2="100%">
+      <stop offset="0%" stop-color="#60a5fa"/>
+      <stop offset="100%" stop-color="#1e3a5f"/>
+    </linearGradient>
+    <radialGradient id="en05glow" cx="50%" cy="30%" r="40%">
+      <stop offset="0%" stop-color="#93c5fd" stop-opacity="0.6"/>
+      <stop offset="100%" stop-color="#3b82f6" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <!-- 底座 -->
+  <ellipse cx="64" cy="104" rx="34" ry="12" fill="#1e3a5f" opacity="0.7"/>
+  <rect x="40" y="56" width="48" height="50" rx="8" fill="url(#en05base)"/>
+  <!-- 喇叭散弹口 -->
+  <polygon points="34,20 94,20 84,56 44,56" fill="url(#en05base)" stroke="#93c5fd" stroke-width="1.5"/>
+  <!-- 口部发光 -->
+  <circle cx="64" cy="30" r="20" fill="url(#en05glow)"/>
+  <!-- 三个弹丸出口 -->
+  <circle cx="50" cy="28" r="4" fill="#dbeafe" opacity="0.8"/>
+  <circle cx="64" cy="24" r="4" fill="#dbeafe" opacity="0.8"/>
+  <circle cx="78" cy="28" r="4" fill="#dbeafe" opacity="0.8"/>
+  <!-- 中央核心 -->
+  <circle cx="64" cy="76" r="10" fill="#60a5fa" opacity="0.6"/>
+  <circle cx="64" cy="76" r="5" fill="#dbeafe"/>
+</svg>
