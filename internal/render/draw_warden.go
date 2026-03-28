@@ -27,7 +27,7 @@ func DrawWarden(screen *ebiten.Image, w *warden.Warden) {
 	case *wardenTypes.CoreState:
 		drawCoreMech(screen, s)
 	case *wardenTypes.ChainState:
-		_ = s // no visual entity, state indicator only
+		drawChain(screen, s)
 	case *wardenTypes.SkystrikeState:
 		drawSkystrike(screen, s)
 	}
@@ -119,20 +119,72 @@ func drawCoreMech(screen *ebiten.Image, s *wardenTypes.CoreState) {
 		color.RGBA{R: 100, G: 200, B: 255, A: 200})
 }
 
-// drawSkystrike renders the skystrike AoE effect (sky-blue fading circle).
-func drawSkystrike(screen *ebiten.Image, s *wardenTypes.SkystrikeState) {
-	if s.StrikeTimer <= 0 {
+// drawChain 渲染能量串联战灵（绿色菱形 + 射击线）。
+func drawChain(screen *ebiten.Image, s *wardenTypes.ChainState) {
+	cx := float32(s.X)
+	cy := float32(s.Y)
+	if cx == 0 && cy == 0 {
 		return
 	}
 
+	// 射击线
+	if s.ShootTimer > 0 {
+		alpha := uint8(200 * (s.ShootTimer / 0.15))
+		draw.Line(screen, cx, cy, float32(s.LastTargetX), float32(s.LastTargetY), 2,
+			color.RGBA{R: 80, G: 255, B: 120, A: alpha}, true)
+	}
+
+	// 光环
+	draw.FilledCircle(screen, cx, cy, 12,
+		color.RGBA{R: 80, G: 255, B: 120, A: 30})
+
+	// 菱形本体（绿色）
+	bodyClr := color.RGBA{R: 80, G: 230, B: 120, A: 220}
+	draw.Diamond(screen, cx, cy, 8, 2, bodyClr)
+	draw.FilledCircle(screen, cx, cy, 4, bodyClr)
+}
+
+// drawSkystrike 渲染天降战灵（天蓝色三角 + 射击线 + AoE 效果）。
+func drawSkystrike(screen *ebiten.Image, s *wardenTypes.SkystrikeState) {
+	cx := float32(s.X)
+	cy := float32(s.Y)
+
+	// 实体渲染（天蓝色三角，类似 core_mech）
+	if cx != 0 || cy != 0 {
+		// 射击线
+		if s.ShootTimer > 0 {
+			alpha := uint8(200 * (s.ShootTimer / 0.15))
+			draw.Line(screen, cx, cy, float32(s.LastTargetX), float32(s.LastTargetY), 2,
+				color.RGBA{R: 80, G: 200, B: 255, A: alpha}, true)
+		}
+
+		// 三角本体（天蓝色）
+		bodyClr := color.RGBA{R: 80, G: 200, B: 255, A: 220}
+		r := float32(9)
+		angle := s.OrbitAngle
+		x1 := cx + r*float32(math.Cos(angle))
+		y1 := cy + r*float32(math.Sin(angle))
+		x2 := cx + r*float32(math.Cos(angle+2.4))
+		y2 := cy + r*float32(math.Sin(angle+2.4))
+		x3 := cx + r*float32(math.Cos(angle-2.4))
+		y3 := cy + r*float32(math.Sin(angle-2.4))
+		draw.Line(screen, x1, y1, x2, y2, 2, bodyClr, true)
+		draw.Line(screen, x2, y2, x3, y3, 2, bodyClr, true)
+		draw.Line(screen, x3, y3, x1, y1, 2, bodyClr, true)
+		draw.FilledCircle(screen, cx, cy, 3,
+			color.RGBA{R: 120, G: 220, B: 255, A: 200})
+	}
+
+	// AoE 打击视觉效果
+	if s.StrikeTimer <= 0 {
+		return
+	}
 	progress := s.StrikeTimer / 0.5
 	alpha := uint8(150 * progress)
-	r := float32(s.AoERadius) * float32(1.2-0.2*progress)
+	aoeR := float32(s.AoERadius) * float32(1.2-0.2*progress)
 
-	// Fading fill
-	draw.FilledCircle(screen, float32(s.StrikeX), float32(s.StrikeY), r,
+	draw.FilledCircle(screen, float32(s.StrikeX), float32(s.StrikeY), aoeR,
 		color.RGBA{R: 80, G: 200, B: 255, A: alpha / 3})
-	// Outline ring
-	draw.CircleOutline(screen, float32(s.StrikeX), float32(s.StrikeY), r, 2,
+	draw.CircleOutline(screen, float32(s.StrikeX), float32(s.StrikeY), aoeR, 2,
 		color.RGBA{R: 100, G: 220, B: 255, A: alpha})
 }
