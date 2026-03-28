@@ -1,0 +1,131 @@
+{
+  "label": "冰冻炮台",
+  "tags": [
+    "elemental",
+    "ice",
+    "control",
+    "slow"
+  ],
+  "shortLabel": "冰冻",
+  "description": "伤害较低，但可减速敌人，为后排主力争取输出时间。",
+  "element": "ice",
+  "supportsModeSwitch": false,
+  "fixedMode": "balanced",
+  "buildCost": 65,
+  "baseRange": 170,
+  "baseDamage": 10,
+  "baseFireRate": 0.68,
+  "projectileSpeed": 380,
+  "splashByMode": {
+    "balanced": 0,
+    "rapid": 0,
+    "sniper": 0
+  },
+  "modeModifiers": {
+    "balanced": {
+      "range": 1,
+      "damage": 1,
+      "fireRate": 1
+    },
+    "rapid": {
+      "range": 0.92,
+      "damage": 0.82,
+      "fireRate": 0.68
+    },
+    "sniper": {
+      "range": 1.16,
+      "damage": 1.24,
+      "fireRate": 1.18
+    }
+  },
+  "muzzleDistanceByMode": {
+    "balanced": 24,
+    "rapid": 22,
+    "sniper": 28
+  },
+  "shotVolumeByMode": {
+    "balanced": 0.17,
+    "rapid": 0.16,
+    "sniper": 0.22
+  },
+  "onHitSlow": {
+    "factorByMode": {
+      "balanced": 0.68,
+      "rapid": 0.78,
+      "sniper": 0.56
+    },
+    "durationByMode": {
+      "balanced": 1.45,
+      "rapid": 1.1,
+      "sniper": 1.85
+    }
+  },
+  "branches": {
+    "frostChain": {
+      "label": "寒霜链",
+      "description": "减速目标周围40px内敌人也受50%效力减速",
+      "chainRadius": 40,
+      "chainEfficiency": 0.5
+    },
+    "deepFreeze": {
+      "label": "极寒核心",
+      "description": "减速时间×2，减速+15%，攻速-20%",
+      "slowDurationMultiplier": 2,
+      "slowBonus": 0.15,
+      "fireRatePenalty": 0.2
+    }
+  },
+  "operationUI": {
+    "upgradeLabel": "强化",
+    "branchLabel": "冻能",
+    "branchPlaceholder": "后续开放",
+    "actionSlots": [
+      "寒霜扩散",
+      "冻结增幅"
+    ],
+    "detailSections": [
+      "后续可扩展为群体减速 / 冻结控制"
+    ]
+  },
+  "abilities": [
+    {
+      "type": "onHitSlow",
+      "factor": 0.68,
+      "duration": 1.45
+    }
+  ],
+  "strength": {
+    "attackDamage": {
+      "base": 4,
+      "potential": 6
+    },
+    "attackSpeed": {
+      "base": 0.27,
+      "potential": 0.41
+    },
+    "range": {
+      "base": 170,
+      "potential": 0
+    },
+    "effects": {
+      "slowFactor": {
+        "base": 0.1,
+        "potential": 0.58
+      }
+    }
+  },
+  "tierProfile": {
+    "damage": {
+      "tier": "C",
+      "growth": "low"
+    },
+    "fireRate": {
+      "tier": "A",
+      "growth": "high"
+    },
+    "range": {
+      "tier": "A",
+      "growth": "mid"
+    }
+  }
+}

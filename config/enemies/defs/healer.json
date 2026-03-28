@@ -1,0 +1,12 @@
+{
+  "label": "治疗兵",
+  "color": "#34d399",
+  "hpScale": 1.06,
+  "speedScale": 1.14,
+  "rewardScale": 1.02,
+  "radius": 20,
+  "healScale": 0.24,
+  "healRadius": 105,
+  "healInterval": 2.5,
+  "description": "战场医疗兵。每2.5秒治疗半径105内友方24%生命值"
+}

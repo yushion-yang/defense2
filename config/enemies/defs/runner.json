@@ -1,0 +1,9 @@
+{
+  "label": "疾行",
+  "color": "#fb923c",
+  "hpScale": 0.74,
+  "speedScale": 1.84,
+  "rewardScale": 0.72,
+  "radius": 16,
+  "description": "轻装快速突击兵，血量薄弱但移速极高，擅长趁防线空隙突破"
+}

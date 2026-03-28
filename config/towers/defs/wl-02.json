@@ -1,0 +1,49 @@
+{
+  "label": "旋风刃",
+  "shortLabel": "旋风",
+  "description": "近距离风刃旋转切割，范围越小伤害越高。中心150%伤害。",
+  "tags": [
+    "wind",
+    "melee",
+    "aoe",
+    "spinAoe"
+  ],
+  "buildCost": 60,
+  "baseRange": 80,
+  "baseDamage": 10,
+  "baseFireRate": 0.5,
+  "projectileSpeed": 0,
+  "attackStyle": "spin_aoe",
+  "innerDamageBonus": 1.5,
+  "innerRadiusRatio": 0.5,
+  "abilities": [],
+  "strength": {
+    "attackDamage": {
+      "base": 7,
+      "potential": 11
+    },
+    "attackSpeed": {
+      "base": 0.3,
+      "potential": 0.5
+    },
+    "range": {
+      "base": 80,
+      "potential": 0
+    }
+  },
+  "abilityUnlocks": [],
+  "tierProfile": {
+    "damage": {
+      "tier": "C",
+      "growth": "low"
+    },
+    "fireRate": {
+      "tier": "S",
+      "growth": "low"
+    },
+    "range": {
+      "tier": "D",
+      "growth": "low"
+    }
+  }
+}

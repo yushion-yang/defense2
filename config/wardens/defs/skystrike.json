@@ -1,0 +1,74 @@
+{
+  "name": "天降",
+  "description": "定时对敌群最密集区域发动AoE天降打击。",
+  "category": "indirect",
+  "icon": "warden-skystrike",
+  "entityCount": 0,
+  "levels": [
+    {
+      "level": 1,
+      "damage": 40,
+      "attackInterval": 5.0,
+      "moveSpeed": 0,
+      "range": 9999,
+      "aoeRadius": 60,
+      "effectDuration": 0,
+      "effectDps": 0
+    },
+    {
+      "level": 2,
+      "damage": 70,
+      "attackInterval": 4.0,
+      "moveSpeed": 0,
+      "range": 9999,
+      "aoeRadius": 75,
+      "effectDuration": 0,
+      "effectDps": 0
+    },
+    {
+      "level": 3,
+      "damage": 110,
+      "attackInterval": 3.0,
+      "moveSpeed": 0,
+      "range": 9999,
+      "aoeRadius": 90,
+      "effectDuration": 0,
+      "effectDps": 0
+    },
+    {
+      "level": 4,
+      "damage": 160,
+      "attackInterval": 2.5,
+      "moveSpeed": 0,
+      "range": 9999,
+      "aoeRadius": 110,
+      "effectDuration": 0,
+      "effectDps": 0
+    },
+    {
+      "level": 5,
+      "damage": 220,
+      "attackInterval": 2.0,
+      "moveSpeed": 0,
+      "range": 9999,
+      "aoeRadius": 130,
+      "effectDuration": 0,
+      "effectDps": 0
+    }
+  ],
+  "mechanics": {
+    "attackPattern": {
+      "name": "天降打击",
+      "desc": "定时对敌群最密集区域发动AoE打击。",
+      "icon": "☄️"
+    },
+    "specials": [],
+    "exclusive": null,
+    "strengthDesc": "强度 → 打击伤害 + AoE范围增大。",
+    "counterTip": "适合密集编队。对分散敌人效率低。"
+  },
+  "growth": {
+    "onKill": 0,
+    "onWaveClear": 10
+  }
+}

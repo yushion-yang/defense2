@@ -1,0 +1,11 @@
+{
+  "label": "传送兵",
+  "color": "#8b5cf6",
+  "hpScale": 0.8,
+  "speedScale": 1,
+  "rewardScale": 1.2,
+  "radius": 16,
+  "teleportInterval": 5,
+  "teleportSkipSegments": 1,
+  "description": "空间折叠者。每5秒传送跳过1段路径，行动难以预测"
+}

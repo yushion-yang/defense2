@@ -1,0 +1,11 @@
+{
+  "description": "战灵配置",
+  "count": 5,
+  "levelThresholds": [
+    0,
+    100,
+    250,
+    450,
+    700
+  ]
+}

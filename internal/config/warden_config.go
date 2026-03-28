@@ -1,10 +1,12 @@
 // warden_config.go — 战灵配置加载。
-// 从 config/wardens/wardens.json 读取所有战灵定义。
+// 支持目录模式（config/wardens/defs/{key}.json）和单文件模式（wardens.json）。
 package config
 
 import (
 	"encoding/json"
 	"fmt"
+	"path/filepath"
+	"strings"
 )
 
 // WardenConfig 单个战灵类型的完整配置。
@@ -39,23 +41,48 @@ type WardenGrowth struct {
 }
 
 // LoadWardenConfigs 加载所有战灵配置。
-// 返回 map[wardenType]WardenConfig，跳过 _meta 键。
+// 优先从目录模式加载（config/wardens/defs/），不存在时回退到单文件模式。
 func LoadWardenConfigs() (map[string]WardenConfig, error) {
 	if dataFS == nil {
 		return nil, fmt.Errorf("dataFS not initialized")
 	}
+
+	configs := make(map[string]WardenConfig)
+
+	// 尝试目录模式
+	if entries, err := dataFS.ReadDir("config/wardens/defs"); err == nil && len(entries) > 0 {
+		for _, entry := range entries {
+			if entry.IsDir() || !strings.HasSuffix(entry.Name(), ".json") {
+				continue
+			}
+			name := strings.TrimSuffix(entry.Name(), ".json")
+			if strings.HasPrefix(name, "_") {
+				continue
+			}
+			data, err := dataFS.ReadFile(filepath.Join("config/wardens/defs", entry.Name()))
+			if err != nil {
+				return nil, fmt.Errorf("read warden %s: %w", entry.Name(), err)
+			}
+			var cfg WardenConfig
+			if err := json.Unmarshal(data, &cfg); err != nil {
+				return nil, fmt.Errorf("parse warden %s: %w", entry.Name(), err)
+			}
+			configs[name] = cfg
+		}
+		return configs, nil
+	}
+
+	// 回退到单文件模式
 	data, err := dataFS.ReadFile("config/wardens/wardens.json")
 	if err != nil {
 		return nil, fmt.Errorf("read wardens config: %w", err)
 	}
 
-	// 先解析为 map[string]json.RawMessage 以跳过 _meta
 	var raw map[string]json.RawMessage
 	if err := json.Unmarshal(data, &raw); err != nil {
 		return nil, fmt.Errorf("parse wardens config: %w", err)
 	}
 
-	configs := make(map[string]WardenConfig)
 	for key, val := range raw {
 		if key == "_meta" {
 			continue

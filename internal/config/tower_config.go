@@ -1,11 +1,15 @@
 // tower_config.go — 塔配置数据结构与加载。
-// 从 JSON 文件（towers.json、towers-core.json）反序列化塔定义，
-// 转换为运行时可用的 TowerDef 列表。
+// 支持两种加载方式：
+//  1. 单文件模式：一个 JSON 包含多个塔 { "_meta": {}, "key1": {}, "key2": {} }
+//  2. 目录模式：每个塔一个 JSON 文件 config/towers/defs/{key}.json
+//
+// 优先使用目录模式，不存在时回退到单文件模式。
 package config
 
 import (
 	"encoding/json"
 	"fmt"
+	"path/filepath"
 	"strings"
 )
 
@@ -136,20 +140,72 @@ func LoadTowerFile(path string) (*TowerFileData, error) {
 	return result, nil
 }
 
-// LoadAllTowers 加载所有塔配置文件并合并。
+// LoadTowerDir 从目录加载塔配置（每个塔一个 JSON 文件）。
+// 文件名（不含后缀）作为塔的 key，_meta.json 和下划线开头的文件被跳过。
+func LoadTowerDir(dirPath string) (*TowerFileData, error) {
+	if dataFS == nil {
+		return nil, fmt.Errorf("load tower dir %s: dataFS not initialized", dirPath)
+	}
+	entries, err := dataFS.ReadDir(dirPath)
+	if err != nil {
+		return nil, fmt.Errorf("read tower dir %s: %w", dirPath, err)
+	}
+
+	result := &TowerFileData{
+		Towers: make(map[string]*TowerJSON),
+	}
+	for _, entry := range entries {
+		if entry.IsDir() || !strings.HasSuffix(entry.Name(), ".json") {
+			continue
+		}
+		name := strings.TrimSuffix(entry.Name(), ".json")
+		if strings.HasPrefix(name, "_") {
+			continue // 跳过 _meta.json 等元数据文件
+		}
+		data, err := dataFS.ReadFile(filepath.Join(dirPath, entry.Name()))
+		if err != nil {
+			return nil, fmt.Errorf("read tower %s/%s: %w", dirPath, entry.Name(), err)
+		}
+		var t TowerJSON
+		if err := json.Unmarshal(data, &t); err != nil {
+			return nil, fmt.Errorf("parse tower %s/%s: %w", dirPath, entry.Name(), err)
+		}
+		result.Towers[name] = &t
+	}
+	return result, nil
+}
+
+// LoadAllTowers 加载所有塔配置并合并。
+// 优先从目录模式加载（config/towers/core/ + config/towers/defs/），
+// 目录不存在时回退到单文件模式。
 func LoadAllTowers() (map[string]*TowerJSON, error) {
 	all := make(map[string]*TowerJSON)
 
+	// 目录模式
+	dirs := []string{
+		"config/towers/core",
+		"config/towers/defs",
+	}
+	// 单文件回退
 	files := []string{
 		"config/towers/towers-core.json",
 		"config/towers/towers.json",
 	}
-	for _, f := range files {
-		fd, err := LoadTowerFile(f)
-		if err != nil {
-			return nil, err
+
+	for i, dir := range dirs {
+		fd, err := LoadTowerDir(dir)
+		if err == nil && len(fd.Towers) > 0 {
+			for k, v := range fd.Towers {
+				all[k] = v
+			}
+			continue
 		}
-		for k, v := range fd.Towers {
+		// 目录不存在或为空，回退单文件
+		fd2, err2 := LoadTowerFile(files[i])
+		if err2 != nil {
+			return nil, err2
+		}
+		for k, v := range fd2.Towers {
 			all[k] = v
 		}
 	}

@@ -1,0 +1,9 @@
+{
+  "label": "重甲",
+  "color": "#a855f7",
+  "hpScale": 2.85,
+  "speedScale": 0.78,
+  "rewardScale": 1.35,
+  "radius": 24,
+  "description": "身形壮硕的重型单位，血量极高但行动缓慢，纯粹依靠高血量硬扛"
+}

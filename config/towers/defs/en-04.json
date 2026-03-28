@@ -1,0 +1,63 @@
+{
+  "label": "光束照射塔",
+  "shortLabel": "光束",
+  "description": "宽幅能量束同时打击多个敌人，目标越多效率越高",
+  "damageType": "physical",
+  "tags": [
+    "energy",
+    "beam",
+    "pierce",
+    "linear",
+    "chainWeapon"
+  ],
+  "buildCost": 60,
+  "baseRange": 140,
+  "baseDamage": 12,
+  "baseFireRate": 0.8,
+  "projectileSpeed": 9999,
+  "attackStyle": "wideBeam",
+  "abilities": [],
+  "beam": {
+    "duration": 0.15,
+    "width": 6,
+    "color": "#93c5fd"
+  },
+  "strength": {
+    "attackDamage": {
+      "base": 6,
+      "potential": 12
+    },
+    "attackSpeed": {
+      "base": 0.4,
+      "potential": 0.6
+    },
+    "range": {
+      "base": 140,
+      "potential": 0
+    }
+  },
+  "abilityUnlocks": [
+    {
+      "level": 1,
+      "type": "wideBeam",
+      "name": "宽幅穿透光束",
+      "params": {
+        "width": 8
+      }
+    }
+  ],
+  "tierProfile": {
+    "damage": {
+      "tier": "C",
+      "growth": "mid"
+    },
+    "fireRate": {
+      "tier": "B",
+      "growth": "mid"
+    },
+    "range": {
+      "tier": "B",
+      "growth": "low"
+    }
+  }
+}

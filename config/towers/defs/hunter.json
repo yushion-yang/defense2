@@ -1,0 +1,154 @@
+{
+  "label": "猎手塔",
+  "tags": [
+    "physical",
+    "sniper",
+    "percentDamage",
+    "targetSwitch"
+  ],
+  "shortLabel": "猎手",
+  "description": "切换目标时首击造成目标最大生命值30%伤害，擅长逐个歼灭。",
+  "supportsModeSwitch": false,
+  "fixedMode": "balanced",
+  "buildCost": 82,
+  "attackStyle": "projectile",
+  "baseRange": 140,
+  "baseDamage": 18,
+  "baseFireRate": 1.4,
+  "projectileSpeed": 380,
+  "splashByMode": {
+    "balanced": 0
+  },
+  "modeModifiers": {
+    "balanced": {
+      "range": 1,
+      "damage": 1,
+      "fireRate": 1
+    }
+  },
+  "muzzleDistanceByMode": {
+    "balanced": 24
+  },
+  "shotVolumeByMode": {
+    "balanced": 0.25
+  },
+  "beam": null,
+  "hunterPassive": {
+    "percentHpDamage": 0.3,
+    "damageType": "true",
+    "bossCapPercent": 0.05
+  },
+  "operationUI": {
+    "upgradeLabel": "升级",
+    "branchLabel": "转职",
+    "branchPlaceholder": "后续开放",
+    "actionSlots": [
+      "待定",
+      "待定"
+    ],
+    "detailSections": [
+      "切换目标首击30%最大生命值真实伤害"
+    ]
+  },
+  "abilities": [
+    {
+      "type": "percentHpDamage",
+      "percent": {
+        "base": 0.2,
+        "potential": 0.1,
+        "format": "percent",
+        "clamp": [
+          0,
+          1
+        ]
+      },
+      "onTargetSwitch": true,
+      "bossCapPercent": 0.05,
+      "damageType": "true"
+    },
+    {
+      "type": "stackDamage",
+      "bonusPerHit": 0.08,
+      "maxBonus": 0.8
+    },
+    {
+      "type": "executionBonus",
+      "hpThreshold": 0.5,
+      "damageBonus": 0.5
+    }
+  ],
+  "strength": {
+    "attackDamage": {
+      "base": 6,
+      "potential": 12
+    },
+    "attackSpeed": {
+      "base": 0.56,
+      "potential": 0.84
+    },
+    "range": {
+      "base": 140,
+      "potential": 0
+    }
+  },
+  "abilityUnlocks": [
+    {
+      "level": 1,
+      "type": "percentHpDamage",
+      "name": "切目标%HP真伤",
+      "params": {
+        "ratio": {
+          "base": 0.2,
+          "potential": 0.1,
+          "format": "percent",
+          "clamp": [
+            0,
+            1
+          ]
+        },
+        "damageType": "true",
+        "bossCap": 0.05
+      }
+    },
+    {
+      "level": 2,
+      "type": "stackDamage",
+      "name": "连击叠伤",
+      "params": {
+        "bonusPerHit": 0.08,
+        "maxBonus": 0.8
+      }
+    },
+    {
+      "level": 3,
+      "type": "executionBonus",
+      "name": "处决",
+      "params": {
+        "hpThreshold": {
+          "base": 0.5,
+          "potential": 0,
+          "format": "percent"
+        },
+        "damageBonus": {
+          "base": 0.5,
+          "potential": 0,
+          "format": "percent"
+        }
+      }
+    }
+  ],
+  "tierProfile": {
+    "damage": {
+      "tier": "B",
+      "growth": "high"
+    },
+    "fireRate": {
+      "tier": "C",
+      "growth": "high"
+    },
+    "range": {
+      "tier": "B",
+      "growth": "low"
+    }
+  }
+}
