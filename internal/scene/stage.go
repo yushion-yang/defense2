@@ -7,16 +7,20 @@ import (
 	"image/color"
 	"log"
 
-	_ "defense2/internal/core/tower/abilities" // 通过 init() 注册能力
+	_ "defense2/internal/core/tower/abilities"  // 通过 init() 注册塔能力
+	_ "defense2/internal/core/warden/types"     // 通过 init() 注册战灵类型
 
 	"defense2/internal/config"
 	"defense2/internal/core/economy"
 	"defense2/internal/core/enemy"
+	"defense2/internal/core/event"
 	"defense2/internal/core/game"
 	"defense2/internal/core/gamemap"
+	"defense2/internal/core/hero"
 	"defense2/internal/core/pipeline"
 	"defense2/internal/core/projectile"
 	"defense2/internal/core/tower"
+	"defense2/internal/core/warden"
 	"defense2/internal/loader"
 	"defense2/internal/render"
 	"defense2/internal/render/hud"
@@ -51,11 +55,17 @@ type StageScene struct {
 	kills        int               // 累计击杀数
 	towerDefs    []tower.TowerDef  // 可建造的塔类型列表
 	selectedDef  int               // 当前选中的塔类型索引
-	hoveredTower  *tower.Tower           // 鼠标悬停的已放置塔（用于信息面板）
-	towerRenderer *render.TowerRenderer // 塔 SVG 渲染器
-	lastWave      int                   // 上一帧的波次号（用于检测波次完成）
-	notification  string                // 屏幕中央短暂通知文本
-	notifyTimer   float64              // 通知剩余显示时间（秒）
+	hoveredTower    *tower.Tower           // 鼠标悬停的已放置塔（用于信息面板）
+	towerRenderer   *render.TowerRenderer // 塔 SVG 渲染器
+	heroUnit        *hero.Hero            // 英雄实体
+	wardenUnit      *warden.Warden        // 战灵实体
+	eventPool       *event.Pool           // 事件池
+	appliedEvents   []event.Event         // 已应用的事件列表
+	killRewardBonus int                   // 额外击杀金币（事件增益）
+	buildDiscount   float64               // 建造折扣比例（事件增益）
+	lastWave        int                   // 上一帧的波次号
+	notification    string                // 屏幕中央通知文本
+	notifyTimer     float64               // 通知剩余时间（秒）
 }
 
 // NewStageScene 创建游戏主场景，加载 map_01 地图。
@@ -72,6 +82,18 @@ func NewStageScene(sw Switcher) *StageScene {
 		}
 	}
 	gm := gamemap.NewGameMap(cfg)
+
+	// 寻找英雄基地位置（CellHeroBase=6），未找到则放在地图中央
+	heroX, heroY := float64(game.ScreenWidth)/2, float64(game.ScreenHeight)/2
+	for row := 0; row < cfg.Rows; row++ {
+		for col := 0; col < cfg.Cols; col++ {
+			if cfg.Grid[row][col] == config.CellHeroBase {
+				p := gm.CellCenter(row, col)
+				heroX, heroY = p.X, p.Y
+			}
+		}
+	}
+
 	return &StageScene{
 		switcher:      sw,
 		gameMap:        gm,
@@ -81,6 +103,9 @@ func NewStageScene(sw Switcher) *StageScene {
 		projectiles:    projectile.DefaultPool(),
 		econ:           economy.DefaultConfig(),
 		towerRenderer:  render.NewTowerRenderer(config.GetAssetFS()),
+		heroUnit:       hero.DefaultHero(heroX, heroY),
+		wardenUnit:     warden.NewWarden(1, "使者", "envoy"),
+		eventPool:      event.NewPool(event.DefaultAllyEvents()),
 		lives:          20,
 		gold:           200,
 		towerDefs:      loadTowerDefsOrFallback(),
@@ -242,32 +267,103 @@ func (s *StageScene) updatePlaying() {
 		}
 	})
 
-	// 4. 塔索敌射击
+	// 4. 英雄 AI + 射击
+	s.heroUnit.Update(s.enemies, s.projectiles, dt)
+
+	// 5. 战灵行为
+	s.wardenUnit.Tick(&warden.TickContext{
+		Enemies: s.enemies,
+		Towers:  s.towers,
+		DT:      dt,
+	})
+
+	// 6. 塔索敌射击
 	pipeline.TickTowerCombat(s.towers, s.enemies, s.projectiles, dt)
 
-	// 5. 弹射物移动
+	// 7. 弹射物移动
 	s.projectiles.Update(dt)
 
-	// 6. 弹射物命中检测（含能力触发）
+	// 8. 弹射物命中检测（含能力触发）
 	kills := pipeline.TickProjectileHits(s.projectiles, s.enemies, s.towers)
 	s.kills += kills
-	s.gold += kills * s.econ.KillGold()
+	killGold := s.econ.KillGold() + s.killRewardBonus
+	s.gold += kills * killGold
 
-	// 7. 波次完成奖励（波次号变化时发放）
+	// 英雄/战灵击杀奖励
+	if kills > 0 {
+		s.heroUnit.AwardXP(kills * 3)
+		for i := 0; i < kills; i++ {
+			s.wardenUnit.OnKill()
+		}
+	}
+
+	// 9. 波次完成奖励 + 事件触发
 	if s.spawner.Wave > prevWave && prevWave > 0 {
 		bonus := s.econ.WaveCompleteGold(prevWave)
 		interest := s.econ.InterestGold(s.gold)
 		s.gold += bonus + interest
+		s.wardenUnit.OnWaveClear()
+		s.heroUnit.AwardXP(10)
 		s.showNotify(fmt.Sprintf("Wave %d clear! +$%d bonus +$%d interest", prevWave, bonus, interest))
+
+		// 检查是否是事件奖励波次
+		for _, rw := range event.RewardWaves() {
+			if prevWave == rw {
+				s.triggerEventChoice(prevWave)
+				break
+			}
+		}
 	}
 
-	// 8. 胜负判定
+	// 10. 胜负判定
 	if s.lives <= 0 {
 		s.state = stateDefeat
 	}
 	if s.spawner.IsClear(s.enemies) {
 		s.state = stateVictory
 	}
+}
+
+// triggerEventChoice 在奖励波次触发事件选择（当前自动选第一个，后续改为 UI 选择）。
+func (s *StageScene) triggerEventChoice(wave int) {
+	picks := s.eventPool.PickTiered(wave)
+	if len(picks) == 0 {
+		return
+	}
+	// TODO: 显示事件选择 UI，当前自动应用第一个
+	chosen := picks[0]
+	event.Apply(&chosen, s)
+	s.appliedEvents = append(s.appliedEvents, chosen)
+	s.showNotify(fmt.Sprintf("Event: %s", chosen.Label))
+}
+
+// ─── GameState 接口实现（供事件处理器调用）───
+
+func (s *StageScene) AddGold(amount int)             { s.gold += amount }
+func (s *StageScene) SetBuildDiscount(ratio float64)  { s.buildDiscount = ratio }
+func (s *StageScene) SetKillRewardBonus(extra int)    { s.killRewardBonus = extra }
+
+func (s *StageScene) BuffAllTowersDamage(ratio float64) {
+	s.towers.Each(func(t *tower.Tower) { t.Damage *= (1 + ratio) })
+}
+func (s *StageScene) BuffAllTowersRange(ratio float64) {
+	s.towers.Each(func(t *tower.Tower) { t.Range *= (1 + ratio) })
+}
+func (s *StageScene) BuffAllTowersSpeed(ratio float64) {
+	s.towers.Each(func(t *tower.Tower) { t.AttackSpeed *= (1 + ratio) })
+}
+func (s *StageScene) SlowAllEnemies(ratio float64) {
+	s.enemies.Each(func(e *enemy.Enemy) {
+		e.BaseSpeed *= (1 - ratio)
+		e.Speed = e.BaseSpeed
+	})
+}
+func (s *StageScene) BuffFactionTowers(faction string, ratio float64) {
+	s.towers.Each(func(t *tower.Tower) {
+		if t.Faction == faction {
+			t.Damage *= (1 + ratio)
+		}
+	})
 }
 
 // Draw 渲染游戏画面：地图 → 塔 → 敌人 → 弹射物 → 预览 → HUD → 通知 → 胜负覆盖。
@@ -285,6 +381,12 @@ func (s *StageScene) Draw(screen *ebiten.Image) {
 
 	// 弹射物
 	render.DrawProjectiles(screen, s.projectiles)
+
+	// 英雄
+	render.DrawHero(screen, s.heroUnit)
+
+	// 战灵
+	render.DrawWarden(screen, s.wardenUnit)
 
 	// 放塔预览（鼠标在可建造位置时显示）
 	if s.state == statePlaying {
