@@ -5,7 +5,6 @@ package hud
 
 import (
 	"fmt"
-	"math"
 
 	"defense2/internal/core/strength"
 	"defense2/internal/core/tower"
@@ -126,7 +125,7 @@ func DrawInfoPanel(screen *ebiten.Image, t *tower.Tower, sellValue int) {
 		// 攻速
 		drawStatIcon(screen, im, "stat-atkspd", x+colW, y, iconSize)
 		if cfg != nil {
-			fm.DrawText(screen, formatStrengthSpeed(cfg, effStr, t.AttackSpeed), x+colW+textOff, y, theme.FontMD, theme.InfoAttrAtkSpd)
+			fm.DrawText(screen, formatStrengthStat(cfg, "attackSpeed", effStr, t.AttackSpeed), x+colW+textOff, y, theme.FontMD, theme.InfoAttrAtkSpd)
 		} else {
 			fm.DrawText(screen, formatStatShort(t.BaseSpeed, t.AttackSpeed), x+colW+textOff, y, theme.FontMD, theme.InfoAttrAtkSpd)
 		}
@@ -490,28 +489,6 @@ func formatStrengthStat(cfg *strength.StrengthConfig, path string, eff, fallback
 	return fmt.Sprintf("%.0f+(%.0f)=%.0f", b.Base, scaled, total)
 }
 
-// formatStrengthSpeed 用战力绑定格式化攻速（反向公式）: "base+(scaled)=total s"。
-// 攻速公式: base + potential * (100 / max(1, eff))，越高战力间隔越短。
-func formatStrengthSpeed(cfg *strength.StrengthConfig, eff, fallback float64) string {
-	if cfg == nil {
-		return fmt.Sprintf("%.2f", fallback)
-	}
-	b := cfg.ResolveBinding("attackSpeed")
-	if b == nil || b.Potential == 0 {
-		return fmt.Sprintf("%.2f", fallback)
-	}
-	e := eff
-	if e < 1 {
-		e = 1
-	}
-	scaled := b.Potential * (100.0 / e)
-	total := b.Base + scaled
-	if total < 0.1 {
-		total = 0.1
-	}
-	return fmt.Sprintf("%.2f+(%.2f)=%.2fs", b.Base, scaled, total)
-}
-
 // abilityStrengthDesc 返回能力的战力缩放参数描述。
 // 对有 effects.* 绑定的能力，显示 "参数名 base%+(scaled%)=total%"。
 func abilityStrengthDesc(abilityType string, cfg *strength.StrengthConfig, eff float64) string {
@@ -572,8 +549,6 @@ func attackStyleLabel(style string) string {
 	return style
 }
 
-// 确保 math 包被使用（formatStrengthSpeed 中的计算）
-var _ = math.Max
 
 // DrawInfoPanelHoverTooltip draws the upgrade detail tooltip above the info panel
 // when the mouse is hovering over the panel. Shows per-level stat growth and future ability unlocks.

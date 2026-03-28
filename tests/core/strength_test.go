@@ -115,25 +115,27 @@ func TestStrength_Overflow(t *testing.T) {
 func TestStrengthConfig_CalcAttackSpeed(t *testing.T) {
 	cfg := &strength.StrengthConfig{
 		Bindings: map[string]*strength.StrengthBinding{
-			"attackSpeed": {Base: 0.37, Potential: 0.55},
+			"attackSpeed": {Base: 0.5, Potential: 0.5},
 		},
 	}
-	// 100 strength: 0.37 + 0.55 * (100/100) = 0.37 + 0.55 = 0.92
-	val := cfg.CalcAttackSpeed(100, 0)
-	if math.Abs(val-0.92) > 1e-9 {
-		t.Errorf("100战力攻速=%.3f, 期望0.92", val)
+	// 攻速是次/秒，用正向公式: base + potential * (eff/100)
+
+	// 100 strength: 0.5 + 0.5 * 1.0 = 1.0
+	val := cfg.CalcAttribute("attackSpeed", 100, 0)
+	if math.Abs(val-1.0) > 1e-9 {
+		t.Errorf("100战力攻速=%.3f, 期望1.0", val)
 	}
 
-	// 200 strength: 0.37 + 0.55 * (100/200) = 0.37 + 0.275 = 0.645 (更快)
-	val2 := cfg.CalcAttackSpeed(200, 0)
-	if math.Abs(val2-0.645) > 1e-9 {
-		t.Errorf("200战力攻速=%.3f, 期望0.645", val2)
+	// 200 strength: 0.5 + 0.5 * 2.0 = 1.5 (更快)
+	val2 := cfg.CalcAttribute("attackSpeed", 200, 0)
+	if math.Abs(val2-1.5) > 1e-9 {
+		t.Errorf("200战力攻速=%.3f, 期望1.5", val2)
 	}
 
-	// 50 strength: 0.37 + 0.55 * (100/50) = 0.37 + 1.1 = 1.47 (更慢)
-	val3 := cfg.CalcAttackSpeed(50, 0)
-	if math.Abs(val3-1.47) > 1e-9 {
-		t.Errorf("50战力攻速=%.3f, 期望1.47", val3)
+	// 50 strength: 0.5 + 0.5 * 0.5 = 0.75 (更慢)
+	val3 := cfg.CalcAttribute("attackSpeed", 50, 0)
+	if math.Abs(val3-0.75) > 1e-9 {
+		t.Errorf("50战力攻速=%.3f, 期望0.75", val3)
 	}
 }
 
