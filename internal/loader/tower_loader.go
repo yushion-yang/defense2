@@ -22,18 +22,22 @@ func TowerJSONToDef(key string, t *config.TowerJSON) tower.TowerDef {
 		attackSpeed = 1.0 / t.BaseFireRate
 	}
 
-	// 收集能力名称
-	var abilities []string
-	for _, a := range t.Abilities {
-		if a.Name != "" {
-			abilities = append(abilities, a.Name)
+	// 能力列表（直接从 JSON 字符串数组获取）
+	abilities := make([]string, len(t.Abilities))
+	copy(abilities, t.Abilities)
+	// bounceConfig → 自动追加 bounce 能力（如果未显式声明）
+	if t.BounceConfig != nil {
+		hasBounce := false
+		for _, a := range abilities {
+			if a == "bounce" {
+				hasBounce = true
+				break
+			}
+		}
+		if !hasBounce {
+			abilities = append(abilities, "bounce")
 		}
 	}
-	// bounceConfig → 自动追加 bounce 能力
-	if t.BounceConfig != nil {
-		abilities = append(abilities, "bounce")
-	}
-
 
 	label := t.ShortLabel
 	if label == "" {

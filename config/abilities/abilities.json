@@ -1,0 +1,295 @@
+{
+  "onHitSlow": {
+    "label": "减速",
+    "description": "命中减速32%持续1.4s",
+    "icon": "slow",
+    "category": "control",
+    "params": {
+      "factor": 0.32,
+      "duration": 1.4
+    }
+  },
+  "stun": {
+    "label": "眩晕",
+    "description": "12%概率眩晕0.4s",
+    "icon": "stun",
+    "category": "control",
+    "params": {
+      "chance": 0.12,
+      "duration": 0.4
+    }
+  },
+  "bounce": {
+    "label": "弹射",
+    "description": "弹射2次,衰减80%",
+    "icon": "bounce",
+    "category": "combat",
+    "params": {
+      "maxBounces": 2,
+      "range": 125,
+      "damageDecay": 0.8
+    }
+  },
+  "burn": {
+    "label": "灼烧",
+    "description": "灼烧30%伤害/2s",
+    "icon": "burn",
+    "category": "control",
+    "params": {
+      "ratio": 0.3,
+      "duration": 2.0
+    }
+  },
+  "splash": {
+    "label": "溅射",
+    "description": "50px范围40%溅射",
+    "icon": "stat-splash",
+    "category": "combat",
+    "params": {
+      "radius": 50,
+      "ratio": 0.4
+    }
+  },
+  "executionBonus": {
+    "label": "斩杀",
+    "description": "≤50%HP时+50%伤害",
+    "icon": "execute",
+    "category": "combat",
+    "params": {
+      "hpThreshold": 0.5,
+      "damageBonus": 0.5
+    }
+  },
+  "percentHpDamage": {
+    "label": "百分比伤害",
+    "description": "额外20%最大HP(Boss5%)",
+    "icon": "hunterInstinct",
+    "category": "combat",
+    "params": {
+      "percentHp": 0.2,
+      "bossCap": 0.05
+    }
+  },
+  "crit": {
+    "label": "暴击",
+    "description": "25%概率+80%暴击",
+    "icon": "heavyHit",
+    "category": "combat",
+    "params": {
+      "chance": 0.25,
+      "multiplier": 1.8
+    }
+  },
+  "bleedDot": {
+    "label": "流血",
+    "description": "流血5dps/3s",
+    "icon": "burn",
+    "category": "control",
+    "params": {
+      "dps": 5,
+      "duration": 3.0
+    }
+  },
+  "stackDamage": {
+    "label": "叠伤",
+    "description": "每次命中+8%伤害",
+    "icon": "armorPen",
+    "category": "combat",
+    "params": {
+      "bonusPerStack": 0.08
+    }
+  },
+  "overload": {
+    "label": "过载",
+    "description": "15%概率双倍伤害",
+    "icon": "thunder",
+    "category": "combat",
+    "params": {
+      "chance": 0.15,
+      "multiplier": 2.0
+    }
+  },
+  "flatDamage": {
+    "label": "固伤",
+    "description": "+5固定伤害",
+    "icon": "stat-damage",
+    "category": "combat",
+    "params": {
+      "damage": 5
+    }
+  },
+  "distanceDamage": {
+    "label": "距离伤害",
+    "description": "越远伤害越高+50%",
+    "icon": "stat-range",
+    "category": "combat",
+    "params": {
+      "maxBonus": 0.5
+    }
+  },
+  "damageUpAura": {
+    "label": "伤害光环",
+    "description": "周围塔+15%伤害",
+    "icon": "tower-aura",
+    "category": "aura",
+    "params": {
+      "radius": 150,
+      "bonus": 0.15
+    }
+  },
+  "attackSpeedAura": {
+    "label": "攻速光环",
+    "description": "周围塔+10%攻速",
+    "icon": "tower-aura",
+    "category": "aura",
+    "params": {
+      "radius": 150,
+      "bonus": 0.10
+    }
+  },
+  "rangeAura": {
+    "label": "射程光环",
+    "description": "周围塔+20px射程",
+    "icon": "tower-aura",
+    "category": "aura",
+    "params": {
+      "radius": 150,
+      "bonus": 20
+    }
+  },
+  "critAura": {
+    "label": "暴击光环",
+    "description": "周围塔+10%暴击",
+    "icon": "tower-aura",
+    "category": "aura",
+    "params": {
+      "radius": 150,
+      "bonus": 0.10
+    }
+  },
+  "soloBoost": {
+    "label": "独行加成",
+    "description": "无邻塔时+30%伤害",
+    "icon": "heavyHit",
+    "category": "aura",
+    "params": {
+      "checkRadius": 120,
+      "bonus": 0.30
+    }
+  },
+  "poisonZone": {
+    "label": "毒区",
+    "description": "范围内3dps毒伤",
+    "icon": "tower-poison",
+    "category": "zone",
+    "params": {
+      "dps": 3
+    }
+  },
+  "silenceZone": {
+    "label": "沉默区",
+    "description": "范围内减速20%",
+    "icon": "slow",
+    "category": "zone",
+    "params": {
+      "slowFactor": 0.2
+    }
+  },
+  "curseZone": {
+    "label": "诅咒区",
+    "description": "范围内1.5%HP/s",
+    "icon": "tower-poison",
+    "category": "zone",
+    "params": {
+      "hpPercentPerSec": 0.015
+    }
+  },
+  "channelLaser": {
+    "label": "引导激光",
+    "description": "持续光束10dps",
+    "icon": "tower-laser",
+    "category": "zone",
+    "params": {
+      "dps": 10
+    }
+  },
+  "buffPurge": {
+    "label": "净化",
+    "description": "剥离护盾5/s",
+    "icon": "stun",
+    "category": "control",
+    "params": {
+      "shieldDrainPerSec": 5
+    }
+  },
+  "root": {
+    "label": "定身",
+    "description": "定身0.5s",
+    "icon": "stun",
+    "category": "control",
+    "params": {
+      "duration": 0.5
+    }
+  },
+  "shieldIgnore": {
+    "label": "无视护盾",
+    "description": "伤害无视护盾",
+    "icon": "armorPen",
+    "category": "combat",
+    "params": {}
+  },
+  "goldPassive": {
+    "label": "被动产金",
+    "description": "每3s产1金币",
+    "icon": "stat-dps",
+    "category": "economy",
+    "params": {
+      "interval": 3,
+      "amount": 1
+    }
+  },
+  "judgmentMark": {
+    "label": "审判标记",
+    "description": "标记目标受伤增加",
+    "icon": "tower-judicator",
+    "category": "control",
+    "params": {}
+  },
+  "deathMark": {
+    "label": "死亡标记",
+    "description": "标记目标死亡时爆炸",
+    "icon": "tower-summon",
+    "category": "combat",
+    "params": {}
+  },
+  "instantHit": {
+    "label": "瞬时命中",
+    "description": "攻击无飞行时间",
+    "icon": "tower-laser",
+    "category": "combat",
+    "params": {}
+  },
+  "multiTarget": {
+    "label": "多目标攻击",
+    "description": "同时攻击多个目标",
+    "icon": "multishot",
+    "category": "combat",
+    "params": {
+      "targets": 2
+    }
+  },
+  "wideBeam": {
+    "label": "宽幅光束",
+    "description": "穿透路径上所有敌人",
+    "icon": "tower-laser",
+    "category": "combat",
+    "params": {}
+  },
+  "scatter": {
+    "label": "锥形散弹",
+    "description": "锥形范围内多发弹丸",
+    "icon": "multishot",
+    "category": "combat",
+    "params": {}
+  }
+}

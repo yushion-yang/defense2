@@ -14,9 +14,7 @@
     "baseFireRate": 0.92,
     "projectileSpeed": 9999,
     "abilities": [
-      {
-        "type": "instantHit"
-      }
+      "instantHit"
     ],
     "beam": {
       "duration": 0.12,
@@ -55,22 +53,8 @@
     "baseFireRate": 0.68,
     "projectileSpeed": 380,
     "abilities": [
-      {
-        "type": "onHitSlow",
-        "factor": {
-          "base": 0.1,
-          "potential": 0.58,
-          "format": "percent",
-          "clamp": [
-            0,
-            1
-          ]
-        },
-        "duration": 1.45
-      },
-      {
-        "type": "multiTarget"
-      }
+      "onHitSlow",
+      "multiTarget"
     ],
     "strength": {
       "attackDamage": {
@@ -114,26 +98,8 @@
       "damageDecay": 0.8
     },
     "abilities": [
-      {
-        "type": "stun",
-        "chance": {
-          "base": 0.08,
-          "potential": 0.04,
-          "format": "percent",
-          "clamp": [
-            0,
-            1
-          ]
-        },
-        "duration": {
-          "base": 0.3,
-          "potential": 0.1,
-          "format": "seconds"
-        }
-      },
-      {
-        "type": "bounce"
-      }
+      "stun",
+      "bounce"
     ],
     "strength": {
       "attackDamage": {
@@ -168,31 +134,9 @@
     "projectileSpeed": 380,
     "beam": null,
     "abilities": [
-      {
-        "type": "percentHpDamage",
-        "percent": {
-          "base": 0.2,
-          "potential": 0.1,
-          "format": "percent",
-          "clamp": [
-            0,
-            1
-          ]
-        },
-        "onTargetSwitch": true,
-        "bossCapPercent": 0.05,
-        "damageType": "true"
-      },
-      {
-        "type": "stackDamage",
-        "bonusPerHit": 0.08,
-        "maxBonus": 0.8
-      },
-      {
-        "type": "executionBonus",
-        "hpThreshold": 0.5,
-        "damageBonus": 0.5
-      }
+      "percentHpDamage",
+      "stackDamage",
+      "executionBonus"
     ],
     "strength": {
       "attackDamage": {
@@ -227,9 +171,7 @@
     "projectileSpeed": 9999,
     "attackStyle": "wideBeam",
     "abilities": [
-      {
-        "type": "wideBeam"
-      }
+      "wideBeam"
     ],
     "beam": {
       "duration": 0.15,
@@ -269,9 +211,7 @@
     "projectileSpeed": 400,
     "attackStyle": "scatter",
     "abilities": [
-      {
-        "type": "scatter"
-      }
+      "scatter"
     ],
     "scatterConfig": {
       "pellets": 3,

@@ -21,7 +21,7 @@ type TowerJSON struct {
 	BaseDamage     float64             `json:"baseDamage"`     // 基础单发伤害
 	BaseFireRate   float64             `json:"baseFireRate"`   // 基础射击间隔（秒/次，越小越快）
 	Tags           []string            `json:"tags"`           // 标签列表（如 "energy"、"laser"）
-	Abilities      []TowerAbilJSON     `json:"abilities"`      // 该塔拥有的能力列表
+	Abilities      []string            `json:"abilities"`      // 能力 key 列表（引用 abilities.json）
 	BounceConfig   *BounceConfigJSON   `json:"bounceConfig"`   // 弹射配置（electric 塔）
 	// 攻击方式配置
 	AttackStyle      string             `json:"attackStyle"`      // "projectile"/"laser"/"wideBeam"/"scatter"/"charge"/"spin_aoe"/"pierce"/"aura_dot"
@@ -66,11 +66,6 @@ type PierceConfigJSON struct {
 type PoisonConfigJSON struct {
 	DPS      float64 `json:"dps"`      // 每秒伤害
 	Interval float64 `json:"interval"` // 伤害间隔（秒）
-}
-
-// TowerAbilJSON 塔能力的 JSON 原始结构。
-type TowerAbilJSON struct {
-	Name string `json:"type"` // 能力注册名称（JSON 中为 "type" 字段）
 }
 
 // StrengthJSON 战力绑定配置（基础值+潜力值）。
