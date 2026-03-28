@@ -34,6 +34,9 @@ type TowerJSON struct {
 	InnerDamageBonus float64            `json:"innerDamageBonus"` // spin_aoe 内圈加伤倍率
 	InnerRadiusRatio float64            `json:"innerRadiusRatio"` // spin_aoe 内圈比例
 	PierceConfig     *PierceConfigJSON  `json:"pierceConfig"`     // pierce 穿刺配置
+
+	// 战力系统配置
+	Strength map[string]interface{} `json:"strength"` // 战力绑定配置（attackDamage/attackSpeed/range/effects.*）
 	PoisonConfig     *PoisonConfigJSON  `json:"poisonConfig"`     // aura_dot 持续毒伤配置
 }
 

@@ -5,6 +5,7 @@ package pipeline
 
 import (
 	"defense2/internal/core/enemy"
+	"defense2/internal/core/strength"
 	"defense2/internal/core/tower"
 )
 
@@ -48,10 +49,23 @@ func TickTowerAbilities(towers *tower.Pool, enemies *enemy.Pool, dt float64) int
 	return goldEarned
 }
 
-// resetTowerStats 将塔的 Damage/Range/AttackSpeed 重置为基础值。
-// 属性缩放由战力系统（StrengthConfig.CalcAttribute）驱动，此处仅恢复 base。
+// resetTowerStats 根据战力系统重算塔的 Damage/Range/AttackSpeed。
+// 公式: effectiveAttr = base + potential * (effectiveStrength / 100)
+// 无战力配置时回退到基础值。
 func resetTowerStats(t *tower.Tower) {
-	t.Damage = t.BaseDamage
-	t.Range = t.BaseRange
-	t.AttackSpeed = t.BaseSpeed
+	cfg, _ := t.StrengthCfg.(*strength.StrengthConfig)
+	sd, _ := t.Strength.(*strength.StrengthData)
+
+	if cfg == nil || sd == nil {
+		// 无战力系统，使用基础值
+		t.Damage = t.BaseDamage
+		t.Range = t.BaseRange
+		t.AttackSpeed = t.BaseSpeed
+		return
+	}
+
+	eff := sd.Effective()
+	t.Damage = cfg.CalcAttribute("attackDamage", eff, t.BaseDamage)
+	t.Range = cfg.CalcAttribute("range", eff, t.BaseRange)
+	t.AttackSpeed = cfg.CalcAttribute("attackSpeed", eff, t.BaseSpeed)
 }

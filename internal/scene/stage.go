@@ -892,7 +892,15 @@ func (s *StageScene) tryPlaceTower(px, py float64) bool {
 	}
 
 	center := gm.CellCenter(row, col)
-	s.towers.Place(row, col, center.X, center.Y, def)
+	placed := s.towers.Place(row, col, center.X, center.Y, def)
+	// 初始化战力系统
+	if placed != nil {
+		sd := strength.NewStrengthData()
+		placed.Strength = sd
+		if def.StrengthRaw != nil {
+			placed.StrengthCfg = strength.ParseStrengthConfig(def.StrengthRaw)
+		}
+	}
 	s.gold -= cost
 	s.session.OnTowerBuilt()
 	s.audioMgr.PlaySafe(gameAudio.SFXBuild)

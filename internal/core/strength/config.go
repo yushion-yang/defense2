@@ -15,7 +15,11 @@ type StrengthConfig struct {
 }
 
 // ParseStrengthConfig 从原始 JSON map 解析战力配置。
-// 期望格式: { "attackDamage": { "base": 10, "potential": 5 }, "effects.slowFactor": { "base": 0.3, "potential": 0.1 } }
+// 支持两种格式:
+//   - 平铺: { "attackDamage": { "base": 10, "potential": 5 } }
+//   - 嵌套: { "effects": { "slowFactor": { "base": 0.05, "potential": 0.15 } } }
+//
+// 嵌套对象会被展开为点分路径（如 "effects.slowFactor"）。
 func ParseStrengthConfig(raw map[string]interface{}) *StrengthConfig {
 	cfg := &StrengthConfig{
 		Bindings: make(map[string]*StrengthBinding),
@@ -24,21 +28,40 @@ func ParseStrengthConfig(raw map[string]interface{}) *StrengthConfig {
 		return cfg
 	}
 
-	for path, v := range raw {
+	parseBindings(cfg, "", raw)
+	return cfg
+}
+
+// parseBindings 递归解析绑定（支持嵌套 effects 等）。
+func parseBindings(cfg *StrengthConfig, prefix string, raw map[string]interface{}) {
+	for key, v := range raw {
 		obj, ok := v.(map[string]interface{})
 		if !ok {
 			continue
 		}
-		b := &StrengthBinding{}
-		if base, ok := obj["base"]; ok {
-			b.Base = toFloat64(base)
+
+		path := key
+		if prefix != "" {
+			path = prefix + "." + key
 		}
-		if pot, ok := obj["potential"]; ok {
-			b.Potential = toFloat64(pot)
+
+		// 判断是绑定（有 base/potential）还是嵌套对象
+		_, hasBase := obj["base"]
+		_, hasPot := obj["potential"]
+		if hasBase || hasPot {
+			b := &StrengthBinding{}
+			if hasBase {
+				b.Base = toFloat64(obj["base"])
+			}
+			if hasPot {
+				b.Potential = toFloat64(obj["potential"])
+			}
+			cfg.Bindings[path] = b
+		} else {
+			// 嵌套对象，递归展开
+			parseBindings(cfg, path, obj)
 		}
-		cfg.Bindings[path] = b
 	}
-	return cfg
 }
 
 // CalcAttribute 计算属性在指定有效战力下的值。
