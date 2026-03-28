@@ -1,31 +1,95 @@
 // gamemap.go — 运行时地图状态。
-// 基于 MapConfig 生成像素坐标系的路径点，提供格子查询和坐标转换。
+// 基于 MapConfig 生成像素坐标系的路径点，支持单路径和多路径地图。
+// 提供格子查询和坐标转换。
 package gamemap
 
-import "defense2/internal/config"
+import (
+	"math/rand"
+
+	"defense2/internal/config"
+)
 
 // Point 像素坐标点。
 type Point struct {
 	X, Y float64
 }
 
+// PathEntry 多路径入口（运行时表示）。
+type PathEntry struct {
+	ID        string  // 入口标识（如 "top"、"bottom"）
+	Waypoints []Point // 该入口的路径点序列
+	Weight    float64 // 出怪权重
+}
+
 // GameMap 运行时地图，由 MapConfig 派生。
 type GameMap struct {
 	Config    *config.MapConfig // 原始地图配置
-	Waypoints []Point          // 像素中心路径点序列，敌人沿此移动
+	Waypoints []Point          // 默认路径点序列（单路径或 pathOrder）
+	Paths     []PathEntry      // 多路径入口列表（多路径地图使用）
+	MultiPath bool             // 是否为多路径地图
 	CellSize  int              // 单元格边长（像素）
 	OffsetX   float64          // 水平偏移量（用于居中显示）
 	OffsetY   float64          // 垂直偏移量（用于居中显示）
 }
 
-// NewGameMap 从 MapConfig 创建运行时地图，将网格坐标转换为像素坐标。
+// NewGameMap 从 MapConfig 创建运行时地图。
 func NewGameMap(cfg *config.MapConfig) *GameMap {
 	gm := &GameMap{
 		Config:   cfg,
 		CellSize: cfg.CellSize,
 	}
+
+	// 默认路径
 	gm.Waypoints = gm.pathToPixels(cfg.PathOrder)
+
+	// 多路径
+	if len(cfg.PathOrders) > 0 && len(cfg.Entries) > 0 {
+		gm.MultiPath = true
+		gm.Paths = make([]PathEntry, 0, len(cfg.Entries))
+		for _, entry := range cfg.Entries {
+			path, ok := cfg.PathOrders[entry.ID]
+			if !ok {
+				continue
+			}
+			gm.Paths = append(gm.Paths, PathEntry{
+				ID:        entry.ID,
+				Waypoints: gm.pathToPixels(path),
+				Weight:    entry.Weight,
+			})
+		}
+	}
+
 	return gm
+}
+
+// PickPath 为一个敌人随机选择一条路径（按权重）。
+// 单路径地图返回默认 Waypoints。
+func (gm *GameMap) PickPath() []Point {
+	if !gm.MultiPath || len(gm.Paths) == 0 {
+		return gm.Waypoints
+	}
+
+	totalWeight := 0.0
+	for _, p := range gm.Paths {
+		totalWeight += p.Weight
+	}
+	r := rand.Float64() * totalWeight
+	cumulative := 0.0
+	for _, p := range gm.Paths {
+		cumulative += p.Weight
+		if r <= cumulative {
+			return p.Waypoints
+		}
+	}
+	return gm.Paths[len(gm.Paths)-1].Waypoints
+}
+
+// SpawnPoint 返回默认出生点（第一个路径点的像素坐标）。
+func (gm *GameMap) SpawnPoint() Point {
+	if len(gm.Waypoints) > 0 {
+		return gm.Waypoints[0]
+	}
+	return Point{}
 }
 
 // pathToPixels 将 [row, col] 路径序列转换为像素中心坐标序列。

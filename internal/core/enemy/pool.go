@@ -39,11 +39,19 @@ func (p *Pool) Spawn(x, y, hp, speed, radius float64, pathIndex int) *Enemy {
 			e.PathIndex = pathIndex
 			e.ReachedEnd = false
 			e.Active = true
+			e.Path = nil
+			e.Archetype = "normal"
+			e.Boss = false
+			e.Reward = 0
 			e.StunTimer = 0
 			e.SlowTimer = 0
 			e.SlowFactor = 1
 			e.BleedTimer = 0
 			e.BleedDPS = 0
+			e.BurnTimer = 0
+			e.BurnDPS = 0
+			e.ShieldHP = 0
+			e.RootTimer = 0
 			p.Count++
 			return e
 		}

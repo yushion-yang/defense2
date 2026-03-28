@@ -72,9 +72,14 @@ type StageScene struct {
 	notifyTimer     float64                      // 通知剩余时间（秒）
 }
 
-// NewStageScene 创建游戏主场景，加载 map_01 地图。
+// NewStageScene 创建游戏主场景，默认加载 map_01。
 func NewStageScene(sw Switcher) *StageScene {
-	cfg, err := config.LoadMap("map_01")
+	return NewStageSceneWithMap(sw, "map_01")
+}
+
+// NewStageSceneWithMap 创建游戏主场景，加载指定地图。
+func NewStageSceneWithMap(sw Switcher, mapID string) *StageScene {
+	cfg, err := config.LoadMap(mapID)
 	if err != nil {
 		log.Printf("地图加载失败: %v", err)
 		cfg = &config.MapConfig{
@@ -112,7 +117,7 @@ func NewStageScene(sw Switcher) *StageScene {
 		switcher:      sw,
 		gameMap:        gm,
 		enemies:        enemy.DefaultPool(),
-		spawner:        enemy.NewSpawner(gm.Waypoints, cfg.Waves),
+		spawner:        enemy.NewSpawner(gm, cfg.Waves),
 		towers:         tower.DefaultPool(),
 		projectiles:    projectile.DefaultPool(),
 		econ:           economy.DefaultConfig(),
@@ -143,10 +148,19 @@ func (s *StageScene) Update() error {
 		s.handleInput()
 		s.updatePlaying()
 	case stateVictory, stateDefeat:
-		// 胜利/失败状态：按 Enter 或点击返回标题
+		// 胜利/失败状态：按 Enter 或点击进入结算场景
 		if inpututil.IsKeyJustPressed(ebiten.KeyEnter) ||
 			inpututil.IsMouseButtonJustPressed(ebiten.MouseButtonLeft) {
-			s.switcher.SwitchScene(NewTitleScene(s.switcher))
+			s.switcher.SwitchScene(NewResultScene(s.switcher, ResultData{
+				MapID:    s.gameMap.Config.ID,
+				MapName:  s.gameMap.Config.Name,
+				Won:      s.state == stateVictory,
+				Kills:    s.kills,
+				Waves:    s.spawner.Wave,
+				MaxWaves: s.spawner.MaxWaves,
+				Gold:     s.gold,
+				Towers:   s.towers.Count,
+			}))
 		}
 	}
 

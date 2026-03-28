@@ -27,7 +27,7 @@ func (s *TitleScene) Update() error {
 	if inpututil.IsKeyJustPressed(ebiten.KeyEnter) ||
 		inpututil.IsMouseButtonJustPressed(ebiten.MouseButtonLeft) ||
 		len(inpututil.JustPressedTouchIDs()) > 0 {
-		s.switcher.SwitchScene(NewStageScene(s.switcher))
+		s.switcher.SwitchScene(NewSelectScene(s.switcher))
 	}
 	return nil
 }
