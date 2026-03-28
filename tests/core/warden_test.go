@@ -1,6 +1,7 @@
 package core_test
 
 import (
+	"math"
 	"testing"
 
 	_ "defense2/internal/core/warden/types" // 注册 envoy 行为
@@ -82,7 +83,14 @@ func TestEnvoyPossess(t *testing.T) {
 	// 第一次 tick：应附身到塔
 	w.Tick(ctx)
 
-	if placed.Damage != 25 { // 20 + 5 (DamageBonus)
-		t.Fatalf("附身后塔伤害应为 25，实际 %.0f", placed.Damage)
+	// 附身后塔的 Damage 不再直接改变，改为通过战力系统增强
+	// 检查塔的 Strength 是否被设置了临时加成
+	sd, ok := placed.Strength.(*strength.StrengthData)
+	if !ok || sd == nil {
+		t.Fatal("附身后塔应有 StrengthData")
+	}
+	// envoy DamageBonus=5, 所以战力应为 100(base) + 5(temp) = 105
+	if math.Abs(sd.Effective()-105) > 1e-9 {
+		t.Fatalf("附身后塔战力应为 105，实际 %.0f", sd.Effective())
 	}
 }

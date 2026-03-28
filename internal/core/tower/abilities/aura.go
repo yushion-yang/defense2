@@ -4,10 +4,12 @@
 package abilities
 
 import (
+	"fmt"
 	"math"
 
 	"defense2/internal/core/enemy"
 	"defense2/internal/core/projectile"
+	"defense2/internal/core/strength"
 	"defense2/internal/core/tower"
 )
 
@@ -30,12 +32,18 @@ func (a *DamageUpAura) OnHit(_ *tower.Tower, _ *projectile.Projectile, _ *enemy.
 	return nil // 光环不触发命中效果
 }
 func (a *DamageUpAura) OnTick(t *tower.Tower, ctx *tower.TickContext) *tower.TickResult {
+	srcKey := fmt.Sprintf("dmgAura_%s_%d_%d", t.Key, t.Row, t.Col)
 	ctx.Towers.Each(func(other *tower.Tower) {
 		if other == t {
 			return
 		}
 		if distBetweenTowers(t, other) <= auraRadius {
-			other.Damage += other.BaseDamage * 0.15
+			// 通过战力系统临时加成（15%基础伤害折算为战力值）
+			bonus := other.BaseDamage * 0.15
+			ensureTowerStrength(other)
+			if sd, ok := other.Strength.(*strength.StrengthData); ok {
+				sd.SetTemp(srcKey, bonus)
+			}
 		}
 	})
 	return nil
@@ -87,12 +95,17 @@ func (a *CritAura) OnHit(_ *tower.Tower, _ *projectile.Projectile, _ *enemy.Enem
 	return nil
 }
 func (a *CritAura) OnTick(t *tower.Tower, ctx *tower.TickContext) *tower.TickResult {
+	srcKey := fmt.Sprintf("critAura_%s_%d_%d", t.Key, t.Row, t.Col)
 	ctx.Towers.Each(func(other *tower.Tower) {
 		if other == t {
 			return
 		}
 		if distBetweenTowers(t, other) <= auraRadius {
-			other.Damage += other.BaseDamage * 0.10
+			bonus := other.BaseDamage * 0.10
+			ensureTowerStrength(other)
+			if sd, ok := other.Strength.(*strength.StrengthData); ok {
+				sd.SetTemp(srcKey, bonus)
+			}
 		}
 	})
 	return nil
@@ -115,8 +128,14 @@ func (a *SoloBoost) OnTick(t *tower.Tower, ctx *tower.TickContext) *tower.TickRe
 			alone = false
 		}
 	})
-	if alone {
-		t.Damage += t.BaseDamage * 0.30
+	srcKey := fmt.Sprintf("soloBoost_%s_%d_%d", t.Key, t.Row, t.Col)
+	ensureTowerStrength(t)
+	if sd, ok := t.Strength.(*strength.StrengthData); ok {
+		if alone {
+			sd.SetTemp(srcKey, t.BaseDamage*0.30)
+		} else {
+			sd.RemoveTemp(srcKey)
+		}
 	}
 	return nil
 }
@@ -124,4 +143,11 @@ func (a *SoloBoost) OnTick(t *tower.Tower, ctx *tower.TickContext) *tower.TickRe
 // distBetweenTowers 计算两座塔之间的像素距离。
 func distBetweenTowers(a, b *tower.Tower) float64 {
 	return math.Hypot(a.X-b.X, a.Y-b.Y)
+}
+
+// ensureTowerStrength 确保塔有 StrengthData（懒初始化）。
+func ensureTowerStrength(t *tower.Tower) {
+	if t.Strength == nil {
+		t.Strength = strength.NewStrengthData()
+	}
 }

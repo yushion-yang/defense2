@@ -4,9 +4,11 @@
 package types
 
 import (
+	"fmt"
 	"math"
 
 	"defense2/internal/core/enemy"
+	"defense2/internal/core/strength"
 	"defense2/internal/core/tower"
 	"defense2/internal/core/warden"
 )
@@ -56,8 +58,11 @@ func (b *EnvoyBehavior) Tick(w *warden.Warden, ctx *warden.TickContext) {
 			s.Timer = s.PossessDuration
 			s.X = best.X
 			s.Y = best.Y
-			// 增强塔伤害
-			best.Damage += s.DamageBonus
+			// 增强塔战力
+			ensureStrength(best)
+			if sd, ok := best.Strength.(*strength.StrengthData); ok {
+				sd.SetTemp(fmt.Sprintf("envoy_warden_%d", w.ID), s.DamageBonus)
+			}
 		}
 
 	case "possessing":
@@ -67,9 +72,11 @@ func (b *EnvoyBehavior) Tick(w *warden.Warden, ctx *warden.TickContext) {
 			s.Y = s.PossessedTower.Y - 20 // 悬浮在塔上方
 		}
 		if s.Timer <= 0 {
-			// 附身结束，恢复塔伤害，进入冷却
+			// 附身结束，移除战力加成，进入冷却
 			if s.PossessedTower != nil {
-				s.PossessedTower.Damage -= s.DamageBonus
+				if sd, ok := s.PossessedTower.Strength.(*strength.StrengthData); ok {
+					sd.RemoveTemp(fmt.Sprintf("envoy_warden_%d", w.ID))
+				}
 			}
 			s.PossessedTower = nil
 			s.Phase = "idle"

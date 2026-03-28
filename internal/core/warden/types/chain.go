@@ -4,9 +4,11 @@
 package types
 
 import (
+	"fmt"
 	"math/rand"
 
 	"defense2/internal/core/enemy"
+	"defense2/internal/core/strength"
 	"defense2/internal/core/tower"
 	"defense2/internal/core/warden"
 )
@@ -44,10 +46,13 @@ func (b *ChainBehavior) Tick(w *warden.Warden, ctx *warden.TickContext) {
 		return
 	}
 
-	// 1. 塔增强：为新建的塔添加伤害加成
+	// 1. 塔增强：为新建的塔添加战力临时加成
 	ctx.Towers.Each(func(t *tower.Tower) {
 		if !s.BoostedSet[t] {
-			t.Damage += s.TowerBonus
+			ensureStrength(t)
+			if sd, ok := t.Strength.(*strength.StrengthData); ok {
+				sd.SetTemp(fmt.Sprintf("chain_warden_%d", w.ID), s.TowerBonus)
+			}
 			s.BoostedSet[t] = true
 		}
 	})
@@ -66,6 +71,13 @@ func (b *ChainBehavior) Tick(w *warden.Warden, ctx *warden.TickContext) {
 				ctx.OnKill()
 			}
 		}
+	}
+}
+
+// ensureStrength 确保塔有 StrengthData（懒初始化）。
+func ensureStrength(t *tower.Tower) {
+	if t.Strength == nil {
+		t.Strength = strength.NewStrengthData()
 	}
 }
 
