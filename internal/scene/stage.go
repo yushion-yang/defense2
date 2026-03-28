@@ -1108,7 +1108,7 @@ func (s *StageScene) updatePlaying() {
 			s.audioMgr.PlaySafe(gameAudio.FireSFXForStyle(style))
 			s.shotSfxCooldown = 0.1
 		}
-	}, func(e *enemy.Enemy, damage float64, killed bool) {
+	}, func(e *enemy.Enemy, damage float64, killed bool, _ string) {
 		// 直接攻击方式（laser/beam/aoe等）的伤害飘字 + 受击闪白
 		if damage > 0 {
 			render.SpawnDamageText(e.X, e.Y-15, damage, damage >= 50)

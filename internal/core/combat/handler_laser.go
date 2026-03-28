@@ -15,10 +15,10 @@ func (h *LaserHandler) Fire(t *tower.Tower, target *enemy.Enemy, ctx *AttackCont
 	target.HP -= t.Damage
 	if target.HP <= 0 {
 		if ctx.OnHit != nil {
-			ctx.OnHit(target, t.Damage, true)
+			ctx.OnHit(target, t.Damage, true, ctx.Style)
 		}
 	} else if ctx.OnHit != nil {
-		ctx.OnHit(target, t.Damage, false)
+		ctx.OnHit(target, t.Damage, false, ctx.Style)
 	}
 
 	// 创建 beam 视觉

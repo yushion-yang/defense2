@@ -129,8 +129,8 @@ const (
 	SFXWaveClearPerfect = "waveClearPerfect" // wave-clear-perfect.wav — 完美通过
 	SFXVictory          = "victory"          // victory.wav — 胜利
 	SFXDefeat           = "defeat"           // defeat.wav — 失败
-	SFXGoldEarn         = "goldEarn"          // gold-earn.wav — 获得金币
-	SFXUIClick          = "uiClick"           // ui-click.wav — UI点击
+	SFXGoldEarn         = "goldEarn"         // gold-earn.wav — 获得金币
+	SFXUIClick          = "uiClick"          // ui-click.wav — UI点击
 	SFXExplode          = "explode"          // explode.wav — 爆炸
 	SFXUpgrade          = "upgrade"          // upgrade.wav — 升级塔
 	SFXSpeedToggle      = "speedToggle"      // speed-toggle.wav — 变速
@@ -144,6 +144,39 @@ const (
 	SFXChoiceAppear     = "choiceAppear"     // choice-appear.wav — 事件弹窗出现
 	SFXChoiceSelect     = "choiceSelect"     // choice-select.wav — 事件选择
 )
+
+// FireSFXForStyle 根据攻击方式返回射击音效名称。
+// 如果对应风格的 WAV 不存在，降级到通用 SFXShot。
+func FireSFXForStyle(style string) string {
+	name := "fire" + ucFirst(style) // 如 "fireProjectile", "fireLaser"
+	// 降级：如果没有对应文件就用通用射击音效
+	if name == "fire" {
+		return SFXShot
+	}
+	return name
+}
+
+// HitSFXForStyle 根据攻击方式返回命中音效名称。
+// 降级到 SFXHitFlesh。
+func HitSFXForStyle(style string) string {
+	name := "hit" + ucFirst(style) // 如 "hitProjectile", "hitLaser"
+	if name == "hit" {
+		return SFXHitFlesh
+	}
+	return name
+}
+
+// ucFirst 首字母大写（简单 ASCII）。
+func ucFirst(s string) string {
+	if s == "" {
+		return ""
+	}
+	b := []byte(s)
+	if b[0] >= 'a' && b[0] <= 'z' {
+		b[0] -= 32
+	}
+	return string(b)
+}
 
 // PlaySafe 安全播放音效，出错时仅打印日志不崩溃。
 func (m *Manager) PlaySafe(name string) {

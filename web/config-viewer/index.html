@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Defense2 Config Viewer</title>
+  <link rel="stylesheet" href="./style.css" />
+</head>
+<body>
+  <div class="app-shell">
+    <aside class="sidebar">
+      <div>
+        <div class="eyebrow">Defense2</div>
+        <h1>Config Viewer</h1>
+        <p class="sidebar-desc">Read-only viewer for game configuration data.</p>
+      </div>
+
+      <div class="sidebar-tools">
+        <input id="globalSearch" class="search-input" placeholder="Search enemies / towers / fields" />
+        <button data-tab="overview" class="tab active">Overview</button>
+        <button data-tab="enemies" class="tab">Enemies</button>
+        <button data-tab="towers" class="tab">Towers</button>
+        <button data-tab="waves" class="tab">Waves</button>
+        <button data-tab="towerGallery" class="tab">Tower Gallery</button>
+        <button data-tab="enemyGallery" class="tab">Enemy Gallery</button>
+      </div>
+
+      <div class="sidebar-actions">
+        <div id="status" class="status">Loading...</div>
+      </div>
+    </aside>
+
+    <main class="content">
+      <section id="overview" class="panel active"></section>
+      <section id="enemies" class="panel"></section>
+      <section id="towers" class="panel"></section>
+      <section id="waves" class="panel"></section>
+      <section id="towerGallery" class="panel"></section>
+      <section id="enemyGallery" class="panel"></section>
+    </main>
+  </div>
+
+  <script src="./viewer.js"></script>
+</body>
+</html>

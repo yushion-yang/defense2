@@ -59,7 +59,7 @@ func (h *SpinAoEHandler) Tick(t *tower.Tower, ctx *AttackContext) {
 		}
 		e.HP -= dmg
 		if ctx.OnHit != nil {
-			ctx.OnHit(e, dmg, e.HP <= 0)
+			ctx.OnHit(e, dmg, e.HP <= 0, ctx.Style)
 		}
 	})
 
@@ -67,7 +67,7 @@ func (h *SpinAoEHandler) Tick(t *tower.Tower, ctx *AttackContext) {
 		t.SpinActive = 0.3
 		t.FireTimer = 1.0 / t.AttackSpeed
 		if ctx.OnFire != nil {
-			ctx.OnFire()
+			ctx.OnFire(ctx.Style)
 		}
 	}
 }

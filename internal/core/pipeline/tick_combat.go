@@ -13,7 +13,7 @@ import (
 
 // TickTowerCombat 塔战斗子管线：按攻击方式分发射击逻辑。
 // beams 可为 nil（无 beam 渲染支持时），onFire/onHit 可为 nil。
-func TickTowerCombat(towers *tower.Pool, enemies *enemy.Pool, projectiles *projectile.Pool, beams *combat.BeamPool, dt float64, onFire func(), onHit combat.HitCallback) {
+func TickTowerCombat(towers *tower.Pool, enemies *enemy.Pool, projectiles *projectile.Pool, beams *combat.BeamPool, dt float64, onFire func(style string), onHit combat.HitCallback) {
 	ctx := &combat.AttackContext{
 		Enemies:     enemies,
 		Projectiles: projectiles,
@@ -33,6 +33,7 @@ func TickTowerCombat(towers *tower.Pool, enemies *enemy.Pool, projectiles *proje
 		if style == "" {
 			style = tower.StyleProjectile
 		}
+		ctx.Style = string(style)
 
 		// 自管理攻击方式：每帧 tick，不走标准冷却
 		if combat.IsSelfManaged(style) {
@@ -60,7 +61,7 @@ func TickTowerCombat(towers *tower.Pool, enemies *enemy.Pool, projectiles *proje
 		t.FireTimer = 1.0 / t.AttackSpeed
 		t.FireAnim = 0.15
 		if onFire != nil {
-			onFire()
+			onFire(string(style))
 		}
 	})
 }
@@ -148,7 +149,12 @@ func TickProjectileHits(projectiles *projectile.Pool, enemies *enemy.Pool, tower
 			e.HP -= totalDamage
 			killed := e.HP <= 0
 			if onHit != nil {
-				onHit(e, totalDamage, killed)
+				// 弹射物命中时使用来源塔的攻击方式
+				hitStyle := ""
+				if srcTower != nil {
+					hitStyle = string(srcTower.AttackStyleID)
+				}
+				onHit(e, totalDamage, killed, hitStyle)
 			}
 
 			if killed {

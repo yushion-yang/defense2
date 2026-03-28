@@ -40,6 +40,11 @@ generate-assets:
 arch:
 	./scripts/gen-arch.sh
 
+# Config viewer (read-only web UI)
+preview:
+	@echo "Config viewer: http://localhost:8080/web/config-viewer/"
+	python3 -m http.server 8080
+
 # Clean
 clean:
 	rm -rf dist/ coverage.out

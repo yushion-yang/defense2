@@ -53,7 +53,7 @@ func (h *ScatterHandler) Fire(t *tower.Tower, target *enemy.Enemy, ctx *AttackCo
 			}
 			e.HP -= damagePerPellet
 			if ctx.OnHit != nil {
-				ctx.OnHit(e, damagePerPellet, e.HP <= 0)
+				ctx.OnHit(e, damagePerPellet, e.HP <= 0, ctx.Style)
 			}
 		})
 

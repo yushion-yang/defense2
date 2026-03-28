@@ -28,13 +28,14 @@ type AttackContext struct {
 	Enemies     *enemy.Pool
 	Projectiles *projectile.Pool
 	Beams       *BeamPool
-	OnFire      func()
-	OnHit       func(e *enemy.Enemy, damage float64, killed bool)
+	OnFire      func(style string)                                              // 射击回调（携带攻击方式）
+	OnHit       func(e *enemy.Enemy, damage float64, killed bool, style string) // 命中回调（携带攻击方式）
 	DT          float64
+	Style       string // 当前攻击方式（由 pipeline 设置，handler 内部可读取）
 }
 
-// HitCallback 命中回调（用于 laser/wideBeam/scatter 的即时伤害反馈）。
-type HitCallback = func(e *enemy.Enemy, damage float64, killed bool)
+// HitCallback 弹射物命中回调（用于生成飘字、音效等）。
+type HitCallback = func(e *enemy.Enemy, damage float64, killed bool, attackStyle string)
 
 // ── 注册表 ──
 
