@@ -5,7 +5,9 @@ package hud
 
 import (
 	"fmt"
+	"math"
 
+	"defense2/internal/core/strength"
 	"defense2/internal/core/tower"
 	"defense2/internal/render"
 	"defense2/internal/render/draw"
@@ -63,14 +65,38 @@ func DrawInfoPanel(screen *ebiten.Image, t *tower.Tower, sellValue int) {
 	panel.Radius = float32(theme.CenterPanelRadius)
 	panel.AddSpace(topPad - innerPad)
 
-	// Row 1: Title (tower name + level + upgrade hint)
+	// 提取战力数据（从 Tower 的 interface{} 字段做类型断言）
+	sd, _ := t.Strength.(*strength.StrengthData)
+	cfg, _ := t.StrengthCfg.(*strength.StrengthConfig)
+	var effStr float64
+	if sd != nil {
+		effStr = sd.Effective()
+	}
+
+	// Row 1: 塔名 + 等级 + 战力显示
 	panel.AddRow(titleH, func(screen *ebiten.Image, x, y float64, w float64) {
-		levelTxt := fmt.Sprintf("Lv.%d", t.Level)
 		fm.DrawBoldText(screen, t.Label, x, y, theme.FontLG, theme.TextTitle)
-		fm.DrawText(screen, levelTxt, x+fm.MeasureText(t.Label, theme.FontLG)+8, y+2, theme.FontSM, theme.StatusSkill)
+		afterName := x + fm.MeasureText(t.Label, theme.FontLG) + 8
+		levelTxt := fmt.Sprintf("Lv.%d", t.Level)
+		fm.DrawText(screen, levelTxt, afterName, y+2, theme.FontSM, theme.StatusSkill)
 
 		rightX := x + w
-		if hasUpgrade {
+
+		// 右侧：战力数值 + 加成分解
+		if sd != nil {
+			strClr := theme.StatusStrNorm
+			if effStr > 100 {
+				strClr = theme.StatusStrUp
+			} else if effStr < 100 {
+				strClr = theme.StatusStrDown
+			}
+			strTxt := fmt.Sprintf("强度%.0f", effStr)
+			breakdown := strengthBreakdown(sd)
+			if breakdown != "" {
+				strTxt += " " + breakdown
+			}
+			fm.DrawRightText(screen, strTxt, rightX, y+2, theme.FontSM, strClr)
+		} else if hasUpgrade {
 			upgCost := t.UpgradeCost()
 			upgTxt := fmt.Sprintf("[U] 升级 $%d", upgCost)
 			fm.DrawRightText(screen, upgTxt, rightX, y+2, theme.FontSM, theme.StatusWarden)
@@ -79,7 +105,7 @@ func DrawInfoPanel(screen *ebiten.Image, t *tower.Tower, sellValue int) {
 		}
 	})
 
-	// Row 2: Current stats (icon + value) + DPS
+	// Row 2: 属性行（伤害/攻速/射程/DPS）
 	panel.AddRow(attrH, func(screen *ebiten.Image, x, y float64, w float64) {
 		colW := w / 4
 		const (
@@ -89,15 +115,31 @@ func DrawInfoPanel(screen *ebiten.Image, t *tower.Tower, sellValue int) {
 		im := render.GlobalIcons()
 		textOff := iconSize + iconGap
 
+		// 伤害
 		drawStatIcon(screen, im, "stat-damage", x, y, iconSize)
-		fm.DrawText(screen, formatStatShort(t.BaseDamage, t.Damage), x+textOff, y, theme.FontMD, theme.InfoAttrDamage)
+		if cfg != nil {
+			fm.DrawText(screen, formatStrengthStat(cfg, "attackDamage", effStr, t.Damage), x+textOff, y, theme.FontMD, theme.InfoAttrDamage)
+		} else {
+			fm.DrawText(screen, formatStatShort(t.BaseDamage, t.Damage), x+textOff, y, theme.FontMD, theme.InfoAttrDamage)
+		}
 
+		// 攻速
 		drawStatIcon(screen, im, "stat-atkspd", x+colW, y, iconSize)
-		fm.DrawText(screen, formatStatShort(t.BaseSpeed, t.AttackSpeed), x+colW+textOff, y, theme.FontMD, theme.InfoAttrAtkSpd)
+		if cfg != nil {
+			fm.DrawText(screen, formatStrengthSpeed(cfg, effStr, t.AttackSpeed), x+colW+textOff, y, theme.FontMD, theme.InfoAttrAtkSpd)
+		} else {
+			fm.DrawText(screen, formatStatShort(t.BaseSpeed, t.AttackSpeed), x+colW+textOff, y, theme.FontMD, theme.InfoAttrAtkSpd)
+		}
 
+		// 射程
 		drawStatIcon(screen, im, "stat-range", x+colW*2, y, iconSize)
-		fm.DrawText(screen, fmt.Sprintf("%.0f", t.Range), x+colW*2+textOff, y, theme.FontMD, theme.InfoAttrRange)
+		if cfg != nil {
+			fm.DrawText(screen, formatStrengthStat(cfg, "range", effStr, t.Range), x+colW*2+textOff, y, theme.FontMD, theme.InfoAttrRange)
+		} else {
+			fm.DrawText(screen, fmt.Sprintf("%.0f", t.Range), x+colW*2+textOff, y, theme.FontMD, theme.InfoAttrRange)
+		}
 
+		// DPS
 		drawStatIcon(screen, im, "stat-dps", x+colW*3, y, iconSize)
 		fm.DrawText(screen, fmt.Sprintf("%.1f", t.DPS()), x+colW*3+textOff, y, theme.FontMD, theme.StatusStrUp)
 	})
@@ -136,24 +178,50 @@ func DrawInfoPanel(screen *ebiten.Image, t *tower.Tower, sellValue int) {
 		})
 	}
 
-	// Row 3: Current (unlocked) abilities only
+	// Row 3: 攻击方式
+	panel.AddRow(abilityH, func(screen *ebiten.Image, x, y float64, _ float64) {
+		style := t.AttackStyleID
+		if style == "" {
+			style = "projectile"
+		}
+		fm.DrawText(screen, "攻击: "+attackStyleLabel(style), x, y, theme.FontXS, theme.TextMuted)
+	})
+
+	// Row 4: 当前（已解锁）能力
 	if len(currentAbilities) > 0 {
-		panel.AddSpace(detailGap)
 		for _, ab := range currentAbilities {
 			ab := ab
 			panel.AddRow(abilityH, func(screen *ebiten.Image, x, y float64, w float64) {
 				im := render.GlobalIcons()
 				if iconName, ok := abilityIconMap[ab]; ok {
 					drawStatIcon(screen, im, iconName, x, y, 12)
-					fm.DrawBoldText(screen, abilityLabel(ab), x+16, y, theme.FontXS, theme.TextBody)
-					if desc, ok := abilityDescMap[ab]; ok {
-						fm.DrawText(screen, desc, x+16+fm.MeasureText(abilityLabel(ab), theme.FontXS)+6, y+1, theme.FontXS, theme.TextMuted)
+				}
+				abX := x + 16.0
+				fm.DrawBoldText(screen, abilityLabel(ab), abX, y, theme.FontXS, theme.TextBody)
+				abX += fm.MeasureText(abilityLabel(ab), theme.FontXS) + 6
+
+				// 战力缩放参数（如 "比率 20%+(60%)=80%"）
+				if cfg != nil && sd != nil {
+					if strDesc := abilityStrengthDesc(ab, cfg, effStr); strDesc != "" {
+						fm.DrawText(screen, strDesc, abX, y+1, theme.FontXS, theme.StatusStrUp)
+						abX += fm.MeasureText(strDesc, theme.FontXS) + 4
+					} else if desc, ok := abilityDescMap[ab]; ok {
+						fm.DrawText(screen, desc, abX, y+1, theme.FontXS, theme.TextMuted)
 					}
-				} else {
-					fm.DrawText(screen, abilityLabel(ab), x, y, theme.FontSM, theme.TextBody)
+				} else if desc, ok := abilityDescMap[ab]; ok {
+					fm.DrawText(screen, desc, abX, y+1, theme.FontXS, theme.TextMuted)
 				}
 			})
 		}
+	}
+
+	// Row 4b: 待解锁能力预览
+	_, futureAbilities := splitAbilities(t)
+	for _, fu := range futureAbilities {
+		fu := fu
+		panel.AddRow(abilityH, func(screen *ebiten.Image, x, y float64, _ float64) {
+			fm.DrawText(screen, fmt.Sprintf("Lv%d: %s", fu.Level, fu.Name), x, y, theme.FontXS, theme.TextMuted)
+		})
 	}
 
 	// Row 4: Action buttons
@@ -370,6 +438,142 @@ func abilityLabel(code string) string {
 	}
 	return code
 }
+
+// ── 战力系统 HUD 辅助函数 ──
+
+// strengthBreakdown 生成战力加成分解文本，如 "↑(永+50 链+20)"。
+func strengthBreakdown(sd *strength.StrengthData) string {
+	if sd == nil {
+		return ""
+	}
+	var parts []string
+	if sd.Permanent > 0 {
+		parts = append(parts, fmt.Sprintf("永+%.0f", sd.Permanent))
+	}
+	// 检查链加成
+	if chain, ok := sd.Temp["chain"]; ok && chain > 0 {
+		parts = append(parts, fmt.Sprintf("链+%.0f", chain))
+	}
+	// 其他临时加成
+	for key, val := range sd.Temp {
+		if key == "chain" || val <= 0 {
+			continue
+		}
+		parts = append(parts, fmt.Sprintf("+%.0f", val))
+	}
+	if len(parts) == 0 {
+		return ""
+	}
+	result := "↑("
+	for i, p := range parts {
+		if i > 0 {
+			result += " "
+		}
+		result += p
+	}
+	result += ")"
+	return result
+}
+
+// formatStrengthStat 用战力绑定格式化普通属性: "base+(scaled)=total"。
+// 如果该属性无绑定或 potential 为0，返回简单数值。
+func formatStrengthStat(cfg *strength.StrengthConfig, path string, eff, fallback float64) string {
+	if cfg == nil {
+		return fmt.Sprintf("%.0f", fallback)
+	}
+	b := cfg.ResolveBinding(path)
+	if b == nil || b.Potential == 0 {
+		return fmt.Sprintf("%.0f", fallback)
+	}
+	scaled := b.Potential * (eff / 100.0)
+	total := b.Base + scaled
+	return fmt.Sprintf("%.0f+(%.0f)=%.0f", b.Base, scaled, total)
+}
+
+// formatStrengthSpeed 用战力绑定格式化攻速（反向公式）: "base+(scaled)=total s"。
+// 攻速公式: base + potential * (100 / max(1, eff))，越高战力间隔越短。
+func formatStrengthSpeed(cfg *strength.StrengthConfig, eff, fallback float64) string {
+	if cfg == nil {
+		return fmt.Sprintf("%.2f", fallback)
+	}
+	b := cfg.ResolveBinding("attackSpeed")
+	if b == nil || b.Potential == 0 {
+		return fmt.Sprintf("%.2f", fallback)
+	}
+	e := eff
+	if e < 1 {
+		e = 1
+	}
+	scaled := b.Potential * (100.0 / e)
+	total := b.Base + scaled
+	if total < 0.1 {
+		total = 0.1
+	}
+	return fmt.Sprintf("%.2f+(%.2f)=%.2fs", b.Base, scaled, total)
+}
+
+// abilityStrengthDesc 返回能力的战力缩放参数描述。
+// 对有 effects.* 绑定的能力，显示 "参数名 base%+(scaled%)=total%"。
+func abilityStrengthDesc(abilityType string, cfg *strength.StrengthConfig, eff float64) string {
+	// 能力类型 → (绑定路径, 参数显示名, 是否百分比)
+	mapping, ok := abilityStrengthBindings[abilityType]
+	if !ok {
+		return ""
+	}
+	b := cfg.ResolveBinding(mapping.path)
+	if b == nil || b.Potential == 0 {
+		return ""
+	}
+	scaled := b.Potential * (eff / 100.0)
+	total := b.Base + scaled
+	if mapping.percent {
+		return fmt.Sprintf("%s %.0f%%+(%.0f%%)=%.0f%%",
+			mapping.label,
+			b.Base*100, scaled*100, total*100)
+	}
+	return fmt.Sprintf("%s %.1f+(%.1f)=%.1f",
+		mapping.label, b.Base, scaled, total)
+}
+
+// abilityStrengthBinding 能力战力绑定映射。
+type abilityStrengthBinding struct {
+	path    string // StrengthConfig 中的绑定路径
+	label   string // 参数显示名
+	percent bool   // 是否以百分比显示
+}
+
+// abilityStrengthBindings 已知的能力-战力绑定映射表。
+var abilityStrengthBindings = map[string]abilityStrengthBinding{
+	"percentHpDamage": {"effects.percentHp", "比率", true},
+	"onHitSlow":       {"effects.slowFactor", "减速", true},
+	"executionBonus":  {"effects.executionThreshold", "阈值", true},
+	"splash":          {"effects.splashRadius", "范围", false},
+	"burn":            {"effects.burnDps", "伤害", false},
+	"bleedDot":        {"effects.bleedDps", "伤害", false},
+	"stun":            {"effects.stunDuration", "时长", false},
+	"bounce":          {"effects.bounceRange", "范围", false},
+}
+
+// attackStyleLabel 攻击方式中文标签。
+func attackStyleLabel(style string) string {
+	labels := map[string]string{
+		"projectile": "投射物",
+		"laser":      "激光",
+		"wideBeam":   "宽光束",
+		"scatter":    "散射",
+		"charge":     "蓄力",
+		"spin_aoe":   "旋转AoE",
+		"pierce":     "穿刺",
+		"aura_dot":   "范围毒伤",
+	}
+	if l, ok := labels[style]; ok {
+		return l
+	}
+	return style
+}
+
+// 确保 math 包被使用（formatStrengthSpeed 中的计算）
+var _ = math.Max
 
 // DrawInfoPanelHoverTooltip draws the upgrade detail tooltip above the info panel
 // when the mouse is hovering over the panel. Shows per-level stat growth and future ability unlocks.
