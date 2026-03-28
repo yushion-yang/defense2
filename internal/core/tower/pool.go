@@ -64,6 +64,7 @@ func (p *Pool) Place(row, col int, cx, cy float64, def TowerDef) *Tower {
 			t.PierceTargets = def.PierceTargets
 			t.PierceDecay = def.PierceDecay
 			t.AuraPulse = 0
+			t.Branch = ""
 			t.Target = nil
 			t.AbilityUnlocks = def.AbilityUnlocks
 			p.Count++

@@ -79,6 +79,9 @@ type Tower struct {
 	// AuraDot 运行时状态
 	AuraPulse float64 // 脉冲动画计时
 
+	// 分支特化
+	Branch string // 分支特化标识（空=未特化，一次性选择）
+
 	// 索敌锁定
 	Target interface{} // 当前锁定目标（*enemy.Enemy，用 interface{} 避免循环导入）
 
