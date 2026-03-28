@@ -4,7 +4,7 @@ package defense2
 
 import "embed"
 
-//go:embed config/levels/*.json config/towers/*.json
+//go:embed config/levels/*.json config/towers/*.json config/enemies/*.json
 var DataFS embed.FS
 
 //go:embed assets/towers/*/*.svg

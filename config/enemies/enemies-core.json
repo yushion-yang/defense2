@@ -1,0 +1,148 @@
+{
+  "_meta": {
+    "description": "Core enemy archetypes (Phase 1 simplification). Deleted types migrated to archetype + buff template combos.",
+    "migration": {
+      "berserker": "normal + berserk buff template",
+      "regenerator": "tank + regen buff template",
+      "elite": "tank + armorBuff + shielded stats via wave scaling",
+      "boss": "tank + bossPhase + bossReflect boss templates (use boss-templates.json)",
+      "mirror": "stealth + revive buff template",
+      "devoter": "tank + healAura buff template (onDeath variant)",
+      "reflector": "normal + reflect buff template",
+      "timewarp": "buffer + timewarp buff template",
+      "ironhide": "armored + damageReduce buff template",
+      "colossus": "tank + regen + damageReduce buff templates",
+      "steadfast": "runner + corruptImmune buff template (slowImmune variant)",
+      "ironwill": "armored + corruptImmune buff template (stunImmune variant)"
+    }
+  },
+  "normal": {
+    "label": "步兵",
+    "color": "#ef4444",
+    "hpScale": 1.18,
+    "speedScale": 1.04,
+    "rewardScale": 0.82,
+    "radius": 18,
+    "description": "最基础的战场单位，各项属性均衡，没有特殊能力，以数量取胜"
+  },
+  "runner": {
+    "label": "疾行",
+    "color": "#fb923c",
+    "hpScale": 0.74,
+    "speedScale": 1.84,
+    "rewardScale": 0.72,
+    "radius": 16,
+    "description": "轻装快速突击兵，血量薄弱但移速极高，擅长趁防线空隙突破"
+  },
+  "tank": {
+    "label": "重甲",
+    "color": "#a855f7",
+    "hpScale": 2.85,
+    "speedScale": 0.78,
+    "rewardScale": 1.35,
+    "radius": 24,
+    "description": "身形壮硕的重型单位，血量极高但行动缓慢，纯粹依靠高血量硬扛"
+  },
+  "armored": {
+    "label": "护甲兵",
+    "color": "#78716c",
+    "hpScale": 1.4,
+    "speedScale": 0.85,
+    "rewardScale": 1.1,
+    "radius": 20,
+    "description": "身披重甲的坚固单位，血量较高且行动迟缓，以数量和硬度拖延防线"
+  },
+  "shielded": {
+    "label": "护盾兵",
+    "color": "#60a5fa",
+    "hpScale": 1.28,
+    "speedScale": 1.02,
+    "rewardScale": 0.94,
+    "radius": 18,
+    "shieldScale": 0.82,
+    "description": "携带能量护盾的战斗单位。护盾值82%最大生命值，伤害优先扣护盾"
+  },
+  "swarm": {
+    "label": "虫群",
+    "color": "#fde047",
+    "hpScale": 0.5,
+    "speedScale": 2.08,
+    "rewardScale": 0.6,
+    "radius": 12,
+    "description": "体型最小的蜂拥单位，单体极其脆弱但速度最快、数量最多，成群涌来容易压垮单体火力"
+  },
+  "stealth": {
+    "label": "隐身兵",
+    "color": "#a3a3a3",
+    "hpScale": 0.92,
+    "speedScale": 1.32,
+    "rewardScale": 1.1,
+    "radius": 16,
+    "stealthDuration": 3,
+    "description": "装备隐形装置的渗透单位。出场隐身3秒，期间不可被选为目标，溅射可强制显形"
+  },
+  "splitter": {
+    "label": "分裂体",
+    "color": "#a78bfa",
+    "hpScale": 1.6,
+    "speedScale": 0.86,
+    "rewardScale": 0.7,
+    "radius": 20,
+    "splitCount": 2,
+    "description": "由不稳定物质构成的生物。死亡分裂为2个子体(30%血量/×1.4速度)"
+  },
+  "teleporter": {
+    "label": "传送兵",
+    "color": "#8b5cf6",
+    "hpScale": 0.8,
+    "speedScale": 1,
+    "rewardScale": 1.2,
+    "radius": 16,
+    "teleportInterval": 5,
+    "teleportSkipSegments": 1,
+    "description": "空间折叠者。每5秒传送跳过1段路径，行动难以预测"
+  },
+  "healer": {
+    "label": "治疗兵",
+    "color": "#34d399",
+    "hpScale": 1.06,
+    "speedScale": 1.14,
+    "rewardScale": 1.02,
+    "radius": 20,
+    "healScale": 0.24,
+    "healRadius": 105,
+    "healInterval": 2.5,
+    "description": "战场医疗兵。每2.5秒治疗半径105内友方24%生命值"
+  },
+  "buffer": {
+    "label": "旗手",
+    "color": "#f59e0b",
+    "hpScale": 0.68,
+    "speedScale": 1.08,
+    "rewardScale": 1.3,
+    "radius": 16,
+    "auraRange": 100,
+    "auraSpeedUp": 0.2,
+    "auraArmor": 10,
+    "description": "军阵指挥官，自身血薄。光环范围100：+20%移速，+10护甲"
+  },
+  "flying": {
+    "label": "飞行斥候",
+    "color": "#93c5fd",
+    "movementType": "flying",
+    "hpScale": 0.9,
+    "speedScale": 1.1,
+    "rewardScale": 0.85,
+    "radius": 16,
+    "description": "基础飞行单位，无特殊能力。对空火力的入门检验"
+  },
+  "dummy": {
+    "label": "木桩",
+    "color": "#78716c",
+    "hpScale": 200,
+    "speedScale": 0,
+    "rewardScale": 0,
+    "radius": 24,
+    "description": "训练用木桩，不移动，超高生命值，用于测试DPS输出"
+  }
+}
