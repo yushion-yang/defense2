@@ -130,8 +130,8 @@ type TowerDef struct {
 	PierceTargets int
 	PierceDecay   float64
 
-	// 战力绑定原始配置（JSON 原样传递，由 stage 解析为 StrengthConfig）
-	StrengthRaw map[string]interface{}
+	// 战力绑定配置（从 JSON 解析的强类型结构，由 stage 转换为 StrengthConfig）
+	StrengthCfg interface{} // *config.StrengthJSON（用 interface{} 避免循环导入）
 }
 
 // BaseTowerDefs 返回 4 种基础塔定义。

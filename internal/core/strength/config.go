@@ -14,6 +14,23 @@ type StrengthConfig struct {
 	Bindings map[string]*StrengthBinding // 属性路径 → 绑定（如 "attackDamage", "effects.slowFactor"）
 }
 
+// BindingPair 基础值+潜力值的简单对（用于从外部强类型结构传入）。
+type BindingPair struct {
+	Base      float64
+	Potential float64
+}
+
+// NewStrengthConfig 从一组命名绑定创建战力配置。
+func NewStrengthConfig(bindings map[string]BindingPair) *StrengthConfig {
+	cfg := &StrengthConfig{
+		Bindings: make(map[string]*StrengthBinding, len(bindings)),
+	}
+	for path, bp := range bindings {
+		cfg.Bindings[path] = &StrengthBinding{Base: bp.Base, Potential: bp.Potential}
+	}
+	return cfg
+}
+
 // ParseStrengthConfig 从原始 JSON map 解析战力配置。
 // 支持两种格式:
 //   - 平铺: { "attackDamage": { "base": 10, "potential": 5 } }

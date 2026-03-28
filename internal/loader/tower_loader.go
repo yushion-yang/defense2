@@ -95,7 +95,7 @@ func TowerJSONToDef(key string, t *config.TowerJSON) tower.TowerDef {
 	}
 
 	// 战力绑定配置
-	def.StrengthRaw = t.Strength
+	def.StrengthCfg = t.Strength
 
 	return def
 }

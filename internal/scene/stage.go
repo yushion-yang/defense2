@@ -897,8 +897,8 @@ func (s *StageScene) tryPlaceTower(px, py float64) bool {
 	if placed != nil {
 		sd := strength.NewStrengthData()
 		placed.Strength = sd
-		if def.StrengthRaw != nil {
-			cfg := strength.ParseStrengthConfig(def.StrengthRaw)
+		if sj, ok := def.StrengthCfg.(*config.StrengthJSON); ok && sj != nil {
+			cfg := strengthConfigFromJSON(sj)
 			placed.StrengthCfg = cfg
 			// 从战力配置提取潜力值到塔字段
 			if b := cfg.ResolveBinding("attackDamage"); b != nil {
@@ -1709,4 +1709,28 @@ func loadTowerDefsOrFallback() []tower.TowerDef {
 		return tower.BaseTowerDefs()
 	}
 	return defs
+}
+
+// strengthConfigFromJSON 将强类型 StrengthJSON 转为 strength.StrengthConfig。
+func strengthConfigFromJSON(sj *config.StrengthJSON) *strength.StrengthConfig {
+	bindings := make(map[string]strength.BindingPair)
+	addBinding := func(path string, b *config.BindingJSON) {
+		if b != nil {
+			bindings[path] = strength.BindingPair{Base: b.Base, Potential: b.Potential}
+		}
+	}
+	addBinding("attackDamage", sj.AttackDamage)
+	addBinding("attackSpeed", sj.AttackSpeed)
+	addBinding("range", sj.Range)
+	if sj.Effects != nil {
+		addBinding("effects.slowFactor", sj.Effects.SlowFactor)
+		addBinding("effects.percentHp", sj.Effects.PercentHp)
+		addBinding("effects.executionThreshold", sj.Effects.ExecutionThreshold)
+		addBinding("effects.splashRadius", sj.Effects.SplashRadius)
+		addBinding("effects.burnDps", sj.Effects.BurnDps)
+		addBinding("effects.bleedDps", sj.Effects.BleedDps)
+		addBinding("effects.stunDuration", sj.Effects.StunDuration)
+		addBinding("effects.bounceRange", sj.Effects.BounceRange)
+	}
+	return strength.NewStrengthConfig(bindings)
 }

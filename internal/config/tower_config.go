@@ -36,8 +36,8 @@ type TowerJSON struct {
 	PierceConfig     *PierceConfigJSON  `json:"pierceConfig"`     // pierce 穿刺配置
 
 	// 战力系统配置
-	Strength map[string]interface{} `json:"strength"` // 战力绑定配置（attackDamage/attackSpeed/range/effects.*）
-	PoisonConfig     *PoisonConfigJSON  `json:"poisonConfig"`     // aura_dot 持续毒伤配置
+	Strength *StrengthJSON `json:"strength"` // 战力绑定（基础值+潜力值）
+	PoisonConfig *PoisonConfigJSON `json:"poisonConfig"` // aura_dot 持续毒伤配置
 }
 
 // BeamConfigJSON 光束配置。
@@ -73,6 +73,32 @@ type PoisonConfigJSON struct {
 // TowerAbilJSON 塔能力的 JSON 原始结构。
 type TowerAbilJSON struct {
 	Name string `json:"type"` // 能力注册名称（JSON 中为 "type" 字段）
+}
+
+// StrengthJSON 战力绑定配置（基础值+潜力值）。
+type StrengthJSON struct {
+	AttackDamage *BindingJSON         `json:"attackDamage"` // 攻击力绑定
+	AttackSpeed  *BindingJSON         `json:"attackSpeed"`  // 攻速绑定
+	Range        *BindingJSON         `json:"range"`        // 射程绑定
+	Effects      *StrengthEffectsJSON `json:"effects"`      // 能力效果绑定
+}
+
+// BindingJSON 单个属性的基础值+潜力值。
+type BindingJSON struct {
+	Base      float64 `json:"base"`      // 基础值（强度0时的最低值）
+	Potential float64 `json:"potential"` // 潜力值（强度100时 base+potential）
+}
+
+// StrengthEffectsJSON 能力效果的战力绑定。
+type StrengthEffectsJSON struct {
+	SlowFactor         *BindingJSON `json:"slowFactor"`         // 减速倍率
+	PercentHp          *BindingJSON `json:"percentHp"`          // 百分比HP伤害
+	ExecutionThreshold *BindingJSON `json:"executionThreshold"` // 斩杀阈值
+	SplashRadius       *BindingJSON `json:"splashRadius"`       // 溅射半径
+	BurnDps            *BindingJSON `json:"burnDps"`            // 灼烧DPS
+	BleedDps           *BindingJSON `json:"bleedDps"`           // 流血DPS
+	StunDuration       *BindingJSON `json:"stunDuration"`       // 眩晕时长
+	BounceRange        *BindingJSON `json:"bounceRange"`        // 弹射范围
 }
 
 // BounceConfigJSON 弹射配置。
