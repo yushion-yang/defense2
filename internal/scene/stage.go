@@ -439,10 +439,11 @@ func (s *StageScene) Draw(screen *ebiten.Image) {
 	render.DrawMap(screen, s.gameMap, render.GlobalFont(), float64(s.frame)/60.0, nil)
 
 	// 塔（优先 SVG 渲染，回退到彩色方块）
-	s.towerRenderer.DrawTowers(screen, s.towers)
+	animTime := float64(s.frame) / 60.0
+	s.towerRenderer.DrawTowers(screen, s.towers, s.hoveredTower, animTime)
 
 	// 敌人（优先 SVG 渲染）
-	s.enemyRenderer.DrawEnemies(screen, s.enemies)
+	s.enemyRenderer.DrawEnemies(screen, s.enemies, animTime)
 
 	// 弹射物
 	render.DrawProjectiles(screen, s.projectiles)

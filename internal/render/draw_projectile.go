@@ -1,20 +1,50 @@
-// draw_projectile.go — 弹射物渲染。
-// 将存活弹射物绘制为黄色小圆点。
+// draw_projectile.go — projectile rendering.
+// Dispatches by SourceTowerKey to render different visual styles per tower type.
+// Uses glow effects and diamond shapes for variety.
 package render
 
 import (
-	"image/color"
+	"strings"
 
 	"defense2/internal/core/projectile"
+	"defense2/internal/render/draw"
+	"defense2/internal/render/theme"
 
 	"github.com/hajimehoshi/ebiten/v2"
-	"github.com/hajimehoshi/ebiten/v2/vector"
 )
 
-// DrawProjectiles 渲染所有存活弹射物。
+// DrawProjectiles renders all alive projectiles with per-tower-type visuals.
 func DrawProjectiles(screen *ebiten.Image, pool *projectile.Pool) {
-	clr := color.RGBA{R: 255, G: 220, B: 100, A: 255} // 黄色
 	pool.Each(func(p *projectile.Projectile) {
-		vector.DrawFilledCircle(screen, float32(p.X), float32(p.Y), float32(p.Radius), clr, false)
+		cx := float32(p.X)
+		cy := float32(p.Y)
+		key := p.SourceTowerKey
+
+		switch {
+		case strings.Contains(key, "sniper"):
+			// Sniper: larger solid + glow
+			draw.Glow(screen, cx, cy,
+				theme.ProjSniperR, theme.ProjSniperGlow, theme.ProjSniper)
+
+		case strings.Contains(key, "rapid"):
+			// Rapid fire: small solid circle
+			draw.FilledCircle(screen, cx, cy,
+				theme.ProjDefaultR, theme.ProjRapid)
+
+		case strings.Contains(key, "freeze"):
+			// Freeze: diamond shape
+			draw.Diamond(screen, cx, cy,
+				theme.ProjDefaultR+1, 1.5, theme.ProjFreeze)
+
+		case strings.Contains(key, "wind"):
+			// Wind: solid circle
+			draw.FilledCircle(screen, cx, cy,
+				theme.ProjDefaultR, theme.ProjWind)
+
+		default:
+			// Default: solid + glow
+			draw.Glow(screen, cx, cy,
+				theme.ProjDefaultR, theme.ProjDefaultGlow, theme.ProjDefault)
+		}
 	})
 }

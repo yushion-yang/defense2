@@ -1,31 +1,33 @@
-// draw_tower.go — 塔渲染。
-// 优先使用 PNG 精灵渲染塔，回退到彩色方块。支持放塔预览。
+// draw_tower.go — tower rendering.
+// Uses PNG sprites (64px), fallback to geometric shapes. Themed selection ring,
+// range indicator, name label, and buff dots for the selected tower.
 package render
 
 import (
 	"fmt"
 	"image/color"
-	"math"
 
 	"defense2/internal/core/tower"
+	"defense2/internal/render/draw"
 	"defense2/internal/render/sprite"
+	"defense2/internal/render/theme"
 
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/hajimehoshi/ebiten/v2/vector"
 )
 
-// TowerRenderer 管理塔的 PNG 精灵渲染。
+// TowerRenderer manages tower PNG sprite rendering.
 type TowerRenderer struct {
-	cache   *sprite.Cache // 图像缓存，避免重复解码
-	assetFS AssetReader   // 嵌入式资源文件读取器
+	cache   *sprite.Cache
+	assetFS AssetReader
 }
 
-// AssetReader 读取嵌入式资源文件的接口。
+// AssetReader reads embedded asset files.
 type AssetReader interface {
 	ReadFile(name string) ([]byte, error)
 }
 
-// NewTowerRenderer 创建塔渲染器。
+// NewTowerRenderer creates a tower renderer.
 func NewTowerRenderer(assetFS AssetReader) *TowerRenderer {
 	return &TowerRenderer{
 		cache:   sprite.NewCache(),
@@ -33,41 +35,62 @@ func NewTowerRenderer(assetFS AssetReader) *TowerRenderer {
 	}
 }
 
-const towerSpriteSize = 40 // 塔 PNG 精灵尺寸（像素）
+const towerSpriteSize = 64 // display size in pixels, matching theme.TowerBaseSize
 
-// DrawTowers 渲染所有已放置的塔。
-func (tr *TowerRenderer) DrawTowers(screen *ebiten.Image, pool *tower.Pool) {
+// DrawTowers renders all placed towers.
+func (tr *TowerRenderer) DrawTowers(screen *ebiten.Image, pool *tower.Pool, selectedTower *tower.Tower, animTime float64) {
 	pool.Each(func(t *tower.Tower) {
 		cx := float32(t.X)
 		cy := float32(t.Y)
+		selected := selectedTower != nil && t == selectedTower
 
-		// 尝试加载 PNG 精灵
+		// --- Selection ring & range indicator (selected tower only) ---
+		if selected {
+			draw.CircleOutline(screen, cx, cy,
+				theme.TowerSelectionRingR, theme.TowerSelectionWidth, theme.TowerSelectionRing)
+			draw.FilledCircle(screen, cx, cy, float32(t.Range), theme.TowerRangeFill)
+			draw.CircleOutline(screen, cx, cy,
+				float32(t.Range), theme.TowerRangeStrokeWidth, theme.TowerRangeStroke)
+		}
+
+		// --- Tower body ---
 		img := tr.loadTowerImage(t)
 		if img != nil {
-			// 以塔中心为原点绘制精灵
 			opts := &ebiten.DrawImageOptions{}
 			w, h := img.Bounds().Dx(), img.Bounds().Dy()
+			scale := float64(towerSpriteSize) / float64(w)
 			opts.GeoM.Translate(-float64(w)/2, -float64(h)/2)
+			opts.GeoM.Scale(scale, scale)
 			opts.GeoM.Translate(float64(cx), float64(cy))
 			screen.DrawImage(img, opts)
 		} else {
-			// 回退：彩色方块
-			size := float32(20)
-			clr := color.RGBA{R: t.Color[0], G: t.Color[1], B: t.Color[2], A: 255}
-			if clr.R == 0 && clr.G == 0 && clr.B == 0 {
-				clr = color.RGBA{R: 80, G: 140, B: 220, A: 255}
+			// Fallback: circle body + barrel rectangle
+			bodyClr := theme.TowerFallbackDef
+			if selected {
+				bodyClr = theme.TowerFallbackSel
 			}
-			vector.DrawFilledRect(screen, cx-size/2, cy-size/2, size, size, clr, false)
+			draw.FilledCircle(screen, cx, cy, theme.TowerFallbackRadius, bodyClr)
+			// Barrel: 8x14 rectangle pointing upward from center
+			barrelW := float32(8)
+			barrelH := float32(14)
+			vector.DrawFilledRect(screen, cx-barrelW/2, cy-barrelH, barrelW, barrelH, theme.TowerBarrel, true)
 		}
 
-		// 射程圆（半透明）
-		rangeClr := color.RGBA{R: t.Color[0], G: t.Color[1], B: t.Color[2], A: 30}
-		drawCircleOutline(screen, cx, cy, float32(t.Range), 1, rangeClr)
+		// --- Name label ---
+		if fm := GlobalFont(); fm != nil {
+			fm.DrawCenteredText(screen, t.Label,
+				float64(cx), float64(cy)+theme.TowerNameLabelY,
+				theme.FontTowerName, theme.TowerNameLabel)
+		}
+
+		// Tower struct has no Buffs field — buff dots rendering skipped.
+		// When the Buffs field is added, draw colored dots above the tower:
+		// offset = -theme.TowerBuffDotBaseY, spacing = theme.TowerBuffDotSpacing, r = theme.TowerBuffDotRadius
 	})
 }
 
-// loadTowerImage 尝试加载塔的 PNG 精灵。
-// 路径约定：assets/towers/core/tower-{key}.png
+// loadTowerImage loads a tower's PNG sprite.
+// Convention: assets/towers/core/tower-{key}.png
 func (tr *TowerRenderer) loadTowerImage(t *tower.Tower) *ebiten.Image {
 	if tr.assetFS == nil {
 		return nil
@@ -77,10 +100,9 @@ func (tr *TowerRenderer) loadTowerImage(t *tower.Tower) *ebiten.Image {
 	if cached != nil {
 		return cached
 	}
-
 	data, err := tr.assetFS.ReadFile(path)
 	if err != nil {
-		return nil // PNG 不存在，回退到方块
+		return nil
 	}
 	img, err := tr.cache.GetOrParse(path, data, towerSpriteSize, towerSpriteSize)
 	if err != nil {
@@ -89,32 +111,25 @@ func (tr *TowerRenderer) loadTowerImage(t *tower.Tower) *ebiten.Image {
 	return img
 }
 
-// DrawTowerRangePreview 绘制放塔预览（射程圆 + 方块影子）。
+// DrawTowerRangePreview draws a placement preview (range circle + tower shadow).
 func DrawTowerRangePreview(screen *ebiten.Image, cx, cy float32, r float64, valid bool) {
-	clr := color.RGBA{R: 100, G: 200, B: 100, A: 80}
-	if !valid {
-		clr = color.RGBA{R: 200, G: 80, B: 80, A: 80}
-	}
-	drawCircleOutline(screen, cx, cy, float32(r), 1.5, clr)
+	fr := float32(r)
 
-	size := float32(20)
-	fillClr := color.RGBA{R: 100, G: 200, B: 100, A: 120}
-	if !valid {
-		fillClr = color.RGBA{R: 200, G: 80, B: 80, A: 120}
+	var fillClr, strokeClr color.RGBA
+	if valid {
+		fillClr = color.RGBA{R: 34, G: 197, B: 94, A: 77}  // green 0.3 alpha
+		strokeClr = color.RGBA{R: 34, G: 197, B: 94, A: 153} // green 0.6 alpha
+	} else {
+		fillClr = color.RGBA{R: 239, G: 68, B: 68, A: 77}  // red 0.3 alpha
+		strokeClr = color.RGBA{R: 239, G: 68, B: 68, A: 153} // red 0.6 alpha
 	}
-	vector.DrawFilledRect(screen, cx-size/2, cy-size/2, size, size, fillClr, false)
-}
 
-// drawCircleOutline 用 48 段线段近似绘制圆形轮廓。
-func drawCircleOutline(screen *ebiten.Image, cx, cy, r, width float32, clr color.RGBA) {
-	const segments = 48
-	for i := 0; i < segments; i++ {
-		a1 := float64(i) * 2 * math.Pi / segments
-		a2 := float64(i+1) * 2 * math.Pi / segments
-		x1 := cx + r*float32(math.Cos(a1))
-		y1 := cy + r*float32(math.Sin(a1))
-		x2 := cx + r*float32(math.Cos(a2))
-		y2 := cy + r*float32(math.Sin(a2))
-		vector.StrokeLine(screen, x1, y1, x2, y2, width, clr, false)
-	}
+	// Range circle (filled + outline)
+	draw.FilledCircle(screen, cx, cy, fr, fillClr)
+	draw.CircleOutline(screen, cx, cy, fr, 1.5, strokeClr)
+
+	// Tower shadow circle
+	shadowClr := fillClr
+	shadowClr.A = 120
+	draw.FilledCircle(screen, cx, cy, theme.TowerFallbackRadius, shadowClr)
 }
