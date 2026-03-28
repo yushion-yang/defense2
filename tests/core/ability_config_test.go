@@ -25,7 +25,7 @@ func TestLoadAbilityTable(t *testing.T) {
 		{"onHitSlow", "减速", "control", "factor"},
 		{"bounce", "弹射", "combat", "range"},
 		{"splash", "溅射", "combat", "radius"},
-		{"shieldIgnore", "无视护盾", "combat", ""},
+		{"flatDamage", "固伤", "combat", "damage"},
 	}
 	for _, tt := range tests {
 		def := table[tt.key]
@@ -85,12 +85,12 @@ func TestAbilityDef_GetParam(t *testing.T) {
 
 func TestAbilityDef_NoScale(t *testing.T) {
 	table, _ := config.LoadAbilityTable()
-	si := table["shieldIgnore"]
+	mt := table["multiTarget"]
 
-	if si.HasScale() {
-		t.Error("shieldIgnore不应有缩放维度")
+	if mt.HasScale() {
+		t.Error("multiTarget不应有缩放维度")
 	}
-	if si.CalcScale(200) != 0 {
+	if mt.CalcScale(200) != 0 {
 		t.Error("无缩放时CalcScale应返回0")
 	}
 }
@@ -113,8 +113,8 @@ func TestAbilityDef_FormatScale(t *testing.T) {
 	}
 
 	// 无缩放
-	si := table["shieldIgnore"]
-	if si.FormatScale(100) != "" {
-		t.Error("shieldIgnore不应有缩放展示")
+	mt := table["multiTarget"]
+	if mt.FormatScale(100) != "" {
+		t.Error("multiTarget不应有缩放展示")
 	}
 }

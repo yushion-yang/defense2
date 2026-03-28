@@ -12,9 +12,7 @@
     "baseRange": 200,
     "baseDamage": 8,
     "projectileSpeed": 9999,
-    "abilities": [
-      "instantHit"
-    ],
+    "abilities": [],
     "beam": {
       "duration": 0.12,
       "width": 3,
@@ -125,9 +123,7 @@
     "baseDamage": 6,
     "projectileSpeed": 9999,
     "attackStyle": "wideBeam",
-    "abilities": [
-      "wideBeam"
-    ],
+    "abilities": [],
     "beam": {
       "duration": 0.15,
       "width": 6,
@@ -154,9 +150,7 @@
     "baseDamage": 5,
     "projectileSpeed": 400,
     "attackStyle": "scatter",
-    "abilities": [
-      "scatter"
-    ],
+    "abilities": [],
     "scatterConfig": {
       "pellets": 3,
       "spreadAngle": 60

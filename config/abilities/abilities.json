@@ -5,9 +5,11 @@
     "icon": "slow",
     "category": "control",
     "scaleDim": "factor",
-    "base": 0.10,
+    "base": 0.1,
     "potential": 0.22,
-    "params": { "duration": 1.4 }
+    "params": {
+      "duration": 1.4
+    }
   },
   "stun": {
     "type": "stun",
@@ -17,7 +19,9 @@
     "scaleDim": "chance",
     "base": 0.05,
     "potential": 0.07,
-    "params": { "duration": 0.4 }
+    "params": {
+      "duration": 0.4
+    }
   },
   "bounce": {
     "type": "bounce",
@@ -27,7 +31,10 @@
     "scaleDim": "range",
     "base": 100,
     "potential": 25,
-    "params": { "maxBounces": 2, "damageDecay": 0.8 }
+    "params": {
+      "maxBounces": 2,
+      "damageDecay": 0.8
+    }
   },
   "burn": {
     "type": "burn",
@@ -37,7 +44,9 @@
     "scaleDim": "ratio",
     "base": 0.15,
     "potential": 0.15,
-    "params": { "duration": 2.0 }
+    "params": {
+      "duration": 2.0
+    }
   },
   "splash": {
     "type": "splash",
@@ -47,7 +56,9 @@
     "scaleDim": "radius",
     "base": 30,
     "potential": 20,
-    "params": { "ratio": 0.4 }
+    "params": {
+      "ratio": 0.4
+    }
   },
   "executionBonus": {
     "type": "executionBonus",
@@ -55,9 +66,11 @@
     "icon": "execute",
     "category": "combat",
     "scaleDim": "damageBonus",
-    "base": 0.20,
-    "potential": 0.30,
-    "params": { "hpThreshold": 0.5 }
+    "base": 0.2,
+    "potential": 0.3,
+    "params": {
+      "hpThreshold": 0.5
+    }
   },
   "percentHpDamage": {
     "type": "percentHpDamage",
@@ -67,7 +80,9 @@
     "scaleDim": "percentHp",
     "base": 0.08,
     "potential": 0.12,
-    "params": { "bossCap": 0.05 }
+    "params": {
+      "bossCap": 0.05
+    }
   },
   "crit": {
     "type": "crit",
@@ -75,9 +90,11 @@
     "icon": "heavyHit",
     "category": "combat",
     "scaleDim": "chance",
-    "base": 0.10,
+    "base": 0.1,
     "potential": 0.15,
-    "params": { "multiplier": 1.8 }
+    "params": {
+      "multiplier": 1.8
+    }
   },
   "bleedDot": {
     "type": "bleedDot",
@@ -87,7 +104,9 @@
     "scaleDim": "dps",
     "base": 2,
     "potential": 3,
-    "params": { "duration": 3.0 }
+    "params": {
+      "duration": 3.0
+    }
   },
   "stackDamage": {
     "type": "stackDamage",
@@ -107,7 +126,9 @@
     "scaleDim": "chance",
     "base": 0.08,
     "potential": 0.07,
-    "params": { "multiplier": 2.0 }
+    "params": {
+      "multiplier": 2.0
+    }
   },
   "flatDamage": {
     "type": "flatDamage",
@@ -125,8 +146,8 @@
     "icon": "stat-range",
     "category": "combat",
     "scaleDim": "maxBonus",
-    "base": 0.20,
-    "potential": 0.30,
+    "base": 0.2,
+    "potential": 0.3,
     "params": {}
   },
   "damageUpAura": {
@@ -136,8 +157,10 @@
     "category": "aura",
     "scaleDim": "bonus",
     "base": 0.05,
-    "potential": 0.10,
-    "params": { "radius": 150 }
+    "potential": 0.1,
+    "params": {
+      "radius": 150
+    }
   },
   "attackSpeedAura": {
     "type": "attackSpeedAura",
@@ -147,7 +170,9 @@
     "scaleDim": "bonus",
     "base": 0.04,
     "potential": 0.06,
-    "params": { "radius": 150 }
+    "params": {
+      "radius": 150
+    }
   },
   "rangeAura": {
     "type": "rangeAura",
@@ -157,7 +182,9 @@
     "scaleDim": "bonus",
     "base": 8,
     "potential": 12,
-    "params": { "radius": 150 }
+    "params": {
+      "radius": 150
+    }
   },
   "critAura": {
     "type": "critAura",
@@ -167,7 +194,9 @@
     "scaleDim": "bonus",
     "base": 0.04,
     "potential": 0.06,
-    "params": { "radius": 150 }
+    "params": {
+      "radius": 150
+    }
   },
   "soloBoost": {
     "type": "soloBoost",
@@ -175,9 +204,11 @@
     "icon": "heavyHit",
     "category": "aura",
     "scaleDim": "bonus",
-    "base": 0.10,
-    "potential": 0.20,
-    "params": { "checkRadius": 120 }
+    "base": 0.1,
+    "potential": 0.2,
+    "params": {
+      "checkRadius": 120
+    }
   },
   "poisonZone": {
     "type": "poisonZone",
@@ -206,7 +237,7 @@
     "category": "zone",
     "scaleDim": "hpPercentPerSec",
     "base": 0.005,
-    "potential": 0.010,
+    "potential": 0.01,
     "params": {}
   },
   "channelLaser": {
@@ -239,16 +270,6 @@
     "potential": 0.2,
     "params": {}
   },
-  "shieldIgnore": {
-    "type": "shieldIgnore",
-    "label": "无视护盾",
-    "icon": "armorPen",
-    "category": "combat",
-    "scaleDim": "",
-    "base": 0,
-    "potential": 0,
-    "params": {}
-  },
   "goldPassive": {
     "type": "goldPassive",
     "label": "被动产金",
@@ -257,7 +278,9 @@
     "scaleDim": "amount",
     "base": 0.5,
     "potential": 0.5,
-    "params": { "interval": 3 }
+    "params": {
+      "interval": 3
+    }
   },
   "judgmentMark": {
     "type": "judgmentMark",
@@ -265,9 +288,11 @@
     "icon": "tower-judicator",
     "category": "control",
     "scaleDim": "damageAmp",
-    "base": 0.10,
-    "potential": 0.10,
-    "params": { "duration": 5 }
+    "base": 0.1,
+    "potential": 0.1,
+    "params": {
+      "duration": 5
+    }
   },
   "deathMark": {
     "type": "deathMark",
@@ -277,17 +302,9 @@
     "scaleDim": "explosionDamage",
     "base": 10,
     "potential": 15,
-    "params": { "radius": 50 }
-  },
-  "instantHit": {
-    "type": "instantHit",
-    "label": "瞬时命中",
-    "icon": "tower-laser",
-    "category": "combat",
-    "scaleDim": "",
-    "base": 0,
-    "potential": 0,
-    "params": {}
+    "params": {
+      "radius": 50
+    }
   },
   "multiTarget": {
     "type": "multiTarget",
@@ -297,26 +314,8 @@
     "scaleDim": "",
     "base": 0,
     "potential": 0,
-    "params": { "targets": 2 }
-  },
-  "wideBeam": {
-    "type": "wideBeam",
-    "label": "宽幅光束",
-    "icon": "tower-laser",
-    "category": "combat",
-    "scaleDim": "",
-    "base": 0,
-    "potential": 0,
-    "params": {}
-  },
-  "scatter": {
-    "type": "scatter",
-    "label": "锥形散弹",
-    "icon": "multishot",
-    "category": "combat",
-    "scaleDim": "",
-    "base": 0,
-    "potential": 0,
-    "params": {}
+    "params": {
+      "targets": 2
+    }
   }
 }
