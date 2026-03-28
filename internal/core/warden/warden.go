@@ -6,6 +6,7 @@ package warden
 import (
 	"defense2/internal/core/enemy"
 	"defense2/internal/core/projectile"
+	"defense2/internal/core/strength"
 	"defense2/internal/core/tower"
 )
 
@@ -64,14 +65,20 @@ func NewWarden(id int, name, typ string) *Warden {
 }
 
 // CalcStrength 根据塔池计算战灵感知强度。
-// 规则：perceivedStrength = selfStrength + Σmax(0, tower.Damage - 10) for each active tower.
+// 规则: perceivedStrength = selfStrength + Σmax(0, tower.effectiveStrength - 100)
+// 只有战力超过基准值(100)的部分贡献给战灵。低于100的塔不拖后腿。
 func (w *Warden) CalcStrength(towers *tower.Pool) {
 	total := w.SelfStrength
 	towers.Each(func(t *tower.Tower) {
-		contrib := t.Damage - 10
-		if contrib > 0 {
-			total += contrib
+		if t.Strength == nil {
+			return
 		}
+		sd, ok := t.Strength.(*strength.StrengthData)
+		if !ok || sd == nil {
+			return
+		}
+		overflow := sd.Overflow() // max(0, effective - 100)
+		total += overflow
 	})
 	w.PerceivedStrength = total
 	if total > w.PeakStrength {

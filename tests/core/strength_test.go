@@ -16,8 +16,8 @@ func TestStrength_Default(t *testing.T) {
 	if math.Abs(s.Effective()-100) > 1e-9 {
 		t.Errorf("默认战力=%.1f, 期望100", s.Effective())
 	}
-	if math.Abs(s.DamageMultiplier()-1.0) > 1e-9 {
-		t.Errorf("默认伤害乘数=%.2f, 期望1.0", s.DamageMultiplier())
+	if math.Abs(s.Ratio()-1.0) > 1e-9 {
+		t.Errorf("默认战力比值=%.2f, 期望1.0", s.Ratio())
 	}
 }
 
@@ -84,26 +84,56 @@ func TestStrength_ClearTransient(t *testing.T) {
 	}
 }
 
-func TestStrength_DamageMultiplier(t *testing.T) {
+func TestStrength_Ratio(t *testing.T) {
 	s := strength.NewStrengthData()
 	s.AddPermanent(100) // 200 effective
 	// 200/100 = 2.0
-	if math.Abs(s.DamageMultiplier()-2.0) > 1e-9 {
-		t.Errorf("200战力伤害乘数=%.2f, 期望2.0", s.DamageMultiplier())
+	if math.Abs(s.Ratio()-2.0) > 1e-9 {
+		t.Errorf("200战力比值=%.2f, 期望2.0", s.Ratio())
 	}
 }
 
-func TestStrength_SpeedMultiplier(t *testing.T) {
+func TestStrength_Overflow(t *testing.T) {
 	s := strength.NewStrengthData()
-	// 100: 速度乘数=1.0
-	if math.Abs(s.SpeedMultiplier()-1.0) > 1e-9 {
-		t.Errorf("100战力速度乘数=%.3f, 期望1.0", s.SpeedMultiplier())
+	// 100: overflow = 0
+	if s.Overflow() != 0 {
+		t.Errorf("100战力溢出=%.1f, 期望0", s.Overflow())
 	}
 
-	s.AddPermanent(100) // 200 effective, excess=100
-	// 1.0 + 100*0.005 = 1.5
-	if math.Abs(s.SpeedMultiplier()-1.5) > 1e-9 {
-		t.Errorf("200战力速度乘数=%.3f, 期望1.5", s.SpeedMultiplier())
+	s.AddPermanent(50) // 150 effective
+	if math.Abs(s.Overflow()-50) > 1e-9 {
+		t.Errorf("150战力溢出=%.1f, 期望50", s.Overflow())
+	}
+
+	s2 := strength.NewStrengthData()
+	s2.SetEnemySub("drain", 50) // 50 effective
+	if s2.Overflow() != 0 {
+		t.Errorf("50战力溢出=%.1f, 期望0", s2.Overflow())
+	}
+}
+
+func TestStrengthConfig_CalcAttackSpeed(t *testing.T) {
+	cfg := &strength.StrengthConfig{
+		Bindings: map[string]*strength.StrengthBinding{
+			"attackSpeed": {Base: 0.37, Potential: 0.55},
+		},
+	}
+	// 100 strength: 0.37 + 0.55 * (100/100) = 0.37 + 0.55 = 0.92
+	val := cfg.CalcAttackSpeed(100, 0)
+	if math.Abs(val-0.92) > 1e-9 {
+		t.Errorf("100战力攻速=%.3f, 期望0.92", val)
+	}
+
+	// 200 strength: 0.37 + 0.55 * (100/200) = 0.37 + 0.275 = 0.645 (更快)
+	val2 := cfg.CalcAttackSpeed(200, 0)
+	if math.Abs(val2-0.645) > 1e-9 {
+		t.Errorf("200战力攻速=%.3f, 期望0.645", val2)
+	}
+
+	// 50 strength: 0.37 + 0.55 * (100/50) = 0.37 + 1.1 = 1.47 (更慢)
+	val3 := cfg.CalcAttackSpeed(50, 0)
+	if math.Abs(val3-1.47) > 1e-9 {
+		t.Errorf("50战力攻速=%.3f, 期望1.47", val3)
 	}
 }
 

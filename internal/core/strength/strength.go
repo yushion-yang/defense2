@@ -47,19 +47,21 @@ func (s *StrengthData) Effective() float64 {
 	return raw
 }
 
-// DamageMultiplier 返回伤害乘数（Effective / 100）。
-func (s *StrengthData) DamageMultiplier() float64 {
+// Ratio 返回有效战力与基准值(100)的比值。
+// 100 战力返回 1.0，200 战力返回 2.0，50 战力返回 0.5。
+// 用于通用属性缩放: effectiveAttr = base + potential * Ratio()
+func (s *StrengthData) Ratio() float64 {
 	return s.Effective() / 100.0
 }
 
-// SpeedMultiplier 返回攻速乘数。
-// <=100 返回 1.0，超过 100 的部分以 0.005 系数加速。
-func (s *StrengthData) SpeedMultiplier() float64 {
+// Overflow 返回超出基准值的部分（负值时为0）。
+// 用于战灵感知强度计算: Σmax(0, tower.Effective() - 100)
+func (s *StrengthData) Overflow() float64 {
 	eff := s.Effective()
 	if eff <= 100 {
-		return 1.0
+		return 0
 	}
-	return 1.0 + (eff-100)*0.005
+	return eff - 100
 }
 
 // AddPermanent 增加永久加成。

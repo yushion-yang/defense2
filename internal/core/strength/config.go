@@ -52,6 +52,26 @@ func (c *StrengthConfig) CalcAttribute(path string, effectiveStrength, fallback 
 	return b.Base + b.Potential*(effectiveStrength/100.0)
 }
 
+// CalcAttackSpeed 计算攻速属性（反向公式）。
+// 攻速是反向属性：战力越高攻击间隔越短（攻击越快）。
+// 公式: base + potential * (100 / max(1, effectiveStrength))
+// 最小值限制为 0.1 秒。
+func (c *StrengthConfig) CalcAttackSpeed(effectiveStrength, fallback float64) float64 {
+	b := c.ResolveBinding("attackSpeed")
+	if b == nil {
+		return fallback
+	}
+	eff := effectiveStrength
+	if eff < 1 {
+		eff = 1
+	}
+	result := b.Base + b.Potential*(100.0/eff)
+	if result < 0.1 {
+		result = 0.1 // 攻击间隔最低 0.1 秒
+	}
+	return result
+}
+
 // ResolveBinding 查找属性路径的绑定配置，支持点号分隔路径（如 "effects.slowFactor"）。
 // 精确匹配优先；无匹配返回 nil。
 func (c *StrengthConfig) ResolveBinding(path string) *StrengthBinding {

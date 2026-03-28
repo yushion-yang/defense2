@@ -82,6 +82,10 @@ type Tower struct {
 	// 分支特化
 	Branch string // 分支特化标识（空=未特化，一次性选择）
 
+	// 战力系统（塔的独立战力数据，不与 Damage 字段混用）
+	Strength    interface{} // *strength.StrengthData（用 interface{} 避免循环导入）
+	StrengthCfg interface{} // *strength.StrengthConfig（同上）
+
 	// 索敌锁定
 	Target interface{} // 当前锁定目标（*enemy.Enemy，用 interface{} 避免循环导入）
 
