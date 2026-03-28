@@ -11,7 +11,6 @@ import (
 	"defense2/internal/render/draw"
 
 	"github.com/hajimehoshi/ebiten/v2"
-	"github.com/hajimehoshi/ebiten/v2/vector"
 )
 
 // DrawWarden renders a single warden entity.
@@ -76,7 +75,7 @@ func drawPrince(screen *ebiten.Image, s *wardenTypes.PrinceState) {
 	if s.Phase == "dashing" {
 		bodyClr = color.RGBA{R: 255, G: 200, B: 80, A: 255}
 		// Dash trail line
-		vector.StrokeLine(screen, float32(s.DashStartX), float32(s.DashStartY), cx, cy, 3,
+		draw.Line(screen, float32(s.DashStartX), float32(s.DashStartY), cx, cy, 3,
 			color.RGBA{R: 255, G: 120, B: 20, A: 100}, true)
 	}
 
@@ -97,7 +96,7 @@ func drawCoreMech(screen *ebiten.Image, s *wardenTypes.CoreState) {
 	// Shoot line (briefly visible)
 	if s.ShootTimer > 0 {
 		alpha := uint8(200 * (s.ShootTimer / 0.15))
-		vector.StrokeLine(screen, cx, cy, float32(s.LastTargetX), float32(s.LastTargetY), 2,
+		draw.Line(screen, cx, cy, float32(s.LastTargetX), float32(s.LastTargetY), 2,
 			color.RGBA{R: 100, G: 180, B: 255, A: alpha}, true)
 	}
 
@@ -111,9 +110,9 @@ func drawCoreMech(screen *ebiten.Image, s *wardenTypes.CoreState) {
 	y2 := cy + r*float32(math.Sin(angle+2.4))
 	x3 := cx + r*float32(math.Cos(angle-2.4))
 	y3 := cy + r*float32(math.Sin(angle-2.4))
-	vector.StrokeLine(screen, x1, y1, x2, y2, 2, bodyClr, true)
-	vector.StrokeLine(screen, x2, y2, x3, y3, 2, bodyClr, true)
-	vector.StrokeLine(screen, x3, y3, x1, y1, 2, bodyClr, true)
+	draw.Line(screen, x1, y1, x2, y2, 2, bodyClr, true)
+	draw.Line(screen, x2, y2, x3, y3, 2, bodyClr, true)
+	draw.Line(screen, x3, y3, x1, y1, 2, bodyClr, true)
 
 	// Center glow dot
 	draw.FilledCircle(screen, cx, cy, 3,

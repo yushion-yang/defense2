@@ -9,9 +9,9 @@ import (
 	"defense2/internal/render"
 	"defense2/internal/render/draw"
 	"defense2/internal/render/theme"
+	"defense2/internal/render/ui"
 
 	"github.com/hajimehoshi/ebiten/v2"
-	"github.com/hajimehoshi/ebiten/v2/vector"
 )
 
 // TopBarData holds the runtime data the top bar needs to render.
@@ -22,8 +22,11 @@ type TopBarData struct {
 	MaxWaves  int  // total waves
 	Kills     int  // cumulative kills
 	Enemies   int  // alive enemies on field
-	Speed     int  // game speed multiplier (1 or 2)
+	Speed     int  // game speed multiplier (1, 2, 3, 10)
 	BuildMode bool // whether build mode is active
+	TestMode  bool // 测试模式（显示额外按钮）
+	SpawnMode bool // 造怪模式激活
+	DebugOpen bool // 调试面板打开
 }
 
 // topBarBtn describes a button inside the top bar.
@@ -79,95 +82,109 @@ func DrawTopBar(screen *ebiten.Image, d TopBarData) {
 	resX += 14
 	waveTxt := fmt.Sprintf("%d/%d", d.Wave, d.MaxWaves)
 	fm.DrawText(screen, waveTxt, resX, resY-5, theme.FontTopBar, color.White)
+	resX += fm.MeasureText(waveTxt, theme.FontTopBar) + 10
+
+	// Kills icon (stat-target) + kill count
+	if im := render.GlobalIcons(); im != nil {
+		if img := im.Get("stat-target"); img != nil {
+			draw.Sprite(screen, img, resX+5, float64(resY)+1, 10)
+			resX += 14
+			killsTxt := fmt.Sprintf("%d", d.Kills)
+			fm.DrawText(screen, killsTxt, resX, resY-5, theme.FontTopBar, color.White)
+		}
+	}
 
 	// ── Divider ──
 	divX := pillX + dividerOff
 	divY1 := pillY + 6
 	divY2 := pillY + pillH - 6
-	vector.StrokeLine(screen, divX, divY1, divX, divY2, 1, theme.HUDTopBarDivider, false)
+	draw.Line(screen, divX, divY1, divX, divY2, 1, theme.HUDTopBarDivider, false)
 
-	// ── Right section: buttons ──
+	// ── Right section: buttons (using ButtonRow) ──
 	buildTone := theme.ToneSecondary
 	if d.BuildMode {
 		buildTone = theme.TonePrimary
 	}
 	speedLabel := "x1"
-	if d.Speed == 2 {
+	switch d.Speed {
+	case 2:
 		speedLabel = "x2"
+	case 3:
+		speedLabel = "x3"
+	case 10:
+		speedLabel = "T"
+	default:
+		speedLabel = "x1"
 	}
 
-	buttons := []topBarBtn{
-		{"造塔", theme.BtnBuildW, buildTone},
-		{"开波", theme.BtnStartW, theme.TonePrimary},
-		{speedLabel, theme.BtnSpeedW, theme.ToneAccent},
-		{"菜单", theme.BtnMenuW, theme.ToneSecondary},
+	// 构建按钮列表 + 名称映射
+	type btnDef struct {
+		name  string
+		label string
+		clr   color.RGBA
 	}
+	var btns []btnDef
 
-	// Calculate total button width to right-align within the pill.
-	var totalBtnW float32
-	for i, b := range buttons {
-		totalBtnW += b.w
-		if i > 0 {
-			totalBtnW += btnGap
+	btns = append(btns, btnDef{"build", "造塔", buildTone})
+
+	// 测试模式：造怪 + 调试按钮
+	if d.TestMode {
+		spawnClr := theme.TonePrimary
+		if d.SpawnMode {
+			spawnClr = color.RGBA{R: 220, G: 60, B: 60, A: 255} // 红色表示激活
 		}
+		btns = append(btns, btnDef{"spawn", "造怪", spawnClr})
 	}
 
-	btnX := pillX + pillW - 12 - totalBtnW
-	btnY := pillY + (pillH-btnH)/2
+	btns = append(btns, btnDef{"start", "开波", theme.TonePrimary})
+	btns = append(btns, btnDef{"speed", speedLabel, theme.ToneAccent})
+	btns = append(btns, btnDef{"menu", "菜单", theme.ToneSecondary})
 
-	for _, b := range buttons {
-		draw.RoundRect(screen, btnX, btnY, b.w, btnH, btnR, b.tone)
-		// Centered label
-		cx := float64(btnX) + float64(b.w)/2
-		cy := float64(btnY) + float64(btnH)/2 - 6
-		fm.DrawCenteredText(screen, b.label, cx, cy, theme.FontMD, color.White)
-		btnX += b.w + btnGap
+	if d.TestMode {
+		debugClr := theme.ToneSecondary
+		if d.DebugOpen {
+			debugClr = color.RGBA{R: 80, G: 120, B: 180, A: 255}
+		}
+		btns = append(btns, btnDef{"debug", "调试", debugClr})
 	}
+
+	items := make([]ui.ButtonRowItem, len(btns))
+	names := make([]string, len(btns))
+	for i, b := range btns {
+		items[i] = ui.ButtonRowItem{Label: b.label, Color: b.clr}
+		names[i] = b.name
+	}
+
+	// 计算按钮区域（右对齐）
+	totalBtnW := float32(len(items))*theme.BtnBuildW + float32(len(items)-1)*btnGap
+	btnArea := ui.Rect{
+		X: pillX + pillW - 12 - totalBtnW,
+		Y: pillY + (pillH-btnH)/2,
+		W: totalBtnW,
+		H: btnH,
+	}
+
+	result := ui.DrawButtonRow(screen, btnArea, items, ui.ButtonRowStyle{
+		Height:   btnH,
+		Gap:      btnGap,
+		Radius:   btnR,
+		FontSize: theme.FontMD,
+	})
+	lastTopBarBtnRects = result.Rects
+	lastTopBarBtnNames = names
 }
 
+// ── 按钮碰撞检测（复用 DrawButtonRow 的 Rects） ──
+
+var lastTopBarBtnRects []ui.Rect
+var lastTopBarBtnNames []string
+
 // TopBarHitTest returns the button name hit by (px, py), or "" if none.
+// Uses the Rects computed by the last DrawTopBar call.
 func TopBarHitTest(px, py float32) string {
-	const (
-		pillY  = float32(theme.TopBarY)
-		pillW  = float32(theme.TopBarW)
-		pillH  = float32(theme.TopBarH)
-		btnH   = float32(theme.TopBarBtnH)
-		btnGap = float32(theme.TopBarBtnGap)
-	)
-	pillX := topBarX
-
-	// Quick bounds check on pill.
-	if px < pillX || px > pillX+pillW || py < pillY || py > pillY+pillH {
-		return ""
-	}
-
-	type btnDef struct {
-		name string
-		w    float32
-	}
-	buttons := []btnDef{
-		{"build", theme.BtnBuildW},
-		{"start", theme.BtnStartW},
-		{"speed", theme.BtnSpeedW},
-		{"menu", theme.BtnMenuW},
-	}
-
-	var totalBtnW float32
-	for i, b := range buttons {
-		totalBtnW += b.w
-		if i > 0 {
-			totalBtnW += btnGap
-		}
-	}
-
-	btnX := pillX + pillW - 12 - totalBtnW
-	btnY := pillY + (pillH-btnH)/2
-
-	for _, b := range buttons {
-		if px >= btnX && px <= btnX+b.w && py >= btnY && py <= btnY+btnH {
-			return b.name
-		}
-		btnX += b.w + btnGap
+	idx := ui.HitTestButtonRow(lastTopBarBtnRects, float64(px), float64(py))
+	if idx >= 0 && idx < len(lastTopBarBtnNames) {
+		return lastTopBarBtnNames[idx]
 	}
 	return ""
 }

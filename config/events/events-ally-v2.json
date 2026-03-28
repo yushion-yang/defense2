@@ -150,17 +150,6 @@
     "value": 0.1
   },
   {
-    "id": "hero-empower",
-    "label": "英雄强化",
-    "description": "英雄经验+30%，移速+25%，攻速+10%",
-    "kind": "heroBoost",
-    "tier": 2,
-    "xpMultiplier": 1.3,
-    "moveSpeed": 1.25,
-    "fireRate": 0.9
-  },
-
-  {
     "id": "mode-master",
     "label": "模式大师",
     "description": "basic塔模式切换冷却-50%，切换后首击伤×2",

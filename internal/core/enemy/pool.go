@@ -8,6 +8,7 @@ import "defense2/internal/core/game"
 type Pool struct {
 	enemies []Enemy // 预分配的敌人槽位数组
 	Count   int     // 当前存活敌人数量
+	nextID  int     // 递增 ID 计数器
 }
 
 // NewPool 创建指定容量的敌人对象池。
@@ -23,26 +24,38 @@ func DefaultPool() *Pool {
 }
 
 // Spawn 激活一个空闲槽位并初始化敌人属性。
+// baseHP/baseSpeed 为当前波次的基准值，cfg 中的倍率会应用于它们。
+// archetype 标识敌人原型（如 "normal"、"runner"、"tank"）。
+// cfg 为 nil 时使用默认配置（hpScale=1, speedScale=1, radius=8）。
 // pathIndex 通常为 1（敌人从 waypoint[0] 出生，朝 waypoint[1] 移动）。
 // 池满时返回 nil。
-func (p *Pool) Spawn(x, y, hp, speed, radius float64, pathIndex int) *Enemy {
+func (p *Pool) Spawn(x, y, baseHP, baseSpeed float64, pathIndex int, archetype string, cfg *SpawnConfig) *Enemy {
+	if cfg == nil {
+		cfg = DefaultSpawnConfig()
+	}
+
+	hp := baseHP * cfg.HpScale
+	speed := baseSpeed * cfg.SpeedScale
+
 	for i := range p.enemies {
 		if !p.enemies[i].Active {
 			e := &p.enemies[i]
+			p.nextID++
+			e.ID = p.nextID
 			e.X = x
 			e.Y = y
 			e.HP = hp
 			e.MaxHP = hp
 			e.Speed = speed
 			e.BaseSpeed = speed
-			e.Radius = radius
+			e.Radius = cfg.Radius
 			e.PathIndex = pathIndex
 			e.ReachedEnd = false
 			e.Active = true
 			e.Path = nil
-			e.Archetype = "normal"
-			e.Boss = false
-			e.Reward = 0
+			e.Archetype = archetype
+			e.Boss = cfg.Boss
+			e.Reward = cfg.Reward
 			e.StunTimer = 0
 			e.SlowTimer = 0
 			e.SlowFactor = 1
@@ -50,8 +63,10 @@ func (p *Pool) Spawn(x, y, hp, speed, radius float64, pathIndex int) *Enemy {
 			e.BleedDPS = 0
 			e.BurnTimer = 0
 			e.BurnDPS = 0
-			e.ShieldHP = 0
+			e.ShieldHP = hp * cfg.ShieldScale
 			e.RootTimer = 0
+			e.DisplayHP = hp
+			e.Elite = cfg.HpScale >= 4
 			p.Count++
 			return e
 		}

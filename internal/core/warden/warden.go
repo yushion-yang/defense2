@@ -5,6 +5,7 @@ package warden
 
 import (
 	"defense2/internal/core/enemy"
+	"defense2/internal/core/projectile"
 	"defense2/internal/core/tower"
 )
 
@@ -23,9 +24,11 @@ type Warden struct {
 
 // TickContext 战灵 tick 时传入的上下文。
 type TickContext struct {
-	Enemies *enemy.Pool  // 场上敌人池
-	Towers  *tower.Pool  // 场上塔池
-	DT      float64      // 帧时间步长（秒）
+	Enemies     *enemy.Pool       // 场上敌人池
+	Towers      *tower.Pool       // 场上塔池
+	Projectiles *projectile.Pool  // 弹射物池（供 Core 等发射弹射物）
+	DT          float64           // 帧时间步长（秒）
+	OnKill      func()            // 击杀回调（通知场景计分/奖金）
 }
 
 // Behavior 战灵行为接口，每种战灵类型实现一个。

@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128">
+  <defs>
+    <radialGradient id="wg0" cx="50%" cy="50%" r="50%"><stop offset="0%" stop-color="#fbbf24" stop-opacity="0.5"/><stop offset="100%" stop-color="#fbbf24" stop-opacity="0"/></radialGradient>
+  </defs>
+  <!-- 小王子: 莽撞热血的火焰菱形体，拖着火尾高速冲撞 -->
+  <circle cx="64" cy="56" r="52" fill="url(#wg0)"/>
+  <polygon points="64,12,102,56,64,88,26,56" fill="#f97316"/><polygon points="64,32,80,56,64,72,48,56" fill="#fbbf24" opacity="0.5"/>
+  <circle cx="64" cy="52" r="8" fill="#fef3c7" opacity="0.9"/>
+  <path d="M40,68 Q28,88 36,106 L52,84 Z" fill="#ea580c" opacity="0.7"/>
+  <path d="M88,68 Q100,88 92,106 L76,84 Z" fill="#ea580c" opacity="0.7"/>
+  <polygon points="56,88,64,114,72,88" fill="#c2410c" opacity="0.5"/>
+  <ellipse cx="54" cy="48" rx="4" ry="6" fill="#fff" opacity="0.9"/><circle cx="55" cy="47" r="2" fill="#c2410c"/>
+  <ellipse cx="74" cy="48" rx="4" ry="6" fill="#fff" opacity="0.9"/><circle cx="75" cy="47" r="2" fill="#c2410c"/>
+</svg>

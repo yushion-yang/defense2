@@ -42,6 +42,30 @@ func (p *Pool) Place(row, col int, cx, cy float64, def TowerDef) *Tower {
 			t.Abilities = def.Abilities
 			t.Color = def.Color
 			t.Active = true
+			t.Level = 1
+			t.BaseDamage = def.Damage
+			t.BaseRange = def.Range
+			t.BaseSpeed = def.AttackSpeed
+			// 攻击方式
+			t.AttackStyleID = def.AttackStyleID
+			t.ProjectileSpeed = def.ProjectileSpeed
+			t.BeamDuration = def.BeamDuration
+			t.BeamWidth = def.BeamWidth
+			t.BeamColor = def.BeamColor
+			t.ScatterPellets = def.ScatterPellets
+			t.ScatterSpread = def.ScatterSpread
+			t.ChargeMult = def.ChargeMult
+			t.ChargeProgress = 0
+			t.ChargeReady = false
+			t.InnerDmgBonus = def.InnerDmgBonus
+			t.InnerRatioR = def.InnerRatioR
+			t.SpinAngle = 0
+			t.SpinActive = 0
+			t.PierceTargets = def.PierceTargets
+			t.PierceDecay = def.PierceDecay
+			t.AuraPulse = 0
+			t.Target = nil
+			t.AbilityUnlocks = def.AbilityUnlocks
 			p.Count++
 			return t
 		}
@@ -53,6 +77,7 @@ func (p *Pool) Place(row, col int, cx, cy float64, def TowerDef) *Tower {
 func (p *Pool) Remove(t *Tower) {
 	if t.Active {
 		t.Active = false
+		t.Target = nil
 		p.Count--
 	}
 }
@@ -86,6 +111,28 @@ type TowerDef struct {
 	Cost        int      // 建造费用
 	Abilities   []string // 能力列表
 	Color       [3]uint8 // 显示颜色 RGB
+
+	// 攻击方式
+	AttackStyleID   AttackStyle // 攻击方式
+	ProjectileSpeed float64     // 弹射物速度（px/s）
+	// Beam
+	BeamDuration float64
+	BeamWidth    float64
+	BeamColor    [3]uint8
+	// Scatter
+	ScatterPellets int
+	ScatterSpread  float64 // 弧度
+	// Charge
+	ChargeMult float64
+	// SpinAoE
+	InnerDmgBonus float64
+	InnerRatioR   float64
+	// Pierce
+	PierceTargets int
+	PierceDecay   float64
+
+	// 等级解锁能力
+	AbilityUnlocks []AbilityUnlock
 }
 
 // BaseTowerDefs 返回 4 种基础塔定义。

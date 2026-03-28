@@ -6,6 +6,7 @@ import "defense2/internal/core/gamemap"
 
 // Enemy 单个敌人实体。
 type Enemy struct {
+	ID         int              // 唯一标识（用于穿刺弹已命中检查）
 	X, Y       float64          // 当前像素位置
 	HP         float64          // 当前血量
 	MaxHP      float64          // 最大血量
@@ -28,6 +29,8 @@ type Enemy struct {
 	BurnDPS    float64          // 灼烧每秒伤害
 	ShieldHP   float64          // 护盾血量（吸收伤害直到耗尽）
 	RootTimer  float64          // 定身剩余时间（秒）
+	DisplayHP  float64          // 显示用血量（伤害拖尾缓慢衰减到实际 HP）
+	Elite      bool             // 是否为精英怪
 }
 
 // TickStatusEffects 处理敌人身上的状态效果（减速、流血）。
@@ -57,5 +60,18 @@ func TickStatusEffects(e *Enemy, dt float64) {
 	// 定身：倒计时
 	if e.RootTimer > 0 {
 		e.RootTimer -= dt
+	}
+
+	// DisplayHP 伤害拖尾衰减（每秒衰减 120% MaxHP）
+	if e.DisplayHP <= 0 {
+		e.DisplayHP = e.HP // 首次初始化
+	}
+	if e.DisplayHP > e.HP {
+		e.DisplayHP -= e.MaxHP * dt * 1.2
+		if e.DisplayHP < e.HP {
+			e.DisplayHP = e.HP
+		}
+	} else {
+		e.DisplayHP = e.HP // 治疗时瞬间跟上
 	}
 }

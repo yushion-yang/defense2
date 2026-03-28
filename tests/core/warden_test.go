@@ -58,7 +58,7 @@ func TestEnvoyPossess(t *testing.T) {
 	placed := tp.Place(0, 0, 100, 100, def)
 
 	ep := enemy.NewPool(4)
-	ep.Spawn(150, 100, 50, 60, 8, 1) // 在塔范围内
+	ep.Spawn(150, 100, 50, 60, 1, "normal", nil) // 在塔范围内
 
 	ctx := &warden.TickContext{
 		Enemies: ep,

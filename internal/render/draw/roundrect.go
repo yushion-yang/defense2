@@ -97,15 +97,15 @@ func roundRectPath(x, y, w, h, radius float32) vector.Path {
 
 // RoundRect draws a filled rounded rectangle.
 func RoundRect(screen *ebiten.Image, x, y, w, h, radius float32, clr color.Color) {
-	path := roundRectPath(x, y, w, h, radius)
+	path := roundRectPath(S32(x), S32(y), S32(w), S32(h), S32(radius))
 	fillPath(screen, &path, clr)
 }
 
 // StrokeRoundRect draws an outlined rounded rectangle.
 func StrokeRoundRect(screen *ebiten.Image, x, y, w, h, radius, strokeWidth float32, clr color.Color) {
-	path := roundRectPath(x, y, w, h, radius)
+	path := roundRectPath(S32(x), S32(y), S32(w), S32(h), S32(radius))
 	vector.StrokePath(screen, &path, &vector.StrokeOptions{
-		Width:    strokeWidth,
+		Width:    S32(strokeWidth),
 		LineJoin: vector.LineJoinRound,
 	}, &vector.DrawPathOptions{
 		AntiAlias:  true,
@@ -115,15 +115,18 @@ func StrokeRoundRect(screen *ebiten.Image, x, y, w, h, radius, strokeWidth float
 
 // StrokeRect draws a simple rectangle outline using StrokeLine.
 func StrokeRect(screen *ebiten.Image, x, y, w, h, width float32, clr color.Color) {
-	vector.StrokeLine(screen, x, y, x+w, y, width, clr, true)
-	vector.StrokeLine(screen, x+w, y, x+w, y+h, width, clr, true)
-	vector.StrokeLine(screen, x+w, y+h, x, y+h, width, clr, true)
-	vector.StrokeLine(screen, x, y+h, x, y, width, clr, true)
+	sx, sy, sw, sh, swidth := S32(x), S32(y), S32(w), S32(h), S32(width)
+	vector.StrokeLine(screen, sx, sy, sx+sw, sy, swidth, clr, true)
+	vector.StrokeLine(screen, sx+sw, sy, sx+sw, sy+sh, swidth, clr, true)
+	vector.StrokeLine(screen, sx+sw, sy+sh, sx, sy+sh, swidth, clr, true)
+	vector.StrokeLine(screen, sx, sy+sh, sx, sy, swidth, clr, true)
 }
 
 // Pill draws a pill shape (a rounded rectangle where radius = h/2).
 func Pill(screen *ebiten.Image, x, y, w, h float32, clr color.Color) {
-	RoundRect(screen, x, y, w, h, h/2, clr)
+	// Don't double-scale: RoundRect already scales internally.
+	path := roundRectPath(S32(x), S32(y), S32(w), S32(h), S32(h)/2)
+	fillPath(screen, &path, clr)
 }
 
 // colorScale converts a color.Color to ebiten.ColorScale for DrawPathOptions.

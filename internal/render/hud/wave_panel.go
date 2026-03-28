@@ -1,5 +1,5 @@
 // wave_panel.go — Left-side wave preview panel.
-// Shows current wave number, optional label, and alive enemy count.
+// Uses FlexPanel + AnchoredRect for adaptive layout.
 package hud
 
 import (
@@ -8,19 +8,20 @@ import (
 	"defense2/internal/render"
 	"defense2/internal/render/draw"
 	"defense2/internal/render/theme"
+	"defense2/internal/render/ui"
 
 	"github.com/hajimehoshi/ebiten/v2"
 )
 
 // WavePanelData holds data for the wave preview panel.
 type WavePanelData struct {
-	WaveNum    int    // current wave number
-	MaxWaves   int    // total waves
-	EnemyCount int    // enemies alive on field
-	WaveLabel  string // optional label like "发育波"
+	WaveNum    int
+	MaxWaves   int
+	EnemyCount int
+	WaveLabel  string
 }
 
-// DrawWavePanel renders the left-side wave information panel.
+// DrawWavePanel renders the left-side wave information panel using FlexPanel.
 func DrawWavePanel(screen *ebiten.Image, d WavePanelData) {
 	fm := render.GlobalFont()
 	if fm == nil {
@@ -28,41 +29,51 @@ func DrawWavePanel(screen *ebiten.Image, d WavePanelData) {
 	}
 
 	const (
-		panelX = float32(theme.InfoPanelX)
 		panelW = float32(theme.InfoPanelW)
-		panelR = float32(theme.WavePanelRadius)
 		pad    = float32(12)
+		lineH  = float32(20)
 	)
 
-	// Calculate height based on content.
-	lineH := float32(20)
-	panelH := pad*2 + lineH // wave number line
+	// 计算内容高度
+	contentLines := 2 // wave + enemy count
 	if d.WaveLabel != "" {
-		panelH += lineH // optional label line
+		contentLines++
 	}
-	panelH += lineH // enemy count line
+	panelH := pad*2 + lineH*float32(contentLines)
 
-	panelY := float32(theme.CanvasH) - panelH - float32(theme.BottomMargin)
+	// 锚定到左下角
+	rect := ui.AnchoredRect(ui.AnchorBottomLeft, panelW, panelH,
+		0, 0, float32(theme.BottomMargin), float32(theme.InfoPanelX))
 
-	// Background
-	draw.RoundRect(screen, panelX, panelY, panelW, panelH, panelR, theme.WavePanelBg)
+	// 面板
+	p := ui.NewFlexPanel(rect.X, rect.Y, rect.W, pad)
+	p.Radius = float32(theme.WavePanelRadius)
+	p.BgColor = theme.WavePanelBg
 
-	// Content
-	ix := float64(panelX) + float64(pad)
-	iy := float64(panelY) + float64(pad)
+	// 波次号
+	p.AddRow(lineH, func(screen *ebiten.Image, x, y float64, w float64) {
+		waveTxt := fmt.Sprintf("%d波预览", d.WaveNum)
+		fm.DrawText(screen, waveTxt, x, y, theme.FontLG, theme.ResWaves)
+	})
 
-	// Wave number
-	waveTxt := fmt.Sprintf("%d波预览", d.WaveNum)
-	fm.DrawText(screen, waveTxt, ix, iy, theme.FontLG, theme.ResWaves)
-	iy += float64(lineH)
-
-	// Optional wave label
+	// 可选标签
 	if d.WaveLabel != "" {
-		fm.DrawText(screen, d.WaveLabel, ix, iy, theme.FontSM, theme.TextMuted)
-		iy += float64(lineH)
+		p.AddRow(lineH, func(screen *ebiten.Image, x, y float64, w float64) {
+			fm.DrawText(screen, d.WaveLabel, x, y, theme.FontSM, theme.TextMuted)
+		})
 	}
 
-	// Enemy count
-	enemyTxt := fmt.Sprintf("场上: %d", d.EnemyCount)
-	fm.DrawText(screen, enemyTxt, ix, iy, theme.FontSM, theme.TextBody)
+	// 敌人数量
+	p.AddRow(lineH, func(screen *ebiten.Image, x, y float64, w float64) {
+		if im := render.GlobalIcons(); im != nil {
+			if img := im.Get("stat-target"); img != nil {
+				draw.Sprite(screen, img, x+5, y+5, 10)
+				fm.DrawText(screen, fmt.Sprintf("%d", d.EnemyCount), x+16, y, theme.FontSM, theme.TextBody)
+				return
+			}
+		}
+		fm.DrawText(screen, fmt.Sprintf("场上: %d", d.EnemyCount), x, y, theme.FontSM, theme.TextBody)
+	})
+
+	p.Draw(screen)
 }

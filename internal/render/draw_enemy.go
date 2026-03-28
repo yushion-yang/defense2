@@ -9,25 +9,27 @@ import (
 	"math"
 
 	"defense2/internal/core/enemy"
+	"defense2/internal/render/anim"
 	"defense2/internal/render/draw"
 	"defense2/internal/render/sprite"
 	"defense2/internal/render/theme"
 
 	"github.com/hajimehoshi/ebiten/v2"
-	"github.com/hajimehoshi/ebiten/v2/vector"
 )
 
-// EnemyRenderer manages enemy PNG sprite rendering.
+// EnemyRenderer manages enemy PNG sprite rendering with optional frame animation.
 type EnemyRenderer struct {
-	cache   *sprite.Cache
-	assetFS AssetReader
+	cache     *sprite.Cache
+	assetFS   AssetReader
+	animators map[string]*anim.Animator // per archetype, lazy initialized
 }
 
 // NewEnemyRenderer creates an enemy renderer.
 func NewEnemyRenderer(assetFS AssetReader) *EnemyRenderer {
 	return &EnemyRenderer{
-		cache:   sprite.NewCache(),
-		assetFS: assetFS,
+		cache:     sprite.NewCache(),
+		assetFS:   assetFS,
+		animators: make(map[string]*anim.Animator),
 	}
 }
 
@@ -69,16 +71,18 @@ func (er *EnemyRenderer) DrawEnemies(screen *ebiten.Image, pool *enemy.Pool, ani
 			draw.CircleOutline(screen, cx, cy, r+4, 1.5, pulseClr)
 		}
 
-		// --- Enemy body ---
-		img := er.loadEnemyImage(e)
+		// --- Enemy body (animated or static) ---
+		img := er.getEnemyFrame(e, 1.0/60.0)
 		if img != nil {
-			opts := &ebiten.DrawImageOptions{}
-			w, h := img.Bounds().Dx(), img.Bounds().Dy()
-			scale := float64(enemySpriteSize) / float64(w)
-			opts.GeoM.Translate(-float64(w)/2, -float64(h)/2)
-			opts.GeoM.Scale(scale, scale)
-			opts.GeoM.Translate(float64(cx), float64(cy))
-			screen.DrawImage(img, opts)
+			// 行走摆动：用 X 位置作为相位，产生微小的上下浮动和旋转
+			wobblePhase := e.X*0.05 + animTime*4
+			wobbleY := math.Sin(wobblePhase) * 1.5
+			wobbleRot := math.Sin(wobblePhase) * 0.05 // ~3 degrees
+			if e.StunTimer > 0 || e.RootTimer > 0 {
+				wobbleY = 0
+				wobbleRot = 0
+			}
+			draw.SpriteRotated(screen, img, float64(cx), float64(cy), enemySpriteSize, wobbleRot, wobbleY)
 		} else {
 			bodyColor := color.RGBA{R: 200, G: 60, B: 60, A: 255}
 			if e.Boss {
@@ -90,7 +94,7 @@ func (er *EnemyRenderer) DrawEnemies(screen *ebiten.Image, pool *enemy.Pool, ani
 		// --- Tank overlay ---
 		if e.Archetype == "tank" {
 			size := float32(14)
-			vector.DrawFilledRect(screen, cx-size/2, cy-size/2, size, size,
+			draw.FilledRect(screen, cx-size/2, cy-size/2, size, size,
 				color.RGBA{R: 255, G: 255, B: 255, A: 40}, true)
 		}
 
@@ -106,32 +110,47 @@ func (er *EnemyRenderer) DrawEnemies(screen *ebiten.Image, pool *enemy.Pool, ani
 			barOffY = theme.EnemyHPBarOffsetY
 		}
 
-		// --- Shield bar (above HP bar) ---
+		// --- Shield bar (above HP bar, 4px gap) ---
 		if e.ShieldHP > 0 {
 			shieldH := float32(theme.EnemyShieldBarH)
 			shieldX := cx - barW/2
-			shieldY := cy - barOffY - shieldH - 1
+			shieldY := cy - barOffY - shieldH - 4
 			shieldRatio := float32(e.ShieldHP / e.MaxHP)
 			if shieldRatio > 1 {
 				shieldRatio = 1
 			}
-			vector.DrawFilledRect(screen, shieldX, shieldY, barW*shieldRatio, shieldH,
-				color.RGBA{R: 255, G: 255, B: 255, A: 200}, true)
+			// Shield border + bg + fill
+			draw.FilledRect(screen, shieldX-1, shieldY-1, barW+2, shieldH+2,
+				theme.EnemyHPBarBorder, true)
+			draw.FilledRect(screen, shieldX, shieldY, barW, shieldH,
+				theme.EnemyHPBarBg, true)
+			draw.FilledRect(screen, shieldX, shieldY, barW*shieldRatio, shieldH,
+				color.RGBA{R: 255, G: 255, B: 255, A: 220}, true)
 		}
 
-		// --- HP bar (only when damaged) ---
-		if e.HP < e.MaxHP {
+		// --- HP bar (always visible) ---
+		{
 			barX := cx - barW/2
 			barY := cy - barOffY
 
-			// Border
-			vector.DrawFilledRect(screen, barX-1, barY-1, barW+2, barH+2,
+			// Border (#0f172a)
+			draw.FilledRect(screen, barX-1, barY-1, barW+2, barH+2,
 				theme.EnemyHPBarBorder, true)
-			// Background
-			vector.DrawFilledRect(screen, barX, barY, barW, barH,
+			// Background (#1e293b)
+			draw.FilledRect(screen, barX, barY, barW, barH,
 				theme.EnemyHPBarBg, true)
 
-			// HP fill
+			// Damage trail (orange, behind HP fill)
+			if e.DisplayHP > e.HP && e.DisplayHP > 0 {
+				trailRatio := float32(e.DisplayHP / e.MaxHP)
+				if trailRatio > 1 {
+					trailRatio = 1
+				}
+				draw.FilledRect(screen, barX, barY, barW*trailRatio, barH,
+					color.RGBA{R: 251, G: 146, B: 60, A: 255}, true) // #fb923c
+			}
+
+			// HP fill (red-only color scheme)
 			ratio := float32(e.HP / e.MaxHP)
 			if ratio < 0 {
 				ratio = 0
@@ -141,20 +160,27 @@ func (er *EnemyRenderer) DrawEnemies(screen *ebiten.Image, pool *enemy.Pool, ani
 			var fillClr color.RGBA
 			switch {
 			case ratio > 0.6:
-				fillClr = theme.EnemyHPFillHigh
+				fillClr = color.RGBA{R: 239, G: 68, B: 68, A: 255}  // #ef4444 bright red
 			case ratio > 0.3:
-				fillClr = theme.EnemyHPFillMid
+				fillClr = color.RGBA{R: 220, G: 38, B: 38, A: 255}  // #dc2626 darker red
 			default:
-				fillClr = theme.EnemyHPFillLow
+				fillClr = color.RGBA{R: 153, G: 27, B: 27, A: 255}  // #991b1b deep red
 			}
-			vector.DrawFilledRect(screen, barX, barY, fillW, barH, fillClr, true)
+			draw.FilledRect(screen, barX, barY, fillW, barH, fillClr, true)
 
-			// Boss HP segment dividers (every 20%)
+			// Boss HP segment dividers (5 segments, 20% each)
 			if e.Boss {
 				for i := 1; i < 5; i++ {
 					divX := barX + barW*float32(i)*0.2
-					vector.DrawFilledRect(screen, divX, barY, 1, barH, theme.EnemyHPSegDiv, true)
+					draw.FilledRect(screen, divX, barY, 1, barH, theme.EnemyHPSegDiv, true)
 				}
+			}
+
+			// Elite center tick (single 50% divider)
+			if e.Elite && !e.Boss {
+				divX := barX + barW*0.5
+				draw.FilledRect(screen, divX, barY, 1, barH,
+					color.RGBA{R: 15, G: 23, B: 42, A: 128}, true)
 			}
 		}
 
@@ -206,6 +232,48 @@ func (er *EnemyRenderer) loadEnemyImage(e *enemy.Enemy) *ebiten.Image {
 		return nil
 	}
 	return img
+}
+
+// GetSprite 按原型名加载敌人静态精灵（供造怪菜单等外部使用）。
+func (er *EnemyRenderer) GetSprite(archetype string) *ebiten.Image {
+	if er.assetFS == nil || archetype == "" {
+		return nil
+	}
+	path := fmt.Sprintf("assets/enemies/%s.png", archetype)
+	if cached := er.cache.Get(path, enemySpriteSize, enemySpriteSize); cached != nil {
+		return cached
+	}
+	data, err := er.assetFS.ReadFile(path)
+	if err != nil {
+		return nil
+	}
+	img, _ := er.cache.GetOrParse(path, data, enemySpriteSize, enemySpriteSize)
+	return img
+}
+
+// getEnemyFrame returns the current animation frame for an enemy, falling back to static sprite.
+func (er *EnemyRenderer) getEnemyFrame(e *enemy.Enemy, dt float64) *ebiten.Image {
+	if e.Archetype == "" {
+		return nil
+	}
+
+	a, ok := er.animators[e.Archetype]
+	if !ok {
+		a = anim.LoadEnemyAnimator(er.assetFS, e.Archetype)
+		er.animators[e.Archetype] = a
+	}
+
+	// Choose animation state
+	if a.HasAnim("walk") {
+		a.Play("walk")
+	}
+	a.Update(dt)
+
+	img := a.CurrentImage()
+	if img != nil {
+		return img
+	}
+	return er.loadEnemyImage(e)
 }
 
 // clampF clamps a float64 value between min and max.

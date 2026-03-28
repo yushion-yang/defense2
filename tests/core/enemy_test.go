@@ -9,7 +9,7 @@ import (
 
 func TestPoolSpawnAndKill(t *testing.T) {
 	p := enemy.NewPool(4)
-	e1 := p.Spawn(100, 100, 10, 60, 8, 1)
+	e1 := p.Spawn(100, 100, 10, 60, 1, "normal", nil)
 	if e1 == nil {
 		t.Fatal("spawn should succeed")
 	}
@@ -17,7 +17,7 @@ func TestPoolSpawnAndKill(t *testing.T) {
 		t.Fatalf("count should be 1, got %d", p.Count)
 	}
 
-	e2 := p.Spawn(200, 200, 20, 60, 8, 1)
+	e2 := p.Spawn(200, 200, 20, 60, 1, "normal", nil)
 	if e2 == nil || p.Count != 2 {
 		t.Fatal("second spawn failed")
 	}
@@ -28,7 +28,7 @@ func TestPoolSpawnAndKill(t *testing.T) {
 	}
 
 	// Killed slot should be reusable
-	e3 := p.Spawn(300, 300, 30, 60, 8, 1)
+	e3 := p.Spawn(300, 300, 30, 60, 1, "normal", nil)
 	if e3 == nil || p.Count != 2 {
 		t.Fatal("respawn into killed slot failed")
 	}
@@ -36,9 +36,9 @@ func TestPoolSpawnAndKill(t *testing.T) {
 
 func TestPoolOverflow(t *testing.T) {
 	p := enemy.NewPool(2)
-	p.Spawn(0, 0, 10, 60, 8, 1)
-	p.Spawn(0, 0, 10, 60, 8, 1)
-	e := p.Spawn(0, 0, 10, 60, 8, 1)
+	p.Spawn(0, 0, 10, 60, 1, "normal", nil)
+	p.Spawn(0, 0, 10, 60, 1, "normal", nil)
+	e := p.Spawn(0, 0, 10, 60, 1, "normal", nil)
 	if e != nil {
 		t.Fatal("overflow spawn should return nil")
 	}
@@ -46,9 +46,9 @@ func TestPoolOverflow(t *testing.T) {
 
 func TestPoolEach(t *testing.T) {
 	p := enemy.NewPool(4)
-	p.Spawn(0, 0, 10, 60, 8, 1)
-	p.Spawn(0, 0, 10, 60, 8, 1)
-	e3 := p.Spawn(0, 0, 10, 60, 8, 1)
+	p.Spawn(0, 0, 10, 60, 1, "normal", nil)
+	p.Spawn(0, 0, 10, 60, 1, "normal", nil)
+	e3 := p.Spawn(0, 0, 10, 60, 1, "normal", nil)
 	p.Kill(e3)
 
 	count := 0

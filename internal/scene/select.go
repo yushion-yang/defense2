@@ -4,7 +4,6 @@ package scene
 
 import (
 	"image/color"
-	"log"
 
 	"defense2/internal/config"
 	"defense2/internal/core/game"
@@ -12,10 +11,9 @@ import (
 	"defense2/internal/render"
 	"defense2/internal/render/draw"
 	"defense2/internal/render/theme"
+	"defense2/internal/render/ui"
 
 	"github.com/hajimehoshi/ebiten/v2"
-	"github.com/hajimehoshi/ebiten/v2/inpututil"
-	"github.com/hajimehoshi/ebiten/v2/vector"
 )
 
 // ── 游戏模式定义 ────────────────────────────────
@@ -29,12 +27,12 @@ type gameModeUI struct {
 }
 
 var gameModes = []gameModeUI{
-	{"campaign", "战役", "⚔", "清除所有波次", "map_01"},
+	{"campaign", "战役", "stat-damage", "清除所有波次", "map_01"},
 	{"endless", "无尽", "∞", "坚持越久越好", "map_01"},
-	{"timedDefense", "限时", "⏱", "存活5分钟", "map_02"},
-	{"bossRush", "Boss", "♛", "连续挑战Boss", "map_03"},
+	{"timedDefense", "限时", "stat-atkspd", "存活5分钟", "map_02"},
+	{"bossRush", "Boss", "execute", "连续挑战Boss", "map_03"},
 	{"challenge", "挑战", "★", "特殊规则", "map_04"},
-	{"test", "测试", "✎", "所有怪物静止排列", "map_test"},
+	{"test", "测试", "stat-dps", "所有怪物静止排列", "map_test"},
 }
 
 // ── 难度定义 ────────────────────────────────────
@@ -104,9 +102,6 @@ func NewSelectScene(sw Switcher) *SelectScene {
 	store, _ := persistence.DefaultStorage()
 	pm := persistence.NewProgressManager(store)
 
-	// 加载字体
-	fm := loadFont()
-
 	// 加载难度配置
 	diffs := loadDifficulties()
 
@@ -128,7 +123,7 @@ func NewSelectScene(sw Switcher) *SelectScene {
 	return &SelectScene{
 		switcher:     sw,
 		progressMgr:  pm,
-		fontMgr:      fm,
+		fontMgr:      render.GlobalFont(),
 		selectedMode: 0,
 		selectedDiff: 1, // 默认普通
 		hoverMode:    -1,
@@ -136,24 +131,6 @@ func NewSelectScene(sw Switcher) *SelectScene {
 		difficulties: diffs,
 		mapNames:     mapNames,
 	}
-}
-
-func loadFont() *render.FontManager {
-	assetFS := config.GetAssetFS()
-	if assetFS == nil {
-		return nil
-	}
-	data, err := assetFS.ReadFile("assets/fonts/NotoSans-Regular.ttf")
-	if err != nil {
-		log.Printf("字体加载失败: %v", err)
-		return nil
-	}
-	fm, err := render.NewFontManager(data)
-	if err != nil {
-		log.Printf("字体解析失败: %v", err)
-		return nil
-	}
-	return fm
 }
 
 func loadDifficulties() []difficultyUI {
@@ -184,63 +161,24 @@ func loadDifficulties() []difficultyUI {
 // ── Update ──────────────────────────────────────
 
 func (s *SelectScene) Update() error {
-	// 键盘：左右切换模式
-	if inpututil.IsKeyJustPressed(ebiten.KeyLeft) || inpututil.IsKeyJustPressed(ebiten.KeyA) {
-		s.selectedMode--
-		if s.selectedMode < 0 {
-			s.selectedMode = len(gameModes) - 1
-		}
-	}
-	if inpututil.IsKeyJustPressed(ebiten.KeyRight) || inpututil.IsKeyJustPressed(ebiten.KeyD) {
-		s.selectedMode++
-		if s.selectedMode >= len(gameModes) {
-			s.selectedMode = 0
-		}
-	}
-
-	// 键盘：上下切换难度
-	if inpututil.IsKeyJustPressed(ebiten.KeyUp) || inpututil.IsKeyJustPressed(ebiten.KeyW) {
-		s.selectedDiff--
-		if s.selectedDiff < 0 {
-			s.selectedDiff = len(s.difficulties) - 1
-		}
-	}
-	if inpututil.IsKeyJustPressed(ebiten.KeyDown) || inpututil.IsKeyJustPressed(ebiten.KeyS) {
-		s.selectedDiff++
-		if s.selectedDiff >= len(s.difficulties) {
-			s.selectedDiff = 0
-		}
-	}
-
-	// Enter/Space 开始游戏
-	if inpututil.IsKeyJustPressed(ebiten.KeyEnter) || inpututil.IsKeyJustPressed(ebiten.KeySpace) {
-		s.startGame()
-		return nil
-	}
-
-	// 数字键快选模式
-	for i := 0; i < len(gameModes) && i < 6; i++ {
-		if inpututil.IsKeyJustPressed(ebiten.Key1 + ebiten.Key(i)) {
-			s.selectedMode = i
-		}
-	}
-
 	// 鼠标悬停检测
-	mx, my := ebiten.CursorPosition()
-	mxf, myf := float64(mx), float64(my)
+	mxf, myf := draw.CursorPos()
 	s.hoverMode = s.hitTestModeCards(mxf, myf)
 	s.hoverDiff = s.hitTestDiffButtons(mxf, myf)
 	s.hoverStart = s.hitTestStartButton(mxf, myf)
 
-	// 鼠标点击
-	if inpututil.IsMouseButtonJustPressed(ebiten.MouseButtonLeft) {
+	// 鼠标/触摸点击
+	if isTapJustPressed() {
 		if idx := s.hitTestModeCards(mxf, myf); idx >= 0 {
 			s.selectedMode = idx
+			playUIClick(s.switcher)
 		}
 		if idx := s.hitTestDiffButtons(mxf, myf); idx >= 0 {
 			s.selectedDiff = idx
+			playUIClick(s.switcher)
 		}
 		if s.hitTestStartButton(mxf, myf) {
+			playUIClick(s.switcher)
 			s.startGame()
 		}
 	}
@@ -249,8 +187,14 @@ func (s *SelectScene) Update() error {
 }
 
 func (s *SelectScene) startGame() {
-	mapID := gameModes[s.selectedMode].DefaultMap
-	s.switcher.SwitchScene(NewWardenSelectScene(s.switcher, mapID))
+	mode := gameModes[s.selectedMode]
+	diff := s.difficulties[s.selectedDiff]
+	// 测试模式进入专用场景选择器
+	if mode.ID == "test" {
+		s.switcher.SwitchScene(NewTestSelectScene(s.switcher))
+		return
+	}
+	s.switcher.SwitchScene(NewWardenSelectScene(s.switcher, mode.DefaultMap, mode.ID, diff.ID))
 }
 
 // ── 碰撞检测 ────────────────────────────────────
@@ -310,7 +254,7 @@ func (s *SelectScene) Draw(screen *ebiten.Image) {
 	fm := s.fontMgr
 
 	// ── 标题 ──
-	fm.DrawCenteredText(screen, "Mini Tower Defense", scW/2, 28, 28, textWhite)
+	fm.DrawCenteredBoldText(screen, "Mini Tower Defense", scW/2, 28, 28, textWhite)
 	fm.DrawCenteredText(screen, "选择游戏模式", scW/2, 60, 14, textGray)
 
 	// ── 模式卡片 ──
@@ -323,36 +267,26 @@ func (s *SelectScene) Draw(screen *ebiten.Image) {
 		selected := i == s.selectedMode
 		hovered := i == s.hoverMode
 
-		// 卡片背景
 		bg := cardBg
 		if hovered && !selected {
 			bg = cardHoverBg
 		}
-		vector.DrawFilledRect(screen, x, y, w, h, bg, false)
 
-		// 卡片边框
-		border := cardBorder
-		if selected {
-			border = greenAccent
-		}
-		strokeRect(screen, x, y, w, h, 2, border)
-
-		// 选中底部高亮条
-		if selected {
-			barW := float32(40)
-			barH := float32(3)
-			vector.DrawFilledRect(screen, x+(w-barW)/2, y+h-8, barW, barH, greenAccent, false)
-		}
-
-		// 图标（大号居中）
-		cx := float64(x) + float64(w)/2
-		fm.DrawCenteredText(screen, mode.Icon, cx, float64(y)+18, 22, textWhite)
-
-		// 名称
-		fm.DrawCenteredText(screen, mode.Name, cx, float64(y)+55, 14, textWhite)
-
-		// 描述
-		fm.DrawCenteredText(screen, mode.Description, cx, float64(y)+78, 10, textGray)
+		ui.IconCard(screen, x, y, w, h, mode.Icon, mode.Name, mode.Description, ui.IconCardStyle{
+			CardStyle: ui.CardStyle{
+				BgColor:       bg,
+				BorderColor:   cardBorder,
+				Radius:        12,
+				BorderWidth:   1.5,
+				Selected:      selected,
+				SelectedColor: greenAccent,
+				HighlightBar:  true,
+				BarWidth:      40,
+			},
+			NameColor: textWhite,
+			NameBold:  true,
+			DescColor: textGray,
+		})
 	}
 
 	// ── 开始按钮 ──
@@ -364,8 +298,12 @@ func (s *SelectScene) Draw(screen *ebiten.Image) {
 	if s.hoverStart {
 		btnClr = greenBtnHover
 	}
-	vector.DrawFilledRect(screen, bx, by, bw, bh, btnClr, false)
-	fm.DrawCenteredText(screen, "开始游戏", scW/2, float64(by)+10, 18, textWhite)
+	ui.Button(screen, bx, by, bw, bh, "开始游戏", ui.ButtonStyle{
+		BgColor:  btnClr,
+		FontSize: 18,
+		Radius:   20,
+		Bold:     true,
+	})
 
 	// ── 难度标签 ──
 	fm.DrawCenteredText(screen, "难度", scW/2, diffLabelY, 12, textGray)
@@ -384,13 +322,16 @@ func (s *SelectScene) Draw(screen *ebiten.Image) {
 		if hovered && !selected {
 			bg = cardHoverBg
 		}
-		vector.DrawFilledRect(screen, dx, dy, dw, dh, bg, false)
-
 		border := diffBtnBorder
 		if selected {
 			border = diffSelBorder
 		}
-		strokeRect(screen, dx, dy, dw, dh, 1.5, border)
+		ui.Card(screen, dx, dy, dw, dh, ui.CardStyle{
+			BgColor:     bg,
+			BorderColor: border,
+			Radius:      8,
+			BorderWidth: 1.5,
+		})
 
 		txtClr := textGray
 		if selected {
@@ -413,14 +354,14 @@ func (s *SelectScene) Draw(screen *ebiten.Image) {
 	fm.DrawCenteredText(screen, "地图: "+mapName, scW/2, 358, 10, textGray)
 
 	// ── 底部提示 ──
-	fm.DrawCenteredText(screen, "快捷键: ←→选模式 · ↑↓选难度 · Enter开始 · 1-6快选模式", scW/2, scH-30, 10, textDim)
+	fm.DrawCenteredText(screen, "点击卡片选择模式和难度", scW/2, scH-30, 10, textDim)
 	fm.DrawCenteredText(screen, "Mini Tower Defense v1.0", scW/2, scH-14, 10, textDim)
 }
 
 // strokeRect 绘制矩形边框。
 func strokeRect(screen *ebiten.Image, x, y, w, h, width float32, clr color.Color) {
-	vector.StrokeLine(screen, x, y, x+w, y, width, clr, false)
-	vector.StrokeLine(screen, x+w, y, x+w, y+h, width, clr, false)
-	vector.StrokeLine(screen, x+w, y+h, x, y+h, width, clr, false)
-	vector.StrokeLine(screen, x, y+h, x, y, width, clr, false)
+	draw.Line(screen, x, y, x+w, y, width, clr, false)
+	draw.Line(screen, x+w, y, x+w, y+h, width, clr, false)
+	draw.Line(screen, x+w, y+h, x, y+h, width, clr, false)
+	draw.Line(screen, x, y+h, x, y, width, clr, false)
 }

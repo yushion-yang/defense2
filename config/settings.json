@@ -410,10 +410,10 @@
         "status": "draft"
       },
       {
-        "id": "stack_slow_tower_plus_hero",
-        "label": "炮塔减速与英雄减速叠加",
+        "id": "stack_slow_tower",
+        "label": "炮塔减速叠加",
         "category": "status-synergy",
-        "description": "验证炮塔附带减速与英雄命中减速同时作用于同一敌人时，当前实现的结果是什么，并作为后续规则固化测试。第一版先记录当前行为，而不是预设一定要乘法或覆盖。",
+        "description": "验证炮塔附带减速作用于敌人时的行为。",
         "scene": {
           "map": "test-arena",
           "speedMultiplier": 200,
@@ -424,14 +424,6 @@
           "level": 1,
           "x": 430,
           "y": 320
-        },
-        "hero": {
-          "enabled": true,
-          "x": 360,
-          "y": 320,
-          "upgrades": {
-            "slow": 1
-          }
         },
         "enemies": [
           {

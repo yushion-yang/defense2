@@ -4,6 +4,7 @@ package render
 
 import (
 	"image/color"
+	"math"
 
 	"defense2/internal/config"
 	"defense2/internal/core/gamemap"
@@ -11,7 +12,6 @@ import (
 	"defense2/internal/render/theme"
 
 	"github.com/hajimehoshi/ebiten/v2"
-	"github.com/hajimehoshi/ebiten/v2/vector"
 )
 
 // ---------------------------------------------------------------------------
@@ -30,18 +30,6 @@ func ensureBg() *draw.CachedGradient {
 		theme.MapGradientTop, theme.MapGradientBot,
 	)
 
-	// Stamp dot grid overlay onto the gradient image.
-	img := cachedBg.Image()
-	dotClr := theme.MapDotGrid
-	for y := 0; y < theme.CanvasH; y += theme.MapDotSpacing {
-		for x := 0; x < theme.CanvasW; x += theme.MapDotSpacing {
-			vector.DrawFilledRect(img,
-				float32(x), float32(y),
-				float32(theme.MapDotSize), float32(theme.MapDotSize),
-				dotClr, false)
-		}
-	}
-
 	return cachedBg
 }
 
@@ -55,14 +43,16 @@ func ensureBg() *draw.CachedGradient {
 //   - screen: 目标画布
 //   - gm: 运行时地图
 //   - fm: 字体管理器（用于绘制入口/基地标签）；可为 nil（跳过标签）
-//   - animTime: 动画时间（秒），当前未使用，预留给后续脉冲动画
+//   - animTime: 动画时间（秒），用于建塔模式空槽位脉冲动画
 //   - towerAt: 返回指定格子 (row, col) 是否有塔；可为 nil（全部视为空槽）
+//   - buildMode: 是否处于建塔模式（显示高亮空槽+加号）
 func DrawMap(
 	screen *ebiten.Image,
 	gm *gamemap.GameMap,
 	fm *FontManager,
 	animTime float64,
 	towerAt func(row, col int) bool,
+	buildMode bool,
 ) {
 	// ── 1. Background gradient + dot grid ──
 	bg := ensureBg()
@@ -72,7 +62,7 @@ func DrawMap(
 	drawPaths(screen, gm)
 
 	// ── 3. Tower slots ──
-	drawSlots(screen, gm, towerAt)
+	drawSlots(screen, gm, fm, towerAt, buildMode, animTime)
 
 	// ── 4. Spawn / base subtle markers ──
 	drawSpawnBaseMarkers(screen, gm)
@@ -127,8 +117,16 @@ func drawWaypointPath(screen *ebiten.Image, waypoints []gamemap.Point) {
 // ---------------------------------------------------------------------------
 
 // drawSlots draws semi-transparent circles for each buildable cell.
-func drawSlots(screen *ebiten.Image, gm *gamemap.GameMap, towerAt func(row, col int) bool) {
+// In build mode, empty slots are highlighted with an outline ring and "+" sign.
+func drawSlots(screen *ebiten.Image, gm *gamemap.GameMap, fm *FontManager, towerAt func(row, col int) bool, buildMode bool, animTime float64) {
 	cfg := gm.Config
+
+	// Build mode pulse: ring alpha oscillates between 0.5 and 1.0
+	var pulseAlpha uint8
+	if buildMode {
+		pulse := 0.5 + 0.5*math.Sin(animTime*3.0)
+		pulseAlpha = uint8(128 + 127*pulse) // 128..255
+	}
 
 	for row := 0; row < cfg.Rows; row++ {
 		for col := 0; col < cfg.Cols; col++ {
@@ -140,12 +138,29 @@ func drawSlots(screen *ebiten.Image, gm *gamemap.GameMap, towerAt func(row, col 
 			cx := float32(center.X)
 			cy := float32(center.Y)
 
-			clr := theme.SlotEmpty
-			if towerAt != nil && towerAt(row, col) {
-				clr = theme.SlotOccupied
-			}
+			occupied := towerAt != nil && towerAt(row, col)
 
-			vector.DrawFilledCircle(screen, cx, cy, theme.MapSlotRadius, clr, true)
+			if occupied {
+				// Occupied slot: subtle green tint
+				draw.FilledCircle(screen, cx, cy, theme.MapSlotRadius, theme.SlotOccupied)
+			} else if buildMode {
+				// Build mode empty slot: 金黄色轮廓 + "+" 号
+				draw.CircleOutline(screen, cx, cy, theme.MapSlotRadius, 1.5, theme.SlotBuildRing)
+
+				ringClr := theme.SlotBuildPulse
+				ringClr.A = pulseAlpha
+				draw.CircleOutline(screen, cx, cy, theme.MapSlotRadius+2, 1, ringClr)
+
+				// "+" sign
+				if fm != nil {
+					fm.DrawCenteredVText(screen, "+",
+						float64(cx), float64(cy),
+						14, theme.SlotPlusSign)
+				}
+			} else {
+				// Normal mode empty slot: 仅轮廓线，中心完全透明
+				draw.CircleOutline(screen, cx, cy, theme.MapSlotRadius, 1.5, theme.SlotIdleRing)
+			}
 		}
 	}
 }
@@ -180,7 +195,7 @@ func drawSpawnBaseMarkers(screen *ebiten.Image, gm *gamemap.GameMap) {
 			if ct == config.CellBase {
 				clr = baseClr
 			}
-			vector.DrawFilledCircle(screen, cx, cy, halfCS, clr, true)
+			draw.FilledCircle(screen, cx, cy, halfCS, clr)
 		}
 	}
 }

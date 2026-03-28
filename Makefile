@@ -1,4 +1,4 @@
-.PHONY: run test test-cover lint check-all build-wasm clean arch
+.PHONY: run test test-cover lint check-all build-wasm clean arch generate-wardens generate-assets
 
 # Desktop development
 run:
@@ -28,6 +28,13 @@ build-wasm:
 	cp "$$(go env GOROOT)/lib/wasm/wasm_exec.js" dist/web/
 	cp web/index.html dist/web/
 	@echo "WASM build done. Serve dist/web/"
+
+# Asset generation: visual description JSON → SVG → PNG
+generate-wardens:
+	node scripts/generate-assets.mjs wardens --force
+
+generate-assets:
+	node scripts/generate-assets.mjs all --force
 
 # Architecture visualization (pkg deps + struct diagram + module index)
 arch:

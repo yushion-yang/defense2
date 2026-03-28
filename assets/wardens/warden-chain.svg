@@ -1,0 +1,30 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128">
+  <defs>
+    <radialGradient id="wg0" cx="50%" cy="50%" r="50%"><stop offset="0%" stop-color="#8b5cf6" stop-opacity="0.35"/><stop offset="100%" stop-color="#8b5cf6" stop-opacity="0"/></radialGradient>
+  </defs>
+  <!-- 能量串联: 蓝紫色能量环体，三层同心圆环旋转，中心六边形核心，六条闪电链从核心延伸 -->
+  <circle cx="64" cy="64" r="56" fill="url(#wg0)"/>
+  <circle cx="64" cy="64" r="44" fill="none" stroke="#a78bfa" stroke-width="2.5" stroke-dasharray="8 4" opacity="0.5"/>
+  <circle cx="64" cy="64" r="34" fill="none" stroke="#a78bfa" stroke-width="2" stroke-dasharray="5 3" opacity="0.65"/>
+  <circle cx="64" cy="64" r="24" fill="none" stroke="#a78bfa" stroke-width="1.5" stroke-dasharray="3 2" opacity="0.8"/>
+  <polygon points="64,50 76.12435565298215,57 76.12435565298215,71 64,78 51.87564434701786,71 51.875644347017854,57.00000000000001" fill="#a78bfa" opacity="0.9"/><circle cx="64" cy="64" r="7" fill="#ddd6fe" opacity="0.9"/>
+  <line x1="64" y1="64" x2="64" y2="14" stroke="#a78bfa" stroke-width="2" opacity="0.6"/>
+  <line x1="64" y1="64" x2="110" y2="40" stroke="#a78bfa" stroke-width="2" opacity="0.6"/>
+  <line x1="64" y1="64" x2="110" y2="88" stroke="#a78bfa" stroke-width="2" opacity="0.6"/>
+  <line x1="64" y1="64" x2="64" y2="114" stroke="#a78bfa" stroke-width="2" opacity="0.6"/>
+  <line x1="64" y1="64" x2="18" y2="88" stroke="#a78bfa" stroke-width="2" opacity="0.6"/>
+  <line x1="64" y1="64" x2="18" y2="40" stroke="#a78bfa" stroke-width="2" opacity="0.6"/>
+  <circle cx="64" cy="14" r="4" fill="#ddd6fe" opacity="0.7"/>
+  <circle cx="110" cy="40" r="4" fill="#ddd6fe" opacity="0.7"/>
+  <circle cx="110" cy="88" r="4" fill="#ddd6fe" opacity="0.7"/>
+  <circle cx="64" cy="114" r="4" fill="#ddd6fe" opacity="0.7"/>
+  <circle cx="18" cy="88" r="4" fill="#ddd6fe" opacity="0.7"/>
+  <circle cx="18" cy="40" r="4" fill="#ddd6fe" opacity="0.7"/>
+  <circle cx="64" cy="14" r="3" fill="#c4b5fd" opacity="0.7"/>
+  <circle cx="110" cy="40" r="3" fill="#c4b5fd" opacity="0.7"/>
+  <circle cx="110" cy="88" r="3" fill="#c4b5fd" opacity="0.7"/>
+  <circle cx="64" cy="114" r="3" fill="#c4b5fd" opacity="0.7"/>
+  <circle cx="18" cy="88" r="3" fill="#c4b5fd" opacity="0.7"/>
+  <circle cx="18" cy="40" r="3" fill="#c4b5fd" opacity="0.7"/>
+  
+</svg>

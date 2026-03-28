@@ -32,5 +32,4 @@ const (
 	CellBuildable = 2 // 可建造塔的位置
 	CellSpawn    = 4 // 出怪点
 	CellBase     = 5 // 基地（敌人终点）
-	CellHeroBase = 6 // 英雄放置点
 )

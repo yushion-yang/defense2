@@ -4,6 +4,9 @@
 package loader
 
 import (
+	"math"
+	"strings"
+
 	"defense2/internal/config"
 	"defense2/internal/core/tower"
 )
@@ -26,22 +29,88 @@ func TowerJSONToDef(key string, t *config.TowerJSON) tower.TowerDef {
 			abilities = append(abilities, a.Name)
 		}
 	}
+	// bounceConfig → 自动追加 bounce 能力
+	if t.BounceConfig != nil {
+		abilities = append(abilities, "bounce")
+	}
+	// abilityUnlocks → 追加解锁的能力（Lv1 默认可用）
+	for _, u := range t.AbilityUnlocks {
+		if u.Type != "" && u.Level <= 1 {
+			abilities = append(abilities, u.Type)
+		}
+	}
 
 	label := t.ShortLabel
 	if label == "" {
 		label = t.Label
 	}
 
-	return tower.TowerDef{
-		Key:         key,
-		Label:       label,
-		Range:       t.BaseRange,
-		Damage:      t.BaseDamage,
-		AttackSpeed: attackSpeed,
-		Cost:        t.BuildCost,
-		Abilities:   abilities,
-		Color:       defaultTowerColor,
+	def := tower.TowerDef{
+		Key:             key,
+		Label:           label,
+		Range:           t.BaseRange,
+		Damage:          t.BaseDamage,
+		AttackSpeed:     attackSpeed,
+		Cost:            t.BuildCost,
+		Abilities:       abilities,
+		Color:           defaultTowerColor,
+		AttackStyleID:   resolveAttackStyle(t),
+		ProjectileSpeed: t.ProjectileSpeed,
 	}
+
+	// Beam 配置
+	if t.Beam != nil {
+		def.BeamDuration = t.Beam.Duration
+		def.BeamWidth = t.Beam.Width
+		def.BeamColor = parseHexColor(t.Beam.Color)
+	}
+	// Scatter 配置
+	if t.ScatterConfig != nil {
+		def.ScatterPellets = t.ScatterConfig.Pellets
+		if def.ScatterPellets == 0 {
+			def.ScatterPellets = 3
+		}
+		def.ScatterSpread = t.ScatterConfig.SpreadAngle * math.Pi / 180 / 2 // 半角
+	}
+	// Charge 配置
+	if t.ChargeConfig != nil {
+		def.ChargeMult = t.ChargeConfig.DamageMultiplier
+		if def.ChargeMult == 0 {
+			def.ChargeMult = 3.0
+		}
+	}
+	// SpinAoE 配置
+	def.InnerDmgBonus = t.InnerDamageBonus
+	def.InnerRatioR = t.InnerRadiusRatio
+	// Pierce 配置
+	if t.PierceConfig != nil {
+		def.PierceTargets = t.PierceConfig.Targets
+		if def.PierceTargets == 0 {
+			def.PierceTargets = 2
+		}
+		def.PierceDecay = t.PierceConfig.Decay
+		if def.PierceDecay == 0 {
+			def.PierceDecay = 0.8
+		}
+	}
+
+	// 等级解锁能力
+	for _, u := range t.AbilityUnlocks {
+		if u.Type == "" {
+			continue
+		}
+		name := u.Name
+		if name == "" {
+			name = u.Type
+		}
+		def.AbilityUnlocks = append(def.AbilityUnlocks, tower.AbilityUnlock{
+			Level: u.Level,
+			Type:  u.Type,
+			Name:  name,
+		})
+	}
+
+	return def
 }
 
 // LoadTowerDefs 加载所有塔 JSON 并转为 TowerDef 切片（按费用升序）。
@@ -65,4 +134,50 @@ func LoadTowerDefs() ([]tower.TowerDef, error) {
 		}
 	}
 	return defs, nil
+}
+
+// resolveAttackStyle 解析攻击方式（含自动推断）。
+func resolveAttackStyle(t *config.TowerJSON) tower.AttackStyle {
+	if t.AttackStyle != "" {
+		return tower.AttackStyle(t.AttackStyle)
+	}
+	// 自动推断（与 JS 版 tickTowerCombat.js 一致）
+	if t.ChargeConfig != nil {
+		return tower.StyleCharge
+	}
+	if t.ScatterConfig != nil {
+		return tower.StyleScatter
+	}
+	if t.PierceConfig != nil {
+		return tower.StylePierce
+	}
+	return tower.StyleProjectile
+}
+
+// parseHexColor 解析 "#rrggbb" hex 颜色为 [3]uint8。
+func parseHexColor(hex string) [3]uint8 {
+	hex = strings.TrimPrefix(hex, "#")
+	if len(hex) != 6 {
+		return [3]uint8{200, 200, 200}
+	}
+	var r, g, b uint8
+	for i, ptr := range []*uint8{&r, &g, &b} {
+		hi := hexVal(hex[i*2])
+		lo := hexVal(hex[i*2+1])
+		*ptr = hi*16 + lo
+	}
+	return [3]uint8{r, g, b}
+}
+
+func hexVal(c byte) uint8 {
+	switch {
+	case c >= '0' && c <= '9':
+		return c - '0'
+	case c >= 'a' && c <= 'f':
+		return c - 'a' + 10
+	case c >= 'A' && c <= 'F':
+		return c - 'A' + 10
+	default:
+		return 0
+	}
 }

@@ -3,6 +3,8 @@
 package abilities
 
 import (
+	"math/rand"
+
 	"defense2/internal/core/enemy"
 	"defense2/internal/core/projectile"
 	"defense2/internal/core/tower"
@@ -25,7 +27,7 @@ type OnHitSlowAbility struct{}
 func (a *OnHitSlowAbility) Name() string { return "onHitSlow" }
 func (a *OnHitSlowAbility) OnHit(_ *tower.Tower, _ *projectile.Projectile, _ *enemy.Enemy) *tower.HitResult {
 	return &tower.HitResult{
-		Slow: &tower.SlowEffect{Factor: 0.6, Duration: 1.0},
+		Slow: &tower.SlowEffect{Factor: 0.32, Duration: 1.45},
 	}
 }
 
@@ -41,18 +43,23 @@ func (a *BleedDotAbility) OnHit(_ *tower.Tower, _ *projectile.Projectile, _ *ene
 
 // BurnAbility 灼烧能力：命中后持续灼烧 2 秒。
 type BurnAbility struct{}
+
 func (a *BurnAbility) Name() string { return "burn" }
 func (a *BurnAbility) OnHit(_ *tower.Tower, p *projectile.Projectile, _ *enemy.Enemy) *tower.HitResult {
 	return &tower.HitResult{
-		Bleed: &tower.BleedEffect{DPS: p.Damage * 0.3, Duration: 2}, // 复用 Bleed 结构表示灼烧
+		Burn: &tower.BleedEffect{DPS: p.Damage * 0.3, Duration: 2},
 	}
 }
 
-// StunAbility 眩晕能力：命中时短暂冻结敌人。
+// StunAbility 眩晕能力：12% 概率命中时短暂冻结敌人 0.4 秒。
 type StunAbility struct{}
+
 func (a *StunAbility) Name() string { return "stun" }
 func (a *StunAbility) OnHit(_ *tower.Tower, _ *projectile.Projectile, _ *enemy.Enemy) *tower.HitResult {
-	return &tower.HitResult{Stun: &tower.StunEffect{Duration: 0.3}}
+	if rand.Float64() < 0.12 {
+		return &tower.HitResult{Stun: &tower.StunEffect{Duration: 0.4}}
+	}
+	return nil
 }
 
 // RootAbility 定身能力：命中时定住敌人 0.5 秒。

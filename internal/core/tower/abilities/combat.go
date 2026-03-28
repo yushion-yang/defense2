@@ -52,26 +52,32 @@ func (a *CritAbility) OnHit(_ *tower.Tower, p *projectile.Projectile, _ *enemy.E
 // BounceAbility 弹射能力：弹射物命中后跳跃到附近敌人。
 type BounceAbility struct{}
 func (a *BounceAbility) Name() string { return "bounce" }
-func (a *BounceAbility) OnHit(_ *tower.Tower, _ *projectile.Projectile, _ *enemy.Enemy) *tower.HitResult {
+func (a *BounceAbility) OnHit(t *tower.Tower, _ *projectile.Projectile, _ *enemy.Enemy) *tower.HitResult {
+	// 弹射范围 = 塔射程（确保能覆盖到附近敌人）
+	bounceRange := t.Range
+	if bounceRange < 150 {
+		bounceRange = 150
+	}
 	return &tower.HitResult{
-		Bounce: &tower.BounceEffect{MaxBounces: 2, Range: 120, DamageDecay: 0.7},
+		Bounce: &tower.BounceEffect{MaxBounces: 2, Range: bounceRange, DamageDecay: 0.8},
 	}
 }
 
-// StackDamage 叠伤能力：连续命中同一目标时伤害递增。
+// StackDamage 叠伤能力：连续命中额外 8% 伤害。
 type StackDamage struct{}
+
 func (a *StackDamage) Name() string { return "stackDamage" }
 func (a *StackDamage) OnHit(_ *tower.Tower, p *projectile.Projectile, _ *enemy.Enemy) *tower.HitResult {
-	// 简化：每次命中额外 10% 伤害
-	return &tower.HitResult{BonusDamage: p.Damage * 0.10}
+	return &tower.HitResult{BonusDamage: p.Damage * 0.08}
 }
 
-// ExecutionBonus 斩杀能力：目标低血量时额外伤害。
+// ExecutionBonus 斩杀能力：目标 HP ≤50% 时额外 50% 伤害。
 type ExecutionBonus struct{}
+
 func (a *ExecutionBonus) Name() string { return "executionBonus" }
 func (a *ExecutionBonus) OnHit(_ *tower.Tower, p *projectile.Projectile, e *enemy.Enemy) *tower.HitResult {
-	if e.HP/e.MaxHP <= 0.3 {
-		return &tower.HitResult{BonusDamage: p.Damage * 1.5}
+	if e.HP/e.MaxHP <= 0.5 {
+		return &tower.HitResult{BonusDamage: p.Damage * 0.5}
 	}
 	return nil
 }
@@ -85,14 +91,16 @@ func (a *DistanceDamage) OnHit(t *tower.Tower, p *projectile.Projectile, e *enem
 	return &tower.HitResult{BonusDamage: p.Damage * ratio * 0.5}
 }
 
-// PercentHpDamage 百分比伤害能力：按目标最大血量比例造成额外伤害。
+// PercentHpDamage 百分比伤害能力：按目标最大血量 20% 造成额外伤害（Boss 上限 5%）。
 type PercentHpDamage struct{}
+
 func (a *PercentHpDamage) Name() string { return "percentHpDamage" }
 func (a *PercentHpDamage) OnHit(_ *tower.Tower, _ *projectile.Projectile, e *enemy.Enemy) *tower.HitResult {
-	bonus := e.MaxHP * 0.02
-	if bonus > 999 {
-		bonus = 999
+	ratio := 0.20
+	if e.Boss {
+		ratio = 0.05
 	}
+	bonus := e.MaxHP * ratio
 	return &tower.HitResult{BonusDamage: bonus}
 }
 

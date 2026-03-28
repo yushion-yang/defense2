@@ -139,7 +139,7 @@
   "dummy": {
     "label": "木桩",
     "color": "#78716c",
-    "hpScale": 200,
+    "hpScale": 10000,
     "speedScale": 0,
     "rewardScale": 0,
     "radius": 24,

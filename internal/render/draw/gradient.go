@@ -9,11 +9,14 @@ import (
 // LinearGradientV draws a vertical linear gradient directly onto screen,
 // blending from top to bottom color row-by-row.
 func LinearGradientV(screen *ebiten.Image, x, y, w, h int, top, bottom color.RGBA) {
-	if w <= 0 || h <= 0 {
+	sw := int(float64(w) * Scale)
+	sh := int(float64(h) * Scale)
+	if sw <= 0 || sh <= 0 {
 		return
 	}
 
-	img := ebiten.NewImage(w, h)
+	img := ebiten.NewImage(sw, sh)
+	w, h = sw, sh
 	pix := make([]byte, w*h*4)
 
 	for row := 0; row < h; row++ {
@@ -43,7 +46,7 @@ func LinearGradientV(screen *ebiten.Image, x, y, w, h int, top, bottom color.RGB
 	img.WritePixels(pix)
 
 	op := &ebiten.DrawImageOptions{}
-	op.GeoM.Translate(float64(x), float64(y))
+	op.GeoM.Translate(S(float64(x)), S(float64(y)))
 	screen.DrawImage(img, op)
 }
 
@@ -55,10 +58,13 @@ type CachedGradient struct {
 
 // NewCachedGradient creates a cached vertical gradient image.
 func NewCachedGradient(w, h int, top, bottom color.RGBA) *CachedGradient {
-	if w <= 0 || h <= 0 {
+	sw := int(float64(w) * Scale)
+	sh := int(float64(h) * Scale)
+	if sw <= 0 || sh <= 0 {
 		return &CachedGradient{img: ebiten.NewImage(1, 1)}
 	}
 
+	w, h = sw, sh
 	img := ebiten.NewImage(w, h)
 	pix := make([]byte, w*h*4)
 
@@ -92,7 +98,7 @@ func NewCachedGradient(w, h int, top, bottom color.RGBA) *CachedGradient {
 // Draw renders the cached gradient onto screen at position (x, y).
 func (cg *CachedGradient) Draw(screen *ebiten.Image, x, y float64) {
 	op := &ebiten.DrawImageOptions{}
-	op.GeoM.Translate(x, y)
+	op.GeoM.Translate(S(x), S(y))
 	screen.DrawImage(cg.img, op)
 }
 

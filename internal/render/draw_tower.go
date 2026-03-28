@@ -6,20 +6,22 @@ package render
 import (
 	"fmt"
 	"image/color"
+	"math"
 
 	"defense2/internal/core/tower"
+	"defense2/internal/render/anim"
 	"defense2/internal/render/draw"
 	"defense2/internal/render/sprite"
 	"defense2/internal/render/theme"
 
 	"github.com/hajimehoshi/ebiten/v2"
-	"github.com/hajimehoshi/ebiten/v2/vector"
 )
 
-// TowerRenderer manages tower PNG sprite rendering.
+// TowerRenderer manages tower PNG sprite rendering with optional frame animation.
 type TowerRenderer struct {
-	cache   *sprite.Cache
-	assetFS AssetReader
+	cache     *sprite.Cache
+	assetFS   AssetReader
+	animators map[string]*anim.Animator // per tower key, lazy initialized
 }
 
 // AssetReader reads embedded asset files.
@@ -30,8 +32,9 @@ type AssetReader interface {
 // NewTowerRenderer creates a tower renderer.
 func NewTowerRenderer(assetFS AssetReader) *TowerRenderer {
 	return &TowerRenderer{
-		cache:   sprite.NewCache(),
-		assetFS: assetFS,
+		cache:     sprite.NewCache(),
+		assetFS:   assetFS,
+		animators: make(map[string]*anim.Animator),
 	}
 }
 
@@ -48,21 +51,26 @@ func (tr *TowerRenderer) DrawTowers(screen *ebiten.Image, pool *tower.Pool, sele
 		if selected {
 			draw.CircleOutline(screen, cx, cy,
 				theme.TowerSelectionRingR, theme.TowerSelectionWidth, theme.TowerSelectionRing)
-			draw.FilledCircle(screen, cx, cy, float32(t.Range), theme.TowerRangeFill)
 			draw.CircleOutline(screen, cx, cy,
 				float32(t.Range), theme.TowerRangeStrokeWidth, theme.TowerRangeStroke)
 		}
 
-		// --- Tower body ---
-		img := tr.loadTowerImage(t)
+		// --- Tower body (animated or static, rotated toward target) ---
+		// spin_aoe / summon 不旋转朝向目标
+		rotation := t.Angle + math.Pi/2
+		if t.AttackStyleID == tower.StyleSpinAoE {
+			rotation = 0
+		}
+
+		img := tr.getTowerFrame(t, 1.0/60.0)
 		if img != nil {
-			opts := &ebiten.DrawImageOptions{}
-			w, h := img.Bounds().Dx(), img.Bounds().Dy()
-			scale := float64(towerSpriteSize) / float64(w)
-			opts.GeoM.Translate(-float64(w)/2, -float64(h)/2)
-			opts.GeoM.Scale(scale, scale)
-			opts.GeoM.Translate(float64(cx), float64(cy))
-			screen.DrawImage(img, opts)
+			logicalScale := float64(towerSpriteSize) / float64(img.Bounds().Dx())
+			// 射击缩放脉冲：射击瞬间放大 15%，快速恢复
+			if t.FireAnim > 0 {
+				pulse := 1.0 + 0.15*(t.FireAnim/0.15)
+				logicalScale *= pulse
+			}
+			draw.SpriteScaledRotated(screen, img, float64(cx), float64(cy), logicalScale, rotation)
 		} else {
 			// Fallback: circle body + barrel rectangle
 			bodyClr := theme.TowerFallbackDef
@@ -70,10 +78,29 @@ func (tr *TowerRenderer) DrawTowers(screen *ebiten.Image, pool *tower.Pool, sele
 				bodyClr = theme.TowerFallbackSel
 			}
 			draw.FilledCircle(screen, cx, cy, theme.TowerFallbackRadius, bodyClr)
-			// Barrel: 8x14 rectangle pointing upward from center
-			barrelW := float32(8)
-			barrelH := float32(14)
-			vector.DrawFilledRect(screen, cx-barrelW/2, cy-barrelH, barrelW, barrelH, theme.TowerBarrel, true)
+			draw.FilledRect(screen, cx-4, cy-14, 8, 14, theme.TowerBarrel, true)
+		}
+
+		// --- Spin AoE visual: rotating blade arcs + inner zone highlight ---
+		if t.AttackStyleID == tower.StyleSpinAoE && t.SpinActive > 0 {
+			alpha := t.SpinActive / 0.3
+			if alpha > 1 {
+				alpha = 1
+			}
+			outerR := float32(t.Range)
+			innerR := float32(t.Range * t.InnerRatioR)
+
+			// 4 条旋转弧线
+			for i := 0; i < 4; i++ {
+				a := t.SpinAngle + float64(i)*math.Pi/2
+				arcR := outerR
+				clr := color.RGBA{R: 163, G: 230, B: 53, A: uint8(100 * alpha)}
+				draw.Arc(screen, cx, cy, arcR, float32(a-0.3), float32(a+0.3), 3, clr)
+			}
+
+			// 内圈半透明填充
+			innerClr := color.RGBA{R: 134, G: 239, B: 172, A: uint8(20 * alpha)}
+			draw.FilledCircle(screen, cx, cy, innerR, innerClr)
 		}
 
 		// --- Name label ---
@@ -111,25 +138,72 @@ func (tr *TowerRenderer) loadTowerImage(t *tower.Tower) *ebiten.Image {
 	return img
 }
 
+// GetSprite returns the tower sprite by key for icon/thumbnail use.
+// Prefers idle-0 animation frame (matches in-game rendering), falls back to static PNG.
+func (tr *TowerRenderer) GetSprite(key string) *ebiten.Image {
+	if tr.assetFS == nil {
+		return nil
+	}
+	// Try idle-0 first (matches map rendering)
+	for _, path := range []string{
+		fmt.Sprintf("assets/towers/core/tower-%s-idle-0.png", key),
+		fmt.Sprintf("assets/towers/core/tower-%s.png", key),
+	} {
+		if img := tr.loadPNG(path); img != nil {
+			return img
+		}
+	}
+	return nil
+}
+
+func (tr *TowerRenderer) loadPNG(path string) *ebiten.Image {
+	if cached := tr.cache.Get(path, towerSpriteSize, towerSpriteSize); cached != nil {
+		return cached
+	}
+	data, err := tr.assetFS.ReadFile(path)
+	if err != nil {
+		return nil
+	}
+	img, _ := tr.cache.GetOrParse(path, data, towerSpriteSize, towerSpriteSize)
+	return img
+}
+
+// getTowerFrame returns the current animation frame for a tower, falling back to static sprite.
+func (tr *TowerRenderer) getTowerFrame(t *tower.Tower, dt float64) *ebiten.Image {
+	// Lazy-load animator
+	a, ok := tr.animators[t.Key]
+	if !ok {
+		a = anim.LoadTowerAnimator(tr.assetFS, t.Key)
+		tr.animators[t.Key] = a
+	}
+
+	// Choose animation state
+	if t.FireAnim > 0 && a.HasAnim("attack") {
+		a.Play("attack")
+	} else if a.HasAnim("idle") {
+		a.Play("idle")
+	}
+	a.Update(dt)
+
+	img := a.CurrentImage()
+	if img != nil {
+		return img
+	}
+	// Fallback to static sprite cache
+	return tr.loadTowerImage(t)
+}
+
 // DrawTowerRangePreview draws a placement preview (range circle + tower shadow).
 func DrawTowerRangePreview(screen *ebiten.Image, cx, cy float32, r float64, valid bool) {
 	fr := float32(r)
 
-	var fillClr, strokeClr color.RGBA
+	var strokeClr color.RGBA
 	if valid {
-		fillClr = color.RGBA{R: 34, G: 197, B: 94, A: 77}  // green 0.3 alpha
 		strokeClr = color.RGBA{R: 34, G: 197, B: 94, A: 153} // green 0.6 alpha
 	} else {
-		fillClr = color.RGBA{R: 239, G: 68, B: 68, A: 77}  // red 0.3 alpha
 		strokeClr = color.RGBA{R: 239, G: 68, B: 68, A: 153} // red 0.6 alpha
 	}
 
-	// Range circle (filled + outline)
-	draw.FilledCircle(screen, cx, cy, fr, fillClr)
+	// Range circle (outline only)
 	draw.CircleOutline(screen, cx, cy, fr, 1.5, strokeClr)
-
-	// Tower shadow circle
-	shadowClr := fillClr
-	shadowClr.A = 120
-	draw.FilledCircle(screen, cx, cy, theme.TowerFallbackRadius, shadowClr)
 }

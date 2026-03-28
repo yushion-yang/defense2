@@ -15,6 +15,7 @@ type HitResult struct {
 	Slow        *SlowEffect   // 减速效果（可选）
 	Stun        *StunEffect   // 眩晕效果（可选）
 	Bleed       *BleedEffect  // 流血效果（可选）
+	Burn        *BleedEffect  // 灼烧效果（可选，结构同 Bleed 但独立计时）
 	Bounce      *BounceEffect // 弹射效果（可选）
 	IsCrit      bool          // 是否暴击
 }
@@ -55,6 +56,28 @@ type Ability interface {
 	Name() string
 	// OnHit 在弹射物命中敌人时调用，返回触发的效果（无效果返回 nil）。
 	OnHit(t *Tower, p *projectile.Projectile, e *enemy.Enemy) *HitResult
+}
+
+// Ticker 可选接口，用于需要每帧 tick 更新的能力（光环、区域、经济类）。
+// 通过类型断言检查，不影响仅实现 OnHit 的能力。
+type Ticker interface {
+	OnTick(t *Tower, ctx *TickContext) *TickResult
+}
+
+// TickContext tick 调用时传入的上下文。
+type TickContext struct {
+	Enemies *enemy.Pool
+	Towers  *Pool
+	DT      float64 // 本帧时间步长（秒）
+}
+
+// TickResult tick 返回的临时效果。
+// 字段为零值表示无对应效果。
+type TickResult struct {
+	DamageBoost float64 // 临时伤害加成比例（0.15 = +15%）
+	SpeedBoost  float64 // 临时攻速加成比例（0.10 = +10%）
+	RangeBoost  float64 // 临时射程加成（像素）
+	GoldEarned  int     // 本 tick 获得的金币
 }
 
 // Registry 全局能力注册表（能力名 → 能力实例）。

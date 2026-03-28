@@ -32,9 +32,9 @@ var (
 // ---------------------------------------------------------------------------
 
 var (
-	TextTitle  = hex(0xe2e8f0)
-	TextBody   = hex(0xcbd5e1)
-	TextMuted  = hex(0x94a3b8)
+	TextTitle  = hex(0xf1f5f9) // 更亮的标题白
+	TextBody   = hex(0xe2e8f0) // 正文提亮
+	TextMuted  = hex(0xb0bec5) // 辅助文字提亮
 	TextLocked = hex(0x4b5563)
 )
 
@@ -44,7 +44,7 @@ var (
 
 var (
 	StatusStrUp    = hex(0x4ade80)
-	StatusStrDown  = hex(0xf87171)
+	StatusStrDown  = hex(0xfca5a5) // 红300，暗背景更醒目
 	StatusStrNorm  = hex(0x94a3b8)
 	StatusSkill    = hex(0x60a5fa)
 	StatusExcl     = hex(0x38bdf8)
@@ -81,7 +81,7 @@ var (
 
 var (
 	FactionBase    = hex(0x38bdf8)
-	FactionOutput  = hex(0xf87171)
+	FactionOutput  = hex(0xfca5a5)
 	FactionControl = hex(0x60a5fa)
 	FactionSupport = hex(0x4ade80)
 )
@@ -91,7 +91,7 @@ var (
 // ---------------------------------------------------------------------------
 
 var (
-	ResHearts = hex(0xf87171)
+	ResHearts = hex(0xfca5a5)
 	ResGold   = hex(0xfbbf24)
 	ResWaves  = hex(0x93c5fd)
 )
@@ -114,11 +114,13 @@ var (
 // ---------------------------------------------------------------------------
 
 var (
-	SlotEmpty      = rgba(255, 255, 255, 20)    // 0.08 * 255 ≈ 20
-	SlotOccupied   = rgba(34, 197, 94, 36)      // 0.14 * 255 ≈ 36
-	SlotBuildPulse = rgba(251, 191, 36, 255)
+	SlotEmpty      = rgba(255, 255, 255, 12)    // 空闲态内部微填充
+	SlotIdleRing   = rgba(180, 200, 220, 50)   // 空闲态淡灰轮廓
+	SlotOccupied   = rgba(34, 197, 94, 36)      // 已占用绿色底
+	SlotBuildRing  = rgba(220, 180, 60, 180)    // 建造态金黄轮廓
+	SlotBuildPulse = rgba(251, 191, 36, 255)    // 建造态脉冲外圈
 	SlotHintPulse  = rgba(96, 165, 250, 255)
-	SlotPlusSign   = hex(0xfde68a)
+	SlotPlusSign   = rgba(250, 220, 120, 220)   // "+" 号颜色
 	SlotHintLabel  = hex(0xbfdbfe)
 )
 
@@ -181,19 +183,6 @@ var (
 )
 
 // ---------------------------------------------------------------------------
-// Hero
-// ---------------------------------------------------------------------------
-
-var (
-	HeroLeashSel   = rgba(192, 132, 252, 133)  // 0.52 * 255 ≈ 133
-	HeroLeashDef   = rgba(125, 211, 252, 46)    // 0.18 * 255 ≈ 46
-	HeroBodyFB     = hex(0x4c1d95)
-	HeroStroke     = hex(0xc4b5fd)
-	HeroXPBarBg    = rgba(255, 255, 255, 20)    // 0.08 * 255 ≈ 20
-	HeroXPBarFill  = hex(0xa78bfa)
-)
-
-// ---------------------------------------------------------------------------
 // HUD
 // ---------------------------------------------------------------------------
 
@@ -230,9 +219,9 @@ var (
 var (
 	InfoBorder      = rgba(148, 163, 184, 51)     // 0.2  * 255 ≈ 51
 	InfoWardenBdr   = rgba(251, 191, 36, 77)       // 0.3  * 255 ≈ 77
-	InfoAttrDamage  = hex(0xf87171)
-	InfoAttrAtkSpd  = hex(0xfb923c)
-	InfoAttrRange   = hex(0x38bdf8)
+	InfoAttrDamage  = hex(0xfca5a5) // 红300，更亮
+	InfoAttrAtkSpd  = hex(0xfdba74) // 橙300，更亮
+	InfoAttrRange   = hex(0x7dd3fc) // 蓝300，更亮
 )
 
 // ---------------------------------------------------------------------------
@@ -240,7 +229,7 @@ var (
 // ---------------------------------------------------------------------------
 
 var (
-	WavePanelBg      = rgba(15, 23, 42, 184)  // 0.72 * 255 ≈ 184
+	WavePanelBg      = rgba(15, 23, 42, 220)  // 0.86 * 255 ≈ 220
 	WaveThreatDanger = hex(0xfca5a5)
 	WaveThreatPress  = hex(0xfde68a)
 	WaveThreatCalm   = hex(0x86efac)

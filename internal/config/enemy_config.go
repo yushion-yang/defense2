@@ -13,8 +13,9 @@ type EnemyArchetype struct {
 	Label            string  `json:"label"`            // 显示名称
 	HPScale          float64 `json:"hpScale"`          // 血量倍率（相对基准值）
 	SpeedScale       float64 `json:"speedScale"`       // 速度倍率
-	RadiusScale      float64 `json:"radiusScale"`      // 碰撞半径倍率
+	Radius           float64 `json:"radius"`           // 碰撞半径（像素绝对值）
 	RewardScale      float64 `json:"rewardScale"`      // 击杀奖励倍率
+	Boss             bool    `json:"boss"`             // 是否为 Boss
 	ShieldScale      float64 `json:"shieldScale"`      // 护盾倍率（0 = 无护盾）
 	SplitCount       int     `json:"splitCount"`       // 分裂数量（0 = 不分裂）
 	MovementType     string  `json:"movementType"`     // 移动类型："ground" 或 "flying"
@@ -52,15 +53,15 @@ func LoadEnemyArchetypes() (map[string]*EnemyArchetype, error) {
 		if err := json.Unmarshal(val, &a); err != nil {
 			continue
 		}
-		// 默认倍率
+		// 默认值
 		if a.HPScale == 0 {
 			a.HPScale = 1
 		}
 		if a.SpeedScale == 0 {
 			a.SpeedScale = 1
 		}
-		if a.RadiusScale == 0 {
-			a.RadiusScale = 1
+		if a.Radius == 0 {
+			a.Radius = 8
 		}
 		if a.RewardScale == 0 {
 			a.RewardScale = 1

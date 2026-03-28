@@ -1,0 +1,319 @@
+{
+  "_meta": {
+    "description": "战灵视觉描述文件 — 用于 generate-assets.mjs 生成 SVG + PNG",
+    "type": "warden",
+    "viewBox": "0 0 128 128",
+    "outputSize": 128
+  },
+  "prince": {
+    "name": "小王子",
+    "description": "莽撞热血的火焰菱形体，拖着火尾高速冲撞",
+    "palette": {
+      "primary": "#f97316",
+      "secondary": "#fbbf24",
+      "accent": "#fef3c7",
+      "dark": "#c2410c",
+      "glow": "#fbbf24"
+    },
+    "body": {
+      "type": "diamond",
+      "points": [64,12, 102,56, 64,88, 26,56],
+      "innerPoints": [64,32, 80,56, 64,72, 48,56],
+      "innerOpacity": 0.5
+    },
+    "core": {
+      "cx": 64, "cy": 52, "r": 8,
+      "color": "#fef3c7",
+      "opacity": 0.9
+    },
+    "glow": {
+      "cx": 64, "cy": 56, "r": 52,
+      "opacity": 0.5
+    },
+    "decorations": [
+      {
+        "type": "wings",
+        "style": "flame",
+        "paths": [
+          "M40,68 Q28,88 36,106 L52,84 Z",
+          "M88,68 Q100,88 92,106 L76,84 Z"
+        ],
+        "color": "#ea580c",
+        "opacity": 0.7
+      },
+      {
+        "type": "tail",
+        "points": [56,88, 64,114, 72,88],
+        "color": "#c2410c",
+        "opacity": 0.5
+      }
+    ],
+    "eyes": {
+      "style": "fierce",
+      "positions": [{"cx":54,"cy":48}, {"cx":74,"cy":48}],
+      "outerRx": 4, "outerRy": 6,
+      "outerColor": "#fff",
+      "pupilR": 2,
+      "pupilColor": "#c2410c",
+      "pupilOffset": {"dx":1, "dy":-1}
+    }
+  },
+  "core": {
+    "name": "战斗机甲",
+    "description": "蓝色箭头形机甲战斗体，双推进器尾焰，核心能量球发光",
+    "palette": {
+      "primary": "#2563eb",
+      "secondary": "#60a5fa",
+      "accent": "#dbeafe",
+      "dark": "#1e3a5f",
+      "glow": "#3b82f6"
+    },
+    "body": {
+      "type": "polygon",
+      "points": [64,18, 96,60, 88,62, 96,100, 64,82, 32,100, 40,62, 32,60],
+      "gradient": {
+        "type": "linear",
+        "y1": "0%", "y2": "100%",
+        "stops": [
+          {"offset": "0%", "color": "#60a5fa"},
+          {"offset": "40%", "color": "#2563eb"},
+          {"offset": "100%", "color": "#1e3a5f"}
+        ]
+      },
+      "stroke": "#93c5fd",
+      "strokeWidth": 1.5
+    },
+    "core": {
+      "cx": 64, "cy": 56, "r": 12,
+      "color": "#60a5fa",
+      "opacity": 0.9,
+      "innerR": 7,
+      "innerColor": "#dbeafe"
+    },
+    "glow": {
+      "cx": 64, "cy": 64, "r": 56,
+      "opacity": 0.3
+    },
+    "decorations": [
+      {
+        "type": "thrusters",
+        "positions": [
+          {"x":44, "y":86, "w":8, "h":16},
+          {"x":76, "y":86, "w":8, "h":16}
+        ],
+        "color": "#1e40af",
+        "opacity": 0.7
+      },
+      {
+        "type": "thruster-flames",
+        "triangles": [
+          [46,102, 48,118, 50,102],
+          [78,102, 80,118, 82,102]
+        ],
+        "color": "#60a5fa",
+        "opacity": 0.5
+      }
+    ],
+    "eyes": null
+  },
+  "envoy": {
+    "name": "使者",
+    "description": "神秘的金色六芒星灵体，内核光球向四方辐射能量线",
+    "palette": {
+      "primary": "#f59e0b",
+      "secondary": "#fbbf24",
+      "accent": "#fef3c7",
+      "dark": "#d97706",
+      "glow": "#fbbf24"
+    },
+    "body": {
+      "type": "hexagram",
+      "triangleA": [64,22, 88,74, 40,74],
+      "triangleB": [64,106, 40,54, 88,54],
+      "gradientA": {
+        "type": "linear",
+        "y1": "0%", "y2": "100%",
+        "stops": [
+          {"offset": "0%", "color": "#fef3c7"},
+          {"offset": "100%", "color": "#f59e0b"}
+        ]
+      },
+      "gradientB": {
+        "type": "linear",
+        "y1": "100%", "y2": "0%",
+        "stops": [
+          {"offset": "0%", "color": "#fef3c7"},
+          {"offset": "100%", "color": "#d97706"}
+        ]
+      },
+      "opacity": 0.85
+    },
+    "core": {
+      "cx": 64, "cy": 64, "r": 16,
+      "color": "#fef3c7",
+      "opacity": 0.85,
+      "innerR": 9,
+      "innerColor": "#fff"
+    },
+    "glow": {
+      "cx": 64, "cy": 64, "r": 56,
+      "opacity": 0.5
+    },
+    "decorations": [
+      {
+        "type": "orbit-ring",
+        "cx": 64, "cy": 64, "r": 44,
+        "stroke": "#fbbf24",
+        "strokeWidth": 1,
+        "dasharray": "4 3",
+        "opacity": 0.4
+      },
+      {
+        "type": "radial-lines",
+        "center": [64, 64],
+        "lines": [
+          {"x1":64,"y1":14,"x2":64,"y2":32, "color":"#fbbf24","width":2.5,"opacity":0.5},
+          {"x1":64,"y1":96,"x2":64,"y2":114,"color":"#fbbf24","width":2.5,"opacity":0.5},
+          {"x1":14,"y1":64,"x2":32,"y2":64, "color":"#fbbf24","width":2.5,"opacity":0.5},
+          {"x1":96,"y1":64,"x2":114,"y2":64,"color":"#fbbf24","width":2.5,"opacity":0.5}
+        ]
+      },
+      {
+        "type": "radial-lines",
+        "center": [64, 64],
+        "lines": [
+          {"x1":24,"y1":24,"x2":38,"y2":38, "color":"#d97706","width":1.5,"opacity":0.3},
+          {"x1":104,"y1":24,"x2":90,"y2":38,"color":"#d97706","width":1.5,"opacity":0.3},
+          {"x1":24,"y1":104,"x2":38,"y2":90,"color":"#d97706","width":1.5,"opacity":0.3},
+          {"x1":104,"y1":104,"x2":90,"y2":90,"color":"#d97706","width":1.5,"opacity":0.3}
+        ]
+      }
+    ],
+    "eyes": null
+  },
+  "chain": {
+    "name": "能量串联",
+    "description": "蓝紫色能量环体，三层同心圆环旋转，中心六边形核心，六条闪电链从核心延伸",
+    "palette": {
+      "primary": "#7c3aed",
+      "secondary": "#a78bfa",
+      "accent": "#ddd6fe",
+      "dark": "#4c1d95",
+      "glow": "#8b5cf6"
+    },
+    "body": {
+      "type": "concentric-rings",
+      "rings": [
+        {"r": 44, "strokeWidth": 2.5, "dasharray": "8 4", "opacity": 0.5},
+        {"r": 34, "strokeWidth": 2,   "dasharray": "5 3", "opacity": 0.65},
+        {"r": 24, "strokeWidth": 1.5, "dasharray": "3 2", "opacity": 0.8}
+      ]
+    },
+    "core": {
+      "cx": 64, "cy": 64, "r": 14,
+      "type": "hexagon",
+      "color": "#a78bfa",
+      "opacity": 0.9,
+      "innerR": 7,
+      "innerColor": "#ddd6fe"
+    },
+    "glow": {
+      "cx": 64, "cy": 64, "r": 56,
+      "opacity": 0.35
+    },
+    "decorations": [
+      {
+        "type": "chain-links",
+        "from": [64, 64],
+        "anchors": [
+          [64, 14], [110, 40], [110, 88],
+          [64, 114], [18, 88], [18, 40]
+        ],
+        "nodeR": 4,
+        "lineWidth": 2,
+        "lineColor": "#a78bfa",
+        "nodeColor": "#ddd6fe",
+        "opacity": 0.6
+      },
+      {
+        "type": "sparks",
+        "positions": [
+          {"cx":64,"cy":14,"r":3}, {"cx":110,"cy":40,"r":3},
+          {"cx":110,"cy":88,"r":3}, {"cx":64,"cy":114,"r":3},
+          {"cx":18,"cy":88,"r":3}, {"cx":18,"cy":40,"r":3}
+        ],
+        "color": "#c4b5fd",
+        "opacity": 0.7
+      }
+    ],
+    "eyes": null
+  },
+  "skystrike": {
+    "name": "天降",
+    "description": "天蓝色倒三角降雷体，顶部圆形瞄准镜，底部三道光柱向下辐射",
+    "palette": {
+      "primary": "#0ea5e9",
+      "secondary": "#38bdf8",
+      "accent": "#bae6fd",
+      "dark": "#0369a1",
+      "glow": "#38bdf8"
+    },
+    "body": {
+      "type": "inverted-triangle",
+      "points": [28,28, 100,28, 64,108],
+      "gradient": {
+        "type": "linear",
+        "y1": "0%", "y2": "100%",
+        "stops": [
+          {"offset": "0%", "color": "#38bdf8"},
+          {"offset": "60%", "color": "#0ea5e9"},
+          {"offset": "100%", "color": "#0369a1"}
+        ]
+      },
+      "stroke": "#bae6fd",
+      "strokeWidth": 2
+    },
+    "core": {
+      "cx": 64, "cy": 48, "r": 14,
+      "color": "#bae6fd",
+      "opacity": 0.85,
+      "innerR": 8,
+      "innerColor": "#fff",
+      "crosshair": true
+    },
+    "glow": {
+      "cx": 64, "cy": 48, "r": 50,
+      "opacity": 0.35
+    },
+    "decorations": [
+      {
+        "type": "crosshair",
+        "cx": 64, "cy": 48, "r": 20,
+        "stroke": "#bae6fd",
+        "strokeWidth": 1.5,
+        "opacity": 0.5
+      },
+      {
+        "type": "light-beams",
+        "beams": [
+          {"x1":48,"y1":80,"x2":40,"y2":120, "width":4},
+          {"x1":64,"y1":90,"x2":64,"y2":124, "width":5},
+          {"x1":80,"y1":80,"x2":88,"y2":120, "width":4}
+        ],
+        "color": "#38bdf8",
+        "opacity": 0.4
+      },
+      {
+        "type": "impact-rings",
+        "positions": [
+          {"cx":40,"cy":120,"rx":8,"ry":3},
+          {"cx":64,"cy":124,"rx":10,"ry":3.5},
+          {"cx":88,"cy":120,"rx":8,"ry":3}
+        ],
+        "color": "#bae6fd",
+        "opacity": 0.35
+      }
+    ],
+    "eyes": null
+  }
+}
