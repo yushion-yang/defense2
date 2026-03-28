@@ -9,7 +9,6 @@ package config
 import (
 	"encoding/json"
 	"fmt"
-	"path/filepath"
 	"strings"
 )
 
@@ -140,74 +139,11 @@ func LoadTowerFile(path string) (*TowerFileData, error) {
 	return result, nil
 }
 
-// LoadTowerDir 从目录加载塔配置（每个塔一个 JSON 文件）。
-// 文件名（不含后缀）作为塔的 key，_meta.json 和下划线开头的文件被跳过。
-func LoadTowerDir(dirPath string) (*TowerFileData, error) {
-	if dataFS == nil {
-		return nil, fmt.Errorf("load tower dir %s: dataFS not initialized", dirPath)
-	}
-	entries, err := dataFS.ReadDir(dirPath)
-	if err != nil {
-		return nil, fmt.Errorf("read tower dir %s: %w", dirPath, err)
-	}
-
-	result := &TowerFileData{
-		Towers: make(map[string]*TowerJSON),
-	}
-	for _, entry := range entries {
-		if entry.IsDir() || !strings.HasSuffix(entry.Name(), ".json") {
-			continue
-		}
-		name := strings.TrimSuffix(entry.Name(), ".json")
-		if strings.HasPrefix(name, "_") {
-			continue // 跳过 _meta.json 等元数据文件
-		}
-		data, err := dataFS.ReadFile(filepath.Join(dirPath, entry.Name()))
-		if err != nil {
-			return nil, fmt.Errorf("read tower %s/%s: %w", dirPath, entry.Name(), err)
-		}
-		var t TowerJSON
-		if err := json.Unmarshal(data, &t); err != nil {
-			return nil, fmt.Errorf("parse tower %s/%s: %w", dirPath, entry.Name(), err)
-		}
-		result.Towers[name] = &t
-	}
-	return result, nil
-}
-
-// LoadAllTowers 加载所有塔配置并合并。
-// 优先从目录模式加载（config/towers/core/ + config/towers/defs/），
-// 目录不存在时回退到单文件模式。
+// LoadAllTowers 加载所有塔配置（从 towers.json）。
 func LoadAllTowers() (map[string]*TowerJSON, error) {
-	all := make(map[string]*TowerJSON)
-
-	// 目录模式
-	dirs := []string{
-		"config/towers/core",
-		"config/towers/defs",
+	fd, err := LoadTowerFile("config/towers/towers.json")
+	if err != nil {
+		return nil, err
 	}
-	// 单文件回退
-	files := []string{
-		"config/towers/towers-core.json",
-		"config/towers/towers.json",
-	}
-
-	for i, dir := range dirs {
-		fd, err := LoadTowerDir(dir)
-		if err == nil && len(fd.Towers) > 0 {
-			for k, v := range fd.Towers {
-				all[k] = v
-			}
-			continue
-		}
-		// 目录不存在或为空，回退单文件
-		fd2, err2 := LoadTowerFile(files[i])
-		if err2 != nil {
-			return nil, err2
-		}
-		for k, v := range fd2.Towers {
-			all[k] = v
-		}
-	}
-	return all, nil
+	return fd.Towers, nil
 }

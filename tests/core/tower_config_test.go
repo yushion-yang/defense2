@@ -6,8 +6,8 @@ import (
 	"defense2/internal/config"
 )
 
-func TestLoadTowersCoreJSON(t *testing.T) {
-	fd, err := config.LoadTowerFile("config/towers/towers-core.json")
+func TestLoadTowersJSON(t *testing.T) {
+	fd, err := config.LoadTowerFile("config/towers/towers.json")
 	if err != nil {
 		t.Fatalf("加载失败: %v", err)
 	}
@@ -32,7 +32,7 @@ func TestLoadAllTowers(t *testing.T) {
 	if len(all) < 8 {
 		t.Fatalf("预期至少 8 座塔, 实际 %d", len(all))
 	}
-	// towers-core 和 towers 应合并
+	// towers.json 应包含所有塔
 	if _, ok := all["laser"]; !ok {
 		t.Fatal("应包含 core 塔 laser")
 	}
