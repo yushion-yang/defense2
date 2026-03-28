@@ -36,9 +36,12 @@ type Tower struct {
 	Faction     string   // 阵营标识（用于资源路径）
 	FireAnim    float64  // 射击动画计时器（射击时设为 0.15，逐帧衰减）
 	Angle       float64  // 朝向角度（弧度，0=向上，顺时针）
-	BaseDamage  float64  // 基础伤害
-	BaseRange   float64  // 基础范围
-	BaseSpeed   float64  // 基础攻速
+	BaseDamage      float64 // 基础伤害
+	BaseRange       float64 // 基础范围
+	BaseSpeed       float64 // 基础攻速
+	PotentialDamage float64 // 潜力伤害（随强度缩放的部分）
+	PotentialRange  float64 // 潜力范围
+	PotentialSpeed  float64 // 潜力攻速
 
 	// 攻击方式
 	AttackStyleID   AttackStyle // 攻击方式（"projectile"/"laser"/...）

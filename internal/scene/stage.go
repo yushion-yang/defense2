@@ -898,7 +898,21 @@ func (s *StageScene) tryPlaceTower(px, py float64) bool {
 		sd := strength.NewStrengthData()
 		placed.Strength = sd
 		if def.StrengthRaw != nil {
-			placed.StrengthCfg = strength.ParseStrengthConfig(def.StrengthRaw)
+			cfg := strength.ParseStrengthConfig(def.StrengthRaw)
+			placed.StrengthCfg = cfg
+			// 从战力配置提取潜力值到塔字段
+			if b := cfg.ResolveBinding("attackDamage"); b != nil {
+				placed.BaseDamage = b.Base
+				placed.PotentialDamage = b.Potential
+			}
+			if b := cfg.ResolveBinding("attackSpeed"); b != nil {
+				placed.BaseSpeed = b.Base
+				placed.PotentialSpeed = b.Potential
+			}
+			if b := cfg.ResolveBinding("range"); b != nil {
+				placed.BaseRange = b.Base
+				placed.PotentialRange = b.Potential
+			}
 		}
 	}
 	s.gold -= cost
