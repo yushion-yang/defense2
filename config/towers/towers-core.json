@@ -1,16 +1,13 @@
 {
   "_meta": {
-    "faction": "base",
-    "factionName": "白族",
     "coreMechanic": "无专属机制——基础泛用塔",
-    "description": "9 座核心塔组成的基础种族。每局可用，不依赖特定阵营系统。",
-    "designNotes": "白族塔的 tower key 不改（67+ 处硬引用）。部分塔保留阵营关联（freeze/poison→nature，targeter/judicator→order），部分已脱离（basic/laser/electric/hunter→base）。SVG 位于 assets/towers/core/。"
+    "description": "9 座核心塔。每局可用。",
+    "designNotes": "SVG 位于 assets/towers/core/。"
   },
   "laser": {
     "label": "激光炮台",
     "shortLabel": "激光",
     "description": "瞬时命中，射程更长，适合点杀高威胁目标。",
-    "faction": "base",
     "tags": [
       "energy",
       "laser"
@@ -113,7 +110,6 @@
   },
   "freeze": {
     "label": "冰冻炮台",
-    "faction": "base",
     "tags": [
       "elemental",
       "ice",
@@ -245,7 +241,6 @@
   },
   "electric": {
     "label": "电磁塔",
-    "faction": "base",
     "tags": [
       "energy",
       "lightning",
@@ -346,7 +341,6 @@
   },
   "hunter": {
     "label": "猎手塔",
-    "faction": "base",
     "tags": [
       "physical",
       "sniper",

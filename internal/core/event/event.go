@@ -1,8 +1,9 @@
 // event.go — 事件系统 v2。
-// 事件是玩家在特定波次检查点选择的增益效果，分为三个等级：
-//   Tier 1: 经济类（额外金币、建造折扣）
-//   Tier 2: 全局属性增益（伤害、射程、攻速提升）
-//   Tier 3: 阵营专属增强
+// 事件是玩家在特定波次检查点选择的增益效果，分为两个等级：
+//
+//	Tier 1: 经济类（额外金币、建造折扣）
+//	Tier 2: 全局属性增益（伤害、射程、攻速提升）
+//
 // 事件通过加权随机从事件池中抽取，玩家三选一。
 package event
 
@@ -12,16 +13,15 @@ import (
 
 // Event 单个事件定义。
 type Event struct {
-	ID          string   // 事件唯一标识
-	Label       string   // 显示名称
-	Description string   // 效果描述
-	Kind        string   // 处理器类型标识（如 "bonusGold"、"outputUp"）
-	Tier        int      // 等级（1=经济, 2=全局, 3=阵营）
-	Value       float64  // 效果数值
-	Factions    []string // Tier3 适用阵营列表（Tier1/2 为空）
-	Weight      float64  // 抽取权重（越大越容易抽到）
-	MinWave     int      // 最早出现波次（0=无限制）
-	MaxWave     int      // 最晚出现波次（0=无限制）
+	ID          string  // 事件唯一标识
+	Label       string  // 显示名称
+	Description string  // 效果描述
+	Kind        string  // 处理器类型标识（如 "bonusGold"、"outputUp"）
+	Tier        int     // 等级（1=经济, 2=全局）
+	Value       float64 // 效果数值
+	Weight      float64 // 抽取权重（越大越容易抽到）
+	MinWave     int     // 最早出现波次（0=无限制）
+	MaxWave     int     // 最晚出现波次（0=无限制）
 }
 
 // Pool 事件池，持有所有可用事件。
@@ -155,12 +155,6 @@ func DefaultAllyEvents() []Event {
 		{ID: "range-extend", Label: "射程扩展", Kind: "rangeUp", Tier: 2, Value: 0.10, Weight: 1},
 		{ID: "speed-boost", Label: "攻速提升", Kind: "speedUp", Tier: 2, Value: 0.12, Weight: 1},
 		{ID: "durability", Label: "敌人减速", Kind: "enemySlow", Tier: 2, Value: 0.10, Weight: 0.8},
-
-		// Tier 3 阵营专属
-		{ID: "base-elite", Label: "白族精锐", Kind: "factionBoost", Tier: 3, Value: 0.20,
-			Factions: []string{"base"}, Weight: 1},
-		{ID: "nature-bloom", Label: "自然绽放", Kind: "factionBoost", Tier: 3, Value: 0.20,
-			Factions: []string{"nature"}, Weight: 1},
 	}
 }
 

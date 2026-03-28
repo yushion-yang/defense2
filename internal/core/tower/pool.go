@@ -37,7 +37,6 @@ func (p *Pool) Place(row, col int, cx, cy float64, def TowerDef) *Tower {
 			t.AttackSpeed = def.AttackSpeed
 			t.FireTimer = 0
 			t.Cost = def.Cost
-			t.Faction = def.Faction
 			t.Key = def.Key
 			t.Label = def.Label
 			t.Abilities = def.Abilities
@@ -81,7 +80,6 @@ func (p *Pool) At(row, col int) *Tower {
 type TowerDef struct {
 	Key         string   // 塔类型标识
 	Label       string   // 显示名称
-	Faction     string   // 所属阵营
 	Range       float64  // 攻击范围（像素）
 	Damage      float64  // 单发伤害
 	AttackSpeed float64  // 攻击速度（次/秒）
@@ -94,24 +92,24 @@ type TowerDef struct {
 func BaseTowerDefs() []TowerDef {
 	return []TowerDef{
 		{
-			Key: "basic", Label: "Arrow", Faction: "base",
+			Key: "basic", Label: "Arrow",
 			Range: 150, Damage: 10, AttackSpeed: 1.5, Cost: 50,
 			Color: [3]uint8{80, 140, 220},
 		},
 		{
-			Key: "splash", Label: "Cannon", Faction: "base",
+			Key: "splash", Label: "Cannon",
 			Range: 120, Damage: 20, AttackSpeed: 0.8, Cost: 80,
 			Abilities: []string{"splash"},
 			Color:     [3]uint8{200, 120, 60},
 		},
 		{
-			Key: "slow", Label: "Frost", Faction: "base",
+			Key: "slow", Label: "Frost",
 			Range: 130, Damage: 5, AttackSpeed: 1.2, Cost: 60,
 			Abilities: []string{"onHitSlow"},
 			Color:     [3]uint8{100, 180, 220},
 		},
 		{
-			Key: "sniper", Label: "Sniper", Faction: "base",
+			Key: "sniper", Label: "Sniper",
 			Range: 220, Damage: 35, AttackSpeed: 0.5, Cost: 100,
 			Abilities: []string{"crit"},
 			Color:     [3]uint8{180, 60, 180},

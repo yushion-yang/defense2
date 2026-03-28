@@ -39,7 +39,6 @@ func convertEvents(raw []config.EventJSON) []event.Event {
 			Kind:        r.Kind,
 			Tier:        r.Tier,
 			Value:       r.Value,
-			Factions:    r.Factions,
 			Weight:      r.Weight,
 			MinWave:     r.MinWave,
 			MaxWave:     r.MaxWave,

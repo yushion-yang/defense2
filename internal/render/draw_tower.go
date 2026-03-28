@@ -1,5 +1,5 @@
 // draw_tower.go — 塔渲染。
-// 优先使用 SVG 图像渲染塔，回退到彩色方块。支持放塔预览。
+// 优先使用 PNG 精灵渲染塔，回退到彩色方块。支持放塔预览。
 package render
 
 import (
@@ -8,16 +8,16 @@ import (
 	"math"
 
 	"defense2/internal/core/tower"
-	"defense2/internal/render/svg"
+	"defense2/internal/render/sprite"
 
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/hajimehoshi/ebiten/v2/vector"
 )
 
-// TowerRenderer 管理塔的 SVG 图像渲染。
+// TowerRenderer 管理塔的 PNG 精灵渲染。
 type TowerRenderer struct {
-	cache   *svg.Cache  // SVG 解析结果缓存，避免重复光栅化
-	assetFS AssetReader // 嵌入式资源文件读取器
+	cache   *sprite.Cache // 图像缓存，避免重复解码
+	assetFS AssetReader   // 嵌入式资源文件读取器
 }
 
 // AssetReader 读取嵌入式资源文件的接口。
@@ -28,12 +28,12 @@ type AssetReader interface {
 // NewTowerRenderer 创建塔渲染器。
 func NewTowerRenderer(assetFS AssetReader) *TowerRenderer {
 	return &TowerRenderer{
-		cache:   svg.NewCache(),
+		cache:   sprite.NewCache(),
 		assetFS: assetFS,
 	}
 }
 
-const towerSpriteSize = 40 // 塔 SVG 渲染尺寸（像素）
+const towerSpriteSize = 40 // 塔 PNG 精灵尺寸（像素）
 
 // DrawTowers 渲染所有已放置的塔。
 func (tr *TowerRenderer) DrawTowers(screen *ebiten.Image, pool *tower.Pool) {
@@ -41,10 +41,10 @@ func (tr *TowerRenderer) DrawTowers(screen *ebiten.Image, pool *tower.Pool) {
 		cx := float32(t.X)
 		cy := float32(t.Y)
 
-		// 尝试加载 SVG 图像
+		// 尝试加载 PNG 精灵
 		img := tr.loadTowerImage(t)
 		if img != nil {
-			// 以塔中心为原点绘制 SVG
+			// 以塔中心为原点绘制精灵
 			opts := &ebiten.DrawImageOptions{}
 			w, h := img.Bounds().Dx(), img.Bounds().Dy()
 			opts.GeoM.Translate(-float64(w)/2, -float64(h)/2)
@@ -66,17 +66,13 @@ func (tr *TowerRenderer) DrawTowers(screen *ebiten.Image, pool *tower.Pool) {
 	})
 }
 
-// loadTowerImage 尝试加载塔的 SVG 图像。
-// 路径约定：assets/towers/{faction}/tower-{key}.svg
+// loadTowerImage 尝试加载塔的 PNG 精灵。
+// 路径约定：assets/towers/core/tower-{key}.png
 func (tr *TowerRenderer) loadTowerImage(t *tower.Tower) *ebiten.Image {
 	if tr.assetFS == nil {
 		return nil
 	}
-	faction := t.Faction
-	if faction == "" {
-		faction = "core"
-	}
-	path := fmt.Sprintf("assets/towers/%s/tower-%s.svg", faction, t.Key)
+	path := fmt.Sprintf("assets/towers/core/tower-%s.png", t.Key)
 	cached := tr.cache.Get(path, towerSpriteSize, towerSpriteSize)
 	if cached != nil {
 		return cached
@@ -84,7 +80,7 @@ func (tr *TowerRenderer) loadTowerImage(t *tower.Tower) *ebiten.Image {
 
 	data, err := tr.assetFS.ReadFile(path)
 	if err != nil {
-		return nil // SVG 不存在，回退到方块
+		return nil // PNG 不存在，回退到方块
 	}
 	img, err := tr.cache.GetOrParse(path, data, towerSpriteSize, towerSpriteSize)
 	if err != nil {

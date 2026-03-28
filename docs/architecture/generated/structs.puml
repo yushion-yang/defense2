@@ -198,7 +198,6 @@ namespace tower {
         + AttackSpeed float64
         + FireTimer float64
         + Cost int
-        + Faction string
         + Key string
         + Label string
         + Active bool
@@ -214,7 +213,6 @@ namespace tower {
     class "TowerDef" << (S,Aquamarine) >> {
         + Key string
         + Label string
-        + Faction string
         + Range float64
         + Damage float64
         + AttackSpeed float64

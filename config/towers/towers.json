@@ -8,7 +8,6 @@
     "label": "激光炮台",
     "shortLabel": "激光",
     "description": "瞬时命中，射程更长，适合点杀高威胁目标。",
-    "faction": "base",
     "tags": [
       "energy",
       "laser"
@@ -128,7 +127,6 @@
   },
   "freeze": {
     "label": "冰冻炮台",
-    "faction": "base",
     "tags": [
       "elemental",
       "ice",
@@ -308,7 +306,6 @@
   },
   "electric": {
     "label": "电磁塔",
-    "faction": "base",
     "tags": [
       "energy",
       "lightning",
@@ -451,7 +448,6 @@
   },
   "hunter": {
     "label": "猎手塔",
-    "faction": "base",
     "tags": [
       "physical",
       "sniper",

@@ -7,8 +7,8 @@ import (
 	"image/color"
 	"log"
 
-	_ "defense2/internal/core/tower/abilities"  // 通过 init() 注册塔能力
-	_ "defense2/internal/core/warden/types"     // 通过 init() 注册战灵类型
+	_ "defense2/internal/core/tower/abilities" // 通过 init() 注册塔能力
+	_ "defense2/internal/core/warden/types"    // 通过 init() 注册战灵类型
 
 	gameAudio "defense2/internal/audio"
 	"defense2/internal/config"
@@ -44,31 +44,31 @@ const (
 
 // StageScene 游戏主场景，包含所有运行时游戏状态。
 type StageScene struct {
-	switcher     Switcher          // 场景切换器引用
-	frame        int               // 当前帧计数
-	state        stageState        // 当前游戏状态（进行中/胜利/失败）
-	gameMap      *gamemap.GameMap   // 运行时地图
-	enemies      *enemy.Pool       // 敌人对象池
-	spawner      *enemy.Spawner    // 波次出怪管理器
-	towers       *tower.Pool       // 塔对象池
-	projectiles  *projectile.Pool  // 弹射物对象池
-	econ         economy.Config    // 经济配置
-	lives        int               // 剩余生命值
-	gold         int               // 当前金币
-	kills        int               // 累计击杀数
-	towerDefs    []tower.TowerDef  // 可建造的塔类型列表
-	selectedDef  int               // 当前选中的塔类型索引
-	hoveredTower    *tower.Tower            // 鼠标悬停的已放置塔（用于信息面板）
-	towerRenderer   *render.TowerRenderer  // 塔 SVG 渲染器
-	enemyRenderer   *render.EnemyRenderer  // 敌人 SVG 渲染器
-	audioMgr        *gameAudio.Manager     // 音效管理器
-	heroUnit        *hero.Hero             // 英雄实体
-	wardenUnit      *warden.Warden        // 战灵实体
-	eventPool       *event.Pool           // 事件池
-	appliedEvents   []event.Event         // 已应用的事件列表
-	killRewardBonus int                   // 额外击杀金币（事件增益）
-	buildDiscount   float64               // 建造折扣比例（事件增益）
-	tutorial        *tutorial.Tutorial        // 新手教程
+	switcher        Switcher                     // 场景切换器引用
+	frame           int                          // 当前帧计数
+	state           stageState                   // 当前游戏状态（进行中/胜利/失败）
+	gameMap         *gamemap.GameMap             // 运行时地图
+	enemies         *enemy.Pool                  // 敌人对象池
+	spawner         *enemy.Spawner               // 波次出怪管理器
+	towers          *tower.Pool                  // 塔对象池
+	projectiles     *projectile.Pool             // 弹射物对象池
+	econ            economy.Config               // 经济配置
+	lives           int                          // 剩余生命值
+	gold            int                          // 当前金币
+	kills           int                          // 累计击杀数
+	towerDefs       []tower.TowerDef             // 可建造的塔类型列表
+	selectedDef     int                          // 当前选中的塔类型索引
+	hoveredTower    *tower.Tower                 // 鼠标悬停的已放置塔（用于信息面板）
+	towerRenderer   *render.TowerRenderer        // 塔 SVG 渲染器
+	enemyRenderer   *render.EnemyRenderer        // 敌人 SVG 渲染器
+	audioMgr        *gameAudio.Manager           // 音效管理器
+	heroUnit        *hero.Hero                   // 英雄实体
+	wardenUnit      *warden.Warden               // 战灵实体
+	eventPool       *event.Pool                  // 事件池
+	appliedEvents   []event.Event                // 已应用的事件列表
+	killRewardBonus int                          // 额外击杀金币（事件增益）
+	buildDiscount   float64                      // 建造折扣比例（事件增益）
+	tutorial        *tutorial.Tutorial           // 新手教程
 	progressMgr     *persistence.ProgressManager // 持久化进度管理器
 	lastWave        int                          // 上一帧的波次号
 	notification    string                       // 屏幕中央通知文本
@@ -118,24 +118,24 @@ func NewStageSceneWithMap(sw Switcher, mapID string) *StageScene {
 
 	s := &StageScene{
 		switcher:      sw,
-		gameMap:        gm,
-		enemies:        enemy.DefaultPool(),
-		spawner:        enemy.NewSpawner(gm, cfg.Waves),
-		towers:         tower.DefaultPool(),
-		projectiles:    projectile.DefaultPool(),
-		econ:           economy.DefaultConfig(),
-		towerRenderer:  render.NewTowerRenderer(config.GetAssetFS()),
-		enemyRenderer:  render.NewEnemyRenderer(config.GetAssetFS()),
-		audioMgr:       initAudio(),
-		heroUnit:       loader.LoadHero(heroX, heroY),
-		wardenUnit:     warden.NewWarden(1, "使者", "envoy"),
-		eventPool:      event.NewPool(loader.LoadAllyEvents()),
-		tutorial:       tut,
-		progressMgr:    pm,
-		lives:          20,
-		gold:           200,
-		towerDefs:      loadTowerDefsOrFallback(),
-		selectedDef:    0,
+		gameMap:       gm,
+		enemies:       enemy.DefaultPool(),
+		spawner:       enemy.NewSpawner(gm, cfg.Waves),
+		towers:        tower.DefaultPool(),
+		projectiles:   projectile.DefaultPool(),
+		econ:          economy.DefaultConfig(),
+		towerRenderer: render.NewTowerRenderer(config.GetAssetFS()),
+		enemyRenderer: render.NewEnemyRenderer(config.GetAssetFS()),
+		audioMgr:      initAudio(),
+		heroUnit:      loader.LoadHero(heroX, heroY),
+		wardenUnit:    warden.NewWarden(1, "使者", "envoy"),
+		eventPool:     event.NewPool(loader.LoadAllyEvents()),
+		tutorial:      tut,
+		progressMgr:   pm,
+		lives:         20,
+		gold:          200,
+		towerDefs:     loadTowerDefsOrFallback(),
+		selectedDef:   0,
 	}
 
 	// 触发教程首步
@@ -394,8 +394,8 @@ func (s *StageScene) triggerEventChoice(wave int) {
 // ─── GameState 接口实现（供事件处理器调用）───
 
 func (s *StageScene) AddGold(amount int)             { s.gold += amount }
-func (s *StageScene) SetBuildDiscount(ratio float64)  { s.buildDiscount = ratio }
-func (s *StageScene) SetKillRewardBonus(extra int)    { s.killRewardBonus = extra }
+func (s *StageScene) SetBuildDiscount(ratio float64) { s.buildDiscount = ratio }
+func (s *StageScene) SetKillRewardBonus(extra int)   { s.killRewardBonus = extra }
 
 func (s *StageScene) BuffAllTowersDamage(ratio float64) {
 	s.towers.Each(func(t *tower.Tower) { t.Damage *= (1 + ratio) })
@@ -410,13 +410,6 @@ func (s *StageScene) SlowAllEnemies(ratio float64) {
 	s.enemies.Each(func(e *enemy.Enemy) {
 		e.BaseSpeed *= (1 - ratio)
 		e.Speed = e.BaseSpeed
-	})
-}
-func (s *StageScene) BuffFactionTowers(faction string, ratio float64) {
-	s.towers.Each(func(t *tower.Tower) {
-		if t.Faction == faction {
-			t.Damage *= (1 + ratio)
-		}
 	})
 }
 

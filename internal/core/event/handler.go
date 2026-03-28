@@ -5,14 +5,13 @@ package event
 // GameState 事件处理器可修改的游戏状态接口。
 // 由 StageScene 实现，避免事件系统直接依赖 scene 包。
 type GameState interface {
-	AddGold(amount int)                       // 增加金币
-	SetBuildDiscount(ratio float64)           // 设置建造折扣比例
-	SetKillRewardBonus(extra int)             // 设置额外击杀金币
-	BuffAllTowersDamage(ratio float64)        // 全体塔伤害加成（比例）
-	BuffAllTowersRange(ratio float64)         // 全体塔射程加成（比例）
-	BuffAllTowersSpeed(ratio float64)         // 全体塔攻速加成（比例）
-	SlowAllEnemies(ratio float64)             // 全场敌人减速（比例）
-	BuffFactionTowers(faction string, ratio float64) // 指定阵营塔伤害加成
+	AddGold(amount int)                // 增加金币
+	SetBuildDiscount(ratio float64)    // 设置建造折扣比例
+	SetKillRewardBonus(extra int)      // 设置额外击杀金币
+	BuffAllTowersDamage(ratio float64) // 全体塔伤害加成（比例）
+	BuffAllTowersRange(ratio float64)  // 全体塔射程加成（比例）
+	BuffAllTowersSpeed(ratio float64)  // 全体塔攻速加成（比例）
+	SlowAllEnemies(ratio float64)      // 全场敌人减速（比例）
 }
 
 // Handler 事件效果处理函数签名。
@@ -20,14 +19,13 @@ type Handler func(e *Event, gs GameState)
 
 // 处理器注册表。
 var handlers = map[string]Handler{
-	"bonusGold":    handleBonusGold,
+	"bonusGold":     handleBonusGold,
 	"buildDiscount": handleBuildDiscount,
-	"killRewardUp": handleKillRewardUp,
-	"outputUp":     handleOutputUp,
-	"rangeUp":      handleRangeUp,
-	"speedUp":      handleSpeedUp,
-	"enemySlow":    handleEnemySlow,
-	"factionBoost": handleFactionBoost,
+	"killRewardUp":  handleKillRewardUp,
+	"outputUp":      handleOutputUp,
+	"rangeUp":       handleRangeUp,
+	"speedUp":       handleSpeedUp,
+	"enemySlow":     handleEnemySlow,
 }
 
 // Apply 应用一个事件到游戏状态。
@@ -63,10 +61,4 @@ func handleSpeedUp(e *Event, gs GameState) {
 
 func handleEnemySlow(e *Event, gs GameState) {
 	gs.SlowAllEnemies(e.Value)
-}
-
-func handleFactionBoost(e *Event, gs GameState) {
-	for _, f := range e.Factions {
-		gs.BuffFactionTowers(f, e.Value)
-	}
 }

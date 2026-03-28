@@ -8,21 +8,8 @@ import (
 	"defense2/internal/core/tower"
 )
 
-// 阵营颜色映射表（faction → RGB）。
-var factionColors = map[string][3]uint8{
-	"base":   {80, 140, 220},
-	"nature": {60, 180, 80},
-	"order":  {200, 180, 60},
-	"mech":   {140, 140, 160},
-	"shadow": {120, 60, 160},
-	"fire":   {220, 80, 40},
-	"wind":   {100, 200, 200},
-	"wood":   {80, 140, 60},
-	"elf":    {180, 220, 120},
-	"holy":   {240, 220, 140},
-	"gold":   {220, 180, 40},
-	"water":  {60, 120, 220},
-}
+// defaultTowerColor 默认塔颜色 RGB。
+var defaultTowerColor = [3]uint8{80, 140, 220}
 
 // TowerJSONToDef 将单个 JSON 塔配置转为运行时 TowerDef。
 func TowerJSONToDef(key string, t *config.TowerJSON) tower.TowerDef {
@@ -40,12 +27,6 @@ func TowerJSONToDef(key string, t *config.TowerJSON) tower.TowerDef {
 		}
 	}
 
-	// 查阵营颜色，未找到用默认蓝色
-	clr, ok := factionColors[t.Faction]
-	if !ok {
-		clr = factionColors["base"]
-	}
-
 	label := t.ShortLabel
 	if label == "" {
 		label = t.Label
@@ -54,13 +35,12 @@ func TowerJSONToDef(key string, t *config.TowerJSON) tower.TowerDef {
 	return tower.TowerDef{
 		Key:         key,
 		Label:       label,
-		Faction:     t.Faction,
 		Range:       t.BaseRange,
 		Damage:      t.BaseDamage,
 		AttackSpeed: attackSpeed,
 		Cost:        t.BuildCost,
 		Abilities:   abilities,
-		Color:       clr,
+		Color:       defaultTowerColor,
 	}
 }
 

@@ -75,7 +75,7 @@ func TestTickProjectileHits(t *testing.T) {
 
 func TestTickTowerCombatFires(t *testing.T) {
 	tp := tower.NewPool(4)
-	def := tower.TowerDef{Key: "test", Label: "Test", Faction: "base",
+	def := tower.TowerDef{Key: "test", Label: "Test",
 		Range: 200, Damage: 10, AttackSpeed: 2, Cost: 50}
 	tp.Place(0, 0, 100, 100, def)
 

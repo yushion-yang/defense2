@@ -1,5 +1,5 @@
 // draw_enemy.go — 敌人渲染。
-// 优先使用 SVG 图像渲染敌人，回退到红色圆形。受伤时显示血条，状态效果显示微图标。
+// 优先使用 PNG 精灵渲染敌人，回退到红色圆形。受伤时显示血条，状态效果显示微图标。
 package render
 
 import (
@@ -7,27 +7,27 @@ import (
 	"image/color"
 
 	"defense2/internal/core/enemy"
-	"defense2/internal/render/svg"
+	"defense2/internal/render/sprite"
 
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/hajimehoshi/ebiten/v2/vector"
 )
 
-// EnemyRenderer 管理敌人的 SVG 图像渲染。
+// EnemyRenderer 管理敌人的 PNG 精灵渲染。
 type EnemyRenderer struct {
-	cache   *svg.Cache  // SVG 解析结果缓存
-	assetFS AssetReader // 嵌入式资源文件读取器
+	cache   *sprite.Cache // 图像缓存
+	assetFS AssetReader   // 嵌入式资源文件读取器
 }
 
 // NewEnemyRenderer 创建敌人渲染器。
 func NewEnemyRenderer(assetFS AssetReader) *EnemyRenderer {
 	return &EnemyRenderer{
-		cache:   svg.NewCache(),
+		cache:   sprite.NewCache(),
 		assetFS: assetFS,
 	}
 }
 
-const enemySpriteSize = 24 // 敌人 SVG 渲染尺寸（像素）
+const enemySpriteSize = 24 // 敌人 PNG 精灵尺寸（像素）
 
 // DrawEnemies 渲染所有存活敌人。
 func (er *EnemyRenderer) DrawEnemies(screen *ebiten.Image, pool *enemy.Pool) {
@@ -36,7 +36,7 @@ func (er *EnemyRenderer) DrawEnemies(screen *ebiten.Image, pool *enemy.Pool) {
 		cy := float32(e.Y)
 		r := float32(e.Radius)
 
-		// 尝试加载 SVG
+		// 尝试加载 PNG 精灵
 		img := er.loadEnemyImage(e)
 		if img != nil {
 			opts := &ebiten.DrawImageOptions{}
@@ -105,13 +105,13 @@ func (er *EnemyRenderer) DrawEnemies(screen *ebiten.Image, pool *enemy.Pool) {
 	})
 }
 
-// loadEnemyImage 尝试加载敌人的 SVG 图像。
-// 路径约定：assets/enemies/enemy-{archetype}.svg
+// loadEnemyImage 尝试加载敌人的 PNG 精灵。
+// 路径约定：assets/enemies/{archetype}.png
 func (er *EnemyRenderer) loadEnemyImage(e *enemy.Enemy) *ebiten.Image {
-	if er.assetFS == nil || e.Archetype == "" || e.Archetype == "normal" {
+	if er.assetFS == nil || e.Archetype == "" {
 		return nil
 	}
-	path := fmt.Sprintf("assets/enemies/enemy-%s.svg", e.Archetype)
+	path := fmt.Sprintf("assets/enemies/%s.png", e.Archetype)
 	cached := er.cache.Get(path, enemySpriteSize, enemySpriteSize)
 	if cached != nil {
 		return cached

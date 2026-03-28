@@ -1,5 +1,5 @@
 // tower.go — 塔实体定义。
-// 定义已放置塔的核心属性：位置、攻击参数、所属阵营、能力列表等。
+// 定义已放置塔的核心属性：位置、攻击参数、能力列表等。
 package tower
 
 // Tower 已放置的塔实体。
@@ -11,7 +11,6 @@ type Tower struct {
 	AttackSpeed float64  // 攻击速度（次/秒）
 	FireTimer   float64  // 下一次射击倒计时（秒）
 	Cost        int      // 建造费用（金币）
-	Faction     string   // 所属阵营
 	Key         string   // 塔类型标识（如 "basic"、"splash"）
 	Label       string   // 显示名称
 	Active      bool     // 是否存活（对象池复用标记）

@@ -85,6 +85,6 @@ oksvg + rasterx → image.RGBA → ebiten.NewImageFromImage, cached at startup.
 | P2 | Tower placement + basic attack + projectiles | Towers auto-attack |
 | P3 | Full combat pipeline + ability system | Multi-wave combat works |
 | P4 | HUD + build menu + economy | Gold/build/sell UI |
-| P5 | 15 factions + SVG models | All towers/enemies render |
+| P5 | SVG/PNG models | All towers/enemies render |
 | P6 | Hero + warden + event system | Full gameplay |
 | P7 | Audio + persistence + tutorial | Production quality |

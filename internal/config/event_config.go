@@ -9,17 +9,16 @@ import (
 
 // EventJSON 事件的 JSON 原始结构。
 type EventJSON struct {
-	ID          string   `json:"id"`          // 事件唯一标识
-	Label       string   `json:"label"`       // 显示名称
-	Description string   `json:"description"` // 效果描述
-	Kind        string   `json:"kind"`        // 处理器类型标识
-	Tier        int      `json:"tier"`        // 等级（1=经济, 2=全局, 3=阵营）
-	Value       float64  `json:"value"`       // 效果数值
-	Effect      string   `json:"effect"`      // 子效果类型
-	Factions    []string `json:"factions"`    // Tier3 适用阵营
-	Weight      float64  `json:"weight"`      // 抽取权重
-	MinWave     int      `json:"minWave"`     // 最早出现波次
-	MaxWave     int      `json:"maxWave"`     // 最晚出现波次
+	ID          string  `json:"id"`          // 事件唯一标识
+	Label       string  `json:"label"`       // 显示名称
+	Description string  `json:"description"` // 效果描述
+	Kind        string  `json:"kind"`        // 处理器类型标识
+	Tier        int     `json:"tier"`        // 等级（1=经济, 2=全局）
+	Value       float64 `json:"value"`       // 效果数值
+	Effect      string  `json:"effect"`      // 子效果类型
+	Weight      float64 `json:"weight"`      // 抽取权重
+	MinWave     int     `json:"minWave"`     // 最早出现波次
+	MaxWave     int     `json:"maxWave"`     // 最晚出现波次
 }
 
 // LoadAllyEvents 加载增益事件列表。

@@ -1,6 +1,6 @@
 // strength.go — 塔强度系统。
 // 强度是塔的核心增幅属性，影响有效伤害和攻速。
-// 来源：基础强度 + 临时增益（光环/buff）+ 链网络加成（相邻同阵营塔）。
+// 来源：基础强度 + 临时增益（光环/buff）+ 链网络加成（相邻塔）。
 package strength
 
 import (
@@ -11,7 +11,7 @@ import (
 type TowerStrength struct {
 	Base       float64 // 基础强度（默认 100）
 	TempBonus  float64 // 临时增益总量（来自光环/buff，每帧重算）
-	ChainBonus float64 // 链网络加成（来自相邻同阵营塔）
+	ChainBonus float64 // 链网络加成（来自相邻塔）
 }
 
 // Effective 返回有效强度 = Base + TempBonus + ChainBonus。
@@ -39,11 +39,11 @@ func DefaultStrength() TowerStrength {
 	return TowerStrength{Base: 100}
 }
 
-// CalcChainBonus 计算链网络加成：同阵营相邻塔每座贡献 5 点强度。
+// CalcChainBonus 计算链网络加成：相邻塔每座贡献 5 点强度。
 func CalcChainBonus(t *tower.Tower, allTowers *tower.Pool) float64 {
 	bonus := 0.0
 	allTowers.Each(func(other *tower.Tower) {
-		if other == t || other.Faction != t.Faction {
+		if other == t {
 			return
 		}
 		// 相邻定义：行列差 ≤ 1

@@ -11,9 +11,6 @@ func TestLoadTowersCoreJSON(t *testing.T) {
 	if err != nil {
 		t.Fatalf("加载失败: %v", err)
 	}
-	if fd.Meta.Faction != "base" {
-		t.Fatalf("预期 faction=base, 实际 %s", fd.Meta.Faction)
-	}
 	if len(fd.Towers) < 3 {
 		t.Fatalf("预期至少 3 座塔, 实际 %d", len(fd.Towers))
 	}
