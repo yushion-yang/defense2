@@ -23,6 +23,7 @@ import (
 	"defense2/internal/core/persistence"
 	"defense2/internal/core/pipeline"
 	"defense2/internal/core/projectile"
+	"defense2/internal/core/strength"
 	"defense2/internal/core/tower"
 	"defense2/internal/core/tutorial"
 	"defense2/internal/core/warden"
@@ -764,20 +765,24 @@ func (s *StageScene) handlePausedInput() {
 	}
 }
 
-// tryUpgradeTower 尝试升级当前悬停的塔。
+// tryUpgradeTower 为选中的塔购买 10 点永久强度。
 func (s *StageScene) tryUpgradeTower() {
 	t := s.selectedTower
-	if t == nil || t.Level >= tower.MaxTowerLevel {
+	if t == nil {
 		return
 	}
-	cost := t.UpgradeCost()
-	if cost == 0 || s.gold < cost {
+	cost := tower.StrengthBuyCost
+	if s.gold < cost {
 		return
 	}
-	spent := t.Upgrade()
+	spent := t.BuyStrength()
 	s.gold -= spent
+	// 通过战力系统增加永久强度
+	if sd, ok := t.Strength.(*strength.StrengthData); ok {
+		sd.AddPermanent(10)
+	}
 	s.audioMgr.PlaySafe(gameAudio.SFXUpgrade)
-	s.showNotify(fmt.Sprintf("Upgraded to Lv%d (-$%d)", t.Level, spent))
+	s.showNotify(fmt.Sprintf("强度+10 (-$%d)", spent))
 }
 
 // towerAtPixel 返回像素位置上的塔，无塔返回 nil。

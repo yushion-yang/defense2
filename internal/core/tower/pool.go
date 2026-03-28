@@ -42,7 +42,6 @@ func (p *Pool) Place(row, col int, cx, cy float64, def TowerDef) *Tower {
 			t.Abilities = def.Abilities
 			t.Color = def.Color
 			t.Active = true
-			t.Level = 1
 			t.BaseDamage = def.Damage
 			t.BaseRange = def.Range
 			t.BaseSpeed = def.AttackSpeed
@@ -66,7 +65,6 @@ func (p *Pool) Place(row, col int, cx, cy float64, def TowerDef) *Tower {
 			t.AuraPulse = 0
 			t.Branch = ""
 			t.Target = nil
-			t.AbilityUnlocks = def.AbilityUnlocks
 			p.Count++
 			return t
 		}
@@ -132,8 +130,6 @@ type TowerDef struct {
 	PierceTargets int
 	PierceDecay   float64
 
-	// 等级解锁能力
-	AbilityUnlocks []AbilityUnlock
 }
 
 // BaseTowerDefs 返回 4 种基础塔定义。

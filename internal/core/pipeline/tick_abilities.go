@@ -48,18 +48,10 @@ func TickTowerAbilities(towers *tower.Pool, enemies *enemy.Pool, dt float64) int
 	return goldEarned
 }
 
-// resetTowerStats 将塔的 Damage/Range/AttackSpeed 重置为等级对应的基准值。
-// 升级公式与 tower.Upgrade() 保持一致：
-//
-//	Damage      = BaseDamage  * (1 + 0.25 * (Level-1))
-//	Range       = BaseRange   * (1 + 0.08 * (Level-1))
-//	AttackSpeed = BaseSpeed   * (1 + 0.10 * (Level-1))
+// resetTowerStats 将塔的 Damage/Range/AttackSpeed 重置为基础值。
+// 属性缩放由战力系统（StrengthConfig.CalcAttribute）驱动，此处仅恢复 base。
 func resetTowerStats(t *tower.Tower) {
-	lvl := float64(t.Level - 1)
-	if lvl < 0 {
-		lvl = 0
-	}
-	t.Damage = t.BaseDamage * (1 + 0.25*lvl)
-	t.Range = t.BaseRange * (1 + 0.08*lvl)
-	t.AttackSpeed = t.BaseSpeed * (1 + 0.10*lvl)
+	t.Damage = t.BaseDamage
+	t.Range = t.BaseRange
+	t.AttackSpeed = t.BaseSpeed
 }

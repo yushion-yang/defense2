@@ -33,9 +33,9 @@ func TowerJSONToDef(key string, t *config.TowerJSON) tower.TowerDef {
 	if t.BounceConfig != nil {
 		abilities = append(abilities, "bounce")
 	}
-	// abilityUnlocks → 追加解锁的能力（Lv1 默认可用）
+	// abilityUnlocks → 所有能力直接加入（无等级限制）
 	for _, u := range t.AbilityUnlocks {
-		if u.Type != "" && u.Level <= 1 {
+		if u.Type != "" {
 			abilities = append(abilities, u.Type)
 		}
 	}
@@ -92,22 +92,6 @@ func TowerJSONToDef(key string, t *config.TowerJSON) tower.TowerDef {
 		if def.PierceDecay == 0 {
 			def.PierceDecay = 0.8
 		}
-	}
-
-	// 等级解锁能力
-	for _, u := range t.AbilityUnlocks {
-		if u.Type == "" {
-			continue
-		}
-		name := u.Name
-		if name == "" {
-			name = u.Type
-		}
-		def.AbilityUnlocks = append(def.AbilityUnlocks, tower.AbilityUnlock{
-			Level: u.Level,
-			Type:  u.Type,
-			Name:  name,
-		})
 	}
 
 	return def

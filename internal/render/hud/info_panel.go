@@ -52,10 +52,8 @@ func DrawInfoPanel(screen *ebiten.Image, t *tower.Tower, sellValue int) {
 		btnGap   = float32(8)
 	)
 
-	hasUpgrade := t.Level < tower.MaxTowerLevel
-
-	// Collect current (unlocked) abilities
-	currentAbilities, _ := splitAbilities(t)
+	// 所有能力都已默认解锁（无等级限制）
+	currentAbilities := t.Abilities
 
 	// --- Build FlexPanel (content-driven height) ---
 	panel := ui.NewFlexPanel(0, 0, panelW, innerPad)
@@ -72,13 +70,9 @@ func DrawInfoPanel(screen *ebiten.Image, t *tower.Tower, sellValue int) {
 		effStr = sd.Effective()
 	}
 
-	// Row 1: 塔名 + 等级 + 战力显示
+	// Row 1: 塔名 + 战力显示
 	panel.AddRow(titleH, func(screen *ebiten.Image, x, y float64, w float64) {
 		fm.DrawBoldText(screen, t.Label, x, y, theme.FontLG, theme.TextTitle)
-		afterName := x + fm.MeasureText(t.Label, theme.FontLG) + 8
-		levelTxt := fmt.Sprintf("Lv.%d", t.Level)
-		fm.DrawText(screen, levelTxt, afterName, y+2, theme.FontSM, theme.StatusSkill)
-
 		rightX := x + w
 
 		// 右侧：战力数值 + 加成分解
@@ -95,12 +89,6 @@ func DrawInfoPanel(screen *ebiten.Image, t *tower.Tower, sellValue int) {
 				strTxt += " " + breakdown
 			}
 			fm.DrawRightText(screen, strTxt, rightX, y+2, theme.FontSM, strClr)
-		} else if hasUpgrade {
-			upgCost := t.UpgradeCost()
-			upgTxt := fmt.Sprintf("[U] 升级 $%d", upgCost)
-			fm.DrawRightText(screen, upgTxt, rightX, y+2, theme.FontSM, theme.StatusWarden)
-		} else {
-			fm.DrawRightText(screen, "MAX", rightX, y+2, theme.FontSM, theme.StatusStrUp)
 		}
 	})
 
@@ -143,40 +131,6 @@ func DrawInfoPanel(screen *ebiten.Image, t *tower.Tower, sellValue int) {
 		fm.DrawText(screen, fmt.Sprintf("%.1f", t.DPS()), x+colW*3+textOff, y, theme.FontMD, theme.StatusStrUp)
 	})
 
-	// Row 2b: Remaining upgrade growth (show all remaining levels' stat growth)
-	if hasUpgrade {
-		panel.AddRow(14, func(screen *ebiten.Image, x, y float64, w float64) {
-			// Show max level stats as upgrade ceiling
-			maxDmg := t.BaseDamage * (1 + 0.25*float64(tower.MaxTowerLevel-1))
-			maxSpd := t.BaseSpeed * (1 + 0.10*float64(tower.MaxTowerLevel-1))
-			maxRng := t.BaseRange * (1 + 0.08*float64(tower.MaxTowerLevel-1))
-
-			colW := w / 4
-			previewClr := theme.StatusStrUp
-			im := render.GlobalIcons()
-			const sz = 10.0
-			off := sz + 3.0
-
-			dmgGrowth := maxDmg - t.Damage
-			spdGrowth := maxSpd - t.AttackSpeed
-			rngGrowth := maxRng - t.Range
-
-			drawStatIcon(screen, im, "stat-damage", x, y, sz)
-			fm.DrawText(screen, fmt.Sprintf("+%.0f", dmgGrowth), x+off, y, theme.FontXS, previewClr)
-
-			drawStatIcon(screen, im, "stat-atkspd", x+colW, y, sz)
-			fm.DrawText(screen, fmt.Sprintf("+%.2f", spdGrowth), x+colW+off, y, theme.FontXS, previewClr)
-
-			drawStatIcon(screen, im, "stat-range", x+colW*2, y, sz)
-			fm.DrawText(screen, fmt.Sprintf("+%.0f", rngGrowth), x+colW*2+off, y, theme.FontXS, previewClr)
-
-			maxDPS := maxDmg * maxSpd
-			dpsGrowth := maxDPS - t.DPS()
-			drawStatIcon(screen, im, "stat-dps", x+colW*3, y, sz)
-			fm.DrawText(screen, fmt.Sprintf("+%.1f", dpsGrowth), x+colW*3+off, y, theme.FontXS, previewClr)
-		})
-	}
-
 	// Row 3: 攻击方式
 	panel.AddRow(abilityH, func(screen *ebiten.Image, x, y float64, _ float64) {
 		style := t.AttackStyleID
@@ -214,16 +168,7 @@ func DrawInfoPanel(screen *ebiten.Image, t *tower.Tower, sellValue int) {
 		}
 	}
 
-	// Row 4b: 待解锁能力预览
-	_, futureAbilities := splitAbilities(t)
-	for _, fu := range futureAbilities {
-		fu := fu
-		panel.AddRow(abilityH, func(screen *ebiten.Image, x, y float64, _ float64) {
-			fm.DrawText(screen, fmt.Sprintf("Lv%d: %s", fu.Level, fu.Name), x, y, theme.FontXS, theme.TextMuted)
-		})
-	}
-
-	// Row 4: Action buttons
+	// 操作按钮：强度+10 / 卖出
 	panel.AddSpace(detailGap)
 	lastUpgradeRect = ui.Rect{}
 	lastSellRect = ui.Rect{}
@@ -231,37 +176,21 @@ func DrawInfoPanel(screen *ebiten.Image, t *tower.Tower, sellValue int) {
 	panel.AddRow(btnH, func(screen *ebiten.Image, x, y float64, w float64) {
 		area := ui.Rect{X: float32(x), Y: float32(y), W: float32(w), H: btnH}
 
-		if hasUpgrade {
-			upgCost := t.UpgradeCost()
-			upgTxt := fmt.Sprintf("升级 Lv.%d $%d", t.Level+1, upgCost)
-			sellTxt := fmt.Sprintf("卖出 $%d", sellValue)
+		buyTxt := fmt.Sprintf("强度+10 $%d", tower.StrengthBuyCost)
+		sellTxt := fmt.Sprintf("卖%d", sellValue)
 
-			result := ui.DrawButtonRow(screen, area, []ui.ButtonRowItem{
-				{Label: upgTxt, Color: theme.TonePrimary},
-				{Label: sellTxt, Color: theme.BtnDanger},
-			}, ui.ButtonRowStyle{
-				Height:   btnH,
-				Gap:      btnGap,
-				Radius:   float32(theme.ButtonRadius),
-				FontSize: theme.FontSM,
-			})
-			if len(result.Rects) == 2 {
-				lastUpgradeRect = result.Rects[0]
-				lastSellRect = result.Rects[1]
-			}
-		} else {
-			sellTxt := fmt.Sprintf("卖出 $%d", sellValue)
-			result := ui.DrawButtonRow(screen, area, []ui.ButtonRowItem{
-				{Label: sellTxt, Color: theme.BtnDanger},
-			}, ui.ButtonRowStyle{
-				Height:   btnH,
-				Gap:      btnGap,
-				Radius:   float32(theme.ButtonRadius),
-				FontSize: theme.FontMD,
-			})
-			if len(result.Rects) == 1 {
-				lastSellRect = result.Rects[0]
-			}
+		result := ui.DrawButtonRow(screen, area, []ui.ButtonRowItem{
+			{Label: buyTxt, Color: theme.TonePrimary},
+			{Label: sellTxt, Color: theme.BtnDanger},
+		}, ui.ButtonRowStyle{
+			Height:   btnH,
+			Gap:      btnGap,
+			Radius:   float32(theme.ButtonRadius),
+			FontSize: theme.FontSM,
+		})
+		if len(result.Rects) == 2 {
+			lastUpgradeRect = result.Rects[0]
+			lastSellRect = result.Rects[1]
 		}
 	})
 
@@ -279,37 +208,6 @@ func DrawInfoPanel(screen *ebiten.Image, t *tower.Tower, sellValue int) {
 	lastPanelVisible = true
 }
 
-// splitAbilities separates tower abilities into current (unlocked) and future (locked) based on tower level.
-func splitAbilities(t *tower.Tower) (current []string, future []tower.AbilityUnlock) {
-	// If no unlock data, all abilities are current
-	if len(t.AbilityUnlocks) == 0 {
-		return t.Abilities, nil
-	}
-
-	// Build set of unlocked ability types (level <= current)
-	unlockedSet := make(map[string]bool)
-	for _, u := range t.AbilityUnlocks {
-		if u.Level <= t.Level {
-			unlockedSet[u.Type] = true
-		} else {
-			future = append(future, u)
-		}
-	}
-
-	// Filter current abilities: keep those in unlocked set OR not in any unlock list
-	// (abilities from bounceConfig etc. that aren't in abilityUnlocks are always shown)
-	unlockTypes := make(map[string]bool)
-	for _, u := range t.AbilityUnlocks {
-		unlockTypes[u.Type] = true
-	}
-	for _, ab := range t.Abilities {
-		if !unlockTypes[ab] || unlockedSet[ab] {
-			current = append(current, ab)
-		}
-	}
-
-	return current, future
-}
 
 // formatStatShort formats a stat as "base+(bonus)=total" or just "value".
 func formatStatShort(base, current float64) string {
@@ -552,135 +450,14 @@ func attackStyleLabel(style string) string {
 
 // DrawInfoPanelHoverTooltip draws the upgrade detail tooltip above the info panel
 // when the mouse is hovering over the panel. Shows per-level stat growth and future ability unlocks.
+// DrawInfoPanelHoverTooltip 悬停面板时的提示（已无等级系统，保留接口兼容）。
 func DrawInfoPanelHoverTooltip(screen *ebiten.Image, t *tower.Tower, mx, my float32) {
-	if t == nil || !lastPanelVisible {
-		return
-	}
-	// Only show when hovering the panel area
-	if !lastPanelRect.Contains(float64(mx), float64(my)) {
-		return
-	}
-	// Nothing to show if already max level
-	if t.Level >= tower.MaxTowerLevel && len(t.AbilityUnlocks) == 0 {
-		return
-	}
-	fm := render.GlobalFont()
-	if fm == nil {
-		return
-	}
-
-	_, futureUnlocks := splitAbilities(t)
-	hasUpgrade := t.Level < tower.MaxTowerLevel
-
-	// Nothing to show
-	if !hasUpgrade && len(futureUnlocks) == 0 {
-		return
-	}
-
-	const (
-		tipW     = float32(280)
-		tipR     = float32(8)
-		tipPad   = float32(10)
-		rowH     = float32(16)
-		titleH   = float32(20)
-		sectionGap = float32(6)
-	)
-
-	// Calculate content height
-	rows := 0
-	if hasUpgrade {
-		rows++ // title "升级路径"
-		remaining := tower.MaxTowerLevel - t.Level
-		rows += remaining // one row per level
-	}
-	if len(futureUnlocks) > 0 {
-		rows++ // title "待解锁能力"
-		rows += len(futureUnlocks)
-	}
-	tipH := tipPad*2 + float32(rows)*rowH
-	if hasUpgrade && len(futureUnlocks) > 0 {
-		tipH += sectionGap // gap between sections
-	}
-
-	// Position: centered above the info panel
-	tipX := lastPanelRect.X + (lastPanelRect.W-tipW)/2
-	tipY := lastPanelRect.Y - tipH - 6
-
-	// Background
-	draw.RoundRect(screen, tipX, tipY, tipW, tipH, tipR, theme.PanelBg)
-	draw.StrokeRoundRect(screen, tipX, tipY, tipW, tipH, tipR, 1, theme.PanelBorder)
-
-	cx := float64(tipX) + float64(tipPad)
-	cy := float64(tipY) + float64(tipPad)
-
-	// Section 1: Per-level upgrade stats
-	if hasUpgrade {
-		fm.DrawBoldText(screen, "升级路径", cx, cy, theme.FontSM, theme.TextTitle)
-		cy += float64(rowH)
-
-		im := render.GlobalIcons()
-		for lv := t.Level + 1; lv <= tower.MaxTowerLevel; lv++ {
-			lvDmg := t.BaseDamage * (1 + 0.25*float64(lv-1))
-			lvSpd := t.BaseSpeed * (1 + 0.10*float64(lv-1))
-			lvRng := t.BaseRange * (1 + 0.08*float64(lv-1))
-			lvDPS := lvDmg * lvSpd
-
-			// Level label
-			lvTxt := fmt.Sprintf("Lv.%d", lv)
-			fm.DrawBoldText(screen, lvTxt, cx, cy, theme.FontXS, theme.StatusSkill)
-
-			// Stats after this level
-			off := cx + 36
-			colW := (float64(tipW) - float64(tipPad)*2 - 36) / 4
-			const sz = 9.0
-			iconOff := sz + 2.0
-
-			drawStatIcon(screen, im, "stat-damage", off, cy, sz)
-			fm.DrawText(screen, fmt.Sprintf("%.0f", lvDmg), off+iconOff, cy, theme.FontXS, theme.InfoAttrDamage)
-
-			drawStatIcon(screen, im, "stat-atkspd", off+colW, cy, sz)
-			fm.DrawText(screen, fmt.Sprintf("%.2f", lvSpd), off+colW+iconOff, cy, theme.FontXS, theme.InfoAttrAtkSpd)
-
-			drawStatIcon(screen, im, "stat-range", off+colW*2, cy, sz)
-			fm.DrawText(screen, fmt.Sprintf("%.0f", lvRng), off+colW*2+iconOff, cy, theme.FontXS, theme.InfoAttrRange)
-
-			drawStatIcon(screen, im, "stat-dps", off+colW*3, cy, sz)
-			fm.DrawText(screen, fmt.Sprintf("%.1f", lvDPS), off+colW*3+iconOff, cy, theme.FontXS, theme.StatusStrUp)
-
-			cy += float64(rowH)
-		}
-	}
-
-	// Section 2: Future ability unlocks
-	if len(futureUnlocks) > 0 {
-		if hasUpgrade {
-			cy += float64(sectionGap)
-		}
-		fm.DrawBoldText(screen, "待解锁能力", cx, cy, theme.FontSM, theme.TextTitle)
-		cy += float64(rowH)
-
-		for _, fu := range futureUnlocks {
-			lvTxt := fmt.Sprintf("Lv.%d", fu.Level)
-			fm.DrawText(screen, lvTxt, cx, cy, theme.FontXS, theme.StatusSkill)
-
-			im := render.GlobalIcons()
-			abX := cx + 36
-			if iconName, ok := abilityIconMap[fu.Type]; ok {
-				drawStatIcon(screen, im, iconName, abX, cy, 10)
-				abX += 14
-			}
-			fm.DrawBoldText(screen, fu.Name, abX, cy, theme.FontXS, theme.TextBody)
-			if desc, ok := abilityDescMap[fu.Type]; ok {
-				fm.DrawText(screen, desc, abX+fm.MeasureText(fu.Name, theme.FontXS)+6, cy+1, theme.FontXS, theme.TextMuted)
-			}
-			cy += float64(rowH)
-		}
-	}
+	// 无等级概念后无需显示升级路径和待解锁能力
 }
 
-// InfoPanelUpgradeHitTest 检查是否点击了升级按钮。
+// InfoPanelUpgradeHitTest 检查是否点击了购买强度按钮。
 func InfoPanelUpgradeHitTest(px, py float32, t *tower.Tower) bool {
-	if t == nil || !lastPanelVisible || t.Level >= tower.MaxTowerLevel {
+	if t == nil || !lastPanelVisible {
 		return false
 	}
 	return lastUpgradeRect.Contains(float64(px), float64(py))
