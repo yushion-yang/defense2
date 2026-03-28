@@ -1,0 +1,12 @@
+{
+  "levels": [
+    { "id": "map_01", "name": "蜿蜒峡谷", "waves": 12, "difficulty": "easy" },
+    { "id": "map_02", "name": "交叉路口", "waves": 15, "difficulty": "normal" },
+    { "id": "map_03", "name": "铁壁防线", "waves": 18, "difficulty": "hard" },
+    { "id": "map_04", "name": "螺旋要塞", "waves": 15, "difficulty": "normal" },
+    { "id": "map_05", "name": "双线战场", "waves": 18, "difficulty": "hard" },
+    { "id": "map_06", "name": "迷宫回廊", "waves": 20, "difficulty": "hard" },
+    { "id": "map_07", "name": "极限窄道", "waves": 22, "difficulty": "extreme" },
+    { "id": "map_08", "name": "竞技场", "waves": 25, "difficulty": "extreme" }
+  ]
+}

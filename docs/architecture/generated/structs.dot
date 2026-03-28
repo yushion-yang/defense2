@@ -1,0 +1,93 @@
+digraph structs {
+  node [shape=record fontsize=10 fontname="Helvetica"];
+  edge [fontsize=9];
+  rankdir=LR;
+  newrank=true;
+
+  subgraph cluster_abilities {
+    label="abilities";
+    style=rounded;
+    color="#666666";
+    "abilities_BleedDotAbility" [label="BleedDotAbility" shape=record];
+    "abilities_CritAbility" [label="CritAbility" shape=record];
+    "abilities_OnHitSlowAbility" [label="OnHitSlowAbility" shape=record];
+    "abilities_SplashAbility" [label="SplashAbility" shape=record];
+  }
+
+  subgraph cluster_config {
+    label="config";
+    style=rounded;
+    color="#666666";
+    "config_MapConfig" [label="MapConfig" shape=record];
+    "config_MapEntry" [label="MapEntry" shape=record];
+  }
+
+  subgraph cluster_economy {
+    label="economy";
+    style=rounded;
+    color="#666666";
+    "economy_Config" [label="Config" shape=record];
+  }
+
+  subgraph cluster_enemy {
+    label="enemy";
+    style=rounded;
+    color="#666666";
+    "enemy_Enemy" [label="Enemy" shape=record];
+    "enemy_Pool" [label="Pool" shape=record];
+    "enemy_Spawner" [label="Spawner" shape=record];
+  }
+
+  subgraph cluster_gamemap {
+    label="gamemap";
+    style=rounded;
+    color="#666666";
+    "gamemap_GameMap" [label="GameMap" shape=record];
+    "gamemap_Point" [label="Point" shape=record];
+  }
+
+  subgraph cluster_hud {
+    label="hud";
+    style=rounded;
+    color="#666666";
+    "hud_BuildMenuData" [label="BuildMenuData" shape=record];
+    "hud_TopBarData" [label="TopBarData" shape=record];
+  }
+
+  subgraph cluster_projectile {
+    label="projectile";
+    style=rounded;
+    color="#666666";
+    "projectile_Pool" [label="Pool" shape=record];
+    "projectile_Projectile" [label="Projectile" shape=record];
+  }
+
+  subgraph cluster_scene {
+    label="scene";
+    style=rounded;
+    color="#666666";
+    "scene_Game" [label="Game" shape=record];
+    "scene_Scene" [label="Scene" shape=ellipse];
+    "scene_StageScene" [label="StageScene" shape=record];
+    "scene_Switcher" [label="Switcher" shape=ellipse];
+    "scene_TitleScene" [label="TitleScene" shape=record];
+  }
+
+  subgraph cluster_tower {
+    label="tower";
+    style=rounded;
+    color="#666666";
+    "tower_Ability" [label="Ability" shape=ellipse];
+    "tower_BleedEffect" [label="BleedEffect" shape=record];
+    "tower_BounceEffect" [label="BounceEffect" shape=record];
+    "tower_HitResult" [label="HitResult" shape=record];
+    "tower_Pool" [label="Pool" shape=record];
+    "tower_SlowEffect" [label="SlowEffect" shape=record];
+    "tower_SplashEffect" [label="SplashEffect" shape=record];
+    "tower_StunEffect" [label="StunEffect" shape=record];
+    "tower_Tower" [label="Tower" shape=record];
+    "tower_TowerAbility" [label="TowerAbility" shape=record];
+    "tower_TowerDef" [label="TowerDef" shape=record];
+  }
+
+}

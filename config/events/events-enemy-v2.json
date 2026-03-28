@@ -1,0 +1,185 @@
+[
+  {
+    "id": "inflation",
+    "label": "通货膨胀",
+    "description": "建造和升级费用+30%",
+    "kind": "buildCostUp",
+    "tier": 1,
+    "value": 0.3,
+    "weight": 1
+  },
+  {
+    "id": "austerity",
+    "label": "紧缩时代",
+    "description": "初始金币-50%",
+    "kind": "startGoldDown",
+    "tier": 1,
+    "value": 0.5,
+    "weight": 1
+  },
+  {
+    "id": "reward-shrink",
+    "label": "战利缩水",
+    "description": "击杀金币-20%",
+    "kind": "rewardDown",
+    "tier": 1,
+    "value": 0.2,
+    "weight": 1
+  },
+  {
+    "id": "slot-cut",
+    "label": "紧缩战场",
+    "description": "可用塔位数量-30%",
+    "kind": "slotReduction",
+    "tier": 1,
+    "value": 0.3,
+    "weight": 1
+  },
+  {
+    "id": "time-compress",
+    "label": "时间压缩",
+    "description": "波间休息减半",
+    "kind": "intermissionDown",
+    "tier": 1,
+    "value": 0.5,
+    "weight": 1.5
+  },
+  {
+    "id": "gold-steal",
+    "label": "偷金潮",
+    "description": "走到终点的敌人额外扣15金币",
+    "kind": "goldStealOnLeak",
+    "tier": 1,
+    "value": 15,
+    "weight": 1
+  },
+  {
+    "id": "mirror-hp",
+    "label": "镜像增益",
+    "description": "每座我方塔→敌人+2%HP",
+    "kind": "mirrorBuff",
+    "tier": 1,
+    "hpPerTower": 0.02,
+    "weight": 1
+  },
+  {
+    "id": "lv-tax",
+    "label": "高等级加税",
+    "description": "Lv3以上升级费用×2",
+    "kind": "lvUpTax",
+    "tier": 1,
+    "value": 2,
+    "weight": 1
+  },
+
+  {
+    "id": "iron-wall",
+    "label": "铁壁",
+    "description": "敌人护甲+50",
+    "kind": "enemyArmorUp",
+    "tier": 2,
+    "value": 50,
+    "weight": 1.5
+  },
+  {
+    "id": "charge",
+    "label": "加速冲锋",
+    "description": "敌人移动速度+30%",
+    "kind": "enemySpeedUp",
+    "tier": 2,
+    "value": 0.3,
+    "weight": 2
+  },
+  {
+    "id": "regen-force",
+    "label": "再生之力",
+    "description": "敌人每3s回复2%HP",
+    "kind": "enemyRegenUp",
+    "tier": 2,
+    "value": 0.02,
+    "interval": 3,
+    "weight": 1.5
+  },
+  {
+    "id": "shield-storm",
+    "label": "护盾风暴",
+    "description": "所有敌人+30%HP护盾",
+    "kind": "allShield",
+    "tier": 2,
+    "value": 0.3,
+    "weight": 1.5
+  },
+  {
+    "id": "cc-resist",
+    "label": "控制抵抗",
+    "description": "所有CC持续时间-50%",
+    "kind": "ccResist",
+    "tier": 2,
+    "value": 0.5,
+    "weight": 1.5
+  },
+  {
+    "id": "elite-night",
+    "label": "精英之夜",
+    "description": "精英出现概率×3",
+    "kind": "eliteRateUp",
+    "tier": 2,
+    "value": 3,
+    "weight": 1
+  },
+  {
+    "id": "split-wave",
+    "label": "分裂浪潮",
+    "description": "所有敌人死亡30%概率分裂",
+    "kind": "allSplit",
+    "tier": 2,
+    "value": 0.3,
+    "weight": 1
+  },
+  {
+    "id": "stealth-fog",
+    "label": "隐身迷雾",
+    "description": "所有敌人开局隐身3s",
+    "kind": "allStealth",
+    "tier": 2,
+    "value": 3,
+    "weight": 1
+  },
+  {
+    "id": "dodge-aura",
+    "label": "闪避直觉",
+    "description": "敌人有15%概率闪避攻击",
+    "kind": "dodgeChance",
+    "tier": 2,
+    "value": 0.15,
+    "weight": 1
+  },
+  {
+    "id": "no-upgrade",
+    "label": "无法升级",
+    "description": "所有塔禁止升级，但敌人血量×0.7",
+    "kind": "noUpgrade",
+    "tier": "restriction",
+    "exclusive": "restriction",
+    "weight": 0.3
+  },
+  {
+    "id": "lv1-lock",
+    "label": "Lv1限定",
+    "description": "所有塔只能保持Lv1",
+    "kind": "lv1Lock",
+    "tier": "restriction",
+    "exclusive": "restriction",
+    "weight": 0.2
+  },
+  {
+    "id": "zero-sum",
+    "label": "零和博弈",
+    "description": "建塔免费但无法升级",
+    "kind": "freeBuildNoUpgrade",
+    "tier": "restriction",
+    "exclusive": "restriction",
+    "value": 1,
+    "weight": 0.5
+  }
+]

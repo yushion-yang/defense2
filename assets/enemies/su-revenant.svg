@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128">
+  <defs>
+    <linearGradient id="cp" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#7c3aed"/><stop offset="100%" stop-color="#a78bfa"/></linearGradient>
+    <filter id="sh" x="-50%" y="-50%" width="200%" height="200%"><feDropShadow dx="0" dy="5" stdDeviation="4" flood-color="#000" flood-opacity="0.28"/></filter>
+  </defs>
+  <ellipse cx="64" cy="112" rx="20.5" ry="9" fill="rgba(15,23,42,0.25)"/>
+  <path d="M51 92 L53 77 L57 90 L52 108Z" fill="#334155"/>
+  <path d="M77 92 L75 77 L71 90 L76 108Z" fill="#334155"/>
+  <g>
+  <path d="M49.5 52 L78.5 52 L75.5 84 L52.5 84Z" fill="url(#cp)" stroke="#a78bfa" stroke-width="2" filter="url(#sh)"/>
+  <circle cx="64" cy="41" r="13" fill="#ede9fe" stroke="#a78bfa" stroke-width="2"/>
+  </g>
+  <circle cx="61" cy="40" r="2" fill="#0f172a"/>
+  <circle cx="67" cy="40" r="2" fill="#0f172a"/>
+  <path d="M60.5 44.9 Q64 47.5 67.5 44.9" fill="none" stroke="#475569" stroke-width="2" stroke-linecap="round"/>
+  <path d="M49.5 60 L39.5 72" stroke="#a78bfa" stroke-width="5" stroke-linecap="round"/>
+  <path d="M78.5 60 L88.5 72" stroke="#a78bfa" stroke-width="5" stroke-linecap="round"/>
+  <rect x="49" y="26" width="30" height="7.8" rx="3" fill="#7c3aed" opacity="0.85"/><line x1="84.5" y1="48" x2="84.5" y2="71.2" stroke="#7c3aed" stroke-width="3" stroke-linecap="round"/><rect x="84.5" y="48" width="12" height="8" rx="1" fill="#a78bfa"/>
+</svg>

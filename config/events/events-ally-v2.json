@@ -1,0 +1,196 @@
+[
+  {
+    "id": "bonus-gold",
+    "label": "战争基金",
+    "description": "开局额外获得60金币",
+    "kind": "bonusGold",
+    "tier": 1,
+    "value": 60
+  },
+  {
+    "id": "fast-build",
+    "label": "急速工程",
+    "description": "建塔花费-15%",
+    "kind": "buildDiscount",
+    "tier": 1,
+    "value": 0.85
+  },
+  {
+    "id": "wave-gold",
+    "label": "战利丰收",
+    "description": "每波清波奖金+50%",
+    "kind": "waveGoldBoost",
+    "tier": 1,
+    "value": 1.5
+  },
+  {
+    "id": "full-refund",
+    "label": "投资回报",
+    "description": "卖塔返还100%",
+    "kind": "fullSellRefund",
+    "tier": 1
+  },
+  {
+    "id": "gold-floor",
+    "label": "破产保护",
+    "description": "金币不会低于50",
+    "kind": "goldFloor",
+    "tier": 1,
+    "value": 50
+  },
+  {
+    "id": "interest",
+    "label": "利息增益",
+    "description": "波结束时金币+10%",
+    "kind": "interestBonus",
+    "tier": 1,
+    "value": 0.1
+  },
+  {
+    "id": "extra-slots",
+    "label": "额外塔位",
+    "description": "塔位上限+2",
+    "kind": "extraSlots",
+    "tier": 1,
+    "value": 2
+  },
+  {
+    "id": "extra-event",
+    "label": "事件选择",
+    "description": "开局额外触发一个随机我方增益",
+    "kind": "extraEvent",
+    "tier": 1
+  },
+
+  {
+    "id": "output-surge",
+    "label": "火力激增",
+    "description": "全阵营输出+20%",
+    "kind": "tieredEffect",
+    "tier": 2,
+    "effect": "outputUp",
+    "value": 0.2
+  },
+  {
+    "id": "iron-will",
+    "label": "钢铁意志",
+    "description": "全阵营持久+30%",
+    "kind": "tieredEffect",
+    "tier": 2,
+    "effect": "durability",
+    "value": 0.3
+  },
+  {
+    "id": "overclock",
+    "label": "超频运转",
+    "description": "全阵营效率+25%",
+    "kind": "tieredEffect",
+    "tier": 2,
+    "effect": "efficiency",
+    "value": 0.25
+  },
+  {
+    "id": "eagle-eye",
+    "label": "鹰眼视域",
+    "description": "全阵营范围+20%",
+    "kind": "tieredEffect",
+    "tier": 2,
+    "effect": "reach",
+    "value": 0.2
+  },
+  {
+    "id": "lockdown",
+    "label": "全面控场",
+    "description": "全阵营控制+30%",
+    "kind": "tieredEffect",
+    "tier": 2,
+    "effect": "control",
+    "value": 0.3
+  },
+  {
+    "id": "lucky-strike",
+    "label": "幸运打击",
+    "description": "全阵营暴击+15%",
+    "kind": "tieredEffect",
+    "tier": 2,
+    "effect": "criticalStrike",
+    "value": 0.15
+  },
+  {
+    "id": "blast-wave",
+    "label": "冲击波",
+    "description": "全阵营范围伤害+30%",
+    "kind": "tieredEffect",
+    "tier": 2,
+    "effect": "areaEffect",
+    "value": 0.3
+  },
+  {
+    "id": "execution",
+    "label": "处决令",
+    "description": "<20%HP敌人受到×2伤害",
+    "kind": "executionDamage",
+    "tier": 2,
+    "threshold": 0.2,
+    "multiplier": 2
+  },
+  {
+    "id": "shield-break",
+    "label": "破盾者",
+    "description": "无视敌人护盾",
+    "kind": "shieldIgnoreGlobal",
+    "tier": 2
+  },
+  {
+    "id": "slow-field",
+    "label": "减速场",
+    "description": "全场敌人永久移速-10%",
+    "kind": "globalSlowDown",
+    "tier": 2,
+    "value": 0.1
+  },
+  {
+    "id": "hero-empower",
+    "label": "英雄强化",
+    "description": "英雄经验+30%，移速+25%，攻速+10%",
+    "kind": "heroBoost",
+    "tier": 2,
+    "xpMultiplier": 1.3,
+    "moveSpeed": 1.25,
+    "fireRate": 0.9
+  },
+
+  {
+    "id": "mode-master",
+    "label": "模式大师",
+    "description": "basic塔模式切换冷却-50%，切换后首击伤×2",
+    "kind": "baseModeBoost",
+    "tier": 3,
+    "cooldownMul": 0.5,
+    "firstHitMul": 2
+  },
+  {
+    "id": "versatile",
+    "label": "通才路线",
+    "description": "base塔升级费-30%，Lv3时两个分支都解锁",
+    "kind": "baseVersatile",
+    "tier": 3,
+    "costMul": 0.7
+  },
+  {
+    "id": "hunter-instinct",
+    "label": "猎手本能",
+    "description": "hunter目标切换被动伤害从30%提升到50%maxHP",
+    "kind": "hunterBoost",
+    "tier": 3,
+    "value": 0.5
+  },
+  {
+    "id": "all-upgrade",
+    "label": "全场升级",
+    "description": "所有已建塔+1级（仅触发一次）",
+    "kind": "allUpgrade",
+    "tier": 3,
+    "levels": 1
+  }
+]

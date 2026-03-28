@@ -1,0 +1,484 @@
+{
+  "economy": {
+    "buildCost": 50,
+    "baseUpgradeCost": 60,
+    "sellRefundRate": 0.7,
+    "startingGold": 120,
+    "startingLives": 20,
+    "victoryWaveTarget": 12,
+    "randomWheel": {
+      "probabilities": [0.2, 0.4, 0.55, 0.7, 0.85],
+      "goldBonus": 30,
+      "goldPenalty": 15,
+      "damageUpMultiplier": 1.2,
+      "damageUpDuration": 15,
+      "fireRateDownChance": 0.3,
+      "fireRateDownValue": 0.8,
+      "fireRateDownDuration": 12,
+      "enemySlowFactor": 0.6,
+      "enemySlowDuration": 5
+    },
+    "firstWaveGoldBase": 20,
+    "lastWaveGoldBase": 50
+  },
+  "difficulty": {
+    "modes": {
+      "easy": {
+        "label": "简单",
+        "hpScale": 0.7,
+        "speedScale": 0.85,
+        "rewardScale": 1.3,
+        "startGold": 180
+      },
+      "normal": {
+        "label": "普通",
+        "hpScale": 1,
+        "speedScale": 1,
+        "rewardScale": 1,
+        "startGold": 120
+      },
+      "hard": {
+        "label": "困难",
+        "hpScale": 1.4,
+        "speedScale": 1.15,
+        "rewardScale": 0.8,
+        "startGold": 100
+      },
+      "extreme": {
+        "label": "极限",
+        "hpScale": 2,
+        "speedScale": 1.3,
+        "rewardScale": 0.6,
+        "startGold": 80
+      }
+    },
+    "default": "normal"
+  },
+  "ui": {
+    "starterSlotHints": [
+      1,
+      3,
+      6
+    ],
+    "pauseModes": {
+      "running": "继续",
+      "paused": "暂停"
+    },
+    "flashMessageDuration": 1500,
+    "battleBannerDuration": 2000,
+    "dangerFlashDuration": 300,
+    "tapRecentThreshold": 350,
+    "notificationFadeDuration": 300,
+    "waveIntroDuration": 1.4
+  },
+  "world": {
+    "width": 2400,
+    "height": 1080,
+    "path": [
+      {
+        "x": -40,
+        "y": 128
+      },
+      {
+        "x": 210,
+        "y": 128
+      },
+      {
+        "x": 210,
+        "y": 470
+      },
+      {
+        "x": 410,
+        "y": 470
+      },
+      {
+        "x": 410,
+        "y": 228
+      },
+      {
+        "x": 620,
+        "y": 228
+      },
+      {
+        "x": 620,
+        "y": 532
+      },
+      {
+        "x": 810,
+        "y": 532
+      },
+      {
+        "x": 810,
+        "y": 320
+      },
+      {
+        "x": 1000,
+        "y": 320
+      }
+    ],
+    "towerSlots": [
+      {
+        "x": 104,
+        "y": 244
+      },
+      {
+        "x": 128,
+        "y": 396
+      },
+      {
+        "x": 292,
+        "y": 80
+      },
+      {
+        "x": 308,
+        "y": 252
+      },
+      {
+        "x": 314,
+        "y": 560
+      },
+      {
+        "x": 502,
+        "y": 372
+      },
+      {
+        "x": 532,
+        "y": 130
+      },
+      {
+        "x": 694,
+        "y": 106
+      },
+      {
+        "x": 706,
+        "y": 382
+      },
+      {
+        "x": 734,
+        "y": 586
+      },
+      {
+        "x": 876,
+        "y": 220
+      },
+      {
+        "x": 900,
+        "y": 448
+      }
+    ]
+  },
+  "towers": {
+    "modeOrder": [
+      "balanced",
+      "rapid",
+      "sniper"
+    ],
+    "modeLabels": {
+      "balanced": "均衡",
+      "rapid": "速射",
+      "sniper": "重炮"
+    },
+    "defaultType": "laser",
+    "runtimeExtensions": {
+      "buffSlots": [],
+      "specialEffects": [],
+      "synergies": []
+    },
+    "types": {}
+  },
+  "enemies": {
+    "systems": {
+      "armor": {
+        "maxArmor": 50,
+        "minArmor": -100,
+        "positiveReductionPerPoint": 0.01,
+        "negativeAmplifyPerPoint": 0.01
+      },
+      "speed": {
+        "absoluteCapMultiplier": 2.4
+      }
+    },
+    "specialHints": {
+      "runner": "速度更快，优先看住拐角别漏怪。",
+      "swarm": "数量密集，溅射或近身优先更稳。",
+      "tank": "血量更厚，建议先升级主塔。",
+      "shielded": "护盾会吃掉首轮伤害，尽量多塔交叉覆盖。",
+      "medic": "会给同伴回血，优先点杀奶妈。",
+      "regenerator": "会缓慢回血，尽量集中火力快速击杀。",
+      "berserker": "残血会冲刺，留近身优先塔兜底。",
+      "elite": "精英压轴很肉，重炮/血厚优先更稳。",
+      "stealth": "隐身兵开局隐身，溅射伤害可强制显形。",
+      "splitter": "分裂体死后分裂成小怪，注意后排火力覆盖。",
+      "banner": "旗手给周围友方加速加甲，优先击杀。",
+      "armored": "护甲兵自带高护甲，需要穿甲或减甲能力。",
+      "timewarp": "时间兵定期净化周围敌人的控制效果，优先击杀。",
+      "teleporter": "传送兵会周期性跳跃前进，注意终点防线。",
+      "mirror": "镜像兵首次受伤会复制自身，注意火力分配。",
+      "devoter": "奉献者死亡时恢复最近队友20%生命值，优先击杀。",
+      "reflector": "反射兵受伤时降低攻击者攻速，避免单塔集火。",
+      "ironhide": "铁皮兵单次受伤上限60，用高攻速多段伤害替代爆发。",
+      "colossus": "巨像极厚+回血+伤害上限，需要全阵线火力覆盖。",
+      "steadfast": "稳行者免疫减速，冰冻塔对它无效，用眩晕或高DPS应对。",
+      "ironwill": "铁意兵免疫眩晕，无法被定住，需要减速或纯输出击杀。",
+      "st-plating": "附甲工兵死亡给周围加甲，集火快杀避免甲层扩散。",
+      "st-bunker": "掩体车给范围友方-30%受伤，优先击杀掩体车。",
+      "st-overload": "过载体半血释放EMP禁塔，保持火力连续输出。",
+      "st-welder": "焊接兵会修复友方，点杀奶妈优先。",
+      "st-magnetize": "磁化兵抗投射物-40%，用光束/AoE/领域替代。",
+      "en-phase": "相位兵15%闪避，用高攻速多次命中弥补。",
+      "en-disrupt": "干扰者削射程-20%，优先击杀保住远程塔射程。",
+      "en-overcharge": "超载体死亡加速友方，先杀周围普通怪再处理它。",
+      "en-siphon": "虹吸兵受击吸血转盾，集中火力一波带走。",
+      "en-flicker": "闪烁虫周期瞬移，用AoE/领域覆盖路径。",
+      "na-spore": "孢子母体死亡释放3孢子，留溅射/AoE清理。",
+      "na-bloom": "绽放体自愈+给友方盾，优先击杀断回复链。",
+      "na-rootwalker": "藤行者全免CC+死亡留减速区，纯输出快杀。",
+      "na-seedling": "种子兵死后变tank，要么秒杀要么准备二次输出。",
+      "na-symbiont": "共生体分摊伤害，AoE/多目标效率更高。",
+      "or-phalanx": "方阵兵近距互相加甲，分散击杀避免抱团。",
+      "or-martyr": "殉道者死亡永久强化同波怪，留到最后杀。",
+      "or-warden": "守望者给友方格挡盾，高攻速打破盾再输出。",
+      "or-inquisitor": "审判官标记攻击者降攻速，用多塔分担攻击。",
+      "or-herald": "传令官存活时全队加HP，优先击杀切断增益。",
+      "su-hive": "母巢虫持续生产虫群，集火母体止住源头。",
+      "su-revenant": "亡魂兵首死复活，留余力应对二次击杀。",
+      "su-cocoon": "虫茧死亡爆出5个快怪，溅射/AoE兜底。",
+      "su-leech": "寄附虫漏了会重走不扣命，但无限循环消耗资源。",
+      "su-totem": "图腾兽不动但持续治疗，远程优先点杀。",
+      "ch-backlash": "反噬体死亡诅咒击杀塔，分散火力降低损失。",
+      "ch-drain": "汲魂兵12%吸血，需要爆发伤害一波带走。",
+      "ch-goldrot": "蚀金虫漏怪扣30金，绝对不能漏。",
+      "ch-corruptor": "腐化先驱死亡传播腐化，控制击杀顺序。",
+      "ch-abyssal": "深渊行者全免疫但受伤+15%，纯输出快杀。",
+      "fly-scout": "飞行斥候，基础对空检验。",
+      "fly-heavy": "飞行重甲，考验对空持续火力。",
+      "fly-dart": "疾风翼极速飞行，需要瞬发/高攻速对空。",
+      "fly-shield": "飞盾卫带60%护盾，需要充足对空火力破盾。",
+      "fly-ghost": "幽灵翼出场隐身3秒，需要揭隐或AoE覆盖。",
+      "fly-bomber": "投弹手死亡释放减速脉冲，注意塔位布局。",
+      "fly-medic": "飞行奶妈治疗飞行友方，优先击杀。",
+      "fly-split": "裂翼虫死亡分裂为2个疾风翼，留对空AoE。",
+      "boss-iron": "铁壁将军30甲+10%伤害上限，需破甲+持续输出。",
+      "boss-storm": "风暴领主传送+免减速，全路径布防。",
+      "boss-grove": "生命古树3%/s回血+治疗光环，DPS必须压过回复。",
+      "boss-legion": "军团统帅光环加速加甲+召唤，先杀小怪再集火Boss。",
+      "boss-hive": "虫潮之母持续召唤+死亡爆兵，溅射/AoE全程开。",
+      "boss-shadow": "暗影主宰受击隐身+反射攻速，多塔分散攻击。",
+      "boss-abyss": "虚空巨兽全免疫+5%伤害上限，需要极高持续DPS。",
+      "boss-chaos": "混沌化身死亡全塔诅咒+扣50金，做好经济准备。",
+      "boss-sky": "天空霸主飞行+召唤飞行斥候，对空火力全开。",
+      "boss-omega": "终焉审判40甲+4%上限+弱点轮换，观察弱点集火。"
+    },
+    "runtimeExtensions": {
+      "buffs": [],
+      "auraEffects": [],
+      "specialBehaviors": []
+    }
+  },
+  "waves": {
+    "autoStart": true,
+    "intermissionSeconds": 10,
+    "difficulty": {
+      "hpBase": 52,
+      "hpPerWave": 21,
+      "speedBase": 58,
+      "speedPerWave": 5,
+      "rewardBase": 9,
+      "rewardPerWave": 1,
+      "lateWaveStart": 5,
+      "lateHpBonusPerWave": 0.125,
+      "lateSpeedBonusPerWave": 0.055,
+      "lateRewardPenaltyPerWave": 0.042
+    },
+    "spawnBaseInterval": 0.92,
+    "spawnMinInterval": 0.18,
+    "spawnMultipliers": {
+      "swarm": 0.6,
+      "runner": 0.74,
+      "normal": 1,
+      "tank": 1.1,
+      "shielded": 1.02,
+      "medic": 0.98,
+      "regenerator": 1.04,
+      "berserker": 0.84,
+      "elite": 1.22,
+      "boss": 1.55,
+      "stealth": 0.9,
+      "splitter": 1.08,
+      "banner": 0.96,
+      "armored": 1.06,
+      "timewarp": 0.94,
+      "teleporter": 0.92,
+      "mirror": 0.88,
+      "devoter": 1.12,
+      "reflector": 1,
+      "ironhide": 1.08,
+      "colossus": 1.3,
+      "steadfast": 0.92,
+      "ironwill": 1
+    },
+    "spawnDecayPerWave": 0.03,
+    "tierThresholds": [5, 15, 25],
+    "maxBuffsPerTier": [0, 1, 2, 2],
+    "baseTotalFormula": { "base": 6, "perWave": 2 },
+    "normalBoostCap": 8,
+    "eliteInterval": 4,
+    "pressureBase": 0.8,
+    "pressureThresholds": { "danger": 15, "pressure": 9 }
+  },
+  "combat": {
+    "bossDamageCapRatio": 0.05,
+    "fireRateFloor": 0.18,
+    "slowCap": 0.30,
+    "minCCDuration": 0.1,
+    "armorDivisor": 100,
+    "minDamageMultiplier": 0.01,
+    "maxDamageAmplification": 3,
+    "dotTickInterval": { "burn": 0.5, "bleed": 0.5, "poison": 1.0 },
+    "controlImmunePriority": 80
+  },
+  "defenseReadiness": {
+    "dpsWeight": 22,
+    "towerCountWeight": 1.6,
+    "splashWeight": 2.4,
+    "avgLevelWeight": 1.15,
+    "strongThreshold": 4.5
+  },
+  "engine": {
+    "maxRawDt": 0.033,
+    "turboDt": 0.05,
+    "turboTicksPerFrame": 200,
+    "defaultAudioVolume": 0.45,
+    "defaultSoundVolume": 0.4,
+    "summonCapBase": 100
+  },
+  "combatExtensions": {
+    "towerBuffs": [],
+    "enemyBuffs": [],
+    "towerCooperationRules": [],
+    "projectileBehaviors": []
+  },
+  "tests": {
+    "enabled": true,
+    "cases": [
+      {
+        "id": "multitarget_3_equal_distance",
+        "label": "三目标同时攻击",
+        "category": "combat",
+        "description": "固定 1 座多目标塔、3 个相同敌人、相同距离与生命值，验证是否在预期窗口内接近同时死亡。",
+        "scene": {
+          "map": "test-arena",
+          "speedMultiplier": 100,
+          "durationMs": 8000
+        },
+        "tower": {
+          "type": "targeter",
+          "level": 1,
+          "x": 480,
+          "y": 320
+        },
+        "enemies": [
+          {
+            "type": "normal",
+            "x": 620,
+            "y": 280,
+            "hpScale": 1
+          },
+          {
+            "type": "normal",
+            "x": 620,
+            "y": 320,
+            "hpScale": 1
+          },
+          {
+            "type": "normal",
+            "x": 620,
+            "y": 360,
+            "hpScale": 1
+          }
+        ],
+        "assertions": [
+          {
+            "kind": "multiHitCountAtLeast",
+            "value": 3
+          },
+          {
+            "kind": "deathWindowMsMax",
+            "value": 400
+          }
+        ],
+        "status": "draft"
+      },
+      {
+        "id": "stack_slow_tower_plus_hero",
+        "label": "炮塔减速与英雄减速叠加",
+        "category": "status-synergy",
+        "description": "验证炮塔附带减速与英雄命中减速同时作用于同一敌人时，当前实现的结果是什么，并作为后续规则固化测试。第一版先记录当前行为，而不是预设一定要乘法或覆盖。",
+        "scene": {
+          "map": "test-arena",
+          "speedMultiplier": 200,
+          "durationMs": 6000
+        },
+        "tower": {
+          "type": "freeze",
+          "level": 1,
+          "x": 430,
+          "y": 320
+        },
+        "hero": {
+          "enabled": true,
+          "x": 360,
+          "y": 320,
+          "upgrades": {
+            "slow": 1
+          }
+        },
+        "enemies": [
+          {
+            "type": "tank",
+            "x": 620,
+            "y": 320,
+            "hpScale": 1.2
+          }
+        ],
+        "observations": [
+          {
+            "kind": "captureEnemySpeedTimeline",
+            "targetIndex": 0
+          },
+          {
+            "kind": "captureEnemyStatuses",
+            "targetIndex": 0
+          },
+          {
+            "kind": "captureHitSources",
+            "targetIndex": 0
+          }
+        ],
+        "assertions": [
+          {
+            "kind": "recordCurrentBehavior",
+            "key": "slow_stack_rule"
+          },
+          {
+            "kind": "statusPresent",
+            "value": "slow"
+          }
+        ],
+        "notes": "先测出现有叠加规则（覆盖/取最小值/乘法等），再决定是否改成设计期望。",
+        "status": "draft"
+      }
+    ]
+  },
+  "missionWaves": [
+    3,
+    6,
+    9
+  ],
+  "rewardWaves": [
+    4,
+    8,
+    12,
+    16
+  ]
+}

@@ -10,6 +10,7 @@ import (
 	_ "defense2/internal/core/tower/abilities"  // 通过 init() 注册塔能力
 	_ "defense2/internal/core/warden/types"     // 通过 init() 注册战灵类型
 
+	gameAudio "defense2/internal/audio"
 	"defense2/internal/config"
 	"defense2/internal/core/economy"
 	"defense2/internal/core/enemy"
@@ -57,9 +58,11 @@ type StageScene struct {
 	kills        int               // 累计击杀数
 	towerDefs    []tower.TowerDef  // 可建造的塔类型列表
 	selectedDef  int               // 当前选中的塔类型索引
-	hoveredTower    *tower.Tower           // 鼠标悬停的已放置塔（用于信息面板）
-	towerRenderer   *render.TowerRenderer // 塔 SVG 渲染器
-	heroUnit        *hero.Hero            // 英雄实体
+	hoveredTower    *tower.Tower            // 鼠标悬停的已放置塔（用于信息面板）
+	towerRenderer   *render.TowerRenderer  // 塔 SVG 渲染器
+	enemyRenderer   *render.EnemyRenderer  // 敌人 SVG 渲染器
+	audioMgr        *gameAudio.Manager     // 音效管理器
+	heroUnit        *hero.Hero             // 英雄实体
 	wardenUnit      *warden.Warden        // 战灵实体
 	eventPool       *event.Pool           // 事件池
 	appliedEvents   []event.Event         // 已应用的事件列表
@@ -122,9 +125,11 @@ func NewStageSceneWithMap(sw Switcher, mapID string) *StageScene {
 		projectiles:    projectile.DefaultPool(),
 		econ:           economy.DefaultConfig(),
 		towerRenderer:  render.NewTowerRenderer(config.GetAssetFS()),
-		heroUnit:       hero.DefaultHero(heroX, heroY),
+		enemyRenderer:  render.NewEnemyRenderer(config.GetAssetFS()),
+		audioMgr:       initAudio(),
+		heroUnit:       loader.LoadHero(heroX, heroY),
 		wardenUnit:     warden.NewWarden(1, "使者", "envoy"),
-		eventPool:      event.NewPool(event.DefaultAllyEvents()),
+		eventPool:      event.NewPool(loader.LoadAllyEvents()),
 		tutorial:       tut,
 		progressMgr:    pm,
 		lives:          20,
@@ -425,8 +430,8 @@ func (s *StageScene) Draw(screen *ebiten.Image) {
 	// 塔（优先 SVG 渲染，回退到彩色方块）
 	s.towerRenderer.DrawTowers(screen, s.towers)
 
-	// 敌人
-	render.DrawEnemies(screen, s.enemies)
+	// 敌人（优先 SVG 渲染）
+	s.enemyRenderer.DrawEnemies(screen, s.enemies)
 
 	// 弹射物
 	render.DrawProjectiles(screen, s.projectiles)
@@ -509,4 +514,14 @@ func loadTowerDefsOrFallback() []tower.TowerDef {
 		return tower.BaseTowerDefs()
 	}
 	return defs
+}
+
+// initAudio 创建音效管理器并从嵌入式文件系统预加载所有 WAV。
+func initAudio() *gameAudio.Manager {
+	mgr := gameAudio.NewManager()
+	assetFS := config.GetAssetFS()
+	if assetFS != nil {
+		mgr.LoadAllFromFS(assetFS)
+	}
+	return mgr
 }
