@@ -32,6 +32,19 @@ type Enemy struct {
 	DisplayHP  float64         // 显示用血量（伤害拖尾缓慢衰减到实际 HP）
 	Elite      bool            // 是否为精英怪
 	HitFlash   float64         // 受击闪白剩余时间（秒，>0 时渲染白色叠加）
+
+	// ── 伤害管线扩展字段 ──
+
+	DamageCap        float64 // 单次伤害上限（0=无上限，如铁甲怪 60）
+	DamageCapPercent float64 // 单次伤害百分比上限（0=无上限，如巨人 0.08=8%maxHP）
+	Silenced         bool    // 是否被沉默（沉默时 DamageCap 失效）
+	IsInvincible     bool    // 无敌状态（pure 伤害可穿透）
+	IsDamageImmune   bool    // 伤害免疫（pure 伤害可穿透）
+	IsUntargetable   bool    // 不可选中
+
+	// 多重护盾系统
+	Shields    []Shield  // 多层护盾列表（按剩余时间升序消耗）
+	Thresholds []Threshold // HP阈值触发器列表
 }
 
 // TickStatusEffects 处理敌人身上的状态效果（减速、流血）。
