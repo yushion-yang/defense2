@@ -1,0 +1,837 @@
+{
+  "_meta": {
+    "description": "统一塔池（redesign Phase 3）— 9 座塔",
+    "version": "2.0",
+    "towerCount": 8
+  },
+  "laser": {
+    "label": "激光炮台",
+    "shortLabel": "激光",
+    "description": "瞬时命中，射程更长，适合点杀高威胁目标。",
+    "faction": "base",
+    "tags": [
+      "energy",
+      "laser"
+    ],
+    "supportsModeSwitch": false,
+    "fixedMode": "balanced",
+    "buildCost": 70,
+    "attackStyle": "laser",
+    "baseRange": 200,
+    "baseDamage": 22,
+    "baseFireRate": 0.92,
+    "projectileSpeed": 9999,
+    "abilities": [],
+    "splashByMode": {
+      "balanced": 0,
+      "rapid": 0,
+      "sniper": 0
+    },
+    "modeModifiers": {
+      "balanced": {
+        "range": 1,
+        "damage": 1,
+        "fireRate": 1
+      },
+      "rapid": {
+        "range": 0.94,
+        "damage": 0.76,
+        "fireRate": 0.62
+      },
+      "sniper": {
+        "range": 1.18,
+        "damage": 1.44,
+        "fireRate": 1.25
+      }
+    },
+    "muzzleDistanceByMode": {
+      "balanced": 26,
+      "rapid": 24,
+      "sniper": 30
+    },
+    "shotVolumeByMode": {
+      "balanced": 0.16,
+      "rapid": 0.15,
+      "sniper": 0.24
+    },
+    "beam": {
+      "duration": 0.12,
+      "width": 3,
+      "color": "#f43f5e",
+      "glow": "#fda4af"
+    },
+    "branches": {
+      "pierce": {
+        "label": "贯穿射线",
+        "description": "发射贯穿光束，命中路径上所有敌人",
+        "attackStyle": "piercingLaser",
+        "rangeMultiplier": 1.3,
+        "damageMultiplier": 0.8
+      }
+    },
+    "operationUI": {
+      "upgradeLabel": "增幅",
+      "branchLabel": "聚焦",
+      "branchPlaceholder": "后续开放",
+      "actionSlots": [
+        "过载脉冲",
+        "贯穿校准"
+      ],
+      "detailSections": [
+        "后续可扩展为高压束 / 连锁束"
+      ]
+    },
+    "strength": {
+      "attackDamage": {
+        "base": 8,
+        "potential": 14
+      },
+      "attackSpeed": {
+        "base": 0.37,
+        "potential": 0.55
+      },
+      "range": {
+        "base": 200,
+        "potential": 0
+      }
+    },
+    "abilityUnlocks": [
+      {
+        "level": 1,
+        "type": "instantHit",
+        "name": "瞬时命中",
+        "params": {}
+      },
+      {
+        "level": 4,
+        "type": "branch",
+        "name": "转职",
+        "options": [
+          "贯穿射线"
+        ]
+      }
+    ],
+    "tierProfile": {
+      "damage": {
+        "tier": "A",
+        "growth": "mid"
+      },
+      "fireRate": {
+        "tier": "B",
+        "growth": "mid"
+      },
+      "range": {
+        "tier": "S",
+        "growth": "high"
+      }
+    }
+  },
+  "freeze": {
+    "label": "冰冻炮台",
+    "faction": "base",
+    "tags": [
+      "elemental",
+      "ice",
+      "control",
+      "slow"
+    ],
+    "shortLabel": "冰冻",
+    "description": "伤害较低，但可减速敌人，为后排主力争取输出时间。",
+    "element": "ice",
+    "supportsModeSwitch": false,
+    "fixedMode": "balanced",
+    "buildCost": 65,
+    "baseRange": 170,
+    "baseDamage": 10,
+    "baseFireRate": 0.68,
+    "projectileSpeed": 380,
+    "splashByMode": {
+      "balanced": 0,
+      "rapid": 0,
+      "sniper": 0
+    },
+    "modeModifiers": {
+      "balanced": {
+        "range": 1,
+        "damage": 1,
+        "fireRate": 1
+      },
+      "rapid": {
+        "range": 0.92,
+        "damage": 0.82,
+        "fireRate": 0.68
+      },
+      "sniper": {
+        "range": 1.16,
+        "damage": 1.24,
+        "fireRate": 1.18
+      }
+    },
+    "muzzleDistanceByMode": {
+      "balanced": 24,
+      "rapid": 22,
+      "sniper": 28
+    },
+    "shotVolumeByMode": {
+      "balanced": 0.17,
+      "rapid": 0.16,
+      "sniper": 0.22
+    },
+    "onHitSlow": {
+      "factorByMode": {
+        "balanced": 0.68,
+        "rapid": 0.78,
+        "sniper": 0.56
+      },
+      "durationByMode": {
+        "balanced": 1.45,
+        "rapid": 1.1,
+        "sniper": 1.85
+      }
+    },
+    "branches": {
+      "frostChain": {
+        "label": "寒霜链",
+        "description": "减速目标周围40px内敌人也受50%效力减速",
+        "chainRadius": 40,
+        "chainEfficiency": 0.5
+      },
+      "deepFreeze": {
+        "label": "极寒核心",
+        "description": "减速时间×2，减速+15%，攻速-20%",
+        "slowDurationMultiplier": 2,
+        "slowBonus": 0.15,
+        "fireRatePenalty": 0.2
+      }
+    },
+    "operationUI": {
+      "upgradeLabel": "强化",
+      "branchLabel": "冻能",
+      "branchPlaceholder": "后续开放",
+      "actionSlots": [
+        "寒霜扩散",
+        "冻结增幅"
+      ],
+      "detailSections": [
+        "后续可扩展为群体减速 / 冻结控制"
+      ]
+    },
+    "abilities": [
+      {
+        "type": "onHitSlow",
+        "factor": {
+          "base": 0.1,
+          "potential": 0.58,
+          "format": "percent",
+          "clamp": [
+            0,
+            1
+          ]
+        },
+        "duration": 1.45
+      }
+    ],
+    "strength": {
+      "attackDamage": {
+        "base": 4,
+        "potential": 6
+      },
+      "attackSpeed": {
+        "base": 0.27,
+        "potential": 0.41
+      },
+      "range": {
+        "base": 170,
+        "potential": 0
+      },
+      "effects": {
+        "slowFactor": {
+          "base": 0.1,
+          "potential": 0.58
+        }
+      }
+    },
+    "abilityUnlocks": [
+      {
+        "level": 1,
+        "type": "onHitSlow",
+        "name": "命中减速",
+        "params": {
+          "factor": {
+            "base": 0.1,
+            "potential": 0.58,
+            "format": "percent",
+            "clamp": [
+              0,
+              1
+            ]
+          },
+          "duration": 1.45
+        }
+      },
+      {
+        "level": 2,
+        "type": "multiTarget",
+        "name": "多目标攻击",
+        "params": {
+          "count": {
+            "base": 1,
+            "potential": 1,
+            "format": "floor"
+          }
+        }
+      },
+      {
+        "level": 4,
+        "type": "branch",
+        "name": "转职",
+        "options": [
+          "寒霜链",
+          "极寒核心"
+        ]
+      }
+    ],
+    "tierProfile": {
+      "damage": {
+        "tier": "C",
+        "growth": "low"
+      },
+      "fireRate": {
+        "tier": "A",
+        "growth": "high"
+      },
+      "range": {
+        "tier": "A",
+        "growth": "mid"
+      }
+    }
+  },
+  "electric": {
+    "label": "电磁塔",
+    "faction": "base",
+    "tags": [
+      "energy",
+      "lightning",
+      "chain",
+      "bounce"
+    ],
+    "shortLabel": "电磁",
+    "description": "发射链式闪电，自动弹射到附近目标。",
+    "supportsModeSwitch": false,
+    "fixedMode": "balanced",
+    "buildCost": 75,
+    "baseRange": 150,
+    "baseDamage": 20,
+    "baseFireRate": 0.85,
+    "projectileSpeed": 600,
+    "splashByMode": {
+      "balanced": 0
+    },
+    "modeModifiers": {
+      "balanced": {
+        "range": 1,
+        "damage": 1,
+        "fireRate": 1
+      }
+    },
+    "muzzleDistanceByMode": {
+      "balanced": 24
+    },
+    "shotVolumeByMode": {
+      "balanced": 0.2
+    },
+    "element": "lightning",
+    "bounceConfig": {
+      "baseBounces": 2,
+      "bouncesPerLevel": {
+        "2": 0,
+        "3": 0,
+        "4": 0
+      },
+      "range": 125,
+      "damageDecay": 0.8,
+      "damageDecayLv4": 0.9
+    },
+    "operationUI": {
+      "upgradeLabel": "升级",
+      "branchLabel": "电能",
+      "branchPlaceholder": "后续开放",
+      "actionSlots": [
+        "磁暴",
+        "超载"
+      ],
+      "detailSections": [
+        "链式闪电弹射攻击"
+      ]
+    },
+    "abilities": [
+      {
+        "type": "stun",
+        "chance": {
+          "base": 0.08,
+          "potential": 0.04,
+          "format": "percent",
+          "clamp": [
+            0,
+            1
+          ]
+        },
+        "duration": {
+          "base": 0.3,
+          "potential": 0.1,
+          "format": "seconds"
+        }
+      }
+    ],
+    "strength": {
+      "attackDamage": {
+        "base": 7,
+        "potential": 13
+      },
+      "attackSpeed": {
+        "base": 0.34,
+        "potential": 0.51
+      },
+      "range": {
+        "base": 150,
+        "potential": 0
+      }
+    },
+    "abilityUnlocks": [
+      {
+        "level": 1,
+        "type": "bounce",
+        "name": "弹射",
+        "params": {
+          "count": {
+            "base": 2,
+            "potential": 1,
+            "format": "floor"
+          },
+          "range": 125,
+          "decay": 0.8
+        }
+      },
+      {
+        "level": 2,
+        "type": "stun",
+        "name": "眩晕",
+        "params": {
+          "chance": {
+            "base": 0.08,
+            "potential": 0.04,
+            "format": "percent",
+            "clamp": [
+              0,
+              1
+            ]
+          },
+          "duration": {
+            "base": 0.3,
+            "potential": 0.1,
+            "format": "seconds"
+          }
+        }
+      }
+    ],
+    "tierProfile": {
+      "damage": {
+        "tier": "A",
+        "growth": "mid"
+      },
+      "fireRate": {
+        "tier": "B",
+        "growth": "mid"
+      },
+      "range": {
+        "tier": "B",
+        "growth": "mid"
+      }
+    }
+  },
+  "hunter": {
+    "label": "猎手塔",
+    "faction": "base",
+    "tags": [
+      "physical",
+      "sniper",
+      "percentDamage",
+      "targetSwitch"
+    ],
+    "shortLabel": "猎手",
+    "description": "切换目标时首击造成目标最大生命值30%伤害，擅长逐个歼灭。",
+    "supportsModeSwitch": false,
+    "fixedMode": "balanced",
+    "buildCost": 82,
+    "attackStyle": "projectile",
+    "baseRange": 140,
+    "baseDamage": 18,
+    "baseFireRate": 1.4,
+    "projectileSpeed": 380,
+    "splashByMode": {
+      "balanced": 0
+    },
+    "modeModifiers": {
+      "balanced": {
+        "range": 1,
+        "damage": 1,
+        "fireRate": 1
+      }
+    },
+    "muzzleDistanceByMode": {
+      "balanced": 24
+    },
+    "shotVolumeByMode": {
+      "balanced": 0.25
+    },
+    "beam": null,
+    "hunterPassive": {
+      "percentHpDamage": 0.3,
+      "damageType": "true",
+      "bossCapPercent": 0.05
+    },
+    "operationUI": {
+      "upgradeLabel": "升级",
+      "branchLabel": "转职",
+      "branchPlaceholder": "后续开放",
+      "actionSlots": [
+        "待定",
+        "待定"
+      ],
+      "detailSections": [
+        "切换目标首击30%最大生命值真实伤害"
+      ]
+    },
+    "abilities": [
+      {
+        "type": "percentHpDamage",
+        "percent": {
+          "base": 0.2,
+          "potential": 0.1,
+          "format": "percent",
+          "clamp": [
+            0,
+            1
+          ]
+        },
+        "onTargetSwitch": true,
+        "bossCapPercent": 0.05,
+        "damageType": "true"
+      },
+      {
+        "type": "stackDamage",
+        "bonusPerHit": 0.08,
+        "maxBonus": 0.8
+      },
+      {
+        "type": "executionBonus",
+        "hpThreshold": 0.5,
+        "damageBonus": 0.5
+      }
+    ],
+    "strength": {
+      "attackDamage": {
+        "base": 6,
+        "potential": 12
+      },
+      "attackSpeed": {
+        "base": 0.56,
+        "potential": 0.84
+      },
+      "range": {
+        "base": 140,
+        "potential": 0
+      }
+    },
+    "abilityUnlocks": [
+      {
+        "level": 1,
+        "type": "percentHpDamage",
+        "name": "切目标%HP真伤",
+        "params": {
+          "ratio": {
+            "base": 0.2,
+            "potential": 0.1,
+            "format": "percent",
+            "clamp": [
+              0,
+              1
+            ]
+          },
+          "damageType": "true",
+          "bossCap": 0.05
+        }
+      },
+      {
+        "level": 2,
+        "type": "stackDamage",
+        "name": "连击叠伤",
+        "params": {
+          "bonusPerHit": 0.08,
+          "maxBonus": 0.8
+        }
+      },
+      {
+        "level": 3,
+        "type": "executionBonus",
+        "name": "处决",
+        "params": {
+          "hpThreshold": {
+            "base": 0.5,
+            "potential": 0,
+            "format": "percent"
+          },
+          "damageBonus": {
+            "base": 0.5,
+            "potential": 0,
+            "format": "percent"
+          }
+        }
+      }
+    ],
+    "tierProfile": {
+      "damage": {
+        "tier": "B",
+        "growth": "high"
+      },
+      "fireRate": {
+        "tier": "C",
+        "growth": "high"
+      },
+      "range": {
+        "tier": "B",
+        "growth": "low"
+      }
+    }
+  },
+  "en-04": {
+    "label": "光束照射塔",
+    "shortLabel": "光束",
+    "description": "宽幅能量束同时打击多个敌人，目标越多效率越高",
+    "damageType": "physical",
+    "tags": [
+      "energy",
+      "beam",
+      "pierce",
+      "linear",
+      "chainWeapon"
+    ],
+    "buildCost": 60,
+    "baseRange": 140,
+    "baseDamage": 12,
+    "baseFireRate": 0.8,
+    "projectileSpeed": 9999,
+    "attackStyle": "wideBeam",
+    "abilities": [],
+    "beam": {
+      "duration": 0.15,
+      "width": 6,
+      "color": "#93c5fd"
+    },
+    "strength": {
+      "attackDamage": {
+        "base": 6,
+        "potential": 12
+      },
+      "attackSpeed": {
+        "base": 0.4,
+        "potential": 0.6
+      },
+      "range": {
+        "base": 140,
+        "potential": 0
+      }
+    },
+    "abilityUnlocks": [
+      {
+        "level": 1,
+        "type": "wideBeam",
+        "name": "宽幅穿透光束",
+        "params": {
+          "width": 8
+        }
+      }
+    ],
+    "tierProfile": {
+      "damage": {
+        "tier": "C",
+        "growth": "mid"
+      },
+      "fireRate": {
+        "tier": "B",
+        "growth": "mid"
+      },
+      "range": {
+        "tier": "B",
+        "growth": "low"
+      }
+    }
+  },
+  "en-05": {
+    "label": "能量散弹塔",
+    "shortLabel": "散弹",
+    "description": "60°锥形散布多颗穿透弹丸，扇面压制",
+    "damageType": "physical",
+    "tags": [
+      "energy",
+      "scatter",
+      "cone",
+      "multi",
+      "chainWeapon"
+    ],
+    "buildCost": 55,
+    "baseRange": 125,
+    "baseDamage": 8,
+    "baseFireRate": 1.1,
+    "projectileSpeed": 400,
+    "attackStyle": "scatter",
+    "abilities": [],
+    "scatterConfig": {
+      "pellets": 3,
+      "spreadAngle": 60
+    },
+    "strength": {
+      "attackDamage": {
+        "base": 5,
+        "potential": 10
+      },
+      "attackSpeed": {
+        "base": 0.35,
+        "potential": 0.55
+      },
+      "range": {
+        "base": 125,
+        "potential": 0
+      }
+    },
+    "abilityUnlocks": [
+      {
+        "level": 1,
+        "type": "scatter",
+        "name": "锥形散弹",
+        "params": {
+          "pellets": {
+            "base": 3,
+            "potential": 0,
+            "format": "floor"
+          },
+          "angle": 60
+        }
+      }
+    ],
+    "tierProfile": {
+      "damage": {
+        "tier": "C",
+        "growth": "low"
+      },
+      "fireRate": {
+        "tier": "C",
+        "growth": "low"
+      },
+      "range": {
+        "tier": "C",
+        "growth": "low"
+      }
+    }
+  },
+  "en-08": {
+    "label": "湮灭射线塔",
+    "shortLabel": "湮灭",
+    "description": "超远单体致命狙击，Boss杀手",
+    "tags": [
+      "energy",
+      "snipe",
+      "single",
+      "boss",
+      "chainWeapon"
+    ],
+    "buildCost": 75,
+    "baseRange": 180,
+    "baseDamage": 30,
+    "baseFireRate": 2.5,
+    "projectileSpeed": 1200,
+    "attackStyle": "charge",
+    "abilities": [],
+    "strength": {
+      "attackDamage": {
+        "base": 12,
+        "potential": 20
+      },
+      "attackSpeed": {
+        "base": 1,
+        "potential": 1.5
+      },
+      "range": {
+        "base": 180,
+        "potential": 0
+      }
+    },
+    "abilityUnlocks": [],
+    "chargeConfig": {
+      "damageMultiplier": 3
+    },
+    "tierProfile": {
+      "damage": {
+        "tier": "S",
+        "growth": "high"
+      },
+      "fireRate": {
+        "tier": "D",
+        "growth": "high"
+      },
+      "range": {
+        "tier": "A",
+        "growth": "low"
+      }
+    }
+  },
+  "wl-02": {
+    "label": "旋风刃",
+    "shortLabel": "旋风",
+    "description": "近距离风刃旋转切割，范围越小伤害越高。中心150%伤害。",
+    "tags": [
+      "wind",
+      "melee",
+      "aoe",
+      "spinAoe"
+    ],
+    "buildCost": 60,
+    "baseRange": 80,
+    "baseDamage": 10,
+    "baseFireRate": 0.5,
+    "projectileSpeed": 0,
+    "attackStyle": "spin_aoe",
+    "innerDamageBonus": 1.5,
+    "innerRadiusRatio": 0.5,
+    "abilities": [],
+    "strength": {
+      "attackDamage": {
+        "base": 7,
+        "potential": 11
+      },
+      "attackSpeed": {
+        "base": 0.3,
+        "potential": 0.5
+      },
+      "range": {
+        "base": 80,
+        "potential": 0
+      }
+    },
+    "abilityUnlocks": [],
+    "tierProfile": {
+      "damage": {
+        "tier": "C",
+        "growth": "low"
+      },
+      "fireRate": {
+        "tier": "S",
+        "growth": "low"
+      },
+      "range": {
+        "tier": "D",
+        "growth": "low"
+      }
+    }
+  }
+}

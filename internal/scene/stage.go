@@ -17,6 +17,7 @@ import (
 	"defense2/internal/core/pipeline"
 	"defense2/internal/core/projectile"
 	"defense2/internal/core/tower"
+	"defense2/internal/loader"
 	"defense2/internal/render"
 	"defense2/internal/render/hud"
 
@@ -25,37 +26,38 @@ import (
 	"github.com/hajimehoshi/ebiten/v2/inpututil"
 )
 
+// stageState 游戏主场景的状态枚举。
 type stageState int
 
 const (
-	statePlaying stageState = iota
-	stateVictory
-	stateDefeat
+	statePlaying stageState = iota // 游戏进行中
+	stateVictory                   // 玩家胜利
+	stateDefeat                    // 玩家失败
 )
 
-// StageScene 游戏主场景。
+// StageScene 游戏主场景，包含所有运行时游戏状态。
 type StageScene struct {
-	switcher    Switcher
-	frame       int
-	state       stageState
-	gameMap     *gamemap.GameMap
-	enemies     *enemy.Pool
-	spawner     *enemy.Spawner
-	towers      *tower.Pool
-	projectiles *projectile.Pool
-	econ        economy.Config
-	lives       int
-	gold        int
-	kills       int
-	towerDefs   []tower.TowerDef
-	selectedDef int      // 当前选中的塔类型索引
-	hoveredTower *tower.Tower // 鼠标悬停的已放置塔
-	lastWave    int      // 上一帧的波次号（用于检测波次完成）
-	notification string  // 屏幕中央短暂通知
-	notifyTimer float64  // 通知剩余显示时间
+	switcher     Switcher          // 场景切换器引用
+	frame        int               // 当前帧计数
+	state        stageState        // 当前游戏状态（进行中/胜利/失败）
+	gameMap      *gamemap.GameMap   // 运行时地图
+	enemies      *enemy.Pool       // 敌人对象池
+	spawner      *enemy.Spawner    // 波次出怪管理器
+	towers       *tower.Pool       // 塔对象池
+	projectiles  *projectile.Pool  // 弹射物对象池
+	econ         economy.Config    // 经济配置
+	lives        int               // 剩余生命值
+	gold         int               // 当前金币
+	kills        int               // 累计击杀数
+	towerDefs    []tower.TowerDef  // 可建造的塔类型列表
+	selectedDef  int               // 当前选中的塔类型索引
+	hoveredTower *tower.Tower      // 鼠标悬停的已放置塔（用于信息面板）
+	lastWave     int               // 上一帧的波次号（用于检测波次完成）
+	notification string            // 屏幕中央短暂通知文本
+	notifyTimer  float64           // 通知剩余显示时间（秒）
 }
 
-// NewStageScene 创建游戏主场景，加载 map_01。
+// NewStageScene 创建游戏主场景，加载 map_01 地图。
 func NewStageScene(sw Switcher) *StageScene {
 	cfg, err := config.LoadMap("map_01")
 	if err != nil {
@@ -79,11 +81,12 @@ func NewStageScene(sw Switcher) *StageScene {
 		econ:        economy.DefaultConfig(),
 		lives:       20,
 		gold:        200,
-		towerDefs:   tower.BaseTowerDefs(),
+		towerDefs:   loadTowerDefsOrFallback(),
 		selectedDef: 0,
 	}
 }
 
+// Update 每帧逻辑更新：根据游戏状态分发输入处理和游戏逻辑。
 func (s *StageScene) Update() error {
 	s.frame++
 
@@ -92,12 +95,14 @@ func (s *StageScene) Update() error {
 		s.handleInput()
 		s.updatePlaying()
 	case stateVictory, stateDefeat:
+		// 胜利/失败状态：按 Enter 或点击返回标题
 		if inpututil.IsKeyJustPressed(ebiten.KeyEnter) ||
 			inpututil.IsMouseButtonJustPressed(ebiten.MouseButtonLeft) {
 			s.switcher.SwitchScene(NewTitleScene(s.switcher))
 		}
 	}
 
+	// ESC 随时返回标题
 	if inpututil.IsKeyJustPressed(ebiten.KeyEscape) {
 		s.switcher.SwitchScene(NewTitleScene(s.switcher))
 	}
@@ -110,8 +115,9 @@ func (s *StageScene) Update() error {
 	return nil
 }
 
+// handleInput 处理游戏进行中的输入：键盘选塔、点击放塔、右键卖塔。
 func (s *StageScene) handleInput() {
-	// 键盘选塔：1-4
+	// 键盘选塔：1-4 对应 4 种塔
 	for i := 0; i < len(s.towerDefs) && i < 4; i++ {
 		if inpututil.IsKeyJustPressed(ebiten.Key1 + ebiten.Key(i)) {
 			s.selectedDef = i
@@ -121,7 +127,7 @@ func (s *StageScene) handleInput() {
 	mx, my := ebiten.CursorPosition()
 	fmx, fmy := float32(mx), float32(my)
 
-	// 点击建塔菜单
+	// 左键：点击建塔菜单选塔 或 点击地图放塔
 	if inpututil.IsMouseButtonJustPressed(ebiten.MouseButtonLeft) {
 		idx := hud.BuildMenuHitTest(fmx, fmy, len(s.towerDefs))
 		if idx >= 0 {
@@ -131,7 +137,7 @@ func (s *StageScene) handleInput() {
 		}
 	}
 
-	// 触摸放塔
+	// 触摸放塔（移动端）
 	for _, id := range inpututil.JustPressedTouchIDs() {
 		tx, ty := ebiten.TouchPosition(id)
 		s.tryPlaceTower(float64(tx), float64(ty))
@@ -142,10 +148,11 @@ func (s *StageScene) handleInput() {
 		s.trySellTower(float64(mx), float64(my))
 	}
 
-	// 更新悬停塔
+	// 更新鼠标悬停的塔（用于信息面板显示）
 	s.updateHoveredTower(float64(mx), float64(my))
 }
 
+// updateHoveredTower 根据鼠标位置更新悬停塔引用。
 func (s *StageScene) updateHoveredTower(px, py float64) {
 	gm := s.gameMap
 	cs := float64(gm.CellSize)
@@ -160,22 +167,23 @@ func (s *StageScene) updateHoveredTower(px, py float64) {
 	s.hoveredTower = s.towers.At(row, col)
 }
 
+// tryPlaceTower 尝试在像素位置放置当前选中类型的塔。
 func (s *StageScene) tryPlaceTower(px, py float64) {
 	gm := s.gameMap
 	cellType := gm.CellAt(px, py)
 	if cellType != config.CellBuildable {
-		return
+		return // 不是可建造位置
 	}
 	cs := float64(gm.CellSize)
 	col := int((px - gm.OffsetX) / cs)
 	row := int((py - gm.OffsetY) / cs)
 
 	if s.towers.At(row, col) != nil {
-		return
+		return // 该位置已有塔
 	}
 	def := s.towerDefs[s.selectedDef]
 	if s.gold < def.Cost {
-		return
+		return // 金币不足
 	}
 
 	center := gm.CellCenter(row, col)
@@ -183,6 +191,7 @@ func (s *StageScene) tryPlaceTower(px, py float64) {
 	s.gold -= def.Cost
 }
 
+// trySellTower 尝试出售像素位置上的塔。
 func (s *StageScene) trySellTower(px, py float64) {
 	gm := s.gameMap
 	cs := float64(gm.CellSize)
@@ -204,23 +213,26 @@ func (s *StageScene) trySellTower(px, py float64) {
 	s.showNotify(fmt.Sprintf("Sold +$%d", refund))
 }
 
+// showNotify 显示屏幕中央通知，1.5 秒后自动消失。
 func (s *StageScene) showNotify(msg string) {
 	s.notification = msg
 	s.notifyTimer = 1.5
 }
 
+// dt 固定时间步长（1/60 秒）。
 const dt = 1.0 / float64(game.TargetTPS)
 
+// updatePlaying 游戏进行中的核心循环，按管线顺序执行。
 func (s *StageScene) updatePlaying() {
 	prevWave := s.spawner.Wave
 
 	// 1. 生成敌人
 	s.spawner.Update(s.enemies, dt)
 
-	// 2. 敌人状态效果
+	// 2. 敌人状态效果（减速、流血等）
 	pipeline.TickEnemyStatusEffects(s.enemies, dt)
 
-	// 3. 敌人移动
+	// 3. 敌人移动（到达终点扣生命）
 	s.enemies.Each(func(e *enemy.Enemy) {
 		if enemy.MoveAlongPath(e, s.gameMap.Waypoints, dt) {
 			s.lives--
@@ -228,18 +240,18 @@ func (s *StageScene) updatePlaying() {
 		}
 	})
 
-	// 4. 塔攻击
+	// 4. 塔索敌射击
 	pipeline.TickTowerCombat(s.towers, s.enemies, s.projectiles, dt)
 
 	// 5. 弹射物移动
 	s.projectiles.Update(dt)
 
-	// 6. 弹射物命中（含能力触发）
+	// 6. 弹射物命中检测（含能力触发）
 	kills := pipeline.TickProjectileHits(s.projectiles, s.enemies, s.towers)
 	s.kills += kills
 	s.gold += kills * s.econ.KillGold()
 
-	// 7. 波次完成奖励
+	// 7. 波次完成奖励（波次号变化时发放）
 	if s.spawner.Wave > prevWave && prevWave > 0 {
 		bonus := s.econ.WaveCompleteGold(prevWave)
 		interest := s.econ.InterestGold(s.gold)
@@ -256,6 +268,7 @@ func (s *StageScene) updatePlaying() {
 	}
 }
 
+// Draw 渲染游戏画面：地图 → 塔 → 敌人 → 弹射物 → 预览 → HUD → 通知 → 胜负覆盖。
 func (s *StageScene) Draw(screen *ebiten.Image) {
 	screen.Fill(color.RGBA{R: 30, G: 40, B: 30, A: 255})
 
@@ -271,7 +284,7 @@ func (s *StageScene) Draw(screen *ebiten.Image) {
 	// 弹射物
 	render.DrawProjectiles(screen, s.projectiles)
 
-	// 放塔预览
+	// 放塔预览（鼠标在可建造位置时显示）
 	if s.state == statePlaying {
 		mx, my := ebiten.CursorPosition()
 		cellType := s.gameMap.CellAt(float64(mx), float64(my))
@@ -286,7 +299,7 @@ func (s *StageScene) Draw(screen *ebiten.Image) {
 		}
 	}
 
-	// HUD：顶部栏
+	// HUD：顶部状态栏
 	hud.DrawTopBar(screen, hud.TopBarData{
 		Gold:     s.gold,
 		Lives:    s.lives,
@@ -296,14 +309,14 @@ func (s *StageScene) Draw(screen *ebiten.Image) {
 		Enemies:  s.enemies.Count,
 	})
 
-	// HUD：建塔菜单
+	// HUD：底部建塔菜单
 	hud.DrawBuildMenu(screen, hud.BuildMenuData{
 		TowerDefs:   s.towerDefs,
 		SelectedIdx: s.selectedDef,
 		Gold:        s.gold,
 	})
 
-	// HUD：塔信息面板
+	// HUD：左下塔信息面板
 	sellValue := 0
 	if s.hoveredTower != nil {
 		sellValue = s.econ.SellRefund(s.hoveredTower.Cost)
@@ -325,4 +338,17 @@ func (s *StageScene) Draw(screen *ebiten.Image) {
 	case stateDefeat:
 		ebitenutil.DebugPrintAt(screen, fmt.Sprintf("DEFEAT! Kills: %d  Press ENTER", s.kills), cx-76, cy)
 	}
+}
+
+// loadTowerDefsOrFallback 从 JSON 配置加载塔定义，失败时回退到硬编码定义。
+func loadTowerDefsOrFallback() []tower.TowerDef {
+	defs, err := loader.LoadTowerDefs()
+	if err != nil {
+		log.Printf("塔配置加载失败，使用硬编码定义: %v", err)
+		return tower.BaseTowerDefs()
+	}
+	if len(defs) == 0 {
+		return tower.BaseTowerDefs()
+	}
+	return defs
 }
