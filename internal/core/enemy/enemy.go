@@ -45,6 +45,29 @@ type Enemy struct {
 	// 多重护盾系统
 	Shields    []Shield  // 多层护盾列表（按剩余时间升序消耗）
 	Thresholds []Threshold // HP阈值触发器列表
+
+	// ── 控制减免 ──
+	Tenacity        float64 // 韧性（0~1，减少控制效果持续时间）
+	IsControlImmune bool    // 控制免疫
+	IsStunImmune    bool    // 眩晕免疫
+	IsSlowImmune    bool    // 减速免疫
+	IsRootImmune    bool    // 定身免疫
+
+	// ── 生命周期 ──
+	Lifecycle *LifecycleHandlers // 生命周期回调
+
+	// ── 行为 ──
+	BerserkThreshold  float64 // 狂暴触发血量比例（如0.5=50%HP）
+	BerserkSpeedScale float64 // 狂暴速度倍率
+	BerserkTriggered  bool    // 狂暴是否已触发（一次性）
+	RegenPerSec       float64 // 每秒回血量
+	HealPower         float64 // 治疗光环治疗量
+	HealRadius        float64 // 治疗光环范围
+	HealInterval      float64 // 治疗光环间隔（秒）
+	HealCooldown      float64 // 治疗光环当前冷却
+
+	// ── 飞行 ──
+	MovementType string // 移动类型（"ground"/"flying"）
 }
 
 // TickStatusEffects 处理敌人身上的状态效果（减速、流血）。
