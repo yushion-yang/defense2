@@ -20,13 +20,13 @@ import (
 	"defense2/internal/core/game"
 	"defense2/internal/core/gamemap"
 	"defense2/internal/core/gamemode"
-	"defense2/internal/input"
 	"defense2/internal/core/persistence"
 	"defense2/internal/core/pipeline"
 	"defense2/internal/core/projectile"
 	"defense2/internal/core/tower"
 	"defense2/internal/core/tutorial"
 	"defense2/internal/core/warden"
+	"defense2/internal/input"
 	"defense2/internal/loader"
 	"defense2/internal/render"
 	"defense2/internal/render/draw"
@@ -51,35 +51,34 @@ const (
 //
 // 状态流转图：
 //
-//	                  ┌─────────────────────────┐
-//	                  │        modeIdle         │ ◄── 默认状态
-//	                  └──┬────┬────┬────┬───────┘
-//	     点击"造塔"/B    │    │    │    │ 点击已有塔
-//	                  ▼    │    │    │    ▼
-//	           ┌──────────┐│    │    │ ┌──────────────┐
-//	           │modeBuild-││    │    │ │modeTowerSel  │
-//	           │  Menu    ││    │    │ │（显示面板+射程）│
-//	           └──┬───────┘│    │    │ └──┬───────────┘
-//	  选择塔型    │        │    │    │    │ 点空地/ESC
-//	           ▼        │    │    │    ▼
-//	     ┌───────────┐  │    │    │  → modeIdle
-//	     │modeBuild- │  │    │    │
-//	     │  Place    │  │    │    │
-//	     │（放塔模式） │  │    │    │
-//	     └───────────┘  │    │    │
-//	  放塔后保持/ESC退出│    │    │
-//	                    │    │    │
-//	          事件触发  ▼    │    │
-//	           ┌──────────┐ │    │
-//	           │modeEvent │ │    │
-//	           │（选择事件）│ │    │
-//	           └──────────┘ │    │
-//	                        │    │
-//	             菜单按钮   ▼    │
-//	              ┌───────────┐  │
-//	              │modePaused │  │
-//	              └───────────┘  │
-//
+//	                ┌─────────────────────────┐
+//	                │        modeIdle         │ ◄── 默认状态
+//	                └──┬────┬────┬────┬───────┘
+//	   点击"造塔"/B    │    │    │    │ 点击已有塔
+//	                ▼    │    │    │    ▼
+//	         ┌──────────┐│    │    │ ┌──────────────┐
+//	         │modeBuild-││    │    │ │modeTowerSel  │
+//	         │  Menu    ││    │    │ │（显示面板+射程）│
+//	         └──┬───────┘│    │    │ └──┬───────────┘
+//	选择塔型    │        │    │    │    │ 点空地/ESC
+//	         ▼        │    │    │    ▼
+//	   ┌───────────┐  │    │    │  → modeIdle
+//	   │modeBuild- │  │    │    │
+//	   │  Place    │  │    │    │
+//	   │（放塔模式） │  │    │    │
+//	   └───────────┘  │    │    │
+//	放塔后保持/ESC退出│    │    │
+//	                  │    │    │
+//	        事件触发  ▼    │    │
+//	         ┌──────────┐ │    │
+//	         │modeEvent │ │    │
+//	         │（选择事件）│ │    │
+//	         └──────────┘ │    │
+//	                      │    │
+//	           菜单按钮   ▼    │
+//	            ┌───────────┐  │
+//	            │modePaused │  │
+//	            └───────────┘  │
 type interactMode int
 
 const (
@@ -110,69 +109,69 @@ type StageOptions struct {
 
 // StageScene 游戏主场景，包含所有运行时游戏状态。
 type StageScene struct {
-	switcher        Switcher                     // 场景切换器引用
-	session         *gamemode.Session            // 游戏模式会话
-	modeID          string                       // 模式 ID（用于重玩）
-	diffID          string                       // 难度 ID（用于重玩）
-	frame           int                          // 当前帧计数
-	state           stageState                   // 当前游戏状态（进行中/胜利/失败）
-	gameMap         *gamemap.GameMap             // 运行时地图
-	enemies         *enemy.Pool                  // 敌人对象池
-	spawner         *enemy.Spawner               // 波次出怪管理器
-	towers          *tower.Pool                  // 塔对象池
-	projectiles     *projectile.Pool             // 弹射物对象池
-	beams           *combat.BeamPool             // 光束视觉对象池
-	econ            economy.Config               // 经济配置
-	lives           int                          // 剩余生命值
-	gold            int                          // 当前金币
-	kills           int                          // 累计击杀数
-	towerDefs       []tower.TowerDef             // 可建造的塔类型列表
-	selectedDef     int                          // 当前选中的塔类型索引
-	selectedTower   *tower.Tower                 // 点击选中的塔（显示信息面板+射程）
-	towerRenderer   *render.TowerRenderer        // 塔 SVG 渲染器
-	enemyRenderer   *render.EnemyRenderer        // 敌人 SVG 渲染器
-	audioMgr        *gameAudio.Manager           // 音效管理器
-	wardenUnit      *warden.Warden               // 战灵实体
-	eventPool       *event.Pool                  // 事件池
-	appliedEvents   []event.Event                // 已应用的事件列表
-	killRewardBonus int                          // 额外击杀金币（事件增益）
-	buildDiscount   float64                      // 建造折扣比例（事件增益）
-	tutorial        *tutorial.Tutorial           // 新手教程
-	progressMgr     *persistence.ProgressManager // 持久化进度管理器
-	lastWave        int                          // 上一帧的波次号
-	wardenType      string                       // 战灵类型标识（用于重玩传递）
-	wardenCfg       *config.WardenConfig         // 战灵配置（用于面板显示）
-	gameSpeed       int                          // 游戏速度倍率（1 或 2）
-	imode           interactMode                 // 交互状态机
-	eventPending    []event.Event                // 待选事件列表（modeEvent 时使用）
-	eventHoverIdx   int                          // 事件卡片鼠标悬停索引
-	buildHoverIdx   int                          // 建塔面板鼠标悬停索引
-	gesture            *input.Gesture             // 统一手势识别器
-	hitSfxCooldown     float64                  // 命中音效节流计时器
-	shotSfxCooldown    float64                  // 射击音效节流计时器
-	waveLivesSnapshot  int                      // 波开始时的生命快照（用于完美波次检测）
+	switcher          Switcher                     // 场景切换器引用
+	session           *gamemode.Session            // 游戏模式会话
+	modeID            string                       // 模式 ID（用于重玩）
+	diffID            string                       // 难度 ID（用于重玩）
+	frame             int                          // 当前帧计数
+	state             stageState                   // 当前游戏状态（进行中/胜利/失败）
+	gameMap           *gamemap.GameMap             // 运行时地图
+	enemies           *enemy.Pool                  // 敌人对象池
+	spawner           *enemy.Spawner               // 波次出怪管理器
+	towers            *tower.Pool                  // 塔对象池
+	projectiles       *projectile.Pool             // 弹射物对象池
+	beams             *combat.BeamPool             // 光束视觉对象池
+	econ              economy.Config               // 经济配置
+	lives             int                          // 剩余生命值
+	gold              int                          // 当前金币
+	kills             int                          // 累计击杀数
+	towerDefs         []tower.TowerDef             // 可建造的塔类型列表
+	selectedDef       int                          // 当前选中的塔类型索引
+	selectedTower     *tower.Tower                 // 点击选中的塔（显示信息面板+射程）
+	towerRenderer     *render.TowerRenderer        // 塔 SVG 渲染器
+	enemyRenderer     *render.EnemyRenderer        // 敌人 SVG 渲染器
+	audioMgr          *gameAudio.Manager           // 音效管理器
+	wardenUnit        *warden.Warden               // 战灵实体
+	eventPool         *event.Pool                  // 事件池
+	appliedEvents     []event.Event                // 已应用的事件列表
+	killRewardBonus   int                          // 额外击杀金币（事件增益）
+	buildDiscount     float64                      // 建造折扣比例（事件增益）
+	tutorial          *tutorial.Tutorial           // 新手教程
+	progressMgr       *persistence.ProgressManager // 持久化进度管理器
+	lastWave          int                          // 上一帧的波次号
+	wardenType        string                       // 战灵类型标识（用于重玩传递）
+	wardenCfg         *config.WardenConfig         // 战灵配置（用于面板显示）
+	gameSpeed         int                          // 游戏速度倍率（1 或 2）
+	imode             interactMode                 // 交互状态机
+	eventPending      []event.Event                // 待选事件列表（modeEvent 时使用）
+	eventHoverIdx     int                          // 事件卡片鼠标悬停索引
+	buildHoverIdx     int                          // 建塔面板鼠标悬停索引
+	gesture           *input.Gesture               // 统一手势识别器
+	hitSfxCooldown    float64                      // 命中音效节流计时器
+	shotSfxCooldown   float64                      // 射击音效节流计时器
+	waveLivesSnapshot int                          // 波开始时的生命快照（用于完美波次检测）
 	// 相机（大地图拖拽）
-	camX, camY         float64                  // 相机偏移（世界坐标）
-	dragging           bool                     // 是否正在拖拽
-	dragStartX         float64                  // 拖拽起始屏幕位置
-	dragStartY         float64
-	dragCamStartX      float64                  // 拖拽起始相机位置
-	dragCamStartY      float64
-	dragMoved          bool                     // 拖拽期间是否产生了位移（区分点击和拖拽）
+	camX, camY    float64 // 相机偏移（世界坐标）
+	dragging      bool    // 是否正在拖拽
+	dragStartX    float64 // 拖拽起始屏幕位置
+	dragStartY    float64
+	dragCamStartX float64 // 拖拽起始相机位置
+	dragCamStartY float64
+	dragMoved     bool // 拖拽期间是否产生了位移（区分点击和拖拽）
 	// 测试模式
 	// HUD 面板状态
 	wavePanelOpen   bool // 左下角波次面板是否展开
 	wardenPanelOpen bool // 右下角战灵面板是否展开
-	testMode       bool
-	scenarioID     string
-	enemyFilter    string
-	manualWave     bool
-	debugPanelOpen bool
-	debugShowRange bool
-	spawnMode      bool
-	spawnType      string
-	spawnHoverIdx  int
-	initOpts       StageOptions // 保存原始配置（重新开始用）
+	testMode        bool
+	scenarioID      string
+	enemyFilter     string
+	manualWave      bool
+	debugPanelOpen  bool
+	debugShowRange  bool
+	spawnMode       bool
+	spawnType       string
+	spawnHoverIdx   int
+	initOpts        StageOptions // 保存原始配置（重新开始用）
 }
 
 // NewStageScene 创建游戏主场景，默认加载 map_01。
@@ -257,32 +256,32 @@ func NewStageSceneWithOpts(sw Switcher, opts StageOptions) *StageScene {
 	session := gamemode.NewSession(mode)
 
 	s := &StageScene{
-		switcher:      sw,
-		session:       session,
-		modeID:        modeID,
-		diffID:        opts.DifficultyID,
-		gameMap:       gm,
-		enemies:       enemy.DefaultPool(),
-		spawner:       spawner,
-		towers:        tower.DefaultPool(),
-		projectiles:   projectile.DefaultPool(),
-		beams:         combat.NewBeamPool(),
-		econ:          econ,
-		towerRenderer: render.NewTowerRenderer(config.GetAssetFS()),
-		enemyRenderer: render.NewEnemyRenderer(config.GetAssetFS()),
-		audioMgr:      sw.AudioManager(),
-		wardenUnit:    warden.NewWarden(1, opts.WardenType, opts.WardenType),
-		eventPool:     event.NewPool(loader.LoadAllyEvents()),
-		tutorial:      tut,
-		progressMgr:   pm,
-		lives:         20,
-		gold:          startGold,
-		towerDefs:     loadTowerDefsOrFallback(),
-		selectedDef:   0,
-		wardenType:    opts.WardenType,
-		wardenCfg:     wardenCfg,
-		gameSpeed:     1,
-		gesture:       newStageGesture(),
+		switcher:        sw,
+		session:         session,
+		modeID:          modeID,
+		diffID:          opts.DifficultyID,
+		gameMap:         gm,
+		enemies:         enemy.DefaultPool(),
+		spawner:         spawner,
+		towers:          tower.DefaultPool(),
+		projectiles:     projectile.DefaultPool(),
+		beams:           combat.NewBeamPool(),
+		econ:            econ,
+		towerRenderer:   render.NewTowerRenderer(config.GetAssetFS()),
+		enemyRenderer:   render.NewEnemyRenderer(config.GetAssetFS()),
+		audioMgr:        sw.AudioManager(),
+		wardenUnit:      warden.NewWarden(1, opts.WardenType, opts.WardenType),
+		eventPool:       event.NewPool(loader.LoadAllyEvents()),
+		tutorial:        tut,
+		progressMgr:     pm,
+		lives:           20,
+		gold:            startGold,
+		towerDefs:       loadTowerDefsOrFallback(),
+		selectedDef:     0,
+		wardenType:      opts.WardenType,
+		wardenCfg:       wardenCfg,
+		gameSpeed:       1,
+		gesture:         newStageGesture(),
 		wavePanelOpen:   true,
 		wardenPanelOpen: false,
 	}
@@ -1104,15 +1103,16 @@ func (s *StageScene) updatePlaying() {
 	})
 
 	// 6. 塔索敌射击（按攻击方式分发）
-	pipeline.TickTowerCombat(s.towers, s.enemies, s.projectiles, s.beams, gameDT, func() {
+	pipeline.TickTowerCombat(s.towers, s.enemies, s.projectiles, s.beams, gameDT, func(style string) {
 		if s.shotSfxCooldown <= 0 {
-			s.audioMgr.PlaySafe(gameAudio.SFXShot)
+			s.audioMgr.PlaySafe(gameAudio.FireSFXForStyle(style))
 			s.shotSfxCooldown = 0.1
 		}
 	}, func(e *enemy.Enemy, damage float64, killed bool) {
-		// 直接攻击方式（laser/beam/aoe等）的伤害飘字 + 音效
+		// 直接攻击方式（laser/beam/aoe等）的伤害飘字 + 受击闪白
 		if damage > 0 {
 			render.SpawnDamageText(e.X, e.Y-15, damage, damage >= 50)
+			e.HitFlash = 0.12
 		}
 		if killed {
 			render.TriggerShake(2, 0.1)
@@ -1128,9 +1128,10 @@ func (s *StageScene) updatePlaying() {
 	s.beams.Update(gameDT)
 
 	// 8. 弹射物命中检测（含能力触发）
-	kills := pipeline.TickProjectileHits(s.projectiles, s.enemies, s.towers, func(e *enemy.Enemy, damage float64, killed bool) {
+	kills := pipeline.TickProjectileHits(s.projectiles, s.enemies, s.towers, func(e *enemy.Enemy, damage float64, killed bool, attackStyle string) {
 		if damage > 0 {
 			render.SpawnDamageText(e.X, e.Y-15, damage, damage >= 50)
+			e.HitFlash = 0.12
 		}
 		if killed {
 			render.TriggerShake(2, 0.1) // 击杀微震
@@ -1140,14 +1141,14 @@ func (s *StageScene) updatePlaying() {
 				s.audioMgr.PlaySafe(gameAudio.SFXEnemyDeath)
 			}
 		} else if s.hitSfxCooldown <= 0 {
-			// 命中音效（节流）
+			// 命中音效：优先按敌人状态区分，再按攻击方式细分
 			switch {
 			case e.ShieldHP > 0:
 				s.audioMgr.PlaySafe(gameAudio.SFXHitShield)
 			case e.Boss:
 				s.audioMgr.PlaySafe(gameAudio.SFXHitHeavy)
 			default:
-				s.audioMgr.PlaySafe(gameAudio.SFXHitFlesh)
+				s.audioMgr.PlaySafe(gameAudio.HitSFXForStyle(attackStyle))
 			}
 			s.hitSfxCooldown = 0.08
 		}
@@ -1682,4 +1683,3 @@ func loadTowerDefsOrFallback() []tower.TowerDef {
 	}
 	return defs
 }
-
