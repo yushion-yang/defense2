@@ -25,10 +25,11 @@ import (
 	"defense2/internal/core/warden"
 	"defense2/internal/loader"
 	"defense2/internal/render"
+	"defense2/internal/render/draw"
 	"defense2/internal/render/hud"
+	"defense2/internal/render/theme"
 
 	"github.com/hajimehoshi/ebiten/v2"
-	"github.com/hajimehoshi/ebiten/v2/ebitenutil"
 	"github.com/hajimehoshi/ebiten/v2/inpututil"
 )
 
@@ -70,8 +71,6 @@ type StageScene struct {
 	tutorial        *tutorial.Tutorial           // 新手教程
 	progressMgr     *persistence.ProgressManager // 持久化进度管理器
 	lastWave        int                          // 上一帧的波次号
-	notification    string                       // 屏幕中央通知文本
-	notifyTimer     float64                      // 通知剩余时间（秒）
 	wardenType      string                       // 战灵类型标识（用于重玩传递）
 }
 
@@ -181,10 +180,8 @@ func (s *StageScene) Update() error {
 		s.switcher.SwitchScene(NewSelectScene(s.switcher))
 	}
 
-	// 通知计时器
-	if s.notifyTimer > 0 {
-		s.notifyTimer -= dt
-	}
+	// Toast 通知更新
+	hud.UpdateToast(dt)
 
 	return nil
 }
@@ -290,10 +287,9 @@ func (s *StageScene) trySellTower(px, py float64) {
 	s.showNotify(fmt.Sprintf("Sold +$%d", refund))
 }
 
-// showNotify 显示屏幕中央通知，1.5 秒后自动消失。
+// showNotify 显示屏幕中央通知（通过 toast 系统，自动淡出）。
 func (s *StageScene) showNotify(msg string) {
-	s.notification = msg
-	s.notifyTimer = 1.5
+	hud.ShowToast(msg)
 }
 
 // dt 固定时间步长（1/60 秒）。
@@ -493,25 +489,35 @@ func (s *StageScene) Draw(screen *ebiten.Image) {
 	}
 	hud.DrawInfoPanel(screen, s.hoveredTower, sellValue)
 
-	// 教程提示（顶部偏下位置）
+	// 波次面板（左下角）
+	hud.DrawWavePanel(screen, hud.WavePanelData{
+		WaveNum:    s.spawner.Wave,
+		MaxWaves:   s.spawner.MaxWaves,
+		EnemyCount: s.enemies.Count,
+	})
+
+	// 教程提示（顶部居中）
 	if msg := s.tutorial.CurrentMessage(); msg != "" {
-		ebitenutil.DebugPrintAt(screen, msg, game.ScreenWidth/2-100, 36)
+		if fm := render.GlobalFont(); fm != nil {
+			fm.DrawCenteredText(screen, msg, float64(game.ScreenWidth)/2, 50, theme.FontMD, theme.TextBody)
+		}
 	}
 
-	// 屏幕中央通知
-	if s.notifyTimer > 0 {
-		cx := game.ScreenWidth / 2
-		ebitenutil.DebugPrintAt(screen, s.notification, cx-60, 50)
-	}
+	// Toast 通知
+	hud.DrawToast(screen)
 
 	// 胜负覆盖层
-	cx := game.ScreenWidth / 2
-	cy := game.ScreenHeight / 2
-	switch s.state {
-	case stateVictory:
-		ebitenutil.DebugPrintAt(screen, fmt.Sprintf("VICTORY! Kills: %d  Press ENTER", s.kills), cx-80, cy)
-	case stateDefeat:
-		ebitenutil.DebugPrintAt(screen, fmt.Sprintf("DEFEAT! Kills: %d  Press ENTER", s.kills), cx-76, cy)
+	if s.state == stateVictory || s.state == stateDefeat {
+		// 半透明遮罩
+		draw.RoundRect(screen, 0, 0, float32(game.ScreenWidth), float32(game.ScreenHeight), 0, theme.HUDGameOverlay)
+		if fm := render.GlobalFont(); fm != nil {
+			if s.state == stateVictory {
+				fm.DrawCenteredText(screen, "VICTORY!", float64(game.ScreenWidth)/2, float64(game.ScreenHeight)/2-20, theme.FontGameOver, theme.HUDVictoryColor)
+			} else {
+				fm.DrawCenteredText(screen, "DEFEAT!", float64(game.ScreenWidth)/2, float64(game.ScreenHeight)/2-20, theme.FontGameOver, theme.HUDDefeatColor)
+			}
+			fm.DrawCenteredText(screen, fmt.Sprintf("击杀: %d  按 ENTER 继续", s.kills), float64(game.ScreenWidth)/2, float64(game.ScreenHeight)/2+30, theme.FontLG, theme.TextMuted)
+		}
 	}
 }
 
