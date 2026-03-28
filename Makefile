@@ -1,4 +1,4 @@
-.PHONY: run test test-cover lint check-all build-wasm clean
+.PHONY: run test test-cover lint check-all build-wasm clean arch
 
 # Desktop development
 run:
@@ -28,6 +28,10 @@ build-wasm:
 	cp "$$(go env GOROOT)/lib/wasm/wasm_exec.js" dist/web/
 	cp web/index.html dist/web/
 	@echo "WASM build done. Serve dist/web/"
+
+# Architecture visualization (pkg deps + struct diagram + module index)
+arch:
+	./scripts/gen-arch.sh
 
 # Clean
 clean:

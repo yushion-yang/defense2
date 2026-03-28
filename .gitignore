@@ -12,6 +12,15 @@ coverage.out
 .vscode/
 *.swp
 
+# Generated architecture docs (regenerate with: make arch)
+docs/architecture/*.svg
+docs/architecture/*.dot
+docs/architecture/*.puml
+docs/architecture/modules.md
+
+# Binary
+game
+
 # OS
 .DS_Store
 Thumbs.db
