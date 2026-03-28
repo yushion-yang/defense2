@@ -33,12 +33,7 @@ func TowerJSONToDef(key string, t *config.TowerJSON) tower.TowerDef {
 	if t.BounceConfig != nil {
 		abilities = append(abilities, "bounce")
 	}
-	// abilityUnlocks → 所有能力直接加入（无等级限制）
-	for _, u := range t.AbilityUnlocks {
-		if u.Type != "" {
-			abilities = append(abilities, u.Type)
-		}
-	}
+
 
 	label := t.ShortLabel
 	if label == "" {

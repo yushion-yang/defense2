@@ -15,7 +15,11 @@
     "baseDamage": 22,
     "baseFireRate": 0.92,
     "projectileSpeed": 9999,
-    "abilities": [],
+    "abilities": [
+      {
+        "type": "instantHit"
+      }
+    ],
     "splashByMode": {
       "balanced": 0,
       "rapid": 0,
@@ -89,22 +93,6 @@
         "potential": 0
       }
     },
-    "abilityUnlocks": [
-      {
-        "level": 1,
-        "type": "instantHit",
-        "name": "瞬时命中",
-        "params": {}
-      },
-      {
-        "level": 4,
-        "type": "branch",
-        "name": "转职",
-        "options": [
-          "贯穿射线"
-        ]
-      }
-    ],
     "tierProfile": {
       "damage": {
         "tier": "A",
@@ -222,6 +210,9 @@
           ]
         },
         "duration": 1.45
+      },
+      {
+        "type": "multiTarget"
       }
     ],
     "strength": {
@@ -244,46 +235,6 @@
         }
       }
     },
-    "abilityUnlocks": [
-      {
-        "level": 1,
-        "type": "onHitSlow",
-        "name": "命中减速",
-        "params": {
-          "factor": {
-            "base": 0.1,
-            "potential": 0.58,
-            "format": "percent",
-            "clamp": [
-              0,
-              1
-            ]
-          },
-          "duration": 1.45
-        }
-      },
-      {
-        "level": 2,
-        "type": "multiTarget",
-        "name": "多目标攻击",
-        "params": {
-          "count": {
-            "base": 1,
-            "potential": 1,
-            "format": "floor"
-          }
-        }
-      },
-      {
-        "level": 4,
-        "type": "branch",
-        "name": "转职",
-        "options": [
-          "寒霜链",
-          "极寒核心"
-        ]
-      }
-    ],
     "tierProfile": {
       "damage": {
         "tier": "C",
@@ -373,6 +324,9 @@
           "potential": 0.1,
           "format": "seconds"
         }
+      },
+      {
+        "type": "bounce"
       }
     ],
     "strength": {
@@ -389,43 +343,6 @@
         "potential": 0
       }
     },
-    "abilityUnlocks": [
-      {
-        "level": 1,
-        "type": "bounce",
-        "name": "弹射",
-        "params": {
-          "count": {
-            "base": 2,
-            "potential": 1,
-            "format": "floor"
-          },
-          "range": 125,
-          "decay": 0.8
-        }
-      },
-      {
-        "level": 2,
-        "type": "stun",
-        "name": "眩晕",
-        "params": {
-          "chance": {
-            "base": 0.08,
-            "potential": 0.04,
-            "format": "percent",
-            "clamp": [
-              0,
-              1
-            ]
-          },
-          "duration": {
-            "base": 0.3,
-            "potential": 0.1,
-            "format": "seconds"
-          }
-        }
-      }
-    ],
     "tierProfile": {
       "damage": {
         "tier": "A",
@@ -534,52 +451,6 @@
         "potential": 0
       }
     },
-    "abilityUnlocks": [
-      {
-        "level": 1,
-        "type": "percentHpDamage",
-        "name": "切目标%HP真伤",
-        "params": {
-          "ratio": {
-            "base": 0.2,
-            "potential": 0.1,
-            "format": "percent",
-            "clamp": [
-              0,
-              1
-            ]
-          },
-          "damageType": "true",
-          "bossCap": 0.05
-        }
-      },
-      {
-        "level": 2,
-        "type": "stackDamage",
-        "name": "连击叠伤",
-        "params": {
-          "bonusPerHit": 0.08,
-          "maxBonus": 0.8
-        }
-      },
-      {
-        "level": 3,
-        "type": "executionBonus",
-        "name": "处决",
-        "params": {
-          "hpThreshold": {
-            "base": 0.5,
-            "potential": 0,
-            "format": "percent"
-          },
-          "damageBonus": {
-            "base": 0.5,
-            "potential": 0,
-            "format": "percent"
-          }
-        }
-      }
-    ],
     "tierProfile": {
       "damage": {
         "tier": "B",
@@ -613,7 +484,11 @@
     "baseFireRate": 0.8,
     "projectileSpeed": 9999,
     "attackStyle": "wideBeam",
-    "abilities": [],
+    "abilities": [
+      {
+        "type": "wideBeam"
+      }
+    ],
     "beam": {
       "duration": 0.15,
       "width": 6,
@@ -633,16 +508,6 @@
         "potential": 0
       }
     },
-    "abilityUnlocks": [
-      {
-        "level": 1,
-        "type": "wideBeam",
-        "name": "宽幅穿透光束",
-        "params": {
-          "width": 8
-        }
-      }
-    ],
     "tierProfile": {
       "damage": {
         "tier": "C",
@@ -676,7 +541,11 @@
     "baseFireRate": 1.1,
     "projectileSpeed": 400,
     "attackStyle": "scatter",
-    "abilities": [],
+    "abilities": [
+      {
+        "type": "scatter"
+      }
+    ],
     "scatterConfig": {
       "pellets": 3,
       "spreadAngle": 60
@@ -695,21 +564,6 @@
         "potential": 0
       }
     },
-    "abilityUnlocks": [
-      {
-        "level": 1,
-        "type": "scatter",
-        "name": "锥形散弹",
-        "params": {
-          "pellets": {
-            "base": 3,
-            "potential": 0,
-            "format": "floor"
-          },
-          "angle": 60
-        }
-      }
-    ],
     "tierProfile": {
       "damage": {
         "tier": "C",
@@ -757,7 +611,6 @@
         "potential": 0
       }
     },
-    "abilityUnlocks": [],
     "chargeConfig": {
       "damageMultiplier": 3
     },
@@ -809,7 +662,6 @@
         "potential": 0
       }
     },
-    "abilityUnlocks": [],
     "tierProfile": {
       "damage": {
         "tier": "C",

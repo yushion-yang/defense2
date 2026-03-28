@@ -23,8 +23,6 @@ type TowerJSON struct {
 	Tags           []string            `json:"tags"`           // 标签列表（如 "energy"、"laser"）
 	Abilities      []TowerAbilJSON     `json:"abilities"`      // 该塔拥有的能力列表
 	BounceConfig   *BounceConfigJSON   `json:"bounceConfig"`   // 弹射配置（electric 塔）
-	AbilityUnlocks []AbilityUnlockJSON `json:"abilityUnlocks"` // 等级解锁能力
-
 	// 攻击方式配置
 	AttackStyle      string             `json:"attackStyle"`      // "projectile"/"laser"/"wideBeam"/"scatter"/"charge"/"spin_aoe"/"pierce"/"aura_dot"
 	ProjectileSpeed  float64            `json:"projectileSpeed"`  // 弹射物速度（px/s）
@@ -106,13 +104,6 @@ type BounceConfigJSON struct {
 	BaseBounces int     `json:"baseBounces"`
 	Range       float64 `json:"range"`
 	DamageDecay float64 `json:"damageDecay"`
-}
-
-// AbilityUnlockJSON 等级解锁的能力。
-type AbilityUnlockJSON struct {
-	Level int    `json:"level"`
-	Type  string `json:"type"`
-	Name  string `json:"name"` // 显示名称（可选，回退到 Type）
 }
 
 // TowerFileData 塔配置文件的完整解析结果。
