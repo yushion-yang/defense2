@@ -1,0 +1,98 @@
+// warden.go — 战灵系统框架。
+// 战灵是由塔强度驱动的伴生灵体，通过行为注册表支持多种类型（使者、连锁、天袭等）。
+// 每种类型通过 RegisterBehavior 注册自己的 tick/draw 逻辑。
+package warden
+
+import (
+	"defense2/internal/core/enemy"
+	"defense2/internal/core/tower"
+)
+
+// Warden 战灵实体。
+type Warden struct {
+	ID               int     // 唯一标识
+	Name             string  // 显示名称
+	Type             string  // 类型标识（如 "envoy"、"chain"、"skystrike"）
+	SelfStrength     float64 // 自身积累强度（来自击杀/通波）
+	PerceivedStrength float64 // 感知强度 = 自身 + 塔贡献
+	PeakStrength     float64 // 历史最高强度（棘轮，只升不降）
+	Active           bool    // 是否已激活
+	// 类型特定状态由 Behavior.Tick 内部管理
+	State            interface{} // 类型特定内部状态（由行为实现持有）
+}
+
+// TickContext 战灵 tick 时传入的上下文。
+type TickContext struct {
+	Enemies *enemy.Pool  // 场上敌人池
+	Towers  *tower.Pool  // 场上塔池
+	DT      float64      // 帧时间步长（秒）
+}
+
+// Behavior 战灵行为接口，每种战灵类型实现一个。
+type Behavior interface {
+	// Type 返回行为类型标识。
+	Type() string
+	// Init 初始化类型特定状态，返回 State 对象。
+	Init(w *Warden) interface{}
+	// Tick 每帧逻辑更新。
+	Tick(w *Warden, ctx *TickContext)
+}
+
+// 全局行为注册表。
+var behaviors = map[string]Behavior{}
+
+// RegisterBehavior 注册一种战灵行为。
+func RegisterBehavior(b Behavior) {
+	behaviors[b.Type()] = b
+}
+
+// NewWarden 创建一个战灵。
+func NewWarden(id int, name, typ string) *Warden {
+	w := &Warden{
+		ID:     id,
+		Name:   name,
+		Type:   typ,
+		Active: true,
+	}
+	if b, ok := behaviors[typ]; ok {
+		w.State = b.Init(w)
+	}
+	return w
+}
+
+// CalcStrength 根据塔池计算战灵感知强度。
+// 规则：perceivedStrength = selfStrength + Σmax(0, tower.Damage - 10) for each active tower.
+func (w *Warden) CalcStrength(towers *tower.Pool) {
+	total := w.SelfStrength
+	towers.Each(func(t *tower.Tower) {
+		contrib := t.Damage - 10
+		if contrib > 0 {
+			total += contrib
+		}
+	})
+	w.PerceivedStrength = total
+	if total > w.PeakStrength {
+		w.PeakStrength = total
+	}
+}
+
+// Tick 驱动战灵行为。
+func (w *Warden) Tick(ctx *TickContext) {
+	if !w.Active {
+		return
+	}
+	w.CalcStrength(ctx.Towers)
+	if b, ok := behaviors[w.Type]; ok {
+		b.Tick(w, ctx)
+	}
+}
+
+// OnKill 击杀敌人时增加自身强度。
+func (w *Warden) OnKill() {
+	w.SelfStrength += 2
+}
+
+// OnWaveClear 波次通过时增加自身强度。
+func (w *Warden) OnWaveClear() {
+	w.SelfStrength += 5
+}
