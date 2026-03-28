@@ -36,6 +36,9 @@ func (p *Pool) Place(row, col int, cx, cy float64, def TowerDef) *Tower {
 			t.Cost = def.Cost
 			t.Faction = def.Faction
 			t.Key = def.Key
+			t.Label = def.Label
+			t.Abilities = def.Abilities
+			t.Color = def.Color
 			t.Active = true
 			p.Count++
 			return t
@@ -74,21 +77,41 @@ func (p *Pool) At(row, col int) *Tower {
 // TowerDef defines the stats for placing a tower.
 type TowerDef struct {
 	Key         string
+	Label       string
 	Faction     string
 	Range       float64
 	Damage      float64
 	AttackSpeed float64 // attacks per second
 	Cost        int
+	Abilities   []string
+	Color       [3]uint8
 }
 
-// DefaultTowerDef returns a basic tower definition for P2.
-func DefaultTowerDef() TowerDef {
-	return TowerDef{
-		Key:         "basic",
-		Faction:     "base",
-		Range:       150,
-		Damage:      10,
-		AttackSpeed: 1.5,
-		Cost:        50,
+// BaseTowerDefs returns the 4 base tower types for P3.
+func BaseTowerDefs() []TowerDef {
+	return []TowerDef{
+		{
+			Key: "basic", Label: "Arrow", Faction: "base",
+			Range: 150, Damage: 10, AttackSpeed: 1.5, Cost: 50,
+			Color: [3]uint8{80, 140, 220},
+		},
+		{
+			Key: "splash", Label: "Cannon", Faction: "base",
+			Range: 120, Damage: 20, AttackSpeed: 0.8, Cost: 80,
+			Abilities: []string{"splash"},
+			Color:     [3]uint8{200, 120, 60},
+		},
+		{
+			Key: "slow", Label: "Frost", Faction: "base",
+			Range: 130, Damage: 5, AttackSpeed: 1.2, Cost: 60,
+			Abilities: []string{"onHitSlow"},
+			Color:     [3]uint8{100, 180, 220},
+		},
+		{
+			Key: "sniper", Label: "Sniper", Faction: "base",
+			Range: 220, Damage: 35, AttackSpeed: 0.5, Cost: 100,
+			Abilities: []string{"crit"},
+			Color:     [3]uint8{180, 60, 180},
+		},
 	}
 }

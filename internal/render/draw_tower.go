@@ -16,14 +16,17 @@ func DrawTowers(screen *ebiten.Image, pool *tower.Pool) {
 		cx := float32(t.X)
 		cy := float32(t.Y)
 
-		// Base square
+		// Base square with tower color
 		size := float32(20)
-		vector.DrawFilledRect(screen, cx-size/2, cy-size/2, size, size,
-			color.RGBA{R: 80, G: 140, B: 220, A: 255}, false)
+		clr := color.RGBA{R: t.Color[0], G: t.Color[1], B: t.Color[2], A: 255}
+		if clr.R == 0 && clr.G == 0 && clr.B == 0 {
+			clr = color.RGBA{R: 80, G: 140, B: 220, A: 255}
+		}
+		vector.DrawFilledRect(screen, cx-size/2, cy-size/2, size, size, clr, false)
 
 		// Range circle (subtle)
-		drawCircleOutline(screen, cx, cy, float32(t.Range), 1,
-			color.RGBA{R: 80, G: 140, B: 220, A: 40})
+		rangeClr := color.RGBA{R: clr.R, G: clr.G, B: clr.B, A: 40}
+		drawCircleOutline(screen, cx, cy, float32(t.Range), 1, rangeClr)
 	})
 }
 

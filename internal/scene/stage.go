@@ -5,6 +5,8 @@ import (
 	"image/color"
 	"log"
 
+	_ "defense2/internal/core/tower/abilities" // register abilities via init()
+
 	"defense2/internal/config"
 	"defense2/internal/core/enemy"
 	"defense2/internal/core/game"
@@ -40,7 +42,8 @@ type StageScene struct {
 	lives       int
 	gold        int
 	kills       int
-	towerDef    tower.TowerDef
+	towerDefs   []tower.TowerDef
+	selectedDef int // index into towerDefs
 }
 
 // NewStageScene creates a new gameplay scene with map_01 loaded.
@@ -66,7 +69,8 @@ func NewStageScene(sw Switcher) *StageScene {
 		projectiles: projectile.DefaultPool(),
 		lives:       20,
 		gold:        200,
-		towerDef:    tower.DefaultTowerDef(),
+		towerDefs:   tower.BaseTowerDefs(),
+		selectedDef: 0,
 	}
 }
 
@@ -91,6 +95,14 @@ func (s *StageScene) Update() error {
 }
 
 func (s *StageScene) handleInput() {
+	// Tower selection: keys 1-4
+	for i := 0; i < len(s.towerDefs) && i < 4; i++ {
+		if inpututil.IsKeyJustPressed(ebiten.Key1 + ebiten.Key(i)) {
+			s.selectedDef = i
+		}
+	}
+
+	// Tower placement
 	if inpututil.IsMouseButtonJustPressed(ebiten.MouseButtonLeft) {
 		mx, my := ebiten.CursorPosition()
 		s.tryPlaceTower(float64(mx), float64(my))
@@ -98,6 +110,12 @@ func (s *StageScene) handleInput() {
 	for _, id := range inpututil.JustPressedTouchIDs() {
 		tx, ty := ebiten.TouchPosition(id)
 		s.tryPlaceTower(float64(tx), float64(ty))
+	}
+
+	// Sell tower: right click
+	if inpututil.IsMouseButtonJustPressed(ebiten.MouseButtonRight) {
+		mx, my := ebiten.CursorPosition()
+		s.trySellTower(float64(mx), float64(my))
 	}
 }
 
@@ -111,18 +129,35 @@ func (s *StageScene) tryPlaceTower(px, py float64) {
 	col := int((px - gm.OffsetX) / cs)
 	row := int((py - gm.OffsetY) / cs)
 
-	// Check if already occupied
 	if s.towers.At(row, col) != nil {
 		return
 	}
-	// Check gold
-	if s.gold < s.towerDef.Cost {
+	def := s.towerDefs[s.selectedDef]
+	if s.gold < def.Cost {
 		return
 	}
 
 	center := gm.CellCenter(row, col)
-	s.towers.Place(row, col, center.X, center.Y, s.towerDef)
-	s.gold -= s.towerDef.Cost
+	s.towers.Place(row, col, center.X, center.Y, def)
+	s.gold -= def.Cost
+}
+
+func (s *StageScene) trySellTower(px, py float64) {
+	gm := s.gameMap
+	cs := float64(gm.CellSize)
+	fx := (px - gm.OffsetX) / cs
+	fy := (py - gm.OffsetY) / cs
+	if fx < 0 || fy < 0 {
+		return
+	}
+	col := int(fx)
+	row := int(fy)
+	t := s.towers.At(row, col)
+	if t == nil {
+		return
+	}
+	s.gold += t.Cost / 2
+	s.towers.Remove(t)
 }
 
 const dt = 1.0 / float64(game.TargetTPS)
@@ -131,7 +166,10 @@ func (s *StageScene) updatePlaying() {
 	// 1. Spawn enemies
 	s.spawner.Update(s.enemies, dt)
 
-	// 2. Move enemies
+	// 2. Enemy status effects (slow, bleed)
+	pipeline.TickEnemyStatusEffects(s.enemies, dt)
+
+	// 3. Move enemies
 	s.enemies.Each(func(e *enemy.Enemy) {
 		if enemy.MoveAlongPath(e, s.gameMap.Waypoints, dt) {
 			s.lives--
@@ -139,18 +177,18 @@ func (s *StageScene) updatePlaying() {
 		}
 	})
 
-	// 3. Tower combat (targeting + firing)
+	// 4. Tower combat (targeting + firing)
 	pipeline.TickTowerCombat(s.towers, s.enemies, s.projectiles, dt)
 
-	// 4. Move projectiles
+	// 5. Move projectiles
 	s.projectiles.Update(dt)
 
-	// 5. Projectile hits
-	kills := pipeline.TickProjectileHits(s.projectiles, s.enemies)
+	// 6. Projectile hits (with abilities)
+	kills := pipeline.TickProjectileHits(s.projectiles, s.enemies, s.towers)
 	s.kills += kills
-	s.gold += kills * 15 // gold per kill
+	s.gold += kills * 15
 
-	// 6. Check win/lose
+	// 7. Check win/lose
 	if s.lives <= 0 {
 		s.state = stateDefeat
 	}
@@ -162,16 +200,9 @@ func (s *StageScene) updatePlaying() {
 func (s *StageScene) Draw(screen *ebiten.Image) {
 	screen.Fill(color.RGBA{R: 30, G: 40, B: 30, A: 255})
 
-	// Map
 	render.DrawMap(screen, s.gameMap)
-
-	// Towers
 	render.DrawTowers(screen, s.towers)
-
-	// Enemies
 	render.DrawEnemies(screen, s.enemies)
-
-	// Projectiles
 	render.DrawProjectiles(screen, s.projectiles)
 
 	// Mouse hover preview
@@ -183,15 +214,32 @@ func (s *StageScene) Draw(screen *ebiten.Image) {
 			col := int((float64(mx) - s.gameMap.OffsetX) / cs)
 			row := int((float64(my) - s.gameMap.OffsetY) / cs)
 			center := s.gameMap.CellCenter(row, col)
-			valid := s.towers.At(row, col) == nil && s.gold >= s.towerDef.Cost
-			render.DrawTowerRangePreview(screen, float32(center.X), float32(center.Y), s.towerDef.Range, valid)
+			def := s.towerDefs[s.selectedDef]
+			valid := s.towers.At(row, col) == nil && s.gold >= def.Cost
+			render.DrawTowerRangePreview(screen, float32(center.X), float32(center.Y), def.Range, valid)
 		}
 	}
 
-	// HUD
-	info := fmt.Sprintf("Wave: %d/%d  Lives: %d  Gold: %d  Towers: %d  Kills: %d  [Click buildable cell to place tower]",
-		s.spawner.Wave, s.spawner.MaxWaves, s.lives, s.gold, s.towers.Count, s.kills)
+	// HUD top
+	def := s.towerDefs[s.selectedDef]
+	info := fmt.Sprintf("Wave %d/%d  Lives %d  Gold %d  Kills %d",
+		s.spawner.Wave, s.spawner.MaxWaves, s.lives, s.gold, s.kills)
 	ebitenutil.DebugPrintAt(screen, info, 8, 4)
+
+	// Tower selection bar
+	selInfo := fmt.Sprintf("[1-%d] Select tower | Selected: %s ($%d) | Right-click to sell",
+		len(s.towerDefs), def.Label, def.Cost)
+	ebitenutil.DebugPrintAt(screen, selInfo, 8, 18)
+
+	// Tower list
+	for i, d := range s.towerDefs {
+		marker := " "
+		if i == s.selectedDef {
+			marker = ">"
+		}
+		txt := fmt.Sprintf("%s%d:%s($%d)", marker, i+1, d.Label, d.Cost)
+		ebitenutil.DebugPrintAt(screen, txt, 8+i*120, game.ScreenHeight-16)
+	}
 
 	// Overlays
 	cx := game.ScreenWidth / 2

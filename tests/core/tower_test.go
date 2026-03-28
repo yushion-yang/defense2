@@ -8,7 +8,7 @@ import (
 
 func TestTowerPlaceAndRemove(t *testing.T) {
 	p := tower.NewPool(4)
-	def := tower.DefaultTowerDef()
+	def := tower.BaseTowerDefs()[0]
 
 	t1 := p.Place(2, 3, 210, 150, def)
 	if t1 == nil || p.Count != 1 {
@@ -29,7 +29,7 @@ func TestTowerPlaceAndRemove(t *testing.T) {
 
 func TestTowerAt(t *testing.T) {
 	p := tower.NewPool(4)
-	def := tower.DefaultTowerDef()
+	def := tower.BaseTowerDefs()[0]
 	p.Place(2, 3, 210, 150, def)
 
 	found := p.At(2, 3)
@@ -44,7 +44,7 @@ func TestTowerAt(t *testing.T) {
 
 func TestTowerPoolOverflow(t *testing.T) {
 	p := tower.NewPool(1)
-	def := tower.DefaultTowerDef()
+	def := tower.BaseTowerDefs()[0]
 	p.Place(0, 0, 30, 30, def)
 	t2 := p.Place(1, 1, 90, 90, def)
 	if t2 != nil {

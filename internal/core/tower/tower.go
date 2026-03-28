@@ -11,5 +11,8 @@ type Tower struct {
 	Cost        int
 	Faction     string
 	Key         string
+	Label       string
 	Active      bool
+	Abilities   []string // registered ability names
+	Color       [3]uint8 // RGB display color
 }
