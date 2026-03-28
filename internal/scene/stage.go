@@ -4,7 +4,6 @@ package scene
 
 import (
 	"fmt"
-	"image/color"
 	"log"
 
 	_ "defense2/internal/core/tower/abilities" // 通过 init() 注册塔能力
@@ -73,15 +72,21 @@ type StageScene struct {
 	lastWave        int                          // 上一帧的波次号
 	notification    string                       // 屏幕中央通知文本
 	notifyTimer     float64                      // 通知剩余时间（秒）
+	wardenType      string                       // 战灵类型标识（用于重玩传递）
 }
 
 // NewStageScene 创建游戏主场景，默认加载 map_01。
 func NewStageScene(sw Switcher) *StageScene {
-	return NewStageSceneWithMap(sw, "map_01")
+	return NewStageSceneWithOptions(sw, "map_01", "envoy")
 }
 
-// NewStageSceneWithMap 创建游戏主场景，加载指定地图。
+// NewStageSceneWithMap 创建游戏主场景，加载指定地图（默认使者战灵）。
 func NewStageSceneWithMap(sw Switcher, mapID string) *StageScene {
+	return NewStageSceneWithOptions(sw, mapID, "envoy")
+}
+
+// NewStageSceneWithOptions 创建游戏主场景，指定地图和战灵类型。
+func NewStageSceneWithOptions(sw Switcher, mapID, wardenType string) *StageScene {
 	cfg, err := config.LoadMap(mapID)
 	if err != nil {
 		log.Printf("地图加载失败: %v", err)
@@ -126,9 +131,9 @@ func NewStageSceneWithMap(sw Switcher, mapID string) *StageScene {
 		econ:          economy.DefaultConfig(),
 		towerRenderer: render.NewTowerRenderer(config.GetAssetFS()),
 		enemyRenderer: render.NewEnemyRenderer(config.GetAssetFS()),
-		audioMgr:      initAudio(),
+		audioMgr:      sw.AudioManager(),
 		heroUnit:      loader.LoadHero(heroX, heroY),
-		wardenUnit:    warden.NewWarden(1, "使者", "envoy"),
+		wardenUnit:    warden.NewWarden(1, wardenType, wardenType),
 		eventPool:     event.NewPool(loader.LoadAllyEvents()),
 		tutorial:      tut,
 		progressMgr:   pm,
@@ -136,6 +141,7 @@ func NewStageSceneWithMap(sw Switcher, mapID string) *StageScene {
 		gold:          200,
 		towerDefs:     loadTowerDefsOrFallback(),
 		selectedDef:   0,
+		wardenType:    wardenType,
 	}
 
 	// 触发教程首步
@@ -164,14 +170,15 @@ func (s *StageScene) Update() error {
 				Waves:    s.spawner.Wave,
 				MaxWaves: s.spawner.MaxWaves,
 				Gold:     s.gold,
-				Towers:   s.towers.Count,
+				Towers:     s.towers.Count,
+				WardenType: s.wardenType,
 			}))
 		}
 	}
 
-	// ESC 随时返回标题
+	// ESC 返回选关
 	if inpututil.IsKeyJustPressed(ebiten.KeyEscape) {
-		s.switcher.SwitchScene(NewTitleScene(s.switcher))
+		s.switcher.SwitchScene(NewSelectScene(s.switcher))
 	}
 
 	// 通知计时器
@@ -256,6 +263,7 @@ func (s *StageScene) tryPlaceTower(px, py float64) {
 	center := gm.CellCenter(row, col)
 	s.towers.Place(row, col, center.X, center.Y, def)
 	s.gold -= def.Cost
+	s.audioMgr.PlaySafe(gameAudio.SFXBuild)
 	s.tutorial.OnEvent("towerBuilt")
 }
 
@@ -278,6 +286,7 @@ func (s *StageScene) trySellTower(px, py float64) {
 	s.gold += refund
 	s.towers.Remove(t)
 	s.hoveredTower = nil
+	s.audioMgr.PlaySafe(gameAudio.SFXTowerSell)
 	s.showNotify(fmt.Sprintf("Sold +$%d", refund))
 }
 
@@ -297,6 +306,7 @@ func (s *StageScene) updatePlaying() {
 	// 1. 生成敌人
 	s.spawner.Update(s.enemies, dt)
 	if s.spawner.Wave > prevWave {
+		s.audioMgr.PlaySafe(gameAudio.SFXWaveStart)
 		s.tutorial.OnEvent("waveStarted")
 	}
 
@@ -308,6 +318,7 @@ func (s *StageScene) updatePlaying() {
 		if enemy.MoveAlongPath(e, s.gameMap.Waypoints, dt) {
 			s.lives--
 			s.enemies.Kill(e)
+			s.audioMgr.PlaySafe(gameAudio.SFXEnemyLeak)
 		}
 	})
 
@@ -316,9 +327,14 @@ func (s *StageScene) updatePlaying() {
 
 	// 5. 战灵行为
 	s.wardenUnit.Tick(&warden.TickContext{
-		Enemies: s.enemies,
-		Towers:  s.towers,
-		DT:      dt,
+		Enemies:     s.enemies,
+		Towers:      s.towers,
+		Projectiles: s.projectiles,
+		DT:          dt,
+		OnKill: func() {
+			s.kills++
+			s.gold += s.econ.KillGold() + s.killRewardBonus
+		},
 	})
 
 	// 6. 塔索敌射击
@@ -333,6 +349,7 @@ func (s *StageScene) updatePlaying() {
 	killGold := s.econ.KillGold() + s.killRewardBonus
 	s.gold += kills * killGold
 	if kills > 0 {
+		s.audioMgr.PlaySafe(gameAudio.SFXEnemyDeath)
 		s.tutorial.OnEvent("enemyKilled")
 	}
 
@@ -351,6 +368,7 @@ func (s *StageScene) updatePlaying() {
 		s.gold += bonus + interest
 		s.wardenUnit.OnWaveClear()
 		s.heroUnit.AwardXP(10)
+		s.audioMgr.PlaySafe(gameAudio.SFXWaveClear)
 		s.showNotify(fmt.Sprintf("Wave %d clear! +$%d bonus +$%d interest", prevWave, bonus, interest))
 		s.tutorial.OnEvent("waveCleared")
 
@@ -366,10 +384,12 @@ func (s *StageScene) updatePlaying() {
 	// 10. 胜负判定 + 持久化结果
 	if s.lives <= 0 && s.state == statePlaying {
 		s.state = stateDefeat
+		s.audioMgr.PlaySafe(gameAudio.SFXDefeat)
 		s.progressMgr.RecordGameResult(s.gameMap.Config.ID, s.kills, false)
 	}
 	if s.spawner.IsClear(s.enemies) && s.state == statePlaying {
 		s.state = stateVictory
+		s.audioMgr.PlaySafe(gameAudio.SFXVictory)
 		s.progressMgr.RecordGameResult(s.gameMap.Config.ID, s.kills, true)
 		// 教程完成后持久化标记
 		if s.tutorial.IsComplete() {
@@ -415,10 +435,8 @@ func (s *StageScene) SlowAllEnemies(ratio float64) {
 
 // Draw 渲染游戏画面：地图 → 塔 → 敌人 → 弹射物 → 预览 → HUD → 通知 → 胜负覆盖。
 func (s *StageScene) Draw(screen *ebiten.Image) {
-	screen.Fill(color.RGBA{R: 30, G: 40, B: 30, A: 255})
-
-	// 地图
-	render.DrawMap(screen, s.gameMap)
+	// 地图（渐变背景覆盖全屏，无需 Fill）
+	render.DrawMap(screen, s.gameMap, render.GlobalFont(), float64(s.frame)/60.0, nil)
 
 	// 塔（优先 SVG 渲染，回退到彩色方块）
 	s.towerRenderer.DrawTowers(screen, s.towers)
@@ -509,12 +527,3 @@ func loadTowerDefsOrFallback() []tower.TowerDef {
 	return defs
 }
 
-// initAudio 创建音效管理器并从嵌入式文件系统预加载所有 WAV。
-func initAudio() *gameAudio.Manager {
-	mgr := gameAudio.NewManager()
-	assetFS := config.GetAssetFS()
-	if assetFS != nil {
-		mgr.LoadAllFromFS(assetFS)
-	}
-	return mgr
-}
