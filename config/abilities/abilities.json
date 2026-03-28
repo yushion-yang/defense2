@@ -2,289 +2,321 @@
   "onHitSlow": {
     "type": "onHitSlow",
     "label": "减速",
-    "description": "命中减速,持续{duration}s",
     "icon": "slow",
     "category": "control",
-    "base": { "factor": 0.10, "duration": 1.0 },
-    "potential": { "factor": 0.22, "duration": 0.4 }
+    "scaleDim": "factor",
+    "base": 0.10,
+    "potential": 0.22,
+    "params": { "duration": 1.4 }
   },
   "stun": {
     "type": "stun",
     "label": "眩晕",
-    "description": "{chance}%概率眩晕{duration}s",
     "icon": "stun",
     "category": "control",
-    "base": { "chance": 0.05, "duration": 0.2 },
-    "potential": { "chance": 0.07, "duration": 0.2 }
+    "scaleDim": "chance",
+    "base": 0.05,
+    "potential": 0.07,
+    "params": { "duration": 0.4 }
   },
   "bounce": {
     "type": "bounce",
     "label": "弹射",
-    "description": "弹射{maxBounces}次,衰减{damageDecay}",
     "icon": "bounce",
     "category": "combat",
-    "base": { "maxBounces": 2, "range": 100, "damageDecay": 0.8 },
-    "potential": { "maxBounces": 0, "range": 25, "damageDecay": 0 }
+    "scaleDim": "range",
+    "base": 100,
+    "potential": 25,
+    "params": { "maxBounces": 2, "damageDecay": 0.8 }
   },
   "burn": {
     "type": "burn",
     "label": "灼烧",
-    "description": "灼烧{ratio}伤害/{duration}s",
     "icon": "burn",
     "category": "control",
-    "base": { "ratio": 0.15, "duration": 1.5 },
-    "potential": { "ratio": 0.15, "duration": 0.5 }
+    "scaleDim": "ratio",
+    "base": 0.15,
+    "potential": 0.15,
+    "params": { "duration": 2.0 }
   },
   "splash": {
     "type": "splash",
     "label": "溅射",
-    "description": "{radius}px范围{ratio}溅射",
     "icon": "stat-splash",
     "category": "combat",
-    "base": { "radius": 30, "ratio": 0.2 },
-    "potential": { "radius": 20, "ratio": 0.2 }
+    "scaleDim": "radius",
+    "base": 30,
+    "potential": 20,
+    "params": { "ratio": 0.4 }
   },
   "executionBonus": {
     "type": "executionBonus",
     "label": "斩杀",
-    "description": "≤{hpThreshold}HP时+{damageBonus}伤害",
     "icon": "execute",
     "category": "combat",
-    "base": { "hpThreshold": 0.5, "damageBonus": 0.2 },
-    "potential": { "hpThreshold": 0, "damageBonus": 0.3 }
+    "scaleDim": "damageBonus",
+    "base": 0.20,
+    "potential": 0.30,
+    "params": { "hpThreshold": 0.5 }
   },
   "percentHpDamage": {
     "type": "percentHpDamage",
     "label": "百分比伤害",
-    "description": "额外{percentHp}最大HP(Boss{bossCap})",
     "icon": "hunterInstinct",
     "category": "combat",
-    "base": { "percentHp": 0.08, "bossCap": 0.02 },
-    "potential": { "percentHp": 0.12, "bossCap": 0.03 }
+    "scaleDim": "percentHp",
+    "base": 0.08,
+    "potential": 0.12,
+    "params": { "bossCap": 0.05 }
   },
   "crit": {
     "type": "crit",
     "label": "暴击",
-    "description": "{chance}概率+{multiplier}暴击",
     "icon": "heavyHit",
     "category": "combat",
-    "base": { "chance": 0.10, "multiplier": 1.5 },
-    "potential": { "chance": 0.15, "multiplier": 0.3 }
+    "scaleDim": "chance",
+    "base": 0.10,
+    "potential": 0.15,
+    "params": { "multiplier": 1.8 }
   },
   "bleedDot": {
     "type": "bleedDot",
     "label": "流血",
-    "description": "流血{dps}dps/{duration}s",
     "icon": "burn",
     "category": "control",
-    "base": { "dps": 2, "duration": 2.0 },
-    "potential": { "dps": 3, "duration": 1.0 }
+    "scaleDim": "dps",
+    "base": 2,
+    "potential": 3,
+    "params": { "duration": 3.0 }
   },
   "stackDamage": {
     "type": "stackDamage",
     "label": "叠伤",
-    "description": "每次命中+{bonusPerStack}伤害",
     "icon": "armorPen",
     "category": "combat",
-    "base": { "bonusPerStack": 0.03 },
-    "potential": { "bonusPerStack": 0.05 }
+    "scaleDim": "bonusPerStack",
+    "base": 0.03,
+    "potential": 0.05,
+    "params": {}
   },
   "overload": {
     "type": "overload",
     "label": "过载",
-    "description": "{chance}概率{multiplier}倍伤害",
     "icon": "thunder",
     "category": "combat",
-    "base": { "chance": 0.08, "multiplier": 1.5 },
-    "potential": { "chance": 0.07, "multiplier": 0.5 }
+    "scaleDim": "chance",
+    "base": 0.08,
+    "potential": 0.07,
+    "params": { "multiplier": 2.0 }
   },
   "flatDamage": {
     "type": "flatDamage",
     "label": "固伤",
-    "description": "+{damage}固定伤害",
     "icon": "stat-damage",
     "category": "combat",
-    "base": { "damage": 2 },
-    "potential": { "damage": 3 }
+    "scaleDim": "damage",
+    "base": 2,
+    "potential": 3,
+    "params": {}
   },
   "distanceDamage": {
     "type": "distanceDamage",
     "label": "距离伤害",
-    "description": "越远伤害越高+{maxBonus}",
     "icon": "stat-range",
     "category": "combat",
-    "base": { "maxBonus": 0.2 },
-    "potential": { "maxBonus": 0.3 }
+    "scaleDim": "maxBonus",
+    "base": 0.20,
+    "potential": 0.30,
+    "params": {}
   },
   "damageUpAura": {
     "type": "damageUpAura",
     "label": "伤害光环",
-    "description": "周围塔+{bonus}伤害",
     "icon": "tower-aura",
     "category": "aura",
-    "base": { "radius": 150, "bonus": 0.05 },
-    "potential": { "radius": 0, "bonus": 0.10 }
+    "scaleDim": "bonus",
+    "base": 0.05,
+    "potential": 0.10,
+    "params": { "radius": 150 }
   },
   "attackSpeedAura": {
     "type": "attackSpeedAura",
     "label": "攻速光环",
-    "description": "周围塔+{bonus}攻速",
     "icon": "tower-aura",
     "category": "aura",
-    "base": { "radius": 150, "bonus": 0.04 },
-    "potential": { "radius": 0, "bonus": 0.06 }
+    "scaleDim": "bonus",
+    "base": 0.04,
+    "potential": 0.06,
+    "params": { "radius": 150 }
   },
   "rangeAura": {
     "type": "rangeAura",
     "label": "射程光环",
-    "description": "周围塔+{bonus}px射程",
     "icon": "tower-aura",
     "category": "aura",
-    "base": { "radius": 150, "bonus": 8 },
-    "potential": { "radius": 0, "bonus": 12 }
+    "scaleDim": "bonus",
+    "base": 8,
+    "potential": 12,
+    "params": { "radius": 150 }
   },
   "critAura": {
     "type": "critAura",
     "label": "暴击光环",
-    "description": "周围塔+{bonus}暴击",
     "icon": "tower-aura",
     "category": "aura",
-    "base": { "radius": 150, "bonus": 0.04 },
-    "potential": { "radius": 0, "bonus": 0.06 }
+    "scaleDim": "bonus",
+    "base": 0.04,
+    "potential": 0.06,
+    "params": { "radius": 150 }
   },
   "soloBoost": {
     "type": "soloBoost",
     "label": "独行加成",
-    "description": "无邻塔时+{bonus}伤害",
     "icon": "heavyHit",
     "category": "aura",
-    "base": { "checkRadius": 120, "bonus": 0.10 },
-    "potential": { "checkRadius": 0, "bonus": 0.20 }
+    "scaleDim": "bonus",
+    "base": 0.10,
+    "potential": 0.20,
+    "params": { "checkRadius": 120 }
   },
   "poisonZone": {
     "type": "poisonZone",
     "label": "毒区",
-    "description": "范围内{dps}dps毒伤",
     "icon": "tower-poison",
     "category": "zone",
-    "base": { "dps": 1 },
-    "potential": { "dps": 2 }
+    "scaleDim": "dps",
+    "base": 1,
+    "potential": 2,
+    "params": {}
   },
   "silenceZone": {
     "type": "silenceZone",
     "label": "沉默区",
-    "description": "范围内减速{slowFactor}",
     "icon": "slow",
     "category": "zone",
-    "base": { "slowFactor": 0.08 },
-    "potential": { "slowFactor": 0.12 }
+    "scaleDim": "slowFactor",
+    "base": 0.08,
+    "potential": 0.12,
+    "params": {}
   },
   "curseZone": {
     "type": "curseZone",
     "label": "诅咒区",
-    "description": "范围内{hpPercentPerSec}HP/s",
     "icon": "tower-poison",
     "category": "zone",
-    "base": { "hpPercentPerSec": 0.005 },
-    "potential": { "hpPercentPerSec": 0.010 }
+    "scaleDim": "hpPercentPerSec",
+    "base": 0.005,
+    "potential": 0.010,
+    "params": {}
   },
   "channelLaser": {
     "type": "channelLaser",
     "label": "引导激光",
-    "description": "持续光束{dps}dps",
     "icon": "tower-laser",
     "category": "zone",
-    "base": { "dps": 4 },
-    "potential": { "dps": 6 }
+    "scaleDim": "dps",
+    "base": 4,
+    "potential": 6,
+    "params": {}
   },
   "buffPurge": {
     "type": "buffPurge",
     "label": "净化",
-    "description": "剥离护盾{shieldDrainPerSec}/s",
     "icon": "stun",
     "category": "control",
-    "base": { "shieldDrainPerSec": 2 },
-    "potential": { "shieldDrainPerSec": 3 }
+    "scaleDim": "shieldDrainPerSec",
+    "base": 2,
+    "potential": 3,
+    "params": {}
   },
   "root": {
     "type": "root",
     "label": "定身",
-    "description": "定身{duration}s",
     "icon": "stun",
     "category": "control",
-    "base": { "duration": 0.3 },
-    "potential": { "duration": 0.2 }
+    "scaleDim": "duration",
+    "base": 0.3,
+    "potential": 0.2,
+    "params": {}
   },
   "shieldIgnore": {
     "type": "shieldIgnore",
     "label": "无视护盾",
-    "description": "伤害无视护盾",
     "icon": "armorPen",
     "category": "combat",
-    "base": {},
-    "potential": {}
+    "scaleDim": "",
+    "base": 0,
+    "potential": 0,
+    "params": {}
   },
   "goldPassive": {
     "type": "goldPassive",
     "label": "被动产金",
-    "description": "每{interval}s产{amount}金币",
     "icon": "stat-dps",
     "category": "economy",
-    "base": { "interval": 3, "amount": 0.5 },
-    "potential": { "interval": 0, "amount": 0.5 }
+    "scaleDim": "amount",
+    "base": 0.5,
+    "potential": 0.5,
+    "params": { "interval": 3 }
   },
   "judgmentMark": {
     "type": "judgmentMark",
     "label": "审判标记",
-    "description": "标记目标受伤增加{damageAmp}",
     "icon": "tower-judicator",
     "category": "control",
-    "base": { "damageAmp": 0.1, "duration": 3 },
-    "potential": { "damageAmp": 0.1, "duration": 2 }
+    "scaleDim": "damageAmp",
+    "base": 0.10,
+    "potential": 0.10,
+    "params": { "duration": 5 }
   },
   "deathMark": {
     "type": "deathMark",
     "label": "死亡标记",
-    "description": "标记目标死亡时爆炸{explosionDamage}",
     "icon": "tower-summon",
     "category": "combat",
-    "base": { "explosionDamage": 10, "radius": 40 },
-    "potential": { "explosionDamage": 15, "radius": 10 }
+    "scaleDim": "explosionDamage",
+    "base": 10,
+    "potential": 15,
+    "params": { "radius": 50 }
   },
   "instantHit": {
     "type": "instantHit",
     "label": "瞬时命中",
-    "description": "攻击无飞行时间",
     "icon": "tower-laser",
     "category": "combat",
-    "base": {},
-    "potential": {}
+    "scaleDim": "",
+    "base": 0,
+    "potential": 0,
+    "params": {}
   },
   "multiTarget": {
     "type": "multiTarget",
     "label": "多目标攻击",
-    "description": "同时攻击{targets}个目标",
     "icon": "multishot",
     "category": "combat",
-    "base": { "targets": 2 },
-    "potential": { "targets": 0 }
+    "scaleDim": "",
+    "base": 0,
+    "potential": 0,
+    "params": { "targets": 2 }
   },
   "wideBeam": {
     "type": "wideBeam",
     "label": "宽幅光束",
-    "description": "穿透路径上所有敌人",
     "icon": "tower-laser",
     "category": "combat",
-    "base": {},
-    "potential": {}
+    "scaleDim": "",
+    "base": 0,
+    "potential": 0,
+    "params": {}
   },
   "scatter": {
     "type": "scatter",
     "label": "锥形散弹",
-    "description": "锥形范围内多发弹丸",
     "icon": "multishot",
     "category": "combat",
-    "base": {},
-    "potential": {}
+    "scaleDim": "",
+    "base": 0,
+    "potential": 0,
+    "params": {}
   }
 }

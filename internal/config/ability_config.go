@@ -1,8 +1,6 @@
 // ability_config.go — 能力配置数据结构与加载。
-// 从 config/abilities/abilities.json 加载能力定义表。
-// 每个能力有 base 和 potential 两组参数，运行时通过强度计算实际值:
-//
-//	effective[key] = base[key] + potential[key] * (strength / 100)
+// 每个能力只有一个可提升维度（scaleDim），其余参数为固定常量。
+// 运行时公式: scaledValue = base + potential * (strength / 100)
 package config
 
 import (
@@ -12,13 +10,14 @@ import (
 
 // AbilityDef 单个能力的完整定义。
 type AbilityDef struct {
-	Type        string             `json:"type"`        // 能力类型标识（与 map key 一致）
-	Label       string             `json:"label"`       // 显示名称（如"减速"、"弹射"）
-	Description string             `json:"description"` // 描述模板（支持 {key} 占位符）
-	Icon        string             `json:"icon"`        // 图标名称（对应 assets/icons/）
-	Category    string             `json:"category"`    // 分类（combat/control/aura/zone/economy）
-	Base        map[string]float64 `json:"base"`        // 基础参数（强度0时的底线值）
-	Potential   map[string]float64 `json:"potential"`   // 潜力参数（强度100时 = base + potential）
+	Type      string             `json:"type"`      // 能力类型标识
+	Label     string             `json:"label"`     // 显示名称
+	Icon      string             `json:"icon"`      // 图标名称
+	Category  string             `json:"category"`  // 分类（combat/control/aura/zone/economy）
+	ScaleDim  string             `json:"scaleDim"`  // 可提升维度名（如"factor"/"chance"/"dps"，空=无缩放）
+	Base      float64            `json:"base"`      // 缩放维度的基础值
+	Potential float64            `json:"potential"` // 缩放维度的潜力值
+	Params    map[string]float64 `json:"params"`    // 固定常量参数
 }
 
 // AbilityTable 能力定义表（abilityType → AbilityDef）。
@@ -41,63 +40,43 @@ func LoadAbilityTable() (AbilityTable, error) {
 	return table, nil
 }
 
-// CalcParam 根据强度计算某个参数的实际值。
-// 公式: base[key] + potential[key] * (strength / 100)
-// 参数不存在时返回 defaultVal。
-func (d *AbilityDef) CalcParam(key string, strength float64, defaultVal float64) float64 {
-	if d == nil {
-		return defaultVal
+// CalcScale 根据强度计算缩放维度的实际值。
+// 公式: base + potential * (strength / 100)
+// 无缩放维度时返回 0。
+func (d *AbilityDef) CalcScale(strength float64) float64 {
+	if d == nil || d.ScaleDim == "" {
+		return 0
 	}
-	base, hasBase := d.Base[key]
-	pot, hasPot := d.Potential[key]
-	if !hasBase && !hasPot {
-		return defaultVal
-	}
-	return base + pot*(strength/100.0)
+	return d.Base + d.Potential*(strength/100.0)
 }
 
-// CalcAllParams 根据强度计算所有参数的实际值。
-// 返回新 map，不修改原始 Base/Potential。
-func (d *AbilityDef) CalcAllParams(strength float64) map[string]float64 {
-	if d == nil {
-		return nil
-	}
-	// 收集所有参数 key
-	keys := make(map[string]bool)
-	for k := range d.Base {
-		keys[k] = true
-	}
-	for k := range d.Potential {
-		keys[k] = true
-	}
-
-	result := make(map[string]float64, len(keys))
-	for k := range keys {
-		base := d.Base[k]
-		pot := d.Potential[k]
-		result[k] = base + pot*(strength/100.0)
-	}
-	return result
-}
-
-// GetBase 获取基础参数值（不含战力缩放）。
-func (d *AbilityDef) GetBase(key string, defaultVal float64) float64 {
-	if d == nil || d.Base == nil {
+// GetParam 获取固定常量参数，不存在时返回 defaultVal。
+func (d *AbilityDef) GetParam(key string, defaultVal float64) float64 {
+	if d == nil || d.Params == nil {
 		return defaultVal
 	}
-	if v, ok := d.Base[key]; ok {
+	if v, ok := d.Params[key]; ok {
 		return v
 	}
 	return defaultVal
 }
 
-// GetPotential 获取潜力参数值。
-func (d *AbilityDef) GetPotential(key string, defaultVal float64) float64 {
-	if d == nil || d.Potential == nil {
-		return defaultVal
+// HasScale 是否有可缩放维度。
+func (d *AbilityDef) HasScale() bool {
+	return d != nil && d.ScaleDim != ""
+}
+
+// FormatScale 格式化缩放维度为 "base+(scaled)=total" 字符串。
+// 用于 HUD 展示。无缩放返回空。
+func (d *AbilityDef) FormatScale(strength float64) string {
+	if !d.HasScale() {
+		return ""
 	}
-	if v, ok := d.Potential[key]; ok {
-		return v
+	scaled := d.Potential * (strength / 100.0)
+	total := d.Base + scaled
+	// 根据数值大小选择格式
+	if d.Base >= 1 {
+		return fmt.Sprintf("%s %.0f+(%.0f)=%.0f", d.ScaleDim, d.Base, scaled, total)
 	}
-	return defaultVal
+	return fmt.Sprintf("%s %.0f%%+(%.0f%%)=%.0f%%", d.ScaleDim, d.Base*100, scaled*100, total*100)
 }
