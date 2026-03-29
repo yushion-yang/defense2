@@ -11,6 +11,7 @@ import (
 	"defense2/internal/core/tower/abilities"
 	"defense2/internal/render"
 	"defense2/internal/render/draw"
+	"defense2/internal/render/postprocess"
 
 	"github.com/hajimehoshi/ebiten/v2"
 )
@@ -29,6 +30,9 @@ func NewGame() *Game {
 	initFont()
 	render.InitGlobalIcons(config.GetAssetFS())
 	abilities.InitConfigAbilities() // 从 abilities.json 注册数据驱动能力
+	if err := postprocess.InitShaders(); err != nil {
+		log.Printf("后处理着色器编译失败（bloom 禁用）: %v", err)
+	}
 	g := &Game{
 		width:    game.ScreenWidth,
 		height:   game.ScreenHeight,

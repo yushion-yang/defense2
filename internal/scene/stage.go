@@ -35,6 +35,7 @@ import (
 	"defense2/internal/render"
 	"defense2/internal/render/draw"
 	"defense2/internal/render/hud"
+	"defense2/internal/render/postprocess"
 	"defense2/internal/render/theme"
 
 	"github.com/hajimehoshi/ebiten/v2"
@@ -178,6 +179,7 @@ type StageScene struct {
 	spawnType       string
 	spawnHoverIdx   int
 	initOpts        StageOptions // 保存原始配置（重新开始用）
+	postPipeline    *postprocess.Pipeline // 后处理管线（bloom 等）
 }
 
 // NewStageScene 创建游戏主场景，默认加载 map_01。
@@ -302,6 +304,9 @@ func NewStageSceneWithOpts(sw Switcher, opts StageOptions) *StageScene {
 		wavePanelOpen:   true,
 		wardenPanelOpen: false,
 	}
+
+	// 后处理管线（bloom）
+	s.postPipeline = postprocess.NewPipeline()
 
 	// 注入战灵精灵获取函数到覆盖层
 	s.wardenOverlay.SpriteFunc = s.wardenRenderer.GetSprite
@@ -1552,8 +1557,12 @@ func (s *StageScene) Draw(screen *ebiten.Image) {
 func (s *StageScene) drawScene(screen *ebiten.Image) {
 	useCamera := s.needsCamera()
 
-	// 确定世界元素的绘制目标：大地图时使用离屏缓冲，小地图直接画到 screen。
-	worldTarget := screen
+	// 后处理管线：世界元素渲染到 sceneTarget，bloom 后输出到 screen。
+	physW, physH := screen.Bounds().Dx(), screen.Bounds().Dy()
+	sceneTarget := s.postPipeline.SceneBuffer(physW, physH)
+
+	// 确定世界元素的绘制目标：大地图时使用离屏缓冲，小地图画到 sceneTarget。
+	worldTarget := sceneTarget
 	if useCamera {
 		// worldBuffer 按地图完整尺寸 × draw.Scale 创建（覆盖整个世界）
 		logicalW := s.gameMap.Width() + s.gameMap.OffsetX*2
@@ -1659,12 +1668,15 @@ func (s *StageScene) drawScene(screen *ebiten.Image) {
 		}
 	}
 
-	// ── 将世界缓冲 blit 到 screen（带相机偏移） ──
+	// ── 将世界缓冲 blit 到 sceneTarget（带相机偏移） ──
 	if useCamera {
 		opts := &ebiten.DrawImageOptions{}
 		opts.GeoM.Translate(-s.camX*draw.Scale, -s.camY*draw.Scale)
-		screen.DrawImage(worldBuffer, opts)
+		sceneTarget.DrawImage(worldBuffer, opts)
 	}
+
+	// ── 后处理（bloom）→ 输出到 screen ──
+	s.postPipeline.Apply(screen)
 
 	// ── HUD 元素（不受相机偏移影响，直接画到 screen）──
 
@@ -1879,6 +1891,9 @@ func (s *StageScene) buildSkillContext() *skill.SkillContext {
 			if sfx := gameAudio.SkillSFX(skillKey); sfx != "" {
 				s.audioMgr.PlaySafe(sfx)
 			}
+		},
+		PlaySFX: func(name string) {
+			s.audioMgr.PlayThrottled(name, 300)
 		},
 	}
 }
