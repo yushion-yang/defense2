@@ -52,8 +52,8 @@ func TestWardenOnKillAndWave(t *testing.T) {
 	w.OnKill()
 	w.OnKill()
 	w.OnWaveClear()
-	if w.SelfStrength != 9 { // 2*2 + 5
-		t.Fatalf("预期自身强度 9，实际 %.0f", w.SelfStrength)
+	if w.SelfStrength != 109 { // 100(初始) + 2*2 + 5
+		t.Fatalf("预期自身强度 109，实际 %.0f", w.SelfStrength)
 	}
 }
 

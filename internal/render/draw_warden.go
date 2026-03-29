@@ -73,10 +73,14 @@ func (wr *WardenRenderer) DrawWarden(screen *ebiten.Image, w *warden.Warden) {
 	switch s := w.State.(type) {
 	case *wardenTypes.PrinceState:
 		drawPrinceEffects(screen, s)
-	case *wardenTypes.EnvoyState:
-		drawEnvoyEffects(screen, s)
+	case *wardenTypes.CoreState:
+		drawCoreEffects(screen, &s.WardenState)
+	case *wardenTypes.ChainState:
+		drawChainEffects(screen, s)
 	case *wardenTypes.SkystrikeState:
 		drawSkystrikeEffects(screen, s)
+	case *wardenTypes.EnvoyState:
+		drawEnvoyEffects(screen, s)
 	}
 
 	// Body sprite（根据精灵原始朝向校正旋转角度）
@@ -127,49 +131,139 @@ func wardenShootColor(typ string) color.RGBA {
 	}
 }
 
-// drawPrinceEffects renders fire trails and fireballs (drawn under body).
+// ── 火灵特效：火球飞行 + 地面燃烧区 ──
+
 func drawPrinceEffects(screen *ebiten.Image, s *wardenTypes.PrinceState) {
-	// Flame trails (ground fire)
+	// 地面燃烧区（多层渐变）
 	for _, t := range s.Trails {
-		alpha := uint8(120 * (t.Life / t.MaxLife))
-		draw.FilledCircle(screen, float32(t.X), float32(t.Y), float32(t.Radius),
-			color.RGBA{R: 255, G: 100, B: 30, A: alpha})
+		p := t.Life / t.MaxLife
+		r := float32(t.Radius)
+		// 外圈暗红光晕
+		draw.FilledCircle(screen, float32(t.X), float32(t.Y), r*1.3,
+			color.RGBA{R: 180, G: 40, B: 0, A: uint8(40 * p)})
+		// 中圈橙色火焰
+		draw.FilledCircle(screen, float32(t.X), float32(t.Y), r,
+			color.RGBA{R: 255, G: 100, B: 30, A: uint8(100 * p)})
+		// 内圈亮黄
+		draw.FilledCircle(screen, float32(t.X), float32(t.Y), r*0.5,
+			color.RGBA{R: 255, G: 200, B: 60, A: uint8(80 * p)})
 	}
 
-	// Flying fireballs
+	// 飞行火球（拖尾 + 核心）
 	for _, fb := range s.Fireballs {
-		draw.FilledCircle(screen, float32(fb.X), float32(fb.Y), float32(fb.Radius)*0.8,
-			color.RGBA{R: 255, G: 120, B: 20, A: 60})
-		draw.FilledCircle(screen, float32(fb.X), float32(fb.Y), float32(fb.Radius)*0.5,
-			color.RGBA{R: 255, G: 180, B: 40, A: 230})
+		fx, fy := float32(fb.X), float32(fb.Y)
+		r := float32(fb.Radius)
+		// 拖尾：沿飞行方向画 3 个渐隐圆
+		if fb.Progress > 0.05 {
+			dx := fb.EndX - fb.StartX
+			dy := fb.EndY - fb.StartY
+			dist := math.Hypot(dx, dy)
+			if dist > 1 {
+				nx, ny := float32(dx/dist), float32(dy/dist)
+				for i := 1; i <= 3; i++ {
+					off := float32(i) * r * 0.6
+					ta := uint8(60 - i*15)
+					draw.FilledCircle(screen, fx-nx*off, fy-ny*off, r*0.4,
+						color.RGBA{R: 255, G: 120, B: 20, A: ta})
+				}
+			}
+		}
+		// 外层光晕
+		draw.FilledCircle(screen, fx, fy, r*0.9,
+			color.RGBA{R: 255, G: 100, B: 0, A: 50})
+		// 核心
+		draw.FilledCircle(screen, fx, fy, r*0.45,
+			color.RGBA{R: 255, G: 200, B: 60, A: 240})
 	}
 }
 
-// drawEnvoyEffects renders buff connection line.
-func drawEnvoyEffects(screen *ebiten.Image, s *wardenTypes.EnvoyState) {
-	if s.BuffExpiry <= 0 || s.BuffedTower == nil {
+// ── 机甲特效：射击闪光 ──
+
+func drawCoreEffects(screen *ebiten.Image, s *warden.WardenState) {
+	if s.ShootTimer <= 0 {
 		return
 	}
-	alpha := uint8(120 * (s.BuffExpiry / 4.0))
-	if alpha > 120 {
-		alpha = 120
-	}
-	draw.Line(screen, float32(s.X), float32(s.Y),
-		float32(s.BuffedTower.X), float32(s.BuffedTower.Y),
-		1, color.RGBA{R: 255, G: 200, B: 100, A: alpha}, true)
+	// 枪口闪光
+	p := s.ShootTimer / 0.15
+	alpha := uint8(200 * p)
+	r := float32(6 + 4*p)
+	draw.FilledCircle(screen, float32(s.X), float32(s.Y), r,
+		color.RGBA{R: 100, G: 200, B: 255, A: alpha / 3})
+	draw.FilledCircle(screen, float32(s.X), float32(s.Y), r*0.4,
+		color.RGBA{R: 200, G: 230, B: 255, A: alpha})
 }
 
-// drawSkystrikeEffects renders AoE strike visual.
+// ── 聚能特效：串联电弧 ──
+
+func drawChainEffects(screen *ebiten.Image, s *wardenTypes.ChainState) {
+	// 射击闪光
+	if s.ShootTimer > 0 {
+		p := s.ShootTimer / 0.15
+		alpha := uint8(180 * p)
+		draw.FilledCircle(screen, float32(s.X), float32(s.Y), float32(5+3*p),
+			color.RGBA{R: 160, G: 80, B: 255, A: alpha / 2})
+	}
+}
+
+// ── 水灵特效：天降冰柱/水花 ──
+
 func drawSkystrikeEffects(screen *ebiten.Image, s *wardenTypes.SkystrikeState) {
 	if s.StrikeTimer <= 0 {
 		return
 	}
-	progress := s.StrikeTimer / 0.5
-	alpha := uint8(150 * progress)
-	aoeR := float32(s.AoERadius) * float32(1.2-0.2*progress)
+	p := s.StrikeTimer / 0.5 // 1→0 衰减
+	sx, sy := float32(s.StrikeX), float32(s.StrikeY)
 
-	draw.FilledCircle(screen, float32(s.StrikeX), float32(s.StrikeY), aoeR,
-		color.RGBA{R: 80, G: 200, B: 255, A: alpha / 3})
-	draw.CircleOutline(screen, float32(s.StrikeX), float32(s.StrikeY), aoeR, 2,
-		color.RGBA{R: 100, G: 220, B: 255, A: alpha})
+	// 根据模式选择颜色
+	var baseClr, coreClr color.RGBA
+	switch s.LastMode {
+	case 1: // 散射 — 天蓝色
+		baseClr = color.RGBA{R: 80, G: 200, B: 255, A: uint8(120 * p)}
+		coreClr = color.RGBA{R: 160, G: 230, B: 255, A: uint8(200 * p)}
+	case 2: // 连击 — 深蓝色
+		baseClr = color.RGBA{R: 40, G: 120, B: 255, A: uint8(130 * p)}
+		coreClr = color.RGBA{R: 120, G: 180, B: 255, A: uint8(220 * p)}
+	case 3: // 收割 — 冰白色
+		baseClr = color.RGBA{R: 180, G: 220, B: 255, A: uint8(100 * p)}
+		coreClr = color.RGBA{R: 220, G: 240, B: 255, A: uint8(200 * p)}
+	default:
+		baseClr = color.RGBA{R: 80, G: 200, B: 255, A: uint8(120 * p)}
+		coreClr = color.RGBA{R: 160, G: 230, B: 255, A: uint8(200 * p)}
+	}
+
+	// 天降冰柱：从上方到打击点的垂直光柱
+	beamTop := sy - 80*float32(p) // 光柱从上方降下
+	draw.Line(screen, sx-3, beamTop, sx-1, sy, 3, baseClr, true)
+	draw.Line(screen, sx+3, beamTop, sx+1, sy, 3, baseClr, true)
+	draw.Line(screen, sx, beamTop-10, sx, sy, 2, coreClr, true)
+
+	// 落地冲击波纹（向外扩散）
+	waveR := float32(s.AoERadius) * float32(1.5-0.5*p)
+	draw.CircleOutline(screen, sx, sy, waveR, 1.5,
+		color.RGBA{R: baseClr.R, G: baseClr.G, B: baseClr.B, A: uint8(80 * p)})
+	draw.CircleOutline(screen, sx, sy, waveR*0.6, 1,
+		color.RGBA{R: coreClr.R, G: coreClr.G, B: coreClr.B, A: uint8(60 * p)})
+
+	// 落点冰花
+	draw.FilledCircle(screen, sx, sy, float32(8*p),
+		color.RGBA{R: coreClr.R, G: coreClr.G, B: coreClr.B, A: uint8(150 * p)})
+	// 碎冰粒子（4个方向）
+	spread := float32(20 * (1 - p))
+	pAlpha := uint8(100 * p)
+	draw.FilledCircle(screen, sx-spread, sy-spread*0.5, 2, color.RGBA{R: 200, G: 230, B: 255, A: pAlpha})
+	draw.FilledCircle(screen, sx+spread, sy-spread*0.3, 2, color.RGBA{R: 200, G: 230, B: 255, A: pAlpha})
+	draw.FilledCircle(screen, sx-spread*0.7, sy+spread*0.4, 2, color.RGBA{R: 200, G: 230, B: 255, A: pAlpha})
+	draw.FilledCircle(screen, sx+spread*0.5, sy+spread*0.6, 2, color.RGBA{R: 200, G: 230, B: 255, A: pAlpha})
+}
+
+// ── 金灵特效：射击闪光（连线和塔顶特效改为五星芒阵在 draw_tower_buff.go 中处理）──
+
+func drawEnvoyEffects(screen *ebiten.Image, s *wardenTypes.EnvoyState) {
+	if s.ShootTimer <= 0 {
+		return
+	}
+	p := s.ShootTimer / 0.15
+	alpha := uint8(180 * p)
+	draw.FilledCircle(screen, float32(s.X), float32(s.Y), float32(5+3*p),
+		color.RGBA{R: 255, G: 210, B: 80, A: alpha / 2})
 }

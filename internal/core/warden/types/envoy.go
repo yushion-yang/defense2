@@ -23,7 +23,8 @@ type EnvoyState struct {
 	// buff 参数
 	BuffInterval  float64 // buff 施加间隔（秒）
 	BuffDuration  float64 // buff 持续时间（秒）
-	BuffThreshold float64 // buff 生效的强度阈值（buff = max(0, strength - threshold)）
+	BuffThreshold float64 // 临时 buff = max(0, 强度 - 此阈值)
+	PermGrant     float64 // 每次触发永久赋予塔的强度
 	BuffTimer     float64 // buff 施加倒计时
 
 	// 当前 buff 追踪（用于视觉反馈）
@@ -48,8 +49,9 @@ func (b *EnvoyBehavior) Init(w *warden.Warden) interface{} {
 			MoveSpeed:      320,
 		},
 		BuffInterval:  5.0,
-		BuffDuration:  5.0,
-		BuffThreshold: 100, // buff = max(0, strength - 100)
+		BuffDuration:  4.0, // 比 interval 短 1s，确保 buff 会到期
+		BuffThreshold: 100, // 临时 buff = 强度 - 100
+		PermGrant:     5,   // 每次永久 +5 强度
 	}
 }
 
@@ -66,6 +68,7 @@ func (s *EnvoyState) DescParams(w *warden.Warden) map[string]string {
 		"buffDuration":   fmt.Sprintf("%.0f", s.BuffDuration),
 		"buffThreshold":  fmt.Sprintf("%.0f", s.BuffThreshold),
 		"buffBonus":      fmt.Sprintf("%.0f", bonus),
+		"permGrant":      fmt.Sprintf("%.0f", s.PermGrant),
 	}
 }
 
@@ -118,31 +121,61 @@ func (b *EnvoyBehavior) Tick(w *warden.Warden, ctx *warden.TickContext) {
 	s.DecayShootTimer(dt)
 }
 
-// applyEnvoyBuff 选择最佳塔施加临时增强 buff。
-// buff 值 = max(0, 感知强度 - 阈值)。
+// applyEnvoyBuff 选择最佳塔施加 buff。
+// 每次触发：永久 +PermGrant 强度 + 临时 max(0, 强度-100) 强度。
+// 只要有塔就触发，无需敌人。
 func applyEnvoyBuff(w *warden.Warden, s *EnvoyState, ctx *warden.TickContext) {
-	bonus := w.PerceivedStrength - s.BuffThreshold
-	if bonus <= 0 {
-		return // 强度不足，不施加 buff
-	}
-	best := findBestHost(ctx.Towers, ctx.Enemies)
+	best := findBestHostOrAny(ctx.Towers, ctx.Enemies)
 	if best == nil {
 		return
 	}
+
 	key := fmt.Sprintf("envoy_buff_%d", w.ID)
+
+	// 切换目标时，主动移除旧塔的临时 buff
+	if s.BuffedTower != nil && s.BuffedTower != best {
+		s.BuffedTower.RemoveBuff(key)
+	}
+
 	ensureStrength(best)
-	best.ApplyBuff(tower.TowerBuff{
-		Key:       key,
-		Source:    "金灵战灵",
-		Desc:      fmt.Sprintf("+%.0f 强度", bonus),
-		Value:     bonus,
-		Duration:  s.BuffDuration,
-		Remaining: s.BuffDuration,
-	})
+
+	// 永久增加强度
+	if s.PermGrant > 0 {
+		best.Strength.AddPermanent(s.PermGrant)
+	}
+
+	// 临时 buff = max(0, 强度 - 阈值)
+	tempBonus := w.PerceivedStrength - s.BuffThreshold
+	if tempBonus > 0 {
+		best.ApplyBuff(tower.TowerBuff{
+			Key:       key,
+			Source:    "金灵战灵",
+			Desc:      fmt.Sprintf("+%.0f 强度 (%.0fs)", tempBonus, s.BuffDuration),
+			Value:     tempBonus,
+			Duration:  s.BuffDuration,
+			Remaining: s.BuffDuration,
+		})
+	}
 
 	// 记录用于渲染
 	s.BuffedTower = best
 	s.BuffExpiry = s.BuffDuration
+}
+
+// findBestHostOrAny 有敌人时选射程内敌人最多的塔，无敌人时选任意塔。
+func findBestHostOrAny(towers *tower.Pool, enemies *enemy.Pool) *tower.Tower {
+	best := findBestHost(towers, enemies)
+	if best != nil {
+		return best
+	}
+	// 无敌人或无塔有敌人在射程内：选任意一座塔
+	var any *tower.Tower
+	towers.Each(func(t *tower.Tower) {
+		if any == nil {
+			any = t
+		}
+	})
+	return any
 }
 
 // findBestHost 找到射程内敌人最多的塔。

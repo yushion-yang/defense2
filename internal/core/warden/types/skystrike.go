@@ -60,13 +60,13 @@ func (b *SkystrikeBehavior) Init(w *warden.Warden) interface{} {
 			Range:          140,
 			MoveSpeed:      320,
 		},
-		SpecialInterval: 5.0,
+		SpecialInterval: 3.0,
 		MultiTargets:    3,
-		MultiDmgRatio:   1.5, // 150% 攻击力
+		MultiDmgRatio:   3.0, // 300% 攻击力
 		BurstHits:       4,
-		BurstDmgRatio:   1.0, // 100% 攻击力 × 4 段
+		BurstDmgRatio:   2.0, // 200% 攻击力 × 4 段
 		HpTargets:       3,
-		HpPercent:       0.05, // 5% 最大生命值
+		HpPercent:       0.20, // 20% 最大生命值
 		AoERadius:       60,
 	}
 }
@@ -170,9 +170,19 @@ func skystrikeBurst(s *SkystrikeState, ctx *warden.TickContext, alive []*enemy.E
 	s.StrikeTimer = 0.5
 }
 
-// 模式 3：随机 N 目标，各受 X% 最大生命值伤害。
+// 模式 3：随机 N 目标，各受 X% 最大生命值伤害（Boss 免疫）。
 func skystrikeHpPercent(s *SkystrikeState, ctx *warden.TickContext, alive []*enemy.Enemy) {
-	targets := pickRandom(alive, s.HpTargets)
+	// 过滤掉 Boss（Boss 免疫百分比伤害）
+	var nonBoss []*enemy.Enemy
+	for _, e := range alive {
+		if !e.Boss {
+			nonBoss = append(nonBoss, e)
+		}
+	}
+	if len(nonBoss) == 0 {
+		return
+	}
+	targets := pickRandom(nonBoss, s.HpTargets)
 	for _, e := range targets {
 		dmg := e.MaxHP * s.HpPercent
 		applyDmg(e, dmg, ctx)

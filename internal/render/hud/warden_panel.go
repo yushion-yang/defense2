@@ -64,23 +64,14 @@ func DrawWardenPanel(screen *ebiten.Image, d WardenPanelData) {
 		titleTxt := fmt.Sprintf("战灵·%s", d.Name)
 		fm.DrawBoldText(screen, titleTxt, x, y, theme.FontLG, theme.TextTitle)
 
-		strDir := "↓"
-		strColor := theme.StatusStrDown
-		if d.Strength >= d.PeakStrength && d.PeakStrength > 0 {
-			strDir = "↑"
-			strColor = theme.StatusStrUp
-		} else if d.Strength == 0 && d.PeakStrength == 0 {
-			strDir = "↓"
-			strColor = theme.StatusStrNorm
-		}
-		strIndicator := fmt.Sprintf("强度%.0f%s", d.Strength, strDir)
-		fm.DrawRightText(screen, strIndicator, x+w, y+2, theme.FontSM, strColor)
+		strIndicator := fmt.Sprintf("强度%.0f", d.Strength)
+		fm.DrawRightText(screen, strIndicator, x+w, y+2, theme.FontSM, theme.TextBody)
 	})
 
 	// Row 2: Strength — "强度 X" (left) + "最高 X" (right).
 	p.AddRow(float32(theme.DetailAttrH), func(screen *ebiten.Image, x, y float64, w float64) {
 		strTxt := fmt.Sprintf("强度 %.0f", d.Strength)
-		fm.DrawText(screen, strTxt, x, y, theme.FontSM, theme.StatusWarden)
+		fm.DrawText(screen, strTxt, x, y, theme.FontSM, theme.TextBody)
 
 		peakTxt := fmt.Sprintf("最高 %.0f", d.PeakStrength)
 		fm.DrawRightText(screen, peakTxt, x+w, y, theme.FontSM, theme.TextMuted)

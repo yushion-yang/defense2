@@ -47,15 +47,13 @@ func (s *CoreState) DescParams(w *warden.Warden) map[string]string {
 		"damage":         fmt.Sprintf("%.0f", s.Damage),
 		"aoeThreshold":   fmt.Sprintf("%d", coreAoeThreshold),
 		"execHpPct":      fmt.Sprintf("%.0f", coreExecHpPct*100),
-		"execDmg":        fmt.Sprintf("%.0f", s.Damage*coreExecMulti),
 	}
 }
 
 const (
 	coreOrbitDist    = 110.0
-	coreAoeThreshold = 4   // 射程内敌人数 ≥ 此值时切换范围攻击
-	coreExecHpPct    = 0.3 // 目标血量 < 30% 触发斩杀
-	coreExecMulti    = 1.5 // 斩杀伤害倍率
+	coreAoeThreshold = 4    // 射程内敌人数 ≥ 此值时切换范围攻击
+	coreExecHpPct    = 0.20 // 目标血量 < 20% 触发秒杀
 )
 
 func (b *coreBehavior) Tick(w *warden.Warden, ctx *warden.TickContext) {
@@ -103,8 +101,16 @@ func countInRange(s *CoreState, ctx *warden.TickContext) int {
 	return n
 }
 
-// coreAttack 机甲战灵攻击：斩杀加成 + 智能 AoE 切换。
-// 单体模式发射弹射物，AoE 模式对范围内所有敌人各发射一颗弹射物。
+// coreExecDmg 计算秒杀伤害：非 Boss 且血量 < 20% 时直接秒杀，否则正常伤害。
+func coreExecDmg(e *enemy.Enemy, baseDmg float64) float64 {
+	if !e.Boss && e.HP < e.MaxHP*coreExecHpPct {
+		return e.HP // 秒杀：伤害 = 剩余血量
+	}
+	return baseDmg
+}
+
+// coreAttack 机甲战灵攻击：秒杀（对 Boss 无效）+ 智能 AoE 切换。
+// 单体模式发射弹射物，AoE 模式对射程内所有敌人各发射一颗弹射物。
 func coreAttack(s *CoreState, ctx *warden.TickContext) {
 	nearest := s.FindNearest(ctx.Enemies)
 	if nearest == nil {
@@ -118,26 +124,19 @@ func coreAttack(s *CoreState, ctx *warden.TickContext) {
 
 	inRange := countInRange(s, ctx)
 
-	if inRange >= coreAoeThreshold && s.AoERadius > 0 {
-		// AoE 模式：对范围内每个敌人发射弹射物
-		tx, ty := nearest.X, nearest.Y
+	if inRange >= coreAoeThreshold {
+		// AoE 模式：对射程内每个敌人发射弹射物
 		ctx.Enemies.Each(func(e *enemy.Enemy) {
-			if math.Hypot(e.X-tx, e.Y-ty) <= s.AoERadius {
-				dmg := s.Damage
-				if e.HP < e.MaxHP*coreExecHpPct {
-					dmg *= coreExecMulti
-				}
+			if math.Hypot(e.X-s.X, e.Y-s.Y) <= s.Range {
+				dmg := coreExecDmg(e, s.Damage)
 				if ctx.Projectiles != nil {
 					ctx.Projectiles.Fire(s.X, s.Y, e.X, e.Y, dmg, speed, 4, e, "warden")
 				}
 			}
 		})
 	} else {
-		// 单体模式：发射弹射物（斩杀加成）
-		dmg := s.Damage
-		if nearest.HP < nearest.MaxHP*coreExecHpPct {
-			dmg *= coreExecMulti
-		}
+		// 单体模式
+		dmg := coreExecDmg(nearest, s.Damage)
 		if ctx.Projectiles != nil {
 			ctx.Projectiles.Fire(s.X, s.Y, nearest.X, nearest.Y, dmg, speed, 4, nearest, "warden")
 		}

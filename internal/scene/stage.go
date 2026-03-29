@@ -1539,6 +1539,13 @@ func (s *StageScene) drawScene(screen *ebiten.Image) {
 	animTime := float64(s.frame) / 60.0
 	s.towerRenderer.DrawTowers(worldTarget, s.towers, s.selectedTower, animTime)
 
+	// 被 buff 的塔显示强化特效（五角星芒）
+	s.towers.Each(func(t *tower.Tower) {
+		if len(t.Buffs) > 0 {
+			render.DrawTowerBuffEffect(worldTarget, t, animTime)
+		}
+	})
+
 	// 调试射程圈（测试模式下显示所有塔的射程）
 	if s.debugShowRange {
 		s.towers.Each(func(t *tower.Tower) {

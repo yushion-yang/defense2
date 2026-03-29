@@ -67,12 +67,17 @@ func (s *WardenState) DecayShootTimer(dt float64) {
 }
 
 // ApplyStrength 根据战灵感知强度更新有效伤害。
-// 公式：Damage = BaseDamage * (1 + PerceivedStrength / 100)
+// 公式：Damage = BaseDamage * PerceivedStrength / 100
+// 强度 100 = 基准（伤害 = BaseDamage），200 = 双倍。
 func (s *WardenState) ApplyStrength(w *Warden) {
 	if s.BaseDamage == 0 {
 		s.BaseDamage = s.Damage
 	}
-	s.Damage = s.BaseDamage * (1 + w.PerceivedStrength/100)
+	str := w.PerceivedStrength
+	if str < 1 {
+		str = 1 // 避免零伤害
+	}
+	s.Damage = s.BaseDamage * str / 100
 }
 
 // ── 移动 ────────────────────────────────────────

@@ -63,8 +63,9 @@ func NewWarden(id int, name, typ string) *Warden {
 		Type:              typ,
 		Active:            true,
 		Level:             1,
-		GrowthOnKill:      2, // 默认值，可被配置覆盖
-		GrowthOnWaveClear: 5, // 默认值，可被配置覆盖
+		SelfStrength:      100, // 初始强度 100
+		GrowthOnKill:      2,   // 默认值，可被配置覆盖
+		GrowthOnWaveClear: 5,   // 默认值，可被配置覆盖
 	}
 	if b, ok := behaviors[typ]; ok {
 		w.State = b.Init(w)
