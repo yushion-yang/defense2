@@ -8,6 +8,7 @@ import (
 	gameAudio "defense2/internal/audio"
 	"defense2/internal/config"
 	"defense2/internal/core/game"
+	"defense2/internal/core/tower/abilities"
 	"defense2/internal/render"
 	"defense2/internal/render/draw"
 
@@ -27,6 +28,7 @@ type Game struct {
 func NewGame() *Game {
 	initFont()
 	render.InitGlobalIcons(config.GetAssetFS())
+	abilities.InitConfigAbilities() // 从 abilities.json 注册数据驱动能力
 	g := &Game{
 		width:    game.ScreenWidth,
 		height:   game.ScreenHeight,

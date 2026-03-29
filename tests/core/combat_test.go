@@ -3,7 +3,9 @@ package core_test
 import (
 	"testing"
 
-	_ "defense2/internal/core/tower/abilities" // register abilities
+	defense2 "defense2"
+	"defense2/internal/config"
+	"defense2/internal/core/tower/abilities"
 
 	"defense2/internal/core/enemy"
 	"defense2/internal/core/pipeline"
@@ -96,7 +98,8 @@ func TestTickTowerCombatFires(t *testing.T) {
 }
 
 func TestAbilityRegistry(t *testing.T) {
-	// Abilities registered via init() in abilities package
+	config.SetDataFS(&defense2.DataFS)
+	abilities.InitConfigAbilities()
 	expected := []string{"splash", "crit", "onHitSlow", "bleedDot"}
 	for _, name := range expected {
 		if _, ok := tower.Registry[name]; !ok {

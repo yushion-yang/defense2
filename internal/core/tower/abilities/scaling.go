@@ -4,6 +4,7 @@
 package abilities
 
 import (
+	"fmt"
 	"math"
 	"math/rand"
 
@@ -11,6 +12,21 @@ import (
 	"defense2/internal/core/projectile"
 	"defense2/internal/core/tower"
 )
+
+// 辅助函数（从已删除的旧能力文件迁移）
+func towerAccKey(t *tower.Tower) string {
+	return fmt.Sprintf("%s_%d_%d", t.Key, t.Row, t.Col)
+}
+
+func distToEnemy(t *tower.Tower, e *enemy.Enemy) float64 {
+	return math.Hypot(t.X-e.X, t.Y-e.Y)
+}
+
+func distBetweenTowers(a, b *tower.Tower) float64 {
+	return math.Hypot(a.X-b.X, a.Y-b.Y)
+}
+
+const auraRadius = 150.0
 
 func init() {
 	tower.Register(&KillUpgrade{})
