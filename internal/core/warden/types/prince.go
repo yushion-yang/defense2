@@ -117,13 +117,17 @@ func (b *princeBehavior) Tick(w *warden.Warden, ctx *warden.TickContext) {
 		s.Wander(dt)
 	}
 
-	// 2-3. 攻击 + 火球（仅有敌人时计时）
+	// 2. 普攻（需要射程内有敌人）
 	if count > 0 {
 		s.AttackTimer -= dt
 		if s.AttackTimer <= 0 {
 			s.AttackTimer += s.AttackInterval
 			s.BasicAttack(ctx)
 		}
+	}
+
+	// 3. 被动：虚空火球（场上有敌人即可，不需要进入攻击范围）
+	if count > 0 {
 		s.FireballTimer -= dt
 		if s.FireballTimer <= 0 {
 			s.FireballTimer += s.FireballInterval

@@ -205,65 +205,131 @@ func drawChainEffects(screen *ebiten.Image, s *wardenTypes.ChainState) {
 	}
 }
 
-// ── 水灵特效：天降冰柱/水花 ──
+// ── 水灵特效：每个被选中敌人头顶天降冰柱 + 轻微命中闪光 ──
 
 func drawSkystrikeEffects(screen *ebiten.Image, s *wardenTypes.SkystrikeState) {
-	if s.StrikeTimer <= 0 {
-		return
+	for _, st := range s.Strikes {
+		drawSingleStrike(screen, st)
 	}
-	p := s.StrikeTimer / 0.5 // 1→0 衰减
-	sx, sy := float32(s.StrikeX), float32(s.StrikeY)
-
-	// 根据模式选择颜色
-	var baseClr, coreClr color.RGBA
-	switch s.LastMode {
-	case 1: // 散射 — 天蓝色
-		baseClr = color.RGBA{R: 80, G: 200, B: 255, A: uint8(120 * p)}
-		coreClr = color.RGBA{R: 160, G: 230, B: 255, A: uint8(200 * p)}
-	case 2: // 连击 — 深蓝色
-		baseClr = color.RGBA{R: 40, G: 120, B: 255, A: uint8(130 * p)}
-		coreClr = color.RGBA{R: 120, G: 180, B: 255, A: uint8(220 * p)}
-	case 3: // 收割 — 冰白色
-		baseClr = color.RGBA{R: 180, G: 220, B: 255, A: uint8(100 * p)}
-		coreClr = color.RGBA{R: 220, G: 240, B: 255, A: uint8(200 * p)}
-	default:
-		baseClr = color.RGBA{R: 80, G: 200, B: 255, A: uint8(120 * p)}
-		coreClr = color.RGBA{R: 160, G: 230, B: 255, A: uint8(200 * p)}
-	}
-
-	// 天降冰柱：从上方到打击点的垂直光柱
-	beamTop := sy - 80*float32(p) // 光柱从上方降下
-	draw.Line(screen, sx-3, beamTop, sx-1, sy, 3, baseClr, true)
-	draw.Line(screen, sx+3, beamTop, sx+1, sy, 3, baseClr, true)
-	draw.Line(screen, sx, beamTop-10, sx, sy, 2, coreClr, true)
-
-	// 落地冲击波纹（向外扩散）
-	waveR := float32(s.AoERadius) * float32(1.5-0.5*p)
-	draw.CircleOutline(screen, sx, sy, waveR, 1.5,
-		color.RGBA{R: baseClr.R, G: baseClr.G, B: baseClr.B, A: uint8(80 * p)})
-	draw.CircleOutline(screen, sx, sy, waveR*0.6, 1,
-		color.RGBA{R: coreClr.R, G: coreClr.G, B: coreClr.B, A: uint8(60 * p)})
-
-	// 落点冰花
-	draw.FilledCircle(screen, sx, sy, float32(8*p),
-		color.RGBA{R: coreClr.R, G: coreClr.G, B: coreClr.B, A: uint8(150 * p)})
-	// 碎冰粒子（4个方向）
-	spread := float32(20 * (1 - p))
-	pAlpha := uint8(100 * p)
-	draw.FilledCircle(screen, sx-spread, sy-spread*0.5, 2, color.RGBA{R: 200, G: 230, B: 255, A: pAlpha})
-	draw.FilledCircle(screen, sx+spread, sy-spread*0.3, 2, color.RGBA{R: 200, G: 230, B: 255, A: pAlpha})
-	draw.FilledCircle(screen, sx-spread*0.7, sy+spread*0.4, 2, color.RGBA{R: 200, G: 230, B: 255, A: pAlpha})
-	draw.FilledCircle(screen, sx+spread*0.5, sy+spread*0.6, 2, color.RGBA{R: 200, G: 230, B: 255, A: pAlpha})
 }
 
-// ── 金灵特效：射击闪光（连线和塔顶特效改为五星芒阵在 draw_tower_buff.go 中处理）──
+func drawSingleStrike(screen *ebiten.Image, st wardenTypes.StrikeVFX) {
+	p := float32(st.Timer / 0.8) // 1→0
+	sx, sy := float32(st.X), float32(st.Y)
+
+	switch st.Mode {
+	case 1:
+		drawIceCone(screen, sx, sy, p)
+	case 2:
+		drawWaterDrop(screen, sx, sy, p)
+	case 3:
+		drawGeyser(screen, sx, sy, p)
+	default:
+		drawIceCone(screen, sx, sy, p)
+	}
+}
+
+// ── 散射：冰锥从高处加速坠落砸中 ──
+func drawIceCone(screen *ebiten.Image, sx, sy, p float32) {
+	a := uint8(200 * p)
+	// 冰锥从 80px 上方加速落下（p*p 加速曲线，越接近地面越快）
+	drop := 80 * p * p
+	tipY := sy - drop
+	// 菱形冰锥：上尖下宽
+	draw.Line(screen, sx, tipY-8, sx-4, tipY, 1.5, color.RGBA{R: 120, G: 210, B: 255, A: a}, true)
+	draw.Line(screen, sx, tipY-8, sx+4, tipY, 1.5, color.RGBA{R: 120, G: 210, B: 255, A: a}, true)
+	draw.Line(screen, sx-4, tipY, sx, tipY+5, 1.5, color.RGBA{R: 120, G: 210, B: 255, A: a}, true)
+	draw.Line(screen, sx+4, tipY, sx, tipY+5, 1.5, color.RGBA{R: 120, G: 210, B: 255, A: a}, true)
+	// 冰锥高光
+	draw.FilledCircle(screen, sx, tipY-2, 2, color.RGBA{R: 220, G: 245, B: 255, A: a})
+
+	// 落地冲击（只在接近地面时，p < 0.4）
+	if p < 0.4 {
+		ip := (0.4 - p) / 0.4 // 0→1
+		ia := uint8(180 * ip)
+		draw.FilledCircle(screen, sx, sy, float32(6*ip), color.RGBA{R: 160, G: 230, B: 255, A: ia / 2})
+		draw.FilledCircle(screen, sx, sy, float32(3*ip), color.RGBA{R: 220, G: 245, B: 255, A: ia})
+		// 碎冰
+		sp := float32(8 * ip)
+		draw.FilledCircle(screen, sx-sp, sy-sp*0.4, 1.5, color.RGBA{R: 200, G: 235, B: 255, A: ia / 2})
+		draw.FilledCircle(screen, sx+sp*0.8, sy+sp*0.3, 1.5, color.RGBA{R: 200, G: 235, B: 255, A: ia / 2})
+	}
+}
+
+// ── 连击：水滴从高处加速坠落溅开 ──
+func drawWaterDrop(screen *ebiten.Image, sx, sy, p float32) {
+	a := uint8(220 * p)
+	// 水滴从 60px 上方加速落下
+	drop := 60 * p * p
+	dropY := sy - drop
+	// 水滴（椭圆形）
+	draw.FilledCircle(screen, sx, dropY, 3, color.RGBA{R: 60, G: 140, B: 255, A: a})
+	draw.FilledCircle(screen, sx, dropY-2, 1.5, color.RGBA{R: 150, G: 200, B: 255, A: a})
+
+	// 溅射（落地后）
+	if p < 0.5 {
+		ip := (0.5 - p) / 0.5
+		ia := uint8(160 * ip)
+		// 水花向两侧溅开
+		sp := float32(6 * ip)
+		draw.FilledCircle(screen, sx-sp, sy-sp*0.3, 2, color.RGBA{R: 80, G: 160, B: 255, A: ia})
+		draw.FilledCircle(screen, sx+sp, sy-sp*0.2, 2, color.RGBA{R: 80, G: 160, B: 255, A: ia})
+		draw.FilledCircle(screen, sx, sy, float32(4*ip), color.RGBA{R: 120, G: 190, B: 255, A: ia / 2})
+	}
+}
+
+// ── 收割：水柱从地面冲击涌起 ──
+func drawGeyser(screen *ebiten.Image, sx, sy, p float32) {
+	a := uint8(180 * p)
+	// 水柱从地面向上涌起（不是从天降下）
+	height := float32(35 * p)
+	// 底部水花
+	draw.FilledCircle(screen, sx, sy, float32(8*p), color.RGBA{R: 140, G: 210, B: 255, A: a / 3})
+	// 水柱（多层，从底部往上渐细）
+	draw.Line(screen, sx-3, sy, sx-2, sy-height, 3, color.RGBA{R: 100, G: 190, B: 255, A: a}, true)
+	draw.Line(screen, sx+3, sy, sx+2, sy-height, 3, color.RGBA{R: 100, G: 190, B: 255, A: a}, true)
+	draw.Line(screen, sx, sy, sx, sy-height-5, 2, color.RGBA{R: 200, G: 235, B: 255, A: a}, true)
+	// 顶部水花飞溅
+	draw.FilledCircle(screen, sx, sy-height-3, float32(3*p), color.RGBA{R: 220, G: 240, B: 255, A: a})
+	// 侧面水珠
+	if p > 0.3 {
+		sp := float32((p - 0.3) / 0.7)
+		spr := float32(12 * sp)
+		sa := uint8(120 * sp)
+		draw.FilledCircle(screen, sx-spr, sy-height*0.6, 2, color.RGBA{R: 160, G: 220, B: 255, A: sa})
+		draw.FilledCircle(screen, sx+spr*0.8, sy-height*0.5, 1.5, color.RGBA{R: 160, G: 220, B: 255, A: sa})
+		draw.FilledCircle(screen, sx-spr*0.5, sy-height*0.3, 1.5, color.RGBA{R: 160, G: 220, B: 255, A: sa})
+	}
+}
+
+// ── 金灵特效：射击闪光 + 施 buff 时短暂金色光束 ──
 
 func drawEnvoyEffects(screen *ebiten.Image, s *wardenTypes.EnvoyState) {
-	if s.ShootTimer <= 0 {
+	// 射击闪光
+	if s.ShootTimer > 0 {
+		p := s.ShootTimer / 0.15
+		alpha := uint8(180 * p)
+		draw.FilledCircle(screen, float32(s.X), float32(s.Y), float32(5+3*p),
+			color.RGBA{R: 255, G: 210, B: 80, A: alpha / 2})
+	}
+
+	// 施 buff 瞬间：短暂金色光束（仅 buff 刚施加的前 0.6s）
+	if s.BuffedTower == nil || s.BuffExpiry <= 0 {
 		return
 	}
-	p := s.ShootTimer / 0.15
-	alpha := uint8(180 * p)
-	draw.FilledCircle(screen, float32(s.X), float32(s.Y), float32(5+3*p),
-		color.RGBA{R: 255, G: 210, B: 80, A: alpha / 2})
+	elapsed := s.BuffDuration - s.BuffExpiry // 已过去的时间
+	if elapsed > 0.6 {
+		return
+	}
+	p := 1.0 - elapsed/0.6 // 1→0 衰减
+	alpha := uint8(200 * p)
+	tx, ty := float32(s.BuffedTower.X), float32(s.BuffedTower.Y)
+	wx, wy := float32(s.X), float32(s.Y)
+
+	// 金色光束
+	draw.Line(screen, wx, wy, tx, ty, float32(2*p),
+		color.RGBA{R: 255, G: 220, B: 80, A: alpha}, true)
+	// 塔顶闪光
+	draw.FilledCircle(screen, tx, ty, float32(10*p),
+		color.RGBA{R: 255, G: 240, B: 130, A: alpha / 2})
 }

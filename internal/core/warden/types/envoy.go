@@ -48,8 +48,8 @@ func (b *EnvoyBehavior) Init(w *warden.Warden) interface{} {
 			Range:          140,
 			MoveSpeed:      320,
 		},
-		BuffInterval:  5.0,
-		BuffDuration:  4.0, // 比 interval 短 1s，确保 buff 会到期
+		BuffInterval:  10.0,
+		BuffDuration:  6.0, // 比 interval 短 1s，确保 buff 会到期
 		BuffThreshold: 100, // 临时 buff = 强度 - 100
 		PermGrant:     5,   // 每次永久 +5 强度
 	}

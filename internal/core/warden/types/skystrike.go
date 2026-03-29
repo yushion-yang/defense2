@@ -36,12 +36,23 @@ type SkystrikeState struct {
 	HpTargets int     // 目标数
 	HpPercent float64 // 每目标伤害 = MaxHP × 此百分比
 
-	// 渲染用字段（上次特殊攻击视觉效果）
-	StrikeX     float64 // 上次打击位置 X
-	StrikeY     float64 // 上次打击位置 Y
-	StrikeTimer float64 // 视觉效果倒计时
-	AoERadius   float64 // 视觉效果半径
-	LastMode    int     // 上次使用的模式（1/2/3，渲染用）
+	// 渲染用字段
+	Strikes  []StrikeVFX // 活跃的天降打击特效列表
+	LastMode int         // 上次使用的模式（1/2/3，渲染用）
+
+	// 连击延时状态（模式 2）
+	BurstTarget   *enemy.Enemy // 连击目标
+	BurstDmgValue float64      // 每段伤害值
+	BurstPending  int          // 剩余连击段数
+	BurstDelay    float64      // 段间倒计时
+}
+
+// StrikeVFX 单个天降打击的视觉效果状态。
+type StrikeVFX struct {
+	X, Y   float64      // 打击位置（初始快照）
+	Target *enemy.Enemy // 跟踪目标（存活时跟随其 X 坐标）
+	Timer  float64      // 剩余显示时间（0.8s）
+	Mode   int          // 攻击模式（1/2/3）
 }
 
 // Base 实现 Stateful 接口。
@@ -60,14 +71,13 @@ func (b *SkystrikeBehavior) Init(w *warden.Warden) interface{} {
 			Range:          140,
 			MoveSpeed:      320,
 		},
-		SpecialInterval: 3.0,
+		SpecialInterval: 1.0,
 		MultiTargets:    3,
-		MultiDmgRatio:   3.0, // 300% 攻击力
-		BurstHits:       4,
-		BurstDmgRatio:   2.0, // 200% 攻击力 × 4 段
+		MultiDmgRatio:   2.0, // 300% 攻击力
+		BurstHits:       5,
+		BurstDmgRatio:   1.0, // 200% 攻击力 × 4 段
 		HpTargets:       3,
-		HpPercent:       0.20, // 20% 最大生命值
-		AoERadius:       60,
+		HpPercent:       0.10, // 20% 最大生命值
 	}
 }
 
@@ -104,16 +114,32 @@ func (b *SkystrikeBehavior) Tick(w *warden.Warden, ctx *warden.TickContext) {
 		s.Wander(dt)
 	}
 
-	// 2-3. 攻击 + 特殊（仅有敌人时计时）
-	if s.StrikeTimer > 0 {
-		s.StrikeTimer -= dt
+	// 特效递减
+	tickStrikes(s, dt)
+
+	// 连击延时处理（模式 2 分段出伤）
+	if s.BurstPending > 0 {
+		s.BurstDelay -= dt
+		if s.BurstDelay <= 0 {
+			s.BurstDelay += 0.15
+			if s.BurstTarget != nil && s.BurstTarget.Active {
+				applyDmg(s.BurstTarget, s.BurstDmgValue, ctx)
+				addStrike(s, s.BurstTarget, 2)
+			}
+			s.BurstPending--
+		}
 	}
+	// 普攻（需要射程内有敌人）
 	if count > 0 {
 		s.AttackTimer -= dt
 		if s.AttackTimer <= 0 {
 			s.AttackTimer += s.AttackInterval
 			s.BasicAttack(ctx)
 		}
+	}
+
+	// 被动：水灵秘术（场上有敌人即可，不需要进入攻击范围）
+	if count > 0 {
 		s.SpecialTimer -= dt
 		if s.SpecialTimer <= 0 {
 			s.SpecialTimer += s.SpecialInterval
@@ -154,20 +180,22 @@ func skystrikeMulti(s *SkystrikeState, ctx *warden.TickContext, alive []*enemy.E
 	dmg := s.Damage * s.MultiDmgRatio
 	for _, e := range targets {
 		applyDmg(e, dmg, ctx)
-		s.StrikeX, s.StrikeY = e.X, e.Y
+		addStrike(s, e, 1)
 	}
-	s.StrikeTimer = 0.5
 }
 
-// 模式 2：随机单目标，N 段各 ratio% 攻击力伤害。
+// 模式 2：随机单目标，N 段延时连击（每段间隔 0.15s）。
 func skystrikeBurst(s *SkystrikeState, ctx *warden.TickContext, alive []*enemy.Enemy) {
 	target := alive[rand.Intn(len(alive))]
 	dmg := s.Damage * s.BurstDmgRatio
-	for i := 0; i < s.BurstHits; i++ {
-		applyDmg(target, dmg, ctx)
-	}
-	s.StrikeX, s.StrikeY = target.X, target.Y
-	s.StrikeTimer = 0.5
+	// 第一段立即出伤
+	applyDmg(target, dmg, ctx)
+	addStrike(s, target, 2)
+	// 剩余段数进入延时队列
+	s.BurstTarget = target
+	s.BurstDmgValue = dmg
+	s.BurstPending = s.BurstHits - 1
+	s.BurstDelay = 0.15
 }
 
 // 模式 3：随机 N 目标，各受 X% 最大生命值伤害（Boss 免疫）。
@@ -186,9 +214,8 @@ func skystrikeHpPercent(s *SkystrikeState, ctx *warden.TickContext, alive []*ene
 	for _, e := range targets {
 		dmg := e.MaxHP * s.HpPercent
 		applyDmg(e, dmg, ctx)
-		s.StrikeX, s.StrikeY = e.X, e.Y
+		addStrike(s, e, 3)
 	}
-	s.StrikeTimer = 0.5
 }
 
 // applyDmg 对敌人施加伤害（统一走 ApplyDamage）。
@@ -216,6 +243,34 @@ func pickRandom(list []*enemy.Enemy, n int) []*enemy.Enemy {
 		result[i] = list[perm[i]]
 	}
 	return result
+}
+
+// addStrike 在指定敌人位置添加一个天降打击特效。
+func addStrike(s *SkystrikeState, e *enemy.Enemy, mode int) {
+	s.Strikes = append(s.Strikes, StrikeVFX{
+		X: e.X, Y: e.Y, Target: e, Timer: 0.8, Mode: mode,
+	})
+	s.LastMode = mode
+}
+
+// tickStrikes 递减计时器，跟随存活敌人的 X 坐标，移除过期的。
+func tickStrikes(s *SkystrikeState, dt float64) {
+	n := 0
+	for i := range s.Strikes {
+		st := &s.Strikes[i]
+		st.Timer -= dt
+		if st.Timer <= 0 {
+			continue
+		}
+		// 跟随存活敌人的横坐标
+		if st.Target != nil && st.Target.Active {
+			st.X = st.Target.X
+			st.Y = st.Target.Y
+		}
+		s.Strikes[n] = s.Strikes[i]
+		n++
+	}
+	s.Strikes = s.Strikes[:n]
 }
 
 // unused import guard
