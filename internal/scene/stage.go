@@ -1039,6 +1039,30 @@ func (s *StageScene) debugActions() []hud.DebugAction {
 		hud.DebugAction{Label: rangeLabel, Action: func() { s.debugShowRange = !s.debugShowRange }},
 	)
 
+	// ── 配置审计 ──
+	actions = append(actions,
+		hud.DebugAction{Label: "配置审计", IsSection: true},
+		hud.DebugAction{Label: "能力装备检查", Action: func() {
+			audit, err := config.AuditAbilities()
+			if err != nil {
+				hud.ShowToast("审计失败: " + err.Error())
+				return
+			}
+			msg := fmt.Sprintf("总%d 装备%d 储备%d", audit.Total, len(audit.Equipped), len(audit.NotEquipped))
+			if len(audit.Orphaned) > 0 {
+				msg += fmt.Sprintf(" 孤儿%d!", len(audit.Orphaned))
+			}
+			hud.ShowToast(msg)
+			// 详细信息打印到控制台
+			for _, a := range audit.NotEquipped {
+				fmt.Printf("  储备能力: %s\n", a)
+			}
+			for _, a := range audit.Orphaned {
+				fmt.Printf("  ⚠ 孤儿引用: %s\n", a)
+			}
+		}},
+	)
+
 	return actions
 }
 
