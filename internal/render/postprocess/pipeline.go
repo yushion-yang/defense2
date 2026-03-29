@@ -42,6 +42,14 @@ func (p *Pipeline) SceneBuffer(physW, physH int) *ebiten.Image {
 		physW, physH = 1, 1
 	}
 	if p.sceneBuffer == nil || p.sceneW != physW || p.sceneH != physH {
+		// Deallocate old GPU textures before replacing.
+		if p.sceneBuffer != nil {
+			p.sceneBuffer.Deallocate()
+			p.bloomExtracted.Deallocate()
+			p.bloomBlurA.Deallocate()
+			p.bloomBlurB.Deallocate()
+			p.bloomUpscaled.Deallocate()
+		}
 		p.sceneW = physW
 		p.sceneH = physH
 		p.sceneBuffer = ebiten.NewImage(physW, physH)
