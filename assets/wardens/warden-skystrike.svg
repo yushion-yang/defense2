@@ -1,18 +1,120 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128">
   <defs>
-    <radialGradient id="wg0" cx="50%" cy="50%" r="50%"><stop offset="0%" stop-color="#38bdf8" stop-opacity="0.35"/><stop offset="100%" stop-color="#38bdf8" stop-opacity="0"/></radialGradient>
-    <linearGradient id="wg1" x1="50%" y1="0%" x2="50%" y2="100%"><stop offset="0%" stop-color="#38bdf8" /><stop offset="60%" stop-color="#0ea5e9" /><stop offset="100%" stop-color="#0369a1" /></linearGradient>
+    <linearGradient id="skyBody" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#38bdf8"/>
+      <stop offset="40%" stop-color="#0ea5e9"/>
+      <stop offset="100%" stop-color="#0369a1"/>
+    </linearGradient>
+    <linearGradient id="skyInner" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#bae6fd"/>
+      <stop offset="100%" stop-color="#0ea5e9"/>
+    </linearGradient>
+    <radialGradient id="skyGlow" cx="50%" cy="35%" r="55%">
+      <stop offset="0%" stop-color="#38bdf8" stop-opacity="0.2"/>
+      <stop offset="50%" stop-color="#0ea5e9" stop-opacity="0.1"/>
+      <stop offset="100%" stop-color="#0369a1" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="skyCore" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#ffffff" stop-opacity="0.95"/>
+      <stop offset="30%" stop-color="#bae6fd" stop-opacity="0.85"/>
+      <stop offset="70%" stop-color="#38bdf8" stop-opacity="0.4"/>
+      <stop offset="100%" stop-color="#0ea5e9" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="skyBeam" cx="50%" cy="0%" r="100%">
+      <stop offset="0%" stop-color="#38bdf8" stop-opacity="0.6"/>
+      <stop offset="50%" stop-color="#0ea5e9" stop-opacity="0.3"/>
+      <stop offset="100%" stop-color="#0369a1" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="skyBeamLine" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#38bdf8" stop-opacity="0.6"/>
+      <stop offset="100%" stop-color="#38bdf8" stop-opacity="0.1"/>
+    </linearGradient>
+    <filter id="skyGl"><feGaussianBlur stdDeviation="2.5" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+    <filter id="skyGls"><feGaussianBlur stdDeviation="1.5" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+    <filter id="skyGlt"><feGaussianBlur stdDeviation="0.8" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
   </defs>
-  <!-- 天降: 天蓝色倒三角降雷体，顶部圆形瞄准镜，底部三道光柱向下辐射 -->
-  <circle cx="64" cy="48" r="50" fill="url(#wg0)"/>
-  <polygon points="28,28,100,28,64,108" fill="url(#wg1)" stroke="#bae6fd" stroke-width="2"/>
-  <circle cx="64" cy="48" r="14" fill="#bae6fd" opacity="0.85"/><circle cx="64" cy="48" r="8" fill="#fff" opacity="0.9"/>
-  <circle cx="64" cy="48" r="20" fill="none" stroke="#bae6fd" stroke-width="1.5" opacity="0.5"/><line x1="64" y1="24" x2="64" y2="34" stroke="#bae6fd" stroke-width="1.5" opacity="0.5"/><line x1="64" y1="62" x2="64" y2="72" stroke="#bae6fd" stroke-width="1.5" opacity="0.5"/><line x1="40" y1="48" x2="50" y2="48" stroke="#bae6fd" stroke-width="1.5" opacity="0.5"/><line x1="78" y1="48" x2="88" y2="48" stroke="#bae6fd" stroke-width="1.5" opacity="0.5"/>
-  <line x1="48" y1="80" x2="40" y2="120" stroke="#38bdf8" stroke-width="4" stroke-linecap="round" opacity="0.4"/>
-  <line x1="64" y1="90" x2="64" y2="124" stroke="#38bdf8" stroke-width="5" stroke-linecap="round" opacity="0.4"/>
-  <line x1="80" y1="80" x2="88" y2="120" stroke="#38bdf8" stroke-width="4" stroke-linecap="round" opacity="0.4"/>
-  <ellipse cx="40" cy="120" rx="8" ry="3" fill="none" stroke="#bae6fd" stroke-width="1.5" opacity="0.35"/>
-  <ellipse cx="64" cy="124" rx="10" ry="3.5" fill="none" stroke="#bae6fd" stroke-width="1.5" opacity="0.35"/>
-  <ellipse cx="88" cy="120" rx="8" ry="3" fill="none" stroke="#bae6fd" stroke-width="1.5" opacity="0.35"/>
-  
+
+  <!-- === Layer 0: Ambient halo === -->
+  <circle cx="64" cy="46" r="56" fill="url(#skyGlow)"/>
+  <circle cx="64" cy="46" r="48" fill="none" stroke="#38bdf8" stroke-width="0.5" opacity="0.15" stroke-dasharray="2 5"/>
+
+  <!-- === Layer 1: Light beams (descending strike) === -->
+  <!-- Outer beams -->
+  <line x1="44" y1="76" x2="34" y2="122" stroke="url(#skyBeamLine)" stroke-width="5" stroke-linecap="round" opacity="0.35"/>
+  <line x1="64" y1="86" x2="64" y2="126" stroke="url(#skyBeamLine)" stroke-width="6" stroke-linecap="round" opacity="0.4"/>
+  <line x1="84" y1="76" x2="94" y2="122" stroke="url(#skyBeamLine)" stroke-width="5" stroke-linecap="round" opacity="0.35"/>
+  <!-- Inner beam cores (brighter) -->
+  <line x1="44" y1="78" x2="36" y2="118" stroke="#bae6fd" stroke-width="2" stroke-linecap="round" opacity="0.25"/>
+  <line x1="64" y1="88" x2="64" y2="124" stroke="#bae6fd" stroke-width="2.5" stroke-linecap="round" opacity="0.3"/>
+  <line x1="84" y1="78" x2="92" y2="118" stroke="#bae6fd" stroke-width="2" stroke-linecap="round" opacity="0.25"/>
+  <!-- Impact rings -->
+  <ellipse cx="35" cy="122" rx="9" ry="3" fill="none" stroke="#bae6fd" stroke-width="1.2" opacity="0.3"/>
+  <ellipse cx="35" cy="122" rx="5" ry="1.5" fill="#38bdf8" opacity="0.1"/>
+  <ellipse cx="64" cy="126" rx="11" ry="3.5" fill="none" stroke="#bae6fd" stroke-width="1.5" opacity="0.35"/>
+  <ellipse cx="64" cy="126" rx="6" ry="2" fill="#38bdf8" opacity="0.12"/>
+  <ellipse cx="93" cy="122" rx="9" ry="3" fill="none" stroke="#bae6fd" stroke-width="1.2" opacity="0.3"/>
+  <ellipse cx="93" cy="122" rx="5" ry="1.5" fill="#38bdf8" opacity="0.1"/>
+
+  <!-- === Layer 2: Main body (inverted triangle, crystalline) === -->
+  <polygon points="24,24 104,24 64,104" fill="url(#skyBody)" stroke="#bae6fd" stroke-width="1.8"/>
+  <!-- Body center line -->
+  <line x1="64" y1="28" x2="64" y2="96" stroke="#bae6fd" stroke-width="0.6" opacity="0.2"/>
+
+  <!-- === Layer 3: Crystal facets (armor panels) === -->
+  <!-- Upper left facet -->
+  <polygon points="32,28 24,24 44,58" fill="#0284c7" stroke="#38bdf8" stroke-width="0.6" opacity="0.5"/>
+  <!-- Upper right facet -->
+  <polygon points="96,28 104,24 84,58" fill="#0284c7" stroke="#38bdf8" stroke-width="0.6" opacity="0.5"/>
+  <!-- Lower left -->
+  <polygon points="38,44 24,24 54,72" fill="#0369a1" stroke="#0ea5e9" stroke-width="0.4" opacity="0.3"/>
+  <!-- Lower right -->
+  <polygon points="90,44 104,24 74,72" fill="#0369a1" stroke="#0ea5e9" stroke-width="0.4" opacity="0.3"/>
+  <!-- Center chevron -->
+  <polygon points="64,30 52,50 64,46 76,50" fill="#0ea5e9" opacity="0.3" stroke="#bae6fd" stroke-width="0.4"/>
+
+  <!-- === Layer 4: Side fins (wing-like stabilizers) === -->
+  <polygon points="28,26 8,38 18,30 26,24" fill="#075985" stroke="#38bdf8" stroke-width="0.8"/>
+  <polygon points="100,26 120,38 110,30 102,24" fill="#075985" stroke="#38bdf8" stroke-width="0.8"/>
+  <!-- Lower stabilizer fins -->
+  <polygon points="42,62 20,74 28,68 40,58" fill="#075985" stroke="#0ea5e9" stroke-width="0.6" opacity="0.7"/>
+  <polygon points="86,62 108,74 100,68 88,58" fill="#075985" stroke="#0ea5e9" stroke-width="0.6" opacity="0.7"/>
+
+  <!-- === Layer 5: Targeting optics === -->
+  <!-- Outer crosshair circle -->
+  <circle cx="64" cy="44" r="22" fill="none" stroke="#bae6fd" stroke-width="1" opacity="0.35"/>
+  <!-- Crosshair lines -->
+  <line x1="64" y1="18" x2="64" y2="30" stroke="#bae6fd" stroke-width="1.2" opacity="0.4"/>
+  <line x1="64" y1="58" x2="64" y2="70" stroke="#bae6fd" stroke-width="1.2" opacity="0.4"/>
+  <line x1="38" y1="44" x2="50" y2="44" stroke="#bae6fd" stroke-width="1.2" opacity="0.4"/>
+  <line x1="78" y1="44" x2="90" y2="44" stroke="#bae6fd" stroke-width="1.2" opacity="0.4"/>
+  <!-- Inner targeting ring -->
+  <circle cx="64" cy="44" r="16" fill="none" stroke="#bae6fd" stroke-width="0.6" opacity="0.25" stroke-dasharray="2 3"/>
+  <!-- Tick marks on crosshair -->
+  <line x1="64" y1="22" x2="64" y2="24" stroke="#ffffff" stroke-width="0.8" opacity="0.3"/>
+  <line x1="64" y1="64" x2="64" y2="66" stroke="#ffffff" stroke-width="0.8" opacity="0.3"/>
+  <line x1="42" y1="44" x2="44" y2="44" stroke="#ffffff" stroke-width="0.8" opacity="0.3"/>
+  <line x1="84" y1="44" x2="86" y2="44" stroke="#ffffff" stroke-width="0.8" opacity="0.3"/>
+
+  <!-- === Layer 6: Core lens (targeting eye) === -->
+  <circle cx="64" cy="44" r="12" fill="url(#skyCore)" filter="url(#skyGl)"/>
+  <circle cx="64" cy="44" r="8" fill="#bae6fd" opacity="0.75"/>
+  <circle cx="64" cy="44" r="4.5" fill="#e0f2fe" opacity="0.85"/>
+  <circle cx="64" cy="44" r="2" fill="#ffffff" opacity="0.95"/>
+  <!-- Lens ring -->
+  <circle cx="64" cy="44" r="14" fill="none" stroke="#38bdf8" stroke-width="1.2" opacity="0.5"/>
+  <!-- Lens reflection -->
+  <ellipse cx="61" cy="40" rx="2" ry="3" fill="#ffffff" opacity="0.2"/>
+
+  <!-- === Layer 7: Weapon pods (on sides) === -->
+  <rect x="14" y="32" width="10" height="4" rx="1.5" fill="#164e63" stroke="#38bdf8" stroke-width="0.5"/>
+  <rect x="104" y="32" width="10" height="4" rx="1.5" fill="#164e63" stroke="#38bdf8" stroke-width="0.5"/>
+  <circle cx="18" cy="34" r="1.2" fill="#22d3ee" filter="url(#skyGlt)"/>
+  <circle cx="110" cy="34" r="1.2" fill="#22d3ee" filter="url(#skyGlt)"/>
+
+  <!-- === Layer 8: Energy particles === -->
+  <circle cx="36" cy="96" r="1.5" fill="#bae6fd" opacity="0.4" filter="url(#skyGlt)"/>
+  <circle cx="92" cy="96" r="1.5" fill="#bae6fd" opacity="0.4" filter="url(#skyGlt)"/>
+  <circle cx="64" cy="108" r="2" fill="#38bdf8" opacity="0.3" filter="url(#skyGlt)"/>
+  <circle cx="50" cy="86" r="1" fill="#e0f2fe" opacity="0.35" filter="url(#skyGlt)"/>
+  <circle cx="78" cy="86" r="1" fill="#e0f2fe" opacity="0.35" filter="url(#skyGlt)"/>
 </svg>

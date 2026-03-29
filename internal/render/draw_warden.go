@@ -1,20 +1,62 @@
 // draw_warden.go — warden rendering.
-// Dispatches by warden type to render geometric representations.
+// Uses PNG sprites for warden bodies, keeps dynamic effects (shoot lines,
+// fireballs, flame trails, AoE strikes, buff connections) as code-rendered.
 package render
 
 import (
+	"fmt"
 	"image/color"
 	"math"
 
 	"defense2/internal/core/warden"
 	wardenTypes "defense2/internal/core/warden/types"
 	"defense2/internal/render/draw"
+	"defense2/internal/render/sprite"
 
 	"github.com/hajimehoshi/ebiten/v2"
 )
 
+// WardenRenderer manages warden PNG sprite rendering.
+type WardenRenderer struct {
+	cache   *sprite.Cache
+	assetFS AssetReader
+}
+
+// NewWardenRenderer creates a warden renderer.
+func NewWardenRenderer(assetFS AssetReader) *WardenRenderer {
+	return &WardenRenderer{
+		cache:   sprite.NewCache(),
+		assetFS: assetFS,
+	}
+}
+
+const wardenSpriteSize = 24 // display size in logical pixels
+
+// loadSprite loads and caches a warden's PNG sprite.
+// Convention: assets/wardens/warden-{type}.png
+func (wr *WardenRenderer) loadSprite(typ string) *ebiten.Image {
+	if wr.assetFS == nil || typ == "" {
+		return nil
+	}
+	path := fmt.Sprintf("assets/wardens/warden-%s.png", typ)
+	if cached := wr.cache.Get(path, wardenSpriteSize, wardenSpriteSize); cached != nil {
+		return cached
+	}
+	data, err := wr.assetFS.ReadFile(path)
+	if err != nil {
+		return nil
+	}
+	img, _ := wr.cache.GetOrParse(path, data, wardenSpriteSize, wardenSpriteSize)
+	return img
+}
+
+// GetSprite returns the cached sprite image for a warden type (for UI preview).
+func (wr *WardenRenderer) GetSprite(typ string) *ebiten.Image {
+	return wr.loadSprite(typ)
+}
+
 // DrawWarden renders a single warden entity.
-func DrawWarden(screen *ebiten.Image, w *warden.Warden) {
+func (wr *WardenRenderer) DrawWarden(screen *ebiten.Image, w *warden.Warden) {
 	if w == nil || !w.Active {
 		return
 	}
@@ -27,79 +69,66 @@ func DrawWarden(screen *ebiten.Image, w *warden.Warden) {
 		return
 	}
 
-	// 公共：射击线（所有能攻击的战灵共享）
-	if base.ShootTimer > 0 {
-		alpha := uint8(200 * (base.ShootTimer / 0.15))
-		clr := wardenShootColor(w.Type)
-		draw.Line(screen,
-			float32(base.X), float32(base.Y),
-			float32(base.LastTargetX), float32(base.LastTargetY),
-			2, color.RGBA{R: clr.R, G: clr.G, B: clr.B, A: alpha}, true)
+	// Type-specific effects (drawn BEFORE body so body renders on top)
+	switch s := w.State.(type) {
+	case *wardenTypes.PrinceState:
+		drawPrinceEffects(screen, s)
+	case *wardenTypes.EnvoyState:
+		drawEnvoyEffects(screen, s)
+	case *wardenTypes.SkystrikeState:
+		drawSkystrikeEffects(screen, s)
 	}
 
-	// 类型特有：本体形状
-	switch s := w.State.(type) {
-	case *wardenTypes.EnvoyState:
-		drawEnvoy(screen, s)
-	case *wardenTypes.PrinceState:
-		drawPrince(screen, s)
-	case *wardenTypes.CoreState:
-		drawCoreMechBody(screen, &s.WardenState)
-	case *wardenTypes.ChainState:
-		drawChainBody(screen, &s.WardenState)
-	case *wardenTypes.SkystrikeState:
-		drawSkystrikeBody(screen, s)
+	// Body sprite（根据精灵原始朝向校正旋转角度）
+	img := wr.loadSprite(w.Type)
+	if img != nil {
+		rotation := wardenSpriteRotation(w.Type, base.FacingAngle)
+		draw.SpriteRotated(screen, img, float64(base.X), float64(base.Y),
+			wardenSpriteSize, rotation, 0)
+	} else {
+		// Fallback: simple colored circle
+		draw.FilledCircle(screen, float32(base.X), float32(base.Y), 8,
+			wardenShootColor(w.Type))
 	}
 }
 
-// wardenShootColor 返回各类型战灵的射击线颜色。
+// wardenSpriteRotation 根据精灵原始朝向计算实际旋转角度。
+// rotation = facingAngle - spriteNativeAngle
+// 对称精灵（chain, envoy）不旋转。
+func wardenSpriteRotation(typ string, facingAngle float64) float64 {
+	switch typ {
+	case "prince", "core":
+		// 精灵朝上（-π/2），移动方向 facingAngle=0 时需旋转 +π/2
+		return facingAngle + math.Pi/2
+	case "skystrike":
+		// 精灵朝下（+π/2），移动方向 facingAngle=0 时需旋转 -π/2
+		return facingAngle - math.Pi/2
+	default:
+		// chain, envoy: 对称精灵不旋转
+		return 0
+	}
+}
+
+// wardenShootColor returns the shoot-line color for each warden type.
 func wardenShootColor(typ string) color.RGBA {
 	switch typ {
+	case "prince":
+		return color.RGBA{R: 255, G: 140, B: 30, A: 200}
 	case "core":
 		return color.RGBA{R: 100, G: 180, B: 255, A: 200}
 	case "chain":
-		return color.RGBA{R: 80, G: 255, B: 120, A: 200}
+		return color.RGBA{R: 160, G: 80, B: 255, A: 200}
 	case "skystrike":
 		return color.RGBA{R: 80, G: 200, B: 255, A: 200}
+	case "envoy":
+		return color.RGBA{R: 255, G: 200, B: 100, A: 200}
 	default:
 		return color.RGBA{R: 200, G: 200, B: 200, A: 200}
 	}
 }
 
-// drawEnvoy renders the envoy warden (purple circle, gold pulse when buff active).
-func drawEnvoy(screen *ebiten.Image, s *wardenTypes.EnvoyState) {
-	cx := float32(s.X)
-	cy := float32(s.Y)
-	r := float32(8)
-
-	// Aura
-	draw.FilledCircle(screen, cx, cy, r+4,
-		color.RGBA{R: 180, G: 120, B: 255, A: 40})
-
-	// Body: 金色光环表示 buff 激活中
-	bodyClr := color.RGBA{R: 180, G: 120, B: 255, A: 200}
-	if s.BuffExpiry > 0 {
-		bodyClr = color.RGBA{R: 255, G: 200, B: 100, A: 230}
-	}
-	draw.FilledCircle(screen, cx, cy, r, bodyClr)
-
-	// buff 连线：金灵 → 被 buff 的塔
-	if s.BuffExpiry > 0 && s.BuffedTower != nil {
-		alpha := uint8(120 * (s.BuffExpiry / 4.0))
-		if alpha > 120 {
-			alpha = 120
-		}
-		draw.Line(screen, cx, cy,
-			float32(s.BuffedTower.X), float32(s.BuffedTower.Y),
-			1, color.RGBA{R: 255, G: 200, B: 100, A: alpha}, true)
-	}
-}
-
-// drawPrince renders the fire spirit warden (orange diamond + fireballs + flame traces).
-func drawPrince(screen *ebiten.Image, s *wardenTypes.PrinceState) {
-	cx := float32(s.X)
-	cy := float32(s.Y)
-
+// drawPrinceEffects renders fire trails and fireballs (drawn under body).
+func drawPrinceEffects(screen *ebiten.Image, s *wardenTypes.PrinceState) {
 	// Flame trails (ground fire)
 	for _, t := range s.Trails {
 		alpha := uint8(120 * (t.Life / t.MaxLife))
@@ -109,79 +138,29 @@ func drawPrince(screen *ebiten.Image, s *wardenTypes.PrinceState) {
 
 	// Flying fireballs
 	for _, fb := range s.Fireballs {
-		fbClr := color.RGBA{R: 255, G: 180, B: 40, A: 230}
-		draw.FilledCircle(screen, float32(fb.X), float32(fb.Y), float32(fb.Radius)*0.5, fbClr)
-		// Tail glow
 		draw.FilledCircle(screen, float32(fb.X), float32(fb.Y), float32(fb.Radius)*0.8,
 			color.RGBA{R: 255, G: 120, B: 20, A: 60})
+		draw.FilledCircle(screen, float32(fb.X), float32(fb.Y), float32(fb.Radius)*0.5,
+			color.RGBA{R: 255, G: 180, B: 40, A: 230})
 	}
-
-	// Body (orange diamond)
-	r := float32(10)
-	bodyClr := color.RGBA{R: 255, G: 140, B: 30, A: 230}
-	draw.Diamond(screen, cx, cy, r, 2, bodyClr)
-	draw.FilledCircle(screen, cx, cy, r*0.5, bodyClr)
 }
 
-// drawCoreMechBody 渲染机甲战灵本体（蓝色旋转三角）。
-func drawCoreMechBody(screen *ebiten.Image, s *warden.WardenState) {
-	cx := float32(s.X)
-	cy := float32(s.Y)
-	r := float32(10)
-	bodyClr := color.RGBA{R: 60, G: 140, B: 255, A: 230}
-	angle := s.OrbitAngle
-
-	x1 := cx + r*float32(math.Cos(angle))
-	y1 := cy + r*float32(math.Sin(angle))
-	x2 := cx + r*float32(math.Cos(angle+2.4))
-	y2 := cy + r*float32(math.Sin(angle+2.4))
-	x3 := cx + r*float32(math.Cos(angle-2.4))
-	y3 := cy + r*float32(math.Sin(angle-2.4))
-	draw.Line(screen, x1, y1, x2, y2, 2, bodyClr, true)
-	draw.Line(screen, x2, y2, x3, y3, 2, bodyClr, true)
-	draw.Line(screen, x3, y3, x1, y1, 2, bodyClr, true)
-
-	draw.FilledCircle(screen, cx, cy, 3,
-		color.RGBA{R: 100, G: 200, B: 255, A: 200})
+// drawEnvoyEffects renders buff connection line.
+func drawEnvoyEffects(screen *ebiten.Image, s *wardenTypes.EnvoyState) {
+	if s.BuffExpiry <= 0 || s.BuffedTower == nil {
+		return
+	}
+	alpha := uint8(120 * (s.BuffExpiry / 4.0))
+	if alpha > 120 {
+		alpha = 120
+	}
+	draw.Line(screen, float32(s.X), float32(s.Y),
+		float32(s.BuffedTower.X), float32(s.BuffedTower.Y),
+		1, color.RGBA{R: 255, G: 200, B: 100, A: alpha}, true)
 }
 
-// drawChainBody 渲染聚能战灵本体（绿色菱形）。
-func drawChainBody(screen *ebiten.Image, s *warden.WardenState) {
-	cx := float32(s.X)
-	cy := float32(s.Y)
-
-	// 光环
-	draw.FilledCircle(screen, cx, cy, 12,
-		color.RGBA{R: 80, G: 255, B: 120, A: 30})
-
-	// 菱形本体
-	bodyClr := color.RGBA{R: 80, G: 230, B: 120, A: 220}
-	draw.Diamond(screen, cx, cy, 8, 2, bodyClr)
-	draw.FilledCircle(screen, cx, cy, 4, bodyClr)
-}
-
-// drawSkystrikeBody 渲染水灵战灵本体（天蓝色三角 + AoE 效果）。
-func drawSkystrikeBody(screen *ebiten.Image, s *wardenTypes.SkystrikeState) {
-	cx := float32(s.X)
-	cy := float32(s.Y)
-
-	// 三角本体
-	bodyClr := color.RGBA{R: 80, G: 200, B: 255, A: 220}
-	r := float32(9)
-	angle := s.OrbitAngle
-	x1 := cx + r*float32(math.Cos(angle))
-	y1 := cy + r*float32(math.Sin(angle))
-	x2 := cx + r*float32(math.Cos(angle+2.4))
-	y2 := cy + r*float32(math.Sin(angle+2.4))
-	x3 := cx + r*float32(math.Cos(angle-2.4))
-	y3 := cy + r*float32(math.Sin(angle-2.4))
-	draw.Line(screen, x1, y1, x2, y2, 2, bodyClr, true)
-	draw.Line(screen, x2, y2, x3, y3, 2, bodyClr, true)
-	draw.Line(screen, x3, y3, x1, y1, 2, bodyClr, true)
-	draw.FilledCircle(screen, cx, cy, 3,
-		color.RGBA{R: 120, G: 220, B: 255, A: 200})
-
-	// AoE 打击视觉效果
+// drawSkystrikeEffects renders AoE strike visual.
+func drawSkystrikeEffects(screen *ebiten.Image, s *wardenTypes.SkystrikeState) {
 	if s.StrikeTimer <= 0 {
 		return
 	}

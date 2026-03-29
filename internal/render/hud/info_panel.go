@@ -135,6 +135,25 @@ func DrawInfoPanel(screen *ebiten.Image, t *tower.Tower, sellValue int) {
 		}
 	}
 
+	// Row 5: Buff 列表
+	if len(t.Buffs) > 0 {
+		panel.AddSpace(2)
+		for _, b := range t.Buffs {
+			b := b
+			panel.AddRow(14, func(screen *ebiten.Image, x, y float64, w float64) {
+				// [来源] 描述 (剩余时间)
+				srcClr := color.RGBA{R: 180, G: 140, B: 255, A: 220}
+				fm.DrawText(screen, b.Source, x, y, theme.FontXS, srcClr)
+				srcW := fm.MeasureText(b.Source, theme.FontXS)
+				fm.DrawText(screen, b.Desc, x+srcW+6, y, theme.FontXS, theme.TextMuted)
+				if b.Remaining >= 0 {
+					timeStr := fmt.Sprintf("%.0fs", b.Remaining)
+					fm.DrawRightText(screen, timeStr, x+w, y, theme.FontXS, theme.TextMuted)
+				}
+			})
+		}
+	}
+
 	// 操作按钮：强度+10 / 卖出
 	panel.AddSpace(detailGap)
 	lastUpgradeRect = ui.Rect{}

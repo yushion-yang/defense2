@@ -73,6 +73,7 @@ type Tower struct {
 
 	// 战力系统
 	Strength *strength.StrengthData // 战力运行时数据
+	Buffs    []TowerBuff            // 当前生效的 buff 列表（含来源/描述/时长）
 
 	// 光环加成（每帧由 Ticker 能力重置+重算）
 	CritBonus float64 // 暴击光环加成的暴击率（由 critAura 设置）

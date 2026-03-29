@@ -6,6 +6,7 @@ package hud
 
 import (
 	"fmt"
+	"image/color"
 
 	"defense2/internal/render"
 	"defense2/internal/render/theme"
@@ -28,11 +29,10 @@ type WardenPanelData struct {
 	GrowthDesc  string // e.g. "击杀+1 通波+5"
 }
 
-// Warden panel layout constants.
+// Warden panel layout constants (与炮塔面板同位 — 底部中央).
 const (
-	wardenPanelW       float32 = 350
-	wardenPanelRMargin float32 = 20 // right margin from screen edge
-	wardenPanelPad     float32 = float32(theme.DetailPad)
+	wardenPanelW   float32 = float32(theme.CenterPanelW)
+	wardenPanelPad float32 = float32(theme.DetailPad)
 )
 
 // DrawWardenPanel renders the warden info panel in the bottom-right area.
@@ -49,9 +49,9 @@ func DrawWardenPanel(screen *ebiten.Image, d WardenPanelData) {
 	// We use a "dry-run" FlexPanel to accumulate row heights.
 	estimatedH := estimateWardenPanelHeight(d)
 
-	// Anchor to bottom-right with margins.
-	rect := ui.AnchoredRect(ui.AnchorBottomRight, wardenPanelW, estimatedH,
-		0, wardenPanelRMargin, float32(theme.BottomMargin), 0)
+	// Anchor to bottom-center (与炮塔面板相同位置).
+	rect := ui.AnchoredRect(ui.AnchorBottomCenter, wardenPanelW, estimatedH,
+		0, 0, float32(theme.BottomMargin), 0)
 
 	// Build FlexPanel at the anchored position.
 	p := ui.NewFlexPanel(rect.X, rect.Y, rect.W, wardenPanelPad)
@@ -109,20 +109,16 @@ func DrawWardenPanel(screen *ebiten.Image, d WardenPanelData) {
 		})
 	}
 
-	// Row 4: Attack description.
+	// Row 4: Attack description (自适应多行).
 	if d.AttackDesc != "" {
-		p.AddSpace(float32(theme.DetailGap))
-		p.AddRow(float32(theme.DetailRowH), func(screen *ebiten.Image, x, y float64, w float64) {
-			fm.DrawText(screen, d.AttackDesc, x, y, theme.FontXS, theme.TextBody)
-		})
+		lines := wrapText(fm, d.AttackDesc, float64(wardenPanelW)-float64(wardenPanelPad)*2, theme.FontXS)
+		addDescLines(p, fm, lines, theme.TextBody)
 	}
 
-	// Row 5: Special ability.
+	// Row 5: Special ability (自适应多行).
 	if d.SpecialDesc != "" {
-		p.AddSpace(float32(theme.DetailGap))
-		p.AddRow(float32(theme.DetailRowH), func(screen *ebiten.Image, x, y float64, w float64) {
-			fm.DrawText(screen, d.SpecialDesc, x, y, theme.FontXS, theme.StatusSkill)
-		})
+		lines := wrapText(fm, d.SpecialDesc, float64(wardenPanelW)-float64(wardenPanelPad)*2, theme.FontXS)
+		addDescLines(p, fm, lines, theme.StatusSkill)
 	}
 
 	// Row 6: Growth info.
@@ -136,18 +132,64 @@ func DrawWardenPanel(screen *ebiten.Image, d WardenPanelData) {
 	p.Draw(screen)
 }
 
-// estimateWardenPanelHeight pre-calculates the total panel height
-// so AnchoredRect can correctly position it from the bottom edge.
+// addDescLines 添加多行描述文本到面板。
+func addDescLines(p *ui.FlexPanel, fm *render.FontManager, lines []string, clr color.RGBA) {
+	if len(lines) == 0 {
+		return
+	}
+	p.AddSpace(float32(theme.DetailGap))
+	for _, line := range lines {
+		line := line
+		p.AddRow(14, func(screen *ebiten.Image, x, y float64, w float64) {
+			fm.DrawText(screen, line, x, y, theme.FontXS, clr)
+		})
+	}
+}
+
+// wrapText 按像素宽度拆行（逐字符，对中英文混排友好）。
+func wrapText(fm *render.FontManager, text string, maxW float64, fontSize float64) []string {
+	if fm == nil || text == "" {
+		return nil
+	}
+	runes := []rune(text)
+	var lines []string
+	start := 0
+	for start < len(runes) {
+		end := start
+		for end < len(runes) {
+			w := fm.MeasureText(string(runes[start:end+1]), fontSize)
+			if w > maxW && end > start {
+				break
+			}
+			end++
+		}
+		lines = append(lines, string(runes[start:end]))
+		start = end
+	}
+	return lines
+}
+
+// estimateWardenPanelHeight pre-calculates the total panel height.
 func estimateWardenPanelHeight(d WardenPanelData) float32 {
+	fm := render.GlobalFont()
+	contentW := float64(wardenPanelW) - float64(wardenPanelPad)*2
 	h := wardenPanelPad*2 + float32(theme.DetailTitleH) + float32(theme.DetailAttrH)
 	if d.Damage != "" || d.Interval != "" {
 		h += float32(theme.DetailGap) + float32(theme.DetailAttrH)
 	}
 	if d.AttackDesc != "" {
-		h += float32(theme.DetailGap) + float32(theme.DetailRowH)
+		n := len(wrapText(fm, d.AttackDesc, contentW, theme.FontXS))
+		if n < 1 {
+			n = 1
+		}
+		h += float32(theme.DetailGap) + float32(n)*14
 	}
 	if d.SpecialDesc != "" {
-		h += float32(theme.DetailGap) + float32(theme.DetailRowH)
+		n := len(wrapText(fm, d.SpecialDesc, contentW, theme.FontXS))
+		if n < 1 {
+			n = 1
+		}
+		h += float32(theme.DetailGap) + float32(n)*14
 	}
 	if d.GrowthDesc != "" {
 		h += float32(theme.DetailGap) + float32(theme.DetailRowH)

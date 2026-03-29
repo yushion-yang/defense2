@@ -27,11 +27,14 @@ type Warden struct {
 
 // TickContext 战灵 tick 时传入的上下文。
 type TickContext struct {
-	Enemies     *enemy.Pool      // 场上敌人池
-	Towers      *tower.Pool      // 场上塔池
-	Projectiles *projectile.Pool // 弹射物池（供 Core 等发射弹射物）
-	DT          float64          // 帧时间步长（秒）
-	OnKill      func()           // 击杀回调（通知场景计分/奖金）
+	Enemies     *enemy.Pool                        // 场上敌人池
+	Towers      *tower.Pool                        // 场上塔池
+	Projectiles *projectile.Pool                   // 弹射物池（供战灵发射弹射物）
+	DT          float64                            // 帧时间步长（秒）
+	OnKill      func()                             // 击杀回调（通知场景计分/奖金）
+	OnFire      func()                             // 普攻射击回调（音效）
+	OnSpecial   func()                             // 特殊能力施放回调（音效）
+	OnDamage    func(x, y, dmg float64, crit bool) // 伤害回调（浮字+特效，统一入口）
 }
 
 // Behavior 战灵行为接口，每种战灵类型实现一个。
@@ -73,6 +76,15 @@ func NewWarden(id int, name, typ string) *Warden {
 func (w *Warden) BaseState() *WardenState {
 	if s, ok := w.State.(Stateful); ok {
 		return s.Base()
+	}
+	return nil
+}
+
+// DescParams 返回当前战灵状态的占位符参数（供 HUD 替换 {key} 用）。
+// 若 State 未实现 DescProvider，返回 nil。
+func (w *Warden) DescParams() map[string]string {
+	if dp, ok := w.State.(DescProvider); ok {
+		return dp.DescParams(w)
 	}
 	return nil
 }

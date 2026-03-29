@@ -7,6 +7,7 @@ import (
 	"image/color"
 	"log"
 	"sort"
+	"strings"
 
 	_ "defense2/internal/core/tower/abilities" // 通过 init() 注册塔能力
 	_ "defense2/internal/core/warden/types"    // 通过 init() 注册战灵类型
@@ -132,6 +133,7 @@ type StageScene struct {
 	selectedTower     *tower.Tower                 // 点击选中的塔（显示信息面板+射程）
 	towerRenderer     *render.TowerRenderer        // 塔 SVG 渲染器
 	enemyRenderer     *render.EnemyRenderer        // 敌人 SVG 渲染器
+	wardenRenderer    *render.WardenRenderer       // 战灵精灵渲染器
 	audioMgr          *gameAudio.Manager           // 音效管理器
 	wardenUnit        *warden.Warden               // 战灵实体（选择前为 nil）
 	wardenOverlay     *hud.WardenSelectOverlay     // 战灵选择覆盖层
@@ -279,6 +281,7 @@ func NewStageSceneWithOpts(sw Switcher, opts StageOptions) *StageScene {
 		econ:            econ,
 		towerRenderer:   render.NewTowerRenderer(config.GetAssetFS()),
 		enemyRenderer:   render.NewEnemyRenderer(config.GetAssetFS()),
+		wardenRenderer:  render.NewWardenRenderer(config.GetAssetFS()),
 		audioMgr:        sw.AudioManager(),
 		wardenUnit:      wardenUnit,
 		wardenOverlay:   hud.NewWardenSelectOverlay(),
@@ -297,6 +300,9 @@ func NewStageSceneWithOpts(sw Switcher, opts StageOptions) *StageScene {
 		wavePanelOpen:   true,
 		wardenPanelOpen: false,
 	}
+
+	// 注入战灵精灵获取函数到覆盖层
+	s.wardenOverlay.SpriteFunc = s.wardenRenderer.GetSprite
 
 	// 测试模式覆盖（优先于难度设置）
 	if opts.Gold > 0 {
@@ -617,9 +623,16 @@ func (s *StageScene) handleInput() {
 		s.wavePanelOpen = !s.wavePanelOpen
 		return
 	}
-	// 右下角切换按钮（战灵面板）
+	// 右下角切换按钮（战灵面板，与建塔菜单互斥）
 	if hud.ToggleButtonHitTest(ftx, fty, false) {
 		s.wardenPanelOpen = !s.wardenPanelOpen
+		if s.wardenPanelOpen {
+			// 关闭建塔菜单
+			if s.imode == modeBuildMenu || s.imode == modeBuildPlace {
+				s.imode = modeIdle
+			}
+			s.selectedTower = nil
+		}
 		return
 	}
 
@@ -662,6 +675,7 @@ func (s *StageScene) handleInput() {
 		} else {
 			s.imode = modeBuildMenu
 			s.selectedTower = nil
+			s.wardenPanelOpen = false // 与战灵面板互斥
 		}
 		return
 	case "spawn":
@@ -1169,6 +1183,16 @@ func (s *StageScene) updatePlaying() {
 				s.gold += s.econ.KillGold() + s.killRewardBonus
 				s.audioMgr.PlaySafe(gameAudio.SFXEnemyDeath)
 			},
+			OnFire: func() {
+				s.audioMgr.PlayThrottled(gameAudio.SFXWardenFire, 100)
+			},
+			OnSpecial: func() {
+				sfx := wardenSpecialSFX(s.wardenType)
+				s.audioMgr.PlayThrottled(sfx, 200)
+			},
+			OnDamage: func(x, y, dmg float64, crit bool) {
+				render.SpawnDamageText(x, y, dmg, crit)
+			},
 		})
 	}
 
@@ -1537,7 +1561,14 @@ func (s *StageScene) drawScene(screen *ebiten.Image) {
 
 	// 战灵（选择后才绘制）
 	if s.wardenReady && s.wardenUnit != nil {
-		render.DrawWarden(worldTarget, s.wardenUnit)
+		s.wardenRenderer.DrawWarden(worldTarget, s.wardenUnit)
+		// 战灵面板展开时显示攻击距离圈
+		if s.wardenPanelOpen {
+			if base := s.wardenUnit.BaseState(); base != nil && base.Range > 0 {
+				draw.DashedCircle(worldTarget, float32(base.X), float32(base.Y),
+					float32(base.Range), 1, 6, 4, color.RGBA{R: 180, G: 140, B: 255, A: 100})
+			}
+		}
 	}
 
 	// 放塔预览（鼠标在可建造位置时显示）
@@ -1688,21 +1719,23 @@ func (s *StageScene) buildWardenPanelData() hud.WardenPanelData {
 	}
 	d.Name = cfg.Name
 
-	// 扁平结构：直接从顶层字段读取属性
-	if cfg.Damage > 0 {
+	// 运行时占位符参数（含强度缩放后的实际值）
+	params := w.DescParams()
+
+	// 有效伤害（优先用运行时值）
+	if base := w.BaseState(); base != nil && base.Damage > 0 {
+		d.Damage = fmt.Sprintf("%.0f", base.Damage)
+	} else if cfg.Damage > 0 {
 		d.Damage = fmt.Sprintf("%.0f", cfg.Damage)
 	}
 	if cfg.AttackInterval > 0 {
 		d.Interval = fmt.Sprintf("%.1fs", cfg.AttackInterval)
 	}
-	if cfg.EffectDPS > 0 || cfg.EffectDuration > 0 {
-		d.SpecialDesc = fmt.Sprintf("%.0f dps / %.0fs", cfg.EffectDPS, cfg.EffectDuration)
-	}
 
-	// 行为描述
-	d.AttackDesc = cfg.Description
+	// 行为描述（替换占位符为实际值）
+	d.AttackDesc = replaceDescParams(cfg.AttackDesc, params)
 	if cfg.SpecialDesc != "" {
-		d.SpecialDesc = cfg.SpecialDesc
+		d.SpecialDesc = replaceDescParams(cfg.SpecialDesc, params)
 	}
 
 	// 成长信息
@@ -1721,6 +1754,36 @@ func (s *StageScene) buildWardenPanelData() hud.WardenPanelData {
 	}
 
 	return d
+}
+
+// wardenSpecialSFX 根据战灵类型返回特殊能力音效名。
+func wardenSpecialSFX(typ string) string {
+	switch typ {
+	case "prince":
+		return gameAudio.SFXWardenSpecialFire
+	case "core":
+		return gameAudio.SFXWardenSpecialMech
+	case "chain":
+		return gameAudio.SFXWardenSpecialChain
+	case "skystrike":
+		return gameAudio.SFXWardenSpecialWater
+	case "envoy":
+		return gameAudio.SFXWardenSpecialGold
+	default:
+		return gameAudio.SFXWardenFire
+	}
+}
+
+// replaceDescParams 将描述字符串中的 {key} 占位符替换为实际值。
+func replaceDescParams(desc string, params map[string]string) string {
+	if params == nil {
+		return desc
+	}
+	result := desc
+	for k, v := range params {
+		result = strings.ReplaceAll(result, "{"+k+"}", v)
+	}
+	return result
 }
 
 // convertArchetypesToSpawnConfigs 将 config.EnemyArchetype 转换为 enemy.SpawnConfig。

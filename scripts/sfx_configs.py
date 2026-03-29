@@ -449,6 +449,59 @@ sfx('electric-chain', category='impact', duration=0.2, drive=1.5,
     {'type': 'harmonics', 'freq': 1500, 'freq_end': 500, 'harmonics': 6, 'h_curve': 'bright', 'vol': 0.25, 'env': 'exp', 'env_rate': 20},
 ])
 
+# ═══════════════════════════════════════════════════════════════
+# F. Warden SFX — 战灵专用音效
+# ═══════════════════════════════════════════════════════════════
+
+# warden-fire — 战灵普攻射击（轻快的能量弹发射）
+sfx('warden-fire', category='impact', duration=0.12, drive=1.0,
+    transient={'duration_ms': 2, 'energy': 0.9}, layers=[
+    {'type': 'sine', 'freq': 1400, 'freq_end': 800, 'vol': 0.45, 'env': 'exp', 'env_rate': 22},
+    {'type': 'noise_hp', 'freq': 3000, 'vol': 0.3, 'env': 'exp', 'env_rate': 28, 'seed': 42},
+    {'type': 'fm', 'freq': 1200, 'fm_freq': 300, 'fm_depth': 1.5, 'vol': 0.2, 'env': 'exp', 'env_rate': 25},
+])
+
+# warden-special-fire — 火灵虚空火球（低沉的火焰呼啸 + 冲击）
+sfx('warden-special-fire', category='impact', duration=0.35, drive=1.4,
+    transient={'duration_ms': 4, 'energy': 1.2}, layers=[
+    {'type': 'noise_bp', 'freq': 400, 'bw': 200, 'vol': 0.5, 'env': 'adsr', 'a': 0.02, 'd': 0.08, 's': 0.6, 'r': 0.1, 'seed': 77},
+    {'type': 'sine', 'freq': 200, 'freq_end': 80, 'vol': 0.4, 'env': 'exp', 'env_rate': 6},
+    {'type': 'fm', 'freq': 600, 'fm_freq': 150, 'fm_depth': 4, 'vol': 0.3, 'env': 'exp', 'env_rate': 8},
+    {'type': 'noise_hp', 'freq': 1500, 'vol': 0.2, 'env': 'exp', 'env_rate': 12, 'seed': 88},
+])
+
+# warden-special-water — 水灵秘术（清脆的水滴涟漪 + 魔法音效）
+sfx('warden-special-water', category='magic', duration=0.3, drive=0.9, layers=[
+    {'type': 'sine', 'freq': 2200, 'freq_end': 1600, 'vol': 0.4, 'env': 'exp', 'env_rate': 10},
+    {'type': 'sine', 'freq': 1100, 'freq_end': 800, 'vol': 0.3, 'env': 'exp', 'env_rate': 8},
+    {'type': 'fm', 'freq': 1800, 'fm_freq': 600, 'fm_depth': 2, 'vol': 0.2, 'env': 'adsr', 'a': 0.01, 'd': 0.06, 's': 0.4, 'r': 0.08},
+    {'type': 'noise_hp', 'freq': 4000, 'vol': 0.15, 'env': 'exp', 'env_rate': 14, 'seed': 55},
+])
+
+# warden-special-gold — 金灵增强光环（温暖的金属共鸣 + 上升音调）
+sfx('warden-special-gold', category='magic', duration=0.3, drive=0.8, layers=[
+    {'type': 'sine', 'freq': 800, 'freq_end': 1200, 'vol': 0.4, 'env': 'adsr', 'a': 0.02, 'd': 0.06, 's': 0.5, 'r': 0.08},
+    {'type': 'harmonics', 'freq': 600, 'freq_end': 900, 'harmonics': 6, 'h_curve': 'metallic', 'vol': 0.3, 'env': 'adsr', 'a': 0.02, 'd': 0.06, 's': 0.4, 'r': 0.1},
+    {'type': 'sine', 'freq': 1600, 'freq_end': 2400, 'vol': 0.15, 'env': 'exp', 'env_rate': 8},
+    {'type': 'noise_hp', 'freq': 5000, 'vol': 0.1, 'env': 'exp', 'env_rate': 16, 'seed': 33},
+])
+
+# warden-special-chain — 聚能串联（电流脉冲 + 连接音效）
+sfx('warden-special-chain', category='impact', duration=0.2, drive=1.2,
+    transient={'duration_ms': 2, 'energy': 1.0}, layers=[
+    {'type': 'noise_hp', 'freq': 2500, 'vol': 0.45, 'env': 'punch', 'atk_ms': 0, 'hold_ms': 4, 'env_rate': 16, 'seed': 66},
+    {'type': 'fm', 'freq': 1800, 'fm_freq': 450, 'fm_depth': 5, 'vol': 0.35, 'env': 'exp', 'env_rate': 14},
+    {'type': 'saw', 'freq': 600, 'freq_end': 300, 'vol': 0.2, 'env': 'exp', 'env_rate': 12},
+])
+
+# warden-special-mech — 机甲智能攻击模式切换（机械变形 + 锁定音）
+sfx('warden-special-mech', category='ui', duration=0.18, drive=1.1,
+    transient={'duration_ms': 3, 'energy': 1.0}, layers=[
+    {'type': 'square', 'freq': 1000, 'freq_end': 600, 'vol': 0.35, 'env': 'exp', 'env_rate': 18},
+    {'type': 'harmonics', 'freq': 800, 'harmonics': 4, 'h_curve': 'metallic', 'vol': 0.3, 'env': 'exp', 'env_rate': 16},
+    {'type': 'noise_hp', 'freq': 3000, 'vol': 0.25, 'env': 'exp', 'env_rate': 22, 'seed': 99},
+])
+
 # Laser beam (sustained visual)
 sfx('laser-beam', category='sustained', duration=0.3, drive=0.8, layers=[
     {'type': 'saw', 'freq': 800, 'vol': 0.3, 'env': 'adsr', 'a': 0.02, 'd': 0.05, 's': 0.7, 'r': 0.05},

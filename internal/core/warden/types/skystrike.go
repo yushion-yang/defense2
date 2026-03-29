@@ -1,10 +1,12 @@
 // skystrike.go — 水灵战灵。
-// 移动型战灵，围绕敌群轨道运动并射击。
-// 定期在敌人最密集处释放 AoE 水灵打击作为特殊能力。
+// 移动型战灵，围绕敌群轨道运动。
+// 被动：每隔一段时间随机施展三种攻击之一（多目标/连击/百分比）。
 package types
 
 import (
+	"fmt"
 	"math"
+	"math/rand"
 
 	"defense2/internal/core/enemy"
 	"defense2/internal/core/warden"
@@ -18,16 +20,28 @@ func init() {
 type SkystrikeState struct {
 	warden.WardenState // 嵌入公共基座
 
-	// AoE 水灵打击（特殊能力，区别于基座的普攻）
-	AoEDamage   float64 // AoE 伤害
-	AoEInterval float64 // AoE 间隔（秒）
-	AoERadius   float64 // AoE 半径（像素）
-	AoETimer    float64 // AoE 冷却计时器
+	// 三模式攻击参数
+	SpecialInterval float64 // 特殊攻击间隔（秒）
+	SpecialTimer    float64 // 特殊攻击倒计时
 
-	// 渲染用字段（AoE 视觉效果）
-	StrikeX     float64 // 上次 AoE 打击位置 X
-	StrikeY     float64 // 上次 AoE 打击位置 Y
-	StrikeTimer float64 // AoE 视觉效果倒计时
+	// 模式 1：多目标伤害
+	MultiTargets  int     // 目标数
+	MultiDmgRatio float64 // 每目标伤害 = 攻击力 × 此比例
+
+	// 模式 2：单目标连击
+	BurstHits     int     // 连击段数
+	BurstDmgRatio float64 // 每段伤害 = 攻击力 × 此比例
+
+	// 模式 3：百分比最大生命值
+	HpTargets int     // 目标数
+	HpPercent float64 // 每目标伤害 = MaxHP × 此百分比
+
+	// 渲染用字段（上次特殊攻击视觉效果）
+	StrikeX     float64 // 上次打击位置 X
+	StrikeY     float64 // 上次打击位置 Y
+	StrikeTimer float64 // 视觉效果倒计时
+	AoERadius   float64 // 视觉效果半径
+	LastMode    int     // 上次使用的模式（1/2/3，渲染用）
 }
 
 // Base 实现 Stateful 接口。
@@ -41,14 +55,34 @@ func (b *SkystrikeBehavior) Type() string { return "skystrike" }
 func (b *SkystrikeBehavior) Init(w *warden.Warden) interface{} {
 	return &SkystrikeState{
 		WardenState: warden.WardenState{
-			MoveSpeed:      320,
-			Damage:         18,
+			Damage:         40,
 			AttackInterval: 1.5,
 			Range:          140,
+			MoveSpeed:      320,
 		},
-		AoEDamage:   40,
-		AoEInterval: 5.0,
-		AoERadius:   60,
+		SpecialInterval: 5.0,
+		MultiTargets:    3,
+		MultiDmgRatio:   1.5, // 150% 攻击力
+		BurstHits:       4,
+		BurstDmgRatio:   1.0, // 100% 攻击力 × 4 段
+		HpTargets:       3,
+		HpPercent:       0.05, // 5% 最大生命值
+		AoERadius:       60,
+	}
+}
+
+// DescParams 返回 HUD 占位符参数。
+func (s *SkystrikeState) DescParams(w *warden.Warden) map[string]string {
+	return map[string]string{
+		"attackInterval":  fmt.Sprintf("%.1f", s.AttackInterval),
+		"damage":          fmt.Sprintf("%.0f", s.Damage),
+		"specialInterval": fmt.Sprintf("%.0f", s.SpecialInterval),
+		"multiTargets":    fmt.Sprintf("%d", s.MultiTargets),
+		"multiDmg":        fmt.Sprintf("%.0f", s.Damage*s.MultiDmgRatio),
+		"burstHits":       fmt.Sprintf("%d", s.BurstHits),
+		"burstDmg":        fmt.Sprintf("%.0f", s.Damage*s.BurstDmgRatio),
+		"hpTargets":       fmt.Sprintf("%d", s.HpTargets),
+		"hpPct":           fmt.Sprintf("%.0f", s.HpPercent*100),
 	}
 }
 
@@ -60,55 +94,119 @@ func (b *SkystrikeBehavior) Tick(w *warden.Warden, ctx *warden.TickContext) {
 		return
 	}
 	dt := ctx.DT
+	s.ApplyStrength(w)
 
-	// 1. 轨道运动
+	// 1. 移动
 	cx, cy, count := warden.ComputeClusterCenter(ctx.Enemies)
 	if count > 0 {
 		s.MoveOrbit(cx, cy, skystrikeOrbitDist, dt)
+	} else {
+		s.Wander(dt)
 	}
 
-	// 2. 普通攻击
-	s.AttackTimer -= dt
-	if s.AttackTimer <= 0 {
-		s.AttackTimer += s.AttackInterval
-		s.BasicAttack(ctx)
-	}
-
-	// 3. AoE 水灵打击
+	// 2-3. 攻击 + 特殊（仅有敌人时计时）
 	if s.StrikeTimer > 0 {
 		s.StrikeTimer -= dt
 	}
-	s.AoETimer -= dt
-	if s.AoETimer <= 0 {
-		s.AoETimer += s.AoEInterval
-		skystrikeAoE(s, ctx)
+	if count > 0 {
+		s.AttackTimer -= dt
+		if s.AttackTimer <= 0 {
+			s.AttackTimer += s.AttackInterval
+			s.BasicAttack(ctx)
+		}
+		s.SpecialTimer -= dt
+		if s.SpecialTimer <= 0 {
+			s.SpecialTimer += s.SpecialInterval
+			skystrikeSpecial(s, ctx)
+			if ctx.OnSpecial != nil {
+				ctx.OnSpecial()
+			}
+		}
 	}
 
 	// 4. 射击线衰减
 	s.DecayShootTimer(dt)
 }
 
-// skystrikeAoE AoE 水灵打击（在最密集敌群处释放范围伤害）。
-func skystrikeAoE(s *SkystrikeState, ctx *warden.TickContext) {
-	center := warden.FindDensestEnemy(ctx.Enemies, s.AoERadius)
-	if center == nil {
+// skystrikeSpecial 随机选择三种攻击模式之一施展。
+func skystrikeSpecial(s *SkystrikeState, ctx *warden.TickContext) {
+	alive := collectAlive(ctx.Enemies)
+	if len(alive) == 0 {
 		return
 	}
 
-	cx, cy := center.X, center.Y
-	s.StrikeX = cx
-	s.StrikeY = cy
-	s.StrikeTimer = 0.5
+	mode := rand.Intn(3) + 1
+	s.LastMode = mode
 
-	ctx.Enemies.Each(func(e *enemy.Enemy) {
-		if math.Hypot(e.X-cx, e.Y-cy) <= s.AoERadius {
-			e.HP -= s.AoEDamage
-			if e.HP <= 0 && e.Active {
-				e.Active = false
-				if ctx.OnKill != nil {
-					ctx.OnKill()
-				}
-			}
-		}
-	})
+	switch mode {
+	case 1:
+		skystrikeMulti(s, ctx, alive)
+	case 2:
+		skystrikeBurst(s, ctx, alive)
+	case 3:
+		skystrikeHpPercent(s, ctx, alive)
+	}
 }
+
+// 模式 1：随机 N 目标，各受 ratio% 攻击力伤害。
+func skystrikeMulti(s *SkystrikeState, ctx *warden.TickContext, alive []*enemy.Enemy) {
+	targets := pickRandom(alive, s.MultiTargets)
+	dmg := s.Damage * s.MultiDmgRatio
+	for _, e := range targets {
+		applyDmg(e, dmg, ctx)
+		s.StrikeX, s.StrikeY = e.X, e.Y
+	}
+	s.StrikeTimer = 0.5
+}
+
+// 模式 2：随机单目标，N 段各 ratio% 攻击力伤害。
+func skystrikeBurst(s *SkystrikeState, ctx *warden.TickContext, alive []*enemy.Enemy) {
+	target := alive[rand.Intn(len(alive))]
+	dmg := s.Damage * s.BurstDmgRatio
+	for i := 0; i < s.BurstHits; i++ {
+		applyDmg(target, dmg, ctx)
+	}
+	s.StrikeX, s.StrikeY = target.X, target.Y
+	s.StrikeTimer = 0.5
+}
+
+// 模式 3：随机 N 目标，各受 X% 最大生命值伤害。
+func skystrikeHpPercent(s *SkystrikeState, ctx *warden.TickContext, alive []*enemy.Enemy) {
+	targets := pickRandom(alive, s.HpTargets)
+	for _, e := range targets {
+		dmg := e.MaxHP * s.HpPercent
+		applyDmg(e, dmg, ctx)
+		s.StrikeX, s.StrikeY = e.X, e.Y
+	}
+	s.StrikeTimer = 0.5
+}
+
+// applyDmg 对敌人施加伤害（统一走 ApplyDamage）。
+func applyDmg(e *enemy.Enemy, dmg float64, ctx *warden.TickContext) {
+	warden.ApplyDamage(ctx, e, dmg, false)
+}
+
+// collectAlive 收集所有存活敌人。
+func collectAlive(pool *enemy.Pool) []*enemy.Enemy {
+	var result []*enemy.Enemy
+	pool.Each(func(e *enemy.Enemy) {
+		result = append(result, e)
+	})
+	return result
+}
+
+// pickRandom 从列表中随机选 n 个（不重复，不足则全选）。
+func pickRandom(list []*enemy.Enemy, n int) []*enemy.Enemy {
+	if n >= len(list) {
+		return list
+	}
+	perm := rand.Perm(len(list))
+	result := make([]*enemy.Enemy, n)
+	for i := 0; i < n; i++ {
+		result[i] = list[perm[i]]
+	}
+	return result
+}
+
+// unused import guard
+var _ = math.Hypot

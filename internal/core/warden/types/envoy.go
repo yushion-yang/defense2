@@ -21,10 +21,10 @@ type EnvoyState struct {
 	warden.WardenState // 嵌入公共基座
 
 	// buff 参数
-	BuffInterval float64 // buff 施加间隔（秒）
-	BuffDuration float64 // buff 持续时间（秒）
-	BuffBonus    float64 // buff 给塔增加的战力
-	BuffTimer    float64 // buff 施加倒计时
+	BuffInterval  float64 // buff 施加间隔（秒）
+	BuffDuration  float64 // buff 持续时间（秒）
+	BuffThreshold float64 // buff 生效的强度阈值（buff = max(0, strength - threshold)）
+	BuffTimer     float64 // buff 施加倒计时
 
 	// 当前 buff 追踪（用于视觉反馈）
 	BuffedTower *tower.Tower // 当前被 buff 的塔（仅渲染用）
@@ -47,9 +47,25 @@ func (b *EnvoyBehavior) Init(w *warden.Warden) interface{} {
 			Range:          140,
 			MoveSpeed:      320,
 		},
-		BuffInterval: 5.0,
-		BuffDuration: 4.0,
-		BuffBonus:    8,
+		BuffInterval:  5.0,
+		BuffDuration:  5.0,
+		BuffThreshold: 100, // buff = max(0, strength - 100)
+	}
+}
+
+// DescParams 返回 HUD 占位符参数。
+func (s *EnvoyState) DescParams(w *warden.Warden) map[string]string {
+	bonus := w.PerceivedStrength - s.BuffThreshold
+	if bonus < 0 {
+		bonus = 0
+	}
+	return map[string]string{
+		"attackInterval": fmt.Sprintf("%.1f", s.AttackInterval),
+		"damage":         fmt.Sprintf("%.0f", s.Damage),
+		"buffInterval":   fmt.Sprintf("%.0f", s.BuffInterval),
+		"buffDuration":   fmt.Sprintf("%.0f", s.BuffDuration),
+		"buffThreshold":  fmt.Sprintf("%.0f", s.BuffThreshold),
+		"buffBonus":      fmt.Sprintf("%.0f", bonus),
 	}
 }
 
@@ -61,18 +77,23 @@ func (b *EnvoyBehavior) Tick(w *warden.Warden, ctx *warden.TickContext) {
 		return
 	}
 	dt := ctx.DT
+	s.ApplyStrength(w)
 
-	// 1. 轨道运动
+	// 1. 移动
 	cx, cy, count := warden.ComputeClusterCenter(ctx.Enemies)
 	if count > 0 {
 		s.MoveOrbit(cx, cy, envoyOrbitDist, dt)
+	} else {
+		s.Wander(dt)
 	}
 
-	// 2. 普通攻击
-	s.AttackTimer -= dt
-	if s.AttackTimer <= 0 {
-		s.AttackTimer += s.AttackInterval
-		s.BasicAttack(ctx)
+	// 2. 普通攻击（仅有敌人时计时）
+	if count > 0 {
+		s.AttackTimer -= dt
+		if s.AttackTimer <= 0 {
+			s.AttackTimer += s.AttackInterval
+			s.BasicAttack(ctx)
+		}
 	}
 
 	// 3. 定时施加 buff
@@ -80,6 +101,9 @@ func (b *EnvoyBehavior) Tick(w *warden.Warden, ctx *warden.TickContext) {
 	if s.BuffTimer <= 0 {
 		s.BuffTimer += s.BuffInterval
 		applyEnvoyBuff(w, s, ctx)
+		if ctx.OnSpecial != nil {
+			ctx.OnSpecial()
+		}
 	}
 
 	// 4. buff 过期追踪（用于渲染）
@@ -95,20 +119,30 @@ func (b *EnvoyBehavior) Tick(w *warden.Warden, ctx *warden.TickContext) {
 }
 
 // applyEnvoyBuff 选择最佳塔施加临时增强 buff。
+// buff 值 = max(0, 感知强度 - 阈值)。
 func applyEnvoyBuff(w *warden.Warden, s *EnvoyState, ctx *warden.TickContext) {
+	bonus := w.PerceivedStrength - s.BuffThreshold
+	if bonus <= 0 {
+		return // 强度不足，不施加 buff
+	}
 	best := findBestHost(ctx.Towers, ctx.Enemies)
 	if best == nil {
 		return
 	}
+	key := fmt.Sprintf("envoy_buff_%d", w.ID)
 	ensureStrength(best)
-	best.Strength.SetTemp(fmt.Sprintf("envoy_buff_%d", w.ID), s.BuffBonus)
+	best.ApplyBuff(tower.TowerBuff{
+		Key:       key,
+		Source:    "金灵战灵",
+		Desc:      fmt.Sprintf("+%.0f 强度", bonus),
+		Value:     bonus,
+		Duration:  s.BuffDuration,
+		Remaining: s.BuffDuration,
+	})
 
 	// 记录用于渲染
 	s.BuffedTower = best
 	s.BuffExpiry = s.BuffDuration
-
-	// 设置定时移除（通过 goroutine 不合适，用 tick 追踪代替）
-	// buff 移除由下一次 applyEnvoyBuff 覆盖（SetTemp 同 key 自动替换）
 }
 
 // findBestHost 找到射程内敌人最多的塔。

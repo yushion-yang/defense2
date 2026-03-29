@@ -147,6 +147,14 @@ const (
 	SFXShieldBreak      = "shieldBreak"      // shield-break.wav — 护盾击碎
 	SFXChoiceAppear     = "choiceAppear"     // choice-appear.wav — 事件弹窗出现
 	SFXChoiceSelect     = "choiceSelect"     // choice-select.wav — 事件选择
+
+	// 战灵音效
+	SFXWardenFire         = "wardenFire"         // warden-fire.wav — 战灵普攻射击
+	SFXWardenSpecialFire  = "wardenSpecialFire"  // warden-special-fire.wav — 火灵虚空火球
+	SFXWardenSpecialWater = "wardenSpecialWater" // warden-special-water.wav — 水灵秘术
+	SFXWardenSpecialGold  = "wardenSpecialGold"  // warden-special-gold.wav — 金灵增强光环
+	SFXWardenSpecialChain = "wardenSpecialChain" // warden-special-chain.wav — 聚能串联
+	SFXWardenSpecialMech  = "wardenSpecialMech"  // warden-special-mech.wav — 机甲模式切换
 )
 
 // FireSFXForStyle 根据攻击方式返回射击音效名称。

@@ -4,6 +4,7 @@ package warden
 
 import (
 	"math"
+	"math/rand"
 
 	"defense2/internal/core/enemy"
 )
@@ -11,20 +12,27 @@ import (
 // WardenState 战灵公共状态，嵌入到所有类型的 State 中。
 type WardenState struct {
 	// --- 位置与移动 ---
-	X, Y       float64 // 当前像素位置
-	MoveSpeed  float64 // 移动速度 px/s（0 = 不移动/瞬移）
-	OrbitAngle float64 // 轨道运动角度（弧度）
+	X, Y        float64 // 当前像素位置
+	MoveSpeed   float64 // 移动速度 px/s（0 = 不移动/瞬移）
+	OrbitAngle  float64 // 轨道运动角度（弧度）
+	FacingAngle float64 // 朝向角度（弧度，根据移动方向更新）
 
 	// --- 轨道中心平滑 ---
 	smoothCX, smoothCY float64 // 平滑后的轨道中心
 	smoothInit         bool    // 是否已初始化平滑中心
 
+	// --- 空闲游荡 ---
+	wanderX, wanderY float64 // 游荡目标点
+	wanderTimer      float64 // 游荡目标切换倒计时
+
 	// --- 战斗（可选，0 表示无攻击能力）---
-	Damage         float64 // 单次伤害
-	AttackInterval float64 // 攻击间隔秒数（0 = 不攻击）
-	AttackTimer    float64 // 攻击冷却倒计时
-	Range          float64 // 攻击范围像素
-	AoERadius      float64 // AoE 半径（0 = 单体）
+	BaseDamage      float64 // 基础伤害（Init 设定，不变）
+	Damage          float64 // 当前帧有效伤害（= BaseDamage * 强度倍率）
+	AttackInterval  float64 // 攻击间隔秒数（0 = 不攻击）
+	AttackTimer     float64 // 攻击冷却倒计时
+	Range           float64 // 攻击范围像素
+	AoERadius       float64 // AoE 半径（0 = 单体）
+	ProjectileSpeed float64 // 弹射物速度 px/s（0 = 使用默认 350）
 
 	// --- 阶段机（可选，"" 表示常驻模式）---
 	Phase string  // 当前阶段
@@ -41,6 +49,11 @@ type Stateful interface {
 	Base() *WardenState
 }
 
+// DescProvider 由支持 HUD 占位符替换的战灵状态实现。
+type DescProvider interface {
+	DescParams(w *Warden) map[string]string
+}
+
 // CanAttack 返回该战灵是否具有攻击能力。
 func (s *WardenState) CanAttack() bool {
 	return s.AttackInterval > 0
@@ -53,59 +66,130 @@ func (s *WardenState) DecayShootTimer(dt float64) {
 	}
 }
 
-// smoothLerp 平滑插值系数（越小越平滑，0.05 = 每帧追踪 5%）。
-const smoothLerp = 0.05
+// ApplyStrength 根据战灵感知强度更新有效伤害。
+// 公式：Damage = BaseDamage * (1 + PerceivedStrength / 100)
+func (s *WardenState) ApplyStrength(w *Warden) {
+	if s.BaseDamage == 0 {
+		s.BaseDamage = s.Damage
+	}
+	s.Damage = s.BaseDamage * (1 + w.PerceivedStrength/100)
+}
+
+// ── 移动 ────────────────────────────────────────
+
+// smoothSpeed 平滑追踪速度（像素/秒）。越大追踪越快。
+const smoothSpeed = 200.0
 
 // MoveOrbit 围绕 (cx, cy) 以 idealDist 为理想距离进行轨道运动。
-// 对轨道中心做指数平滑，避免敌群质心跳动导致战灵闪现。
-// 首次调用（位置为 0,0）时直接 teleport 到轨道位置。
+// 简化模型：始终推进角度 + 向目标轨道位置平滑移动，消除模式切换跳变。
 func (s *WardenState) MoveOrbit(cx, cy, idealDist, dt float64) {
-	// 平滑轨道中心
+	// dt-aware 平滑轨道中心
 	if !s.smoothInit {
 		s.smoothCX = cx
 		s.smoothCY = cy
 		s.smoothInit = true
 	} else {
-		s.smoothCX += (cx - s.smoothCX) * smoothLerp
-		s.smoothCY += (cy - s.smoothCY) * smoothLerp
+		dx := cx - s.smoothCX
+		dy := cy - s.smoothCY
+		dist := math.Hypot(dx, dy)
+		maxMove := smoothSpeed * dt
+		if dist > maxMove {
+			s.smoothCX += (dx / dist) * maxMove
+			s.smoothCY += (dy / dist) * maxMove
+		} else {
+			s.smoothCX = cx
+			s.smoothCY = cy
+		}
 	}
 	scx, scy := s.smoothCX, s.smoothCY
 
-	// 首次定位：直接 teleport 到目标轨道
+	// 始终推进轨道角度
+	angularSpeed := s.MoveSpeed / idealDist
+	s.OrbitAngle += angularSpeed * dt
+
+	// 目标位置 = 平滑中心 + 轨道半径
+	targetX := scx + idealDist*math.Cos(s.OrbitAngle)
+	targetY := scy + idealDist*math.Sin(s.OrbitAngle)
+
+	prevX, prevY := s.X, s.Y
+
+	// 首次定位：直接 teleport
 	if s.X == 0 && s.Y == 0 {
-		s.X = scx + idealDist*math.Cos(s.OrbitAngle)
-		s.Y = scy + idealDist*math.Sin(s.OrbitAngle)
-		s.X = clampF(s.X, 0, 1200)
-		s.Y = clampF(s.Y, 0, 540)
+		s.X = clampF(targetX, 0, 1200)
+		s.Y = clampF(targetY, 0, 540)
 		return
 	}
 
-	dx := s.X - scx
-	dy := s.Y - scy
+	// 向目标位置平滑移动
+	dx := targetX - s.X
+	dy := targetY - s.Y
 	dist := math.Hypot(dx, dy)
-	step := s.MoveSpeed * dt
-
-	if dist < 1 {
-		s.X = scx + idealDist*math.Cos(s.OrbitAngle)
-		s.Y = scy + idealDist*math.Sin(s.OrbitAngle)
-	} else if math.Abs(dist-idealDist) > step {
-		dir := 1.0
-		if dist > idealDist {
-			dir = -1.0
-		}
-		nx := dx / dist
-		ny := dy / dist
-		s.X += nx * dir * step
-		s.Y += ny * dir * step
+	maxMove := s.MoveSpeed * dt
+	if dist > maxMove {
+		s.X += (dx / dist) * maxMove
+		s.Y += (dy / dist) * maxMove
 	} else {
-		s.OrbitAngle += step / idealDist
-		s.X = scx + idealDist*math.Cos(s.OrbitAngle)
-		s.Y = scy + idealDist*math.Sin(s.OrbitAngle)
+		s.X = targetX
+		s.Y = targetY
 	}
 
 	s.X = clampF(s.X, 0, 1200)
 	s.Y = clampF(s.Y, 0, 540)
+	s.updateFacing(prevX, prevY)
 }
+
+// Wander 无敌人时缓慢游荡。每 3-5 秒换一个随机目标点，缓慢漂移过去。
+func (s *WardenState) Wander(dt float64) {
+	prevX, prevY := s.X, s.Y
+
+	// 首次或到期：选新游荡点
+	s.wanderTimer -= dt
+	if s.wanderTimer <= 0 || (s.wanderX == 0 && s.wanderY == 0) {
+		s.wanderX = 200 + rand.Float64()*800 // 避免边缘
+		s.wanderY = 100 + rand.Float64()*340
+		s.wanderTimer = 3 + rand.Float64()*2
+	}
+
+	// 缓慢移向目标点（1/3 速度）
+	dx := s.wanderX - s.X
+	dy := s.wanderY - s.Y
+	dist := math.Hypot(dx, dy)
+	speed := s.MoveSpeed * 0.3
+	maxMove := speed * dt
+	if dist > maxMove {
+		s.X += (dx / dist) * maxMove
+		s.Y += (dy / dist) * maxMove
+	} else {
+		s.X = s.wanderX
+		s.Y = s.wanderY
+	}
+
+	s.X = clampF(s.X, 0, 1200)
+	s.Y = clampF(s.Y, 0, 540)
+	s.updateFacing(prevX, prevY)
+}
+
+// updateFacing 根据移动方向平滑更新朝向角度。
+func (s *WardenState) updateFacing(prevX, prevY float64) {
+	dx := s.X - prevX
+	dy := s.Y - prevY
+	if math.Hypot(dx, dy) < 0.1 {
+		return
+	}
+	target := math.Atan2(dy, dx)
+	// 角度平滑插值（避免突变，每帧趋近 15%）
+	diff := target - s.FacingAngle
+	// 归一化到 [-π, π]
+	for diff > math.Pi {
+		diff -= 2 * math.Pi
+	}
+	for diff < -math.Pi {
+		diff += 2 * math.Pi
+	}
+	s.FacingAngle += diff * 0.15
+}
+
+// ── 战斗 ────────────────────────────────────────
 
 // FindNearest 查找 Range 范围内最近的敌人。
 func (s *WardenState) FindNearest(enemies *enemy.Pool) *enemy.Enemy {
@@ -122,27 +206,56 @@ func (s *WardenState) FindNearest(enemies *enemy.Pool) *enemy.Enemy {
 	return nearest
 }
 
-// BasicAttack 对最近敌人造成 Damage 伤害。
-// 返回命中目标（nil 表示未命中）。调用方负责击杀回调。
+// BasicAttack 对最近敌人发射弹射物。
+// 通过弹射物系统处理伤害和视觉，不再直接扣 HP。
+// 返回目标敌人（nil 表示无目标）。
 func (s *WardenState) BasicAttack(ctx *TickContext) *enemy.Enemy {
 	target := s.FindNearest(ctx.Enemies)
 	if target == nil {
 		return nil
 	}
 
-	target.HP -= s.Damage
-	if target.HP <= 0 && target.Active {
-		target.Active = false
-		if ctx.OnKill != nil {
-			ctx.OnKill()
-		}
+	speed := s.ProjectileSpeed
+	if speed <= 0 {
+		speed = 350
+	}
+
+	// 通过弹射物池发射（伤害/碰撞/渲染由弹射物系统处理）
+	if ctx.Projectiles != nil {
+		ctx.Projectiles.Fire(s.X, s.Y, target.X, target.Y, s.Damage, speed, 4, target, "warden")
 	}
 
 	s.LastTargetX = target.X
 	s.LastTargetY = target.Y
 	s.ShootTimer = 0.15
+
+	// 音效回调
+	if ctx.OnFire != nil {
+		ctx.OnFire()
+	}
+
 	return target
 }
+
+// ApplyDamage 对敌人造成伤害的统一入口。
+// 处理：扣 HP → 浮字回调 → 击杀回调。所有战灵伤害都应走此方法。
+func ApplyDamage(ctx *TickContext, e *enemy.Enemy, dmg float64, crit bool) {
+	if e == nil || !e.Active || dmg <= 0 {
+		return
+	}
+	e.HP -= dmg
+	if ctx.OnDamage != nil {
+		ctx.OnDamage(e.X, e.Y-10, dmg, crit)
+	}
+	if e.HP <= 0 && e.Active {
+		e.Active = false
+		if ctx.OnKill != nil {
+			ctx.OnKill()
+		}
+	}
+}
+
+// ── 敌群分析 ────────────────────────────────────
 
 // ComputeClusterCenter 计算所有存活敌人的质心。
 func ComputeClusterCenter(enemies *enemy.Pool) (cx, cy float64, count int) {
@@ -178,7 +291,7 @@ func FindClusterCenter(enemies *enemy.Pool, clusterRange float64) *enemy.Enemy {
 	return best
 }
 
-// FindDensestEnemy 找到在给定半径内邻居最多的敌人，用于 AoE 中心选择。
+// FindDensestEnemy 找到在给定半径内邻居最多的敌人。
 func FindDensestEnemy(enemies *enemy.Pool, radius float64) *enemy.Enemy {
 	var alive []*enemy.Enemy
 	enemies.Each(func(e *enemy.Enemy) {

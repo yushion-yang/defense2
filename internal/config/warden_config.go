@@ -9,25 +9,18 @@ import (
 	"strings"
 )
 
-// WardenConfig 单个战灵类型的完整配置（扁平结构，Lv1 属性在顶层）。
+// WardenConfig 单个战灵类型的完整配置（扁平结构，表格化数组格式）。
 type WardenConfig struct {
+	Key         string `json:"key"` // 类型标识（prince/core/chain/skystrike/envoy）
 	Name        string `json:"name"`
 	Description string `json:"description"`
 	Category    string `json:"category"` // "mobile" or "indirect"
-	EntityCount int    `json:"entityCount"`
 
-	// Lv1 属性（各字段按需使用，缺失自动为零值）
-	Damage                 float64 `json:"damage"`
-	AttackInterval         float64 `json:"attackInterval"`
-	Range                  float64 `json:"range"`
-	MoveSpeed              float64 `json:"moveSpeed"`
-	AoERadius              float64 `json:"aoeRadius"`
-	EffectDPS              float64 `json:"effectDps"`
-	EffectDuration         float64 `json:"effectDuration"`
-	TowerBonus             float64 `json:"towerBonus"`
-	PossessDuration        float64 `json:"possessDuration"`
-	Cooldown               float64 `json:"cooldown"`
-	PermanentStrengthGrant float64 `json:"permanentStrengthGrant"`
+	// 基础属性
+	Damage         float64 `json:"damage"`
+	AttackInterval float64 `json:"attackInterval"`
+	Range          float64 `json:"range"`
+	MoveSpeed      float64 `json:"moveSpeed"`
 
 	// 行为描述（UI 展示用）
 	AttackName   string `json:"attackName"`
@@ -74,17 +67,28 @@ func LoadWardenConfigs() (map[string]WardenConfig, error) {
 		return configs, nil
 	}
 
-	// 回退到单文件模式
+	// 回退到单文件模式（表格化数组格式）
 	data, err := dataFS.ReadFile("config/wardens/wardens.json")
 	if err != nil {
 		return nil, fmt.Errorf("read wardens config: %w", err)
 	}
 
+	// 尝试数组格式（表格化）
+	var arr []WardenConfig
+	if err := json.Unmarshal(data, &arr); err == nil && len(arr) > 0 {
+		for _, cfg := range arr {
+			if cfg.Key != "" {
+				configs[cfg.Key] = cfg
+			}
+		}
+		return configs, nil
+	}
+
+	// 兼容旧 map 格式
 	var raw map[string]json.RawMessage
 	if err := json.Unmarshal(data, &raw); err != nil {
 		return nil, fmt.Errorf("parse wardens config: %w", err)
 	}
-
 	for key, val := range raw {
 		if key == "_meta" {
 			continue
@@ -93,6 +97,7 @@ func LoadWardenConfigs() (map[string]WardenConfig, error) {
 		if err := json.Unmarshal(val, &cfg); err != nil {
 			return nil, fmt.Errorf("parse warden %q: %w", key, err)
 		}
+		cfg.Key = key
 		configs[key] = cfg
 	}
 	return configs, nil

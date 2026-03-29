@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"image/color"
 
+	"defense2/internal/config"
 	"defense2/internal/core/game"
 	"defense2/internal/render"
 	"defense2/internal/render/draw"
@@ -23,11 +24,11 @@ type wardenOption struct {
 	Description string
 	Color       color.RGBA
 	// 详情面板数据
-	AttackName string
-	AttackDesc string
+	AttackName  string
+	AttackDesc  string
 	SpecialName string
 	SpecialDesc string
-	Tips       []string
+	Tips        []string
 	// Lv.1 属性
 	Damage   string
 	Interval string
@@ -47,7 +48,7 @@ var wardenOptions = []wardenOption{
 		Color:       color.RGBA{R: 255, G: 140, B: 30, A: 255},
 		AttackName:  "轨道射击", AttackDesc: "围绕敌群轨道飞行，攻击最近敌人。",
 		SpecialName: "虚空火球", SpecialDesc: "每4s召唤火球冲向敌群，穿透伤害30，留下火焰痕迹。",
-		Tips:        []string{"强度 → 攻击力 + 火球伤害增强。", "适合密集小怪波次。"},
+		Tips:   []string{"强度 → 攻击力 + 火球伤害增强。", "适合密集小怪波次。"},
 		Damage: "15", Interval: "1.2s", Speed: "350", AoE: "-", Duration: "-", DoT: "10/s",
 		GrowthKill: "+1 强度", GrowthWave: "+5 强度",
 	},
@@ -57,7 +58,7 @@ var wardenOptions = []wardenOption{
 		Color:       color.RGBA{R: 60, G: 140, B: 255, A: 255},
 		AttackName:  "巡逻射击", AttackDesc: "绕敌群中心巡逻，自动锁定高威胁目标。",
 		SpecialName: "智能模式", SpecialDesc: "4+敌人=AoE / <30%HP=斩杀 / Boss=全力。",
-		Tips:        []string{"强度 → 伤害 + 攻速增强。", "适合精英/Boss波次。"},
+		Tips:   []string{"强度 → 伤害 + 攻速增强。", "适合精英/Boss波次。"},
 		Damage: "25", Interval: "1.2s", Speed: "360", AoE: "-", Duration: "-", DoT: "-",
 		GrowthKill: "+1 强度", GrowthWave: "+10 强度",
 	},
@@ -67,7 +68,7 @@ var wardenOptions = []wardenOption{
 		Color:       color.RGBA{R: 160, G: 80, B: 255, A: 255},
 		AttackName:  "能量弹", AttackDesc: "定时向随机敌人发射能量弹造成伤害。",
 		SpecialName: "串联体", SpecialDesc: "被动：全场塔 +10 伤害加成。",
-		Tips:        []string{"塔越多，收益越高。", "适合塔数量多的防线。"},
+		Tips:   []string{"塔越多，收益越高。", "适合塔数量多的防线。"},
 		Damage: "15", Interval: "2s", Speed: "-", AoE: "-", Duration: "-", DoT: "-",
 		GrowthKill: "-", GrowthWave: "+8 强度",
 	},
@@ -77,7 +78,7 @@ var wardenOptions = []wardenOption{
 		Color:       color.RGBA{R: 80, G: 200, B: 255, A: 255},
 		AttackName:  "水灵打击", AttackDesc: "锁定敌群最密集位置，释放范围打击。",
 		SpecialName: "智能瞄准", SpecialDesc: "自动选择敌人最多的区域。",
-		Tips:        []string{"AoE 半径随强度增长。", "适合拥堵路径节点。"},
+		Tips:   []string{"AoE 半径随强度增长。", "适合拥堵路径节点。"},
 		Damage: "40", Interval: "5s", Speed: "-", AoE: "60", Duration: "-", DoT: "-",
 		GrowthKill: "-", GrowthWave: "+10 强度",
 	},
@@ -87,7 +88,7 @@ var wardenOptions = []wardenOption{
 		Color:       color.RGBA{R: 180, G: 120, B: 255, A: 255},
 		AttackName:  "轨道射击", AttackDesc: "围绕敌群轨道飞行，攻击最近敌人。",
 		SpecialName: "增强光环", SpecialDesc: "每5s为射程内敌人最多的塔施加+8战力buff(4s)。",
-		Tips:        []string{"攻防兼备，适合需要塔增强的阵型。"},
+		Tips:   []string{"攻防兼备，适合需要塔增强的阵型。"},
 		Damage: "12", Interval: "1.5s", Speed: "320", AoE: "-", Duration: "-", DoT: "-",
 		GrowthKill: "-", GrowthWave: "+5 强度",
 	},
@@ -101,44 +102,46 @@ var wardenOptions = []wardenOption{
 // ── 布局常量 ────────────────────────────────────
 
 const (
-	wListX     = 40.0  // 左侧列表 X
-	wListY     = 80.0  // 列表起始 Y
-	wListW     = 180.0 // 列表项宽度
-	wListH     = 44.0  // 列表项高度
-	wListGap   = 4.0   // 列表项间距
-	wDetailX   = 250.0 // 右侧详情面板 X
-	wDetailY   = 80.0  // 详情面板 Y
-	wDetailW   = 910.0 // 详情面板宽度
-	wDetailH   = 380.0 // 详情面板高度
-	wBtnY      = 480.0 // 底部按钮 Y
-	wBtnW      = 200.0
-	wBtnH      = 36.0
-	wBtnGap    = 20.0
+	wListX   = 40.0  // 左侧列表 X
+	wListY   = 80.0  // 列表起始 Y
+	wListW   = 180.0 // 列表项宽度
+	wListH   = 44.0  // 列表项高度
+	wListGap = 4.0   // 列表项间距
+	wDetailX = 250.0 // 右侧详情面板 X
+	wDetailY = 80.0  // 详情面板 Y
+	wDetailW = 910.0 // 详情面板宽度
+	wDetailH = 380.0 // 详情面板高度
+	wBtnY    = 480.0 // 底部按钮 Y
+	wBtnW    = 200.0
+	wBtnH    = 36.0
+	wBtnGap  = 20.0
 )
 
 // ── WardenSelectScene ──────────────────────────────
 
 type WardenSelectScene struct {
-	switcher    Switcher
-	fontMgr     *render.FontManager
-	mapID       string
-	modeID      string // 游戏模式 ID
-	diffID      string // 难度 ID
-	selectedIdx int
-	hoverIdx    int  // 列表悬停
-	hoverConfirm bool
-	hoverSkip   bool
+	switcher       Switcher
+	fontMgr        *render.FontManager
+	wardenRenderer *render.WardenRenderer
+	mapID          string
+	modeID         string // 游戏模式 ID
+	diffID         string // 难度 ID
+	selectedIdx    int
+	hoverIdx       int // 列表悬停
+	hoverConfirm   bool
+	hoverSkip      bool
 }
 
 func NewWardenSelectScene(sw Switcher, mapID, modeID, diffID string) *WardenSelectScene {
 	return &WardenSelectScene{
-		switcher:    sw,
-		fontMgr:     render.GlobalFont(),
-		mapID:       mapID,
-		modeID:      modeID,
-		diffID:      diffID,
-		selectedIdx: 0,
-		hoverIdx:    -1,
+		switcher:       sw,
+		fontMgr:        render.GlobalFont(),
+		wardenRenderer: render.NewWardenRenderer(config.GetAssetFS()),
+		mapID:          mapID,
+		modeID:         modeID,
+		diffID:         diffID,
+		selectedIdx:    0,
+		hoverIdx:       -1,
 	}
 }
 
@@ -315,6 +318,15 @@ func (s *WardenSelectScene) drawDetail(screen *ebiten.Image, fm *render.FontMana
 
 	px := float64(x) + 20 // padding
 	py := float64(y) + 16
+
+	// 战灵精灵预览（右上角）
+	if s.wardenRenderer != nil {
+		if img := s.wardenRenderer.GetSprite(opt.Key); img != nil {
+			previewX := float64(x) + float64(w) - 84
+			previewY := float64(y) + 20
+			draw.Sprite(screen, img, previewX, previewY, 64)
+		}
+	}
 
 	// 标题行
 	fm.DrawBoldText(screen, fmt.Sprintf("战灵 · %s", opt.Name), px, py, 18, theme.TextTitle)
