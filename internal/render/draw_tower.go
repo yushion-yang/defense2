@@ -88,7 +88,7 @@ func (tr *TowerRenderer) DrawTowers(screen *ebiten.Image, pool *tower.Pool, sele
 				alpha = 1
 			}
 			outerR := float32(t.Range)
-			innerR := float32(t.Range * t.InnerRatioR)
+			innerR := float32(t.Range * 0.5) // spin_aoe 内圈半径比例
 
 			// 4 条旋转弧线
 			for i := 0; i < 4; i++ {

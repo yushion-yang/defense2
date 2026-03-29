@@ -50,12 +50,8 @@ func (p *Pool) Place(row, col int, cx, cy float64, def TowerDef) *Tower {
 			t.ProjectileSpeed = def.ProjectileSpeed
 			t.ChargeProgress = 0
 			t.ChargeReady = false
-			t.InnerDmgBonus = def.InnerDmgBonus
-			t.InnerRatioR = def.InnerRatioR
 			t.SpinAngle = 0
 			t.SpinActive = 0
-			t.PierceTargets = def.PierceTargets
-			t.PierceDecay = def.PierceDecay
 			t.AuraPulse = 0
 			t.Branch = ""
 			t.Target = nil
@@ -108,14 +104,6 @@ type TowerDef struct {
 	// 攻击方式
 	AttackStyleID   AttackStyle // 攻击方式
 	ProjectileSpeed float64     // 弹射物速度（px/s）
-	// Beam
-	// SpinAoE
-	InnerDmgBonus float64
-	InnerRatioR   float64
-	// Pierce
-	PierceTargets int
-	PierceDecay   float64
-
 	// 战力基础值+潜力值（从 JSON 扁平字段）
 	PotentialDamage float64
 	PotentialSpeed  float64

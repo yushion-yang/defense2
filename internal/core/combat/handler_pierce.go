@@ -7,6 +7,12 @@ import (
 	"defense2/internal/core/tower"
 )
 
+// pierce 默认参数
+const (
+	pierceDefaultTargets = 2   // 最大穿透目标数
+	pierceDefaultDecay   = 0.8 // 每次穿透伤害衰减
+)
+
 // PierceHandler 穿刺弹。
 type PierceHandler struct{}
 
@@ -15,13 +21,5 @@ func (h *PierceHandler) Fire(t *tower.Tower, target *enemy.Enemy, ctx *AttackCon
 	if speed <= 0 {
 		speed = 350
 	}
-	targets := t.PierceTargets
-	if targets <= 0 {
-		targets = 2
-	}
-	decay := t.PierceDecay
-	if decay <= 0 {
-		decay = 0.8
-	}
-	ctx.Projectiles.FirePierce(t.X, t.Y, target.X, target.Y, t.Damage, speed, target, t.Key, targets, decay)
+	ctx.Projectiles.FirePierce(t.X, t.Y, target.X, target.Y, t.Damage, speed, target, t.Key, pierceDefaultTargets, pierceDefaultDecay)
 }

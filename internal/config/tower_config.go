@@ -30,23 +30,6 @@ type TowerJSON struct {
 	// 攻击方式配置
 	AttackStyle     string  `json:"attackStyle"`     // "projectile"/"laser"/"wideBeam"/"scatter"/"charge"/"spin_aoe"/"pierce"/"aura_dot"
 	ProjectileSpeed float64 `json:"projectileSpeed"` // 弹射物速度（px/s）
-	InnerDamageBonus float64            `json:"innerDamageBonus"` // spin_aoe 内圈加伤倍率
-	InnerRadiusRatio float64            `json:"innerRadiusRatio"` // spin_aoe 内圈比例
-	PierceConfig     *PierceConfigJSON  `json:"pierceConfig"`     // pierce 穿刺配置
-
-	PoisonConfig *PoisonConfigJSON `json:"poisonConfig"` // aura_dot 持续毒伤配置
-}
-
-// PierceConfigJSON 穿刺配置。
-type PierceConfigJSON struct {
-	Targets int     `json:"targets"` // 最大穿透目标数（默认 2）
-	Decay   float64 `json:"decay"`   // 每次穿透伤害衰减（默认 0.8）
-}
-
-// PoisonConfigJSON 持续毒伤配置。
-type PoisonConfigJSON struct {
-	DPS      float64 `json:"dps"`      // 每秒伤害
-	Interval float64 `json:"interval"` // 伤害间隔（秒）
 }
 
 // TowerFileData 塔配置文件的完整解析结果。

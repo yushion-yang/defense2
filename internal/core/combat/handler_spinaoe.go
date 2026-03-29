@@ -38,14 +38,13 @@ func (h *SpinAoEHandler) Tick(t *tower.Tower, ctx *AttackContext) {
 		return
 	}
 
-	// 检查范围内是否有敌人
+	// spin_aoe 默认参数
+	const innerRatio = 0.5 // 内圈半径比例
+	const innerBonus = 1.5 // 内圈伤害倍率
+
 	hasTarget := false
 	r := t.Range
-	innerR := r * t.InnerRatioR
-	bonus := t.InnerDmgBonus
-	if bonus <= 0 {
-		bonus = 1.5
-	}
+	innerR := r * innerRatio
 
 	ctx.Enemies.Each(func(e *enemy.Enemy) {
 		dist := math.Hypot(e.X-t.X, e.Y-t.Y)
@@ -55,7 +54,7 @@ func (h *SpinAoEHandler) Tick(t *tower.Tower, ctx *AttackContext) {
 		hasTarget = true
 		dmg := t.Damage
 		if dist <= innerR {
-			dmg *= bonus
+			dmg *= innerBonus
 		}
 		e.HP -= dmg
 		if ctx.OnHit != nil {

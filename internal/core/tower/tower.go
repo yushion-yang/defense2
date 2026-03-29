@@ -56,15 +56,9 @@ type Tower struct {
 	ChargeProgress float64 // 蓄力进度 0-1
 	ChargeReady    bool    // 蓄力完成
 
-	// SpinAoE 配置 + 运行时状态
-	InnerDmgBonus float64 // 内圈加伤倍率
-	InnerRatioR   float64 // 内圈半径比例
+	// SpinAoE 运行时状态
 	SpinAngle     float64 // 旋转角度（弧度）
 	SpinActive    float64 // 旋转激活计时器
-
-	// Pierce 配置
-	PierceTargets int     // 最大穿透数
-	PierceDecay   float64 // 伤害衰减
 
 	// AuraDot 运行时状态
 	AuraPulse float64 // 脉冲动画计时

@@ -16,8 +16,6 @@ func makeTower(style tower.AttackStyle, damage, rng, speed float64) *tower.Tower
 		Active: true, Key: "test",
 		AttackStyleID:   style,
 		ProjectileSpeed: 400,
-		InnerDmgBonus:   1.5, InnerRatioR: 0.5,
-		PierceTargets:   2, PierceDecay: 0.8,
 	}
 }
 

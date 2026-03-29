@@ -25,6 +25,7 @@
     "potentialAttackSpeed": 0.41,
     "baseRange": 170,
     "potentialRange": 0,
+    "attackStyle": "projectile",
     "projectileSpeed": 380,
     "abilities": [
       "onHitSlow",
@@ -42,6 +43,7 @@
     "potentialAttackSpeed": 0.51,
     "baseRange": 150,
     "potentialRange": 0,
+    "attackStyle": "projectile",
     "projectileSpeed": 600,
     "abilities": [
       "stun",
@@ -127,8 +129,6 @@
     "potentialRange": 0,
     "attackStyle": "spin_aoe",
     "projectileSpeed": 0,
-    "abilities": [],
-    "innerDamageBonus": 1.5,
-    "innerRadiusRatio": 0.5
+    "abilities": []
   }
 }

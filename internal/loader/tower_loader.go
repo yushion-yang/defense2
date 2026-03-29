@@ -42,21 +42,6 @@ func TowerJSONToDef(key string, t *config.TowerJSON) tower.TowerDef {
 		ProjectileSpeed: t.ProjectileSpeed,
 	}
 
-	// SpinAoE 配置
-	def.InnerDmgBonus = t.InnerDamageBonus
-	def.InnerRatioR = t.InnerRadiusRatio
-	// Pierce 配置
-	if t.PierceConfig != nil {
-		def.PierceTargets = t.PierceConfig.Targets
-		if def.PierceTargets == 0 {
-			def.PierceTargets = 2
-		}
-		def.PierceDecay = t.PierceConfig.Decay
-		if def.PierceDecay == 0 {
-			def.PierceDecay = 0.8
-		}
-	}
-
 	// 战力潜力值和效果绑定
 	def.PotentialDamage = t.PotentialDamage
 	def.PotentialSpeed = t.PotentialAttackSpeed
