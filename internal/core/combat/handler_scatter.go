@@ -1,4 +1,6 @@
-// handler_scatter.go — 锥形散射攻击方式（即时命中 + 视觉弹丸）。
+// handler_scatter.go — 锥形散射攻击方式。
+// 发射 N 颗真实弹丸，各自独立飞行+碰撞检测。
+// 同一敌人被多颗命中时合并为一次伤害（由 TickProjectileHits 处理）。
 package combat
 
 import (
@@ -10,10 +12,9 @@ import (
 
 // scatter 默认参数
 const (
-	scatterPellets   = 3                        // 弹丸数
-	scatterHalfSpread = 30 * math.Pi / 180      // 半角30度（弧度）
-	scatterHitRadius = 15.0                     // 每颗弹丸命中判定半径
-	scatterDmgRatio  = 0.7                      // 每颗弹丸伤害比例
+	scatterPellets    = 3                  // 弹丸数
+	scatterHalfSpread = 30 * math.Pi / 180 // 半角30度（弧度）
+	scatterPelletR    = 5.0                // 弹丸碰撞半径
 )
 
 // ScatterHandler 锥形散射。
@@ -21,38 +22,20 @@ type ScatterHandler struct{}
 
 func (h *ScatterHandler) Fire(t *tower.Tower, target *enemy.Enemy, ctx *AttackContext) {
 	baseAngle := math.Atan2(target.Y-t.Y, target.X-t.X)
-	damagePerPellet := t.Damage * scatterDmgRatio
+	speed := t.ProjectileSpeed
+	if speed <= 0 {
+		speed = 400
+	}
+
+	// 同一次散射共享 groupID，TickProjectileHits 据此合并命中
+	groupID := ctx.Projectiles.NextScatterGroup()
 
 	for i := 0; i < scatterPellets; i++ {
 		frac := float64(i) / float64(scatterPellets-1)
 		angle := baseAngle - scatterHalfSpread + frac*2*scatterHalfSpread
-
-		dirX := math.Cos(angle)
-		dirY := math.Sin(angle)
-
-		// 射线检查：沿方向到射程距离内的敌人
-		ctx.Enemies.Each(func(e *enemy.Enemy) {
-			ex := e.X - t.X
-			ey := e.Y - t.Y
-			proj := ex*dirX + ey*dirY
-			if proj < 0 || proj > t.Range {
-				return
-			}
-			perpDist := math.Abs(ex*(-dirY) + ey*dirX)
-			if perpDist > scatterHitRadius+e.Radius {
-				return
-			}
-			e.HP -= damagePerPellet
-			if ctx.OnHit != nil {
-				ctx.OnHit(e, damagePerPellet, e.HP <= 0, ctx.Style)
-			}
-		})
-
-		// 视觉弹丸
-		speed := t.ProjectileSpeed
-		if speed <= 0 {
-			speed = 400
-		}
-		ctx.Projectiles.FireScatter(t.X, t.Y, angle, t.Range, speed, t.Key)
+		ctx.Projectiles.FireScatterPellet(
+			t.X, t.Y, angle, t.Damage, t.Range, speed,
+			scatterPelletR, t.InstanceKey, groupID,
+		)
 	}
 }

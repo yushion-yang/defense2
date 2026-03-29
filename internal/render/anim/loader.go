@@ -36,13 +36,13 @@ var EnemyAnimConfig = map[string]struct {
 }
 
 // LoadTowerAnimator 加载塔的动画帧。
-// 路径约定：assets/towers/core/tower-{key}-{state}-{frame}.png
-// 回退：assets/towers/core/tower-{key}.png（单帧）
+// 路径约定：assets/towers/{key}/tower-{key}-{state}-{frame}.png
+// 回退：assets/towers/{key}/tower-{key}.png（单帧）
 func LoadTowerAnimator(fs AssetReader, key string) *Animator {
 	a := NewAnimator()
 
 	for state, cfg := range TowerAnimConfig {
-		frames := loadFrames(fs, fmt.Sprintf("assets/towers/core/tower-%s-%s", key, state))
+		frames := loadFrames(fs, fmt.Sprintf("assets/towers/%s/tower-%s-%s", key, key, state))
 		if len(frames) > 0 {
 			a.AddAnim(state, frames, cfg.FPS, cfg.Loop)
 		}
@@ -50,7 +50,7 @@ func LoadTowerAnimator(fs AssetReader, key string) *Animator {
 
 	// 如果没有任何动画帧，尝试加载单帧静态 PNG 作为 idle
 	if len(a.Anims) == 0 {
-		img := loadSinglePNG(fs, fmt.Sprintf("assets/towers/core/tower-%s.png", key))
+		img := loadSinglePNG(fs, fmt.Sprintf("assets/towers/%s/tower-%s.png", key, key))
 		if img != nil {
 			a.AddAnim("idle", []*ebiten.Image{img}, 1, true)
 		}

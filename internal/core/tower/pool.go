@@ -2,7 +2,11 @@
 // 固定大小数组实现零分配对象池，支持放置、出售、遍历和按格查找。
 package tower
 
-import "defense2/internal/core/game"
+import (
+	"fmt"
+
+	"defense2/internal/core/game"
+)
 
 // Pool 固定大小的塔对象池。
 type Pool struct {
@@ -39,6 +43,7 @@ func (p *Pool) Place(row, col int, cx, cy float64, def TowerDef) *Tower {
 			t.FireTimer = 0
 			t.Cost = def.Cost
 			t.Key = def.Key
+			t.InstanceKey = fmt.Sprintf("%s_%d_%d", def.Key, row, col)
 			t.Label = def.Label
 			t.Abilities = def.Abilities
 			t.Color = def.Color

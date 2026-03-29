@@ -7,6 +7,7 @@ import (
 	"bytes"
 	"io"
 	"log"
+	"strings"
 	"sync"
 	"time"
 
@@ -151,22 +152,19 @@ const (
 // FireSFXForStyle 根据攻击方式返回射击音效名称。
 // 如果对应风格的 WAV 不存在，降级到通用 SFXShot。
 func FireSFXForStyle(style string) string {
-	name := "fire" + ucFirst(style) // 如 "fireProjectile", "fireLaser"
-	// 降级：如果没有对应文件就用通用射击音效
-	if name == "fire" {
+	if style == "" {
 		return SFXShot
 	}
-	return name
+	return "fire" + snakeToCamel(style) // "spin_aoe" → "fireSpinAoe"
 }
 
 // HitSFXForStyle 根据攻击方式返回命中音效名称。
 // 降级到 SFXHitFlesh。
 func HitSFXForStyle(style string) string {
-	name := "hit" + ucFirst(style) // 如 "hitProjectile", "hitLaser"
-	if name == "hit" {
+	if style == "" {
 		return SFXHitFlesh
 	}
-	return name
+	return "hit" + snakeToCamel(style) // "spin_aoe" → "hitSpinAoe"
 }
 
 // ucFirst 首字母大写（简单 ASCII）。
@@ -179,6 +177,15 @@ func ucFirst(s string) string {
 		b[0] -= 32
 	}
 	return string(b)
+}
+
+// snakeToCamel 将 snake_case 转为 CamelCase（如 "spin_aoe" → "SpinAoe"）。
+func snakeToCamel(s string) string {
+	parts := strings.Split(s, "_")
+	for i := range parts {
+		parts[i] = ucFirst(parts[i])
+	}
+	return strings.Join(parts, "")
 }
 
 // PlayThrottled 带 per-sound 节流的播放。

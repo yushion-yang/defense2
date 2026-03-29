@@ -22,9 +22,16 @@ import (
 
 // Pool 环形缓冲区弹射物对象池。
 type Pool struct {
-	projectiles []Projectile // 预分配的弹射物槽位数组
-	cursor      int          // 下一个写入位置（环形）
-	Count       int          // 当前存活弹射物数量
+	projectiles    []Projectile // 预分配的弹射物槽位数组
+	cursor         int          // 下一个写入位置（环形）
+	Count          int          // 当前存活弹射物数量
+	scatterGroupID int          // 散射组 ID 自增计数器
+}
+
+// NextScatterGroup 返回下一个散射组 ID（同一次散射的弹丸共享同一组 ID）。
+func (p *Pool) NextScatterGroup() int {
+	p.scatterGroupID++
+	return p.scatterGroupID
 }
 
 // NewPool 创建指定容量的弹射物对象池。
@@ -180,6 +187,35 @@ func (p *Pool) Release(proj *Projectile) {
 		proj.Active = false
 		p.Count--
 	}
+}
+
+// FireScatterPellet 发射一颗真实散射弹（参与碰撞检测，同组命中合并伤害）。
+func (p *Pool) FireScatterPellet(sx, sy, angle, damage, maxRange, speed float64, radius float64, towerKey string, groupID int) {
+	proj := &p.projectiles[p.cursor]
+	if proj.Active {
+		p.Count--
+	}
+	*proj = Projectile{}
+
+	proj.X = sx
+	proj.Y = sy
+	proj.VX = math.Cos(angle) * speed
+	proj.VY = math.Sin(angle) * speed
+	proj.Damage = damage
+	proj.Speed = speed
+	proj.Radius = radius
+	proj.Active = true
+	proj.MaxLife = 2.0
+	proj.Life = proj.MaxLife
+	proj.SourceTowerKey = towerKey
+	proj.ScatterGroup = groupID
+	proj.Angle = angle
+	proj.MaxRange = maxRange
+	proj.StartX = sx
+	proj.StartY = sy
+
+	p.Count++
+	p.cursor = (p.cursor + 1) % len(p.projectiles)
 }
 
 // FireScatter 发射一颗散射视觉弹（不造成伤害）。

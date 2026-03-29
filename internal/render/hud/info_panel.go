@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"image/color"
 	"math"
+	"strings"
 
 	"defense2/internal/config"
 	"defense2/internal/core/strength"
@@ -93,7 +94,7 @@ func DrawInfoPanel(screen *ebiten.Image, t *tower.Tower, sellValue int) {
 
 	// Row 2: 属性行（伤害/攻速/射程/DPS）
 	panel.AddRow(attrH, func(screen *ebiten.Image, x, y float64, w float64) {
-		colW := w / 4
+		colW := w / 3
 		const (
 			iconSize = 14.0
 			iconGap  = 4.0
@@ -112,10 +113,6 @@ func DrawInfoPanel(screen *ebiten.Image, t *tower.Tower, sellValue int) {
 		// 射程
 		drawStatIcon(screen, im, "stat-range", x+colW*2, y, iconSize)
 		fm.DrawText(screen, fmtAttr("%.0f", t.BaseRange, t.PotentialRange, effStr), x+colW*2+textOff, y, theme.FontMD, theme.InfoAttrRange)
-
-		// DPS
-		drawStatIcon(screen, im, "stat-dps", x+colW*3, y, iconSize)
-		fm.DrawText(screen, fmt.Sprintf("%.1f", t.DPS()), x+colW*3+textOff, y, theme.FontMD, theme.StatusStrUp)
 	})
 
 	// Row 3: 攻击方式
@@ -213,102 +210,99 @@ func drawAbilityRow(screen *ebiten.Image, fm *render.FontManager, abilityType st
 		return
 	}
 
-	// 有 scaleDim：显示 base+(scaled)=total 格式，括号内带颜色
-	hasScale := def.HasScale()
-	if hasScale {
-		abX = drawScaledValue(screen, fm, def, effStr, abX, y+1)
-	}
-
-	// 有 paramDim：追加固定参数（有 scaleDim 时用 ", " 分隔，否则直接显示）
-	if def.HasParam() {
-		drawParamValue(screen, fm, def, hasScale, abX, y+1)
-	}
+	// 用 Display 模板渲染
+	drawAbilityDisplay(screen, fm, def, effStr, abX, y+1)
 }
 
-// drawScaledValue 渲染缩放值: "base+(scaled)=total" 或百分比格式。
-// 返回绘制后的 X 偏移。
-func drawScaledValue(screen *ebiten.Image, fm *render.FontManager, def *config.AbilityDef, effStr float64, x, y float64) float64 {
+// drawAbilityDisplay 按 Display 模板渲染能力描述。
+// {s} → 缩放值 base+(scaled)=total（带颜色），{s%} → 百分比格式
+// {p} → 参数原值，{p%} → 参数百分比
+// 其余文本原样渲染。
+func drawAbilityDisplay(screen *ebiten.Image, fm *render.FontManager, def *config.AbilityDef, effStr float64, x, y float64) {
+	tpl := def.Display
+	if tpl == "" {
+		return
+	}
+
 	scaled := def.Potential * (effStr / 100.0)
 	total := def.Base + scaled
-	isPct := def.Base < 1 && def.Base > 0
-
-	// 括号内颜色：scaled > potential 绿 / == potential 白 / < potential 红
 	scaledClr := scaledColor(scaled, def.Potential)
 
-	if isPct {
-		// 百分比格式: "10%+(22%)=32%"
-		baseTxt := fmt.Sprintf("%.0f%%+", def.Base*100)
-		scaledTxt := fmt.Sprintf("(%.0f%%)", scaled*100)
-		totalTxt := fmt.Sprintf("=%.0f%%", total*100)
-
-		fm.DrawText(screen, baseTxt, x, y, theme.FontXS, theme.TextBody)
-		x += fm.MeasureText(baseTxt, theme.FontXS)
-		fm.DrawText(screen, scaledTxt, x, y, theme.FontXS, scaledClr)
-		x += fm.MeasureText(scaledTxt, theme.FontXS)
-		fm.DrawText(screen, totalTxt, x, y, theme.FontXS, theme.TextBody)
-		x += fm.MeasureText(totalTxt, theme.FontXS)
-	} else {
-		// 绝对值格式: "2+(2)=4"
-		baseTxt := fmt.Sprintf("%.0f+", def.Base)
-		scaledTxt := fmt.Sprintf("(%.0f)", scaled)
-		totalTxt := fmt.Sprintf("=%.0f", total)
-		// 浮点数判断：如果精度需要小数
-		if needsDecimal(def.Base) || needsDecimal(scaled) || needsDecimal(total) {
-			baseTxt = fmt.Sprintf("%.1f+", def.Base)
-			scaledTxt = fmt.Sprintf("(%.1f)", scaled)
-			totalTxt = fmt.Sprintf("=%.1f", total)
+	i := 0
+	for i < len(tpl) {
+		// 查找下一个占位符
+		next := strings.Index(tpl[i:], "{")
+		if next < 0 {
+			// 剩余纯文本
+			fm.DrawText(screen, tpl[i:], x, y, theme.FontXS, theme.TextMuted)
+			x += fm.MeasureText(tpl[i:], theme.FontXS)
+			break
 		}
 
-		fm.DrawText(screen, baseTxt, x, y, theme.FontXS, theme.TextBody)
-		x += fm.MeasureText(baseTxt, theme.FontXS)
-		fm.DrawText(screen, scaledTxt, x, y, theme.FontXS, scaledClr)
-		x += fm.MeasureText(scaledTxt, theme.FontXS)
-		fm.DrawText(screen, totalTxt, x, y, theme.FontXS, theme.TextBody)
-		x += fm.MeasureText(totalTxt, theme.FontXS)
-	}
+		// 输出占位符前的纯文本
+		if next > 0 {
+			seg := tpl[i : i+next]
+			fm.DrawText(screen, seg, x, y, theme.FontXS, theme.TextMuted)
+			x += fm.MeasureText(seg, theme.FontXS)
+		}
+		i += next
 
+		// 解析占位符
+		end := strings.Index(tpl[i:], "}")
+		if end < 0 {
+			break
+		}
+		ph := tpl[i+1 : i+end] // 占位符内容（如 "s%", "p"）
+		i += end + 1
+
+		switch ph {
+		case "s%":
+			// 缩放百分比：10%+(22%)=32%
+			x = drawScaleSegment(screen, fm, x, y, scaledClr,
+				fmt.Sprintf("%.0f%%+", def.Base*100),
+				fmt.Sprintf("(%.0f%%)", scaled*100),
+				fmt.Sprintf("=%.0f%%", total*100))
+		case "s":
+			// 缩放绝对值：2+(1)=3
+			nf := "%.0f"
+			if needsDecimal(def.Base) || needsDecimal(scaled) || needsDecimal(total) {
+				nf = "%.1f"
+			}
+			x = drawScaleSegment(screen, fm, x, y, scaledClr,
+				fmt.Sprintf(nf+"+", def.Base),
+				fmt.Sprintf("("+nf+")", scaled),
+				fmt.Sprintf("="+nf, total))
+		case "p":
+			// 参数原值
+			txt := fmtNum(def.Param)
+			fm.DrawText(screen, txt, x, y, theme.FontXS, theme.TextMuted)
+			x += fm.MeasureText(txt, theme.FontXS)
+		case "p%":
+			// 参数百分比
+			txt := fmtNum(def.Param*100) + "%"
+			fm.DrawText(screen, txt, x, y, theme.FontXS, theme.TextMuted)
+			x += fm.MeasureText(txt, theme.FontXS)
+		}
+	}
+}
+
+// drawScaleSegment 渲染 "base+(scaled)=total" 三段文本，中间段带颜色。
+func drawScaleSegment(screen *ebiten.Image, fm *render.FontManager, x, y float64, scaledClr color.Color, baseTxt, scaledTxt, totalTxt string) float64 {
+	fm.DrawText(screen, baseTxt, x, y, theme.FontXS, theme.TextBody)
+	x += fm.MeasureText(baseTxt, theme.FontXS)
+	fm.DrawText(screen, scaledTxt, x, y, theme.FontXS, scaledClr)
+	x += fm.MeasureText(scaledTxt, theme.FontXS)
+	fm.DrawText(screen, totalTxt, x, y, theme.FontXS, theme.TextBody)
+	x += fm.MeasureText(totalTxt, theme.FontXS)
 	return x
 }
 
-// drawParamValue 渲染固定参数: "持续1.4s" 等。hasScale=true 时加 ", " 前缀。
-func drawParamValue(screen *ebiten.Image, fm *render.FontManager, def *config.AbilityDef, hasScale bool, x, y float64) float64 {
-	dimLabel := paramDimLabel(def.ParamDim)
-	prefix := ""
-	if hasScale {
-		prefix = ", "
+// fmtNum 格式化数字：整数不带小数点，非整数保留一位。
+func fmtNum(v float64) string {
+	if needsDecimal(v) {
+		return fmt.Sprintf("%.1f", v)
 	}
-	var txt string
-	if needsDecimal(def.Param) {
-		txt = fmt.Sprintf("%s%s%.1f", prefix, dimLabel, def.Param)
-	} else {
-		txt = fmt.Sprintf("%s%s%.0f", prefix, dimLabel, def.Param)
-	}
-	// 特殊单位后缀
-	switch def.ParamDim {
-	case "duration":
-		txt += "s"
-	case "radius", "checkRadius":
-		txt += "px"
-	case "interval":
-		txt += "s"
-	case "damageDecay":
-		if needsDecimal(def.Param * 100) {
-			txt = fmt.Sprintf("%s%.1f%%伤害", prefix, def.Param*100)
-		} else {
-			txt = fmt.Sprintf("%s%.0f%%伤害", prefix, def.Param*100)
-		}
-	case "hpThreshold":
-		if needsDecimal(def.Param * 100) {
-			txt = fmt.Sprintf("%s%s%.1f%%", prefix, dimLabel, def.Param*100)
-		} else {
-			txt = fmt.Sprintf("%s%s%.0f%%", prefix, dimLabel, def.Param*100)
-		}
-	case "multiplier":
-		txt = fmt.Sprintf("%s%s%.1fx", prefix, dimLabel, def.Param)
-	}
-	fm.DrawText(screen, txt, x, y, theme.FontXS, theme.TextMuted)
-	x += fm.MeasureText(txt, theme.FontXS)
-	return x
+	return fmt.Sprintf("%.0f", v)
 }
 
 // scaledColor 根据缩放值与潜力值的比较返回颜色。
@@ -339,24 +333,6 @@ func drawStatIcon(screen *ebiten.Image, im *render.IconManager, name string, x, 
 		return
 	}
 	draw.Sprite(screen, img, x+size/2, y+size/2, size)
-}
-
-// paramDimLabel paramDim 英文标识 → 中文显示标签。
-func paramDimLabel(dim string) string {
-	labels := map[string]string{
-		"duration":    "持续",
-		"damageDecay": "衰减",
-		"multiplier":  "倍率",
-		"radius":      "范围",
-		"hpThreshold": "阈值",
-		"targets":     "目标",
-		"interval":    "间隔",
-		"checkRadius": "检测",
-	}
-	if l, ok := labels[dim]; ok {
-		return l
-	}
-	return dim
 }
 
 // fallbackIconMap 不在 AbilityTable 中的能力的图标映射。

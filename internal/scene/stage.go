@@ -1149,13 +1149,10 @@ func (s *StageScene) updatePlaying() {
 	pipeline.TickTowerCombat(s.towers, s.enemies, s.projectiles, s.beams, gameDT, func(style string) {
 		s.audioMgr.PlayThrottled(gameAudio.FireSFXForStyle(style), 100)
 	}, func(e *enemy.Enemy, damage float64, killed bool, _ string) {
-		// 直接攻击方式（laser/beam/aoe等）的伤害飘字 + 受击闪白
+		// 直接攻击方式（laser/beam/aoe等）的伤害飘字
+		// 不生成命中特效（近战 AoE 会在塔身密集叠加白闪）
 		if damage > 0 {
 			render.SpawnDamageText(e.X, e.Y-15, damage, damage >= 50)
-			e.HitFlash = 0.12
-		}
-		if killed {
-			render.TriggerShake(2, 0.1)
 		}
 	})
 
@@ -1168,9 +1165,14 @@ func (s *StageScene) updatePlaying() {
 		if damage > 0 {
 			render.SpawnDamageText(e.X, e.Y-15, damage, damage >= 50)
 			e.HitFlash = 0.12
+			// 命中特效：蓄力弹用大号，其他用通用小型
+			if attackStyle == "charge" {
+				render.SpawnChargeImpact(e.X, e.Y)
+			} else {
+				render.SpawnHitImpact(e.X, e.Y)
+			}
 		}
 		if killed {
-			render.TriggerShake(2, 0.1) // 击杀微震
 			if e.Boss {
 				s.audioMgr.PlayThrottled(gameAudio.SFXEnemyDeathBoss, 50)
 			} else {
@@ -1201,6 +1203,7 @@ func (s *StageScene) updatePlaying() {
 
 	// 9. 浮动文本 + 屏幕震动更新
 	render.UpdateFloatTexts(gameDT)
+	render.UpdateImpactVFX(gameDT)
 	render.UpdateShake(gameDT)
 
 	// 10. 波次完成奖励 + 事件触发
@@ -1490,6 +1493,9 @@ func (s *StageScene) drawScene(screen *ebiten.Image) {
 	// 弹射物
 	render.DrawProjectiles(worldTarget, s.projectiles)
 	render.DrawBeams(worldTarget, s.beams)
+
+	// 冲击特效（蓄力弹命中）
+	render.DrawImpactVFX(worldTarget)
 
 	// 浮动文本（伤害数字等）
 	render.DrawFloatTexts(worldTarget)

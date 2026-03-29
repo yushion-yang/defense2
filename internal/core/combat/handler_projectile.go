@@ -14,5 +14,5 @@ func (h *ProjectileHandler) Fire(t *tower.Tower, target *enemy.Enemy, ctx *Attac
 	if speed <= 0 {
 		speed = 300
 	}
-	ctx.Projectiles.Fire(t.X, t.Y, target.X, target.Y, t.Damage, speed, 4, target, t.Key)
+	ctx.Projectiles.Fire(t.X, t.Y, target.X, target.Y, t.Damage, speed, 4, target, t.InstanceKey)
 }

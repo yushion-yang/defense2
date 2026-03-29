@@ -33,6 +33,7 @@ type Tower struct {
 	FireTimer   float64  // 下一次射击倒计时（秒）
 	Cost        int      // 总投入金币（建造+升级累计，用于计算卖价）
 	Key         string   // 塔类型标识（如 "basic"、"splash"）
+	InstanceKey string   // 实例唯一标识（"key_row_col"，用于弹射物来源匹配）
 	Label       string   // 显示名称
 	Active      bool     // 是否存活（对象池复用标记）
 	Abilities   []string // 该塔拥有的能力名称列表
@@ -71,7 +72,8 @@ type Tower struct {
 	Strength *strength.StrengthData // 战力运行时数据
 
 	// 索敌锁定
-	Target *enemy.Enemy // 当前锁定目标
+	Target              *enemy.Enemy // 当前锁定目标
+	LastPercentHpTarget int          // 上次触发 percentHpDamage 的敌人 ID（切换目标首击）
 }
 
 // BuyStrength 花费金币购买 10 点永久强度。返回实际花费。

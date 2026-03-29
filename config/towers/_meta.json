@@ -1,5 +1,5 @@
 {
   "coreMechanic": "无专属机制——基础泛用塔",
   "description": "9 座核心塔。每局可用。",
-  "designNotes": "SVG 位于 assets/towers/core/。"
+  "designNotes": "资源按塔分目录：assets/towers/{key}/。"
 }

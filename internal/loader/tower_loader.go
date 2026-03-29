@@ -4,6 +4,7 @@
 package loader
 
 import (
+	"sort"
 	"strings"
 
 	"defense2/internal/config"
@@ -59,19 +60,22 @@ func LoadTowerDefs() ([]tower.TowerDef, error) {
 		return nil, err
 	}
 
+	// 先按 key 字典序收集，确保 map 遍历顺序不影响结果
+	keys := make([]string, 0, len(all))
+	for key := range all {
+		keys = append(keys, key)
+	}
+	sort.Strings(keys)
+
 	defs := make([]tower.TowerDef, 0, len(all))
-	for key, t := range all {
-		defs = append(defs, TowerJSONToDef(key, t))
+	for _, key := range keys {
+		defs = append(defs, TowerJSONToDef(key, all[key]))
 	}
 
-	// 冒泡排序按费用升序
-	for i := 0; i < len(defs); i++ {
-		for j := i + 1; j < len(defs); j++ {
-			if defs[j].Cost < defs[i].Cost {
-				defs[i], defs[j] = defs[j], defs[i]
-			}
-		}
-	}
+	// 稳定排序按费用升序（费用相同时保持 key 字典序）
+	sort.SliceStable(defs, func(i, j int) bool {
+		return defs[i].Cost < defs[j].Cost
+	})
 	return defs, nil
 }
 

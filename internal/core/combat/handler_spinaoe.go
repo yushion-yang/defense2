@@ -22,7 +22,9 @@ func (h *SpinAoEHandler) Tick(t *tower.Tower, ctx *AttackContext) {
 	dt := ctx.DT
 
 	// 旋转角度持续更新
-	t.SpinAngle += dt * 3.0 // ~3 rad/s
+	// 旋转速度随攻速缩放：基准 3 rad/s 对应攻速 0.3，攻速越快旋转越快
+	spinSpeed := 3.0 * (t.AttackSpeed / 0.3)
+	t.SpinAngle += dt * spinSpeed
 	if t.SpinAngle > 2*math.Pi {
 		t.SpinAngle -= 2 * math.Pi
 	}

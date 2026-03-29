@@ -19,10 +19,6 @@ import (
 // BossPercentHpCap Boss 百分比伤害全局上限（游戏规则常量）。
 const BossPercentHpCap = 0.05
 
-// lastPercentHpTarget 记录每座塔上次触发 percentHpDamage 的敌人 ID。
-// 用于实现"切换目标时首击触发"的机制。
-var lastPercentHpTarget = map[string]int{}
-
 // InitConfigAbilities 加载能力配置表并注册所有数据驱动的能力。
 // 必须在 config.SetDataFS() 之后调用。
 func InitConfigAbilities() error {
@@ -101,11 +97,10 @@ func (a *ConfigAbility) OnHit(t *tower.Tower, p *projectile.Projectile, e *enemy
 
 	case "percentHpDamage":
 		// 切换目标时首击触发（猎手印记），同一目标不重复触发
-		key := towerAccKey(t)
-		if lastID, ok := lastPercentHpTarget[key]; ok && lastID == e.ID {
+		if t.LastPercentHpTarget == e.ID {
 			return nil // 同一目标，不触发
 		}
-		lastPercentHpTarget[key] = e.ID
+		t.LastPercentHpTarget = e.ID
 		ratio := sv
 		if e.Boss && ratio > BossPercentHpCap {
 			ratio = BossPercentHpCap

@@ -69,9 +69,11 @@ const GENERATORS = {
   },
   towers: {
     configPath: 'config/visuals/towers.json',
-    outDir: 'assets/towers/core',
+    outDir: 'assets/towers',
     filenamePrefix: 'tower-',
     generate: generateAllTowerSvgs,
+    // Each tower gets its own subdirectory: assets/towers/{towerKey}/tower-{towerKey}-{state}-{frame}.ext
+    subdirFromKey: (itemKey) => itemKey.replace(/-(idle|attack)-\d+$/, ''),
   },
   enemies: {
     configPath: 'config/visuals/enemies.json',
@@ -96,6 +98,16 @@ async function runGenerator(name, gen) {
   const outDir = path.resolve(ROOT, gen.outDir);
   fs.mkdirSync(outDir, { recursive: true });
 
+  // Resolve per-item output directory (supports subdirFromKey for per-tower dirs)
+  const itemOutDir = (itemKey) => {
+    if (gen.subdirFromKey) {
+      const sub = path.join(outDir, gen.subdirFromKey(itemKey));
+      fs.mkdirSync(sub, { recursive: true });
+      return sub;
+    }
+    return outDir;
+  };
+
   let svgCount = 0;
   let pngCount = 0;
 
@@ -103,7 +115,8 @@ async function runGenerator(name, gen) {
     // Generate SVGs
     const items = gen.generate(config);
     for (const item of items) {
-      const svgPath = path.join(outDir, `${gen.filenamePrefix}${item.key}.svg`);
+      const dir = itemOutDir(item.key);
+      const svgPath = path.join(dir, `${gen.filenamePrefix}${item.key}.svg`);
       if (force || !fs.existsSync(svgPath)) {
         fs.writeFileSync(svgPath, item.svg, 'utf8');
         svgCount++;
@@ -114,8 +127,9 @@ async function runGenerator(name, gen) {
     if (!svgOnly) {
       // Convert to PNG
       for (const item of items) {
-        const svgPath = path.join(outDir, `${gen.filenamePrefix}${item.key}.svg`);
-        const pngPath = path.join(outDir, `${gen.filenamePrefix}${item.key}.png`);
+        const dir = itemOutDir(item.key);
+        const svgPath = path.join(dir, `${gen.filenamePrefix}${item.key}.svg`);
+        const pngPath = path.join(dir, `${gen.filenamePrefix}${item.key}.png`);
         if (force || !fs.existsSync(pngPath)) {
           const svgStr = fs.readFileSync(svgPath, 'utf8');
           const result = await svgToPng(svgStr, pngPath, { size: outputSize });
@@ -125,16 +139,21 @@ async function runGenerator(name, gen) {
       console.log(`  [${name}] PNG: ${pngCount} generated (${outputSize}x${outputSize})`);
     }
   } else {
-    // PNG-only mode: convert all existing SVGs
-    const svgFiles = fs.readdirSync(outDir).filter(f => f.startsWith(gen.filenamePrefix) && f.endsWith('.svg'));
-    for (const svgFile of svgFiles) {
-      const svgPath = path.join(outDir, svgFile);
-      const pngFile = svgFile.replace(/\.svg$/, '.png');
-      const pngPath = path.join(outDir, pngFile);
-      if (force || !fs.existsSync(pngPath)) {
-        const svgStr = fs.readFileSync(svgPath, 'utf8');
-        await svgToPng(svgStr, pngPath, { size: outputSize });
-        pngCount++;
+    // PNG-only mode: convert all existing SVGs in subdirs
+    const scanDirs = gen.subdirFromKey
+      ? fs.readdirSync(outDir).map(d => path.join(outDir, d)).filter(d => fs.statSync(d).isDirectory())
+      : [outDir];
+    for (const dir of scanDirs) {
+      const svgFiles = fs.readdirSync(dir).filter(f => f.startsWith(gen.filenamePrefix) && f.endsWith('.svg'));
+      for (const svgFile of svgFiles) {
+        const svgPath = path.join(dir, svgFile);
+        const pngFile = svgFile.replace(/\.svg$/, '.png');
+        const pngPath = path.join(dir, pngFile);
+        if (force || !fs.existsSync(pngPath)) {
+          const svgStr = fs.readFileSync(svgPath, 'utf8');
+          await svgToPng(svgStr, pngPath, { size: outputSize });
+          pngCount++;
+        }
       }
     }
     console.log(`  [${name}] PNG: ${pngCount} converted (${outputSize}x${outputSize})`);

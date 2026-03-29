@@ -69,22 +69,21 @@ func TestAbilityDef_Param(t *testing.T) {
 	}
 }
 
-func TestAbilityDef_NoScale(t *testing.T) {
+func TestAbilityDef_MultiTargetScale(t *testing.T) {
 	table, _ := config.LoadAbilityTable()
 	mt := table["multiTarget"]
 
-	if mt.HasScale() {
-		t.Error("multiTarget不应有缩放维度")
+	// multiTarget 现在有缩放维度（targets），base=1 potential=1
+	if !mt.HasScale() {
+		t.Error("multiTarget应有缩放维度")
 	}
-	if mt.CalcScale(200) != 0 {
-		t.Error("无缩放时CalcScale应返回0")
+	// 强度100: 1 + 1*1 = 2 目标
+	if mt.CalcScale(100) != 2 {
+		t.Errorf("强度100目标数=%.0f, 期望2", mt.CalcScale(100))
 	}
-	// 但有固定参数
-	if !mt.HasParam() {
-		t.Error("multiTarget应有targets参数")
-	}
-	if mt.Param != 2 {
-		t.Errorf("targets=%.0f, 期望2", mt.Param)
+	// 强度200: 1 + 1*2 = 3 目标
+	if mt.CalcScale(200) != 3 {
+		t.Errorf("强度200目标数=%.0f, 期望3", mt.CalcScale(200))
 	}
 }
 

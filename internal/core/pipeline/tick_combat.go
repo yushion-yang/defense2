@@ -78,29 +78,41 @@ func TickTowerCombat(towers *tower.Pool, enemies *enemy.Pool, projectiles *proje
 // HitCallback 弹射物命中回调（用于生成飘字、音效等）。
 type HitCallback = combat.HitCallback
 
+// scatterHit 散射弹命中记录（同组同敌人合并）。
+type scatterHit struct {
+	enemy    *enemy.Enemy
+	towerKey string
+	count    int     // 命中弹丸数
+	damage   float64 // 单颗伤害
+}
+
 // TickProjectileHits 弹射物碰撞子管线：检测碰撞 → 触发能力 → 扣血 → 击杀。
 // 返回本帧击杀数。onHit 可为 nil。
 //
 // 碰撞规则（塔防模型）：
 //   - 追踪弹（Target != nil）：只和锁定目标碰撞，穿过其他敌人
 //   - 穿刺弹（Pierce=true）：对路径上所有敌人碰撞，命中后继续飞行
-//   - 散射视觉弹（ScatterVisual）：不参与碰撞
+//   - 散射弹（ScatterGroup>0）：路径碰撞，同组命中同敌人合并为一次伤害
+//   - 散射视觉弹（ScatterVisual）：不参与碰撞（旧版兼容）
 func TickProjectileHits(projectiles *projectile.Pool, enemies *enemy.Pool, towers *tower.Pool, onHit HitCallback) int {
 	kills := 0
+
+	// 散射命中收集（key = groupID<<32|enemyID）
+	scatterHits := map[int64]*scatterHit{}
+
 	projectiles.Each(func(p *projectile.Projectile) {
-		// 散射视觉弹不参与碰撞检测
+		// 散射视觉弹不参与碰撞检测（旧版兼容）
 		if p.ScatterVisual {
 			return
 		}
 
 		enemies.Each(func(e *enemy.Enemy) {
 			if !p.Active {
-				return // 已被前一个碰撞消耗
+				return
 			}
 
-			// 塔防规则：追踪弹只和锁定目标碰撞，穿过路径上的其他敌人。
-			// 穿刺弹除外 — 穿刺弹需要命中路径上的所有敌人。
-			if p.Target != nil && !p.Pierce && e != p.Target {
+			// 追踪弹只和锁定目标碰撞（穿刺弹和散射弹除外）
+			if p.Target != nil && !p.Pierce && p.ScatterGroup == 0 && e != p.Target {
 				return
 			}
 
@@ -108,7 +120,7 @@ func TickProjectileHits(projectiles *projectile.Pool, enemies *enemy.Pool, tower
 			dy := p.Y - e.Y
 			dist := math.Hypot(dx, dy)
 			if dist > p.Radius+e.Radius {
-				return // 未碰撞
+				return
 			}
 
 			// 穿刺弹：跳过已命中的敌人
@@ -120,13 +132,38 @@ func TickProjectileHits(projectiles *projectile.Pool, enemies *enemy.Pool, tower
 				}
 			}
 
+			// ── 散射弹（穿透）：跳过已命中敌人，记录命中，延迟合并处理 ──
+			if p.ScatterGroup > 0 {
+				// 穿透：跳过已命中的敌人
+				for _, hitID := range p.PierceHitIDs {
+					if hitID == e.ID {
+						return
+					}
+				}
+				p.PierceHitIDs = append(p.PierceHitIDs, e.ID)
+
+				key := int64(p.ScatterGroup)<<32 | int64(e.ID)
+				if sh, ok := scatterHits[key]; ok {
+					sh.count++
+				} else {
+					scatterHits[key] = &scatterHit{
+						enemy:    e,
+						towerKey: p.SourceTowerKey,
+						count:    1,
+						damage:   p.Damage,
+					}
+				}
+				// 不 Release：弹丸继续飞行穿透后续敌人，到 MaxRange 自然消亡
+				return
+			}
+
+			// ── 普通弹/追踪弹/穿刺弹：即时处理 ──
 			totalDamage := p.Damage
 
-			// 查找发射该弹射物的来源塔（按 Key 匹配）
 			var srcTower *tower.Tower
 			if p.SourceTowerKey != "" {
 				towers.Each(func(t *tower.Tower) {
-					if srcTower == nil && t.Key == p.SourceTowerKey {
+					if srcTower == nil && t.InstanceKey == p.SourceTowerKey {
 						srcTower = t
 					}
 				})
@@ -147,7 +184,7 @@ func TickProjectileHits(projectiles *projectile.Pool, enemies *enemy.Pool, tower
 				}
 			}
 
-			// Shield 吸收（检查 shieldIgnore）
+			// Shield 吸收
 			hasShieldIgnore := false
 			if srcTower != nil {
 				for _, aName := range srcTower.Abilities {
@@ -170,7 +207,6 @@ func TickProjectileHits(projectiles *projectile.Pool, enemies *enemy.Pool, tower
 			e.HP -= totalDamage
 			killed := e.HP <= 0
 			if onHit != nil {
-				// 弹射物命中时使用来源塔的攻击方式
 				hitStyle := ""
 				if srcTower != nil {
 					hitStyle = string(srcTower.AttackStyleID)
@@ -183,7 +219,6 @@ func TickProjectileHits(projectiles *projectile.Pool, enemies *enemy.Pool, tower
 				kills++
 			}
 
-			// 穿刺弹：命中后继续飞行
 			if p.Pierce {
 				p.PierceHitIDs = append(p.PierceHitIDs, e.ID)
 				p.PierceCount++
@@ -191,7 +226,6 @@ func TickProjectileHits(projectiles *projectile.Pool, enemies *enemy.Pool, tower
 				if p.PierceCount >= p.PierceMax {
 					projectiles.Release(p)
 				} else {
-					// 寻找下一个最近的未命中敌人重定向
 					retargetPierce(p, e, enemies)
 				}
 			} else {
@@ -199,6 +233,47 @@ func TickProjectileHits(projectiles *projectile.Pool, enemies *enemy.Pool, tower
 			}
 		})
 	})
+
+	// ── 散射命中合并处理 ──
+	for _, sh := range scatterHits {
+		e := sh.enemy
+		if !e.Active {
+			continue
+		}
+		totalDamage := sh.damage * float64(sh.count)
+
+		// 查找来源塔触发能力（以合并伤害为基准）
+		var srcTower *tower.Tower
+		if sh.towerKey != "" {
+			towers.Each(func(t *tower.Tower) {
+				if srcTower == nil && t.InstanceKey == sh.towerKey {
+					srcTower = t
+				}
+			})
+		}
+
+		// Shield 吸收
+		if e.ShieldHP > 0 {
+			if totalDamage <= e.ShieldHP {
+				e.ShieldHP -= totalDamage
+				totalDamage = 0
+			} else {
+				totalDamage -= e.ShieldHP
+				e.ShieldHP = 0
+			}
+		}
+
+		e.HP -= totalDamage
+		killed := e.HP <= 0
+		if onHit != nil {
+			onHit(e, totalDamage, killed, "scatter")
+		}
+		if killed {
+			enemies.Kill(e)
+			kills++
+		}
+	}
+
 	return kills
 }
 
@@ -295,17 +370,28 @@ func applyHitEffects(r *tower.HitResult, target *enemy.Enemy, p *projectile.Proj
 }
 
 // multiTargetCount 返回塔的多目标额外目标数（不含主目标）。
+// 公式: targets = floor(base + potential * (strength/100)) - 1（减去主目标）。
 // 无 multiTarget 能力时返回 0。
 func multiTargetCount(t *tower.Tower) int {
 	for _, aName := range t.Abilities {
 		if aName == "multiTarget" {
 			abTable := config.GlobalAbilityTable()
-			if abTable != nil {
-				if def, ok := abTable["multiTarget"]; ok {
-					return int(def.Param) // param = 额外目标数
-				}
+			if abTable == nil {
+				return 1
 			}
-			return 1 // fallback
+			def, ok := abTable["multiTarget"]
+			if !ok {
+				return 1
+			}
+			str := 100.0
+			if t.Strength != nil {
+				str = t.Strength.Effective()
+			}
+			total := int(def.CalcScale(str)) // 总目标数（含主目标）
+			if total < 1 {
+				total = 1
+			}
+			return total - 1 // 额外目标数
 		}
 	}
 	return 0

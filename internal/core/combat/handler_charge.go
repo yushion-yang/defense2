@@ -21,7 +21,7 @@ func (h *ChargeHandler) Fire(t *tower.Tower, target *enemy.Enemy, ctx *AttackCon
 	if speed <= 0 {
 		speed = 600
 	}
-	ctx.Projectiles.FireCharge(t.X, t.Y, target.X, target.Y, t.Damage*mult, speed, target, t.Key)
+	ctx.Projectiles.FireCharge(t.X, t.Y, target.X, target.Y, t.Damage*mult, speed, target, t.InstanceKey)
 
 	t.ChargeProgress = 0
 	t.ChargeReady = false

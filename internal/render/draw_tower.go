@@ -81,6 +81,40 @@ func (tr *TowerRenderer) DrawTowers(screen *ebiten.Image, pool *tower.Pool, sele
 			draw.FilledRect(screen, cx-4, cy-14, 8, 14, theme.TowerBarrel, true)
 		}
 
+		// --- Charge visual: red glow at muzzle position (follows aim angle) ---
+		if t.AttackStyleID == tower.StyleCharge && (t.ChargeProgress > 0 || t.ChargeReady) {
+			progress := t.ChargeProgress
+			if progress > 1 {
+				progress = 1
+			}
+			// 炮口位置（沿瞄准方向偏移 24px）
+			const muzzleDist = 24.0
+			mx := float64(cx) + math.Cos(t.Angle)*muzzleDist
+			my := float64(cy) + math.Sin(t.Angle)*muzzleDist
+			fmx, fmy := float32(mx), float32(my)
+
+			// Layer 1: 聚能光晕（红色半透明填充圆，随进度增大）
+			glowR := float32(16 * progress)
+			glowA := uint8(38 + 64*progress) // alpha 0.15~0.40
+			draw.Glow(screen, fmx, fmy, glowR*0.2, glowR,
+				color.RGBA{R: 239, G: 68, B: 68, A: glowA})
+
+			// Layer 2: 脉冲环（浅红色描边圆，快速脉动）
+			pulse := 1.0 + math.Sin(animTime*8)*0.2
+			ringR := float32(float64(glowR) * pulse)
+			ringA := uint8(76 + 128*progress) // alpha 0.3~0.8
+			draw.CircleOutline(screen, fmx, fmy, ringR, 1.5,
+				color.RGBA{R: 248, G: 113, B: 113, A: ringA})
+
+			// Layer 3: 中心亮点（>50% 进度时出现，近白色）
+			if progress > 0.5 {
+				dotR := float32(2 + (progress-0.5)*6)
+				dotA := uint8((progress - 0.5) * 1.5 * 255)
+				draw.FilledCircle(screen, fmx, fmy, dotR,
+					color.RGBA{R: 254, G: 242, B: 242, A: dotA})
+			}
+		}
+
 		// --- Spin AoE visual: rotating blade arcs + inner zone highlight ---
 		if t.AttackStyleID == tower.StyleSpinAoE && t.SpinActive > 0 {
 			alpha := t.SpinActive / 0.3
@@ -117,12 +151,12 @@ func (tr *TowerRenderer) DrawTowers(screen *ebiten.Image, pool *tower.Pool, sele
 }
 
 // loadTowerImage loads a tower's PNG sprite.
-// Convention: assets/towers/core/tower-{key}.png
+// Convention: assets/towers/{key}/tower-{key}.png
 func (tr *TowerRenderer) loadTowerImage(t *tower.Tower) *ebiten.Image {
 	if tr.assetFS == nil {
 		return nil
 	}
-	path := fmt.Sprintf("assets/towers/core/tower-%s.png", t.Key)
+	path := fmt.Sprintf("assets/towers/%s/tower-%s.png", t.Key, t.Key)
 	cached := tr.cache.Get(path, towerSpriteSize, towerSpriteSize)
 	if cached != nil {
 		return cached
@@ -146,8 +180,8 @@ func (tr *TowerRenderer) GetSprite(key string) *ebiten.Image {
 	}
 	// Try idle-0 first (matches map rendering)
 	for _, path := range []string{
-		fmt.Sprintf("assets/towers/core/tower-%s-idle-0.png", key),
-		fmt.Sprintf("assets/towers/core/tower-%s.png", key),
+		fmt.Sprintf("assets/towers/%s/tower-%s-idle-0.png", key, key),
+		fmt.Sprintf("assets/towers/%s/tower-%s.png", key, key),
 	} {
 		if img := tr.loadPNG(path); img != nil {
 			return img

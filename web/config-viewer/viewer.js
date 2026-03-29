@@ -103,8 +103,8 @@ async function loadConfig() {
 }
 
 // ── Asset Paths ──
-function towerAsset(key) { return `../../assets/towers/core/tower-${key}.png`; }
-function towerFrame(key, state, n) { return `../../assets/towers/core/tower-${key}-${state}-${n}.png`; }
+function towerAsset(key) { return `../../assets/towers/${key}/tower-${key}.png`; }
+function towerFrame(key, state, n) { return `../../assets/towers/${key}/tower-${key}-${state}-${n}.png`; }
 function enemyAsset(key) { return `../../assets/enemies/${key}.png`; }
 function enemyFrame(key, state, n) { return `../../assets/enemies/${key}-${state}-${n}.png`; }
 
