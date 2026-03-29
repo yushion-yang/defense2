@@ -38,7 +38,7 @@ type PrinceState struct {
 // Base 实现 Stateful 接口。
 func (s *PrinceState) Base() *warden.WardenState { return &s.WardenState }
 
-// Fireball 虚空召唤的火球，从屏幕外飞向敌群密集处，穿透路径上的敌人。
+// Fireball 火球，从最佳打击位置出现，沿直线穿透尽可能多的敌人。
 type Fireball struct {
 	X, Y     float64               // 当前位置
 	StartX   float64               // 起点 X
@@ -47,10 +47,14 @@ type Fireball struct {
 	EndY     float64               // 终点 Y
 	Progress float64               // 飞行进度 0-1
 	Speed    float64               // 飞行速度 px/s
-	Damage   float64               // 穿透伤害
+	Damage   float64               // 穿透伤害（攻击力部分）
+	HpPctDmg float64               // 额外最大生命值百分比伤害（0.05 = 5%）
 	Radius   float64               // 碰撞半径
 	HitSet   map[*enemy.Enemy]bool // 已命中的敌人
 }
+
+const fireballHpPct = 0.05    // 5% 最大生命值额外伤害
+const fireballLineLen = 400.0 // 火球穿透飞行距离
 
 // trailTickInterval 火焰痕迹伤害判定周期（秒）。
 const trailTickInterval = 0.5
@@ -94,6 +98,7 @@ func (s *PrinceState) DescParams(w *warden.Warden) map[string]string {
 		"damage":           fmt.Sprintf("%.0f", s.Damage),
 		"fireballInterval": fmt.Sprintf("%.0f", s.FireballInterval),
 		"fireballDmg":      fmt.Sprintf("%.0f", s.Damage*s.FireballDmgRatio),
+		"fireballHpPct":    fmt.Sprintf("%.0f", fireballHpPct*100),
 		"trailDuration":    fmt.Sprintf("%.0f", s.TrailDuration),
 		"trailDps":         fmt.Sprintf("%.0f", s.Damage*s.TrailDpsRatio),
 	}
@@ -148,35 +153,65 @@ func (b *princeBehavior) Tick(w *warden.Warden, ctx *warden.TickContext) {
 	s.DecayShootTimer(dt)
 }
 
-// spawnFireball 从战灵身后方向召唤一颗火球飞向敌群密集处。
+// spawnFireball 在敌群最密集处召唤火球，沿最优方向穿透尽可能多的敌人。
 func spawnFireball(s *PrinceState, ctx *warden.TickContext) {
-	target := warden.FindClusterCenter(ctx.Enemies, 80.0)
-	if target == nil {
+	// 1. 找到最佳打击中心（敌群最密集的敌人位置）
+	center := warden.FindDensestEnemy(ctx.Enemies, 80)
+	if center == nil {
 		return
 	}
 
-	// 起点：从战灵反方向 200px 处（虚空召唤效果）
-	dx := target.X - s.X
-	dy := target.Y - s.Y
-	dist := math.Hypot(dx, dy)
-	if dist < 1 {
-		dist = 1
+	// 2. 从该中心扫描 36 方向，找到穿透最多敌人的角度
+	bestAngle := 0.0
+	bestCount := 0
+	var enemies []*enemy.Enemy
+	ctx.Enemies.Each(func(e *enemy.Enemy) {
+		enemies = append(enemies, e)
+	})
+	for i := 0; i < 36; i++ {
+		a := float64(i) * math.Pi / 18
+		count := countOnLine(enemies, center.X, center.Y, a, fireballLineLen, s.FireballRadius)
+		if count > bestCount {
+			bestCount = count
+			bestAngle = a
+		}
 	}
-	startX := s.X - (dx/dist)*200
-	startY := s.Y - (dy/dist)*200
+
+	// 3. 起点 = 密集中心沿反方向偏移，终点 = 沿方向延伸
+	cosA, sinA := math.Cos(bestAngle), math.Sin(bestAngle)
+	startX := center.X - cosA*50 // 从中心后方 50px 出现
+	startY := center.Y - sinA*50
+	endX := center.X + cosA*fireballLineLen
+	endY := center.Y + sinA*fireballLineLen
 
 	s.Fireballs = append(s.Fireballs, Fireball{
-		X:      startX,
-		Y:      startY,
-		StartX: startX,
-		StartY: startY,
-		EndX:   target.X,
-		EndY:   target.Y,
-		Speed:  s.FireballSpeed,
-		Damage: s.Damage * s.FireballDmgRatio,
-		Radius: s.FireballRadius,
-		HitSet: make(map[*enemy.Enemy]bool),
+		X: startX, Y: startY,
+		StartX: startX, StartY: startY,
+		EndX: endX, EndY: endY,
+		Speed:    s.FireballSpeed,
+		Damage:   s.Damage * s.FireballDmgRatio,
+		HpPctDmg: fireballHpPct,
+		Radius:   s.FireballRadius,
+		HitSet:   make(map[*enemy.Enemy]bool),
 	})
+}
+
+// countOnLine 统计沿 (cx,cy) + angle 方向、长 length、宽 radius 的矩形内的敌人数。
+func countOnLine(enemies []*enemy.Enemy, cx, cy, angle, length, width float64) int {
+	cosA, sinA := math.Cos(angle), math.Sin(angle)
+	count := 0
+	for _, e := range enemies {
+		if !e.Active || e.HP <= 0 {
+			continue
+		}
+		dx, dy := e.X-cx, e.Y-cy
+		along := dx*cosA + dy*sinA
+		perp := math.Abs(-dx*sinA + dy*cosA)
+		if along >= -50 && along <= length && perp <= width {
+			count++
+		}
+	}
+	return count
 }
 
 // tickFireballs 更新所有活跃火球：移动、穿透伤害、到达后留下痕迹。
@@ -199,13 +234,17 @@ func tickFireballs(s *PrinceState, ctx *warden.TickContext) {
 		fb.X = fb.StartX + dx*fb.Progress
 		fb.Y = fb.StartY + dy*fb.Progress
 
-		// 穿透伤害
+		// 穿透伤害 = 攻击力伤害 + 5% MaxHP（boss 免疫百分比部分）
 		ctx.Enemies.Each(func(e *enemy.Enemy) {
 			if fb.HitSet[e] {
 				return
 			}
 			if math.Hypot(e.X-fb.X, e.Y-fb.Y) < fb.Radius {
-				warden.ApplyDamage(ctx, e, fb.Damage, false)
+				dmg := fb.Damage
+				if fb.HpPctDmg > 0 && !e.Boss {
+					dmg += e.MaxHP * fb.HpPctDmg
+				}
+				warden.ApplyDamage(ctx, e, dmg, false)
 				fb.HitSet[e] = true
 			}
 		})

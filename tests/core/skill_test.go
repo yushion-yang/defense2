@@ -137,7 +137,7 @@ func TestChannelLaser_FindBestDirection(t *testing.T) {
 		makeSkillEnemy(120, 0, 100),
 	}
 	// 所有敌人在右方，最佳方向应接近0弧度
-	angle := skill.FindBestLaserDirection(0, 0, enemies, 200, 28)
+	angle := skill.FindBestLaserDirection(enemies, 0, 0, 200, 28)
 	if math.Abs(angle) > math.Pi/4 {
 		t.Errorf("最佳方向=%.2f弧度, 敌人在右方应接近0", angle)
 	}
@@ -145,72 +145,29 @@ func TestChannelLaser_FindBestDirection(t *testing.T) {
 
 func TestChannelLaser_GetEnemiesInLaser(t *testing.T) {
 	enemies := []*enemy.Enemy{
-		makeSkillEnemy(100, 0, 100),  // 正右方
-		makeSkillEnemy(0, 100, 100),  // 正上方
+		makeSkillEnemy(100, 0, 100), // 正右方
+		makeSkillEnemy(0, 100, 100), // 正上方
 	}
-	hits := skill.GetEnemiesInLaser(0, 0, 0, 200, 28, enemies) // 角度0=向右
+	hits := skill.GetEnemiesInLaser(enemies, 0, 0, 0, 200, 28) // 角度0=向右
 	if len(hits) != 1 {
 		t.Errorf("向右激光应命中1个敌人(正右方), 实际%d", len(hits))
 	}
 }
 
 // ============================================================
-// 被动技能测试
+// 全部 9 技能注册测试
 // ============================================================
 
-func TestPassive_Defaults(t *testing.T) {
-	def := skill.GetPassiveDefaults("missile-barrage")
-	if def.ChargeMax != 100 {
-		t.Errorf("missile-barrage ChargeMax=%.0f, 期望100", def.ChargeMax)
+func TestAllSkillsRegistered(t *testing.T) {
+	names := []string{
+		"chainLightning", "nukeBomb", "windBlade", "channelLaser",
+		"missileBarrage", "judgmentBeam", "chainLightningBolts", "judgmentRain",
+		"thunderSmite",
 	}
-	if def.ChargePerSec != 8 {
-		t.Errorf("missile-barrage ChargePerSec=%.0f, 期望8", def.ChargePerSec)
-	}
-}
-
-func TestPassive_ChargeAndRelease(t *testing.T) {
-	def := skill.GetPassiveDefaults("missile-barrage")
-	p := skill.NewPassiveSkill(def)
-
-	// 充能
-	for i := 0; i < 100; i++ {
-		p.Tick(0.1) // 10秒 = 80充能(不够)
-	}
-	if p.Ready {
-		t.Error("80充能不应满(需要100)")
-	}
-
-	// 再充3秒 = 24更多 = 总104
-	for i := 0; i < 30; i++ {
-		p.Tick(0.1)
-	}
-	if !p.Ready {
-		t.Error("13秒应已充满")
-	}
-
-	progress := p.Progress()
-	if progress < 1.0 {
-		t.Errorf("充满时Progress=%.2f, 期望>=1.0", progress)
-	}
-
-	ok := p.TryRelease()
-	if !ok {
-		t.Error("充满时TryRelease应返回true")
-	}
-	if p.Ready {
-		t.Error("释放后不应仍为ready")
-	}
-	if p.Charge != 0 {
-		t.Errorf("释放后Charge=%.0f, 期望0", p.Charge)
-	}
-}
-
-func TestPassive_Adapter_Registration(t *testing.T) {
-	names := []string{"missileBarrage", "judgmentBeam", "chainLightningBolts", "judgmentRain"}
 	for _, name := range names {
 		s := skill.Get(name)
 		if s == nil {
-			t.Errorf("%s适配器应已注册", name)
+			t.Errorf("%s 应已注册", name)
 		}
 	}
 }
@@ -220,16 +177,16 @@ func TestPassive_Adapter_Registration(t *testing.T) {
 // ============================================================
 
 type mockSkill struct {
-	name    string
-	ticked  int
+	name   string
+	ticked int
 }
 
-func (m *mockSkill) Name() string                     { return m.name }
-func (m *mockSkill) Init(_ interface{})                {}
+func (m *mockSkill) Name() string       { return m.name }
+func (m *mockSkill) Init(_ interface{}) {}
 func (m *mockSkill) Tick(_ interface{}, _ []*enemy.Enemy, _ float64, _ *skill.SkillContext) bool {
 	m.ticked++
 	return false
 }
-func (m *mockSkill) ShouldSuppressFire(_ interface{}) bool { return false }
-func (m *mockSkill) ShouldSuppressMove(_ interface{}) bool { return false }
+func (m *mockSkill) ShouldSuppressFire(_ interface{}) bool     { return false }
+func (m *mockSkill) ShouldSuppressMove(_ interface{}) bool     { return false }
 func (m *mockSkill) GetProgress(_ interface{}) (float64, bool) { return 0, false }

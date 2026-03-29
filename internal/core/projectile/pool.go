@@ -324,6 +324,11 @@ func (p *Pool) ClearAll() {
 	p.cursor = 0
 }
 
+// FireSkillMissile 技能专用追踪导弹（从指定位置发射，追踪目标）。
+func (p *Pool) FireSkillMissile(sx, sy float64, target *enemy.Enemy, damage, speed float64) {
+	p.Fire(sx, sy, target.X, target.Y, damage, speed, 5, target, "skill")
+}
+
 // SpawnSkillProjectile 技能专用弹射物（无追踪目标，按速度向量飞行，支持穿透）。
 // 由 windBlade 等技能通过 bladeSpawner 接口调用。
 func (p *Pool) SpawnSkillProjectile(x, y, vx, vy, damage, radius float64, pierce bool) {

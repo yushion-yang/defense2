@@ -10,10 +10,9 @@ import (
 // ── 常量 ──
 
 const (
-	clCooldown         = 7.0   // 冷却时间（秒）
+	clCooldown         = 5.0   // 冷却时间（秒）
 	clMaxTargets       = 8     // 最大跳跃目标数
 	clDamageMultiplier = 4.0   // 伤害倍率（相对持有者基础伤害）
-	clDamageDecay      = 0.85  // 每跳伤害衰减倍率
 	clJumpRange        = 120.0 // 每跳搜索范围（像素）
 	clJumpInterval     = 0.15  // 跳跃间隔（秒）
 	clDefaultRange     = 200.0 // 默认攻击范围（持有者无范围时使用）
@@ -21,13 +20,10 @@ const (
 
 // chainLightning 链式闪电技能实现。
 type chainLightning struct {
-	timer      float64        // 冷却计时器
-	ready      bool           // 是否就绪
-	firing     bool           // 正在释放中
-	jumpTimer  float64        // 当前跳跃间隔计时
-	jumpIndex  int            // 当前跳跃索引
-	targets    []*enemy.Enemy // 跳跃目标列表
-	baseDamage float64        // 基础伤害（从持有者获取）
+	skillBase
+	jumpTimer float64        // 当前跳跃间隔计时
+	jumpIndex int            // 当前跳跃索引
+	targets   []*enemy.Enemy // 跳跃目标列表
 }
 
 func init() {
@@ -39,87 +35,57 @@ func init() {
 func (c *chainLightning) Name() string { return "chainLightning" }
 
 func (c *chainLightning) Init(_ interface{}) {
-	c.timer = 0
-	c.ready = false
-	c.firing = false
+	c.Timer = 0
+	c.Ready = false
+	c.Firing = false
 	c.jumpIndex = 0
 	c.targets = nil
-	c.baseDamage = 0
 }
 
 func (c *chainLightning) Tick(owner interface{}, enemies []*enemy.Enemy, dt float64, ctx *SkillContext) bool {
-	// 释放阶段：逐跳应用伤害
-	if c.firing {
+	if c.Firing {
 		c.jumpTimer += dt
 		for c.jumpTimer >= clJumpInterval && c.jumpIndex < len(c.targets) {
 			c.jumpTimer -= clJumpInterval
 			t := c.targets[c.jumpIndex]
 			if t.Active && t.HP > 0 {
-				// 每跳衰减伤害
-				dmg := c.baseDamage * clDamageMultiplier * math.Pow(clDamageDecay, float64(c.jumpIndex))
-				t.HP -= dmg
-				t.HitFlash = 0.15
-				killed := t.HP <= 0
-				if killed {
-					t.Active = false
-				}
-				if ctx != nil && ctx.OnHit != nil {
-					ctx.OnHit(t, dmg, killed)
-				}
+				dmg := c.BaseDmg * clDamageMultiplier
+				applySkillDamage(t, dmg, ctx)
 			}
 			c.jumpIndex++
 		}
-		// 所有跳跃完成
 		if c.jumpIndex >= len(c.targets) {
-			c.firing = false
+			c.endFiring()
 			c.targets = nil
 			c.jumpIndex = 0
 		}
-		return true // 释放期间压制普攻
+		return true
 	}
-
-	// 冷却阶段
-	c.timer += dt
-	if c.timer >= clCooldown {
-		c.ready = true
-	}
-
-	if !c.ready {
+	c.tickCD(dt, clCooldown)
+	if !c.tryActivate(owner, enemies, clDefaultRange) {
 		return false
 	}
-
-	// 尝试激活：范围内需要有敌人
-	ox, oy, rng := getOwnerPosAndRange(owner, clDefaultRange)
-	if !hasEnemyInRange(enemies, ox, oy, rng) {
-		return false
-	}
-
-	// 获取基础伤害
-	c.baseDamage = getOwnerDamage(owner, 10.0)
-
-	// 寻找跳跃链
-	c.targets = findChainTargets(enemies, ox, oy, rng, clMaxTargets, clJumpRange)
+	c.targets = findChainTargets(enemies, c.OX, c.OY, c.Rng, clMaxTargets, clJumpRange)
 	if len(c.targets) == 0 {
+		c.endFiring()
 		return false
 	}
-
-	// 开始释放
-	c.firing = true
 	c.jumpTimer = 0
 	c.jumpIndex = 0
-	c.timer = 0
-	c.ready = false
+	notifyActivate("chainLightning", ctx)
 	return true
 }
 
-func (c *chainLightning) ShouldSuppressFire(_ interface{}) bool { return c.firing }
+func (c *chainLightning) ShouldSuppressFire(_ interface{}) bool { return c.Firing }
 func (c *chainLightning) ShouldSuppressMove(_ interface{}) bool { return false }
 
 func (c *chainLightning) GetVFX() *SkillVFX {
-	if !c.firing || len(c.targets) == 0 {
+	if !c.Firing || len(c.targets) == 0 {
 		return nil
 	}
-	pts := make([][2]float64, 0, c.jumpIndex+1)
+	// 首个点为施法者位置，后续为跳跃目标
+	pts := make([][2]float64, 0, c.jumpIndex+2)
+	pts = append(pts, [2]float64{c.OX, c.OY})
 	for i := 0; i <= c.jumpIndex && i < len(c.targets); i++ {
 		t := c.targets[i]
 		pts = append(pts, [2]float64{t.X, t.Y})
@@ -128,14 +94,7 @@ func (c *chainLightning) GetVFX() *SkillVFX {
 }
 
 func (c *chainLightning) GetProgress(_ interface{}) (float64, bool) {
-	if c.firing {
-		return 1.0, false
-	}
-	ratio := c.timer / clCooldown
-	if ratio > 1 {
-		ratio = 1
-	}
-	return ratio, c.ready
+	return c.progress(clCooldown)
 }
 
 // findChainTargets 贪心最近邻跳跃链。

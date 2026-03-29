@@ -28,6 +28,7 @@ type SkillContext struct {
 	Projectiles interface{}                                       // *projectile.Pool（避免循环依赖用 interface）
 	Beams       interface{}                                       // *combat.BeamPool
 	OnHit       func(e *enemy.Enemy, damage float64, killed bool) // 命中回调
+	OnActivate  func(skillKey string)                             // 技能激活回调（音效等）
 }
 
 // SkillVFX 技能视觉效果数据（渲染层读取）。

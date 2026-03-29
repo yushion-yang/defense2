@@ -49,21 +49,13 @@ func initFont() {
 	if assetFS == nil {
 		return
 	}
-	fallback, err := assetFS.ReadFile("assets/fonts/NotoSansSC-Regular.ttf")
+	fontData, err := assetFS.ReadFile("assets/fonts/NotoSansSC-Medium.otf")
 	if err != nil {
-		log.Printf("中文字体加载失败: %v", err)
+		log.Printf("字体加载失败: %v", err)
 		return
 	}
-	primary, err := assetFS.ReadFile("assets/fonts/JetBrainsMono-Regular.ttf")
-	if err != nil {
-		log.Printf("JetBrains Mono 加载失败，退回单字体: %v", err)
-		if err2 := render.InitGlobalFont(fallback); err2 != nil {
-			log.Printf("全局字体解析失败: %v", err2)
-		}
-		return
-	}
-	if err := render.InitGlobalDualFont(primary, fallback); err != nil {
-		log.Printf("双字体初始化失败: %v", err)
+	if err := render.InitGlobalFont(fontData); err != nil {
+		log.Printf("全局字体初始化失败: %v", err)
 	}
 }
 

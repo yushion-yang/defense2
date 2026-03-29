@@ -11,5 +11,5 @@ var DataFS embed.FS
 
 // AssetFS 资源文件系统（PNG 精灵 + WAV 音频）。
 //
-//go:embed assets/towers/*/*.png assets/enemies/*.png assets/wardens/*.png assets/icons/*.png assets/audio/*.wav assets/fonts/*.ttf
+//go:embed assets/towers/*/*.png assets/enemies/*.png assets/wardens/*.png assets/icons/*.png assets/audio/*.wav assets/fonts/*.ttf assets/fonts/*.otf
 var AssetFS embed.FS

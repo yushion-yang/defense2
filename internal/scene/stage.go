@@ -1167,6 +1167,7 @@ func (s *StageScene) updatePlaying() {
 	// 游戏速度倍率
 	gameDT := dt * float64(s.gameSpeed)
 	prevWave := s.spawner.Wave
+	render.UpdateVFXTick(gameDT)
 
 	// 音效节流计时器递减
 
@@ -1872,6 +1873,11 @@ func (s *StageScene) buildSkillContext() *skill.SkillContext {
 				s.kills++
 				s.gold += s.econ.KillGold() + s.killRewardBonus
 				s.audioMgr.PlaySafe(gameAudio.SFXEnemyDeath)
+			}
+		},
+		OnActivate: func(skillKey string) {
+			if sfx := gameAudio.SkillSFX(skillKey); sfx != "" {
+				s.audioMgr.PlaySafe(sfx)
 			}
 		},
 	}

@@ -502,6 +502,82 @@ sfx('warden-special-mech', category='ui', duration=0.18, drive=1.1,
     {'type': 'noise_hp', 'freq': 3000, 'vol': 0.25, 'env': 'exp', 'env_rate': 22, 'seed': 99},
 ])
 
+# ═══════════════════════════════════════════════════════════════
+# G. Skill Activation Sounds (9 skills)
+# Played when a skill fires / activates
+# ═══════════════════════════════════════════════════════════════
+
+# skill-chain-lightning — 电弧爆裂连锁音（优化：增加频谱丰富度）
+sfx('skill-chain-lightning', category='impact', duration=0.28, drive=1.3,
+    transient={'duration_ms': 2, 'energy': 1.3}, layers=[
+    {'type': 'noise_hp', 'freq': 3000, 'vol': 0.45, 'env': 'punch', 'atk_ms': 0, 'hold_ms': 5, 'env_rate': 16, 'seed': 301},
+    {'type': 'fm', 'freq': 2200, 'freq_end': 1000, 'fm_freq': 550, 'fm_depth': 7, 'vol': 0.35, 'env': 'exp', 'env_rate': 12},
+    {'type': 'sine', 'freq': 1400, 'freq_end': 500, 'vol': 0.2, 'env': 'exp', 'env_rate': 10},
+    {'type': 'harmonics', 'freq': 600, 'freq_end': 300, 'harmonics': 6, 'h_curve': 'metallic', 'vol': 0.2, 'env': 'exp', 'env_rate': 14},
+])
+
+# skill-nuke-bomb — 深沉爆炸冲击波（优化：增强瞬态+频率变化）
+sfx('skill-nuke-bomb', category='impact', duration=0.4, drive=1.5,
+    transient={'duration_ms': 3, 'energy': 1.6}, layers=[
+    {'type': 'harmonics', 'freq': 120, 'freq_end': 40, 'harmonics': 8, 'h_curve': 'natural', 'vol': 0.5, 'env': 'punch', 'atk_ms': 1, 'hold_ms': 8, 'env_rate': 6},
+    {'type': 'noise_lp', 'freq': 800, 'freq_end': 200, 'vol': 0.4, 'env': 'exp', 'env_rate': 8, 'seed': 302},
+    {'type': 'fm', 'freq': 300, 'freq_end': 80, 'fm_freq': 80, 'fm_depth': 6, 'vol': 0.3, 'env': 'exp', 'env_rate': 6},
+    {'type': 'sine', 'freq': 1800, 'freq_end': 200, 'vol': 0.2, 'env': 'exp', 'env_rate': 16},
+])
+
+# skill-wind-blade — 风刃切割呼啸
+sfx('skill-wind-blade', category='sustained', duration=0.2, drive=1.0, layers=[
+    {'type': 'noise_bp', 'freq': 1200, 'bw': 800, 'vol': 0.45, 'env': 'adsr', 'a': 0.01, 'd': 0.04, 's': 0.5, 'r': 0.06, 'seed': 303},
+    {'type': 'sine', 'freq': 800, 'freq_end': 1600, 'vol': 0.3, 'env': 'exp', 'env_rate': 10},
+    {'type': 'fm', 'freq': 1000, 'fm_freq': 250, 'fm_depth': 3, 'vol': 0.2, 'env': 'exp', 'env_rate': 12},
+])
+
+# skill-channel-laser — 持续引导嗡鸣（优化：增加频率扫动+动态变化）
+sfx('skill-channel-laser', category='sustained', duration=0.35, drive=1.0, layers=[
+    {'type': 'saw', 'freq': 600, 'freq_end': 800, 'vol': 0.35, 'env': 'adsr', 'a': 0.01, 'd': 0.05, 's': 0.65, 'r': 0.06},
+    {'type': 'harmonics', 'freq': 880, 'freq_end': 1200, 'harmonics': 10, 'h_curve': 'bright', 'vol': 0.3, 'env': 'adsr', 'a': 0.015, 'd': 0.04, 's': 0.55, 'r': 0.06},
+    {'type': 'noise_hp', 'freq': 3500, 'vol': 0.2, 'env': 'adsr', 'a': 0.005, 'd': 0.04, 's': 0.45, 'r': 0.05, 'seed': 304},
+    {'type': 'fm', 'freq': 1600, 'fm_freq': 400, 'fm_depth': 2, 'vol': 0.15, 'env': 'adsr', 'a': 0.02, 'd': 0.05, 's': 0.35, 'r': 0.06},
+])
+
+# skill-missile-barrage — 连续导弹发射
+sfx('skill-missile-barrage', category='impact', duration=0.3, drive=1.4,
+    transient={'duration_ms': 3, 'energy': 1.3}, layers=[
+    {'type': 'harmonics', 'freq': 300, 'freq_end': 150, 'harmonics': 6, 'h_curve': 'metallic', 'vol': 0.45, 'env': 'punch', 'atk_ms': 1, 'hold_ms': 6, 'env_rate': 12},
+    {'type': 'noise_hp', 'freq': 2000, 'vol': 0.4, 'env': 'exp', 'env_rate': 16, 'seed': 305},
+    {'type': 'fm', 'freq': 800, 'fm_freq': 200, 'fm_depth': 3, 'vol': 0.25, 'env': 'exp', 'env_rate': 14},
+])
+
+# skill-judgment-beam — 审判光束充能释放
+sfx('skill-judgment-beam', category='sustained', duration=0.4, drive=1.2, layers=[
+    {'type': 'harmonics', 'freq': 200, 'freq_end': 400, 'harmonics': 12, 'h_curve': 'bright', 'vol': 0.45, 'env': 'adsr', 'a': 0.03, 'd': 0.08, 's': 0.6, 'r': 0.1},
+    {'type': 'saw', 'freq': 500, 'freq_end': 800, 'vol': 0.3, 'env': 'adsr', 'a': 0.02, 'd': 0.06, 's': 0.5, 'r': 0.08},
+    {'type': 'noise_hp', 'freq': 2500, 'vol': 0.2, 'env': 'adsr', 'a': 0.01, 'd': 0.06, 's': 0.35, 'r': 0.06, 'seed': 306},
+])
+
+# skill-chain-bolts — 闪电激射脉冲
+sfx('skill-chain-bolts', category='impact', duration=0.2, drive=1.3,
+    transient={'duration_ms': 2, 'energy': 1.1}, layers=[
+    {'type': 'noise_hp', 'freq': 3500, 'vol': 0.5, 'env': 'exp', 'env_rate': 20, 'seed': 307},
+    {'type': 'fm', 'freq': 2500, 'fm_freq': 600, 'fm_depth': 5, 'vol': 0.3, 'env': 'exp', 'env_rate': 16},
+    {'type': 'sine', 'freq': 1500, 'freq_end': 800, 'vol': 0.2, 'env': 'exp', 'env_rate': 14},
+])
+
+# skill-judgment-rain — 天降审判持续轰鸣
+sfx('skill-judgment-rain', category='sustained', duration=0.35, drive=1.1, layers=[
+    {'type': 'noise_bp', 'freq': 600, 'bw': 400, 'vol': 0.4, 'env': 'adsr', 'a': 0.03, 'd': 0.08, 's': 0.55, 'r': 0.1, 'seed': 308},
+    {'type': 'sine', 'freq': 1500, 'freq_end': 1000, 'vol': 0.3, 'env': 'exp', 'env_rate': 8},
+    {'type': 'harmonics', 'freq': 400, 'harmonics': 6, 'h_curve': 'hollow', 'vol': 0.25, 'env': 'adsr', 'a': 0.02, 'd': 0.06, 's': 0.4, 'r': 0.08},
+])
+
+# skill-thunder-smite — 天罚雷击重击
+sfx('skill-thunder-smite', category='impact', duration=0.3, drive=1.5,
+    transient={'duration_ms': 4, 'energy': 1.4}, layers=[
+    {'type': 'harmonics', 'freq': 100, 'freq_end': 50, 'harmonics': 10, 'h_curve': 'natural', 'vol': 0.5, 'env': 'exp', 'env_rate': 7},
+    {'type': 'noise_hp', 'freq': 2800, 'vol': 0.45, 'env': 'punch', 'atk_ms': 0, 'hold_ms': 6, 'env_rate': 14, 'seed': 309},
+    {'type': 'fm', 'freq': 1600, 'fm_freq': 400, 'fm_depth': 5, 'vol': 0.3, 'env': 'exp', 'env_rate': 12},
+])
+
 # Laser beam (sustained visual)
 sfx('laser-beam', category='sustained', duration=0.3, drive=0.8, layers=[
     {'type': 'saw', 'freq': 800, 'vol': 0.3, 'env': 'adsr', 'a': 0.02, 'd': 0.05, 's': 0.7, 'r': 0.05},
