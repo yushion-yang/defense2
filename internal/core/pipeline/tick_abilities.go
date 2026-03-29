@@ -49,22 +49,7 @@ func TickTowerAbilities(towers *tower.Pool, enemies *enemy.Pool, dt float64) int
 }
 
 // resetTowerStats 根据战力系统重算塔的 Damage/Range/AttackSpeed。
-// 公式: effectiveAttr = base + potential * (effectiveStrength / 100)
-// 无战力配置时回退到基础值。
+// 公式: attr = base + potential * (strength / 100)
 func resetTowerStats(t *tower.Tower) {
-	cfg := t.StrengthCfg
-	sd := t.Strength
-
-	if cfg == nil || sd == nil {
-		// 无战力系统，使用基础值
-		t.Damage = t.BaseDamage
-		t.Range = t.BaseRange
-		t.AttackSpeed = t.BaseSpeed
-		return
-	}
-
-	eff := sd.Effective()
-	t.Damage = cfg.CalcAttribute("attackDamage", eff, t.BaseDamage)
-	t.Range = cfg.CalcAttribute("range", eff, t.BaseRange)
-	t.AttackSpeed = cfg.CalcAttribute("attackSpeed", eff, t.BaseSpeed)
+	t.RecalcStats()
 }

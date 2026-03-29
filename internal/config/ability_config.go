@@ -28,6 +28,14 @@ type AbilityDef struct {
 // AbilityTable 能力定义表（abilityType → AbilityDef）。
 type AbilityTable map[string]*AbilityDef
 
+// globalAbilityTable 全局缓存（首次加载后复用）。
+var globalAbilityTable AbilityTable
+
+// GlobalAbilityTable 返回全局能力定义表。LoadAbilityTable 成功后可用。
+func GlobalAbilityTable() AbilityTable {
+	return globalAbilityTable
+}
+
 // LoadAbilityTable 从 abilities.json 加载能力定义表。
 func LoadAbilityTable() (AbilityTable, error) {
 	if dataFS == nil {
@@ -42,6 +50,7 @@ func LoadAbilityTable() (AbilityTable, error) {
 	if err := json.Unmarshal(data, &table); err != nil {
 		return nil, fmt.Errorf("parse abilities: %w", err)
 	}
+	globalAbilityTable = table
 	return table, nil
 }
 

@@ -1,11 +1,14 @@
 // info_panel.go — Bottom-center tower detail panel.
 // Shows tower stats, current abilities, upgrade growth, and sell button when a tower is selected.
-// Future ability unlocks are shown in a hover tooltip.
+// Ability display is data-driven from config.AbilityTable with strength scaling.
 package hud
 
 import (
 	"fmt"
+	"image/color"
+	"math"
 
+	"defense2/internal/config"
 	"defense2/internal/core/strength"
 	"defense2/internal/core/tower"
 	"defense2/internal/render"
@@ -40,19 +43,18 @@ func DrawInfoPanel(screen *ebiten.Image, t *tower.Tower, sellValue int) {
 	}
 
 	const (
-		panelW   = float32(theme.CenterPanelW)
-		innerPad = float32(theme.CenterPanelInnerPad)
-		titleH   = float32(theme.DetailTitleH)
-		attrH    = float32(theme.DetailAttrH)
-		abilityH = float32(theme.DetailRowH)
-		btnH     = float32(theme.DetailBtnH)
-		topPad   = float32(theme.DetailTopPad)
-		botPad   = float32(theme.DetailBotPad)
+		panelW    = float32(theme.CenterPanelW)
+		innerPad  = float32(theme.CenterPanelInnerPad)
+		titleH    = float32(theme.DetailTitleH)
+		attrH     = float32(theme.DetailAttrH)
+		abilityH  = float32(theme.DetailRowH)
+		btnH      = float32(theme.DetailBtnH)
+		topPad    = float32(theme.DetailTopPad)
+		botPad    = float32(theme.DetailBotPad)
 		detailGap = float32(theme.DetailGap)
-		btnGap   = float32(8)
+		btnGap    = float32(8)
 	)
 
-	// 所有能力都已默认解锁（无等级限制）
 	currentAbilities := t.Abilities
 
 	// --- Build FlexPanel (content-driven height) ---
@@ -62,9 +64,7 @@ func DrawInfoPanel(screen *ebiten.Image, t *tower.Tower, sellValue int) {
 	panel.Radius = float32(theme.CenterPanelRadius)
 	panel.AddSpace(topPad - innerPad)
 
-	// 提取战力数据（从 Tower 的 interface{} 字段做类型断言）
 	sd := t.Strength
-	cfg := t.StrengthCfg
 	var effStr float64
 	if sd != nil {
 		effStr = sd.Effective()
@@ -75,7 +75,6 @@ func DrawInfoPanel(screen *ebiten.Image, t *tower.Tower, sellValue int) {
 		fm.DrawBoldText(screen, t.Label, x, y, theme.FontLG, theme.TextTitle)
 		rightX := x + w
 
-		// 右侧：战力数值 + 加成分解
 		if sd != nil {
 			strClr := theme.StatusStrNorm
 			if effStr > 100 {
@@ -104,27 +103,15 @@ func DrawInfoPanel(screen *ebiten.Image, t *tower.Tower, sellValue int) {
 
 		// 伤害
 		drawStatIcon(screen, im, "stat-damage", x, y, iconSize)
-		if cfg != nil {
-			fm.DrawText(screen, formatStrengthStat(cfg, "attackDamage", effStr, t.Damage), x+textOff, y, theme.FontMD, theme.InfoAttrDamage)
-		} else {
-			fm.DrawText(screen, formatStatShort(t.BaseDamage, t.Damage), x+textOff, y, theme.FontMD, theme.InfoAttrDamage)
-		}
+		fm.DrawText(screen, fmtAttr("%.0f", t.BaseDamage, t.PotentialDamage, effStr), x+textOff, y, theme.FontMD, theme.InfoAttrDamage)
 
-		// 攻速
+		// 攻速（精确到一位小数）
 		drawStatIcon(screen, im, "stat-atkspd", x+colW, y, iconSize)
-		if cfg != nil {
-			fm.DrawText(screen, formatStrengthStat(cfg, "attackSpeed", effStr, t.AttackSpeed), x+colW+textOff, y, theme.FontMD, theme.InfoAttrAtkSpd)
-		} else {
-			fm.DrawText(screen, formatStatShort(t.BaseSpeed, t.AttackSpeed), x+colW+textOff, y, theme.FontMD, theme.InfoAttrAtkSpd)
-		}
+		fm.DrawText(screen, fmtAttr("%.1f", t.BaseSpeed, t.PotentialSpeed, effStr), x+colW+textOff, y, theme.FontMD, theme.InfoAttrAtkSpd)
 
 		// 射程
 		drawStatIcon(screen, im, "stat-range", x+colW*2, y, iconSize)
-		if cfg != nil {
-			fm.DrawText(screen, formatStrengthStat(cfg, "range", effStr, t.Range), x+colW*2+textOff, y, theme.FontMD, theme.InfoAttrRange)
-		} else {
-			fm.DrawText(screen, fmt.Sprintf("%.0f", t.Range), x+colW*2+textOff, y, theme.FontMD, theme.InfoAttrRange)
-		}
+		fm.DrawText(screen, fmtAttr("%.0f", t.BaseRange, t.PotentialRange, effStr), x+colW*2+textOff, y, theme.FontMD, theme.InfoAttrRange)
 
 		// DPS
 		drawStatIcon(screen, im, "stat-dps", x+colW*3, y, iconSize)
@@ -140,30 +127,13 @@ func DrawInfoPanel(screen *ebiten.Image, t *tower.Tower, sellValue int) {
 		fm.DrawText(screen, "攻击: "+attackStyleLabel(style), x, y, theme.FontXS, theme.TextMuted)
 	})
 
-	// Row 4: 当前（已解锁）能力
+	// Row 4: 能力列表（数据驱动）
+	abTable := config.GlobalAbilityTable()
 	if len(currentAbilities) > 0 {
 		for _, ab := range currentAbilities {
 			ab := ab
 			panel.AddRow(abilityH, func(screen *ebiten.Image, x, y float64, w float64) {
-				im := render.GlobalIcons()
-				if iconName, ok := abilityIconMap[ab]; ok {
-					drawStatIcon(screen, im, iconName, x, y, 12)
-				}
-				abX := x + 16.0
-				fm.DrawBoldText(screen, abilityLabel(ab), abX, y, theme.FontXS, theme.TextBody)
-				abX += fm.MeasureText(abilityLabel(ab), theme.FontXS) + 6
-
-				// 战力缩放参数（如 "比率 20%+(60%)=80%"）
-				if cfg != nil && sd != nil {
-					if strDesc := abilityStrengthDesc(ab, cfg, effStr); strDesc != "" {
-						fm.DrawText(screen, strDesc, abX, y+1, theme.FontXS, theme.StatusStrUp)
-						abX += fm.MeasureText(strDesc, theme.FontXS) + 4
-					} else if desc, ok := abilityDescMap[ab]; ok {
-						fm.DrawText(screen, desc, abX, y+1, theme.FontXS, theme.TextMuted)
-					}
-				} else if desc, ok := abilityDescMap[ab]; ok {
-					fm.DrawText(screen, desc, abX, y+1, theme.FontXS, theme.TextMuted)
-				}
+				drawAbilityRow(screen, fm, ab, abTable, effStr, x, y)
 			})
 		}
 	}
@@ -208,14 +178,155 @@ func DrawInfoPanel(screen *ebiten.Image, t *tower.Tower, sellValue int) {
 	lastPanelVisible = true
 }
 
+// drawAbilityRow 渲染一行能力：图标 + 标签（粗体）+ 缩放值（带颜色）+ 固定参数。
+func drawAbilityRow(screen *ebiten.Image, fm *render.FontManager, abilityType string, abTable config.AbilityTable, effStr float64, x, y float64) {
+	im := render.GlobalIcons()
+	def := abTable[abilityType]
 
-// formatStatShort formats a stat as "base+(bonus)=total" or just "value".
-func formatStatShort(base, current float64) string {
-	bonus := current - base
-	if bonus < 0.5 && bonus > -0.5 {
-		return fmt.Sprintf("%.0f", current)
+	// 图标
+	iconName := ""
+	if def != nil {
+		iconName = def.Icon
+	} else if name, ok := fallbackIconMap[abilityType]; ok {
+		iconName = name
 	}
-	return fmt.Sprintf("%.0f+(%.0f)=%.0f", base, bonus, current)
+	if iconName != "" {
+		drawStatIcon(screen, im, iconName, x, y, 12)
+	}
+	abX := x + 16.0
+
+	// 标签（粗体）
+	label := abilityType
+	if def != nil {
+		label = def.Label
+	} else if l, ok := fallbackLabelMap[abilityType]; ok {
+		label = l
+	}
+	fm.DrawBoldText(screen, label, abX, y, theme.FontXS, theme.TextBody)
+	abX += fm.MeasureText(label, theme.FontXS) + 6
+
+	// 无 AbilityDef 时显示 fallback 描述
+	if def == nil {
+		if desc, ok := fallbackDescMap[abilityType]; ok {
+			fm.DrawText(screen, desc, abX, y+1, theme.FontXS, theme.TextMuted)
+		}
+		return
+	}
+
+	// 有 scaleDim：显示 base+(scaled)=total 格式，括号内带颜色
+	hasScale := def.HasScale()
+	if hasScale {
+		abX = drawScaledValue(screen, fm, def, effStr, abX, y+1)
+	}
+
+	// 有 paramDim：追加固定参数（有 scaleDim 时用 ", " 分隔，否则直接显示）
+	if def.HasParam() {
+		drawParamValue(screen, fm, def, hasScale, abX, y+1)
+	}
+}
+
+// drawScaledValue 渲染缩放值: "base+(scaled)=total" 或百分比格式。
+// 返回绘制后的 X 偏移。
+func drawScaledValue(screen *ebiten.Image, fm *render.FontManager, def *config.AbilityDef, effStr float64, x, y float64) float64 {
+	scaled := def.Potential * (effStr / 100.0)
+	total := def.Base + scaled
+	isPct := def.Base < 1 && def.Base > 0
+
+	// 括号内颜色：scaled > potential 绿 / == potential 白 / < potential 红
+	scaledClr := scaledColor(scaled, def.Potential)
+
+	if isPct {
+		// 百分比格式: "10%+(22%)=32%"
+		baseTxt := fmt.Sprintf("%.0f%%+", def.Base*100)
+		scaledTxt := fmt.Sprintf("(%.0f%%)", scaled*100)
+		totalTxt := fmt.Sprintf("=%.0f%%", total*100)
+
+		fm.DrawText(screen, baseTxt, x, y, theme.FontXS, theme.TextBody)
+		x += fm.MeasureText(baseTxt, theme.FontXS)
+		fm.DrawText(screen, scaledTxt, x, y, theme.FontXS, scaledClr)
+		x += fm.MeasureText(scaledTxt, theme.FontXS)
+		fm.DrawText(screen, totalTxt, x, y, theme.FontXS, theme.TextBody)
+		x += fm.MeasureText(totalTxt, theme.FontXS)
+	} else {
+		// 绝对值格式: "2+(2)=4"
+		baseTxt := fmt.Sprintf("%.0f+", def.Base)
+		scaledTxt := fmt.Sprintf("(%.0f)", scaled)
+		totalTxt := fmt.Sprintf("=%.0f", total)
+		// 浮点数判断：如果精度需要小数
+		if needsDecimal(def.Base) || needsDecimal(scaled) || needsDecimal(total) {
+			baseTxt = fmt.Sprintf("%.1f+", def.Base)
+			scaledTxt = fmt.Sprintf("(%.1f)", scaled)
+			totalTxt = fmt.Sprintf("=%.1f", total)
+		}
+
+		fm.DrawText(screen, baseTxt, x, y, theme.FontXS, theme.TextBody)
+		x += fm.MeasureText(baseTxt, theme.FontXS)
+		fm.DrawText(screen, scaledTxt, x, y, theme.FontXS, scaledClr)
+		x += fm.MeasureText(scaledTxt, theme.FontXS)
+		fm.DrawText(screen, totalTxt, x, y, theme.FontXS, theme.TextBody)
+		x += fm.MeasureText(totalTxt, theme.FontXS)
+	}
+
+	return x
+}
+
+// drawParamValue 渲染固定参数: "持续1.4s" 等。hasScale=true 时加 ", " 前缀。
+func drawParamValue(screen *ebiten.Image, fm *render.FontManager, def *config.AbilityDef, hasScale bool, x, y float64) float64 {
+	dimLabel := paramDimLabel(def.ParamDim)
+	prefix := ""
+	if hasScale {
+		prefix = ", "
+	}
+	var txt string
+	if needsDecimal(def.Param) {
+		txt = fmt.Sprintf("%s%s%.1f", prefix, dimLabel, def.Param)
+	} else {
+		txt = fmt.Sprintf("%s%s%.0f", prefix, dimLabel, def.Param)
+	}
+	// 特殊单位后缀
+	switch def.ParamDim {
+	case "duration":
+		txt += "s"
+	case "radius", "checkRadius":
+		txt += "px"
+	case "interval":
+		txt += "s"
+	case "damageDecay":
+		if needsDecimal(def.Param * 100) {
+			txt = fmt.Sprintf("%s%.1f%%伤害", prefix, def.Param*100)
+		} else {
+			txt = fmt.Sprintf("%s%.0f%%伤害", prefix, def.Param*100)
+		}
+	case "hpThreshold":
+		if needsDecimal(def.Param * 100) {
+			txt = fmt.Sprintf("%s%s%.1f%%", prefix, dimLabel, def.Param*100)
+		} else {
+			txt = fmt.Sprintf("%s%s%.0f%%", prefix, dimLabel, def.Param*100)
+		}
+	case "multiplier":
+		txt = fmt.Sprintf("%s%s%.1fx", prefix, dimLabel, def.Param)
+	}
+	fm.DrawText(screen, txt, x, y, theme.FontXS, theme.TextMuted)
+	x += fm.MeasureText(txt, theme.FontXS)
+	return x
+}
+
+// scaledColor 根据缩放值与潜力值的比较返回颜色。
+func scaledColor(scaled, potential float64) color.Color {
+	const eps = 0.001
+	diff := scaled - potential
+	if diff > eps {
+		return theme.StatusStrUp // 绿色：强度>100
+	}
+	if diff < -eps {
+		return theme.StatusStrDown // 红色：强度<100
+	}
+	return theme.TextBody // 白色：强度=100
+}
+
+// needsDecimal 判断数值是否需要小数位显示。
+func needsDecimal(v float64) bool {
+	return math.Abs(v-math.Round(v)) > 0.05
 }
 
 // drawStatIcon draws a stat icon at (x, y) with the given logical display size.
@@ -230,110 +341,44 @@ func drawStatIcon(screen *ebiten.Image, im *render.IconManager, name string, x, 
 	draw.Sprite(screen, img, x+size/2, y+size/2, size)
 }
 
-// abilityIconMap 能力代码名 -> 图标名映射。
-var abilityIconMap = map[string]string{
-	"onHitSlow":       "slow",
-	"stun":            "stun",
-	"bounce":          "bounce",
-	"burn":            "burn",
-	"splash":          "stat-splash",
-	"executionBonus":  "execute",
-	"percentHpDamage": "hunterInstinct",
-	"crit":            "heavyHit",
-	"bleedDot":        "burn",
-	"stackDamage":     "armorPen",
-	"overload":        "thunder",
-	"flatDamage":      "stat-damage",
-	"distanceDamage":  "stat-range",
-	"damageUpAura":    "tower-aura",
-	"attackSpeedAura": "tower-aura",
-	"rangeAura":       "tower-aura",
-	"critAura":        "tower-aura",
-	"soloBoost":       "heavyHit",
-	"poisonZone":      "tower-poison",
-	"silenceZone":     "slow",
-	"curseZone":       "tower-poison",
-	"channelLaser":    "tower-laser",
-	"judgmentMark":    "tower-judicator",
-	"deathMark":       "tower-summon",
-	"buffPurge":       "stun",
-	"root":            "stun",
-	"shieldIgnore":    "armorPen",
-	"goldPassive":     "stat-dps",
-	"multishot":       "multishot",
-	"pulse":           "pulse",
-}
-
-// abilityLabelMap 能力代码名 -> 显示标签。
-var abilityLabelMap = map[string]string{
-	"onHitSlow":       "减速",
-	"stun":            "眩晕",
-	"bounce":          "弹射",
-	"burn":            "灼烧",
-	"splash":          "溅射",
-	"executionBonus":  "斩杀",
-	"percentHpDamage": "百分比伤害",
-	"crit":            "暴击",
-	"bleedDot":        "流血",
-	"stackDamage":     "叠伤",
-	"overload":        "过载",
-	"flatDamage":      "固伤",
-	"distanceDamage":  "距离伤害",
-	"damageUpAura":    "伤害光环",
-	"attackSpeedAura": "攻速光环",
-	"rangeAura":       "射程光环",
-	"critAura":        "暴击光环",
-	"soloBoost":       "独行加成",
-	"poisonZone":      "毒区",
-	"silenceZone":     "沉默区",
-	"curseZone":       "诅咒区",
-	"channelLaser":    "引导激光",
-	"buffPurge":       "净化",
-	"root":            "定身",
-	"shieldIgnore":    "无视护盾",
-	"judgmentMark":    "审判标记",
-	"deathMark":       "死亡标记",
-	"goldPassive":     "被动产金",
-	"multishot":       "多重射击",
-	"pulse":           "脉冲",
-}
-
-// abilityDescMap 能力简短描述。
-var abilityDescMap = map[string]string{
-	"onHitSlow":       "命中减速32%持续1.4s",
-	"stun":            "12%概率眩晕0.4s",
-	"bounce":          "弹射2次,衰减80%",
-	"burn":            "灼烧30%伤害/2s",
-	"splash":          "50px范围40%溅射",
-	"executionBonus":  "≤50%HP时+50%伤害",
-	"percentHpDamage": "额外20%最大HP(Boss5%)",
-	"crit":            "25%概率+80%暴击",
-	"bleedDot":        "流血5dps/3s",
-	"stackDamage":     "每次命中+8%伤害",
-	"overload":        "15%概率双倍伤害",
-	"flatDamage":      "+5固定伤害",
-	"distanceDamage":  "越远伤害越高+50%",
-	"damageUpAura":    "周围塔+15%伤害",
-	"attackSpeedAura": "周围塔+10%攻速",
-	"rangeAura":       "周围塔+20px射程",
-	"critAura":        "周围塔+10%暴击",
-	"soloBoost":       "无邻塔时+30%伤害",
-	"poisonZone":      "范围内3dps毒伤",
-	"silenceZone":     "范围内减速20%",
-	"curseZone":       "范围内1.5%HP/s",
-	"channelLaser":    "持续光束10dps",
-	"buffPurge":       "剥离护盾5/s",
-	"root":            "定身0.5s",
-	"shieldIgnore":    "伤害无视护盾",
-	"goldPassive":     "每3s产1金币",
-}
-
-// abilityLabel 返回能力的显示标签，未找到则返回原始代码名。
-func abilityLabel(code string) string {
-	if label, ok := abilityLabelMap[code]; ok {
-		return label
+// paramDimLabel paramDim 英文标识 → 中文显示标签。
+func paramDimLabel(dim string) string {
+	labels := map[string]string{
+		"duration":    "持续",
+		"damageDecay": "衰减",
+		"multiplier":  "倍率",
+		"radius":      "范围",
+		"hpThreshold": "阈值",
+		"targets":     "目标",
+		"interval":    "间隔",
+		"checkRadius": "检测",
 	}
-	return code
+	if l, ok := labels[dim]; ok {
+		return l
+	}
+	return dim
+}
+
+// fallbackIconMap 不在 AbilityTable 中的能力的图标映射。
+var fallbackIconMap = map[string]string{
+	"shieldIgnore": "armorPen",
+	"multishot":    "multishot",
+	"pulse":        "pulse",
+	"multiTarget":  "multishot",
+}
+
+// fallbackLabelMap 不在 AbilityTable 中的能力的显示标签。
+var fallbackLabelMap = map[string]string{
+	"shieldIgnore": "无视护盾",
+	"multishot":    "多重射击",
+	"pulse":        "脉冲",
+}
+
+// fallbackDescMap 不在 AbilityTable 中的能力的描述。
+var fallbackDescMap = map[string]string{
+	"shieldIgnore": "伤害无视护盾",
+	"multishot":    "多重射击",
+	"pulse":        "脉冲",
 }
 
 // ── 战力系统 HUD 辅助函数 ──
@@ -347,11 +392,9 @@ func strengthBreakdown(sd *strength.StrengthData) string {
 	if sd.Permanent > 0 {
 		parts = append(parts, fmt.Sprintf("永+%.0f", sd.Permanent))
 	}
-	// 检查链加成
 	if chain, ok := sd.Temp["chain"]; ok && chain > 0 {
 		parts = append(parts, fmt.Sprintf("链+%.0f", chain))
 	}
-	// 其他临时加成
 	for key, val := range sd.Temp {
 		if key == "chain" || val <= 0 {
 			continue
@@ -372,61 +415,19 @@ func strengthBreakdown(sd *strength.StrengthData) string {
 	return result
 }
 
-// formatStrengthStat 用战力绑定格式化普通属性: "base+(scaled)=total"。
-// 如果该属性无绑定或 potential 为0，返回简单数值。
-func formatStrengthStat(cfg *strength.StrengthConfig, path string, eff, fallback float64) string {
-	if cfg == nil {
-		return fmt.Sprintf("%.0f", fallback)
+// fmtAttr 格式化塔属性: "base+(scaled)=total"。
+// potential 为 0 时只显示总值。
+func fmtAttr(numFmt string, base, potential, effStr float64) string {
+	if potential == 0 {
+		return fmt.Sprintf(numFmt, base)
 	}
-	b := cfg.ResolveBinding(path)
-	if b == nil || b.Potential == 0 {
-		return fmt.Sprintf("%.0f", fallback)
+	ratio := effStr / 100.0
+	if effStr == 0 {
+		ratio = 1.0 // 无强度数据时按100
 	}
-	scaled := b.Potential * (eff / 100.0)
-	total := b.Base + scaled
-	return fmt.Sprintf("%.0f+(%.0f)=%.0f", b.Base, scaled, total)
-}
-
-// abilityStrengthDesc 返回能力的战力缩放参数描述。
-// 对有 effects.* 绑定的能力，显示 "参数名 base%+(scaled%)=total%"。
-func abilityStrengthDesc(abilityType string, cfg *strength.StrengthConfig, eff float64) string {
-	// 能力类型 → (绑定路径, 参数显示名, 是否百分比)
-	mapping, ok := abilityStrengthBindings[abilityType]
-	if !ok {
-		return ""
-	}
-	b := cfg.ResolveBinding(mapping.path)
-	if b == nil || b.Potential == 0 {
-		return ""
-	}
-	scaled := b.Potential * (eff / 100.0)
-	total := b.Base + scaled
-	if mapping.percent {
-		return fmt.Sprintf("%s %.0f%%+(%.0f%%)=%.0f%%",
-			mapping.label,
-			b.Base*100, scaled*100, total*100)
-	}
-	return fmt.Sprintf("%s %.1f+(%.1f)=%.1f",
-		mapping.label, b.Base, scaled, total)
-}
-
-// abilityStrengthBinding 能力战力绑定映射。
-type abilityStrengthBinding struct {
-	path    string // StrengthConfig 中的绑定路径
-	label   string // 参数显示名
-	percent bool   // 是否以百分比显示
-}
-
-// abilityStrengthBindings 已知的能力-战力绑定映射表。
-var abilityStrengthBindings = map[string]abilityStrengthBinding{
-	"percentHpDamage": {"effects.percentHp", "比率", true},
-	"onHitSlow":       {"effects.slowFactor", "减速", true},
-	"executionBonus":  {"effects.executionThreshold", "阈值", true},
-	"splash":          {"effects.splashRadius", "范围", false},
-	"burn":            {"effects.burnDps", "伤害", false},
-	"bleedDot":        {"effects.bleedDps", "伤害", false},
-	"stun":            {"effects.stunDuration", "时长", false},
-	"bounce":          {"effects.bounceRange", "范围", false},
+	scaled := potential * ratio
+	total := base + scaled
+	return fmt.Sprintf(numFmt+"+("+numFmt+")="+numFmt, base, scaled, total)
 }
 
 // attackStyleLabel 攻击方式中文标签。
@@ -447,12 +448,8 @@ func attackStyleLabel(style string) string {
 	return style
 }
 
-
-// DrawInfoPanelHoverTooltip draws the upgrade detail tooltip above the info panel
-// when the mouse is hovering over the panel. Shows per-level stat growth and future ability unlocks.
 // DrawInfoPanelHoverTooltip 悬停面板时的提示（已无等级系统，保留接口兼容）。
 func DrawInfoPanelHoverTooltip(screen *ebiten.Image, t *tower.Tower, mx, my float32) {
-	// 无等级概念后无需显示升级路径和待解锁能力
 }
 
 // InfoPanelUpgradeHitTest 检查是否点击了购买强度按钮。

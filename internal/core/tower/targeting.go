@@ -49,3 +49,37 @@ func FindNearestEnemy(t *Tower, pool *enemy.Pool) *enemy.Enemy {
 	})
 	return best
 }
+
+// FindExtraTargets 返回塔射程内除 exclude 外最近的 count 个敌人。
+// 用于多目标攻击：主目标由 AcquireTarget 选取，额外目标由此函数选取。
+func FindExtraTargets(t *Tower, pool *enemy.Pool, count int, exclude *enemy.Enemy) []*enemy.Enemy {
+	type candidate struct {
+		e    *enemy.Enemy
+		dist float64
+	}
+	var cands []candidate
+	pool.Each(func(e *enemy.Enemy) {
+		if e == exclude {
+			return
+		}
+		dx := e.X - t.X
+		dy := e.Y - t.Y
+		dist := math.Hypot(dx, dy)
+		if dist <= t.Range {
+			cands = append(cands, candidate{e, dist})
+		}
+	})
+	// 按距离排序，取前 count 个
+	for i := 0; i < len(cands); i++ {
+		for j := i + 1; j < len(cands); j++ {
+			if cands[j].dist < cands[i].dist {
+				cands[i], cands[j] = cands[j], cands[i]
+			}
+		}
+	}
+	result := make([]*enemy.Enemy, 0, count)
+	for i := 0; i < count && i < len(cands); i++ {
+		result = append(result, cands[i].e)
+	}
+	return result
+}

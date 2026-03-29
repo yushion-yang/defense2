@@ -32,8 +32,8 @@ func TowerJSONToDef(key string, t *config.TowerJSON) tower.TowerDef {
 	def := tower.TowerDef{
 		Key:             key,
 		Label:           label,
-		Range:           t.BaseRange + t.PotentialRange,       // 强度100时的默认值
-		Damage:          t.BaseDamage + t.PotentialDamage,     // 强度100时的默认值
+		Range:           t.BaseRange + t.PotentialRange,   // 强度100时的默认值
+		Damage:          t.BaseDamage + t.PotentialDamage, // 强度100时的默认值
 		AttackSpeed:     attackSpeed,
 		Cost:            t.BuildCost,
 		Abilities:       abilities,
@@ -42,7 +42,10 @@ func TowerJSONToDef(key string, t *config.TowerJSON) tower.TowerDef {
 		ProjectileSpeed: t.ProjectileSpeed,
 	}
 
-	// 战力潜力值和效果绑定
+	// 战力基础值+潜力值
+	def.CfgBaseDamage = t.BaseDamage
+	def.CfgBaseSpeed = t.BaseAttackSpeed
+	def.CfgBaseRange = t.BaseRange
 	def.PotentialDamage = t.PotentialDamage
 	def.PotentialSpeed = t.PotentialAttackSpeed
 	def.PotentialRange = t.PotentialRange

@@ -18,14 +18,15 @@ func init() {
 
 // EnvoyState 使者的内部状态。
 type EnvoyState struct {
-	X, Y           float64 // 当前像素位置
-	Phase          string  // "idle" 或 "possessing"
-	Timer          float64 // 当前阶段剩余时间（秒）
-	PossessedTower *tower.Tower // 正在附身的塔（nil 表示空闲）
-	PossessDuration float64     // 附身持续时间（秒）
-	CooldownDuration float64    // 冷却持续时间（秒）
-	DamageBonus    float64      // 附身时给塔增加的伤害
+	warden.WardenState              // 嵌入公共基座
+	PossessedTower     *tower.Tower // 正在附身的塔（nil 表示空闲）
+	PossessDuration    float64      // 附身持续时间（秒）
+	CooldownDuration   float64      // 冷却持续时间（秒）
+	DamageBonus        float64      // 附身时给塔增加的战力
 }
+
+// Base 实现 Stateful 接口。
+func (s *EnvoyState) Base() *warden.WardenState { return &s.WardenState }
 
 // EnvoyBehavior 使者行为实现。
 type EnvoyBehavior struct{}
@@ -34,7 +35,9 @@ func (b *EnvoyBehavior) Type() string { return "envoy" }
 
 func (b *EnvoyBehavior) Init(w *warden.Warden) interface{} {
 	return &EnvoyState{
-		Phase:            "idle",
+		WardenState: warden.WardenState{
+			Phase: "idle",
+		},
 		PossessDuration:  4.0,
 		CooldownDuration: 3.0,
 		DamageBonus:      5,
@@ -49,7 +52,6 @@ func (b *EnvoyBehavior) Tick(w *warden.Warden, ctx *warden.TickContext) {
 
 	switch s.Phase {
 	case "idle":
-		// 寻找最佳附身目标：周围敌人最多的塔
 		best := findBestHost(ctx.Towers, ctx.Enemies)
 		if best != nil {
 			s.PossessedTower = best
@@ -57,7 +59,6 @@ func (b *EnvoyBehavior) Tick(w *warden.Warden, ctx *warden.TickContext) {
 			s.Timer = s.PossessDuration
 			s.X = best.X
 			s.Y = best.Y
-			// 增强塔战力
 			ensureStrength(best)
 			best.Strength.SetTemp(fmt.Sprintf("envoy_warden_%d", w.ID), s.DamageBonus)
 		}
@@ -66,10 +67,9 @@ func (b *EnvoyBehavior) Tick(w *warden.Warden, ctx *warden.TickContext) {
 		s.Timer -= ctx.DT
 		if s.PossessedTower != nil {
 			s.X = s.PossessedTower.X
-			s.Y = s.PossessedTower.Y - 20 // 悬浮在塔上方
+			s.Y = s.PossessedTower.Y - 20
 		}
 		if s.Timer <= 0 {
-			// 附身结束，移除战力加成，进入冷却
 			if s.PossessedTower != nil && s.PossessedTower.Strength != nil {
 				s.PossessedTower.Strength.RemoveTemp(fmt.Sprintf("envoy_warden_%d", w.ID))
 			}
@@ -79,7 +79,7 @@ func (b *EnvoyBehavior) Tick(w *warden.Warden, ctx *warden.TickContext) {
 		}
 	}
 
-	// 冷却倒计时（idle 状态复用 Timer）
+	// 冷却倒计时
 	if s.Phase == "idle" && s.Timer > 0 {
 		s.Timer -= ctx.DT
 	}

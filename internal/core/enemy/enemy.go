@@ -43,7 +43,7 @@ type Enemy struct {
 	IsUntargetable   bool    // 不可选中
 
 	// 多重护盾系统
-	Shields    []Shield  // 多层护盾列表（按剩余时间升序消耗）
+	Shields    []Shield    // 多层护盾列表（按剩余时间升序消耗）
 	Thresholds []Threshold // HP阈值触发器列表
 
 	// ── 控制减免 ──
@@ -70,13 +70,20 @@ type Enemy struct {
 	MovementType string // 移动类型（"ground"/"flying"）
 }
 
+// MinSpeedRatio 全局减速下限：速度不低于初始速度的 20%。
+const MinSpeedRatio = 0.2
+
 // TickStatusEffects 处理敌人身上的状态效果（减速、流血）。
 // 眩晕在 movement.go 中处理。
 func TickStatusEffects(e *Enemy, dt float64) {
-	// 减速：倒计时归零后恢复基础速度
+	// 减速：倒计时归零后恢复基础速度（受全局减速下限约束）
 	if e.SlowTimer > 0 {
 		e.SlowTimer -= dt
-		e.Speed = e.BaseSpeed * e.SlowFactor
+		factor := e.SlowFactor
+		if factor < MinSpeedRatio {
+			factor = MinSpeedRatio
+		}
+		e.Speed = e.BaseSpeed * factor
 		if e.SlowTimer <= 0 {
 			e.Speed = e.BaseSpeed
 		}

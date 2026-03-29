@@ -1,10 +1,11 @@
 // handler_charge.go — 蓄力攻击方式（自管理冷却）。
-// 持续蓄力，满蓄时发射高伤弹射物。
+// 持续蓄力，满蓄时发射高伤弹射物。伤害 = 塔伤害 × chargeShot 倍率。
 package combat
 
 import (
 	"math"
 
+	"defense2/internal/config"
 	"defense2/internal/core/enemy"
 	"defense2/internal/core/tower"
 )
@@ -14,11 +15,8 @@ type ChargeHandler struct{}
 
 func (h *ChargeHandler) SelfManaged() bool { return true }
 
-// charge 默认蓄力倍率（由 chargeShot 能力的 CalcScale 在运行时覆盖）
-const chargeDefaultMult = 3.0
-
 func (h *ChargeHandler) Fire(t *tower.Tower, target *enemy.Enemy, ctx *AttackContext) {
-	mult := chargeDefaultMult
+	mult := chargeMultiplier(t)
 	speed := t.ProjectileSpeed
 	if speed <= 0 {
 		speed = 600
@@ -62,4 +60,25 @@ func (h *ChargeHandler) Tick(t *tower.Tower, ctx *AttackContext) {
 			h.Fire(t, target, ctx)
 		}
 	}
+}
+
+// chargeMultiplier 从 chargeShot 能力配置读取当前强度下的伤害倍率。
+func chargeMultiplier(t *tower.Tower) float64 {
+	abTable := config.GlobalAbilityTable()
+	if abTable == nil {
+		return 2.0
+	}
+	def, ok := abTable["chargeShot"]
+	if !ok {
+		return 2.0
+	}
+	str := 100.0
+	if t.Strength != nil {
+		str = t.Strength.Effective()
+	}
+	mult := def.CalcScale(str) // base + potential * (strength/100)
+	if mult < 1 {
+		mult = 1
+	}
+	return mult
 }

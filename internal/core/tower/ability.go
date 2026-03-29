@@ -10,7 +10,7 @@ import (
 
 // HitResult 描述弹射物命中时触发的能力效果。
 type HitResult struct {
-	BonusDamage float64      // 额外伤害
+	BonusDamage float64       // 额外伤害
 	Splash      *SplashEffect // 溅射效果（可选）
 	Slow        *SlowEffect   // 减速效果（可选）
 	Stun        *StunEffect   // 眩晕效果（可选）
@@ -47,7 +47,8 @@ type BleedEffect struct {
 type BounceEffect struct {
 	MaxBounces  int     // 最大弹射次数
 	Range       float64 // 弹射搜索范围（像素）
-	DamageDecay float64 // 每次弹射的伤害衰减比例
+	DamageRatio float64 // 弹射伤害比例（相对塔伤害，0.8 = 80%）
+	SrcDamage   float64 // 来源塔的当前伤害（用于计算弹射伤害）
 }
 
 // Ability 塔能力接口。

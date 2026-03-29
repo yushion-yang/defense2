@@ -5,6 +5,7 @@ package pipeline
 import (
 	"math"
 
+	"defense2/internal/config"
 	"defense2/internal/core/combat"
 	"defense2/internal/core/enemy"
 	"defense2/internal/core/projectile"
@@ -57,6 +58,14 @@ func TickTowerCombat(towers *tower.Pool, enemies *enemy.Pool, projectiles *proje
 		handler := combat.Get(style)
 		if handler != nil {
 			handler.Fire(t, target, ctx)
+
+			// 多目标攻击：对额外目标各发射一颗弹
+			if extra := multiTargetCount(t); extra > 0 {
+				targets := tower.FindExtraTargets(t, enemies, extra, target)
+				for _, et := range targets {
+					handler.Fire(t, et, ctx)
+				}
+			}
 		}
 		t.FireTimer = 1.0 / t.AttackSpeed
 		t.FireAnim = 0.15
@@ -71,6 +80,11 @@ type HitCallback = combat.HitCallback
 
 // TickProjectileHits 弹射物碰撞子管线：检测碰撞 → 触发能力 → 扣血 → 击杀。
 // 返回本帧击杀数。onHit 可为 nil。
+//
+// 碰撞规则（塔防模型）：
+//   - 追踪弹（Target != nil）：只和锁定目标碰撞，穿过其他敌人
+//   - 穿刺弹（Pierce=true）：对路径上所有敌人碰撞，命中后继续飞行
+//   - 散射视觉弹（ScatterVisual）：不参与碰撞
 func TickProjectileHits(projectiles *projectile.Pool, enemies *enemy.Pool, towers *tower.Pool, onHit HitCallback) int {
 	kills := 0
 	projectiles.Each(func(p *projectile.Projectile) {
@@ -83,6 +97,13 @@ func TickProjectileHits(projectiles *projectile.Pool, enemies *enemy.Pool, tower
 			if !p.Active {
 				return // 已被前一个碰撞消耗
 			}
+
+			// 塔防规则：追踪弹只和锁定目标碰撞，穿过路径上的其他敌人。
+			// 穿刺弹除外 — 穿刺弹需要命中路径上的所有敌人。
+			if p.Target != nil && !p.Pierce && e != p.Target {
+				return
+			}
+
 			dx := p.X - e.X
 			dy := p.Y - e.Y
 			dist := math.Hypot(dx, dy)
@@ -209,15 +230,13 @@ func retargetPierce(p *projectile.Projectile, justHit *enemy.Enemy, enemies *ene
 
 // applyHitEffects 将能力效果（减速、眩晕、流血、灼烧、溅射、弹射）施加到目标及周围敌人。
 func applyHitEffects(r *tower.HitResult, target *enemy.Enemy, p *projectile.Projectile, enemies *enemy.Pool, projectiles *projectile.Pool) {
-	// 减速
+	// 减速（走 crowd_control 统一逻辑：免疫检查 + 韧性减免 + 减速下限）
 	if r.Slow != nil {
-		target.SlowTimer = r.Slow.Duration
-		target.SlowFactor = r.Slow.Factor
-		target.Speed = target.BaseSpeed * r.Slow.Factor
+		combat.ApplySlow(target, r.Slow.Factor, r.Slow.Duration, p.SourceTowerKey)
 	}
-	// 眩晕
+	// 眩晕（走 crowd_control 统一逻辑：免疫检查 + 韧性减免）
 	if r.Stun != nil {
-		target.StunTimer = r.Stun.Duration
+		combat.ApplyStun(target, r.Stun.Duration, p.SourceTowerKey)
 	}
 	// 流血
 	if r.Bleed != nil {
@@ -246,13 +265,20 @@ func applyHitEffects(r *tower.HitResult, target *enemy.Enemy, p *projectile.Proj
 			}
 		})
 	}
-	// 弹射：向附近最近敌人发射衰减弹射物
+	// 弹射：向附近最近的未命中敌人发射衰减弹射物
 	if r.Bounce != nil && p.BounceCount < r.Bounce.MaxBounces {
+		// 构建已命中列表（当前目标 + 历史命中）
+		hitIDs := append([]int{}, p.BounceHitIDs...)
+		hitIDs = append(hitIDs, target.ID)
+
 		var best *enemy.Enemy
 		bestDist := r.Bounce.Range
 		enemies.Each(func(e2 *enemy.Enemy) {
-			if e2 == target {
-				return
+			// 排除所有已命中的敌人（不弹回）
+			for _, id := range hitIDs {
+				if e2.ID == id {
+					return
+				}
 			}
 			d := math.Hypot(e2.X-target.X, e2.Y-target.Y)
 			if d < bestDist {
@@ -261,10 +287,28 @@ func applyHitEffects(r *tower.HitResult, target *enemy.Enemy, p *projectile.Proj
 			}
 		})
 		if best != nil && projectiles != nil {
-			bounceDmg := p.Damage * r.Bounce.DamageDecay
-			projectiles.FireBounce(target.X, target.Y, best, bounceDmg, p.Speed, p.Radius, p.SourceTowerKey, p.BounceCount+1)
+			// 弹射伤害 = 塔原始伤害 * 固定比例（不递减）
+			bounceDmg := r.Bounce.SrcDamage * r.Bounce.DamageRatio
+			projectiles.FireBounce(target.X, target.Y, best, bounceDmg, p.Speed, p.Radius, p.SourceTowerKey, p.BounceCount+1, hitIDs)
 		}
 	}
+}
+
+// multiTargetCount 返回塔的多目标额外目标数（不含主目标）。
+// 无 multiTarget 能力时返回 0。
+func multiTargetCount(t *tower.Tower) int {
+	for _, aName := range t.Abilities {
+		if aName == "multiTarget" {
+			abTable := config.GlobalAbilityTable()
+			if abTable != nil {
+				if def, ok := abTable["multiTarget"]; ok {
+					return int(def.Param) // param = 额外目标数
+				}
+			}
+			return 1 // fallback
+		}
+	}
+	return 0
 }
 
 // TickEnemyStatusEffects 敌人状态效果子管线：处理所有敌人的减速/流血，击杀血量归零的敌人。

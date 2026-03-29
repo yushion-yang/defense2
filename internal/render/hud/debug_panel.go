@@ -1,5 +1,5 @@
 // debug_panel.go — 调试面板（仅测试模式）。
-// 右侧固定宽度面板，分区标题 + 按钮列表，支持滚动和关闭。
+// 右侧固定宽度面板，分区标题 + 按钮列表，自适应高度。
 package hud
 
 import (
@@ -26,14 +26,38 @@ type DebugPanelData struct {
 }
 
 const (
-	debugPanelW   = float32(190)
-	debugPanelPad = float32(8)
-	debugBtnH     = float32(22)
-	debugSecH     = float32(18) // 分区标题高度
-	debugBtnGap   = float32(3)
-	debugBtnR     = float32(5)
+	debugPanelW    = float32(190)
+	debugPanelPad  = float32(8)
+	debugBtnH      = float32(22)
+	debugSecH      = float32(18) // 分区标题高度
+	debugBtnGap    = float32(3)
+	debugBtnR      = float32(5)
 	debugCloseSize = float32(20)
+	debugTitleH    = float32(22) // 标题行高度
 )
+
+// debugPanelLayout 计算面板高度和 Y 坐标（Draw 和 HitTest 共享）。
+func debugPanelLayout(actions []DebugAction) (panelY, panelH float32) {
+	contentH := float32(0)
+	for _, act := range actions {
+		if act.IsSection {
+			contentH += debugSecH + debugBtnGap
+		} else {
+			contentH += debugBtnH + debugBtnGap
+		}
+	}
+	panelH = debugPanelPad*2 + debugTitleH + contentH
+	panelY = float32(54)
+	// 面板超出屏幕底部时上移，保证完整显示
+	maxBottom := float32(game.ScreenHeight) - 10
+	if panelY+panelH > maxBottom {
+		panelY = maxBottom - panelH
+		if panelY < 4 {
+			panelY = 4
+		}
+	}
+	return
+}
 
 // DrawDebugPanel 渲染右侧调试面板。
 func DrawDebugPanel(screen *ebiten.Image, d DebugPanelData) {
@@ -42,23 +66,8 @@ func DrawDebugPanel(screen *ebiten.Image, d DebugPanelData) {
 		return
 	}
 
-	// 计算面板高度
-	contentH := float32(0)
-	for _, act := range d.Actions {
-		if act.IsSection {
-			contentH += debugSecH + debugBtnGap
-		} else {
-			contentH += debugBtnH + debugBtnGap
-		}
-	}
-	panelH := debugPanelPad*2 + 22 + contentH // +22 for title row
-	maxH := float32(game.ScreenHeight) - 70
-	if panelH > maxH {
-		panelH = maxH
-	}
-
+	panelY, panelH := debugPanelLayout(d.Actions)
 	panelX := float32(game.ScreenWidth) - debugPanelW - 8
-	panelY := float32(54)
 
 	// Background
 	draw.RoundRect(screen, panelX, panelY, debugPanelW, panelH, 10, color.RGBA{R: 15, G: 20, B: 35, A: 230})
@@ -69,12 +78,11 @@ func DrawDebugPanel(screen *ebiten.Image, d DebugPanelData) {
 	iy := float64(panelY) + float64(debugPanelPad)
 	fm.DrawBoldText(screen, "调试面板", ix, iy, theme.FontMD, color.RGBA{R: 120, G: 180, B: 255, A: 255})
 
-	// Close X button
 	closeX := float64(panelX) + float64(debugPanelW) - float64(debugPanelPad) - float64(debugCloseSize)
 	closeY := iy
 	draw.RoundRect(screen, float32(closeX), float32(closeY), debugCloseSize, debugCloseSize, 4, color.RGBA{R: 60, G: 40, B: 40, A: 200})
 	fm.DrawCenteredVText(screen, "x", closeX+float64(debugCloseSize)/2, closeY+float64(debugCloseSize)/2, 11, color.White)
-	iy += 22
+	iy += float64(debugTitleH)
 
 	// Items
 	btnW := debugPanelW - debugPanelPad*2
@@ -82,15 +90,9 @@ func DrawDebugPanel(screen *ebiten.Image, d DebugPanelData) {
 	btnBg := color.RGBA{R: 30, G: 40, B: 65, A: 240}
 
 	for _, act := range d.Actions {
-		if float32(iy)+debugBtnH > panelY+panelH-debugPanelPad {
-			break // 超出面板可见区域
-		}
 		bx := panelX + debugPanelPad
 		if act.IsSection {
-			// 分区标题：左侧横线 + 文字 + 右侧横线
-			secY := float32(iy) + debugSecH/2
 			fm.DrawText(screen, "── "+act.Label+" ──", float64(bx), float64(iy)+1, theme.FontXS, sectionClr)
-			_ = secY
 			iy += float64(debugSecH + debugBtnGap)
 		} else {
 			by := float32(iy)
@@ -109,8 +111,8 @@ func DebugPanelHitTest(px, py float32, actions []DebugAction) int {
 	if len(actions) == 0 {
 		return -1
 	}
+	panelY, _ := debugPanelLayout(actions)
 	panelX := float32(game.ScreenWidth) - debugPanelW - 8
-	panelY := float32(54)
 	btnW := debugPanelW - debugPanelPad*2
 
 	// Close button hit test
@@ -120,7 +122,7 @@ func DebugPanelHitTest(px, py float32, actions []DebugAction) int {
 		return -2 // close
 	}
 
-	iy := panelY + debugPanelPad + 22 // after title
+	iy := panelY + debugPanelPad + debugTitleH
 	for i, act := range actions {
 		bx := panelX + debugPanelPad
 		if act.IsSection {

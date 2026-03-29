@@ -40,12 +40,12 @@ func TestStackMode_Strongest(t *testing.T) {
 
 func TestStackMode_Strongest_Cap(t *testing.T) {
 	bl := buff.NewBuffList()
-	// 默认 slow cap = 0.7
+	// 默认 slow cap = 0.8（最多减速80%，速度不低于20%）
 	bl.AddSimple(buff.NewBuff("slow", "tower1", 0.9, 5.0))
 
 	val := bl.GetEffective("slow")
-	if math.Abs(val-0.7) > 1e-9 {
-		t.Errorf("slow应被cap到0.7, 实际%.1f", val)
+	if math.Abs(val-0.8) > 1e-9 {
+		t.Errorf("slow应被cap到0.8, 实际%.1f", val)
 	}
 }
 

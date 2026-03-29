@@ -20,6 +20,7 @@ type WardenConfig struct {
 }
 
 // WardenLevel 战灵某一等级的属性。
+// 各字段按需使用，缺失的 JSON 字段自动为零值。
 type WardenLevel struct {
 	Level                  int     `json:"level"`
 	Damage                 float64 `json:"damage"`
@@ -29,6 +30,7 @@ type WardenLevel struct {
 	AoERadius              float64 `json:"aoeRadius"`
 	EffectDPS              float64 `json:"effectDps"`
 	EffectDuration         float64 `json:"effectDuration"`
+	TowerBonus             float64 `json:"towerBonus"`
 	PossessDuration        float64 `json:"possessDuration"`
 	Cooldown               float64 `json:"cooldown"`
 	PermanentStrengthGrant float64 `json:"permanentStrengthGrant"`

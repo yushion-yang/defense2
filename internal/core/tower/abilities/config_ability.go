@@ -9,6 +9,7 @@ import (
 	"math/rand"
 
 	"defense2/internal/config"
+	"defense2/internal/core/combat"
 	"defense2/internal/core/enemy"
 	"defense2/internal/core/projectile"
 	"defense2/internal/core/strength"
@@ -17,6 +18,10 @@ import (
 
 // BossPercentHpCap Boss 百分比伤害全局上限（游戏规则常量）。
 const BossPercentHpCap = 0.05
+
+// lastPercentHpTarget 记录每座塔上次触发 percentHpDamage 的敌人 ID。
+// 用于实现"切换目标时首击触发"的机制。
+var lastPercentHpTarget = map[string]int{}
 
 // InitConfigAbilities 加载能力配置表并注册所有数据驱动的能力。
 // 必须在 config.SetDataFS() 之后调用。
@@ -69,7 +74,7 @@ func (a *ConfigAbility) OnHit(t *tower.Tower, p *projectile.Projectile, e *enemy
 		return nil
 
 	case "bounce":
-		// scaleDim=maxBounces, param=damageDecay
+		// scaleDim=maxBounces, param=damageRatio（弹射伤害 = 塔伤害 * ratio）
 		bounceRange := t.Range
 		if bounceRange < 150 {
 			bounceRange = 150
@@ -78,7 +83,8 @@ func (a *ConfigAbility) OnHit(t *tower.Tower, p *projectile.Projectile, e *enemy
 			Bounce: &tower.BounceEffect{
 				MaxBounces:  int(math.Floor(sv)),
 				Range:       bounceRange,
-				DamageDecay: pm,
+				DamageRatio: pm,
+				SrcDamage:   t.Damage,
 			},
 		}
 
@@ -94,7 +100,20 @@ func (a *ConfigAbility) OnHit(t *tower.Tower, p *projectile.Projectile, e *enemy
 		return nil
 
 	case "percentHpDamage":
-		// scaleDim=percentHp, Boss 用全局上限
+		// 切换目标时首击触发（猎手印记），同一目标不重复触发
+		key := towerAccKey(t)
+		if lastID, ok := lastPercentHpTarget[key]; ok && lastID == e.ID {
+			return nil // 同一目标，不触发
+		}
+		lastPercentHpTarget[key] = e.ID
+		ratio := sv
+		if e.Boss && ratio > BossPercentHpCap {
+			ratio = BossPercentHpCap
+		}
+		return &tower.HitResult{BonusDamage: e.MaxHP * ratio}
+
+	case "percentHpMinor":
+		// 每次命中触发的小额百分比伤害
 		ratio := sv
 		if e.Boss && ratio > BossPercentHpCap {
 			ratio = BossPercentHpCap
@@ -270,10 +289,14 @@ func (a *ConfigAbility) OnTick(t *tower.Tower, ctx *tower.TickContext) *tower.Ti
 		})
 
 	case "silenceZone":
-		// scaleDim=slowFactor — 对射程内敌人减速
+		// scaleDim=slowFactor — 对射程内敌人减速（受全局减速下限约束）
+		factor := 1 - sv
+		if factor < combat.MinSpeedRatio {
+			factor = combat.MinSpeedRatio
+		}
 		ctx.Enemies.Each(func(e *enemy.Enemy) {
 			if math.Hypot(e.X-t.X, e.Y-t.Y) <= t.Range {
-				e.Speed = e.BaseSpeed * (1 - sv)
+				e.Speed = e.BaseSpeed * factor
 			}
 		})
 

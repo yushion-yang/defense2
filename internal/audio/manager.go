@@ -8,6 +8,7 @@ import (
 	"io"
 	"log"
 	"sync"
+	"time"
 
 	"github.com/hajimehoshi/ebiten/v2/audio"
 	"github.com/hajimehoshi/ebiten/v2/audio/wav"
@@ -30,18 +31,20 @@ func getAudioContext() *audio.Context {
 
 // Manager 音效管理器。
 type Manager struct {
-	context *audio.Context    // Ebitengine 音频上下文
-	cache   map[string][]byte // 音效 PCM 数据缓存（名称 → 解码后数据）
-	volume  float64           // 主音量（0.0 ~ 1.0）
-	mu      sync.Mutex        // 并发安全锁
+	context  *audio.Context       // Ebitengine 音频上下文
+	cache    map[string][]byte    // 音效 PCM 数据缓存（名称 → 解码后数据）
+	volume   float64              // 主音量（0.0 ~ 1.0）
+	throttle map[string]time.Time // 每个音效的上次播放时间（per-sound 节流）
+	mu       sync.Mutex           // 并发安全锁
 }
 
 // NewManager 创建音效管理器。
 func NewManager() *Manager {
 	return &Manager{
-		context: getAudioContext(),
-		cache:   make(map[string][]byte),
-		volume:  0.8,
+		context:  getAudioContext(),
+		cache:    make(map[string][]byte),
+		throttle: make(map[string]time.Time),
+		volume:   0.8,
 	}
 }
 
@@ -176,6 +179,24 @@ func ucFirst(s string) string {
 		b[0] -= 32
 	}
 	return string(b)
+}
+
+// PlayThrottled 带 per-sound 节流的播放。
+// intervalMs=0 时等同于 Play（无节流）。
+// 同一 name 在 intervalMs 毫秒内只播放一次，后续调用静默跳过。
+func (m *Manager) PlayThrottled(name string, intervalMs int) {
+	if intervalMs > 0 {
+		now := time.Now()
+		m.mu.Lock()
+		last, ok := m.throttle[name]
+		if ok && now.Sub(last) < time.Duration(intervalMs)*time.Millisecond {
+			m.mu.Unlock()
+			return
+		}
+		m.throttle[name] = now
+		m.mu.Unlock()
+	}
+	m.Play(name)
 }
 
 // PlaySafe 安全播放音效，出错时仅打印日志不崩溃。

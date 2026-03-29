@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"defense2/internal/core/strength"
+	"defense2/internal/core/tower"
 )
 
 // ============================================================
@@ -112,81 +113,49 @@ func TestStrength_Overflow(t *testing.T) {
 	}
 }
 
-func TestStrengthConfig_CalcAttackSpeed(t *testing.T) {
-	cfg := &strength.StrengthConfig{
-		Bindings: map[string]*strength.StrengthBinding{
-			"attackSpeed": {Base: 0.5, Potential: 0.5},
-		},
-	}
-	// 攻速是次/秒，用正向公式: base + potential * (eff/100)
-
-	// 100 strength: 0.5 + 0.5 * 1.0 = 1.0
-	val := cfg.CalcAttribute("attackSpeed", 100, 0)
-	if math.Abs(val-1.0) > 1e-9 {
-		t.Errorf("100战力攻速=%.3f, 期望1.0", val)
-	}
-
-	// 200 strength: 0.5 + 0.5 * 2.0 = 1.5 (更快)
-	val2 := cfg.CalcAttribute("attackSpeed", 200, 0)
-	if math.Abs(val2-1.5) > 1e-9 {
-		t.Errorf("200战力攻速=%.3f, 期望1.5", val2)
-	}
-
-	// 50 strength: 0.5 + 0.5 * 0.5 = 0.75 (更慢)
-	val3 := cfg.CalcAttribute("attackSpeed", 50, 0)
-	if math.Abs(val3-0.75) > 1e-9 {
-		t.Errorf("50战力攻速=%.3f, 期望0.75", val3)
-	}
-}
-
 // ============================================================
-// 战力配置测试
+// Tower.RecalcStats 测试
 // ============================================================
 
-func TestStrengthConfig_CalcAttribute(t *testing.T) {
-	cfg := &strength.StrengthConfig{
-		Bindings: map[string]*strength.StrengthBinding{
-			"attackDamage": {Base: 10, Potential: 50},
-			"attackSpeed":  {Base: 0.3, Potential: 0.5},
-		},
+func TestTower_RecalcStats(t *testing.T) {
+	tw := &tower.Tower{
+		BaseDamage:      10,
+		PotentialDamage: 5,
+		BaseSpeed:       0.2,
+		PotentialSpeed:  0.2,
+		BaseRange:       100,
+		PotentialRange:  50,
 	}
 
-	// 100 strength: 10 + 50*1.0 = 60
-	val := cfg.CalcAttribute("attackDamage", 100, 0)
-	if math.Abs(val-60) > 1e-9 {
-		t.Errorf("100战力attackDamage=%.1f, 期望60", val)
+	// 无 Strength → 按强度100：base + potential * 1.0
+	tw.RecalcStats()
+	if math.Abs(tw.Damage-15) > 1e-9 {
+		t.Errorf("无强度伤害=%.1f, 期望15", tw.Damage)
+	}
+	if math.Abs(tw.AttackSpeed-0.4) > 1e-9 {
+		t.Errorf("无强度攻速=%.3f, 期望0.4", tw.AttackSpeed)
 	}
 
-	// 200 strength: 10 + 50*2.0 = 110
-	val2 := cfg.CalcAttribute("attackDamage", 200, 0)
-	if math.Abs(val2-110) > 1e-9 {
-		t.Errorf("200战力attackDamage=%.1f, 期望110", val2)
+	// 强度200 → base + potential * 2.0
+	tw.Strength = strength.NewStrengthData()
+	tw.Strength.AddPermanent(100) // 100+100=200
+	tw.RecalcStats()
+	if math.Abs(tw.Damage-20) > 1e-9 {
+		t.Errorf("200强度伤害=%.1f, 期望20", tw.Damage)
+	}
+	if math.Abs(tw.AttackSpeed-0.6) > 1e-9 {
+		t.Errorf("200强度攻速=%.3f, 期望0.6", tw.AttackSpeed)
+	}
+	if math.Abs(tw.Range-200) > 1e-9 {
+		t.Errorf("200强度射程=%.1f, 期望200", tw.Range)
 	}
 
-	// 0 strength: 10 + 50*0 = 10 (只有base)
-	val3 := cfg.CalcAttribute("attackDamage", 0, 0)
-	if math.Abs(val3-10) > 1e-9 {
-		t.Errorf("0战力attackDamage=%.1f, 期望10", val3)
-	}
-
-	// 不存在的属性返回fallback
-	val4 := cfg.CalcAttribute("unknown", 100, 42)
-	if math.Abs(val4-42) > 1e-9 {
-		t.Errorf("未知属性=%.1f, 期望fallback=42", val4)
-	}
-}
-
-func TestStrengthConfig_IsLinked(t *testing.T) {
-	cfg := &strength.StrengthConfig{
-		Bindings: map[string]*strength.StrengthBinding{
-			"attackDamage": {Base: 10, Potential: 50},
-		},
-	}
-	if !cfg.IsLinked("attackDamage") {
-		t.Error("attackDamage应有绑定")
-	}
-	if cfg.IsLinked("range") {
-		t.Error("range不应有绑定")
+	// 强度50 → base + potential * 0.5
+	tw.Strength = strength.NewStrengthData()
+	tw.Strength.SetEnemySub("drain", 50) // 100-50=50
+	tw.RecalcStats()
+	if math.Abs(tw.Damage-12.5) > 1e-9 {
+		t.Errorf("50强度伤害=%.1f, 期望12.5", tw.Damage)
 	}
 }
 

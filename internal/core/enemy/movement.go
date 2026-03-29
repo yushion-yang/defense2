@@ -12,8 +12,14 @@ import (
 // MoveAlongPath 驱动敌人向下一个路径点移动。
 // 到达路径终点时返回 true（表示该敌人抵达基地）。
 func MoveAlongPath(e *Enemy, fallbackWaypoints []gamemap.Point, dt float64) bool {
-	// 静止敌人（造怪放置/全怪展示）：不移动、不到达终点
+	// 静止敌人（造怪放置/全怪展示）：不移动、不到达终点，但仍递减控制计时器
 	if e.BaseSpeed == 0 && e.Speed == 0 {
+		if e.StunTimer > 0 {
+			e.StunTimer -= dt
+		}
+		if e.RootTimer > 0 {
+			e.RootTimer -= dt
+		}
 		return false
 	}
 

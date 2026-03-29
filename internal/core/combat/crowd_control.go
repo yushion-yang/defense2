@@ -4,8 +4,8 @@ package combat
 
 import "defense2/internal/core/enemy"
 
-// SlowCap 减速效果的最大倍率上限（0.7 表示最多减速到 30% 速度）。
-const SlowCap = 0.7
+// MinSpeedRatio 全局减速下限：速度不低于初始速度的 20%。
+const MinSpeedRatio = 0.2
 
 // ApplyStun 对敌人施加眩晕效果。
 // 检查免疫状态，应用韧性减免后设置眩晕计时器。
@@ -30,7 +30,7 @@ func ApplyStun(e *enemy.Enemy, duration float64, source string) bool {
 }
 
 // ApplySlow 对敌人施加减速效果。
-// 检查免疫状态，应用韧性减免，减速倍率上限为 SlowCap。
+// 检查免疫状态，应用韧性减免，速度不低于 BaseSpeed * MinSpeedRatio。
 // 返回 true 表示成功施加。
 func ApplySlow(e *enemy.Enemy, factor, duration float64, source string) bool {
 	// 控制免疫检查
@@ -44,9 +44,9 @@ func ApplySlow(e *enemy.Enemy, factor, duration float64, source string) bool {
 		return false
 	}
 
-	// 减速倍率上限限制
-	if factor > SlowCap {
-		factor = SlowCap
+	// 减速倍率下限限制（速度不低于初始速度的 MinSpeedRatio）
+	if factor < MinSpeedRatio {
+		factor = MinSpeedRatio
 	}
 
 	// 取更强的减速效果（更低的 factor = 更慢）

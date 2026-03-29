@@ -17,10 +17,10 @@ const (
 	StyleProjectile AttackStyle = "projectile" // 标准追踪弹
 	StyleLaser      AttackStyle = "laser"      // 即时光束
 	StyleWideBeam   AttackStyle = "wideBeam"   // 宽光束（贯穿）
-	StyleScatter    AttackStyle = "scatter"     // 锥形散射
-	StyleCharge     AttackStyle = "charge"      // 蓄力重弹
-	StyleSpinAoE    AttackStyle = "spin_aoe"    // 旋转范围伤害
-	StyleAuraDot    AttackStyle = "aura_dot"    // 持续范围毒伤
+	StyleScatter    AttackStyle = "scatter"    // 锥形散射
+	StyleCharge     AttackStyle = "charge"     // 蓄力重弹
+	StyleSpinAoE    AttackStyle = "spin_aoe"   // 旋转范围伤害
+	StyleAuraDot    AttackStyle = "aura_dot"   // 持续范围毒伤
 )
 
 // Tower 已放置的塔实体。
@@ -40,12 +40,14 @@ type Tower struct {
 	Faction     string   // 阵营标识（用于资源路径）
 	FireAnim    float64  // 射击动画计时器（射击时设为 0.15，逐帧衰减）
 	Angle       float64  // 朝向角度（弧度，0=向上，顺时针）
-	BaseDamage      float64 // 基础伤害
-	BaseRange       float64 // 基础范围
-	BaseSpeed       float64 // 基础攻速
-	PotentialDamage float64 // 潜力伤害（随强度缩放的部分）
-	PotentialRange  float64 // 潜力范围
-	PotentialSpeed  float64 // 潜力攻速
+	// 战力缩放参数（来自 JSON 配置，放置后不变）
+	// 公式: attr = Base + Potential * (strength / 100)
+	BaseDamage      float64 // JSON baseDamage
+	BaseRange       float64 // JSON baseRange
+	BaseSpeed       float64 // JSON baseAttackSpeed
+	PotentialDamage float64 // JSON potentialDamage
+	PotentialRange  float64 // JSON potentialRange
+	PotentialSpeed  float64 // JSON potentialAttackSpeed
 
 	// 攻击方式
 	AttackStyleID   AttackStyle // 攻击方式（"projectile"/"laser"/...）
@@ -56,8 +58,8 @@ type Tower struct {
 	ChargeReady    bool    // 蓄力完成
 
 	// SpinAoE 运行时状态
-	SpinAngle     float64 // 旋转角度（弧度）
-	SpinActive    float64 // 旋转激活计时器
+	SpinAngle  float64 // 旋转角度（弧度）
+	SpinActive float64 // 旋转激活计时器
 
 	// AuraDot 运行时状态
 	AuraPulse float64 // 脉冲动画计时
@@ -65,9 +67,8 @@ type Tower struct {
 	// 分支特化
 	Branch string // 分支特化标识（空=未特化，一次性选择）
 
-	// 战力系统（塔的独立战力数据，不与 Damage 字段混用）
-	Strength    *strength.StrengthData   // 战力运行时数据
-	StrengthCfg *strength.StrengthConfig // 战力绑定配置
+	// 战力系统
+	Strength *strength.StrengthData // 战力运行时数据
 
 	// 索敌锁定
 	Target *enemy.Enemy // 当前锁定目标
@@ -80,6 +81,19 @@ func (t *Tower) BuyStrength() int {
 	t.Cost += cost // 累计投入（影响卖价）
 	// 通过 strength 包的接口添加永久加成（由调用方做类型断言）
 	return cost
+}
+
+// RecalcStats 根据当前强度重算 Damage/AttackSpeed/Range。
+// 公式与 AbilityDef 一致: value = base + potential * (strength / 100)
+// 无 Strength 时使用强度100的默认值（base + potential）。
+func (t *Tower) RecalcStats() {
+	ratio := 1.0 // 默认强度100
+	if t.Strength != nil {
+		ratio = t.Strength.Effective() / 100.0
+	}
+	t.Damage = t.BaseDamage + t.PotentialDamage*ratio
+	t.AttackSpeed = t.BaseSpeed + t.PotentialSpeed*ratio
+	t.Range = t.BaseRange + t.PotentialRange*ratio
 }
 
 // DPS 返回当前每秒伤害。

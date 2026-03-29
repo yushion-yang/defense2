@@ -32,6 +32,7 @@ func (p *Pool) Place(row, col int, cx, cy float64, def TowerDef) *Tower {
 			t.Col = col
 			t.X = cx
 			t.Y = cy
+			// 初始属性 = base+potential（强度100默认值），RecalcStats 会覆盖
 			t.Range = def.Range
 			t.Damage = def.Damage
 			t.AttackSpeed = def.AttackSpeed
@@ -42,9 +43,13 @@ func (p *Pool) Place(row, col int, cx, cy float64, def TowerDef) *Tower {
 			t.Abilities = def.Abilities
 			t.Color = def.Color
 			t.Active = true
-			t.BaseDamage = def.Damage
-			t.BaseRange = def.Range
-			t.BaseSpeed = def.AttackSpeed
+			// 战力缩放参数（JSON 原始 base/potential）
+			t.BaseDamage = def.CfgBaseDamage
+			t.BaseRange = def.CfgBaseRange
+			t.BaseSpeed = def.CfgBaseSpeed
+			t.PotentialDamage = def.PotentialDamage
+			t.PotentialSpeed = def.PotentialSpeed
+			t.PotentialRange = def.PotentialRange
 			// 攻击方式
 			t.AttackStyleID = def.AttackStyleID
 			t.ProjectileSpeed = def.ProjectileSpeed
@@ -105,6 +110,11 @@ type TowerDef struct {
 	AttackStyleID   AttackStyle // 攻击方式
 	ProjectileSpeed float64     // 弹射物速度（px/s）
 	// 战力基础值+潜力值（从 JSON 扁平字段）
+	// Base* 是强度0时的底线，Potential* 是每100强度的增量
+	// Damage/AttackSpeed/Range 是强度100时的合值（Base+Potential）
+	CfgBaseDamage   float64
+	CfgBaseSpeed    float64
+	CfgBaseRange    float64
 	PotentialDamage float64
 	PotentialSpeed  float64
 	PotentialRange  float64

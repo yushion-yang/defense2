@@ -16,23 +16,24 @@ func init() {
 
 // PrinceState 小王子的内部状态。
 type PrinceState struct {
-	X, Y           float64            // 当前像素位置
-	Phase          string             // "idle", "dashing", "cooldown"
-	Timer          float64            // 当前阶段剩余/倒计时（秒）
-	DashEndX       float64            // 冲刺终点 X
-	DashEndY       float64            // 冲刺终点 Y
-	DashProgress   float64            // 冲刺进度 0-1
-	DashStartX     float64            // 冲刺起点 X
-	DashStartY     float64            // 冲刺起点 Y
-	HitSet         map[*enemy.Enemy]bool // 本次冲刺中已命中的敌人
-	Trails         []FireTrail        // 活跃的火焰痕迹列表
-	Damage         float64            // 冲刺命中伤害
-	MoveSpeed      float64            // 冲刺速度（像素/秒）
-	AoERadius      float64            // 冲刺命中判定半径
-	EffectDPS      float64            // 火焰痕迹每秒伤害
-	EffectDuration float64            // 火焰痕迹持续时间（秒）
-	AttackInterval float64            // 攻击间隔（秒）
+	warden.WardenState // 嵌入公共基座
+
+	// 冲刺专属
+	DashEndX     float64               // 冲刺终点 X
+	DashEndY     float64               // 冲刺终点 Y
+	DashProgress float64               // 冲刺进度 0-1
+	DashStartX   float64               // 冲刺起点 X
+	DashStartY   float64               // 冲刺起点 Y
+	HitSet       map[*enemy.Enemy]bool // 本次冲刺中已命中的敌人
+
+	// 火焰痕迹
+	Trails         []FireTrail // 活跃的火焰痕迹列表
+	EffectDPS      float64     // 火焰痕迹每秒伤害
+	EffectDuration float64     // 火焰痕迹持续时间（秒）
 }
+
+// Base 实现 Stateful 接口。
+func (s *PrinceState) Base() *warden.WardenState { return &s.WardenState }
 
 // FireTrail 冲刺结束时留下的火焰痕迹，持续灼烧范围内敌人。
 type FireTrail struct {
@@ -50,14 +51,15 @@ func (b *princeBehavior) Type() string { return "prince" }
 
 func (b *princeBehavior) Init(w *warden.Warden) interface{} {
 	return &PrinceState{
-		X:              600,
-		Y:              270,
-		Phase:          "idle",
-		Timer:          0,
-		Damage:         30,
-		AttackInterval: 3,
-		MoveSpeed:      600,
-		AoERadius:      20,
+		WardenState: warden.WardenState{
+			X:              600,
+			Y:              270,
+			Phase:          "idle",
+			Damage:         30,
+			AttackInterval: 3,
+			MoveSpeed:      600,
+			AoERadius:      20,
+		},
 		EffectDPS:      10,
 		EffectDuration: 2,
 	}
@@ -76,8 +78,7 @@ func (b *princeBehavior) Tick(w *warden.Warden, ctx *warden.TickContext) {
 	case "idle":
 		s.Timer -= ctx.DT
 		if s.Timer <= 0 {
-			// 寻找敌群中心（周围敌人最多的敌人）
-			target := findClusterCenter(ctx.Enemies)
+			target := warden.FindClusterCenter(ctx.Enemies, 80.0)
 			if target != nil {
 				s.DashStartX = s.X
 				s.DashStartY = s.Y
@@ -107,23 +108,20 @@ func tickDash(s *PrinceState, ctx *warden.TickContext) {
 	dy := s.DashEndY - s.DashStartY
 	dist := math.Hypot(dx, dy)
 	if dist < 1 {
-		// 目标太近，直接结束
 		finishDash(s)
 		return
 	}
 
-	// 按速度推进进度
 	step := (s.MoveSpeed * ctx.DT) / dist
 	s.DashProgress += step
 
-	// 插值当前位置
 	if s.DashProgress >= 1.0 {
 		s.DashProgress = 1.0
 	}
 	s.X = s.DashStartX + dx*s.DashProgress
 	s.Y = s.DashStartY + dy*s.DashProgress
 
-	// 碰撞检测：命中范围内未击中的敌人
+	// 碰撞检测
 	ctx.Enemies.Each(func(e *enemy.Enemy) {
 		if s.HitSet[e] {
 			return
@@ -137,7 +135,6 @@ func tickDash(s *PrinceState, ctx *warden.TickContext) {
 		}
 	})
 
-	// 冲刺完成
 	if s.DashProgress >= 1.0 {
 		finishDash(s)
 	}
@@ -167,7 +164,6 @@ func tickTrails(s *PrinceState, ctx *warden.TickContext) {
 		if t.Life <= 0 {
 			continue
 		}
-		// 范围内敌人受到灼烧伤害
 		dmg := t.DPS * ctx.DT
 		ctx.Enemies.Each(func(e *enemy.Enemy) {
 			if math.Hypot(e.X-t.X, e.Y-t.Y) < t.Radius {
@@ -180,26 +176,4 @@ func tickTrails(s *PrinceState, ctx *warden.TickContext) {
 		alive = append(alive, *t)
 	}
 	s.Trails = alive
-}
-
-// findClusterCenter 寻找周围敌人最多的敌人（敌群中心）。
-func findClusterCenter(enemies *enemy.Pool) *enemy.Enemy {
-	const clusterRange = 80.0
-
-	var best *enemy.Enemy
-	bestCount := 0
-
-	enemies.Each(func(e *enemy.Enemy) {
-		count := 0
-		enemies.Each(func(other *enemy.Enemy) {
-			if math.Hypot(other.X-e.X, other.Y-e.Y) <= clusterRange {
-				count++
-			}
-		})
-		if count > bestCount {
-			bestCount = count
-			best = e
-		}
-	})
-	return best
 }

@@ -33,7 +33,7 @@ type StackRule struct {
 // DefaultStackRules 19 种 buff 类型的默认堆叠规则。
 var DefaultStackRules = map[string]StackRule{
 	// 控制类
-	"slow":    {Mode: ModeStrongest, Cap: 0.7},
+	"slow":    {Mode: ModeStrongest, Cap: 0.8}, // 最多减速80%（速度不低于20%）
 	"stun":    {Mode: ModeOverride},
 	"knockup": {Mode: ModeOverride},
 	"root":    {Mode: ModeOverride},

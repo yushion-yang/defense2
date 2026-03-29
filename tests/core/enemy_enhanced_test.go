@@ -56,10 +56,13 @@ func TestCC_Tenacity(t *testing.T) {
 
 func TestCC_SlowCap(t *testing.T) {
 	e := &enemy.Enemy{HP: 100, MaxHP: 100, Active: true, BaseSpeed: 100, Speed: 100}
-	combat.ApplySlow(e, 0.9, 3.0, "test")
-	// slowCap = 0.7, 0.9 被 cap 到 0.7
-	if math.Abs(e.SlowFactor-0.7) > 1e-9 {
-		t.Errorf("减速倍率=%.2f, 期望0.7(cap)", e.SlowFactor)
+	// factor=0.1 低于 MinSpeedRatio=0.2，应被 clamp 到 0.2
+	combat.ApplySlow(e, 0.1, 3.0, "test")
+	if math.Abs(e.SlowFactor-0.2) > 1e-9 {
+		t.Errorf("减速倍率=%.2f, 期望0.2(MinSpeedRatio)", e.SlowFactor)
+	}
+	if math.Abs(e.Speed-20) > 1e-9 {
+		t.Errorf("速度=%.2f, 期望20(BaseSpeed*MinSpeedRatio)", e.Speed)
 	}
 }
 
@@ -254,7 +257,7 @@ func TestFlying_Move(t *testing.T) {
 		Speed: 50, BaseSpeed: 50,
 		Path: path, PathIndex: 1,
 		MovementType: "flying",
-		Active: true,
+		Active:       true,
 	}
 
 	reached := enemy.MoveFlyingEnemy(e, 1.0) // 50像素/秒 * 1秒 = 50像素

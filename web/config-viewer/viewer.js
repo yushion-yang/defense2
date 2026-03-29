@@ -42,6 +42,11 @@ const ZH = {
   baseFireRate: '基础攻速', projectileSpeed: '弹速', attackStyle: '攻击方式',
   // Difficulty
   easy: '简单', normal: '普通', hard: '困难', extreme: '极限',
+  // Mode modifier fields
+  range: '射程', damage: '伤害', fireRate: '攻速',
+  // Tower factions
+  base: '基础', steel: '钢铁', energy: '能量', nature: '自然',
+  order: '秩序', summon: '召唤', chaos: '混沌', other: '其他',
 };
 function t(key) { return ZH[key] || key; }
 
@@ -61,7 +66,7 @@ function matchesSearch(...parts) {
 }
 function fmt(v) {
   if (v == null) return '-';
-  if (typeof v === 'boolean') return v ? 'Yes' : 'No';
+  if (typeof v === 'boolean') return v ? '是' : '否';
   if (typeof v === 'number') return Number.isInteger(v) ? String(v) : v.toFixed(2);
   return String(v);
 }
@@ -129,37 +134,37 @@ function buildOverview() {
 
   el.innerHTML = `
     <div class="card">
-      <h2>Overview</h2>
+      <h2>总览</h2>
       <div class="kpi-grid" style="margin-top:12px">
-        <div class="kpi"><div class="kpi-label">Enemy Archetypes</div><div class="kpi-value">${enemyCount}</div></div>
-        <div class="kpi"><div class="kpi-label">Tower Types</div><div class="kpi-value">${towerCount}</div></div>
-        <div class="kpi"><div class="kpi-label">Ally Events</div><div class="kpi-value">${allyEventCount}</div></div>
-        <div class="kpi"><div class="kpi-label">Enemy Events</div><div class="kpi-value">${enemyEventCount}</div></div>
-        <div class="kpi"><div class="kpi-label">Path Points</div><div class="kpi-value">${w?.path?.length ?? 0}</div></div>
-        <div class="kpi"><div class="kpi-label">Tower Slots</div><div class="kpi-value">${w?.towerSlots?.length ?? 0}</div></div>
+        <div class="kpi"><div class="kpi-label">敌人原型</div><div class="kpi-value">${enemyCount}</div></div>
+        <div class="kpi"><div class="kpi-label">炮塔类型</div><div class="kpi-value">${towerCount}</div></div>
+        <div class="kpi"><div class="kpi-label">友方事件</div><div class="kpi-value">${allyEventCount}</div></div>
+        <div class="kpi"><div class="kpi-label">敌方事件</div><div class="kpi-value">${enemyEventCount}</div></div>
+        <div class="kpi"><div class="kpi-label">路径点</div><div class="kpi-value">${w?.path?.length ?? 0}</div></div>
+        <div class="kpi"><div class="kpi-label">塔位</div><div class="kpi-value">${w?.towerSlots?.length ?? 0}</div></div>
       </div>
     </div>
     <div class="card">
-      <h3>Economy</h3>
+      <h3>经济</h3>
       <div class="stat-grid" style="margin-top:10px">
-        ${displayField('Starting Gold', eco?.startingGold)}
-        ${displayField('Starting Lives', eco?.startingLives)}
-        ${displayField('Victory Wave', eco?.victoryWaveTarget)}
-        ${displayField('Build Cost', eco?.buildCost)}
-        ${displayField('Upgrade Cost', eco?.baseUpgradeCost)}
-        ${displayField('Sell Refund', eco?.sellRefundRate)}
+        ${displayField('初始金币', eco?.startingGold)}
+        ${displayField('初始生命', eco?.startingLives)}
+        ${displayField('胜利波次', eco?.victoryWaveTarget)}
+        ${displayField('建造费用', eco?.buildCost)}
+        ${displayField('升级费用', eco?.baseUpgradeCost)}
+        ${displayField('卖出退款', eco?.sellRefundRate)}
       </div>
     </div>
     <div class="card">
-      <h3>Difficulty Modes</h3>
+      <h3>难度模式</h3>
       <div class="diff-grid" style="margin-top:10px">
         ${Object.entries(config.difficulty?.modes || {}).map(([id, m]) => `
           <div class="diff-card">
             <h4>${escapeHtml(m.label || id)}</h4>
-            <div class="stat">HP: <span>${m.hpScale}x</span></div>
-            <div class="stat">Speed: <span>${m.speedScale}x</span></div>
-            <div class="stat">Reward: <span>${m.rewardScale}x</span></div>
-            <div class="stat">Start Gold: <span>${m.startGold}</span></div>
+            <div class="stat">生命: <span>${m.hpScale}x</span></div>
+            <div class="stat">速度: <span>${m.speedScale}x</span></div>
+            <div class="stat">奖励: <span>${m.rewardScale}x</span></div>
+            <div class="stat">初始金币: <span>${m.startGold}</span></div>
           </div>
         `).join('')}
       </div>
@@ -176,19 +181,19 @@ function buildEnemies() {
     matchesSearch(key, e.label, e.description, t(key))
   ).map(([key, e]) => {
     const specialFields = [];
-    if (e.shieldScale != null) specialFields.push(displayField('Shield', `${e.shieldScale}x`));
-    if (e.stealthDuration != null) specialFields.push(displayField('Stealth', `${e.stealthDuration}s`));
-    if (e.splitCount != null) specialFields.push(displayField('Split', `x${e.splitCount}`));
-    if (e.teleportInterval != null) specialFields.push(displayField('Teleport', `${e.teleportInterval}s`));
-    if (e.healScale != null) specialFields.push(displayField('Heal', `${e.healScale}x r=${e.healRadius}`));
-    if (e.auraRange != null) specialFields.push(displayField('Aura', `r=${e.auraRange} spd+${e.auraSpeedUp} arm+${e.auraArmor}`));
-    if (e.movementType) specialFields.push(displayField('Move', e.movementType));
+    if (e.shieldScale != null) specialFields.push(displayField('护盾', `${e.shieldScale}x`));
+    if (e.stealthDuration != null) specialFields.push(displayField('隐身', `${e.stealthDuration}s`));
+    if (e.splitCount != null) specialFields.push(displayField('分裂', `x${e.splitCount}`));
+    if (e.teleportInterval != null) specialFields.push(displayField('传送', `${e.teleportInterval}s`));
+    if (e.healScale != null) specialFields.push(displayField('治疗', `${e.healScale}x r=${e.healRadius}`));
+    if (e.auraRange != null) specialFields.push(displayField('光环', `r=${e.auraRange} 速+${e.auraSpeedUp} 甲+${e.auraArmor}`));
+    if (e.movementType) specialFields.push(displayField('移动', e.movementType));
 
     const tags = [];
     if (key.startsWith('boss-')) tags.push('<span class="tag bad">Boss</span>');
-    if (key.startsWith('fly-') || e.movementType === 'flying') tags.push('<span class="tag info">Flying</span>');
-    if (e.speedScale >= 1.5) tags.push('<span class="tag warn">Fast</span>');
-    if (e.hpScale >= 2) tags.push('<span class="tag good">Tank</span>');
+    if (key.startsWith('fly-') || e.movementType === 'flying') tags.push('<span class="tag info">飞行</span>');
+    if (e.speedScale >= 1.5) tags.push('<span class="tag warn">高速</span>');
+    if (e.hpScale >= 2) tags.push('<span class="tag good">肉盾</span>');
 
     const hint = hints[key] ? `<div class="muted" style="margin-top:6px;font-size:12px">${escapeHtml(hints[key])}</div>` : '';
 
@@ -203,10 +208,10 @@ function buildEnemies() {
           <div>
             <div class="muted" style="font-size:12px;margin-bottom:8px">${escapeHtml(e.description || '')}</div>
             <div class="stat-grid">
-              ${displayField('HP', `${e.hpScale}x`)}
-              ${displayField('Speed', `${e.speedScale}x`)}
-              ${displayField('Reward', `${e.rewardScale}x`)}
-              ${displayField('Radius', e.radius)}
+              ${displayField('生命', `${e.hpScale}x`)}
+              ${displayField('速度', `${e.speedScale}x`)}
+              ${displayField('奖励', `${e.rewardScale}x`)}
+              ${displayField('体型', e.radius)}
               ${specialFields.join('')}
             </div>
             ${hint}
@@ -216,7 +221,7 @@ function buildEnemies() {
     `;
   });
 
-  el.innerHTML = cards.length ? cards.join('') : '<div class="card empty-state">No matching enemies.</div>';
+  el.innerHTML = cards.length ? cards.join('') : '<div class="card empty-state">没有匹配的敌人</div>';
 }
 
 function buildTowers() {
@@ -228,7 +233,7 @@ function buildTowers() {
   ).map(([key, tw]) => {
     const tags = (tw.tags || []).map(tag => `<span class="tag info">${escapeHtml(t(tag))}</span>`).join('');
     const styleTag = tw.attackStyle ? `<span class="tag">${escapeHtml(t(tw.attackStyle))}</span>` : '';
-    const modeTag = tw.supportsModeSwitch ? '<span class="tag good">Mode Switch</span>' : '';
+    const modeTag = tw.supportsModeSwitch ? '<span class="tag good">模式切换</span>' : '';
 
     // Mode modifiers table
     let modeTable = '';
@@ -236,7 +241,7 @@ function buildTowers() {
       const modes = Object.keys(tw.modeModifiers);
       const fields = ['range', 'damage', 'fireRate'];
       modeTable = `
-        <h4 style="margin-top:12px">Mode Modifiers</h4>
+        <h4 style="margin-top:12px">模式修正</h4>
         <table class="mode-table">
           <tr><th></th>${modes.map(m => `<th>${escapeHtml(t(m))}</th>`).join('')}</tr>
           ${fields.map(f => `<tr><td class="row-label">${escapeHtml(t(f))}</td>${modes.map(m => `<td>${fmt(tw.modeModifiers[m]?.[f])}</td>`).join('')}</tr>`).join('')}
@@ -263,7 +268,7 @@ function buildTowers() {
     // Beam info
     let beamHtml = '';
     if (tw.beam) {
-      beamHtml = `<div style="margin-top:8px"><span class="tag" style="border-color:${tw.beam.color}; color:${tw.beam.glow || tw.beam.color}">Beam: ${tw.beam.duration}s w=${tw.beam.width}</span></div>`;
+      beamHtml = `<div style="margin-top:8px"><span class="tag" style="border-color:${tw.beam.color}; color:${tw.beam.glow || tw.beam.color}">光束: ${tw.beam.duration}s 宽=${tw.beam.width}</span></div>`;
     }
 
     // Branches
@@ -285,12 +290,12 @@ function buildTowers() {
           <div>
             <div class="muted" style="font-size:12px;margin-bottom:8px">${escapeHtml(tw.description || '')}</div>
             <div class="stat-grid">
-              ${displayField('Cost', tw.buildCost)}
-              ${displayField('Range', tw.baseRange)}
-              ${displayField('Damage', tw.baseDamage)}
-              ${displayField('Fire Rate', tw.baseFireRate)}
-              ${displayField('Proj Speed', tw.projectileSpeed)}
-              ${displayField('Fixed Mode', tw.fixedMode ? t(tw.fixedMode) : '-')}
+              ${displayField('费用', tw.buildCost)}
+              ${displayField('射程', tw.baseRange)}
+              ${displayField('伤害', tw.baseDamage)}
+              ${displayField('攻速', tw.baseFireRate)}
+              ${displayField('弹速', tw.projectileSpeed)}
+              ${displayField('固定模式', tw.fixedMode ? t(tw.fixedMode) : '-')}
             </div>
           </div>
         </div>
@@ -303,7 +308,7 @@ function buildTowers() {
     `;
   });
 
-  el.innerHTML = cards.length ? cards.join('') : '<div class="card empty-state">No matching towers.</div>';
+  el.innerHTML = cards.length ? cards.join('') : '<div class="card empty-state">没有匹配的炮塔</div>';
 }
 
 function buildWaves() {
@@ -317,46 +322,46 @@ function buildWaves() {
 
   el.innerHTML = `
     <div class="card">
-      <h3>Wave Difficulty Curve</h3>
+      <h3>波次难度曲线</h3>
       <div class="stat-grid" style="margin-top:10px">
-        ${displayField('HP Base', d.hpBase)}
-        ${displayField('HP / Wave', d.hpPerWave)}
-        ${displayField('Speed Base', d.speedBase)}
-        ${displayField('Speed / Wave', d.speedPerWave)}
-        ${displayField('Reward Base', d.rewardBase)}
-        ${displayField('Reward / Wave', d.rewardPerWave)}
-        ${displayField('Late Wave Start', d.lateWaveStart)}
-        ${displayField('Late HP Bonus/Wave', d.lateHpBonusPerWave)}
-        ${displayField('Late Speed Bonus/Wave', d.lateSpeedBonusPerWave)}
-        ${displayField('Late Reward Penalty/Wave', d.lateRewardPenaltyPerWave)}
+        ${displayField('基础HP', d.hpBase)}
+        ${displayField('每波HP增量', d.hpPerWave)}
+        ${displayField('基础速度', d.speedBase)}
+        ${displayField('每波速度增量', d.speedPerWave)}
+        ${displayField('基础奖励', d.rewardBase)}
+        ${displayField('每波奖励增量', d.rewardPerWave)}
+        ${displayField('后期波次起始', d.lateWaveStart)}
+        ${displayField('后期HP加成/波', d.lateHpBonusPerWave)}
+        ${displayField('后期速度加成/波', d.lateSpeedBonusPerWave)}
+        ${displayField('后期奖励衰减/波', d.lateRewardPenaltyPerWave)}
       </div>
     </div>
     <div class="card">
-      <h3>Spawn Settings</h3>
+      <h3>生成设置</h3>
       <div class="stat-grid" style="margin-top:10px">
-        ${displayField('Auto Start', w?.autoStart)}
-        ${displayField('Intermission (s)', w?.intermissionSeconds)}
-        ${displayField('Base Interval', w?.spawnBaseInterval)}
-        ${displayField('Min Interval', w?.spawnMinInterval)}
-        ${displayField('Decay / Wave', w?.spawnDecayPerWave)}
+        ${displayField('自动开波', w?.autoStart)}
+        ${displayField('波间间隔(秒)', w?.intermissionSeconds)}
+        ${displayField('基础间隔', w?.spawnBaseInterval)}
+        ${displayField('最小间隔', w?.spawnMinInterval)}
+        ${displayField('每波衰减', w?.spawnDecayPerWave)}
       </div>
     </div>
     <div class="card">
-      <h3>Spawn Multipliers</h3>
+      <h3>生成倍率</h3>
       <table class="spawn-table" style="margin-top:10px">
-        <tr><th>Type</th><th>Multiplier</th></tr>
+        <tr><th>类型</th><th>倍率</th></tr>
         ${multKeys.map(k => `<tr><td class="row-label">${escapeHtml(t(k))}<span class="muted"> ${k}</span></td><td>${fmt(mult[k])}</td></tr>`).join('')}
       </table>
     </div>
     <div class="card">
-      <h3>Wave Composition</h3>
+      <h3>波次组成</h3>
       <div class="stat-grid" style="margin-top:10px">
-        ${displayField('Tier Thresholds', JSON.stringify(w?.tierThresholds))}
-        ${displayField('Max Buffs/Tier', JSON.stringify(w?.maxBuffsPerTier))}
-        ${displayField('Base Total', `${w?.baseTotalFormula?.base} + ${w?.baseTotalFormula?.perWave}/wave`)}
-        ${displayField('Normal Boost Cap', w?.normalBoostCap)}
-        ${displayField('Elite Interval', w?.eliteInterval)}
-        ${displayField('Pressure Base', w?.pressureBase)}
+        ${displayField('阶段阈值', JSON.stringify(w?.tierThresholds))}
+        ${displayField('每阶最大Buff', JSON.stringify(w?.maxBuffsPerTier))}
+        ${displayField('基础数量', `${w?.baseTotalFormula?.base} + ${w?.baseTotalFormula?.perWave}/波`)}
+        ${displayField('普通加强上限', w?.normalBoostCap)}
+        ${displayField('精英间隔', w?.eliteInterval)}
+        ${displayField('压力基数', w?.pressureBase)}
       </div>
     </div>
   `;
@@ -387,7 +392,7 @@ function buildTowerGallery() {
         <div class="gallery-faction-header">
           <div style="width:12px;height:12px;border-radius:50%;background:${color}"></div>
           <h3>${escapeHtml(t(faction))}</h3>
-          <span class="muted">${items.length} towers</span>
+          <span class="muted">${items.length} 座</span>
         </div>
         <div class="gallery-grid">
           ${items.map(([key, tw]) => {
@@ -414,7 +419,7 @@ function buildTowerGallery() {
     `;
   }
 
-  el.innerHTML = html || '<div class="card empty-state">No matching towers.</div>';
+  el.innerHTML = html || '<div class="card empty-state">没有匹配的炮塔</div>';
 }
 
 function buildEnemyGallery() {
@@ -423,17 +428,17 @@ function buildEnemyGallery() {
 
   // Group by key prefix
   const factionMap = {
-    'st-': { name: 'Steel', color: '#78716c' },
-    'en-': { name: 'Energy', color: '#60a5fa' },
-    'na-': { name: 'Nature', color: '#4ade80' },
-    'or-': { name: 'Order', color: '#fbbf24' },
-    'su-': { name: 'Summon', color: '#c084fc' },
-    'ch-': { name: 'Chaos', color: '#f87171' },
-    'fly-': { name: 'Flying', color: '#93c5fd' },
+    'st-': { name: '钢铁', color: '#78716c' },
+    'en-': { name: '能量', color: '#60a5fa' },
+    'na-': { name: '自然', color: '#4ade80' },
+    'or-': { name: '秩序', color: '#fbbf24' },
+    'su-': { name: '召唤', color: '#c084fc' },
+    'ch-': { name: '混沌', color: '#f87171' },
+    'fly-': { name: '飞行', color: '#93c5fd' },
     'boss-': { name: 'Boss', color: '#ef4444' },
   };
 
-  const groups = { 'Base': [] };
+  const groups = { '基础': [] };
   for (const [key, e] of entries) {
     if (!matchesSearch(key, e.label, e.description, t(key))) continue;
     let placed = false;
@@ -444,10 +449,10 @@ function buildEnemyGallery() {
         break;
       }
     }
-    if (!placed) groups['Base'].push([key, e]);
+    if (!placed) groups['基础'].push([key, e]);
   }
 
-  const groupColors = { Base: '#94a3b8' };
+  const groupColors = { '基础': '#94a3b8' };
   for (const [, info] of Object.entries(factionMap)) groupColors[info.name] = info.color;
 
   let html = '';
@@ -459,7 +464,7 @@ function buildEnemyGallery() {
         <div class="gallery-faction-header">
           <div style="width:12px;height:12px;border-radius:50%;background:${color}"></div>
           <h3>${escapeHtml(groupName)}</h3>
-          <span class="muted">${items.length} enemies</span>
+          <span class="muted">${items.length} 只</span>
         </div>
         <div class="gallery-grid">
           ${items.map(([key, e]) => {
@@ -470,13 +475,13 @@ function buildEnemyGallery() {
             ];
             const roleTags = [];
             if (key.startsWith('boss-')) roleTags.push('Boss');
-            if (e.movementType === 'flying') roleTags.push('Flying');
-            if (e.speedScale >= 1.5) roleTags.push('Fast');
-            if (e.hpScale >= 2) roleTags.push('Tank');
-            if (e.shieldScale) roleTags.push('Shield');
-            if (e.splitCount) roleTags.push('Split');
-            if (e.stealthDuration) roleTags.push('Stealth');
-            if (e.healScale) roleTags.push('Heal');
+            if (e.movementType === 'flying') roleTags.push('飞行');
+            if (e.speedScale >= 1.5) roleTags.push('高速');
+            if (e.hpScale >= 2) roleTags.push('肉盾');
+            if (e.shieldScale) roleTags.push('护盾');
+            if (e.splitCount) roleTags.push('分裂');
+            if (e.stealthDuration) roleTags.push('隐身');
+            if (e.healScale) roleTags.push('治疗');
             const tagHtml = roleTags.map(tag => `<span>${tag}</span>`).join('');
             return `
               <div class="gallery-card">
@@ -484,7 +489,7 @@ function buildEnemyGallery() {
                 <div class="gallery-info">
                   <div class="name" style="color:${e.color || '#fff'}">${escapeHtml(e.label || key)}</div>
                   <div class="key">${key}</div>
-                  <div class="stat-line">HP ${e.hpScale}x / Spd ${e.speedScale}x / R ${e.radius}</div>
+                  <div class="stat-line">生命 ${e.hpScale}x / 速度 ${e.speedScale}x / 体型 ${e.radius}</div>
                   <div class="tags">${tagHtml}</div>
                   <div style="margin-top:6px">${spriteStrip(frames, 32)}</div>
                 </div>
@@ -496,7 +501,7 @@ function buildEnemyGallery() {
     `;
   }
 
-  el.innerHTML = html || '<div class="card empty-state">No matching enemies.</div>';
+  el.innerHTML = html || '<div class="card empty-state">没有匹配的敌人</div>';
 }
 
 // ══════════════════════════════════════
@@ -536,13 +541,13 @@ $$('.tab').forEach(btn => btn.addEventListener('click', () => activateTab(btn.da
 
 // ── Boot ──
 async function boot() {
-  setStatus('Loading config...');
+  setStatus('加载配置中...');
   try {
     config = await loadConfig();
     renderPanel('overview');
-    setStatus(`Loaded: ${Object.keys(config.enemies.types).length} enemies, ${Object.keys(config.towers.types).length} towers`);
+    setStatus(`已加载: ${Object.keys(config.enemies.types).length} 种敌人, ${Object.keys(config.towers.types).length} 种炮塔`);
   } catch (e) {
-    setStatus('Load failed: ' + e.message);
+    setStatus('加载失败: ' + e.message);
     console.error(e);
   }
 }

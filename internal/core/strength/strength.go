@@ -64,9 +64,14 @@ func (s *StrengthData) Overflow() float64 {
 	return eff - 100
 }
 
-// AddPermanent 增加永久加成。
+// AddPermanent 增加永久加成（可为负数）。
 func (s *StrengthData) AddPermanent(amount float64) {
 	s.Permanent += amount
+}
+
+// ResetPermanent 清零永久加成。
+func (s *StrengthData) ResetPermanent() {
+	s.Permanent = 0
 }
 
 // SetTemp 设置临时加成（按 sourceID 覆盖）。

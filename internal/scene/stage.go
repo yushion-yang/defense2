@@ -148,8 +148,6 @@ type StageScene struct {
 	eventHoverIdx     int                          // 事件卡片鼠标悬停索引
 	buildHoverIdx     int                          // 建塔面板鼠标悬停索引
 	gesture           *input.Gesture               // 统一手势识别器
-	hitSfxCooldown    float64                      // 命中音效节流计时器
-	shotSfxCooldown   float64                      // 射击音效节流计时器
 	waveLivesSnapshot int                          // 波开始时的生命快照（用于完美波次检测）
 	// 相机（大地图拖拽）
 	camX, camY    float64 // 相机偏移（世界坐标）
@@ -306,10 +304,11 @@ func NewStageSceneWithOpts(sw Switcher, opts StageOptions) *StageScene {
 	s.manualWave = opts.ManualWave
 	s.initOpts = opts
 
-	// 测试模式：手动开波 + 每波固定 3 个怪
+	// 测试模式：手动开波 + 每波固定 3 个怪 + 高 HP（方便观察）
 	if opts.TestMode {
 		spawner.ManualWave = true
 		spawner.FixedCount = 3
+		spawner.HPScale = 50
 	}
 	// ManualWave 场景覆盖（如沙盒模式也需要手动开波）
 	if opts.ManualWave {
@@ -893,20 +892,10 @@ func (s *StageScene) tryPlaceTower(px, py float64) bool {
 
 	center := gm.CellCenter(row, col)
 	placed := s.towers.Place(row, col, center.X, center.Y, def)
-	// 初始化战力系统
+	// 初始化战力系统（base/potential 已在 pool.Place 中从 TowerDef 设置）
 	if placed != nil {
-		sd := strength.NewStrengthData()
-		placed.Strength = sd
-		// 从扁平字段构建战力配置
-		bindings := map[string]strength.BindingPair{
-			"attackDamage": {Base: placed.BaseDamage, Potential: def.PotentialDamage},
-			"attackSpeed":  {Base: placed.BaseSpeed, Potential: def.PotentialSpeed},
-			"range":        {Base: placed.BaseRange, Potential: def.PotentialRange},
-		}
-		placed.StrengthCfg = strength.NewStrengthConfig(bindings)
-		placed.PotentialDamage = def.PotentialDamage
-		placed.PotentialSpeed = def.PotentialSpeed
-		placed.PotentialRange = def.PotentialRange
+		placed.Strength = strength.NewStrengthData()
+		placed.RecalcStats() // 用强度100计算初始属性
 	}
 	s.gold -= cost
 	s.session.OnTowerBuilt()
@@ -959,18 +948,25 @@ func (s *StageScene) debugActions() []hud.DebugAction {
 		// ── 强度 ──
 		{Label: "强度", IsSection: true},
 		{Label: "全场塔 +50 强度", Action: func() {
-			s.towers.Each(func(t *tower.Tower) { t.Damage += 50 })
+			s.towers.Each(func(t *tower.Tower) {
+				if t.Strength != nil {
+					t.Strength.AddPermanent(50)
+				}
+			})
 		}},
 		{Label: "全场塔 -50 强度", Action: func() {
 			s.towers.Each(func(t *tower.Tower) {
-				t.Damage -= 50
-				if t.Damage < 1 {
-					t.Damage = 1
+				if t.Strength != nil {
+					t.Strength.AddPermanent(-50)
 				}
 			})
 		}},
 		{Label: "全场塔强度重置", Action: func() {
-			s.towers.Each(func(t *tower.Tower) { t.Damage = t.BaseDamage })
+			s.towers.Each(func(t *tower.Tower) {
+				if t.Strength != nil {
+					t.Strength.ResetPermanent()
+				}
+			})
 		}},
 	}
 
@@ -1102,8 +1098,6 @@ func (s *StageScene) updatePlaying() {
 	prevWave := s.spawner.Wave
 
 	// 音效节流计时器递减
-	s.hitSfxCooldown -= gameDT
-	s.shotSfxCooldown -= gameDT
 
 	// 模式每帧 tick（限时模式倒计时等）
 	s.session.Tick(gameDT, s.buildModeCtx())
@@ -1146,12 +1140,14 @@ func (s *StageScene) updatePlaying() {
 		},
 	})
 
-	// 6. 塔索敌射击（按攻击方式分发）
+	// 6. 能力 tick（重置属性 + 光环 buff + 区域效果 + 经济产出）
+	// 必须在索敌射击之前执行，确保 Range 等属性是本帧最新值
+	abilityGold := pipeline.TickTowerAbilities(s.towers, s.enemies, gameDT)
+	s.gold += abilityGold
+
+	// 7. 塔索敌射击（按攻击方式分发）
 	pipeline.TickTowerCombat(s.towers, s.enemies, s.projectiles, s.beams, gameDT, func(style string) {
-		if s.shotSfxCooldown <= 0 {
-			s.audioMgr.PlaySafe(gameAudio.FireSFXForStyle(style))
-			s.shotSfxCooldown = 0.1
-		}
+		s.audioMgr.PlayThrottled(gameAudio.FireSFXForStyle(style), 100)
 	}, func(e *enemy.Enemy, damage float64, killed bool, _ string) {
 		// 直接攻击方式（laser/beam/aoe等）的伤害飘字 + 受击闪白
 		if damage > 0 {
@@ -1162,10 +1158,6 @@ func (s *StageScene) updatePlaying() {
 			render.TriggerShake(2, 0.1)
 		}
 	})
-
-	// 6.5 能力 tick（光环 buff、区域效果、经济产出）
-	abilityGold := pipeline.TickTowerAbilities(s.towers, s.enemies, gameDT)
-	s.gold += abilityGold
 
 	// 7. 弹射物移动 + 光束衰减
 	s.projectiles.Update(gameDT)
@@ -1180,21 +1172,20 @@ func (s *StageScene) updatePlaying() {
 		if killed {
 			render.TriggerShake(2, 0.1) // 击杀微震
 			if e.Boss {
-				s.audioMgr.PlaySafe(gameAudio.SFXEnemyDeathBoss)
+				s.audioMgr.PlayThrottled(gameAudio.SFXEnemyDeathBoss, 50)
 			} else {
-				s.audioMgr.PlaySafe(gameAudio.SFXEnemyDeath)
+				s.audioMgr.PlayThrottled(gameAudio.SFXEnemyDeath, 50)
 			}
-		} else if s.hitSfxCooldown <= 0 {
-			// 命中音效：优先按敌人状态区分，再按攻击方式细分
+		} else {
+			// 命中音效：per-sound 节流，优先按敌人状态区分
 			switch {
 			case e.ShieldHP > 0:
-				s.audioMgr.PlaySafe(gameAudio.SFXHitShield)
+				s.audioMgr.PlayThrottled(gameAudio.SFXHitShield, 60)
 			case e.Boss:
-				s.audioMgr.PlaySafe(gameAudio.SFXHitHeavy)
+				s.audioMgr.PlayThrottled(gameAudio.SFXHitHeavy, 60)
 			default:
-				s.audioMgr.PlaySafe(gameAudio.HitSFXForStyle(attackStyle))
+				s.audioMgr.PlayThrottled(gameAudio.HitSFXForStyle(attackStyle), 60)
 			}
-			s.hitSfxCooldown = 0.08
 		}
 	})
 	s.kills += kills
@@ -1727,4 +1718,3 @@ func loadTowerDefsOrFallback() []tower.TowerDef {
 	}
 	return defs
 }
-

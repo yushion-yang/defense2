@@ -1,5 +1,16 @@
 // pool.go — 弹射物对象池。
 // 环形缓冲区实现，写入时覆盖最老的槽位，支持发射、移动更新和释放。
+//
+// ── 弹射物生命周期（塔防模型） ──
+//
+// 本游戏是塔防，不是弹幕射击。弹射物行为遵循塔防惯例：
+//
+//  1. 发射时锁定目标（Target != nil），每帧追踪目标飞行
+//  2. 碰撞检测只对锁定目标生效，穿过其他敌人（见 tick_combat.go）
+//  3. 命中目标 → 触发能力 + 伤害 → 回收
+//  4. 目标被其他弹先杀死 → 本弹直接消失（不继续飞行）
+//
+// 例外：穿刺弹（Pierce=true）对路径上所有敌人做碰撞检测。
 package projectile
 
 import (
@@ -34,8 +45,9 @@ func DefaultPool() *Pool {
 func (p *Pool) Fire(sx, sy, tx, ty, damage, speed, radius float64, target *enemy.Enemy, towerKey string) {
 	proj := &p.projectiles[p.cursor]
 	if proj.Active {
-		p.Count-- // 覆盖了一颗还在飞的弹射物
+		p.Count--
 	}
+	*proj = Projectile{} // 清零所有旧字段，防止复用槽位残留
 
 	dx := tx - sx
 	dy := ty - sy
@@ -57,22 +69,17 @@ func (p *Pool) Fire(sx, sy, tx, ty, damage, speed, radius float64, target *enemy
 	proj.Target = target
 	proj.SourceTowerKey = towerKey
 
-	proj.BounceCount = 0
-	// 清零攻击方式扩展字段
-	proj.Pierce = false
-	proj.ScatterVisual = false
-	proj.ChargeShot = false
-	proj.PierceHitIDs = nil
 	p.Count++
 	p.cursor = (p.cursor + 1) % len(p.projectiles)
 }
 
 // FireBounce 发射一颗弹射子弹（从前一次命中位置飞向新目标）。
-func (p *Pool) FireBounce(sx, sy float64, target *enemy.Enemy, damage, speed, radius float64, towerKey string, bounceCount int) {
+func (p *Pool) FireBounce(sx, sy float64, target *enemy.Enemy, damage, speed, radius float64, towerKey string, bounceCount int, hitIDs []int) {
 	proj := &p.projectiles[p.cursor]
 	if proj.Active {
 		p.Count--
 	}
+	*proj = Projectile{} // 清零所有旧字段
 
 	dx := target.X - sx
 	dy := target.Y - sy
@@ -94,8 +101,7 @@ func (p *Pool) FireBounce(sx, sy float64, target *enemy.Enemy, damage, speed, ra
 	proj.Target = target
 	proj.SourceTowerKey = towerKey
 	proj.BounceCount = bounceCount
-	proj.Trail = [TrailLen]TrailPoint{}
-	proj.TrailCursor = 0
+	proj.BounceHitIDs = hitIDs
 
 	p.Count++
 	p.cursor = (p.cursor + 1) % len(p.projectiles)
@@ -109,7 +115,9 @@ func (p *Pool) Update(dt float64) {
 			continue
 		}
 
-		// 追踪：若目标存活，重新计算速度方向；目标死亡则子弹消失
+		// 追踪：所有有目标的弹（普通弹/弹射弹/蓄力弹）统一行为：
+		//   - 目标存活 → 每帧重算朝向，完美追踪
+		//   - 目标死亡 → 弹射物立即消失（塔防惯例，不继续飞行）
 		if proj.Target != nil {
 			if proj.Target.Active {
 				dx := proj.Target.X - proj.X
@@ -120,7 +128,6 @@ func (p *Pool) Update(dt float64) {
 					proj.VY = (dy / dist) * proj.Speed
 				}
 			} else {
-				// 目标已死 → 回收弹射物
 				proj.Active = false
 				proj.Target = nil
 				p.Count--
