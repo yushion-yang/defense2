@@ -35,6 +35,7 @@ import (
 	"defense2/internal/render"
 	"defense2/internal/render/draw"
 	"defense2/internal/render/hud"
+	"defense2/internal/render/particle"
 	"defense2/internal/render/postprocess"
 	"defense2/internal/render/theme"
 
@@ -179,7 +180,8 @@ type StageScene struct {
 	spawnType       string
 	spawnHoverIdx   int
 	initOpts        StageOptions // 保存原始配置（重新开始用）
-	postPipeline    *postprocess.Pipeline // 后处理管线（bloom 等）
+	postPipeline    *postprocess.Pipeline      // 后处理管线（bloom 等）
+	particlePool    *particle.Pool             // GPU 粒子系统
 }
 
 // NewStageScene 创建游戏主场景，默认加载 map_01。
@@ -305,8 +307,9 @@ func NewStageSceneWithOpts(sw Switcher, opts StageOptions) *StageScene {
 		wardenPanelOpen: false,
 	}
 
-	// 后处理管线（bloom）
+	// 后处理管线（bloom）+ 粒子系统
 	s.postPipeline = postprocess.NewPipeline()
+	s.particlePool = particle.NewPool()
 
 	// 注入战灵精灵获取函数到覆盖层
 	s.wardenOverlay.SpriteFunc = s.wardenRenderer.GetSprite
@@ -1292,6 +1295,8 @@ func (s *StageScene) updatePlaying() {
 			}
 		}
 		if killed {
+			particle.EmitDeathBurst(s.particlePool, e.X, e.Y)
+			particle.EmitGoldCollect(s.particlePool, e.X, e.Y)
 			if e.Boss {
 				s.audioMgr.PlayThrottled(gameAudio.SFXEnemyDeathBoss, 50)
 				s.postPipeline.Effects.TriggerHitStop(3)
@@ -1323,9 +1328,10 @@ func (s *StageScene) updatePlaying() {
 		}
 	}
 
-	// 9. 浮动文本 + 屏幕震动更新
+	// 9. VFX 更新（浮动文本 + 冲击 + 粒子 + 屏幕震动）
 	render.UpdateFloatTexts(gameDT)
 	render.UpdateImpactVFX(gameDT)
+	s.particlePool.Update(gameDT)
 	render.UpdateShake(gameDT)
 
 	// 10. 波次完成奖励 + 事件触发
@@ -1639,6 +1645,9 @@ func (s *StageScene) drawScene(screen *ebiten.Image) {
 
 	// 冲击特效（蓄力弹命中）
 	render.DrawImpactVFX(worldTarget)
+
+	// 粒子系统
+	s.particlePool.Draw(worldTarget)
 
 	// 浮动文本（伤害数字等）
 	render.DrawFloatTexts(worldTarget)
