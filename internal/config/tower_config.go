@@ -27,28 +27,14 @@ type TowerJSON struct {
 	PotentialRange     float64 `json:"potentialRange"`     // 潜力射程
 
 	Abilities      []string            `json:"abilities"`      // 能力 key 列表（引用 abilities.json）
-	BounceConfig   *BounceConfigJSON   `json:"bounceConfig"`   // 弹射配置（electric 塔）
 	// 攻击方式配置
-	AttackStyle      string             `json:"attackStyle"`      // "projectile"/"laser"/"wideBeam"/"scatter"/"charge"/"spin_aoe"/"pierce"/"aura_dot"
-	ProjectileSpeed  float64            `json:"projectileSpeed"`  // 弹射物速度（px/s）
-	ScatterConfig    *ScatterConfigJSON `json:"scatterConfig"`    // scatter 散射配置
-	ChargeConfig     *ChargeConfigJSON  `json:"chargeConfig"`     // charge 蓄力配置
+	AttackStyle     string  `json:"attackStyle"`     // "projectile"/"laser"/"wideBeam"/"scatter"/"charge"/"spin_aoe"/"pierce"/"aura_dot"
+	ProjectileSpeed float64 `json:"projectileSpeed"` // 弹射物速度（px/s）
 	InnerDamageBonus float64            `json:"innerDamageBonus"` // spin_aoe 内圈加伤倍率
 	InnerRadiusRatio float64            `json:"innerRadiusRatio"` // spin_aoe 内圈比例
 	PierceConfig     *PierceConfigJSON  `json:"pierceConfig"`     // pierce 穿刺配置
 
 	PoisonConfig *PoisonConfigJSON `json:"poisonConfig"` // aura_dot 持续毒伤配置
-}
-
-// ScatterConfigJSON 散射配置。
-type ScatterConfigJSON struct {
-	Pellets     int     `json:"pellets"`     // 弹丸数（默认 3）
-	SpreadAngle float64 `json:"spreadAngle"` // 散射角度（度，默认 60）
-}
-
-// ChargeConfigJSON 蓄力配置。
-type ChargeConfigJSON struct {
-	DamageMultiplier float64 `json:"damageMultiplier"` // 蓄力伤害倍率（默认 3）
 }
 
 // PierceConfigJSON 穿刺配置。
@@ -61,13 +47,6 @@ type PierceConfigJSON struct {
 type PoisonConfigJSON struct {
 	DPS      float64 `json:"dps"`      // 每秒伤害
 	Interval float64 `json:"interval"` // 伤害间隔（秒）
-}
-
-// BounceConfigJSON 弹射配置。
-type BounceConfigJSON struct {
-	BaseBounces int     `json:"baseBounces"`
-	Range       float64 `json:"range"`
-	DamageDecay float64 `json:"damageDecay"`
 }
 
 // TowerFileData 塔配置文件的完整解析结果。

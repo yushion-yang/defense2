@@ -12,8 +12,8 @@ func TestLoadAbilityTable(t *testing.T) {
 	if err != nil {
 		t.Fatalf("加载能力表失败: %v", err)
 	}
-	if len(table) != 28 {
-		t.Errorf("能力数=%d, 期望28", len(table))
+	if len(table) != 29 {
+		t.Errorf("能力数=%d, 期望29", len(table))
 	}
 
 	// 验证结构统一性：每个能力都有 type/label/category

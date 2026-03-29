@@ -52,12 +52,7 @@ type Tower struct {
 	AttackStyleID   AttackStyle // 攻击方式（"projectile"/"laser"/...）
 	ProjectileSpeed float64     // 弹射物速度（px/s，0=默认300）
 
-	// Scatter 配置
-	ScatterPellets int     // 弹丸数
-	ScatterSpread  float64 // 散射半角（弧度）
-
-	// Charge 运行时状态
-	ChargeMult     float64 // 蓄力伤害倍率
+	// Charge 运行时状态（由 handler_charge 管理）
 	ChargeProgress float64 // 蓄力进度 0-1
 	ChargeReady    bool    // 蓄力完成
 

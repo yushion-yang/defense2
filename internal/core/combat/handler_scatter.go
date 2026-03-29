@@ -8,33 +8,24 @@ import (
 	"defense2/internal/core/tower"
 )
 
-const scatterHitRadius = 15.0 // 每颗弹丸的命中判定半径
+// scatter 默认参数
+const (
+	scatterPellets   = 3                        // 弹丸数
+	scatterHalfSpread = 30 * math.Pi / 180      // 半角30度（弧度）
+	scatterHitRadius = 15.0                     // 每颗弹丸命中判定半径
+	scatterDmgRatio  = 0.7                      // 每颗弹丸伤害比例
+)
 
 // ScatterHandler 锥形散射。
 type ScatterHandler struct{}
 
 func (h *ScatterHandler) Fire(t *tower.Tower, target *enemy.Enemy, ctx *AttackContext) {
-	pellets := t.ScatterPellets
-	if pellets <= 0 {
-		pellets = 3
-	}
-	halfSpread := t.ScatterSpread
-	if halfSpread <= 0 {
-		halfSpread = 30 * math.Pi / 180 // 默认 30 度半角
-	}
-
 	baseAngle := math.Atan2(target.Y-t.Y, target.X-t.X)
-	damagePerPellet := t.Damage * 0.7 // 每颗弹丸 70% 伤害
+	damagePerPellet := t.Damage * scatterDmgRatio
 
-	for i := 0; i < pellets; i++ {
-		// 均匀分布在扇形内
-		var angle float64
-		if pellets == 1 {
-			angle = baseAngle
-		} else {
-			frac := float64(i) / float64(pellets-1) // 0 to 1
-			angle = baseAngle - halfSpread + frac*2*halfSpread
-		}
+	for i := 0; i < scatterPellets; i++ {
+		frac := float64(i) / float64(scatterPellets-1)
+		angle := baseAngle - scatterHalfSpread + frac*2*scatterHalfSpread
 
 		dirX := math.Cos(angle)
 		dirY := math.Sin(angle)
@@ -57,7 +48,7 @@ func (h *ScatterHandler) Fire(t *tower.Tower, target *enemy.Enemy, ctx *AttackCo
 			}
 		})
 
-		// 视觉弹丸（非追踪，纯飞行效果）
+		// 视觉弹丸
 		speed := t.ProjectileSpeed
 		if speed <= 0 {
 			speed = 400

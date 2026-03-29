@@ -16,8 +16,6 @@ func makeTower(style tower.AttackStyle, damage, rng, speed float64) *tower.Tower
 		Active: true, Key: "test",
 		AttackStyleID:   style,
 		ProjectileSpeed: 400,
-		ScatterPellets:  3, ScatterSpread: 0.52, // ~30 deg
-		ChargeMult:      3,
 		InnerDmgBonus:   1.5, InnerRatioR: 0.5,
 		PierceTargets:   2, PierceDecay: 0.8,
 	}
@@ -144,7 +142,6 @@ func TestWideBeamHitsMultiple(t *testing.T) {
 
 func TestScatterCreatesVisualProjectiles(t *testing.T) {
 	tw := makeTower(tower.StyleScatter, 20, 150, 1)
-	tw.ScatterPellets = 5
 	e := makeEnemy(200, 100, 100)
 	pool := projectile.NewPool(16)
 	beams := combat.NewBeamPool()
@@ -154,9 +151,9 @@ func TestScatterCreatesVisualProjectiles(t *testing.T) {
 	h := combat.Get(tower.StyleScatter)
 	h.Fire(tw, e, ctx)
 
-	// Should create visual projectiles
-	if pool.Count != 5 {
-		t.Errorf("expected 5 scatter pellets, got %d", pool.Count)
+	// scatter 默认 3 颗弹丸
+	if pool.Count != 3 {
+		t.Errorf("expected 3 scatter pellets, got %d", pool.Count)
 	}
 }
 

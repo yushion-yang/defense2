@@ -14,12 +14,11 @@ type ChargeHandler struct{}
 
 func (h *ChargeHandler) SelfManaged() bool { return true }
 
+// charge 默认蓄力倍率（由 chargeShot 能力的 CalcScale 在运行时覆盖）
+const chargeDefaultMult = 3.0
+
 func (h *ChargeHandler) Fire(t *tower.Tower, target *enemy.Enemy, ctx *AttackContext) {
-	// 满蓄发射
-	mult := t.ChargeMult
-	if mult <= 0 {
-		mult = 3.0
-	}
+	mult := chargeDefaultMult
 	speed := t.ProjectileSpeed
 	if speed <= 0 {
 		speed = 600

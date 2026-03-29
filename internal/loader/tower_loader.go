@@ -4,7 +4,6 @@
 package loader
 
 import (
-	"math"
 	"strings"
 
 	"defense2/internal/config"
@@ -25,20 +24,6 @@ func TowerJSONToDef(key string, t *config.TowerJSON) tower.TowerDef {
 	// 能力列表（直接从 JSON 字符串数组获取）
 	abilities := make([]string, len(t.Abilities))
 	copy(abilities, t.Abilities)
-	// bounceConfig → 自动追加 bounce 能力（如果未显式声明）
-	if t.BounceConfig != nil {
-		hasBounce := false
-		for _, a := range abilities {
-			if a == "bounce" {
-				hasBounce = true
-				break
-			}
-		}
-		if !hasBounce {
-			abilities = append(abilities, "bounce")
-		}
-	}
-
 	label := t.ShortLabel
 	if label == "" {
 		label = t.Label
@@ -57,21 +42,6 @@ func TowerJSONToDef(key string, t *config.TowerJSON) tower.TowerDef {
 		ProjectileSpeed: t.ProjectileSpeed,
 	}
 
-	// Scatter 配置
-	if t.ScatterConfig != nil {
-		def.ScatterPellets = t.ScatterConfig.Pellets
-		if def.ScatterPellets == 0 {
-			def.ScatterPellets = 3
-		}
-		def.ScatterSpread = t.ScatterConfig.SpreadAngle * math.Pi / 180 / 2 // 半角
-	}
-	// Charge 配置
-	if t.ChargeConfig != nil {
-		def.ChargeMult = t.ChargeConfig.DamageMultiplier
-		if def.ChargeMult == 0 {
-			def.ChargeMult = 3.0
-		}
-	}
 	// SpinAoE 配置
 	def.InnerDmgBonus = t.InnerDamageBonus
 	def.InnerRatioR = t.InnerRadiusRatio
@@ -117,20 +87,10 @@ func LoadTowerDefs() ([]tower.TowerDef, error) {
 	return defs, nil
 }
 
-// resolveAttackStyle 解析攻击方式（含自动推断）。
+// resolveAttackStyle 解析攻击方式。
 func resolveAttackStyle(t *config.TowerJSON) tower.AttackStyle {
 	if t.AttackStyle != "" {
 		return tower.AttackStyle(t.AttackStyle)
-	}
-	// 自动推断（与 JS 版 tickTowerCombat.js 一致）
-	if t.ChargeConfig != nil {
-		return tower.StyleCharge
-	}
-	if t.ScatterConfig != nil {
-		return tower.StyleScatter
-	}
-	if t.PierceConfig != nil {
-		return tower.StylePierce
 	}
 	return tower.StyleProjectile
 }

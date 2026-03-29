@@ -46,12 +46,7 @@
     "abilities": [
       "stun",
       "bounce"
-    ],
-    "bounceConfig": {
-      "baseBounces": 2,
-      "range": 125,
-      "damageDecay": 0.8
-    }
+    ]
   },
   "hunter": {
     "label": "猎手塔",
@@ -100,11 +95,7 @@
     "potentialRange": 0,
     "attackStyle": "scatter",
     "projectileSpeed": 400,
-    "abilities": [],
-    "scatterConfig": {
-      "pellets": 3,
-      "spreadAngle": 60
-    }
+    "abilities": []
   },
   "en-08": {
     "label": "湮灭射线塔",
@@ -119,10 +110,9 @@
     "potentialRange": 0,
     "attackStyle": "charge",
     "projectileSpeed": 1200,
-    "abilities": [],
-    "chargeConfig": {
-      "damageMultiplier": 3
-    }
+    "abilities": [
+      "chargeShot"
+    ]
   },
   "wl-02": {
     "label": "旋风刃",
