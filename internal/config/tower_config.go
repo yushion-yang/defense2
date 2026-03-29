@@ -26,7 +26,6 @@ type TowerJSON struct {
 	BaseRange          float64 `json:"baseRange"`          // 基础射程（像素）
 	PotentialRange     float64 `json:"potentialRange"`     // 潜力射程
 
-	Tags           []string            `json:"tags"`           // 标签列表（如 "energy"、"laser"）
 	Abilities      []string            `json:"abilities"`      // 能力 key 列表（引用 abilities.json）
 	BounceConfig   *BounceConfigJSON   `json:"bounceConfig"`   // 弹射配置（electric 塔）
 	// 攻击方式配置

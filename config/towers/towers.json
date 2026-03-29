@@ -12,10 +12,6 @@
     "potentialRange": 0,
     "attackStyle": "laser",
     "projectileSpeed": 9999,
-    "tags": [
-      "energy",
-      "laser"
-    ],
     "abilities": [],
     "beam": {
       "duration": 0.12,
@@ -36,12 +32,6 @@
     "baseRange": 170,
     "potentialRange": 0,
     "projectileSpeed": 380,
-    "tags": [
-      "elemental",
-      "ice",
-      "control",
-      "slow"
-    ],
     "abilities": [
       "onHitSlow",
       "multiTarget"
@@ -59,12 +49,6 @@
     "baseRange": 150,
     "potentialRange": 0,
     "projectileSpeed": 600,
-    "tags": [
-      "energy",
-      "lightning",
-      "chain",
-      "bounce"
-    ],
     "abilities": [
       "stun",
       "bounce"
@@ -88,12 +72,6 @@
     "potentialRange": 0,
     "attackStyle": "projectile",
     "projectileSpeed": 380,
-    "tags": [
-      "physical",
-      "sniper",
-      "percentDamage",
-      "targetSwitch"
-    ],
     "abilities": [
       "percentHpDamage",
       "stackDamage",
@@ -114,13 +92,6 @@
     "potentialRange": 0,
     "attackStyle": "wideBeam",
     "projectileSpeed": 9999,
-    "tags": [
-      "energy",
-      "beam",
-      "pierce",
-      "linear",
-      "chainWeapon"
-    ],
     "abilities": [],
     "beam": {
       "duration": 0.15,
@@ -141,13 +112,6 @@
     "potentialRange": 0,
     "attackStyle": "scatter",
     "projectileSpeed": 400,
-    "tags": [
-      "energy",
-      "scatter",
-      "cone",
-      "multi",
-      "chainWeapon"
-    ],
     "abilities": [],
     "scatterConfig": {
       "pellets": 3,
@@ -167,13 +131,6 @@
     "potentialRange": 0,
     "attackStyle": "charge",
     "projectileSpeed": 1200,
-    "tags": [
-      "energy",
-      "snipe",
-      "single",
-      "boss",
-      "chainWeapon"
-    ],
     "abilities": [],
     "chargeConfig": {
       "damageMultiplier": 3
@@ -192,12 +149,6 @@
     "potentialRange": 0,
     "attackStyle": "spin_aoe",
     "projectileSpeed": 0,
-    "tags": [
-      "wind",
-      "melee",
-      "aoe",
-      "spinAoe"
-    ],
     "abilities": [],
     "innerDamageBonus": 1.5,
     "innerRadiusRatio": 0.5
