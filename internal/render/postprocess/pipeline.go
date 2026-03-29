@@ -3,6 +3,8 @@
 package postprocess
 
 import (
+	"defense2/internal/render/draw"
+
 	"github.com/hajimehoshi/ebiten/v2"
 )
 
@@ -26,6 +28,9 @@ type Pipeline struct {
 
 	// Screen-level effects (vignette, hit flash, radial blur, hit-stop).
 	Effects *Effects
+
+	// Dynamic point lighting.
+	Lighting *LightingState
 }
 
 // NewPipeline creates a pipeline with default bloom settings.
@@ -36,6 +41,7 @@ func NewPipeline() *Pipeline {
 		BloomIntensity: BloomDefault.Intensity,
 		BloomPasses:    BloomDefault.Passes,
 		Effects:        NewEffects(),
+		Lighting:       NewLightingState(),
 	}
 	return p
 }
@@ -93,12 +99,14 @@ func (p *Pipeline) Apply(dst *ebiten.Image) {
 
 	// Determine which effect passes are needed.
 	fx := p.Effects
+	ls := p.Lighting
+	needLighting := ls != nil && ls.Enabled && ls.Count > 0
 	needVignette := fx != nil && fx.VignetteStrength > 0
 	needColorGrade := fx != nil && fx.HitFlash.Active
 	needRadialBlur := fx != nil && fx.RadialBlur.Active
 
 	// If no bloom and no effects, fast blit.
-	if !p.BloomEnabled && !needVignette && !needColorGrade && !needRadialBlur {
+	if !p.BloomEnabled && !needLighting && !needVignette && !needColorGrade && !needRadialBlur {
 		dst.DrawImage(p.sceneBuffer, nil)
 		return
 	}
@@ -147,7 +155,7 @@ func (p *Pipeline) Apply(dst *ebiten.Image) {
 		upOpts.Filter = ebiten.FilterLinear
 		p.bloomUpscaled.DrawImage(src, upOpts)
 
-		if needVignette || needColorGrade || needRadialBlur {
+		if needLighting || needVignette || needColorGrade || needRadialBlur {
 			// Bloom combine into fxPingPong for further chaining.
 			p.fxPingPong.Clear()
 			p.fxPingPong.DrawRectShader(p.sceneW, p.sceneH, shaderBloomCombine, &ebiten.DrawRectShaderOptions{
@@ -177,6 +185,9 @@ func (p *Pipeline) Apply(dst *ebiten.Image) {
 	// --- Effect pass chaining ---
 	// Count remaining passes to know when to write directly to dst.
 	remaining := 0
+	if needLighting {
+		remaining++
+	}
 	if needVignette {
 		remaining++
 	}
@@ -197,6 +208,16 @@ func (p *Pipeline) Apply(dst *ebiten.Image) {
 		}
 		p.bloomUpscaled.Clear()
 		return p.bloomUpscaled
+	}
+
+	// Lighting (dynamic point lights).
+	if needLighting {
+		target := fxTarget()
+		target.DrawRectShader(p.sceneW, p.sceneH, shaderLighting, &ebiten.DrawRectShaderOptions{
+			Uniforms: p.buildLightingUniforms(),
+			Images:   [4]*ebiten.Image{fxSrc},
+		})
+		fxSrc = target
 	}
 
 	// Vignette (always-on edge darkening).
@@ -246,4 +267,36 @@ func (p *Pipeline) Apply(dst *ebiten.Image) {
 			Images: [4]*ebiten.Image{fxSrc},
 		})
 	}
+}
+
+// buildLightingUniforms converts LightingState to shader uniforms.
+// Positions and radii are converted to physical pixels via draw.S().
+func (p *Pipeline) buildLightingUniforms() map[string]any {
+	ls := p.Lighting
+	u := map[string]any{
+		"Ambient":    float32(ls.Ambient),
+		"LightCount": float32(ls.Count),
+	}
+	for i := 0; i < MaxLights; i++ {
+		suffix := [4]string{"0", "1", "2", "3"}[i]
+		if i < ls.Count {
+			l := &ls.Lights[i]
+			u["LightX"+suffix] = float32(draw.S(l.X))
+			u["LightY"+suffix] = float32(draw.S(l.Y))
+			u["LightR"+suffix] = float32(l.Color.R) / 255
+			u["LightG"+suffix] = float32(l.Color.G) / 255
+			u["LightB"+suffix] = float32(l.Color.B) / 255
+			u["LightRadius"+suffix] = float32(draw.S(l.Radius))
+			u["LightIntensity"+suffix] = float32(l.Intensity)
+		} else {
+			u["LightX"+suffix] = float32(0)
+			u["LightY"+suffix] = float32(0)
+			u["LightR"+suffix] = float32(0)
+			u["LightG"+suffix] = float32(0)
+			u["LightB"+suffix] = float32(0)
+			u["LightRadius"+suffix] = float32(1)
+			u["LightIntensity"+suffix] = float32(0)
+		}
+	}
+	return u
 }

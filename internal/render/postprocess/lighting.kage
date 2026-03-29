@@ -1,0 +1,73 @@
+//kage:unit pixels
+
+package main
+
+// 4 point lights — separate uniforms per light (Kage cannot do dynamic indexing).
+// Positions (physical pixels).
+var LightX0, LightX1, LightX2, LightX3 float
+var LightY0, LightY1, LightY2, LightY3 float
+
+// Colors (0-1 normalized).
+var LightR0, LightR1, LightR2, LightR3 float
+var LightG0, LightG1, LightG2, LightG3 float
+var LightB0, LightB1, LightB2, LightB3 float
+
+// Falloff radius (physical pixels).
+var LightRadius0, LightRadius1, LightRadius2, LightRadius3 float
+
+// Brightness multiplier per light.
+var LightIntensity0, LightIntensity1, LightIntensity2, LightIntensity3 float
+
+// Number of active lights (0-4).
+var LightCount float
+
+// Base ambient light level (0-1).
+var Ambient float
+
+func Fragment(dstPos vec4, srcPos vec2, color vec4) vec4 {
+	scene := imageSrc0At(srcPos)
+
+	light := vec3(Ambient, Ambient, Ambient)
+
+	// Light 0
+	if LightCount > 0.5 {
+		dx := srcPos.x - LightX0
+		dy := srcPos.y - LightY0
+		dist := sqrt(dx*dx + dy*dy)
+		att := clamp(1.0-dist/max(LightRadius0, 1.0), 0.0, 1.0)
+		att *= att // quadratic falloff
+		light += vec3(LightR0, LightG0, LightB0) * att * LightIntensity0
+	}
+
+	// Light 1
+	if LightCount > 1.5 {
+		dx := srcPos.x - LightX1
+		dy := srcPos.y - LightY1
+		dist := sqrt(dx*dx + dy*dy)
+		att := clamp(1.0-dist/max(LightRadius1, 1.0), 0.0, 1.0)
+		att *= att
+		light += vec3(LightR1, LightG1, LightB1) * att * LightIntensity1
+	}
+
+	// Light 2
+	if LightCount > 2.5 {
+		dx := srcPos.x - LightX2
+		dy := srcPos.y - LightY2
+		dist := sqrt(dx*dx + dy*dy)
+		att := clamp(1.0-dist/max(LightRadius2, 1.0), 0.0, 1.0)
+		att *= att
+		light += vec3(LightR2, LightG2, LightB2) * att * LightIntensity2
+	}
+
+	// Light 3
+	if LightCount > 3.5 {
+		dx := srcPos.x - LightX3
+		dy := srcPos.y - LightY3
+		dist := sqrt(dx*dx + dy*dy)
+		att := clamp(1.0-dist/max(LightRadius3, 1.0), 0.0, 1.0)
+		att *= att
+		light += vec3(LightR3, LightG3, LightB3) * att * LightIntensity3
+	}
+
+	return vec4(scene.rgb * clamp(light, vec3(0), vec3(2)), scene.a)
+}

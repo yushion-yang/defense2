@@ -29,6 +29,9 @@ var colorGradeSrc []byte
 //go:embed radial_blur.kage
 var radialBlurSrc []byte
 
+//go:embed lighting.kage
+var lightingSrc []byte
+
 // Compiled shaders (set by InitShaders).
 var (
 	shaderBloomExtract *ebiten.Shader
@@ -38,6 +41,7 @@ var (
 	shaderVignette     *ebiten.Shader
 	shaderColorGrade   *ebiten.Shader
 	shaderRadialBlur   *ebiten.Shader
+	shaderLighting     *ebiten.Shader
 	shadersReady       bool
 )
 
@@ -79,6 +83,11 @@ func InitShaders() error {
 	shaderRadialBlur, err = ebiten.NewShader(radialBlurSrc)
 	if err != nil {
 		return fmt.Errorf("radial_blur shader: %w", err)
+	}
+
+	shaderLighting, err = ebiten.NewShader(lightingSrc)
+	if err != nil {
+		return fmt.Errorf("lighting shader: %w", err)
 	}
 
 	shadersReady = true
