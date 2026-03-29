@@ -30,8 +30,6 @@ func (b *coreBehavior) Type() string { return "core" }
 func (b *coreBehavior) Init(w *warden.Warden) interface{} {
 	return &CoreState{
 		WardenState: warden.WardenState{
-			X:              600,
-			Y:              270,
 			Damage:         25,
 			AttackInterval: 1.2,
 			Range:          160,

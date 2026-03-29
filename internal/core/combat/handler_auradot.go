@@ -38,10 +38,14 @@ func (h *AuraDotHandler) Tick(t *tower.Tower, ctx *AttackContext) {
 		if dist > r+e.Radius {
 			return
 		}
-		e.HP -= t.Damage
+		dmg := t.Damage
+		if ctx.OnAbilityHit != nil {
+			dmg += ctx.OnAbilityHit(t, e, dmg)
+		}
+		e.HP -= dmg
 		hit = true
 		if ctx.OnHit != nil {
-			ctx.OnHit(e, t.Damage, e.HP <= 0, ctx.Style)
+			ctx.OnHit(e, dmg, e.HP <= 0, ctx.Style)
 		}
 	})
 

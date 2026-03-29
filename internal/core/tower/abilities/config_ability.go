@@ -60,8 +60,8 @@ func (a *ConfigAbility) OnHit(t *tower.Tower, p *projectile.Projectile, e *enemy
 		}
 
 	case "crit":
-		// scaleDim=chance, param=multiplier
-		if rand.Float64() < sv {
+		// scaleDim=chance, param=multiplier（加上 critAura 加成）
+		if rand.Float64() < sv+t.CritBonus {
 			return &tower.HitResult{
 				BonusDamage: p.Damage * (pm - 1), // multiplier 1.8 → +0.8x
 				IsCrit:      true,
@@ -85,8 +85,13 @@ func (a *ConfigAbility) OnHit(t *tower.Tower, p *projectile.Projectile, e *enemy
 		}
 
 	case "stackDamage":
-		// scaleDim=bonusPerStack, 无固定参数
-		return &tower.HitResult{BonusDamage: p.Damage * sv}
+		// scaleDim=bonusPerStack — 连续命中同目标递增，切换目标重置
+		if t.StackTarget != e.ID {
+			t.StackTarget = e.ID
+			t.StackCount = 0
+		}
+		t.StackCount++
+		return &tower.HitResult{BonusDamage: p.Damage * sv * float64(t.StackCount)}
 
 	case "executionBonus":
 		// scaleDim=damageBonus, param=hpThreshold
@@ -122,15 +127,16 @@ func (a *ConfigAbility) OnHit(t *tower.Tower, p *projectile.Projectile, e *enemy
 	case "distanceDamage":
 		// scaleDim=maxBonus, 无固定参数
 		dist := math.Hypot(e.X-t.X, e.Y-t.Y)
-		ratio := math.Min(dist/t.Range, 1.0)
-		return &tower.HitResult{BonusDamage: p.Damage * ratio * sv}
-
-	case "overload":
-		// scaleDim=chance, param=multiplier
-		if rand.Float64() < sv {
-			return &tower.HitResult{BonusDamage: p.Damage * (pm - 1)}
+		if t.Range <= 0 {
+			return nil
 		}
-		return nil
+		ratio := dist / t.Range
+		if ratio > 1 {
+			ratio = 1
+		}
+		bonus := p.Damage * ratio * sv
+		fmt.Printf("[distanceDamage] dist=%.0f range=%.0f ratio=%.2f sv=%.2f dmg=%.1f bonus=%.1f\n", dist, t.Range, ratio, sv, p.Damage, bonus)
+		return &tower.HitResult{BonusDamage: bonus}
 
 	case "onHitSlow":
 		// scaleDim=factor, param=duration
@@ -159,19 +165,9 @@ func (a *ConfigAbility) OnHit(t *tower.Tower, p *projectile.Projectile, e *enemy
 			Burn: &tower.BleedEffect{DPS: p.Damage * sv, Duration: pm},
 		}
 
-	case "root":
-		// scaleDim=duration, 无固定参数
-		return &tower.HitResult{
-			Stun: &tower.StunEffect{Duration: sv}, // 定身复用眩晕效果
-		}
-
-	case "judgmentMark":
-		// scaleDim=damageAmp, param=duration — 标记目标（简化为额外伤害）
-		return &tower.HitResult{BonusDamage: p.Damage * sv}
-
 	case "deathMark":
-		// scaleDim=explosionDamage, param=radius — 简化为额外伤害
-		return &tower.HitResult{BonusDamage: sv}
+		// 不在 OnHit 中处理 — 击杀时由 pipeline 检查 srcTower 是否有此能力
+		return nil
 
 	case "buffPurge":
 		// scaleDim=shieldDrainPerSec — 命中时剥离护盾
@@ -247,15 +243,13 @@ func (a *ConfigAbility) OnTick(t *tower.Tower, ctx *tower.TickContext) *tower.Ti
 		})
 
 	case "critAura":
-		// scaleDim=bonus, param=radius
-		srcKey := fmt.Sprintf("critAura_%s_%d_%d", t.Key, t.Row, t.Col)
+		// scaleDim=bonus(暴击率加成), param=radius
 		ctx.Towers.Each(func(other *tower.Tower) {
 			if other == t {
 				return
 			}
 			if math.Hypot(t.X-other.X, t.Y-other.Y) <= pm {
-				ensureStr(other)
-				other.Strength.SetTemp(srcKey, other.BaseDamage*sv)
+				other.CritBonus += sv // 叠加暴击率（多个光环可叠加）
 			}
 		})
 
@@ -276,47 +270,47 @@ func (a *ConfigAbility) OnTick(t *tower.Tower, ctx *tower.TickContext) *tower.Ti
 		}
 
 	case "poisonZone":
-		// scaleDim=dps — 对射程内敌人造成毒伤
+		// scaleDim=dps — 对射程内敌人造成毒伤（累积到 ZoneDmgAccum，按 DotTick 结算）
 		ctx.Enemies.Each(func(e *enemy.Enemy) {
 			if math.Hypot(e.X-t.X, e.Y-t.Y) <= t.Range {
-				e.HP -= sv * ctx.DT
+				e.ZoneDmgAccum += sv * ctx.DT
 			}
 		})
 
 	case "silenceZone":
-		// scaleDim=slowFactor — 对射程内敌人减速（受全局减速下限约束）
+		// scaleDim=slowFactor — 射程内敌人沉默（禁用 DamageCap）+ 减速
 		factor := 1 - sv
 		if factor < combat.MinSpeedRatio {
 			factor = combat.MinSpeedRatio
 		}
 		ctx.Enemies.Each(func(e *enemy.Enemy) {
 			if math.Hypot(e.X-t.X, e.Y-t.Y) <= t.Range {
+				e.Silenced = true
 				e.Speed = e.BaseSpeed * factor
 			}
 		})
 
 	case "curseZone":
-		// scaleDim=hpPercentPerSec — 对射程内敌人百分比扣血
+		// scaleDim=hpPercentPerSec — 对射程内敌人百分比扣血（累积到 ZoneDmgAccum）
 		ctx.Enemies.Each(func(e *enemy.Enemy) {
 			if math.Hypot(e.X-t.X, e.Y-t.Y) <= t.Range {
-				e.HP -= e.MaxHP * sv * ctx.DT
-			}
-		})
-
-	case "channelLaser":
-		// scaleDim=dps — 对射程内最近敌人造成持续伤害
-		ctx.Enemies.Each(func(e *enemy.Enemy) {
-			if math.Hypot(e.X-t.X, e.Y-t.Y) <= t.Range {
-				e.HP -= sv * ctx.DT
+				e.ZoneDmgAccum += e.MaxHP * sv * ctx.DT
 			}
 		})
 
 	case "goldPassive":
-		// scaleDim=amount, param=interval
-		// 需要冷却计时器，简化为每帧按比例产金
-		gold := sv * ctx.DT / pm
-		if gold > 0 {
-			return &tower.TickResult{GoldEarned: int(gold * 60)} // 近似为整数
+		// scaleDim=amount, param=interval — 每 interval 秒产生 floor(amount) 金币
+		t.GoldCooldown -= ctx.DT
+		if t.GoldCooldown <= 0 {
+			t.GoldCooldown += pm // 重置冷却（用 += 而非 = 避免累积误差）
+			if t.GoldCooldown <= 0 {
+				t.GoldCooldown = pm
+			}
+			gold := int(sv) // 取整
+			if gold < 1 {
+				gold = 1
+			}
+			return &tower.TickResult{GoldEarned: gold}
 		}
 
 	case "goldOnKill":

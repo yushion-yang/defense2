@@ -43,19 +43,27 @@ func (g *Game) AudioManager() *gameAudio.Manager {
 	return g.audioMgr
 }
 
-// initFont 初始化全局字体管理器（只执行一次）。
+// initFont 初始化全局双字体管理器（JetBrains Mono + Noto Sans SC 回退）。
 func initFont() {
 	assetFS := config.GetAssetFS()
 	if assetFS == nil {
 		return
 	}
-	data, err := assetFS.ReadFile("assets/fonts/NotoSansSC-Regular.ttf")
+	fallback, err := assetFS.ReadFile("assets/fonts/NotoSansSC-Regular.ttf")
 	if err != nil {
-		log.Printf("全局字体加载失败: %v", err)
+		log.Printf("中文字体加载失败: %v", err)
 		return
 	}
-	if err := render.InitGlobalFont(data); err != nil {
-		log.Printf("全局字体解析失败: %v", err)
+	primary, err := assetFS.ReadFile("assets/fonts/JetBrainsMono-Regular.ttf")
+	if err != nil {
+		log.Printf("JetBrains Mono 加载失败，退回单字体: %v", err)
+		if err2 := render.InitGlobalFont(fallback); err2 != nil {
+			log.Printf("全局字体解析失败: %v", err2)
+		}
+		return
+	}
+	if err := render.InitGlobalDualFont(primary, fallback); err != nil {
+		log.Printf("双字体初始化失败: %v", err)
 	}
 }
 

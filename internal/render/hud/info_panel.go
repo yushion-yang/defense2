@@ -53,7 +53,7 @@ func DrawInfoPanel(screen *ebiten.Image, t *tower.Tower, sellValue int) {
 		topPad    = float32(theme.DetailTopPad)
 		botPad    = float32(theme.DetailBotPad)
 		detailGap = float32(theme.DetailGap)
-		btnGap    = float32(8)
+		btnGap    = float32(12)
 	)
 
 	currentAbilities := t.Abilities
@@ -73,7 +73,7 @@ func DrawInfoPanel(screen *ebiten.Image, t *tower.Tower, sellValue int) {
 
 	// Row 1: 塔名 + 战力显示
 	panel.AddRow(titleH, func(screen *ebiten.Image, x, y float64, w float64) {
-		fm.DrawBoldText(screen, t.Label, x, y, theme.FontLG, theme.TextTitle)
+		fm.DrawBoldText(screen, t.Label, x, y, theme.FontXL, theme.TextTitle)
 		rightX := x + w
 
 		if sd != nil {
@@ -88,7 +88,7 @@ func DrawInfoPanel(screen *ebiten.Image, t *tower.Tower, sellValue int) {
 			if breakdown != "" {
 				strTxt += " " + breakdown
 			}
-			fm.DrawRightText(screen, strTxt, rightX, y+2, theme.FontSM, strClr)
+			fm.DrawRightText(screen, strTxt, rightX, y+4, theme.FontSM, strClr)
 		}
 	})
 
@@ -96,23 +96,23 @@ func DrawInfoPanel(screen *ebiten.Image, t *tower.Tower, sellValue int) {
 	panel.AddRow(attrH, func(screen *ebiten.Image, x, y float64, w float64) {
 		colW := w / 3
 		const (
-			iconSize = 14.0
-			iconGap  = 4.0
+			iconSize = 16.0
+			iconGap  = 5.0
 		)
 		im := render.GlobalIcons()
 		textOff := iconSize + iconGap
 
 		// 伤害
 		drawStatIcon(screen, im, "stat-damage", x, y, iconSize)
-		fm.DrawText(screen, fmtAttr("%.0f", t.BaseDamage, t.PotentialDamage, effStr), x+textOff, y, theme.FontMD, theme.InfoAttrDamage)
+		fm.DrawText(screen, fmtAttr("%.0f", t.BaseDamage, t.PotentialDamage, effStr), x+textOff, y, theme.FontLG, theme.InfoAttrDamage)
 
 		// 攻速（精确到一位小数）
 		drawStatIcon(screen, im, "stat-atkspd", x+colW, y, iconSize)
-		fm.DrawText(screen, fmtAttr("%.1f", t.BaseSpeed, t.PotentialSpeed, effStr), x+colW+textOff, y, theme.FontMD, theme.InfoAttrAtkSpd)
+		fm.DrawText(screen, fmtAttr("%.1f", t.BaseSpeed, t.PotentialSpeed, effStr), x+colW+textOff, y, theme.FontLG, theme.InfoAttrAtkSpd)
 
 		// 射程
 		drawStatIcon(screen, im, "stat-range", x+colW*2, y, iconSize)
-		fm.DrawText(screen, fmtAttr("%.0f", t.BaseRange, t.PotentialRange, effStr), x+colW*2+textOff, y, theme.FontMD, theme.InfoAttrRange)
+		fm.DrawText(screen, fmtAttr("%.0f", t.BaseRange, t.PotentialRange, effStr), x+colW*2+textOff, y, theme.FontLG, theme.InfoAttrRange)
 	})
 
 	// Row 3: 攻击方式
@@ -121,7 +121,7 @@ func DrawInfoPanel(screen *ebiten.Image, t *tower.Tower, sellValue int) {
 		if style == "" {
 			style = "projectile"
 		}
-		fm.DrawText(screen, "攻击: "+attackStyleLabel(style), x, y, theme.FontXS, theme.TextMuted)
+		fm.DrawText(screen, "攻击: "+attackStyleLabel(style), x, y, theme.FontSM, theme.TextMuted)
 	})
 
 	// Row 4: 能力列表（数据驱动）
@@ -188,9 +188,9 @@ func drawAbilityRow(screen *ebiten.Image, fm *render.FontManager, abilityType st
 		iconName = name
 	}
 	if iconName != "" {
-		drawStatIcon(screen, im, iconName, x, y, 12)
+		drawStatIcon(screen, im, iconName, x, y, 14)
 	}
-	abX := x + 16.0
+	abX := x + 19.0
 
 	// 标签（粗体）
 	label := abilityType
@@ -199,13 +199,13 @@ func drawAbilityRow(screen *ebiten.Image, fm *render.FontManager, abilityType st
 	} else if l, ok := fallbackLabelMap[abilityType]; ok {
 		label = l
 	}
-	fm.DrawBoldText(screen, label, abX, y, theme.FontXS, theme.TextBody)
-	abX += fm.MeasureText(label, theme.FontXS) + 6
+	fm.DrawBoldText(screen, label, abX, y, theme.FontSM, theme.TextBody)
+	abX += fm.MeasureText(label, theme.FontSM) + 6
 
 	// 无 AbilityDef 时显示 fallback 描述
 	if def == nil {
 		if desc, ok := fallbackDescMap[abilityType]; ok {
-			fm.DrawText(screen, desc, abX, y+1, theme.FontXS, theme.TextMuted)
+			fm.DrawText(screen, desc, abX, y+1, theme.FontSM, theme.TextMuted)
 		}
 		return
 	}
@@ -234,16 +234,16 @@ func drawAbilityDisplay(screen *ebiten.Image, fm *render.FontManager, def *confi
 		next := strings.Index(tpl[i:], "{")
 		if next < 0 {
 			// 剩余纯文本
-			fm.DrawText(screen, tpl[i:], x, y, theme.FontXS, theme.TextMuted)
-			x += fm.MeasureText(tpl[i:], theme.FontXS)
+			fm.DrawText(screen, tpl[i:], x, y, theme.FontSM, theme.TextMuted)
+			x += fm.MeasureText(tpl[i:], theme.FontSM)
 			break
 		}
 
 		// 输出占位符前的纯文本
 		if next > 0 {
 			seg := tpl[i : i+next]
-			fm.DrawText(screen, seg, x, y, theme.FontXS, theme.TextMuted)
-			x += fm.MeasureText(seg, theme.FontXS)
+			fm.DrawText(screen, seg, x, y, theme.FontSM, theme.TextMuted)
+			x += fm.MeasureText(seg, theme.FontSM)
 		}
 		i += next
 
@@ -272,28 +272,34 @@ func drawAbilityDisplay(screen *ebiten.Image, fm *render.FontManager, def *confi
 				fmt.Sprintf(nf+"+", def.Base),
 				fmt.Sprintf("("+nf+")", scaled),
 				fmt.Sprintf("="+nf, total))
+		case "si":
+			// 缩放取整：1+(1)=2（强制 floor，用于目标数等整数量）
+			x = drawScaleSegment(screen, fm, x, y, scaledClr,
+				fmt.Sprintf("%.0f+", math.Floor(def.Base)),
+				fmt.Sprintf("(%.0f)", math.Floor(scaled)),
+				fmt.Sprintf("=%.0f", math.Floor(total)))
 		case "p":
 			// 参数原值
 			txt := fmtNum(def.Param)
-			fm.DrawText(screen, txt, x, y, theme.FontXS, theme.TextMuted)
-			x += fm.MeasureText(txt, theme.FontXS)
+			fm.DrawText(screen, txt, x, y, theme.FontSM, theme.TextMuted)
+			x += fm.MeasureText(txt, theme.FontSM)
 		case "p%":
 			// 参数百分比
 			txt := fmtNum(def.Param*100) + "%"
-			fm.DrawText(screen, txt, x, y, theme.FontXS, theme.TextMuted)
-			x += fm.MeasureText(txt, theme.FontXS)
+			fm.DrawText(screen, txt, x, y, theme.FontSM, theme.TextMuted)
+			x += fm.MeasureText(txt, theme.FontSM)
 		}
 	}
 }
 
 // drawScaleSegment 渲染 "base+(scaled)=total" 三段文本，中间段带颜色。
 func drawScaleSegment(screen *ebiten.Image, fm *render.FontManager, x, y float64, scaledClr color.Color, baseTxt, scaledTxt, totalTxt string) float64 {
-	fm.DrawText(screen, baseTxt, x, y, theme.FontXS, theme.TextBody)
-	x += fm.MeasureText(baseTxt, theme.FontXS)
-	fm.DrawText(screen, scaledTxt, x, y, theme.FontXS, scaledClr)
-	x += fm.MeasureText(scaledTxt, theme.FontXS)
-	fm.DrawText(screen, totalTxt, x, y, theme.FontXS, theme.TextBody)
-	x += fm.MeasureText(totalTxt, theme.FontXS)
+	fm.DrawText(screen, baseTxt, x, y, theme.FontSM, theme.TextBody)
+	x += fm.MeasureText(baseTxt, theme.FontSM)
+	fm.DrawText(screen, scaledTxt, x, y, theme.FontSM, scaledClr)
+	x += fm.MeasureText(scaledTxt, theme.FontSM)
+	fm.DrawText(screen, totalTxt, x, y, theme.FontSM, theme.TextBody)
+	x += fm.MeasureText(totalTxt, theme.FontSM)
 	return x
 }
 

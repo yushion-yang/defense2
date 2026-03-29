@@ -83,14 +83,15 @@ const (
 type interactMode int
 
 const (
-	modeIdle       interactMode = iota // 空闲：观察游戏
-	modeBuildMenu                      // 建塔面板打开：选择塔类型
-	modeBuildPlace                     // 放塔模式：已选塔型，点击可建位放塔
-	modeTowerSel                       // 塔选中：显示信息面板+射程
-	modeSpawnMenu                      // 造怪菜单：选择敌人类型
-	modeSpawnPlace                     // 造怪放置：点击地图放置敌人
-	modeEvent                          // 事件选择：弹窗选事件
-	modePaused                         // 暂停菜单
+	modeIdle         interactMode = iota // 空闲：观察游戏
+	modeBuildMenu                        // 建塔面板打开：选择塔类型
+	modeBuildPlace                       // 放塔模式：已选塔型，点击可建位放塔
+	modeTowerSel                         // 塔选中：显示信息面板+射程
+	modeSpawnMenu                        // 造怪菜单：选择敌人类型
+	modeSpawnPlace                       // 造怪放置：点击地图放置敌人
+	modeEvent                            // 事件选择：弹窗选事件
+	modePaused                           // 暂停菜单
+	modeWardenSelect                     // 战灵选择覆盖层
 )
 
 // StageOptions 创建 StageScene 的配置选项。
@@ -132,7 +133,9 @@ type StageScene struct {
 	towerRenderer     *render.TowerRenderer        // 塔 SVG 渲染器
 	enemyRenderer     *render.EnemyRenderer        // 敌人 SVG 渲染器
 	audioMgr          *gameAudio.Manager           // 音效管理器
-	wardenUnit        *warden.Warden               // 战灵实体
+	wardenUnit        *warden.Warden               // 战灵实体（选择前为 nil）
+	wardenOverlay     *hud.WardenSelectOverlay     // 战灵选择覆盖层
+	wardenReady       bool                         // 战灵已选择并激活
 	eventPool         *event.Pool                  // 事件池
 	appliedEvents     []event.Event                // 已应用的事件列表
 	killRewardBonus   int                          // 额外击杀金币（事件增益）
@@ -254,6 +257,14 @@ func NewStageSceneWithOpts(sw Switcher, opts StageOptions) *StageScene {
 	mode := gamemode.GetOrDefault(modeID)
 	session := gamemode.NewSession(mode)
 
+	// 战灵：WardenType 为空表示需要在 Stage 内选择
+	var wardenUnit *warden.Warden
+	wardenReady := false
+	if opts.WardenType != "" {
+		wardenUnit = warden.NewWarden(1, opts.WardenType, opts.WardenType)
+		wardenReady = true
+	}
+
 	s := &StageScene{
 		switcher:        sw,
 		session:         session,
@@ -269,7 +280,9 @@ func NewStageSceneWithOpts(sw Switcher, opts StageOptions) *StageScene {
 		towerRenderer:   render.NewTowerRenderer(config.GetAssetFS()),
 		enemyRenderer:   render.NewEnemyRenderer(config.GetAssetFS()),
 		audioMgr:        sw.AudioManager(),
-		wardenUnit:      warden.NewWarden(1, opts.WardenType, opts.WardenType),
+		wardenUnit:      wardenUnit,
+		wardenOverlay:   hud.NewWardenSelectOverlay(),
+		wardenReady:     wardenReady,
 		eventPool:       event.NewPool(loader.LoadAllyEvents()),
 		tutorial:        tut,
 		progressMgr:     pm,
@@ -317,6 +330,14 @@ func NewStageSceneWithOpts(sw Switcher, opts StageOptions) *StageScene {
 
 	// 传递 EnemyFilter 到 spawner
 	spawner.EnemyFilter = opts.EnemyFilter
+
+	// 波间隔使用模式配置
+	spawner.WaveInterval = session.Mode.IntermissionSecs()
+
+	// 未选战灵时：ManualWave 确保第一波不自动开始（由 stage 控制）
+	if !wardenReady {
+		spawner.ManualWave = true
+	}
 
 	// 模式初始化（endless → 设置 maxWaves=9999, timed → 初始化计时器）
 	session.Mode.OnInit(s.buildModeCtx())
@@ -402,6 +423,8 @@ func (s *StageScene) Update() error {
 			s.handleEventSelection()
 		case modePaused:
 			s.handlePausedInput()
+		case modeWardenSelect:
+			s.handleWardenSelection()
 		default:
 			s.handleInput()
 			s.updatePlaying()
@@ -510,8 +533,7 @@ func (s *StageScene) handleInput() {
 	}
 	if inpututil.IsKeyJustPressed(ebiten.KeyS) {
 		if !s.spawner.WaveActive && !s.spawner.AllDone {
-			s.spawner.StartNextWave()
-			s.audioMgr.PlaySafe(gameAudio.SFXUIClick)
+			s.tryStartWave()
 		}
 	}
 	if inpututil.IsKeyJustPressed(ebiten.Key1) {
@@ -606,7 +628,7 @@ func (s *StageScene) handleInput() {
 	switch topBtn {
 	case "start":
 		if !s.spawner.WaveActive && !s.spawner.AllDone {
-			s.spawner.StartNextWave()
+			s.tryStartWave()
 		}
 		return
 	case "speed":
@@ -1102,6 +1124,12 @@ func (s *StageScene) updatePlaying() {
 	// 模式每帧 tick（限时模式倒计时等）
 	s.session.Tick(gameDT, s.buildModeCtx())
 
+	// 0. 非手动模式：第一波倒计时结束时自动弹出战灵选择
+	if !s.wardenReady && s.spawner.Wave == 0 && s.spawner.TimeToNextWave() <= 0 && !s.testMode {
+		s.showWardenSelect()
+		return
+	}
+
 	// 1. 生成敌人
 	s.spawner.Update(s.enemies, gameDT)
 	if s.spawner.Wave > prevWave {
@@ -1115,7 +1143,9 @@ func (s *StageScene) updatePlaying() {
 	}
 
 	// 2. 敌人状态效果（减速、流血等）
-	pipeline.TickEnemyStatusEffects(s.enemies, gameDT)
+	pipeline.TickEnemyStatusEffects(s.enemies, gameDT, func(e *enemy.Enemy, dmg float64) {
+		render.SpawnDamageText(e.X, e.Y-10, dmg, false)
+	})
 
 	// 3. 敌人移动（到达终点扣生命）
 	s.enemies.Each(func(e *enemy.Enemy) {
@@ -1127,18 +1157,20 @@ func (s *StageScene) updatePlaying() {
 		}
 	})
 
-	// 4. 战灵行为
-	s.wardenUnit.Tick(&warden.TickContext{
-		Enemies:     s.enemies,
-		Towers:      s.towers,
-		Projectiles: s.projectiles,
-		DT:          gameDT,
-		OnKill: func() {
-			s.kills++
-			s.gold += s.econ.KillGold() + s.killRewardBonus
-			s.audioMgr.PlaySafe(gameAudio.SFXEnemyDeath)
-		},
-	})
+	// 4. 战灵行为（未选择前跳过）
+	if s.wardenReady && s.wardenUnit != nil {
+		s.wardenUnit.Tick(&warden.TickContext{
+			Enemies:     s.enemies,
+			Towers:      s.towers,
+			Projectiles: s.projectiles,
+			DT:          gameDT,
+			OnKill: func() {
+				s.kills++
+				s.gold += s.econ.KillGold() + s.killRewardBonus
+				s.audioMgr.PlaySafe(gameAudio.SFXEnemyDeath)
+			},
+		})
+	}
 
 	// 6. 能力 tick（重置属性 + 光环 buff + 区域效果 + 经济产出）
 	// 必须在索敌射击之前执行，确保 Range 等属性是本帧最新值
@@ -1149,8 +1181,7 @@ func (s *StageScene) updatePlaying() {
 	pipeline.TickTowerCombat(s.towers, s.enemies, s.projectiles, s.beams, gameDT, func(style string) {
 		s.audioMgr.PlayThrottled(gameAudio.FireSFXForStyle(style), 100)
 	}, func(e *enemy.Enemy, damage float64, killed bool, _ string) {
-		// 直接攻击方式（laser/beam/aoe等）的伤害飘字
-		// 不生成命中特效（近战 AoE 会在塔身密集叠加白闪）
+		// 直接攻击方式（laser/beam/spin_aoe等）的伤害飘字
 		if damage > 0 {
 			render.SpawnDamageText(e.X, e.Y-15, damage, damage >= 50)
 		}
@@ -1197,7 +1228,9 @@ func (s *StageScene) updatePlaying() {
 		s.tutorial.OnEvent("enemyKilled")
 		for i := 0; i < kills; i++ {
 			s.session.OnEnemyKilled(false, s.buildModeCtx()) // TODO: pass actual boss flag per enemy
-			s.wardenUnit.OnKill()
+			if s.wardenReady && s.wardenUnit != nil {
+				s.wardenUnit.OnKill()
+			}
 		}
 	}
 
@@ -1213,7 +1246,9 @@ func (s *StageScene) updatePlaying() {
 		interest := s.econ.InterestGold(s.gold)
 		totalBonus := result.BonusGold + result.PerfectBonus + interest
 		s.gold += totalBonus
-		s.wardenUnit.OnWaveClear()
+		if s.wardenReady && s.wardenUnit != nil {
+			s.wardenUnit.OnWaveClear()
+		}
 		if s.lives == s.waveLivesSnapshot && result.PerfectBonus > 0 {
 			s.audioMgr.PlaySafe(gameAudio.SFXWaveClearPerfect)
 		} else {
@@ -1500,8 +1535,10 @@ func (s *StageScene) drawScene(screen *ebiten.Image) {
 	// 浮动文本（伤害数字等）
 	render.DrawFloatTexts(worldTarget)
 
-	// 战灵
-	render.DrawWarden(worldTarget, s.wardenUnit)
+	// 战灵（选择后才绘制）
+	if s.wardenReady && s.wardenUnit != nil {
+		render.DrawWarden(worldTarget, s.wardenUnit)
+	}
 
 	// 放塔预览（鼠标在可建造位置时显示）
 	// 放塔预览：仅在放塔模式下，鼠标悬停可建位时显示射程圈
@@ -1531,16 +1568,17 @@ func (s *StageScene) drawScene(screen *ebiten.Image) {
 
 	// HUD：顶部状态栏
 	hud.DrawTopBar(screen, hud.TopBarData{
-		Gold:      s.gold,
-		Lives:     s.lives,
-		Wave:      s.spawner.Wave,
-		MaxWaves:  s.spawner.MaxWaves,
-		Kills:     s.kills,
-		Enemies:   s.enemies.Count,
-		Speed:     s.gameSpeed,
-		TestMode:  s.testMode,
-		SpawnMode: s.imode == modeSpawnMenu || s.imode == modeSpawnPlace,
-		DebugOpen: s.debugPanelOpen,
+		Gold:          s.gold,
+		Lives:         s.lives,
+		Wave:          s.spawner.Wave,
+		MaxWaves:      s.spawner.MaxWaves,
+		Kills:         s.kills,
+		Enemies:       s.enemies.Count,
+		Speed:         s.gameSpeed,
+		WaveCountdown: s.spawner.TimeToNextWave(),
+		TestMode:      s.testMode,
+		SpawnMode:     s.imode == modeSpawnMenu || s.imode == modeSpawnPlace,
+		DebugOpen:     s.debugPanelOpen,
 	})
 
 	// HUD：底部建塔菜单
@@ -1561,7 +1599,7 @@ func (s *StageScene) drawScene(screen *ebiten.Image) {
 		// Hover 在面板上时显示升级详情浮窗
 		mx, my := draw.CursorPos()
 		hud.DrawInfoPanelHoverTooltip(screen, s.selectedTower, float32(mx), float32(my))
-	} else if s.wardenPanelOpen && s.wardenUnit != nil && s.wardenUnit.Active {
+	} else if s.wardenPanelOpen && s.wardenReady && s.wardenUnit != nil && s.wardenUnit.Active {
 		// 无塔选中且战灵面板展开时显示战灵面板（底部中央）
 		hud.DrawWardenPanel(screen, s.buildWardenPanelData())
 	}
@@ -1577,8 +1615,8 @@ func (s *StageScene) drawScene(screen *ebiten.Image) {
 	// 左下角收起按钮
 	hud.DrawToggleButton(screen, true, s.wavePanelOpen, ">")
 
-	// 右下角收起按钮（战灵）
-	if s.wardenUnit != nil && s.wardenUnit.Active {
+	// 右下角收起按钮（战灵，选择后才显示）
+	if s.wardenReady && s.wardenUnit != nil && s.wardenUnit.Active {
 		hud.DrawToggleButton(screen, false, s.wardenPanelOpen, "⚡")
 	}
 
@@ -1610,6 +1648,11 @@ func (s *StageScene) drawScene(screen *ebiten.Image) {
 
 	// Toast 通知
 	hud.DrawToast(screen)
+
+	// 战灵选择覆盖层
+	if s.wardenOverlay != nil {
+		s.wardenOverlay.Draw(screen)
+	}
 
 	// 事件选择弹窗
 	s.drawEventPopup(screen)
@@ -1645,49 +1688,34 @@ func (s *StageScene) buildWardenPanelData() hud.WardenPanelData {
 	}
 	d.Name = cfg.Name
 
-	// Determine current level based on strength thresholds.
-	levelIdx := 0
-	thresholds := []float64{0, 100, 250, 450, 700}
-	for i, t := range thresholds {
-		if w.PerceivedStrength >= t {
-			levelIdx = i
-		}
+	// 扁平结构：直接从顶层字段读取属性
+	if cfg.Damage > 0 {
+		d.Damage = fmt.Sprintf("%.0f", cfg.Damage)
 	}
-	if levelIdx >= len(cfg.Levels) {
-		levelIdx = len(cfg.Levels) - 1
+	if cfg.AttackInterval > 0 {
+		d.Interval = fmt.Sprintf("%.1fs", cfg.AttackInterval)
 	}
-
-	// Stats from current level.
-	if levelIdx >= 0 && levelIdx < len(cfg.Levels) {
-		lv := cfg.Levels[levelIdx]
-		if lv.Damage > 0 {
-			d.Damage = fmt.Sprintf("%.0f", lv.Damage)
-		}
-		if lv.AttackInterval > 0 {
-			d.Interval = fmt.Sprintf("%.1fs", lv.AttackInterval)
-		}
-
-		// Build special desc from effect stats.
-		if lv.EffectDPS > 0 || lv.EffectDuration > 0 {
-			d.SpecialDesc = fmt.Sprintf("%.0f dps / %.0fs",
-				lv.EffectDPS, lv.EffectDuration)
-		}
+	if cfg.EffectDPS > 0 || cfg.EffectDuration > 0 {
+		d.SpecialDesc = fmt.Sprintf("%.0f dps / %.0fs", cfg.EffectDPS, cfg.EffectDuration)
 	}
 
-	// Attack description from config.
+	// 行为描述
 	d.AttackDesc = cfg.Description
+	if cfg.SpecialDesc != "" {
+		d.SpecialDesc = cfg.SpecialDesc
+	}
 
-	// Growth info.
-	if cfg.Growth.OnKill > 0 || cfg.Growth.OnWaveClear > 0 {
+	// 成长信息
+	if cfg.GrowthOnKill > 0 || cfg.GrowthOnWaveClear > 0 {
 		parts := ""
-		if cfg.Growth.OnKill > 0 {
-			parts += fmt.Sprintf("击杀+%.0f", cfg.Growth.OnKill)
+		if cfg.GrowthOnKill > 0 {
+			parts += fmt.Sprintf("击杀+%.0f", cfg.GrowthOnKill)
 		}
-		if cfg.Growth.OnWaveClear > 0 {
+		if cfg.GrowthOnWaveClear > 0 {
 			if parts != "" {
 				parts += " "
 			}
-			parts += fmt.Sprintf("通波+%.0f", cfg.Growth.OnWaveClear)
+			parts += fmt.Sprintf("通波+%.0f", cfg.GrowthOnWaveClear)
 		}
 		d.GrowthDesc = parts
 	}
@@ -1710,6 +1738,64 @@ func convertArchetypesToSpawnConfigs(archetypes map[string]*config.EnemyArchetyp
 		}
 	}
 	return result
+}
+
+// ── 战灵选择逻辑 ────────────────────────────────────
+
+// tryStartWave 尝试开波。若战灵未选择则先弹出战灵选择面板。
+func (s *StageScene) tryStartWave() {
+	if !s.wardenReady {
+		s.showWardenSelect()
+		return
+	}
+	s.spawner.StartNextWave()
+	s.audioMgr.PlaySafe(gameAudio.SFXUIClick)
+}
+
+// showWardenSelect 弹出战灵选择覆盖层。
+func (s *StageScene) showWardenSelect() {
+	s.wardenOverlay.Show(func(key string) {
+		s.activateWarden(key)
+		// 选完后立即开第一波
+		s.spawner.StartNextWave()
+		s.audioMgr.PlaySafe(gameAudio.SFXUIClick)
+	})
+	s.imode = modeWardenSelect
+}
+
+// activateWarden 激活战灵。
+func (s *StageScene) activateWarden(key string) {
+	s.wardenType = key
+	s.wardenReady = true
+	s.imode = modeIdle
+
+	if key == "" {
+		// "不选" — wardenUnit 保持 nil
+		return
+	}
+	s.wardenUnit = warden.NewWarden(1, key, key)
+
+	// 加载战灵配置（面板显示用）
+	if cfgs, err := config.LoadWardenConfigs(); err == nil {
+		if wc, ok := cfgs[key]; ok {
+			s.wardenCfg = &wc
+		}
+	}
+
+	// 非手动模式下，恢复自动开波
+	if !s.testMode && !s.manualWave {
+		s.spawner.ManualWave = false
+	}
+}
+
+// handleWardenSelection 战灵选择覆盖层的交互处理。
+func (s *StageScene) handleWardenSelection() {
+	if s.wardenOverlay == nil || !s.wardenOverlay.Active {
+		s.imode = modeIdle
+		return
+	}
+	mx, my := draw.CursorPos()
+	s.wardenOverlay.Update(mx, my, isTapJustPressed())
 }
 
 // loadTowerDefsOrFallback 从 JSON 配置加载塔定义，失败时回退到硬编码定义。

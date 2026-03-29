@@ -22,6 +22,10 @@ func TickTowerCombat(towers *tower.Pool, enemies *enemy.Pool, projectiles *proje
 		OnFire:      onFire,
 		OnHit:       onHit,
 		DT:          dt,
+		// 能力触发回调：供 spin_aoe 等非弹射物攻击方式使用
+		OnAbilityHit: func(t *tower.Tower, e *enemy.Enemy, damage float64) float64 {
+			return applyTowerAbilities(t, e, damage, enemies, projectiles)
+		},
 	}
 
 	towers.Each(func(t *tower.Tower) {
@@ -215,6 +219,10 @@ func TickProjectileHits(projectiles *projectile.Pool, enemies *enemy.Pool, tower
 			}
 
 			if killed {
+				// 死亡爆炸：检查来源塔是否有 deathMark 能力
+				if srcTower != nil {
+					kills += applyDeathExplosion(srcTower, e, enemies, onHit)
+				}
 				enemies.Kill(e)
 				kills++
 			}
@@ -242,7 +250,7 @@ func TickProjectileHits(projectiles *projectile.Pool, enemies *enemy.Pool, tower
 		}
 		totalDamage := sh.damage * float64(sh.count)
 
-		// 查找来源塔触发能力（以合并伤害为基准）
+		// 查找来源塔，触发 OnHit 能力（以合并伤害为基准）
 		var srcTower *tower.Tower
 		if sh.towerKey != "" {
 			towers.Each(func(t *tower.Tower) {
@@ -250,6 +258,9 @@ func TickProjectileHits(projectiles *projectile.Pool, enemies *enemy.Pool, tower
 					srcTower = t
 				}
 			})
+		}
+		if srcTower != nil {
+			totalDamage += applyTowerAbilities(srcTower, e, totalDamage, enemies, projectiles)
 		}
 
 		// Shield 吸收
@@ -397,10 +408,80 @@ func multiTargetCount(t *tower.Tower) int {
 	return 0
 }
 
+// applyDeathExplosion 检查塔是否有 deathMark 能力，若有则对被杀敌人周围造成 AoE 爆炸。
+// 返回爆炸击杀数。
+func applyDeathExplosion(t *tower.Tower, killed *enemy.Enemy, enemies *enemy.Pool, onHit combat.HitCallback) int {
+	for _, aName := range t.Abilities {
+		if aName != "deathMark" {
+			continue
+		}
+		abTable := config.GlobalAbilityTable()
+		if abTable == nil {
+			return 0
+		}
+		def, ok := abTable["deathMark"]
+		if !ok {
+			return 0
+		}
+		str := 100.0
+		if t.Strength != nil {
+			str = t.Strength.Effective()
+		}
+		explodeDmg := def.CalcScale(str)
+		explodeR := def.Param
+		extraKills := 0
+		enemies.Each(func(e2 *enemy.Enemy) {
+			if e2 == killed {
+				return
+			}
+			if math.Hypot(e2.X-killed.X, e2.Y-killed.Y) <= explodeR {
+				e2.HP -= explodeDmg
+				if onHit != nil {
+					onHit(e2, explodeDmg, e2.HP <= 0, "explosion")
+				}
+				if e2.HP <= 0 {
+					enemies.Kill(e2)
+					extraKills++
+				}
+			}
+		})
+		return extraKills
+	}
+	return 0
+}
+
+// applyTowerAbilities 触发塔的所有 OnHit 能力，返回额外伤害并应用效果。
+// 用于散射合并和 spin_aoe 等非标准弹射物路径。
+func applyTowerAbilities(t *tower.Tower, e *enemy.Enemy, hitDamage float64, enemies *enemy.Pool, projectiles *projectile.Pool) float64 {
+	synth := &projectile.Projectile{
+		Damage:         hitDamage,
+		SourceTowerKey: t.InstanceKey,
+	}
+	bonus := 0.0
+	for _, aName := range t.Abilities {
+		ab, ok := tower.Registry[aName]
+		if !ok {
+			continue
+		}
+		result := ab.OnHit(t, synth, e)
+		if result == nil {
+			continue
+		}
+		bonus += result.BonusDamage
+		applyHitEffects(result, e, synth, enemies, projectiles)
+	}
+	return bonus
+}
+
 // TickEnemyStatusEffects 敌人状态效果子管线：处理所有敌人的减速/流血，击杀血量归零的敌人。
-func TickEnemyStatusEffects(enemies *enemy.Pool, dt float64) {
+func TickEnemyStatusEffects(enemies *enemy.Pool, dt float64, onDotDmg func(e *enemy.Enemy, dmg float64)) {
 	enemies.Each(func(e *enemy.Enemy) {
 		enemy.TickStatusEffects(e, dt)
+		// DoT tick 触发时弹浮字
+		if e.LastDotDmg > 0 && onDotDmg != nil {
+			onDotDmg(e, e.LastDotDmg)
+			e.LastDotDmg = 0
+		}
 		if e.HP <= 0 && e.Active {
 			enemies.Kill(e)
 		}

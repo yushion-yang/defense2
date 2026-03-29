@@ -194,7 +194,12 @@ func (s *SelectScene) startGame() {
 		s.switcher.SwitchScene(NewTestSelectScene(s.switcher))
 		return
 	}
-	s.switcher.SwitchScene(NewWardenSelectScene(s.switcher, mode.DefaultMap, mode.ID, diff.ID))
+	// 直接进入 Stage（战灵在 Stage 内第一波倒计时结束时选择）
+	s.switcher.SwitchScene(NewStageSceneWithOpts(s.switcher, StageOptions{
+		MapID:        mode.DefaultMap,
+		ModeID:       mode.ID,
+		DifficultyID: diff.ID,
+	}))
 }
 
 // ── 碰撞检测 ────────────────────────────────────

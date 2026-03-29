@@ -161,7 +161,7 @@ func (s *TestSelectScene) startScenario() {
 	sc := testScenarios[s.selectedIdx]
 	s.switcher.SwitchScene(NewStageSceneWithOpts(s.switcher, StageOptions{
 		MapID:       sc.MapID,
-		WardenType:  "envoy",
+		WardenType:  "", // 在 Stage 内第一次开波时选择战灵
 		Gold:        sc.Gold,
 		Lives:       sc.Lives,
 		Waves:       sc.Waves,

@@ -65,15 +65,25 @@ type Tower struct {
 	// AuraDot 运行时状态
 	AuraPulse float64 // 脉冲动画计时
 
+	// GoldPassive 运行时状态
+	GoldCooldown float64 // 被动产金冷却计时器
+
 	// 分支特化
 	Branch string // 分支特化标识（空=未特化，一次性选择）
 
 	// 战力系统
 	Strength *strength.StrengthData // 战力运行时数据
 
+	// 光环加成（每帧由 Ticker 能力重置+重算）
+	CritBonus float64 // 暴击光环加成的暴击率（由 critAura 设置）
+
 	// 索敌锁定
 	Target              *enemy.Enemy // 当前锁定目标
 	LastPercentHpTarget int          // 上次触发 percentHpDamage 的敌人 ID（切换目标首击）
+
+	// 叠伤计数（stackDamage 能力：连续命中同目标递增）
+	StackTarget int // 当前叠伤目标 ID
+	StackCount  int // 叠伤层数
 }
 
 // BuyStrength 花费金币购买 10 点永久强度。返回实际花费。
@@ -96,6 +106,7 @@ func (t *Tower) RecalcStats() {
 	t.Damage = t.BaseDamage + t.PotentialDamage*ratio
 	t.AttackSpeed = t.BaseSpeed + t.PotentialSpeed*ratio
 	t.Range = t.BaseRange + t.PotentialRange*ratio
+	t.CritBonus = 0 // 每帧重置，由 critAura OnTick 重新设置
 }
 
 // DPS 返回当前每秒伤害。

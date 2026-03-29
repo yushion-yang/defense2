@@ -9,20 +9,14 @@ import (
 	"strings"
 )
 
-// WardenConfig 单个战灵类型的完整配置。
+// WardenConfig 单个战灵类型的完整配置（扁平结构，Lv1 属性在顶层）。
 type WardenConfig struct {
-	Name        string        `json:"name"`
-	Description string        `json:"description"`
-	Category    string        `json:"category"` // "mobile" or "indirect"
-	EntityCount int           `json:"entityCount"`
-	Levels      []WardenLevel `json:"levels"`
-	Growth      WardenGrowth  `json:"growth"`
-}
+	Name        string `json:"name"`
+	Description string `json:"description"`
+	Category    string `json:"category"` // "mobile" or "indirect"
+	EntityCount int    `json:"entityCount"`
 
-// WardenLevel 战灵某一等级的属性。
-// 各字段按需使用，缺失的 JSON 字段自动为零值。
-type WardenLevel struct {
-	Level                  int     `json:"level"`
+	// Lv1 属性（各字段按需使用，缺失自动为零值）
 	Damage                 float64 `json:"damage"`
 	AttackInterval         float64 `json:"attackInterval"`
 	Range                  float64 `json:"range"`
@@ -34,12 +28,18 @@ type WardenLevel struct {
 	PossessDuration        float64 `json:"possessDuration"`
 	Cooldown               float64 `json:"cooldown"`
 	PermanentStrengthGrant float64 `json:"permanentStrengthGrant"`
-}
 
-// WardenGrowth 战灵成长配置。
-type WardenGrowth struct {
-	OnKill      float64 `json:"onKill"`
-	OnWaveClear float64 `json:"onWaveClear"`
+	// 行为描述（UI 展示用）
+	AttackName   string `json:"attackName"`
+	AttackDesc   string `json:"attackDesc"`
+	SpecialName  string `json:"specialName"`
+	SpecialDesc  string `json:"specialDesc"`
+	StrengthDesc string `json:"strengthDesc"`
+	CounterTip   string `json:"counterTip"`
+
+	// 成长
+	GrowthOnKill      float64 `json:"growthOnKill"`
+	GrowthOnWaveClear float64 `json:"growthOnWaveClear"`
 }
 
 // LoadWardenConfigs 加载所有战灵配置。

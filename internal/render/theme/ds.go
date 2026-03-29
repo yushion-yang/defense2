@@ -74,11 +74,11 @@ const (
 
 const (
 	DetailPad    = 14
-	DetailTopPad = 10
-	DetailBotPad = 10
-	DetailGap    = 6
-	DetailTitleH = 18
-	DetailAttrH  = 16
-	DetailRowH   = 15
-	DetailBtnH   = 34
+	DetailTopPad = 14
+	DetailBotPad = 14
+	DetailGap    = 10
+	DetailTitleH = 24
+	DetailAttrH  = 22
+	DetailRowH   = 20
+	DetailBtnH   = 38
 )

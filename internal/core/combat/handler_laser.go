@@ -18,14 +18,14 @@ var laserColor = [3]uint8{244, 63, 94} // #f43f5e 玫红
 type LaserHandler struct{}
 
 func (h *LaserHandler) Fire(t *tower.Tower, target *enemy.Enemy, ctx *AttackContext) {
-	// 即时伤害
-	target.HP -= t.Damage
-	if target.HP <= 0 {
-		if ctx.OnHit != nil {
-			ctx.OnHit(target, t.Damage, true, ctx.Style)
-		}
-	} else if ctx.OnHit != nil {
-		ctx.OnHit(target, t.Damage, false, ctx.Style)
+	// 即时伤害 + 触发 OnHit 能力
+	dmg := t.Damage
+	if ctx.OnAbilityHit != nil {
+		dmg += ctx.OnAbilityHit(t, target, dmg)
+	}
+	target.HP -= dmg
+	if ctx.OnHit != nil {
+		ctx.OnHit(target, dmg, target.HP <= 0, ctx.Style)
 	}
 
 	// 创建 beam 视觉

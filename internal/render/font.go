@@ -1,10 +1,11 @@
 // font.go — 字体管理与文本渲染工具。
-// 基于 Ebitengine text/v2 提供中文文本渲染能力。
+// 基于 Ebitengine text/v2 提供双字体渲染：JetBrains Mono（英文/数字）+ Noto Sans SC（中文回退）。
 package render
 
 import (
 	"bytes"
 	"image/color"
+	"log"
 	"math"
 	"sync"
 
@@ -14,35 +15,67 @@ import (
 	"github.com/hajimehoshi/ebiten/v2/text/v2"
 )
 
-// FontManager 管理 TTF 字体源并缓存不同尺寸的字体。
+// FontManager 管理双字体源并缓存不同尺寸的 MultiFace。
 type FontManager struct {
-	source *text.GoTextFaceSource
-	mu     sync.Mutex
-	faces  map[float64]*text.GoTextFace
+	primary  *text.GoTextFaceSource // JetBrains Mono（英文/数字优先）
+	fallback *text.GoTextFaceSource // Noto Sans SC（中文回退）
+	mu       sync.Mutex
+	faces    map[float64]text.Face
 }
 
-// NewFontManager 从 TTF 字节数据创建字体管理器。
+// NewFontManager 从 TTF 字节数据创建字体管理器（单字体，兼容旧调用）。
 func NewFontManager(ttfData []byte) (*FontManager, error) {
 	src, err := text.NewGoTextFaceSource(bytes.NewReader(ttfData))
 	if err != nil {
 		return nil, err
 	}
 	return &FontManager{
-		source: src,
-		faces:  make(map[float64]*text.GoTextFace),
+		fallback: src,
+		faces:    make(map[float64]text.Face),
+	}, nil
+}
+
+// NewDualFontManager 从两个 TTF 创建双字体管理器。
+func NewDualFontManager(primaryTTF, fallbackTTF []byte) (*FontManager, error) {
+	pSrc, err := text.NewGoTextFaceSource(bytes.NewReader(primaryTTF))
+	if err != nil {
+		return nil, err
+	}
+	fSrc, err := text.NewGoTextFaceSource(bytes.NewReader(fallbackTTF))
+	if err != nil {
+		return nil, err
+	}
+	return &FontManager{
+		primary:  pSrc,
+		fallback: fSrc,
+		faces:    make(map[float64]text.Face),
 	}, nil
 }
 
 // Face 返回指定尺寸的字体（缓存复用）。
-func (fm *FontManager) Face(size float64) *text.GoTextFace {
+// 有双字体时返回 MultiFace，否则返回单 GoTextFace。
+func (fm *FontManager) Face(size float64) text.Face {
 	fm.mu.Lock()
 	defer fm.mu.Unlock()
 	if f, ok := fm.faces[size]; ok {
 		return f
 	}
-	f := &text.GoTextFace{Source: fm.source, Size: size}
-	fm.faces[size] = f
-	return f
+	var face text.Face
+	if fm.primary != nil {
+		pFace := &text.GoTextFace{Source: fm.primary, Size: size}
+		fFace := &text.GoTextFace{Source: fm.fallback, Size: size}
+		mf, err := text.NewMultiFace(pFace, fFace)
+		if err != nil {
+			log.Printf("MultiFace creation failed, using fallback only: %v", err)
+			face = fFace
+		} else {
+			face = mf
+		}
+	} else {
+		face = &text.GoTextFace{Source: fm.fallback, Size: size}
+	}
+	fm.faces[size] = face
+	return face
 }
 
 // DrawText 在指定位置绘制文本（左上角对齐）。
@@ -148,11 +181,22 @@ var (
 	globalOnce sync.Once
 )
 
-// InitGlobalFont 初始化全局字体管理器（只执行一次）。
+// InitGlobalFont 初始化全局字体管理器（单字体模式，兼容旧调用）。
 func InitGlobalFont(ttfData []byte) error {
 	var err error
 	globalOnce.Do(func() {
 		globalFM, err = NewFontManager(ttfData)
+	})
+	return err
+}
+
+// InitGlobalDualFont 初始化全局双字体管理器。
+// primaryTTF: 英文/数字优先字体（如 JetBrains Mono）
+// fallbackTTF: 中文回退字体（如 Noto Sans SC）
+func InitGlobalDualFont(primaryTTF, fallbackTTF []byte) error {
+	var err error
+	globalOnce.Do(func() {
+		globalFM, err = NewDualFontManager(primaryTTF, fallbackTTF)
 	})
 	return err
 }

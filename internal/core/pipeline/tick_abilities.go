@@ -21,6 +21,11 @@ func TickTowerAbilities(towers *tower.Pool, enemies *enemy.Pool, dt float64) int
 		resetTowerStats(t)
 	})
 
+	// --- Phase 1.5: 重置敌人每帧临时状态（沉默等，由区域能力重新设置） ---
+	enemies.Each(func(e *enemy.Enemy) {
+		e.Silenced = false
+	})
+
 	// --- Phase 2: 执行所有 Ticker 能力 ---
 	goldEarned := 0
 	ctx := &tower.TickContext{

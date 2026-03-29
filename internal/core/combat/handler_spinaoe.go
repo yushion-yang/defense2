@@ -58,6 +58,10 @@ func (h *SpinAoEHandler) Tick(t *tower.Tower, ctx *AttackContext) {
 		if dist <= innerR {
 			dmg *= innerBonus
 		}
+		// 触发塔 OnHit 能力（减速、灼烧等）
+		if ctx.OnAbilityHit != nil {
+			dmg += ctx.OnAbilityHit(t, e, dmg)
+		}
 		e.HP -= dmg
 		if ctx.OnHit != nil {
 			ctx.OnHit(e, dmg, e.HP <= 0, ctx.Style)

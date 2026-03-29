@@ -41,8 +41,6 @@ func (b *SkystrikeBehavior) Type() string { return "skystrike" }
 func (b *SkystrikeBehavior) Init(w *warden.Warden) interface{} {
 	return &SkystrikeState{
 		WardenState: warden.WardenState{
-			X:              600,
-			Y:              270,
 			MoveSpeed:      320,
 			Damage:         18,
 			AttackInterval: 1.5,

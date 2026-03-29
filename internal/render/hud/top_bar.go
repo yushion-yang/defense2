@@ -16,17 +16,18 @@ import (
 
 // TopBarData holds the runtime data the top bar needs to render.
 type TopBarData struct {
-	Gold      int  // current gold
-	Lives     int  // remaining lives
-	Wave      int  // current wave number
-	MaxWaves  int  // total waves
-	Kills     int  // cumulative kills
-	Enemies   int  // alive enemies on field
-	Speed     int  // game speed multiplier (1, 2, 3, 10)
-	BuildMode bool // whether build mode is active
-	TestMode  bool // 测试模式（显示额外按钮）
-	SpawnMode bool // 造怪模式激活
-	DebugOpen bool // 调试面板打开
+	Gold          int     // current gold
+	Lives         int     // remaining lives
+	Wave          int     // current wave number
+	MaxWaves      int     // total waves
+	Kills         int     // cumulative kills
+	Enemies       int     // alive enemies on field
+	Speed         int     // game speed multiplier (1, 2, 3, 10)
+	WaveCountdown float64 // 波间倒计时剩余秒数（0 表示无倒计时）
+	BuildMode     bool    // whether build mode is active
+	TestMode      bool    // 测试模式（显示额外按钮）
+	SpawnMode     bool    // 造怪模式激活
+	DebugOpen     bool    // 调试面板打开
 }
 
 // topBarBtn describes a button inside the top bar.
@@ -136,7 +137,11 @@ func DrawTopBar(screen *ebiten.Image, d TopBarData) {
 		btns = append(btns, btnDef{"spawn", "造怪", spawnClr})
 	}
 
-	btns = append(btns, btnDef{"start", "开波", theme.TonePrimary})
+	startLabel := "开波"
+	if d.WaveCountdown > 0 {
+		startLabel = fmt.Sprintf("开波(%ds)", int(d.WaveCountdown)+1)
+	}
+	btns = append(btns, btnDef{"start", startLabel, theme.TonePrimary})
 	btns = append(btns, btnDef{"speed", speedLabel, theme.ToneAccent})
 	btns = append(btns, btnDef{"menu", "菜单", theme.ToneSecondary})
 

@@ -44,36 +44,38 @@ var waveCompositions = []struct {
 
 // Spawner 波次出怪控制器。
 type Spawner struct {
-	Wave           int                       // 当前波次号（从 1 开始）
-	MaxWaves       int                       // 总波次数
-	SpawnTimer     float64                   // 单波内两个敌人之间的倒计时（秒）
-	SpawnIndex     int                       // 当前波已出第几个敌人
-	EnemiesPerWave int                       // 每波基础敌人数
-	SpawnInterval  float64                   // 同波内敌人生成间隔（秒）
-	WaveInterval   float64                   // 两波之间的间隔（秒）
-	WaveTimer      float64                   // 波间等待倒计时（秒）
-	WaveActive     bool                      // 当前波是否正在出怪
-	AllDone        bool                      // 是否所有波次已出完
-	GameMap        *gamemap.GameMap          // 运行时地图（用于获取路径）
-	Archetypes     map[string]*SpawnConfig   // 原型名 → 生成配置（由外部注入）
-	EnemyFilter    string                    // 敌人过滤器（ground-only/flying-only/elite-only/boss-only/dummy/stress/none/mixed/""）
-	HPScale        float64                   // 难度 HP 倍率（默认 1.0）
-	SpeedScale     float64                   // 难度速度倍率（默认 1.0）
-	ManualWave     bool                      // 手动开波模式：波间不自动倒计时
-	FixedCount     int                       // >0 时每波固定该数量（不随波次递增）
-	bossQueued     bool                      // 本波是否需要在末尾追加 Boss
+	Wave              int                       // 当前波次号（从 1 开始）
+	MaxWaves          int                       // 总波次数
+	SpawnTimer        float64                   // 单波内两个敌人之间的倒计时（秒）
+	SpawnIndex        int                       // 当前波已出第几个敌人
+	EnemiesPerWave    int                       // 每波基础敌人数
+	SpawnInterval     float64                   // 同波内敌人生成间隔（秒）
+	WaveInterval      float64                   // 两波之间的间隔（秒）
+	WaveTimer         float64                   // 波间等待倒计时（秒）
+	FirstWaveInterval float64                   // 第一波等待时间（秒），默认 20
+	WaveActive        bool                      // 当前波是否正在出怪
+	AllDone           bool                      // 是否所有波次已出完
+	GameMap           *gamemap.GameMap          // 运行时地图（用于获取路径）
+	Archetypes        map[string]*SpawnConfig   // 原型名 → 生成配置（由外部注入）
+	EnemyFilter       string                    // 敌人过滤器（ground-only/flying-only/elite-only/boss-only/dummy/stress/none/mixed/""）
+	HPScale           float64                   // 难度 HP 倍率（默认 1.0）
+	SpeedScale        float64                   // 难度速度倍率（默认 1.0）
+	ManualWave        bool                      // 手动开波模式：波间到 0 不自动开波，需外部调用 StartNextWave
+	FixedCount        int                       // >0 时每波固定该数量（不随波次递增）
+	bossQueued        bool                      // 本波是否需要在末尾追加 Boss
 }
 
 // NewSpawner 创建出怪管理器。
 func NewSpawner(gm *gamemap.GameMap, maxWaves int) *Spawner {
 	return &Spawner{
-		Wave:           0,
-		MaxWaves:       maxWaves,
-		EnemiesPerWave: 5,
-		SpawnInterval:  0.6,
-		WaveInterval:   3.0,
-		WaveTimer:      2.0,
-		GameMap:        gm,
+		Wave:              0,
+		MaxWaves:          maxWaves,
+		EnemiesPerWave:    5,
+		SpawnInterval:     0.6,
+		WaveInterval:      10.0,
+		FirstWaveInterval: 20.0,
+		WaveTimer:         20.0,
+		GameMap:           gm,
 	}
 }
 
@@ -87,12 +89,19 @@ func (s *Spawner) Update(pool *Pool, dt float64) {
 		return
 	}
 
-	// 波间等待（ManualWave 模式下不自动倒计时，需外部调用 StartNextWave）
+	// 波间等待
 	if !s.WaveActive {
+		// 倒计时始终递减（UI 显示用），到 0 停住
+		if s.WaveTimer > 0 {
+			s.WaveTimer -= dt
+			if s.WaveTimer < 0 {
+				s.WaveTimer = 0
+			}
+		}
+		// ManualWave 模式不自动开波，需外部调用 StartNextWave
 		if s.ManualWave {
 			return
 		}
-		s.WaveTimer -= dt
 		if s.WaveTimer <= 0 {
 			s.startWave()
 		}
@@ -161,11 +170,26 @@ func (s *Spawner) Update(pool *Pool, dt float64) {
 	}
 }
 
-// StartNextWave 手动触发下一波（ManualWave 模式下由外部调用）。
+// TimeToNextWave 返回距离下一波的剩余倒计时秒数（UI 显示用）。
+// 波内或已结束时返回 0。
+func (s *Spawner) TimeToNextWave() float64 {
+	if s.WaveActive || s.AllDone {
+		return 0
+	}
+	return s.WaveTimer
+}
+
+// IsIntermission 返回是否处于波间等待状态（可开波）。
+func (s *Spawner) IsIntermission() bool {
+	return !s.WaveActive && !s.AllDone
+}
+
+// StartNextWave 手动触发下一波（跳过倒计时）。
 func (s *Spawner) StartNextWave() {
 	if s.WaveActive || s.AllDone {
 		return
 	}
+	s.WaveTimer = 0
 	s.startWave()
 }
 

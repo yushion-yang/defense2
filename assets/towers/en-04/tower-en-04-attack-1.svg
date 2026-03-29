@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128">
+  <defs>
+    <radialGradient id="tg0" cx="50%" cy="50%" r="50%"><stop offset="0%" stop-color="#f97316" stop-opacity="0.3"/><stop offset="100%" stop-color="#f97316" stop-opacity="0"/></radialGradient>
+    <radialGradient id="tg1" cx="50%" cy="50%" r="50%"><stop offset="0%" stop-color="#ea580c"/><stop offset="70%" stop-color="#c2410c"/><stop offset="100%" stop-color="#9a3412"/></radialGradient>
+    <linearGradient id="tg2" x1="0%" y1="0%" x2="0%" y2="100%"><stop offset="0%" stop-color="#f97316"/><stop offset="50%" stop-color="#ea580c"/><stop offset="100%" stop-color="#9a3412"/></linearGradient>
+    <radialGradient id="tg3" cx="50%" cy="50%" r="50%"><stop offset="0%" stop-color="#f97316" stop-opacity="0.2"/><stop offset="100%" stop-color="#f97316" stop-opacity="0"/></radialGradient>
+    <radialGradient id="tg4" cx="50%" cy="50%" r="50%"><stop offset="0%" stop-color="#fed7aa" stop-opacity="0.85"/><stop offset="100%" stop-color="#fed7aa" stop-opacity="0"/></radialGradient>
+  </defs>
+  <!-- Wide Beam Tower: attack-1 -->
+  <circle cx="64" cy="50" r="44" fill="url(#tg0)"/>
+  <ellipse cx="64" cy="84" rx="42" ry="24" fill="url(#tg1)" stroke="#fed7aa" stroke-width="1.5"/>
+  <ellipse cx="64" cy="84" rx="30" ry="14" fill="none" stroke="#c2410c" stroke-width="1" opacity="0.4"/>
+  <polygon points="42,61 86,61 76,27 52,27" fill="url(#tg2)"/>
+  <rect x="50" y="25" width="28" height="5" rx="2" fill="#fed7aa" opacity="0.85"/>
+  <rect x="54" y="26" width="20" height="3" rx="1" fill="#fff7ed" opacity="0.6"/>
+  <ellipse cx="64" cy="47" rx="12" ry="3" fill="#fed7aa" opacity="0.85"/>
+  <line x1="52" y1="28" x2="36" y2="10" stroke="#f97316" stroke-width="1.5" stroke-linecap="round" opacity="0.5"/>
+  <line x1="64" y1="28" x2="64" y2="8" stroke="#f97316" stroke-width="2" stroke-linecap="round" opacity="0.6"/>
+  <line x1="76" y1="28" x2="92" y2="10" stroke="#f97316" stroke-width="1.5" stroke-linecap="round" opacity="0.5"/>
+  <circle cx="64" cy="28" r="18" fill="url(#tg3)"/>
+  
+  <ellipse cx="64" cy="23" rx="20" ry="8" fill="url(#tg4)"/>
+  <rect x="48" y="21" width="32" height="4" rx="2" fill="#fed7aa" opacity="0.9"/>
+</svg>

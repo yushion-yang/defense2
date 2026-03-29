@@ -25,8 +25,11 @@ type Enemy struct {
 	SlowFactor float64         // 减速倍率（0.5 表示半速）
 	BleedTimer float64         // 流血剩余时间（秒）
 	BleedDPS   float64         // 流血每秒伤害
-	BurnTimer  float64         // 灼烧剩余时间（秒）
-	BurnDPS    float64         // 灼烧每秒伤害
+	BurnTimer    float64         // 灼烧剩余时间（秒）
+	BurnDPS      float64         // 灼烧每秒伤害
+	DotTickTimer float64         // DoT 触发计时器（每 DotTickInterval 触发一次伤害）
+	LastDotDmg   float64         // 上次 DoT tick 的伤害量（>0 时由 pipeline 弹浮字后清零）
+	ZoneDmgAccum float64         // 区域能力（curseZone/poisonZone）每帧累积伤害，DotTick 时结算
 	ShieldHP   float64         // 护盾血量（吸收伤害直到耗尽）
 	RootTimer  float64         // 定身剩余时间（秒）
 	DisplayHP  float64         // 显示用血量（伤害拖尾缓慢衰减到实际 HP）
@@ -73,6 +76,9 @@ type Enemy struct {
 // MinSpeedRatio 全局减速下限：速度不低于初始速度的 20%。
 const MinSpeedRatio = 0.2
 
+// DotTickInterval DoT（流血/灼烧）伤害触发周期（秒）。
+const DotTickInterval = 0.5
+
 // TickStatusEffects 处理敌人身上的状态效果（减速、流血）。
 // 眩晕在 movement.go 中处理。
 func TickStatusEffects(e *Enemy, dt float64) {
@@ -89,16 +95,36 @@ func TickStatusEffects(e *Enemy, dt float64) {
 		}
 	}
 
-	// 流血：持续扣血
-	if e.BleedTimer > 0 {
-		e.BleedTimer -= dt
-		e.HP -= e.BleedDPS * dt
-	}
-
-	// 灼烧：持续扣血
-	if e.BurnTimer > 0 {
-		e.BurnTimer -= dt
-		e.HP -= e.BurnDPS * dt
+	// DoT（流血/灼烧/区域伤害）按固定周期触发
+	hasDot := e.BleedTimer > 0 || e.BurnTimer > 0 || e.ZoneDmgAccum > 0
+	if hasDot {
+		e.DotTickTimer -= dt
+		if e.DotTickTimer <= 0 {
+			e.DotTickTimer += DotTickInterval
+			dotDmg := 0.0
+			if e.BleedTimer > 0 {
+				dotDmg += e.BleedDPS * DotTickInterval
+			}
+			if e.BurnTimer > 0 {
+				dotDmg += e.BurnDPS * DotTickInterval
+			}
+			// 区域伤害（curseZone/poisonZone 每帧累积，tick 时一次性结算）
+			if e.ZoneDmgAccum > 0 {
+				dotDmg += e.ZoneDmgAccum
+				e.ZoneDmgAccum = 0
+			}
+			e.HP -= dotDmg
+			e.LastDotDmg = dotDmg
+		}
+		// 倒计时递减
+		if e.BleedTimer > 0 {
+			e.BleedTimer -= dt
+		}
+		if e.BurnTimer > 0 {
+			e.BurnTimer -= dt
+		}
+	} else {
+		e.DotTickTimer = 0
 	}
 
 	// 定身：倒计时

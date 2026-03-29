@@ -52,8 +52,6 @@ func (b *princeBehavior) Type() string { return "prince" }
 func (b *princeBehavior) Init(w *warden.Warden) interface{} {
 	return &PrinceState{
 		WardenState: warden.WardenState{
-			X:              600,
-			Y:              270,
 			Phase:          "idle",
 			Damage:         30,
 			AttackInterval: 3,
@@ -80,6 +78,11 @@ func (b *princeBehavior) Tick(w *warden.Warden, ctx *warden.TickContext) {
 		if s.Timer <= 0 {
 			target := warden.FindClusterCenter(ctx.Enemies, 80.0)
 			if target != nil {
+				// 首次定位：teleport 到目标附近
+				if s.X == 0 && s.Y == 0 {
+					s.X = target.X - 60
+					s.Y = target.Y - 40
+				}
 				s.DashStartX = s.X
 				s.DashStartY = s.Y
 				s.DashEndX = target.X

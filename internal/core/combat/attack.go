@@ -30,6 +30,7 @@ type AttackContext struct {
 	Beams       *BeamPool
 	OnFire      func(style string)                                              // 射击回调（携带攻击方式）
 	OnHit       func(e *enemy.Enemy, damage float64, killed bool, style string) // 命中回调（携带攻击方式）
+	OnAbilityHit func(t *tower.Tower, e *enemy.Enemy, damage float64) float64   // 触发塔 OnHit 能力，返回额外伤害
 	DT          float64
 	Style       string // 当前攻击方式（由 pipeline 设置，handler 内部可读取）
 }
