@@ -6,6 +6,7 @@ import (
 	"fmt"
 
 	"defense2/internal/core/game"
+	"defense2/internal/core/strength"
 )
 
 // Pool 固定大小的塔对象池。
@@ -65,6 +66,10 @@ func (p *Pool) Place(row, col int, cx, cy float64, def TowerDef) *Tower {
 			t.AuraPulse = 0
 			t.Branch = ""
 			t.Target = nil
+			t.Strength = strength.NewStrengthData() // Base=100，确保强度系统从放置起就生效
+			t.Buffs = nil
+			t.Skill = nil
+			t.SkillSuppressFire = false
 			p.Count++
 			return t
 		}

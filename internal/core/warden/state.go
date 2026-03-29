@@ -54,6 +54,13 @@ type DescProvider interface {
 	DescParams(w *Warden) map[string]string
 }
 
+// ── 技能 Owner 接口实现 ──
+
+func (s *WardenState) GetX() float64      { return s.X }
+func (s *WardenState) GetY() float64      { return s.Y }
+func (s *WardenState) GetRange() float64  { return s.Range }
+func (s *WardenState) GetDamage() float64 { return s.Damage }
+
 // CanAttack 返回该战灵是否具有攻击能力。
 func (s *WardenState) CanAttack() bool {
 	return s.AttackInterval > 0

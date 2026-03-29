@@ -73,7 +73,7 @@ func (b *princeBehavior) Type() string { return "prince" }
 func (b *princeBehavior) Init(w *warden.Warden) interface{} {
 	return &PrinceState{
 		WardenState: warden.WardenState{
-			Damage:         15,
+			Damage:         12,
 			AttackInterval: 1.2,
 			Range:          140,
 			MoveSpeed:      350,

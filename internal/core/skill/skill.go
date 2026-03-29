@@ -25,9 +25,35 @@ type CoreSkill interface {
 
 // SkillContext 技能执行上下文。
 type SkillContext struct {
-	Projectiles interface{}                                      // *projectile.Pool（避免循环依赖用 interface）
-	Beams       interface{}                                      // *combat.BeamPool
+	Projectiles interface{}                                       // *projectile.Pool（避免循环依赖用 interface）
+	Beams       interface{}                                       // *combat.BeamPool
 	OnHit       func(e *enemy.Enemy, damage float64, killed bool) // 命中回调
+}
+
+// SkillVFX 技能视觉效果数据（渲染层读取）。
+type SkillVFX struct {
+	Type   string       // 特效类型: "lightning", "explosion", "blades", "laser"
+	Active bool         // 是否正在播放
+	Points [][2]float64 // 关键点列表（闪电链路径 / 爆炸中心 / 激光起止点）
+	Timer  float64      // 特效剩余时间
+	Radius float64      // AoE 半径（爆炸/激光宽度）
+	Angle  float64      // 方向角（激光/风刃）
+}
+
+// VFXProvider 可选接口——技能可实现此接口暴露渲染数据。
+type VFXProvider interface {
+	GetVFX() *SkillVFX
+}
+
+// GetSkillVFX 从 SkillState 获取 VFX 数据（技能未实现 VFXProvider 时返回 nil）。
+func GetSkillVFX(state *SkillState) *SkillVFX {
+	if state == nil || state.Skill == nil {
+		return nil
+	}
+	if vp, ok := state.Skill.(VFXProvider); ok {
+		return vp.GetVFX()
+	}
+	return nil
 }
 
 // SkillState 挂载在实体上的技能运行状态。

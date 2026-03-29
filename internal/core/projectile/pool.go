@@ -323,3 +323,33 @@ func (p *Pool) ClearAll() {
 	p.Count = 0
 	p.cursor = 0
 }
+
+// SpawnSkillProjectile 技能专用弹射物（无追踪目标，按速度向量飞行，支持穿透）。
+// 由 windBlade 等技能通过 bladeSpawner 接口调用。
+func (p *Pool) SpawnSkillProjectile(x, y, vx, vy, damage, radius float64, pierce bool) {
+	proj := &p.projectiles[p.cursor]
+	if proj.Active {
+		p.Count--
+	}
+	*proj = Projectile{}
+
+	proj.X = x
+	proj.Y = y
+	proj.VX = vx
+	proj.VY = vy
+	proj.Damage = damage
+	proj.Speed = math.Hypot(vx, vy)
+	proj.Radius = radius
+	proj.Active = true
+	proj.MaxLife = 3.0
+	proj.Life = proj.MaxLife
+	proj.SourceTowerKey = "skill"
+	if pierce {
+		proj.Pierce = true
+		proj.PierceMax = 999
+		proj.PierceDecay = 0
+	}
+
+	p.Count++
+	p.cursor = (p.cursor + 1) % len(p.projectiles)
+}

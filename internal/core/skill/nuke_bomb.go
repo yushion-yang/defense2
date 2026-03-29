@@ -10,14 +10,14 @@ import (
 // ── 常量 ──
 
 const (
-	nbCooldown          = 12.0  // 冷却时间（秒）
-	nbDamageMultiplier  = 15.0  // 伤害倍率
-	nbBlastRadius       = 150.0 // 爆炸半径（像素）
-	nbEdgeDamageFactor  = 0.3   // 爆炸边缘伤害系数（中心100%，边缘30%）
-	nbBombSpeed         = 240.0 // 飞弹速度（像素/秒）
-	nbScanRadius        = 180.0 // 密度扫描半径（像素）
-	nbDefaultRange      = 300.0 // 默认攻击范围
-	nbBossWeight        = 5.0   // Boss 在密度计算中的权重
+	nbCooldown         = 12.0  // 冷却时间（秒）
+	nbDamageMultiplier = 15.0  // 伤害倍率
+	nbBlastRadius      = 150.0 // 爆炸半径（像素）
+	nbEdgeDamageFactor = 0.3   // 爆炸边缘伤害系数（中心100%，边缘30%）
+	nbBombSpeed        = 240.0 // 飞弹速度（像素/秒）
+	nbScanRadius       = 180.0 // 密度扫描半径（像素）
+	nbDefaultRange     = 300.0 // 默认攻击范围
+	nbBossWeight       = 5.0   // Boss 在密度计算中的权重
 )
 
 // nukeBomb 核弹技能实现。
@@ -117,6 +117,16 @@ func (n *nukeBomb) Tick(owner interface{}, enemies []*enemy.Enemy, dt float64, c
 
 func (n *nukeBomb) ShouldSuppressFire(_ interface{}) bool { return n.flying }
 func (n *nukeBomb) ShouldSuppressMove(_ interface{}) bool { return false }
+
+func (n *nukeBomb) GetVFX() *SkillVFX {
+	if n.flying {
+		return &SkillVFX{Type: "projectile", Active: true, Points: [][2]float64{{n.posX, n.posY}, {n.targetX, n.targetY}}, Timer: 0.5}
+	}
+	if n.exploding {
+		return &SkillVFX{Type: "explosion", Active: true, Points: [][2]float64{{n.expPosX, n.expPosY}}, Timer: n.expTimer, Radius: nbBlastRadius}
+	}
+	return nil
+}
 
 func (n *nukeBomb) GetProgress(_ interface{}) (float64, bool) {
 	if n.flying || n.exploding {

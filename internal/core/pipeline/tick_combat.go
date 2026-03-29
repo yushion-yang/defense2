@@ -34,6 +34,11 @@ func TickTowerCombat(towers *tower.Pool, enemies *enemy.Pool, projectiles *proje
 			t.FireAnim -= dt
 		}
 
+		// 技能压制普攻时跳过射击
+		if t.SkillSuppressFire {
+			return
+		}
+
 		style := t.AttackStyleID
 		if style == "" {
 			style = tower.StyleProjectile

@@ -5,6 +5,7 @@ package pipeline
 
 import (
 	"defense2/internal/core/enemy"
+	"defense2/internal/core/skill"
 	"defense2/internal/core/tower"
 )
 
@@ -56,6 +57,28 @@ func TickTowerAbilities(towers *tower.Pool, enemies *enemy.Pool, dt float64) int
 	})
 
 	return goldEarned
+}
+
+// TickTowerSkills 驱动所有塔上的技能，返回被技能压制普攻的塔。
+func TickTowerSkills(towers *tower.Pool, enemies *enemy.Pool, dt float64, ctx *skill.SkillContext) {
+	// 收集敌人切片（skill 接口需要 []*enemy.Enemy）
+	var enemySlice []*enemy.Enemy
+	enemies.Each(func(e *enemy.Enemy) {
+		enemySlice = append(enemySlice, e)
+	})
+
+	towers.Each(func(t *tower.Tower) {
+		// 每帧重置技能压制标志
+		t.SkillSuppressFire = false
+
+		if t.Skill == nil {
+			return
+		}
+		suppress := skill.TickEntitySkill(t.Skill, t, enemySlice, dt, ctx)
+		if suppress {
+			t.SkillSuppressFire = true
+		}
+	})
 }
 
 // resetTowerStats 根据战力系统重算塔的 Damage/Range/AttackSpeed。

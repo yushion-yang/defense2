@@ -66,7 +66,7 @@ func (b *SkystrikeBehavior) Type() string { return "skystrike" }
 func (b *SkystrikeBehavior) Init(w *warden.Warden) interface{} {
 	return &SkystrikeState{
 		WardenState: warden.WardenState{
-			Damage:         40,
+			Damage:         10,
 			AttackInterval: 1.5,
 			Range:          140,
 			MoveSpeed:      320,
@@ -154,14 +154,18 @@ func (b *SkystrikeBehavior) Tick(w *warden.Warden, ctx *warden.TickContext) {
 	s.DecayShootTimer(dt)
 }
 
-// skystrikeSpecial 随机选择三种攻击模式之一施展。
+// skystrikeSpecial 轮流施展三种攻击模式（1→2→3→1→...）。
 func skystrikeSpecial(s *SkystrikeState, ctx *warden.TickContext) {
 	alive := collectAlive(ctx.Enemies)
 	if len(alive) == 0 {
 		return
 	}
 
-	mode := rand.Intn(3) + 1
+	// 轮流：上次模式 +1，循环 1→2→3→1
+	mode := s.LastMode + 1
+	if mode > 3 {
+		mode = 1
+	}
 	s.LastMode = mode
 
 	switch mode {

@@ -50,7 +50,7 @@ func (h *SpinAoEHandler) Tick(t *tower.Tower, ctx *AttackContext) {
 
 	ctx.Enemies.Each(func(e *enemy.Enemy) {
 		dist := math.Hypot(e.X-t.X, e.Y-t.Y)
-		if dist > r+e.Radius {
+		if dist > r {
 			return
 		}
 		hasTarget = true

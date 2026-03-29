@@ -44,7 +44,7 @@ func (b *EnvoyBehavior) Init(w *warden.Warden) interface{} {
 	return &EnvoyState{
 		WardenState: warden.WardenState{
 			Damage:         12,
-			AttackInterval: 1.5,
+			AttackInterval: 1.2,
 			Range:          140,
 			MoveSpeed:      320,
 		},

@@ -9,6 +9,7 @@ import (
 	"sort"
 	"strings"
 
+	_ "defense2/internal/core/skill"           // 通过 init() 注册技能
 	_ "defense2/internal/core/tower/abilities" // 通过 init() 注册塔能力
 	_ "defense2/internal/core/warden/types"    // 通过 init() 注册战灵类型
 
@@ -24,6 +25,7 @@ import (
 	"defense2/internal/core/persistence"
 	"defense2/internal/core/pipeline"
 	"defense2/internal/core/projectile"
+	"defense2/internal/core/skill"
 	"defense2/internal/core/strength"
 	"defense2/internal/core/tower"
 	"defense2/internal/core/tutorial"
@@ -490,13 +492,14 @@ func (s *StageScene) handleInput() {
 		s.clampCamera()
 	}
 
-	// ── 滚轮/触控板双指 → 平移相机 ──
-	if s.needsCamera() {
-		_, sy := g.ScrollDelta()
-		if sy != 0 {
-			s.camY -= sy * 3
-			s.clampCamera()
-		}
+	// ── 滚轮 ──
+	_, sy := g.ScrollDelta()
+	// 调试面板打开时，滚轮用于面板滚动
+	if sy != 0 && s.debugPanelOpen {
+		hud.DebugPanelScroll(sy)
+	} else if sy != 0 && s.needsCamera() {
+		s.camY -= sy * 3
+		s.clampCamera()
 	}
 
 	// ── Hover 更新 ──
@@ -1071,6 +1074,38 @@ func (s *StageScene) debugActions() []hud.DebugAction {
 		hud.DebugAction{Label: rangeLabel, Action: func() { s.debugShowRange = !s.debugShowRange }},
 	)
 
+	// ── 技能 ──
+	skillNames := []string{
+		"chainLightning", "nukeBomb", "windBlade", "channelLaser",
+		"missileBarrage", "judgmentBeam", "chainLightningBolts", "judgmentRain",
+	}
+	actions = append(actions, hud.DebugAction{Label: "技能", IsSection: true})
+	for _, sn := range skillNames {
+		sn := sn // capture
+		actions = append(actions, hud.DebugAction{
+			Label: "塔+" + sn,
+			Action: func() {
+				if s.selectedTower == nil {
+					hud.ShowToast("先选中一座塔")
+					return
+				}
+				t := s.selectedTower
+				if t.Skill == nil {
+					t.Skill = &skill.SkillState{}
+				}
+				skill.AssignSkill(t.Skill, sn, t)
+				hud.ShowToast("塔挂载 " + sn)
+			},
+		})
+	}
+	for _, sn := range skillNames {
+		sn := sn
+		actions = append(actions, hud.DebugAction{
+			Label:  "灵+" + sn,
+			Action: func() { s.assignWardenSkill(sn) },
+		})
+	}
+
 	// ── 配置审计 ──
 	actions = append(actions,
 		hud.DebugAction{Label: "配置审计", IsSection: true},
@@ -1196,10 +1231,23 @@ func (s *StageScene) updatePlaying() {
 		})
 	}
 
+	// 5. 战灵技能 tick
+	if s.wardenReady && s.wardenUnit != nil && s.wardenUnit.Skill != nil {
+		base := s.wardenUnit.BaseState()
+		if base != nil {
+			var enemySlice []*enemy.Enemy
+			s.enemies.Each(func(e *enemy.Enemy) { enemySlice = append(enemySlice, e) })
+			skill.TickEntitySkill(s.wardenUnit.Skill, base, enemySlice, gameDT, s.buildSkillContext())
+		}
+	}
+
 	// 6. 能力 tick（重置属性 + 光环 buff + 区域效果 + 经济产出）
 	// 必须在索敌射击之前执行，确保 Range 等属性是本帧最新值
 	abilityGold := pipeline.TickTowerAbilities(s.towers, s.enemies, gameDT)
 	s.gold += abilityGold
+
+	// 6.5. 塔技能 tick
+	pipeline.TickTowerSkills(s.towers, s.enemies, gameDT, s.buildSkillContext())
 
 	// 7. 塔索敌射击（按攻击方式分发）
 	pipeline.TickTowerCombat(s.towers, s.enemies, s.projectiles, s.beams, gameDT, func(style string) {
@@ -1546,6 +1594,14 @@ func (s *StageScene) drawScene(screen *ebiten.Image) {
 		}
 	})
 
+	// 塔技能 VFX + CD 进度条
+	s.towers.Each(func(t *tower.Tower) {
+		if t.Skill != nil {
+			render.DrawSkillVFX(worldTarget, t.Skill)
+			render.DrawSkillBar(worldTarget, t.X, t.Y, t.Skill, t)
+		}
+	})
+
 	// 调试射程圈（测试模式下显示所有塔的射程）
 	if s.debugShowRange {
 		s.towers.Each(func(t *tower.Tower) {
@@ -1569,6 +1625,13 @@ func (s *StageScene) drawScene(screen *ebiten.Image) {
 	// 战灵（选择后才绘制）
 	if s.wardenReady && s.wardenUnit != nil {
 		s.wardenRenderer.DrawWarden(worldTarget, s.wardenUnit)
+		// 战灵技能 VFX + CD 进度条
+		if s.wardenUnit.Skill != nil {
+			render.DrawSkillVFX(worldTarget, s.wardenUnit.Skill)
+			if base := s.wardenUnit.BaseState(); base != nil {
+				render.DrawSkillBar(worldTarget, base.X, base.Y, s.wardenUnit.Skill, base)
+			}
+		}
 		// 战灵面板展开时显示攻击距离圈
 		if s.wardenPanelOpen {
 			if base := s.wardenUnit.BaseState(); base != nil && base.Range > 0 {
@@ -1781,6 +1844,39 @@ func wardenSpecialSFX(typ string) string {
 	}
 }
 
+// assignWardenSkill 为战灵挂载技能（调试用）。
+func (s *StageScene) assignWardenSkill(name string) {
+	if s.wardenUnit == nil {
+		hud.ShowToast("无战灵")
+		return
+	}
+	base := s.wardenUnit.BaseState()
+	if base == nil {
+		return
+	}
+	if s.wardenUnit.Skill == nil {
+		s.wardenUnit.Skill = &skill.SkillState{}
+	}
+	skill.AssignSkill(s.wardenUnit.Skill, name, base)
+	hud.ShowToast("战灵挂载 " + name)
+}
+
+// buildSkillContext 构建技能执行上下文。
+func (s *StageScene) buildSkillContext() *skill.SkillContext {
+	return &skill.SkillContext{
+		Projectiles: s.projectiles,
+		Beams:       s.beams,
+		OnHit: func(e *enemy.Enemy, dmg float64, killed bool) {
+			render.SpawnDamageText(e.X, e.Y-10, dmg, dmg >= 50)
+			if killed {
+				s.kills++
+				s.gold += s.econ.KillGold() + s.killRewardBonus
+				s.audioMgr.PlaySafe(gameAudio.SFXEnemyDeath)
+			}
+		},
+	}
+}
+
 // replaceDescParams 将描述字符串中的 {key} 占位符替换为实际值。
 func replaceDescParams(desc string, params map[string]string) string {
 	if params == nil {
@@ -1845,10 +1941,32 @@ func (s *StageScene) activateWarden(key string) {
 	}
 	s.wardenUnit = warden.NewWarden(1, key, key)
 
-	// 加载战灵配置（面板显示用）
+	// 加载战灵配置：驱动 Init 参数 + 面板显示
 	if cfgs, err := config.LoadWardenConfigs(); err == nil {
 		if wc, ok := cfgs[key]; ok {
 			s.wardenCfg = &wc
+			// JSON 驱动覆盖 Init 硬编码的基础属性
+			if base := s.wardenUnit.BaseState(); base != nil {
+				if wc.Damage > 0 {
+					base.Damage = wc.Damage
+				}
+				if wc.AttackInterval > 0 {
+					base.AttackInterval = wc.AttackInterval
+				}
+				if wc.Range > 0 {
+					base.Range = wc.Range
+				}
+				if wc.MoveSpeed > 0 {
+					base.MoveSpeed = wc.MoveSpeed
+				}
+			}
+			// 覆盖成长参数
+			if wc.GrowthOnKill > 0 {
+				s.wardenUnit.GrowthOnKill = wc.GrowthOnKill
+			}
+			if wc.GrowthOnWaveClear > 0 {
+				s.wardenUnit.GrowthOnWaveClear = wc.GrowthOnWaveClear
+			}
 		}
 	}
 

@@ -11,13 +11,13 @@ import (
 // ── 常量 ──
 
 const (
-	clsCooldown    = 6.0   // 冷却时间（秒）
-	clsDuration    = 2.0   // 引导持续时间（秒）
-	clsDPSMul      = 8.0   // DPS 倍率
-	clsRangeBonus  = 40.0  // 额外射程加成（像素）
-	clsWidth       = 28.0  // 激光宽度（像素）
-	clsTickRate    = 0.1   // 伤害 tick 间隔（秒）
-	clsSectorCount = 36    // 方向扫描扇区数（每 10 度）
+	clsCooldown     = 6.0   // 冷却时间（秒）
+	clsDuration     = 2.0   // 引导持续时间（秒）
+	clsDPSMul       = 8.0   // DPS 倍率
+	clsRangeBonus   = 40.0  // 额外射程加成（像素）
+	clsWidth        = 28.0  // 激光宽度（像素）
+	clsTickRate     = 0.1   // 伤害 tick 间隔（秒）
+	clsSectorCount  = 36    // 方向扫描扇区数（每 10 度）
 	clsDefaultRange = 200.0 // 默认射程
 )
 
@@ -108,6 +108,22 @@ func (l *channelLaser) Tick(owner interface{}, enemies []*enemy.Enemy, dt float6
 
 func (l *channelLaser) ShouldSuppressFire(_ interface{}) bool { return l.active }
 func (l *channelLaser) ShouldSuppressMove(_ interface{}) bool { return l.active }
+
+func (l *channelLaser) GetVFX() *SkillVFX {
+	if !l.active {
+		return nil
+	}
+	endX := l.ownerX + l.laserRange*math.Cos(l.angle)
+	endY := l.ownerY + l.laserRange*math.Sin(l.angle)
+	return &SkillVFX{
+		Type:   "laser",
+		Active: true,
+		Points: [][2]float64{{l.ownerX, l.ownerY}, {endX, endY}},
+		Timer:  clsDuration - l.elapsed,
+		Radius: float64(clsWidth),
+		Angle:  l.angle,
+	}
+}
 
 func (l *channelLaser) GetProgress(_ interface{}) (float64, bool) {
 	if l.active {

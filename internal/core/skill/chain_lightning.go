@@ -21,13 +21,13 @@ const (
 
 // chainLightning 链式闪电技能实现。
 type chainLightning struct {
-	timer      float64          // 冷却计时器
-	ready      bool             // 是否就绪
-	firing     bool             // 正在释放中
-	jumpTimer  float64          // 当前跳跃间隔计时
-	jumpIndex  int              // 当前跳跃索引
-	targets    []*enemy.Enemy   // 跳跃目标列表
-	baseDamage float64          // 基础伤害（从持有者获取）
+	timer      float64        // 冷却计时器
+	ready      bool           // 是否就绪
+	firing     bool           // 正在释放中
+	jumpTimer  float64        // 当前跳跃间隔计时
+	jumpIndex  int            // 当前跳跃索引
+	targets    []*enemy.Enemy // 跳跃目标列表
+	baseDamage float64        // 基础伤害（从持有者获取）
 }
 
 func init() {
@@ -114,6 +114,18 @@ func (c *chainLightning) Tick(owner interface{}, enemies []*enemy.Enemy, dt floa
 
 func (c *chainLightning) ShouldSuppressFire(_ interface{}) bool { return c.firing }
 func (c *chainLightning) ShouldSuppressMove(_ interface{}) bool { return false }
+
+func (c *chainLightning) GetVFX() *SkillVFX {
+	if !c.firing || len(c.targets) == 0 {
+		return nil
+	}
+	pts := make([][2]float64, 0, c.jumpIndex+1)
+	for i := 0; i <= c.jumpIndex && i < len(c.targets); i++ {
+		t := c.targets[i]
+		pts = append(pts, [2]float64{t.X, t.Y})
+	}
+	return &SkillVFX{Type: "lightning", Active: true, Points: pts, Timer: 0.3}
+}
 
 func (c *chainLightning) GetProgress(_ interface{}) (float64, bool) {
 	if c.firing {

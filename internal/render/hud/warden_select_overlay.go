@@ -5,7 +5,9 @@ package hud
 import (
 	"fmt"
 	"image/color"
+	"strings"
 
+	"defense2/internal/config"
 	"defense2/internal/core/game"
 	"defense2/internal/render"
 	"defense2/internal/render/draw"
@@ -38,63 +40,144 @@ type WardenOption struct {
 	GrowthWave  string
 }
 
-// WardenOptions 所有可选战灵（5 个战灵 + 1 个"不选"）。
-var WardenOptions = []WardenOption{
-	{
-		Key: "prince", Name: "火灵", Category: "移动型",
-		Description: "围绕敌群轨道飞行并攻击，定时从虚空召唤火球冲撞敌群。",
-		Color:       color.RGBA{R: 255, G: 140, B: 30, A: 255},
-		AttackName:  "轨道射击", AttackDesc: "围绕敌群轨道飞行，攻击最近敌人。",
-		SpecialName: "虚空火球", SpecialDesc: "每4s召唤火球冲向敌群，穿透伤害30，留下火焰痕迹。",
-		Tips:   []string{"强度 → 攻击力 + 火球伤害增强。", "适合密集小怪波次。"},
-		Damage: "15", Interval: "1.2s", Speed: "350", AoE: "-", Duration: "-", DoT: "10/s",
-		GrowthKill: "+1 强度", GrowthWave: "+5 强度",
-	},
-	{
-		Key: "core", Name: "机甲", Category: "移动型",
-		Description: "单个超强移动实体，在敌群周围巡逻，智能切换攻击模式。",
-		Color:       color.RGBA{R: 60, G: 140, B: 255, A: 255},
-		AttackName:  "巡逻射击", AttackDesc: "绕敌群中心巡逻，自动锁定高威胁目标。",
-		SpecialName: "智能模式", SpecialDesc: "4+敌人=AoE / <30%HP=斩杀 / Boss=全力。",
-		Tips:   []string{"强度 → 伤害 + 攻速增强。", "适合精英/Boss波次。"},
-		Damage: "25", Interval: "1.2s", Speed: "360", AoE: "-", Duration: "-", DoT: "-",
-		GrowthKill: "+1 强度", GrowthWave: "+10 强度",
-	},
-	{
-		Key: "chain", Name: "聚能", Category: "间接型",
-		Description: "启用全场塔串联（+10伤害/塔），定时发射能量弹。",
-		Color:       color.RGBA{R: 160, G: 80, B: 255, A: 255},
-		AttackName:  "能量弹", AttackDesc: "定时向随机敌人发射能量弹造成伤害。",
-		SpecialName: "串联体", SpecialDesc: "被动：全场塔 +10 伤害加成。",
-		Tips:   []string{"塔越多，收益越高。", "适合塔数量多的防线。"},
-		Damage: "15", Interval: "2s", Speed: "-", AoE: "-", Duration: "-", DoT: "-",
-		GrowthKill: "-", GrowthWave: "+8 强度",
-	},
-	{
-		Key: "skystrike", Name: "水灵", Category: "间接型",
-		Description: "定时对敌群最密集区域发动AoE水灵打击。",
-		Color:       color.RGBA{R: 80, G: 200, B: 255, A: 255},
-		AttackName:  "水灵打击", AttackDesc: "锁定敌群最密集位置，释放范围打击。",
-		SpecialName: "智能瞄准", SpecialDesc: "自动选择敌人最多的区域。",
-		Tips:   []string{"AoE 半径随强度增长。", "适合拥堵路径节点。"},
-		Damage: "40", Interval: "5s", Speed: "-", AoE: "60", Duration: "-", DoT: "-",
-		GrowthKill: "-", GrowthWave: "+10 强度",
-	},
-	{
-		Key: "envoy", Name: "金灵", Category: "移动型",
-		Description: "围绕敌群轨道飞行并攻击，定时为最佳塔施加增强 buff。",
-		Color:       color.RGBA{R: 180, G: 120, B: 255, A: 255},
-		AttackName:  "轨道射击", AttackDesc: "围绕敌群轨道飞行，攻击最近敌人。",
-		SpecialName: "增强光环", SpecialDesc: "每5s为射程内敌人最多的塔施加+8战力buff(4s)。",
-		Tips:   []string{"攻防兼备，适合需要塔增强的阵型。"},
-		Damage: "12", Interval: "1.5s", Speed: "320", AoE: "-", Duration: "-", DoT: "-",
-		GrowthKill: "-", GrowthWave: "+5 强度",
-	},
-	{
-		Key: "none", Name: "纯塔挑战", Category: "-",
+// wardenColors 按 key 映射战灵主题色（不在 JSON 中的视觉属性）。
+var wardenColors = map[string]color.RGBA{
+	"prince":    {R: 255, G: 140, B: 30, A: 255},
+	"core":      {R: 60, G: 140, B: 255, A: 255},
+	"chain":     {R: 160, G: 80, B: 255, A: 255},
+	"skystrike": {R: 80, G: 200, B: 255, A: 255},
+	"envoy":     {R: 255, G: 200, B: 60, A: 255},
+}
+
+// wardenOrder 战灵在选择列表中的顺序。
+var wardenOrder = []string{"prince", "core", "chain", "skystrike", "envoy"}
+
+// categoryName 将 config category 转为显示名。
+func categoryName(cat string) string {
+	switch cat {
+	case "mobile":
+		return "移动型"
+	case "indirect":
+		return "间接型"
+	default:
+		return cat
+	}
+}
+
+// BuildWardenOptions 从 wardens.json 配置构建选择列表。
+func BuildWardenOptions() []WardenOption {
+	cfgs, err := config.LoadWardenConfigs()
+	if err != nil {
+		return []WardenOption{{Key: "none", Name: "纯塔挑战", Category: "-", Description: "不选择战灵，纯靠塔防御。", Color: color.RGBA{R: 120, G: 120, B: 130, A: 255}}}
+	}
+
+	var opts []WardenOption
+	for _, key := range wardenOrder {
+		c, ok := cfgs[key]
+		if !ok {
+			continue
+		}
+		clr := wardenColors[key]
+		growthKill := "-"
+		if c.GrowthOnKill > 0 {
+			growthKill = fmt.Sprintf("+%.0f 强度", c.GrowthOnKill)
+		}
+		growthWave := "-"
+		if c.GrowthOnWaveClear > 0 {
+			growthWave = fmt.Sprintf("+%.0f 强度", c.GrowthOnWaveClear)
+		}
+
+		// 用配置基础值替换描述中的占位符
+		params := buildStaticParams(c)
+		opts = append(opts, WardenOption{
+			Key:         c.Key,
+			Name:        c.Name,
+			Category:    categoryName(c.Category),
+			Description: c.Description,
+			Color:       clr,
+			AttackName:  c.AttackName,
+			AttackDesc:  replaceParams(c.AttackDesc, params),
+			SpecialName: c.SpecialName,
+			SpecialDesc: replaceParams(c.SpecialDesc, params),
+			Tips:        []string{c.StrengthDesc, c.CounterTip},
+			Damage:      fmt.Sprintf("%.0f", c.Damage),
+			Interval:    fmt.Sprintf("%.1fs", c.AttackInterval),
+			Speed:       fmt.Sprintf("%.0f", c.MoveSpeed),
+			AoE:         "-",
+			Duration:    "-",
+			DoT:         "-",
+			GrowthKill:  growthKill,
+			GrowthWave:  growthWave,
+		})
+	}
+
+	// "不选" 选项
+	opts = append(opts, WardenOption{
+		Key:         "none",
+		Name:        "纯塔挑战",
+		Category:    "-",
 		Description: "不选择战灵，纯靠塔防御。",
 		Color:       color.RGBA{R: 120, G: 120, B: 130, A: 255},
-	},
+	})
+	return opts
+}
+
+// buildStaticParams 从配置构建占位符参数（选择阶段用基础值，不含强度缩放）。
+func buildStaticParams(c config.WardenConfig) map[string]string {
+	p := map[string]string{
+		"attackInterval": fmt.Sprintf("%.1f", c.AttackInterval),
+		"damage":         fmt.Sprintf("%.0f", c.Damage),
+		"moveSpeed":      fmt.Sprintf("%.0f", c.MoveSpeed),
+		"range":          fmt.Sprintf("%.0f", c.Range),
+	}
+	// 按 key 补充类型特有参数的默认值（与 Go Init 中的硬编码一致）
+	switch c.Key {
+	case "prince":
+		p["fireballInterval"] = "4"
+		p["fireballDmg"] = fmt.Sprintf("%.0f", c.Damage*2) // 200%
+		p["trailDuration"] = "2"
+		p["trailDps"] = fmt.Sprintf("%.0f", c.Damage*0.5) // 50%
+	case "core":
+		p["aoeThreshold"] = "4"
+		p["execHpPct"] = "20"
+	case "chain":
+		p["chainRange"] = "150"
+		p["bonusPerTower"] = "10"
+	case "skystrike":
+		p["specialInterval"] = "1"
+		p["multiTargets"] = "3"
+		p["multiDmg"] = fmt.Sprintf("%.0f", c.Damage*2) // 200%
+		p["burstHits"] = "5"
+		p["burstDmg"] = fmt.Sprintf("%.0f", c.Damage*1) // 100%
+		p["hpTargets"] = "3"
+		p["hpPct"] = "10"
+	case "envoy":
+		p["buffInterval"] = "10"
+		p["buffDuration"] = "6"
+		p["buffThreshold"] = "100"
+		p["buffBonus"] = "0"
+		p["permGrant"] = "5"
+	}
+	return p
+}
+
+// replaceParams 替换字符串中的 {key} 占位符。
+func replaceParams(s string, params map[string]string) string {
+	for k, v := range params {
+		s = strings.ReplaceAll(s, "{"+k+"}", v)
+	}
+	return s
+}
+
+// WardenOptions 延迟初始化的选项列表（首次访问时从配置构建）。
+var wardenOptionsCache []WardenOption
+
+// GetWardenOptions 返回战灵选项列表（懒加载）。
+func GetWardenOptions() []WardenOption {
+	if wardenOptionsCache == nil {
+		wardenOptionsCache = BuildWardenOptions()
+	}
+	return wardenOptionsCache
 }
 
 // ── 布局常量 ────────────────────────────────────
@@ -175,13 +258,13 @@ func (o *WardenSelectOverlay) Update(mx, my float64, clicked bool) {
 	}
 	// 跳过按钮
 	if o.hitTestBtn(mx, my, 1) {
-		o.selectedIdx = len(WardenOptions) - 1 // "none"
+		o.selectedIdx = len(GetWardenOptions()) - 1 // "none"
 		o.confirm()
 	}
 }
 
 func (o *WardenSelectOverlay) confirm() {
-	opt := WardenOptions[o.selectedIdx]
+	opt := GetWardenOptions()[o.selectedIdx]
 	key := opt.Key
 	if key == "none" {
 		key = ""
@@ -193,7 +276,7 @@ func (o *WardenSelectOverlay) confirm() {
 }
 
 func (o *WardenSelectOverlay) hitTestList(mx, my float64) int {
-	for i := range WardenOptions {
+	for i := range GetWardenOptions() {
 		y := woListY + float64(i)*(woListH+woListGap)
 		if mx >= woListX && mx <= woListX+woListW && my >= y && my <= y+woListH {
 			return i
@@ -232,7 +315,7 @@ func (o *WardenSelectOverlay) Draw(screen *ebiten.Image) {
 	fm.DrawCenteredText(screen, "选择最适合的战灵 — 或不选，挑战纯塔模式", sw/2, 50, 11, theme.TextMuted)
 
 	// 左侧列表
-	for i, opt := range WardenOptions {
+	for i, opt := range GetWardenOptions() {
 		x := float32(woListX)
 		y := float32(woListY + float64(i)*(woListH+woListGap))
 		w := float32(woListW)
@@ -271,7 +354,7 @@ func (o *WardenSelectOverlay) Draw(screen *ebiten.Image) {
 	}
 
 	// 右侧详情面板
-	opt := WardenOptions[o.selectedIdx]
+	opt := GetWardenOptions()[o.selectedIdx]
 	o.drawDetail(screen, fm, opt)
 
 	// 底部按钮
@@ -324,24 +407,35 @@ func (o *WardenSelectOverlay) drawDetail(screen *ebiten.Image, fm *render.FontMa
 	fm.DrawBoldText(screen, fmt.Sprintf("战灵 · %s", opt.Name), px, py, 18, theme.TextTitle)
 	py += 24
 
-	fm.DrawText(screen, opt.Description, px, py, theme.FontMD, theme.TextBody)
-	py += 28
+	contentW := float64(w) - 40 - 80 // 留出右侧精灵预览空间
+	for _, line := range wrapText(fm, opt.Description, contentW, theme.FontMD) {
+		fm.DrawText(screen, line, px, py, theme.FontMD, theme.TextBody)
+		py += 16
+	}
+	py += 8
 
 	draw.Line(screen, float32(px), float32(py), float32(px)+w-40, float32(py), 1, theme.PanelBorder, false)
 	py += 12
 
+	descW := float64(w) - 56 // 描述区可用宽度（留左右 padding）
 	if opt.AttackName != "" {
 		fm.DrawBoldText(screen, ">> "+opt.AttackName, px, py, theme.FontMD, theme.TextTitle)
 		py += 16
-		fm.DrawText(screen, opt.AttackDesc, px+16, py, theme.FontSM, theme.TextBody)
-		py += 18
+		for _, line := range wrapText(fm, opt.AttackDesc, descW, theme.FontSM) {
+			fm.DrawText(screen, line, px+16, py, theme.FontSM, theme.TextBody)
+			py += 14
+		}
+		py += 4
 	}
 
 	if opt.SpecialName != "" {
 		fm.DrawBoldText(screen, ">> "+opt.SpecialName, px, py, theme.FontMD, color.RGBA{R: 255, G: 180, B: 60, A: 255})
 		py += 16
-		fm.DrawText(screen, opt.SpecialDesc, px+16, py, theme.FontSM, theme.TextBody)
-		py += 18
+		for _, line := range wrapText(fm, opt.SpecialDesc, descW, theme.FontSM) {
+			fm.DrawText(screen, line, px+16, py, theme.FontSM, theme.TextBody)
+			py += 14
+		}
+		py += 4
 	}
 
 	for _, tip := range opt.Tips {

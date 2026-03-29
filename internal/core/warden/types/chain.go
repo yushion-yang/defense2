@@ -35,8 +35,8 @@ func (b *ChainBehavior) Type() string { return "chain" }
 func (b *ChainBehavior) Init(w *warden.Warden) interface{} {
 	return &ChainState{
 		WardenState: warden.WardenState{
-			Damage:         15,
-			AttackInterval: 2.0,
+			Damage:         12,
+			AttackInterval: 1.2,
 			Range:          150,
 			MoveSpeed:      300,
 		},

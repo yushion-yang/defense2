@@ -10,93 +10,15 @@ import (
 	"defense2/internal/core/game"
 	"defense2/internal/render"
 	"defense2/internal/render/draw"
+	"defense2/internal/render/hud"
 	"defense2/internal/render/theme"
 
 	"github.com/hajimehoshi/ebiten/v2"
 )
 
-// ── 战灵数据 ────────────────────────────────────
-
-type wardenOption struct {
-	Key         string
-	Name        string
-	Category    string // "移动型" / "间接型" / "-"
-	Description string
-	Color       color.RGBA
-	// 详情面板数据
-	AttackName  string
-	AttackDesc  string
-	SpecialName string
-	SpecialDesc string
-	Tips        []string
-	// Lv.1 属性
-	Damage   string
-	Interval string
-	Speed    string
-	AoE      string
-	Duration string
-	DoT      string
-	// 成长
-	GrowthKill string
-	GrowthWave string
-}
-
-var wardenOptions = []wardenOption{
-	{
-		Key: "prince", Name: "火灵", Category: "移动型",
-		Description: "围绕敌群轨道飞行并攻击，定时从虚空召唤火球冲撞敌群。",
-		Color:       color.RGBA{R: 255, G: 140, B: 30, A: 255},
-		AttackName:  "轨道射击", AttackDesc: "围绕敌群轨道飞行，攻击最近敌人。",
-		SpecialName: "虚空火球", SpecialDesc: "每4s召唤火球冲向敌群，穿透伤害30，留下火焰痕迹。",
-		Tips:   []string{"强度 → 攻击力 + 火球伤害增强。", "适合密集小怪波次。"},
-		Damage: "15", Interval: "1.2s", Speed: "350", AoE: "-", Duration: "-", DoT: "10/s",
-		GrowthKill: "+1 强度", GrowthWave: "+5 强度",
-	},
-	{
-		Key: "core", Name: "机甲", Category: "移动型",
-		Description: "单个超强移动实体，在敌群周围巡逻，智能切换攻击模式。",
-		Color:       color.RGBA{R: 60, G: 140, B: 255, A: 255},
-		AttackName:  "巡逻射击", AttackDesc: "绕敌群中心巡逻，自动锁定高威胁目标。",
-		SpecialName: "智能模式", SpecialDesc: "4+敌人=AoE / <30%HP=斩杀 / Boss=全力。",
-		Tips:   []string{"强度 → 伤害 + 攻速增强。", "适合精英/Boss波次。"},
-		Damage: "25", Interval: "1.2s", Speed: "360", AoE: "-", Duration: "-", DoT: "-",
-		GrowthKill: "+1 强度", GrowthWave: "+10 强度",
-	},
-	{
-		Key: "chain", Name: "聚能", Category: "间接型",
-		Description: "启用全场塔串联（+10伤害/塔），定时发射能量弹。",
-		Color:       color.RGBA{R: 160, G: 80, B: 255, A: 255},
-		AttackName:  "能量弹", AttackDesc: "定时向随机敌人发射能量弹造成伤害。",
-		SpecialName: "串联体", SpecialDesc: "被动：全场塔 +10 伤害加成。",
-		Tips:   []string{"塔越多，收益越高。", "适合塔数量多的防线。"},
-		Damage: "15", Interval: "2s", Speed: "-", AoE: "-", Duration: "-", DoT: "-",
-		GrowthKill: "-", GrowthWave: "+8 强度",
-	},
-	{
-		Key: "skystrike", Name: "水灵", Category: "间接型",
-		Description: "定时对敌群最密集区域发动AoE水灵打击。",
-		Color:       color.RGBA{R: 80, G: 200, B: 255, A: 255},
-		AttackName:  "水灵打击", AttackDesc: "锁定敌群最密集位置，释放范围打击。",
-		SpecialName: "智能瞄准", SpecialDesc: "自动选择敌人最多的区域。",
-		Tips:   []string{"AoE 半径随强度增长。", "适合拥堵路径节点。"},
-		Damage: "40", Interval: "5s", Speed: "-", AoE: "60", Duration: "-", DoT: "-",
-		GrowthKill: "-", GrowthWave: "+10 强度",
-	},
-	{
-		Key: "envoy", Name: "金灵", Category: "移动型",
-		Description: "围绕敌群轨道飞行并攻击，定时为最佳塔施加增强 buff。",
-		Color:       color.RGBA{R: 180, G: 120, B: 255, A: 255},
-		AttackName:  "轨道射击", AttackDesc: "围绕敌群轨道飞行，攻击最近敌人。",
-		SpecialName: "增强光环", SpecialDesc: "每5s为射程内敌人最多的塔施加+8战力buff(4s)。",
-		Tips:   []string{"攻防兼备，适合需要塔增强的阵型。"},
-		Damage: "12", Interval: "1.5s", Speed: "320", AoE: "-", Duration: "-", DoT: "-",
-		GrowthKill: "-", GrowthWave: "+5 强度",
-	},
-	{
-		Key: "none", Name: "纯塔挑战", Category: "-",
-		Description: "不选择战灵，纯靠塔和英雄防御。",
-		Color:       color.RGBA{R: 120, G: 120, B: 130, A: 255},
-	},
+// wardenOptions 从配置加载（复用 hud.GetWardenOptions）。
+func wardenOptions() []hud.WardenOption {
+	return hud.GetWardenOptions()
 }
 
 // ── 布局常量 ────────────────────────────────────
@@ -173,7 +95,7 @@ func (s *WardenSelectScene) Update() error {
 		// 跳过按钮
 		if s.hitTestBtn(mx, my, 1) {
 			playUIClick(s.switcher)
-			s.selectedIdx = len(wardenOptions) - 1 // "none"
+			s.selectedIdx = len(wardenOptions()) - 1 // "none"
 			s.confirm()
 		}
 	}
@@ -182,7 +104,7 @@ func (s *WardenSelectScene) Update() error {
 }
 
 func (s *WardenSelectScene) confirm() {
-	opt := wardenOptions[s.selectedIdx]
+	opt := wardenOptions()[s.selectedIdx]
 	wType := opt.Key
 	if wType == "none" {
 		wType = ""
@@ -196,7 +118,7 @@ func (s *WardenSelectScene) confirm() {
 }
 
 func (s *WardenSelectScene) hitTestList(mx, my float64) int {
-	for i := range wardenOptions {
+	for i := range wardenOptions() {
 		y := wListY + float64(i)*(wListH+wListGap)
 		if mx >= wListX && mx <= wListX+wListW && my >= y && my <= y+wListH {
 			return i
@@ -234,7 +156,7 @@ func (s *WardenSelectScene) Draw(screen *ebiten.Image) {
 	fm.DrawCenteredText(screen, "<- 返回", 55, 22, 12, theme.TextBody)
 
 	// ── 左侧列表 ──
-	for i, opt := range wardenOptions {
+	for i, opt := range wardenOptions() {
 		x := float32(wListX)
 		y := float32(wListY + float64(i)*(wListH+wListGap))
 		w := float32(wListW)
@@ -275,7 +197,7 @@ func (s *WardenSelectScene) Draw(screen *ebiten.Image) {
 	}
 
 	// ── 右侧详情面板 ──
-	opt := wardenOptions[s.selectedIdx]
+	opt := wardenOptions()[s.selectedIdx]
 	s.drawDetail(screen, fm, opt)
 
 	// ── 底部按钮 ──
@@ -301,7 +223,7 @@ func (s *WardenSelectScene) Draw(screen *ebiten.Image) {
 	fm.DrawCenteredText(screen, "不选（纯塔挑战）", skipX+wBtnW/2, wBtnY+10, theme.FontMD, theme.TextMuted)
 }
 
-func (s *WardenSelectScene) drawDetail(screen *ebiten.Image, fm *render.FontManager, opt wardenOption) {
+func (s *WardenSelectScene) drawDetail(screen *ebiten.Image, fm *render.FontManager, opt hud.WardenOption) {
 	x := float32(wDetailX)
 	y := float32(wDetailY)
 	w := float32(wDetailW)

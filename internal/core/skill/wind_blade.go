@@ -114,6 +114,13 @@ func (w *windBlade) Tick(owner interface{}, enemies []*enemy.Enemy, dt float64, 
 func (w *windBlade) ShouldSuppressFire(_ interface{}) bool { return w.firing }
 func (w *windBlade) ShouldSuppressMove(_ interface{}) bool { return false }
 
+func (w *windBlade) GetVFX() *SkillVFX {
+	if !w.firing {
+		return nil
+	}
+	return &SkillVFX{Type: "blades", Active: true, Points: [][2]float64{{w.ownerX, w.ownerY}}, Timer: 0.5}
+}
+
 func (w *windBlade) GetProgress(_ interface{}) (float64, bool) {
 	if w.firing {
 		return 1.0, false
