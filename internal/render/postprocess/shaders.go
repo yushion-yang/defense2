@@ -20,12 +20,24 @@ var blurVSrc []byte
 //go:embed bloom_combine.kage
 var bloomCombineSrc []byte
 
+//go:embed vignette.kage
+var vignetteSrc []byte
+
+//go:embed color_grade.kage
+var colorGradeSrc []byte
+
+//go:embed radial_blur.kage
+var radialBlurSrc []byte
+
 // Compiled shaders (set by InitShaders).
 var (
 	shaderBloomExtract *ebiten.Shader
 	shaderBlurH        *ebiten.Shader
 	shaderBlurV        *ebiten.Shader
 	shaderBloomCombine *ebiten.Shader
+	shaderVignette     *ebiten.Shader
+	shaderColorGrade   *ebiten.Shader
+	shaderRadialBlur   *ebiten.Shader
 	shadersReady       bool
 )
 
@@ -52,6 +64,21 @@ func InitShaders() error {
 	shaderBloomCombine, err = ebiten.NewShader(bloomCombineSrc)
 	if err != nil {
 		return fmt.Errorf("bloom_combine shader: %w", err)
+	}
+
+	shaderVignette, err = ebiten.NewShader(vignetteSrc)
+	if err != nil {
+		return fmt.Errorf("vignette shader: %w", err)
+	}
+
+	shaderColorGrade, err = ebiten.NewShader(colorGradeSrc)
+	if err != nil {
+		return fmt.Errorf("color_grade shader: %w", err)
+	}
+
+	shaderRadialBlur, err = ebiten.NewShader(radialBlurSrc)
+	if err != nil {
+		return fmt.Errorf("radial_blur shader: %w", err)
 	}
 
 	shadersReady = true

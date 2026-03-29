@@ -1171,6 +1171,15 @@ func (s *StageScene) updatePlaying() {
 	}
 	// 游戏速度倍率
 	gameDT := dt * float64(s.gameSpeed)
+
+	// Screen effects update (hit-stop freezes game logic for this frame).
+	if s.postPipeline.Effects.Update(gameDT) {
+		// Hit-stop: skip game logic but still update VFX for visual feedback.
+		render.UpdateFloatTexts(gameDT)
+		render.UpdateImpactVFX(gameDT)
+		return
+	}
+
 	prevWave := s.spawner.Wave
 	render.UpdateVFXTick(gameDT)
 
@@ -1209,6 +1218,7 @@ func (s *StageScene) updatePlaying() {
 			s.session.OnEnemyLeaked(s.buildModeCtx())
 			s.enemies.Kill(e)
 			s.audioMgr.PlaySafe(gameAudio.SFXEnemyLeak)
+			s.postPipeline.Effects.TriggerHitFlash(0.15)
 		}
 	})
 
@@ -1284,6 +1294,7 @@ func (s *StageScene) updatePlaying() {
 		if killed {
 			if e.Boss {
 				s.audioMgr.PlayThrottled(gameAudio.SFXEnemyDeathBoss, 50)
+				s.postPipeline.Effects.TriggerHitStop(3)
 			} else {
 				s.audioMgr.PlayThrottled(gameAudio.SFXEnemyDeath, 50)
 			}

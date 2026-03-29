@@ -13,8 +13,8 @@ import (
 func TestPipelineCreation(t *testing.T) {
 	p := postprocess.NewPipeline()
 
-	if !p.BloomEnabled {
-		t.Error("bloom should be enabled by default")
+	if p.BloomEnabled {
+		t.Error("bloom should be disabled by default (DrawRectShader crash workaround)")
 	}
 	if p.BloomThreshold != 0.65 {
 		t.Errorf("default threshold: got %v, want 0.65", p.BloomThreshold)
@@ -145,8 +145,8 @@ func TestApplyWithoutShaders(t *testing.T) {
 	if postprocess.ShadersReady() {
 		t.Error("shaders should not be ready in test env")
 	}
-	if !p.BloomEnabled {
-		t.Error("bloom should be enabled by default")
+	if p.BloomEnabled {
+		t.Error("bloom should be disabled by default")
 	}
 	// Actual rendering tested via `make run`.
 }
