@@ -75,6 +75,5 @@ func init() {
 	Register(tower.StyleScatter, &ScatterHandler{})
 	Register(tower.StyleCharge, &ChargeHandler{})
 	Register(tower.StyleSpinAoE, &SpinAoEHandler{})
-	Register(tower.StylePierce, &PierceHandler{})
 	Register(tower.StyleAuraDot, &AuraDotHandler{})
 }

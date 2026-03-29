@@ -20,7 +20,6 @@ const (
 	StyleScatter    AttackStyle = "scatter"     // 锥形散射
 	StyleCharge     AttackStyle = "charge"      // 蓄力重弹
 	StyleSpinAoE    AttackStyle = "spin_aoe"    // 旋转范围伤害
-	StylePierce     AttackStyle = "pierce"      // 穿刺弹
 	StyleAuraDot    AttackStyle = "aura_dot"    // 持续范围毒伤
 )
 

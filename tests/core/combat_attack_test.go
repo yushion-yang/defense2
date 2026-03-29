@@ -38,7 +38,7 @@ func TestAllHandlersRegistered(t *testing.T) {
 	styles := []tower.AttackStyle{
 		tower.StyleProjectile, tower.StyleLaser, tower.StyleWideBeam,
 		tower.StyleScatter, tower.StyleCharge, tower.StyleSpinAoE,
-		tower.StylePierce, tower.StyleAuraDot,
+		tower.StyleAuraDot,
 	}
 	for _, s := range styles {
 		if combat.Get(s) == nil {
@@ -54,7 +54,7 @@ func TestSelfManagedStyles(t *testing.T) {
 			t.Errorf("%s should be self-managed", s)
 		}
 	}
-	notSelfManaged := []tower.AttackStyle{tower.StyleProjectile, tower.StyleLaser, tower.StyleWideBeam, tower.StyleScatter, tower.StylePierce}
+	notSelfManaged := []tower.AttackStyle{tower.StyleProjectile, tower.StyleLaser, tower.StyleWideBeam, tower.StyleScatter}
 	for _, s := range notSelfManaged {
 		if combat.IsSelfManaged(s) {
 			t.Errorf("%s should NOT be self-managed", s)
@@ -215,33 +215,6 @@ func TestSpinAoEDamagesAllInRange(t *testing.T) {
 	if e3.HP < 100 {
 		t.Error("e3 should NOT be damaged (out of range)")
 	}
-}
-
-// ── Pierce Projectile ──
-
-func TestPierceProjectileCreated(t *testing.T) {
-	tw := makeTower(tower.StylePierce, 20, 200, 1)
-	e := makeEnemy(150, 100, 100)
-	pool := projectile.NewPool(16)
-	beams := combat.NewBeamPool()
-	ePool := enemy.NewPool(4)
-	ctx := makeCtx(ePool, pool, beams)
-
-	h := combat.Get(tower.StylePierce)
-	h.Fire(tw, e, ctx)
-
-	if pool.Count != 1 {
-		t.Errorf("expected 1 pierce projectile, got %d", pool.Count)
-	}
-	// Verify pierce flag
-	pool.Each(func(p *projectile.Projectile) {
-		if !p.Pierce {
-			t.Error("projectile should have Pierce=true")
-		}
-		if p.PierceMax != 2 {
-			t.Errorf("PierceMax=%d, want 2", p.PierceMax)
-		}
-	})
 }
 
 // ── AuraDot Handler ──
