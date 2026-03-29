@@ -13,7 +13,7 @@ import (
 )
 
 func TestWardenCalcStrength(t *testing.T) {
-	w := warden.NewWarden(1, "测试使者", "envoy")
+	w := warden.NewWarden(1, "测试金灵", "envoy")
 	w.SelfStrength = 10
 
 	tp := tower.NewPool(4)
@@ -58,14 +58,14 @@ func TestWardenOnKillAndWave(t *testing.T) {
 }
 
 func TestEnvoyBehaviorInit(t *testing.T) {
-	w := warden.NewWarden(1, "使者", "envoy")
+	w := warden.NewWarden(1, "金灵", "envoy")
 	if w.State == nil {
 		t.Fatal("envoy 应初始化 State")
 	}
 }
 
-func TestEnvoyPossess(t *testing.T) {
-	w := warden.NewWarden(1, "使者", "envoy")
+func TestEnvoyBuff(t *testing.T) {
+	w := warden.NewWarden(1, "金灵", "envoy")
 
 	tp := tower.NewPool(4)
 	def := tower.TowerDef{Key: "t", Label: "T", Damage: 20, Range: 200, AttackSpeed: 1, Cost: 50}
@@ -77,19 +77,20 @@ func TestEnvoyPossess(t *testing.T) {
 	ctx := &warden.TickContext{
 		Enemies: ep,
 		Towers:  tp,
-		DT:      0.016,
+		DT:      1.0, // 大步长加速倒计时
 	}
 
-	// 第一次 tick：应附身到塔
-	w.Tick(ctx)
+	// BuffInterval=5s, 多次 tick 直到 buff 触发
+	for i := 0; i < 6; i++ {
+		w.Tick(ctx)
+	}
 
-	// 附身后塔的 Damage 不再直接改变，改为通过战力系统增强
-	// 检查塔的 Strength 是否被设置了临时加成
+	// buff 施加后塔应有 StrengthData + 临时加成
 	if placed.Strength == nil {
-		t.Fatal("附身后塔应有 StrengthData")
+		t.Fatal("buff 施加后塔应有 StrengthData")
 	}
-	// envoy DamageBonus=5, 所以战力应为 100(base) + 5(temp) = 105
-	if math.Abs(placed.Strength.Effective()-105) > 1e-9 {
-		t.Fatalf("附身后塔战力应为 105，实际 %.0f", placed.Strength.Effective())
+	// envoy BuffBonus=8, 所以战力应为 100(base) + 8(temp) = 108
+	if math.Abs(placed.Strength.Effective()-108) > 1e-9 {
+		t.Fatalf("buff 后塔战力应为 108，实际 %.0f", placed.Strength.Effective())
 	}
 }

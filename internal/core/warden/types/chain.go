@@ -1,4 +1,4 @@
-// chain.go — 能量串联型战灵。
+// chain.go — 聚能战灵。
 // 移动型战灵，围绕敌群轨道运动并射击。
 // 被动增强所有塔的战力，同时主动攻击敌人。
 package types
@@ -15,7 +15,7 @@ func init() {
 	warden.RegisterBehavior(&ChainBehavior{})
 }
 
-// ChainState 能量串联的内部状态。
+// ChainState 聚能战灵的内部状态。
 type ChainState struct {
 	warden.WardenState                       // 嵌入公共基座
 	TowerBonus         float64               // 每座塔的战力加成
@@ -25,7 +25,7 @@ type ChainState struct {
 // Base 实现 Stateful 接口。
 func (s *ChainState) Base() *warden.WardenState { return &s.WardenState }
 
-// ChainBehavior 能量串联行为实现。
+// ChainBehavior 聚能战灵行为实现。
 type ChainBehavior struct{}
 
 func (b *ChainBehavior) Type() string { return "chain" }

@@ -1,4 +1,4 @@
-// core_mech.go — 战斗机甲型战灵。
+// core_mech.go — 机甲战灵。
 // Core Mech 是移动型战灵，围绕敌群轨道运动并射击。
 // 行为循环：定位敌群中心 → 轨道运动 → 攻击最近敌人（支持单体/AoE）。
 package types
@@ -14,7 +14,7 @@ func init() {
 	warden.RegisterBehavior(&coreBehavior{})
 }
 
-// CoreState 战斗机甲的内部状态。
+// CoreState 机甲战灵的内部状态。
 type CoreState struct {
 	warden.WardenState // 嵌入公共基座
 }
@@ -22,7 +22,7 @@ type CoreState struct {
 // Base 实现 Stateful 接口。
 func (s *CoreState) Base() *warden.WardenState { return &s.WardenState }
 
-// coreBehavior 战斗机甲行为实现。
+// coreBehavior 机甲战灵行为实现。
 type coreBehavior struct{}
 
 func (b *coreBehavior) Type() string { return "core" }
@@ -65,7 +65,7 @@ func (b *coreBehavior) Tick(w *warden.Warden, ctx *warden.TickContext) {
 	s.DecayShootTimer(dt)
 }
 
-// coreAttack 战斗机甲攻击：斩杀加成 + 智能 AoE 切换。
+// coreAttack 机甲战灵攻击：斩杀加成 + 智能 AoE 切换。
 func coreAttack(s *CoreState, ctx *warden.TickContext) {
 	nearest := s.FindNearest(ctx.Enemies)
 	if nearest == nil {

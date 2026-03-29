@@ -1,6 +1,6 @@
-// skystrike.go — 天降型战灵。
+// skystrike.go — 水灵战灵。
 // 移动型战灵，围绕敌群轨道运动并射击。
-// 定期在敌人最密集处释放 AoE 打击作为特殊能力。
+// 定期在敌人最密集处释放 AoE 水灵打击作为特殊能力。
 package types
 
 import (
@@ -14,11 +14,11 @@ func init() {
 	warden.RegisterBehavior(&SkystrikeBehavior{})
 }
 
-// SkystrikeState 天降的内部状态。
+// SkystrikeState 水灵战灵的内部状态。
 type SkystrikeState struct {
 	warden.WardenState // 嵌入公共基座
 
-	// AoE 天降打击（特殊能力，区别于基座的普攻）
+	// AoE 水灵打击（特殊能力，区别于基座的普攻）
 	AoEDamage   float64 // AoE 伤害
 	AoEInterval float64 // AoE 间隔（秒）
 	AoERadius   float64 // AoE 半径（像素）
@@ -33,7 +33,7 @@ type SkystrikeState struct {
 // Base 实现 Stateful 接口。
 func (s *SkystrikeState) Base() *warden.WardenState { return &s.WardenState }
 
-// SkystrikeBehavior 天降行为实现。
+// SkystrikeBehavior 水灵战灵行为实现。
 type SkystrikeBehavior struct{}
 
 func (b *SkystrikeBehavior) Type() string { return "skystrike" }
@@ -74,7 +74,7 @@ func (b *SkystrikeBehavior) Tick(w *warden.Warden, ctx *warden.TickContext) {
 		s.BasicAttack(ctx)
 	}
 
-	// 3. AoE 天降打击
+	// 3. AoE 水灵打击
 	if s.StrikeTimer > 0 {
 		s.StrikeTimer -= dt
 	}
@@ -88,7 +88,7 @@ func (b *SkystrikeBehavior) Tick(w *warden.Warden, ctx *warden.TickContext) {
 	s.DecayShootTimer(dt)
 }
 
-// skystrikeAoE AoE 天降打击（在最密集敌群处释放范围伤害）。
+// skystrikeAoE AoE 水灵打击（在最密集敌群处释放范围伤害）。
 func skystrikeAoE(s *SkystrikeState, ctx *warden.TickContext) {
 	center := warden.FindDensestEnemy(ctx.Enemies, s.AoERadius)
 	if center == nil {

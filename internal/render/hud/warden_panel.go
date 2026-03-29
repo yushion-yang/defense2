@@ -16,7 +16,7 @@ import (
 
 // WardenPanelData holds pre-formatted display data for the warden info panel.
 type WardenPanelData struct {
-	Name         string  // e.g. "小王子"
+	Name         string  // e.g. "火灵"
 	Type         string  // e.g. "prince", "core", "envoy"
 	Strength     float64 // current perceived strength
 	PeakStrength float64 // peak (ratchet) strength

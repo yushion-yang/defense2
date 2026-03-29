@@ -181,7 +181,7 @@ func NewStageScene(sw Switcher) *StageScene {
 	return NewStageSceneWithOpts(sw, StageOptions{MapID: "map_01", WardenType: "envoy"})
 }
 
-// NewStageSceneWithMap 创建游戏主场景，加载指定地图（默认使者战灵）。
+// NewStageSceneWithMap 创建游戏主场景，加载指定地图（默认金灵战灵）。
 func NewStageSceneWithMap(sw Switcher, mapID string) *StageScene {
 	return NewStageSceneWithOpts(sw, StageOptions{MapID: mapID, WardenType: "envoy"})
 }

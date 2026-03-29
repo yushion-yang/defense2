@@ -6,7 +6,7 @@
     "outputSize": 128
   },
   "prince": {
-    "name": "小王子",
+    "name": "火灵",
     "description": "莽撞热血的火焰菱形体，拖着火尾高速冲撞",
     "palette": {
       "primary": "#f97316",
@@ -59,7 +59,7 @@
     }
   },
   "core": {
-    "name": "战斗机甲",
+    "name": "机甲",
     "description": "蓝色箭头形机甲战斗体，双推进器尾焰，核心能量球发光",
     "palette": {
       "primary": "#2563eb",
@@ -117,7 +117,7 @@
     "eyes": null
   },
   "envoy": {
-    "name": "使者",
+    "name": "金灵",
     "description": "神秘的金色六芒星灵体，内核光球向四方辐射能量线",
     "palette": {
       "primary": "#f59e0b",
@@ -192,7 +192,7 @@
     "eyes": null
   },
   "chain": {
-    "name": "能量串联",
+    "name": "聚能",
     "description": "蓝紫色能量环体，三层同心圆环旋转，中心六边形核心，六条闪电链从核心延伸",
     "palette": {
       "primary": "#7c3aed",
@@ -249,7 +249,7 @@
     "eyes": null
   },
   "skystrike": {
-    "name": "天降",
+    "name": "水灵",
     "description": "天蓝色倒三角降雷体，顶部圆形瞄准镜，底部三道光柱向下辐射",
     "palette": {
       "primary": "#0ea5e9",

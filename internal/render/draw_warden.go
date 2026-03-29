@@ -66,7 +66,7 @@ func wardenShootColor(typ string) color.RGBA {
 	}
 }
 
-// drawEnvoy renders the envoy warden (purple circle / gold when possessing).
+// drawEnvoy renders the envoy warden (purple circle, gold pulse when buff active).
 func drawEnvoy(screen *ebiten.Image, s *wardenTypes.EnvoyState) {
 	cx := float32(s.X)
 	cy := float32(s.Y)
@@ -76,40 +76,54 @@ func drawEnvoy(screen *ebiten.Image, s *wardenTypes.EnvoyState) {
 	draw.FilledCircle(screen, cx, cy, r+4,
 		color.RGBA{R: 180, G: 120, B: 255, A: 40})
 
-	// Body
+	// Body: 金色光环表示 buff 激活中
 	bodyClr := color.RGBA{R: 180, G: 120, B: 255, A: 200}
-	if s.Phase == "possessing" {
+	if s.BuffExpiry > 0 {
 		bodyClr = color.RGBA{R: 255, G: 200, B: 100, A: 230}
 	}
 	draw.FilledCircle(screen, cx, cy, r, bodyClr)
+
+	// buff 连线：金灵 → 被 buff 的塔
+	if s.BuffExpiry > 0 && s.BuffedTower != nil {
+		alpha := uint8(120 * (s.BuffExpiry / 4.0))
+		if alpha > 120 {
+			alpha = 120
+		}
+		draw.Line(screen, cx, cy,
+			float32(s.BuffedTower.X), float32(s.BuffedTower.Y),
+			1, color.RGBA{R: 255, G: 200, B: 100, A: alpha}, true)
+	}
 }
 
-// drawPrince renders the prince warden (orange diamond + dash trail + flame traces).
+// drawPrince renders the fire spirit warden (orange diamond + fireballs + flame traces).
 func drawPrince(screen *ebiten.Image, s *wardenTypes.PrinceState) {
 	cx := float32(s.X)
 	cy := float32(s.Y)
 
-	// Flame trails
+	// Flame trails (ground fire)
 	for _, t := range s.Trails {
 		alpha := uint8(120 * (t.Life / t.MaxLife))
 		draw.FilledCircle(screen, float32(t.X), float32(t.Y), float32(t.Radius),
 			color.RGBA{R: 255, G: 100, B: 30, A: alpha})
 	}
 
+	// Flying fireballs
+	for _, fb := range s.Fireballs {
+		fbClr := color.RGBA{R: 255, G: 180, B: 40, A: 230}
+		draw.FilledCircle(screen, float32(fb.X), float32(fb.Y), float32(fb.Radius)*0.5, fbClr)
+		// Tail glow
+		draw.FilledCircle(screen, float32(fb.X), float32(fb.Y), float32(fb.Radius)*0.8,
+			color.RGBA{R: 255, G: 120, B: 20, A: 60})
+	}
+
 	// Body (orange diamond)
 	r := float32(10)
 	bodyClr := color.RGBA{R: 255, G: 140, B: 30, A: 230}
-	if s.Phase == "dashing" {
-		bodyClr = color.RGBA{R: 255, G: 200, B: 80, A: 255}
-		draw.Line(screen, float32(s.DashStartX), float32(s.DashStartY), cx, cy, 3,
-			color.RGBA{R: 255, G: 120, B: 20, A: 100}, true)
-	}
-
 	draw.Diamond(screen, cx, cy, r, 2, bodyClr)
 	draw.FilledCircle(screen, cx, cy, r*0.5, bodyClr)
 }
 
-// drawCoreMechBody renders the core mech body (blue rotating triangle).
+// drawCoreMechBody 渲染机甲战灵本体（蓝色旋转三角）。
 func drawCoreMechBody(screen *ebiten.Image, s *warden.WardenState) {
 	cx := float32(s.X)
 	cy := float32(s.Y)
@@ -131,7 +145,7 @@ func drawCoreMechBody(screen *ebiten.Image, s *warden.WardenState) {
 		color.RGBA{R: 100, G: 200, B: 255, A: 200})
 }
 
-// drawChainBody 渲染能量串联战灵本体（绿色菱形）。
+// drawChainBody 渲染聚能战灵本体（绿色菱形）。
 func drawChainBody(screen *ebiten.Image, s *warden.WardenState) {
 	cx := float32(s.X)
 	cy := float32(s.Y)
@@ -146,7 +160,7 @@ func drawChainBody(screen *ebiten.Image, s *warden.WardenState) {
 	draw.FilledCircle(screen, cx, cy, 4, bodyClr)
 }
 
-// drawSkystrikeBody 渲染天降战灵本体（天蓝色三角 + AoE 效果）。
+// drawSkystrikeBody 渲染水灵战灵本体（天蓝色三角 + AoE 效果）。
 func drawSkystrikeBody(screen *ebiten.Image, s *wardenTypes.SkystrikeState) {
 	cx := float32(s.X)
 	cy := float32(s.Y)
