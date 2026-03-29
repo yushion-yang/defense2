@@ -31,7 +31,6 @@ type TowerJSON struct {
 	// 攻击方式配置
 	AttackStyle      string             `json:"attackStyle"`      // "projectile"/"laser"/"wideBeam"/"scatter"/"charge"/"spin_aoe"/"pierce"/"aura_dot"
 	ProjectileSpeed  float64            `json:"projectileSpeed"`  // 弹射物速度（px/s）
-	Beam             *BeamConfigJSON    `json:"beam"`             // laser/wideBeam 光束配置
 	ScatterConfig    *ScatterConfigJSON `json:"scatterConfig"`    // scatter 散射配置
 	ChargeConfig     *ChargeConfigJSON  `json:"chargeConfig"`     // charge 蓄力配置
 	InnerDamageBonus float64            `json:"innerDamageBonus"` // spin_aoe 内圈加伤倍率
@@ -39,13 +38,6 @@ type TowerJSON struct {
 	PierceConfig     *PierceConfigJSON  `json:"pierceConfig"`     // pierce 穿刺配置
 
 	PoisonConfig *PoisonConfigJSON `json:"poisonConfig"` // aura_dot 持续毒伤配置
-}
-
-// BeamConfigJSON 光束配置。
-type BeamConfigJSON struct {
-	Duration float64 `json:"duration"` // 显示时长（秒）
-	Width    float64 `json:"width"`    // 宽度（像素）
-	Color    string  `json:"color"`    // 颜色 hex（如 "#93c5fd"）
 }
 
 // ScatterConfigJSON 散射配置。

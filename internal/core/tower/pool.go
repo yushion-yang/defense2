@@ -48,9 +48,6 @@ func (p *Pool) Place(row, col int, cx, cy float64, def TowerDef) *Tower {
 			// 攻击方式
 			t.AttackStyleID = def.AttackStyleID
 			t.ProjectileSpeed = def.ProjectileSpeed
-			t.BeamDuration = def.BeamDuration
-			t.BeamWidth = def.BeamWidth
-			t.BeamColor = def.BeamColor
 			t.ScatterPellets = def.ScatterPellets
 			t.ScatterSpread = def.ScatterSpread
 			t.ChargeMult = def.ChargeMult
@@ -115,9 +112,6 @@ type TowerDef struct {
 	AttackStyleID   AttackStyle // 攻击方式
 	ProjectileSpeed float64     // 弹射物速度（px/s）
 	// Beam
-	BeamDuration float64
-	BeamWidth    float64
-	BeamColor    [3]uint8
 	// Scatter
 	ScatterPellets int
 	ScatterSpread  float64 // 弧度

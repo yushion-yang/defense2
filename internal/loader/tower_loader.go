@@ -57,12 +57,6 @@ func TowerJSONToDef(key string, t *config.TowerJSON) tower.TowerDef {
 		ProjectileSpeed: t.ProjectileSpeed,
 	}
 
-	// Beam 配置
-	if t.Beam != nil {
-		def.BeamDuration = t.Beam.Duration
-		def.BeamWidth = t.Beam.Width
-		def.BeamColor = parseHexColor(t.Beam.Color)
-	}
 	// Scatter 配置
 	if t.ScatterConfig != nil {
 		def.ScatterPellets = t.ScatterConfig.Pellets

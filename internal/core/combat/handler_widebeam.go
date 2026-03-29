@@ -8,6 +8,13 @@ import (
 	"defense2/internal/core/tower"
 )
 
+// wideBeam 默认视觉参数
+const (
+	wideBeamDuration = 0.15           // 光束显示时长（秒）
+	wideBeamWidth    = 6.0            // 光束宽度（像素）
+)
+var wideBeamColor = [3]uint8{147, 197, 253} // #93c5fd 蓝
+
 // WideBeamHandler 宽光束。
 type WideBeamHandler struct{}
 
@@ -26,26 +33,18 @@ func (h *WideBeamHandler) Fire(t *tower.Tower, target *enemy.Enemy, ctx *AttackC
 	beamLen := t.Range * 3
 	endX := t.X + dirX*beamLen
 	endY := t.Y + dirY*beamLen
-
-	w := t.BeamWidth
-	if w <= 0 {
-		w = 8
-	}
-	halfW := w / 2
+	halfW := wideBeamWidth / 2
 
 	// 对路径上所有敌人造成伤害（垂直距离检查）
 	ctx.Enemies.Each(func(e *enemy.Enemy) {
-		// 投影到射线
 		ex := e.X - t.X
 		ey := e.Y - t.Y
 		proj := ex*dirX + ey*dirY
 		if proj < 0 || proj > beamLen {
 			return
 		}
-		// 垂直距离
 		perpDist := math.Abs(ex*(-dirY) + ey*dirX)
-		hitR := halfW + e.Radius
-		if perpDist > hitR {
+		if perpDist > halfW+e.Radius {
 			return
 		}
 		e.HP -= t.Damage
@@ -55,21 +54,13 @@ func (h *WideBeamHandler) Fire(t *tower.Tower, target *enemy.Enemy, ctx *AttackC
 	})
 
 	// Beam 视觉
-	dur := t.BeamDuration
-	if dur <= 0 {
-		dur = 0.15
-	}
-	clr := t.BeamColor
-	if clr == [3]uint8{} {
-		clr = [3]uint8{147, 197, 253}
-	}
 	ctx.Beams.Add(Beam{
 		X1: t.X, Y1: t.Y,
 		X2: endX, Y2: endY,
-		Width:   w,
-		Color:   clr,
-		Life:    dur,
-		MaxLife: dur,
+		Width:   wideBeamWidth,
+		Color:   wideBeamColor,
+		Life:    wideBeamDuration,
+		MaxLife: wideBeamDuration,
 		Wide:    true,
 	})
 }

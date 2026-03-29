@@ -7,6 +7,13 @@ import (
 	"defense2/internal/core/tower"
 )
 
+// laser 默认视觉参数
+const (
+	laserDuration = 0.12            // 光束显示时长（秒）
+	laserWidth    = 3.0             // 光束宽度（像素）
+)
+var laserColor = [3]uint8{244, 63, 94} // #f43f5e 玫红
+
 // LaserHandler 即时光束。
 type LaserHandler struct{}
 
@@ -22,24 +29,12 @@ func (h *LaserHandler) Fire(t *tower.Tower, target *enemy.Enemy, ctx *AttackCont
 	}
 
 	// 创建 beam 视觉
-	dur := t.BeamDuration
-	if dur <= 0 {
-		dur = 0.15
-	}
-	w := t.BeamWidth
-	if w <= 0 {
-		w = 3
-	}
-	clr := t.BeamColor
-	if clr == [3]uint8{} {
-		clr = [3]uint8{147, 197, 253} // #93c5fd
-	}
 	ctx.Beams.Add(Beam{
 		X1: t.X, Y1: t.Y,
 		X2: target.X, Y2: target.Y,
-		Width:   w,
-		Color:   clr,
-		Life:    dur,
-		MaxLife: dur,
+		Width:   laserWidth,
+		Color:   laserColor,
+		Life:    laserDuration,
+		MaxLife: laserDuration,
 	})
 }

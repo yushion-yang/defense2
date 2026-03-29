@@ -52,11 +52,6 @@ type Tower struct {
 	AttackStyleID   AttackStyle // 攻击方式（"projectile"/"laser"/...）
 	ProjectileSpeed float64     // 弹射物速度（px/s，0=默认300）
 
-	// Beam 配置
-	BeamDuration float64  // beam 显示时长（秒）
-	BeamWidth    float64  // beam 宽度（像素）
-	BeamColor    [3]uint8 // beam 颜色 RGB
-
 	// Scatter 配置
 	ScatterPellets int     // 弹丸数
 	ScatterSpread  float64 // 散射半角（弧度）

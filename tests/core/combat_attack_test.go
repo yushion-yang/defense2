@@ -16,7 +16,6 @@ func makeTower(style tower.AttackStyle, damage, rng, speed float64) *tower.Tower
 		Active: true, Key: "test",
 		AttackStyleID:   style,
 		ProjectileSpeed: 400,
-		BeamDuration:    0.15, BeamWidth: 4, BeamColor: [3]uint8{200, 200, 255},
 		ScatterPellets:  3, ScatterSpread: 0.52, // ~30 deg
 		ChargeMult:      3,
 		InnerDmgBonus:   1.5, InnerRatioR: 0.5,
@@ -116,7 +115,6 @@ func TestLaserInstantDamage(t *testing.T) {
 
 func TestWideBeamHitsMultiple(t *testing.T) {
 	tw := makeTower(tower.StyleWideBeam, 20, 200, 1)
-	tw.BeamWidth = 20 // wide beam
 	ePool := enemy.NewPool(8)
 	// Place 3 enemies in a line from tower
 	e1 := ePool.Spawn(150, 100, 100, 50, 1, "normal", nil)

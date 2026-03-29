@@ -12,13 +12,7 @@
     "potentialRange": 0,
     "attackStyle": "laser",
     "projectileSpeed": 9999,
-    "abilities": [],
-    "beam": {
-      "duration": 0.12,
-      "width": 3,
-      "color": "#f43f5e",
-      "glow": "#fda4af"
-    }
+    "abilities": []
   },
   "freeze": {
     "label": "冰冻炮台",
@@ -76,8 +70,7 @@
       "percentHpDamage",
       "stackDamage",
       "executionBonus"
-    ],
-    "beam": null
+    ]
   },
   "en-04": {
     "label": "光束照射塔",
@@ -92,12 +85,7 @@
     "potentialRange": 0,
     "attackStyle": "wideBeam",
     "projectileSpeed": 9999,
-    "abilities": [],
-    "beam": {
-      "duration": 0.15,
-      "width": 6,
-      "color": "#93c5fd"
-    }
+    "abilities": []
   },
   "en-05": {
     "label": "能量散弹塔",
