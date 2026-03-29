@@ -97,8 +97,6 @@ func TowerJSONToDef(key string, t *config.TowerJSON) tower.TowerDef {
 	def.PotentialDamage = t.PotentialDamage
 	def.PotentialSpeed = t.PotentialAttackSpeed
 	def.PotentialRange = t.PotentialRange
-	def.StrengthEffects = t.StrengthEffects
-
 	return def
 }
 

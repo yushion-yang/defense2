@@ -26,9 +26,6 @@ type TowerJSON struct {
 	BaseRange          float64 `json:"baseRange"`          // 基础射程（像素）
 	PotentialRange     float64 `json:"potentialRange"`     // 潜力射程
 
-	// 战力效果绑定（能力参数的强度缩放，如减速倍率）
-	StrengthEffects *StrengthEffectsJSON `json:"strengthEffects"`
-
 	Tags           []string            `json:"tags"`           // 标签列表（如 "energy"、"laser"）
 	Abilities      []string            `json:"abilities"`      // 能力 key 列表（引用 abilities.json）
 	BounceConfig   *BounceConfigJSON   `json:"bounceConfig"`   // 弹射配置（electric 塔）
@@ -73,24 +70,6 @@ type PierceConfigJSON struct {
 type PoisonConfigJSON struct {
 	DPS      float64 `json:"dps"`      // 每秒伤害
 	Interval float64 `json:"interval"` // 伤害间隔（秒）
-}
-
-// BindingJSON 基础值+潜力值（用于 effects 内的嵌套绑定）。
-type BindingJSON struct {
-	Base      float64 `json:"base"`      // 基础值
-	Potential float64 `json:"potential"` // 潜力值
-}
-
-// StrengthEffectsJSON 能力效果的战力绑定。
-type StrengthEffectsJSON struct {
-	SlowFactor         *BindingJSON `json:"slowFactor"`         // 减速倍率
-	PercentHp          *BindingJSON `json:"percentHp"`          // 百分比HP伤害
-	ExecutionThreshold *BindingJSON `json:"executionThreshold"` // 斩杀阈值
-	SplashRadius       *BindingJSON `json:"splashRadius"`       // 溅射半径
-	BurnDps            *BindingJSON `json:"burnDps"`            // 灼烧DPS
-	BleedDps           *BindingJSON `json:"bleedDps"`           // 流血DPS
-	StunDuration       *BindingJSON `json:"stunDuration"`       // 眩晕时长
-	BounceRange        *BindingJSON `json:"bounceRange"`        // 弹射范围
 }
 
 // BounceConfigJSON 弹射配置。
