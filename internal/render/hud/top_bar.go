@@ -268,7 +268,7 @@ func drawTopBarFull(screen *ebiten.Image, d TopBarData) {
 		Gap:      btnGap,
 		Radius:   btnR,
 		FontSize: theme.FontH2,
-	}, btnPadX)
+	})
 	lastTopBarBtnRects = result.Rects
 	lastTopBarBtnNames = names
 }

@@ -164,6 +164,78 @@ func DrawButtonRow(screen *ebiten.Image, area Rect, items []ButtonRowItem, style
 	return ButtonRowResult{Rects: rects}
 }
 
+// DrawButtonRowAutoWidth 绘制一排按钮，宽度按文本内容自适应。
+// 与 DrawButtonRow 类似但每个按钮宽度 = 文本宽度 + padding，从右侧对齐。
+func DrawButtonRowAutoWidth(screen *ebiten.Image, area Rect, items []ButtonRowItem, style ButtonRowStyle) ButtonRowResult {
+	if len(items) == 0 {
+		return ButtonRowResult{}
+	}
+	fm := render.GlobalFont()
+
+	gap := style.Gap
+	if gap <= 0 {
+		gap = 8
+	}
+	btnH := style.Height
+	if btnH <= 0 {
+		btnH = 30
+	}
+	btnR := style.Radius
+	if btnR <= 0 {
+		btnR = 10
+	}
+	fontSize := style.FontSize
+	if fontSize <= 0 {
+		fontSize = 12
+	}
+	pad := float32(16) // horizontal padding per side
+
+	// Measure widths
+	widths := make([]float32, len(items))
+	totalW := float32(0)
+	for i, item := range items {
+		tw := float32(0)
+		if fm != nil {
+			tw = float32(fm.MeasureText(item.Label, fontSize))
+		}
+		widths[i] = tw + pad*2
+		if widths[i] < 40 {
+			widths[i] = 40
+		}
+		totalW += widths[i]
+	}
+	totalW += gap * float32(len(items)-1)
+
+	// Right-align: start from area right edge
+	startX := area.X + area.W - totalW
+
+	rects := make([]Rect, len(items))
+	bx := startX
+	for i, item := range items {
+		by := area.Y
+		bw := widths[i]
+		rects[i] = Rect{X: bx, Y: by, W: bw, H: btnH}
+
+		bgClr := item.Color
+		if bgClr == nil {
+			bgClr = color.RGBA{R: 60, G: 70, B: 95, A: 255}
+		}
+		draw.RoundRect(screen, bx, by, bw, btnH, btnR, bgClr)
+
+		if fm != nil {
+			cx := float64(bx) + float64(bw)/2
+			cy := float64(by) + float64(btnH)/2
+			if item.Bold {
+				fm.DrawCenteredVBoldText(screen, item.Label, cx, cy, fontSize, color.White)
+			} else {
+				fm.DrawCenteredVText(screen, item.Label, cx, cy, fontSize, color.White)
+			}
+		}
+		bx += bw + gap
+	}
+	return ButtonRowResult{Rects: rects}
+}
+
 // HitTestButtonRow 检查点 (px,py) 命中了哪个按钮，返回索引或 -1。
 func HitTestButtonRow(rects []Rect, px, py float64) int {
 	for i, r := range rects {

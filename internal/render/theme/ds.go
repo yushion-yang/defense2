@@ -9,6 +9,12 @@ const (
 	SpaceSM = 8
 	SpaceMD = 12
 	SpaceLG = 16
+
+	// Aliases (used by ui/ package)
+	Gap4  = SpaceXS
+	Gap8  = SpaceSM
+	Gap12 = SpaceMD
+	Gap16 = SpaceLG
 )
 
 // ---------------------------------------------------------------------------
@@ -21,6 +27,12 @@ const (
 	FontMD = 14
 	FontLG = 16
 	FontXL = 18
+
+	// Semantic aliases
+	FontCaption = FontXS // 11
+	FontBody    = FontSM // 12
+	FontH2      = FontMD // 14
+	FontH1      = FontXL // 18
 )
 
 // ---------------------------------------------------------------------------

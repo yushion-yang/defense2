@@ -17,7 +17,9 @@ type ImpactVFX struct {
 	Life    float64
 	MaxLife float64
 	Active  bool
-	Large   bool // true=蓄力弹大号特效, false=通用小型特效
+	Large   bool           // true=蓄力弹大号特效, false=通用小型特效
+	Color   color.RGBA     // 扩散环颜色
+	Radius  float32        // 最大扩散半径
 }
 
 const maxImpactVFX = 16
@@ -27,14 +29,7 @@ var impactCursor int
 
 // SpawnHitImpact 在指定位置生成通用命中特效（小型扩散环）。
 func SpawnHitImpact(x, y float64) {
-	v := &impactPool[impactCursor]
-	impactCursor = (impactCursor + 1) % maxImpactVFX
-	v.X = x
-	v.Y = y
-	v.Life = 0.15
-	v.MaxLife = 0.15
-	v.Active = true
-	v.Large = false
+	spawnImpact(x, y, color.RGBA{R: 255, G: 220, B: 100, A: 200}, 12, 0.15)
 }
 
 // SpawnChargeImpact 在指定位置生成蓄力弹命中特效（大号扩散环）。
@@ -47,6 +42,38 @@ func SpawnChargeImpact(x, y float64) {
 	v.MaxLife = 0.25
 	v.Active = true
 	v.Large = true
+	v.Color = color.RGBA{R: 239, G: 68, B: 68, A: 220}
+	v.Radius = 25
+}
+
+// SpawnTypedImpact 根据攻击方式生成对应元素颜色的命中特效。
+func SpawnTypedImpact(x, y float64, attackStyle string) {
+	switch attackStyle {
+	case "scatter": // ice — blue
+		spawnImpact(x, y, color.RGBA{R: 100, G: 180, B: 255, A: 200}, 8, 0.18)
+	case "spin_aoe", "projectile": // fire/physical — orange
+		spawnImpact(x, y, color.RGBA{R: 255, G: 140, B: 40, A: 200}, 8, 0.15)
+	case "laser", "wideBeam", "pierce": // energy — purple
+		spawnImpact(x, y, color.RGBA{R: 200, G: 100, B: 255, A: 200}, 6, 0.12)
+	case "charge": // keep existing large charge impact
+		SpawnChargeImpact(x, y)
+	default: // warm yellow default
+		spawnImpact(x, y, color.RGBA{R: 255, G: 220, B: 100, A: 200}, 7, 0.15)
+	}
+}
+
+// spawnImpact 生成一个自定义颜色和半径的小型命中特效。
+func spawnImpact(x, y float64, clr color.RGBA, radius float32, life float64) {
+	v := &impactPool[impactCursor]
+	impactCursor = (impactCursor + 1) % maxImpactVFX
+	v.X = x
+	v.Y = y
+	v.Life = life
+	v.MaxLife = life
+	v.Active = true
+	v.Large = false
+	v.Color = clr
+	v.Radius = radius
 }
 
 // UpdateImpactVFX 每帧更新所有命中特效。

@@ -5,6 +5,7 @@ package render
 
 import (
 	"image/color"
+	"math"
 	"strings"
 
 	"defense2/internal/core/projectile"
@@ -24,6 +25,16 @@ func DrawProjectiles(screen *ebiten.Image, pool *projectile.Pool) {
 		cx := float32(p.X)
 		cy := float32(p.Y)
 		key := p.SourceTowerKey
+
+		// Travel angle for directional effects
+		angle := math.Atan2(p.VY, p.VX)
+
+		// --- Speed line (directional tail) for all projectiles ---
+		const tailLen = 4.0
+		tailX := p.X - math.Cos(angle)*tailLen
+		tailY := p.Y - math.Sin(angle)*tailLen
+		draw.Line(screen, cx, cy, float32(tailX), float32(tailY), 1,
+			color.RGBA{R: 255, G: 255, B: 255, A: 80}, true)
 
 		// 特殊弹丸类型优先判断
 		switch {
@@ -50,8 +61,9 @@ func DrawProjectiles(screen *ebiten.Image, pool *projectile.Pool) {
 				theme.ProjDefaultR, theme.ProjRapid)
 
 		case strings.Contains(key, "freeze"):
-			draw.Diamond(screen, cx, cy,
-				theme.ProjDefaultR+1, 1.5, theme.ProjFreeze)
+			// Rotate diamond to point in travel direction
+			draw.DiamondRotated(screen, cx, cy,
+				theme.ProjDefaultR+1, 1.5, angle, theme.ProjFreeze)
 
 		case strings.Contains(key, "wind"):
 			draw.FilledCircle(screen, cx, cy,

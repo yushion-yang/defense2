@@ -120,6 +120,7 @@ type StageOptions struct {
 // StageScene 游戏主场景，包含所有运行时游戏状态。
 type StageScene struct {
 	switcher          Switcher                     // 场景切换器引用
+	bus               *event.Bus                   // 事件总线（从 Switcher 获取）
 	session           *gamemode.Session            // 游戏模式会话
 	modeID            string                       // 模式 ID（用于重玩）
 	diffID            string                       // 难度 ID（用于重玩）
@@ -381,10 +382,79 @@ func NewStageSceneWithOpts(sw Switcher, opts StageOptions) *StageScene {
 		s.spawnAllStatic()
 	}
 
+	// 事件总线订阅
+	s.bus = sw.EventBus()
+	s.subscribeBus()
+
 	// 触发教程首步
 	tut.OnEvent("gameStart")
 
 	return s
+}
+
+// subscribeBus 注册所有事件总线订阅。
+// 注册顺序即执行顺序，关键路径（如 gold 变更）应在统计类订阅之前。
+func (s *StageScene) subscribeBus() {
+	bus := s.bus
+
+	// ── 塔事件 ──────────────────────────────────
+	event.OnTyped(bus, event.EvtTowerBuilt, func(p event.TowerBuiltPayload) {
+		s.session.OnTowerBuilt()
+		s.audioMgr.PlaySafe(gameAudio.SFXBuild)
+		s.tutorial.OnEvent("towerBuilt")
+	})
+	event.OnTyped(bus, event.EvtTowerUpgraded, func(_ event.TowerUpgradedPayload) {
+		s.audioMgr.PlaySafe(gameAudio.SFXUpgrade)
+	})
+	event.OnTyped(bus, event.EvtTowerSold, func(_ event.TowerSoldPayload) {
+		s.audioMgr.PlaySafe(gameAudio.SFXTowerSell)
+	})
+
+	// ── 波次事件 ─────────────────────────────────
+	event.OnTyped(bus, event.EvtWaveStarted, func(p event.WaveStartedPayload) {
+		s.session.OnWaveStart(p.Wave, s.buildModeCtx())
+		s.audioMgr.PlaySafe(gameAudio.SFXWaveStart)
+		if p.IsBoss {
+			s.audioMgr.PlaySafe(gameAudio.SFXBossEnter)
+		}
+		s.waveAnnounce.Trigger(p.Wave, s.spawner.MaxWaves, p.IsBoss)
+		s.tutorial.OnEvent("waveStarted")
+	})
+	event.OnTyped(bus, event.EvtWaveCleared, func(p event.WaveClearedPayload) {
+		if s.wardenReady && s.wardenUnit != nil {
+			s.wardenUnit.OnWaveClear()
+		}
+		if p.Perfect {
+			s.audioMgr.PlaySafe(gameAudio.SFXWaveClearPerfect)
+		} else {
+			s.audioMgr.PlaySafe(gameAudio.SFXWaveClear)
+		}
+		s.tutorial.OnEvent("waveCleared")
+	})
+
+	// ── 敌人事件 ─────────────────────────────────
+	event.OnTyped(bus, event.EvtEnemyLeaked, func(_ event.EnemyLeakedPayload) {
+		s.session.OnEnemyLeaked(s.buildModeCtx())
+		s.audioMgr.PlaySafe(gameAudio.SFXEnemyLeak)
+	})
+	event.OnTyped(bus, event.EvtEnemyKilled, func(p event.EnemyKilledPayload) {
+		s.kills++
+		s.gold += p.GoldValue
+		s.session.OnEnemyKilled(p.IsBoss, s.buildModeCtx())
+		s.tutorial.OnEvent("enemyKilled")
+		if s.wardenReady && s.wardenUnit != nil {
+			s.wardenUnit.OnKill()
+		}
+	})
+}
+
+// emitKill 统一发出击杀事件（弹射物/战灵/技能共用）。
+func (s *StageScene) emitKill(isBoss bool, killerID string) {
+	s.bus.Emit(event.EvtEnemyKilled, event.EnemyKilledPayload{
+		IsBoss:    isBoss,
+		KillerID:  killerID,
+		GoldValue: s.econ.KillGold() + s.killRewardBonus,
+	})
 }
 
 // buildModeCtx 构建游戏模式上下文快照。
@@ -854,7 +924,7 @@ func (s *StageScene) tryUpgradeTower() {
 	if t.Strength != nil {
 		t.Strength.AddPermanent(10)
 	}
-	s.audioMgr.PlaySafe(gameAudio.SFXUpgrade)
+	s.bus.Emit(event.EvtTowerUpgraded, event.TowerUpgradedPayload{TowerKey: t.Key, Spent: spent})
 	s.showNotify(fmt.Sprintf("强度+10 (-$%d)", spent))
 }
 
@@ -978,9 +1048,7 @@ func (s *StageScene) tryPlaceTower(px, py float64) bool {
 	}
 	s.gold -= cost
 	render.InvalidateMapCache() // slot occupancy changed
-	s.session.OnTowerBuilt()
-	s.audioMgr.PlaySafe(gameAudio.SFXBuild)
-	s.tutorial.OnEvent("towerBuilt")
+	s.bus.Emit(event.EvtTowerBuilt, event.TowerBuiltPayload{TowerKey: def.Key, Cost: cost})
 	return true
 }
 
@@ -1007,7 +1075,7 @@ func (s *StageScene) trySellTower(px, py float64) {
 	t.Selling = true
 	particle.EmitGoldCollect(s.particlePool, t.X, t.Y)
 	s.selectedTower = nil
-	s.audioMgr.PlaySafe(gameAudio.SFXTowerSell)
+	s.bus.Emit(event.EvtTowerSold, event.TowerSoldPayload{TowerKey: t.Key, Refund: refund})
 	s.showNotify(fmt.Sprintf("Sold +$%d", refund))
 }
 
@@ -1242,14 +1310,9 @@ func (s *StageScene) updatePlaying() {
 	s.spawner.Update(s.enemies, gameDT)
 	if s.spawner.Wave > prevWave {
 		s.waveLivesSnapshot = s.lives
-		s.session.OnWaveStart(s.spawner.Wave, s.buildModeCtx())
-		s.audioMgr.PlaySafe(gameAudio.SFXWaveStart)
-		isBossWave := s.spawner.Wave%5 == 0
-		if isBossWave {
-			s.audioMgr.PlaySafe(gameAudio.SFXBossEnter)
-		}
-		s.waveAnnounce.Trigger(s.spawner.Wave, s.spawner.MaxWaves, isBossWave)
-		s.tutorial.OnEvent("waveStarted")
+		s.bus.Emit(event.EvtWaveStarted, event.WaveStartedPayload{
+			Wave: s.spawner.Wave, IsBoss: s.spawner.Wave%5 == 0,
+		})
 	}
 
 	// 波次公告动画更新
@@ -1267,10 +1330,9 @@ func (s *StageScene) updatePlaying() {
 		}
 		if enemy.MoveAlongPath(e, s.gameMap.Waypoints, gameDT) {
 			s.lives--
-			s.session.OnEnemyLeaked(s.buildModeCtx())
 			s.enemies.KillImmediate(e) // leaked enemies vanish instantly, no dying anim
-			s.audioMgr.PlaySafe(gameAudio.SFXEnemyLeak)
 			s.postPipeline.Effects.TriggerHitFlash(0.15)
+			s.bus.Emit(event.EvtEnemyLeaked, event.EnemyLeakedPayload{})
 		}
 	})
 
@@ -1291,10 +1353,9 @@ func (s *StageScene) updatePlaying() {
 			Towers:      s.towers,
 			Projectiles: s.projectiles,
 			DT:          gameDT,
-			OnKill: func() {
-				s.kills++
-				s.gold += s.econ.KillGold() + s.killRewardBonus
+			OnKill: func(e *enemy.Enemy) {
 				s.audioMgr.PlaySafe(gameAudio.SFXEnemyDeath)
+				s.emitKill(e.Boss, "warden")
 			},
 			OnFire: func() {
 				s.audioMgr.PlayThrottled(gameAudio.SFXWardenFire, 100)
@@ -1472,6 +1533,7 @@ func (s *StageScene) updatePlaying() {
 			} else {
 				s.audioMgr.PlayThrottled(gameAudio.SFXEnemyDeath, 50)
 			}
+			s.emitKill(e.Boss, "projectile") // 统一击杀事件：kills/gold/session/tutorial/warden
 		} else {
 			// 命中音效：per-sound 节流，优先按敌人状态区分
 			switch {
@@ -1484,18 +1546,8 @@ func (s *StageScene) updatePlaying() {
 			}
 		}
 	})
-	s.kills += kills
-	killGold := s.econ.KillGold() + s.killRewardBonus
-	s.gold += kills * killGold
-	if kills > 0 {
-		s.tutorial.OnEvent("enemyKilled")
-		for i := 0; i < kills; i++ {
-			s.session.OnEnemyKilled(false, s.buildModeCtx()) // TODO: pass actual boss flag per enemy
-			if s.wardenReady && s.wardenUnit != nil {
-				s.wardenUnit.OnKill()
-			}
-		}
-	}
+	// 击杀统计/金币/session/tutorial/warden 由 emitKill → Bus 订阅者统一处理
+	_ = kills
 
 	// 8.5. Bleed drip particles for bleeding enemies
 	s.enemies.Each(func(e *enemy.Enemy) {
@@ -1533,26 +1585,26 @@ func (s *StageScene) updatePlaying() {
 	// 10. 波次完成奖励 + 事件触发
 	if s.spawner.Wave > prevWave && prevWave > 0 {
 		ctx := s.buildModeCtx()
+		// session 直调（有返回值 WaveClearResult）
 		result := s.session.OnWaveCleared(prevWave, ctx)
 		interest := s.econ.InterestGold(s.gold)
 		totalBonus := result.BonusGold + result.PerfectBonus + interest
 		s.gold += totalBonus
-		if s.wardenReady && s.wardenUnit != nil {
-			s.wardenUnit.OnWaveClear()
-		}
-		if s.lives == s.waveLivesSnapshot && result.PerfectBonus > 0 {
-			s.audioMgr.PlaySafe(gameAudio.SFXWaveClearPerfect)
+		perfect := s.lives == s.waveLivesSnapshot && result.PerfectBonus > 0
+		if perfect {
 			render.SpawnText(float64(game.ScreenWidth)/2, float64(game.ScreenHeight)/2-50,
 				"PERFECT!", color.RGBA{255, 215, 0, 255}, 20, 2.0)
-		} else {
-			s.audioMgr.PlaySafe(gameAudio.SFXWaveClear)
 		}
 		msg := result.Message
 		if interest > 0 {
 			msg += fmt.Sprintf(" +$%d interest", interest)
 		}
 		s.showNotify(msg)
-		s.tutorial.OnEvent("waveCleared")
+
+		// 通知订阅者（audio/warden/tutorial）
+		s.bus.Emit(event.EvtWaveCleared, event.WaveClearedPayload{
+			Wave: prevWave, Perfect: perfect,
+		})
 
 		// 检查是否是事件奖励波次（仅启用事件的模式）
 		if s.session.Mode.EnableEvents() {
@@ -2105,18 +2157,14 @@ func (s *StageScene) buildSkillContext() *skill.SkillContext {
 		OnHit: func(e *enemy.Enemy, dmg float64, killed bool) {
 			render.SpawnDamageText(e.X, e.Y-10, dmg, dmg >= 50)
 			if killed {
-				s.kills++
-				s.gold += s.econ.KillGold() + s.killRewardBonus
 				s.audioMgr.PlaySafe(gameAudio.SFXEnemyDeath)
+				s.emitKill(e.Boss, "skill") // 统一击杀事件
 			}
 		},
 		OnActivate: func(skillKey string) {
 			if sfx := gameAudio.SkillSFX(skillKey); sfx != "" {
 				s.audioMgr.PlaySafe(sfx)
 			}
-		},
-		PlaySFX: func(name string) {
-			s.audioMgr.PlayThrottled(name, 300)
 		},
 	}
 }

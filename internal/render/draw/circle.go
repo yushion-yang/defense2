@@ -67,6 +67,30 @@ func Diamond(screen *ebiten.Image, cx, cy, r, width float32, clr color.Color) {
 	vector.StrokeLine(screen, left[0], left[1], top[0], top[1], sw, clr, true)
 }
 
+// DiamondRotated draws a diamond outline rotated by angle (radians) around its center.
+func DiamondRotated(screen *ebiten.Image, cx, cy, r, width float32, angle float64, clr color.Color) {
+	scx, scy, sr, sw := S32(cx), S32(cy), S32(r), S32(width)
+	cos, sin := float32(math.Cos(angle)), float32(math.Sin(angle))
+
+	// Diamond vertices relative to center, then rotate
+	offsets := [4][2]float32{
+		{0, -sr},  // top
+		{sr, 0},   // right
+		{0, sr},   // bottom
+		{-sr, 0},  // left
+	}
+	var pts [4][2]float32
+	for i, o := range offsets {
+		pts[i][0] = scx + o[0]*cos - o[1]*sin
+		pts[i][1] = scy + o[0]*sin + o[1]*cos
+	}
+
+	vector.StrokeLine(screen, pts[0][0], pts[0][1], pts[1][0], pts[1][1], sw, clr, true)
+	vector.StrokeLine(screen, pts[1][0], pts[1][1], pts[2][0], pts[2][1], sw, clr, true)
+	vector.StrokeLine(screen, pts[2][0], pts[2][1], pts[3][0], pts[3][1], sw, clr, true)
+	vector.StrokeLine(screen, pts[3][0], pts[3][1], pts[0][0], pts[0][1], sw, clr, true)
+}
+
 // ThickLine draws a thick line with round caps from (x1,y1) to (x2,y2).
 func ThickLine(screen *ebiten.Image, x1, y1, x2, y2, width float32, clr color.Color) {
 	var path vector.Path

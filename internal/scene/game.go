@@ -5,14 +5,17 @@ package scene
 import (
 	"image/color"
 	"log"
+	"strconv"
 
 	gameAudio "defense2/internal/audio"
 	"defense2/internal/config"
+	"defense2/internal/core/event"
 	"defense2/internal/core/game"
 	"defense2/internal/core/tower/abilities"
 	"defense2/internal/render"
 	"defense2/internal/render/draw"
 	"defense2/internal/render/postprocess"
+	"defense2/internal/render/theme"
 
 	"github.com/hajimehoshi/ebiten/v2"
 )
@@ -36,6 +39,7 @@ type Game struct {
 	width    int                // 逻辑宽度
 	height   int                // 逻辑高度
 	audioMgr *gameAudio.Manager // 全局音效管理器（跨场景复用）
+	bus      *event.Bus         // 全局事件总线（跨场景复用）
 
 	// 场景过渡
 	transState  transitionState // 当前过渡状态
@@ -55,6 +59,7 @@ func NewGame() *Game {
 		width:    game.ScreenWidth,
 		height:   game.ScreenHeight,
 		audioMgr: initAudio(),
+		bus:      event.NewBus(),
 	}
 	g.current = NewSelectScene(g)
 	return g
@@ -63,6 +68,11 @@ func NewGame() *Game {
 // AudioManager 返回全局音效管理器（实现 Switcher 接口）。
 func (g *Game) AudioManager() *gameAudio.Manager {
 	return g.audioMgr
+}
+
+// EventBus 返回全局事件总线（实现 Switcher 接口）。
+func (g *Game) EventBus() *event.Bus {
+	return g.bus
 }
 
 // initFont 初始化全局双字体管理器（JetBrains Mono + Noto Sans SC 回退）。
@@ -115,7 +125,8 @@ func (g *Game) Update() error {
 		g.transAlpha += transSpeed
 		if g.transAlpha >= 1.0 {
 			g.transAlpha = 1.0
-			// 淡出完成：切换场景，开始淡入
+			// 淡出完成：清除旧场景订阅，切换场景，开始淡入
+			g.bus.Clear()
 			g.current = g.pendingNext
 			g.pendingNext = nil
 			g.transState = transFadeIn
@@ -141,6 +152,16 @@ func (g *Game) Draw(screen *ebiten.Image) {
 		w := float32(screen.Bounds().Dx())
 		h := float32(screen.Bounds().Dy())
 		draw.FilledRect(screen, 0, 0, w, h, color.RGBA{0, 0, 0, a}, false)
+	}
+
+	// 常驻 FPS 显示（左下角）
+	if fm := render.GlobalFont(); fm != nil {
+		fps := int(ebiten.ActualFPS() + 0.5)
+		var buf [16]byte
+		b := buf[:0]
+		b = append(b, "FPS: "...)
+		b = strconv.AppendInt(b, int64(fps), 10)
+		fm.DrawText(screen, string(b), 4, float64(game.ScreenHeight)-4-float64(theme.FontCaption), theme.FontCaption, theme.TextMuted)
 	}
 }
 

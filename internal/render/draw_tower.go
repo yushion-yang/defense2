@@ -208,7 +208,7 @@ func (tr *TowerRenderer) DrawTowers(screen *ebiten.Image, pool *tower.Pool, sele
 			if fm := GlobalFont(); fm != nil {
 				fm.DrawCenteredText(screen, t.Label,
 					float64(cx), float64(cy)+theme.TowerNameLabelY,
-					theme.FontCaption, theme.TowerNameLabel)
+					theme.FontTowerName, theme.TowerNameLabel)
 			}
 		}
 
