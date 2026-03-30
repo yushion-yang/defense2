@@ -33,7 +33,7 @@ type TickContext struct {
 	Towers      *tower.Pool                        // 场上塔池
 	Projectiles *projectile.Pool                   // 弹射物池（供战灵发射弹射物）
 	DT          float64                            // 帧时间步长（秒）
-	OnKill      func()                             // 击杀回调（通知场景计分/奖金）
+	OnKill      func(e *enemy.Enemy)               // 击杀回调（通知场景计分/奖金）
 	OnFire      func()                             // 普攻射击回调（音效）
 	OnSpecial   func()                             // 特殊能力施放回调（音效）
 	OnDamage    func(x, y, dmg float64, crit bool) // 伤害回调（浮字+特效，统一入口）

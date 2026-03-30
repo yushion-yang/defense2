@@ -262,7 +262,7 @@ func ApplyDamage(ctx *TickContext, e *enemy.Enemy, dmg float64, crit bool) {
 	if e.HP <= 0 && e.Active {
 		e.Active = false
 		if ctx.OnKill != nil {
-			ctx.OnKill()
+			ctx.OnKill(e)
 		}
 	}
 }
