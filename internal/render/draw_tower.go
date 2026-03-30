@@ -40,6 +40,39 @@ func NewTowerRenderer(assetFS AssetReader) *TowerRenderer {
 
 const towerSpriteSize = 64 // display size in pixels, matching theme.TowerBaseSize
 
+// overshootEase returns an easing that overshoots to ~1.1 then settles at 1.0.
+func overshootEase(t float64) float64 {
+	if t < 0.7 {
+		return (t / 0.7) * 1.1
+	}
+	return 1.1 - 0.1*((t-0.7)/0.3)
+}
+
+// towerAnimScaleAlpha computes the scale multiplier and alpha for build/sell animations.
+// Returns (scaleMul, alpha) where scaleMul=1 and alpha=1 mean no animation active.
+func towerAnimScaleAlpha(t *tower.Tower) (float64, float64) {
+	// Sell animation: expand slightly then shrink to 0
+	if t.Selling && t.SellAnim > 0 {
+		progress := 1.0 - t.SellAnim/0.25 // 0→1
+		var scale float64
+		if progress < 0.2 {
+			scale = 1.0 + progress*1.0 // 1.0 → 1.2
+		} else {
+			scale = 1.2 * (1.0 - (progress-0.2)/0.8) // 1.2 → 0
+		}
+		alpha := 1.0 - progress
+		return scale, alpha
+	}
+	// Build animation: overshoot bounce in
+	if t.BuildAnim > 0 {
+		progress := 1.0 - t.BuildAnim/0.3 // 0→1
+		scale := overshootEase(progress)
+		alpha := progress // fade in
+		return scale, alpha
+	}
+	return 1.0, 1.0
+}
+
 // DrawTowers renders all placed towers.
 func (tr *TowerRenderer) DrawTowers(screen *ebiten.Image, pool *tower.Pool, selectedTower *tower.Tower, animTime float64) {
 	pool.Each(func(t *tower.Tower) {
@@ -47,8 +80,20 @@ func (tr *TowerRenderer) DrawTowers(screen *ebiten.Image, pool *tower.Pool, sele
 		cy := float32(t.Y)
 		selected := selectedTower != nil && t == selectedTower
 
-		// --- Selection ring & range indicator (selected tower only) ---
-		if selected {
+		// Compute animation scale and alpha
+		animScale, animAlpha := towerAnimScaleAlpha(t)
+
+		// --- Build ripple effect (expanding white ring) ---
+		if t.BuildAnim > 0 {
+			progress := 1.0 - t.BuildAnim/0.3
+			ringR := float32(10 + 20*progress) // 10 → 30
+			ringA := uint8(float64(150) * (1 - progress))
+			draw.CircleOutline(screen, cx, cy, ringR, 2,
+				color.RGBA{255, 255, 255, ringA})
+		}
+
+		// --- Selection ring & range indicator (selected tower only, skip during sell) ---
+		if selected && !t.Selling {
 			draw.CircleOutline(screen, cx, cy,
 				theme.TowerSelectionRingR, theme.TowerSelectionWidth, theme.TowerSelectionRing)
 			draw.CircleOutline(screen, cx, cy,
@@ -56,8 +101,9 @@ func (tr *TowerRenderer) DrawTowers(screen *ebiten.Image, pool *tower.Pool, sele
 		}
 
 		// --- Ground shadow (dark ellipse below tower) ---
+		shadowAlpha := uint8(float64(30) * animAlpha)
 		draw.FilledCircle(screen, cx, cy+float32(towerSpriteSize*0.35),
-			float32(towerSpriteSize*0.35), color.RGBA{0, 0, 0, 30})
+			float32(float64(towerSpriteSize*0.35)*animScale), color.RGBA{0, 0, 0, shadowAlpha})
 
 		// --- Tower body (animated or static, rotated toward target) ---
 		// spin_aoe / summon 不旋转朝向目标
@@ -69,24 +115,40 @@ func (tr *TowerRenderer) DrawTowers(screen *ebiten.Image, pool *tower.Pool, sele
 		img := tr.getTowerFrame(t, 1.0/60.0)
 		if img != nil {
 			logicalScale := float64(towerSpriteSize) / float64(img.Bounds().Dx())
-			// 射击缩放脉冲：射击瞬间放大 15%，快速恢复
-			if t.FireAnim > 0 {
+			// 射击缩放脉冲：射击瞬间放大 15%，快速恢复（skip during build/sell anim）
+			if t.FireAnim > 0 && t.BuildAnim <= 0 && !t.Selling {
 				pulse := 1.0 + 0.15*(t.FireAnim/0.15)
 				logicalScale *= pulse
 			}
-			draw.SpriteScaledRotated(screen, img, float64(cx), float64(cy), logicalScale, rotation)
+			// Apply build/sell animation scale
+			logicalScale *= animScale
+			if animAlpha < 1.0 {
+				draw.SpriteScaledRotatedAlpha(screen, img, float64(cx), float64(cy), logicalScale, rotation, animAlpha)
+			} else {
+				draw.SpriteScaledRotated(screen, img, float64(cx), float64(cy), logicalScale, rotation)
+			}
 		} else {
 			// Fallback: circle body + barrel rectangle
 			bodyClr := theme.TowerFallbackDef
 			if selected {
 				bodyClr = theme.TowerFallbackSel
 			}
-			draw.FilledCircle(screen, cx, cy, theme.TowerFallbackRadius, bodyClr)
-			draw.FilledRect(screen, cx-4, cy-14, 8, 14, theme.TowerBarrel, true)
+			// Apply alpha to fallback colors
+			if animAlpha < 1.0 {
+				bodyClr.A = uint8(float64(bodyClr.A) * animAlpha)
+			}
+			draw.FilledCircle(screen, cx, cy, float32(float64(theme.TowerFallbackRadius)*animScale), bodyClr)
+			barrelClr := theme.TowerBarrel
+			if animAlpha < 1.0 {
+				barrelClr.A = uint8(float64(barrelClr.A) * animAlpha)
+			}
+			bw := float32(8 * animScale)
+			bh := float32(14 * animScale)
+			draw.FilledRect(screen, cx-bw/2, cy-bh, bw, bh, barrelClr, true)
 		}
 
 		// --- Charge visual: red glow at muzzle position (follows aim angle) ---
-		if t.AttackStyleID == tower.StyleCharge && (t.ChargeProgress > 0 || t.ChargeReady) {
+		if !t.Selling && t.BuildAnim <= 0 && t.AttackStyleID == tower.StyleCharge && (t.ChargeProgress > 0 || t.ChargeReady) {
 			progress := t.ChargeProgress
 			if progress > 1 {
 				progress = 1
@@ -120,32 +182,34 @@ func (tr *TowerRenderer) DrawTowers(screen *ebiten.Image, pool *tower.Pool, sele
 		}
 
 		// --- Spin AoE visual: rotating blade arcs + inner zone highlight ---
-		if t.AttackStyleID == tower.StyleSpinAoE && t.SpinActive > 0 {
-			alpha := t.SpinActive / 0.3
-			if alpha > 1 {
-				alpha = 1
+		if !t.Selling && t.BuildAnim <= 0 && t.AttackStyleID == tower.StyleSpinAoE && t.SpinActive > 0 {
+			a := t.SpinActive / 0.3
+			if a > 1 {
+				a = 1
 			}
 			outerR := float32(t.Range)
 			innerR := float32(t.Range * 0.5) // spin_aoe 内圈半径比例
 
 			// 4 条旋转弧线
 			for i := 0; i < 4; i++ {
-				a := t.SpinAngle + float64(i)*math.Pi/2
+				ang := t.SpinAngle + float64(i)*math.Pi/2
 				arcR := outerR
-				clr := color.RGBA{R: 163, G: 230, B: 53, A: uint8(100 * alpha)}
-				draw.Arc(screen, cx, cy, arcR, float32(a-0.3), float32(a+0.3), 3, clr)
+				clr := color.RGBA{R: 163, G: 230, B: 53, A: uint8(100 * a)}
+				draw.Arc(screen, cx, cy, arcR, float32(ang-0.3), float32(ang+0.3), 3, clr)
 			}
 
 			// 内圈半透明填充
-			innerClr := color.RGBA{R: 134, G: 239, B: 172, A: uint8(20 * alpha)}
+			innerClr := color.RGBA{R: 134, G: 239, B: 172, A: uint8(20 * a)}
 			draw.FilledCircle(screen, cx, cy, innerR, innerClr)
 		}
 
-		// --- Name label ---
-		if fm := GlobalFont(); fm != nil {
-			fm.DrawCenteredText(screen, t.Label,
-				float64(cx), float64(cy)+theme.TowerNameLabelY,
-				theme.FontCaption, theme.TowerNameLabel)
+		// --- Name label (skip during sell animation) ---
+		if !t.Selling {
+			if fm := GlobalFont(); fm != nil {
+				fm.DrawCenteredText(screen, t.Label,
+					float64(cx), float64(cy)+theme.TowerNameLabelY,
+					theme.FontCaption, theme.TowerNameLabel)
+			}
 		}
 
 		// Tower struct has no Buffs field — buff dots rendering skipped.

@@ -934,7 +934,11 @@ func (s *StageScene) towerAtPixel(px, py float64) *tower.Tower {
 	if fx < 0 || fy < 0 {
 		return nil
 	}
-	return s.towers.At(int(fy), int(fx))
+	t := s.towers.At(int(fy), int(fx))
+	if t != nil && t.Selling {
+		return nil // selling towers are not selectable
+	}
+	return t
 }
 
 // tryPlaceTower 尝试在像素位置放置当前选中类型的塔。
@@ -969,6 +973,7 @@ func (s *StageScene) tryPlaceTower(px, py float64) bool {
 	if placed != nil {
 		placed.Strength = strength.NewStrengthData()
 		placed.RecalcStats() // 用强度100计算初始属性
+		placed.BuildAnim = 0.3 // build-in animation
 	}
 	s.gold -= cost
 	render.InvalidateMapCache() // slot occupancy changed
@@ -979,6 +984,7 @@ func (s *StageScene) tryPlaceTower(px, py float64) bool {
 }
 
 // trySellTower 尝试出售像素位置上的塔。
+// 不立即删除，而是启动出售动画，动画结束后由 updatePlaying 移除。
 func (s *StageScene) trySellTower(px, py float64) {
 	gm := s.gameMap
 	cs := float64(gm.CellSize)
@@ -990,13 +996,15 @@ func (s *StageScene) trySellTower(px, py float64) {
 	col := int(fx)
 	row := int(fy)
 	t := s.towers.At(row, col)
-	if t == nil {
+	if t == nil || t.Selling {
 		return
 	}
 	refund := s.econ.SellRefund(t.Cost)
 	s.gold += refund
-	s.towers.Remove(t)
-	render.InvalidateMapCache() // slot occupancy changed
+	// Start sell animation instead of immediate removal
+	t.SellAnim = 0.25
+	t.Selling = true
+	particle.EmitGoldCollect(s.particlePool, t.X, t.Y)
 	s.selectedTower = nil
 	s.audioMgr.PlaySafe(gameAudio.SFXTowerSell)
 	s.showNotify(fmt.Sprintf("Sold +$%d", refund))
@@ -1313,6 +1321,23 @@ func (s *StageScene) updatePlaying() {
 			skill.TickEntitySkill(s.wardenUnit.Skill, base, enemySlice, gameDT, s.buildSkillContext())
 		}
 	}
+
+	// 5.5. 塔建造/出售动画 tick
+	s.towers.Each(func(t *tower.Tower) {
+		if t.BuildAnim > 0 {
+			t.BuildAnim -= gameDT
+			if t.BuildAnim < 0 {
+				t.BuildAnim = 0
+			}
+		}
+		if t.SellAnim > 0 {
+			t.SellAnim -= gameDT
+			if t.SellAnim <= 0 {
+				s.towers.Remove(t)
+				render.InvalidateMapCache()
+			}
+		}
+	})
 
 	// 6. 能力 tick（重置属性 + 光环 buff + 区域效果 + 经济产出）
 	// 必须在索敌射击之前执行，确保 Range 等属性是本帧最新值

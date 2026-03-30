@@ -29,6 +29,11 @@ func TickTowerCombat(towers *tower.Pool, enemies *enemy.Pool, projectiles *proje
 	}
 
 	towers.Each(func(t *tower.Tower) {
+		// 正在出售的塔跳过战斗
+		if t.Selling {
+			return
+		}
+
 		// 射击动画衰减
 		if t.FireAnim > 0 {
 			t.FireAnim -= dt

@@ -66,6 +66,9 @@ func (p *Pool) Place(row, col int, cx, cy float64, def TowerDef) *Tower {
 			t.AuraPulse = 0
 			t.Branch = ""
 			t.Target = nil
+			t.BuildAnim = 0
+			t.SellAnim = 0
+			t.Selling = false
 			t.Strength = strength.NewStrengthData() // Base=100，确保强度系统从放置起就生效
 			t.Buffs = nil
 			t.Skill = nil

@@ -40,6 +40,9 @@ func TickTowerAbilities(towers *tower.Pool, enemies *enemy.Pool, dt float64) int
 		DT:      dt,
 	}
 	towers.Each(func(t *tower.Tower) {
+		if t.Selling {
+			return // selling towers skip abilities
+		}
 		for _, aName := range t.Abilities {
 			ab, ok := tower.Registry[aName]
 			if !ok {
@@ -71,7 +74,7 @@ func TickTowerSkills(towers *tower.Pool, enemies *enemy.Pool, dt float64, ctx *s
 		// 每帧重置技能压制标志
 		t.SkillSuppressFire = false
 
-		if t.Skill == nil {
+		if t.Selling || t.Skill == nil {
 			return
 		}
 		suppress := skill.TickEntitySkill(t.Skill, t, enemySlice, dt, ctx)

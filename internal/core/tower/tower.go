@@ -90,6 +90,11 @@ type Tower struct {
 	// 技能系统
 	Skill             *skill.SkillState // 挂载的技能（nil = 无）
 	SkillSuppressFire bool              // 本帧技能压制普攻（每帧重置）
+
+	// 建造/出售动画
+	BuildAnim float64 // >0 during build-in animation (seconds remaining, starts at 0.3)
+	SellAnim  float64 // >0 during sell-out animation (seconds remaining, starts at 0.25)
+	Selling   bool    // true when tower is in sell animation (skip gameplay logic)
 }
 
 // ── 技能 Owner 接口实现 ──

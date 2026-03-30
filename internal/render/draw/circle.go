@@ -158,6 +158,26 @@ func SpriteScaledRotated(screen, img *ebiten.Image, cx, cy, logicalScale, rotati
 	screen.DrawImage(img, &op)
 }
 
+// SpriteScaledRotatedAlpha draws an image centered at logical (cx, cy) with scale, rotation, and alpha.
+// alpha is 0.0 (transparent) to 1.0 (opaque).
+func SpriteScaledRotatedAlpha(screen, img *ebiten.Image, cx, cy, logicalScale, rotation, alpha float64) {
+	if img == nil || alpha <= 0 {
+		return
+	}
+	w := float64(img.Bounds().Dx())
+	h := float64(img.Bounds().Dy())
+	s := logicalScale * Scale
+	var op ebiten.DrawImageOptions
+	op.GeoM.Translate(-w/2, -h/2)
+	op.GeoM.Rotate(rotation)
+	op.GeoM.Scale(s, s)
+	op.GeoM.Translate(cx*Scale, cy*Scale)
+	if alpha < 1.0 {
+		op.ColorScale.ScaleAlpha(float32(alpha))
+	}
+	screen.DrawImage(img, &op)
+}
+
 // Arc draws a stroked arc (partial circle outline) from startAngle to endAngle (radians).
 func Arc(screen *ebiten.Image, cx, cy, r, startAngle, endAngle, width float32, clr color.Color) {
 	if r <= 0 {
