@@ -1,5 +1,10 @@
 // draw_map.go — 地图渲染。
 // 绘制渐变背景、点阵网格、路径连线（粗线+虚线）、塔槽位圆圈、入口/基地标签。
+//
+// The full map is cached to an offscreen image and only re-rendered when
+// buildMode changes or InvalidateMapCache() is called (e.g. on map load).
+// Animated elements (slot pulse) use a fixed animTime=0 in the cache;
+// the visual impact is negligible and avoids per-frame re-draws (~80 calls).
 package render
 
 import (
@@ -34,19 +39,75 @@ func ensureBg() *draw.CachedGradient {
 }
 
 // ---------------------------------------------------------------------------
+// Map cache — full map rendered to offscreen image, invalidated on demand.
+// ---------------------------------------------------------------------------
+
+var (
+	mapCache         *ebiten.Image
+	mapCacheDirty    = true
+	mapCacheLastBuild bool // tracks the buildMode used to render the cache
+)
+
+// InvalidateMapCache forces the map to be re-rendered on the next DrawMap call.
+// Call this when the map layout changes (new map loaded, path modified, etc.).
+func InvalidateMapCache() {
+	mapCacheDirty = true
+}
+
+// ---------------------------------------------------------------------------
 // DrawMap renders the full map: background, path, tower slots, labels.
 // ---------------------------------------------------------------------------
 
 // DrawMap 渲染地图：渐变背景 + 点阵 → 路径粗线 + 虚线 → 塔槽位 → 入口/基地标签。
+// The result is cached offscreen; only re-rendered when buildMode changes or
+// the cache is explicitly invalidated via InvalidateMapCache().
 //
 // Parameters:
 //   - screen: 目标画布
 //   - gm: 运行时地图
 //   - fm: 字体管理器（用于绘制入口/基地标签）；可为 nil（跳过标签）
-//   - animTime: 动画时间（秒），用于建塔模式空槽位脉冲动画
+//   - animTime: 动画时间（秒），用于建塔模式空槽位脉冲动画（缓存时使用固定值 0）
 //   - towerAt: 返回指定格子 (row, col) 是否有塔；可为 nil（全部视为空槽）
 //   - buildMode: 是否处于建塔模式（显示高亮空槽+加号）
 func DrawMap(
+	screen *ebiten.Image,
+	gm *gamemap.GameMap,
+	fm *FontManager,
+	animTime float64,
+	towerAt func(row, col int) bool,
+	buildMode bool,
+) {
+	w, h := screen.Bounds().Dx(), screen.Bounds().Dy()
+
+	needRedraw := mapCacheDirty || mapCache == nil || buildMode != mapCacheLastBuild
+	if mapCache != nil {
+		cw, ch := mapCache.Bounds().Dx(), mapCache.Bounds().Dy()
+		if cw != w || ch != h {
+			needRedraw = true
+		}
+	}
+
+	if needRedraw {
+		if mapCache != nil && (mapCache.Bounds().Dx() != w || mapCache.Bounds().Dy() != h) {
+			mapCache.Deallocate()
+			mapCache = nil
+		}
+		if mapCache == nil {
+			mapCache = ebiten.NewImage(w, h)
+		} else {
+			mapCache.Clear()
+		}
+		// Render with animTime=0 so the cache is static (no pulse animation).
+		drawMapFull(mapCache, gm, fm, 0, towerAt, buildMode)
+		mapCacheDirty = false
+		mapCacheLastBuild = buildMode
+	}
+
+	screen.DrawImage(mapCache, nil)
+}
+
+// drawMapFull renders the entire map to the given target image.
+func drawMapFull(
 	screen *ebiten.Image,
 	gm *gamemap.GameMap,
 	fm *FontManager,

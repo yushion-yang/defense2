@@ -957,6 +957,7 @@ func (s *StageScene) tryPlaceTower(px, py float64) bool {
 		placed.RecalcStats() // 用强度100计算初始属性
 	}
 	s.gold -= cost
+	render.InvalidateMapCache() // slot occupancy changed
 	s.session.OnTowerBuilt()
 	s.audioMgr.PlaySafe(gameAudio.SFXBuild)
 	s.tutorial.OnEvent("towerBuilt")
@@ -981,6 +982,7 @@ func (s *StageScene) trySellTower(px, py float64) {
 	refund := s.econ.SellRefund(t.Cost)
 	s.gold += refund
 	s.towers.Remove(t)
+	render.InvalidateMapCache() // slot occupancy changed
 	s.selectedTower = nil
 	s.audioMgr.PlaySafe(gameAudio.SFXTowerSell)
 	s.showNotify(fmt.Sprintf("Sold +$%d", refund))
