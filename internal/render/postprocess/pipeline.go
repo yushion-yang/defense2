@@ -31,6 +31,16 @@ type Pipeline struct {
 
 	// Dynamic point lighting.
 	Lighting *LightingState
+
+	// Pre-allocated uniform maps (reused each frame, values updated in-place).
+	uBloomExt   map[string]any
+	uBlurH      map[string]any
+	uBlurV      map[string]any
+	uBloomComb  map[string]any
+	uVignette   map[string]any
+	uColorGrade map[string]any
+	uRadialBlur map[string]any
+	uLighting   map[string]any
 }
 
 // NewPipeline creates a pipeline with default bloom settings.
@@ -43,6 +53,23 @@ func NewPipeline() *Pipeline {
 		Effects:        NewEffects(),
 		Lighting:       NewLightingState(),
 	}
+
+	// Pre-allocate uniform maps so Apply() never allocates per frame.
+	p.uBloomExt = map[string]any{"Threshold": float32(0)}
+	p.uBlurH = map[string]any{"TexelSize": float32(0)}
+	p.uBlurV = map[string]any{"TexelSize": float32(0)}
+	p.uBloomComb = map[string]any{"Intensity": float32(0)}
+	p.uVignette = map[string]any{"Strength": float32(0)}
+	p.uColorGrade = map[string]any{"TintR": float32(0), "TintG": float32(0), "TintB": float32(0), "TintA": float32(0)}
+	p.uRadialBlur = map[string]any{"CenterX": float32(0), "CenterY": float32(0), "Strength": float32(0)}
+	p.uLighting = map[string]any{
+		"Ambient": float32(0), "LightCount": float32(0),
+		"LightX0": float32(0), "LightY0": float32(0), "LightR0": float32(0), "LightG0": float32(0), "LightB0": float32(0), "LightRadius0": float32(1), "LightIntensity0": float32(0),
+		"LightX1": float32(0), "LightY1": float32(0), "LightR1": float32(0), "LightG1": float32(0), "LightB1": float32(0), "LightRadius1": float32(1), "LightIntensity1": float32(0),
+		"LightX2": float32(0), "LightY2": float32(0), "LightR2": float32(0), "LightG2": float32(0), "LightB2": float32(0), "LightRadius2": float32(1), "LightIntensity2": float32(0),
+		"LightX3": float32(0), "LightY3": float32(0), "LightR3": float32(0), "LightG3": float32(0), "LightB3": float32(0), "LightRadius3": float32(1), "LightIntensity3": float32(0),
+	}
+
 	return p
 }
 
@@ -121,57 +148,51 @@ func (p *Pipeline) Apply(dst *ebiten.Image) {
 
 		// Extract bright pixels (downscale to 1/4 res).
 		p.bloomExtracted.Clear()
+		p.uBloomExt["Threshold"] = float32(p.BloomThreshold)
 		p.bloomExtracted.DrawRectShader(qw, qh, shaderBloomExtract, &ebiten.DrawRectShaderOptions{
-			Uniforms: map[string]any{
-				"Threshold": float32(p.BloomThreshold),
-			},
-			Images: [4]*ebiten.Image{p.sceneBuffer},
+			Uniforms: p.uBloomExt,
+			Images:   [4]*ebiten.Image{p.sceneBuffer},
 		})
 
 		// Ping-pong gaussian blur.
 		src := p.bloomExtracted
 		for i := 0; i < p.BloomPasses; i++ {
 			p.bloomBlurA.Clear()
+			p.uBlurH["TexelSize"] = float32(1.0 / float64(qw))
 			p.bloomBlurA.DrawRectShader(qw, qh, shaderBlurH, &ebiten.DrawRectShaderOptions{
-				Uniforms: map[string]any{
-					"TexelSize": float32(1.0 / float64(qw)),
-				},
-				Images: [4]*ebiten.Image{src},
+				Uniforms: p.uBlurH,
+				Images:   [4]*ebiten.Image{src},
 			})
 			p.bloomBlurB.Clear()
+			p.uBlurV["TexelSize"] = float32(1.0 / float64(qh))
 			p.bloomBlurB.DrawRectShader(qw, qh, shaderBlurV, &ebiten.DrawRectShaderOptions{
-				Uniforms: map[string]any{
-					"TexelSize": float32(1.0 / float64(qh)),
-				},
-				Images: [4]*ebiten.Image{p.bloomBlurA},
+				Uniforms: p.uBlurV,
+				Images:   [4]*ebiten.Image{p.bloomBlurA},
 			})
 			src = p.bloomBlurB
 		}
 
 		// Upscale bloom to full resolution.
 		p.bloomUpscaled.Clear()
-		upOpts := &ebiten.DrawImageOptions{}
+		var upOpts ebiten.DrawImageOptions
 		upOpts.GeoM.Scale(float64(p.sceneW)/float64(qw), float64(p.sceneH)/float64(qh))
 		upOpts.Filter = ebiten.FilterLinear
-		p.bloomUpscaled.DrawImage(src, upOpts)
+		p.bloomUpscaled.DrawImage(src, &upOpts)
 
+		p.uBloomComb["Intensity"] = float32(p.BloomIntensity)
 		if needLighting || needVignette || needColorGrade || needRadialBlur {
 			// Bloom combine into fxPingPong for further chaining.
 			p.fxPingPong.Clear()
 			p.fxPingPong.DrawRectShader(p.sceneW, p.sceneH, shaderBloomCombine, &ebiten.DrawRectShaderOptions{
-				Uniforms: map[string]any{
-					"Intensity": float32(p.BloomIntensity),
-				},
-				Images: [4]*ebiten.Image{p.sceneBuffer, p.bloomUpscaled},
+				Uniforms: p.uBloomComb,
+				Images:   [4]*ebiten.Image{p.sceneBuffer, p.bloomUpscaled},
 			})
 			fxSrc = p.fxPingPong
 		} else {
 			// No effects after bloom: combine directly to dst.
 			dst.DrawRectShader(p.sceneW, p.sceneH, shaderBloomCombine, &ebiten.DrawRectShaderOptions{
-				Uniforms: map[string]any{
-					"Intensity": float32(p.BloomIntensity),
-				},
-				Images: [4]*ebiten.Image{p.sceneBuffer, p.bloomUpscaled},
+				Uniforms: p.uBloomComb,
+				Images:   [4]*ebiten.Image{p.sceneBuffer, p.bloomUpscaled},
 			})
 			return
 		}
@@ -199,15 +220,23 @@ func (p *Pipeline) Apply(dst *ebiten.Image) {
 	}
 
 	// fxTarget picks the correct output for each pass.
-	// The last pass writes to dst; intermediate passes write to bloomUpscaled
-	// (safe to reuse since bloom combine is already done).
+	// The last pass writes to dst; intermediate passes ping-pong between
+	// bloomUpscaled and fxPingPong to avoid source==destination.
+	// fxSrc starts on fxPingPong, so first intermediate target must be bloomUpscaled.
+	useBloomUp := true // first intermediate goes to bloomUpscaled (opposite of fxSrc)
 	fxTarget := func() *ebiten.Image {
 		remaining--
 		if remaining == 0 {
 			return dst
 		}
-		p.bloomUpscaled.Clear()
-		return p.bloomUpscaled
+		if useBloomUp {
+			useBloomUp = false
+			p.bloomUpscaled.Clear()
+			return p.bloomUpscaled
+		}
+		useBloomUp = true
+		p.fxPingPong.Clear()
+		return p.fxPingPong
 	}
 
 	// Lighting (dynamic point lights).
@@ -223,11 +252,10 @@ func (p *Pipeline) Apply(dst *ebiten.Image) {
 	// Vignette (always-on edge darkening).
 	if needVignette {
 		target := fxTarget()
+		p.uVignette["Strength"] = float32(fx.VignetteStrength)
 		target.DrawRectShader(p.sceneW, p.sceneH, shaderVignette, &ebiten.DrawRectShaderOptions{
-			Uniforms: map[string]any{
-				"Strength": float32(fx.VignetteStrength),
-			},
-			Images: [4]*ebiten.Image{fxSrc},
+			Uniforms: p.uVignette,
+			Images:   [4]*ebiten.Image{fxSrc},
 		})
 		fxSrc = target
 	}
@@ -239,14 +267,13 @@ func (p *Pipeline) Apply(dst *ebiten.Image) {
 			tintA = 0
 		}
 		target := fxTarget()
+		p.uColorGrade["TintR"] = float32(fx.HitTintR)
+		p.uColorGrade["TintG"] = float32(fx.HitTintG)
+		p.uColorGrade["TintB"] = float32(fx.HitTintB)
+		p.uColorGrade["TintA"] = float32(tintA * 0.4) // cap peak flash at 40% blend
 		target.DrawRectShader(p.sceneW, p.sceneH, shaderColorGrade, &ebiten.DrawRectShaderOptions{
-			Uniforms: map[string]any{
-				"TintR": float32(fx.HitTintR),
-				"TintG": float32(fx.HitTintG),
-				"TintB": float32(fx.HitTintB),
-				"TintA": float32(tintA * 0.4), // cap peak flash at 40% blend
-			},
-			Images: [4]*ebiten.Image{fxSrc},
+			Uniforms: p.uColorGrade,
+			Images:   [4]*ebiten.Image{fxSrc},
 		})
 		fxSrc = target
 	}
@@ -258,45 +285,42 @@ func (p *Pipeline) Apply(dst *ebiten.Image) {
 			t = 0
 		}
 		target := fxTarget()
+		p.uRadialBlur["CenterX"] = float32(fx.BlurCenterX)
+		p.uRadialBlur["CenterY"] = float32(fx.BlurCenterY)
+		p.uRadialBlur["Strength"] = float32(fx.BlurStrength * t)
 		target.DrawRectShader(p.sceneW, p.sceneH, shaderRadialBlur, &ebiten.DrawRectShaderOptions{
-			Uniforms: map[string]any{
-				"CenterX":  float32(fx.BlurCenterX),
-				"CenterY":  float32(fx.BlurCenterY),
-				"Strength": float32(fx.BlurStrength * t),
-			},
-			Images: [4]*ebiten.Image{fxSrc},
+			Uniforms: p.uRadialBlur,
+			Images:   [4]*ebiten.Image{fxSrc},
 		})
 	}
 }
 
-// buildLightingUniforms converts LightingState to shader uniforms.
+// buildLightingUniforms updates p.uLighting in-place and returns it.
 // Positions and radii are converted to physical pixels via draw.S().
 func (p *Pipeline) buildLightingUniforms() map[string]any {
 	ls := p.Lighting
-	u := map[string]any{
-		"Ambient":    float32(ls.Ambient),
-		"LightCount": float32(ls.Count),
-	}
+	p.uLighting["Ambient"] = float32(ls.Ambient)
+	p.uLighting["LightCount"] = float32(ls.Count)
 	for i := 0; i < MaxLights; i++ {
 		suffix := [4]string{"0", "1", "2", "3"}[i]
 		if i < ls.Count {
 			l := &ls.Lights[i]
-			u["LightX"+suffix] = float32(draw.S(l.X))
-			u["LightY"+suffix] = float32(draw.S(l.Y))
-			u["LightR"+suffix] = float32(l.Color.R) / 255
-			u["LightG"+suffix] = float32(l.Color.G) / 255
-			u["LightB"+suffix] = float32(l.Color.B) / 255
-			u["LightRadius"+suffix] = float32(draw.S(l.Radius))
-			u["LightIntensity"+suffix] = float32(l.Intensity)
+			p.uLighting["LightX"+suffix] = float32(draw.S(l.X))
+			p.uLighting["LightY"+suffix] = float32(draw.S(l.Y))
+			p.uLighting["LightR"+suffix] = float32(l.Color.R) / 255
+			p.uLighting["LightG"+suffix] = float32(l.Color.G) / 255
+			p.uLighting["LightB"+suffix] = float32(l.Color.B) / 255
+			p.uLighting["LightRadius"+suffix] = float32(draw.S(l.Radius))
+			p.uLighting["LightIntensity"+suffix] = float32(l.Intensity)
 		} else {
-			u["LightX"+suffix] = float32(0)
-			u["LightY"+suffix] = float32(0)
-			u["LightR"+suffix] = float32(0)
-			u["LightG"+suffix] = float32(0)
-			u["LightB"+suffix] = float32(0)
-			u["LightRadius"+suffix] = float32(1)
-			u["LightIntensity"+suffix] = float32(0)
+			p.uLighting["LightX"+suffix] = float32(0)
+			p.uLighting["LightY"+suffix] = float32(0)
+			p.uLighting["LightR"+suffix] = float32(0)
+			p.uLighting["LightG"+suffix] = float32(0)
+			p.uLighting["LightB"+suffix] = float32(0)
+			p.uLighting["LightRadius"+suffix] = float32(1)
+			p.uLighting["LightIntensity"+suffix] = float32(0)
 		}
 	}
-	return u
+	return p.uLighting
 }
