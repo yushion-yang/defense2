@@ -98,6 +98,11 @@ func (er *EnemyRenderer) DrawEnemies(screen *ebiten.Image, pool *enemy.Pool, ani
 			draw.CircleOutline(screen, cx, cy, r+4, 1.5, pulseClr)
 		}
 
+		// --- Root ground effect (drawn UNDER enemy body) ---
+		if e.RootTimer > 0 {
+			draw.FilledCircle(screen, cx, cy+r, r*0.8, color.RGBA{100, 70, 40, 60})
+		}
+
 		// --- Enemy body (animated or static) ---
 		img := er.getEnemyFrame(e, 1.0/60.0)
 		if img != nil {
@@ -116,6 +121,26 @@ func (er *EnemyRenderer) DrawEnemies(screen *ebiten.Image, pool *enemy.Pool, ani
 				bodyColor = color.RGBA{R: 220, G: 160, B: 40, A: 255}
 			}
 			draw.FilledCircle(screen, cx, cy, r, bodyColor)
+		}
+
+		// --- Status effect body overlays (semi-transparent colored circles) ---
+		if e.SlowTimer > 0 {
+			draw.FilledCircle(screen, cx, cy, r, color.RGBA{80, 140, 255, 45}) // blue overlay (frozen/slow)
+		}
+		if e.BurnTimer > 0 {
+			draw.FilledCircle(screen, cx, cy, r, color.RGBA{255, 140, 40, 45}) // orange overlay (burning)
+		}
+
+		// --- Stun rotating stars (3 yellow circles orbiting above head) ---
+		if e.StunTimer > 0 {
+			starR := float32(2)
+			orbitR := r + 4
+			for i := 0; i < 3; i++ {
+				angle := animTime*5 + float64(i)*2.094 // 120° apart, rotating
+				sx := cx + orbitR*float32(math.Cos(angle))
+				sy := cy - r - 4 + orbitR*0.4*float32(math.Sin(angle)) // above head, elliptical
+				draw.FilledCircle(screen, sx, sy, starR, color.RGBA{255, 255, 100, 200})
+			}
 		}
 
 		// --- White flash overlay on hit ---

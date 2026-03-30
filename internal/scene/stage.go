@@ -7,6 +7,7 @@ import (
 	"image/color"
 	"log"
 	"math"
+	"math/rand"
 	"sort"
 	"strings"
 
@@ -1496,6 +1497,16 @@ func (s *StageScene) updatePlaying() {
 		}
 	}
 
+	// 8.5. Bleed drip particles for bleeding enemies
+	s.enemies.Each(func(e *enemy.Enemy) {
+		if e.IsDying() {
+			return
+		}
+		if e.BleedTimer > 0 && rand.Float64() < 0.15 { // ~9 particles/sec at 60fps
+			particle.EmitBleedDrip(s.particlePool, e.X, e.Y, e.Radius)
+		}
+	})
+
 	// 9. VFX 更新（浮动文本 + 冲击 + 粒子 + 屏幕震动）
 	render.UpdateFloatTexts(gameDT)
 	render.UpdateImpactVFX(gameDT)
@@ -1989,9 +2000,9 @@ func (s *StageScene) drawScene(screen *ebiten.Image) {
 		draw.RoundRect(screen, 0, 0, float32(game.ScreenWidth), float32(game.ScreenHeight), 0, theme.HUDGameOverlay)
 		if fm := render.GlobalFont(); fm != nil {
 			if s.state == stateVictory {
-				fm.DrawCenteredText(screen, "VICTORY!", float64(game.ScreenWidth)/2, float64(game.ScreenHeight)/2-20, theme.FontGameOver, theme.HUDVictoryColor)
+				fm.DrawCenteredText(screen, "VICTORY!", float64(game.ScreenWidth)/2, float64(game.ScreenHeight)/2-20, 52, theme.HUDVictoryColor)
 			} else {
-				fm.DrawCenteredText(screen, "DEFEAT!", float64(game.ScreenWidth)/2, float64(game.ScreenHeight)/2-20, theme.FontGameOver, theme.HUDDefeatColor)
+				fm.DrawCenteredText(screen, "DEFEAT!", float64(game.ScreenWidth)/2, float64(game.ScreenHeight)/2-20, 52, theme.HUDDefeatColor)
 			}
 			fm.DrawCenteredText(screen, fmt.Sprintf("击杀: %d  点击继续", s.kills), float64(game.ScreenWidth)/2, float64(game.ScreenHeight)/2+30, theme.FontH2, theme.TextMuted)
 		}

@@ -127,6 +127,22 @@ func EmitAmbient(pool *Pool, screenW, screenH float64) {
 	}
 }
 
+// EmitBleedDrip spawns a single red downward-dripping particle at (x, y).
+// Call per-frame with a probability gate (~15% at 60fps ≈ 9 particles/sec).
+func EmitBleedDrip(pool *Pool, x, y, radius float64) {
+	pool.Spawn(ParticleConfig{
+		X: x, Y: y + radius,
+		SpreadX: radius * 0.5,
+		Speed: 8, SpeedVar: 4,
+		Angle: math.Pi / 2, AngleVar: 0.3, // downward
+		Life: 0.4, LifeVar: 0.1,
+		Size: 1.5, SizeEnd: 0.5,
+		Color:    color.RGBA{R: 200, G: 30, B: 30, A: 180},
+		EndAlpha: 0,
+		Gravity:  80,
+	})
+}
+
 // EmitElectricSparks spawns fast electric spark particles in random directions.
 func EmitElectricSparks(pool *Pool, x, y float64, count int) {
 	for i := 0; i < count; i++ {
