@@ -4,10 +4,14 @@ package scene
 
 import (
 	"fmt"
+	"image"
 	"image/color"
+	"image/png"
 	"log"
 	"math"
 	"math/rand"
+	"os"
+	"path/filepath"
 	"sort"
 	"strings"
 
@@ -194,6 +198,7 @@ type StageScene struct {
 	ambientTimer    float64                    // 环境粒子发射计时器（每秒一次）
 	multiKillCount  int                        // 连续击杀计数
 	multiKillTimer  float64                    // 连杀窗口倒计时（1.5s 无击杀后重置）
+	autoPlayer      AutoPlayer                 // 自动对局驱动（nil=手动模式）
 }
 
 // NewStageScene 创建游戏主场景，默认加载 map_01。
@@ -524,16 +529,45 @@ func (s *StageScene) Update() error {
 		// 交互状态机驱动
 		switch s.imode {
 		case modeEvent:
-			s.handleEventSelection()
+			if s.autoPlayer != nil {
+				// 自动对局：自动选择事件
+				snap := s.buildAutoPlaySnapshot()
+				actions := s.autoPlayer.OnUpdate(snap)
+				for _, a := range actions {
+					if a.Type == APActionChooseEvent {
+						s.executeAutoPlayAction(a)
+						break
+					}
+				}
+			} else {
+				s.handleEventSelection()
+			}
 		case modePaused:
 			s.handlePausedInput()
 		case modeWardenSelect:
-			s.handleWardenSelection()
+			if s.autoPlayer != nil {
+				// 自动对局：自动选择战灵
+				snap := s.buildAutoPlaySnapshot()
+				actions := s.autoPlayer.OnUpdate(snap)
+				for _, a := range actions {
+					if a.Type == APActionSelectWarden {
+						s.executeAutoPlayAction(a)
+						break
+					}
+				}
+			} else {
+				s.handleWardenSelection()
+			}
 		default:
 			s.handleInput()
 			s.updatePlaying()
 		}
 	case stateVictory, stateDefeat:
+		if s.autoPlayer != nil {
+			// 自动对局：通知结束并标记完成
+			s.autoPlayer.OnGameEnd(s.buildAutoPlaySnapshot(), s.state == stateVictory)
+			return ebiten.Termination
+		}
 		// 胜利/失败状态：点击/触摸进入结算场景
 		if isTapJustPressed() {
 			s.audioMgr.PlaySafe(gameAudio.SFXUIClick)
@@ -1074,6 +1108,7 @@ func (s *StageScene) trySellTower(px, py float64) {
 	t.SellAnim = 0.25
 	t.Selling = true
 	particle.EmitGoldCollect(s.particlePool, t.X, t.Y)
+	render.SpawnGoldText(t.X, t.Y-10, refund)
 	s.selectedTower = nil
 	s.bus.Emit(event.EvtTowerSold, event.TowerSoldPayload{TowerKey: t.Key, Refund: refund})
 	s.showNotify(fmt.Sprintf("Sold +$%d", refund))
@@ -1292,6 +1327,18 @@ func (s *StageScene) updatePlaying() {
 		return
 	}
 
+	// Day/night cycle: warm(early) → cool(late) based on wave progress
+	if s.spawner.MaxWaves > 0 {
+		progress := float64(s.spawner.Wave) / float64(s.spawner.MaxWaves) // 0→1
+		fx := s.postPipeline.Effects
+		// Early (warm amber): R=1.0 G=0.9 B=0.7
+		// Late (cool blue):   R=0.6 G=0.7 B=1.0
+		fx.DayNightR = 1.0 - 0.4*progress
+		fx.DayNightG = 0.9 - 0.2*progress
+		fx.DayNightB = 0.7 + 0.3*progress
+		fx.DayNightA = 0.06 // subtle — 6% blend
+	}
+
 	prevWave := s.spawner.Wave
 	render.UpdateVFXTick(gameDT)
 
@@ -1331,7 +1378,9 @@ func (s *StageScene) updatePlaying() {
 		if enemy.MoveAlongPath(e, s.gameMap.Waypoints, gameDT) {
 			s.lives--
 			s.enemies.KillImmediate(e) // leaked enemies vanish instantly, no dying anim
-			s.postPipeline.Effects.TriggerHitFlash(0.15)
+			fx := s.postPipeline.Effects
+			fx.HitTintR, fx.HitTintG, fx.HitTintB = 1.0, 0.1, 0.1 // red flash on leak
+			fx.TriggerHitFlash(0.15)
 			s.bus.Emit(event.EvtEnemyLeaked, event.EnemyLeakedPayload{})
 		}
 	})
@@ -1400,6 +1449,21 @@ func (s *StageScene) updatePlaying() {
 			}
 		}
 	})
+
+	// 5.6. 持续粒子特效：火焰塔/冰冻塔在有目标时发射元素粒子
+	if s.frame%6 == 0 && game.Settings().MaxParticles > 100 {
+		s.towers.Each(func(t *tower.Tower) {
+			if t.Selling || t.Target == nil {
+				return
+			}
+			switch t.AttackStyleID {
+			case tower.StyleSpinAoE:
+				particle.EmitFireParticles(s.particlePool, t.X, t.Y-4, 1)
+			case tower.StyleScatter:
+				particle.EmitIceParticles(s.particlePool, t.X, t.Y-4, 1)
+			}
+		})
+	}
 
 	// 6. 能力 tick（重置属性 + 光环 buff + 区域效果 + 经济产出）
 	// 必须在索敌射击之前执行，确保 Range 等属性是本帧最新值
@@ -1513,6 +1577,7 @@ func (s *StageScene) updatePlaying() {
 			switch attackStyle {
 			case "scatter":
 				particle.EmitIceParticles(s.particlePool, e.X, e.Y, 2)
+				s.postPipeline.Effects.TriggerRipple(e.X, e.Y, 6.0)
 			case "spin_aoe":
 				particle.EmitFireParticles(s.particlePool, e.X, e.Y, 2)
 			case "charge":
@@ -1638,6 +1703,9 @@ func (s *StageScene) updatePlaying() {
 			s.progressMgr.RecordGameResult(s.modeID, s.gameMap.Config.ID, s.kills, false)
 		}
 	}
+
+	// AutoPlay 决策钩子
+	s.runAutoPlayFrame()
 }
 
 // triggerEventChoice 在奖励波次触发事件选择弹窗，暂停游戏等待玩家选择。
@@ -1794,6 +1862,37 @@ func (s *StageScene) SlowAllEnemies(ratio float64) {
 // shakeBuffer 屏幕震动用的离屏缓冲（懒初始化）。
 var shakeBuffer *ebiten.Image
 
+// captureScreenshot 异步将屏幕内容保存为 PNG。
+func captureScreenshot(screen *ebiten.Image, path string) {
+	// ReadPixels 需要在 Draw 的 goroutine 中调用；
+	// 为简化，在 Draw 中同步读取像素，异步编码保存。
+	// 注意：ebiten.Image 不是线程安全的，此处仅在 Draw 完成后调用。
+	bounds := screen.Bounds()
+	w, h := bounds.Dx(), bounds.Dy()
+	pixels := make([]byte, w*h*4)
+	screen.ReadPixels(pixels)
+
+	img := &image.NRGBA{
+		Pix:    pixels,
+		Stride: w * 4,
+		Rect:   image.Rect(0, 0, w, h),
+	}
+
+	dir := filepath.Dir(path)
+	if dir != "" && dir != "." {
+		os.MkdirAll(dir, 0o755)
+	}
+	f, err := os.Create(path)
+	if err != nil {
+		log.Printf("screenshot create error: %v", err)
+		return
+	}
+	defer f.Close()
+	if err := png.Encode(f, img); err != nil {
+		log.Printf("screenshot encode error: %v", err)
+	}
+}
+
 // worldBuffer 大地图相机偏移用的离屏缓冲（懒初始化）。
 var worldBuffer *ebiten.Image
 
@@ -1819,6 +1918,13 @@ func (s *StageScene) Draw(screen *ebiten.Image) {
 		opts := &ebiten.DrawImageOptions{}
 		opts.GeoM.Translate(dx, dy)
 		screen.DrawImage(target, opts)
+	}
+
+	// AutoPlay 截图钩子
+	if s.autoPlayer != nil {
+		if fname := s.autoPlayer.ScreenshotRequested(); fname != "" {
+			go captureScreenshot(screen, fname)
+		}
 	}
 }
 
@@ -1856,13 +1962,14 @@ func (s *StageScene) drawScene(screen *ebiten.Image) {
 	// ── 世界元素（受相机偏移影响）──
 
 	// 地图（渐变背景覆盖全屏，无需 Fill）
+	animTime := float64(s.frame) / 60.0
 	inBuildMode := s.imode == modeBuildMenu || s.imode == modeBuildPlace
-	render.DrawMap(worldTarget, s.gameMap, render.GlobalFont(), float64(s.frame)/60.0, func(row, col int) bool {
+	render.DrawMap(worldTarget, s.gameMap, render.GlobalFont(), animTime, func(row, col int) bool {
 		return s.towers.At(row, col) != nil
 	}, inBuildMode)
+	render.DrawParallaxBG(worldTarget, animTime)
 
 	// 塔（优先 SVG 渲染，回退到彩色方块）
-	animTime := float64(s.frame) / 60.0
 	s.towerRenderer.DrawTowers(worldTarget, s.towers, s.selectedTower, animTime)
 
 	// 被 buff 的塔显示强化特效（五角星芒）
@@ -2023,6 +2130,15 @@ func (s *StageScene) drawScene(screen *ebiten.Image) {
 		s.beams.Count(), s.projectiles.Count)
 	s.debugOverlay.DrawPerf(screen, s.perfTracker)
 
+	// 小地图
+	wardenX, wardenY := 0.0, 0.0
+	if s.wardenReady && s.wardenUnit != nil {
+		if wb := s.wardenUnit.BaseState(); wb != nil {
+			wardenX, wardenY = wb.X, wb.Y
+		}
+	}
+	hud.DrawMinimap(screen, s.gameMap, s.enemies, s.towers, wardenX, wardenY)
+
 	// 波次公告动画（slide-in/hold/slide-out）
 	s.waveAnnounce.Draw(screen)
 
@@ -2170,6 +2286,10 @@ func (s *StageScene) buildSkillContext() *skill.SkillContext {
 			if sfx := gameAudio.SkillSFX(skillKey); sfx != "" {
 				s.audioMgr.PlaySafe(sfx)
 			}
+			// 技能激活屏幕边缘白闪
+			fx := s.postPipeline.Effects
+			fx.HitTintR, fx.HitTintG, fx.HitTintB = 1.0, 1.0, 1.0
+			fx.TriggerHitFlash(0.1)
 		},
 	}
 }
@@ -2311,5 +2431,149 @@ func towerLightColor(style string) color.RGBA {
 		return color.RGBA{R: 150, G: 255, B: 150, A: 255} // poison green
 	default:
 		return color.RGBA{R: 255, G: 240, B: 220, A: 255} // warm white
+	}
+}
+
+// ─── AutoPlay 集成 ───
+
+// SetAutoPlayer 注入自动对局驱动器。设为 nil 恢复手动模式。
+func (s *StageScene) SetAutoPlayer(ap AutoPlayer) {
+	s.autoPlayer = ap
+}
+
+// buildAutoPlaySnapshot 构建当前游戏状态快照。
+func (s *StageScene) buildAutoPlaySnapshot() AutoPlaySnapshot {
+	snap := AutoPlaySnapshot{
+		Tick:            s.frame,
+		Gold:            s.gold,
+		Lives:           s.lives,
+		Wave:            s.spawner.Wave,
+		MaxWaves:        s.spawner.MaxWaves,
+		WaveActive:      s.spawner.WaveActive,
+		WardenReady:     s.wardenReady,
+		InteractMode:    int(s.imode),
+		GameOver:        s.state != statePlaying,
+		Victory:         s.state == stateVictory,
+		TotalKills:      s.kills,
+		EnemyPoolCount:  s.enemies.Count,
+		ProjectileCount: s.projectiles.Count,
+		TowerCount:      s.towers.Count,
+		MapPixelW:       s.gameMap.PixelWidth(),
+		MapPixelH:       s.gameMap.PixelHeight(),
+		GameSpeed:       s.gameSpeed,
+	}
+	// 战灵位置
+	if s.wardenReady && s.wardenUnit != nil {
+		if base := s.wardenUnit.BaseState(); base != nil {
+			snap.WardenX = base.X
+			snap.WardenY = base.Y
+		}
+	}
+
+	// 敌人快照
+	s.enemies.Each(func(e *enemy.Enemy) {
+		snap.Enemies = append(snap.Enemies, AutoPlayEnemy{
+			ID: e.ID, X: e.X, Y: e.Y,
+			HP: e.HP, MaxHP: e.MaxHP, Speed: e.Speed,
+			Archetype: e.Archetype, Boss: e.Boss,
+			Active: e.Active, Dying: e.IsDying(),
+		})
+	})
+
+	// 已建塔快照
+	s.towers.Each(func(t *tower.Tower) {
+		str := 0
+		if t.Strength != nil {
+			str = int(t.Strength.Permanent)
+		}
+		snap.Towers = append(snap.Towers, AutoPlayTower{
+			Key: t.Key, Row: t.Row, Col: t.Col,
+			X: t.X, Y: t.Y, Damage: t.Damage,
+			Range: t.Range, Cost: t.Cost, Strength: str,
+		})
+	})
+
+	// 可用建造位置
+	gm := s.gameMap
+	for row := 0; row < gm.Config.Rows; row++ {
+		for col := 0; col < gm.Config.Cols; col++ {
+			if gm.Config.Grid[row][col] == config.CellBuildable && s.towers.At(row, col) == nil {
+				center := gm.CellCenter(row, col)
+				snap.BuildCells = append(snap.BuildCells, AutoPlayCell{
+					Row: row, Col: col, X: center.X, Y: center.Y,
+				})
+			}
+		}
+	}
+
+	// 可用塔类型
+	for i, d := range s.towerDefs {
+		snap.TowerDefs = append(snap.TowerDefs, AutoPlayTowerDef{
+			Key: d.Key, Cost: d.Cost, Range: d.Range,
+			Damage: d.Damage, Index: i,
+		})
+	}
+
+	return snap
+}
+
+// executeAutoPlayAction 执行一个自动操作指令。
+func (s *StageScene) executeAutoPlayAction(a AutoPlayAction) {
+	switch a.Type {
+	case APActionBuild:
+		// 设置选中塔类型
+		for i, d := range s.towerDefs {
+			if d.Key == a.TowerKey {
+				s.selectedDef = i
+				break
+			}
+		}
+		center := s.gameMap.CellCenter(a.Row, a.Col)
+		s.tryPlaceTower(center.X, center.Y)
+
+	case APActionUpgrade:
+		t := s.towers.At(a.Row, a.Col)
+		if t != nil {
+			s.selectedTower = t
+			s.tryUpgradeTower()
+		}
+
+	case APActionSell:
+		center := s.gameMap.CellCenter(a.Row, a.Col)
+		s.trySellTower(center.X, center.Y)
+
+	case APActionStartWave:
+		if s.wardenReady {
+			s.spawner.StartNextWave()
+		}
+
+	case APActionSelectWarden:
+		s.activateWarden(a.WardenKey)
+
+	case APActionChooseEvent:
+		if s.imode == modeEvent && len(s.eventPending) > 0 {
+			idx := a.EventIndex
+			if idx < 0 || idx >= len(s.eventPending) {
+				idx = 0
+			}
+			chosen := s.eventPending[idx]
+			event.Apply(&chosen, s)
+			s.appliedEvents = append(s.appliedEvents, chosen)
+			s.eventPending = nil
+			s.eventHoverIdx = -1
+			s.imode = modeIdle
+		}
+	}
+}
+
+// runAutoPlayFrame 在 updatePlaying 末尾调用，驱动自动对局逻辑。
+func (s *StageScene) runAutoPlayFrame() {
+	if s.autoPlayer == nil {
+		return
+	}
+	snap := s.buildAutoPlaySnapshot()
+	actions := s.autoPlayer.OnUpdate(snap)
+	for _, a := range actions {
+		s.executeAutoPlayAction(a)
 	}
 }

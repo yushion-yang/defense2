@@ -16,12 +16,18 @@ func init() {
 	warden.RegisterBehavior(&ChainBehavior{})
 }
 
+// ChainLink 一对串联塔的位置（用于渲染能量连线）。
+type ChainLink struct {
+	X1, Y1, X2, Y2 float64
+}
+
 // ChainState 聚能战灵的内部状态。
 type ChainState struct {
 	warden.WardenState                          // 嵌入公共基座
 	ChainRange         float64                  // 串联范围（px）
 	BonusPerTower      float64                  // 每座串联塔贡献的强度
 	lastBonuses        map[*tower.Tower]float64 // 上一帧各塔设置的加成值
+	ChainLinks         []ChainLink              // 当前帧的串联连线（渲染用）
 }
 
 // Base 实现 Stateful 接口。
@@ -119,11 +125,16 @@ func chainTowerBuff(w *warden.Warden, s *ChainState, ctx *warden.TickContext) {
 		}
 	}
 
-	// 串联 ChainRange 内的塔
+	// 串联 ChainRange 内的塔，同时记录连接对（供渲染用）
+	s.ChainLinks = s.ChainLinks[:0]
 	for i := 0; i < len(towers); i++ {
 		for j := i + 1; j < len(towers); j++ {
 			if math.Hypot(towers[i].X-towers[j].X, towers[i].Y-towers[j].Y) <= s.ChainRange {
 				union(i, j)
+				s.ChainLinks = append(s.ChainLinks, ChainLink{
+					X1: towers[i].X, Y1: towers[i].Y,
+					X2: towers[j].X, Y2: towers[j].Y,
+				})
 			}
 		}
 	}

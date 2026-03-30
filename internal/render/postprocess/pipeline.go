@@ -42,6 +42,7 @@ type Pipeline struct {
 	uColorGrade map[string]any
 	uRadialBlur map[string]any
 	uLighting   map[string]any
+	uRipple     map[string]any
 }
 
 // NewPipeline creates a pipeline with default bloom settings.
@@ -61,8 +62,18 @@ func NewPipeline() *Pipeline {
 	p.uBlurV = map[string]any{"TexelSize": float32(0)}
 	p.uBloomComb = map[string]any{"Intensity": float32(0)}
 	p.uVignette = map[string]any{"Strength": float32(0)}
-	p.uColorGrade = map[string]any{"TintR": float32(0), "TintG": float32(0), "TintB": float32(0), "TintA": float32(0)}
+	p.uColorGrade = map[string]any{
+		"TintR": float32(0), "TintG": float32(0), "TintB": float32(0), "TintA": float32(0),
+		"DayNightR": float32(0), "DayNightG": float32(0), "DayNightB": float32(0), "DayNightA": float32(0),
+	}
 	p.uRadialBlur = map[string]any{"CenterX": float32(0), "CenterY": float32(0), "Strength": float32(0)}
+	p.uRipple = map[string]any{
+		"Ripple0X": float32(0), "Ripple0Y": float32(0), "Ripple0T": float32(0), "Ripple0A": float32(0),
+		"Ripple1X": float32(0), "Ripple1Y": float32(0), "Ripple1T": float32(0), "Ripple1A": float32(0),
+		"Ripple2X": float32(0), "Ripple2Y": float32(0), "Ripple2T": float32(0), "Ripple2A": float32(0),
+		"Ripple3X": float32(0), "Ripple3Y": float32(0), "Ripple3T": float32(0), "Ripple3A": float32(0),
+		"ScreenW": float32(0), "ScreenH": float32(0),
+	}
 	p.uLighting = map[string]any{
 		"Ambient": float32(0), "LightCount": float32(0),
 		"LightX0": float32(0), "LightY0": float32(0), "LightR0": float32(0), "LightG0": float32(0), "LightB0": float32(0), "LightRadius0": float32(1), "LightIntensity0": float32(0),
@@ -133,11 +144,12 @@ func (p *Pipeline) Apply(dst *ebiten.Image) {
 	ls := p.Lighting
 	needLighting := ls != nil && ls.Enabled && ls.Count > 0 && qs.PostProcessing
 	needVignette := fx != nil && fx.VignetteStrength > 0 && qs.PostProcessing
-	needColorGrade := fx != nil && fx.HitFlash.Active
+	needColorGrade := fx != nil && (fx.HitFlash.Active || fx.DayNightA > 0)
 	needRadialBlur := fx != nil && fx.RadialBlur.Active && qs.PostProcessing
+	needRipple := fx != nil && qs.PostProcessing && hasActiveRipples(fx)
 
 	// If no bloom and no effects, fast blit.
-	if !p.BloomEnabled && !needLighting && !needVignette && !needColorGrade && !needRadialBlur {
+	if !p.BloomEnabled && !needLighting && !needVignette && !needColorGrade && !needRadialBlur && !needRipple {
 		dst.DrawImage(p.sceneBuffer, nil)
 		return
 	}
@@ -184,7 +196,7 @@ func (p *Pipeline) Apply(dst *ebiten.Image) {
 		p.bloomUpscaled.DrawImage(src, &upOpts)
 
 		p.uBloomComb["Intensity"] = float32(p.BloomIntensity)
-		if needLighting || needVignette || needColorGrade || needRadialBlur {
+		if needLighting || needVignette || needColorGrade || needRadialBlur || needRipple {
 			// Bloom combine into fxPingPong for further chaining.
 			p.fxPingPong.Clear()
 			p.fxPingPong.DrawRectShader(p.sceneW, p.sceneH, shaderBloomCombine, &ebiten.DrawRectShaderOptions{
@@ -220,6 +232,9 @@ func (p *Pipeline) Apply(dst *ebiten.Image) {
 		remaining++
 	}
 	if needRadialBlur {
+		remaining++
+	}
+	if needRipple {
 		remaining++
 	}
 
@@ -264,17 +279,45 @@ func (p *Pipeline) Apply(dst *ebiten.Image) {
 		fxSrc = target
 	}
 
-	// Color grade (hit flash — tint strength decays over duration).
+	// Ripple distortion (ice tower hits).
+	if needRipple {
+		scale := draw.Scale
+		for i := 0; i < MaxRipples; i++ {
+			r := fx.Ripples[i]
+			prefix := [4]string{"Ripple0", "Ripple1", "Ripple2", "Ripple3"}[i]
+			p.uRipple[prefix+"X"] = float32(r.X * scale)
+			p.uRipple[prefix+"Y"] = float32(r.Y * scale)
+			p.uRipple[prefix+"T"] = float32(r.Time)
+			p.uRipple[prefix+"A"] = float32(r.Amplitude)
+		}
+		p.uRipple["ScreenW"] = float32(p.sceneW)
+		p.uRipple["ScreenH"] = float32(p.sceneH)
+		target := fxTarget()
+		target.DrawRectShader(p.sceneW, p.sceneH, shaderRipple, &ebiten.DrawRectShaderOptions{
+			Uniforms: p.uRipple,
+			Images:   [4]*ebiten.Image{fxSrc},
+		})
+		fxSrc = target
+	}
+
+	// Color grade (hit flash + day/night ambient tint).
 	if needColorGrade {
-		tintA := fx.HitFlash.Timer / fx.HitFlash.Duration
-		if tintA < 0 {
-			tintA = 0
+		tintA := 0.0
+		if fx.HitFlash.Active && fx.HitFlash.Duration > 0 {
+			tintA = fx.HitFlash.Timer / fx.HitFlash.Duration
+			if tintA < 0 {
+				tintA = 0
+			}
 		}
 		target := fxTarget()
 		p.uColorGrade["TintR"] = float32(fx.HitTintR)
 		p.uColorGrade["TintG"] = float32(fx.HitTintG)
 		p.uColorGrade["TintB"] = float32(fx.HitTintB)
 		p.uColorGrade["TintA"] = float32(tintA * 0.4) // cap peak flash at 40% blend
+		p.uColorGrade["DayNightR"] = float32(fx.DayNightR)
+		p.uColorGrade["DayNightG"] = float32(fx.DayNightG)
+		p.uColorGrade["DayNightB"] = float32(fx.DayNightB)
+		p.uColorGrade["DayNightA"] = float32(fx.DayNightA)
 		target.DrawRectShader(p.sceneW, p.sceneH, shaderColorGrade, &ebiten.DrawRectShaderOptions{
 			Uniforms: p.uColorGrade,
 			Images:   [4]*ebiten.Image{fxSrc},
@@ -297,6 +340,15 @@ func (p *Pipeline) Apply(dst *ebiten.Image) {
 			Images:   [4]*ebiten.Image{fxSrc},
 		})
 	}
+}
+
+func hasActiveRipples(fx *Effects) bool {
+	for i := range fx.Ripples {
+		if fx.Ripples[i].Amplitude > 0 {
+			return true
+		}
+	}
+	return false
 }
 
 // buildLightingUniforms updates p.uLighting in-place and returns it.

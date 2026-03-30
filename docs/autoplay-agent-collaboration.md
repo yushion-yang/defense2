@@ -1,307 +1,197 @@
-# AutoPlay Agent Collaboration System
+# AutoPlay 自动化闭环测试系统
 
-Date: 2026-03-30
-Status: Design
-Depends on: `docs/plans/2026-03-30-autoplay-design.md` (autoplay core)
+日期: 2026-03-31
+状态: 设计
+前置依赖: `internal/autoplay/`(已实现), `cmd/autoplay/main.go`(已实现)
 
-## Goal
+## 目标
 
-Build a **fully autonomous** game optimization loop powered by Claude Code cron scheduling:
+构建**全自动**的游戏优化闭环: 自动对局 -> AI 分析 -> 自动修复 -> 回归验证, 循环迭代直到无关键问题或达到轮次上限。由 Claude Code cron 驱动, 无人值守运行。
 
-1. **Runner Agent** — executes automated game sessions, collects JSON reports + screenshots
-2. **Analyst Agent** — multimodal analysis of results, identifies balance issues and bugs
-3. **Fixer Agent** — modifies config/code to fix issues, validates with tests
-4. **Orchestrator** — cron-driven loop that coordinates the three agents in 5-10min cycles
-
-The system runs unattended, iterating until convergence (no critical issues found) or reaching a configurable iteration cap.
-
-## Architecture Overview
+## 流程总览
 
 ```
-                    ┌──────────────────────────────────┐
-                    │        Orchestrator (cron)        │
-                    │  5-10min interval, max N rounds   │
-                    └──────┬───────┬───────┬───────────┘
-                           │       │       │
-                    ┌──────▼──┐ ┌──▼────┐ ┌▼────────┐
-                    │ Runner  │ │Analyst│ │ Fixer   │
-                    │ Agent   │ │Agent  │ │ Agent   │
-                    └────┬────┘ └───┬───┘ └────┬────┘
-                         │         │           │
-              ┌──────────▼─────────▼───────────▼──────────┐
-              │           autoplay-results/                │
-              │  round-001/  round-002/  ...  summary.md  │
-              └───────────────────────────────────────────┘
+脚本1 (环境检查/增量更新)
+  |
+  v
+脚本2 (自动对局 -> M1 JSON + M2 截图)
+  |
+  v
+脚本3 (AI 分析 M1/M2 -> 新问题写 M4)
+  |
+  v
+M4 为空? --是--> 本轮结束, 生成总结报告
+  |
+  否
+  v
+脚本4 (修复 M4 问题 -> make build -> 归档 M3)
+  |
+  v
+build 不过? --> 继续修直到通过
+  |
+  v
+回到脚本2 (回归验证, 进入下一轮循环)
 ```
 
-### Data Flow Per Round
+## 目录结构
 
 ```
-Runner Agent
-  │  go run cmd/autoplay/main.go --sweep --output autoplay-results/round-{N}/
-  │  produces: report.json + screenshots per session
-  ▼
-Analyst Agent
-  │  reads: all round-{N}/*.json + *.png (multimodal)
-  │  produces: autoplay-results/round-{N}/analysis.md
-  │            autoplay-results/round-{N}/issues.json
-  ▼
-Fixer Agent
-  │  reads: issues.json
-  │  modifies: config/*.json and/or internal/**/*.go
-  │  runs: make test (gate)
-  │  produces: git commit on claude/autoplay-fix branch
-  ▼
-Orchestrator
-  │  checks: analysis.md for convergence
-  │  if not converged && round < max: trigger next round
-  │  else: produce final summary.md
-  ▼
-DONE
+docs/autotest/
+  last_commit.txt        # 文件A: 上次更新自动对局系统时的 git commit hash
+  config.json            # 可选: 闭环运行参数配置
+  state.json             # 编排器状态(当前轮次/阶段)
+  M1/                    # 自动对局产出 -- JSON 数据(波次统计/DPS/金币曲线等)
+  M2/                    # 自动对局产出 -- 截图(关键帧/异常画面等)
+  M3/                    # 已处理归档 -- 修复完的 issue 文档
+  M4/                    # 待修复队列 -- AI 分析发现的新问题
 ```
 
-## Agent Definitions
+## 脚本详细说明
 
-### 1. Runner Agent
+### 脚本1 -- 环境检查 / 增量更新
 
-**Trigger**: Orchestrator cron fires
-**Type**: `general-purpose` subagent
-**Isolation**: worktree (runs autoplay binary, no code conflict)
+**依赖**: `docs/autotest/last_commit.txt`
 
-**Actions**:
-1. `go build cmd/autoplay/main.go` — build autoplay binary
-2. Execute with configurable strategy mix:
-   - Round 1: `--sweep` (full pairwise ~30 cases) — establish baseline
-   - Round 2+: `--targeted` (re-run failing scenarios from previous analysis)
-3. Output to `autoplay-results/round-{N}/`
+**任务**:
+1. 读取 `last_commit.txt` 中的 git commit hash
+2. `git diff <old_hash>..HEAD` 检查自动对局相关代码是否有改动
+3. 如有改动 -> 更新自动对局系统逻辑(autoplay 策略/测试参数等)
+4. 更新 `last_commit.txt` 为当前 commit hash
+5. 无改动 -> 跳过, 直接进入脚本2
 
-**Session Selection Per Round**:
+### 脚本2 -- 自动对局 (Runner)
 
-| Round | Strategy | Sessions | Purpose |
-|-------|----------|----------|---------|
-| 1 | Full sweep | ~30 (pairwise) | Baseline coverage |
-| 2+ | Targeted rerun | 5-15 (from issues.json) | Verify fixes |
-| Final | Validation sweep | ~30 (pairwise) | Confirm no regressions |
+**依赖**: 无(直接运行游戏)
+**实现**: `general-purpose` subagent, worktree 隔离
 
-**Timeout**: 10 min per round (turbo 10x speed, ~30 sessions complete in ~5 min)
+**任务**:
+1. `go build cmd/autoplay/main.go` 编译自动对局二进制
+2. 按策略执行对局:
+   - 第1轮: `--sweep` 全组合扫描(~30 场) -- 建立基线
+   - 后续轮: `--targeted` 只跑上轮失败场景(5-15 场) -- 验证修复
+   - 最终轮: `--sweep` 全量回归(~30 场) -- 确认无回归
+3. 产出写入对应目录:
+   - JSON 数据 -> `docs/autotest/M1/` (波次统计/DPS/金币/泄漏/FPS/异常等)
+   - 截图 -> `docs/autotest/M2/` (关键帧/异常画面)
+4. 对局结束后退出
 
-### 2. Analyst Agent
+**超时**: 单轮 10 分钟(turbo 10x 速度, ~30 场约 5 分钟完成)
 
-**Trigger**: Runner Agent completes
-**Type**: `general-purpose` subagent (multimodal capable)
-**Input**: `autoplay-results/round-{N}/` (JSON + PNG)
+### 脚本3 -- AI 分析 (Analyst)
 
-**Analysis Dimensions**:
+**依赖**: `M1/` 和 `M2/` 下的 JSON + 截图
+**实现**: `general-purpose` subagent (多模态, 可读图)
 
-#### A. Balance Analysis
+**任务**:
+1. 从 `M1/`、`M2/` 获取本轮产出
+2. 读取 `M3/` (已处理归档) 了解历史修复情况, 避免重复报告
+3. 结合项目当前代码状态进行多维分析
+4. 发现新问题 -> 写入 `M4/`
+5. 未发现新问题 -> `M4/` 为空, 本轮闭环结束
 
-For each tower:
-- **Win rate** across maps/difficulties (< 30% → underpowered, > 90% on hard → overpowered)
-- **Pick efficiency**: gold spent vs kills contributed
-- **DPS curve**: damage output per wave progression
+**分析维度**:
 
-For each enemy archetype:
-- **Leak rate**: how often this type reaches endpoint
-- **Time alive**: average survival time (too short → too easy, too long → annoying)
-- **Special mechanic trigger count**: did the special behavior actually activate?
+| 维度 | 内容 | 判定标准 |
+|------|------|----------|
+| **平衡性** | 各塔胜率/金币效率/DPS 曲线 | 胜率 <30% 偏弱, >90%(困难) 偏强 |
+| **敌人** | 泄漏率/存活时长/特殊机制触发 | 太短=太简单, 太长=拖沓 |
+| **异常分类** | anomalies[] 按类型分组/去重/分级 | CRITICAL > HIGH > MEDIUM > LOW |
+| **覆盖缺口** | 未测试的能力/敌人/管线步骤 | 建议补充测试场景 |
+| **视觉检查** | 截图多模态分析 | UI 重叠/特效残留/布局错位 |
 
-#### B. Anomaly Triage
-
-From `anomalies[]` in each report.json:
-- Group by type (enemy_stuck, gold_negative, etc.)
-- Deduplicate (same anomaly across sessions = 1 issue)
-- Assign severity: CRITICAL > HIGH > MEDIUM > LOW
-- Attach screenshot evidence
-
-#### C. Coverage Gap Detection
-
-From `coverage` field aggregated across all sessions:
-- Flag untested content (abilities never triggered, enemy types never spawned)
-- Suggest additional test scenarios to fill gaps
-
-#### D. Visual Inspection (Multimodal)
-
-Read screenshots for:
-- UI rendering glitches (overlapping text, misaligned HUD)
-- Visual effect anomalies (particles stuck, effects not clearing)
-- Layout issues on different maps
-
-**Output**: `analysis.md` (human-readable) + `issues.json` (machine-readable)
-
-#### issues.json Schema
+**M4 issue 格式** (JSON):
 
 ```json
 {
-  "round": 1,
-  "timestamp": "2026-03-30T14:30:00Z",
-  "converged": false,
-  "critical_count": 2,
-  "issues": [
-    {
-      "id": "BAL-001",
-      "category": "balance",
-      "severity": "HIGH",
-      "title": "Laser tower overpowered on map_03",
-      "detail": "Laser tower solo (FocusStrategy) wins map_03 extreme with 19/20 lives. DPS scales too aggressively with upgrades.",
-      "evidence": {
-        "sessions": ["round-001/focus_laser_map03_extreme_001"],
-        "screenshots": ["result.png"],
-        "metrics": {
-          "win_rate": 1.0,
-          "avg_lives_remaining": 19,
-          "total_dps_wave_12": 450.5
-        }
-      },
-      "suggested_fix": {
-        "type": "config",
-        "file": "config/towers/towers.json",
-        "path": "$.laser.levels[*].damage",
-        "action": "reduce_by_percent",
-        "value": 15,
-        "reasoning": "Laser level scaling too steep; 15% reduction brings win rate closer to 70% target on extreme"
-      }
-    },
-    {
-      "id": "BUG-001",
-      "category": "anomaly",
-      "severity": "CRITICAL",
-      "title": "Enemy stuck at path corner (340, 120)",
-      "detail": "3 sessions reported enemy_stuck at same coordinate. Likely pathfinding rounding issue at tight corner.",
-      "evidence": {
-        "sessions": ["round-001/greedy_map01_normal_001", "round-001/random_map01_hard_002"],
-        "screenshots": ["anomaly_enemy_stuck_5200.png"],
-        "occurrences": 3
-      },
-      "suggested_fix": {
-        "type": "code",
-        "file": "internal/core/enemy/movement.go",
-        "description": "Add waypoint snap tolerance of 2px at path corners to prevent floating-point stuck"
-      }
-    }
-  ],
-  "rerun_scenarios": [
-    {
-      "strategy": "focus",
-      "tower": "laser",
-      "map": "map_03",
-      "difficulty": "extreme",
-      "reason": "Verify BAL-001 fix"
-    }
-  ]
+  "id": "BAL-001",
+  "category": "balance | anomaly | coverage | visual",
+  "severity": "CRITICAL | HIGH | MEDIUM | LOW",
+  "title": "Laser tower overpowered on map_03",
+  "detail": "描述...",
+  "evidence": {
+    "sessions": ["相关会话ID"],
+    "screenshots": ["截图文件名"],
+    "metrics": {}
+  },
+  "suggested_fix": {
+    "type": "config | code",
+    "file": "目标文件路径",
+    "description": "修复建议"
+  }
 }
 ```
 
-### 3. Fixer Agent
+### 脚本4 -- 自动修复 (Fixer)
 
-**Trigger**: Analyst Agent completes with `converged: false`
-**Type**: `general-purpose` subagent
-**Branch**: `claude/autoplay-fix` (created on first run)
+**依赖**: `M4/` 下的待修复文档
+**实现**: `general-purpose` subagent
+**分支**: `claude/autoplay-fix` (首次运行时创建)
 
-**Fix Pipeline**:
+**任务**:
+1. 从 `M4/` 取出问题(按严重度降序)
+2. 逐个修复:
+   - config 类: 修改 JSON 配置 + 校验语法
+   - code 类: 修改代码 + `make lint`
+3. `make build` + `make test` 验证
+   - 通过 -> git commit, 归档至 `M3/`
+   - 不通过 -> 继续修 build 错误直到通过; 实在修不掉 -> 回滚本文件改动, 跳过此 issue
+4. 完成后回到脚本2 进行回归验证
 
-```
-For each issue in issues.json (sorted by severity DESC):
-  1. Read suggested_fix
-  2. If type == "config":
-       - Modify JSON file at specified path
-       - Validate JSON syntax
-  3. If type == "code":
-       - Read target file
-       - Implement fix (minimal, surgical)
-       - Run `make lint` on modified files
-  4. Run `make test`
-       - If PASS: git add + commit with message "fix(autoplay): {issue.title} #{issue.id}"
-       - If FAIL: revert changes, log skip reason, continue to next issue
-  5. Record fix result in autoplay-results/round-{N}/fixes.json
-```
+**安全规则**:
 
-**Safety Rails**:
+| 规则 | 说明 |
+|------|------|
+| 禁止破坏性 git 操作 | 不用 `reset --hard` / `checkout --` / `clean` |
+| 测试门禁 | `make test` 必须通过才能 commit |
+| 范围限制 | 只修改 issue 引用的文件 |
+| 文件上限 | 每轮最多修改 5 个文件 |
+| 行数上限 | 每文件最多改 50 行 |
+| 失败回滚 | 只回滚 Fixer 自己刚改的文件 |
+| 分支隔离 | 所有改动在 `claude/autoplay-fix`, 不碰当前分支 |
 
-| Rule | Implementation |
-|------|---------------|
-| No destructive git ops | Never `reset --hard`, `checkout --`, `clean` |
-| Test gate | `make test` must pass before any commit |
-| Scope limit | Only modify files referenced in issues.json |
-| Change cap | Max 5 files modified per round |
-| Diff cap | Max 50 lines changed per file |
-| Revert on failure | `git checkout -- <file>` only for files Fixer just modified |
-| Branch isolation | All work on `claude/autoplay-fix`, never touch current branch |
+## 编排器 (Orchestrator)
 
-**fixes.json Schema**:
+**实现**: Claude Code `CronCreate`, 7 分钟间隔
 
-```json
-{
-  "round": 1,
-  "fixes_attempted": 3,
-  "fixes_applied": 2,
-  "fixes_skipped": 1,
-  "details": [
-    {
-      "issue_id": "BAL-001",
-      "status": "applied",
-      "files_modified": ["config/towers/towers.json"],
-      "diff_lines": 8,
-      "commit": "abc1234"
-    },
-    {
-      "issue_id": "BUG-001",
-      "status": "skipped",
-      "reason": "make test failed: TestEnemyMovement/corner_snap assertion mismatch",
-      "files_attempted": ["internal/core/enemy/movement.go"]
-    }
-  ]
-}
-```
-
-### 4. Orchestrator (Cron Controller)
-
-**Implementation**: Claude Code `CronCreate` with 7-min interval
-
-**State Machine**:
+**状态机**:
 
 ```
-         ┌─────────┐
-         │  IDLE    │ ◄── initial state / manual trigger
-         └────┬────┘
-              │ /autoplay-start
-              ▼
-         ┌─────────┐
-         │  RUN     │ ── spawn Runner Agent
-         └────┬────┘
-              │ Runner done
-              ▼
-         ┌─────────┐
-         │ ANALYZE  │ ── spawn Analyst Agent
-         └────┬────┘
-              │ Analyst done
-              ▼
-         ┌─────────┐     converged || round >= max
-         │  CHECK   │ ──────────────────────────────┐
-         └────┬────┘                                │
-              │ not converged                        ▼
-              ▼                                ┌─────────┐
-         ┌─────────┐                           │  DONE    │
-         │  FIX     │ ── spawn Fixer Agent     └─────────┘
-         └────┬────┘         │ produce summary.md
-              │ Fixer done   │
-              ▼              │
-         ┌─────────┐        │
-         │  RUN     │ ◄─────┘ (next round)
-         └─────────┘
+IDLE  <-- 初始 / 手动触发
+  | /autoplay-start
+  v
+RUN  -- 启动 Runner (脚本2)
+  | Runner 完成
+  v
+ANALYZE  -- 启动 Analyst (脚本3)
+  | Analyst 完成
+  v
+CHECK  -- M4 为空 || 轮次 >= 上限?
+  |            \
+  | 否          是
+  v              v
+FIX  -- 启动   DONE -- 生成
+  | Fixer       summary.md
+  | (脚本4)
+  v
+RUN  (下一轮)
 ```
 
-**Convergence Criteria**:
-- `issues.json.critical_count == 0` AND `issues.json.issues.length <= 2` (only LOW remaining)
-- OR `round >= max_rounds` (default: 5)
+**收敛判定**:
+- `M4/` 为空 (无新问题)
+- 或达到最大轮次 (默认 5 轮)
 
-**State Persistence**: `autoplay-results/state.json`
+**防死循环**:
+- 同一问题连续 N 轮修不掉 -> 标记跳过, 继续下一个
+- 看门狗: 15 分钟无进展 -> 强制推进到下一阶段
+
+**状态持久化**: `docs/autotest/state.json`
 
 ```json
 {
   "current_round": 2,
   "max_rounds": 5,
   "phase": "ANALYZE",
-  "started_at": "2026-03-30T14:00:00Z",
+  "started_at": "2026-03-31T14:00:00Z",
   "rounds": [
     {
       "round": 1,
@@ -316,177 +206,66 @@ For each issue in issues.json (sorted by severity DESC):
 }
 ```
 
-## Cron Schedule Design
+## 典型时间线
+
+| 时间 | 阶段 | 耗时 |
+|------|------|------|
+| T+0 | 第1轮: Runner (30 场 @10x) | ~5 min |
+| T+7 | 第1轮: Analyst (读 30 JSON + 截图) | ~3 min |
+| T+14 | 第1轮: Fixer (修 3-5 个问题) | ~4 min |
+| T+21 | 第2轮: Runner (定向 10 场) | ~3 min |
+| T+28 | 第2轮: Analyst | ~2 min |
+| T+35 | 第2轮: Fixer | ~3 min |
+| ... | 第3-5轮或收敛 | ... |
+| T+~60 | 最终总结 | |
+
+总计: **约 60 分钟** 完成 5 轮自主优化。
+
+## 手动操作
 
 ```
-Cron Job 1: "autoplay-tick" (every 7 minutes)
-  - Read state.json
-  - If phase == IDLE: do nothing (waiting for manual trigger)
-  - If phase == RUN: check if Runner Agent done → if yes, transition to ANALYZE
-  - If phase == ANALYZE: check if Analyst Agent done → if yes, check convergence
-  - If phase == FIX: check if Fixer Agent done → if yes, transition to RUN (next round)
-  - If phase == DONE: cancel cron, output summary
-
-Cron Job 2: "autoplay-watchdog" (every 15 minutes)
-  - Check for stuck agents (no progress for >15min)
-  - If stuck: log warning, force-advance to next phase
+/autoplay-start    # 创建分支 + 初始化 state.json + 创建 cron + 启动第一轮
+/autoplay-status   # 查看当前轮次/阶段/问题统计
+/autoplay-stop     # 取消 cron + 生成已完成轮次的总结报告
 ```
 
-**Typical Timeline** (5 rounds):
+## 最终总结报告
 
-| Time | Phase | Duration |
-|------|-------|----------|
-| T+0 | Round 1: Runner (30 sessions @ 10x) | ~5 min |
-| T+7 | Round 1: Analyst (read 30 JSONs + screenshots) | ~3 min |
-| T+14 | Round 1: Fixer (apply 3-5 fixes) | ~4 min |
-| T+21 | Round 2: Runner (targeted 10 sessions) | ~3 min |
-| T+28 | Round 2: Analyst | ~2 min |
-| T+35 | Round 2: Fixer | ~3 min |
-| ... | ... | ... |
-| T+~50 | Round 3-5 or convergence | |
-| T+~60 | Final summary | |
-
-Total: **~60 minutes** for 5 rounds of autonomous optimization.
-
-## Directory Structure
-
-```
-autoplay-results/
-├── state.json                          # orchestrator state
-├── round-001/
-│   ├── greedy_map01_normal_001/
-│   │   ├── report.json                 # per-session data
-│   │   ├── start.png
-│   │   ├── wave_5.png
-│   │   └── result.png
-│   ├── random_map02_hard_001/
-│   │   └── ...
-│   ├── coverage_summary.json           # aggregated coverage
-│   ├── analysis.md                     # analyst report (human-readable)
-│   ├── issues.json                     # analyst findings (machine-readable)
-│   └── fixes.json                      # fixer results
-├── round-002/
-│   └── ...
-└── summary.md                          # final convergence report
-```
-
-## Final Summary Report
-
-`summary.md` generated at completion, covering all rounds:
+闭环结束时生成 `docs/autotest/summary.md`:
 
 ```markdown
-# AutoPlay Optimization Summary
+# AutoPlay 优化总结
 
-## Run Config
-- Rounds: 3 (converged at round 3)
-- Total sessions: 70 (30 + 25 + 15)
-- Total time: 42 minutes
-- Branch: claude/autoplay-fix (4 commits)
+## 运行概况
+- 轮次: 3 (第3轮收敛)
+- 总对局: 70 场 (30 + 25 + 15)
+- 总耗时: 42 分钟
+- 分支: claude/autoplay-fix (4 commits)
 
-## Issues Found & Fixed
-| ID | Category | Severity | Status | Fix |
-|----|----------|----------|--------|-----|
-| BAL-001 | balance | HIGH | FIXED | Laser damage -15% |
-| BAL-002 | balance | MEDIUM | FIXED | Swarm HP +20% |
-| BUG-001 | anomaly | CRITICAL | FIXED | Corner snap tolerance |
-| BUG-002 | anomaly | LOW | OPEN | Projectile leak (cosmetic) |
+## 问题发现与修复
+| ID | 类别 | 严重度 | 状态 | 修复方案 |
+|----|------|--------|------|----------|
+| BAL-001 | 平衡 | HIGH | 已修复 | Laser 伤害 -15% |
+| BUG-001 | 异常 | CRITICAL | 已修复 | 拐角吸附容差 |
 
-## Coverage
-- Towers: 8/8 (100%)
-- Enemy archetypes: 13/13 (100%)
-- Abilities: 25/27 (93%) — missing: aura_dot (no tower), silenceZone
-- Pipeline steps: 8/8 (100%)
+## 覆盖率
+- 塔: 8/8 (100%)
+- 敌人原型: 13/13 (100%)
+- 能力: 25/27 (93%)
 
-## Balance Changes Applied
-| Target | Field | Before | After | Rationale |
-|--------|-------|--------|-------|-----------|
-| laser.levels[1].damage | damage | 45 | 38 | OP on map_03 extreme |
-| swarm.hpScale | hpScale | 0.5 | 0.6 | Too easy to kill |
+## 平衡调整
+| 目标 | 字段 | 修改前 | 修改后 | 原因 |
+|------|------|--------|--------|------|
+| laser.levels[1] | damage | 45 | 38 | map_03 extreme 过强 |
 
-## Recommendations (not auto-fixed)
-1. Consider adding a tower that uses `aura_dot` attack style
-2. `silenceZone` ability never triggers — check if any tower has it
-3. Map_07 has unusually low win rate across all strategies — map design issue?
+## 建议 (未自动修复)
+1. 考虑增加 aura_dot 攻击方式的塔
+2. silenceZone 能力从未触发 -- 检查是否有塔配置了它
 ```
 
-## Manual Trigger
+## 配置
 
-Start the loop from Claude Code session:
-
-```
-User: /autoplay-start
-→ Creates claude/autoplay-fix branch
-→ Sets state.json phase=RUN round=1
-→ Creates cron job (7min interval)
-→ Spawns first Runner Agent
-```
-
-Stop early:
-
-```
-User: /autoplay-stop
-→ Cancels cron jobs
-→ Generates summary.md from whatever rounds completed
-→ Reports status
-```
-
-Check progress:
-
-```
-User: /autoplay-status
-→ Reads state.json
-→ Shows current round, phase, issues found/fixed
-```
-
-## Implementation Dependencies
-
-### Required First (from autoplay-design.md)
-1. `cmd/autoplay/main.go` — standalone autoplay binary
-2. `internal/autoplay/` — controller, strategies, recorder, screenshotter
-3. `internal/core/gamemode/autoplay.go` — autoplay game mode
-
-### This Design Adds
-1. `autoplay-results/` directory convention
-2. Three agent prompt templates (runner/analyst/fixer)
-3. Orchestrator cron logic (in Claude Code session)
-4. `issues.json` / `fixes.json` / `state.json` schemas
-5. `/autoplay-start` / `/autoplay-stop` / `/autoplay-status` commands (Claude Code skills)
-
-### Agent Prompts (stored as Claude Code skills or inline)
-
-**Runner Agent Prompt Template**:
-```
-Build and run the autoplay binary for round {N}.
-Command: go run cmd/autoplay/main.go {args} --output autoplay-results/round-{N}/
-Wait for completion. Report session count and any build errors.
-If --targeted: use rerun_scenarios from round-{N-1}/issues.json.
-```
-
-**Analyst Agent Prompt Template**:
-```
-Analyze autoplay results in autoplay-results/round-{N}/.
-Read all report.json files and examine screenshots.
-Produce analysis.md and issues.json following the schema defined in
-docs/autoplay-agent-collaboration.md.
-Focus on: balance outliers, recurring anomalies, coverage gaps, visual glitches.
-Compare with previous rounds if available.
-```
-
-**Fixer Agent Prompt Template**:
-```
-Fix issues listed in autoplay-results/round-{N}/issues.json.
-Work on branch claude/autoplay-fix.
-For each issue (sorted by severity):
-  - Apply suggested_fix
-  - Run make test
-  - Commit if pass, revert if fail
-Respect safety rails: max 5 files, max 50 lines per file.
-Output fixes.json with results.
-```
-
-## Configuration
-
-Stored in `autoplay-results/config.json` (created at /autoplay-start):
+`docs/autotest/config.json` (在 /autoplay-start 时创建):
 
 ```json
 {
@@ -509,7 +288,6 @@ Stored in `autoplay-results/config.json` (created at /autoplay-start):
     "max_lines_per_file": 50,
     "test_command": "make test",
     "lint_command": "make lint",
-    "auto_commit": true,
     "branch": "claude/autoplay-fix"
   },
   "convergence": {
@@ -519,11 +297,11 @@ Stored in `autoplay-results/config.json` (created at /autoplay-start):
 }
 ```
 
-## Out of Scope (YAGNI)
+## 不做的事 (YAGNI)
 
-- No Web UI dashboard for monitoring
-- No Slack/webhook notifications
-- No parallel multi-branch fixes
-- No ML-based strategy optimization
-- No automated PR creation (human reviews branch manually)
-- No cross-repository changes (this project only)
+- 不做 Web UI 监控面板
+- 不做 Slack/webhook 通知
+- 不做并行多分支修复
+- 不做 ML 策略优化
+- 不自动创建 PR (人工审查分支后手动合并)
+- 不跨仓库改动 (仅限本项目)

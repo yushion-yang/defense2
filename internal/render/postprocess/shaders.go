@@ -32,6 +32,9 @@ var radialBlurSrc []byte
 //go:embed lighting.kage
 var lightingSrc []byte
 
+//go:embed ripple.kage
+var rippleSrc []byte
+
 // Compiled shaders (set by InitShaders).
 var (
 	shaderBloomExtract *ebiten.Shader
@@ -42,6 +45,7 @@ var (
 	shaderColorGrade   *ebiten.Shader
 	shaderRadialBlur   *ebiten.Shader
 	shaderLighting     *ebiten.Shader
+	shaderRipple       *ebiten.Shader
 	shadersReady       bool
 )
 
@@ -88,6 +92,11 @@ func InitShaders() error {
 	shaderLighting, err = ebiten.NewShader(lightingSrc)
 	if err != nil {
 		return fmt.Errorf("lighting shader: %w", err)
+	}
+
+	shaderRipple, err = ebiten.NewShader(rippleSrc)
+	if err != nil {
+		return fmt.Errorf("ripple shader: %w", err)
 	}
 
 	shadersReady = true

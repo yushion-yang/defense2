@@ -42,6 +42,11 @@ type WardenState struct {
 	LastTargetX float64 // 上次射击目标 X
 	LastTargetY float64 // 上次射击目标 Y
 	ShootTimer  float64 // 射击线视觉计时器
+
+	// --- 拖尾 ---
+	TrailHistory  [8][2]float64 // 位置历史环形缓冲（最多 8 帧）
+	TrailCursor   int           // 当前写入位置
+	TrailRecordCD float64       // 记录间隔倒计时
 }
 
 // Stateful 由所有战灵 State 结构体实现，用于获取公共基座。
@@ -148,6 +153,7 @@ func (s *WardenState) MoveOrbit(cx, cy, idealDist, dt float64) {
 	s.X = clampF(s.X, 0, 1200)
 	s.Y = clampF(s.Y, 0, 540)
 	s.updateFacing(prevX, prevY)
+	s.RecordTrail(dt)
 }
 
 // Wander 无敌人时缓慢游荡。每 3-5 秒换一个随机目标点，缓慢漂移过去。
@@ -179,6 +185,7 @@ func (s *WardenState) Wander(dt float64) {
 	s.X = clampF(s.X, 0, 1200)
 	s.Y = clampF(s.Y, 0, 540)
 	s.updateFacing(prevX, prevY)
+	s.RecordTrail(dt)
 }
 
 // updateFacing 根据移动方向平滑更新朝向角度。
@@ -199,6 +206,18 @@ func (s *WardenState) updateFacing(prevX, prevY float64) {
 		diff += 2 * math.Pi
 	}
 	s.FacingAngle += diff * 0.15
+}
+
+// RecordTrail 按间隔记录位置到拖尾缓冲。
+func (s *WardenState) RecordTrail(dt float64) {
+	const trailInterval = 0.04 // 每 40ms 记录一次（~25Hz）
+	s.TrailRecordCD -= dt
+	if s.TrailRecordCD > 0 {
+		return
+	}
+	s.TrailRecordCD = trailInterval
+	s.TrailHistory[s.TrailCursor] = [2]float64{s.X, s.Y}
+	s.TrailCursor = (s.TrailCursor + 1) % len(s.TrailHistory)
 }
 
 // ── 战斗 ────────────────────────────────────────

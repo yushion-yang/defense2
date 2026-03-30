@@ -212,7 +212,9 @@ func drawSlots(screen *ebiten.Image, gm *gamemap.GameMap, fm *FontManager, tower
 				// Occupied slot: subtle green tint
 				draw.FilledCircle(screen, cx, cy, theme.MapSlotRadius, theme.SlotOccupied)
 			} else if buildMode {
-				// Build mode empty slot: 金黄色轮廓 + "+" 号
+				// Build mode empty slot: 凹陷效果 + 金黄色轮廓 + "+" 号
+				draw.FilledCircle(screen, cx, cy, theme.MapSlotRadius, color.RGBA{R: 10, G: 15, B: 30, A: 35})
+				draw.CircleOutline(screen, cx, cy, theme.MapSlotRadius-2, 1, color.RGBA{R: 5, G: 10, B: 20, A: 25})
 				draw.CircleOutline(screen, cx, cy, theme.MapSlotRadius, 1.5, theme.SlotBuildRing)
 
 				ringClr := theme.SlotBuildPulse
@@ -226,7 +228,9 @@ func drawSlots(screen *ebiten.Image, gm *gamemap.GameMap, fm *FontManager, tower
 						14, theme.SlotPlusSign)
 				}
 			} else {
-				// Normal mode empty slot: 仅轮廓线，中心完全透明
+				// Normal mode empty slot: 凹陷效果 + 轮廓线
+				draw.FilledCircle(screen, cx, cy, theme.MapSlotRadius, color.RGBA{R: 10, G: 15, B: 30, A: 25})
+				draw.CircleOutline(screen, cx, cy, theme.MapSlotRadius-2, 1, color.RGBA{R: 5, G: 10, B: 20, A: 18})
 				draw.CircleOutline(screen, cx, cy, theme.MapSlotRadius, 1.5, theme.SlotIdleRing)
 			}
 		}
@@ -332,5 +336,41 @@ func drawTerrainDecorations(screen *ebiten.Image, gm *gamemap.GameMap) {
 			case 3: // nothing (variation)
 			}
 		}
+	}
+}
+
+// ---------------------------------------------------------------------------
+// Parallax background — slow-drifting star field drawn every frame.
+// ---------------------------------------------------------------------------
+
+var parallaxStars [][3]float64
+
+func initParallaxStars() {
+	if len(parallaxStars) > 0 {
+		return
+	}
+	const count = 40
+	parallaxStars = make([][3]float64, count)
+	for i := 0; i < count; i++ {
+		fi := float64(i)
+		parallaxStars[i] = [3]float64{
+			math.Mod(fi*0.618033988*1200, 1200),
+			math.Mod((fi*0.381966+0.2)*540, 540),
+			0.5 + math.Mod(fi*0.7, 1.5),
+		}
+	}
+}
+
+// DrawParallaxBG renders slow-moving background stars. Called every frame (not cached).
+func DrawParallaxBG(screen *ebiten.Image, animTime float64) {
+	initParallaxStars()
+	for i, s := range parallaxStars {
+		speed := 2.0 + float64(i%3)*1.5
+		x := math.Mod(s[0]+animTime*speed, 1200)
+		y := s[1]
+		alpha := uint8(15 + (i%4)*5)
+		r := float32(s[2])
+		draw.FilledCircle(screen, float32(x), float32(y), r,
+			color.RGBA{R: 180, G: 200, B: 255, A: alpha})
 	}
 }

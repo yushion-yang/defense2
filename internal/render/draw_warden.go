@@ -69,6 +69,25 @@ func (wr *WardenRenderer) DrawWarden(screen *ebiten.Image, w *warden.Warden, ani
 		return
 	}
 
+	// Movement trail (rendered behind everything)
+	trailClr := wardenShootColor(w.Type)
+	cursor := base.TrailCursor
+	for i := 0; i < len(base.TrailHistory); i++ {
+		idx := (cursor - 1 - i + len(base.TrailHistory)) % len(base.TrailHistory)
+		tx, ty := base.TrailHistory[idx][0], base.TrailHistory[idx][1]
+		if tx == 0 && ty == 0 {
+			break
+		}
+		age := float64(i+1) / float64(len(base.TrailHistory))
+		alpha := uint8(float64(trailClr.A) * 0.3 * (1 - age))
+		r := float32(6 * (1 - age))
+		if r < 1 {
+			break
+		}
+		draw.FilledCircle(screen, float32(tx), float32(ty), r,
+			color.RGBA{R: trailClr.R, G: trailClr.G, B: trailClr.B, A: alpha})
+	}
+
 	// Type-specific effects (drawn BEFORE body so body renders on top)
 	switch s := w.State.(type) {
 	case *wardenTypes.PrinceState:
@@ -200,6 +219,13 @@ func drawCoreEffects(screen *ebiten.Image, s *warden.WardenState) {
 // ── 聚能特效：串联电弧 ──
 
 func drawChainEffects(screen *ebiten.Image, s *wardenTypes.ChainState) {
+	// 能量连线：串联塔之间画紫色脉冲线段
+	for _, link := range s.ChainLinks {
+		draw.Line(screen, float32(link.X1), float32(link.Y1),
+			float32(link.X2), float32(link.Y2), 1.5,
+			color.RGBA{R: 160, G: 80, B: 255, A: 50}, true)
+	}
+
 	// 射击闪光
 	if s.ShootTimer > 0 {
 		p := s.ShootTimer / 0.15
@@ -220,6 +246,14 @@ func drawSkystrikeEffects(screen *ebiten.Image, s *wardenTypes.SkystrikeState) {
 func drawSingleStrike(screen *ebiten.Image, st wardenTypes.StrikeVFX) {
 	p := float32(st.Timer / 0.8) // 1→0
 	sx, sy := float32(st.X), float32(st.Y)
+
+	// 预警瞄准圈：落下前显示，alpha 随 p 衰减
+	if p > 0.3 {
+		circleA := uint8(120 * (p - 0.3) / 0.7)
+		circleR := float32(12 * (2 - p)) // 扩散效果
+		draw.DashedCircle(screen, sx, sy, circleR, 1, 4, 3,
+			color.RGBA{R: 120, G: 200, B: 255, A: circleA})
+	}
 
 	switch st.Mode {
 	case 1:

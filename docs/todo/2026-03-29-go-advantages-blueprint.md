@@ -27,11 +27,14 @@ Phase 4: 性能封顶 ——— 批渲染 + 内存/GC 极限优化 + 发热控�
 
 ---
 
-## Phase 1: 视觉超越
+## Phase 1: 视觉超越 (大部分完成)
 
 **目标**: 让玩家第一眼就感受到"这不是浏览器游戏"。利用 Kage Shader 和 GPU 做 Canvas 2D 根本不可能的效果。
 
-### 1.1 Bloom 后处理管线
+> **已完成**: 1.2 后处理(vignette/color_grade/radial_blur/ripple/lighting) / 1.3 GPU粒子系统(2048池+8预设) / 1.4 动态光照(4点光源)
+> **阻塞**: 1.1 Bloom (DrawRectShader v2.9.9 crash)
+
+### 1.1 Bloom 后处理管线（阻塞）
 
 Canvas 2D 没有 render-to-texture 能力，无法做后处理。Go 版可以：
 
@@ -277,7 +280,7 @@ Go GC 在移动端更敏感（GC pause 导致掉帧）：
 
 | Phase | 主题 | 核心交付物 | JS 做不到的原因 |
 |-------|------|-----------|----------------|
-| 1 | 视觉超越 | Bloom + 后处理 + 粒子 + 光照 | Canvas 2D 无 shader/render-to-texture |
+| 1 | 视觉超越 | ~~后处理 + 粒子 + 光照~~ ✅ / Bloom 阻塞 | Canvas 2D 无 shader/render-to-texture |
 | 2 | 移动原生 | 触控优化 + 震动 + 省电 + 商店发布 | 浏览器沙箱无原生 API |
 | 3 | 智能体验 | 并发 AI + 程序化生成 + Replay | JS 单线程 + 浮点不确定 |
 | 4 | 性能封顶 | 批渲染 + GC 控制 + 热量管理 | JS GC 不可控 + 无 GPU 批处理 |

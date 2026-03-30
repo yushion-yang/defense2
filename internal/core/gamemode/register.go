@@ -9,4 +9,5 @@ func init() {
 	Register(NewChallengeMode())
 	Register(NewTestMode())
 	Register(NewSkillTestMode())
+	Register(NewAutoPlayMode())
 }

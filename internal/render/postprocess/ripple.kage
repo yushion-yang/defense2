@@ -1,0 +1,53 @@
+//kage:unit pixels
+
+package main
+
+// Ripple0..3: vec4(centerX, centerY, time, amplitude)
+// time: 0=just spawned, increases; amplitude decays with time
+var Ripple0X float
+var Ripple0Y float
+var Ripple0T float
+var Ripple0A float
+
+var Ripple1X float
+var Ripple1Y float
+var Ripple1T float
+var Ripple1A float
+
+var Ripple2X float
+var Ripple2Y float
+var Ripple2T float
+var Ripple2A float
+
+var Ripple3X float
+var Ripple3Y float
+var Ripple3T float
+var Ripple3A float
+
+var ScreenW float
+var ScreenH float
+
+func applyRipple(srcPos vec2, cx float, cy float, t float, amp float) vec2 {
+	if amp < 0.001 {
+		return srcPos
+	}
+	dx := srcPos.x - cx
+	dy := srcPos.y - cy
+	dist := length(vec2(dx, dy))
+	wave := sin(dist*0.15 - t*12) * amp * exp(-dist*0.02) * exp(-t*3)
+	if dist < 1 {
+		return srcPos
+	}
+	return srcPos + vec2(dx, dy)/dist*wave
+}
+
+func Fragment(dstPos vec4, srcPos vec2, color vec4) vec4 {
+	uv := srcPos
+	uv = applyRipple(uv, Ripple0X, Ripple0Y, Ripple0T, Ripple0A)
+	uv = applyRipple(uv, Ripple1X, Ripple1Y, Ripple1T, Ripple1A)
+	uv = applyRipple(uv, Ripple2X, Ripple2Y, Ripple2T, Ripple2A)
+	uv = applyRipple(uv, Ripple3X, Ripple3Y, Ripple3T, Ripple3A)
+	// Clamp to texture bounds
+	uv = clamp(uv, vec2(0), vec2(ScreenW, ScreenH))
+	return imageSrc0At(uv)
+}
