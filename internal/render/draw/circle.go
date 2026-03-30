@@ -101,11 +101,11 @@ func Sprite(screen, img *ebiten.Image, cx, cy, displaySize float64) {
 	w := float64(img.Bounds().Dx())
 	h := float64(img.Bounds().Dy())
 	s := displaySize / w * Scale
-	op := &ebiten.DrawImageOptions{}
+	var op ebiten.DrawImageOptions
 	op.GeoM.Translate(-w/2, -h/2)
 	op.GeoM.Scale(s, s)
 	op.GeoM.Translate(cx*Scale, cy*Scale)
-	screen.DrawImage(img, op)
+	screen.DrawImage(img, &op)
 }
 
 // SpriteRotated draws an image centered at logical (cx, cy) with a display size and rotation.
@@ -117,12 +117,12 @@ func SpriteRotated(screen, img *ebiten.Image, cx, cy, displaySize, rotation, off
 	w := float64(img.Bounds().Dx())
 	h := float64(img.Bounds().Dy())
 	s := displaySize / w * Scale
-	op := &ebiten.DrawImageOptions{}
+	var op ebiten.DrawImageOptions
 	op.GeoM.Translate(-w/2, -h/2)
 	op.GeoM.Rotate(rotation)
 	op.GeoM.Scale(s, s)
 	op.GeoM.Translate(cx*Scale, (cy+offsetY)*Scale)
-	screen.DrawImage(img, op)
+	screen.DrawImage(img, &op)
 }
 
 // SpriteScaled draws an image centered at logical (cx, cy) with a pre-computed logical scale.
@@ -134,11 +134,11 @@ func SpriteScaled(screen, img *ebiten.Image, cx, cy, logicalScale float64) {
 	w := float64(img.Bounds().Dx())
 	h := float64(img.Bounds().Dy())
 	s := logicalScale * Scale
-	op := &ebiten.DrawImageOptions{}
+	var op ebiten.DrawImageOptions
 	op.GeoM.Translate(-w/2, -h/2)
 	op.GeoM.Scale(s, s)
 	op.GeoM.Translate(cx*Scale, cy*Scale)
-	screen.DrawImage(img, op)
+	screen.DrawImage(img, &op)
 }
 
 // SpriteScaledRotated draws an image centered at logical (cx, cy) with scale and rotation.
@@ -150,12 +150,12 @@ func SpriteScaledRotated(screen, img *ebiten.Image, cx, cy, logicalScale, rotati
 	w := float64(img.Bounds().Dx())
 	h := float64(img.Bounds().Dy())
 	s := logicalScale * Scale
-	op := &ebiten.DrawImageOptions{}
+	var op ebiten.DrawImageOptions
 	op.GeoM.Translate(-w/2, -h/2)
 	op.GeoM.Rotate(rotation)
 	op.GeoM.Scale(s, s)
 	op.GeoM.Translate(cx*Scale, cy*Scale)
-	screen.DrawImage(img, op)
+	screen.DrawImage(img, &op)
 }
 
 // Arc draws a stroked arc (partial circle outline) from startAngle to endAngle (radians).
