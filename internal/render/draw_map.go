@@ -161,6 +161,10 @@ func drawWaypointPath(screen *ebiten.Image, waypoints []gamemap.Point) {
 		x2 := float32(waypoints[i+1].X)
 		y2 := float32(waypoints[i+1].Y)
 
+		// Shadow (2px below, darker, slightly thicker) for depth.
+		draw.ThickLine(screen, x1, y1+2, x2, y2+2,
+			theme.MapPathStrokeW+1, color.RGBA{0, 0, 0, 30})
+
 		// Thick rounded base stroke.
 		draw.ThickLine(screen, x1, y1, x2, y2,
 			theme.MapPathStrokeW, theme.MapPathStroke)

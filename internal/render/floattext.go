@@ -51,6 +51,11 @@ func SpawnKillText(x, y float64) {
 	spawnFloatText(x, y-10, "KILL", clr, 10, 0.6)
 }
 
+// SpawnText spawns a floating text with custom color, size, and lifetime.
+func SpawnText(x, y float64, text string, clr color.RGBA, size, life float64) {
+	spawnFloatText(x, y, text, clr, size, life)
+}
+
 func spawnFloatText(x, y float64, text string, clr color.RGBA, size, life float64) {
 	ft := &floatTexts[ftCursor]
 	ft.X = x

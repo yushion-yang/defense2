@@ -189,6 +189,9 @@ type StageScene struct {
 	perfTracker     *debug.PerfTracker         // 性能追踪器
 	qualityAdaptive *game.QualityAdaptive     // 自适应画质调节器
 	waveAnnounce    *hud.WaveAnnounce          // 波次开始公告动画
+	ambientTimer    float64                    // 环境粒子发射计时器（每秒一次）
+	multiKillCount  int                        // 连续击杀计数
+	multiKillTimer  float64                    // 连杀窗口倒计时（1.5s 无击杀后重置）
 }
 
 // NewStageScene 创建游戏主场景，默认加载 map_01。
@@ -1370,6 +1373,16 @@ func (s *StageScene) updatePlaying() {
 		if killed {
 			particle.EmitDeathBurst(s.particlePool, e.X, e.Y)
 			particle.EmitGoldCollect(s.particlePool, e.X, e.Y)
+			// Multi-kill tracker
+			s.multiKillCount++
+			s.multiKillTimer = 1.5
+			if s.multiKillCount == 5 {
+				render.SpawnText(float64(game.ScreenWidth)/2, float64(game.ScreenHeight)/2-30,
+					"MULTI KILL x5", color.RGBA{255, 200, 50, 255}, 16, 1.5)
+			} else if s.multiKillCount == 10 {
+				render.SpawnText(float64(game.ScreenWidth)/2, float64(game.ScreenHeight)/2-30,
+					"MEGA KILL x10", color.RGBA{255, 100, 50, 255}, 18, 2.0)
+			}
 			if e.Boss {
 				s.audioMgr.PlayThrottled(gameAudio.SFXEnemyDeathBoss, 50)
 				s.postPipeline.Effects.TriggerHitStop(3)
@@ -1407,6 +1420,23 @@ func (s *StageScene) updatePlaying() {
 	s.particlePool.Update(gameDT)
 	render.UpdateShake(gameDT)
 
+	// Multi-kill timer decay
+	if s.multiKillTimer > 0 {
+		s.multiKillTimer -= gameDT
+		if s.multiKillTimer <= 0 {
+			s.multiKillCount = 0
+		}
+	}
+
+	// Ambient environment particles (skip on Low quality)
+	if game.Settings().MaxParticles >= 1024 {
+		s.ambientTimer += gameDT
+		if s.ambientTimer >= 1.0 {
+			s.ambientTimer -= 1.0
+			particle.EmitAmbient(s.particlePool, float64(game.ScreenWidth), float64(game.ScreenHeight))
+		}
+	}
+
 	// 10. 波次完成奖励 + 事件触发
 	if s.spawner.Wave > prevWave && prevWave > 0 {
 		ctx := s.buildModeCtx()
@@ -1419,6 +1449,8 @@ func (s *StageScene) updatePlaying() {
 		}
 		if s.lives == s.waveLivesSnapshot && result.PerfectBonus > 0 {
 			s.audioMgr.PlaySafe(gameAudio.SFXWaveClearPerfect)
+			render.SpawnText(float64(game.ScreenWidth)/2, float64(game.ScreenHeight)/2-50,
+				"PERFECT!", color.RGBA{255, 215, 0, 255}, 20, 2.0)
 		} else {
 			s.audioMgr.PlaySafe(gameAudio.SFXWaveClear)
 		}

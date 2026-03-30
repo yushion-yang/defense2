@@ -94,6 +94,39 @@ func EmitGoldCollect(pool *Pool, fromX, fromY float64) {
 	}
 }
 
+// EmitAmbient spawns ambient floating particles across the screen area.
+// Call once per second to maintain ~40 visible particles.
+func EmitAmbient(pool *Pool, screenW, screenH float64) {
+	// Floating dust motes: 5 per call, very slow, long life.
+	for i := 0; i < 5; i++ {
+		pool.Spawn(ParticleConfig{
+			X:        rand.Float64() * screenW,
+			Y:        rand.Float64() * screenH,
+			Speed:    3 + rand.Float64()*8,
+			Angle:    rand.Float64() * 2 * math.Pi,
+			AngleVar: 0,
+			Life:     8 + rand.Float64()*4,
+			Size:     1.5, SizeEnd: 0.5,
+			Color:    color.RGBA{R: 255, G: 255, B: 240, A: 50},
+			EndAlpha: 0,
+		})
+	}
+	// Rising light particles: 3 per call, slow upward.
+	for i := 0; i < 3; i++ {
+		pool.Spawn(ParticleConfig{
+			X:        rand.Float64() * screenW,
+			Y:        screenH + 10,
+			Speed:    6 + rand.Float64()*6,
+			Angle:    -math.Pi / 2, AngleVar: 0.3,
+			Life:     10 + rand.Float64()*5,
+			Size:     2, SizeEnd: 0.8,
+			Color:    color.RGBA{R: 200, G: 220, B: 255, A: 35},
+			EndAlpha: 0,
+			Gravity:  -2,
+		})
+	}
+}
+
 // EmitElectricSparks spawns fast electric spark particles in random directions.
 func EmitElectricSparks(pool *Pool, x, y float64, count int) {
 	for i := 0; i < count; i++ {

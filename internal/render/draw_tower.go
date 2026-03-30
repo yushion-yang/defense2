@@ -55,6 +55,10 @@ func (tr *TowerRenderer) DrawTowers(screen *ebiten.Image, pool *tower.Pool, sele
 				float32(t.Range), theme.TowerRangeStrokeWidth, theme.TowerRangeStroke)
 		}
 
+		// --- Ground shadow (dark ellipse below tower) ---
+		draw.FilledCircle(screen, cx, cy+float32(towerSpriteSize*0.35),
+			float32(towerSpriteSize*0.35), color.RGBA{0, 0, 0, 30})
+
 		// --- Tower body (animated or static, rotated toward target) ---
 		// spin_aoe / summon 不旋转朝向目标
 		rotation := t.Angle + math.Pi/2
@@ -141,7 +145,7 @@ func (tr *TowerRenderer) DrawTowers(screen *ebiten.Image, pool *tower.Pool, sele
 		if fm := GlobalFont(); fm != nil {
 			fm.DrawCenteredText(screen, t.Label,
 				float64(cx), float64(cy)+theme.TowerNameLabelY,
-				theme.FontTowerName, theme.TowerNameLabel)
+				theme.FontCaption, theme.TowerNameLabel)
 		}
 
 		// Tower struct has no Buffs field — buff dots rendering skipped.
