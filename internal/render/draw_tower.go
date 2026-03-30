@@ -203,6 +203,30 @@ func (tr *TowerRenderer) DrawTowers(screen *ebiten.Image, pool *tower.Pool, sele
 			draw.FilledCircle(screen, cx, cy, innerR, innerClr)
 		}
 
+		// --- Strength-based visual tiers (glow / rings) ---
+		if !t.Selling && t.BuildAnim <= 0 && t.Strength != nil {
+			str := t.Strength.Overflow() // strength above baseline (100)
+
+			if str >= 50 {
+				// Tier 2 (50-100): faint warm base glow
+				glowAlpha := uint8(20 + min(30, int((str-50)*0.6)))
+				draw.Glow(screen, cx, cy, float32(towerSpriteSize*0.3), float32(towerSpriteSize*0.5),
+					color.RGBA{255, 255, 200, glowAlpha})
+			}
+			if str >= 100 {
+				// Tier 3 (100-150): stronger glow + base ring
+				draw.CircleOutline(screen, cx, cy, float32(towerSpriteSize*0.45), 0.5,
+					color.RGBA{255, 255, 180, 40})
+			}
+			if str >= 150 {
+				// Tier 4 (150+): double ring with pulsing
+				pulse := 0.5 + 0.5*math.Sin(animTime*3)
+				ringAlpha := uint8(30 + 25*pulse)
+				draw.CircleOutline(screen, cx, cy, float32(towerSpriteSize*0.55), 0.5,
+					color.RGBA{255, 220, 100, ringAlpha})
+			}
+		}
+
 		// --- Name label (skip during sell animation) ---
 		if !t.Selling {
 			if fm := GlobalFont(); fm != nil {

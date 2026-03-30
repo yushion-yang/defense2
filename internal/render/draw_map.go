@@ -122,6 +122,9 @@ func drawMapFull(
 	// ── 2. Path: thick rounded line + dashed center ──
 	drawPaths(screen, gm)
 
+	// ── 2.5. Terrain decorations on empty cells (deterministic, no rand) ──
+	drawTerrainDecorations(screen, gm)
+
 	// ── 3. Tower slots ──
 	drawSlots(screen, gm, fm, towerAt, buildMode, animTime)
 
@@ -290,4 +293,44 @@ func drawPathLabels(screen *ebiten.Image, gm *gamemap.GameMap, fm *FontManager) 
 	// "基地" at last waypoint (centered above).
 	last := waypoints[len(waypoints)-1]
 	fm.DrawCenteredText(screen, "\u57fa\u5730", last.X, last.Y-float64(theme.MapSlotRadius)-labelSize, labelSize, clr)
+}
+
+// ---------------------------------------------------------------------------
+// Terrain decorations
+// ---------------------------------------------------------------------------
+
+// drawTerrainDecorations scatters subtle decorative elements on empty cells.
+// Uses a deterministic hash based on cell position — no rand, fully reproducible.
+func drawTerrainDecorations(screen *ebiten.Image, gm *gamemap.GameMap) {
+	cfg := gm.Config
+	for row := 0; row < cfg.Rows; row++ {
+		for col := 0; col < cfg.Cols; col++ {
+			if cfg.Grid[row][col] != config.CellEmpty {
+				continue
+			}
+
+			// Deterministic "random" based on position
+			hash := uint32(row*7919 + col*104729)
+
+			// Only ~30% of empty cells get decoration
+			if hash%100 > 30 {
+				continue
+			}
+
+			center := gm.CellCenter(row, col)
+			cx := float32(center.X)
+			cy := float32(center.Y)
+
+			switch (hash / 100) % 4 {
+			case 0: // small dot
+				draw.FilledCircle(screen, cx, cy, 1.5, color.RGBA{60, 80, 100, 25})
+			case 1: // tiny cross
+				draw.Line(screen, cx-2, cy, cx+2, cy, 0.5, color.RGBA{50, 70, 90, 20}, false)
+				draw.Line(screen, cx, cy-2, cx, cy+2, 0.5, color.RGBA{50, 70, 90, 20}, false)
+			case 2: // faint ring
+				draw.CircleOutline(screen, cx, cy, 3, 0.5, color.RGBA{40, 60, 80, 15})
+			case 3: // nothing (variation)
+			}
+		}
+	}
 }
