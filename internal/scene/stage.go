@@ -1491,10 +1491,10 @@ func (s *StageScene) updatePlaying() {
 			angle := math.Atan2(t.Target.Y-t.Y, t.Target.X-t.X)
 			particle.EmitMuzzleFlash(s.particlePool, t.X, t.Y, angle)
 		}
-	}, func(e *enemy.Enemy, damage float64, killed bool, _ string) {
+	}, func(e *enemy.Enemy, damage float64, killed bool, _ string, crit bool) {
 		// 直接攻击方式（laser/beam/spin_aoe等）的伤害飘字
 		if damage > 0 {
-			render.SpawnDamageText(e.X, e.Y-15, damage, damage >= 50)
+			render.SpawnDamageText(e.X, e.Y-15, damage, crit)
 		}
 	})
 
@@ -1503,9 +1503,9 @@ func (s *StageScene) updatePlaying() {
 	s.beams.Update(gameDT)
 
 	// 8. 弹射物命中检测（含能力触发）
-	kills := pipeline.TickProjectileHits(s.projectiles, s.enemies, s.towers, func(e *enemy.Enemy, damage float64, killed bool, attackStyle string) {
+	kills := pipeline.TickProjectileHits(s.projectiles, s.enemies, s.towers, func(e *enemy.Enemy, damage float64, killed bool, attackStyle string, crit bool) {
 		if damage > 0 {
-			render.SpawnDamageText(e.X, e.Y-15, damage, damage >= 50)
+			render.SpawnDamageText(e.X, e.Y-15, damage, crit)
 			e.HitFlash = 0.12
 			// 元素类型化命中特效
 			render.SpawnTypedImpact(e.X, e.Y, attackStyle)
@@ -1905,7 +1905,7 @@ func (s *StageScene) drawScene(screen *ebiten.Image) {
 
 	// 战灵（选择后才绘制）
 	if s.wardenReady && s.wardenUnit != nil {
-		s.wardenRenderer.DrawWarden(worldTarget, s.wardenUnit)
+		s.wardenRenderer.DrawWarden(worldTarget, s.wardenUnit, animTime)
 		// 战灵技能 VFX + CD 进度条
 		if s.wardenUnit.Skill != nil {
 			render.DrawSkillVFX(worldTarget, s.wardenUnit.Skill)
@@ -2160,7 +2160,7 @@ func (s *StageScene) buildSkillContext() *skill.SkillContext {
 		Projectiles: s.projectiles,
 		Beams:       s.beams,
 		OnHit: func(e *enemy.Enemy, dmg float64, killed bool) {
-			render.SpawnDamageText(e.X, e.Y-10, dmg, dmg >= 50)
+			render.SpawnDamageText(e.X, e.Y-10, dmg, false)
 			if killed {
 				s.audioMgr.PlaySafe(gameAudio.SFXEnemyDeath)
 				s.emitKill(e.Boss, "skill") // 统一击杀事件

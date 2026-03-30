@@ -45,7 +45,7 @@ func (h *AuraDotHandler) Tick(t *tower.Tower, ctx *AttackContext) {
 		e.HP -= dmg
 		hit = true
 		if ctx.OnHit != nil {
-			ctx.OnHit(e, dmg, e.HP <= 0, ctx.Style)
+			ctx.OnHit(e, dmg, e.HP <= 0, ctx.Style, false)
 		}
 	})
 

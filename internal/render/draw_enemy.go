@@ -114,7 +114,14 @@ func (er *EnemyRenderer) DrawEnemies(screen *ebiten.Image, pool *enemy.Pool, ani
 				wobbleY = 0
 				wobbleRot = 0
 			}
-			draw.SpriteRotated(screen, img, float64(cx), float64(cy), enemySpriteSize, wobbleRot, wobbleY)
+			// Boss/Elite 呼吸缩放：体型周期性脉冲
+			displaySize := float64(enemySpriteSize)
+			if e.Boss {
+				displaySize *= 1.0 + 0.04*math.Sin(animTime*1.8)
+			} else if e.Elite {
+				displaySize *= 1.0 + 0.02*math.Sin(animTime*2.2)
+			}
+			draw.SpriteRotated(screen, img, float64(cx), float64(cy), displaySize, wobbleRot, wobbleY)
 		} else {
 			bodyColor := color.RGBA{R: 200, G: 60, B: 60, A: 255}
 			if e.Boss {

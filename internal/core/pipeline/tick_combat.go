@@ -186,6 +186,7 @@ func TickProjectileHits(projectiles *projectile.Pool, enemies *enemy.Pool, tower
 				})
 			}
 
+			isCrit := false
 			if srcTower != nil {
 				for _, aName := range srcTower.Abilities {
 					ab, ok := tower.Registry[aName]
@@ -197,6 +198,9 @@ func TickProjectileHits(projectiles *projectile.Pool, enemies *enemy.Pool, tower
 						continue
 					}
 					totalDamage += result.BonusDamage
+					if result.IsCrit {
+						isCrit = true
+					}
 					applyHitEffects(result, e, p, enemies, projectiles)
 				}
 			}
@@ -228,7 +232,7 @@ func TickProjectileHits(projectiles *projectile.Pool, enemies *enemy.Pool, tower
 				if srcTower != nil {
 					hitStyle = string(srcTower.AttackStyleID)
 				}
-				onHit(e, totalDamage, killed, hitStyle)
+				onHit(e, totalDamage, killed, hitStyle, isCrit)
 			}
 
 			if killed {
@@ -290,7 +294,7 @@ func TickProjectileHits(projectiles *projectile.Pool, enemies *enemy.Pool, tower
 		e.HP -= totalDamage
 		killed := e.HP <= 0
 		if onHit != nil {
-			onHit(e, totalDamage, killed, "scatter")
+			onHit(e, totalDamage, killed, "scatter", false)
 		}
 		if killed {
 			enemies.Kill(e)
@@ -453,7 +457,7 @@ func applyDeathExplosion(t *tower.Tower, killed *enemy.Enemy, enemies *enemy.Poo
 			if math.Hypot(e2.X-killed.X, e2.Y-killed.Y) <= explodeR {
 				e2.HP -= explodeDmg
 				if onHit != nil {
-					onHit(e2, explodeDmg, e2.HP <= 0, "explosion")
+					onHit(e2, explodeDmg, e2.HP <= 0, "explosion", false)
 				}
 				if e2.HP <= 0 {
 					enemies.Kill(e2)

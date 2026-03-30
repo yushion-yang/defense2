@@ -54,7 +54,7 @@ func (h *WideBeamHandler) Fire(t *tower.Tower, target *enemy.Enemy, ctx *AttackC
 		}
 		e.HP -= dmg
 		if ctx.OnHit != nil {
-			ctx.OnHit(e, dmg, e.HP <= 0, ctx.Style)
+			ctx.OnHit(e, dmg, e.HP <= 0, ctx.Style, false)
 		}
 	})
 

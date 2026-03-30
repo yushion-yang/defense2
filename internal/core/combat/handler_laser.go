@@ -25,7 +25,7 @@ func (h *LaserHandler) Fire(t *tower.Tower, target *enemy.Enemy, ctx *AttackCont
 	}
 	target.HP -= dmg
 	if ctx.OnHit != nil {
-		ctx.OnHit(target, dmg, target.HP <= 0, ctx.Style)
+		ctx.OnHit(target, dmg, target.HP <= 0, ctx.Style, false)
 	}
 
 	// 创建 beam 视觉

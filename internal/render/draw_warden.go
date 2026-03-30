@@ -56,7 +56,7 @@ func (wr *WardenRenderer) GetSprite(typ string) *ebiten.Image {
 }
 
 // DrawWarden renders a single warden entity.
-func (wr *WardenRenderer) DrawWarden(screen *ebiten.Image, w *warden.Warden) {
+func (wr *WardenRenderer) DrawWarden(screen *ebiten.Image, w *warden.Warden, animTime float64) {
 	if w == nil || !w.Active {
 		return
 	}
@@ -84,14 +84,18 @@ func (wr *WardenRenderer) DrawWarden(screen *ebiten.Image, w *warden.Warden) {
 	}
 
 	// Body sprite（根据精灵原始朝向校正旋转角度）
+	// 悬浮动画：Y 轴上下浮动 + 微缩放脉冲
+	bobY := math.Sin(animTime*2.5) * 3.0
+	displaySize := float64(wardenSpriteSize) * (1.0 + 0.015*math.Sin(animTime*2.0))
+
 	img := wr.loadSprite(w.Type)
 	if img != nil {
 		rotation := wardenSpriteRotation(w.Type, base.FacingAngle)
 		draw.SpriteRotated(screen, img, float64(base.X), float64(base.Y),
-			wardenSpriteSize, rotation, 0)
+			displaySize, rotation, bobY)
 	} else {
 		// Fallback: simple colored circle
-		draw.FilledCircle(screen, float32(base.X), float32(base.Y), 8,
+		draw.FilledCircle(screen, float32(base.X), float32(base.Y+bobY), 8,
 			wardenShootColor(w.Type))
 	}
 }

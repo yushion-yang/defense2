@@ -29,14 +29,14 @@ type AttackContext struct {
 	Projectiles *projectile.Pool
 	Beams       *BeamPool
 	OnFire      func(t *tower.Tower, style string)                               // 射击回调（携带塔引用和攻击方式）
-	OnHit       func(e *enemy.Enemy, damage float64, killed bool, style string) // 命中回调（携带攻击方式）
+	OnHit       func(e *enemy.Enemy, damage float64, killed bool, style string, crit bool) // 命中回调（携带攻击方式+暴击）
 	OnAbilityHit func(t *tower.Tower, e *enemy.Enemy, damage float64) float64   // 触发塔 OnHit 能力，返回额外伤害
 	DT          float64
 	Style       string // 当前攻击方式（由 pipeline 设置，handler 内部可读取）
 }
 
 // HitCallback 弹射物命中回调（用于生成飘字、音效等）。
-type HitCallback = func(e *enemy.Enemy, damage float64, killed bool, attackStyle string)
+type HitCallback = func(e *enemy.Enemy, damage float64, killed bool, attackStyle string, crit bool)
 
 // ── 注册表 ──
 
