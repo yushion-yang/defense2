@@ -3,8 +3,8 @@
 package render
 
 import (
-	"fmt"
 	"image/color"
+	"strconv"
 	"math"
 
 	"github.com/hajimehoshi/ebiten/v2"
@@ -35,17 +35,14 @@ func SpawnDamageText(x, y, damage float64, crit bool) {
 		clr = color.RGBA{R: 255, G: 80, B: 60, A: 255}
 		size = 14.0
 	}
-	text := fmt.Sprintf("%.0f", damage)
-	if damage >= 100 {
-		text = fmt.Sprintf("%.0f", damage)
-	}
+	text := strconv.FormatFloat(damage, 'f', 0, 64)
 	spawnFloatText(x, y, text, clr, size, 0.8)
 }
 
 // SpawnGoldText 在指定位置弹出金币获取文字。
 func SpawnGoldText(x, y float64, amount int) {
 	clr := color.RGBA{R: 255, G: 215, B: 0, A: 255}
-	spawnFloatText(x, y, fmt.Sprintf("+%d", amount), clr, 11, 1.0)
+	spawnFloatText(x, y, "+"+strconv.Itoa(amount), clr, 11, 1.0)
 }
 
 // SpawnKillText 在指定位置弹出击杀文字。

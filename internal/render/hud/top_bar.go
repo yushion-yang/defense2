@@ -3,8 +3,8 @@
 package hud
 
 import (
-	"fmt"
 	"image/color"
+	"strconv"
 
 	"defense2/internal/render"
 	"defense2/internal/render/draw"
@@ -67,31 +67,32 @@ func DrawTopBar(screen *ebiten.Image, d TopBarData) {
 	// Heart icon + lives
 	draw.FilledCircle(screen, float32(resX)+6, float32(resY)+2, 6, theme.ResHearts)
 	resX += 16
-	livesTxt := fmt.Sprintf("%d", d.Lives)
-	fm.DrawText(screen, livesTxt, resX, resY-5, theme.FontTopBar, color.White)
-	resX += fm.MeasureText(livesTxt, theme.FontTopBar) + 10
+	const topFS = theme.FontH1 // 顶栏使用 H1 字号
+	livesTxt := strconv.Itoa(d.Lives)
+	fm.DrawText(screen, livesTxt, resX, resY-5, topFS, color.White)
+	resX += fm.MeasureText(livesTxt, topFS) + 10
 
 	// Coin icon + gold
 	draw.FilledCircle(screen, float32(resX)+6, float32(resY)+2, 6, theme.ResGold)
 	resX += 16
-	goldTxt := fmt.Sprintf("%d", d.Gold)
-	fm.DrawText(screen, goldTxt, resX, resY-5, theme.FontTopBar, color.White)
-	resX += fm.MeasureText(goldTxt, theme.FontTopBar) + 10
+	goldTxt := strconv.Itoa(d.Gold)
+	fm.DrawText(screen, goldTxt, resX, resY-5, topFS, color.White)
+	resX += fm.MeasureText(goldTxt, topFS) + 10
 
 	// Wave icon + wave/maxWaves
 	draw.FilledCircle(screen, float32(resX)+5, float32(resY)+2, 5, theme.ResWaves)
 	resX += 14
-	waveTxt := fmt.Sprintf("%d/%d", d.Wave, d.MaxWaves)
-	fm.DrawText(screen, waveTxt, resX, resY-5, theme.FontTopBar, color.White)
-	resX += fm.MeasureText(waveTxt, theme.FontTopBar) + 10
+	waveTxt := strconv.Itoa(d.Wave) + "/" + strconv.Itoa(d.MaxWaves)
+	fm.DrawText(screen, waveTxt, resX, resY-5, topFS, color.White)
+	resX += fm.MeasureText(waveTxt, topFS) + 10
 
 	// Kills icon (stat-target) + kill count
 	if im := render.GlobalIcons(); im != nil {
 		if img := im.Get("stat-target"); img != nil {
 			draw.Sprite(screen, img, resX+5, float64(resY)+1, 10)
 			resX += 14
-			killsTxt := fmt.Sprintf("%d", d.Kills)
-			fm.DrawText(screen, killsTxt, resX, resY-5, theme.FontTopBar, color.White)
+			killsTxt := strconv.Itoa(d.Kills)
+			fm.DrawText(screen, killsTxt, resX, resY-5, topFS, color.White)
 		}
 	}
 
@@ -132,14 +133,14 @@ func DrawTopBar(screen *ebiten.Image, d TopBarData) {
 	if d.TestMode {
 		spawnClr := theme.TonePrimary
 		if d.SpawnMode {
-			spawnClr = color.RGBA{R: 220, G: 60, B: 60, A: 255} // 红色表示激活
+			spawnClr = theme.BtnDanger // 红色表示激活
 		}
 		btns = append(btns, btnDef{"spawn", "造怪", spawnClr})
 	}
 
 	startLabel := "开波"
 	if d.WaveCountdown > 0 {
-		startLabel = fmt.Sprintf("开波(%ds)", int(d.WaveCountdown)+1)
+		startLabel = "开波(" + strconv.Itoa(int(d.WaveCountdown)+1) + "s)"
 	}
 	btns = append(btns, btnDef{"start", startLabel, theme.TonePrimary})
 	btns = append(btns, btnDef{"speed", speedLabel, theme.ToneAccent})
@@ -148,7 +149,7 @@ func DrawTopBar(screen *ebiten.Image, d TopBarData) {
 	if d.TestMode {
 		debugClr := theme.ToneSecondary
 		if d.DebugOpen {
-			debugClr = color.RGBA{R: 80, G: 120, B: 180, A: 255}
+			debugClr = theme.ToneAccent
 		}
 		btns = append(btns, btnDef{"debug", "调试", debugClr})
 	}
@@ -160,8 +161,15 @@ func DrawTopBar(screen *ebiten.Image, d TopBarData) {
 		names[i] = b.name
 	}
 
-	// 计算按钮区域（右对齐）
-	totalBtnW := float32(len(items))*theme.BtnBuildW + float32(len(items)-1)*btnGap
+	// 计算按钮区域（右对齐，按文本自适应宽度）
+	const btnPadX float32 = 20 // 按钮内水平 padding
+	totalBtnW := float32(0)
+	for _, item := range items {
+		tw := float32(fm.MeasureText(item.Label, theme.FontH2))
+		totalBtnW += tw + btnPadX*2
+	}
+	totalBtnW += float32(len(items)-1) * btnGap
+
 	btnArea := ui.Rect{
 		X: pillX + pillW - 12 - totalBtnW,
 		Y: pillY + (pillH-btnH)/2,
@@ -169,12 +177,12 @@ func DrawTopBar(screen *ebiten.Image, d TopBarData) {
 		H: btnH,
 	}
 
-	result := ui.DrawButtonRow(screen, btnArea, items, ui.ButtonRowStyle{
+	result := ui.DrawButtonRowAutoWidth(screen, btnArea, items, ui.ButtonRowStyle{
 		Height:   btnH,
 		Gap:      btnGap,
 		Radius:   btnR,
-		FontSize: theme.FontMD,
-	})
+		FontSize: theme.FontH2,
+	}, btnPadX)
 	lastTopBarBtnRects = result.Rects
 	lastTopBarBtnNames = names
 }
