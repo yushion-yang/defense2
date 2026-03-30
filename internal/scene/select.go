@@ -4,12 +4,14 @@ package scene
 
 import (
 	"image/color"
+	"math"
 
 	"defense2/internal/config"
 	"defense2/internal/core/game"
 	"defense2/internal/core/persistence"
 	"defense2/internal/render"
 	"defense2/internal/render/draw"
+	"defense2/internal/render/particle"
 	"defense2/internal/render/theme"
 	"defense2/internal/render/ui"
 
@@ -95,6 +97,11 @@ type SelectScene struct {
 	hoverStart   bool
 	difficulties []difficultyUI
 	mapNames     map[string]string // mapID → 显示名
+
+	// Ambient atmosphere
+	particlePool *particle.Pool  // 环境粒子池
+	ambientTimer float64         // 粒子发射计时器
+	frame        int             // 帧计数（用于动画）
 }
 
 // NewSelectScene 创建选关场景。
@@ -130,6 +137,7 @@ func NewSelectScene(sw Switcher) *SelectScene {
 		hoverDiff:    -1,
 		difficulties: diffs,
 		mapNames:     mapNames,
+		particlePool: particle.NewPool(),
 	}
 }
 
@@ -161,6 +169,17 @@ func loadDifficulties() []difficultyUI {
 // ── Update ──────────────────────────────────────
 
 func (s *SelectScene) Update() error {
+	s.frame++
+	const dt = 1.0 / 60.0
+
+	// Ambient particles (denser than stage: every 0.5s)
+	s.ambientTimer += dt
+	if s.ambientTimer >= 0.5 {
+		s.ambientTimer -= 0.5
+		particle.EmitAmbient(s.particlePool, float64(game.ScreenWidth), float64(game.ScreenHeight))
+	}
+	s.particlePool.Update(dt)
+
 	// 鼠标悬停检测
 	mxf, myf := draw.CursorPos()
 	s.hoverMode = s.hitTestModeCards(mxf, myf)
@@ -251,6 +270,9 @@ var (
 func (s *SelectScene) Draw(screen *ebiten.Image) {
 	draw.LinearGradientV(screen, 0, 0, game.ScreenWidth, game.ScreenHeight, theme.SelectGradTop, theme.SelectGradBot)
 
+	// Ambient particles (behind all UI)
+	s.particlePool.Draw(screen)
+
 	if s.fontMgr == nil {
 		// 字体加载失败回退
 		return
@@ -258,8 +280,11 @@ func (s *SelectScene) Draw(screen *ebiten.Image) {
 
 	fm := s.fontMgr
 
-	// ── 标题 ──
-	fm.DrawCenteredBoldText(screen, "Mini Tower Defense", scW/2, 28, 28, textWhite)
+	// ── 标题（breathing pulse） ──
+	animTime := float64(s.frame) / 60.0
+	pulse := 1.0 + 0.015*math.Sin(animTime*2) // scale oscillates 0.985 - 1.015
+	titleSize := 28.0 * pulse
+	fm.DrawCenteredBoldText(screen, "Mini Tower Defense", scW/2, 28, titleSize, textWhite)
 	fm.DrawCenteredText(screen, "选择游戏模式", scW/2, 60, 14, textGray)
 
 	// ── 模式卡片 ──
@@ -360,7 +385,9 @@ func (s *SelectScene) Draw(screen *ebiten.Image) {
 
 	// ── 底部提示 ──
 	fm.DrawCenteredText(screen, "点击卡片选择模式和难度", scW/2, scH-30, 10, textDim)
-	fm.DrawCenteredText(screen, "Mini Tower Defense v1.0", scW/2, scH-14, 10, textDim)
+	// Version text with muted color
+	versionColor := color.RGBA{R: 60, G: 65, B: 80, A: 255}
+	fm.DrawCenteredText(screen, "v0.1.0", scW/2, scH-12, 9, versionColor)
 }
 
 // strokeRect 绘制矩形边框。

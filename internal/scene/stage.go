@@ -1322,12 +1322,69 @@ func (s *StageScene) updatePlaying() {
 	// 6.5. 塔技能 tick
 	pipeline.TickTowerSkills(s.towers, s.enemies, gameDT, s.buildSkillContext())
 
-	// 6.6. 收集塔光源（动态光照，受画质等级限制）
+	// 6.6. 收集光源（优先级：路径端点 > Boss > 战灵 > 塔）
 	s.postPipeline.Lighting.Clear()
-	lightIdx := 0
+	animTime := float64(s.frame) / 60.0
 	lightCap := game.Settings().MaxLights
+	lightCount := 0
+
+	// Priority 1: path entrance (red breathing) + exit (blue breathing)
+	if len(s.gameMap.Waypoints) > 0 && lightCount < lightCap {
+		first := s.gameMap.Waypoints[0]
+		last := s.gameMap.Waypoints[len(s.gameMap.Waypoints)-1]
+		breathIntensity := 0.3 + 0.1*math.Sin(animTime*2)
+		s.postPipeline.Lighting.AddLight(postprocess.PointLight{
+			X: first.X, Y: first.Y,
+			Color:     color.RGBA{R: 255, G: 60, B: 60, A: 255},
+			Radius:    60,
+			Intensity: breathIntensity,
+		})
+		lightCount++
+		if lightCount < lightCap {
+			s.postPipeline.Lighting.AddLight(postprocess.PointLight{
+				X: last.X, Y: last.Y,
+				Color:     color.RGBA{R: 60, G: 120, B: 255, A: 255},
+				Radius:    60,
+				Intensity: breathIntensity,
+			})
+			lightCount++
+		}
+	}
+
+	// Priority 2: boss enemy lights (first boss found)
+	if lightCount < lightCap {
+		s.enemies.Each(func(e *enemy.Enemy) {
+			if lightCount >= lightCap {
+				return
+			}
+			if e.Boss && !e.IsDying() {
+				s.postPipeline.Lighting.AddLight(postprocess.PointLight{
+					X: e.X, Y: e.Y,
+					Color:     color.RGBA{R: 255, G: 160, B: 40, A: 255},
+					Radius:    50,
+					Intensity: 0.5,
+				})
+				lightCount++
+			}
+		})
+	}
+
+	// Priority 3: warden light
+	if lightCount < lightCap && s.wardenReady && s.wardenUnit != nil {
+		if base := s.wardenUnit.BaseState(); base != nil {
+			s.postPipeline.Lighting.AddLight(postprocess.PointLight{
+				X: base.X, Y: base.Y,
+				Color:     color.RGBA{R: 180, G: 140, B: 255, A: 255},
+				Radius:    70,
+				Intensity: 0.4,
+			})
+			lightCount++
+		}
+	}
+
+	// Priority 4: towers fill remaining slots
 	s.towers.Each(func(t *tower.Tower) {
-		if lightIdx >= postprocess.MaxLights || lightIdx >= lightCap {
+		if lightCount >= postprocess.MaxLights || lightCount >= lightCap {
 			return
 		}
 		s.postPipeline.Lighting.AddLight(postprocess.PointLight{
@@ -1336,7 +1393,7 @@ func (s *StageScene) updatePlaying() {
 			Radius:    t.Range * 0.6,
 			Intensity: 0.4,
 		})
-		lightIdx++
+		lightCount++
 	})
 
 	// 7. 塔索敌射击（按攻击方式分发）
