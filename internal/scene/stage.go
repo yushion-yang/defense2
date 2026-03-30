@@ -186,6 +186,7 @@ type StageScene struct {
 	particlePool    *particle.Pool             // GPU 粒子系统
 	debugOverlay    *hud.DebugOverlay          // 调试覆盖层（F2 切换）
 	perfTracker     *debug.PerfTracker         // 性能追踪器
+	qualityAdaptive *game.QualityAdaptive     // 自适应画质调节器
 }
 
 // NewStageScene 创建游戏主场景，默认加载 map_01。
@@ -315,9 +316,11 @@ func NewStageSceneWithOpts(sw Switcher, opts StageOptions) *StageScene {
 	s.postPipeline = postprocess.NewPipeline()
 	s.particlePool = particle.NewPool()
 
-	// 调试覆盖层 + 性能追踪器
+	// 调试覆盖层 + 性能追踪器 + 自适应画质
 	s.debugOverlay = hud.NewDebugOverlay()
 	s.perfTracker = debug.NewPerfTracker()
+	s.qualityAdaptive = game.NewQualityAdaptive()
+	s.particlePool.MaxActive = game.Settings().MaxParticles
 
 	// 注入战灵精灵获取函数到覆盖层
 	s.wardenOverlay.SpriteFunc = s.wardenRenderer.GetSprite
@@ -477,6 +480,11 @@ func (s *StageScene) Update() error {
 
 	// Toast 通知更新
 	hud.UpdateToast(dt)
+
+	// 自适应画质：根据帧耗时动态调整画质等级
+	totalMs := s.perfTracker.AvgUpdateMs + s.perfTracker.AvgDrawMs
+	s.qualityAdaptive.Tick(totalMs)
+	s.particlePool.MaxActive = game.Settings().MaxParticles
 
 	return nil
 }
@@ -1286,11 +1294,12 @@ func (s *StageScene) updatePlaying() {
 	// 6.5. 塔技能 tick
 	pipeline.TickTowerSkills(s.towers, s.enemies, gameDT, s.buildSkillContext())
 
-	// 6.6. 收集塔光源（动态光照）
+	// 6.6. 收集塔光源（动态光照，受画质等级限制）
 	s.postPipeline.Lighting.Clear()
 	lightIdx := 0
+	lightCap := game.Settings().MaxLights
 	s.towers.Each(func(t *tower.Tower) {
-		if lightIdx >= postprocess.MaxLights {
+		if lightIdx >= postprocess.MaxLights || lightIdx >= lightCap {
 			return
 		}
 		s.postPipeline.Lighting.AddLight(postprocess.PointLight{

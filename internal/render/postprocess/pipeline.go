@@ -3,6 +3,7 @@
 package postprocess
 
 import (
+	"defense2/internal/core/game"
 	"defense2/internal/render/draw"
 
 	"github.com/hajimehoshi/ebiten/v2"
@@ -125,12 +126,15 @@ func (p *Pipeline) Apply(dst *ebiten.Image) {
 	}
 
 	// Determine which effect passes are needed.
+	// Respect quality settings: vignette/lighting/radialBlur are skipped on Low,
+	// but hit flash (color grade) is always kept as important gameplay feedback.
+	qs := game.Settings()
 	fx := p.Effects
 	ls := p.Lighting
-	needLighting := ls != nil && ls.Enabled && ls.Count > 0
-	needVignette := fx != nil && fx.VignetteStrength > 0
+	needLighting := ls != nil && ls.Enabled && ls.Count > 0 && qs.PostProcessing
+	needVignette := fx != nil && fx.VignetteStrength > 0 && qs.PostProcessing
 	needColorGrade := fx != nil && fx.HitFlash.Active
-	needRadialBlur := fx != nil && fx.RadialBlur.Active
+	needRadialBlur := fx != nil && fx.RadialBlur.Active && qs.PostProcessing
 
 	// If no bloom and no effects, fast blit.
 	if !p.BloomEnabled && !needLighting && !needVignette && !needColorGrade && !needRadialBlur {
@@ -299,11 +303,17 @@ func (p *Pipeline) Apply(dst *ebiten.Image) {
 // Positions and radii are converted to physical pixels via draw.S().
 func (p *Pipeline) buildLightingUniforms() map[string]any {
 	ls := p.Lighting
+	// Cap active light count at the quality-level maximum.
+	lightCap := game.Settings().MaxLights
+	count := ls.Count
+	if lightCap >= 0 && count > lightCap {
+		count = lightCap
+	}
 	p.uLighting["Ambient"] = float32(ls.Ambient)
-	p.uLighting["LightCount"] = float32(ls.Count)
+	p.uLighting["LightCount"] = float32(count)
 	for i := 0; i < MaxLights; i++ {
 		suffix := [4]string{"0", "1", "2", "3"}[i]
-		if i < ls.Count {
+		if i < count {
 			l := &ls.Lights[i]
 			p.uLighting["LightX"+suffix] = float32(draw.S(l.X))
 			p.uLighting["LightY"+suffix] = float32(draw.S(l.Y))

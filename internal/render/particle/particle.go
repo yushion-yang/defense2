@@ -45,6 +45,8 @@ type ParticleConfig struct {
 type Pool struct {
 	particles [MaxParticles]Particle
 	cursor    int
+	active    int // tracked count of alive particles
+	MaxActive int // quality cap; 0 = unlimited (use MaxParticles)
 	vertices  []ebiten.Vertex
 	indices   []uint16
 }
@@ -59,8 +61,17 @@ func NewPool() *Pool {
 
 // Spawn adds a particle to the pool using the given config.
 // Uses the ring-buffer cursor so oldest particles are overwritten when full.
+// If MaxActive > 0 and the tracked active count has reached that cap,
+// the spawn is silently skipped to respect quality settings.
 func (p *Pool) Spawn(cfg ParticleConfig) {
+	if p.MaxActive > 0 && p.active >= p.MaxActive {
+		return
+	}
 	pt := &p.particles[p.cursor]
+	// Track: if we are overwriting a still-active particle, active count stays the same.
+	if !pt.Active {
+		p.active++
+	}
 	p.cursor = (p.cursor + 1) % MaxParticles
 
 	// Position with random spread.
@@ -108,6 +119,7 @@ func (p *Pool) Update(dt float64) {
 		pt.Life -= dt
 		if pt.Life <= 0 {
 			pt.Active = false
+			p.active--
 			continue
 		}
 		pt.VY += pt.Gravity * dt
@@ -179,12 +191,7 @@ func (p *Pool) Draw(screen *ebiten.Image) {
 }
 
 // ActiveCount returns the number of currently active (alive) particles.
+// Uses the incrementally tracked counter — O(1).
 func (p *Pool) ActiveCount() int {
-	count := 0
-	for i := range p.particles {
-		if p.particles[i].Active {
-			count++
-		}
-	}
-	return count
+	return p.active
 }
