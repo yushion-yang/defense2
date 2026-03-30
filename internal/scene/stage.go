@@ -16,6 +16,7 @@ import (
 	gameAudio "defense2/internal/audio"
 	"defense2/internal/config"
 	"defense2/internal/core/combat"
+	"defense2/internal/core/debug"
 	"defense2/internal/core/economy"
 	"defense2/internal/core/enemy"
 	"defense2/internal/core/event"
@@ -153,6 +154,7 @@ type StageScene struct {
 	wardenCfg         *config.WardenConfig         // 战灵配置（用于面板显示）
 	gameSpeed         int                          // 游戏速度倍率（1 或 2）
 	imode             interactMode                 // 交互状态机
+	prePauseMode      interactMode                 // 暂停前的交互模式（恢复用）
 	eventPending      []event.Event                // 待选事件列表（modeEvent 时使用）
 	eventHoverIdx     int                          // 事件卡片鼠标悬停索引
 	buildHoverIdx     int                          // 建塔面板鼠标悬停索引
@@ -182,6 +184,8 @@ type StageScene struct {
 	initOpts        StageOptions // 保存原始配置（重新开始用）
 	postPipeline    *postprocess.Pipeline      // 后处理管线（bloom 等）
 	particlePool    *particle.Pool             // GPU 粒子系统
+	debugOverlay    *hud.DebugOverlay          // 调试覆盖层（F2 切换）
+	perfTracker     *debug.PerfTracker         // 性能追踪器
 }
 
 // NewStageScene 创建游戏主场景，默认加载 map_01。
@@ -310,6 +314,10 @@ func NewStageSceneWithOpts(sw Switcher, opts StageOptions) *StageScene {
 	// 后处理管线（bloom）+ 粒子系统
 	s.postPipeline = postprocess.NewPipeline()
 	s.particlePool = particle.NewPool()
+
+	// 调试覆盖层 + 性能追踪器
+	s.debugOverlay = hud.NewDebugOverlay()
+	s.perfTracker = debug.NewPerfTracker()
 
 	// 注入战灵精灵获取函数到覆盖层
 	s.wardenOverlay.SpriteFunc = s.wardenRenderer.GetSprite
@@ -531,7 +539,9 @@ func (s *StageScene) handleInput() {
 			s.spawnType = ""
 			s.imode = modeIdle
 		default:
-			s.switcher.SwitchScene(NewSelectScene(s.switcher))
+			// modeIdle 等: ESC 打开暂停菜单（而非直接退出对局）
+			s.prePauseMode = s.imode
+			s.imode = modePaused
 		}
 		return
 	}
@@ -564,8 +574,9 @@ func (s *StageScene) handleInput() {
 	}
 	if inpututil.IsKeyJustPressed(ebiten.KeyP) {
 		if s.imode == modePaused {
-			s.imode = modeIdle
-		} else if s.imode == modeIdle {
+			s.imode = s.prePauseMode
+		} else {
+			s.prePauseMode = s.imode
 			s.imode = modePaused
 		}
 	}
@@ -573,6 +584,11 @@ func (s *StageScene) handleInput() {
 		if s.imode == modeTowerSel && s.selectedTower != nil {
 			s.trySellTower(s.selectedTower.X, s.selectedTower.Y)
 		}
+	}
+
+	// F2: 调试覆盖层（性能统计，任何模式可用）
+	if inpututil.IsKeyJustPressed(ebiten.KeyF2) {
+		s.debugOverlay.Toggle()
 	}
 
 	// 测试模式专用快捷键
@@ -731,12 +747,8 @@ func (s *StageScene) handleInput() {
 		placed := s.tryPlaceTower(wtx, wty)
 		if placed {
 			s.imode = modeIdle // 放完一个回到空闲，需重新选择
-		} else {
-			clicked := s.towerAtPixel(wtx, wty)
-			if clicked != nil {
-				s.selectedTower = clicked
-				s.imode = modeTowerSel
-			}
+		} else if s.towerAtPixel(wtx, wty) != nil {
+			hud.ShowToast("此位置已有塔")
 		}
 
 	case modeSpawnMenu:
@@ -791,7 +803,7 @@ func (s *StageScene) handleInput() {
 func (s *StageScene) handlePausedInput() {
 	s.gesture.Update()
 	if inpututil.IsKeyJustPressed(ebiten.KeyEscape) || inpututil.IsKeyJustPressed(ebiten.KeyP) || inpututil.IsKeyJustPressed(ebiten.KeySpace) {
-		s.imode = modeIdle
+		s.imode = s.prePauseMode // 恢复暂停前的模式
 		return
 	}
 	if s.gesture.JustTapped() {
@@ -800,7 +812,7 @@ func (s *StageScene) handlePausedInput() {
 		switch action {
 		case hud.PauseResume:
 			s.audioMgr.PlaySafe(gameAudio.SFXUIClick)
-			s.imode = modeIdle
+			s.imode = s.prePauseMode // 恢复暂停前的模式
 		case hud.PauseRestart:
 			s.audioMgr.PlaySafe(gameAudio.SFXUIClick)
 			s.switcher.SwitchScene(NewStageSceneWithOpts(s.switcher, s.initOpts))
@@ -1170,6 +1182,9 @@ const dt = 1.0 / float64(game.TargetTPS)
 
 // updatePlaying 游戏进行中的核心循环，按管线顺序执行。
 func (s *StageScene) updatePlaying() {
+	s.perfTracker.BeginUpdate()
+	defer s.perfTracker.EndUpdate()
+
 	if s.imode == modePaused {
 		return
 	}
@@ -1434,7 +1449,12 @@ func eventCardRect(n, i int) (x, y float32) {
 }
 
 // handleEventSelection 处理事件选择弹窗的输入：悬停高亮和点击选择。
+// 使用手势系统统一处理鼠标/触摸输入，避免拖拽误触。
 func (s *StageScene) handleEventSelection() {
+	g := s.gesture
+	g.DragEnabled = false
+	g.Update()
+
 	mx, my := draw.CursorPos()
 	fmx, fmy := float32(mx), float32(my)
 	n := len(s.eventPending)
@@ -1449,22 +1469,10 @@ func (s *StageScene) handleEventSelection() {
 		}
 	}
 
-	// 点击选择
-	if inpututil.IsMouseButtonJustPressed(ebiten.MouseButtonLeft) && s.eventHoverIdx >= 0 {
-		chosen := s.eventPending[s.eventHoverIdx]
-		event.Apply(&chosen, s)
-		s.appliedEvents = append(s.appliedEvents, chosen)
-		s.showNotify(fmt.Sprintf("Event: %s", chosen.Label))
-		s.eventPending = nil
-		s.eventHoverIdx = -1
-		s.imode = modeIdle
-		s.audioMgr.PlaySafe(gameAudio.SFXChoiceSelect)
-	}
-
-	// 触摸选择（移动端）
-	for _, id := range inpututil.JustPressedTouchIDs() {
-		tx, ty := draw.TouchPos(id)
-		ftx, fty := float32(tx), float32(ty)
+	// 通过手势系统检测 Tap（桌面+移动端统一）
+	if g.JustTapped() {
+		tapX, tapY := g.TapPos()
+		ftx, fty := float32(tapX), float32(tapY)
 		for i := 0; i < n; i++ {
 			cx, cy := eventCardRect(n, i)
 			if ftx >= cx && ftx <= cx+eventCardW && fty >= cy && fty <= cy+eventCardH {
@@ -1499,7 +1507,7 @@ func (s *StageScene) drawEventPopup(screen *ebiten.Image) {
 
 	// 标题
 	titleY := float64(game.ScreenHeight)/2 - float64(eventCardH)/2 - 36
-	fm.DrawCenteredBoldText(screen, "选择事件", float64(game.ScreenWidth)/2, titleY, theme.FontXL, theme.TextTitle)
+	fm.DrawCenteredBoldText(screen, "选择事件", float64(game.ScreenWidth)/2, titleY, theme.FontH1, theme.TextTitle)
 
 	// 事件卡片
 	for i, ev := range s.eventPending {
@@ -1518,12 +1526,12 @@ func (s *StageScene) drawEventPopup(screen *ebiten.Image) {
 		// 事件名称（卡片上方居中）
 		labelX := float64(cx) + float64(eventCardW)/2
 		labelY := float64(cy) + 16
-		fm.DrawCenteredBoldText(screen, ev.Label, labelX, labelY, theme.FontLG, theme.TextTitle)
+		fm.DrawCenteredBoldText(screen, ev.Label, labelX, labelY, theme.FontH2, theme.TextTitle)
 
 		// 事件描述（卡片中部居中）
 		descX := float64(cx) + float64(eventCardW)/2
 		descY := float64(cy) + 48
-		fm.DrawCenteredText(screen, ev.Description, descX, descY, theme.FontSM, theme.TextBody)
+		fm.DrawCenteredText(screen, ev.Description, descX, descY, theme.FontBody, theme.TextBody)
 
 		// Tier 标签（卡片底部）
 		tierLabel := fmt.Sprintf("Tier %d", ev.Tier)
@@ -1533,7 +1541,7 @@ func (s *StageScene) drawEventPopup(screen *ebiten.Image) {
 		if ev.Tier >= 2 {
 			tierColor = theme.StatusSkill
 		}
-		fm.DrawCenteredText(screen, tierLabel, tierX, tierY, theme.FontXS, tierColor)
+		fm.DrawCenteredText(screen, tierLabel, tierX, tierY, theme.FontCaption, tierColor)
 	}
 }
 
@@ -1567,6 +1575,9 @@ var shakeBuffer *ebiten.Image
 var worldBuffer *ebiten.Image
 
 func (s *StageScene) Draw(screen *ebiten.Image) {
+	s.perfTracker.BeginDraw()
+	defer s.perfTracker.EndDraw()
+
 	// 屏幕震动：先画到缓冲，再偏移 blit 到 screen
 	dx, dy := render.ShakeOffset()
 	target := screen
@@ -1774,7 +1785,7 @@ func (s *StageScene) drawScene(screen *ebiten.Image) {
 	// 教程提示（顶部居中）
 	if msg := s.tutorial.CurrentMessage(); msg != "" {
 		if fm := render.GlobalFont(); fm != nil {
-			fm.DrawCenteredText(screen, msg, float64(game.ScreenWidth)/2, 50, theme.FontMD, theme.TextBody)
+			fm.DrawCenteredText(screen, msg, float64(game.ScreenWidth)/2, 50, theme.FontH2, theme.TextBody)
 		}
 	}
 
@@ -1782,6 +1793,12 @@ func (s *StageScene) drawScene(screen *ebiten.Image) {
 	if s.testMode && s.debugPanelOpen {
 		hud.DrawDebugPanel(screen, hud.DebugPanelData{Actions: s.debugActions()})
 	}
+
+	// 调试覆盖层：实体统计 + 性能统计（F2 切换）
+	s.debugOverlay.DrawHUD(screen,
+		s.towers.Count, s.enemies.Count,
+		s.beams.Count(), s.projectiles.Count)
+	s.debugOverlay.DrawPerf(screen, s.perfTracker)
 
 	// 造怪选择菜单（测试模式 FSM）
 	if s.imode == modeSpawnMenu {
@@ -1818,7 +1835,7 @@ func (s *StageScene) drawScene(screen *ebiten.Image) {
 			} else {
 				fm.DrawCenteredText(screen, "DEFEAT!", float64(game.ScreenWidth)/2, float64(game.ScreenHeight)/2-20, theme.FontGameOver, theme.HUDDefeatColor)
 			}
-			fm.DrawCenteredText(screen, fmt.Sprintf("击杀: %d  点击继续", s.kills), float64(game.ScreenWidth)/2, float64(game.ScreenHeight)/2+30, theme.FontLG, theme.TextMuted)
+			fm.DrawCenteredText(screen, fmt.Sprintf("击杀: %d  点击继续", s.kills), float64(game.ScreenWidth)/2, float64(game.ScreenHeight)/2+30, theme.FontH2, theme.TextMuted)
 		}
 	}
 }

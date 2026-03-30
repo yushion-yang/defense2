@@ -4,8 +4,9 @@ package hud
 
 import (
 	"fmt"
-	"image/color"
+	"strconv"
 
+	"defense2/internal/core/debug"
 	"defense2/internal/core/game"
 	"defense2/internal/render"
 	"defense2/internal/render/draw"
@@ -45,8 +46,7 @@ func (o *DebugOverlay) DrawWorld(screen *ebiten.Image, towers, enemies interface
 	towerCount := countSlice(towers)
 	enemyCount := countSlice(enemies)
 	text := fmt.Sprintf("调试: %d塔 / %d敌", towerCount, enemyCount)
-	fm.DrawText(screen, text, 10, float64(game.ScreenHeight)-30, theme.FontXS,
-		color.RGBA{R: 100, G: 200, B: 255, A: 180})
+	fm.DrawText(screen, text, 10, float64(game.ScreenHeight)-30, theme.FontCaption, theme.DebugTextClr)
 }
 
 // DrawHUD 绘制 HUD 空间调试统计栏（屏幕顶部）。
@@ -59,15 +59,68 @@ func (o *DebugOverlay) DrawHUD(screen *ebiten.Image, towerCount, enemyCount, bea
 		return
 	}
 
-	// 半透明背景条
-	barH := float32(20)
-	bgClr := color.RGBA{R: 0, G: 0, B: 0, A: 150}
-	draw.FilledRect(screen, 0, 0, float32(game.ScreenWidth), barH, bgClr, false)
+	// 半透明背景条（紧贴 TopBar 下方）
+	barY := float32(theme.TopBarY+theme.TopBarH) + 2
+	barH := float32(18)
+	bgClr := theme.OverlayHeavy
+	draw.FilledRect(screen, 0, barY, float32(game.ScreenWidth), barH, bgClr, false)
 
 	// 统计文本
 	stats := fmt.Sprintf("塔:%d  敌:%d  光束:%d  弹:%d", towerCount, enemyCount, beamCount, projCount)
-	textClr := color.RGBA{R: 180, G: 220, B: 255, A: 230}
-	fm.DrawCenteredText(screen, stats, float64(game.ScreenWidth)/2, 2, theme.FontXS, textClr)
+	textClr := theme.DebugStatsClr
+	fm.DrawCenteredText(screen, stats, float64(game.ScreenWidth)/2, float64(barY)+2, theme.FontCaption, textClr)
+}
+
+// DrawPerf 绘制性能统计栏（紧贴 DrawHUD 实体栏下方）。
+// 使用 strconv + stack buffer 避免 fmt.Sprintf 分配。
+// Format: "FPS:60 | U:2.1ms D:4.3ms | P99:3.2/6.1 | GC:2/s | Heap:12M"
+func (o *DebugOverlay) DrawPerf(screen *ebiten.Image, pt *debug.PerfTracker) {
+	if !o.Enabled || pt == nil {
+		return
+	}
+	fm := render.GlobalFont()
+	if fm == nil {
+		return
+	}
+
+	// Position: second bar below entity stats bar
+	barY := float32(theme.TopBarY+theme.TopBarH) + 2 + 18 + 1 // entity bar height + gap
+	barH := float32(18)
+	draw.FilledRect(screen, 0, barY, float32(game.ScreenWidth), barH, theme.OverlayHeavy, false)
+
+	// Build string with strconv (zero-alloc pattern using stack buffer)
+	var buf [256]byte
+	b := buf[:0]
+
+	// FPS:60
+	b = append(b, "FPS:"...)
+	b = strconv.AppendInt(b, int64(pt.FPS+0.5), 10)
+
+	// | U:2.1ms D:4.3ms
+	b = append(b, " | U:"...)
+	b = strconv.AppendFloat(b, pt.AvgUpdateMs, 'f', 1, 64)
+	b = append(b, "ms D:"...)
+	b = strconv.AppendFloat(b, pt.AvgDrawMs, 'f', 1, 64)
+	b = append(b, "ms"...)
+
+	// | P99:3.2/6.1
+	b = append(b, " | P99:"...)
+	b = strconv.AppendFloat(b, pt.P99UpdateMs, 'f', 1, 64)
+	b = append(b, '/')
+	b = strconv.AppendFloat(b, pt.P99DrawMs, 'f', 1, 64)
+
+	// | GC:2/s
+	b = append(b, " | GC:"...)
+	b = strconv.AppendUint(b, uint64(pt.GCCount), 10)
+	b = append(b, "/s"...)
+
+	// | Heap:12M
+	b = append(b, " | Heap:"...)
+	b = strconv.AppendInt(b, int64(pt.HeapMB+0.5), 10)
+	b = append(b, 'M')
+
+	text := string(b) // single allocation for the final string
+	fm.DrawCenteredText(screen, text, float64(game.ScreenWidth)/2, float64(barY)+2, theme.FontCaption, theme.DebugStatsClr)
 }
 
 // countSlice 尝试获取切片长度（辅助函数）。
