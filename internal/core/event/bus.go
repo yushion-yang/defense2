@@ -14,8 +14,6 @@ const (
 	EvtEnemyLeaked   = "enemyLeaked"   // 敌人泄漏到终点
 	EvtWaveStarted   = "waveStarted"   // 波次开始
 	EvtWaveCleared   = "waveCleared"   // 波次全部清除
-	EvtDamageDealt   = "damageDealt"   // 伤害产生
-	EvtGoldChanged   = "goldChanged"   // 金币变更
 )
 
 // BusHandler 事件总线处理函数类型（区别于 handler.go 中的事件效果 Handler）。
