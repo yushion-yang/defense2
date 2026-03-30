@@ -188,6 +188,7 @@ type StageScene struct {
 	debugOverlay    *hud.DebugOverlay          // 调试覆盖层（F2 切换）
 	perfTracker     *debug.PerfTracker         // 性能追踪器
 	qualityAdaptive *game.QualityAdaptive     // 自适应画质调节器
+	waveAnnounce    *hud.WaveAnnounce          // 波次开始公告动画
 }
 
 // NewStageScene 创建游戏主场景，默认加载 map_01。
@@ -321,6 +322,7 @@ func NewStageSceneWithOpts(sw Switcher, opts StageOptions) *StageScene {
 	s.debugOverlay = hud.NewDebugOverlay()
 	s.perfTracker = debug.NewPerfTracker()
 	s.qualityAdaptive = game.NewQualityAdaptive()
+	s.waveAnnounce = hud.NewWaveAnnounce()
 	s.particlePool.MaxActive = game.Settings().MaxParticles
 
 	// 注入战灵精灵获取函数到覆盖层
@@ -1230,11 +1232,16 @@ func (s *StageScene) updatePlaying() {
 		s.waveLivesSnapshot = s.lives
 		s.session.OnWaveStart(s.spawner.Wave, s.buildModeCtx())
 		s.audioMgr.PlaySafe(gameAudio.SFXWaveStart)
-		if s.spawner.Wave%5 == 0 {
+		isBossWave := s.spawner.Wave%5 == 0
+		if isBossWave {
 			s.audioMgr.PlaySafe(gameAudio.SFXBossEnter)
 		}
+		s.waveAnnounce.Trigger(s.spawner.Wave, s.spawner.MaxWaves, isBossWave)
 		s.tutorial.OnEvent("waveStarted")
 	}
+
+	// 波次公告动画更新
+	s.waveAnnounce.Update(gameDT)
 
 	// 2. 敌人状态效果（减速、流血等）
 	pipeline.TickEnemyStatusEffects(s.enemies, gameDT, func(e *enemy.Enemy, dmg float64) {
@@ -1833,6 +1840,9 @@ func (s *StageScene) drawScene(screen *ebiten.Image) {
 		s.towers.Count, s.enemies.Count,
 		s.beams.Count(), s.projectiles.Count)
 	s.debugOverlay.DrawPerf(screen, s.perfTracker)
+
+	// 波次公告动画（slide-in/hold/slide-out）
+	s.waveAnnounce.Draw(screen)
 
 	// 造怪选择菜单（测试模式 FSM）
 	if s.imode == modeSpawnMenu {
