@@ -14,7 +14,7 @@ import (
 
 // TickTowerCombat 塔战斗子管线：按攻击方式分发射击逻辑。
 // beams 可为 nil（无 beam 渲染支持时），onFire/onHit 可为 nil。
-func TickTowerCombat(towers *tower.Pool, enemies *enemy.Pool, projectiles *projectile.Pool, beams *combat.BeamPool, dt float64, onFire func(style string), onHit combat.HitCallback) {
+func TickTowerCombat(towers *tower.Pool, enemies *enemy.Pool, projectiles *projectile.Pool, beams *combat.BeamPool, dt float64, onFire func(*tower.Tower, string), onHit combat.HitCallback) {
 	ctx := &combat.AttackContext{
 		Enemies:     enemies,
 		Projectiles: projectiles,
@@ -79,7 +79,7 @@ func TickTowerCombat(towers *tower.Pool, enemies *enemy.Pool, projectiles *proje
 		t.FireTimer = 1.0 / t.AttackSpeed
 		t.FireAnim = 0.15
 		if onFire != nil {
-			onFire(string(style))
+			onFire(t, string(style))
 		}
 	})
 }

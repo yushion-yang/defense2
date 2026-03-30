@@ -27,7 +27,7 @@ func (h *ChargeHandler) Fire(t *tower.Tower, target *enemy.Enemy, ctx *AttackCon
 	t.ChargeReady = false
 	t.FireAnim = 0.15
 	if ctx.OnFire != nil {
-		ctx.OnFire(ctx.Style)
+		ctx.OnFire(t, ctx.Style)
 	}
 }
 

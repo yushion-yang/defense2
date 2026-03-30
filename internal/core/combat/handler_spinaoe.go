@@ -72,7 +72,7 @@ func (h *SpinAoEHandler) Tick(t *tower.Tower, ctx *AttackContext) {
 		t.SpinActive = 0.3
 		t.FireTimer = 1.0 / t.AttackSpeed
 		if ctx.OnFire != nil {
-			ctx.OnFire(ctx.Style)
+			ctx.OnFire(t, ctx.Style)
 		}
 	}
 }

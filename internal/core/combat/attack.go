@@ -28,7 +28,7 @@ type AttackContext struct {
 	Enemies     *enemy.Pool
 	Projectiles *projectile.Pool
 	Beams       *BeamPool
-	OnFire      func(style string)                                              // 射击回调（携带攻击方式）
+	OnFire      func(t *tower.Tower, style string)                               // 射击回调（携带塔引用和攻击方式）
 	OnHit       func(e *enemy.Enemy, damage float64, killed bool, style string) // 命中回调（携带攻击方式）
 	OnAbilityHit func(t *tower.Tower, e *enemy.Enemy, damage float64) float64   // 触发塔 OnHit 能力，返回额外伤害
 	DT          float64

@@ -118,6 +118,12 @@ func (er *EnemyRenderer) DrawEnemies(screen *ebiten.Image, pool *enemy.Pool, ani
 			draw.FilledCircle(screen, cx, cy, r, bodyColor)
 		}
 
+		// --- White flash overlay on hit ---
+		if e.HitFlash > 0 && !e.IsDying() {
+			flashAlpha := uint8(clampF(float64(e.HitFlash)/0.12*100, 0, 255))
+			draw.FilledCircle(screen, cx, cy, r, color.RGBA{R: 255, G: 255, B: 255, A: flashAlpha})
+		}
+
 		// --- Tank overlay ---
 		if e.Archetype == "tank" {
 			size := float32(14)
@@ -290,8 +296,10 @@ func (er *EnemyRenderer) getEnemyFrame(e *enemy.Enemy, dt float64) *ebiten.Image
 		er.animators[e.Archetype] = a
 	}
 
-	// Choose animation state
-	if a.HasAnim("walk") {
+	// Play hit animation when taking damage, otherwise walk
+	if e.HitFlash > 0 && a.HasAnim("hit") {
+		a.Play("hit")
+	} else if a.HasAnim("walk") {
 		a.Play("walk")
 	}
 	a.Update(dt)
