@@ -119,6 +119,9 @@ func TickProjectileHits(projectiles *projectile.Pool, enemies *enemy.Pool, tower
 			if !p.Active {
 				return
 			}
+			if e.IsDying() {
+				return
+			}
 
 			// 追踪弹只和锁定目标碰撞（穿刺弹和散射弹除外）
 			if p.Target != nil && !p.Pierce && p.ScatterGroup == 0 && e != p.Target {
@@ -250,7 +253,7 @@ func TickProjectileHits(projectiles *projectile.Pool, enemies *enemy.Pool, tower
 	// ── 散射命中合并处理 ──
 	for _, sh := range scatterHits {
 		e := sh.enemy
-		if !e.Active {
+		if !e.Active || e.IsDying() {
 			continue
 		}
 		totalDamage := sh.damage * float64(sh.count)
@@ -298,7 +301,7 @@ func retargetPierce(p *projectile.Projectile, justHit *enemy.Enemy, enemies *ene
 	var best *enemy.Enemy
 	bestDist := 300.0 // 穿刺搜索范围
 	enemies.Each(func(e *enemy.Enemy) {
-		if e == justHit {
+		if e == justHit || e.IsDying() {
 			return
 		}
 		for _, id := range p.PierceHitIDs {
@@ -343,8 +346,8 @@ func applyHitEffects(r *tower.HitResult, target *enemy.Enemy, p *projectile.Proj
 	if r.Splash != nil {
 		splashDamage := p.Damage * r.Splash.Ratio
 		enemies.Each(func(e *enemy.Enemy) {
-			if e == target {
-				return // 跳过已命中的目标
+			if e == target || e.IsDying() {
+				return // 跳过已命中的目标和正在死亡的敌人
 			}
 			dx := e.X - target.X
 			dy := e.Y - target.Y
@@ -365,6 +368,9 @@ func applyHitEffects(r *tower.HitResult, target *enemy.Enemy, p *projectile.Proj
 		var best *enemy.Enemy
 		bestDist := r.Bounce.Range
 		enemies.Each(func(e2 *enemy.Enemy) {
+			if e2.IsDying() {
+				return
+			}
 			// 排除所有已命中的敌人（不弹回）
 			for _, id := range hitIDs {
 				if e2.ID == id {
@@ -436,7 +442,7 @@ func applyDeathExplosion(t *tower.Tower, killed *enemy.Enemy, enemies *enemy.Poo
 		explodeR := def.Param
 		extraKills := 0
 		enemies.Each(func(e2 *enemy.Enemy) {
-			if e2 == killed {
+			if e2 == killed || e2.IsDying() {
 				return
 			}
 			if math.Hypot(e2.X-killed.X, e2.Y-killed.Y) <= explodeR {
@@ -481,6 +487,9 @@ func applyTowerAbilities(t *tower.Tower, e *enemy.Enemy, hitDamage float64, enem
 // TickEnemyStatusEffects 敌人状态效果子管线：处理所有敌人的减速/流血，击杀血量归零的敌人。
 func TickEnemyStatusEffects(enemies *enemy.Pool, dt float64, onDotDmg func(e *enemy.Enemy, dmg float64)) {
 	enemies.Each(func(e *enemy.Enemy) {
+		if e.IsDying() {
+			return
+		}
 		enemy.TickStatusEffects(e, dt)
 		// DoT tick 触发时弹浮字
 		if e.LastDotDmg > 0 && onDotDmg != nil {

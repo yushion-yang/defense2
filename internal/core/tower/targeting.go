@@ -12,7 +12,7 @@ import (
 // 优先沿用已锁定的目标（存活且在射程内），否则重新选最近的。
 func AcquireTarget(t *Tower, pool *enemy.Pool) *enemy.Enemy {
 	// 检查已锁定目标是否仍然有效
-	if t.Target != nil && t.Target.Active {
+	if t.Target != nil && t.Target.Active && !t.Target.IsDying() {
 		dx := t.Target.X - t.X
 		dy := t.Target.Y - t.Y
 		if math.Hypot(dx, dy) <= t.Range {
@@ -39,6 +39,9 @@ func FindNearestEnemy(t *Tower, pool *enemy.Pool) *enemy.Enemy {
 	bestDist := math.MaxFloat64
 
 	pool.Each(func(e *enemy.Enemy) {
+		if e.IsDying() {
+			return
+		}
 		dx := e.X - t.X
 		dy := e.Y - t.Y
 		dist := math.Hypot(dx, dy)
@@ -59,7 +62,7 @@ func FindExtraTargets(t *Tower, pool *enemy.Pool, count int, exclude *enemy.Enem
 	}
 	var cands []candidate
 	pool.Each(func(e *enemy.Enemy) {
-		if e == exclude {
+		if e == exclude || e.IsDying() {
 			return
 		}
 		dx := e.X - t.X

@@ -40,6 +40,33 @@ func (er *EnemyRenderer) DrawEnemies(screen *ebiten.Image, pool *enemy.Pool, ani
 	pool.Each(func(e *enemy.Enemy) {
 		cx := float32(e.X)
 		cy := float32(e.Y)
+
+		// --- Dying animation: fade + shrink + float upward ---
+		if e.IsDying() {
+			progress := 1.0 - e.DyingTimer/e.DyingDuration // 0→1 (0=just died, 1=gone)
+			scale := 1.0 - progress                         // shrink from 1 to 0
+			alpha := float32(1.0 - progress)                // fade from 1 to 0
+			offsetY := -progress * 8                         // float up 8px
+
+			img := er.getEnemyFrame(e, 1.0/60.0)
+			if img != nil {
+				displaySize := float64(enemySpriteSize) * scale
+				if displaySize < 0.5 {
+					return // too small to see
+				}
+				w := float64(img.Bounds().Dx())
+				h := float64(img.Bounds().Dy())
+				s := displaySize / w * draw.Scale
+				var op ebiten.DrawImageOptions
+				op.GeoM.Translate(-w/2, -h/2)
+				op.GeoM.Scale(s, s)
+				op.GeoM.Translate(float64(cx)*draw.Scale, (float64(cy)+offsetY)*draw.Scale)
+				op.ColorScale.ScaleAlpha(alpha)
+				screen.DrawImage(img, &op)
+			}
+			return // skip normal rendering for dying enemies
+		}
+
 		r := float32(e.Radius)
 
 		// --- Flying enemy ground shadow ---

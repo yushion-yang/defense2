@@ -26,6 +26,19 @@ func TestPoolSpawnAndKill(t *testing.T) {
 	if p.Count != 1 {
 		t.Fatalf("count after kill should be 1, got %d", p.Count)
 	}
+	// Kill starts dying animation; enemy is still Active until FinishDying
+	if !e1.Active {
+		t.Fatal("dying enemy should still be Active")
+	}
+	if !e1.IsDying() {
+		t.Fatal("killed enemy should be dying")
+	}
+
+	// Finish dying to free the slot
+	p.FinishDying(e1)
+	if e1.Active {
+		t.Fatal("finished dying enemy should be inactive")
+	}
 
 	// Killed slot should be reusable
 	e3 := p.Spawn(300, 300, 30, 60, 1, "normal", nil)
@@ -51,10 +64,19 @@ func TestPoolEach(t *testing.T) {
 	e3 := p.Spawn(0, 0, 10, 60, 1, "normal", nil)
 	p.Kill(e3)
 
+	// Kill starts dying animation: enemy is still Active (visited by Each for rendering)
 	count := 0
 	p.Each(func(_ *enemy.Enemy) { count++ })
+	if count != 3 {
+		t.Fatalf("each should visit 3 active (including dying), got %d", count)
+	}
+
+	// After FinishDying, the slot is freed
+	p.FinishDying(e3)
+	count = 0
+	p.Each(func(_ *enemy.Enemy) { count++ })
 	if count != 2 {
-		t.Fatalf("each should visit 2 active, got %d", count)
+		t.Fatalf("each should visit 2 active after FinishDying, got %d", count)
 	}
 }
 

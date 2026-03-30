@@ -36,6 +36,10 @@ type Enemy struct {
 	Elite      bool            // 是否为精英怪
 	HitFlash   float64         // 受击闪白剩余时间（秒，>0 时渲染白色叠加）
 
+	// ── 死亡动画 ──
+	DyingTimer    float64 // >0 means dying animation in progress (seconds remaining)
+	DyingDuration float64 // total dying time (for progress calculation)
+
 	// ── 伤害管线扩展字段 ──
 
 	DamageCap        float64 // 单次伤害上限（0=无上限，如铁甲怪 60）
@@ -72,6 +76,11 @@ type Enemy struct {
 	// ── 飞行 ──
 	MovementType string // 移动类型（"ground"/"flying"）
 }
+
+// IsDying returns true if the enemy is playing its death animation.
+// Dying enemies are still Active (for rendering) but should be skipped by
+// targeting, collision, movement, and status-effect systems.
+func (e *Enemy) IsDying() bool { return e.DyingTimer > 0 }
 
 // MinSpeedRatio 全局减速下限：速度不低于初始速度的 20%。
 const MinSpeedRatio = 0.2

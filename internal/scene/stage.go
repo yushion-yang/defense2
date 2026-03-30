@@ -1242,12 +1242,25 @@ func (s *StageScene) updatePlaying() {
 
 	// 3. 敌人移动（到达终点扣生命）
 	s.enemies.Each(func(e *enemy.Enemy) {
+		if e.IsDying() {
+			return // dying enemies don't move
+		}
 		if enemy.MoveAlongPath(e, s.gameMap.Waypoints, gameDT) {
 			s.lives--
 			s.session.OnEnemyLeaked(s.buildModeCtx())
-			s.enemies.Kill(e)
+			s.enemies.KillImmediate(e) // leaked enemies vanish instantly, no dying anim
 			s.audioMgr.PlaySafe(gameAudio.SFXEnemyLeak)
 			s.postPipeline.Effects.TriggerHitFlash(0.15)
+		}
+	})
+
+	// 3.5. Tick dying enemies (shrink+fade animation countdown)
+	s.enemies.Each(func(e *enemy.Enemy) {
+		if e.IsDying() {
+			e.DyingTimer -= gameDT
+			if e.DyingTimer <= 0 {
+				s.enemies.FinishDying(e)
+			}
 		}
 	})
 
@@ -1281,7 +1294,11 @@ func (s *StageScene) updatePlaying() {
 		base := s.wardenUnit.BaseState()
 		if base != nil {
 			var enemySlice []*enemy.Enemy
-			s.enemies.Each(func(e *enemy.Enemy) { enemySlice = append(enemySlice, e) })
+			s.enemies.Each(func(e *enemy.Enemy) {
+				if !e.IsDying() {
+					enemySlice = append(enemySlice, e)
+				}
+			})
 			skill.TickEntitySkill(s.wardenUnit.Skill, base, enemySlice, gameDT, s.buildSkillContext())
 		}
 	}

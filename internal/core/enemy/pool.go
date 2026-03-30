@@ -67,6 +67,8 @@ func (p *Pool) Spawn(x, y, baseHP, baseSpeed float64, pathIndex int, archetype s
 			e.RootTimer = 0
 			e.DisplayHP = hp
 			e.Elite = cfg.HpScale >= 4
+			e.DyingTimer = 0
+			e.DyingDuration = 0
 			p.Count++
 			return e
 		}
@@ -74,12 +76,37 @@ func (p *Pool) Spawn(x, y, baseHP, baseSpeed float64, pathIndex int, archetype s
 	return nil
 }
 
-// Kill 将敌人标记为非存活（回收槽位）。
+// Kill starts the dying animation for an enemy. Count drops immediately so
+// gameplay systems see the enemy as "gone", but the enemy stays Active for
+// rendering until FinishDying is called.
 func (p *Pool) Kill(e *Enemy) {
-	if e.Active {
-		e.Active = false
+	if e.Active && e.DyingTimer <= 0 {
+		e.DyingTimer = 0.3
+		e.DyingDuration = 0.3
+		if e.Boss {
+			e.DyingTimer = 0.5
+			e.DyingDuration = 0.5
+		}
 		p.Count--
 	}
+}
+
+// KillImmediate deactivates an enemy instantly without a dying animation.
+// Used for enemies that reach the base (leaked) or other non-combat removal.
+func (p *Pool) KillImmediate(e *Enemy) {
+	if e.Active {
+		if e.DyingTimer <= 0 {
+			p.Count-- // only decrement if not already dying (Kill already decremented)
+		}
+		e.Active = false
+		e.DyingTimer = 0
+	}
+}
+
+// FinishDying completes the dying animation and deactivates the enemy slot.
+func (p *Pool) FinishDying(e *Enemy) {
+	e.Active = false
+	e.DyingTimer = 0
 }
 
 // Each 遍历所有存活敌人并执行回调。
