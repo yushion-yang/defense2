@@ -1,8 +1,9 @@
 // game.go — 顶层游戏管理器。
-// 实现 ebiten.Game 接口，管理场景切换（排队到下一帧生效）。
+// 实现 ebiten.Game 接口，管理场景切换（带淡入淡出过渡）。
 package scene
 
 import (
+	"image/color"
 	"log"
 
 	gameAudio "defense2/internal/audio"
@@ -16,13 +17,30 @@ import (
 	"github.com/hajimehoshi/ebiten/v2"
 )
 
+// transitionState 场景过渡状态。
+type transitionState int
+
+const (
+	transIdle    transitionState = iota // 无过渡
+	transFadeOut                        // 当前场景淡出到黑色
+	transFadeIn                         // 新场景从黑色淡入
+)
+
+// transSpeed 过渡速度：alpha 每帧变化量（0.3s = 18 帧 @ 60fps）。
+const transSpeed = 1.0 / 18.0
+
 // Game 顶层游戏对象，实现 ebiten.Game 接口。
 type Game struct {
 	current  Scene              // 当前活跃场景
-	next     Scene              // 待切换的下一个场景（下帧生效）
+	next     Scene              // 待切换的下一个场景（下帧生效，无过渡时用）
 	width    int                // 逻辑宽度
 	height   int                // 逻辑高度
 	audioMgr *gameAudio.Manager // 全局音效管理器（跨场景复用）
+
+	// 场景过渡
+	transState  transitionState // 当前过渡状态
+	transAlpha  float64         // 0.0（透明）→ 1.0（全黑）
+	pendingNext Scene           // 淡出完成后切换到的场景
 }
 
 // NewGame 创建游戏实例，初始场景为标题画面。
@@ -73,23 +91,57 @@ func initAudio() *gameAudio.Manager {
 	return mgr
 }
 
-// SwitchScene 排队场景切换（下一帧生效，避免帧内切换导致状态不一致）。
+// SwitchScene 触发带淡入淡出过渡的场景切换。
+// 如果过渡已在进行中，新请求被忽略。
 func (g *Game) SwitchScene(next Scene) {
-	g.next = next
+	if g.transState != transIdle {
+		return // 过渡进行中，忽略
+	}
+	g.pendingNext = next
+	g.transState = transFadeOut
+	g.transAlpha = 0
 }
 
-// Update 每帧逻辑更新：先处理场景切换，再更新当前场景。
+// Update 每帧逻辑更新：处理过渡动画 + 更新当前场景。
 func (g *Game) Update() error {
+	// 兼容旧的 next 直接切换（无过渡）
 	if g.next != nil {
 		g.current = g.next
 		g.next = nil
 	}
+
+	switch g.transState {
+	case transFadeOut:
+		g.transAlpha += transSpeed
+		if g.transAlpha >= 1.0 {
+			g.transAlpha = 1.0
+			// 淡出完成：切换场景，开始淡入
+			g.current = g.pendingNext
+			g.pendingNext = nil
+			g.transState = transFadeIn
+		}
+	case transFadeIn:
+		g.transAlpha -= transSpeed
+		if g.transAlpha <= 0 {
+			g.transAlpha = 0
+			g.transState = transIdle
+		}
+	}
+
 	return g.current.Update()
 }
 
-// Draw 每帧渲染：委托给当前场景。
+// Draw 每帧渲染：委托给当前场景，叠加过渡遮罩。
 func (g *Game) Draw(screen *ebiten.Image) {
 	g.current.Draw(screen)
+
+	// 过渡遮罩（全屏半透明黑色）
+	if g.transAlpha > 0 {
+		a := uint8(g.transAlpha * 255)
+		w := float32(screen.Bounds().Dx())
+		h := float32(screen.Bounds().Dy())
+		draw.FilledRect(screen, 0, 0, w, h, color.RGBA{0, 0, 0, a}, false)
+	}
 }
 
 // Layout 返回逻辑分辨率（仅在 LayoutF 不可用时调用）。
