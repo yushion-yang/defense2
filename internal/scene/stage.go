@@ -1507,11 +1507,16 @@ func (s *StageScene) updatePlaying() {
 		if damage > 0 {
 			render.SpawnDamageText(e.X, e.Y-15, damage, damage >= 50)
 			e.HitFlash = 0.12
-			// 命中特效：蓄力弹用大号，其他用通用小型
-			if attackStyle == "charge" {
-				render.SpawnChargeImpact(e.X, e.Y)
-			} else {
-				render.SpawnHitImpact(e.X, e.Y)
+			// 元素类型化命中特效
+			render.SpawnTypedImpact(e.X, e.Y, attackStyle)
+			// 元素粒子
+			switch attackStyle {
+			case "scatter":
+				particle.EmitIceParticles(s.particlePool, e.X, e.Y, 2)
+			case "spin_aoe":
+				particle.EmitFireParticles(s.particlePool, e.X, e.Y, 2)
+			case "charge":
+				particle.EmitElectricSparks(s.particlePool, e.X, e.Y, 4)
 			}
 		}
 		if killed {
