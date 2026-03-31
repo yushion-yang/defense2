@@ -1542,22 +1542,52 @@ func (s *StageScene) drawScene(screen *ebiten.Image) {
 
 // buildBuildMenuData 构建建造菜单展示数据。
 func (s *StageScene) buildBuildMenuData() hud.BuildMenuData {
-	cards := make([]hud.BuildCardVM, len(s.towerDefs))
-	for i, def := range s.towerDefs {
+	buildableCount := len(s.towerDefs)
+	cards := make([]hud.BuildCardVM, 0, buildableCount+10)
+
+	// Buildable tower cards
+	for _, def := range s.towerDefs {
 		roleTag, roleClr := towerRoleTags(def)
-		cards[i] = hud.BuildCardVM{
+		cards = append(cards, hud.BuildCardVM{
 			Key: def.Key, Label: def.Label, Cost: def.Cost,
 			Damage: def.Damage, AttackSpeed: def.AttackSpeed, Range: def.Range,
 			RoleTag: roleTag, RoleColor: roleClr,
 			TypeIcon: towerTypeIcon(def.Key),
 			Sprite:   s.towerRenderer.GetSprite(def.Key),
-		}
+			Buildable: true,
+		})
 	}
+
+	// Attack style variant cards (display only)
+	attackAbils := tower.AbilitiesForCategory(config.AbilityCatAttack)
+	sort.Slice(attackAbils, func(i, j int) bool {
+		return attackAbils[i].Type < attackAbils[j].Type
+	})
+	for _, ab := range attackAbils {
+		cards = append(cards, hud.BuildCardVM{
+			Key:         ab.Type,
+			Label:       ab.Label,
+			RoleTag:     ab.Display,
+			RoleColor:   color.RGBA{R: 140, G: 160, B: 200, A: 180},
+			TypeIcon:    ab.Icon,
+			Buildable:   false,
+			AbilityDesc: ab.Display,
+		})
+	}
+
 	return hud.BuildMenuData{
-		Cards: cards, SelectedIdx: s.selectedDef,
-		Gold: s.gold, HoverIdx: s.buildHoverIdx,
-		Visible: s.imode == modeBuildMenu,
+		Cards:          cards,
+		BuildableCount: buildableCount,
+		SelectedIdx:    s.selectedDef,
+		Gold:           s.gold,
+		HoverIdx:       s.buildHoverIdx,
+		Visible:        s.imode == modeBuildMenu,
 	}
+}
+
+// buildMenuTotalCards returns total card count (buildable + attack variants) for layout.
+func (s *StageScene) buildMenuTotalCards() int {
+	return len(s.towerDefs) + len(tower.AbilitiesForCategory(config.AbilityCatAttack))
 }
 
 // towerRoleTags 返回塔的角色标签和颜色。

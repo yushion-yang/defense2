@@ -21,19 +21,22 @@ type BuildCardVM struct {
 	Damage      float64
 	AttackSpeed float64
 	Range       float64
-	RoleTag     string     // 预计算的角色标签："输出·减速"/"辅助·光环"/...
-	RoleColor   color.RGBA // 角色标签颜色
-	TypeIcon    string     // 塔类型图标名："tower-freeze"/""
-	Sprite      *ebiten.Image // 预加载的精灵图
+	RoleTag     string         // 预计算的角色标签："输出·减速"/"辅助·光环"/...
+	RoleColor   color.RGBA     // 角色标签颜色
+	TypeIcon    string         // 塔类型图标名："tower-freeze"/""
+	Sprite      *ebiten.Image  // 预加载的精灵图
+	Buildable   bool           // true=可建造, false=仅展示变体
+	AbilityDesc string         // 变体卡的能力描述文本
 }
 
 // BuildMenuData holds the runtime data the build menu needs to render.
 type BuildMenuData struct {
-	Cards       []BuildCardVM // 替代 TowerDefs
-	SelectedIdx int
-	Gold        int
-	HoverIdx    int
-	Visible     bool
+	Cards          []BuildCardVM // 可建造卡 + 变体展示卡
+	BuildableCount int           // 前 N 张为可建造卡，之后为展示卡
+	SelectedIdx    int
+	Gold           int
+	HoverIdx       int
+	Visible        bool
 }
 
 // Build panel constants
@@ -112,55 +115,12 @@ func DrawBuildMenu(screen *ebiten.Image, d BuildMenuData) {
 		row := i / bpCols
 		cx := m.gridX + float32(col)*(bpCardW+bpCardGap)
 		cy := m.gridY + float32(row)*(bpCardH+bpCardGap)
-		affordable := d.Gold >= card.Cost
-		selected := i == d.SelectedIdx
 		hovered := i == d.HoverIdx
 
-		cardBg := theme.BuildCardNormal
-		if selected {
-			cardBg = theme.BuildCardSelected
-		} else if hovered {
-			cardBg = color.RGBA{R: 35, G: 45, B: 70, A: 240}
-		}
-		if !affordable {
-			cardBg.A = cardBg.A / 2
-		}
-		draw.RoundRect(screen, cx, cy, bpCardW, bpCardH, bpCardR, cardBg)
-
-		if selected {
-			draw.StrokeRoundRect(screen, cx, cy, bpCardW, bpCardH, bpCardR, 2, theme.BuildCardSelBorder)
-		}
-
-		nameX := float64(cx) + 8
-		nameY := float64(cy) + 6
-		fm.DrawBoldText(screen, card.Label, nameX, nameY, theme.FontMD, color.White)
-
-		costTxt := fmt.Sprintf("%dG", card.Cost)
-		costClr := theme.BuildCostColor
-		if !affordable {
-			costClr = color.RGBA{R: 200, G: 80, B: 80, A: 200}
-		}
-		fm.DrawText(screen, costTxt, nameX, nameY+16, theme.FontSM, costClr)
-
-		// Tower-type icon badge
-		if card.TypeIcon != "" {
-			if im := render.GlobalIcons(); im != nil {
-				if img := im.Get(card.TypeIcon); img != nil {
-					badgeX := float64(cx) + float64(bpCardW) - 16
-					badgeY := float64(cy) + 4
-					draw.Sprite(screen, img, badgeX, badgeY+6, 12)
-				}
-			}
-		}
-
-		// Role tag
-		fm.DrawText(screen, card.RoleTag, nameX, float64(cy)+float64(bpCardH)-16, theme.FontXS, card.RoleColor)
-
-		// Sprite preview
-		if card.Sprite != nil {
-			spriteX := float64(cx) + float64(bpCardW) - 26
-			spriteY := float64(cy) + float64(bpCardH)/2
-			draw.Sprite(screen, card.Sprite, spriteX, spriteY, 36)
+		if card.Buildable {
+			drawBuildableCard(screen, fm, card, d, i, cx, cy, hovered)
+		} else {
+			drawVariantCard(screen, fm, card, cx, cy, hovered)
 		}
 	}
 
@@ -170,8 +130,104 @@ func DrawBuildMenu(screen *ebiten.Image, d BuildMenuData) {
 	}
 }
 
+// drawBuildableCard renders a normal buildable tower card.
+func drawBuildableCard(screen *ebiten.Image, fm *render.FontManager, card BuildCardVM, d BuildMenuData, i int, cx, cy float32, hovered bool) {
+	affordable := d.Gold >= card.Cost
+	selected := i == d.SelectedIdx
+
+	cardBg := theme.BuildCardNormal
+	if selected {
+		cardBg = theme.BuildCardSelected
+	} else if hovered {
+		cardBg = color.RGBA{R: 35, G: 45, B: 70, A: 240}
+	}
+	if !affordable {
+		cardBg.A = cardBg.A / 2
+	}
+	draw.RoundRect(screen, cx, cy, bpCardW, bpCardH, bpCardR, cardBg)
+
+	if selected {
+		draw.StrokeRoundRect(screen, cx, cy, bpCardW, bpCardH, bpCardR, 2, theme.BuildCardSelBorder)
+	}
+
+	nameX := float64(cx) + 8
+	nameY := float64(cy) + 6
+	fm.DrawBoldText(screen, card.Label, nameX, nameY, theme.FontMD, color.White)
+
+	costTxt := fmt.Sprintf("%dG", card.Cost)
+	costClr := theme.BuildCostColor
+	if !affordable {
+		costClr = color.RGBA{R: 200, G: 80, B: 80, A: 200}
+	}
+	fm.DrawText(screen, costTxt, nameX, nameY+16, theme.FontSM, costClr)
+
+	// Tower-type icon badge
+	if card.TypeIcon != "" {
+		if im := render.GlobalIcons(); im != nil {
+			if img := im.Get(card.TypeIcon); img != nil {
+				badgeX := float64(cx) + float64(bpCardW) - 16
+				badgeY := float64(cy) + 4
+				draw.Sprite(screen, img, badgeX, badgeY+6, 12)
+			}
+		}
+	}
+
+	// Role tag
+	fm.DrawText(screen, card.RoleTag, nameX, float64(cy)+float64(bpCardH)-16, theme.FontXS, card.RoleColor)
+
+	// Sprite preview
+	if card.Sprite != nil {
+		spriteX := float64(cx) + float64(bpCardW) - 26
+		spriteY := float64(cy) + float64(bpCardH)/2
+		draw.Sprite(screen, card.Sprite, spriteX, spriteY, 36)
+	}
+}
+
+// drawVariantCard renders a display-only attack style variant card.
+func drawVariantCard(screen *ebiten.Image, fm *render.FontManager, card BuildCardVM, cx, cy float32, hovered bool) {
+	cardBg := theme.BuildCardVariant
+	if hovered {
+		cardBg = color.RGBA{R: 40, G: 55, B: 80, A: 160}
+	}
+	draw.RoundRect(screen, cx, cy, bpCardW, bpCardH, bpCardR, cardBg)
+
+	// Dashed border to indicate non-buildable
+	draw.StrokeRoundRect(screen, cx, cy, bpCardW, bpCardH, bpCardR, 1,
+		color.RGBA{R: 100, G: 120, B: 160, A: 80})
+
+	nameX := float64(cx) + 8
+	nameY := float64(cy) + 6
+
+	// Ability icon (top-right)
+	if card.TypeIcon != "" {
+		if im := render.GlobalIcons(); im != nil {
+			if img := im.Get(card.TypeIcon); img != nil {
+				badgeX := float64(cx) + float64(bpCardW) - 16
+				badgeY := float64(cy) + 4
+				draw.Sprite(screen, img, badgeX, badgeY+6, 14)
+			}
+		}
+	}
+
+	// Ability label
+	fm.DrawBoldText(screen, card.Label, nameX, nameY, theme.FontMD,
+		color.RGBA{R: 180, G: 200, B: 230, A: 220})
+
+	// Short description (truncated to fit card)
+	fm.DrawText(screen, card.RoleTag, nameX, nameY+18, theme.FontXS, theme.TextMuted)
+
+	// "展示" tag at bottom
+	fm.DrawText(screen, "选择能力后", nameX, float64(cy)+float64(bpCardH)-16, theme.FontXS,
+		color.RGBA{R: 120, G: 140, B: 170, A: 140})
+}
+
 // drawBuildCardTooltip renders a small stats tooltip above the build panel.
 func drawBuildCardTooltip(screen *ebiten.Image, fm *render.FontManager, card BuildCardVM, m buildPanelMetrics) {
+	if !card.Buildable {
+		drawVariantTooltip(screen, fm, card, m)
+		return
+	}
+
 	const (
 		tipW = float32(240)
 		tipH = float32(70)
@@ -204,14 +260,35 @@ func drawBuildCardTooltip(screen *ebiten.Image, fm *render.FontManager, card Bui
 	fm.DrawText(screen, fmt.Sprintf("%.0f", card.Range), tx+140+tipIconSz+tipIconGap, ty, theme.FontSM, theme.InfoAttrRange)
 }
 
-// BuildMenuHitTest returns the tower card index hit by (px, py), or -1.
-// Also handles close button detection (returns -2 for close).
-func BuildMenuHitTest(px, py float32, count int) int {
-	if count <= 0 {
+// drawVariantTooltip renders a tooltip for display-only variant cards.
+func drawVariantTooltip(screen *ebiten.Image, fm *render.FontManager, card BuildCardVM, m buildPanelMetrics) {
+	const (
+		tipW = float32(300)
+		tipH = float32(52)
+		tipR = float32(8)
+	)
+	tipX := (float32(theme.CanvasW) - tipW) / 2
+	tipY := m.panelY - tipH - 6
+
+	draw.RoundRect(screen, tipX, tipY, tipW, tipH, tipR, theme.PanelBg)
+	draw.StrokeRoundRect(screen, tipX, tipY, tipW, tipH, tipR, 1, theme.PanelBorder)
+
+	tx := float64(tipX) + 12
+	ty := float64(tipY) + 8
+
+	fm.DrawBoldText(screen, card.Label, tx, ty, theme.FontLG, theme.TextTitle)
+	fm.DrawText(screen, card.AbilityDesc, tx, ty+20, theme.FontSM, theme.TextMuted)
+}
+
+// BuildMenuHitTest returns the buildable tower card index hit by (px, py), or -1.
+// totalCount is total cards (for panel sizing), buildableCount is the clickable subset.
+// Returns -2 for close button, -1 for miss/non-buildable card.
+func BuildMenuHitTest(px, py float32, totalCount, buildableCount int) int {
+	if totalCount <= 0 {
 		return -1
 	}
 
-	m := calcBuildPanelMetrics(count)
+	m := calcBuildPanelMetrics(totalCount)
 
 	// Quick panel bounds check
 	if px < m.panelX || px > m.panelX+m.panelW || py < m.panelY || py > m.panelY+m.panelH {
@@ -225,8 +302,8 @@ func BuildMenuHitTest(px, py float32, count int) int {
 		return -2 // close signal
 	}
 
-	// Card hit test
-	for i := 0; i < count; i++ {
+	// Card hit test — only buildable cards are clickable
+	for i := 0; i < buildableCount; i++ {
 		col := i % bpCols
 		row := i / bpCols
 		cx := m.gridX + float32(col)*(bpCardW+bpCardGap)
@@ -238,7 +315,7 @@ func BuildMenuHitTest(px, py float32, count int) int {
 	return -1
 }
 
-// BuildMenuHoverTest returns the tower card index the mouse is hovering over.
+// BuildMenuHoverTest returns the card index the mouse is hovering over (all cards, including variants).
 func BuildMenuHoverTest(px, py float32, count int) int {
 	if count <= 0 {
 		return -1

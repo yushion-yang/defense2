@@ -40,13 +40,13 @@ func TestBuildMenuHitTest(t *testing.T) {
 	// Click inside first card.
 	x := cardStartX + 5
 	y := cardStartY + 10
-	idx := hud.BuildMenuHitTest(x, y, cardCount)
+	idx := hud.BuildMenuHitTest(x, y, cardCount, cardCount)
 	if idx != 0 {
 		t.Fatalf("expected slot 0, got %d", idx)
 	}
 
 	// Click outside the panel.
-	idx = hud.BuildMenuHitTest(0, 0, cardCount)
+	idx = hud.BuildMenuHitTest(0, 0, cardCount, cardCount)
 	if idx != -1 {
 		t.Fatalf("expected -1 for outside click, got %d", idx)
 	}

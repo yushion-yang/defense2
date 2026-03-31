@@ -207,6 +207,7 @@ var (
 	BuildCardNormal    = rgba(255, 255, 255, 13) // 0.05 * 255 ≈ 13
 	BuildCardSelected  = rgba(34, 197, 94, 56)   // 0.22 * 255 ≈ 56
 	BuildCardSelBorder = rgba(74, 222, 128, 168) // 0.66 * 255 ≈ 168
+	BuildCardVariant   = rgba(30, 40, 60, 120)   // variant preview card bg
 	BuildCostColor     = hex(0xfbbf24)
 	BuildTooltipBg     = rgba(15, 23, 42, 235)   // 0.92 * 255 ≈ 235
 	BuildTooltipBorder = rgba(79, 140, 255, 102) // 0.4  * 255 ≈ 102

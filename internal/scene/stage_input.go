@@ -150,7 +150,7 @@ func (s *StageScene) handleInput() {
 
 	// ── Hover 更新（每帧） ──
 	if s.imode == modeBuildMenu {
-		s.buildHoverIdx = hud.BuildMenuHoverTest(fmx, fmy, len(s.towerDefs))
+		s.buildHoverIdx = hud.BuildMenuHoverTest(fmx, fmy, s.buildMenuTotalCards())
 	} else {
 		s.buildHoverIdx = -1
 	}
@@ -263,7 +263,7 @@ func (s *StageScene) handleInput() {
 		}
 
 	case modeBuildMenu:
-		idx := hud.BuildMenuHitTest(ftx, fty, len(s.towerDefs))
+		idx := hud.BuildMenuHitTest(ftx, fty, s.buildMenuTotalCards(), len(s.towerDefs))
 		if idx == -2 || idx == -1 {
 			s.imode = modeIdle
 		} else if idx >= 0 {
