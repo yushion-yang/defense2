@@ -565,9 +565,12 @@ func (s *StageScene) Update() error {
 		}
 	case stateVictory, stateDefeat:
 		if s.autoPlayer != nil {
-			// 自动对局：通知结束并标记完成
+			// 自动对局：通知结束，等 Done() 返回 true 后再退出（让 Draw 截到结果画面）
 			s.autoPlayer.OnGameEnd(s.buildAutoPlaySnapshot(), s.state == stateVictory)
-			return ebiten.Termination
+			if s.autoPlayer.Done() {
+				return ebiten.Termination
+			}
+			return nil
 		}
 		// 胜利/失败状态：点击/触摸进入结算场景
 		if isTapJustPressed() {
@@ -2495,6 +2498,9 @@ func (s *StageScene) buildAutoPlaySnapshot() AutoPlaySnapshot {
 			HP: e.HP, MaxHP: e.MaxHP, Speed: e.Speed,
 			Archetype: e.Archetype, Boss: e.Boss,
 			Active: e.Active, Dying: e.IsDying(),
+			IsSlowed: e.SlowTimer > 0, IsStunned: e.StunTimer > 0,
+			IsBurning: e.BurnTimer > 0, IsBleeding: e.BleedTimer > 0,
+			IsRooted: e.RootTimer > 0,
 		})
 	})
 
@@ -2514,6 +2520,7 @@ func (s *StageScene) buildAutoPlaySnapshot() AutoPlaySnapshot {
 			Range: t.Range, Cost: t.Cost, Strength: str,
 			Abilities: t.Abilities, SkillName: skillName,
 			AttackStyle: string(t.AttackStyleID),
+			HasTarget: t.Target != nil,
 		})
 	})
 

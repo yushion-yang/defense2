@@ -18,7 +18,8 @@ func NewFocusStrategy(towerKey string) *FocusStrategy {
 	}
 }
 
-func (s *FocusStrategy) Name() string { return "focus_" + s.towerKey }
+func (s *FocusStrategy) Name() string    { return "focus_" + s.towerKey }
+func (s *FocusStrategy) TowerKey() string { return s.towerKey }
 
 func (s *FocusStrategy) Init(_ *GameState) {}
 

@@ -19,7 +19,8 @@ func NewSkillTestStrategy(skillName string) *SkillTestStrategy {
 	}
 }
 
-func (s *SkillTestStrategy) Name() string { return "skill_" + s.skillName }
+func (s *SkillTestStrategy) Name() string      { return "skill_" + s.skillName }
+func (s *SkillTestStrategy) SkillName() string { return s.skillName }
 
 func (s *SkillTestStrategy) Init(state *GameState) {
 	s.inner.Init(state)

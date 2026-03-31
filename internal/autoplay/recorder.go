@@ -46,6 +46,7 @@ type SessionRecord struct {
 	MapID         string       `json:"map_id"`
 	Difficulty    string       `json:"difficulty"`
 	Warden        string       `json:"warden"`
+	Seed          int64        `json:"seed"` // 随机种子（用于复现）
 	Result        string       `json:"result"`
 	WavesSurvived int          `json:"waves_survived"`
 	TotalWaves    int          `json:"total_waves"`

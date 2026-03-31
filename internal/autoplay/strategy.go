@@ -4,6 +4,7 @@ package autoplay
 
 import (
 	"fmt"
+	"math/rand"
 	"time"
 
 	"defense2/internal/core/telemetry"
@@ -50,6 +51,11 @@ type EnemyInfo struct {
 	Boss      bool
 	Active    bool
 	Dying     bool
+	IsSlowed   bool
+	IsStunned  bool
+	IsBurning  bool
+	IsBleeding bool
+	IsRooted   bool
 }
 
 // TowerInfo 已建塔快照。
@@ -64,6 +70,7 @@ type TowerInfo struct {
 	Abilities   []string
 	SkillName   string
 	AttackStyle string
+	HasTarget   bool
 }
 
 // TowerDefInfo 可用塔类型定义。
@@ -117,8 +124,16 @@ type Strategy interface {
 	Decide(state *GameState) []Action
 }
 
-// FormatSessionID 生成格式化的会话 ID。
+// SeedAll 设置全局随机种子，确保同 seed = 同结果（可复现）。
+// 同时重置全局 math/rand（影响 spawner.pickArchetype、event.PickTiered 等）
+// 和返回一个确定性的局部 rand 供策略使用。
+func SeedAll(seed int64) *rand.Rand {
+	rand.Seed(seed) //nolint:staticcheck // 故意重置全局 rand 以保证确定性
+	return rand.New(rand.NewSource(seed))
+}
+
+// FormatSessionID 生成格式化的会话 ID（含时间戳，避免重复运行碰撞）。
 func FormatSessionID(strategy, mapID, difficulty string, run int) string {
-	date := time.Now().Format("2006-01-02")
-	return fmt.Sprintf("%s_%s_%s_%s_%03d", date, strategy, mapID, difficulty, run)
+	ts := time.Now().Format("20060102_150405")
+	return fmt.Sprintf("%s_%s_%s_%s_%03d", ts, strategy, mapID, difficulty, run)
 }

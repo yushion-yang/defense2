@@ -60,6 +60,12 @@ type AutoPlayEnemy struct {
 	Boss      bool
 	Active    bool
 	Dying     bool
+	// 状态效果（视觉目录用）
+	IsSlowed   bool
+	IsStunned  bool
+	IsBurning  bool
+	IsBleeding bool
+	IsRooted   bool
 }
 
 // AutoPlayTower 已建塔快照。
@@ -71,9 +77,10 @@ type AutoPlayTower struct {
 	Range      float64
 	Cost       int
 	Strength   int
-	Abilities  []string // 已装载能力列表
-	SkillName  string   // 已装载技能名（空=无）
-	AttackStyle string  // 攻击方式 ID
+	Abilities   []string // 已装载能力列表
+	SkillName   string   // 已装载技能名（空=无）
+	AttackStyle string   // 攻击方式 ID
+	HasTarget   bool     // 是否正在锁定目标（视觉目录用）
 }
 
 // AutoPlayCell 可建造位置。

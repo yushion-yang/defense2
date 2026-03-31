@@ -69,7 +69,10 @@ func GenerateTestPlan() []TestCase {
 	// 6. 交互场景 (~4)
 	cases = append(cases, generateInteractionScenarios()...)
 
-	// 7. 边界测试 (~4)
+	// 7. 视觉目录 (1-2)
+	cases = append(cases, generateVisualCatalog()...)
+
+	// 8. 边界测试 (~4)
 	cases = append(cases, generateEdgeCases()...)
 
 	return cases
@@ -183,6 +186,21 @@ func generateInteractionScenarios() []TestCase {
 		})
 	}
 	return cases
+}
+
+// generateVisualCatalog 生成视觉目录用例。
+// 单局建造所有塔类型 + 装载所有技能，最大化视觉内容覆盖。
+func generateVisualCatalog() []TestCase {
+	return []TestCase{
+		{
+			ID: "visual_catalog_normal", MapID: "map_01", Difficulty: "normal",
+			Warden: "prince", Strategy: NewVisualCatalogStrategy(),
+		},
+		{
+			ID: "visual_catalog_hard", MapID: "map_05", Difficulty: "hard",
+			Warden: "skystrike", Strategy: NewVisualCatalogStrategy(),
+		},
+	}
 }
 
 // generateEdgeCases 生成边界测试用例。

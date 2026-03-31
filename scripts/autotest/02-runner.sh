@@ -22,10 +22,7 @@ if [ -f "$STATE_FILE" ]; then
     ROUND=$(python3 -c "import json; print(json.load(open('$STATE_FILE')).get('current_round', 1))" 2>/dev/null || echo 1)
 fi
 
-# 用时间戳+轮次作为子目录名，保证唯一且不覆盖旧数据
-BATCH_ID="$(date +%Y%m%d-%H%M%S)_round-$(printf '%03d' "$ROUND")"
-
-echo "[$(date)] Round: $ROUND, Batch: $BATCH_ID" >> "$LOG"
+echo "[$(date)] Round: $ROUND" >> "$LOG"
 
 # 编译
 echo "[$(date)] Building autoplay binary..." >> "$LOG"
@@ -48,9 +45,10 @@ else
     fi
 fi
 
-# autoplay 直接分离输出: --json-dir → M1, --png-dir → M2
-M1_DIR="${DATA_DIR}/M1/${BATCH_ID}"
-M2_DIR="${DATA_DIR}/M2/${BATCH_ID}"
+# autoplay --json-dir/--png-dir 分离输出
+# 分离模式下 autoplay 不再自动创建 run_timestamp 子目录
+M1_DIR="${DATA_DIR}/M1"
+M2_DIR="${DATA_DIR}/M2"
 
 echo "[$(date)] Running autoplay: $ARGS --json-dir $M1_DIR --png-dir $M2_DIR" >> "$LOG"
 
@@ -67,15 +65,10 @@ timeout 600 /tmp/autoplay-bin $ARGS \
     fi
 }
 
-# 统计本次产出
-JSON_COUNT=$(find "$M1_DIR" -name "*.json" 2>/dev/null | wc -l | tr -d ' ')
-PNG_COUNT=$(find "$M2_DIR" -name "*.png" 2>/dev/null | wc -l | tr -d ' ')
+# 统计本次产出及全部待处理数据
+TOTAL_JSON=$(find "$M1_DIR" -name "*.json" 2>/dev/null | wc -l | tr -d ' ')
+TOTAL_PNG=$(find "$M2_DIR" -name "*.png" 2>/dev/null | wc -l | tr -d ' ')
 
-# 统计 M1/M2 中全部未处理数据
-TOTAL_JSON=$(find "${DATA_DIR}/M1" -name "*.json" 2>/dev/null | wc -l | tr -d ' ')
-TOTAL_PNG=$(find "${DATA_DIR}/M2" -name "*.png" 2>/dev/null | wc -l | tr -d ' ')
+echo "[$(date)] Total in M1: JSON=$TOTAL_JSON, M2: PNG=$TOTAL_PNG" >> "$LOG"
 
-echo "[$(date)] This batch: JSON=$JSON_COUNT, PNG=$PNG_COUNT" >> "$LOG"
-echo "[$(date)] Total pending: JSON=$TOTAL_JSON, PNG=$TOTAL_PNG" >> "$LOG"
-
-echo "DONE round=$ROUND batch=$BATCH_ID json=$JSON_COUNT png=$PNG_COUNT total_json=$TOTAL_JSON total_png=$TOTAL_PNG"
+echo "DONE round=$ROUND total_json=$TOTAL_JSON total_png=$TOTAL_PNG"

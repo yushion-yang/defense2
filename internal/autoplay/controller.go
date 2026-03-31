@@ -6,6 +6,7 @@
 package autoplay
 
 import (
+	"fmt"
 	"log"
 	"path/filepath"
 	"time"
@@ -17,13 +18,14 @@ import (
 // ControllerConfig 控制器配置。
 type ControllerConfig struct {
 	Strategy   Strategy
-	OutputDir  string // 兼容旧用法: JSON+PNG 混合输出 (当 JSONDir/PNGDir 为空时使用)
-	JSONDir    string // JSON 报告输出目录 (纯 JSON)
-	PNGDir     string // 截图输出目录 (纯 PNG)
+	OutputDir  string
+	JSONDir    string
+	PNGDir     string
 	SessionID  string
 	MapID      string
 	Difficulty string
 	Warden     string
+	Seed       int64 // 随机种子（记录到报告，用于复现）
 }
 
 // Controller 自动对局控制器，实现 scene.AutoPlayer。
@@ -32,16 +34,25 @@ type Controller struct {
 	recorder      *Recorder
 	anomaly       *AnomalyDetector
 	screenshotter *Screenshotter
+	visualTracker *VisualTracker
 
-	jsonDir   string // JSON 报告写入目录
-	pngDir    string // 截图写入目录
+	jsonDir   string
+	pngDir    string
 	sessionID string
+	seed      int64
 
 	prevWave    int
 	prevLives   int
+	prevMode    int  // 上一帧交互模式
+	modeDelay   bool // 模式切换延迟标志：先截图，下帧再操作
 	gameStarted bool
 	done        bool
+	resultDrawn bool // 结果画面已截图
 	startTime   time.Time
+
+	// HUD 截图追踪（每种模式只截一次）
+	modeCaptured map[int]bool
+	firstTowerCaptured bool
 }
 
 // NewController 创建自动对局控制器。
@@ -60,11 +71,29 @@ func NewController(cfg ControllerConfig) *Controller {
 		recorder:      NewRecorder(cfg.SessionID, cfg.Strategy.Name(), cfg.MapID, cfg.Difficulty, cfg.Warden),
 		anomaly:       NewAnomalyDetector(),
 		screenshotter: NewScreenshotter(pngDir),
+		visualTracker: nil, // 延迟初始化
 		jsonDir:       jsonDir,
 		pngDir:        pngDir,
 		sessionID:     cfg.SessionID,
+		seed:          cfg.Seed,
 		startTime:     time.Now(),
+		modeCaptured:  make(map[int]bool),
 	}
+}
+
+// 交互模式名称（与 scene.interactMode 对应）。
+var modeNames = map[int]string{
+	0: "idle", 1: "buildMenu", 2: "buildPlace", 3: "towerSel",
+	4: "spawnMenu", 5: "spawnPlace", 6: "event", 7: "paused", 8: "wardenSelect",
+}
+
+// hudModes 需要截图的 HUD 模式（进入时截一张以验证面板渲染正确）。
+var hudModes = map[int]bool{
+	1: true, // buildMenu
+	3: true, // towerSel
+	6: true, // event
+	7: true, // paused
+	8: true, // wardenSelect
 }
 
 // OnUpdate 每帧调用，返回要执行的操作。实现 scene.AutoPlayer。
@@ -75,9 +104,28 @@ func (c *Controller) OnUpdate(snap scene.AutoPlaySnapshot) []scene.AutoPlayActio
 	if !c.gameStarted {
 		c.gameStarted = true
 		c.prevLives = state.Lives
-		telemetry.T.Reset() // 每局开始清除遥测数据
+		c.prevMode = state.InteractMode
+		telemetry.T.Reset()
+		c.visualTracker = NewVisualTracker(c.screenshotter)
 		c.strategy.Init(state)
 		c.screenshotter.RequestStart()
+	}
+
+	// ── HUD 模式截图：检测模式切换，先截图再操作 ──
+	if state.InteractMode != c.prevMode {
+		if hudModes[state.InteractMode] && !c.modeCaptured[state.InteractMode] {
+			// 新进入一个 HUD 模式 → 请求截图，本帧不执行操作
+			name := modeNames[state.InteractMode]
+			c.screenshotter.RequestCapture(fmt.Sprintf("hud_%s_%d.png", name, state.Tick))
+			c.modeCaptured[state.InteractMode] = true
+			c.modeDelay = true
+		}
+		c.prevMode = state.InteractMode
+	}
+	// 模式延迟：上帧刚请求截图，本帧 Draw 会渲染，下帧再操作
+	if c.modeDelay {
+		c.modeDelay = false
+		return nil // 空操作，让 Draw 有机会截到 HUD
 	}
 
 	// 异常检测
@@ -92,29 +140,35 @@ func (c *Controller) OnUpdate(snap scene.AutoPlaySnapshot) []scene.AutoPlayActio
 
 	// 波次变化检测
 	if state.Wave > c.prevWave && state.Wave > 0 {
-		// 上一波结束
 		if c.prevWave > 0 {
 			c.recorder.OnWaveEnd(c.prevWave, state)
 		}
 		c.recorder.OnWaveStart(state.Wave, state)
 
-		// 截图触发
-		if state.Wave%5 == 0 {
-			c.screenshotter.RequestWave(state.Wave)
-		}
-		if state.Wave%5 == 0 && state.Wave > 0 {
+		if state.Wave > 0 && state.Wave%5 == 0 {
 			c.screenshotter.RequestBossWave(state.Wave)
 		}
 	}
 
-	// 泄漏检测（生命减少）
+	// 泄漏检测
 	if state.Lives < c.prevLives {
 		c.screenshotter.RequestLeak(state.Wave, state.Tick)
 	}
 	c.prevLives = state.Lives
 	c.prevWave = state.Wave
 
-	// 录制 tick
+	// 视觉内容追踪：检测首次出现的塔/敌人/攻击方式/状态效果等
+	if c.visualTracker != nil {
+		c.visualTracker.Check(state)
+	}
+
+	// 波次公告截图（波次变化后立即请求，公告动画正在显示）
+	if state.Wave > c.prevWave && state.Wave > 1 && state.Wave <= 3 {
+		// 只对前几波截公告（避免重复）
+		c.screenshotter.RequestCapture(fmt.Sprintf("wave_announce_%d.png", state.Wave))
+	}
+
+	// 录制
 	c.recorder.OnTick(state, 1.0/60.0)
 	c.recorder.TickDPS(1.0 / 60.0)
 
@@ -142,29 +196,38 @@ func (c *Controller) OnUpdate(snap scene.AutoPlaySnapshot) []scene.AutoPlayActio
 }
 
 // OnGameEnd 游戏结束时调用。实现 scene.AutoPlayer。
+// 第一次调用：请求结果截图 + 写报告，但 Done() 返回 false（让 Draw 截图）。
+// 第二次调用：设置 done=true，触发 Termination。
 func (c *Controller) OnGameEnd(snap scene.AutoPlaySnapshot, won bool) {
 	if c.done {
 		return
 	}
+
+	if !c.resultDrawn {
+		// 第一次：请求截图 + 写报告
+		c.resultDrawn = true
+
+		state := snapshotToGameState(snap)
+		c.screenshotter.RequestResult()
+
+		if c.prevWave > 0 {
+			c.recorder.OnWaveEnd(c.prevWave, state)
+		}
+
+		record := c.recorder.Finalize(state, c.anomaly.Anomalies(), c.screenshotter.CapturedFiles())
+		record.Seed = c.seed
+		if err := WriteJSON(record, c.jsonDir); err != nil {
+			log.Printf("report write error: %v", err)
+		} else {
+			log.Printf("[DONE] session=%s result=%s waves=%d/%d kills=%d anomalies=%d",
+				c.sessionID, record.Result, record.WavesSurvived, record.TotalWaves,
+				record.TotalKills, len(record.Anomalies))
+		}
+		return // 不设 done，让 Draw 有机会截到结果画面
+	}
+
+	// 第二次：截图已完成，可以退出
 	c.done = true
-
-	state := snapshotToGameState(snap)
-	c.screenshotter.RequestResult()
-
-	// 最后一波
-	if c.prevWave > 0 {
-		c.recorder.OnWaveEnd(c.prevWave, state)
-	}
-
-	// 生成报告
-	record := c.recorder.Finalize(state, c.anomaly.Anomalies(), c.screenshotter.CapturedFiles())
-	if err := WriteJSON(record, c.jsonDir); err != nil {
-		log.Printf("report write error: %v", err)
-	} else {
-		log.Printf("[DONE] session=%s result=%s waves=%d/%d kills=%d anomalies=%d",
-			c.sessionID, record.Result, record.WavesSurvived, record.TotalWaves,
-			record.TotalKills, len(record.Anomalies))
-	}
 }
 
 // ScreenshotRequested 返回下一个截图路径。实现 scene.AutoPlayer。
@@ -213,6 +276,9 @@ func snapshotToGameState(snap scene.AutoPlaySnapshot) *GameState {
 			HP: e.HP, MaxHP: e.MaxHP, Speed: e.Speed,
 			Archetype: e.Archetype, Boss: e.Boss,
 			Active: e.Active, Dying: e.Dying,
+			IsSlowed: e.IsSlowed, IsStunned: e.IsStunned,
+			IsBurning: e.IsBurning, IsBleeding: e.IsBleeding,
+			IsRooted: e.IsRooted,
 		})
 	}
 
@@ -223,6 +289,7 @@ func snapshotToGameState(snap scene.AutoPlaySnapshot) *GameState {
 			Range: t.Range, Cost: t.Cost, Strength: t.Strength,
 			Abilities: t.Abilities, SkillName: t.SkillName,
 			AttackStyle: t.AttackStyle,
+			HasTarget: t.HasTarget,
 		})
 	}
 
