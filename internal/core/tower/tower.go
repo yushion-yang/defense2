@@ -15,12 +15,15 @@ type AttackStyle = string
 
 const (
 	StyleProjectile AttackStyle = "projectile" // 标准追踪弹
-	StyleLaser      AttackStyle = "laser"      // 即时光束
 	StyleWideBeam   AttackStyle = "wideBeam"   // 宽光束（贯穿）
 	StyleScatter    AttackStyle = "scatter"    // 锥形散射
-	StyleCharge     AttackStyle = "charge"     // 蓄力重弹
 	StyleSpinAoE    AttackStyle = "spin_aoe"   // 旋转范围伤害
-	StyleAuraDot    AttackStyle = "aura_dot"   // 持续范围毒伤
+	StyleRadial     AttackStyle = "radial"     // 360度环射穿刺弹
+
+	// 废弃：保留常量供旧配置兼容，运行时映射到 projectile
+	StyleLaser  AttackStyle = "laser"  // 废弃 → 高弹速 projectile
+	StyleCharge AttackStyle = "charge" // 废弃 → 低攻速 projectile + momentum
+	StyleAuraDot AttackStyle = "aura_dot" // 废弃 → 合并到 spinAoe
 )
 
 // Tower 已放置的塔实体。
@@ -36,7 +39,15 @@ type Tower struct {
 	InstanceKey string   // 实例唯一标识（"key_row_col"，用于弹射物来源匹配）
 	Label       string   // 显示名称
 	Active      bool     // 是否存活（对象池复用标记）
-	Abilities   []string // 该塔拥有的能力名称列表
+	Abilities   []string // 该塔拥有的能力名称列表（兼容旧配置）
+	// 六大类别能力槽 [0]=攻击模式 [1]=CC [2]=命中加伤 [3]=光环 [4]=DoT [5]=范围效果
+	AbilitySlots [6]string
+	UnlockOrder  [6]int // 能力类别解锁顺序（运行时随机）
+	Level        int    // 塔等级 (1=基础, 2~7=升级)
+	// 属性档位标签（展示用）
+	DamageTier string
+	SpeedTier  string
+	RangeTier  string
 	Color       [3]uint8 // 显示颜色 RGB
 	Faction     string   // 阵营标识（用于资源路径）
 	FireAnim    float64  // 射击动画计时器（射击时设为 0.15，逐帧衰减）
@@ -86,6 +97,9 @@ type Tower struct {
 	StackTarget int // 当前叠伤目标 ID
 	StackCount  int // 叠伤层数
 
+	// momentum (蓄势) 能力计数
+	MomentumCount int // 当前攻击次数计数
+
 	// 建造/出售动画
 	BuildAnim float64 // >0 during build-in animation (seconds remaining, starts at 0.3)
 	SellAnim  float64 // >0 during sell-out animation (seconds remaining, starts at 0.25)
@@ -113,6 +127,53 @@ func (t *Tower) RecalcStats() {
 	t.AttackSpeed = t.BaseSpeed + t.PotentialSpeed*ratio
 	t.Range = t.BaseRange + t.PotentialRange*ratio
 	t.CritBonus = 0 // 每帧重置，由 critAura OnTick 重新设置
+}
+
+// AllAbilities 返回所有生效能力（合并 AbilitySlots 和旧 Abilities）。
+func (t *Tower) AllAbilities() []string {
+	seen := map[string]bool{}
+	var result []string
+	for _, a := range t.AbilitySlots {
+		if a != "" && !seen[a] {
+			seen[a] = true
+			result = append(result, a)
+		}
+	}
+	for _, a := range t.Abilities {
+		if a != "" && !seen[a] {
+			seen[a] = true
+			result = append(result, a)
+		}
+	}
+	return result
+}
+
+// ResolveAttackStyle 根据 AbilitySlots[0]（攻击模式）决定实际攻击方式。
+// 如果 AbilitySlots[0] 为空则回退到 AttackStyleID（兼容旧配置）。
+func (t *Tower) ResolveAttackStyle() AttackStyle {
+	pattern := t.AbilitySlots[0]
+	switch pattern {
+	case "scatter":
+		return StyleScatter
+	case "wideBeam":
+		return StyleWideBeam
+	case "spinAoe":
+		return StyleSpinAoE
+	case "radial":
+		return StyleRadial
+	default:
+		// pierce/bounce/splash/multiTarget/空 → 都用 projectile（pierce 通过弹射物标志实现）
+		if t.AttackStyleID != "" {
+			switch t.AttackStyleID {
+			case StyleLaser, StyleCharge:
+				return StyleProjectile
+			case StyleAuraDot:
+				return StyleSpinAoE
+			}
+			return t.AttackStyleID
+		}
+		return StyleProjectile
+	}
 }
 
 // DPS 返回当前每秒伤害。

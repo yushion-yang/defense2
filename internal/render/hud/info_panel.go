@@ -67,9 +67,19 @@ type InfoPanelVM struct {
 	// Buffs
 	Buffs []BuffVM
 
+	// Upgrade ability choices (empty = no pending upgrade)
+	UpgradeChoices []UpgradeChoiceVM
+
 	// Buttons
 	UpgradeButtonText string // e.g. "强度+10 $10"
 	SellButtonText    string // e.g. "卖60"
+}
+
+// UpgradeChoiceVM 单个候选能力按钮的展示数据。
+type UpgradeChoiceVM struct {
+	Type  string // 能力类型标识（用于回调）
+	Label string // 显示名
+	Desc  string // 描述文本
 }
 
 // ---------------------------------------------------------------------------
@@ -77,11 +87,22 @@ type InfoPanelVM struct {
 // ---------------------------------------------------------------------------
 
 var (
-	lastUpgradeRect  ui.Rect
-	lastSellRect     ui.Rect
-	lastPanelRect    ui.Rect // entire info panel bounding box
-	lastPanelVisible bool
+	lastUpgradeRect      ui.Rect
+	lastSellRect         ui.Rect
+	lastPanelRect        ui.Rect // entire info panel bounding box
+	lastPanelVisible     bool
+	lastChoiceRects      []ui.Rect // 候选能力按钮 rects
 )
+
+// HitTestUpgradeChoice 检测点击是否在候选能力按钮上，返回索引(-1=未命中)。
+func HitTestUpgradeChoice(mx, my float32) int {
+	for i, r := range lastChoiceRects {
+		if mx >= r.X && mx <= r.X+r.W && my >= r.Y && my <= r.Y+r.H {
+			return i
+		}
+	}
+	return -1
+}
 
 // DrawInfoPanel renders the tower information panel using pre-built view data.
 // Pass a VM with Visible=false to hide the panel.
@@ -185,6 +206,38 @@ func DrawInfoPanel(screen *ebiten.Image, vm InfoPanelVM) {
 					timeStr := fmt.Sprintf("%.0fs", b.Remaining)
 					fm.DrawRightText(screen, timeStr, x+w, y, theme.FontXS, theme.TextMuted)
 				}
+			})
+		}
+	}
+
+	// 候选能力选择（有 pending upgrade 时显示）
+	lastChoiceRects = lastChoiceRects[:0]
+	if len(vm.UpgradeChoices) > 0 {
+		panel.AddSpace(detailGap)
+		panel.AddRow(14, func(screen *ebiten.Image, x, y float64, _ float64) {
+			fm.DrawBoldText(screen, "选择能力:", x, y, theme.FontSM, color.RGBA{R: 250, G: 200, B: 50, A: 255})
+		})
+		panel.AddSpace(4)
+		for idx, ch := range vm.UpgradeChoices {
+			ch := ch
+			idx := idx
+			panel.AddRow(32, func(screen *ebiten.Image, x, y float64, w float64) {
+				btnRect := ui.Rect{X: float32(x), Y: float32(y), W: float32(w), H: 30}
+				btnClr := theme.TonePrimary
+				// 简单 hover 检测
+				mx, my := draw.CursorPos()
+				if float32(mx) >= btnRect.X && float32(mx) <= btnRect.X+btnRect.W &&
+					float32(my) >= btnRect.Y && float32(my) <= btnRect.Y+btnRect.H {
+					btnClr = color.RGBA{R: 60, G: 120, B: 200, A: 255}
+				}
+				draw.RoundRect(screen, btnRect.X, btnRect.Y, btnRect.W, btnRect.H, 6, btnClr)
+				fm.DrawBoldText(screen, ch.Label, x+10, y+7, theme.FontSM, theme.TextTitle)
+				fm.DrawText(screen, ch.Desc, x+10+fm.MeasureText(ch.Label, theme.FontSM)+8, y+8, theme.FontXS, theme.TextBody)
+				// 扩展 rects 到正确索引
+				for len(lastChoiceRects) <= idx {
+					lastChoiceRects = append(lastChoiceRects, ui.Rect{})
+				}
+				lastChoiceRects[idx] = btnRect
 			})
 		}
 	}

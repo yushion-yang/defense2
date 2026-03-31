@@ -63,7 +63,6 @@ func (p *Pool) Spawn(x, y, baseHP, baseSpeed float64, pathIndex int, archetype s
 			e.BleedDPS = 0
 			e.BurnTimer = 0
 			e.BurnDPS = 0
-			e.ShieldHP = hp * cfg.ShieldScale
 			e.RootTimer = 0
 			e.DisplayHP = hp
 			e.Elite = cfg.HpScale >= 4

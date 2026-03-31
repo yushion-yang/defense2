@@ -65,6 +65,43 @@ func (d *AbilityDef) CalcScale(strength float64) float64 {
 	return d.Base + d.Potential*(strength/100.0)
 }
 
+// 六大能力类别常量。
+const (
+	AbilityCatAttack  = 0 // 攻击模式
+	AbilityCatCC      = 1 // 控制效果
+	AbilityCatDamage  = 2 // 命中加伤
+	AbilityCatBuff    = 3 // 增益光环
+	AbilityCatDoT     = 4 // 持续伤害
+	AbilityCatZone    = 5 // 范围效果
+	AbilityCatCount   = 6 // 类别总数
+)
+
+// 类别名 → 索引映射。
+var categoryIndex = map[string]int{
+	"attack":  AbilityCatAttack,
+	"cc":      AbilityCatCC,
+	"damage":  AbilityCatDamage,
+	"buff":    AbilityCatBuff,
+	"dot":     AbilityCatDoT,
+	"zone":    AbilityCatZone,
+	// 旧分类名兼容
+	"combat":  AbilityCatDamage,
+	"control": AbilityCatCC,
+	"aura":    AbilityCatBuff,
+	"economy": AbilityCatBuff,
+}
+
+// CategoryIndex 返回能力的类别索引 (0-5)，未知类别返回 -1。
+func (d *AbilityDef) CategoryIndex() int {
+	if d == nil {
+		return -1
+	}
+	if idx, ok := categoryIndex[d.Category]; ok {
+		return idx
+	}
+	return -1
+}
+
 // HasScale 是否有可缩放维度。
 func (d *AbilityDef) HasScale() bool {
 	return d != nil && d.ScaleDim != ""

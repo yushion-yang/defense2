@@ -4,6 +4,42 @@ package enemy
 
 import "defense2/internal/core/gamemap"
 
+// Threshold HP阈值触发器。
+// 当敌人 HP 比例降到 Ratio 以下时触发一次。
+type Threshold struct {
+	Type      string  // 触发器类型标识
+	Ratio     float64 // 触发比例（如 0.5 = 50% HP）
+	Triggered bool    // 是否已触发
+}
+
+// AddThreshold 注册一个 HP 阈值触发器。
+func AddThreshold(e *Enemy, typ string, ratio float64) {
+	if e.Thresholds == nil {
+		e.Thresholds = make([]Threshold, 0, 4)
+	}
+	e.Thresholds = append(e.Thresholds, Threshold{
+		Type:  typ,
+		Ratio: ratio,
+	})
+}
+
+// CheckThresholds 检查并返回本次伤害触发的阈值列表。
+func CheckThresholds(e *Enemy) []Threshold {
+	if len(e.Thresholds) == 0 || e.MaxHP <= 0 {
+		return nil
+	}
+	ratio := e.HP / e.MaxHP
+	var triggered []Threshold
+	for i := range e.Thresholds {
+		th := &e.Thresholds[i]
+		if !th.Triggered && ratio <= th.Ratio {
+			th.Triggered = true
+			triggered = append(triggered, *th)
+		}
+	}
+	return triggered
+}
+
 // Enemy 单个敌人实体。
 type Enemy struct {
 	ID         int             // 唯一标识（用于穿刺弹已命中检查）
@@ -30,7 +66,6 @@ type Enemy struct {
 	DotTickTimer float64         // DoT 触发计时器（每 DotTickInterval 触发一次伤害）
 	LastDotDmg   float64         // 上次 DoT tick 的伤害量（>0 时由 pipeline 弹浮字后清零）
 	ZoneDmgAccum float64         // 区域能力（curseZone/poisonZone）每帧累积伤害，DotTick 时结算
-	ShieldHP   float64         // 护盾血量（吸收伤害直到耗尽）
 	RootTimer  float64         // 定身剩余时间（秒）
 	DisplayHP  float64         // 显示用血量（伤害拖尾缓慢衰减到实际 HP）
 	Elite      bool            // 是否为精英怪
@@ -53,8 +88,6 @@ type Enemy struct {
 	IsDamageImmune   bool    // 伤害免疫（pure 伤害可穿透）
 	IsUntargetable   bool    // 不可选中
 
-	// 多重护盾系统
-	Shields    []Shield    // 多层护盾列表（按剩余时间升序消耗）
 	Thresholds []Threshold // HP阈值触发器列表
 
 	// ── 控制减免 ──

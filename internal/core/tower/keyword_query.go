@@ -17,7 +17,6 @@ var legacyFieldMapping = map[string]string{
 	"stun":         "stun",
 	"splash":       "splash",
 	"crit":         "crit",
-	"shieldIgnore": "shieldIgnore",
 }
 
 // GetTowerAbilities 合并能力数组与旧字段，返回去重后的能力条目列表。

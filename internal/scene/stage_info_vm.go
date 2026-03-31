@@ -19,7 +19,7 @@ import (
 
 // BuildInfoPanelVM constructs an InfoPanelVM from a tower and sell value.
 // If t is nil, returns a VM with Visible=false.
-func BuildInfoPanelVM(t *tower.Tower, sellValue int) hud.InfoPanelVM {
+func BuildInfoPanelVM(t *tower.Tower, sellValue int, wavesCleared int) hud.InfoPanelVM {
 	if t == nil {
 		return hud.InfoPanelVM{Visible: false}
 	}
@@ -71,6 +71,18 @@ func BuildInfoPanelVM(t *tower.Tower, sellValue int) hud.InfoPanelVM {
 			Desc:      b.Desc,
 			Remaining: b.Remaining,
 		})
+	}
+
+	// Upgrade choices (pending ability slots)
+	if t.HasPendingUpgrade(wavesCleared) {
+		choices := tower.RollAbilityChoices(t, tower.ChoicesPerUnlock)
+		for _, c := range choices {
+			vm.UpgradeChoices = append(vm.UpgradeChoices, hud.UpgradeChoiceVM{
+				Type:  c.Type,
+				Label: c.Label,
+				Desc:  c.Display,
+			})
+		}
 	}
 
 	// Buttons
@@ -209,20 +221,17 @@ func fmtNum(v float64) string {
 // fallback maps for abilities not in AbilityTable.
 var (
 	fallbackIconMap = map[string]string{
-		"shieldIgnore": "armorPen",
-		"multishot":    "multishot",
-		"pulse":        "pulse",
-		"multiTarget":  "multishot",
+		"multishot":   "multishot",
+		"pulse":       "pulse",
+		"multiTarget": "multishot",
 	}
 	fallbackLabelMap = map[string]string{
-		"shieldIgnore": "无视护盾",
-		"multishot":    "多重射击",
-		"pulse":        "脉冲",
+		"multishot": "多重射击",
+		"pulse":     "脉冲",
 	}
 	fallbackDescMap = map[string]string{
-		"shieldIgnore": "伤害无视护盾",
-		"multishot":    "多重射击",
-		"pulse":        "脉冲",
+		"multishot": "多重射击",
+		"pulse":     "脉冲",
 	}
 )
 

@@ -25,22 +25,18 @@ func makePipelineEnemy(hp, maxHP float64) *enemy.Enemy {
 
 func TestDamageType_BypassRules(t *testing.T) {
 	tests := []struct {
-		typ          string
-		reduction    bool
-		shield       bool
-		invincible   bool
+		typ        string
+		reduction  bool
+		invincible bool
 	}{
-		{combat.DmgPhysical, false, false, false},
-		{combat.DmgMagic, false, false, false},
-		{combat.DmgTrue, true, false, false},
-		{combat.DmgPure, true, true, true},
+		{combat.DmgPhysical, false, false},
+		{combat.DmgMagic, false, false},
+		{combat.DmgTrue, true, false},
+		{combat.DmgPure, true, true},
 	}
 	for _, tt := range tests {
 		if combat.IgnoresReduction(tt.typ) != tt.reduction {
 			t.Errorf("%s: IgnoresReduction=%v, 期望%v", tt.typ, !tt.reduction, tt.reduction)
-		}
-		if combat.IgnoresShield(tt.typ) != tt.shield {
-			t.Errorf("%s: IgnoresShield=%v, 期望%v", tt.typ, !tt.shield, tt.shield)
 		}
 		if combat.IgnoresInvincible(tt.typ) != tt.invincible {
 			t.Errorf("%s: IgnoresInvincible=%v, 期望%v", tt.typ, !tt.invincible, tt.invincible)
@@ -248,62 +244,6 @@ func TestPipeline_DamageCapDisabledBySilence(t *testing.T) {
 	}
 }
 
-// ── 步骤5: 护盾吸收 ──
-
-func TestPipeline_ShieldAbsorption(t *testing.T) {
-	e := makePipelineEnemy(100, 100)
-	e.ShieldHP = 30
-
-	r := combat.ProcessDamage(combat.DamageInput{
-		Target:    e,
-		RawDamage: 50,
-	})
-	if math.Abs(r.ShieldAbsorbed-30) > 1e-9 {
-		t.Errorf("护盾吸收=%.1f, 期望30", r.ShieldAbsorbed)
-	}
-	if math.Abs(r.HPDamage-20) > 1e-9 {
-		t.Errorf("穿透护盾后HP伤害=%.1f, 期望20", r.HPDamage)
-	}
-}
-
-func TestPipeline_MultiShield(t *testing.T) {
-	e := makePipelineEnemy(100, 100)
-	enemy.AddShield(e, 20, 5.0, "aura1")
-	enemy.AddShield(e, 30, 10.0, "aura2")
-
-	r := combat.ProcessDamage(combat.DamageInput{
-		Target:    e,
-		RawDamage: 40,
-	})
-	// 先消耗5秒盾(20)，再消耗10秒盾的20
-	if math.Abs(r.ShieldAbsorbed-40) > 1e-9 {
-		t.Errorf("多重护盾吸收=%.1f, 期望40", r.ShieldAbsorbed)
-	}
-	if math.Abs(r.HPDamage) > 1e-9 {
-		t.Errorf("全被护盾吸收, HP伤害应为0, 实际%.1f", r.HPDamage)
-	}
-}
-
-func TestPipeline_PureBypassesShield(t *testing.T) {
-	e := makePipelineEnemy(100, 100)
-	e.ShieldHP = 50
-
-	r := combat.ProcessDamage(combat.DamageInput{
-		Target:     e,
-		RawDamage:  30,
-		DamageType: combat.DmgPure,
-	})
-	if r.ShieldAbsorbed != 0 {
-		t.Errorf("pure应跳过护盾, 吸收量=%.1f", r.ShieldAbsorbed)
-	}
-	if math.Abs(r.HPDamage-30) > 1e-9 {
-		t.Errorf("pure直接扣HP=%.1f, 期望30", r.HPDamage)
-	}
-	if e.ShieldHP != 50 {
-		t.Errorf("pure不应消耗护盾, ShieldHP=%.1f", e.ShieldHP)
-	}
-}
-
 // ── 步骤7: 阈值触发 ──
 
 func TestPipeline_Thresholds(t *testing.T) {
@@ -368,31 +308,3 @@ func TestQuickDamage(t *testing.T) {
 	}
 }
 
-// ── 护盾系统测试 ──
-
-func TestShield_TickExpire(t *testing.T) {
-	e := makePipelineEnemy(100, 100)
-	enemy.AddShield(e, 50, 2.0, "test")
-
-	enemy.TickShields(e, 1.0)
-	if len(e.Shields) != 1 {
-		t.Error("1秒后护盾应仍存在")
-	}
-
-	enemy.TickShields(e, 1.5)
-	if len(e.Shields) != 0 {
-		t.Errorf("2.5秒后护盾应过期, 剩余%d", len(e.Shields))
-	}
-}
-
-func TestShield_TotalHP(t *testing.T) {
-	e := makePipelineEnemy(100, 100)
-	e.ShieldHP = 20
-	enemy.AddShield(e, 30, 10, "a")
-	enemy.AddShield(e, 40, 10, "b")
-
-	total := enemy.TotalShieldHP(e)
-	if math.Abs(total-90) > 1e-9 {
-		t.Errorf("总护盾=%.1f, 期望90 (20+30+40)", total)
-	}
-}

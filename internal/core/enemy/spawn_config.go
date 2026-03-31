@@ -10,7 +10,6 @@ type SpawnConfig struct {
 	SpeedScale  float64 // 速度倍率（应用于 baseSpeed）
 	Radius      float64 // 碰撞半径（像素绝对值）
 	Boss        bool    // 是否为 Boss
-	ShieldScale float64 // 护盾倍率（基于最终 HP，0 = 无护盾）
 	Reward      int     // 击杀奖励金币
 }
 

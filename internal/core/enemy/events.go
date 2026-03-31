@@ -9,19 +9,13 @@ package enemy
 const maxSpeedScale = 2.4
 
 // ApplyEnemyEvent 对敌人施加波次事件增益。
-// kind 支持 5 种类型：
-//   - "shieldPercent": 按最大血量百分比增加护盾
+// kind 支持 4 种类型：
 //   - "hpPercent": 按最大血量百分比增加血量/最大血量
 //   - "periodicHealPercent": 设置每秒回血量（按最大血量百分比）
 //   - "speedPercent": 按百分比提升基础速度（上限 2.4x）
 //   - "rewardPercent": 按百分比提升击杀奖励（最少 1 金币）
 func ApplyEnemyEvent(e *Enemy, kind string, value float64) {
 	switch kind {
-	case "shieldPercent":
-		// 增加护盾值 = 最大血量 * value
-		bonus := e.MaxHP * value
-		e.ShieldHP += bonus
-
 	case "hpPercent":
 		// 增加血量和最大血量
 		bonus := e.MaxHP * value
@@ -56,7 +50,7 @@ func ApplyEnemyEvent(e *Enemy, kind string, value float64) {
 }
 
 // ApplyElitePromotion 将普通敌人晋升为精英。
-// 提升属性：HP*4, Speed*0.9, Reward*2, Radius*1.4, Shield+=15%maxHP。
+// 提升属性：HP*4, Speed*0.9, Reward*2, Radius*1.4。
 func ApplyElitePromotion(e *Enemy) {
 	// 血量翻 4 倍
 	e.MaxHP *= 4
@@ -75,9 +69,6 @@ func ApplyElitePromotion(e *Enemy) {
 
 	// 碰撞体积增大
 	e.Radius *= 1.4
-
-	// 增加 15% 最大血量的护盾
-	e.ShieldHP += e.MaxHP * 0.15
 
 	// 标记为精英
 	e.Elite = true

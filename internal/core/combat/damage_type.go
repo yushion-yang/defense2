@@ -3,32 +3,27 @@
 //
 // 穿透规则矩阵:
 //
-//	类型       | 忽略减免 | 忽略护盾 | 忽略无敌
-//	-----------|---------|---------|--------
-//	physical   |   ✗     |   ✗     |   ✗
-//	magic      |   ✗     |   ✗     |   ✗
-//	true       |   ✓     |   ✗     |   ✗
-//	pure       |   ✓     |   ✓     |   ✓
+//	类型       | 忽略减免 | 忽略无敌
+//	-----------|---------|--------
+//	physical   |   ✗     |   ✗
+//	magic      |   ✗     |   ✗
+//	true       |   ✓     |   ✗
+//	pure       |   ✓     |   ✓
 package combat
 
 import "image/color"
 
 // 伤害类型常量
 const (
-	DmgPhysical = "physical" // 物理伤害（受减免、受护盾、受无敌）
-	DmgMagic    = "magic"    // 魔法伤害（受减免、受护盾、受无敌）
-	DmgTrue     = "true"     // 真实伤害（忽略减免，受护盾、受无敌）
-	DmgPure     = "pure"     // 纯粹伤害（忽略减免、忽略护盾、忽略无敌）
+	DmgPhysical = "physical" // 物理伤害（受减免、受无敌）
+	DmgMagic    = "magic"    // 魔法伤害（受减免、受无敌）
+	DmgTrue     = "true"     // 真实伤害（忽略减免，受无敌）
+	DmgPure     = "pure"     // 纯粹伤害（忽略减免、忽略无敌）
 )
 
 // IgnoresReduction 该伤害类型是否忽略攻击/防御增减益。
 func IgnoresReduction(t string) bool {
 	return t == DmgTrue || t == DmgPure
-}
-
-// IgnoresShield 该伤害类型是否忽略护盾吸收。
-func IgnoresShield(t string) bool {
-	return t == DmgPure
 }
 
 // IgnoresInvincible 该伤害类型是否忽略无敌状态。

@@ -29,9 +29,6 @@ type BuffTemplate struct {
 	// ── 减伤参数 ──
 	DamageReduce float64 // 伤害减免比例（0~1）
 
-	// ── 护盾参数 ──
-	ShieldPercent float64 // 护盾值占最大血量百分比
-
 	// ── 死亡效果参数 ──
 	DeathSplitCount int     // 死亡分裂数量
 	DeathSlowFactor float64 // 死亡减速倍率
@@ -95,12 +92,6 @@ func InitBuffTemplates() {
 			ID:          "empBurst",
 			Description: "电磁脉冲爆发，干扰塔攻击",
 			Category:    "offense",
-		},
-		"siphonShield": {
-			ID:            "siphonShield",
-			Description:   "吸取伤害转化为护盾",
-			Category:      "defense",
-			ShieldPercent: 0.1, // 10% 最大血量护盾
 		},
 		"blink": {
 			ID:          "blink",
@@ -189,11 +180,6 @@ func ApplyBuffTemplate(e *Enemy, templateID string) bool {
 		e.HealCooldown = 0
 	}
 
-	// 护盾
-	if tmpl.ShieldPercent > 0 {
-		e.ShieldHP += e.MaxHP * tmpl.ShieldPercent
-	}
-
 	// 应用附加标记
 	if len(tmpl.Flags) > 0 {
 		ApplyFlags(e, tmpl.Flags)
@@ -248,8 +234,6 @@ func MapLegacyType(typeName string) (archetype string, flags []string, buffIDs [
 		return "berserker", nil, []string{"berserk"}
 	case "regenerator":
 		return "regenerator", nil, []string{"regen"}
-	case "shielder":
-		return "shielder", nil, []string{"siphonShield"}
 	case "splitter":
 		return "splitter", nil, []string{"deathSplit"}
 	case "summoner":

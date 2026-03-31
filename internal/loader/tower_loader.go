@@ -50,6 +50,12 @@ func TowerJSONToDef(key string, t *config.TowerJSON) tower.TowerDef {
 	def.PotentialDamage = t.PotentialDamage
 	def.PotentialSpeed = t.PotentialAttackSpeed
 	def.PotentialRange = t.PotentialRange
+
+	// 升级费用
+	if len(t.UpgradeCosts) > 0 {
+		def.UpgradeCosts = make([]int, len(t.UpgradeCosts))
+		copy(def.UpgradeCosts, t.UpgradeCosts)
+	}
 	return def
 }
 

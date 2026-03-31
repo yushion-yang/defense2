@@ -176,23 +176,7 @@ func (er *EnemyRenderer) DrawEnemies(screen *ebiten.Image, pool *enemy.Pool, ani
 			barOffY = theme.EnemyHPBarOffsetY
 		}
 
-		// --- Shield bar (above HP bar, 4px gap) ---
-		if e.ShieldHP > 0 {
-			shieldH := float32(theme.EnemyShieldBarH)
-			shieldX := cx - barW/2
-			shieldY := cy - barOffY - shieldH - 4
-			shieldRatio := float32(e.ShieldHP / e.MaxHP)
-			if shieldRatio > 1 {
-				shieldRatio = 1
-			}
-			// Shield bg (1px border integrated)
-			draw.FilledRect(screen, shieldX-1, shieldY-1, barW+2, shieldH+2,
-				theme.EnemyHPBarBg, true)
-			draw.FilledRect(screen, shieldX, shieldY, barW*shieldRatio, shieldH,
-				color.RGBA{R: 255, G: 255, B: 255, A: 220}, true)
-		}
-
-		// --- HP bar (always visible) ---
+			// --- HP bar (always visible) ---
 		{
 			barX := cx - barW/2
 			barY := cy - barOffY

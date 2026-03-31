@@ -188,14 +188,6 @@ func TestBehavior_Regeneration(t *testing.T) {
 // 敌人事件测试
 // ============================================================
 
-func TestEvent_ShieldPercent(t *testing.T) {
-	e := &enemy.Enemy{HP: 100, MaxHP: 100, ShieldHP: 0}
-	enemy.ApplyEnemyEvent(e, "shieldPercent", 0.2)
-	if math.Abs(e.ShieldHP-20) > 1e-9 {
-		t.Errorf("shieldPercent后ShieldHP=%.1f, 期望20", e.ShieldHP)
-	}
-}
-
 func TestEvent_HPPercent(t *testing.T) {
 	e := &enemy.Enemy{HP: 100, MaxHP: 100}
 	enemy.ApplyEnemyEvent(e, "hpPercent", 0.3)
@@ -219,9 +211,6 @@ func TestEvent_ElitePromotion(t *testing.T) {
 	}
 	if e.Reward != 20 {
 		t.Errorf("精英Reward=%d, 期望20", e.Reward)
-	}
-	if math.Abs(e.ShieldHP-60) > 1e-9 { // 15% of 400
-		t.Errorf("精英ShieldHP=%.1f, 期望60", e.ShieldHP)
 	}
 }
 

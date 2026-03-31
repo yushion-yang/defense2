@@ -65,7 +65,18 @@ func (p *Pool) Place(row, col int, cx, cy float64, def TowerDef) *Tower {
 			t.SpinActive = 0
 			t.AuraPulse = 0
 			t.Branch = ""
+			t.Level = 1
+			t.AbilitySlots = [6]string{}
+			t.UnlockOrder = RollUnlockOrder()
+			t.MomentumCount = 0
 			t.Target = nil
+
+			// 随机属性（tier-presets 驱动，总能力均衡但分布不同）
+			stats := RollTowerStats()
+			ApplyRandomStats(t, stats)
+			t.DamageTier = stats.DamageTier
+			t.SpeedTier = stats.SpeedTier
+			t.RangeTier = stats.RangeTier
 			t.BuildAnim = 0
 			t.SellAnim = 0
 			t.Selling = false
@@ -129,6 +140,9 @@ type TowerDef struct {
 	PotentialDamage float64
 	PotentialSpeed  float64
 	PotentialRange  float64
+
+	// 升级费用
+	UpgradeCosts []int // 每次升级费用（索引0=第1次升级，索引5=第6次升级）
 }
 
 // BaseTowerDefs 返回 4 种基础塔定义。

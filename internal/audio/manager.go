@@ -76,6 +76,7 @@ const (
 	VolWave  = 0.7  // 开波、清波、Boss 出场
 	VolExplo = 0.45 // 爆炸、雷击等大特效
 	VolWarden = 0.5  // 战灵
+	VolSkill  = 0.5  // 技能施放
 )
 
 // Play 播放已缓存的音效（使用主音量）。未缓存的音效静默忽略。
@@ -163,8 +164,6 @@ const (
 	SFXBossEnter        = "bossEnter"        // boss-enter.wav — Boss出场
 	SFXHitFlesh         = "hitFlesh"         // hit-flesh.wav — 命中普通敌人
 	SFXHitHeavy         = "hitHeavy"         // hit-heavy.wav — 命中Boss/Tank
-	SFXHitShield        = "hitShield"        // hit-shield.wav — 命中护盾
-	SFXShieldBreak      = "shieldBreak"      // shield-break.wav — 护盾击碎
 	// 战灵音效
 	SFXWardenFire         = "wardenFire"         // warden-fire.wav — 战灵普攻射击
 	SFXWardenSpecialFire  = "wardenSpecialFire"  // warden-special-fire.wav — 火灵虚空火球
@@ -172,6 +171,8 @@ const (
 	SFXWardenSpecialGold  = "wardenSpecialGold"  // warden-special-gold.wav — 金灵增强光环
 	SFXWardenSpecialChain = "wardenSpecialChain" // warden-special-chain.wav — 聚能串联
 	SFXWardenSpecialMech  = "wardenSpecialMech"  // warden-special-mech.wav — 机甲模式切换
+	SFXChoiceAppear       = "uiOpen"             // 事件选择弹窗出现（复用 uiOpen）
+	SFXChoiceSelect       = "uiClick"            // 事件选择确认（复用 uiClick）
 
 )
 
@@ -191,6 +192,12 @@ func HitSFXForStyle(style string) string {
 		return SFXHitFlesh
 	}
 	return "hit" + snakeToCamel(style) // "spin_aoe" → "hitSpinAoe"
+}
+
+// SkillSFX 根据技能名称返回音效名称（stub：返回空字符串）。
+func SkillSFX(skillKey string) string {
+	// TODO: implement skill-specific SFX mapping
+	return ""
 }
 
 // ucFirst 首字母大写（简单 ASCII）。

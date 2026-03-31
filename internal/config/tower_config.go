@@ -28,8 +28,11 @@ type TowerJSON struct {
 
 	Abilities      []string            `json:"abilities"`      // 能力 key 列表（引用 abilities.json）
 	// 攻击方式配置
-	AttackStyle     string  `json:"attackStyle"`     // "projectile"/"laser"/"wideBeam"/"scatter"/"charge"/"spin_aoe"/"pierce"/"aura_dot"
+	AttackStyle     string  `json:"attackStyle"`     // "projectile"/"wideBeam"/"scatter"/"spin_aoe"
 	ProjectileSpeed float64 `json:"projectileSpeed"` // 弹射物速度（px/s）
+
+	// 升级系统
+	UpgradeCosts []int `json:"upgradeCosts"` // 每次升级费用（长度=最大升级次数）
 }
 
 // TowerFileData 塔配置文件的完整解析结果。

@@ -22,10 +22,7 @@ func TickTowerCombat(towers *tower.Pool, enemies *enemy.Pool, projectiles *proje
 		OnFire:      onFire,
 		OnHit:       onHit,
 		DT:          dt,
-		// 能力触发回调：供 spin_aoe 等非弹射物攻击方式使用
-		OnAbilityHit: func(t *tower.Tower, e *enemy.Enemy, damage float64) float64 {
-			return applyTowerAbilities(t, e, damage, enemies, projectiles)
-		},
+		// OnAbilityHit 已废弃：所有 handler 通过 ApplyHit 统一处理
 	}
 
 	towers.Each(func(t *tower.Tower) {
@@ -39,10 +36,7 @@ func TickTowerCombat(towers *tower.Pool, enemies *enemy.Pool, projectiles *proje
 			t.FireAnim -= dt
 		}
 
-		style := t.AttackStyleID
-		if style == "" {
-			style = tower.StyleProjectile
-		}
+		style := t.ResolveAttackStyle()
 		ctx.Style = string(style)
 
 		// 自管理攻击方式：每帧 tick，不走标准冷却
@@ -169,9 +163,7 @@ func TickProjectileHits(projectiles *projectile.Pool, enemies *enemy.Pool, tower
 				return
 			}
 
-			// ── 普通弹/追踪弹/穿刺弹：即时处理 ──
-			totalDamage := p.Damage
-
+			// ── 普通弹/追踪弹/穿刺弹：统一命中处理 ──
 			var srcTower *tower.Tower
 			if p.SourceTowerKey != "" {
 				towers.Each(func(t *tower.Tower) {
@@ -181,62 +173,17 @@ func TickProjectileHits(projectiles *projectile.Pool, enemies *enemy.Pool, tower
 				})
 			}
 
-			isCrit := false
+			hitStyle := ""
 			if srcTower != nil {
-				for _, aName := range srcTower.Abilities {
-					ab, ok := tower.Registry[aName]
-					if !ok {
-						continue
-					}
-					result := ab.OnHit(srcTower, p, e)
-					if result == nil {
-						continue
-					}
-					totalDamage += result.BonusDamage
-					if result.IsCrit {
-						isCrit = true
-					}
-					applyHitEffects(result, e, p, enemies, projectiles)
-				}
+				hitStyle = string(srcTower.AttackStyleID)
 			}
+			out := combat.ApplyHit(combat.HitInput{
+				Tower: srcTower, Target: e, BaseDamage: p.Damage, Style: hitStyle,
+				Enemies: enemies, Projectiles: projectiles, Projectile: p,
+			}, onHit)
 
-			// Shield 吸收
-			hasShieldIgnore := false
-			if srcTower != nil {
-				for _, aName := range srcTower.Abilities {
-					if aName == "shieldIgnore" {
-						hasShieldIgnore = true
-						break
-					}
-				}
-			}
-			if e.ShieldHP > 0 && !hasShieldIgnore {
-				if totalDamage <= e.ShieldHP {
-					e.ShieldHP -= totalDamage
-					totalDamage = 0
-				} else {
-					totalDamage -= e.ShieldHP
-					e.ShieldHP = 0
-				}
-			}
-
-			e.HP -= totalDamage
-			killed := e.HP <= 0
-			if onHit != nil {
-				hitStyle := ""
-				if srcTower != nil {
-					hitStyle = string(srcTower.AttackStyleID)
-				}
-				onHit(e, totalDamage, killed, hitStyle, isCrit)
-			}
-
-			if killed {
-				// 死亡爆炸：检查来源塔是否有 deathMark 能力
-				if srcTower != nil {
-					kills += applyDeathExplosion(srcTower, e, enemies, onHit)
-				}
-				enemies.Kill(e)
-				kills++
+			if out.Killed {
+				kills += 1 + out.ExtraKills
 			}
 
 			if p.Pierce {
@@ -260,9 +207,8 @@ func TickProjectileHits(projectiles *projectile.Pool, enemies *enemy.Pool, tower
 		if !e.Active || e.IsDying() {
 			continue
 		}
-		totalDamage := sh.damage * float64(sh.count)
+		mergedDamage := sh.damage * float64(sh.count)
 
-		// 查找来源塔，触发 OnHit 能力（以合并伤害为基准）
 		var srcTower *tower.Tower
 		if sh.towerKey != "" {
 			towers.Each(func(t *tower.Tower) {
@@ -271,29 +217,14 @@ func TickProjectileHits(projectiles *projectile.Pool, enemies *enemy.Pool, tower
 				}
 			})
 		}
-		if srcTower != nil {
-			totalDamage += applyTowerAbilities(srcTower, e, totalDamage, enemies, projectiles)
-		}
 
-		// Shield 吸收
-		if e.ShieldHP > 0 {
-			if totalDamage <= e.ShieldHP {
-				e.ShieldHP -= totalDamage
-				totalDamage = 0
-			} else {
-				totalDamage -= e.ShieldHP
-				e.ShieldHP = 0
-			}
-		}
+		out := combat.ApplyHit(combat.HitInput{
+			Tower: srcTower, Target: e, BaseDamage: mergedDamage, Style: "scatter",
+			Enemies: enemies, Projectiles: projectiles,
+		}, onHit)
 
-		e.HP -= totalDamage
-		killed := e.HP <= 0
-		if onHit != nil {
-			onHit(e, totalDamage, killed, "scatter", false)
-		}
-		if killed {
-			enemies.Kill(e)
-			kills++
+		if out.Killed {
+			kills += 1 + out.ExtraKills
 		}
 	}
 
@@ -326,75 +257,6 @@ func retargetPierce(p *projectile.Projectile, justHit *enemy.Enemy, enemies *ene
 	}
 }
 
-// applyHitEffects 将能力效果（减速、眩晕、流血、灼烧、溅射、弹射）施加到目标及周围敌人。
-func applyHitEffects(r *tower.HitResult, target *enemy.Enemy, p *projectile.Projectile, enemies *enemy.Pool, projectiles *projectile.Pool) {
-	// 减速（走 crowd_control 统一逻辑：免疫检查 + 韧性减免 + 减速下限）
-	if r.Slow != nil {
-		combat.ApplySlow(target, r.Slow.Factor, r.Slow.Duration, p.SourceTowerKey)
-	}
-	// 眩晕（走 crowd_control 统一逻辑：免疫检查 + 韧性减免）
-	if r.Stun != nil {
-		combat.ApplyStun(target, r.Stun.Duration, p.SourceTowerKey)
-	}
-	// 流血
-	if r.Bleed != nil {
-		target.BleedTimer = r.Bleed.Duration
-		target.BleedDPS = r.Bleed.DPS
-	}
-	// 灼烧（独立于流血）
-	if r.Burn != nil {
-		target.BurnTimer = r.Burn.Duration
-		target.BurnDPS = r.Burn.DPS
-	}
-	// 溅射：对目标周围敌人造成比例伤害
-	if r.Splash != nil {
-		splashDamage := p.Damage * r.Splash.Ratio
-		enemies.Each(func(e *enemy.Enemy) {
-			if e == target || e.IsDying() {
-				return // 跳过已命中的目标和正在死亡的敌人
-			}
-			dx := e.X - target.X
-			dy := e.Y - target.Y
-			if math.Hypot(dx, dy) <= r.Splash.Radius {
-				e.HP -= splashDamage
-				if e.HP <= 0 {
-					enemies.Kill(e)
-				}
-			}
-		})
-	}
-	// 弹射：向附近最近的未命中敌人发射衰减弹射物
-	if r.Bounce != nil && p.BounceCount < r.Bounce.MaxBounces {
-		// 构建已命中列表（当前目标 + 历史命中）
-		hitIDs := append([]int{}, p.BounceHitIDs...)
-		hitIDs = append(hitIDs, target.ID)
-
-		var best *enemy.Enemy
-		bestDist := r.Bounce.Range
-		enemies.Each(func(e2 *enemy.Enemy) {
-			if e2.IsDying() {
-				return
-			}
-			// 排除所有已命中的敌人（不弹回）
-			for _, id := range hitIDs {
-				if e2.ID == id {
-					return
-				}
-			}
-			d := math.Hypot(e2.X-target.X, e2.Y-target.Y)
-			if d < bestDist {
-				bestDist = d
-				best = e2
-			}
-		})
-		if best != nil && projectiles != nil {
-			// 弹射伤害 = 塔原始伤害 * 固定比例（不递减）
-			bounceDmg := r.Bounce.SrcDamage * r.Bounce.DamageRatio
-			projectiles.FireBounce(target.X, target.Y, best, bounceDmg, p.Speed, p.Radius, p.SourceTowerKey, p.BounceCount+1, hitIDs)
-		}
-	}
-}
-
 // multiTargetCount 返回塔的多目标额外目标数（不含主目标）。
 // 公式: targets = floor(base + potential * (strength/100)) - 1（减去主目标）。
 // 无 multiTarget 能力时返回 0。
@@ -421,71 +283,6 @@ func multiTargetCount(t *tower.Tower) int {
 		}
 	}
 	return 0
-}
-
-// applyDeathExplosion 检查塔是否有 deathMark 能力，若有则对被杀敌人周围造成 AoE 爆炸。
-// 返回爆炸击杀数。
-func applyDeathExplosion(t *tower.Tower, killed *enemy.Enemy, enemies *enemy.Pool, onHit combat.HitCallback) int {
-	for _, aName := range t.Abilities {
-		if aName != "deathMark" {
-			continue
-		}
-		abTable := config.GlobalAbilityTable()
-		if abTable == nil {
-			return 0
-		}
-		def, ok := abTable["deathMark"]
-		if !ok {
-			return 0
-		}
-		str := 100.0
-		if t.Strength != nil {
-			str = t.Strength.Effective()
-		}
-		explodeDmg := def.CalcScale(str)
-		explodeR := def.Param
-		extraKills := 0
-		enemies.Each(func(e2 *enemy.Enemy) {
-			if e2 == killed || e2.IsDying() {
-				return
-			}
-			if math.Hypot(e2.X-killed.X, e2.Y-killed.Y) <= explodeR {
-				e2.HP -= explodeDmg
-				if onHit != nil {
-					onHit(e2, explodeDmg, e2.HP <= 0, "explosion", false)
-				}
-				if e2.HP <= 0 {
-					enemies.Kill(e2)
-					extraKills++
-				}
-			}
-		})
-		return extraKills
-	}
-	return 0
-}
-
-// applyTowerAbilities 触发塔的所有 OnHit 能力，返回额外伤害并应用效果。
-// 用于散射合并和 spin_aoe 等非标准弹射物路径。
-func applyTowerAbilities(t *tower.Tower, e *enemy.Enemy, hitDamage float64, enemies *enemy.Pool, projectiles *projectile.Pool) float64 {
-	synth := &projectile.Projectile{
-		Damage:         hitDamage,
-		SourceTowerKey: t.InstanceKey,
-	}
-	bonus := 0.0
-	for _, aName := range t.Abilities {
-		ab, ok := tower.Registry[aName]
-		if !ok {
-			continue
-		}
-		result := ab.OnHit(t, synth, e)
-		if result == nil {
-			continue
-		}
-		bonus += result.BonusDamage
-		applyHitEffects(result, e, synth, enemies, projectiles)
-	}
-	return bonus
 }
 
 // TickEnemyStatusEffects 敌人状态效果子管线：处理所有敌人的减速/流血，击杀血量归零的敌人。

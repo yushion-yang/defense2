@@ -1,0 +1,204 @@
+// upgrade.go — 塔升级系统。
+// 每 2 波解锁 1 个能力位，玩家从 3 个候选能力中选 1 个。可保留不选。
+package tower
+
+import (
+	"math/rand"
+
+	"defense2/internal/config"
+)
+
+// MaxAbilitySlots 最大能力槽位数（6 大类别各一个）。
+const MaxAbilitySlots = config.AbilityCatCount
+
+// WavesPerUnlock 每隔多少波解锁 1 个能力位。
+const WavesPerUnlock = 2
+
+// ChoicesPerUnlock 每次解锁提供的候选能力数。
+const ChoicesPerUnlock = 3
+
+// ── 能力位解锁 ──
+
+// UnlockedSlots 根据已完成的波次数计算已解锁的能力位数。
+func UnlockedSlots(wavesCleared int) int {
+	n := wavesCleared / WavesPerUnlock
+	if n > MaxAbilitySlots {
+		n = MaxAbilitySlots
+	}
+	return n
+}
+
+// PendingSlots 返回塔有多少个已解锁但未选择能力的槽位。
+func (t *Tower) PendingSlots(wavesCleared int) int {
+	unlocked := UnlockedSlots(wavesCleared)
+	used := 0
+	for _, a := range t.AbilitySlots {
+		if a != "" {
+			used++
+		}
+	}
+	pending := unlocked - used
+	if pending < 0 {
+		pending = 0
+	}
+	return pending
+}
+
+// HasPendingUpgrade 返回塔是否有待选择的能力。
+func (t *Tower) HasPendingUpgrade(wavesCleared int) bool {
+	return t.PendingSlots(wavesCleared) > 0
+}
+
+// ── 能力选择 ──
+
+// AddAbility 为塔添加一个能力到对应类别的槽位。
+// 返回 false 如果该类别已被占用或类别无效。
+func (t *Tower) AddAbility(abilityType string) bool {
+	table := config.GlobalAbilityTable()
+	if table == nil {
+		return false
+	}
+	def, ok := table[abilityType]
+	if !ok {
+		return false
+	}
+	cat := def.CategoryIndex()
+	if cat < 0 || cat >= config.AbilityCatCount {
+		return false
+	}
+	if t.AbilitySlots[cat] != "" {
+		return false // 该类别已有能力
+	}
+	t.AbilitySlots[cat] = abilityType
+	t.Abilities = t.AllAbilities()
+	t.Level++
+
+	// 攻击模式 → 更新 AttackStyleID
+	if cat == config.AbilityCatAttack {
+		t.AttackStyleID = t.ResolveAttackStyle()
+	}
+
+	// 强化 → 提升基础属性
+	if abilityType == "enhance" {
+		applyEnhance(t, def)
+	}
+
+	return true
+}
+
+// applyEnhance 强化能力：提升塔的基础和潜力属性。
+func applyEnhance(t *Tower, def *config.AbilityDef) {
+	str := 100.0
+	if t.Strength != nil {
+		str = t.Strength.Effective()
+	}
+	boost := def.CalcScale(str) // base=0.2 + potential=0.15 * (str/100)
+
+	t.BaseDamage *= 1 + boost
+	t.PotentialDamage *= 1 + boost
+	t.BaseSpeed *= 1 + boost
+	t.PotentialSpeed *= 1 + boost
+	t.BaseRange *= 1 + boost/2 // 射程提升减半避免过强
+	t.PotentialRange *= 1 + boost/2
+	t.RecalcStats()
+}
+
+// NextUnlockCategory 返回下一个应该解锁的类别（按 UnlockOrder 中首个空槽）。
+// 如果全部已满，返回 -1。
+func (t *Tower) NextUnlockCategory() int {
+	for _, cat := range t.UnlockOrder {
+		if t.AbilitySlots[cat] == "" {
+			return cat
+		}
+	}
+	return -1
+}
+
+// RollAbilityChoices 为塔随机生成 N 个候选能力。
+// 按 UnlockOrder 顺序，从下一个待解锁类别中选择候选。
+func RollAbilityChoices(t *Tower, count int) []config.AbilityDef {
+	nextCat := t.NextUnlockCategory()
+	if nextCat < 0 {
+		return nil
+	}
+
+	// 从该类别收集候选能力
+	var pool []*config.AbilityDef
+	pool = append(pool, AbilitiesForCategory(nextCat)...)
+	if len(pool) == 0 {
+		return nil
+	}
+
+	// 随机打乱后取前 count 个
+	rand.Shuffle(len(pool), func(i, j int) {
+		pool[i], pool[j] = pool[j], pool[i]
+	})
+	if count > len(pool) {
+		count = len(pool)
+	}
+
+	result := make([]config.AbilityDef, count)
+	for i := 0; i < count; i++ {
+		result[i] = *pool[i]
+	}
+	return result
+}
+
+// ── 查询 ──
+
+// UsedCategories 返回已使用的类别索引集合。
+func (t *Tower) UsedCategories() map[int]bool {
+	used := map[int]bool{}
+	for i, a := range t.AbilitySlots {
+		if a != "" {
+			used[i] = true
+		}
+	}
+	return used
+}
+
+// AvailableCategories 返回尚未使用的类别索引列表。
+func (t *Tower) AvailableCategories() []int {
+	var result []int
+	for i, a := range t.AbilitySlots {
+		if a == "" {
+			result = append(result, i)
+		}
+	}
+	return result
+}
+
+// AbilitiesForCategory 返回指定类别中可选择的能力列表。
+func AbilitiesForCategory(category int) []*config.AbilityDef {
+	table := config.GlobalAbilityTable()
+	if table == nil {
+		return nil
+	}
+	var result []*config.AbilityDef
+	for _, def := range table {
+		if def.CategoryIndex() == category {
+			result = append(result, def)
+		}
+	}
+	return result
+}
+
+// CategoryName 返回类别的中文名称。
+func CategoryName(cat int) string {
+	switch cat {
+	case config.AbilityCatAttack:
+		return "攻击模式"
+	case config.AbilityCatCC:
+		return "控制效果"
+	case config.AbilityCatDamage:
+		return "命中加伤"
+	case config.AbilityCatBuff:
+		return "增益光环"
+	case config.AbilityCatDoT:
+		return "持续伤害"
+	case config.AbilityCatZone:
+		return "范围效果"
+	default:
+		return "未知"
+	}
+}

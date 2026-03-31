@@ -42,7 +42,7 @@
     "speedScale": 1.02,
     "rewardScale": 0.94,
     "radius": 18,
-    "shieldScale": 0.82,
+    "shieldScale": 0,
     "description": "携带能量护盾的战斗单位。护盾值82%最大生命值，伤害优先扣护盾"
   },
   "swarm": {

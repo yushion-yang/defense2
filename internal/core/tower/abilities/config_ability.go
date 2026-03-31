@@ -16,8 +16,6 @@ import (
 	"defense2/internal/core/tower"
 )
 
-// BossPercentHpCap Boss 百分比伤害全局上限（游戏规则常量）。
-const BossPercentHpCap = 0.05
 
 // InitConfigAbilities 加载能力配置表并注册所有数据驱动的能力。
 // 必须在 config.SetDataFS() 之后调用。
@@ -84,14 +82,9 @@ func (a *ConfigAbility) OnHit(t *tower.Tower, p *projectile.Projectile, e *enemy
 			},
 		}
 
-	case "stackDamage":
-		// scaleDim=bonusPerStack — 连续命中同目标递增，切换目标重置
-		if t.StackTarget != e.ID {
-			t.StackTarget = e.ID
-			t.StackCount = 0
-		}
-		t.StackCount++
-		return &tower.HitResult{BonusDamage: p.Damage * sv * float64(t.StackCount)}
+	case "momentum":
+		// scaleDim=bonusRatio — 每次攻击附加 sv% 额外伤害
+		return &tower.HitResult{BonusDamage: p.Damage * sv}
 
 	case "executionBonus":
 		// scaleDim=damageBonus, param=hpThreshold
@@ -99,26 +92,6 @@ func (a *ConfigAbility) OnHit(t *tower.Tower, p *projectile.Projectile, e *enemy
 			return &tower.HitResult{BonusDamage: p.Damage * sv}
 		}
 		return nil
-
-	case "percentHpDamage":
-		// 切换目标时首击触发（猎手印记），同一目标不重复触发
-		if t.LastPercentHpTarget == e.ID {
-			return nil // 同一目标，不触发
-		}
-		t.LastPercentHpTarget = e.ID
-		ratio := sv
-		if e.Boss && ratio > BossPercentHpCap {
-			ratio = BossPercentHpCap
-		}
-		return &tower.HitResult{BonusDamage: e.MaxHP * ratio}
-
-	case "percentHpMinor":
-		// 每次命中触发的小额百分比伤害
-		ratio := sv
-		if e.Boss && ratio > BossPercentHpCap {
-			ratio = BossPercentHpCap
-		}
-		return &tower.HitResult{BonusDamage: e.MaxHP * ratio}
 
 	case "flatDamage":
 		// scaleDim=damage, 无固定参数
@@ -137,14 +110,20 @@ func (a *ConfigAbility) OnHit(t *tower.Tower, p *projectile.Projectile, e *enemy
 		bonus := p.Damage * ratio * sv
 		return &tower.HitResult{BonusDamage: bonus}
 
-	case "onHitSlow":
-		// scaleDim=factor, param=duration
+	case "onHitSlow", "slowPower":
+		// scaleDim=factor(强度提升减速值), param=duration(固定时长)
 		return &tower.HitResult{
 			Slow: &tower.SlowEffect{Factor: 1 - sv, Duration: pm},
 		}
 
-	case "stun":
-		// scaleDim=chance, param=duration
+	case "slowDuration":
+		// scaleDim=duration(强度提升持续时间), param=factor(固定减速值)
+		return &tower.HitResult{
+			Slow: &tower.SlowEffect{Factor: 1 - pm, Duration: sv},
+		}
+
+	case "stun", "stunChance":
+		// scaleDim=chance(强度提升概率), param=duration(固定时长)
 		if rand.Float64() < sv {
 			return &tower.HitResult{
 				Stun: &tower.StunEffect{Duration: pm},
@@ -152,10 +131,23 @@ func (a *ConfigAbility) OnHit(t *tower.Tower, p *projectile.Projectile, e *enemy
 		}
 		return nil
 
+	case "stunDuration":
+		// scaleDim=duration(强度提升时长), param=chance(固定概率)
+		if rand.Float64() < pm {
+			return &tower.HitResult{
+				Stun: &tower.StunEffect{Duration: sv},
+			}
+		}
+		return nil
+
 	case "bleedDot":
-		// scaleDim=dps, param=duration
+		// scaleDim=hpPercent — 每秒失去 sv% 最大生命值，对 Boss 无效
+		if e.Boss {
+			return nil
+		}
+		dps := e.MaxHP * sv // sv=0.01 → 1%HP/s
 		return &tower.HitResult{
-			Bleed: &tower.BleedEffect{DPS: sv, Duration: pm},
+			Bleed: &tower.BleedEffect{DPS: dps, Duration: pm},
 		}
 
 	case "burn":
@@ -164,27 +156,28 @@ func (a *ConfigAbility) OnHit(t *tower.Tower, p *projectile.Projectile, e *enemy
 			Burn: &tower.BleedEffect{DPS: p.Damage * sv, Duration: pm},
 		}
 
+	case "poison":
+		// scaleDim=dps, param=duration — 固定 DPS 中毒
+		return &tower.HitResult{
+			Bleed: &tower.BleedEffect{DPS: sv, Duration: pm},
+		}
+
+	case "weaken":
+		// scaleDim=amplify, param=duration — 命中后受伤增加
+		// 通过 Silenced 字段临时复用（后续可扩展为独立 debuff）
+		// TODO: 实现独立的 DamageAmplify debuff 字段
+		return nil
+
 	case "deathMark":
 		// 不在 OnHit 中处理 — 击杀时由 pipeline 检查 srcTower 是否有此能力
 		return nil
 
-	case "buffPurge":
-		// scaleDim=shieldDrainPerSec — 命中时剥离护盾
-		if e.ShieldHP > 0 {
-			drain := sv * 0.5 // 每次命中剥离半秒量
-			if drain > e.ShieldHP {
-				drain = e.ShieldHP
-			}
-			e.ShieldHP -= drain
-		}
+	case "enhance":
+		// 强化能力 — 选择时一次性提升基础属性，OnHit 无额外效果
 		return nil
 
 	case "multiTarget":
 		// 无缩放，param=targets — 逻辑在 pipeline 层处理
-		return nil
-
-	case "shieldIgnore":
-		// 无参数 — 逻辑在伤害管线层处理
 		return nil
 
 	case "goldOnKill":

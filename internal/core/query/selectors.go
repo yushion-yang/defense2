@@ -18,7 +18,6 @@ type WaveComposition struct {
 	Runner      int // 快速敌人数
 	Swarm       int // 蜂群敌人数
 	Tank        int // 坦克敌人数
-	Shielded    int // 护盾敌人数
 	Medic       int // 治疗敌人数
 	Regenerator int // 回血敌人数
 	Berserker   int // 狂暴敌人数
@@ -59,7 +58,6 @@ var pressureWeights = map[string]float64{
 	"runner":      0.8,
 	"swarm":       0.9,
 	"tank":        1.6,
-	"shielded":    1.1,
 	"medic":       1.35,
 	"regenerator": 1.4,
 	"berserker":   1.2,
@@ -75,7 +73,6 @@ func GetWavePressureScore(wave int, comp WaveComposition) float64 {
 	score += float64(comp.Runner) * pressureWeights["runner"]
 	score += float64(comp.Swarm) * pressureWeights["swarm"]
 	score += float64(comp.Tank) * pressureWeights["tank"]
-	score += float64(comp.Shielded) * pressureWeights["shielded"]
 	score += float64(comp.Medic) * pressureWeights["medic"]
 	score += float64(comp.Regenerator) * pressureWeights["regenerator"]
 	score += float64(comp.Berserker) * pressureWeights["berserker"]

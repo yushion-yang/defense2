@@ -20,7 +20,6 @@ type SpawnEntry struct {
 	Label      string  // 中文显示名
 	HpScale    float64 // HP 倍率
 	SpeedScale float64 // 速度倍率
-	ShieldScale float64 // 护盾倍率
 	Radius     float64 // 半径
 	Reward     int     // 击杀奖励
 	Boss       bool    // 是否 Boss
@@ -123,8 +122,6 @@ func DrawSpawnMenu(screen *ebiten.Image, d SpawnMenuData) {
 			tag = "首领"
 		} else if entry.HpScale >= 4 {
 			tag = "精英"
-		} else if entry.ShieldScale > 0 {
-			tag = "护盾"
 		}
 		if tag != "" {
 			fm.DrawText(screen, tag, nameX, nameY+14, theme.FontXS, color.RGBA{R: 250, G: 190, B: 80, A: 240})
@@ -186,11 +183,6 @@ func drawSpawnTooltip(screen *ebiten.Image, fm *render.FontManager, e SpawnEntry
 	}
 	fm.DrawText(screen, fmt.Sprintf("速度:%.1f", e.SpeedScale), attrX, ty, theme.FontSM, color.RGBA{R: 74, G: 222, B: 128, A: 255})
 	attrX += 60
-
-	if e.ShieldScale > 0 {
-		fm.DrawText(screen, fmt.Sprintf("盾:%.0f%%", e.ShieldScale*100), attrX, ty, theme.FontSM, color.RGBA{R: 200, G: 200, B: 255, A: 255})
-		attrX += 50
-	}
 
 	fm.DrawText(screen, fmt.Sprintf("半径:%.0f", e.Radius), attrX, ty, theme.FontSM, color.RGBA{R: 160, G: 160, B: 180, A: 200})
 	ty += 16

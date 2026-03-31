@@ -101,7 +101,6 @@ const (
 	EnemyBossHPBarW    = 48
 	EnemyBossHPBarH    = 7
 	EnemyBossHPOffsetY = 30
-	EnemyShieldBarH    = 3
 )
 
 // ---------------------------------------------------------------------------

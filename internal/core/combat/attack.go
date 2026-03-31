@@ -30,7 +30,6 @@ type AttackContext struct {
 	Beams       *BeamPool
 	OnFire      func(t *tower.Tower, style string)                               // 射击回调（携带塔引用和攻击方式）
 	OnHit       func(e *enemy.Enemy, damage float64, killed bool, style string, crit bool) // 命中回调（携带攻击方式+暴击）
-	OnAbilityHit func(t *tower.Tower, e *enemy.Enemy, damage float64) float64   // 触发塔 OnHit 能力，返回额外伤害
 	DT          float64
 	Style       string // 当前攻击方式（由 pipeline 设置，handler 内部可读取）
 }
@@ -71,10 +70,13 @@ func TickSelfManaged(t *tower.Tower, ctx *AttackContext) {
 
 func init() {
 	Register(tower.StyleProjectile, &ProjectileHandler{})
-	Register(tower.StyleLaser, &LaserHandler{})
 	Register(tower.StyleWideBeam, &WideBeamHandler{})
 	Register(tower.StyleScatter, &ScatterHandler{})
-	Register(tower.StyleCharge, &ChargeHandler{})
 	Register(tower.StyleSpinAoE, &SpinAoEHandler{})
-	Register(tower.StyleAuraDot, &AuraDotHandler{})
+	Register(tower.StyleRadial, &RadialHandler{})
+
+	// 废弃的攻击方式 → 映射到保留的 handler
+	Register(tower.StyleLaser, &ProjectileHandler{})   // laser → 高弹速 projectile
+	Register(tower.StyleCharge, &ProjectileHandler{})   // charge → 低攻速 projectile
+	Register(tower.StyleAuraDot, &SpinAoEHandler{})     // aura_dot → 合并到 spinAoe
 }

@@ -1,18 +1,17 @@
-// damage_pipeline.go — 8步伤害管线。
+// damage_pipeline.go — 7步伤害管线。
 // 所有伤害（弹射物、光束、技能、DOT）最终都应通过 ProcessDamage 处理，
-// 确保免疫/减免/护盾/阈值等机制统一生效。
+// 确保免疫/减免/阈值等机制统一生效。
 //
-// 8步管线:
+// 7步管线:
 //
 //	1. 免疫检查（不可选中/无敌/伤害免疫，pure穿透所有）
 //	2. Boss百分比HP上限（%HP伤害对Boss额外限制）
 //	3. 攻击者增伤buff（damageUp乘数，true/pure跳过）
 //	4. 目标减伤buff（damageDown乘数，true/pure跳过）
 //	4.5 伤害上限（damageCap/damageCapPercent，沉默时失效）
-//	5. 护盾吸收（多重护盾按到期顺序消耗，pure跳过）
-//	6. HP扣减
-//	7. 阈值触发（HP比例触发器）
-//	8. 死亡检查
+//	5. HP扣减
+//	6. 阈值触发（HP比例触发器）
+//	7. 死亡检查
 package combat
 
 import (
@@ -46,16 +45,15 @@ type DamageResult struct {
 	AfterAttackerMod float64 // 步骤3: 攻击者增伤后
 	AfterTargetMod   float64 // 步骤4: 目标减伤后
 	AfterDamageCap   float64 // 步骤4.5: 伤害上限后
-	ShieldAbsorbed   float64 // 步骤5: 护盾吸收量
-	HPDamage         float64 // 步骤6: 实际扣减HP量
-	FinalDamage      float64 // 总伤害（护盾吸收+HP扣减）
-	Killed           bool    // 步骤8: 是否死亡
+	HPDamage         float64 // 步骤5: 实际扣减HP量
+	FinalDamage      float64 // 总伤害
+	Killed           bool    // 步骤7: 是否死亡
 
-	Thresholds []enemy.Threshold // 步骤7: 本次触发的阈值列表
+	Thresholds []enemy.Threshold // 步骤6: 本次触发的阈值列表
 }
 
-// ProcessDamage 执行8步伤害管线。
-// 这是所有伤害的统一入口，确保免疫/减免/护盾/阈值等机制一致生效。
+// ProcessDamage 执行7步伤害管线。
+// 这是所有伤害的统一入口，确保免疫/减免/阈值等机制一致生效。
 func ProcessDamage(input DamageInput) DamageResult {
 	e := input.Target
 	dmgType := input.DamageType
@@ -144,38 +142,27 @@ func ProcessDamage(input DamageInput) DamageResult {
 		damage = 1
 	}
 
-	// ── 步骤5: 护盾吸收 ──
-	tel.T.Record("pipeline", "shield_absorb")
-	if !IgnoresShield(dmgType) {
-		absorbed := enemy.AbsorbShields(e, damage)
-		result.ShieldAbsorbed = absorbed
-		damage -= absorbed
-		if damage < 0 {
-			damage = 0
-		}
-	}
-
-	// ── 步骤6: HP扣减 ──
+	// ── 步骤5: HP扣减 ──
 	tel.T.Record("pipeline", "hp_deduct")
 	result.HPDamage = damage
 	e.HP -= damage
 	if e.HP < 0 {
 		e.HP = 0
 	}
-	result.FinalDamage = result.ShieldAbsorbed + result.HPDamage
+	result.FinalDamage = result.HPDamage
 
-	// ── 步骤7: 阈值触发 ──
+	// ── 步骤6: 阈值触发 ──
 	tel.T.Record("pipeline", "threshold")
 	result.Thresholds = enemy.CheckThresholds(e)
 
-	// ── 步骤8: 死亡检查 ──
+	// ── 步骤7: 死亡检查 ──
 	tel.T.Record("pipeline", "death_check")
 	result.Killed = e.HP <= 0
 	if result.Killed {
 		tel.T.Record("pipeline", "death")
 	}
 
-	// 最低伤害保底（即使经过护盾/减免，结果伤害不能为负）
+	// 最低伤害保底（即使经过减免，结果伤害不能为负）
 	if result.FinalDamage < 0 {
 		result.FinalDamage = 0
 	}

@@ -83,8 +83,6 @@ type StageScene struct {
 	wardenUnit        *warden.Warden               // 战灵实体（选择前为 nil）
 	wardenOverlay     *hud.WardenSelectOverlay     // 战灵选择覆盖层
 	wardenReady       bool                         // 战灵已选择并激活
-	eventPool         *event.Pool                  // 事件池
-	appliedEvents     []event.Event                // 已应用的事件列表
 	killRewardBonus   int                          // 额外击杀金币（事件增益）
 	buildDiscount     float64                      // 建造折扣比例（事件增益）
 	tutorial          *tutorial.Tutorial           // 新手教程
@@ -95,8 +93,6 @@ type StageScene struct {
 	gameSpeed         int                          // 游戏速度倍率（1 或 2）
 	imode             interactMode                 // 交互状态机
 	prePauseMode      interactMode                 // 暂停前的交互模式（恢复用）
-	eventPending      []event.Event                // 待选事件列表（modeEvent 时使用）
-	eventHoverIdx     int                          // 事件卡片鼠标悬停索引
 	buildHoverIdx     int                          // 建塔面板鼠标悬停索引
 	gesture           *input.Gesture               // 统一手势识别器
 	waveLivesSnapshot int                          // 波开始时的生命快照（用于完美波次检测）
@@ -108,6 +104,8 @@ type StageScene struct {
 	dragCamStartX float64 // 拖拽起始相机位置
 	dragCamStartY float64
 	dragMoved     bool // 拖拽期间是否产生了位移（区分点击和拖拽）
+	// 能力升级
+	wavesCleared int // 已清除波次数（用于能力解锁）
 	// 测试模式
 	// HUD 面板状态
 	wavePanelOpen   bool // 左下角波次面板是否展开
@@ -247,7 +245,6 @@ func NewStageSceneWithOpts(sw Switcher, opts StageOptions) *StageScene {
 		wardenUnit:      wardenUnit,
 		wardenOverlay:   hud.NewWardenSelectOverlay(),
 		wardenReady:     wardenReady,
-		eventPool:       event.NewPool(loader.LoadAllyEvents()),
 		tutorial:        tut,
 		progressMgr:     pm,
 		lives:           20,
@@ -360,6 +357,7 @@ func (s *StageScene) subscribeBus() {
 		s.tutorial.OnEvent("waveStarted")
 	})
 	event.OnTyped(bus, event.EvtWaveCleared, func(p event.WaveClearedPayload) {
+		s.wavesCleared++
 		if s.wardenReady && s.wardenUnit != nil {
 			s.wardenUnit.OnWaveClear()
 		}
@@ -479,20 +477,6 @@ func (s *StageScene) Update() error {
 	case statePlaying:
 		// 交互状态机驱动
 		switch s.imode {
-		case modeEvent:
-			if s.autoPlayer != nil {
-				// 自动对局：自动选择事件
-				snap := s.buildAutoPlaySnapshot()
-				actions := s.autoPlayer.OnUpdate(snap)
-				for _, a := range actions {
-					if a.Type == APActionChooseEvent {
-						s.executeAutoPlayAction(a)
-						break
-					}
-				}
-			} else {
-				s.handleEventSelection()
-			}
 		case modePaused:
 			s.handlePausedInput()
 		case modeWardenSelect:
@@ -735,47 +719,6 @@ func (s *StageScene) debugActions() []hud.DebugAction {
 	)
 
 	// ── 技能 ──
-	type skillEntry struct {
-		key, label string
-	}
-	skillEntries := []skillEntry{
-		{"chainLightning", "链式闪电"},
-		{"nukeBomb", "核弹打击"},
-		{"windBlade", "风刃"},
-		{"channelLaser", "引导激光"},
-		{"missileBarrage", "导弹齐射"},
-		{"judgmentBeam", "审判光束"},
-		{"chainLightningBolts", "连锁雷球"},
-		{"judgmentRain", "审判之雨"},
-		{"thunderSmite", "雷霆一击"},
-	}
-	actions = append(actions, hud.DebugAction{Label: "技能", IsSection: true})
-	for _, se := range skillEntries {
-		se := se // capture
-		actions = append(actions, hud.DebugAction{
-			Label: "塔+" + se.label,
-			Action: func() {
-				if s.selectedTower == nil {
-					hud.ShowToast("先选中一座塔")
-					return
-				}
-				t := s.selectedTower
-				if t.Skill == nil {
-					t.Skill = &skill.SkillState{}
-				}
-				skill.AssignSkill(t.Skill, se.key, t)
-				hud.ShowToast("塔挂载 " + se.label)
-			},
-		})
-	}
-	for _, se := range skillEntries {
-		se := se
-		actions = append(actions, hud.DebugAction{
-			Label:  "灵+" + se.label,
-			Action: func() { s.assignWardenSkill(se.key) },
-		})
-	}
-
 	// ── 配置审计 ──
 	actions = append(actions,
 		hud.DebugAction{Label: "配置审计", IsSection: true},
@@ -810,7 +753,7 @@ func (s *StageScene) spawnEntries() []hud.SpawnEntry {
 		entries = append(entries, hud.SpawnEntry{
 			Name: name, Label: cfg.Label,
 			HpScale: cfg.HpScale, SpeedScale: cfg.SpeedScale,
-			ShieldScale: cfg.ShieldScale, Radius: cfg.Radius,
+			Radius: cfg.Radius,
 			Reward: cfg.Reward, Boss: cfg.Boss,
 		})
 	}
@@ -866,7 +809,6 @@ func (s *StageScene) updatePlaying() {
 	}
 
 	prevWave := s.spawner.Wave
-	render.UpdateVFXTick(gameDT)
 
 	// 音效节流计时器递减
 
@@ -945,20 +887,6 @@ func (s *StageScene) updatePlaying() {
 		})
 	}
 
-	// 5. 战灵技能 tick
-	if s.wardenReady && s.wardenUnit != nil && s.wardenUnit.Skill != nil {
-		base := s.wardenUnit.BaseState()
-		if base != nil {
-			var enemySlice []*enemy.Enemy
-			s.enemies.Each(func(e *enemy.Enemy) {
-				if !e.IsDying() {
-					enemySlice = append(enemySlice, e)
-				}
-			})
-			skill.TickEntitySkill(s.wardenUnit.Skill, base, enemySlice, gameDT, s.buildSkillContext())
-		}
-	}
-
 	// 5.5. 塔建造/出售动画 tick
 	s.towers.Each(func(t *tower.Tower) {
 		if t.BuildAnim > 0 {
@@ -995,9 +923,6 @@ func (s *StageScene) updatePlaying() {
 	// 必须在索敌射击之前执行，确保 Range 等属性是本帧最新值
 	abilityGold := pipeline.TickTowerAbilities(s.towers, s.enemies, gameDT)
 	s.gold += abilityGold
-
-	// 6.5. 塔技能 tick
-	pipeline.TickTowerSkills(s.towers, s.enemies, gameDT, s.buildSkillContext())
 
 	// 6.6. 收集光源（优先级：路径端点 > Boss > 战灵 > 塔）
 	s.postPipeline.Lighting.Clear()
@@ -1137,8 +1062,6 @@ func (s *StageScene) updatePlaying() {
 		} else {
 			// 命中音效：per-sound 节流，优先按敌人状态区分
 			switch {
-			case e.ShieldHP > 0:
-				s.audioMgr.PlayThrottledAt(gameAudio.SFXHitShield, 60, gameAudio.VolHit)
 			case e.Boss:
 				s.audioMgr.PlayThrottledAt(gameAudio.SFXHitHeavy, 60, gameAudio.VolHit)
 			default:
@@ -1206,15 +1129,6 @@ func (s *StageScene) updatePlaying() {
 			Wave: prevWave, Perfect: perfect,
 		})
 
-		// 检查是否是事件奖励波次（仅启用事件的模式）
-		if s.session.Mode.EnableEvents() {
-			for _, rw := range event.RewardWaves() {
-				if prevWave == rw {
-					s.triggerEventChoice(prevWave)
-					break
-				}
-			}
-		}
 	}
 
 	// 10.5. 后置安全网：清除本帧内被 abilities/skills/combat 击杀但尚未 Kill 的敌人
@@ -1242,133 +1156,6 @@ func (s *StageScene) updatePlaying() {
 	s.runAutoPlayFrame()
 }
 
-// triggerEventChoice 在奖励波次触发事件选择弹窗，暂停游戏等待玩家选择。
-func (s *StageScene) triggerEventChoice(wave int) {
-	picks := s.eventPool.PickTiered(wave)
-	if len(picks) == 0 {
-		return
-	}
-	s.eventPending = picks
-	s.eventHoverIdx = -1
-	s.imode = modeEvent
-	s.audioMgr.PlaySafeAt(gameAudio.SFXChoiceAppear, gameAudio.VolUI)
-}
-
-// ─── 事件选择弹窗 ───
-
-// 事件卡片布局常量。
-const (
-	eventCardW   float32 = 200 // 卡片宽度
-	eventCardH   float32 = 120 // 卡片高度
-	eventCardGap float32 = 12  // 卡片间距
-	eventCardR   float32 = 10  // 卡片圆角
-)
-
-// eventCardRect 计算第 i 张事件卡片的位置（居中布局）。
-func eventCardRect(n, i int) (x, y float32) {
-	totalW := float32(n)*eventCardW + float32(n-1)*eventCardGap
-	startX := (float32(game.ScreenWidth) - totalW) / 2
-	x = startX + float32(i)*(eventCardW+eventCardGap)
-	y = (float32(game.ScreenHeight) - eventCardH) / 2
-	return x, y
-}
-
-// handleEventSelection 处理事件选择弹窗的输入：悬停高亮和点击选择。
-// 使用手势系统统一处理鼠标/触摸输入，避免拖拽误触。
-func (s *StageScene) handleEventSelection() {
-	g := s.gesture
-	g.DragEnabled = false
-	g.Update()
-
-	mx, my := draw.CursorPos()
-	fmx, fmy := float32(mx), float32(my)
-	n := len(s.eventPending)
-
-	// 更新悬停索引
-	s.eventHoverIdx = -1
-	for i := 0; i < n; i++ {
-		cx, cy := eventCardRect(n, i)
-		if fmx >= cx && fmx <= cx+eventCardW && fmy >= cy && fmy <= cy+eventCardH {
-			s.eventHoverIdx = i
-			break
-		}
-	}
-
-	// 通过手势系统检测 Tap（桌面+移动端统一）
-	if g.JustTapped() {
-		tapX, tapY := g.TapPos()
-		ftx, fty := float32(tapX), float32(tapY)
-		for i := 0; i < n; i++ {
-			cx, cy := eventCardRect(n, i)
-			if ftx >= cx && ftx <= cx+eventCardW && fty >= cy && fty <= cy+eventCardH {
-				chosen := s.eventPending[i]
-				event.Apply(&chosen, s)
-				s.appliedEvents = append(s.appliedEvents, chosen)
-				s.showNotify(fmt.Sprintf("事件: %s", chosen.Label))
-				s.eventPending = nil
-				s.eventHoverIdx = -1
-				s.imode = modeIdle
-				s.audioMgr.PlaySafeAt(gameAudio.SFXChoiceSelect, gameAudio.VolUI)
-				return
-			}
-		}
-	}
-}
-
-// drawEventPopup 绘制事件选择弹窗（半透明遮罩 + 标题 + 卡片列表）。
-func (s *StageScene) drawEventPopup(screen *ebiten.Image) {
-	if s.eventPending == nil {
-		return
-	}
-	n := len(s.eventPending)
-
-	// 半透明遮罩
-	draw.RoundRect(screen, 0, 0, float32(game.ScreenWidth), float32(game.ScreenHeight), 0, theme.HUDGameOverlay)
-
-	fm := render.GlobalFont()
-	if fm == nil {
-		return
-	}
-
-	// 标题
-	titleY := float64(game.ScreenHeight)/2 - float64(eventCardH)/2 - 36
-	fm.DrawCenteredBoldText(screen, "选择事件", float64(game.ScreenWidth)/2, titleY, theme.FontH1, theme.TextTitle)
-
-	// 事件卡片
-	for i, ev := range s.eventPending {
-		cx, cy := eventCardRect(n, i)
-
-		// 卡片背景
-		if i == s.eventHoverIdx {
-			draw.RoundRect(screen, cx, cy, eventCardW, eventCardH, eventCardR, theme.TonePrimary)
-		} else {
-			draw.RoundRect(screen, cx, cy, eventCardW, eventCardH, eventCardR, theme.PanelBg)
-		}
-
-		// 卡片描边
-		draw.StrokeRoundRect(screen, cx, cy, eventCardW, eventCardH, eventCardR, 1.5, theme.PanelBorder)
-
-		// 事件名称（卡片上方居中）
-		labelX := float64(cx) + float64(eventCardW)/2
-		labelY := float64(cy) + 16
-		fm.DrawCenteredBoldText(screen, ev.Label, labelX, labelY, theme.FontH2, theme.TextTitle)
-
-		// 事件描述（卡片中部居中）
-		descX := float64(cx) + float64(eventCardW)/2
-		descY := float64(cy) + 48
-		fm.DrawCenteredText(screen, ev.Description, descX, descY, theme.FontBody, theme.TextBody)
-
-		// Tier 标签（卡片底部）
-		tierLabel := fmt.Sprintf("%d阶", ev.Tier)
-		tierX := float64(cx) + float64(eventCardW)/2
-		tierY := float64(cy) + float64(eventCardH) - 24
-		tierColor := theme.TextMuted
-		if ev.Tier >= 2 {
-			tierColor = theme.StatusSkill
-		}
-		fm.DrawCenteredText(screen, tierLabel, tierX, tierY, theme.FontCaption, tierColor)
-	}
-}
 
 // ─── GameState 接口实现（供事件处理器调用）───
 
@@ -1572,13 +1359,8 @@ func (s *StageScene) drawScene(screen *ebiten.Image) {
 		}
 	})
 
-	// 塔技能 VFX + CD 进度条
-	s.towers.Each(func(t *tower.Tower) {
-		if t.Skill != nil {
-			render.DrawSkillVFX(worldTarget, t.Skill)
-			render.DrawSkillBar(worldTarget, t.X, t.Y, t.Skill, t)
-		}
-	})
+	// 能力升级指示器（塔上方脉冲金色菱形）
+	s.drawUpgradeIndicators(worldTarget, animTime)
 
 	// 调试射程圈（测试模式下显示所有塔的射程）
 	if s.debugShowRange {
@@ -1606,13 +1388,6 @@ func (s *StageScene) drawScene(screen *ebiten.Image) {
 	// 战灵（选择后才绘制）
 	if s.wardenReady && s.wardenUnit != nil {
 		s.wardenRenderer.DrawWarden(worldTarget, s.wardenUnit, animTime)
-		// 战灵技能 VFX + CD 进度条
-		if s.wardenUnit.Skill != nil {
-			render.DrawSkillVFX(worldTarget, s.wardenUnit.Skill)
-			if base := s.wardenUnit.BaseState(); base != nil {
-				render.DrawSkillBar(worldTarget, base.X, base.Y, s.wardenUnit.Skill, base)
-			}
-		}
 		// 战灵面板展开时显示攻击距离圈
 		if s.wardenPanelOpen {
 			if base := s.wardenUnit.BaseState(); base != nil && base.Range > 0 {
@@ -1673,7 +1448,7 @@ func (s *StageScene) drawScene(screen *ebiten.Image) {
 	if s.selectedTower != nil {
 		// 塔选中时显示塔信息面板（底部中央）
 		sellValue := s.econ.SellRefund(s.selectedTower.Cost)
-		vm := BuildInfoPanelVM(s.selectedTower, sellValue)
+		vm := BuildInfoPanelVM(s.selectedTower, sellValue, s.wavesCleared)
 		hud.DrawInfoPanel(screen, vm)
 		// Hover 在面板上时显示升级详情浮窗
 		mx, my := draw.CursorPos()
@@ -1749,9 +1524,6 @@ func (s *StageScene) drawScene(screen *ebiten.Image) {
 	if s.wardenOverlay != nil {
 		s.wardenOverlay.Draw(screen)
 	}
-
-	// 事件选择弹窗
-	s.drawEventPopup(screen)
 
 	// 胜负覆盖层
 	if s.state == stateVictory || s.state == stateDefeat {
@@ -1829,6 +1601,21 @@ func towerTypeIcon(key string) string {
 	default:
 		return ""
 	}
+}
+
+// drawUpgradeIndicators 在有待选能力的塔上方绘制脉冲金色菱形指示器。
+func (s *StageScene) drawUpgradeIndicators(target *ebiten.Image, animTime float64) {
+	if s.wavesCleared < tower.WavesPerUnlock {
+		return
+	}
+	pulse := float32(0.7 + 0.3*math.Sin(animTime*4)) // alpha 脉冲
+	s.towers.Each(func(t *tower.Tower) {
+		if t.HasPendingUpgrade(s.wavesCleared) {
+			a := uint8(200 * pulse)
+			draw.Diamond(target, float32(t.X), float32(t.Y-22), 5, 1.5,
+				color.RGBA{R: 250, G: 200, B: 50, A: a})
+		}
+	})
 }
 
 // buildMinimapVM 构建小地图展示数据。
@@ -1929,47 +1716,6 @@ func wardenSpecialSFX(typ string) string {
 	}
 }
 
-// assignWardenSkill 为战灵挂载技能（调试用）。
-func (s *StageScene) assignWardenSkill(name string) {
-	if s.wardenUnit == nil {
-		hud.ShowToast("无战灵")
-		return
-	}
-	base := s.wardenUnit.BaseState()
-	if base == nil {
-		return
-	}
-	if s.wardenUnit.Skill == nil {
-		s.wardenUnit.Skill = &skill.SkillState{}
-	}
-	skill.AssignSkill(s.wardenUnit.Skill, name, base)
-	hud.ShowToast("战灵挂载 " + name)
-}
-
-// buildSkillContext 构建技能执行上下文。
-func (s *StageScene) buildSkillContext() *skill.SkillContext {
-	return &skill.SkillContext{
-		Projectiles: s.projectiles,
-		Beams:       s.beams,
-		OnHit: func(e *enemy.Enemy, dmg float64, killed bool) {
-			render.SpawnDamageText(e.X, e.Y-10, dmg, false)
-			if killed {
-				s.audioMgr.PlaySafeAt(gameAudio.SFXEnemyDeath, gameAudio.VolKill)
-				s.emitKill(e.Boss, "skill") // 统一击杀事件
-			}
-		},
-		OnActivate: func(skillKey string) {
-			if sfx := gameAudio.SkillSFX(skillKey); sfx != "" {
-				s.audioMgr.PlaySafeAt(sfx, gameAudio.VolSkill)
-			}
-			// 技能激活屏幕边缘白闪
-			fx := s.postPipeline.Effects
-			fx.HitTintR, fx.HitTintG, fx.HitTintB = 1.0, 1.0, 1.0
-			fx.TriggerHitFlash(0.1)
-		},
-	}
-}
-
 // replaceDescParams 将描述字符串中的 {key} 占位符替换为实际值。
 func replaceDescParams(desc string, params map[string]string) string {
 	if params == nil {
@@ -1988,12 +1734,11 @@ func convertArchetypesToSpawnConfigs(archetypes map[string]*config.EnemyArchetyp
 	result := make(map[string]*enemy.SpawnConfig, len(archetypes))
 	for key, a := range archetypes {
 		result[key] = &enemy.SpawnConfig{
-			Label:       a.Label,
-			HpScale:     a.HPScale,
-			SpeedScale:  a.SpeedScale,
-			Radius:      a.Radius,
-			Boss:        a.Boss,
-			ShieldScale: a.ShieldScale,
+			Label:      a.Label,
+			HpScale:    a.HPScale,
+			SpeedScale: a.SpeedScale,
+			Radius:     a.Radius,
+			Boss:       a.Boss,
 		}
 	}
 	return result
@@ -2174,15 +1919,11 @@ func (s *StageScene) buildAutoPlaySnapshot() AutoPlaySnapshot {
 		if t.Strength != nil {
 			str = int(t.Strength.Permanent)
 		}
-		skillName := ""
-		if t.Skill != nil && t.Skill.Inited {
-			skillName = t.Skill.SkillName
-		}
 		snap.Towers = append(snap.Towers, AutoPlayTower{
 			Key: t.Key, Row: t.Row, Col: t.Col,
 			X: t.X, Y: t.Y, Damage: t.Damage,
 			Range: t.Range, Cost: t.Cost, Strength: str,
-			Abilities: t.Abilities, SkillName: skillName,
+			Abilities: t.Abilities,
 			AttackStyle: string(t.AttackStyleID),
 			HasTarget: t.Target != nil,
 		})
@@ -2244,30 +1985,6 @@ func (s *StageScene) executeAutoPlayAction(a AutoPlayAction) {
 
 	case APActionSelectWarden:
 		s.activateWarden(a.WardenKey)
-
-	case APActionChooseEvent:
-		if s.imode == modeEvent && len(s.eventPending) > 0 {
-			idx := a.EventIndex
-			if idx < 0 || idx >= len(s.eventPending) {
-				idx = 0
-			}
-			chosen := s.eventPending[idx]
-			event.Apply(&chosen, s)
-			s.appliedEvents = append(s.appliedEvents, chosen)
-			s.eventPending = nil
-			s.eventHoverIdx = -1
-			s.imode = modeIdle
-		}
-
-	case APActionAssignSkill:
-		if a.SkillToWarden {
-			s.assignWardenSkill(a.SkillName)
-		} else {
-			t := s.towers.At(a.Row, a.Col)
-			if t != nil && t.Skill != nil {
-				skill.AssignSkill(t.Skill, a.SkillName, t)
-			}
-		}
 	}
 }
 

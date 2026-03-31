@@ -1,10 +1,18 @@
 {
-  "laser"   : {"label":"激光炮台" , "shortLabel":"激光"        , "description":"瞬时命中，射程更长，适合点杀高威胁目标。"         , "buildCost":70         , "baseDamage":8           , "potentialDamage":14               , "baseAttackSpeed":0.37             , "potentialAttackSpeed":0.55                  , "baseRange":200        , "potentialRange":0               , "attackStyle":"laser"      , "projectileSpeed":9999             , "abilities":["distanceDamage"]                                  },
-  "freeze"  : {"label":"冰冻炮台" , "shortLabel":"冰冻"        , "description":"伤害较低，但可减速敌人，为后排主力争取输出时间。"     , "buildCost":65         , "baseDamage":4           , "potentialDamage":6                , "baseAttackSpeed":0.27             , "potentialAttackSpeed":0.41                  , "baseRange":170        , "potentialRange":0               , "attackStyle":"projectile" , "projectileSpeed":380              , "abilities":["onHitSlow", "multiTarget"]                        },
-  "electric": {"label":"电磁塔"  , "shortLabel":"电磁"        , "description":"发射链式闪电，自动弹射到附近目标。"            , "buildCost":75         , "baseDamage":7           , "potentialDamage":13               , "baseAttackSpeed":0.34             , "potentialAttackSpeed":0.51                  , "baseRange":150        , "potentialRange":0               , "attackStyle":"projectile" , "projectileSpeed":600              , "abilities":["stun", "bounce"]                                  },
-  "hunter"  : {"label":"猎手塔"  , "shortLabel":"猎手"        , "description":"切换目标时首击造成目标最大生命值30%伤害，擅长逐个歼灭。", "buildCost":82         , "baseDamage":6           , "potentialDamage":12               , "baseAttackSpeed":0.56             , "potentialAttackSpeed":0.84                  , "baseRange":140        , "potentialRange":0               , "attackStyle":"projectile" , "projectileSpeed":380              , "abilities":["percentHpDamage"]                                 },
-  "en-04"   : {"label":"光束照射塔", "shortLabel":"光束"        , "description":"宽幅能量束同时打击多个敌人，目标越多效率越高"       , "buildCost":60         , "baseDamage":6           , "potentialDamage":12               , "baseAttackSpeed":0.4              , "potentialAttackSpeed":0.6                   , "baseRange":140        , "potentialRange":0               , "attackStyle":"wideBeam"   , "projectileSpeed":9999             , "abilities":["burn"]                                            },
-  "en-05"   : {"label":"能量散弹塔", "shortLabel":"散弹"        , "description":"60°锥形散布多颗穿透弹丸，扇面压制"           , "buildCost":55         , "baseDamage":5           , "potentialDamage":10               , "baseAttackSpeed":0.35             , "potentialAttackSpeed":0.55                  , "baseRange":125        , "potentialRange":50              , "attackStyle":"scatter"    , "projectileSpeed":400              , "abilities":["bleedDot"]                                        },
-  "en-08"   : {"label":"湮灭射线塔", "shortLabel":"湮灭"        , "description":"超远单体致命狙击，Boss杀手"              , "buildCost":75         , "baseDamage":12          , "potentialDamage":20               , "baseAttackSpeed":0.2              , "potentialAttackSpeed":0.1                   , "baseRange":180        , "potentialRange":0               , "attackStyle":"charge"     , "projectileSpeed":1200             , "abilities":["chargeShot"]                                      },
-  "wl-02"   : {"label":"旋风刃"  , "shortLabel":"旋风"        , "description":"近距离风刃旋转切割，范围越小伤害越高。中心150%伤害。" , "buildCost":60         , "baseDamage":7           , "potentialDamage":11               , "baseAttackSpeed":0.3              , "potentialAttackSpeed":0.5                   , "baseRange":80         , "potentialRange":0               , "attackStyle":"spin_aoe"   , "projectileSpeed":0                , "abilities":["percentHpMinor"]                                       }
+  "basic": {
+    "label": "基础炮塔",
+    "shortLabel": "基础",
+    "description": "基础追踪弹射击。升级后可选择攻击模式和特殊能力。",
+    "buildCost": 50,
+    "baseDamage": 8,
+    "potentialDamage": 14,
+    "baseAttackSpeed": 0.4,
+    "potentialAttackSpeed": 0.6,
+    "baseRange": 150,
+    "potentialRange": 30,
+    "attackStyle": "projectile",
+    "projectileSpeed": 400,
+    "abilities": [],
+    "upgradeCosts": [80, 120, 180, 260, 400, 600]
+  }
 }

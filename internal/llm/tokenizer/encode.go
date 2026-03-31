@@ -26,7 +26,7 @@ type EncodeEnemy struct {
 	X, Y      float64
 	HP, MaxHP float64
 	Archetype string
-	IsSlowed, IsStunned, IsBurning, IsBleeding, IsRooted, IsShielded bool
+	IsSlowed, IsStunned, IsBurning, IsBleeding, IsRooted bool
 }
 
 // EncodeTower holds the subset of tower state needed for tokenization.
@@ -102,9 +102,6 @@ func Encode(v *Vocab, input *EncodeInput) []int {
 		}
 		if e.IsRooted {
 			emit("s_root")
-		}
-		if e.IsShielded {
-			emit("s_shield")
 		}
 		emit("SEP")
 	}

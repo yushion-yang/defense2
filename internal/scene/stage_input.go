@@ -307,7 +307,10 @@ func (s *StageScene) handleInput() {
 		}
 
 	case modeTowerSel:
-		if hud.InfoPanelUpgradeHitTest(ftx, fty, s.selectedTower != nil) {
+		// 候选能力按钮点击
+		if choiceIdx := hud.HitTestUpgradeChoice(ftx, fty); choiceIdx >= 0 && s.selectedTower != nil {
+			s.handleAbilityChoice(choiceIdx)
+		} else if hud.InfoPanelUpgradeHitTest(ftx, fty, s.selectedTower != nil) {
 			s.tryUpgradeTower()
 		} else if hud.InfoPanelSellHitTest(ftx, fty, s.selectedTower != nil) {
 			s.trySellTower(s.selectedTower.X, s.selectedTower.Y)
@@ -443,6 +446,24 @@ func (s *StageScene) needsCamera() bool {
 	mapW := s.gameMap.Width() + s.gameMap.OffsetX*2
 	mapH := s.gameMap.Height() + s.gameMap.OffsetY*2
 	return mapW > float64(game.ScreenWidth) || mapH > float64(game.ScreenHeight)
+}
+
+// handleAbilityChoice 处理 info panel 中候选能力按钮的点击。
+func (s *StageScene) handleAbilityChoice(choiceIdx int) {
+	t := s.selectedTower
+	if t == nil {
+		return
+	}
+	// 从当前 VM 获取对应的能力类型
+	sellValue := s.econ.SellRefund(t.Cost)
+	vm := BuildInfoPanelVM(t, sellValue, s.wavesCleared)
+	if choiceIdx >= len(vm.UpgradeChoices) {
+		return
+	}
+	choice := vm.UpgradeChoices[choiceIdx]
+	if t.AddAbility(choice.Type) {
+		hud.ShowToast("获得能力: " + choice.Label)
+	}
 }
 
 // towerAtPixel 返回像素位置上的塔，无塔返回 nil。

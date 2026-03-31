@@ -47,15 +47,10 @@ func (h *WideBeamHandler) Fire(t *tower.Tower, target *enemy.Enemy, ctx *AttackC
 		if perpDist > halfW+e.Radius {
 			return
 		}
-		dmg := t.Damage
-		// 触发塔 OnHit 能力（灼烧、减速等）
-		if ctx.OnAbilityHit != nil {
-			dmg += ctx.OnAbilityHit(t, e, dmg)
-		}
-		e.HP -= dmg
-		if ctx.OnHit != nil {
-			ctx.OnHit(e, dmg, e.HP <= 0, ctx.Style, false)
-		}
+		ApplyHit(HitInput{
+			Tower: t, Target: e, BaseDamage: t.Damage, Style: ctx.Style,
+			Enemies: ctx.Enemies, Projectiles: ctx.Projectiles,
+		}, ctx.OnHit)
 	})
 
 	// Beam 视觉

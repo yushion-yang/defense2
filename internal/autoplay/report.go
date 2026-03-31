@@ -107,7 +107,7 @@ func GenerateReport(records []*SessionRecord) *CoverageReport {
 	allAbilities := []string{
 		"bounce", "chargeShot", "crit", "deathMark", "distanceDamage", "executionBonus",
 		"flatDamage", "multiTarget", "percentHpDamage", "percentHpMinor", "splash", "stackDamage",
-		"bleedDot", "buffPurge", "burn", "onHitSlow", "stun",
+		"bleedDot", "burn", "onHitSlow", "stun",
 		"attackSpeedAura", "critAura", "damageUpAura", "rangeAura", "soloBoost",
 		"curseZone", "poisonZone", "silenceZone",
 		"goldPassive", "goldOnKill",
@@ -115,7 +115,7 @@ func GenerateReport(records []*SessionRecord) *CoverageReport {
 	r.CoverageGaps["abilities"] = findGaps(allAbilities, abilitiesSeen)
 
 	// 遥测维度覆盖
-	allPipeline := []string{"immunity_check", "boss_hp_cap", "attacker_buff", "target_debuff", "damage_cap", "shield_absorb", "hp_deduct", "threshold", "death_check"}
+	allPipeline := []string{"immunity_check", "boss_hp_cap", "attacker_buff", "target_debuff", "damage_cap", "hp_deduct", "threshold", "death_check"}
 	r.CoverageGaps["pipeline_steps"] = findGaps(allPipeline, pipelineStepsSeen)
 
 	allDmgTypes := []string{"physical", "magic", "true", "pure"}
@@ -125,7 +125,7 @@ func GenerateReport(records []*SessionRecord) *CoverageReport {
 		"slow", "stun", "knockup", "root", "silence", "disarm",
 		"speedUp", "damageUp", "damageDown", "fireRateUp",
 		"invincible", "damageImmune", "controlImmune", "slowImmune", "stunImmune", "rootImmune", "untargetable",
-		"shield", "dot", "tenacity",
+		"dot", "tenacity",
 	}
 	r.CoverageGaps["buff_types"] = findGaps(allBuffTypes, buffTypesSeen)
 
@@ -134,7 +134,7 @@ func GenerateReport(records []*SessionRecord) *CoverageReport {
 
 	allTemplates := []string{
 		"berserk", "regen", "healAura", "speedAura", "damageReduce",
-		"empBurst", "siphonShield", "blink", "deathSplit", "deathSlow",
+		"empBurst", "blink", "deathSplit", "deathSlow",
 		"reflect", "timewarp", "revive", "spawnMinions",
 	}
 	r.CoverageGaps["enemy_templates"] = findGaps(allTemplates, enemyTemplatesSeen)
@@ -171,7 +171,7 @@ func (r *CoverageReport) WriteText(w io.Writer) {
 	}
 	fmt.Fprintln(w)
 
-	fmt.Fprintf(w, "Archetypes: %d/13", 13-len(r.CoverageGaps["archetypes"]))
+	fmt.Fprintf(w, "Archetypes: %d/12", 12-len(r.CoverageGaps["archetypes"]))
 	if len(r.CoverageGaps["archetypes"]) > 0 {
 		fmt.Fprintf(w, "  -- MISSING: %v", r.CoverageGaps["archetypes"])
 	}
@@ -183,7 +183,7 @@ func (r *CoverageReport) WriteText(w io.Writer) {
 	}
 	fmt.Fprintln(w)
 
-	fmt.Fprintf(w, "Abilities:  %d/27", 27-len(r.CoverageGaps["abilities"]))
+	fmt.Fprintf(w, "Abilities:  %d/26", 26-len(r.CoverageGaps["abilities"]))
 	if len(r.CoverageGaps["abilities"]) > 0 {
 		fmt.Fprintf(w, "  -- MISSING: %v", r.CoverageGaps["abilities"])
 	}
@@ -195,11 +195,11 @@ func (r *CoverageReport) WriteText(w io.Writer) {
 		key   string
 		total int
 	}{
-		{"Pipeline:  ", "pipeline_steps", 9},
+		{"Pipeline:  ", "pipeline_steps", 8},
 		{"DmgTypes:  ", "damage_types", 4},
-		{"BuffTypes: ", "buff_types", 20},
+		{"BuffTypes: ", "buff_types", 19},
 		{"BuffModes: ", "buff_stack_modes", 6},
-		{"Templates: ", "enemy_templates", 14},
+		{"Templates: ", "enemy_templates", 13},
 		{"IModes:    ", "interaction_modes", 8},
 		{"CC Types:  ", "cc_types", 3},
 	}
