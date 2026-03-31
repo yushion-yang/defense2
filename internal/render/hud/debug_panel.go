@@ -138,8 +138,8 @@ func DrawDebugPanel(screen *ebiten.Image, d DebugPanelData) {
 			} else {
 				draw.RoundRect(screen, bx, itemY, btnW, debugBtnH, debugBtnR, btnBg)
 				cx := float64(bx) + float64(btnW)/2
-				cy := float64(itemY) + float64(debugBtnH)/2 - 5
-				fm.DrawCenteredText(screen, act.Label, cx, cy, theme.FontXS, color.White)
+				cy := float64(itemY) + float64(debugBtnH)/2
+				fm.DrawCenteredVText(screen, act.Label, cx, cy, theme.FontXS, color.White)
 			}
 		}
 		itemY += h
