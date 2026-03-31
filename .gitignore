@@ -21,6 +21,9 @@ docs/architecture/modules.md
 # Binary
 game
 
+# Generated LLM weight files
+config/llm/models/*.bin
+
 # OS
 .DS_Store
 Thumbs.db
