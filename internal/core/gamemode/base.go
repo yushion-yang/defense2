@@ -9,19 +9,20 @@ type baseMode struct {
 	id string
 }
 
-func (b *baseMode) ID() string                                    { return b.id }
-func (b *baseMode) OnInit(_ *Context)                             {}
-func (b *baseMode) OnGameStart(_ *Context)                        {}
-func (b *baseMode) OnTick(_ float64, _ *Context)                  {}
-func (b *baseMode) OnWaveStart(_ int, _ *Context)                 {}
-func (b *baseMode) OnEnemyKilled(_ bool, _ *Context)              {}
-func (b *baseMode) OnEnemyLeaked(_ *Context)                      {}
-func (b *baseMode) ShouldAutoStart() bool                         { return true }
-func (b *baseMode) IntermissionSecs() float64                     { return 10 }
-func (b *baseMode) CheckVictory(ctx *Context) bool                { return !ctx.Spawning && ctx.Wave >= ctx.MaxWaves }
-func (b *baseMode) CheckDefeat(ctx *Context) bool                 { return ctx.Lives <= 0 }
-func (b *baseMode) GetScore(_ *Context) int                       { return 0 }
-func (b *baseMode) VictoryWaveTarget() int                        { return -1 }
+func (b *baseMode) ID() string                       { return b.id }
+func (b *baseMode) OnInit(_ *Context)                {}
+func (b *baseMode) OnGameStart(_ *Context)           {}
+func (b *baseMode) OnTick(_ float64, _ *Context)     {}
+func (b *baseMode) OnWaveStart(_ int, _ *Context)    {}
+func (b *baseMode) OnEnemyKilled(_ bool, _ *Context) {}
+func (b *baseMode) OnEnemyLeaked(_ *Context)         {}
+func (b *baseMode) ShouldAutoStart() bool            { return true }
+func (b *baseMode) IntermissionSecs() float64        { return 10 }
+func (b *baseMode) CheckVictory(ctx *Context) bool   { return !ctx.Spawning && ctx.Wave >= ctx.MaxWaves }
+func (b *baseMode) CheckDefeat(ctx *Context) bool    { return ctx.Lives <= 0 }
+func (b *baseMode) GetScore(_ *Context) int          { return 0 }
+func (b *baseMode) VictoryWaveTarget() int           { return -1 }
+func (b *baseMode) EnableEvents() bool               { return false }
 
 func (b *baseMode) OnWaveCleared(wave int, _ *Context) WaveClearResult {
 	bonus := 12 + wave*4

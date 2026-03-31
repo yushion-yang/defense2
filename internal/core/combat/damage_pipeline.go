@@ -4,14 +4,15 @@
 //
 // 7步管线:
 //
-//	1. 免疫检查（不可选中/无敌/伤害免疫，pure穿透所有）
-//	2. Boss百分比HP上限（%HP伤害对Boss额外限制）
-//	3. 攻击者增伤buff（damageUp乘数，true/pure跳过）
-//	4. 目标减伤buff（damageDown乘数，true/pure跳过）
-//	4.5 伤害上限（damageCap/damageCapPercent，沉默时失效）
-//	5. HP扣减
-//	6. 阈值触发（HP比例触发器）
-//	7. 死亡检查
+//  1. 免疫检查（不可选中/无敌/伤害免疫，pure穿透所有）
+//  2. Boss百分比HP上限（%HP伤害对Boss额外限制）
+//  3. 攻击者增伤buff（damageUp乘数，true/pure跳过）
+//  4. 目标减伤buff（damageDown乘数，true/pure跳过）
+//     4.25 虚弱增伤（weaken/weakenZone，上限50%）
+//     4.5 伤害上限（damageCap/damageCapPercent，沉默时失效）
+//  5. HP扣减
+//  6. 阈值触发（HP比例触发器）
+//  7. 死亡检查
 package combat
 
 import (
@@ -20,6 +21,9 @@ import (
 	"defense2/internal/core/enemy"
 	tel "defense2/internal/core/telemetry"
 )
+
+// MaxDamageAmplify 虚弱增伤上限（0.5 = 最多 +50% 受伤）。
+const MaxDamageAmplify = 0.5
 
 // DamageInput 伤害管线输入参数。
 type DamageInput struct {
@@ -38,8 +42,8 @@ type DamageInput struct {
 
 // DamageResult 伤害管线输出结果。
 type DamageResult struct {
-	Blocked       bool    // 伤害是否被完全阻挡
-	BlockedReason string  // 阻挡原因（"invincible"/"damageImmune"/"untargetable"）
+	Blocked       bool   // 伤害是否被完全阻挡
+	BlockedReason string // 阻挡原因（"invincible"/"damageImmune"/"untargetable"）
 
 	RawDamage        float64 // 步骤1: 原始伤害
 	AfterAttackerMod float64 // 步骤3: 攻击者增伤后
@@ -121,6 +125,16 @@ func ProcessDamage(input DamageInput) DamageResult {
 		damage *= input.TargetDamageDown
 	}
 	result.AfterTargetMod = damage
+
+	// ── 步骤4.25: 虚弱增伤（weaken/weakenZone） ──
+	tel.T.Record("pipeline", "damage_amplify")
+	if e.DamageAmplify > 0 {
+		amp := e.DamageAmplify
+		if amp > MaxDamageAmplify {
+			amp = MaxDamageAmplify
+		}
+		damage *= 1 + amp
+	}
 
 	// ── 步骤4.5: 伤害上限 ──
 	tel.T.Record("pipeline", "damage_cap")

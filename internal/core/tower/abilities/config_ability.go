@@ -16,7 +16,6 @@ import (
 	"defense2/internal/core/tower"
 )
 
-
 // InitConfigAbilities 加载能力配置表并注册所有数据驱动的能力。
 // 必须在 config.SetDataFS() 之后调用。
 func InitConfigAbilities() error {
@@ -164,8 +163,8 @@ func (a *ConfigAbility) OnHit(t *tower.Tower, p *projectile.Projectile, e *enemy
 
 	case "weaken":
 		// scaleDim=amplify, param=duration — 命中后受伤增加
-		// 通过 Silenced 字段临时复用（后续可扩展为独立 debuff）
-		// TODO: 实现独立的 DamageAmplify debuff 字段
+		e.DamageAmplify = sv
+		e.DamageAmplifyTimer = pm
 		return nil
 
 	case "deathMark":
@@ -287,6 +286,16 @@ func (a *ConfigAbility) OnTick(t *tower.Tower, ctx *tower.TickContext) *tower.Ti
 		ctx.Enemies.Each(func(e *enemy.Enemy) {
 			if math.Hypot(e.X-t.X, e.Y-t.Y) <= t.Range {
 				e.ZoneDmgAccum += e.MaxHP * sv * ctx.DT
+			}
+		})
+
+	case "weakenZone":
+		// scaleDim=amplify — 射程内敌人受伤增加
+		ctx.Enemies.Each(func(e *enemy.Enemy) {
+			if math.Hypot(e.X-t.X, e.Y-t.Y) <= t.Range {
+				if sv > e.DamageAmplify {
+					e.DamageAmplify = sv // 取最强的一个 zone 效果，不叠加
+				}
 			}
 		})
 

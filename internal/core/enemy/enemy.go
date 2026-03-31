@@ -42,38 +42,38 @@ func CheckThresholds(e *Enemy) []Threshold {
 
 // Enemy 单个敌人实体。
 type Enemy struct {
-	ID         int             // 唯一标识（用于穿刺弹已命中检查）
-	X, Y       float64         // 当前像素位置
-	HP         float64         // 当前血量
-	MaxHP      float64         // 最大血量
-	Speed      float64         // 当前移动速度（像素/秒，受减速影响）
-	BaseSpeed  float64         // 基础移动速度（无减速时的速度）
-	Radius     float64         // 碰撞半径（像素）
-	PathIndex  int             // 当前目标路径点索引
-	Path       []gamemap.Point // 该敌人的行进路径（多路径地图时各敌人可能不同）
-	ReachedEnd bool            // 是否已到达路径终点（基地）
-	Active     bool            // 是否存活（对象池复用标记）
-	Archetype  string          // 敌人原型标识（如 "normal"、"runner"、"tank"）
-	Boss       bool            // 是否为 Boss
-	Reward     int             // 击杀奖励金币
-	StunTimer  float64         // 眩晕剩余时间（秒），>0 时无法移动
-	SlowTimer  float64         // 减速剩余时间（秒）
-	SlowFactor float64         // 减速倍率（0.5 表示半速）
-	BleedTimer float64         // 流血剩余时间（秒）
-	BleedDPS   float64         // 流血每秒伤害
+	ID           int             // 唯一标识（用于穿刺弹已命中检查）
+	X, Y         float64         // 当前像素位置
+	HP           float64         // 当前血量
+	MaxHP        float64         // 最大血量
+	Speed        float64         // 当前移动速度（像素/秒，受减速影响）
+	BaseSpeed    float64         // 基础移动速度（无减速时的速度）
+	Radius       float64         // 碰撞半径（像素）
+	PathIndex    int             // 当前目标路径点索引
+	Path         []gamemap.Point // 该敌人的行进路径（多路径地图时各敌人可能不同）
+	ReachedEnd   bool            // 是否已到达路径终点（基地）
+	Active       bool            // 是否存活（对象池复用标记）
+	Archetype    string          // 敌人原型标识（如 "normal"、"runner"、"tank"）
+	Boss         bool            // 是否为 Boss
+	Reward       int             // 击杀奖励金币
+	StunTimer    float64         // 眩晕剩余时间（秒），>0 时无法移动
+	SlowTimer    float64         // 减速剩余时间（秒）
+	SlowFactor   float64         // 减速倍率（0.5 表示半速）
+	BleedTimer   float64         // 流血剩余时间（秒）
+	BleedDPS     float64         // 流血每秒伤害
 	BurnTimer    float64         // 灼烧剩余时间（秒）
 	BurnDPS      float64         // 灼烧每秒伤害
 	DotTickTimer float64         // DoT 触发计时器（每 DotTickInterval 触发一次伤害）
 	LastDotDmg   float64         // 上次 DoT tick 的伤害量（>0 时由 pipeline 弹浮字后清零）
 	ZoneDmgAccum float64         // 区域能力（curseZone/poisonZone）每帧累积伤害，DotTick 时结算
-	RootTimer  float64         // 定身剩余时间（秒）
-	DisplayHP  float64         // 显示用血量（伤害拖尾缓慢衰减到实际 HP）
-	Elite      bool            // 是否为精英怪
-	HitFlash   float64         // 受击闪白剩余时间（秒，>0 时渲染白色叠加）
-	AnimCur    string          // 当前动画名（per-instance）
-	AnimFrame  int             // 当前帧索引
-	AnimTimer  float64         // 帧计时器
-	AnimDone   bool            // 非循环动画是否播完
+	RootTimer    float64         // 定身剩余时间（秒）
+	DisplayHP    float64         // 显示用血量（伤害拖尾缓慢衰减到实际 HP）
+	Elite        bool            // 是否为精英怪
+	HitFlash     float64         // 受击闪白剩余时间（秒，>0 时渲染白色叠加）
+	AnimCur      string          // 当前动画名（per-instance）
+	AnimFrame    int             // 当前帧索引
+	AnimTimer    float64         // 帧计时器
+	AnimDone     bool            // 非循环动画是否播完
 
 	// ── 死亡动画 ──
 	DyingTimer    float64 // >0 means dying animation in progress (seconds remaining)
@@ -81,12 +81,14 @@ type Enemy struct {
 
 	// ── 伤害管线扩展字段 ──
 
-	DamageCap        float64 // 单次伤害上限（0=无上限，如铁甲怪 60）
-	DamageCapPercent float64 // 单次伤害百分比上限（0=无上限，如巨人 0.08=8%maxHP）
-	Silenced         bool    // 是否被沉默（沉默时 DamageCap 失效）
-	IsInvincible     bool    // 无敌状态（pure 伤害可穿透）
-	IsDamageImmune   bool    // 伤害免疫（pure 伤害可穿透）
-	IsUntargetable   bool    // 不可选中
+	DamageCap          float64 // 单次伤害上限（0=无上限，如铁甲怪 60）
+	DamageCapPercent   float64 // 单次伤害百分比上限（0=无上限，如巨人 0.08=8%maxHP）
+	Silenced           bool    // 是否被沉默（沉默时 DamageCap 失效）
+	DamageAmplify      float64 // 受伤增加倍率（weaken/weakenZone 施加）
+	DamageAmplifyTimer float64 // weaken OnHit 的持续时间（秒），zone 型每帧由区域重设
+	IsInvincible       bool    // 无敌状态（pure 伤害可穿透）
+	IsDamageImmune     bool    // 伤害免疫（pure 伤害可穿透）
+	IsUntargetable     bool    // 不可选中
 
 	Thresholds []Threshold // HP阈值触发器列表
 
@@ -171,6 +173,15 @@ func TickStatusEffects(e *Enemy, dt float64) {
 		}
 	} else {
 		e.DotTickTimer = 0
+	}
+
+	// 虚弱(weaken OnHit)：倒计时归零后清除增伤
+	if e.DamageAmplifyTimer > 0 {
+		e.DamageAmplifyTimer -= dt
+		if e.DamageAmplifyTimer <= 0 {
+			e.DamageAmplifyTimer = 0
+			e.DamageAmplify = 0
+		}
 	}
 
 	// 定身：倒计时

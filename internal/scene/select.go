@@ -99,9 +99,9 @@ type SelectScene struct {
 	mapNames     map[string]string // mapID → 显示名
 
 	// Ambient atmosphere
-	particlePool *particle.Pool  // 环境粒子池
-	ambientTimer float64         // 粒子发射计时器
-	frame        int             // 帧计数（用于动画）
+	particlePool *particle.Pool // 环境粒子池
+	ambientTimer float64        // 粒子发射计时器
+	frame        int            // 帧计数（用于动画）
 }
 
 // NewSelectScene 创建选关场景。
@@ -208,12 +208,17 @@ func (s *SelectScene) Update() error {
 func (s *SelectScene) startGame() {
 	mode := gameModes[s.selectedMode]
 	diff := s.difficulties[s.selectedDiff]
+	// 战役模式进入关卡选择
+	if mode.ID == "campaign" {
+		s.switcher.SwitchScene(NewCampaignSelectScene(s.switcher))
+		return
+	}
 	// 测试模式进入专用场景选择器
 	if mode.ID == "test" {
 		s.switcher.SwitchScene(NewTestSelectScene(s.switcher))
 		return
 	}
-	// 直接进入 Stage（战灵在 Stage 内第一波倒计时结束时选择）
+	// 其他模式直接进入 Stage（战灵在 Stage 内第一波倒计时结束时选择）
 	s.switcher.SwitchScene(NewStageSceneWithOpts(s.switcher, StageOptions{
 		MapID:        mode.DefaultMap,
 		ModeID:       mode.ID,
@@ -253,18 +258,18 @@ func (s *SelectScene) hitTestStartButton(mx, my float64) bool {
 // ── Draw ────────────────────────────────────────
 
 var (
-	bgColor        = color.RGBA{R: 18, G: 25, B: 45, A: 255}
-	cardBg         = color.RGBA{R: 30, G: 38, B: 60, A: 255}
-	cardHoverBg    = color.RGBA{R: 40, G: 50, B: 75, A: 255}
-	cardBorder     = color.RGBA{R: 60, G: 70, B: 95, A: 255}
-	greenAccent    = color.RGBA{R: 76, G: 175, B: 80, A: 255}
-	greenBtnHover  = color.RGBA{R: 100, G: 200, B: 100, A: 255}
-	diffBtnBg      = color.RGBA{R: 35, G: 42, B: 68, A: 255}
-	diffBtnBorder  = color.RGBA{R: 70, G: 80, B: 110, A: 255}
-	diffSelBorder  = color.RGBA{R: 100, G: 150, B: 220, A: 255}
-	textWhite      = color.RGBA{R: 230, G: 230, B: 235, A: 255}
-	textGray       = color.RGBA{R: 140, G: 145, B: 160, A: 255}
-	textDim        = color.RGBA{R: 90, G: 95, B: 110, A: 255}
+	bgColor       = color.RGBA{R: 18, G: 25, B: 45, A: 255}
+	cardBg        = color.RGBA{R: 30, G: 38, B: 60, A: 255}
+	cardHoverBg   = color.RGBA{R: 40, G: 50, B: 75, A: 255}
+	cardBorder    = color.RGBA{R: 60, G: 70, B: 95, A: 255}
+	greenAccent   = color.RGBA{R: 76, G: 175, B: 80, A: 255}
+	greenBtnHover = color.RGBA{R: 100, G: 200, B: 100, A: 255}
+	diffBtnBg     = color.RGBA{R: 35, G: 42, B: 68, A: 255}
+	diffBtnBorder = color.RGBA{R: 70, G: 80, B: 110, A: 255}
+	diffSelBorder = color.RGBA{R: 100, G: 150, B: 220, A: 255}
+	textWhite     = color.RGBA{R: 230, G: 230, B: 235, A: 255}
+	textGray      = color.RGBA{R: 140, G: 145, B: 160, A: 255}
+	textDim       = color.RGBA{R: 90, G: 95, B: 110, A: 255}
 )
 
 func (s *SelectScene) Draw(screen *ebiten.Image) {

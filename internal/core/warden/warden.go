@@ -6,6 +6,7 @@ package warden
 import (
 	"defense2/internal/core/enemy"
 	"defense2/internal/core/projectile"
+	"defense2/internal/core/skill"
 	"defense2/internal/core/tower"
 )
 
@@ -21,6 +22,8 @@ type Warden struct {
 	Level             int     // 当前等级（1-5，由强度阈值决定）
 	GrowthOnKill      float64 // 每次击杀增加的强度（从配置读取）
 	GrowthOnWaveClear float64 // 每次通波增加的强度（从配置读取）
+	// 技能系统
+	Skill *skill.SkillState // 挂载的技能（nil=无技能）
 	// 类型特定状态由 Behavior.Tick 内部管理
 	State interface{} // 类型特定内部状态（由行为实现持有）
 }

@@ -53,6 +53,9 @@ type Mode interface {
 
 	// VictoryWaveTarget 返回胜利目标波数（-1 表示无目标，如无尽模式）。
 	VictoryWaveTarget() int
+
+	// EnableEvents 返回是否启用关卡事件系统（奖励波次弹出事件选择）。
+	EnableEvents() bool
 }
 
 // Context 模式回调时的游戏状态快照 + 状态修改器。

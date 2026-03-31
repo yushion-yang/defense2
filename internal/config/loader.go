@@ -29,6 +29,33 @@ func GetAssetFS() *embed.FS {
 	return assetFS
 }
 
+// LevelEntry 关卡列表条目（来自 level-list.json）。
+type LevelEntry struct {
+	ID          string `json:"id"`
+	Name        string `json:"name"`
+	Description string `json:"description"`
+	Waves       int    `json:"waves"`
+	Difficulty  string `json:"difficulty"`
+}
+
+// LoadLevelList 加载关卡列表。
+func LoadLevelList() ([]LevelEntry, error) {
+	if dataFS == nil {
+		return nil, fmt.Errorf("load level list: dataFS not initialized")
+	}
+	data, err := dataFS.ReadFile("config/level-list.json")
+	if err != nil {
+		return nil, fmt.Errorf("load level list: %w", err)
+	}
+	var wrap struct {
+		Levels []LevelEntry `json:"levels"`
+	}
+	if err := json.Unmarshal(data, &wrap); err != nil {
+		return nil, fmt.Errorf("parse level list: %w", err)
+	}
+	return wrap.Levels, nil
+}
+
 // LoadMap 按地图 ID（如 "map_01"）加载地图配置。
 func LoadMap(id string) (*MapConfig, error) {
 	if dataFS == nil {
