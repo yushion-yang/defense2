@@ -77,7 +77,9 @@ func notifyActivate(skillKey string, ctx *SkillContext) {
 // 确保 Pool.Count 正确递减，否则 CheckVictory 永远不触发。
 func applySkillDamage(e *enemy.Enemy, dmg float64, ctx *SkillContext) {
 	e.HP -= dmg
-	e.HitFlash = 0.12
+	if e.HitFlash < 0.06 {
+		e.HitFlash = 0.12
+	}
 	killed := e.HP <= 0
 	if ctx != nil && ctx.OnHit != nil {
 		ctx.OnHit(e, dmg, killed)

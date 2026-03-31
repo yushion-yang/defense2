@@ -4,8 +4,9 @@ package render
 
 import (
 	"image/color"
-	"strconv"
 	"math"
+	"math/rand"
+	"strconv"
 
 	"github.com/hajimehoshi/ebiten/v2"
 )
@@ -36,7 +37,10 @@ func SpawnDamageText(x, y, damage float64, crit bool) {
 		size = 14.0
 	}
 	text := strconv.FormatFloat(damage, 'f', 0, 64)
-	spawnFloatText(x, y, text, clr, size, 0.8)
+	// Random scatter to prevent stacking when multiple hits land simultaneously
+	ox := (rand.Float64() - 0.5) * 16 // -8 to +8
+	oy := (rand.Float64() - 0.5) * 10 // -5 to +5
+	spawnFloatText(x+ox, y+oy, text, clr, size, 0.8)
 }
 
 // SpawnGoldText 在指定位置弹出金币获取文字。

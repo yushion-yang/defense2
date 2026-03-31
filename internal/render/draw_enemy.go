@@ -130,12 +130,13 @@ func (er *EnemyRenderer) DrawEnemies(screen *ebiten.Image, pool *enemy.Pool, ani
 			draw.FilledCircle(screen, cx, cy, r, bodyColor)
 		}
 
-		// --- Status effect body overlays (semi-transparent colored circles) ---
+		// --- Status effect body overlays (subtle, sprite-sized) ---
+		spriteR := float32(enemySpriteSize) / 2
 		if e.SlowTimer > 0 {
-			draw.FilledCircle(screen, cx, cy, r, color.RGBA{80, 140, 255, 45}) // blue overlay (frozen/slow)
+			draw.CircleOutline(screen, cx, cy, spriteR+1, 1.5, color.RGBA{80, 160, 255, 80})
 		}
 		if e.BurnTimer > 0 {
-			draw.FilledCircle(screen, cx, cy, r, color.RGBA{255, 140, 40, 45}) // orange overlay (burning)
+			draw.FilledCircle(screen, cx, cy+spriteR*0.5, spriteR*0.5, color.RGBA{255, 120, 30, 35})
 		}
 
 		// --- Stun rotating stars (3 yellow circles orbiting above head) ---
@@ -150,10 +151,10 @@ func (er *EnemyRenderer) DrawEnemies(screen *ebiten.Image, pool *enemy.Pool, ani
 			}
 		}
 
-		// --- White flash overlay on hit ---
+		// --- Hit flash overlay (red tint, sprite-sized, NOT collision-radius) ---
 		if e.HitFlash > 0 && !e.IsDying() {
-			flashAlpha := uint8(clampF(float64(e.HitFlash)/0.12*100, 0, 255))
-			draw.FilledCircle(screen, cx, cy, r, color.RGBA{R: 255, G: 255, B: 255, A: flashAlpha})
+			flashAlpha := uint8(clampF(float64(e.HitFlash)/0.12*60, 0, 90))
+			draw.FilledCircle(screen, cx, cy, spriteR, color.RGBA{R: 255, G: 80, B: 60, A: flashAlpha})
 		}
 
 		// --- Tank overlay ---
@@ -184,10 +185,8 @@ func (er *EnemyRenderer) DrawEnemies(screen *ebiten.Image, pool *enemy.Pool, ani
 			if shieldRatio > 1 {
 				shieldRatio = 1
 			}
-			// Shield border + bg + fill
+			// Shield bg (1px border integrated)
 			draw.FilledRect(screen, shieldX-1, shieldY-1, barW+2, shieldH+2,
-				theme.EnemyHPBarBorder, true)
-			draw.FilledRect(screen, shieldX, shieldY, barW, shieldH,
 				theme.EnemyHPBarBg, true)
 			draw.FilledRect(screen, shieldX, shieldY, barW*shieldRatio, shieldH,
 				color.RGBA{R: 255, G: 255, B: 255, A: 220}, true)
@@ -198,11 +197,8 @@ func (er *EnemyRenderer) DrawEnemies(screen *ebiten.Image, pool *enemy.Pool, ani
 			barX := cx - barW/2
 			barY := cy - barOffY
 
-			// Border (#0f172a)
+			// Background (includes 1px border via darker color, saves 1 draw call)
 			draw.FilledRect(screen, barX-1, barY-1, barW+2, barH+2,
-				theme.EnemyHPBarBorder, true)
-			// Background (#1e293b)
-			draw.FilledRect(screen, barX, barY, barW, barH,
 				theme.EnemyHPBarBg, true)
 
 			// Damage trail (orange, behind HP fill)
@@ -271,7 +267,7 @@ func (er *EnemyRenderer) DrawEnemies(screen *ebiten.Image, pool *enemy.Pool, ani
 		}
 		if e.BurnTimer > 0 {
 			draw.FilledCircle(screen, dotX, dotY, dotR,
-				color.RGBA{R: 34, G: 197, B: 94, A: 255})
+				color.RGBA{R: 255, G: 140, B: 40, A: 255})
 			dotX += 6
 		}
 	})

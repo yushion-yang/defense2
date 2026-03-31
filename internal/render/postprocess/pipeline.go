@@ -43,6 +43,17 @@ type Pipeline struct {
 	uRadialBlur map[string]any
 	uLighting   map[string]any
 	uRipple     map[string]any
+
+	// Pre-allocated shader options (avoids per-frame heap allocation).
+	opBloomExt  ebiten.DrawRectShaderOptions
+	opBlurH     ebiten.DrawRectShaderOptions
+	opBlurV     ebiten.DrawRectShaderOptions
+	opBloomComb ebiten.DrawRectShaderOptions
+	opVignette  ebiten.DrawRectShaderOptions
+	opColorGr   ebiten.DrawRectShaderOptions
+	opRadialBl  ebiten.DrawRectShaderOptions
+	opLighting  ebiten.DrawRectShaderOptions
+	opRipple    ebiten.DrawRectShaderOptions
 }
 
 // NewPipeline creates a pipeline with default bloom settings.
@@ -165,26 +176,23 @@ func (p *Pipeline) Apply(dst *ebiten.Image) {
 		// Extract bright pixels (downscale to 1/4 res).
 		p.bloomExtracted.Clear()
 		p.uBloomExt["Threshold"] = float32(p.BloomThreshold)
-		p.bloomExtracted.DrawRectShader(qw, qh, shaderBloomExtract, &ebiten.DrawRectShaderOptions{
-			Uniforms: p.uBloomExt,
-			Images:   [4]*ebiten.Image{p.sceneBuffer},
-		})
+		p.opBloomExt.Uniforms = p.uBloomExt
+		p.opBloomExt.Images = [4]*ebiten.Image{p.sceneBuffer}
+		p.bloomExtracted.DrawRectShader(qw, qh, shaderBloomExtract, &p.opBloomExt)
 
 		// Ping-pong gaussian blur.
 		src := p.bloomExtracted
 		for i := 0; i < p.BloomPasses; i++ {
 			p.bloomBlurA.Clear()
 			p.uBlurH["TexelSize"] = float32(1.0 / float64(qw))
-			p.bloomBlurA.DrawRectShader(qw, qh, shaderBlurH, &ebiten.DrawRectShaderOptions{
-				Uniforms: p.uBlurH,
-				Images:   [4]*ebiten.Image{src},
-			})
+			p.opBlurH.Uniforms = p.uBlurH
+			p.opBlurH.Images = [4]*ebiten.Image{src}
+			p.bloomBlurA.DrawRectShader(qw, qh, shaderBlurH, &p.opBlurH)
 			p.bloomBlurB.Clear()
 			p.uBlurV["TexelSize"] = float32(1.0 / float64(qh))
-			p.bloomBlurB.DrawRectShader(qw, qh, shaderBlurV, &ebiten.DrawRectShaderOptions{
-				Uniforms: p.uBlurV,
-				Images:   [4]*ebiten.Image{p.bloomBlurA},
-			})
+			p.opBlurV.Uniforms = p.uBlurV
+			p.opBlurV.Images = [4]*ebiten.Image{p.bloomBlurA}
+			p.bloomBlurB.DrawRectShader(qw, qh, shaderBlurV, &p.opBlurV)
 			src = p.bloomBlurB
 		}
 
@@ -196,27 +204,21 @@ func (p *Pipeline) Apply(dst *ebiten.Image) {
 		p.bloomUpscaled.DrawImage(src, &upOpts)
 
 		p.uBloomComb["Intensity"] = float32(p.BloomIntensity)
+		p.opBloomComb.Uniforms = p.uBloomComb
+		p.opBloomComb.Images = [4]*ebiten.Image{p.sceneBuffer, p.bloomUpscaled}
 		if needLighting || needVignette || needColorGrade || needRadialBlur || needRipple {
 			// Bloom combine into fxPingPong for further chaining.
 			p.fxPingPong.Clear()
-			p.fxPingPong.DrawRectShader(p.sceneW, p.sceneH, shaderBloomCombine, &ebiten.DrawRectShaderOptions{
-				Uniforms: p.uBloomComb,
-				Images:   [4]*ebiten.Image{p.sceneBuffer, p.bloomUpscaled},
-			})
+			p.fxPingPong.DrawRectShader(p.sceneW, p.sceneH, shaderBloomCombine, &p.opBloomComb)
 			fxSrc = p.fxPingPong
 		} else {
 			// No effects after bloom: combine directly to dst.
-			dst.DrawRectShader(p.sceneW, p.sceneH, shaderBloomCombine, &ebiten.DrawRectShaderOptions{
-				Uniforms: p.uBloomComb,
-				Images:   [4]*ebiten.Image{p.sceneBuffer, p.bloomUpscaled},
-			})
+			dst.DrawRectShader(p.sceneW, p.sceneH, shaderBloomCombine, &p.opBloomComb)
 			return
 		}
 	} else {
-		// No bloom: start effect chain from sceneBuffer.
-		p.fxPingPong.Clear()
-		p.fxPingPong.DrawImage(p.sceneBuffer, nil)
-		fxSrc = p.fxPingPong
+		// No bloom: start effect chain directly from sceneBuffer (no full-screen copy).
+		fxSrc = p.sceneBuffer
 	}
 
 	// --- Effect pass chaining ---
@@ -240,31 +242,31 @@ func (p *Pipeline) Apply(dst *ebiten.Image) {
 
 	// fxTarget picks the correct output for each pass.
 	// The last pass writes to dst; intermediate passes ping-pong between
-	// bloomUpscaled and fxPingPong to avoid source==destination.
-	// fxSrc starts on fxPingPong, so first intermediate target must be bloomUpscaled.
-	useBloomUp := true // first intermediate goes to bloomUpscaled (opposite of fxSrc)
+	// fxPingPong and bloomUpscaled to avoid source==destination.
+	// When fxSrc=sceneBuffer (no bloom), first intermediate goes to fxPingPong.
+	// When fxSrc=fxPingPong (bloom), first intermediate goes to bloomUpscaled.
+	usePingPong := fxSrc != p.fxPingPong // first target is fxPingPong if src is sceneBuffer
 	fxTarget := func() *ebiten.Image {
 		remaining--
 		if remaining == 0 {
 			return dst
 		}
-		if useBloomUp {
-			useBloomUp = false
-			p.bloomUpscaled.Clear()
-			return p.bloomUpscaled
+		if usePingPong {
+			usePingPong = false
+			p.fxPingPong.Clear()
+			return p.fxPingPong
 		}
-		useBloomUp = true
-		p.fxPingPong.Clear()
-		return p.fxPingPong
+		usePingPong = true
+		p.bloomUpscaled.Clear()
+		return p.bloomUpscaled
 	}
 
 	// Lighting (dynamic point lights).
 	if needLighting {
 		target := fxTarget()
-		target.DrawRectShader(p.sceneW, p.sceneH, shaderLighting, &ebiten.DrawRectShaderOptions{
-			Uniforms: p.buildLightingUniforms(),
-			Images:   [4]*ebiten.Image{fxSrc},
-		})
+		p.opLighting.Uniforms = p.buildLightingUniforms()
+		p.opLighting.Images = [4]*ebiten.Image{fxSrc}
+		target.DrawRectShader(p.sceneW, p.sceneH, shaderLighting, &p.opLighting)
 		fxSrc = target
 	}
 
@@ -272,10 +274,9 @@ func (p *Pipeline) Apply(dst *ebiten.Image) {
 	if needVignette {
 		target := fxTarget()
 		p.uVignette["Strength"] = float32(fx.VignetteStrength)
-		target.DrawRectShader(p.sceneW, p.sceneH, shaderVignette, &ebiten.DrawRectShaderOptions{
-			Uniforms: p.uVignette,
-			Images:   [4]*ebiten.Image{fxSrc},
-		})
+		p.opVignette.Uniforms = p.uVignette
+		p.opVignette.Images = [4]*ebiten.Image{fxSrc}
+		target.DrawRectShader(p.sceneW, p.sceneH, shaderVignette, &p.opVignette)
 		fxSrc = target
 	}
 
@@ -293,10 +294,9 @@ func (p *Pipeline) Apply(dst *ebiten.Image) {
 		p.uRipple["ScreenW"] = float32(p.sceneW)
 		p.uRipple["ScreenH"] = float32(p.sceneH)
 		target := fxTarget()
-		target.DrawRectShader(p.sceneW, p.sceneH, shaderRipple, &ebiten.DrawRectShaderOptions{
-			Uniforms: p.uRipple,
-			Images:   [4]*ebiten.Image{fxSrc},
-		})
+		p.opRipple.Uniforms = p.uRipple
+		p.opRipple.Images = [4]*ebiten.Image{fxSrc}
+		target.DrawRectShader(p.sceneW, p.sceneH, shaderRipple, &p.opRipple)
 		fxSrc = target
 	}
 
@@ -318,10 +318,9 @@ func (p *Pipeline) Apply(dst *ebiten.Image) {
 		p.uColorGrade["DayNightG"] = float32(fx.DayNightG)
 		p.uColorGrade["DayNightB"] = float32(fx.DayNightB)
 		p.uColorGrade["DayNightA"] = float32(fx.DayNightA)
-		target.DrawRectShader(p.sceneW, p.sceneH, shaderColorGrade, &ebiten.DrawRectShaderOptions{
-			Uniforms: p.uColorGrade,
-			Images:   [4]*ebiten.Image{fxSrc},
-		})
+		p.opColorGr.Uniforms = p.uColorGrade
+		p.opColorGr.Images = [4]*ebiten.Image{fxSrc}
+		target.DrawRectShader(p.sceneW, p.sceneH, shaderColorGrade, &p.opColorGr)
 		fxSrc = target
 	}
 
@@ -335,10 +334,9 @@ func (p *Pipeline) Apply(dst *ebiten.Image) {
 		p.uRadialBlur["CenterX"] = float32(fx.BlurCenterX)
 		p.uRadialBlur["CenterY"] = float32(fx.BlurCenterY)
 		p.uRadialBlur["Strength"] = float32(fx.BlurStrength * t)
-		target.DrawRectShader(p.sceneW, p.sceneH, shaderRadialBlur, &ebiten.DrawRectShaderOptions{
-			Uniforms: p.uRadialBlur,
-			Images:   [4]*ebiten.Image{fxSrc},
-		})
+		p.opRadialBl.Uniforms = p.uRadialBlur
+		p.opRadialBl.Images = [4]*ebiten.Image{fxSrc}
+		target.DrawRectShader(p.sceneW, p.sceneH, shaderRadialBlur, &p.opRadialBl)
 	}
 }
 

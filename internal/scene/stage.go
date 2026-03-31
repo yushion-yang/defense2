@@ -1592,7 +1592,9 @@ func (s *StageScene) updatePlaying() {
 	kills := pipeline.TickProjectileHits(s.projectiles, s.enemies, s.towers, func(e *enemy.Enemy, damage float64, killed bool, attackStyle string, crit bool) {
 		if damage > 0 {
 			render.SpawnDamageText(e.X, e.Y-15, damage, crit)
-			e.HitFlash = 0.12
+			if e.HitFlash < 0.06 {
+				e.HitFlash = 0.12
+			}
 			// 元素类型化命中特效
 			render.SpawnTypedImpact(e.X, e.Y, attackStyle)
 			// 元素粒子

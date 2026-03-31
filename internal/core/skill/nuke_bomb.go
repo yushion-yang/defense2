@@ -134,7 +134,7 @@ func (n *nukeBomb) applyExplosion(enemies []*enemy.Enemy, ctx *SkillContext) {
 		dmg := totalDmg * factor
 
 		e.HP -= dmg
-		e.HitFlash = 0.2
+		e.HitFlash = 0.15
 		killed := e.HP <= 0
 		// 不直接设 e.Active=false，由 TickEnemyStatusEffects 安全网调 Pool.Kill()
 		if ctx != nil && ctx.OnHit != nil {

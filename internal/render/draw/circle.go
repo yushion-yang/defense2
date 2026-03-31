@@ -10,26 +10,12 @@ import (
 
 const circleSegments = 48
 
-// CircleOutline draws a circle outline using a 48-segment line approximation.
+// CircleOutline draws a circle outline using a single StrokeCircle call.
 func CircleOutline(screen *ebiten.Image, cx, cy, r, width float32, clr color.Color) {
 	if r <= 0 {
 		return
 	}
-
-	scx, scy, sr, sw := S32(cx), S32(cy), S32(r), S32(width)
-	step := 2 * math.Pi / circleSegments
-	var prevX, prevY float32
-
-	for i := 0; i <= circleSegments; i++ {
-		angle := float64(i) * step
-		x := scx + sr*float32(math.Cos(angle))
-		y := scy + sr*float32(math.Sin(angle))
-		if i > 0 {
-			vector.StrokeLine(screen, prevX, prevY, x, y, sw, clr, true)
-		}
-		prevX = x
-		prevY = y
-	}
+	vector.StrokeCircle(screen, S32(cx), S32(cy), S32(r), S32(width), clr, true)
 }
 
 // FilledCircle draws a filled circle with anti-aliasing enabled.
