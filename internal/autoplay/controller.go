@@ -223,6 +223,8 @@ func (c *Controller) OnUpdate(snap scene.AutoPlaySnapshot) []scene.AutoPlayActio
 					break
 				}
 			}
+			// 记录升级花费到波次统计
+			c.recorder.OnTowerBuilt(10) // tower.StrengthBuyCost = 10
 		}
 	}
 

@@ -15,6 +15,7 @@ import (
 	"sort"
 	"strings"
 	"sync"
+	"time"
 
 	_ "defense2/internal/core/skill"           // 通过 init() 注册技能
 	_ "defense2/internal/core/tower/abilities" // 通过 init() 注册塔能力
@@ -200,7 +201,8 @@ type StageScene struct {
 	ambientTimer    float64                    // 环境粒子发射计时器（每秒一次）
 	multiKillCount  int                        // 连续击杀计数
 	multiKillTimer  float64                    // 连杀窗口倒计时（1.5s 无击杀后重置）
-	autoPlayer      AutoPlayer                 // 自动对局驱动（nil=手动模式）
+	autoPlayer        AutoPlayer                 // 自动对局驱动（nil=手动模式）
+	screenshotPending bool                       // F12 截图请求标志
 }
 
 // NewStageScene 创建游戏主场景，默认加载 map_01。
@@ -289,6 +291,10 @@ func NewStageSceneWithOpts(sw Switcher, opts StageOptions) *StageScene {
 	wardenReady := false
 	if opts.WardenType != "" {
 		wardenUnit = warden.NewWarden(1, opts.WardenType, opts.WardenType)
+		if base := wardenUnit.BaseState(); base != nil {
+			base.MapWidth = gm.PixelWidth()
+			base.MapHeight = gm.PixelHeight()
+		}
 		wardenReady = true
 	}
 
@@ -525,6 +531,17 @@ func (s *StageScene) spawnAllStatic() {
 // Update 每帧逻辑更新：根据游戏状态分发输入处理和游戏逻辑。
 func (s *StageScene) Update() error {
 	s.frame++
+
+	// F12 / 截图按钮：任意状态可用（不受交互模式限制）
+	if inpututil.IsKeyJustPressed(ebiten.KeyF12) {
+		s.screenshotPending = true
+	}
+	if inpututil.IsMouseButtonJustPressed(ebiten.MouseButtonLeft) {
+		mx, my := draw.CursorPos()
+		if hud.TopBarHitTest(float32(mx), float32(my)) == "screenshot" {
+			s.screenshotPending = true
+		}
+	}
 
 	switch s.state {
 	case statePlaying:
@@ -1881,6 +1898,18 @@ func readScreenPixels(screen *ebiten.Image) *image.NRGBA {
 	}
 	pixels := make([]byte, w*h*4)
 	screen.ReadPixels(pixels)
+	// 检查像素数据是否全零（GPU 尚未渲染）
+	allZero := true
+	for i := 0; i < len(pixels) && i < 1024; i++ {
+		if pixels[i] != 0 {
+			allZero = false
+			break
+		}
+	}
+	if allZero {
+		log.Printf("screenshot skipped: pixel data is all zero (%dx%d)", w, h)
+		return nil
+	}
 	return &image.NRGBA{
 		Pix:    pixels,
 		Stride: w * 4,
@@ -1915,10 +1944,13 @@ func saveImageAsync(img *image.NRGBA, path string) {
 			log.Printf("screenshot create error: %v", err)
 			return
 		}
-		defer f.Close()
 		if err := png.Encode(f, img); err != nil {
+			f.Close()
+			os.Remove(path) // 删除残缺 PNG
 			log.Printf("screenshot encode error: %v", err)
+			return
 		}
+		f.Close()
 	}()
 }
 
@@ -1944,6 +1976,18 @@ func (s *StageScene) Draw(screen *ebiten.Image) {
 	}
 
 	s.drawFullScene(screen)
+
+	// F12 截图：渲染完成后读取像素并异步保存
+	if s.screenshotPending {
+		s.screenshotPending = false
+		if img := readScreenPixels(screen); img != nil {
+			fname := filepath.Join("docs", "autotest", "pic",
+				fmt.Sprintf("screenshot_%s.png", time.Now().Format("20060102_150405")))
+			saveImageAsync(img, fname)
+			hud.ShowToast("截图已保存")
+			log.Printf("screenshot saved: %s", fname)
+		}
+	}
 }
 
 // drawFullScene 执行完整的场景渲染（含屏幕震动）。
@@ -2398,6 +2442,11 @@ func (s *StageScene) activateWarden(key string) {
 		return
 	}
 	s.wardenUnit = warden.NewWarden(1, key, key)
+	// 设置地图边界，使战灵可达全域
+	if base := s.wardenUnit.BaseState(); base != nil {
+		base.MapWidth = s.gameMap.PixelWidth()
+		base.MapHeight = s.gameMap.PixelHeight()
+	}
 
 	// 加载战灵配置：驱动 Init 参数 + 面板显示
 	if cfgs, err := config.LoadWardenConfigs(); err == nil {

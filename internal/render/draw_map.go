@@ -23,18 +23,24 @@ import (
 // Cached background (gradient + dot grid) — created once, reused every frame.
 // ---------------------------------------------------------------------------
 
-var cachedBg *draw.CachedGradient
+var (
+	cachedBg  *draw.CachedGradient
+	cachedBgW int
+	cachedBgH int
+)
 
-// ensureBg lazily initializes the cached background gradient.
-func ensureBg() *draw.CachedGradient {
-	if cachedBg != nil {
+// ensureBg lazily initializes the cached background gradient sized to cover
+// the full map (which may be larger than one screen).
+func ensureBg(w, h int) *draw.CachedGradient {
+	if cachedBg != nil && cachedBgW == w && cachedBgH == h {
 		return cachedBg
 	}
 	cachedBg = draw.NewCachedGradient(
-		theme.CanvasW, theme.CanvasH,
+		w, h,
 		theme.MapGradientTop, theme.MapGradientBot,
 	)
-
+	cachedBgW = w
+	cachedBgH = h
 	return cachedBg
 }
 
@@ -115,8 +121,16 @@ func drawMapFull(
 	towerAt func(row, col int) bool,
 	buildMode bool,
 ) {
-	// ── 1. Background gradient + dot grid ──
-	bg := ensureBg()
+	// ── 1. Background gradient covering full map ──
+	mapW := gm.Config.Cols * gm.CellSize
+	mapH := gm.Config.Rows * gm.CellSize
+	if mapW < theme.CanvasW {
+		mapW = theme.CanvasW
+	}
+	if mapH < theme.CanvasH {
+		mapH = theme.CanvasH
+	}
+	bg := ensureBg(mapW, mapH)
 	bg.Draw(screen, 0, 0)
 
 	// ── 2. Path: thick rounded line + dashed center ──
@@ -343,30 +357,43 @@ func drawTerrainDecorations(screen *ebiten.Image, gm *gamemap.GameMap) {
 // Parallax background — slow-drifting star field drawn every frame.
 // ---------------------------------------------------------------------------
 
-var parallaxStars [][3]float64
+var (
+	parallaxStars  [][3]float64
+	parallaxW      float64
+	parallaxH      float64
+)
 
-func initParallaxStars() {
-	if len(parallaxStars) > 0 {
+func initParallaxStars(w, h float64) {
+	if len(parallaxStars) > 0 && parallaxW == w && parallaxH == h {
 		return
 	}
+	parallaxW = w
+	parallaxH = h
 	const count = 40
 	parallaxStars = make([][3]float64, count)
 	for i := 0; i < count; i++ {
 		fi := float64(i)
 		parallaxStars[i] = [3]float64{
-			math.Mod(fi*0.618033988*1200, 1200),
-			math.Mod((fi*0.381966+0.2)*540, 540),
+			math.Mod(fi*0.618033988*w, w),
+			math.Mod((fi*0.381966+0.2)*h, h),
 			0.5 + math.Mod(fi*0.7, 1.5),
 		}
 	}
 }
 
 // DrawParallaxBG renders slow-moving background stars. Called every frame (not cached).
-func DrawParallaxBG(screen *ebiten.Image, animTime float64) {
-	initParallaxStars()
+// worldW/worldH are the logical pixel dimensions of the full map.
+func DrawParallaxBG(screen *ebiten.Image, animTime, worldW, worldH float64) {
+	if worldW <= 0 {
+		worldW = float64(theme.CanvasW)
+	}
+	if worldH <= 0 {
+		worldH = float64(theme.CanvasH)
+	}
+	initParallaxStars(worldW, worldH)
 	for i, s := range parallaxStars {
 		speed := 2.0 + float64(i%3)*1.5
-		x := math.Mod(s[0]+animTime*speed, 1200)
+		x := math.Mod(s[0]+animTime*speed, worldW)
 		y := s[1]
 		alpha := uint8(15 + (i%4)*5)
 		r := float32(s[2])

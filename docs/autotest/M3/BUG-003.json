@@ -1,0 +1,34 @@
+{
+  "id": "BUG-003",
+  "category": "bug",
+  "severity": "HIGH",
+  "title": "Result screenshots are corrupt (33 bytes, missing IDAT/IEND chunks)",
+  "detail": "All 4 result.png files are exactly 33 bytes — only the PNG signature (8 bytes) and IHDR chunk (25 bytes) with no image data (IDAT) or IEND chunk. This means png.Encode is failing or being interrupted after writing the header. The likely cause is a panic during pixel encoding that is caught by the recover block in saveImageAsync, leaving a truncated file. The result screen (VICTORY/DEFEAT overlay) is never visually verified.",
+  "evidence": {
+    "sessions": [
+      "20260331_120255_greedy_map_01_normal_000",
+      "20260331_120255_greedy_map_01_normal_001",
+      "20260331_120255_random_map_01_normal_000",
+      "20260331_120255_random_map_01_normal_001"
+    ],
+    "screenshots": ["result.png"],
+    "metrics": {
+      "file_size_bytes": 33,
+      "expected_min_size_bytes": 50000,
+      "affected_sessions": "4/4 (100%)"
+    }
+  },
+  "suggested_fix": {
+    "type": "code",
+    "file": "internal/scene/stage.go",
+    "description": "In readScreenPixels() (line 1876), the issue is likely that the screen image from Ebitengine has no valid pixel data at the time of reading for the result frame. Add error handling: after readScreenPixels returns the image, validate that img.Pix is non-empty and contains at least some non-zero bytes before passing to saveImageAsync. Also, in saveImageAsync (line 1899), if png.Encode fails, delete the partial file with os.Remove(path) to avoid leaving corrupt PNGs. Additionally, add logging in the recover block to capture the actual panic message for debugging."
+  },
+  "fix_result": {
+    "status": "fixed",
+    "files_modified": [
+      "internal/scene/stage.go"
+    ],
+    "description": "Two fixes: (1) readScreenPixels now validates first 1024 bytes are not all-zero before returning image, skipping empty GPU buffers. (2) saveImageAsync now deletes partial PNG on encode error via os.Remove, and properly closes file before removal.",
+    "diff_summary": "stage.go: readScreenPixels +8 lines all-zero check. saveImageAsync: removed defer f.Close(), added explicit close+remove on error, close on success."
+  }
+}

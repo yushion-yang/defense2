@@ -287,7 +287,7 @@ func (d *AnomalyDetector) checkWaveHPProgression(state *GameState) []Anomaly {
 
 	// 与前一波比较
 	if prev, ok := d.prevWaveHP[state.Wave-1]; ok && avgHP > 0 && prev > 0 {
-		if avgHP < prev*0.5 { // 比前一波低 50% 以上
+		if avgHP < prev*0.15 { // 比前一波低 85% 以上（考虑原型 hpScale 0.5~2.85 的方差）
 			d.waveHPReportedWaves[state.Wave] = true
 			return []Anomaly{{
 				Tick:     state.Tick,

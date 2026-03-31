@@ -14,6 +14,8 @@ type WardenState struct {
 	// --- 位置与移动 ---
 	X, Y        float64 // 当前像素位置
 	MoveSpeed   float64 // 移动速度 px/s（0 = 不移动/瞬移）
+	MapWidth    float64 // 地图像素宽度（clamp 上限，0 则回退 1200）
+	MapHeight   float64 // 地图像素高度（clamp 上限，0 则回退 540）
 	OrbitAngle  float64 // 轨道运动角度（弧度）
 	FacingAngle float64 // 朝向角度（弧度，根据移动方向更新）
 
@@ -97,6 +99,19 @@ func (s *WardenState) ApplyStrength(w *Warden) {
 // smoothSpeed 平滑追踪速度（像素/秒）。越大追踪越快。
 const smoothSpeed = 200.0
 
+func (s *WardenState) mapW() float64 {
+	if s.MapWidth > 0 {
+		return s.MapWidth
+	}
+	return 1200
+}
+func (s *WardenState) mapH() float64 {
+	if s.MapHeight > 0 {
+		return s.MapHeight
+	}
+	return 540
+}
+
 // MoveOrbit 围绕 (cx, cy) 以 idealDist 为理想距离进行轨道运动。
 // 简化模型：始终推进角度 + 向目标轨道位置平滑移动，消除模式切换跳变。
 func (s *WardenState) MoveOrbit(cx, cy, idealDist, dt float64) {
@@ -132,8 +147,8 @@ func (s *WardenState) MoveOrbit(cx, cy, idealDist, dt float64) {
 
 	// 首次定位：直接 teleport
 	if s.X == 0 && s.Y == 0 {
-		s.X = clampF(targetX, 0, 1200)
-		s.Y = clampF(targetY, 0, 540)
+		s.X = clampF(targetX, 0, s.mapW())
+		s.Y = clampF(targetY, 0, s.mapH())
 		return
 	}
 
@@ -150,8 +165,8 @@ func (s *WardenState) MoveOrbit(cx, cy, idealDist, dt float64) {
 		s.Y = targetY
 	}
 
-	s.X = clampF(s.X, 0, 1200)
-	s.Y = clampF(s.Y, 0, 540)
+	s.X = clampF(s.X, 0, s.mapW())
+	s.Y = clampF(s.Y, 0, s.mapH())
 	s.updateFacing(prevX, prevY)
 	s.RecordTrail(dt)
 }
@@ -163,8 +178,9 @@ func (s *WardenState) Wander(dt float64) {
 	// 首次或到期：选新游荡点
 	s.wanderTimer -= dt
 	if s.wanderTimer <= 0 || (s.wanderX == 0 && s.wanderY == 0) {
-		s.wanderX = 200 + rand.Float64()*800 // 避免边缘
-		s.wanderY = 100 + rand.Float64()*340
+		mw, mh := s.mapW(), s.mapH()
+		s.wanderX = 200 + rand.Float64()*(mw-400) // 避免边缘
+		s.wanderY = 100 + rand.Float64()*(mh-200)
 		s.wanderTimer = 3 + rand.Float64()*2
 	}
 
@@ -182,8 +198,8 @@ func (s *WardenState) Wander(dt float64) {
 		s.Y = s.wanderY
 	}
 
-	s.X = clampF(s.X, 0, 1200)
-	s.Y = clampF(s.Y, 0, 540)
+	s.X = clampF(s.X, 0, s.mapW())
+	s.Y = clampF(s.Y, 0, s.mapH())
 	s.updateFacing(prevX, prevY)
 	s.RecordTrail(dt)
 }

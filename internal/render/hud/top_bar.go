@@ -1,9 +1,9 @@
 // top_bar.go — Centered pill-shaped top status bar.
 // Displays resources on the left, action buttons on the right.
 //
-// Rendering is cached to an offscreen image and only re-drawn when the
-// displayed data actually changes (dirty-flag comparison). Button hit
-// detection uses rects computed during the last render and works every frame.
+// Draws directly to the screen each frame (no offscreen cache) so that
+// draw.* auto-scaling works correctly on HiDPI displays.
+// Button hit detection uses rects computed during the last render.
 package hud
 
 import (
@@ -34,56 +34,6 @@ type TopBarData struct {
 	DebugOpen     bool    // 调试面板打开
 }
 
-// topBarCacheKey is a comparable snapshot of the values that actually affect
-// the rendered output. WaveCountdown is truncated to integer seconds because
-// the label only displays whole seconds — this avoids cache thrashing from
-// sub-second float changes every frame.
-type topBarCacheKey struct {
-	Gold             int
-	Lives            int
-	Wave             int
-	MaxWaves         int
-	Kills            int
-	Enemies          int
-	Speed            int
-	WaveCountdownSec int // int(WaveCountdown) — only displayed seconds matter
-	BuildMode        bool
-	TestMode         bool
-	SpawnMode        bool
-	DebugOpen        bool
-}
-
-func topBarKeyFrom(d TopBarData) topBarCacheKey {
-	sec := 0
-	if d.WaveCountdown > 0 {
-		sec = int(d.WaveCountdown) + 1 // matches strconv.Itoa(int(d.WaveCountdown)+1)
-	}
-	return topBarCacheKey{
-		Gold:             d.Gold,
-		Lives:            d.Lives,
-		Wave:             d.Wave,
-		MaxWaves:         d.MaxWaves,
-		Kills:            d.Kills,
-		Enemies:          d.Enemies,
-		Speed:            d.Speed,
-		WaveCountdownSec: sec,
-		BuildMode:        d.BuildMode,
-		TestMode:         d.TestMode,
-		SpawnMode:        d.SpawnMode,
-		DebugOpen:        d.DebugOpen,
-	}
-}
-
-// ---------------------------------------------------------------------------
-// TopBar cache
-// ---------------------------------------------------------------------------
-
-var (
-	topBarCache      *ebiten.Image
-	topBarLastKey    topBarCacheKey
-	topBarCacheValid bool
-)
-
 // topBarBtn describes a button inside the top bar.
 type topBarBtn struct {
 	label string
@@ -91,40 +41,8 @@ type topBarBtn struct {
 	tone  color.RGBA
 }
 
-// DrawTopBar renders the centered pill-shaped top bar.
-// The result is cached offscreen and only re-rendered when displayed data
-// changes (integer-second granularity for countdown).
+// DrawTopBar renders the centered pill-shaped top bar directly to screen.
 func DrawTopBar(screen *ebiten.Image, d TopBarData) {
-	fm := render.GlobalFont()
-	if fm == nil {
-		return
-	}
-
-	w := screen.Bounds().Dx()
-	key := topBarKeyFrom(d)
-
-	needRedraw := !topBarCacheValid || key != topBarLastKey
-	if topBarCache == nil || topBarCache.Bounds().Dx() != w {
-		if topBarCache != nil {
-			topBarCache.Deallocate()
-		}
-		// Height covers the pill area with margin.
-		topBarCache = ebiten.NewImage(w, int(theme.TopBarH)+20)
-		needRedraw = true
-	}
-
-	if needRedraw {
-		topBarCache.Clear()
-		drawTopBarFull(topBarCache, d)
-		topBarLastKey = key
-		topBarCacheValid = true
-	}
-
-	screen.DrawImage(topBarCache, nil)
-}
-
-// drawTopBarFull renders the full top bar to the given target image.
-func drawTopBarFull(screen *ebiten.Image, d TopBarData) {
 	fm := render.GlobalFont()
 	if fm == nil {
 		return
@@ -239,6 +157,9 @@ func drawTopBarFull(screen *ebiten.Image, d TopBarData) {
 		}
 		btns = append(btns, btnDef{"debug", "调试", debugClr})
 	}
+
+	// 截图按钮（所有模式可用）
+	btns = append(btns, btnDef{"screenshot", "截图", theme.ToneSecondary})
 
 	items := make([]ui.ButtonRowItem, len(btns))
 	names := make([]string, len(btns))
