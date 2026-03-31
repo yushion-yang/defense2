@@ -3,6 +3,7 @@
 package tower
 
 import (
+	"defense2/internal/config"
 	"defense2/internal/core/enemy"
 	"defense2/internal/core/strength"
 )
@@ -99,6 +100,10 @@ type Tower struct {
 
 	// momentum (蓄势) 能力计数
 	MomentumCount int // 当前攻击次数计数
+
+	// 能力选项缓存：key=category index(0-5), value=3 个候选 AbilityDef
+	// 建塔时根据全局 wavesCleared 一次性 roll 所有已解锁位；新波次解锁时追加 roll。
+	PendingChoices map[int][]config.AbilityDef
 
 	// 建造/出售动画
 	BuildAnim float64 // >0 during build-in animation (seconds remaining, starts at 0.3)

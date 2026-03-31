@@ -58,8 +58,31 @@ func BuildInfoPanelVM(t *tower.Tower, sellValue int, wavesCleared int) hud.InfoP
 	}
 	vm.AttackStyleText = "攻击: " + attackStyleLabel(style)
 
-	// Abilities
+	// 6-slot display
 	abTable := config.GlobalAbilityTable()
+	unlocked := tower.UnlockedSlots(wavesCleared)
+	for i := 0; i < len(t.UnlockOrder); i++ {
+		cat := t.UnlockOrder[i]
+		slot := hud.SlotVM{
+			CategoryIdx:  cat,
+			CategoryName: tower.CategoryName(cat),
+			Unlocked:     i < unlocked,
+		}
+		if abilType := t.AbilitySlots[cat]; abilType != "" {
+			slot.AbilityLabel = abilType
+			if def, ok := abTable[abilType]; ok {
+				slot.AbilityLabel = def.Label
+				slot.AbilityIcon = def.Icon
+			}
+		} else if t.PendingChoices != nil {
+			if _, has := t.PendingChoices[cat]; has {
+				slot.HasPending = true
+			}
+		}
+		vm.Slots = append(vm.Slots, slot)
+	}
+
+	// Abilities (已获取的能力详细描述)
 	for _, abType := range t.Abilities {
 		vm.Abilities = append(vm.Abilities, buildAbilityVM(abType, abTable, effStr))
 	}
@@ -73,17 +96,8 @@ func BuildInfoPanelVM(t *tower.Tower, sellValue int, wavesCleared int) hud.InfoP
 		})
 	}
 
-	// Upgrade choices (pending ability slots)
-	if t.HasPendingUpgrade(wavesCleared) {
-		choices := tower.RollAbilityChoices(t, tower.ChoicesPerUnlock)
-		for _, c := range choices {
-			vm.UpgradeChoices = append(vm.UpgradeChoices, hud.UpgradeChoiceVM{
-				Type:  c.Type,
-				Label: c.Label,
-				Desc:  c.Display,
-			})
-		}
-	}
+	// Pending ability count
+	vm.PendingCount = tower.PendingCount(t)
 
 	// Buttons
 	vm.UpgradeButtonText = fmt.Sprintf("强度+10 $%d", tower.StrengthBuyCost)

@@ -129,6 +129,7 @@ type StageScene struct {
 	ambientTimer    float64                    // 环境粒子发射计时器（每秒一次）
 	multiKillCount  int                        // 连续击杀计数
 	multiKillTimer  float64                    // 连杀窗口倒计时（1.5s 无击杀后重置）
+	choicePanel       *hud.ChoicePanel            // 能力选择覆盖层
 	autoPlayer        AutoPlayer                 // 自动对局驱动（nil=手动模式）
 	screenshotPending bool                       // F12 截图请求标志
 }
@@ -268,6 +269,7 @@ func NewStageSceneWithOpts(sw Switcher, opts StageOptions) *StageScene {
 	s.perfTracker = debug.NewPerfTracker()
 	s.qualityAdaptive = game.NewQualityAdaptive()
 	s.waveAnnounce = hud.NewWaveAnnounce()
+	s.choicePanel = hud.NewChoicePanel()
 	s.particlePool.MaxActive = game.Settings().MaxParticles
 
 	// 注入战灵精灵获取函数到覆盖层
@@ -358,6 +360,10 @@ func (s *StageScene) subscribeBus() {
 	})
 	event.OnTyped(bus, event.EvtWaveCleared, func(p event.WaveClearedPayload) {
 		s.wavesCleared++
+		// 为所有塔 roll 新解锁能力位的选项
+		s.towers.Each(func(t *tower.Tower) {
+			tower.RollAndCachePendingChoices(t, s.wavesCleared)
+		})
 		if s.wardenReady && s.wardenUnit != nil {
 			s.wardenUnit.OnWaveClear()
 		}
@@ -575,6 +581,7 @@ func (s *StageScene) tryPlaceTower(px, py float64) bool {
 		placed.Strength = strength.NewStrengthData()
 		placed.RecalcStats() // 用强度100计算初始属性
 		placed.BuildAnim = 0.3 // build-in animation
+		tower.RollAndCachePendingChoices(placed, s.wavesCleared)
 	}
 	s.gold -= cost
 	render.InvalidateMapCache() // slot occupancy changed
@@ -1523,6 +1530,11 @@ func (s *StageScene) drawScene(screen *ebiten.Image) {
 	// 战灵选择覆盖层
 	if s.wardenOverlay != nil {
 		s.wardenOverlay.Draw(screen)
+	}
+
+	// 能力选择覆盖层
+	if s.choicePanel != nil {
+		s.choicePanel.Draw(screen)
 	}
 
 	// 胜负覆盖层

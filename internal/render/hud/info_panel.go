@@ -61,14 +61,18 @@ type InfoPanelVM struct {
 	// Attack style row
 	AttackStyleText string // e.g. "攻击: 投射物"
 
-	// Abilities
+	// 6-slot ability display
+	Slots []SlotVM // 6 个能力槽（按 UnlockOrder 排列）
+
+	// Abilities (已获取的能力详细描述)
 	Abilities []AbilityVM
 
 	// Buffs
 	Buffs []BuffVM
 
-	// Upgrade ability choices (empty = no pending upgrade)
-	UpgradeChoices []UpgradeChoiceVM
+	// Pending ability selection
+	PendingCount int               // 待选能力位数量
+	UpgradeChoices []UpgradeChoiceVM // 兼容旧代码（废弃路径）
 
 	// Buttons
 	UpgradeButtonText string // e.g. "强度+10 $10"
@@ -82,6 +86,16 @@ type UpgradeChoiceVM struct {
 	Desc  string // 描述文本
 }
 
+// SlotVM 能力槽展示数据。
+type SlotVM struct {
+	CategoryIdx  int    // 类别索引 (0-5)
+	CategoryName string // 类别中文名
+	AbilityLabel string // 已选能力名（空=未选）
+	AbilityIcon  string // 已选能力图标（空=未选）
+	Unlocked     bool   // 是否已解锁
+	HasPending   bool   // 是否有待选缓存选项
+}
+
 // ---------------------------------------------------------------------------
 // Cached button Rects — written by DrawInfoPanel, read by hit tests.
 // ---------------------------------------------------------------------------
@@ -89,9 +103,10 @@ type UpgradeChoiceVM struct {
 var (
 	lastUpgradeRect      ui.Rect
 	lastSellRect         ui.Rect
-	lastPanelRect        ui.Rect // entire info panel bounding box
+	lastAbilityBtnRect   ui.Rect   // "选择能力(N)" 按钮
+	lastPanelRect        ui.Rect   // entire info panel bounding box
 	lastPanelVisible     bool
-	lastChoiceRects      []ui.Rect // 候选能力按钮 rects
+	lastChoiceRects      []ui.Rect // 候选能力按钮 rects (legacy)
 )
 
 // HitTestUpgradeChoice 检测点击是否在候选能力按钮上，返回索引(-1=未命中)。
@@ -102,6 +117,14 @@ func HitTestUpgradeChoice(mx, my float32) int {
 		}
 	}
 	return -1
+}
+
+// HitTestAbilityBtn 检测点击是否在"选择能力(N)"按钮上。
+func HitTestAbilityBtn(mx, my float32) bool {
+	if !lastPanelVisible {
+		return false
+	}
+	return lastAbilityBtnRect.Contains(float64(mx), float64(my))
 }
 
 // DrawInfoPanel renders the tower information panel using pre-built view data.
@@ -184,15 +207,33 @@ func DrawInfoPanel(screen *ebiten.Image, vm InfoPanelVM) {
 		fm.DrawText(screen, vm.AttackStyleText, x, y, theme.FontSM, theme.TextMuted)
 	})
 
-	// Row 4: 能力列表
-	for _, ab := range vm.Abilities {
-		ab := ab
-		panel.AddRow(abilityH, func(screen *ebiten.Image, x, y float64, w float64) {
-			drawAbilityRowVM(screen, fm, ab, x, y)
+	// Row 4: 6-slot ability grid
+	if len(vm.Slots) > 0 {
+		panel.AddSpace(2)
+		panel.AddRow(14, func(screen *ebiten.Image, x, y float64, _ float64) {
+			fm.DrawBoldText(screen, "能力槽:", x, y, theme.FontSM, theme.TextMuted)
 		})
+		panel.AddSpace(2)
+		for _, slot := range vm.Slots {
+			slot := slot
+			panel.AddRow(abilityH, func(screen *ebiten.Image, x, y float64, w float64) {
+				drawSlotRow(screen, fm, slot, x, y, w)
+			})
+		}
 	}
 
-	// Row 5: Buff 列表
+	// Row 5: 已获取能力详细描述
+	if len(vm.Abilities) > 0 {
+		panel.AddSpace(2)
+		for _, ab := range vm.Abilities {
+			ab := ab
+			panel.AddRow(abilityH, func(screen *ebiten.Image, x, y float64, w float64) {
+				drawAbilityRowVM(screen, fm, ab, x, y)
+			})
+		}
+	}
+
+	// Row 6: Buff 列表
 	if len(vm.Buffs) > 0 {
 		panel.AddSpace(2)
 		for _, b := range vm.Buffs {
@@ -210,36 +251,25 @@ func DrawInfoPanel(screen *ebiten.Image, vm InfoPanelVM) {
 		}
 	}
 
-	// 候选能力选择（有 pending upgrade 时显示）
+	// "选择能力(N)" 按钮
 	lastChoiceRects = lastChoiceRects[:0]
-	if len(vm.UpgradeChoices) > 0 {
+	lastAbilityBtnRect = ui.Rect{}
+	if vm.PendingCount > 0 {
 		panel.AddSpace(detailGap)
-		panel.AddRow(14, func(screen *ebiten.Image, x, y float64, _ float64) {
-			fm.DrawBoldText(screen, "选择能力:", x, y, theme.FontSM, color.RGBA{R: 250, G: 200, B: 50, A: 255})
+		panel.AddRow(32, func(screen *ebiten.Image, x, y float64, w float64) {
+			btnRect := ui.Rect{X: float32(x), Y: float32(y), W: float32(w), H: 30}
+			btnClr := color.RGBA{R: 200, G: 160, B: 40, A: 255} // gold
+			mx, my := draw.CursorPos()
+			if float32(mx) >= btnRect.X && float32(mx) <= btnRect.X+btnRect.W &&
+				float32(my) >= btnRect.Y && float32(my) <= btnRect.Y+btnRect.H {
+				btnClr = color.RGBA{R: 230, G: 190, B: 60, A: 255}
+			}
+			draw.RoundRect(screen, btnRect.X, btnRect.Y, btnRect.W, btnRect.H, 6, btnClr)
+			label := fmt.Sprintf("选择能力 (%d)", vm.PendingCount)
+			fm.DrawCenteredBoldText(screen, label,
+				float64(btnRect.X)+float64(btnRect.W)/2, y+7, theme.FontSM, theme.TextTitle)
+			lastAbilityBtnRect = btnRect
 		})
-		panel.AddSpace(4)
-		for idx, ch := range vm.UpgradeChoices {
-			ch := ch
-			idx := idx
-			panel.AddRow(32, func(screen *ebiten.Image, x, y float64, w float64) {
-				btnRect := ui.Rect{X: float32(x), Y: float32(y), W: float32(w), H: 30}
-				btnClr := theme.TonePrimary
-				// 简单 hover 检测
-				mx, my := draw.CursorPos()
-				if float32(mx) >= btnRect.X && float32(mx) <= btnRect.X+btnRect.W &&
-					float32(my) >= btnRect.Y && float32(my) <= btnRect.Y+btnRect.H {
-					btnClr = color.RGBA{R: 60, G: 120, B: 200, A: 255}
-				}
-				draw.RoundRect(screen, btnRect.X, btnRect.Y, btnRect.W, btnRect.H, 6, btnClr)
-				fm.DrawBoldText(screen, ch.Label, x+10, y+7, theme.FontSM, theme.TextTitle)
-				fm.DrawText(screen, ch.Desc, x+10+fm.MeasureText(ch.Label, theme.FontSM)+8, y+8, theme.FontXS, theme.TextBody)
-				// 扩展 rects 到正确索引
-				for len(lastChoiceRects) <= idx {
-					lastChoiceRects = append(lastChoiceRects, ui.Rect{})
-				}
-				lastChoiceRects[idx] = btnRect
-			})
-		}
 	}
 
 	// 操作按钮：强度+10 / 卖出
@@ -277,6 +307,37 @@ func DrawInfoPanel(screen *ebiten.Image, vm InfoPanelVM) {
 	panel.Draw(screen)
 	lastPanelRect = ui.Rect{X: panel.X, Y: panel.Y, W: panelW, H: totalH}
 	lastPanelVisible = true
+}
+
+// drawSlotRow renders one ability slot row.
+func drawSlotRow(screen *ebiten.Image, fm *render.FontManager, slot SlotVM, x, y, w float64) {
+	im := render.GlobalIcons()
+
+	if !slot.Unlocked {
+		// Locked slot: grey text
+		fm.DrawText(screen, "🔒 "+slot.CategoryName, x, y, theme.FontXS, color.RGBA{R: 80, G: 90, B: 110, A: 140})
+		return
+	}
+
+	if slot.AbilityLabel != "" {
+		// Filled slot: icon + ability name
+		if slot.AbilityIcon != "" {
+			drawStatIcon(screen, im, slot.AbilityIcon, x, y, 14)
+		}
+		fm.DrawBoldText(screen, slot.AbilityLabel, x+19, y, theme.FontSM, theme.TextBody)
+		fm.DrawText(screen, " ("+slot.CategoryName+")", x+19+fm.MeasureText(slot.AbilityLabel, theme.FontSM), y, theme.FontXS, theme.TextMuted)
+		return
+	}
+
+	if slot.HasPending {
+		// Pending slot: gold flash
+		fm.DrawText(screen, "⚡ "+slot.CategoryName+" — 待选择", x, y, theme.FontSM,
+			color.RGBA{R: 250, G: 200, B: 50, A: 230})
+		return
+	}
+
+	// Unlocked but not yet cached (shouldn't happen)
+	fm.DrawText(screen, slot.CategoryName, x, y, theme.FontXS, theme.TextMuted)
 }
 
 // drawAbilityRowVM renders one ability row from pre-computed VM data.

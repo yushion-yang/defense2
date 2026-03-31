@@ -82,6 +82,7 @@ func (p *Pool) Place(row, col int, cx, cy float64, def TowerDef) *Tower {
 			t.Selling = false
 			t.Strength = strength.NewStrengthData() // Base=100，确保强度系统从放置起就生效
 			t.Buffs = nil
+			t.PendingChoices = nil // Place 后由调用方调用 RollAndCachePendingChoices
 			p.Count++
 			return t
 		}

@@ -59,6 +59,18 @@ func (s *StageScene) handleInput() {
 	}
 
 	// ── 键盘快捷键 ──
+	// modeUpgrade: ChoicePanel 每帧更新（在键盘和 tap 之前）
+	if s.imode == modeUpgrade && s.choicePanel != nil && s.choicePanel.IsActive() {
+		mx, my := draw.CursorPos()
+		clicked := g.JustTapped()
+		s.choicePanel.Update(mx, my, clicked)
+		if !s.choicePanel.IsActive() {
+			// 选择回调已关闭面板 → 回到 modeTowerSel
+			s.imode = modeTowerSel
+		}
+		return // modeUpgrade 吃掉所有输入
+	}
+
 	if inpututil.IsKeyJustPressed(ebiten.KeyEscape) {
 		switch s.imode {
 		case modeBuildMenu, modeBuildPlace:
@@ -67,6 +79,9 @@ func (s *StageScene) handleInput() {
 		case modeTowerSel:
 			s.selectedTower = nil
 			s.imode = modeIdle
+		case modeUpgrade:
+			s.choicePanel.Close()
+			s.imode = modeTowerSel
 		case modeSpawnMenu, modeSpawnPlace:
 			s.spawnMode = false
 			s.spawnType = ""
@@ -307,9 +322,9 @@ func (s *StageScene) handleInput() {
 		}
 
 	case modeTowerSel:
-		// 候选能力按钮点击
-		if choiceIdx := hud.HitTestUpgradeChoice(ftx, fty); choiceIdx >= 0 && s.selectedTower != nil {
-			s.handleAbilityChoice(choiceIdx)
+		// "选择能力(N)" 按钮点击 → 打开 ChoicePanel
+		if hud.HitTestAbilityBtn(ftx, fty) && s.selectedTower != nil {
+			s.openAbilityChoicePanel()
 		} else if hud.InfoPanelUpgradeHitTest(ftx, fty, s.selectedTower != nil) {
 			s.tryUpgradeTower()
 		} else if hud.InfoPanelSellHitTest(ftx, fty, s.selectedTower != nil) {
@@ -448,22 +463,41 @@ func (s *StageScene) needsCamera() bool {
 	return mapW > float64(game.ScreenWidth) || mapH > float64(game.ScreenHeight)
 }
 
-// handleAbilityChoice 处理 info panel 中候选能力按钮的点击。
-func (s *StageScene) handleAbilityChoice(choiceIdx int) {
+// openAbilityChoicePanel 打开能力选择覆盖层。
+func (s *StageScene) openAbilityChoicePanel() {
 	t := s.selectedTower
 	if t == nil {
 		return
 	}
-	// 从当前 VM 获取对应的能力类型
-	sellValue := s.econ.SellRefund(t.Cost)
-	vm := BuildInfoPanelVM(t, sellValue, s.wavesCleared)
-	if choiceIdx >= len(vm.UpgradeChoices) {
+	nextCat := tower.NextPendingCategory(t)
+	if nextCat < 0 {
 		return
 	}
-	choice := vm.UpgradeChoices[choiceIdx]
-	if t.AddAbility(choice.Type) {
-		hud.ShowToast("获得能力: " + choice.Label)
+	choices, ok := t.PendingChoices[nextCat]
+	if !ok || len(choices) == 0 {
+		return
 	}
+
+	// 构建 ChoiceOption
+	opts := make([]hud.ChoiceOption, len(choices))
+	for i, c := range choices {
+		opts[i] = hud.ChoiceOption{
+			Label:       c.Label,
+			Description: c.Display,
+			Tier:        "normal",
+			Data:        c.Type,
+		}
+	}
+
+	catName := tower.CategoryName(nextCat)
+	s.choicePanel.Show("选择"+catName, opts, func(idx int, opt hud.ChoiceOption) {
+		abilType, _ := opt.Data.(string)
+		if abilType != "" && t.AddAbility(abilType) {
+			tower.ClearPendingChoice(t, nextCat)
+			hud.ShowToast("获得能力: " + opt.Label)
+		}
+	})
+	s.imode = modeUpgrade
 }
 
 // towerAtPixel 返回像素位置上的塔，无塔返回 nil。

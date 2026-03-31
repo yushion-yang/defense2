@@ -49,6 +49,86 @@ func (t *Tower) HasPendingUpgrade(wavesCleared int) bool {
 	return t.PendingSlots(wavesCleared) > 0
 }
 
+// ── 选项缓存 ──
+
+// RollAndCachePendingChoices 为塔 roll 所有已解锁但未选择能力位的 3 选项并缓存。
+// 已有缓存的位不会重新 roll。建塔时和新波次解锁时调用。
+func RollAndCachePendingChoices(t *Tower, wavesCleared int) {
+	if t.PendingChoices == nil {
+		t.PendingChoices = make(map[int][]config.AbilityDef)
+	}
+	unlocked := UnlockedSlots(wavesCleared)
+	for i := 0; i < unlocked && i < len(t.UnlockOrder); i++ {
+		cat := t.UnlockOrder[i]
+		if t.AbilitySlots[cat] != "" {
+			continue // 已选择
+		}
+		if _, exists := t.PendingChoices[cat]; exists {
+			continue // 已缓存
+		}
+		choices := rollChoicesForCategory(cat, ChoicesPerUnlock)
+		if len(choices) > 0 {
+			t.PendingChoices[cat] = choices
+		}
+	}
+}
+
+// ClearPendingChoice 选择能力后清除该类别的缓存选项。
+func ClearPendingChoice(t *Tower, cat int) {
+	if t.PendingChoices != nil {
+		delete(t.PendingChoices, cat)
+	}
+}
+
+// NextPendingCategory 返回下一个有缓存选项待选的类别（按 UnlockOrder 顺序）。
+// 返回 -1 表示没有待选。
+func NextPendingCategory(t *Tower) int {
+	if t.PendingChoices == nil {
+		return -1
+	}
+	for _, cat := range t.UnlockOrder {
+		if t.AbilitySlots[cat] == "" {
+			if _, exists := t.PendingChoices[cat]; exists {
+				return cat
+			}
+		}
+	}
+	return -1
+}
+
+// PendingCount 返回有缓存选项待选的能力位数量。
+func PendingCount(t *Tower) int {
+	if t.PendingChoices == nil {
+		return 0
+	}
+	count := 0
+	for cat, choices := range t.PendingChoices {
+		if t.AbilitySlots[cat] == "" && len(choices) > 0 {
+			count++
+		}
+	}
+	return count
+}
+
+// rollChoicesForCategory 为指定类别 roll N 个候选能力。
+func rollChoicesForCategory(cat, count int) []config.AbilityDef {
+	pool := AbilitiesForCategory(cat)
+	if len(pool) == 0 {
+		return nil
+	}
+	rand.Shuffle(len(pool), func(i, j int) {
+		pool[i], pool[j] = pool[j], pool[i]
+	})
+	if count > len(pool) {
+		count = len(pool)
+	}
+	result := make([]config.AbilityDef, count)
+	for i := 0; i < count; i++ {
+		result[i] = *pool[i]
+	}
+	return result
+}
+
 // ── 能力选择 ──
 
 // AddAbility 为塔添加一个能力到对应类别的槽位。
