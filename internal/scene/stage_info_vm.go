@@ -134,9 +134,6 @@ func fmtAttr(numFmt string, base, potential, effStr float64) string {
 		return fmt.Sprintf(numFmt, base)
 	}
 	ratio := effStr / 100.0
-	if effStr == 0 {
-		ratio = 1.0
-	}
 	scaled := potential * ratio
 	total := base + scaled
 	return fmt.Sprintf(numFmt+"+("+numFmt+")="+numFmt, base, scaled, total)
@@ -151,9 +148,6 @@ func buildAttrSegs(numFmt string, base, potential, effStr float64) []hud.Ability
 		}
 	}
 	ratio := effStr / 100.0
-	if effStr == 0 {
-		ratio = 1.0
-	}
 	scaled := potential * ratio
 	total := base + scaled
 	sClr := scaledColor(scaled, potential)

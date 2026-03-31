@@ -65,8 +65,12 @@ func (s *StrengthData) Overflow() float64 {
 }
 
 // AddPermanent 增加永久加成（可为负数）。
+// Permanent 下限为 -Base，确保 Base+Permanent >= 0。
 func (s *StrengthData) AddPermanent(amount float64) {
 	s.Permanent += amount
+	if s.Permanent < -s.Base {
+		s.Permanent = -s.Base
+	}
 }
 
 // ResetPermanent 清零永久加成。

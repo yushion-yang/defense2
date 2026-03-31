@@ -40,9 +40,6 @@ func DrawScaleText(screen *ebiten.Image, fm *render.FontManager, x, y float64,
 	}
 
 	ratio := effStr / 100.0
-	if effStr == 0 {
-		ratio = 1.0
-	}
 	scaled := potential * ratio
 	total := base + scaled
 	sClr := ScaledColor(scaled, potential)
