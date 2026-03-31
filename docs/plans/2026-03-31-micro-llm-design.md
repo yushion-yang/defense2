@@ -457,3 +457,120 @@ greedy strategy wins → tokenize → train DTLM → export
 - A/B compare vs greedy strategy
 - Data augmentation + self-play
 - Tune model size / training data volume
+
+## Current Status (2026-03-31)
+
+Phase 0-2 complete. E2E pipeline verified:
+
+```
+Synthetic data (1000 samples) → PyTorch train (30 epoch, loss 5.73→1.23, 9.4s)
+  → export tiny_trained.bin (626KB, 160K params)
+  → Go autoplay --strategy llm
+  → 3/3 wins (12/12 waves, ~115 kills avg)
+  → 8/8 tower types covered (greedy only covers 2/8)
+```
+
+### Known Limitation
+
+`recorder.go` only captures aggregate statistics (wave log, coverage, anomalies), **not per-frame GameState + Actions**. Current training uses synthetic data only. Real replay-based training requires frame-level recording.
+
+## Follow-up Improvements
+
+### P0: Frame-Level Recording (prerequisite for real training)
+
+**Problem**: Recorder collects summary stats but no per-frame snapshots. LLM training needs `(GameState, Actions)` pairs at decision points.
+
+**Approach**: Add `FrameRecord` to `recorder.go`:
+```go
+type FrameRecord struct {
+    Tick       int              `json:"tick"`
+    Gold       int              `json:"gold"`
+    Lives      int              `json:"lives"`
+    Wave       int              `json:"wave"`
+    WaveActive bool             `json:"wave_active"`
+    GameSpeed  int              `json:"game_speed"`
+    Enemies    []EnemySnapshot  `json:"enemies"`
+    Towers     []TowerSnapshot  `json:"towers"`
+    BuildCells []CellSnapshot   `json:"build_cells"`
+    Actions    []ActionSnapshot `json:"actions"`
+}
+```
+
+Only record frames where `actions` is non-empty (decision points). This keeps file size manageable (~100 frames per game vs ~600 ticks).
+
+Add `--record-frames` flag to `cmd/autoplay/main.go`. Default off to avoid bloating existing reports.
+
+### P1: Real Data Training Pipeline
+
+**Goal**: Train on actual greedy strategy replays instead of synthetic data.
+
+**Steps**:
+1. Run `cmd/autoplay --strategy greedy --runs 100 --record-frames` on all maps/difficulties
+2. `python3 tokenize_replays.py --input-dir ./autoplay-results --output train_data.jsonl --filter-wins`
+3. `python3 train.py --data train_data.jsonl --preset small --epochs 50`
+4. Evaluate with `./scripts/llm_eval.sh --model config/llm/models/small_trained.bin`
+
+**Expected**: With 100 games × ~100 decision frames = 10K real training samples, the small model (800K params) should significantly outperform synthetic-trained tiny model.
+
+### P2: Self-Play Iteration
+
+**Goal**: Bootstrap LLM quality beyond greedy level through iterative self-improvement.
+
+**Loop**:
+```
+Round 0: Train on greedy wins → LLM_v0
+Round 1: Run LLM_v0, filter wins → mix with greedy data → LLM_v1
+Round 2: Run LLM_v1, filter wins → mix with all data → LLM_v2
+...repeat until win rate plateaus
+```
+
+**Key**: Only add LLM replay data from **winning** games. Failed games teach bad patterns.
+
+**Metrics per round**: Win rate, avg waves survived, avg kills, gold efficiency (kills/gold spent), tower diversity.
+
+### P3: Model Scaling
+
+**Goal**: Find the sweet spot between model capacity and inference cost.
+
+| Experiment | Config | Expected Outcome |
+|-----------|--------|-----------------|
+| Baseline | tiny (160K, 2L) | Current: 100% win, ~115 kills |
+| Scale up | small (800K, 4L) | Better decisions, ~130+ kills |
+| Scale up | medium (5M, 6L) | Diminishing returns? Need profiling |
+| Wide tiny | d_model=128, 2L | Same depth, more capacity per layer |
+| Deep tiny | d_model=64, 4L | More depth, same width |
+
+Profile inference latency on each. Target: <200ms per decision for autoplay (headless).
+
+### P4: Multi-Map Generalization
+
+**Goal**: Single model works across all maps, not just map_01.
+
+**Approach**:
+- Add map topology tokens to vocabulary: path length, number of turns, choke point positions
+- Train on mixed map data (map_01 through map_05)
+- Evaluate per-map win rate to detect map-specific weaknesses
+
+**Risk**: Small models may memorize map-specific patterns rather than learning general strategy. If per-map performance varies wildly, consider map-specific fine-tuning heads.
+
+### P5: Decision Explanation (CoT)
+
+**Goal**: Generate human-readable reasoning alongside actions (design doc "Approach C").
+
+**Approach**: Add an explanation vocabulary (~100 template tokens) and train a second "explanation head" on annotated data. Display in autoplay debug overlay.
+
+**Example output**:
+```
+[ACT_BUILD k_freeze R2C5]  "chokepoint needs CC, freeze covers path turn"
+[ACT_UPGRADE R1C3]         "laser at chokepoint is highest value upgrade"
+```
+
+**Priority**: Low. Only pursue after P1-P3 are done and model quality is strong.
+
+### P6: Online Learning (Ambitious)
+
+**Goal**: Model improves during a single game session.
+
+**Approach**: Lightweight gradient-free adaptation — maintain a running statistics of which actions led to good outcomes (enemy kills within N ticks of placement) and bias the sampling distribution accordingly. Not true backprop, but a form of contextual bandit.
+
+**Risk**: High complexity, may not be worth it for autoplay testing use case. Consider only if LLM strategy is also used as a player-facing feature.
