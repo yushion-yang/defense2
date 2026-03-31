@@ -530,9 +530,9 @@ function generateTowerFrame(key, def, state, frameIdx) {
     }
   }
 
-  // ── en-08 charge effect: growing energy sphere during attack ──
+  // ── nova charge effect: growing energy sphere during attack ──
   let chargeSvg = '';
-  if (key === 'en-08' && state === 'attack') {
+  if (key === 'nova' && state === 'attack') {
     const ccy = (def.core?.cy || 24) + turretOffsetY;
     const ccx = def.core?.cx || 64;
     // frame 0: small charge, frame 1: full charge + ring, frame 2: dissipating
@@ -579,14 +579,14 @@ function generateTowerFrame(key, def, state, frameIdx) {
   // ── Muzzle flash — different per tower type ──
   let flashSvg = '';
   if (state === 'attack' && frameIdx === 1) {
-    if (key === 'wl-02') {
+    if (key === 'cyclone') {
       // Spin blade: shockwave ring at center instead of muzzle flash
       const bladeCy = (def.turret?.blade?.cy || 52) + turretOffsetY;
       const shockId = gid();
       defs.push(svgGlowGrad(shockId, palette.accent, 0.5));
       flashSvg = `<circle cx="64" cy="${bladeCy}" r="36" fill="url(#${shockId})"/>`;
       flashSvg += `\n  <circle cx="64" cy="${bladeCy}" r="28" fill="none" stroke="${palette.accent}" stroke-width="2" opacity="0.6"/>`;
-    } else if (key === 'en-08') {
+    } else if (key === 'nova') {
       // Charge cannon: big muzzle burst
       const fcy = (def.core?.cy || 24) + turretOffsetY;
       const flashGlowId = gid();

@@ -202,6 +202,49 @@ func TestPipeline_TrueDamageIgnoresModifiers(t *testing.T) {
 	}
 }
 
+// ── 步骤4.25: 虚弱增伤 ──
+
+func TestPipeline_DamageAmplify(t *testing.T) {
+	e := makePipelineEnemy(100, 100)
+	e.DamageAmplify = 0.2 // +20% 受伤
+
+	r := combat.ProcessDamage(combat.DamageInput{
+		Target:    e,
+		RawDamage: 10,
+	})
+	// 10 * 1.2 = 12
+	if math.Abs(r.HPDamage-12) > 1e-9 {
+		t.Errorf("虚弱增伤后HP伤害=%.1f, 期望12", r.HPDamage)
+	}
+}
+
+func TestPipeline_DamageAmplifyCapped(t *testing.T) {
+	e := makePipelineEnemy(100, 100)
+	e.DamageAmplify = 0.8 // 超过上限 0.5
+
+	r := combat.ProcessDamage(combat.DamageInput{
+		Target:    e,
+		RawDamage: 10,
+	})
+	// 应限制到 0.5: 10 * 1.5 = 15
+	if math.Abs(r.HPDamage-15) > 1e-9 {
+		t.Errorf("虚弱增伤应被限制到50%%, HP伤害=%.1f, 期望15", r.HPDamage)
+	}
+}
+
+func TestPipeline_DamageAmplifyZeroNoEffect(t *testing.T) {
+	e := makePipelineEnemy(100, 100)
+	// DamageAmplify = 0 (默认)
+
+	r := combat.ProcessDamage(combat.DamageInput{
+		Target:    e,
+		RawDamage: 10,
+	})
+	if math.Abs(r.HPDamage-10) > 1e-9 {
+		t.Errorf("无虚弱时HP伤害=%.1f, 期望10", r.HPDamage)
+	}
+}
+
 // ── 步骤4.5: 伤害上限 ──
 
 func TestPipeline_DamageCap(t *testing.T) {

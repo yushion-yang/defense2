@@ -1,0 +1,32 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128">
+  <defs>
+    <radialGradient id="tg0" cx="50%" cy="50%" r="50%"><stop offset="0%" stop-color="#3b82f6" stop-opacity="0.3"/><stop offset="100%" stop-color="#3b82f6" stop-opacity="0"/></radialGradient>
+    <radialGradient id="tg1" cx="50%" cy="50%" r="50%"><stop offset="0%" stop-color="#2563eb"/><stop offset="70%" stop-color="#1d4ed8"/><stop offset="100%" stop-color="#1e3a5f"/></radialGradient>
+    <linearGradient id="tg2" x1="0%" y1="0%" x2="0%" y2="100%"><stop offset="0%" stop-color="#3b82f6"/><stop offset="50%" stop-color="#2563eb"/><stop offset="100%" stop-color="#1e3a5f"/></linearGradient>
+    <radialGradient id="tg3" cx="50%" cy="50%" r="50%"><stop offset="0%" stop-color="#3b82f6" stop-opacity="0.3"/><stop offset="100%" stop-color="#3b82f6" stop-opacity="0"/></radialGradient>
+    <radialGradient id="tg4" cx="50%" cy="50%" r="50%"><stop offset="0%" stop-color="#3b82f6" stop-opacity="0.15"/><stop offset="100%" stop-color="#3b82f6" stop-opacity="0"/></radialGradient>
+    <radialGradient id="tg5" cx="50%" cy="50%" r="50%"><stop offset="0%" stop-color="#93c5fd" stop-opacity="0.85"/><stop offset="100%" stop-color="#93c5fd" stop-opacity="0"/></radialGradient>
+  </defs>
+  <!-- Fortress: attack-1 -->
+  <circle cx="64" cy="26" r="44" fill="url(#tg0)"/>
+  <rect x="31" y="53" width="66" height="66" rx="6" fill="url(#tg1)" stroke="#93c5fd" stroke-width="2"/>
+  <line x1="31" y1="53" x2="43" y2="53" stroke="#93c5fd" stroke-width="2.5" opacity="0.6"/>
+  <line x1="31" y1="53" x2="31" y2="65" stroke="#93c5fd" stroke-width="2.5" opacity="0.6"/>
+  <line x1="97" y1="53" x2="85" y2="53" stroke="#93c5fd" stroke-width="2.5" opacity="0.6"/>
+  <line x1="97" y1="53" x2="97" y2="65" stroke="#93c5fd" stroke-width="2.5" opacity="0.6"/>
+  <line x1="31" y1="119" x2="43" y2="119" stroke="#93c5fd" stroke-width="2.5" opacity="0.6"/>
+  <line x1="31" y1="119" x2="31" y2="107" stroke="#93c5fd" stroke-width="2.5" opacity="0.6"/>
+  <line x1="97" y1="119" x2="85" y2="119" stroke="#93c5fd" stroke-width="2.5" opacity="0.6"/>
+  <line x1="97" y1="119" x2="97" y2="107" stroke="#93c5fd" stroke-width="2.5" opacity="0.6"/>
+  <rect x="46" y="31" width="4" height="28" rx="2" fill="#1d4ed8" opacity="0.7"/>
+  <rect x="78" y="31" width="4" height="28" rx="2" fill="#1d4ed8" opacity="0.7"/>
+  <rect x="50" y="21" width="28" height="46" rx="5" fill="url(#tg2)"/>
+  <rect x="53" y="21" width="22" height="46" rx="4" fill="#93c5fd" opacity="0.1"/>
+  <circle cx="64" cy="21" r="7" fill="#93c5fd" opacity="0.9"/>
+  <circle cx="64" cy="21" r="4" fill="#dbeafe" opacity="0.8"/>
+  <circle cx="64" cy="26" r="16" fill="url(#tg3)"/>
+  <circle cx="64" cy="64" r="10" fill="url(#tg4)"/>
+  
+  <circle cx="64" cy="17" r="14" fill="url(#tg5)"/>
+  <circle cx="64" cy="17" r="5" fill="#93c5fd" opacity="0.95"/>
+</svg>
