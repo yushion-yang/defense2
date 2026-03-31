@@ -52,7 +52,7 @@ func SpawnGoldText(x, y float64, amount int) {
 // SpawnKillText 在指定位置弹出击杀文字。
 func SpawnKillText(x, y float64) {
 	clr := color.RGBA{R: 200, G: 60, B: 60, A: 255}
-	spawnFloatText(x, y-10, "KILL", clr, 10, 0.6)
+	spawnFloatText(x, y-10, "击杀", clr, 10, 0.6)
 }
 
 // SpawnText spawns a floating text with custom color, size, and lifetime.

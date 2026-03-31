@@ -169,11 +169,16 @@ func DrawTopBar(screen *ebiten.Image, d TopBarData) {
 	}
 
 	// 计算按钮区域（右对齐，按文本自适应宽度）
-	const btnPadX float32 = 20 // 按钮内水平 padding
+	// pad 必须与 DrawButtonRowAutoWidth 内部的 pad=16 一致
+	const btnPadX float32 = 16
 	totalBtnW := float32(0)
 	for _, item := range items {
 		tw := float32(fm.MeasureText(item.Label, theme.FontH2))
-		totalBtnW += tw + btnPadX*2
+		w := tw + btnPadX*2
+		if w < 40 {
+			w = 40
+		}
+		totalBtnW += w
 	}
 	totalBtnW += float32(len(items)-1) * btnGap
 

@@ -134,15 +134,15 @@ func (wa *WaveAnnounce) Draw(screen *ebiten.Image) {
 
 	switch {
 	case wa.isFinal:
-		text = "FINAL WAVE"
+		text = "最终波"
 		textClr = color.RGBA{R: 255, G: 215, B: 0, A: 255} // gold
 		fontSize = 32
 	case wa.isBoss:
-		text = "WAVE " + strconv.Itoa(wa.wave)
+		text = "第 " + strconv.Itoa(wa.wave) + " 波"
 		textClr = color.RGBA{R: 255, G: 80, B: 60, A: 255} // red-orange
 		fontSize = 32
 	default:
-		text = "WAVE " + strconv.Itoa(wa.wave)
+		text = "第 " + strconv.Itoa(wa.wave) + " 波"
 		textClr = color.RGBA{R: 255, G: 255, B: 255, A: 230}
 	}
 

@@ -16,9 +16,9 @@ import (
 	"github.com/hajimehoshi/ebiten/v2"
 )
 
-// wardenOptions 从配置加载（复用 hud.GetWardenOptions）。
+// wardenOptions 从配置加载战灵选项列表（懒加载缓存在 stage_warden_vm.go）。
 func wardenOptions() []hud.WardenOption {
-	return hud.GetWardenOptions()
+	return GetWardenOptions()
 }
 
 // ── 布局常量 ────────────────────────────────────

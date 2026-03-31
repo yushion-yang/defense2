@@ -286,8 +286,8 @@ func (s *StageScene) handleInput() {
 			s.spawnType = entries[idx].Name
 			s.imode = modeSpawnPlace
 			label := entries[idx].Name
-			if entries[idx].Config != nil && entries[idx].Config.Label != "" {
-				label = entries[idx].Config.Label
+			if entries[idx].Label != "" {
+				label = entries[idx].Label
 			}
 			hud.ShowToast("点击地图放置: " + label)
 		} else {
@@ -307,9 +307,9 @@ func (s *StageScene) handleInput() {
 		}
 
 	case modeTowerSel:
-		if hud.InfoPanelUpgradeHitTest(ftx, fty, s.selectedTower) {
+		if hud.InfoPanelUpgradeHitTest(ftx, fty, s.selectedTower != nil) {
 			s.tryUpgradeTower()
-		} else if hud.InfoPanelSellHitTest(ftx, fty, s.selectedTower) {
+		} else if hud.InfoPanelSellHitTest(ftx, fty, s.selectedTower != nil) {
 			s.trySellTower(s.selectedTower.X, s.selectedTower.Y)
 			s.imode = modeIdle
 		} else {

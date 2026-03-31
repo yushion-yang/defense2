@@ -5,9 +5,7 @@ package hud
 import (
 	"fmt"
 	"image/color"
-	"strings"
 
-	"defense2/internal/config"
 	"defense2/internal/core/game"
 	"defense2/internal/render"
 	"defense2/internal/render/draw"
@@ -40,146 +38,6 @@ type WardenOption struct {
 	GrowthWave  string
 }
 
-// wardenColors 按 key 映射战灵主题色（不在 JSON 中的视觉属性）。
-var wardenColors = map[string]color.RGBA{
-	"prince":    {R: 255, G: 140, B: 30, A: 255},
-	"core":      {R: 60, G: 140, B: 255, A: 255},
-	"chain":     {R: 160, G: 80, B: 255, A: 255},
-	"skystrike": {R: 80, G: 200, B: 255, A: 255},
-	"envoy":     {R: 255, G: 200, B: 60, A: 255},
-}
-
-// wardenOrder 战灵在选择列表中的顺序。
-var wardenOrder = []string{"prince", "core", "chain", "skystrike", "envoy"}
-
-// categoryName 将 config category 转为显示名。
-func categoryName(cat string) string {
-	switch cat {
-	case "mobile":
-		return "移动型"
-	case "indirect":
-		return "间接型"
-	default:
-		return cat
-	}
-}
-
-// BuildWardenOptions 从 wardens.json 配置构建选择列表。
-func BuildWardenOptions() []WardenOption {
-	cfgs, err := config.LoadWardenConfigs()
-	if err != nil {
-		return []WardenOption{{Key: "none", Name: "纯塔挑战", Category: "-", Description: "不选择战灵，纯靠塔防御。", Color: color.RGBA{R: 120, G: 120, B: 130, A: 255}}}
-	}
-
-	var opts []WardenOption
-	for _, key := range wardenOrder {
-		c, ok := cfgs[key]
-		if !ok {
-			continue
-		}
-		clr := wardenColors[key]
-		growthKill := "-"
-		if c.GrowthOnKill > 0 {
-			growthKill = fmt.Sprintf("+%.0f 强度", c.GrowthOnKill)
-		}
-		growthWave := "-"
-		if c.GrowthOnWaveClear > 0 {
-			growthWave = fmt.Sprintf("+%.0f 强度", c.GrowthOnWaveClear)
-		}
-
-		// 用配置基础值替换描述中的占位符
-		params := buildStaticParams(c)
-		opts = append(opts, WardenOption{
-			Key:         c.Key,
-			Name:        c.Name,
-			Category:    categoryName(c.Category),
-			Description: c.Description,
-			Color:       clr,
-			AttackName:  c.AttackName,
-			AttackDesc:  replaceParams(c.AttackDesc, params),
-			SpecialName: c.SpecialName,
-			SpecialDesc: replaceParams(c.SpecialDesc, params),
-			Tips:        []string{c.StrengthDesc, c.CounterTip},
-			Damage:      fmt.Sprintf("%.0f", c.Damage),
-			Interval:    fmt.Sprintf("%.1fs", c.AttackInterval),
-			Speed:       fmt.Sprintf("%.0f", c.MoveSpeed),
-			AoE:         "-",
-			Duration:    "-",
-			DoT:         "-",
-			GrowthKill:  growthKill,
-			GrowthWave:  growthWave,
-		})
-	}
-
-	// "不选" 选项
-	opts = append(opts, WardenOption{
-		Key:         "none",
-		Name:        "纯塔挑战",
-		Category:    "-",
-		Description: "不选择战灵，纯靠塔防御。",
-		Color:       color.RGBA{R: 120, G: 120, B: 130, A: 255},
-	})
-	return opts
-}
-
-// buildStaticParams 从配置构建占位符参数（选择阶段用基础值，不含强度缩放）。
-func buildStaticParams(c config.WardenConfig) map[string]string {
-	p := map[string]string{
-		"attackInterval": fmt.Sprintf("%.1f", c.AttackInterval),
-		"damage":         fmt.Sprintf("%.0f", c.Damage),
-		"moveSpeed":      fmt.Sprintf("%.0f", c.MoveSpeed),
-		"range":          fmt.Sprintf("%.0f", c.Range),
-	}
-	// 按 key 补充类型特有参数的默认值（与 Go Init 中的硬编码一致）
-	switch c.Key {
-	case "prince":
-		p["fireballInterval"] = "4"
-		p["fireballDmg"] = fmt.Sprintf("%.0f", c.Damage*2) // 200%
-		p["trailDuration"] = "2"
-		p["trailDps"] = fmt.Sprintf("%.0f", c.Damage*0.5) // 50%
-	case "core":
-		p["aoeThreshold"] = "4"
-		p["execHpPct"] = "20"
-	case "chain":
-		p["chainRange"] = "150"
-		p["bonusPerTower"] = "10"
-	case "skystrike":
-		p["specialInterval"] = "1"
-		p["multiTargets"] = "3"
-		p["multiDmg"] = fmt.Sprintf("%.0f", c.Damage*2) // 200%
-		p["burstHits"] = "5"
-		p["burstDmg"] = fmt.Sprintf("%.0f", c.Damage*1) // 100%
-		p["hpTargets"] = "3"
-		p["hpPct"] = "10"
-	case "envoy":
-		p["buffInterval"] = "10"
-		p["buffDuration"] = "6"
-		p["buffThreshold"] = "100"
-		p["buffBonus"] = "0"
-		p["permGrant"] = "5"
-	}
-	return p
-}
-
-// replaceParams 替换字符串中的 {key} 占位符。
-func replaceParams(s string, params map[string]string) string {
-	for k, v := range params {
-		s = strings.ReplaceAll(s, "{"+k+"}", v)
-	}
-	return s
-}
-
-// WardenOptions 延迟初始化的选项列表（首次访问时从配置构建）。
-var wardenOptionsCache []WardenOption
-
-// GetWardenOptions 返回战灵选项列表（懒加载）。
-func GetWardenOptions() []WardenOption {
-	if wardenOptionsCache == nil {
-		wardenOptionsCache = BuildWardenOptions()
-	}
-	return wardenOptionsCache
-}
-
 // ── 布局常量 ────────────────────────────────────
 
 const (
@@ -205,6 +63,7 @@ type WardenSelectOverlay struct {
 	Active       bool
 	OnSelect     func(key string)               // 选择回调
 	SpriteFunc   func(key string) *ebiten.Image // 战灵精灵获取（由 stage 注入）
+	options      []WardenOption                  // 由外部注入的战灵选项列表
 	selectedIdx  int
 	hoverIdx     int
 	hoverConfirm bool
@@ -219,9 +78,10 @@ func NewWardenSelectOverlay() *WardenSelectOverlay {
 	}
 }
 
-// Show 激活覆盖层。
-func (o *WardenSelectOverlay) Show(onSelect func(string)) {
+// Show 激活覆盖层。options 为外部构建的战灵选择数据。
+func (o *WardenSelectOverlay) Show(options []WardenOption, onSelect func(string)) {
 	o.Active = true
+	o.options = options
 	o.OnSelect = onSelect
 	o.selectedIdx = 0
 	o.hoverIdx = -1
@@ -258,13 +118,13 @@ func (o *WardenSelectOverlay) Update(mx, my float64, clicked bool) {
 	}
 	// 跳过按钮
 	if o.hitTestBtn(mx, my, 1) {
-		o.selectedIdx = len(GetWardenOptions()) - 1 // "none"
+		o.selectedIdx = len(o.options) - 1 // "none"
 		o.confirm()
 	}
 }
 
 func (o *WardenSelectOverlay) confirm() {
-	opt := GetWardenOptions()[o.selectedIdx]
+	opt := o.options[o.selectedIdx]
 	key := opt.Key
 	if key == "none" {
 		key = ""
@@ -276,7 +136,7 @@ func (o *WardenSelectOverlay) confirm() {
 }
 
 func (o *WardenSelectOverlay) hitTestList(mx, my float64) int {
-	for i := range GetWardenOptions() {
+	for i := range o.options {
 		y := woListY + float64(i)*(woListH+woListGap)
 		if mx >= woListX && mx <= woListX+woListW && my >= y && my <= y+woListH {
 			return i
@@ -315,7 +175,7 @@ func (o *WardenSelectOverlay) Draw(screen *ebiten.Image) {
 	fm.DrawCenteredText(screen, "选择最适合的战灵 — 或不选，挑战纯塔模式", sw/2, 50, 11, theme.TextMuted)
 
 	// 左侧列表
-	for i, opt := range GetWardenOptions() {
+	for i, opt := range o.options {
 		x := float32(woListX)
 		y := float32(woListY + float64(i)*(woListH+woListGap))
 		w := float32(woListW)
@@ -354,7 +214,7 @@ func (o *WardenSelectOverlay) Draw(screen *ebiten.Image) {
 	}
 
 	// 右侧详情面板
-	opt := GetWardenOptions()[o.selectedIdx]
+	opt := o.options[o.selectedIdx]
 	o.drawDetail(screen, fm, opt)
 
 	// 底部按钮

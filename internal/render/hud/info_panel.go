@@ -1,17 +1,12 @@
 // info_panel.go — Bottom-center tower detail panel.
 // Shows tower stats, current abilities, upgrade growth, and sell button when a tower is selected.
-// Ability display is data-driven from config.AbilityTable with strength scaling.
+// All data is provided via InfoPanelVM — no direct dependency on core/tower or core/strength.
 package hud
 
 import (
 	"fmt"
 	"image/color"
-	"math"
-	"strings"
 
-	"defense2/internal/config"
-	"defense2/internal/core/strength"
-	"defense2/internal/core/tower"
 	"defense2/internal/render"
 	"defense2/internal/render/draw"
 	"defense2/internal/render/theme"
@@ -19,6 +14,63 @@ import (
 
 	"github.com/hajimehoshi/ebiten/v2"
 )
+
+// ---------------------------------------------------------------------------
+// View-model structs — built by the caller (scene package), consumed here.
+// ---------------------------------------------------------------------------
+
+// AbilitySegment is one rendering segment inside an ability display line.
+// Kind: "text" (plain muted), "bold" (bold body), "base" (body color),
+// "scaled" (custom color), "total" (body color).
+type AbilitySegment struct {
+	Text  string
+	Kind  string     // "text", "bold", "base", "scaled", "total"
+	Color color.Color // used when Kind == "scaled"
+}
+
+// AbilityVM holds pre-computed display data for one ability row.
+type AbilityVM struct {
+	Icon     string           // icon name (empty = no icon)
+	Label    string           // bold label text
+	Segments []AbilitySegment // display segments after label (may be nil for fallback-only abilities)
+	Fallback string           // shown when Segments is nil (fallback desc)
+}
+
+// BuffVM holds display data for one buff row.
+type BuffVM struct {
+	Source    string  // source display name
+	Desc      string  // effect description
+	Remaining float64 // remaining seconds (-1 = permanent)
+}
+
+// InfoPanelVM contains all display data needed by DrawInfoPanel.
+// Built by scene.BuildInfoPanelVM; consumed by hud.DrawInfoPanel.
+type InfoPanelVM struct {
+	Visible bool // false → panel is hidden
+
+	// Title row
+	Label         string
+	StrengthText  string     // e.g. "强度120 ↑(永+20)" — empty if no strength data
+	StrengthColor color.Color // nil-safe: ignored when StrengthText == ""
+
+	// Attribute row (segment-based for colored rendering)
+	DamageSegs []AbilitySegment
+	SpeedSegs  []AbilitySegment
+	RangeSegs  []AbilitySegment
+
+	// Attack style row
+	AttackStyleText string // e.g. "攻击: 投射物"
+
+	// Abilities
+	Abilities []AbilityVM
+
+	// Buffs
+	Buffs []BuffVM
+
+	// Buttons
+	UpgradeButtonText string // e.g. "强度+10 $10"
+	SellButtonText    string // e.g. "卖60"
+}
 
 // ---------------------------------------------------------------------------
 // Cached button Rects — written by DrawInfoPanel, read by hit tests.
@@ -31,9 +83,10 @@ var (
 	lastPanelVisible bool
 )
 
-// DrawInfoPanel renders the tower information panel. Passing nil hides it.
-func DrawInfoPanel(screen *ebiten.Image, t *tower.Tower, sellValue int) {
-	if t == nil {
+// DrawInfoPanel renders the tower information panel using pre-built view data.
+// Pass a VM with Visible=false to hide the panel.
+func DrawInfoPanel(screen *ebiten.Image, vm InfoPanelVM) {
+	if !vm.Visible {
 		lastPanelVisible = false
 		return
 	}
@@ -56,8 +109,6 @@ func DrawInfoPanel(screen *ebiten.Image, t *tower.Tower, sellValue int) {
 		btnGap    = float32(12)
 	)
 
-	currentAbilities := t.Abilities
-
 	// --- Build FlexPanel (content-driven height) ---
 	panel := ui.NewFlexPanel(0, 0, panelW, innerPad)
 	panel.BgColor = theme.PanelBg
@@ -65,34 +116,15 @@ func DrawInfoPanel(screen *ebiten.Image, t *tower.Tower, sellValue int) {
 	panel.Radius = float32(theme.CenterPanelRadius)
 	panel.AddSpace(topPad - innerPad)
 
-	sd := t.Strength
-	var effStr float64
-	if sd != nil {
-		effStr = sd.Effective()
-	}
-
 	// Row 1: 塔名 + 战力显示
 	panel.AddRow(titleH, func(screen *ebiten.Image, x, y float64, w float64) {
-		fm.DrawBoldText(screen, t.Label, x, y, theme.FontXL, theme.TextTitle)
-		rightX := x + w
-
-		if sd != nil {
-			strClr := theme.StatusStrNorm
-			if effStr > 100 {
-				strClr = theme.StatusStrUp
-			} else if effStr < 100 {
-				strClr = theme.StatusStrDown
-			}
-			strTxt := fmt.Sprintf("强度%.0f", effStr)
-			breakdown := strengthBreakdown(sd)
-			if breakdown != "" {
-				strTxt += " " + breakdown
-			}
-			fm.DrawRightText(screen, strTxt, rightX, y+4, theme.FontSM, strClr)
+		fm.DrawBoldText(screen, vm.Label, x, y, theme.FontXL, theme.TextTitle)
+		if vm.StrengthText != "" {
+			fm.DrawRightText(screen, vm.StrengthText, x+w, y+4, theme.FontSM, vm.StrengthColor)
 		}
 	})
 
-	// Row 2: 属性行（伤害/攻速/射程/DPS）
+	// Row 2: 属性行（伤害/攻速/射程）— 三段式着色
 	panel.AddRow(attrH, func(screen *ebiten.Image, x, y float64, w float64) {
 		colW := w / 3
 		const (
@@ -102,46 +134,49 @@ func DrawInfoPanel(screen *ebiten.Image, t *tower.Tower, sellValue int) {
 		im := render.GlobalIcons()
 		textOff := iconSize + iconGap
 
+		drawAttrSegs := func(segs []AbilitySegment, sx, sy float64) {
+			for _, seg := range segs {
+				var clr color.Color = theme.TextBody
+				if seg.Kind == "scaled" && seg.Color != nil {
+					clr = seg.Color
+				}
+				fm.DrawText(screen, seg.Text, sx, sy, theme.FontLG, clr)
+				sx += fm.MeasureText(seg.Text, theme.FontLG)
+			}
+		}
+
 		// 伤害
 		drawStatIcon(screen, im, "stat-damage", x, y, iconSize)
-		fm.DrawText(screen, fmtAttr("%.0f", t.BaseDamage, t.PotentialDamage, effStr), x+textOff, y, theme.FontLG, theme.InfoAttrDamage)
+		drawAttrSegs(vm.DamageSegs, x+textOff, y)
 
-		// 攻速（精确到一位小数）
+		// 攻速
 		drawStatIcon(screen, im, "stat-atkspd", x+colW, y, iconSize)
-		fm.DrawText(screen, fmtAttr("%.1f", t.BaseSpeed, t.PotentialSpeed, effStr), x+colW+textOff, y, theme.FontLG, theme.InfoAttrAtkSpd)
+		drawAttrSegs(vm.SpeedSegs, x+colW+textOff, y)
 
 		// 射程
 		drawStatIcon(screen, im, "stat-range", x+colW*2, y, iconSize)
-		fm.DrawText(screen, fmtAttr("%.0f", t.BaseRange, t.PotentialRange, effStr), x+colW*2+textOff, y, theme.FontLG, theme.InfoAttrRange)
+		drawAttrSegs(vm.RangeSegs, x+colW*2+textOff, y)
 	})
 
 	// Row 3: 攻击方式
 	panel.AddRow(abilityH, func(screen *ebiten.Image, x, y float64, _ float64) {
-		style := t.AttackStyleID
-		if style == "" {
-			style = "projectile"
-		}
-		fm.DrawText(screen, "攻击: "+attackStyleLabel(style), x, y, theme.FontSM, theme.TextMuted)
+		fm.DrawText(screen, vm.AttackStyleText, x, y, theme.FontSM, theme.TextMuted)
 	})
 
-	// Row 4: 能力列表（数据驱动）
-	abTable := config.GlobalAbilityTable()
-	if len(currentAbilities) > 0 {
-		for _, ab := range currentAbilities {
-			ab := ab
-			panel.AddRow(abilityH, func(screen *ebiten.Image, x, y float64, w float64) {
-				drawAbilityRow(screen, fm, ab, abTable, effStr, x, y)
-			})
-		}
+	// Row 4: 能力列表
+	for _, ab := range vm.Abilities {
+		ab := ab
+		panel.AddRow(abilityH, func(screen *ebiten.Image, x, y float64, w float64) {
+			drawAbilityRowVM(screen, fm, ab, x, y)
+		})
 	}
 
 	// Row 5: Buff 列表
-	if len(t.Buffs) > 0 {
+	if len(vm.Buffs) > 0 {
 		panel.AddSpace(2)
-		for _, b := range t.Buffs {
+		for _, b := range vm.Buffs {
 			b := b
 			panel.AddRow(14, func(screen *ebiten.Image, x, y float64, w float64) {
-				// [来源] 描述 (剩余时间)
 				srcClr := color.RGBA{R: 180, G: 140, B: 255, A: 220}
 				fm.DrawText(screen, b.Source, x, y, theme.FontXS, srcClr)
 				srcW := fm.MeasureText(b.Source, theme.FontXS)
@@ -162,12 +197,9 @@ func DrawInfoPanel(screen *ebiten.Image, t *tower.Tower, sellValue int) {
 	panel.AddRow(btnH, func(screen *ebiten.Image, x, y float64, w float64) {
 		area := ui.Rect{X: float32(x), Y: float32(y), W: float32(w), H: btnH}
 
-		buyTxt := fmt.Sprintf("强度+10 $%d", tower.StrengthBuyCost)
-		sellTxt := fmt.Sprintf("卖%d", sellValue)
-
 		result := ui.DrawButtonRow(screen, area, []ui.ButtonRowItem{
-			{Label: buyTxt, Color: theme.TonePrimary},
-			{Label: sellTxt, Color: theme.BtnDanger},
+			{Label: vm.UpgradeButtonText, Color: theme.TonePrimary},
+			{Label: vm.SellButtonText, Color: theme.BtnDanger},
 		}, ui.ButtonRowStyle{
 			Height:   btnH,
 			Gap:      btnGap,
@@ -194,158 +226,46 @@ func DrawInfoPanel(screen *ebiten.Image, t *tower.Tower, sellValue int) {
 	lastPanelVisible = true
 }
 
-// drawAbilityRow 渲染一行能力：图标 + 标签（粗体）+ 缩放值（带颜色）+ 固定参数。
-func drawAbilityRow(screen *ebiten.Image, fm *render.FontManager, abilityType string, abTable config.AbilityTable, effStr float64, x, y float64) {
+// drawAbilityRowVM renders one ability row from pre-computed VM data.
+func drawAbilityRowVM(screen *ebiten.Image, fm *render.FontManager, ab AbilityVM, x, y float64) {
 	im := render.GlobalIcons()
-	def := abTable[abilityType]
 
-	// 图标
-	iconName := ""
-	if def != nil {
-		iconName = def.Icon
-	} else if name, ok := fallbackIconMap[abilityType]; ok {
-		iconName = name
-	}
-	if iconName != "" {
-		drawStatIcon(screen, im, iconName, x, y, 14)
+	// Icon
+	if ab.Icon != "" {
+		drawStatIcon(screen, im, ab.Icon, x, y, 14)
 	}
 	abX := x + 19.0
 
-	// 标签（粗体）
-	label := abilityType
-	if def != nil {
-		label = def.Label
-	} else if l, ok := fallbackLabelMap[abilityType]; ok {
-		label = l
-	}
-	fm.DrawBoldText(screen, label, abX, y, theme.FontSM, theme.TextBody)
-	abX += fm.MeasureText(label, theme.FontSM) + 6
+	// Label (bold)
+	fm.DrawBoldText(screen, ab.Label, abX, y, theme.FontSM, theme.TextBody)
+	abX += fm.MeasureText(ab.Label, theme.FontSM) + 6
 
-	// 无 AbilityDef 时显示 fallback 描述
-	if def == nil {
-		if desc, ok := fallbackDescMap[abilityType]; ok {
-			fm.DrawText(screen, desc, abX, y+1, theme.FontSM, theme.TextMuted)
+	// Segments or fallback
+	if len(ab.Segments) == 0 {
+		if ab.Fallback != "" {
+			fm.DrawText(screen, ab.Fallback, abX, y+1, theme.FontSM, theme.TextMuted)
 		}
 		return
 	}
 
-	// 用 Display 模板渲染
-	drawAbilityDisplay(screen, fm, def, effStr, abX, y+1)
-}
-
-// drawAbilityDisplay 按 Display 模板渲染能力描述。
-// {s} → 缩放值 base+(scaled)=total（带颜色），{s%} → 百分比格式
-// {p} → 参数原值，{p%} → 参数百分比
-// 其余文本原样渲染。
-func drawAbilityDisplay(screen *ebiten.Image, fm *render.FontManager, def *config.AbilityDef, effStr float64, x, y float64) {
-	tpl := def.Display
-	if tpl == "" {
-		return
-	}
-
-	scaled := def.Potential * (effStr / 100.0)
-	total := def.Base + scaled
-	scaledClr := scaledColor(scaled, def.Potential)
-
-	i := 0
-	for i < len(tpl) {
-		// 查找下一个占位符
-		next := strings.Index(tpl[i:], "{")
-		if next < 0 {
-			// 剩余纯文本
-			fm.DrawText(screen, tpl[i:], x, y, theme.FontSM, theme.TextMuted)
-			x += fm.MeasureText(tpl[i:], theme.FontSM)
-			break
-		}
-
-		// 输出占位符前的纯文本
-		if next > 0 {
-			seg := tpl[i : i+next]
-			fm.DrawText(screen, seg, x, y, theme.FontSM, theme.TextMuted)
-			x += fm.MeasureText(seg, theme.FontSM)
-		}
-		i += next
-
-		// 解析占位符
-		end := strings.Index(tpl[i:], "}")
-		if end < 0 {
-			break
-		}
-		ph := tpl[i+1 : i+end] // 占位符内容（如 "s%", "p"）
-		i += end + 1
-
-		switch ph {
-		case "s%":
-			// 缩放百分比：10%+(22%)=32%
-			x = drawScaleSegment(screen, fm, x, y, scaledClr,
-				fmt.Sprintf("%.0f%%+", def.Base*100),
-				fmt.Sprintf("(%.0f%%)", scaled*100),
-				fmt.Sprintf("=%.0f%%", total*100))
-		case "s":
-			// 缩放绝对值：2+(1)=3
-			nf := "%.0f"
-			if needsDecimal(def.Base) || needsDecimal(scaled) || needsDecimal(total) {
-				nf = "%.1f"
+	segX := abX
+	for _, seg := range ab.Segments {
+		switch seg.Kind {
+		case "text":
+			fm.DrawText(screen, seg.Text, segX, y+1, theme.FontSM, theme.TextMuted)
+			segX += fm.MeasureText(seg.Text, theme.FontSM)
+		case "base", "total":
+			fm.DrawText(screen, seg.Text, segX, y+1, theme.FontSM, theme.TextBody)
+			segX += fm.MeasureText(seg.Text, theme.FontSM)
+		case "scaled":
+			clr := seg.Color
+			if clr == nil {
+				clr = theme.TextBody
 			}
-			x = drawScaleSegment(screen, fm, x, y, scaledClr,
-				fmt.Sprintf(nf+"+", def.Base),
-				fmt.Sprintf("("+nf+")", scaled),
-				fmt.Sprintf("="+nf, total))
-		case "si":
-			// 缩放取整：1+(1)=2（强制 floor，用于目标数等整数量）
-			x = drawScaleSegment(screen, fm, x, y, scaledClr,
-				fmt.Sprintf("%.0f+", math.Floor(def.Base)),
-				fmt.Sprintf("(%.0f)", math.Floor(scaled)),
-				fmt.Sprintf("=%.0f", math.Floor(total)))
-		case "p":
-			// 参数原值
-			txt := fmtNum(def.Param)
-			fm.DrawText(screen, txt, x, y, theme.FontSM, theme.TextMuted)
-			x += fm.MeasureText(txt, theme.FontSM)
-		case "p%":
-			// 参数百分比
-			txt := fmtNum(def.Param*100) + "%"
-			fm.DrawText(screen, txt, x, y, theme.FontSM, theme.TextMuted)
-			x += fm.MeasureText(txt, theme.FontSM)
+			fm.DrawText(screen, seg.Text, segX, y+1, theme.FontSM, clr)
+			segX += fm.MeasureText(seg.Text, theme.FontSM)
 		}
 	}
-}
-
-// drawScaleSegment 渲染 "base+(scaled)=total" 三段文本，中间段带颜色。
-func drawScaleSegment(screen *ebiten.Image, fm *render.FontManager, x, y float64, scaledClr color.Color, baseTxt, scaledTxt, totalTxt string) float64 {
-	fm.DrawText(screen, baseTxt, x, y, theme.FontSM, theme.TextBody)
-	x += fm.MeasureText(baseTxt, theme.FontSM)
-	fm.DrawText(screen, scaledTxt, x, y, theme.FontSM, scaledClr)
-	x += fm.MeasureText(scaledTxt, theme.FontSM)
-	fm.DrawText(screen, totalTxt, x, y, theme.FontSM, theme.TextBody)
-	x += fm.MeasureText(totalTxt, theme.FontSM)
-	return x
-}
-
-// fmtNum 格式化数字：整数不带小数点，非整数保留一位。
-func fmtNum(v float64) string {
-	if needsDecimal(v) {
-		return fmt.Sprintf("%.1f", v)
-	}
-	return fmt.Sprintf("%.0f", v)
-}
-
-// scaledColor 根据缩放值与潜力值的比较返回颜色。
-func scaledColor(scaled, potential float64) color.Color {
-	const eps = 0.001
-	diff := scaled - potential
-	if diff > eps {
-		return theme.StatusStrUp // 绿色：强度>100
-	}
-	if diff < -eps {
-		return theme.StatusStrDown // 红色：强度<100
-	}
-	return theme.TextBody // 白色：强度=100
-}
-
-// needsDecimal 判断数值是否需要小数位显示。
-func needsDecimal(v float64) bool {
-	return math.Abs(v-math.Round(v)) > 0.05
 }
 
 // drawStatIcon draws a stat icon at (x, y) with the given logical display size.
@@ -360,111 +280,23 @@ func drawStatIcon(screen *ebiten.Image, im *render.IconManager, name string, x, 
 	draw.Sprite(screen, img, x+size/2, y+size/2, size)
 }
 
-// fallbackIconMap 不在 AbilityTable 中的能力的图标映射。
-var fallbackIconMap = map[string]string{
-	"shieldIgnore": "armorPen",
-	"multishot":    "multishot",
-	"pulse":        "pulse",
-	"multiTarget":  "multishot",
-}
-
-// fallbackLabelMap 不在 AbilityTable 中的能力的显示标签。
-var fallbackLabelMap = map[string]string{
-	"shieldIgnore": "无视护盾",
-	"multishot":    "多重射击",
-	"pulse":        "脉冲",
-}
-
-// fallbackDescMap 不在 AbilityTable 中的能力的描述。
-var fallbackDescMap = map[string]string{
-	"shieldIgnore": "伤害无视护盾",
-	"multishot":    "多重射击",
-	"pulse":        "脉冲",
-}
-
-// ── 战力系统 HUD 辅助函数 ──
-
-// strengthBreakdown 生成战力加成分解文本，如 "↑(永+50 链+20)"。
-func strengthBreakdown(sd *strength.StrengthData) string {
-	if sd == nil {
-		return ""
-	}
-	var parts []string
-	if sd.Permanent > 0 {
-		parts = append(parts, fmt.Sprintf("永+%.0f", sd.Permanent))
-	}
-	if chain, ok := sd.Temp["chain"]; ok && chain > 0 {
-		parts = append(parts, fmt.Sprintf("链+%.0f", chain))
-	}
-	for key, val := range sd.Temp {
-		if key == "chain" || val <= 0 {
-			continue
-		}
-		parts = append(parts, fmt.Sprintf("+%.0f", val))
-	}
-	if len(parts) == 0 {
-		return ""
-	}
-	result := "↑("
-	for i, p := range parts {
-		if i > 0 {
-			result += " "
-		}
-		result += p
-	}
-	result += ")"
-	return result
-}
-
-// fmtAttr 格式化塔属性: "base+(scaled)=total"。
-// potential 为 0 时只显示总值。
-func fmtAttr(numFmt string, base, potential, effStr float64) string {
-	if potential == 0 {
-		return fmt.Sprintf(numFmt, base)
-	}
-	ratio := effStr / 100.0
-	if effStr == 0 {
-		ratio = 1.0 // 无强度数据时按100
-	}
-	scaled := potential * ratio
-	total := base + scaled
-	return fmt.Sprintf(numFmt+"+("+numFmt+")="+numFmt, base, scaled, total)
-}
-
-// attackStyleLabel 攻击方式中文标签。
-func attackStyleLabel(style string) string {
-	labels := map[string]string{
-		"projectile": "投射物",
-		"laser":      "激光",
-		"wideBeam":   "宽光束",
-		"scatter":    "散射",
-		"charge":     "蓄力",
-		"spin_aoe":   "旋转AoE",
-		"pierce":     "穿刺",
-		"aura_dot":   "范围毒伤",
-	}
-	if l, ok := labels[style]; ok {
-		return l
-	}
-	return style
-}
-
 // DrawInfoPanelHoverTooltip 悬停面板时的提示（已无等级系统，保留接口兼容）。
-func DrawInfoPanelHoverTooltip(screen *ebiten.Image, t *tower.Tower, mx, my float32) {
+func DrawInfoPanelHoverTooltip(screen *ebiten.Image, visible bool, mx, my float32) {
 }
 
 // InfoPanelUpgradeHitTest 检查是否点击了购买强度按钮。
-func InfoPanelUpgradeHitTest(px, py float32, t *tower.Tower) bool {
-	if t == nil || !lastPanelVisible {
+func InfoPanelUpgradeHitTest(px, py float32, visible bool) bool {
+	if !visible || !lastPanelVisible {
 		return false
 	}
 	return lastUpgradeRect.Contains(float64(px), float64(py))
 }
 
 // InfoPanelSellHitTest 检查是否点击了卖出按钮。
-func InfoPanelSellHitTest(px, py float32, t *tower.Tower) bool {
-	if t == nil || !lastPanelVisible {
+func InfoPanelSellHitTest(px, py float32, visible bool) bool {
+	if !visible || !lastPanelVisible {
 		return false
 	}
 	return lastSellRect.Contains(float64(px), float64(py))
 }
+

@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"image/color"
 
-	"defense2/internal/core/tower"
 	"defense2/internal/render"
 	"defense2/internal/render/draw"
 	"defense2/internal/render/theme"
@@ -14,14 +13,27 @@ import (
 	"github.com/hajimehoshi/ebiten/v2"
 )
 
+// BuildCardVM 建造菜单中单个塔卡片的展示数据（纯值类型）。
+type BuildCardVM struct {
+	Key         string
+	Label       string
+	Cost        int
+	Damage      float64
+	AttackSpeed float64
+	Range       float64
+	RoleTag     string     // 预计算的角色标签："输出·减速"/"辅助·光环"/...
+	RoleColor   color.RGBA // 角色标签颜色
+	TypeIcon    string     // 塔类型图标名："tower-freeze"/""
+	Sprite      *ebiten.Image // 预加载的精灵图
+}
+
 // BuildMenuData holds the runtime data the build menu needs to render.
 type BuildMenuData struct {
-	TowerDefs   []tower.TowerDef               // buildable tower types
-	SelectedIdx int                             // currently selected tower index
-	Gold        int                             // player's current gold
-	HoverIdx    int                             // mouse hover index (-1 = none)
-	SpriteFunc  func(key string) *ebiten.Image  // optional: returns tower sprite by key
-	Visible     bool                            // whether the build panel is open
+	Cards       []BuildCardVM // 替代 TowerDefs
+	SelectedIdx int
+	Gold        int
+	HoverIdx    int
+	Visible     bool
 }
 
 // Build panel constants
@@ -71,52 +83,9 @@ func calcBuildPanelMetrics(count int) buildPanelMetrics {
 	}
 }
 
-// towerTypeIcon returns the tower-type icon name for the given tower key.
-func towerTypeIcon(key string) string {
-	switch key {
-	case "freeze":
-		return "tower-freeze"
-	case "electric":
-		return "tower-electric"
-	case "hunter":
-		return "tower-hunter"
-	case "laser":
-		return "tower-laser"
-	default:
-		return ""
-	}
-}
-
-// towerRoleTags returns a role description for a tower based on its abilities.
-func towerRoleTags(def tower.TowerDef) (string, color.RGBA) {
-	for _, ab := range def.Abilities {
-		switch ab {
-		case "onHitSlow":
-			return "控制·减速", color.RGBA{R: 80, G: 180, B: 220, A: 255}
-		case "stun":
-			return "输出·眩晕", color.RGBA{R: 180, G: 120, B: 220, A: 255}
-		case "bounce":
-			return "输出·连锁", color.RGBA{R: 220, G: 180, B: 80, A: 255}
-		case "splash":
-			return "输出·溅射", color.RGBA{R: 220, G: 120, B: 80, A: 255}
-		case "bleedDot", "burn":
-			return "输出·持续", color.RGBA{R: 220, G: 80, B: 80, A: 255}
-		case "executionBonus", "percentHpDamage":
-			return "输出·斩杀", color.RGBA{R: 180, G: 60, B: 60, A: 255}
-		case "damageUpAura", "attackSpeedAura":
-			return "辅助·光环", color.RGBA{R: 80, G: 200, B: 120, A: 255}
-		case "poisonZone", "silenceZone":
-			return "控制·区域", color.RGBA{R: 100, G: 160, B: 200, A: 255}
-		case "goldOnKill", "goldPassive":
-			return "经济", color.RGBA{R: 220, G: 200, B: 80, A: 255}
-		}
-	}
-	return "输出", color.RGBA{R: 200, G: 200, B: 200, A: 200}
-}
-
 // DrawBuildMenu renders the build panel popup.
 func DrawBuildMenu(screen *ebiten.Image, d BuildMenuData) {
-	if !d.Visible || len(d.TowerDefs) == 0 {
+	if !d.Visible || len(d.Cards) == 0 {
 		return
 	}
 	fm := render.GlobalFont()
@@ -124,34 +93,29 @@ func DrawBuildMenu(screen *ebiten.Image, d BuildMenuData) {
 		return
 	}
 
-	m := calcBuildPanelMetrics(len(d.TowerDefs))
+	m := calcBuildPanelMetrics(len(d.Cards))
 
-	// Panel background + border
 	draw.RoundRect(screen, m.panelX, m.panelY, m.panelW, m.panelH,
 		float32(theme.CenterPanelRadius), theme.PanelBg)
 	draw.StrokeRoundRect(screen, m.panelX, m.panelY, m.panelW, m.panelH,
 		float32(theme.CenterPanelRadius), 1, theme.PanelBorder)
 
-	// Title: "建造炮塔"
 	titleX := float64(m.panelX) + float64(bpPadX)
 	titleY := float64(m.panelY) + 8
 	fm.DrawBoldText(screen, "建造炮塔", titleX, titleY, theme.FontLG, theme.TextTitle)
 
-	// Close button (right side)
 	closeX := float64(m.panelX) + float64(m.panelW) - float64(bpPadX) - 40
 	fm.DrawText(screen, "关闭", closeX, titleY+2, theme.FontMD, theme.TextMuted)
 
-	// Tower cards grid
-	for i, def := range d.TowerDefs {
+	for i, card := range d.Cards {
 		col := i % bpCols
 		row := i / bpCols
 		cx := m.gridX + float32(col)*(bpCardW+bpCardGap)
 		cy := m.gridY + float32(row)*(bpCardH+bpCardGap)
-		affordable := d.Gold >= def.Cost
+		affordable := d.Gold >= card.Cost
 		selected := i == d.SelectedIdx
 		hovered := i == d.HoverIdx
 
-		// Card background
 		cardBg := theme.BuildCardNormal
 		if selected {
 			cardBg = theme.BuildCardSelected
@@ -163,27 +127,25 @@ func DrawBuildMenu(screen *ebiten.Image, d BuildMenuData) {
 		}
 		draw.RoundRect(screen, cx, cy, bpCardW, bpCardH, bpCardR, cardBg)
 
-		// Selection border
 		if selected {
 			draw.StrokeRoundRect(screen, cx, cy, bpCardW, bpCardH, bpCardR, 2, theme.BuildCardSelBorder)
 		}
 
-		// Tower name (left) + cost (left below)
 		nameX := float64(cx) + 8
 		nameY := float64(cy) + 6
-		fm.DrawBoldText(screen, def.Label, nameX, nameY, theme.FontMD, color.White)
+		fm.DrawBoldText(screen, card.Label, nameX, nameY, theme.FontMD, color.White)
 
-		costTxt := fmt.Sprintf("%dG", def.Cost)
+		costTxt := fmt.Sprintf("%dG", card.Cost)
 		costClr := theme.BuildCostColor
 		if !affordable {
 			costClr = color.RGBA{R: 200, G: 80, B: 80, A: 200}
 		}
 		fm.DrawText(screen, costTxt, nameX, nameY+16, theme.FontSM, costClr)
 
-		// Tower-type icon badge (top-right corner)
-		if towerIcon := towerTypeIcon(def.Key); towerIcon != "" {
+		// Tower-type icon badge
+		if card.TypeIcon != "" {
 			if im := render.GlobalIcons(); im != nil {
-				if img := im.Get(towerIcon); img != nil {
+				if img := im.Get(card.TypeIcon); img != nil {
 					badgeX := float64(cx) + float64(bpCardW) - 16
 					badgeY := float64(cy) + 4
 					draw.Sprite(screen, img, badgeX, badgeY+6, 12)
@@ -192,27 +154,24 @@ func DrawBuildMenu(screen *ebiten.Image, d BuildMenuData) {
 		}
 
 		// Role tag
-		role, roleClr := towerRoleTags(def)
-		fm.DrawText(screen, role, nameX, float64(cy)+float64(bpCardH)-16, theme.FontXS, roleClr)
+		fm.DrawText(screen, card.RoleTag, nameX, float64(cy)+float64(bpCardH)-16, theme.FontXS, card.RoleColor)
 
-		// Sprite preview (right side of card)
-		if d.SpriteFunc != nil {
-			if img := d.SpriteFunc(def.Key); img != nil {
-				spriteX := float64(cx) + float64(bpCardW) - 26
-				spriteY := float64(cy) + float64(bpCardH)/2
-				draw.Sprite(screen, img, spriteX, spriteY, 36)
-			}
+		// Sprite preview
+		if card.Sprite != nil {
+			spriteX := float64(cx) + float64(bpCardW) - 26
+			spriteY := float64(cy) + float64(bpCardH)/2
+			draw.Sprite(screen, card.Sprite, spriteX, spriteY, 36)
 		}
 	}
 
 	// Hover tooltip
-	if d.HoverIdx >= 0 && d.HoverIdx < len(d.TowerDefs) {
-		drawBuildTooltip(screen, fm, d.TowerDefs[d.HoverIdx], m)
+	if d.HoverIdx >= 0 && d.HoverIdx < len(d.Cards) {
+		drawBuildCardTooltip(screen, fm, d.Cards[d.HoverIdx], m)
 	}
 }
 
-// drawBuildTooltip renders a small stats tooltip above the build panel.
-func drawBuildTooltip(screen *ebiten.Image, fm *render.FontManager, def tower.TowerDef, m buildPanelMetrics) {
+// drawBuildCardTooltip renders a small stats tooltip above the build panel.
+func drawBuildCardTooltip(screen *ebiten.Image, fm *render.FontManager, card BuildCardVM, m buildPanelMetrics) {
 	const (
 		tipW = float32(240)
 		tipH = float32(70)
@@ -227,25 +186,22 @@ func drawBuildTooltip(screen *ebiten.Image, fm *render.FontManager, def tower.To
 	tx := float64(tipX) + 12
 	ty := float64(tipY) + 8
 
-	// Tower name + cost
-	role, roleClr := towerRoleTags(def)
-	fm.DrawBoldText(screen, def.Label, tx, ty, theme.FontLG, theme.TextTitle)
-	fm.DrawText(screen, fmt.Sprintf("%s · %dG", role, def.Cost), tx, ty+18, theme.FontSM, roleClr)
+	fm.DrawBoldText(screen, card.Label, tx, ty, theme.FontLG, theme.TextTitle)
+	fm.DrawText(screen, fmt.Sprintf("%s · %dG", card.RoleTag, card.Cost), tx, ty+18, theme.FontSM, card.RoleColor)
 
-	// Stats row with icons
 	ty += 38
 	im := render.GlobalIcons()
 	const tipIconSz = 12.0
 	const tipIconGap = 4.0
 
 	drawStatIcon(screen, im, "stat-damage", tx, ty, tipIconSz)
-	fm.DrawText(screen, fmt.Sprintf("%.0f", def.Damage), tx+tipIconSz+tipIconGap, ty, theme.FontSM, theme.InfoAttrDamage)
+	fm.DrawText(screen, fmt.Sprintf("%.0f", card.Damage), tx+tipIconSz+tipIconGap, ty, theme.FontSM, theme.InfoAttrDamage)
 
 	drawStatIcon(screen, im, "stat-atkspd", tx+60, ty, tipIconSz)
-	fm.DrawText(screen, fmt.Sprintf("%.2fs", 1.0/def.AttackSpeed), tx+60+tipIconSz+tipIconGap, ty, theme.FontSM, theme.InfoAttrAtkSpd)
+	fm.DrawText(screen, fmt.Sprintf("%.2fs", 1.0/card.AttackSpeed), tx+60+tipIconSz+tipIconGap, ty, theme.FontSM, theme.InfoAttrAtkSpd)
 
 	drawStatIcon(screen, im, "stat-range", tx+140, ty, tipIconSz)
-	fm.DrawText(screen, fmt.Sprintf("%.0f", def.Range), tx+140+tipIconSz+tipIconGap, ty, theme.FontSM, theme.InfoAttrRange)
+	fm.DrawText(screen, fmt.Sprintf("%.0f", card.Range), tx+140+tipIconSz+tipIconGap, ty, theme.FontSM, theme.InfoAttrRange)
 }
 
 // BuildMenuHitTest returns the tower card index hit by (px, py), or -1.

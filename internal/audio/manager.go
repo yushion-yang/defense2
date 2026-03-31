@@ -66,15 +66,36 @@ func (m *Manager) LoadWAV(name string, data []byte) error {
 	return nil
 }
 
-// Play 播放已缓存的音效。未缓存的音效静默忽略。
+// 分类音量倍率（相对于主音量的比例，0.0 ~ 1.0）。
+const (
+	VolUI     = 0.6 // UI 点击、面板开关
+	VolBuild  = 0.7 // 建塔、卖塔、升级
+	VolFire   = 0.35 // 射击（高频，必须最低）
+	VolHit    = 0.4  // 命中（高频）
+	VolKill   = 0.55 // 击杀、死亡
+	VolWave   = 0.7  // 开波、清波、Boss 出场
+	VolSkill  = 0.6  // 技能释放
+	VolExplo  = 0.45 // 爆炸、雷击等大特效
+	VolWarden = 0.5  // 战灵
+)
+
+// Play 播放已缓存的音效（使用主音量）。未缓存的音效静默忽略。
 func (m *Manager) Play(name string) {
+	m.PlayAt(name, 1.0)
+}
+
+// PlayAt 以指定音量倍率播放音效。finalVol = masterVolume * scale。
+func (m *Manager) PlayAt(name string, scale float64) {
 	m.mu.Lock()
 	pcm, ok := m.cache[name]
-	vol := m.volume
+	vol := m.volume * scale
 	m.mu.Unlock()
 
 	if !ok || vol <= 0 {
 		return
+	}
+	if vol > 1 {
+		vol = 1
 	}
 
 	player := m.context.NewPlayerFromBytes(pcm)
@@ -225,10 +246,15 @@ func snakeToCamel(s string) string {
 	return strings.Join(parts, "")
 }
 
-// PlayThrottled 带 per-sound 节流的播放。
+// PlayThrottled 带 per-sound 节流的播放（主音量）。
 // intervalMs=0 时等同于 Play（无节流）。
 // 同一 name 在 intervalMs 毫秒内只播放一次，后续调用静默跳过。
 func (m *Manager) PlayThrottled(name string, intervalMs int) {
+	m.PlayThrottledAt(name, intervalMs, 1.0)
+}
+
+// PlayThrottledAt 带 per-sound 节流和音量倍率的播放。
+func (m *Manager) PlayThrottledAt(name string, intervalMs int, scale float64) {
 	if intervalMs > 0 {
 		now := time.Now()
 		m.mu.Lock()
@@ -240,15 +266,20 @@ func (m *Manager) PlayThrottled(name string, intervalMs int) {
 		m.throttle[name] = now
 		m.mu.Unlock()
 	}
-	m.Play(name)
+	m.PlayAt(name, scale)
 }
 
-// PlaySafe 安全播放音效，出错时仅打印日志不崩溃。
+// PlaySafe 安全播放音效（主音量），出错时仅打印日志不崩溃。
 func (m *Manager) PlaySafe(name string) {
+	m.PlaySafeAt(name, 1.0)
+}
+
+// PlaySafeAt 安全播放音效（带音量倍率），出错时仅打印日志不崩溃。
+func (m *Manager) PlaySafeAt(name string, scale float64) {
 	defer func() {
 		if r := recover(); r != nil {
 			log.Printf("音效播放异常 %s: %v", name, r)
 		}
 	}()
-	m.Play(name)
+	m.PlayAt(name, scale)
 }

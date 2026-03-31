@@ -53,81 +53,13 @@ import (
 	"github.com/hajimehoshi/ebiten/v2/inpututil"
 )
 
-// stageState 游戏主场景的胜负状态。
-type stageState int
-
-const (
-	statePlaying stageState = iota // 游戏进行中
-	stateVictory                   // 玩家胜利
-	stateDefeat                    // 玩家失败
-)
-
-// interactMode 交互状态机。
-// 控制玩家当前的操作模式和 UI 显示。
-//
-// 状态流转图：
-//
-//	                ┌─────────────────────────┐
-//	                │        modeIdle         │ ◄── 默认状态
-//	                └──┬────┬────┬────┬───────┘
-//	   点击"造塔"/B    │    │    │    │ 点击已有塔
-//	                ▼    │    │    │    ▼
-//	         ┌──────────┐│    │    │ ┌──────────────┐
-//	         │modeBuild-││    │    │ │modeTowerSel  │
-//	         │  Menu    ││    │    │ │（显示面板+射程）│
-//	         └──┬───────┘│    │    │ └──┬───────────┘
-//	选择塔型    │        │    │    │    │ 点空地/ESC
-//	         ▼        │    │    │    ▼
-//	   ┌───────────┐  │    │    │  → modeIdle
-//	   │modeBuild- │  │    │    │
-//	   │  Place    │  │    │    │
-//	   │（放塔模式） │  │    │    │
-//	   └───────────┘  │    │    │
-//	放塔后保持/ESC退出│    │    │
-//	                  │    │    │
-//	        事件触发  ▼    │    │
-//	         ┌──────────┐ │    │
-//	         │modeEvent │ │    │
-//	         │（选择事件）│ │    │
-//	         └──────────┘ │    │
-//	                      │    │
-//	           菜单按钮   ▼    │
-//	            ┌───────────┐  │
-//	            │modePaused │  │
-//	            └───────────┘  │
-type interactMode int
-
-const (
-	modeIdle         interactMode = iota // 空闲：观察游戏
-	modeBuildMenu                        // 建塔面板打开：选择塔类型
-	modeBuildPlace                       // 放塔模式：已选塔型，点击可建位放塔
-	modeTowerSel                         // 塔选中：显示信息面板+射程
-	modeSpawnMenu                        // 造怪菜单：选择敌人类型
-	modeSpawnPlace                       // 造怪放置：点击地图放置敌人
-	modeEvent                            // 事件选择：弹窗选事件
-	modePaused                           // 暂停菜单
-	modeWardenSelect                     // 战灵选择覆盖层
-)
-
-// StageOptions 创建 StageScene 的配置选项。
-type StageOptions struct {
-	MapID        string
-	WardenType   string
-	ModeID       string // 游戏模式 ID（默认 "campaign"）
-	DifficultyID string // 难度 ID（默认 "normal"）
-	Gold         int    // 0 = 默认（由难度决定）
-	Lives        int    // 0 = 默认 20
-	Waves        int    // 0 = 地图默认; -1 = 无波次
-	TestMode     bool   // 测试模式（启用调试面板）
-	ScenarioID   string // 测试场景 ID
-	EnemyFilter  string // ground-only/flying-only/elite-only/boss-only/all-static/mixed/stress/dummy/none
-	ManualWave   bool   // 仅手动开波
-}
+// 类型定义 (stageState/interactMode/StageOptions) 已移至 stage_types.go。
 
 // StageScene 游戏主场景，包含所有运行时游戏状态。
 type StageScene struct {
 	switcher          Switcher                     // 场景切换器引用
 	bus               *event.Bus                   // 事件总线（从 Switcher 获取）
+	busSubscribed     bool                         // Bus 订阅是否已完成（延迟到首次 Update）
 	session           *gamemode.Session            // 游戏模式会话
 	modeID            string                       // 模式 ID（用于重玩）
 	diffID            string                       // 难度 ID（用于重玩）
@@ -395,12 +327,8 @@ func NewStageSceneWithOpts(sw Switcher, opts StageOptions) *StageScene {
 		s.spawnAllStatic()
 	}
 
-	// 事件总线订阅
+	// 事件总线引用（订阅延迟到首次 Update，避免被场景切换淡出的 bus.Clear 清掉）
 	s.bus = sw.EventBus()
-	s.subscribeBus()
-
-	// 触发教程首步
-	tut.OnEvent("gameStart")
 
 	return s
 }
@@ -413,22 +341,22 @@ func (s *StageScene) subscribeBus() {
 	// ── 塔事件 ──────────────────────────────────
 	event.OnTyped(bus, event.EvtTowerBuilt, func(p event.TowerBuiltPayload) {
 		s.session.OnTowerBuilt()
-		s.audioMgr.PlaySafe(gameAudio.SFXBuild)
+		s.audioMgr.PlaySafeAt(gameAudio.SFXBuild, gameAudio.VolBuild)
 		s.tutorial.OnEvent("towerBuilt")
 	})
 	event.OnTyped(bus, event.EvtTowerUpgraded, func(_ event.TowerUpgradedPayload) {
-		s.audioMgr.PlaySafe(gameAudio.SFXUpgrade)
+		s.audioMgr.PlaySafeAt(gameAudio.SFXUpgrade, gameAudio.VolBuild)
 	})
 	event.OnTyped(bus, event.EvtTowerSold, func(_ event.TowerSoldPayload) {
-		s.audioMgr.PlaySafe(gameAudio.SFXTowerSell)
+		s.audioMgr.PlaySafeAt(gameAudio.SFXTowerSell, gameAudio.VolBuild)
 	})
 
 	// ── 波次事件 ─────────────────────────────────
 	event.OnTyped(bus, event.EvtWaveStarted, func(p event.WaveStartedPayload) {
 		s.session.OnWaveStart(p.Wave, s.buildModeCtx())
-		s.audioMgr.PlaySafe(gameAudio.SFXWaveStart)
+		s.audioMgr.PlaySafeAt(gameAudio.SFXWaveStart, gameAudio.VolWave)
 		if p.IsBoss {
-			s.audioMgr.PlaySafe(gameAudio.SFXBossEnter)
+			s.audioMgr.PlaySafeAt(gameAudio.SFXBossEnter, gameAudio.VolWave)
 		}
 		s.waveAnnounce.Trigger(p.Wave, s.spawner.MaxWaves, p.IsBoss)
 		s.tutorial.OnEvent("waveStarted")
@@ -438,9 +366,9 @@ func (s *StageScene) subscribeBus() {
 			s.wardenUnit.OnWaveClear()
 		}
 		if p.Perfect {
-			s.audioMgr.PlaySafe(gameAudio.SFXWaveClearPerfect)
+			s.audioMgr.PlaySafeAt(gameAudio.SFXWaveClearPerfect, gameAudio.VolWave)
 		} else {
-			s.audioMgr.PlaySafe(gameAudio.SFXWaveClear)
+			s.audioMgr.PlaySafeAt(gameAudio.SFXWaveClear, gameAudio.VolWave)
 		}
 		s.tutorial.OnEvent("waveCleared")
 	})
@@ -448,7 +376,7 @@ func (s *StageScene) subscribeBus() {
 	// ── 敌人事件 ─────────────────────────────────
 	event.OnTyped(bus, event.EvtEnemyLeaked, func(_ event.EnemyLeakedPayload) {
 		s.session.OnEnemyLeaked(s.buildModeCtx())
-		s.audioMgr.PlaySafe(gameAudio.SFXEnemyLeak)
+		s.audioMgr.PlaySafeAt(gameAudio.SFXEnemyLeak, gameAudio.VolWave)
 	})
 	event.OnTyped(bus, event.EvtEnemyKilled, func(p event.EnemyKilledPayload) {
 		s.kills++
@@ -530,6 +458,12 @@ func (s *StageScene) spawnAllStatic() {
 
 // Update 每帧逻辑更新：根据游戏状态分发输入处理和游戏逻辑。
 func (s *StageScene) Update() error {
+	// 延迟订阅 Bus：避免在构造函数中订阅后被场景切换淡出的 bus.Clear() 清掉
+	if !s.busSubscribed {
+		s.busSubscribed = true
+		s.subscribeBus()
+		s.tutorial.OnEvent("gameStart")
+	}
 	s.frame++
 
 	// F12 / 截图按钮：任意状态可用（不受交互模式限制）
@@ -592,7 +526,7 @@ func (s *StageScene) Update() error {
 		}
 		// 胜利/失败状态：点击/触摸进入结算场景
 		if isTapJustPressed() {
-			s.audioMgr.PlaySafe(gameAudio.SFXUIClick)
+			s.audioMgr.PlaySafeAt(gameAudio.SFXUIClick, gameAudio.VolUI)
 			s.switcher.SwitchScene(NewResultScene(s.switcher, ResultData{
 				MapID:        s.gameMap.Config.ID,
 				MapName:      s.gameMap.Config.Name,
@@ -622,451 +556,9 @@ func (s *StageScene) Update() error {
 	return nil
 }
 
-// handleInput 基于手势识别器 + 交互状态机处理输入。
-// Gesture 在 Update 中统一判定 Tap/Drag/Scroll：
-//   - Drag: 实时平移相机（按住移动中每帧更新）
-//   - Tap:  松开时触发游戏操作（仅未拖拽时）
-//   - Scroll: 触控板双指滚动平移相机
-func (s *StageScene) handleInput() {
-	g := s.gesture
-	// 状态机控制拖拽权限
-	switch s.imode {
-	case modeIdle, modeBuildPlace, modeTowerSel, modeSpawnPlace:
-		g.DragEnabled = s.needsCamera()
-	default: // modeBuildMenu, modeSpawnMenu, modeEvent, modePaused
-		g.DragEnabled = false
-	}
-	g.Update()
 
-	mx, my := g.CursorPos()
-	fmx, fmy := float32(mx), float32(my)
+// handleInput 等输入方法已移至 stage_input.go。
 
-	// ── 拖拽 → 平移相机（实时，每帧） ──
-	if g.IsDragging() && s.needsCamera() {
-		dx, dy := g.DragDelta()
-		s.camX -= dx
-		s.camY -= dy
-		s.clampCamera()
-	}
-
-	// ── 滚轮 ──
-	_, sy := g.ScrollDelta()
-	// 调试面板打开时，滚轮用于面板滚动
-	if sy != 0 && s.debugPanelOpen {
-		hud.DebugPanelScroll(sy)
-	} else if sy != 0 && s.needsCamera() {
-		s.camY -= sy * 3
-		s.clampCamera()
-	}
-
-	// ── Hover 更新 ──
-	if s.imode == modeSpawnMenu {
-		s.spawnHoverIdx = hud.SpawnMenuHoverTest(fmx, fmy, len(s.spawnEntries()))
-	} else {
-		s.spawnHoverIdx = -1
-	}
-
-	// ── 键盘快捷键 ──
-	if inpututil.IsKeyJustPressed(ebiten.KeyEscape) {
-		switch s.imode {
-		case modeBuildMenu, modeBuildPlace:
-			s.selectedTower = nil
-			s.imode = modeIdle
-		case modeTowerSel:
-			s.selectedTower = nil
-			s.imode = modeIdle
-		case modeSpawnMenu, modeSpawnPlace:
-			s.spawnMode = false
-			s.spawnType = ""
-			s.imode = modeIdle
-		default:
-			// modeIdle 等: ESC 打开暂停菜单（而非直接退出对局）
-			s.prePauseMode = s.imode
-			s.imode = modePaused
-		}
-		return
-	}
-	if inpututil.IsKeyJustPressed(ebiten.KeyB) {
-		if s.imode == modeBuildMenu {
-			s.imode = modeIdle
-		} else {
-			s.imode = modeBuildMenu
-			s.selectedTower = nil
-		}
-		return
-	}
-	if inpututil.IsKeyJustPressed(ebiten.KeyU) && s.imode == modeTowerSel {
-		s.tryUpgradeTower()
-		return
-	}
-	if inpututil.IsKeyJustPressed(ebiten.KeyS) {
-		if !s.spawner.WaveActive && !s.spawner.AllDone {
-			s.tryStartWave()
-		}
-	}
-	if inpututil.IsKeyJustPressed(ebiten.Key1) {
-		s.gameSpeed = 1
-	}
-	if inpututil.IsKeyJustPressed(ebiten.Key2) {
-		s.gameSpeed = 2
-	}
-	if inpututil.IsKeyJustPressed(ebiten.Key3) {
-		s.gameSpeed = 3
-	}
-	if inpututil.IsKeyJustPressed(ebiten.KeyP) {
-		if s.imode == modePaused {
-			s.imode = s.prePauseMode
-		} else {
-			s.prePauseMode = s.imode
-			s.imode = modePaused
-		}
-	}
-	if inpututil.IsKeyJustPressed(ebiten.KeyDelete) || inpututil.IsKeyJustPressed(ebiten.KeyBackspace) {
-		if s.imode == modeTowerSel && s.selectedTower != nil {
-			s.trySellTower(s.selectedTower.X, s.selectedTower.Y)
-		}
-	}
-
-	// F2: 调试覆盖层（性能统计，任何模式可用）
-	if inpututil.IsKeyJustPressed(ebiten.KeyF2) {
-		s.debugOverlay.Toggle()
-	}
-
-	// 测试模式专用快捷键
-	if s.testMode {
-		if inpututil.IsKeyJustPressed(ebiten.KeyD) {
-			s.debugPanelOpen = !s.debugPanelOpen
-		}
-		if inpututil.IsKeyJustPressed(ebiten.KeyG) {
-			s.gold += 500
-			hud.ShowToast("+500 金币")
-		}
-		if inpututil.IsKeyJustPressed(ebiten.KeyK) {
-			s.enemies.Each(func(e *enemy.Enemy) {
-				e.HP = 0
-			})
-			hud.ShowToast("清除全场敌人")
-		}
-		if inpututil.IsKeyJustPressed(ebiten.KeyN) {
-			s.enemies.Each(func(e *enemy.Enemy) {
-				e.HP = 0
-			})
-			s.spawner.WaveActive = false
-			s.spawner.StartNextWave()
-			hud.ShowToast("跳到下一波")
-		}
-	}
-
-	// ── Hover 更新（每帧） ──
-	if s.imode == modeBuildMenu {
-		s.buildHoverIdx = hud.BuildMenuHoverTest(fmx, fmy, len(s.towerDefs))
-	} else {
-		s.buildHoverIdx = -1
-	}
-
-	// ── Tap → 游戏操作（仅在 Gesture 判定为 Tap 时执行） ──
-	if !g.JustTapped() {
-		return
-	}
-	tapX, tapY := g.TapPos()
-	ftx, fty := float32(tapX), float32(tapY)
-	wtx, wty := s.screenToWorld(tapX, tapY)
-
-	// 调试面板点击（优先级最高）
-	if s.testMode && s.debugPanelOpen {
-		actions := s.debugActions()
-		idx := hud.DebugPanelHitTest(ftx, fty, actions)
-		if idx == -2 {
-			s.debugPanelOpen = false // 关闭按钮
-			return
-		}
-		if idx >= 0 && idx < len(actions) && actions[idx].Action != nil {
-			actions[idx].Action()
-			return // consume click
-		}
-	}
-
-	// 左下角切换按钮（波次面板）
-	if hud.ToggleButtonHitTest(ftx, fty, true) {
-		s.wavePanelOpen = !s.wavePanelOpen
-		return
-	}
-	// 右下角切换按钮（战灵面板，与建塔菜单互斥）
-	if hud.ToggleButtonHitTest(ftx, fty, false) {
-		s.wardenPanelOpen = !s.wardenPanelOpen
-		if s.wardenPanelOpen {
-			// 关闭建塔菜单
-			if s.imode == modeBuildMenu || s.imode == modeBuildPlace {
-				s.imode = modeIdle
-			}
-			s.selectedTower = nil
-		}
-		return
-	}
-
-	// TopBar 按钮（屏幕坐标）
-	topBtn := hud.TopBarHitTest(ftx, fty)
-	switch topBtn {
-	case "start":
-		if !s.spawner.WaveActive && !s.spawner.AllDone {
-			s.tryStartWave()
-		}
-		return
-	case "speed":
-		if s.testMode {
-			// 测试模式: 1 → 2 → 3 → 10(turbo) → 1
-			switch s.gameSpeed {
-			case 1:
-				s.gameSpeed = 2
-			case 2:
-				s.gameSpeed = 3
-			case 3:
-				s.gameSpeed = 10
-			default:
-				s.gameSpeed = 1
-			}
-		} else {
-			// 普通模式: 1 → 2 → 1
-			if s.gameSpeed == 1 {
-				s.gameSpeed = 2
-			} else {
-				s.gameSpeed = 1
-			}
-		}
-		return
-	case "menu":
-		s.imode = modePaused
-		return
-	case "build":
-		if s.imode == modeBuildMenu {
-			s.imode = modeIdle
-		} else {
-			s.imode = modeBuildMenu
-			s.selectedTower = nil
-			s.wardenPanelOpen = false // 与战灵面板互斥
-		}
-		return
-	case "spawn":
-		if s.imode == modeSpawnMenu || s.imode == modeSpawnPlace {
-			s.imode = modeIdle
-			s.spawnMode = false
-			s.spawnType = ""
-		} else {
-			s.imode = modeSpawnMenu
-			s.spawnMode = true
-			s.spawnType = ""
-			s.selectedTower = nil
-		}
-		return
-	case "debug":
-		s.debugPanelOpen = !s.debugPanelOpen
-		return
-	}
-
-	// 按交互模式分发 Tap
-	switch s.imode {
-	case modeIdle:
-		clicked := s.towerAtPixel(wtx, wty)
-		if clicked != nil {
-			s.selectedTower = clicked
-			s.imode = modeTowerSel
-		} else if s.wardenPanelOpen {
-			s.wardenPanelOpen = false // 点击空地收起战灵面板
-		}
-
-	case modeBuildMenu:
-		idx := hud.BuildMenuHitTest(ftx, fty, len(s.towerDefs))
-		if idx == -2 || idx == -1 {
-			s.imode = modeIdle // 点击关闭按钮或面板外部 → 关闭
-		} else if idx >= 0 {
-			s.selectedDef = idx
-			s.selectedTower = nil
-			s.imode = modeBuildPlace
-		}
-
-	case modeBuildPlace:
-		placed := s.tryPlaceTower(wtx, wty)
-		if placed {
-			s.imode = modeIdle // 放完一个回到空闲，需重新选择
-		} else if s.towerAtPixel(wtx, wty) != nil {
-			hud.ShowToast("此位置已有塔")
-		}
-
-	case modeSpawnMenu:
-		// 造怪菜单：点击选择敌人类型
-		entries := s.spawnEntries()
-		if idx := hud.SpawnMenuHitTest(ftx, fty, len(entries)); idx >= 0 {
-			s.spawnType = entries[idx].Name
-			s.imode = modeSpawnPlace
-			label := entries[idx].Name
-			if entries[idx].Config != nil && entries[idx].Config.Label != "" {
-				label = entries[idx].Config.Label
-			}
-			hud.ShowToast("点击地图放置: " + label)
-		} else {
-			// 点击菜单外部 → 关闭
-			s.imode = modeIdle
-			s.spawnMode = false
-			s.spawnType = ""
-		}
-
-	case modeSpawnPlace:
-		// 造怪放置：点击地图放置静止敌人（baseHP=100, baseSpeed=0 → 静止）
-		if cfg, ok := s.spawner.Archetypes[s.spawnType]; ok {
-			s.enemies.Spawn(wtx, wty, 100, 0, 0, s.spawnType, cfg)
-			label := s.spawnType
-			if cfg.Label != "" {
-				label = cfg.Label
-			}
-			hud.ShowToast("已放置: " + label)
-		}
-		// 放完后留在放置模式，可继续放置同类敌人
-
-	case modeTowerSel:
-		if hud.InfoPanelUpgradeHitTest(ftx, fty, s.selectedTower) {
-			s.tryUpgradeTower()
-		} else if hud.InfoPanelSellHitTest(ftx, fty, s.selectedTower) {
-			s.trySellTower(s.selectedTower.X, s.selectedTower.Y)
-			s.imode = modeIdle
-		} else {
-			clicked := s.towerAtPixel(wtx, wty)
-			if clicked != nil && clicked != s.selectedTower {
-				s.selectedTower = clicked
-			} else {
-				s.selectedTower = nil
-				s.imode = modeIdle
-			}
-		}
-	}
-}
-
-// handlePausedInput 暂停菜单输入：按钮点击 + 键盘。
-func (s *StageScene) handlePausedInput() {
-	s.gesture.Update()
-	if inpututil.IsKeyJustPressed(ebiten.KeyEscape) || inpututil.IsKeyJustPressed(ebiten.KeyP) || inpututil.IsKeyJustPressed(ebiten.KeySpace) {
-		s.imode = s.prePauseMode // 恢复暂停前的模式
-		return
-	}
-	if s.gesture.JustTapped() {
-		tx, ty := s.gesture.TapPos()
-		action := hud.PauseMenuHitTest(float32(tx), float32(ty))
-		switch action {
-		case hud.PauseResume:
-			s.audioMgr.PlaySafe(gameAudio.SFXUIClick)
-			s.imode = s.prePauseMode // 恢复暂停前的模式
-		case hud.PauseRestart:
-			s.audioMgr.PlaySafe(gameAudio.SFXUIClick)
-			s.switcher.SwitchScene(NewStageSceneWithOpts(s.switcher, s.initOpts))
-		case hud.PauseQuit:
-			s.audioMgr.PlaySafe(gameAudio.SFXUIClick)
-			s.switcher.SwitchScene(NewSelectScene(s.switcher))
-		}
-	}
-}
-
-// tryUpgradeTower 为选中的塔购买 10 点永久强度。
-func (s *StageScene) tryUpgradeTower() {
-	t := s.selectedTower
-	if t == nil {
-		return
-	}
-	cost := tower.StrengthBuyCost
-	if s.gold < cost {
-		return
-	}
-	spent := t.BuyStrength()
-	s.gold -= spent
-	// 通过战力系统增加永久强度
-	if t.Strength != nil {
-		t.Strength.AddPermanent(10)
-	}
-	s.bus.Emit(event.EvtTowerUpgraded, event.TowerUpgradedPayload{TowerKey: t.Key, Spent: spent})
-	s.showNotify(fmt.Sprintf("强度+10 (-$%d)", spent))
-}
-
-// towerAtPixel 返回像素位置上的塔，无塔返回 nil。
-// screenToWorld 将屏幕坐标转换为世界坐标（加上相机偏移）。
-
-// newStageGesture 创建配置好的手势识别器。
-func newStageGesture() *input.Gesture {
-	g := input.NewGesture()
-	g.ToLogical = func(x, y float64) (float64, float64) {
-		return x / draw.Scale, y / draw.Scale
-	}
-	g.IsOnUI = func(x, y float64) bool {
-		fx, fy := float32(x), float32(y)
-		if hud.TopBarHitTest(fx, fy) != "" {
-			return true
-		}
-		// 左下/右下角切换按钮
-		if hud.ToggleButtonHitTest(fx, fy, true) || hud.ToggleButtonHitTest(fx, fy, false) {
-			return true
-		}
-		if y > float64(game.ScreenHeight)-120 {
-			return true
-		}
-		return false
-	}
-	return g
-}
-
-// screenToWorld 将屏幕坐标转换为世界坐标（加上相机偏移）。
-func (s *StageScene) screenToWorld(sx, sy float64) (float64, float64) {
-	return sx + s.camX, sy + s.camY
-}
-
-// clampCamera 将相机偏移夹紧到地图范围内。
-func (s *StageScene) clampCamera() {
-	mapW := s.gameMap.Width()
-	mapH := s.gameMap.Height()
-	screenW := float64(game.ScreenWidth)
-	screenH := float64(game.ScreenHeight)
-
-	// 地图小于等于屏幕时不允许滚动
-	maxX := mapW + s.gameMap.OffsetX*2 - screenW
-	maxY := mapH + s.gameMap.OffsetY*2 - screenH
-	if maxX < 0 {
-		maxX = 0
-	}
-	if maxY < 0 {
-		maxY = 0
-	}
-
-	if s.camX < 0 {
-		s.camX = 0
-	}
-	if s.camX > maxX {
-		s.camX = maxX
-	}
-	if s.camY < 0 {
-		s.camY = 0
-	}
-	if s.camY > maxY {
-		s.camY = maxY
-	}
-}
-
-// needsCamera 返回地图是否需要相机（大于屏幕）。
-func (s *StageScene) needsCamera() bool {
-	mapW := s.gameMap.Width() + s.gameMap.OffsetX*2
-	mapH := s.gameMap.Height() + s.gameMap.OffsetY*2
-	return mapW > float64(game.ScreenWidth) || mapH > float64(game.ScreenHeight)
-}
-
-func (s *StageScene) towerAtPixel(px, py float64) *tower.Tower {
-	gm := s.gameMap
-	cs := float64(gm.CellSize)
-	fx := (px - gm.OffsetX) / cs
-	fy := (py - gm.OffsetY) / cs
-	if fx < 0 || fy < 0 {
-		return nil
-	}
-	t := s.towers.At(int(fy), int(fx))
-	if t != nil && t.Selling {
-		return nil // selling towers are not selectable
-	}
-	return t
-}
 
 // tryPlaceTower 尝试在像素位置放置当前选中类型的塔。
 func (s *StageScene) tryPlaceTower(px, py float64) bool {
@@ -1133,7 +625,7 @@ func (s *StageScene) trySellTower(px, py float64) {
 	render.SpawnGoldText(t.X, t.Y-10, refund)
 	s.selectedTower = nil
 	s.bus.Emit(event.EvtTowerSold, event.TowerSoldPayload{TowerKey: t.Key, Refund: refund})
-	s.showNotify(fmt.Sprintf("Sold +$%d", refund))
+	s.showNotify(fmt.Sprintf("已卖出 +$%d", refund))
 }
 
 // showNotify 显示屏幕中央通知（通过 toast 系统，自动淡出）。
@@ -1430,15 +922,15 @@ func (s *StageScene) updatePlaying() {
 			Projectiles: s.projectiles,
 			DT:          gameDT,
 			OnKill: func(e *enemy.Enemy) {
-				s.audioMgr.PlaySafe(gameAudio.SFXEnemyDeath)
+				s.audioMgr.PlaySafeAt(gameAudio.SFXEnemyDeath, gameAudio.VolKill)
 				s.emitKill(e.Boss, "warden")
 			},
 			OnFire: func() {
-				s.audioMgr.PlayThrottled(gameAudio.SFXWardenFire, 100)
+				s.audioMgr.PlayThrottledAt(gameAudio.SFXWardenFire, 100, gameAudio.VolWarden)
 			},
 			OnSpecial: func() {
 				sfx := wardenSpecialSFX(s.wardenType)
-				s.audioMgr.PlayThrottled(sfx, 200)
+				s.audioMgr.PlayThrottledAt(sfx, 200, gameAudio.VolWarden)
 			},
 			OnDamage: func(x, y, dmg float64, crit bool) {
 				render.SpawnDamageText(x, y, dmg, crit)
@@ -1576,7 +1068,7 @@ func (s *StageScene) updatePlaying() {
 
 	// 7. 塔索敌射击（按攻击方式分发）
 	pipeline.TickTowerCombat(s.towers, s.enemies, s.projectiles, s.beams, gameDT, func(t *tower.Tower, style string) {
-		s.audioMgr.PlayThrottled(gameAudio.FireSFXForStyle(style), 100)
+		s.audioMgr.PlayThrottledAt(gameAudio.FireSFXForStyle(style), 100, gameAudio.VolFire)
 		// Muzzle flash particles toward target
 		if t.Target != nil {
 			angle := math.Atan2(t.Target.Y-t.Y, t.Target.X-t.X)
@@ -1621,27 +1113,27 @@ func (s *StageScene) updatePlaying() {
 			s.multiKillTimer = 1.5
 			if s.multiKillCount == 5 {
 				render.SpawnText(float64(game.ScreenWidth)/2, float64(game.ScreenHeight)/2-30,
-					"MULTI KILL x5", color.RGBA{255, 200, 50, 255}, 16, 1.5)
+					"连杀 x5", color.RGBA{255, 200, 50, 255}, 16, 1.5)
 			} else if s.multiKillCount == 10 {
 				render.SpawnText(float64(game.ScreenWidth)/2, float64(game.ScreenHeight)/2-30,
-					"MEGA KILL x10", color.RGBA{255, 100, 50, 255}, 18, 2.0)
+					"超级连杀 x10", color.RGBA{255, 100, 50, 255}, 18, 2.0)
 			}
 			if e.Boss {
-				s.audioMgr.PlayThrottled(gameAudio.SFXEnemyDeathBoss, 50)
+				s.audioMgr.PlayThrottledAt(gameAudio.SFXEnemyDeathBoss, 50, gameAudio.VolKill)
 				s.postPipeline.Effects.TriggerHitStop(3)
 			} else {
-				s.audioMgr.PlayThrottled(gameAudio.SFXEnemyDeath, 50)
+				s.audioMgr.PlayThrottledAt(gameAudio.SFXEnemyDeath, 50, gameAudio.VolKill)
 			}
 			s.emitKill(e.Boss, "projectile") // 统一击杀事件：kills/gold/session/tutorial/warden
 		} else {
 			// 命中音效：per-sound 节流，优先按敌人状态区分
 			switch {
 			case e.ShieldHP > 0:
-				s.audioMgr.PlayThrottled(gameAudio.SFXHitShield, 60)
+				s.audioMgr.PlayThrottledAt(gameAudio.SFXHitShield, 60, gameAudio.VolHit)
 			case e.Boss:
-				s.audioMgr.PlayThrottled(gameAudio.SFXHitHeavy, 60)
+				s.audioMgr.PlayThrottledAt(gameAudio.SFXHitHeavy, 60, gameAudio.VolHit)
 			default:
-				s.audioMgr.PlayThrottled(gameAudio.HitSFXForStyle(attackStyle), 60)
+				s.audioMgr.PlayThrottledAt(gameAudio.HitSFXForStyle(attackStyle), 60, gameAudio.VolHit)
 			}
 		}
 	})
@@ -1692,11 +1184,11 @@ func (s *StageScene) updatePlaying() {
 		perfect := s.lives == s.waveLivesSnapshot && result.PerfectBonus > 0
 		if perfect {
 			render.SpawnText(float64(game.ScreenWidth)/2, float64(game.ScreenHeight)/2-50,
-				"PERFECT!", color.RGBA{255, 215, 0, 255}, 20, 2.0)
+				"完美!", color.RGBA{255, 215, 0, 255}, 20, 2.0)
 		}
 		msg := result.Message
 		if interest > 0 {
-			msg += fmt.Sprintf(" +$%d interest", interest)
+			msg += fmt.Sprintf(" +$%d 利息", interest)
 		}
 		s.showNotify(msg)
 
@@ -1725,14 +1217,14 @@ func (s *StageScene) updatePlaying() {
 	if s.session.CheckEndConditions(ctx) && s.state == statePlaying {
 		if s.session.Status == gamemode.StatusVictory {
 			s.state = stateVictory
-			s.audioMgr.PlaySafe(gameAudio.SFXVictory)
+			s.audioMgr.PlaySafeAt(gameAudio.SFXVictory, gameAudio.VolWave)
 			s.progressMgr.RecordGameResult(s.modeID, s.gameMap.Config.ID, s.kills, true)
 			if s.tutorial.IsComplete() {
 				s.progressMgr.SetTutorialDone()
 			}
 		} else if s.session.Status == gamemode.StatusDefeat {
 			s.state = stateDefeat
-			s.audioMgr.PlaySafe(gameAudio.SFXDefeat)
+			s.audioMgr.PlaySafeAt(gameAudio.SFXDefeat, gameAudio.VolWave)
 			s.progressMgr.RecordGameResult(s.modeID, s.gameMap.Config.ID, s.kills, false)
 		}
 	}
@@ -1750,7 +1242,7 @@ func (s *StageScene) triggerEventChoice(wave int) {
 	s.eventPending = picks
 	s.eventHoverIdx = -1
 	s.imode = modeEvent
-	s.audioMgr.PlaySafe(gameAudio.SFXChoiceAppear)
+	s.audioMgr.PlaySafeAt(gameAudio.SFXChoiceAppear, gameAudio.VolUI)
 }
 
 // ─── 事件选择弹窗 ───
@@ -1803,11 +1295,11 @@ func (s *StageScene) handleEventSelection() {
 				chosen := s.eventPending[i]
 				event.Apply(&chosen, s)
 				s.appliedEvents = append(s.appliedEvents, chosen)
-				s.showNotify(fmt.Sprintf("Event: %s", chosen.Label))
+				s.showNotify(fmt.Sprintf("事件: %s", chosen.Label))
 				s.eventPending = nil
 				s.eventHoverIdx = -1
 				s.imode = modeIdle
-				s.audioMgr.PlaySafe(gameAudio.SFXChoiceSelect)
+				s.audioMgr.PlaySafeAt(gameAudio.SFXChoiceSelect, gameAudio.VolUI)
 				return
 			}
 		}
@@ -1858,7 +1350,7 @@ func (s *StageScene) drawEventPopup(screen *ebiten.Image) {
 		fm.DrawCenteredText(screen, ev.Description, descX, descY, theme.FontBody, theme.TextBody)
 
 		// Tier 标签（卡片底部）
-		tierLabel := fmt.Sprintf("Tier %d", ev.Tier)
+		tierLabel := fmt.Sprintf("%d阶", ev.Tier)
 		tierX := float64(cx) + float64(eventCardW)/2
 		tierY := float64(cy) + float64(eventCardH) - 24
 		tierColor := theme.TextMuted
@@ -2059,7 +1551,7 @@ func (s *StageScene) drawScene(screen *ebiten.Image) {
 	render.DrawMap(worldTarget, s.gameMap, render.GlobalFont(), animTime, func(row, col int) bool {
 		return s.towers.At(row, col) != nil
 	}, inBuildMode)
-	render.DrawParallaxBG(worldTarget, animTime)
+	render.DrawParallaxBG(worldTarget, animTime, s.gameMap.Width()+s.gameMap.OffsetX*2, s.gameMap.Height()+s.gameMap.OffsetY*2)
 
 	// 塔（优先 SVG 渲染，回退到彩色方块）
 	s.towerRenderer.DrawTowers(worldTarget, s.towers, s.selectedTower, animTime)
@@ -2166,23 +1658,17 @@ func (s *StageScene) drawScene(screen *ebiten.Image) {
 	})
 
 	// HUD：底部建塔菜单
-	hud.DrawBuildMenu(screen, hud.BuildMenuData{
-		TowerDefs:   s.towerDefs,
-		SelectedIdx: s.selectedDef,
-		Gold:        s.gold,
-		HoverIdx:    s.buildHoverIdx,
-		SpriteFunc:  s.towerRenderer.GetSprite,
-		Visible:     s.imode == modeBuildMenu,
-	})
+	hud.DrawBuildMenu(screen, s.buildBuildMenuData())
 
 	// HUD：底部中央面板（塔信息 和 战灵信息 互斥）
 	if s.selectedTower != nil {
 		// 塔选中时显示塔信息面板（底部中央）
 		sellValue := s.econ.SellRefund(s.selectedTower.Cost)
-		hud.DrawInfoPanel(screen, s.selectedTower, sellValue)
+		vm := BuildInfoPanelVM(s.selectedTower, sellValue)
+		hud.DrawInfoPanel(screen, vm)
 		// Hover 在面板上时显示升级详情浮窗
 		mx, my := draw.CursorPos()
-		hud.DrawInfoPanelHoverTooltip(screen, s.selectedTower, float32(mx), float32(my))
+		hud.DrawInfoPanelHoverTooltip(screen, s.selectedTower != nil, float32(mx), float32(my))
 	} else if s.wardenPanelOpen && s.wardenReady && s.wardenUnit != nil && s.wardenUnit.Active {
 		// 无塔选中且战灵面板展开时显示战灵面板（底部中央）
 		hud.DrawWardenPanel(screen, s.buildWardenPanelData())
@@ -2264,13 +1750,103 @@ func (s *StageScene) drawScene(screen *ebiten.Image) {
 		draw.RoundRect(screen, 0, 0, float32(game.ScreenWidth), float32(game.ScreenHeight), 0, theme.HUDGameOverlay)
 		if fm := render.GlobalFont(); fm != nil {
 			if s.state == stateVictory {
-				fm.DrawCenteredText(screen, "VICTORY!", float64(game.ScreenWidth)/2, float64(game.ScreenHeight)/2-20, 52, theme.HUDVictoryColor)
+				fm.DrawCenteredText(screen, "胜利!", float64(game.ScreenWidth)/2, float64(game.ScreenHeight)/2-20, 52, theme.HUDVictoryColor)
 			} else {
-				fm.DrawCenteredText(screen, "DEFEAT!", float64(game.ScreenWidth)/2, float64(game.ScreenHeight)/2-20, 52, theme.HUDDefeatColor)
+				fm.DrawCenteredText(screen, "失败!", float64(game.ScreenWidth)/2, float64(game.ScreenHeight)/2-20, 52, theme.HUDDefeatColor)
 			}
 			fm.DrawCenteredText(screen, fmt.Sprintf("击杀: %d  点击继续", s.kills), float64(game.ScreenWidth)/2, float64(game.ScreenHeight)/2+30, theme.FontH2, theme.TextMuted)
 		}
 	}
+}
+
+// buildBuildMenuData 构建建造菜单展示数据。
+func (s *StageScene) buildBuildMenuData() hud.BuildMenuData {
+	cards := make([]hud.BuildCardVM, len(s.towerDefs))
+	for i, def := range s.towerDefs {
+		roleTag, roleClr := towerRoleTags(def)
+		cards[i] = hud.BuildCardVM{
+			Key: def.Key, Label: def.Label, Cost: def.Cost,
+			Damage: def.Damage, AttackSpeed: def.AttackSpeed, Range: def.Range,
+			RoleTag: roleTag, RoleColor: roleClr,
+			TypeIcon: towerTypeIcon(def.Key),
+			Sprite:   s.towerRenderer.GetSprite(def.Key),
+		}
+	}
+	return hud.BuildMenuData{
+		Cards: cards, SelectedIdx: s.selectedDef,
+		Gold: s.gold, HoverIdx: s.buildHoverIdx,
+		Visible: s.imode == modeBuildMenu,
+	}
+}
+
+// towerRoleTags 返回塔的角色标签和颜色。
+func towerRoleTags(def tower.TowerDef) (string, color.RGBA) {
+	for _, ab := range def.Abilities {
+		switch ab {
+		case "onHitSlow":
+			return "控制·减速", color.RGBA{R: 80, G: 180, B: 220, A: 255}
+		case "stun":
+			return "输出·眩晕", color.RGBA{R: 180, G: 120, B: 220, A: 255}
+		case "bounce":
+			return "输出·连锁", color.RGBA{R: 220, G: 180, B: 80, A: 255}
+		case "splash":
+			return "输出·溅射", color.RGBA{R: 220, G: 120, B: 80, A: 255}
+		case "bleedDot", "burn":
+			return "输出·持续", color.RGBA{R: 220, G: 80, B: 80, A: 255}
+		case "executionBonus", "percentHpDamage":
+			return "输出·斩杀", color.RGBA{R: 180, G: 60, B: 60, A: 255}
+		case "damageUpAura", "attackSpeedAura":
+			return "辅助·光环", color.RGBA{R: 80, G: 200, B: 120, A: 255}
+		case "poisonZone", "silenceZone":
+			return "控制·区域", color.RGBA{R: 100, G: 160, B: 200, A: 255}
+		case "goldOnKill", "goldPassive":
+			return "经济", color.RGBA{R: 220, G: 200, B: 80, A: 255}
+		}
+	}
+	return "输出", color.RGBA{R: 200, G: 200, B: 200, A: 200}
+}
+
+// towerTypeIcon 返回塔类型图标名。
+func towerTypeIcon(key string) string {
+	switch key {
+	case "freeze":
+		return "tower-freeze"
+	case "electric":
+		return "tower-electric"
+	case "hunter":
+		return "tower-hunter"
+	case "laser":
+		return "tower-laser"
+	default:
+		return ""
+	}
+}
+
+// buildMinimapVM 构建小地图展示数据。
+func (s *StageScene) buildMinimapVM() hud.MinimapVM {
+	vm := hud.MinimapVM{}
+	// 路径点
+	for _, wp := range s.gameMap.Waypoints {
+		vm.PathPoints = append(vm.PathPoints, hud.MinimapPoint{X: wp.X, Y: wp.Y})
+	}
+	// 塔
+	s.towers.Each(func(t *tower.Tower) {
+		vm.Towers = append(vm.Towers, hud.MinimapPoint{X: t.X, Y: t.Y})
+	})
+	// 敌人
+	s.enemies.Each(func(e *enemy.Enemy) {
+		if e.IsDying() {
+			return
+		}
+		vm.Enemies = append(vm.Enemies, hud.MinimapDot{X: e.X, Y: e.Y, IsBoss: e.Boss})
+	})
+	// 战灵
+	if s.wardenReady && s.wardenUnit != nil {
+		if wb := s.wardenUnit.BaseState(); wb != nil {
+			vm.WardenX, vm.WardenY = wb.X, wb.Y
+		}
+	}
+	return vm
 }
 
 // buildWardenPanelData 根据当前战灵状态和配置构建面板显示数据。
@@ -2369,13 +1945,13 @@ func (s *StageScene) buildSkillContext() *skill.SkillContext {
 		OnHit: func(e *enemy.Enemy, dmg float64, killed bool) {
 			render.SpawnDamageText(e.X, e.Y-10, dmg, false)
 			if killed {
-				s.audioMgr.PlaySafe(gameAudio.SFXEnemyDeath)
+				s.audioMgr.PlaySafeAt(gameAudio.SFXEnemyDeath, gameAudio.VolKill)
 				s.emitKill(e.Boss, "skill") // 统一击杀事件
 			}
 		},
 		OnActivate: func(skillKey string) {
 			if sfx := gameAudio.SkillSFX(skillKey); sfx != "" {
-				s.audioMgr.PlaySafe(sfx)
+				s.audioMgr.PlaySafeAt(sfx, gameAudio.VolSkill)
 			}
 			// 技能激活屏幕边缘白闪
 			fx := s.postPipeline.Effects
@@ -2423,16 +1999,16 @@ func (s *StageScene) tryStartWave() {
 		return
 	}
 	s.spawner.StartNextWave()
-	s.audioMgr.PlaySafe(gameAudio.SFXUIClick)
+	s.audioMgr.PlaySafeAt(gameAudio.SFXUIClick, gameAudio.VolUI)
 }
 
 // showWardenSelect 弹出战灵选择覆盖层。
 func (s *StageScene) showWardenSelect() {
-	s.wardenOverlay.Show(func(key string) {
+	s.wardenOverlay.Show(GetWardenOptions(), func(key string) {
 		s.activateWarden(key)
 		// 选完后立即开第一波
 		s.spawner.StartNextWave()
-		s.audioMgr.PlaySafe(gameAudio.SFXUIClick)
+		s.audioMgr.PlaySafeAt(gameAudio.SFXUIClick, gameAudio.VolUI)
 	})
 	s.imode = modeWardenSelect
 }
@@ -2489,15 +2065,7 @@ func (s *StageScene) activateWarden(key string) {
 	}
 }
 
-// handleWardenSelection 战灵选择覆盖层的交互处理。
-func (s *StageScene) handleWardenSelection() {
-	if s.wardenOverlay == nil || !s.wardenOverlay.Active {
-		s.imode = modeIdle
-		return
-	}
-	mx, my := draw.CursorPos()
-	s.wardenOverlay.Update(mx, my, isTapJustPressed())
-}
+// handleWardenSelection 已移至 stage_input.go。
 
 // loadTowerDefsOrFallback 从 JSON 配置加载塔定义，失败时回退到硬编码定义。
 func loadTowerDefsOrFallback() []tower.TowerDef {
