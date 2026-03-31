@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"image/color"
 
-	"defense2/internal/core/enemy"
 	"defense2/internal/core/game"
 	"defense2/internal/render"
 	"defense2/internal/render/draw"
@@ -15,10 +14,16 @@ import (
 	"github.com/hajimehoshi/ebiten/v2"
 )
 
-// SpawnEntry 造怪菜单中的单个敌人条目。
+// SpawnEntry 造怪菜单中的单个敌人条目（纯值类型）。
 type SpawnEntry struct {
-	Name   string             // 原型名
-	Config *enemy.SpawnConfig // 配置（HP/Speed/Shield 等）
+	Name       string  // 原型名
+	Label      string  // 中文显示名
+	HpScale    float64 // HP 倍率
+	SpeedScale float64 // 速度倍率
+	ShieldScale float64 // 护盾倍率
+	Radius     float64 // 半径
+	Reward     int     // 击杀奖励
+	Boss       bool    // 是否 Boss
 }
 
 // SpawnMenuData 造怪菜单数据。
@@ -107,28 +112,25 @@ func DrawSpawnMenu(screen *ebiten.Image, d SpawnMenuData) {
 		nameX := float64(cx) + 36
 		nameY := float64(cy) + 6
 		displayName := entry.Name
-		if entry.Config != nil && entry.Config.Label != "" {
-			displayName = entry.Config.Label
+		if entry.Label != "" {
+			displayName = entry.Label
 		}
 		fm.DrawBoldText(screen, displayName, nameX, nameY, theme.FontSM, color.White)
 
 		// 简略属性
-		if entry.Config != nil {
-			cfg := entry.Config
-			tag := ""
-			if cfg.Boss {
-				tag = "BOSS"
-			} else if cfg.HpScale >= 4 {
-				tag = "精英"
-			} else if cfg.ShieldScale > 0 {
-				tag = "护盾"
-			}
-			if tag != "" {
-				fm.DrawText(screen, tag, nameX, nameY+14, theme.FontXS, color.RGBA{R: 250, G: 190, B: 80, A: 240})
-			}
-			hpTxt := fmt.Sprintf("HP:%.0f", cfg.HpScale*100)
-			fm.DrawText(screen, hpTxt, nameX+40, nameY+14, theme.FontXS, color.RGBA{R: 200, G: 200, B: 210, A: 230})
+		tag := ""
+		if entry.Boss {
+			tag = "BOSS"
+		} else if entry.HpScale >= 4 {
+			tag = "精英"
+		} else if entry.ShieldScale > 0 {
+			tag = "护盾"
 		}
+		if tag != "" {
+			fm.DrawText(screen, tag, nameX, nameY+14, theme.FontXS, color.RGBA{R: 250, G: 190, B: 80, A: 240})
+		}
+		hpTxt := fmt.Sprintf("HP:%.0f", entry.HpScale*100)
+		fm.DrawText(screen, hpTxt, nameX+40, nameY+14, theme.FontXS, color.RGBA{R: 200, G: 200, B: 210, A: 230})
 	}
 
 	// Hover tooltip（在面板下方）
@@ -139,11 +141,6 @@ func DrawSpawnMenu(screen *ebiten.Image, d SpawnMenuData) {
 
 // drawSpawnTooltip 渲染 hover 详情 tooltip。
 func drawSpawnTooltip(screen *ebiten.Image, fm *render.FontManager, e SpawnEntry, x, y, maxW float32) {
-	cfg := e.Config
-	if cfg == nil {
-		return
-	}
-
 	tipW := float32(260)
 	tipH := float32(68)
 	tipX := x + (maxW-tipW)/2
@@ -157,13 +154,13 @@ func drawSpawnTooltip(screen *ebiten.Image, fm *render.FontManager, e SpawnEntry
 
 	// 名称 + 标签
 	displayName := e.Name
-	if cfg.Label != "" {
-		displayName = cfg.Label
+	if e.Label != "" {
+		displayName = e.Label
 	}
 	fm.DrawBoldText(screen, displayName, tx, ty, theme.FontMD, color.White)
-	if cfg.Boss {
+	if e.Boss {
 		fm.DrawText(screen, "BOSS", tx+100, ty+2, theme.FontSM, color.RGBA{R: 239, G: 68, B: 68, A: 255})
-	} else if cfg.HpScale >= 4 {
+	} else if e.HpScale >= 4 {
 		fm.DrawText(screen, "精英", tx+100, ty+2, theme.FontSM, color.RGBA{R: 180, G: 130, B: 255, A: 255})
 	}
 	ty += 18
@@ -172,38 +169,33 @@ func drawSpawnTooltip(screen *ebiten.Image, fm *render.FontManager, e SpawnEntry
 	im := render.GlobalIcons()
 	attrX := tx
 
-	// HP
 	if im != nil {
 		if img := im.Get("stat-damage"); img != nil {
 			draw.Sprite(screen, img, attrX+5, ty+5, 10)
 			attrX += 14
 		}
 	}
-	fm.DrawText(screen, fmt.Sprintf("HP:%.0f", cfg.HpScale*100), attrX, ty, theme.FontSM, color.RGBA{R: 239, G: 68, B: 68, A: 255})
+	fm.DrawText(screen, fmt.Sprintf("HP:%.0f", e.HpScale*100), attrX, ty, theme.FontSM, color.RGBA{R: 239, G: 68, B: 68, A: 255})
 	attrX += 60
 
-	// Speed
 	if im != nil {
 		if img := im.Get("stat-movspd"); img != nil {
 			draw.Sprite(screen, img, attrX+5, ty+5, 10)
 			attrX += 14
 		}
 	}
-	fm.DrawText(screen, fmt.Sprintf("速度:%.1f", cfg.SpeedScale), attrX, ty, theme.FontSM, color.RGBA{R: 74, G: 222, B: 128, A: 255})
+	fm.DrawText(screen, fmt.Sprintf("速度:%.1f", e.SpeedScale), attrX, ty, theme.FontSM, color.RGBA{R: 74, G: 222, B: 128, A: 255})
 	attrX += 60
 
-	// Shield
-	if cfg.ShieldScale > 0 {
-		fm.DrawText(screen, fmt.Sprintf("盾:%.0f%%", cfg.ShieldScale*100), attrX, ty, theme.FontSM, color.RGBA{R: 200, G: 200, B: 255, A: 255})
+	if e.ShieldScale > 0 {
+		fm.DrawText(screen, fmt.Sprintf("盾:%.0f%%", e.ShieldScale*100), attrX, ty, theme.FontSM, color.RGBA{R: 200, G: 200, B: 255, A: 255})
 		attrX += 50
 	}
 
-	// Radius
-	fm.DrawText(screen, fmt.Sprintf("半径:%.0f", cfg.Radius), attrX, ty, theme.FontSM, color.RGBA{R: 160, G: 160, B: 180, A: 200})
+	fm.DrawText(screen, fmt.Sprintf("半径:%.0f", e.Radius), attrX, ty, theme.FontSM, color.RGBA{R: 160, G: 160, B: 180, A: 200})
 	ty += 16
 
-	// Reward
-	fm.DrawText(screen, fmt.Sprintf("击杀奖励: %d 金币", cfg.Reward), tx, ty, theme.FontXS, color.RGBA{R: 250, G: 190, B: 60, A: 200})
+	fm.DrawText(screen, fmt.Sprintf("击杀奖励: %d 金币", e.Reward), tx, ty, theme.FontXS, color.RGBA{R: 250, G: 190, B: 60, A: 200})
 }
 
 // SpawnMenuHitTest 检测点击了哪个敌人卡片，返回索引或 -1。

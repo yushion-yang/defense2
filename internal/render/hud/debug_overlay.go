@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"strconv"
 
-	"defense2/internal/core/debug"
 	"defense2/internal/core/game"
 	"defense2/internal/render"
 	"defense2/internal/render/draw"
@@ -14,6 +13,17 @@ import (
 
 	"github.com/hajimehoshi/ebiten/v2"
 )
+
+// PerfVM 性能统计的展示数据（纯值类型，无核心依赖）。
+type PerfVM struct {
+	FPS         float64
+	AvgUpdateMs float64
+	AvgDrawMs   float64
+	P99UpdateMs float64
+	P99DrawMs   float64
+	GCCount     uint32
+	HeapMB      float64
+}
 
 // DebugOverlay 调试覆盖层（F2 切换）。
 type DebugOverlay struct {
@@ -74,8 +84,8 @@ func (o *DebugOverlay) DrawHUD(screen *ebiten.Image, towerCount, enemyCount, bea
 // DrawPerf 绘制性能统计栏（紧贴 DrawHUD 实体栏下方）。
 // 使用 strconv + stack buffer 避免 fmt.Sprintf 分配。
 // Format: "FPS:60 | U:2.1ms D:4.3ms | P99:3.2/6.1 | GC:2/s | Heap:12M"
-func (o *DebugOverlay) DrawPerf(screen *ebiten.Image, pt *debug.PerfTracker) {
-	if !o.Enabled || pt == nil {
+func (o *DebugOverlay) DrawPerf(screen *ebiten.Image, pt PerfVM) {
+	if !o.Enabled {
 		return
 	}
 	fm := render.GlobalFont()

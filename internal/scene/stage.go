@@ -1308,7 +1308,12 @@ func (s *StageScene) debugActions() []hud.DebugAction {
 func (s *StageScene) spawnEntries() []hud.SpawnEntry {
 	var entries []hud.SpawnEntry
 	for name, cfg := range s.spawner.Archetypes {
-		entries = append(entries, hud.SpawnEntry{Name: name, Config: cfg})
+		entries = append(entries, hud.SpawnEntry{
+			Name: name, Label: cfg.Label,
+			HpScale: cfg.HpScale, SpeedScale: cfg.SpeedScale,
+			ShieldScale: cfg.ShieldScale, Radius: cfg.Radius,
+			Reward: cfg.Reward, Boss: cfg.Boss,
+		})
 	}
 	sort.Slice(entries, func(i, j int) bool { return entries[i].Name < entries[j].Name })
 	return entries
@@ -2215,16 +2220,15 @@ func (s *StageScene) drawScene(screen *ebiten.Image) {
 	s.debugOverlay.DrawHUD(screen,
 		s.towers.Count, s.enemies.Count,
 		s.beams.Count(), s.projectiles.Count)
-	s.debugOverlay.DrawPerf(screen, s.perfTracker)
+	s.debugOverlay.DrawPerf(screen, hud.PerfVM{
+		FPS: s.perfTracker.FPS, AvgUpdateMs: s.perfTracker.AvgUpdateMs,
+		AvgDrawMs: s.perfTracker.AvgDrawMs, P99UpdateMs: s.perfTracker.P99UpdateMs,
+		P99DrawMs: s.perfTracker.P99DrawMs, GCCount: s.perfTracker.GCCount,
+		HeapMB: s.perfTracker.HeapMB,
+	})
 
 	// 小地图
-	wardenX, wardenY := 0.0, 0.0
-	if s.wardenReady && s.wardenUnit != nil {
-		if wb := s.wardenUnit.BaseState(); wb != nil {
-			wardenX, wardenY = wb.X, wb.Y
-		}
-	}
-	hud.DrawMinimap(screen, s.gameMap, s.enemies, s.towers, wardenX, wardenY)
+	hud.DrawMinimap(screen, s.buildMinimapVM())
 
 	// 波次公告动画（slide-in/hold/slide-out）
 	s.waveAnnounce.Draw(screen)
