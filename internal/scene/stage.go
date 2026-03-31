@@ -14,6 +14,7 @@ import (
 	"path/filepath"
 	"sort"
 	"strings"
+	"sync"
 
 	_ "defense2/internal/core/skill"           // 通过 init() 注册技能
 	_ "defense2/internal/core/tower/abilities" // 通过 init() 注册塔能力
@@ -1887,9 +1888,19 @@ func readScreenPixels(screen *ebiten.Image) *image.NRGBA {
 	}
 }
 
+// screenshotWG 追踪所有异步截图 goroutine，确保进程退出前全部完成。
+var screenshotWG sync.WaitGroup
+
+// WaitScreenshots 等待所有异步截图完成。在进程退出前调用。
+func WaitScreenshots() {
+	screenshotWG.Wait()
+}
+
 // saveImageAsync 异步编码并保存 PNG（不涉及 GPU 操作，可安全在 goroutine 中执行）。
 func saveImageAsync(img *image.NRGBA, path string) {
+	screenshotWG.Add(1)
 	go func() {
+		defer screenshotWG.Done()
 		defer func() {
 			if r := recover(); r != nil {
 				log.Printf("screenshot panic (skipped): %v", r)

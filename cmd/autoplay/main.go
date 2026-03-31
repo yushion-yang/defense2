@@ -226,6 +226,8 @@ func runSingleSession(cfgJSON string) {
 	if err := ebiten.RunGame(g); err != nil {
 		log.Printf("session %s error: %v", cfg.ID, err)
 	}
+	// 等待所有异步截图 goroutine 完成（result.png 等可能还在写入）
+	scene.WaitScreenshots()
 }
 
 // restoreStrategy 从序列化配置还原策略实例。
