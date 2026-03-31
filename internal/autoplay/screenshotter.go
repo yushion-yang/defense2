@@ -29,6 +29,11 @@ func (s *Screenshotter) RequestCapture(filename string) {
 	s.pending = append(s.pending, filename)
 }
 
+// HasPending 检查是否有待截图请求（不消费队列）。
+func (s *Screenshotter) HasPending() bool {
+	return len(s.pending) > 0
+}
+
 // NextPending 获取并弹出下一个待捕获的文件名，无则返回空字符串。
 func (s *Screenshotter) NextPending() string {
 	if len(s.pending) == 0 {

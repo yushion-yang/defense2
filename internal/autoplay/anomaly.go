@@ -57,6 +57,12 @@ type AnomalyDetector struct {
 	towerDamageAccum  map[string]int  // towerKey -> 存在帧数（DPS=0 检测）
 	poolHighWater     int             // 敌人池历史最高计数
 
+	// 去重标记（避免同类异常每 tick 重复输出）
+	goldNegReported      bool         // 金币为负已报告（回正时重置）
+	poolHighReported     bool         // 敌人池高占用已报告（降下来后重置）
+	projOverflowReported bool         // 弹射物溢出已报告（降下来后重置）
+	waveHPReportedWaves  map[int]bool // 已报告过 HP 回退的波次
+
 	// 战灵活动范围追踪
 	wardenMinX, wardenMaxX float64 // 历史访问过的 X 范围
 	wardenMinY, wardenMaxY float64 // 历史访问过的 Y 范围
@@ -82,10 +88,11 @@ const stuckThreshold = 60
 // NewAnomalyDetector 创建异常检测器。
 func NewAnomalyDetector() *AnomalyDetector {
 	return &AnomalyDetector{
-		prevEnemyPos:     make(map[int][2]float64),
-		stuckCounters:    make(map[int]int),
-		prevWaveHP:       make(map[int]float64),
-		towerDamageAccum: make(map[string]int),
+		prevEnemyPos:        make(map[int][2]float64),
+		stuckCounters:       make(map[int]int),
+		prevWaveHP:          make(map[int]float64),
+		towerDamageAccum:    make(map[string]int),
+		waveHPReportedWaves: make(map[int]bool),
 	}
 }
 
@@ -103,14 +110,19 @@ func (d *AnomalyDetector) Check(state *GameState, updateMs float64) []Anomaly {
 	// 1. 敌人卡住检测
 	found = append(found, d.checkEnemyStuck(state)...)
 
-	// 2. 金币为负
+	// 2. 金币为负（首次报告后不再重复，回正时重置）
 	if state.Gold < 0 {
-		found = append(found, Anomaly{
-			Tick:     state.Tick,
-			Type:     "gold_negative",
-			Detail:   fmt.Sprintf("gold=%d", state.Gold),
-			Severity: SeverityCritical,
-		})
+		if !d.goldNegReported {
+			found = append(found, Anomaly{
+				Tick:     state.Tick,
+				Type:     "gold_negative",
+				Detail:   fmt.Sprintf("gold=%d", state.Gold),
+				Severity: SeverityCritical,
+			})
+			d.goldNegReported = true
+		}
+	} else {
+		d.goldNegReported = false
 	}
 
 	// 3. 金币突增（>500/帧）
@@ -185,27 +197,37 @@ func (d *AnomalyDetector) Check(state *GameState, updateMs float64) []Anomaly {
 	//     长时间只停留在原始一屏范围 = 活动范围被限制的 bug。
 	found = append(found, d.checkWardenCoverage(state)...)
 
-	// 9. 敌人池容量预警（>75% 占用）
+	// 9. 敌人池容量预警（>75% 占用，首次报告后不再重复，降到 75% 以下时重置）
 	if state.EnemyPoolCount > d.poolHighWater {
 		d.poolHighWater = state.EnemyPoolCount
 	}
 	if state.EnemyPoolCount > 192 { // 256 * 0.75
-		found = append(found, Anomaly{
-			Tick:     state.Tick,
-			Type:     "pool_high_usage",
-			Detail:   fmt.Sprintf("enemy pool %d/256 (high water: %d)", state.EnemyPoolCount, d.poolHighWater),
-			Severity: SeverityMedium,
-		})
+		if !d.poolHighReported {
+			found = append(found, Anomaly{
+				Tick:     state.Tick,
+				Type:     "pool_high_usage",
+				Detail:   fmt.Sprintf("enemy pool %d/256 (high water: %d)", state.EnemyPoolCount, d.poolHighWater),
+				Severity: SeverityMedium,
+			})
+			d.poolHighReported = true
+		}
+	} else {
+		d.poolHighReported = false
 	}
 
-	// 10. 弹射物泄漏（弹射物数 > 100 且持续增长）
+	// 10. 弹射物泄漏（弹射物数 > 100，首次报告后不再重复，降下来后重置）
 	if state.ProjectileCount > 100 {
-		found = append(found, Anomaly{
-			Tick:     state.Tick,
-			Type:     "projectile_overflow",
-			Detail:   fmt.Sprintf("projectile count=%d", state.ProjectileCount),
-			Severity: SeverityMedium,
-		})
+		if !d.projOverflowReported {
+			found = append(found, Anomaly{
+				Tick:     state.Tick,
+				Type:     "projectile_overflow",
+				Detail:   fmt.Sprintf("projectile count=%d", state.ProjectileCount),
+				Severity: SeverityMedium,
+			})
+			d.projOverflowReported = true
+		}
+	} else {
+		d.projOverflowReported = false
 	}
 
 	// 11. 波次 HP 非递增检测（新波的平均 HP 比前一波低）
@@ -238,9 +260,14 @@ func (d *AnomalyDetector) Check(state *GameState, updateMs float64) []Anomaly {
 	return found
 }
 
-// checkWaveHPProgression 检查波次 HP 是否递增。
+// checkWaveHPProgression 检查波次 HP 是否递增（每波只报告一次）。
 func (d *AnomalyDetector) checkWaveHPProgression(state *GameState) []Anomaly {
 	if state.Wave <= 1 || !state.WaveActive {
+		return nil
+	}
+
+	// 已对本波报告过，跳过
+	if d.waveHPReportedWaves[state.Wave] {
 		return nil
 	}
 
@@ -261,6 +288,7 @@ func (d *AnomalyDetector) checkWaveHPProgression(state *GameState) []Anomaly {
 	// 与前一波比较
 	if prev, ok := d.prevWaveHP[state.Wave-1]; ok && avgHP > 0 && prev > 0 {
 		if avgHP < prev*0.5 { // 比前一波低 50% 以上
+			d.waveHPReportedWaves[state.Wave] = true
 			return []Anomaly{{
 				Tick:     state.Tick,
 				Type:     "wave_hp_regression",

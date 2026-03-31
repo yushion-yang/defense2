@@ -31,7 +31,8 @@ go build -o /tmp/autoplay-bin ./cmd/autoplay/ >> "$LOG" 2>&1
 # 决定策略
 ARGS=""
 if [ "$ROUND" -eq 1 ]; then
-    ARGS="--sweep"
+    # 首轮: 少量 cases 快速验证 (sweep 78 cases 在 macOS 窗口限速下太慢)
+    ARGS="--strategies random,greedy --runs 2"
 else
     if [ -f "${DATA_DIR}/M4/rerun_scenarios.txt" ]; then
         SCENARIOS=$(cat "${DATA_DIR}/M4/rerun_scenarios.txt" | tr '\n' ',' | sed 's/,$//')
@@ -52,18 +53,37 @@ M2_DIR="${DATA_DIR}/M2"
 
 echo "[$(date)] Running autoplay: $ARGS --json-dir $M1_DIR --png-dir $M2_DIR" >> "$LOG"
 
-# 运行自动对局 (超时 10 分钟)
-timeout 600 /tmp/autoplay-bin $ARGS \
+# 运行自动对局 (超时 30 分钟, macOS 无 timeout 命令)
+# 子进程日志写独立文件避免 I/O 阻塞主日志
+AUTOPLAY_LOG="/tmp/autotest-autoplay-output.log"
+/tmp/autoplay-bin $ARGS \
     --json-dir "$M1_DIR" \
     --png-dir "$M2_DIR" \
-    >> "$LOG" 2>&1 || {
-    EXIT_CODE=$?
-    if [ $EXIT_CODE -eq 124 ]; then
-        echo "[$(date)] WARNING: autoplay timed out after 600s" >> "$LOG"
-    else
-        echo "[$(date)] WARNING: autoplay exited with code $EXIT_CODE" >> "$LOG"
-    fi
-}
+    > "$AUTOPLAY_LOG" 2>&1 &
+AUTOPLAY_PID=$!
+
+# 后台倒计时 1800s (30 分钟), 超时则 kill
+( sleep 1800 && kill "$AUTOPLAY_PID" 2>/dev/null ) &
+TIMER_PID=$!
+
+echo "[$(date)] autoplay PID=$AUTOPLAY_PID, waiting (timeout 30min)..." >> "$LOG"
+
+# 等待 autoplay 完成 (|| true 防止 set -e 中断)
+wait "$AUTOPLAY_PID" 2>/dev/null && EXIT_CODE=0 || EXIT_CODE=$?
+
+# 取消倒计时
+kill "$TIMER_PID" 2>/dev/null; wait "$TIMER_PID" 2>/dev/null || true
+
+if [ $EXIT_CODE -eq 137 ] || [ $EXIT_CODE -eq 143 ]; then
+    echo "[$(date)] WARNING: autoplay timed out (killed after 1800s)" >> "$LOG"
+elif [ $EXIT_CODE -ne 0 ]; then
+    echo "[$(date)] WARNING: autoplay exited with code $EXIT_CODE" >> "$LOG"
+else
+    echo "[$(date)] autoplay completed successfully" >> "$LOG"
+fi
+
+# 摘要写入主日志
+tail -5 "$AUTOPLAY_LOG" >> "$LOG" 2>/dev/null || true
 
 # 统计本次产出及全部待处理数据
 TOTAL_JSON=$(find "$M1_DIR" -name "*.json" 2>/dev/null | wc -l | tr -d ' ')

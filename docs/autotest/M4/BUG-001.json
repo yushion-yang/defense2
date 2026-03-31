@@ -1,0 +1,31 @@
+{
+  "id": "BUG-001",
+  "category": "bug",
+  "severity": "CRITICAL",
+  "title": "total_kills always 0 in all sessions",
+  "detail": "All 8 sessions report total_kills=0 despite completing all 12 waves with victory and 20 lives remaining (0 leaks). Enemies are clearly being killed (visible in screenshots: dying enemies, boss kills, wave completions) but the kill counter is never incremented. This means kill-based mechanics (gold-on-kill, warden GrowthOnKill, session kill stats, combo/multi-kill detection) are all broken or disconnected from the reporting pipeline.",
+  "evidence": {
+    "sessions": [
+      "20260331_112219_greedy_map_01_normal_000",
+      "20260331_112219_greedy_map_01_normal_001",
+      "20260331_112219_random_map_01_normal_000",
+      "20260331_112219_random_map_01_normal_001",
+      "20260331_112426_greedy_map_01_normal_000",
+      "20260331_112426_greedy_map_01_normal_001",
+      "20260331_112426_random_map_01_normal_000",
+      "20260331_112426_random_map_01_normal_001"
+    ],
+    "screenshots": [],
+    "metrics": {
+      "total_kills_all_sessions": 0,
+      "total_enemies_spawned": "~61 per session (sum of wave_log enemies)",
+      "total_leaks": 0,
+      "sessions_affected": "8/8 (100%)"
+    }
+  },
+  "suggested_fix": {
+    "type": "code",
+    "file": "internal/autoplay/controller.go or internal/scene/stage.go",
+    "description": "The autoplay snapshot builder likely does not capture kills from emitKill() / event bus, or the report serializer reads from a field that is never updated. Check that stage.totalKills is incremented on every kill path (projectile, warden, skill) and that buildAutoPlaySnapshot() / report writer reads it."
+  }
+}

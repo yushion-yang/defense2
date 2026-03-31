@@ -73,13 +73,12 @@ func notifyActivate(skillKey string, ctx *SkillContext) {
 }
 
 // applySkillDamage 技能伤害统一入口。
+// 注意：不直接设 e.Active=false，由 TickEnemyStatusEffects 安全网统一调 Pool.Kill()
+// 确保 Pool.Count 正确递减，否则 CheckVictory 永远不触发。
 func applySkillDamage(e *enemy.Enemy, dmg float64, ctx *SkillContext) {
 	e.HP -= dmg
 	e.HitFlash = 0.12
 	killed := e.HP <= 0
-	if killed {
-		e.Active = false
-	}
 	if ctx != nil && ctx.OnHit != nil {
 		ctx.OnHit(e, dmg, killed)
 	}

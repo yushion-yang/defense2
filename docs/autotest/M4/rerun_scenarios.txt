@@ -1,0 +1,37 @@
+# Rerun scenarios for next Runner round
+# Format: strategy map_id difficulty [extra flags]
+# Priority: fix BUG-001/002/003 first, then rerun to validate telemetry
+
+# Re-validate after BUG-001/002/003 fixes (verify kill counting, DPS tracking, gold spending)
+greedy map_01 normal
+random map_01 normal
+
+# Test harder difficulties (BAL-002: normal too easy)
+greedy map_01 hard
+random map_01 hard
+greedy map_01 extreme
+random map_01 extreme
+
+# Test other maps for broader coverage
+greedy map_02 normal
+random map_02 normal
+greedy map_02 hard
+
+# Test other wardens (COV-002: only prince tested)
+greedy map_01 normal --warden=chain
+greedy map_01 normal --warden=skystrike
+greedy map_01 normal --warden=core
+greedy map_01 normal --warden=envoy
+
+# Force skill usage (COV-001: 0 skills tested)
+skill_test map_01 normal
+skill_test map_02 normal
+
+# Force specific tower builds for untested abilities (COV-001)
+scenario map_01 normal --towers=aura_dot,splash,crit
+scenario map_01 normal --towers=curseZone,poisonZone,silenceZone
+
+# Test special enemy archetypes (COV-001: splitter/teleporter/buffer untested)
+random map_01 normal --enemy-filter=splitter
+random map_01 normal --enemy-filter=teleporter
+random map_01 normal --enemy-filter=mixed

@@ -1,0 +1,26 @@
+{
+  "id": "BUG-002",
+  "category": "bug",
+  "severity": "CRITICAL",
+  "title": "DPS snapshots are all zero across all sessions",
+  "detail": "Every session's dps_snapshots array contains only zeroes (60-85 entries, all 0). This makes DPS curve analysis impossible. Towers are clearly dealing damage (enemies die, waves are cleared, no leaks), so either the DPS tracking is not connected to the actual damage pipeline, the snapshot sampling is reading from the wrong field, or the telemetry dimension for DPS is never recorded. This also means the DPS-based anomaly detection (e.g. DPS plateau, DPS regression) cannot function.",
+  "evidence": {
+    "sessions": [
+      "20260331_112219_greedy_map_01_normal_000",
+      "20260331_112219_random_map_01_normal_000",
+      "20260331_112426_greedy_map_01_normal_001",
+      "20260331_112426_random_map_01_normal_001"
+    ],
+    "screenshots": [],
+    "metrics": {
+      "total_nonzero_dps_entries": 0,
+      "total_dps_entries_checked": "~550 across 8 sessions",
+      "sessions_affected": "8/8 (100%)"
+    }
+  },
+  "suggested_fix": {
+    "type": "code",
+    "file": "internal/autoplay/controller.go",
+    "description": "The DPS snapshot sampler likely reads tower.DPS or similar but towers report config DPS, not actual realized DPS. Either: (1) sum actual damage dealt per interval from telemetry, or (2) sum tower.Damage * tower.FireRate for instantaneous theoretical DPS. Also check if the snapshot interval aligns with game ticks — sampling too early (before towers built) would yield zeros."
+  }
+}

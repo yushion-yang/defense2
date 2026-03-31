@@ -13,6 +13,8 @@ type AutoPlayer interface {
 	OnGameEnd(snap AutoPlaySnapshot, won bool)
 	// ScreenshotRequested 返回下一个要截图的文件名，无则返回空字符串。
 	ScreenshotRequested() string
+	// HasPendingScreenshot 检查是否有待截图请求（不消费队列）。
+	HasPendingScreenshot() bool
 	// Done 返回 true 表示自动对局完成，应退出游戏循环。
 	Done() bool
 }

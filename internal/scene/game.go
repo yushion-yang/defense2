@@ -47,21 +47,39 @@ type Game struct {
 	pendingNext Scene           // 淡出完成后切换到的场景
 }
 
+// HeadlessMode 自动对局模式开关: 跳过音效加载 + 直接切场景 + turbo tick。
+// 在 ebiten.RunGame 之前由 cmd/autoplay 设置。
+var HeadlessMode bool
+
+// turboTicksPerFrame turbo 模式下每帧推进的 tick 数上限。
+// 遇到截图请求时提前 break 让 Draw 渲染一帧。
+const turboTicksPerFrame = 5000
+
 // NewGame 创建游戏实例，初始场景为标题画面。
 func NewGame() *Game {
+	// 字体/图标/着色器始终加载（截图渲染需要）
 	initFont()
 	render.InitGlobalIcons(config.GetAssetFS())
-	abilities.InitConfigAbilities() // 从 abilities.json 注册数据驱动能力
+	abilities.InitConfigAbilities()
 	if err := postprocess.InitShaders(); err != nil {
 		log.Printf("后处理着色器编译失败（bloom 禁用）: %v", err)
+	}
+	// 音效: HeadlessMode 跳过加载（自动对局不需要声音）
+	var am *gameAudio.Manager
+	if !HeadlessMode {
+		am = initAudio()
+	} else {
+		am = gameAudio.NewManager()
 	}
 	g := &Game{
 		width:    game.ScreenWidth,
 		height:   game.ScreenHeight,
-		audioMgr: initAudio(),
+		audioMgr: am,
 		bus:      event.NewBus(),
 	}
-	g.current = NewSelectScene(g)
+	if !HeadlessMode {
+		g.current = NewSelectScene(g)
+	}
 	return g
 }
 
@@ -104,6 +122,10 @@ func initAudio() *gameAudio.Manager {
 // SwitchScene 触发带淡入淡出过渡的场景切换。
 // 如果过渡已在进行中，新请求被忽略。
 func (g *Game) SwitchScene(next Scene) {
+	if HeadlessMode {
+		g.current = next // 无头模式: 直接切换，不走过渡动画
+		return
+	}
 	if g.transState != transIdle {
 		return // 过渡进行中，忽略
 	}
@@ -114,6 +136,21 @@ func (g *Game) SwitchScene(next Scene) {
 
 // Update 每帧逻辑更新：处理过渡动画 + 更新当前场景。
 func (g *Game) Update() error {
+	// HeadlessMode turbo: 每帧跑数千 tick，截图时 break 让 Draw 渲染
+	if HeadlessMode && g.current != nil {
+		for range turboTicksPerFrame {
+			if err := g.current.Update(); err != nil {
+				return err
+			}
+			// 有截图请求 → break 让 Draw 渲染一帧
+			type screenshotChecker interface{ HasPendingScreenshot() bool }
+			if c, ok := g.current.(screenshotChecker); ok && c.HasPendingScreenshot() {
+				break
+			}
+		}
+		return nil
+	}
+
 	// 兼容旧的 next 直接切换（无过渡）
 	if g.next != nil {
 		g.current = g.next

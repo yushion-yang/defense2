@@ -278,8 +278,9 @@ func ApplyDamage(ctx *TickContext, e *enemy.Enemy, dmg float64, crit bool) {
 	if ctx.OnDamage != nil {
 		ctx.OnDamage(e.X, e.Y-10, dmg, crit)
 	}
+	// 不直接设 e.Active=false，由 TickEnemyStatusEffects 安全网调 Pool.Kill()
+	// 确保 Pool.Count 正确递减，否则 CheckVictory 永远不触发。
 	if e.HP <= 0 && e.Active {
-		e.Active = false
 		if ctx.OnKill != nil {
 			ctx.OnKill(e)
 		}

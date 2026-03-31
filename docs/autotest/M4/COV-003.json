@@ -1,0 +1,24 @@
+{
+  "id": "COV-003",
+  "category": "coverage",
+  "severity": "MEDIUM",
+  "title": "Only idle interaction mode recorded, 7 other modes never triggered",
+  "detail": "All 8 sessions only record interaction_modes=['idle']. The 7 untested modes are: buildMenu, buildPlace, towerSel, spawnMenu, spawnPlace, event, paused, wardenSelect. This means the autoplay controller performs all actions (build, upgrade, sell) without going through the normal UI state machine. While autoplay may bypass UI modes by design, this means: (1) UI state machine bugs are never caught, (2) mode transition bugs are untested, (3) the wardenSelect overlay flow is not exercised (warden is pre-selected), (4) pause/resume is never tested. The modeEvent path (random events) is also completely untested.",
+  "evidence": {
+    "sessions": [
+      "20260331_112219_greedy_map_01_normal_000",
+      "20260331_112426_random_map_01_normal_001"
+    ],
+    "screenshots": [],
+    "metrics": {
+      "modes_triggered": ["idle"],
+      "modes_untested": ["buildMenu", "buildPlace", "towerSel", "spawnMenu", "spawnPlace", "event", "paused", "wardenSelect"],
+      "interaction_mode_coverage_pct": "12.5%"
+    }
+  },
+  "suggested_fix": {
+    "type": "code",
+    "file": "internal/autoplay/controller.go",
+    "description": "Autoplay actions should go through the same interaction mode state machine as player input. BuildTower should transition idle->buildMenu->buildPlace->idle. SelectTower should use towerSel mode. Pause should be tested periodically. Random events should be enabled to exercise modeEvent. This would catch mode transition bugs."
+  }
+}

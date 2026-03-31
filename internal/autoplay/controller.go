@@ -25,7 +25,7 @@ type ControllerConfig struct {
 	MapID      string
 	Difficulty string
 	Warden     string
-	Seed       int64 // 随机种子（记录到报告，用于复现）
+	Seed int64 // 随机种子（记录到报告，用于复现）
 }
 
 // Controller 自动对局控制器，实现 scene.AutoPlayer。
@@ -96,9 +96,19 @@ var hudModes = map[int]bool{
 	8: true, // wardenSelect
 }
 
+// maxSessionTicks 单局最大 tick 数，超过强制结束防止死循环。
+const maxSessionTicks = 30000 // ~8 分钟 @60TPS
+
 // OnUpdate 每帧调用，返回要执行的操作。实现 scene.AutoPlayer。
 func (c *Controller) OnUpdate(snap scene.AutoPlaySnapshot) []scene.AutoPlayAction {
 	state := snapshotToGameState(snap)
+
+	// 安全超时: 防止游戏逻辑 bug 导致永不结束
+	if state.Tick > maxSessionTicks && !c.done {
+		log.Printf("[TIMEOUT] session=%s tick=%d exceeded max %d, forcing end", c.sessionID, state.Tick, maxSessionTicks)
+		c.OnGameEnd(snap, false)
+		return nil
+	}
 
 	// 首帧初始化
 	if !c.gameStarted {
@@ -237,6 +247,11 @@ func (c *Controller) ScreenshotRequested() string {
 		return ""
 	}
 	return filepath.Join(c.pngDir, fname)
+}
+
+// HasPendingScreenshot 检查是否有待截图请求。实现 scene.AutoPlayer。
+func (c *Controller) HasPendingScreenshot() bool {
+	return c.screenshotter.HasPending()
 }
 
 // Done 返回是否已完成。实现 scene.AutoPlayer。

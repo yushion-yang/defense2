@@ -1691,6 +1691,10 @@ func (s *StageScene) updatePlaying() {
 		}
 	}
 
+	// 10.5. 后置安全网：清除本帧内被 abilities/skills/combat 击杀但尚未 Kill 的敌人
+	// 前置安全网(step 2)只能处理上一帧残留，本帧新产生的 HP<=0 敌人需要在胜负判定前处理
+	pipeline.TickEnemyStatusEffects(s.enemies, 0, nil) // dt=0 不触发 DoT，仅做 HP<=0 检查
+
 	// 11. 胜负判定（委托给游戏模式）
 	ctx := s.buildModeCtx()
 	if s.session.CheckEndConditions(ctx) && s.state == statePlaying {
@@ -1866,35 +1870,45 @@ func (s *StageScene) SlowAllEnemies(ratio float64) {
 // shakeBuffer 屏幕震动用的离屏缓冲（懒初始化）。
 var shakeBuffer *ebiten.Image
 
-// captureScreenshot 异步将屏幕内容保存为 PNG。
-func captureScreenshot(screen *ebiten.Image, path string) {
-	// ReadPixels 需要在 Draw 的 goroutine 中调用；
-	// 为简化，在 Draw 中同步读取像素，异步编码保存。
-	// 注意：ebiten.Image 不是线程安全的，此处仅在 Draw 完成后调用。
+// readScreenPixels 在 Draw goroutine 中同步读取屏幕像素，返回 NRGBA image。
+// 必须在 Draw 内同步调用，因为 Ebitengine 的 screen 在 Draw 返回后立即被清空/重用。
+func readScreenPixels(screen *ebiten.Image) *image.NRGBA {
 	bounds := screen.Bounds()
 	w, h := bounds.Dx(), bounds.Dy()
+	if w <= 1 || h <= 1 {
+		return nil // 无头模式窗口太小，跳过截图
+	}
 	pixels := make([]byte, w*h*4)
 	screen.ReadPixels(pixels)
-
-	img := &image.NRGBA{
+	return &image.NRGBA{
 		Pix:    pixels,
 		Stride: w * 4,
 		Rect:   image.Rect(0, 0, w, h),
 	}
+}
 
-	dir := filepath.Dir(path)
-	if dir != "" && dir != "." {
-		os.MkdirAll(dir, 0o755)
-	}
-	f, err := os.Create(path)
-	if err != nil {
-		log.Printf("screenshot create error: %v", err)
-		return
-	}
-	defer f.Close()
-	if err := png.Encode(f, img); err != nil {
-		log.Printf("screenshot encode error: %v", err)
-	}
+// saveImageAsync 异步编码并保存 PNG（不涉及 GPU 操作，可安全在 goroutine 中执行）。
+func saveImageAsync(img *image.NRGBA, path string) {
+	go func() {
+		defer func() {
+			if r := recover(); r != nil {
+				log.Printf("screenshot panic (skipped): %v", r)
+			}
+		}()
+		dir := filepath.Dir(path)
+		if dir != "" && dir != "." {
+			os.MkdirAll(dir, 0o755)
+		}
+		f, err := os.Create(path)
+		if err != nil {
+			log.Printf("screenshot create error: %v", err)
+			return
+		}
+		defer f.Close()
+		if err := png.Encode(f, img); err != nil {
+			log.Printf("screenshot encode error: %v", err)
+		}
+	}()
 }
 
 // worldBuffer 大地图相机偏移用的离屏缓冲（懒初始化）。
@@ -1910,9 +1924,11 @@ func (s *StageScene) Draw(screen *ebiten.Image) {
 		if fname == "" {
 			return // 跳过渲染
 		}
-		// 有截图请求：执行一次完整渲染 → 捕获 → 返回
+		// 有截图请求：执行一次完整渲染 → 同步读像素 → 异步保存 PNG
 		s.drawFullScene(screen)
-		go captureScreenshot(screen, fname)
+		if img := readScreenPixels(screen); img != nil {
+			saveImageAsync(img, fname)
+		}
 		return
 	}
 
@@ -2453,6 +2469,11 @@ func towerLightColor(style string) color.RGBA {
 // SetAutoPlayer 注入自动对局驱动器。设为 nil 恢复手动模式。
 func (s *StageScene) SetAutoPlayer(ap AutoPlayer) {
 	s.autoPlayer = ap
+}
+
+// HasPendingScreenshot 检查 autoPlayer 是否有待截图请求（turbo 循环用）。
+func (s *StageScene) HasPendingScreenshot() bool {
+	return s.autoPlayer != nil && s.autoPlayer.HasPendingScreenshot()
 }
 
 // buildAutoPlaySnapshot 构建当前游戏状态快照。

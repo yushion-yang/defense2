@@ -1,0 +1,26 @@
+{
+  "id": "BUG-003",
+  "category": "bug",
+  "severity": "HIGH",
+  "title": "gold_spent always 0 in wave_log despite towers being built",
+  "detail": "Every wave_log entry across all 8 sessions shows gold_spent=0, yet towers are clearly built (towers_built arrays show 2-15 towers with total_cost up to 2275 gold). Gold is being spent on tower construction but the wave_log does not record it. This means economy analysis (gold efficiency per wave, spending curves, investment timing) is impossible from the reports. Note: gold_earned IS tracked for some waves (non-zero values appear), so the issue is specific to the spending tracking path.",
+  "evidence": {
+    "sessions": [
+      "20260331_112219_greedy_map_01_normal_000",
+      "20260331_112219_random_map_01_normal_001",
+      "20260331_112426_random_map_01_normal_000"
+    ],
+    "screenshots": [],
+    "metrics": {
+      "total_gold_spent_all_waves": 0,
+      "total_tower_cost_greedy_000": 2265,
+      "total_tower_cost_random_000": 1115,
+      "sessions_affected": "8/8 (100%)"
+    }
+  },
+  "suggested_fix": {
+    "type": "code",
+    "file": "internal/autoplay/controller.go",
+    "description": "The wave_log gold_spent accumulator is likely not hooked into the tower purchase path. When executeAutoPlayAction() builds a tower, it should increment the current wave's gold_spent counter by the tower cost. Check if the spending is tracked per-wave or only globally."
+  }
+}

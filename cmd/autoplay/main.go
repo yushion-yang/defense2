@@ -21,6 +21,7 @@ import (
 	defense2 "defense2"
 	"defense2/internal/autoplay"
 	"defense2/internal/config"
+	"defense2/internal/core/game"
 	"defense2/internal/scene"
 )
 
@@ -189,39 +190,35 @@ func runSingleSession(cfgJSON string) {
 	// 确定性随机种子（同 seed = 同结果）
 	autoplay.SeedAll(cfg.Seed)
 
-	// 无头优化
-	ebiten.SetWindowSize(1, 1)
+	// Turbo 模式: 跳过音效 + 每帧跑数千 tick + 截图时渲染一帧
+	scene.HeadlessMode = true
+	ebiten.SetWindowSize(game.ScreenWidth, game.ScreenHeight)
 	ebiten.SetWindowTitle("AutoPlay: " + cfg.ID)
 	ebiten.SetVsyncEnabled(false)
-	ebiten.SetTPS(600)
+	ebiten.SetTPS(ebiten.SyncWithFPS)           // Update:Draw = 1:1，turbo 循环在 Update 内加速
+	ebiten.SetScreenClearedEveryFrame(false)
+	ebiten.SetRunnableOnUnfocused(true)
 
-	// 创建 Game
 	g := scene.NewGame()
-
-	// 创建 StageScene
-	opts := scene.StageOptions{
+	stage := scene.NewStageSceneWithOpts(g, scene.StageOptions{
 		MapID:        cfg.MapID,
 		WardenType:   cfg.Warden,
 		ModeID:       cfg.ModeID,
 		DifficultyID: cfg.Difficulty,
 		EnemyFilter:  cfg.EnemyFilter,
-	}
-	stage := scene.NewStageSceneWithOpts(g, opts)
+	})
 
-	// 还原策略
 	strategy := restoreStrategy(cfg)
-
-	// 创建控制器
 	ctrl := autoplay.NewController(autoplay.ControllerConfig{
-		Strategy:   strategy,
-		OutputDir:  cfg.OutputDir,
-		JSONDir:    cfg.JSONDir,
-		PNGDir:     cfg.PNGDir,
-		SessionID:  cfg.ID,
-		MapID:      cfg.MapID,
+		Strategy:  strategy,
+		OutputDir: cfg.OutputDir,
+		JSONDir:   cfg.JSONDir,
+		PNGDir:    cfg.PNGDir,
+		SessionID: cfg.ID,
+		MapID:     cfg.MapID,
 		Difficulty: cfg.Difficulty,
-		Warden:     cfg.Warden,
-		Seed:       cfg.Seed,
+		Warden:    cfg.Warden,
+		Seed:      cfg.Seed,
 	})
 	stage.SetAutoPlayer(ctrl)
 	g.SwitchScene(stage)
