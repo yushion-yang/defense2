@@ -35,6 +35,10 @@ type Enemy struct {
 	DisplayHP  float64         // 显示用血量（伤害拖尾缓慢衰减到实际 HP）
 	Elite      bool            // 是否为精英怪
 	HitFlash   float64         // 受击闪白剩余时间（秒，>0 时渲染白色叠加）
+	AnimCur    string          // 当前动画名（per-instance）
+	AnimFrame  int             // 当前帧索引
+	AnimTimer  float64         // 帧计时器
+	AnimDone   bool            // 非循环动画是否播完
 
 	// ── 死亡动画 ──
 	DyingTimer    float64 // >0 means dying animation in progress (seconds remaining)

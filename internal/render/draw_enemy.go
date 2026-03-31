@@ -21,15 +21,15 @@ import (
 type EnemyRenderer struct {
 	cache     *sprite.Cache
 	assetFS   AssetReader
-	animators map[string]*anim.Animator // per archetype, lazy initialized
+	animLibs map[string]*anim.AnimLib // per archetype shared frame data
 }
 
 // NewEnemyRenderer creates an enemy renderer.
 func NewEnemyRenderer(assetFS AssetReader) *EnemyRenderer {
 	return &EnemyRenderer{
-		cache:     sprite.NewCache(),
-		assetFS:   assetFS,
-		animators: make(map[string]*anim.Animator),
+		cache:    sprite.NewCache(),
+		assetFS:  assetFS,
+		animLibs: make(map[string]*anim.AnimLib),
 	}
 }
 
@@ -313,26 +313,52 @@ func (er *EnemyRenderer) GetSprite(archetype string) *ebiten.Image {
 }
 
 // getEnemyFrame returns the current animation frame for an enemy, falling back to static sprite.
+// Uses per-enemy animation state (AnimCur/AnimFrame/AnimTimer/AnimDone) with shared AnimLib.
 func (er *EnemyRenderer) getEnemyFrame(e *enemy.Enemy, dt float64) *ebiten.Image {
 	if e.Archetype == "" {
 		return nil
 	}
 
-	a, ok := er.animators[e.Archetype]
+	lib, ok := er.animLibs[e.Archetype]
 	if !ok {
-		a = anim.LoadEnemyAnimator(er.assetFS, e.Archetype)
-		er.animators[e.Archetype] = a
+		lib = anim.LoadEnemyAnimLib(er.assetFS, e.Archetype)
+		er.animLibs[e.Archetype] = lib
 	}
 
-	// Play hit animation when taking damage, otherwise walk
-	if e.HitFlash > 0 && a.HasAnim("hit") {
-		a.Play("hit")
-	} else if a.HasAnim("walk") {
-		a.Play("walk")
+	// Determine target animation
+	target := "walk"
+	if e.HitFlash > 0 && lib.HasAnim("hit") {
+		target = "hit"
 	}
-	a.Update(dt)
 
-	img := a.CurrentImage()
+	// Switch animation if needed (reset on change or when finished non-loop replays)
+	if e.AnimCur != target || (e.AnimDone && target != e.AnimCur) {
+		e.AnimCur = target
+		e.AnimFrame = 0
+		e.AnimTimer = 0
+		e.AnimDone = false
+	}
+
+	// Advance per-enemy timer
+	a, exists := lib.Anims[e.AnimCur]
+	if exists && !e.AnimDone && len(a.Frames) > 0 {
+		e.AnimTimer += dt
+		frameDur := 1.0 / a.FPS
+		if e.AnimTimer >= frameDur {
+			e.AnimTimer -= frameDur
+			e.AnimFrame++
+			if e.AnimFrame >= len(a.Frames) {
+				if a.Loop {
+					e.AnimFrame = 0
+				} else {
+					e.AnimFrame = len(a.Frames) - 1
+					e.AnimDone = true
+				}
+			}
+		}
+	}
+
+	img := lib.Frame(e.AnimCur, e.AnimFrame)
 	if img != nil {
 		return img
 	}

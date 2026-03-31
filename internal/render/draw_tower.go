@@ -115,9 +115,9 @@ func (tr *TowerRenderer) DrawTowers(screen *ebiten.Image, pool *tower.Pool, sele
 		img := tr.getTowerFrame(t, 1.0/60.0)
 		if img != nil {
 			logicalScale := float64(towerSpriteSize) / float64(img.Bounds().Dx())
-			// 射击缩放脉冲：射击瞬间放大 15%，快速恢复（skip during build/sell anim）
+			// 射击缩放脉冲：射击瞬间放大 8%，快速恢复（skip during build/sell anim）
 			if t.FireAnim > 0 && t.BuildAnim <= 0 && !t.Selling {
-				pulse := 1.0 + 0.15*(t.FireAnim/0.15)
+				pulse := 1.0 + 0.08*(t.FireAnim/0.15)
 				logicalScale *= pulse
 			}
 			// Apply build/sell animation scale
@@ -147,12 +147,8 @@ func (tr *TowerRenderer) DrawTowers(screen *ebiten.Image, pool *tower.Pool, sele
 			draw.FilledRect(screen, cx-bw/2, cy-bh, bw, bh, barrelClr, true)
 		}
 
-		// --- Fire flash: white flash overlay on shoot ---
-		if t.FireAnim > 0 && t.BuildAnim <= 0 && !t.Selling {
-			flashAlpha := uint8(80 * (t.FireAnim / 0.15))
-			flashR := float32(towerSpriteSize/2+4) * float32(animScale)
-			draw.FilledCircle(screen, cx, cy, flashR, color.RGBA{R: 255, G: 255, B: 255, A: flashAlpha})
-		}
+		// 射击反馈已由 shoot pulse（精灵放大 15%）+ muzzle flash 粒子提供，
+		// 不再叠加白色圆——高攻速塔会导致持续白圈。
 
 		// --- Charge visual: red glow at muzzle position (follows aim angle) ---
 		if !t.Selling && t.BuildAnim <= 0 && t.AttackStyleID == tower.StyleCharge && (t.ChargeProgress > 0 || t.ChargeReady) {

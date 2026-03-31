@@ -83,6 +83,29 @@ func LoadEnemyAnimator(fs AssetReader, archetype string) *Animator {
 	return a
 }
 
+// LoadEnemyAnimLib 加载敌人的动画帧库（共享帧数据，不含播放状态）。
+// 与 LoadEnemyAnimator 路径约定相同，但返回 AnimLib 而非 Animator。
+func LoadEnemyAnimLib(fs AssetReader, archetype string) *AnimLib {
+	lib := NewAnimLib()
+
+	for state, cfg := range EnemyAnimConfig {
+		frames := loadFrames(fs, fmt.Sprintf("assets/enemies/%s-%s", archetype, state))
+		if len(frames) > 0 {
+			lib.Anims[state] = &Animation{Frames: frames, FPS: cfg.FPS, Loop: cfg.Loop}
+		}
+	}
+
+	// 回退到单帧静态 PNG
+	if len(lib.Anims) == 0 {
+		img := loadSinglePNG(fs, fmt.Sprintf("assets/enemies/%s.png", archetype))
+		if img != nil {
+			lib.Anims["walk"] = &Animation{Frames: []*ebiten.Image{img}, FPS: 1, Loop: true}
+		}
+	}
+
+	return lib
+}
+
 // loadFrames 尝试加载 {prefix}-0.png, {prefix}-1.png, ... 直到文件不存在。
 func loadFrames(fs AssetReader, prefix string) []*ebiten.Image {
 	var frames []*ebiten.Image
