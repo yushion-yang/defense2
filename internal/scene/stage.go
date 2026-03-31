@@ -17,7 +17,6 @@ import (
 	"sync"
 	"time"
 
-	_ "defense2/internal/core/skill"           // 通过 init() 注册技能
 	_ "defense2/internal/core/tower/abilities" // 通过 init() 注册塔能力
 	_ "defense2/internal/core/warden/types"    // 通过 init() 注册战灵类型
 
@@ -35,7 +34,6 @@ import (
 	"defense2/internal/core/persistence"
 	"defense2/internal/core/pipeline"
 	"defense2/internal/core/projectile"
-	"defense2/internal/core/skill"
 	"defense2/internal/core/strength"
 	"defense2/internal/core/tower"
 	"defense2/internal/core/tutorial"
@@ -737,16 +735,25 @@ func (s *StageScene) debugActions() []hud.DebugAction {
 	)
 
 	// ── 技能 ──
-	skillNames := []string{
-		"chainLightning", "nukeBomb", "windBlade", "channelLaser",
-		"missileBarrage", "judgmentBeam", "chainLightningBolts", "judgmentRain",
-		"thunderSmite",
+	type skillEntry struct {
+		key, label string
+	}
+	skillEntries := []skillEntry{
+		{"chainLightning", "链式闪电"},
+		{"nukeBomb", "核弹打击"},
+		{"windBlade", "风刃"},
+		{"channelLaser", "引导激光"},
+		{"missileBarrage", "导弹齐射"},
+		{"judgmentBeam", "审判光束"},
+		{"chainLightningBolts", "连锁雷球"},
+		{"judgmentRain", "审判之雨"},
+		{"thunderSmite", "雷霆一击"},
 	}
 	actions = append(actions, hud.DebugAction{Label: "技能", IsSection: true})
-	for _, sn := range skillNames {
-		sn := sn // capture
+	for _, se := range skillEntries {
+		se := se // capture
 		actions = append(actions, hud.DebugAction{
-			Label: "塔+" + sn,
+			Label: "塔+" + se.label,
 			Action: func() {
 				if s.selectedTower == nil {
 					hud.ShowToast("先选中一座塔")
@@ -756,16 +763,16 @@ func (s *StageScene) debugActions() []hud.DebugAction {
 				if t.Skill == nil {
 					t.Skill = &skill.SkillState{}
 				}
-				skill.AssignSkill(t.Skill, sn, t)
-				hud.ShowToast("塔挂载 " + sn)
+				skill.AssignSkill(t.Skill, se.key, t)
+				hud.ShowToast("塔挂载 " + se.label)
 			},
 		})
 	}
-	for _, sn := range skillNames {
-		sn := sn
+	for _, se := range skillEntries {
+		se := se
 		actions = append(actions, hud.DebugAction{
-			Label:  "灵+" + sn,
-			Action: func() { s.assignWardenSkill(sn) },
+			Label:  "灵+" + se.label,
+			Action: func() { s.assignWardenSkill(se.key) },
 		})
 	}
 
@@ -1069,10 +1076,12 @@ func (s *StageScene) updatePlaying() {
 	// 7. 塔索敌射击（按攻击方式分发）
 	pipeline.TickTowerCombat(s.towers, s.enemies, s.projectiles, s.beams, gameDT, func(t *tower.Tower, style string) {
 		s.audioMgr.PlayThrottledAt(gameAudio.FireSFXForStyle(style), 100, gameAudio.VolFire)
-		// Muzzle flash particles toward target
+		// Muzzle flash particles toward target (or spin angle for AoE)
 		if t.Target != nil {
 			angle := math.Atan2(t.Target.Y-t.Y, t.Target.X-t.X)
 			particle.EmitMuzzleFlash(s.particlePool, t.X, t.Y, angle)
+		} else if style == tower.StyleSpinAoE {
+			particle.EmitMuzzleFlash(s.particlePool, t.X, t.Y, t.SpinAngle)
 		}
 	}, func(e *enemy.Enemy, damage float64, killed bool, _ string, crit bool) {
 		// 直接攻击方式（laser/beam/spin_aoe等）的伤害飘字

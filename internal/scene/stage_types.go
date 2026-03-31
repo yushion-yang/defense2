@@ -33,12 +33,6 @@ const (
 //	   └───────────┘  │    │    │
 //	放塔后保持/ESC退出│    │    │
 //	                  │    │    │
-//	        事件触发  ▼    │    │
-//	         ┌──────────┐ │    │
-//	         │modeEvent │ │    │
-//	         │（选择事件）│ │    │
-//	         └──────────┘ │    │
-//	                      │    │
 //	           菜单按钮   ▼    │
 //	            ┌───────────┐  │
 //	            │modePaused │  │
@@ -52,7 +46,6 @@ const (
 	modeTowerSel                         // 塔选中：显示信息面板+射程
 	modeSpawnMenu                        // 造怪菜单：选择敌人类型
 	modeSpawnPlace                       // 造怪放置：点击地图放置敌人
-	modeEvent                            // 事件选择：弹窗选事件
 	modePaused                           // 暂停菜单
 	modeWardenSelect                     // 战灵选择覆盖层
 )

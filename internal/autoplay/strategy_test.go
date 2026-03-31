@@ -48,20 +48,6 @@ func TestRandomStrategy_SelectsWarden(t *testing.T) {
 	}
 }
 
-func TestRandomStrategy_ChoosesEvent(t *testing.T) {
-	s := NewRandomStrategy(42)
-	state := mockState()
-	state.InteractMode = 6 // modeEvent
-
-	actions := s.Decide(state)
-	if len(actions) == 0 {
-		t.Fatal("expected event choice action")
-	}
-	if actions[0].Type != ActionChooseEvent {
-		t.Errorf("expected ActionChooseEvent, got %v", actions[0].Type)
-	}
-}
-
 func TestRandomStrategy_NoActionsOnGameOver(t *testing.T) {
 	s := NewRandomStrategy(42)
 	state := mockState()

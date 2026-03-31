@@ -85,14 +85,13 @@ func NewController(cfg ControllerConfig) *Controller {
 // 交互模式名称（与 scene.interactMode 对应）。
 var modeNames = map[int]string{
 	0: "idle", 1: "buildMenu", 2: "buildPlace", 3: "towerSel",
-	4: "spawnMenu", 5: "spawnPlace", 6: "event", 7: "paused", 8: "wardenSelect",
+	4: "spawnMenu", 5: "spawnPlace", 7: "paused", 8: "wardenSelect",
 }
 
 // hudModes 需要截图的 HUD 模式（进入时截一张以验证面板渲染正确）。
 var hudModes = map[int]bool{
 	1: true, // buildMenu
 	3: true, // towerSel
-	6: true, // event
 	7: true, // paused
 	8: true, // wardenSelect
 }
@@ -329,7 +328,7 @@ func snapshotToGameState(snap scene.AutoPlaySnapshot) *GameState {
 			Key: t.Key, Row: t.Row, Col: t.Col,
 			X: t.X, Y: t.Y, Damage: t.Damage,
 			Range: t.Range, Cost: t.Cost, Strength: t.Strength,
-			Abilities: t.Abilities, SkillName: t.SkillName,
+			Abilities: t.Abilities,
 			AttackStyle: t.AttackStyle,
 			HasTarget: t.HasTarget,
 		})
@@ -359,11 +358,10 @@ func actionsToSceneActions(actions []Action) []scene.AutoPlayAction {
 	result := make([]scene.AutoPlayAction, 0, len(actions))
 	for _, a := range actions {
 		sa := scene.AutoPlayAction{
-			TowerKey:   a.TowerKey,
-			Row:        a.Row,
-			Col:        a.Col,
-			WardenKey:  a.WardenKey,
-			EventIndex: a.EventIndex,
+			TowerKey:  a.TowerKey,
+			Row:       a.Row,
+			Col:       a.Col,
+			WardenKey: a.WardenKey,
 		}
 		switch a.Type {
 		case ActionBuild:
@@ -378,12 +376,6 @@ func actionsToSceneActions(actions []Action) []scene.AutoPlayAction {
 			sa.Type = scene.APActionStartWave
 		case ActionSelectWarden:
 			sa.Type = scene.APActionSelectWarden
-		case ActionChooseEvent:
-			sa.Type = scene.APActionChooseEvent
-		case ActionAssignSkill:
-			sa.Type = scene.APActionAssignSkill
-			sa.SkillName = a.SkillName
-			sa.SkillToWarden = a.SkillToWarden
 		default:
 			continue
 		}

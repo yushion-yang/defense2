@@ -65,7 +65,6 @@ type sessionConfig struct {
 	EnemyFilter string `json:"enemy_filter"`
 	Strategy    string `json:"strategy"`
 	TowerKey    string `json:"tower_key,omitempty"`
-	SkillName   string `json:"skill_name,omitempty"`
 	ModelPath   string `json:"model_path,omitempty"`
 	VocabPath   string `json:"vocab_path,omitempty"`
 	OutputDir   string `json:"output_dir"`
@@ -153,9 +152,6 @@ func orchestrate(runs int, strategies, mapID, difficulty, warden, output, jsonDi
 		// 特殊策略参数
 		if f, ok := tc.Strategy.(*autoplay.FocusStrategy); ok {
 			cfg.TowerKey = f.TowerKey()
-		}
-		if s, ok := tc.Strategy.(*autoplay.SkillTestStrategy); ok {
-			cfg.SkillName = s.SkillName()
 		}
 
 		cfgJSON, _ := json.Marshal(cfg)
@@ -254,8 +250,6 @@ func restoreStrategy(cfg sessionConfig) autoplay.Strategy {
 		return s
 	case len(name) > 6 && name[:6] == "focus_":
 		return autoplay.NewFocusStrategy(cfg.TowerKey)
-	case len(name) > 6 && name[:6] == "skill_":
-		return autoplay.NewSkillTestStrategy(cfg.SkillName)
 	case len(name) > 9 && name[:9] == "scenario_":
 		scenarioName := name[9:]
 		scenarios := autoplay.AllScenariosMap()

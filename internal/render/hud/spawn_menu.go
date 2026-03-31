@@ -120,7 +120,7 @@ func DrawSpawnMenu(screen *ebiten.Image, d SpawnMenuData) {
 		// 简略属性
 		tag := ""
 		if entry.Boss {
-			tag = "BOSS"
+			tag = "首领"
 		} else if entry.HpScale >= 4 {
 			tag = "精英"
 		} else if entry.ShieldScale > 0 {
@@ -129,7 +129,7 @@ func DrawSpawnMenu(screen *ebiten.Image, d SpawnMenuData) {
 		if tag != "" {
 			fm.DrawText(screen, tag, nameX, nameY+14, theme.FontXS, color.RGBA{R: 250, G: 190, B: 80, A: 240})
 		}
-		hpTxt := fmt.Sprintf("HP:%.0f", entry.HpScale*100)
+		hpTxt := fmt.Sprintf("血量:%.0f", entry.HpScale*100)
 		fm.DrawText(screen, hpTxt, nameX+40, nameY+14, theme.FontXS, color.RGBA{R: 200, G: 200, B: 210, A: 230})
 	}
 
@@ -159,7 +159,7 @@ func drawSpawnTooltip(screen *ebiten.Image, fm *render.FontManager, e SpawnEntry
 	}
 	fm.DrawBoldText(screen, displayName, tx, ty, theme.FontMD, color.White)
 	if e.Boss {
-		fm.DrawText(screen, "BOSS", tx+100, ty+2, theme.FontSM, color.RGBA{R: 239, G: 68, B: 68, A: 255})
+		fm.DrawText(screen, "首领", tx+100, ty+2, theme.FontSM, color.RGBA{R: 239, G: 68, B: 68, A: 255})
 	} else if e.HpScale >= 4 {
 		fm.DrawText(screen, "精英", tx+100, ty+2, theme.FontSM, color.RGBA{R: 180, G: 130, B: 255, A: 255})
 	}
@@ -175,7 +175,7 @@ func drawSpawnTooltip(screen *ebiten.Image, fm *render.FontManager, e SpawnEntry
 			attrX += 14
 		}
 	}
-	fm.DrawText(screen, fmt.Sprintf("HP:%.0f", e.HpScale*100), attrX, ty, theme.FontSM, color.RGBA{R: 239, G: 68, B: 68, A: 255})
+	fm.DrawText(screen, fmt.Sprintf("血量:%.0f", e.HpScale*100), attrX, ty, theme.FontSM, color.RGBA{R: 239, G: 68, B: 68, A: 255})
 	attrX += 60
 
 	if im != nil {

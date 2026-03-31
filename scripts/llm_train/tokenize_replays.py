@@ -184,12 +184,6 @@ def encode_actions(actions: list[dict], vocab: dict[str, int]) -> list[int]:
         elif atype == "select_warden":
             add("ACT_WARDEN")
             add(f"w_{a.get('warden_key', 'prince')}")
-        elif atype == "choose_event":
-            add("ACT_EVENT")
-            add(f"EV{a.get('event_index', 0)}")
-        elif atype == "assign_skill":
-            add("ACT_SKILL")
-            add(f"sk_{a.get('skill_name', 'chain_lightning')}")
         elif atype in ("noop", "wait"):
             add("ACT_WAIT")
 

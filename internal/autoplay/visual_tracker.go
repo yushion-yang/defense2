@@ -13,7 +13,6 @@ type VisualTracker struct {
 	archetypes   map[string]bool // 每种敌人外观
 	attackStyles map[string]bool // 每种攻击方式射击视觉
 	statusFX     map[string]bool // 每种状态效果视觉
-	skills       map[string]bool // 每种技能效果
 
 	bossAppear    bool
 	dyingEnemy    bool
@@ -31,7 +30,6 @@ func NewVisualTracker(ss *Screenshotter) *VisualTracker {
 		archetypes:    make(map[string]bool),
 		attackStyles:  make(map[string]bool),
 		statusFX:      make(map[string]bool),
-		skills:        make(map[string]bool),
 	}
 }
 
@@ -120,15 +118,6 @@ func (v *VisualTracker) Check(state *GameState) int {
 		}
 	}
 
-	// ── 每种技能效果（塔装了技能且有目标 = 技能可能在施放）──
-	for _, t := range state.Towers {
-		if t.SkillName != "" && t.HasTarget && !v.skills[t.SkillName] {
-			v.skills[t.SkillName] = true
-			v.screenshotter.RequestCapture(fmt.Sprintf("skill_%s.png", t.SkillName))
-			count++
-		}
-	}
-
 	// ── 波次公告（波次刚切换后 5 帧内截图，此时公告动画正在显示）──
 	// 由 controller 在波次变化时调用 RequestWaveAnnounce
 	// 这里不做，交给 controller 处理
@@ -146,10 +135,9 @@ func (v *VisualTracker) Check(state *GameState) int {
 // Summary 返回已捕获的视觉内容统计。
 func (v *VisualTracker) Summary() map[string]int {
 	return map[string]int{
-		"tower_types":   len(v.towerTypes),
-		"archetypes":    len(v.archetypes),
-		"attack_styles": len(v.attackStyles),
+		"tower_types":    len(v.towerTypes),
+		"archetypes":     len(v.archetypes),
+		"attack_styles":  len(v.attackStyles),
 		"status_effects": len(v.statusFX),
-		"skills":        len(v.skills),
 	}
 }

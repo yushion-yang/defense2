@@ -349,8 +349,7 @@
     "turboDt": 0.05,
     "turboTicksPerFrame": 200,
     "defaultAudioVolume": 0.45,
-    "defaultSoundVolume": 0.4,
-    "summonCapBase": 100
+    "defaultSoundVolume": 0.4
   },
   "combatExtensions": {
     "towerBuffs": [],

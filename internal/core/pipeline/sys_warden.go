@@ -3,7 +3,6 @@ package pipeline
 
 import (
 	"defense2/internal/core/enemy"
-	"defense2/internal/core/skill"
 	"defense2/internal/core/warden"
 )
 
@@ -43,23 +42,3 @@ func (SysWardenTick) Tick(ctx *TickCtx) bool {
 	return false
 }
 
-// SysWardenSkill 驱动战灵技能。
-type SysWardenSkill struct{}
-
-func (SysWardenSkill) Tick(ctx *TickCtx) bool {
-	if !ctx.WardenReady || ctx.WardenUnit == nil || ctx.WardenUnit.Skill == nil {
-		return false
-	}
-	base := ctx.WardenUnit.BaseState()
-	if base == nil {
-		return false
-	}
-	var enemySlice []*enemy.Enemy
-	ctx.Enemies.Each(func(e *enemy.Enemy) {
-		if !e.IsDying() {
-			enemySlice = append(enemySlice, e)
-		}
-	})
-	skill.TickEntitySkill(ctx.WardenUnit.Skill, base, enemySlice, ctx.DT, ctx.BuildSkillCtx())
-	return false
-}

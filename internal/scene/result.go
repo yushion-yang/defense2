@@ -405,7 +405,7 @@ func (s *ResultScene) drawStats(screen *ebiten.Image, fm *render.FontManager, cx
 		{"击杀", d.Kills, "d", theme.HUDDefeatColor},
 		{"分数", d.Score, "d", theme.TonePrimary},
 		{"金币", d.Gold, "d", theme.ResGold},
-		{"塔数", d.Towers, "d", theme.StatusSkill},
+		{"塔数", d.Towers, "d", theme.StatusStrUp},
 		{"用时", int(d.ElapsedSecs), "time", theme.StatusWarden},
 	}
 

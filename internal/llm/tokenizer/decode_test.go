@@ -92,37 +92,6 @@ func TestDecodeActions_Warden(t *testing.T) {
 	}
 }
 
-func TestDecodeActions_Event(t *testing.T) {
-	v := loadTestVocab(t)
-	actions := DecodeActions(v, tokenIDs(v, "ACT_EVENT", "EV2"))
-
-	if len(actions) != 1 {
-		t.Fatalf("got %d actions, want 1", len(actions))
-	}
-	a := actions[0]
-	if a.Type != ActEvent {
-		t.Errorf("Type = %d, want ActEvent(%d)", a.Type, ActEvent)
-	}
-	if a.EventIdx != 2 {
-		t.Errorf("EventIdx = %d, want 2", a.EventIdx)
-	}
-}
-
-func TestDecodeActions_Skill(t *testing.T) {
-	v := loadTestVocab(t)
-	actions := DecodeActions(v, tokenIDs(v, "ACT_SKILL", "sk_chain_lightning"))
-
-	if len(actions) != 1 {
-		t.Fatalf("got %d actions, want 1", len(actions))
-	}
-	a := actions[0]
-	if a.Type != ActSkill {
-		t.Errorf("Type = %d, want ActSkill(%d)", a.Type, ActSkill)
-	}
-	if a.SkillName != "chain_lightning" {
-		t.Errorf("SkillName = %q, want %q", a.SkillName, "chain_lightning")
-	}
-}
 
 func TestDecodeActions_Wait(t *testing.T) {
 	v := loadTestVocab(t)

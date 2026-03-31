@@ -289,7 +289,7 @@ func (s *WardenSelectScene) drawDetail(screen *ebiten.Image, fm *render.FontMana
 	py += 12
 
 	// Lv.1 属性网格 (2行3列)
-	fm.DrawBoldText(screen, "Lv.1 属性", px, py, theme.FontMD, theme.TextTitle)
+	fm.DrawBoldText(screen, "1级 属性", px, py, theme.FontMD, theme.TextTitle)
 	py += 20
 
 	attrClr := theme.TextBody
@@ -300,9 +300,9 @@ func (s *WardenSelectScene) drawDetail(screen *ebiten.Image, fm *render.FontMana
 		{"stat-damage", "伤害", opt.Damage},
 		{"stat-atkspd", "间隔", opt.Interval},
 		{"stat-movspd", "速度", opt.Speed},
-		{"stat-splash", "AoE", opt.AoE},
+		{"stat-splash", "范围", opt.AoE},
 		{"stat-atkspd", "持续", opt.Duration},
-		{"burn", "DoT", opt.DoT},
+		{"burn", "持伤", opt.DoT},
 	}
 
 	im := render.GlobalIcons()

@@ -106,7 +106,7 @@ func (tr *TowerRenderer) DrawTowers(screen *ebiten.Image, pool *tower.Pool, sele
 			float32(float64(towerSpriteSize*0.35)*animScale), color.RGBA{0, 0, 0, shadowAlpha})
 
 		// --- Tower body (animated or static, rotated toward target) ---
-		// spin_aoe / summon 不旋转朝向目标
+		// spin_aoe 不旋转朝向目标
 		rotation := t.Angle + math.Pi/2
 		if t.AttackStyleID == tower.StyleSpinAoE {
 			rotation = 0
@@ -211,22 +211,22 @@ func (tr *TowerRenderer) DrawTowers(screen *ebiten.Image, pool *tower.Pool, sele
 			str := t.Strength.Overflow() // strength above baseline (100)
 
 			if str >= 50 {
-				// Tier 2 (50-100): faint warm base glow
-				glowAlpha := uint8(20 + min(30, int((str-50)*0.6)))
-				draw.Glow(screen, cx, cy, float32(towerSpriteSize*0.3), float32(towerSpriteSize*0.5),
-					color.RGBA{255, 255, 200, glowAlpha})
+				// Tier 2 (50+): warm ring outline
+				ringAlpha := uint8(30 + min(30, int((str-50)*0.6)))
+				draw.CircleOutline(screen, cx, cy, float32(towerSpriteSize*0.4), 1,
+					color.RGBA{255, 230, 150, ringAlpha})
 			}
 			if str >= 100 {
-				// Tier 3 (100-150): stronger glow + base ring
-				draw.CircleOutline(screen, cx, cy, float32(towerSpriteSize*0.45), 0.5,
-					color.RGBA{255, 255, 180, 40})
+				// Tier 3 (100+): brighter outer ring
+				draw.CircleOutline(screen, cx, cy, float32(towerSpriteSize*0.48), 1,
+					color.RGBA{255, 220, 100, 50})
 			}
 			if str >= 150 {
-				// Tier 4 (150+): double ring with pulsing
+				// Tier 4 (150+): pulsing outer ring
 				pulse := 0.5 + 0.5*math.Sin(animTime*3)
 				ringAlpha := uint8(30 + 25*pulse)
-				draw.CircleOutline(screen, cx, cy, float32(towerSpriteSize*0.55), 0.5,
-					color.RGBA{255, 220, 100, ringAlpha})
+				draw.CircleOutline(screen, cx, cy, float32(towerSpriteSize*0.55), 1,
+					color.RGBA{255, 200, 50, ringAlpha})
 			}
 		}
 

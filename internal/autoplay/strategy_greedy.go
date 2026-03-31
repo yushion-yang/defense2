@@ -37,12 +37,6 @@ func (s *GreedyStrategy) Decide(state *GameState) []Action {
 		return []Action{{Type: ActionSelectWarden, WardenKey: s.wardenKey}}
 	}
 
-	// 事件选择：轮换选择以覆盖所有事件类型
-	if state.InteractMode == 6 {
-		idx := state.Wave % 3 // 按波次轮换：0,1,2,0,1,2...
-		return []Action{{Type: ActionChooseEvent, EventIndex: idx}}
-	}
-
 	// 阶段判定
 	progress := 0.0
 	if state.MaxWaves > 0 {

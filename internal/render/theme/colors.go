@@ -45,9 +45,8 @@ var (
 var (
 	StatusStrUp    = hex(0x4ade80)
 	StatusStrDown  = hex(0xfca5a5) // 红300，暗背景更醒目
-	StatusStrNorm  = hex(0x94a3b8)
-	StatusSkill    = hex(0x60a5fa)
-	StatusExcl     = hex(0x38bdf8)
+	StatusStrNorm = hex(0x94a3b8)
+	StatusExcl    = hex(0x38bdf8)
 	StatusWarden   = hex(0xfbbf24)
 	StatusGrowth   = hex(0x4ade80)
 )

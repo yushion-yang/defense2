@@ -232,20 +232,6 @@ def test_encode_actions_warden(vocab: dict[str, int]) -> None:
     assert vocab["w_envoy"] in tokens
 
 
-def test_encode_actions_event(vocab: dict[str, int]) -> None:
-    actions = [{"type": "choose_event", "event_index": 2}]
-    tokens = encode_actions(actions, vocab)
-    assert vocab["ACT_EVENT"] in tokens
-    assert vocab["EV2"] in tokens
-
-
-def test_encode_actions_skill(vocab: dict[str, int]) -> None:
-    actions = [{"type": "assign_skill", "skill_name": "nuke_bomb"}]
-    tokens = encode_actions(actions, vocab)
-    assert vocab["ACT_SKILL"] in tokens
-    assert vocab["sk_nuke_bomb"] in tokens
-
-
 def test_encode_actions_wait(vocab: dict[str, int]) -> None:
     for atype in ("noop", "wait"):
         tokens = encode_actions([{"type": atype}], vocab)

@@ -40,12 +40,6 @@ func TestAutoPlayMode_AutoStart(t *testing.T) {
 	}
 }
 
-func TestAutoPlayMode_EnableEvents(t *testing.T) {
-	m := NewAutoPlayMode()
-	if !m.EnableEvents() {
-		t.Error("autoplay should enable events for coverage")
-	}
-}
 
 func TestAutoPlayMode_ShortIntermission(t *testing.T) {
 	m := NewAutoPlayMode()

@@ -35,11 +35,6 @@ func (s *FocusStrategy) Decide(state *GameState) []Action {
 		return []Action{{Type: ActionSelectWarden, WardenKey: s.wardenKey}}
 	}
 
-	// 事件选择
-	if state.InteractMode == 6 {
-		return []Action{{Type: ActionChooseEvent, EventIndex: 0}}
-	}
-
 	// 开波
 	if !state.WaveActive && state.Wave < state.MaxWaves {
 		actions = append(actions, Action{Type: ActionStartWave})

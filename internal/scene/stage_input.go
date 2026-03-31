@@ -1,5 +1,5 @@
 // stage_input.go — StageScene 的输入处理和交互状态机。
-// 包含 handleInput、handlePausedInput、handleEventSelection、handleWardenSelection
+// 包含 handleInput、handlePausedInput、handleWardenSelection
 // 以及相机控制、手势初始化等辅助方法。
 package scene
 

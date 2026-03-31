@@ -16,7 +16,6 @@ func NewCampaignMode() *CampaignMode {
 
 func (m *CampaignMode) IntermissionSecs() float64 { return 10 }
 func (m *CampaignMode) ShouldAutoStart() bool     { return true }
-func (m *CampaignMode) EnableEvents() bool         { return true }
 
 func (m *CampaignMode) VictoryWaveTarget() int { return -1 } // 由地图 Waves 决定
 

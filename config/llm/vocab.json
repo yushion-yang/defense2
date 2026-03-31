@@ -58,13 +58,6 @@
     "w_prince": 198, "w_core": 199, "w_chain": 200,
     "w_skystrike": 201, "w_envoy": 202,
     "ACT_BUILD": 203, "ACT_UPGRADE": 204, "ACT_SELL": 205,
-    "ACT_WAVE": 206, "ACT_WARDEN": 207, "ACT_EVENT": 208,
-    "ACT_SKILL": 209, "ACT_WAIT": 210,
-    "EV0": 211, "EV1": 212, "EV2": 213, "EV3": 214,
-    "sk_chain_lightning": 215, "sk_nuke_bomb": 216,
-    "sk_wind_blade": 217, "sk_channel_laser": 218,
-    "sk_passive_crit": 219, "sk_passive_speed": 220,
-    "sk_passive_range": 221, "sk_passive_regen": 222,
-    "sk_passive_gold": 223
+    "ACT_WAVE": 206, "ACT_WARDEN": 207, "ACT_WAIT": 210
   }
 }

@@ -134,6 +134,9 @@ func coreAttack(s *CoreState, ctx *warden.TickContext) {
 				}
 			}
 		})
+		if ctx.OnSpecial != nil {
+			ctx.OnSpecial()
+		}
 	} else {
 		// 单体模式
 		dmg := coreExecDmg(nearest, s.Damage)

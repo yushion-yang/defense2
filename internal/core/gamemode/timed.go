@@ -37,7 +37,6 @@ func (m *TimedMode) OnTick(dt float64, _ *Context) {
 
 func (m *TimedMode) IntermissionSecs() float64 { return 3 }
 func (m *TimedMode) ShouldAutoStart() bool     { return true }
-func (m *TimedMode) EnableEvents() bool         { return false }
 func (m *TimedMode) VictoryWaveTarget() int     { return -1 }
 
 func (m *TimedMode) CheckVictory(ctx *Context) bool {

@@ -36,6 +36,13 @@ var tierColors = map[string]color.RGBA{
 	"epic":   {R: 192, G: 132, B: 252, A: 255}, // #c084fc
 }
 
+// 品质中文名映射。
+var tierLabels = map[string]string{
+	"normal": "普通",
+	"rare":   "稀有",
+	"epic":   "史诗",
+}
+
 // 选项卡片布局常量。
 const (
 	cpCardW   = float32(180) // 卡片宽度
@@ -137,7 +144,11 @@ func (p *ChoicePanel) Draw(screen *ebiten.Image) {
 		// 品质标签（顶部）
 		tierLabelY := float64(cy) + 12
 		tierLabelClr := tierClr
-		fm.DrawCenteredText(screen, opt.Tier,
+		tierText := opt.Tier
+		if cn, ok := tierLabels[opt.Tier]; ok {
+			tierText = cn
+		}
+		fm.DrawCenteredText(screen, tierText,
 			float64(cx)+float64(cpCardW)/2, tierLabelY, theme.FontXS, tierLabelClr)
 
 		// 标签（卡片中部偏上）

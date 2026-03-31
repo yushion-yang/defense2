@@ -41,14 +41,6 @@ func (SysTowerAbilities) Tick(ctx *TickCtx) bool {
 	return false
 }
 
-// SysTowerSkills tick 塔上的技能。
-type SysTowerSkills struct{}
-
-func (SysTowerSkills) Tick(ctx *TickCtx) bool {
-	TickTowerSkills(ctx.Towers, ctx.Enemies, ctx.DT, ctx.BuildSkillCtx())
-	return false
-}
-
 // SysTowerCombat 塔索敌射击。
 type SysTowerCombat struct{}
 

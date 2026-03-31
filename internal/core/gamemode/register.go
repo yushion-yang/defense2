@@ -8,6 +8,5 @@ func init() {
 	Register(NewBossRushMode())
 	Register(NewChallengeMode())
 	Register(NewTestMode())
-	Register(NewSkillTestMode())
 	Register(NewAutoPlayMode())
 }

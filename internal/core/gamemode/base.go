@@ -22,7 +22,6 @@ func (b *baseMode) CheckVictory(ctx *Context) bool                { return !ctx.
 func (b *baseMode) CheckDefeat(ctx *Context) bool                 { return ctx.Lives <= 0 }
 func (b *baseMode) GetScore(_ *Context) int                       { return 0 }
 func (b *baseMode) VictoryWaveTarget() int                        { return -1 }
-func (b *baseMode) EnableEvents() bool                            { return true }
 
 func (b *baseMode) OnWaveCleared(wave int, _ *Context) WaveClearResult {
 	bonus := 12 + wave*4

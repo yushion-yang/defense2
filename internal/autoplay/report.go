@@ -35,10 +35,8 @@ func GenerateReport(records []*SessionRecord) *CoverageReport {
 
 	towersSeen := make(map[string]bool)
 	archetypesSeen := make(map[string]bool)
-	eventsSeen := make(map[string]bool)
 	abilitiesSeen := make(map[string]bool)
 	attackStylesSeen := make(map[string]bool)
-	skillsSeen := make(map[string]bool)
 	pipelineStepsSeen := make(map[string]bool)
 	damageTypesSeen := make(map[string]bool)
 	buffTypesSeen := make(map[string]bool)
@@ -69,17 +67,11 @@ func GenerateReport(records []*SessionRecord) *CoverageReport {
 			archetypesSeen[a] = true
 			r.ArchetypesSeen[a]++
 		}
-		for _, e := range rec.Coverage.EventsChosen {
-			eventsSeen[e] = true
-		}
 		for _, ab := range rec.Coverage.AbilitiesTriggered {
 			abilitiesSeen[ab] = true
 		}
 		for _, as := range rec.Coverage.AttackStylesFired {
 			attackStylesSeen[as] = true
-		}
-		for _, sk := range rec.Coverage.SkillsActivated {
-			skillsSeen[sk] = true
 		}
 		// 遥测维度
 		for _, v := range rec.PipelineSteps {
@@ -108,12 +100,6 @@ func GenerateReport(records []*SessionRecord) *CoverageReport {
 	// 检查覆盖缺口
 	r.CoverageGaps["towers"] = findGaps(TowerKeys, towersSeen)
 	r.CoverageGaps["archetypes"] = findGaps(EnemyArchetypes, archetypesSeen)
-
-	allEvents := []string{
-		"bonusGold", "buildDiscount", "killRewardUp", "outputUp", "rangeUp", "speedUp", "enemySlow",
-	}
-	r.CoverageGaps["events"] = findGaps(allEvents, eventsSeen)
-	r.CoverageGaps["skills"] = findGaps(SkillNames, skillsSeen)
 
 	allAttackStyles := []string{"projectile", "laser", "wideBeam", "scatter", "charge", "spin_aoe", "aura_dot"}
 	r.CoverageGaps["attack_styles"] = findGaps(allAttackStyles, attackStylesSeen)
@@ -153,7 +139,7 @@ func GenerateReport(records []*SessionRecord) *CoverageReport {
 	}
 	r.CoverageGaps["enemy_templates"] = findGaps(allTemplates, enemyTemplatesSeen)
 
-	allIModes := []string{"idle", "buildMenu", "buildPlace", "towerSel", "spawnMenu", "spawnPlace", "event", "paused", "wardenSelect"}
+	allIModes := []string{"idle", "buildMenu", "buildPlace", "towerSel", "spawnMenu", "spawnPlace", "paused", "wardenSelect"}
 	r.CoverageGaps["interaction_modes"] = findGaps(allIModes, interactionModesSeen)
 
 	allCC := []string{"slow", "stun", "root"}
@@ -191,18 +177,6 @@ func (r *CoverageReport) WriteText(w io.Writer) {
 	}
 	fmt.Fprintln(w)
 
-	fmt.Fprintf(w, "Events:     %d/7", 7-len(r.CoverageGaps["events"]))
-	if len(r.CoverageGaps["events"]) > 0 {
-		fmt.Fprintf(w, "  -- MISSING: %v", r.CoverageGaps["events"])
-	}
-	fmt.Fprintln(w)
-
-	fmt.Fprintf(w, "Skills:     %d/9", 9-len(r.CoverageGaps["skills"]))
-	if len(r.CoverageGaps["skills"]) > 0 {
-		fmt.Fprintf(w, "  -- MISSING: %v", r.CoverageGaps["skills"])
-	}
-	fmt.Fprintln(w)
-
 	fmt.Fprintf(w, "AttackStyle:%d/7", 7-len(r.CoverageGaps["attack_styles"]))
 	if len(r.CoverageGaps["attack_styles"]) > 0 {
 		fmt.Fprintf(w, "  -- MISSING: %v", r.CoverageGaps["attack_styles"])
@@ -226,7 +200,7 @@ func (r *CoverageReport) WriteText(w io.Writer) {
 		{"BuffTypes: ", "buff_types", 20},
 		{"BuffModes: ", "buff_stack_modes", 6},
 		{"Templates: ", "enemy_templates", 14},
-		{"IModes:    ", "interaction_modes", 9},
+		{"IModes:    ", "interaction_modes", 8},
 		{"CC Types:  ", "cc_types", 3},
 	}
 	for _, d := range dims {

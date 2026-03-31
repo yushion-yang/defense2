@@ -72,10 +72,9 @@ const (
 	VolBuild  = 0.7 // 建塔、卖塔、升级
 	VolFire   = 0.35 // 射击（高频，必须最低）
 	VolHit    = 0.4  // 命中（高频）
-	VolKill   = 0.55 // 击杀、死亡
-	VolWave   = 0.7  // 开波、清波、Boss 出场
-	VolSkill  = 0.6  // 技能释放
-	VolExplo  = 0.45 // 爆炸、雷击等大特效
+	VolKill  = 0.55 // 击杀、死亡
+	VolWave  = 0.7  // 开波、清波、Boss 出场
+	VolExplo = 0.45 // 爆炸、雷击等大特效
 	VolWarden = 0.5  // 战灵
 )
 
@@ -166,9 +165,6 @@ const (
 	SFXHitHeavy         = "hitHeavy"         // hit-heavy.wav — 命中Boss/Tank
 	SFXHitShield        = "hitShield"        // hit-shield.wav — 命中护盾
 	SFXShieldBreak      = "shieldBreak"      // shield-break.wav — 护盾击碎
-	SFXChoiceAppear     = "choiceAppear"     // choice-appear.wav — 事件弹窗出现
-	SFXChoiceSelect     = "choiceSelect"     // choice-select.wav — 事件选择
-
 	// 战灵音效
 	SFXWardenFire         = "wardenFire"         // warden-fire.wav — 战灵普攻射击
 	SFXWardenSpecialFire  = "wardenSpecialFire"  // warden-special-fire.wav — 火灵虚空火球
@@ -177,16 +173,6 @@ const (
 	SFXWardenSpecialChain = "wardenSpecialChain" // warden-special-chain.wav — 聚能串联
 	SFXWardenSpecialMech  = "wardenSpecialMech"  // warden-special-mech.wav — 机甲模式切换
 
-	// 技能音效
-	SFXSkillChainLightning = "skillChainLightning" // skill-chain-lightning.wav — 链式闪电
-	SFXSkillNukeBomb       = "skillNukeBomb"       // skill-nuke-bomb.wav — 核弹打击
-	SFXSkillWindBlade      = "skillWindBlade"      // skill-wind-blade.wav — 风刃旋舞
-	SFXSkillChannelLaser   = "skillChannelLaser"   // skill-channel-laser.wav — 引导激光
-	SFXSkillMissileBarrage = "skillMissileBarrage" // skill-missile-barrage.wav — 导弹齐射
-	SFXSkillJudgmentBeam   = "skillJudgmentBeam"   // skill-judgment-beam.wav — 审判光束
-	SFXSkillChainBolts     = "skillChainBolts"     // skill-chain-bolts.wav — 闪电风暴
-	SFXSkillJudgmentRain   = "skillJudgmentRain"   // skill-judgment-rain.wav — 审判之雨
-	SFXSkillThunderSmite   = "skillThunderSmite"   // skill-thunder-smite.wav — 天罚雷击
 )
 
 // FireSFXForStyle 根据攻击方式返回射击音效名称。
@@ -205,24 +191,6 @@ func HitSFXForStyle(style string) string {
 		return SFXHitFlesh
 	}
 	return "hit" + snakeToCamel(style) // "spin_aoe" → "hitSpinAoe"
-}
-
-// skillSFXMap 技能 key → SFX 常量名映射。
-var skillSFXMap = map[string]string{
-	"chainLightning":      SFXSkillChainLightning,
-	"nukeBomb":            SFXSkillNukeBomb,
-	"windBlade":           SFXSkillWindBlade,
-	"channelLaser":        SFXSkillChannelLaser,
-	"missileBarrage":      SFXSkillMissileBarrage,
-	"judgmentBeam":        SFXSkillJudgmentBeam,
-	"chainLightningBolts": SFXSkillChainBolts,
-	"judgmentRain":        SFXSkillJudgmentRain,
-	"thunderSmite":        SFXSkillThunderSmite,
-}
-
-// SkillSFX 根据技能 key 返回对应的音效名称。找不到返回空字符串。
-func SkillSFX(skillKey string) string {
-	return skillSFXMap[skillKey]
 }
 
 // ucFirst 首字母大写（简单 ASCII）。

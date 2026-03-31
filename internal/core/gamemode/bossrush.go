@@ -33,7 +33,6 @@ func (m *BossRushMode) OnInit(ctx *Context) {
 
 func (m *BossRushMode) IntermissionSecs() float64 { return 15 }
 func (m *BossRushMode) ShouldAutoStart() bool     { return true }
-func (m *BossRushMode) EnableEvents() bool         { return false }
 func (m *BossRushMode) VictoryWaveTarget() int     { return m.totalBosses }
 
 func (m *BossRushMode) OnEnemyKilled(boss bool, _ *Context) {

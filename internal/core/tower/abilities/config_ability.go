@@ -135,7 +135,6 @@ func (a *ConfigAbility) OnHit(t *tower.Tower, p *projectile.Projectile, e *enemy
 			ratio = 1
 		}
 		bonus := p.Damage * ratio * sv
-		fmt.Printf("[distanceDamage] dist=%.0f range=%.0f ratio=%.2f sv=%.2f dmg=%.1f bonus=%.1f\n", dist, t.Range, ratio, sv, p.Damage, bonus)
 		return &tower.HitResult{BonusDamage: bonus}
 
 	case "onHitSlow":

@@ -109,7 +109,7 @@ func DrawWardenPanel(screen *ebiten.Image, d WardenPanelData) {
 	// Row 5: Special ability (自适应多行).
 	if d.SpecialDesc != "" {
 		lines := wrapText(fm, d.SpecialDesc, float64(wardenPanelW)-float64(wardenPanelPad)*2, theme.FontXS)
-		addDescLines(p, fm, lines, theme.StatusSkill)
+		addDescLines(p, fm, lines, theme.StatusStrUp)
 	}
 
 	// Row 6: Growth info.

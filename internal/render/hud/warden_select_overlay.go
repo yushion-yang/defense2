@@ -307,7 +307,7 @@ func (o *WardenSelectOverlay) drawDetail(screen *ebiten.Image, fm *render.FontMa
 	draw.Line(screen, float32(px), float32(py), float32(px)+w-40, float32(py), 1, theme.PanelBorder, false)
 	py += 12
 
-	fm.DrawBoldText(screen, "Lv.1 属性", px, py, theme.FontMD, theme.TextTitle)
+	fm.DrawBoldText(screen, "1级 属性", px, py, theme.FontMD, theme.TextTitle)
 	py += 20
 
 	attrClr := theme.TextBody
@@ -318,9 +318,9 @@ func (o *WardenSelectOverlay) drawDetail(screen *ebiten.Image, fm *render.FontMa
 		{"stat-damage", "伤害", opt.Damage},
 		{"stat-atkspd", "间隔", opt.Interval},
 		{"stat-movspd", "速度", opt.Speed},
-		{"stat-splash", "AoE", opt.AoE},
+		{"stat-splash", "范围", opt.AoE},
 		{"stat-atkspd", "持续", opt.Duration},
-		{"burn", "DoT", opt.DoT},
+		{"burn", "持伤", opt.DoT},
 	}
 
 	im := render.GlobalIcons()

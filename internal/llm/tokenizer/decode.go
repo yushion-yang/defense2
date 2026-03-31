@@ -14,8 +14,6 @@ const (
 	ActSell
 	ActWave
 	ActWarden
-	ActEvent
-	ActSkill
 	ActWait
 )
 
@@ -25,8 +23,6 @@ type DecodedAction struct {
 	TowerKey  string // Build: tower type (without "k_" prefix)
 	Row, Col  int    // Build/Upgrade/Sell: grid position
 	WardenKey string // Warden: type (without "w_" prefix)
-	EventIdx  int    // Event: index 0-3
-	SkillName string // Skill: name (without "sk_" prefix)
 }
 
 // DecodeActions parses a sequence of token IDs into structured actions.
@@ -37,8 +33,6 @@ type DecodedAction struct {
 //   - ACT_SELL <RxCy> → 2 tokens
 //   - ACT_WAVE → 1 token
 //   - ACT_WARDEN <w_type> → 2 tokens
-//   - ACT_EVENT <EVn> → 2 tokens
-//   - ACT_SKILL <sk_name> → 2 tokens
 //   - ACT_WAIT → 1 token
 //
 // Incomplete action sequences and unknown tokens are skipped.
@@ -124,41 +118,6 @@ func DecodeActions(v *Vocab, tokenIDs []int) []DecodedAction {
 			actions = append(actions, DecodedAction{
 				Type:      ActWarden,
 				WardenKey: strings.TrimPrefix(wardenTok, "w_"),
-			})
-			i += 2
-
-		case "ACT_EVENT":
-			if i+1 >= n {
-				return actions
-			}
-			evTok := v.IDToToken(tokenIDs[i+1])
-			if !strings.HasPrefix(evTok, "EV") {
-				i++
-				continue
-			}
-			idx, err := strconv.Atoi(strings.TrimPrefix(evTok, "EV"))
-			if err != nil {
-				i++
-				continue
-			}
-			actions = append(actions, DecodedAction{
-				Type:     ActEvent,
-				EventIdx: idx,
-			})
-			i += 2
-
-		case "ACT_SKILL":
-			if i+1 >= n {
-				return actions
-			}
-			skillTok := v.IDToToken(tokenIDs[i+1])
-			if !strings.HasPrefix(skillTok, "sk_") {
-				i++
-				continue
-			}
-			actions = append(actions, DecodedAction{
-				Type:      ActSkill,
-				SkillName: strings.TrimPrefix(skillTok, "sk_"),
 			})
 			i += 2
 

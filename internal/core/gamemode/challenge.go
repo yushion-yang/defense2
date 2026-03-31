@@ -20,8 +20,7 @@ func NewChallengeMode() *ChallengeMode {
 	return m
 }
 
-func (m *ChallengeMode) ID() string         { return "challenge" }
-func (m *ChallengeMode) EnableEvents() bool   { return true }
+func (m *ChallengeMode) ID() string { return "challenge" }
 
 func (m *ChallengeMode) GetScore(ctx *Context) int {
 	base := m.CampaignMode.GetScore(ctx)

@@ -25,7 +25,7 @@ const ZH = {
   // Attack modes
   balanced: '均衡', rapid: '速射', sniper: '重炮',
   // Attack styles
-  projectile: '投射物', aura_dot: '范围持续', summon: '召唤',
+  projectile: '投射物', aura_dot: '范围持续',
   wideBeam: '宽束', scatter: '散射', charge: '蓄力', spin_aoe: '旋转AOE', pierce: '贯穿',
   // Ability types
   bounce: '弹射', stackDamage: '叠加伤害', splash: '溅射',
@@ -46,7 +46,7 @@ const ZH = {
   range: '射程', damage: '伤害', fireRate: '攻速',
   // Tower factions
   base: '基础', steel: '钢铁', energy: '能量', nature: '自然',
-  order: '秩序', summon: '召唤', chaos: '混沌', other: '其他',
+  order: '秩序', chaos: '混沌', other: '其他',
 };
 function t(key) { return ZH[key] || key; }
 
@@ -79,12 +79,10 @@ let activeTab = 'overview';
 // ── Config Loader ──
 async function loadConfig() {
   const base = '../../config';
-  const [enemies, towers, settings, allyEvents, enemyEvents] = await Promise.all([
+  const [enemies, towers, settings] = await Promise.all([
     fetch(`${base}/enemies/enemies-core.json`).then(r => r.json()),
     fetch(`${base}/towers/towers.json`).then(r => r.json()),
     fetch(`${base}/settings.json`).then(r => r.json()),
-    fetch(`${base}/events/events-ally-v2.json`).then(r => r.json()),
-    fetch(`${base}/events/events-enemy-v2.json`).then(r => r.json()),
   ]);
   const stripMeta = obj => Object.fromEntries(
     Object.entries(obj).filter(([k]) => !k.startsWith('_'))
@@ -96,8 +94,6 @@ async function loadConfig() {
     waves: settings.waves,
     difficulty: settings.difficulty,
     world: settings.world,
-    allyEventPool: allyEvents,
-    enemyEventPool: enemyEvents,
     combat: settings.combat,
   };
 }
@@ -127,8 +123,6 @@ function buildOverview() {
   const el = $('#overview');
   const enemyCount = Object.keys(config.enemies.types).length;
   const towerCount = Object.keys(config.towers.types).length;
-  const allyEventCount = Array.isArray(config.allyEventPool) ? config.allyEventPool.length : 0;
-  const enemyEventCount = Array.isArray(config.enemyEventPool) ? config.enemyEventPool.length : 0;
   const eco = config.economy;
   const w = config.world;
 
@@ -138,8 +132,6 @@ function buildOverview() {
       <div class="kpi-grid" style="margin-top:12px">
         <div class="kpi"><div class="kpi-label">敌人原型</div><div class="kpi-value">${enemyCount}</div></div>
         <div class="kpi"><div class="kpi-label">炮塔类型</div><div class="kpi-value">${towerCount}</div></div>
-        <div class="kpi"><div class="kpi-label">友方事件</div><div class="kpi-value">${allyEventCount}</div></div>
-        <div class="kpi"><div class="kpi-label">敌方事件</div><div class="kpi-value">${enemyEventCount}</div></div>
         <div class="kpi"><div class="kpi-label">路径点</div><div class="kpi-value">${w?.path?.length ?? 0}</div></div>
         <div class="kpi"><div class="kpi-label">塔位</div><div class="kpi-value">${w?.towerSlots?.length ?? 0}</div></div>
       </div>
@@ -381,7 +373,7 @@ function buildTowerGallery() {
 
   const factionColors = {
     base: '#94a3b8', steel: '#78716c', energy: '#60a5fa', nature: '#4ade80',
-    order: '#fbbf24', summon: '#c084fc', chaos: '#f87171', other: '#9ca3af',
+    order: '#fbbf24', chaos: '#f87171', other: '#9ca3af',
   };
 
   let html = '';

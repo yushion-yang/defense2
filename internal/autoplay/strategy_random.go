@@ -44,11 +44,6 @@ func (s *RandomStrategy) Decide(state *GameState) []Action {
 		return []Action{{Type: ActionSelectWarden, WardenKey: key}}
 	}
 
-	// 事件选择（交互模式 6 = modeEvent）— 随机选择以覆盖所有事件
-	if state.InteractMode == 6 {
-		return []Action{{Type: ActionChooseEvent, EventIndex: s.rng.Intn(4)}}
-	}
-
 	// 开波
 	if !state.WaveActive && state.Wave < state.MaxWaves {
 		s.framesSinceEnd++

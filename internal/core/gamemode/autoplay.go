@@ -21,9 +21,6 @@ func (m *AutoPlayMode) ShouldAutoStart() bool { return true }
 // IntermissionSecs 波间歇 2 秒（加快测试速度）。
 func (m *AutoPlayMode) IntermissionSecs() float64 { return 2 }
 
-// EnableEvents 启用事件系统（测试事件代码路径）。
-func (m *AutoPlayMode) EnableEvents() bool { return true }
-
 // VictoryWaveTarget 由地图波次数决定。
 func (m *AutoPlayMode) VictoryWaveTarget() int { return -1 }
 

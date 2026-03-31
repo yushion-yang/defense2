@@ -105,34 +105,3 @@ func ValidateEnemyDef(e *EnemyArchetype) []ValidationError {
 	return errs
 }
 
-// ValidateEventDef 校验事件配置。
-// 检查项：id/label/kind 非空。
-func ValidateEventDef(ev *EventJSON) []ValidationError {
-	var errs []ValidationError
-
-	if ev.ID == "" {
-		errs = append(errs, ValidationError{
-			Field:   "id",
-			Value:   ev.ID,
-			Message: "事件 ID 不能为空",
-		})
-	}
-
-	if ev.Label == "" {
-		errs = append(errs, ValidationError{
-			Field:   "label",
-			Value:   ev.Label,
-			Message: "事件标签不能为空",
-		})
-	}
-
-	if ev.Kind == "" {
-		errs = append(errs, ValidationError{
-			Field:   "kind",
-			Value:   ev.Kind,
-			Message: "事件类型不能为空",
-		})
-	}
-
-	return errs
-}

@@ -68,7 +68,6 @@ type TowerInfo struct {
 	Cost        int
 	Strength    int
 	Abilities   []string
-	SkillName   string
 	AttackStyle string
 	HasTarget   bool
 }
@@ -97,8 +96,6 @@ const (
 	ActionSell                           // 出售塔
 	ActionStartWave                      // 开始下一波
 	ActionSelectWarden                   // 选择战灵
-	ActionChooseEvent                    // 选择事件
-	ActionAssignSkill                    // 给塔/战灵装技能
 	ActionNoop                           // 空操作
 )
 
@@ -107,11 +104,8 @@ type Action struct {
 	Type          ActionType
 	TowerKey      string // Build: 要建造的塔类型
 	Cell          Cell   // Build: 建造位置
-	Row, Col      int    // Upgrade/Sell/AssignSkill: 目标塔网格坐标
+	Row, Col      int    // Upgrade/Sell: 目标塔网格坐标
 	WardenKey     string // SelectWarden: 战灵类型
-	EventIndex    int    // ChooseEvent: 事件选项索引
-	SkillName     string // AssignSkill: 技能名
-	SkillToWarden bool   // AssignSkill: true=战灵, false=塔
 }
 
 // Strategy 自动对局策略接口。
@@ -125,7 +119,7 @@ type Strategy interface {
 }
 
 // SeedAll 设置全局随机种子，确保同 seed = 同结果（可复现）。
-// 同时重置全局 math/rand（影响 spawner.pickArchetype、event.PickTiered 等）
+// 同时重置全局 math/rand（影响 spawner.pickArchetype 等）
 // 和返回一个确定性的局部 rand 供策略使用。
 func SeedAll(seed int64) *rand.Rand {
 	rand.Seed(seed) //nolint:staticcheck // 故意重置全局 rand 以保证确定性

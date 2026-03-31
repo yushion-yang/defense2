@@ -9,7 +9,6 @@ import (
 	"defense2/internal/core/gamemode"
 	"defense2/internal/core/gamemap"
 	"defense2/internal/core/projectile"
-	"defense2/internal/core/skill"
 	"defense2/internal/core/tower"
 	"defense2/internal/core/warden"
 )
@@ -52,9 +51,7 @@ type TickCtx struct {
 	// 波次快照
 	WaveLivesSnap *int
 
-	// 技能上下文构建器（避免 pipeline 依赖 render）
-	BuildSkillCtx func() *skill.SkillContext
-	BuildModeCtx  func() *gamemode.Context
+	BuildModeCtx func() *gamemode.Context
 
 	// 回调（连接 stage.go 的音效/VFX/渲染副作用）
 	CB TickCallbacks

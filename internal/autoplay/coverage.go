@@ -31,12 +31,6 @@ var (
 	Wardens      = []string{"prince", "core", "chain", "skystrike", "envoy"}
 	TowerKeys    = []string{"laser", "freeze", "electric", "hunter", "en-04", "en-05", "en-08", "wl-02"}
 
-	// SkillNames 所有可用技能。
-	SkillNames = []string{
-		"chainLightning", "nukeBomb", "windBlade", "channelLaser",
-		"missileBarrage", "judgmentBeam", "chainLightningBolts", "judgmentRain", "thunderSmite",
-	}
-
 	// GameModes 需要测试的游戏模式。
 	GameModes = []string{"campaign", "endless", "timed", "bossRush", "challenge", "test"}
 
@@ -60,19 +54,16 @@ func GenerateTestPlan() []TestCase {
 	// 3. 敌人定向 — 使用 EnemyFilter (13)
 	cases = append(cases, generateEnemySpecific()...)
 
-	// 4. 技能覆盖 (9)
-	cases = append(cases, generateSkillCoverage()...)
-
-	// 5. 游戏模式覆盖 (6)
+	// 4. 游戏模式覆盖 (6)
 	cases = append(cases, generateModeCoverage()...)
 
-	// 6. 交互场景 (~4)
+	// 5. 交互场景 (~4)
 	cases = append(cases, generateInteractionScenarios()...)
 
-	// 7. 视觉目录 (1-2)
+	// 6. 视觉目录 (1-2)
 	cases = append(cases, generateVisualCatalog()...)
 
-	// 8. 边界测试 (~4)
+	// 7. 边界测试 (~4)
 	cases = append(cases, generateEdgeCases()...)
 
 	return cases
@@ -140,22 +131,6 @@ func generateEnemySpecific() []TestCase {
 	return cases
 }
 
-// generateSkillCoverage 为每种技能生成测试用例。
-// 策略：建塔后给第一座塔装技能，给战灵装另一个技能。
-func generateSkillCoverage() []TestCase {
-	var cases []TestCase
-	for i, sk := range SkillNames {
-		cases = append(cases, TestCase{
-			ID:         fmt.Sprintf("skill_%s", sk),
-			MapID:      Maps[i%len(Maps)],
-			Difficulty: "normal",
-			Warden:     Wardens[i%len(Wardens)],
-			Strategy:   NewSkillTestStrategy(sk),
-		})
-	}
-	return cases
-}
-
 // generateModeCoverage 为每种游戏模式生成测试用例。
 func generateModeCoverage() []TestCase {
 	var cases []TestCase
@@ -189,7 +164,7 @@ func generateInteractionScenarios() []TestCase {
 }
 
 // generateVisualCatalog 生成视觉目录用例。
-// 单局建造所有塔类型 + 装载所有技能，最大化视觉内容覆盖。
+// 单局建造所有塔类型，最大化视觉内容覆盖。
 func generateVisualCatalog() []TestCase {
 	return []TestCase{
 		{

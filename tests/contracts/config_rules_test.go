@@ -183,33 +183,3 @@ func TestEnemyConfigFields(t *testing.T) {
 	}
 }
 
-// TestEventConfigRanges 验证所有事件配置字段非空。
-func TestEventConfigRanges(t *testing.T) {
-	// 测试增益事件
-	allyEvents, err := config.LoadAllyEvents()
-	if err != nil {
-		t.Fatalf("加载增益事件失败: %v", err)
-	}
-	for i, ev := range allyEvents {
-		t.Run(fmt.Sprintf("ally_%d_%s", i, ev.ID), func(t *testing.T) {
-			errs := config.ValidateEventDef(&ev)
-			for _, e := range errs {
-				t.Errorf("[ally/%s] %s", ev.ID, e.Error())
-			}
-		})
-	}
-
-	// 测试减益事件（部分 tier 字段为字符串，加载可能失败）
-	enemyEvents, err := config.LoadEnemyEvents()
-	if err != nil {
-		t.Skipf("加载减益事件失败（已知 tier 字段类型不匹配）: %v", err)
-	}
-	for i, ev := range enemyEvents {
-		t.Run(fmt.Sprintf("enemy_%d_%s", i, ev.ID), func(t *testing.T) {
-			errs := config.ValidateEventDef(&ev)
-			for _, e := range errs {
-				t.Errorf("[enemy/%s] %s", ev.ID, e.Error())
-			}
-		})
-	}
-}

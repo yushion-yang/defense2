@@ -4,7 +4,6 @@ package tower
 
 import (
 	"defense2/internal/core/enemy"
-	"defense2/internal/core/skill"
 	"defense2/internal/core/strength"
 )
 
@@ -87,22 +86,11 @@ type Tower struct {
 	StackTarget int // 当前叠伤目标 ID
 	StackCount  int // 叠伤层数
 
-	// 技能系统
-	Skill             *skill.SkillState // 挂载的技能（nil = 无）
-	SkillSuppressFire bool              // 本帧技能压制普攻（每帧重置）
-
 	// 建造/出售动画
 	BuildAnim float64 // >0 during build-in animation (seconds remaining, starts at 0.3)
 	SellAnim  float64 // >0 during sell-out animation (seconds remaining, starts at 0.25)
 	Selling   bool    // true when tower is in sell animation (skip gameplay logic)
 }
-
-// ── 技能 Owner 接口实现 ──
-
-func (t *Tower) GetX() float64      { return t.X }
-func (t *Tower) GetY() float64      { return t.Y }
-func (t *Tower) GetRange() float64  { return t.Range }
-func (t *Tower) GetDamage() float64 { return t.Damage }
 
 // BuyStrength 花费金币购买 10 点永久强度。返回实际花费。
 // 需要塔已挂载 StrengthData（通过 Strength 字段）。

@@ -41,7 +41,6 @@ func TestBloomPresets(t *testing.T) {
 	}{
 		{"Default", postprocess.BloomDefault, 0.65, 0.6, 2},
 		{"Boss", postprocess.BloomBoss, 0.5, 1.0, 3},
-		{"Skill", postprocess.BloomSkill, 0.55, 0.8, 2},
 		{"Subtle", postprocess.BloomSubtle, 0.75, 0.3, 1},
 	}
 

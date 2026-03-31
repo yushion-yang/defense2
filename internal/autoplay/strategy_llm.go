@@ -16,8 +16,6 @@ type decodedAction struct {
 	towerKey  string
 	row, col  int
 	wardenKey string
-	eventIdx  int
-	skillName string
 }
 
 // Action type constants mirroring tokenizer.Act* to avoid exporting tokenizer types.
@@ -27,8 +25,6 @@ const (
 	actSell    = int(tokenizer.ActSell)
 	actWave    = int(tokenizer.ActWave)
 	actWarden  = int(tokenizer.ActWarden)
-	actEvent   = int(tokenizer.ActEvent)
-	actSkill   = int(tokenizer.ActSkill)
 	actWait    = int(tokenizer.ActWait)
 )
 
@@ -103,11 +99,6 @@ func (s *LLMStrategy) Decide(state *GameState) []Action {
 		return []Action{{Type: ActionSelectWarden, WardenKey: "prince"}}
 	}
 
-	// Event selection (bypass LLM -- rotate like greedy)
-	if state.InteractMode == 6 { // modeEvent
-		return []Action{{Type: ActionChooseEvent, EventIndex: state.Wave % 3}}
-	}
-
 	s.tickSinceDecide++
 	if !s.shouldDecide(state) {
 		return nil
@@ -164,8 +155,6 @@ func (s *LLMStrategy) Decide(state *GameState) []Action {
 			row:       d.Row,
 			col:       d.Col,
 			wardenKey: d.WardenKey,
-			eventIdx:  d.EventIdx,
-			skillName: d.SkillName,
 		}
 	}
 
@@ -290,10 +279,6 @@ func (s *LLMStrategy) convertActions(decoded []decodedAction, state *GameState) 
 			a = Action{Type: ActionStartWave}
 		case actWarden:
 			a = Action{Type: ActionSelectWarden, WardenKey: d.wardenKey}
-		case actEvent:
-			a = Action{Type: ActionChooseEvent, EventIndex: d.eventIdx}
-		case actSkill:
-			a = Action{Type: ActionAssignSkill, SkillName: d.skillName}
 		case actWait:
 			a = Action{Type: ActionNoop}
 		}

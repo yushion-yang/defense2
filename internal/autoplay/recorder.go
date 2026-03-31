@@ -34,9 +34,7 @@ type CoverageData struct {
 	AbilitiesTriggered   []string `json:"abilities_triggered,omitempty"`
 	AttackStylesFired    []string `json:"attack_styles_fired,omitempty"`
 	EnemyArchetypesSeen  []string `json:"enemy_archetypes_seen"`
-	EventsChosen         []string `json:"events_chosen,omitempty"`
 	InteractionModes     []string `json:"interaction_modes_entered,omitempty"`
-	SkillsActivated      []string `json:"skills_activated,omitempty"`
 }
 
 // SessionRecord 完整的对局报告。
@@ -97,10 +95,8 @@ type Recorder struct {
 	// 覆盖率追踪
 	towersUsed       map[string]bool
 	archetypesSeen   map[string]bool
-	eventsChosen     map[string]bool
 	abilitiesSeen    map[string]bool
 	attackStylesSeen map[string]bool
-	skillsSeen       map[string]bool
 
 	// 累计统计
 	totalKills int
@@ -119,10 +115,8 @@ func NewRecorder(sessionID, strategy, mapID, difficulty, warden string) *Recorde
 		dpsSnapshots:     make([]float64, 0, 128),
 		towersUsed:       make(map[string]bool),
 		archetypesSeen:   make(map[string]bool),
-		eventsChosen:     make(map[string]bool),
 		abilitiesSeen:    make(map[string]bool),
 		attackStylesSeen: make(map[string]bool),
-		skillsSeen:       make(map[string]bool),
 	}
 }
 
@@ -143,9 +137,6 @@ func (r *Recorder) OnTick(state *GameState, gameDT float64) {
 		}
 		if t.AttackStyle != "" {
 			r.attackStylesSeen[t.AttackStyle] = true
-		}
-		if t.SkillName != "" {
-			r.skillsSeen[t.SkillName] = true
 		}
 	}
 
@@ -211,11 +202,6 @@ func (r *Recorder) OnKill() {
 	r.totalKills++
 }
 
-// OnEventChosen 记录事件选择。
-func (r *Recorder) OnEventChosen(eventKind string) {
-	r.eventsChosen[eventKind] = true
-}
-
 // Finalize 生成最终对局报告。
 func (r *Recorder) Finalize(state *GameState, anomalies []Anomaly, screenshots []string) *SessionRecord {
 	result := "timeout"
@@ -246,10 +232,8 @@ func (r *Recorder) Finalize(state *GameState, anomalies []Anomaly, screenshots [
 	coverage := CoverageData{
 		TowersUsed:          mapKeys(r.towersUsed),
 		EnemyArchetypesSeen: mapKeys(r.archetypesSeen),
-		EventsChosen:        mapKeys(r.eventsChosen),
 		AbilitiesTriggered:  mapKeys(r.abilitiesSeen),
 		AttackStylesFired:   mapKeys(r.attackStylesSeen),
-		SkillsActivated:     mapKeys(r.skillsSeen),
 	}
 
 	rec := &SessionRecord{

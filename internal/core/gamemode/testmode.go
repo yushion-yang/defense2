@@ -14,7 +14,6 @@ func NewTestMode() *TestMode {
 
 func (m *TestMode) IntermissionSecs() float64 { return 5 }
 func (m *TestMode) ShouldAutoStart() bool     { return true }
-func (m *TestMode) EnableEvents() bool         { return false }
 func (m *TestMode) VictoryWaveTarget() int     { return -1 }
 
 // CheckDefeat 测试模式永远不失败。
