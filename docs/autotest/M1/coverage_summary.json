@@ -1,0 +1,160 @@
+{
+  "total_sessions": 4,
+  "victories": 4,
+  "defeats": 0,
+  "timeouts": 0,
+  "coverage_gaps": {
+    "abilities": [
+      "crit",
+      "deathMark",
+      "executionBonus",
+      "flatDamage",
+      "splash",
+      "stackDamage",
+      "buffPurge",
+      "attackSpeedAura",
+      "critAura",
+      "damageUpAura",
+      "rangeAura",
+      "soloBoost",
+      "curseZone",
+      "poisonZone",
+      "silenceZone",
+      "goldPassive",
+      "goldOnKill"
+    ],
+    "archetypes": [
+      "splitter",
+      "teleporter",
+      "buffer",
+      "dummy"
+    ],
+    "attack_styles": [
+      "aura_dot"
+    ],
+    "buff_stack_modes": [
+      "strongest",
+      "additive",
+      "multiplicative",
+      "override",
+      "independent",
+      "independentPerSource"
+    ],
+    "buff_types": [
+      "slow",
+      "stun",
+      "knockup",
+      "root",
+      "silence",
+      "disarm",
+      "speedUp",
+      "damageUp",
+      "damageDown",
+      "fireRateUp",
+      "invincible",
+      "damageImmune",
+      "controlImmune",
+      "slowImmune",
+      "stunImmune",
+      "rootImmune",
+      "untargetable",
+      "shield",
+      "dot",
+      "tenacity"
+    ],
+    "cc_types": [
+      "slow",
+      "root"
+    ],
+    "damage_types": [
+      "physical",
+      "magic",
+      "true",
+      "pure"
+    ],
+    "enemy_templates": [
+      "berserk",
+      "regen",
+      "healAura",
+      "speedAura",
+      "damageReduce",
+      "empBurst",
+      "siphonShield",
+      "blink",
+      "deathSplit",
+      "deathSlow",
+      "reflect",
+      "timewarp",
+      "revive",
+      "spawnMinions"
+    ],
+    "events": [
+      "bonusGold",
+      "buildDiscount",
+      "killRewardUp",
+      "outputUp",
+      "rangeUp",
+      "speedUp",
+      "enemySlow"
+    ],
+    "interaction_modes": [
+      "buildMenu",
+      "buildPlace",
+      "towerSel",
+      "spawnMenu",
+      "spawnPlace",
+      "event",
+      "paused",
+      "wardenSelect"
+    ],
+    "pipeline_steps": [
+      "immunity_check",
+      "boss_hp_cap",
+      "attacker_buff",
+      "target_debuff",
+      "damage_cap",
+      "shield_absorb",
+      "hp_deduct",
+      "threshold",
+      "death_check"
+    ],
+    "skills": [
+      "chainLightning",
+      "nukeBomb",
+      "windBlade",
+      "channelLaser",
+      "missileBarrage",
+      "judgmentBeam",
+      "chainLightningBolts",
+      "judgmentRain",
+      "thunderSmite"
+    ],
+    "towers": null
+  },
+  "anomaly_summary": {
+    "warden_range_limited_x": 4,
+    "warden_range_limited_y": 4,
+    "wave_hp_regression": 9
+  },
+  "tower_usage": {
+    "electric": 2,
+    "en-04": 2,
+    "en-05": 4,
+    "en-08": 4,
+    "freeze": 2,
+    "hunter": 2,
+    "laser": 2,
+    "wl-02": 2
+  },
+  "archetypes_seen": {
+    "armored": 4,
+    "flying": 4,
+    "healer": 4,
+    "normal": 4,
+    "runner": 4,
+    "shielded": 4,
+    "stealth": 4,
+    "swarm": 4,
+    "tank": 4
+  }
+}

@@ -40,10 +40,14 @@ docs/autotest/
   last_commit.txt        # 文件A: 上次更新自动对局系统时的 git commit hash
   config.json            # 可选: 闭环运行参数配置
   state.json             # 编排器状态(当前轮次/阶段)
+  analysis.md            # 脚本3 产出的完整分析报告(含不可自动修复的观察)
   M1/                    # 自动对局产出 -- JSON 数据(波次统计/DPS/金币曲线等)
   M2/                    # 自动对局产出 -- 截图(关键帧/异常画面等)
-  M3/                    # 已处理归档 -- 修复完的 issue 文档
-  M4/                    # 待修复队列 -- AI 分析发现的新问题
+  M3/                    # 已处理归档 -- 修复完的 issue 文档(含 fix_result)
+  M4/                    # 待修复队列 -- AI 分析发现的可自动修复问题
+  archive/               # 已分析的 M1/M2 数据归档
+    M1/                  # 已分析的 JSON 数据
+    M2/                  # 已分析的截图
 ```
 
 ## 脚本详细说明

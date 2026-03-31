@@ -1,0 +1,347 @@
+{
+  "session_id": "20260331_120255_random_map_01_normal_001",
+  "strategy": "random",
+  "map_id": "map_01",
+  "difficulty": "normal",
+  "warden": "prince",
+  "seed": 1774929775076331002,
+  "result": "victory",
+  "waves_survived": 12,
+  "total_waves": 12,
+  "final_gold": 641,
+  "final_lives": 20,
+  "total_kills": 128,
+  "duration_ticks": 5100,
+  "towers_built": [
+    {
+      "key": "wl-02",
+      "count": 2,
+      "total_cost": 130,
+      "total_dps": 37.1
+    },
+    {
+      "key": "en-05",
+      "count": 4,
+      "total_cost": 260,
+      "total_dps": 64
+    },
+    {
+      "key": "laser",
+      "count": 3,
+      "total_cost": 270,
+      "total_dps": 74.4
+    },
+    {
+      "key": "en-08",
+      "count": 1,
+      "total_cost": 75,
+      "total_dps": 32
+    },
+    {
+      "key": "en-04",
+      "count": 2,
+      "total_cost": 120,
+      "total_dps": 36
+    },
+    {
+      "key": "freeze",
+      "count": 1,
+      "total_cost": 75,
+      "total_dps": 10.600000000000001
+    },
+    {
+      "key": "hunter",
+      "count": 2,
+      "total_cost": 184,
+      "total_dps": 38.400000000000006
+    }
+  ],
+  "wave_log": [
+    {
+      "wave": 1,
+      "enemies": 1,
+      "leaked": 0,
+      "gold_earned": 52,
+      "gold_spent": 135
+    },
+    {
+      "wave": 2,
+      "enemies": 6,
+      "leaked": 0,
+      "gold_earned": 85,
+      "gold_spent": 70
+    },
+    {
+      "wave": 3,
+      "enemies": 6,
+      "leaked": 0,
+      "gold_earned": 140,
+      "gold_spent": 115
+    },
+    {
+      "wave": 4,
+      "enemies": 4,
+      "leaked": 0,
+      "gold_earned": 150,
+      "gold_spent": 180
+    },
+    {
+      "wave": 5,
+      "enemies": 2,
+      "leaked": 0,
+      "gold_earned": 130,
+      "gold_spent": 130
+    },
+    {
+      "wave": 6,
+      "enemies": 4,
+      "leaked": 0,
+      "gold_earned": 145,
+      "gold_spent": 75
+    },
+    {
+      "wave": 7,
+      "enemies": 4,
+      "leaked": 0,
+      "gold_earned": 162,
+      "gold_spent": 217
+    },
+    {
+      "wave": 8,
+      "enemies": 4,
+      "leaked": 0,
+      "gold_earned": 175,
+      "gold_spent": 137
+    },
+    {
+      "wave": 9,
+      "enemies": 2,
+      "leaked": 0,
+      "gold_earned": 185,
+      "gold_spent": 142
+    },
+    {
+      "wave": 10,
+      "enemies": 2,
+      "leaked": 0,
+      "gold_earned": 231,
+      "gold_spent": 130
+    },
+    {
+      "wave": 11,
+      "enemies": 4,
+      "leaked": 0,
+      "gold_earned": 235,
+      "gold_spent": 0
+    },
+    {
+      "wave": 12,
+      "enemies": 3,
+      "leaked": 0,
+      "gold_earned": 292,
+      "gold_spent": 130
+    }
+  ],
+  "anomalies": [
+    {
+      "tick": 601,
+      "type": "warden_range_limited_x",
+      "detail": "map width=1320 (\u003e1200) but warden X range=[0,308] (span=308), never reached beyond first screen",
+      "severity": 2
+    },
+    {
+      "tick": 601,
+      "type": "warden_range_limited_y",
+      "detail": "map height=600 (\u003e540) but warden Y range=[0,188] (span=188), never reached beyond first screen",
+      "severity": 2
+    },
+    {
+      "tick": 2607,
+      "type": "wave_hp_regression",
+      "detail": "wave 8 avgHP=37 \u003c wave 7 avgHP=91",
+      "severity": 2
+    },
+    {
+      "tick": 3641,
+      "type": "wave_hp_regression",
+      "detail": "wave 10 avgHP=71 \u003c wave 9 avgHP=157",
+      "severity": 2
+    },
+    {
+      "tick": 4657,
+      "type": "wave_hp_regression",
+      "detail": "wave 12 avgHP=73 \u003c wave 11 avgHP=149",
+      "severity": 2
+    }
+  ],
+  "screenshots": [
+    "start.png",
+    "warden_active.png",
+    "enemy_normal.png",
+    "enemy_dying.png",
+    "tower_wl-02.png",
+    "tower_electric.png",
+    "tower_laser.png",
+    "tower_en-05.png",
+    "attack_scatter.png",
+    "status_bleed.png",
+    "anomaly_warden_range_limited_x_601.png",
+    "anomaly_warden_range_limited_y_601.png",
+    "enemy_swarm.png",
+    "tower_en-04.png",
+    "attack_wideBeam.png",
+    "status_burn.png",
+    "enemy_runner.png",
+    "tower_freeze.png",
+    "boss_wave_5.png",
+    "enemy_tank.png",
+    "boss_appear.png",
+    "tower_hunter.png",
+    "tower_en-08.png",
+    "enemy_armored.png",
+    "attack_charge.png",
+    "anomaly_wave_hp_regression_2607.png",
+    "enemy_shielded.png",
+    "boss_wave_10.png",
+    "enemy_healer.png",
+    "enemy_flying.png",
+    "anomaly_wave_hp_regression_3641.png",
+    "enemy_stealth.png",
+    "anomaly_wave_hp_regression_4657.png"
+  ],
+  "coverage": {
+    "towers_used": [
+      "laser",
+      "en-05",
+      "en-04",
+      "hunter",
+      "wl-02",
+      "electric",
+      "freeze",
+      "en-08"
+    ],
+    "abilities_triggered": [
+      "burn",
+      "onHitSlow",
+      "multiTarget",
+      "percentHpDamage",
+      "percentHpMinor",
+      "stun",
+      "bounce",
+      "distanceDamage",
+      "bleedDot",
+      "chargeShot"
+    ],
+    "attack_styles_fired": [
+      "laser",
+      "scatter",
+      "wideBeam",
+      "charge",
+      "spin_aoe",
+      "projectile"
+    ],
+    "enemy_archetypes_seen": [
+      "normal",
+      "swarm",
+      "tank",
+      "armored",
+      "shielded",
+      "stealth",
+      "runner",
+      "healer",
+      "flying"
+    ]
+  },
+  "dps_snapshots": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    374.9999999999995,
+    899.9999999999987,
+    914.9999999999987,
+    959.9999999999987,
+    959.9999999999987,
+    1679.9999999999977,
+    1319.9999999999982,
+    1175.9999999999984,
+    1823.9999999999975,
+    959.9999999999987,
+    959.9999999999987,
+    959.9999999999987,
+    959.9999999999987,
+    959.9999999999987,
+    959.9999999999987,
+    1643.9999999999977,
+    1355.9999999999982,
+    959.9999999999987,
+    1355.9999999999982,
+    2068.7999999999984,
+    1631.9999999999986,
+    959.9999999999987,
+    1708.7999999999993,
+    2111.999999999999,
+    1247.9999999999984,
+    959.9999999999987,
+    1567.999999999998,
+    2879.9999999999964,
+    2879.9999999999964,
+    2879.9999999999964,
+    2879.9999999999964,
+    3091.199999999994,
+    3763.199999999993,
+    2879.9999999999964,
+    2879.9999999999964,
+    2879.9999999999964,
+    2879.9999999999964,
+    2879.9999999999964,
+    2879.9999999999964,
+    3091.199999999994,
+    3763.199999999993,
+    2879.9999999999964,
+    3782.399999999991,
+    4031.99999999999,
+    3014.399999999996,
+    2879.9999999999964,
+    2879.9999999999964,
+    2879.9999999999964,
+    3859.199999999991,
+    3002.399999999996,
+    2879.9999999999964,
+    3287.9999999999973,
+    3573.5999999999967,
+    2879.9999999999964,
+    2879.9999999999964,
+    3961.199999999998,
+    2900.3999999999965,
+    3920.3999999999987,
+    4103.999999999998,
+    4887.999999999994,
+    4021.9999999999973,
+    2879.9999999999964,
+    3206.3999999999974,
+    3655.1999999999966,
+    3553.1999999999975,
+    2915.999999999996,
+    3959.9999999999945,
+    3959.9999999999945,
+    3923.999999999995,
+    2879.9999999999964,
+    3635.999999999995,
+    4823.999999999994,
+    3671.999999999995,
+    4439.999999999994,
+    4397.9999999999945
+  ],
+  "boss_spawned": [
+    "tank"
+  ],
+  "interaction_modes": [
+    "idle"
+  ]
+}

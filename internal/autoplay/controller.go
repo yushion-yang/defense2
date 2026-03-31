@@ -43,6 +43,7 @@ type Controller struct {
 
 	prevWave    int
 	prevLives   int
+	prevKills   int  // 上一帧累计击杀数（用于增量检测）
 	prevMode    int  // 上一帧交互模式
 	modeDelay   bool // 模式切换延迟标志：先截图，下帧再操作
 	gameStarted bool
@@ -178,6 +179,23 @@ func (c *Controller) OnUpdate(snap scene.AutoPlaySnapshot) []scene.AutoPlayActio
 		c.screenshotter.RequestCapture(fmt.Sprintf("wave_announce_%d.png", state.Wave))
 	}
 
+	// 击杀增量同步 (BUG-001: total_kills always 0)
+	if state.TotalKills > c.prevKills {
+		delta := state.TotalKills - c.prevKills
+		for i := 0; i < delta; i++ {
+			c.recorder.OnKill()
+		}
+		c.prevKills = state.TotalKills
+	}
+
+	// 理论 DPS 采样 (BUG-002: DPS snapshots all zero)
+	// 对有目标的塔累加 Damage 作为瞬时 DPS 近似
+	for _, t := range state.Towers {
+		if t.HasTarget {
+			c.recorder.RecordDamage(t.Damage)
+		}
+	}
+
 	// 录制
 	c.recorder.OnTick(state, 1.0/60.0)
 	c.recorder.TickDPS(1.0 / 60.0)
@@ -190,6 +208,13 @@ func (c *Controller) OnUpdate(snap scene.AutoPlaySnapshot) []scene.AutoPlayActio
 		switch a.Type {
 		case ActionBuild:
 			c.anomaly.RecordBuildAction(state.Tick, a.Cell.Row, a.Cell.Col, a.TowerKey)
+			// BUG-003: 记录建塔花费到波次统计
+			for _, d := range state.TowerDefs {
+				if d.Key == a.TowerKey {
+					c.recorder.OnTowerBuilt(d.Cost)
+					break
+				}
+			}
 		case ActionUpgrade:
 			// 找当前强度
 			for _, t := range state.Towers {
