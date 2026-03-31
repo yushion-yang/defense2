@@ -2,6 +2,8 @@
 // 定义在 scene 包中以避免 scene <-> autoplay 循环导入。
 package scene
 
+import "defense2/internal/core/telemetry"
+
 // AutoPlayer 自动对局驱动接口。
 // 由 autoplay.Controller 实现，注入到 StageScene 中。
 type AutoPlayer interface {
@@ -43,6 +45,9 @@ type AutoPlaySnapshot struct {
 	MapPixelW       float64 // 地图像素宽度
 	MapPixelH       float64 // 地图像素高度
 	GameSpeed       int     // 当前游戏速度倍率
+
+	// 遥测数据快照
+	Telemetry telemetry.TelemetrySnapshot
 }
 
 // AutoPlayEnemy 敌人快照。

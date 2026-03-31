@@ -10,6 +10,7 @@ import (
 	"path/filepath"
 	"time"
 
+	"defense2/internal/core/telemetry"
 	"defense2/internal/scene"
 )
 
@@ -74,6 +75,7 @@ func (c *Controller) OnUpdate(snap scene.AutoPlaySnapshot) []scene.AutoPlayActio
 	if !c.gameStarted {
 		c.gameStarted = true
 		c.prevLives = state.Lives
+		telemetry.T.Reset() // 每局开始清除遥测数据
 		c.strategy.Init(state)
 		c.screenshotter.RequestStart()
 	}
@@ -156,7 +158,7 @@ func (c *Controller) OnGameEnd(snap scene.AutoPlaySnapshot, won bool) {
 
 	// 生成报告
 	record := c.recorder.Finalize(state, c.anomaly.Anomalies(), c.screenshotter.CapturedFiles())
-	if err := WriteJSON(record, c.outputDir); err != nil {
+	if err := WriteJSON(record, c.jsonDir); err != nil {
 		log.Printf("report write error: %v", err)
 	} else {
 		log.Printf("[DONE] session=%s result=%s waves=%d/%d kills=%d anomalies=%d",
@@ -171,7 +173,7 @@ func (c *Controller) ScreenshotRequested() string {
 	if fname == "" {
 		return ""
 	}
-	return filepath.Join(c.outputDir, fname)
+	return filepath.Join(c.pngDir, fname)
 }
 
 // Done 返回是否已完成。实现 scene.AutoPlayer。
@@ -202,6 +204,7 @@ func snapshotToGameState(snap scene.AutoPlaySnapshot) *GameState {
 		MapPixelW:       snap.MapPixelW,
 		MapPixelH:       snap.MapPixelH,
 		GameSpeed:       snap.GameSpeed,
+		Telemetry:       snap.Telemetry,
 	}
 
 	for _, e := range snap.Enemies {

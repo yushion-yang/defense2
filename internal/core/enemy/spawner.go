@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"defense2/internal/core/gamemap"
+	tel "defense2/internal/core/telemetry"
 )
 
 // waveEntry 波次组合中一种原型的权重配置。
@@ -143,6 +144,7 @@ func (s *Spawner) Update(pool *Pool, dt float64) {
 					bossCfg.HpScale *= 3   // Boss 额外 3 倍 HP
 					bossCfg.Radius *= 1.5  // Boss 体型更大
 					cfg = &bossCfg
+					tel.T.Record("boss", archetype)
 				}
 			} else {
 				archetype = s.pickArchetype()

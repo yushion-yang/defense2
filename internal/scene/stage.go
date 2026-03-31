@@ -28,6 +28,7 @@ import (
 	"defense2/internal/core/event"
 	"defense2/internal/core/game"
 	"defense2/internal/core/gamemap"
+	tel "defense2/internal/core/telemetry"
 	"defense2/internal/core/gamemode"
 	"defense2/internal/core/persistence"
 	"defense2/internal/core/pipeline"
@@ -2471,7 +2472,14 @@ func (s *StageScene) buildAutoPlaySnapshot() AutoPlaySnapshot {
 		MapPixelW:       s.gameMap.PixelWidth(),
 		MapPixelH:       s.gameMap.PixelHeight(),
 		GameSpeed:       s.gameSpeed,
+		Telemetry:       tel.T.Snapshot(),
 	}
+	// 遥测：记录交互模式
+	modeNames := []string{"idle", "buildMenu", "buildPlace", "towerSel", "spawnMenu", "spawnPlace", "event", "paused", "wardenSelect"}
+	if int(s.imode) < len(modeNames) {
+		tel.T.Record("imode", modeNames[s.imode])
+	}
+
 	// 战灵位置
 	if s.wardenReady && s.wardenUnit != nil {
 		if base := s.wardenUnit.BaseState(); base != nil {

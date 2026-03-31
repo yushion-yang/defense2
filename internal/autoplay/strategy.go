@@ -5,6 +5,8 @@ package autoplay
 import (
 	"fmt"
 	"time"
+
+	"defense2/internal/core/telemetry"
 )
 
 // GameState 游戏状态快照，由 Controller 每帧构建。
@@ -35,6 +37,7 @@ type GameState struct {
 	MapPixelW       float64
 	MapPixelH       float64
 	GameSpeed       int
+	Telemetry       telemetry.TelemetrySnapshot
 }
 
 // EnemyInfo 敌人快照。

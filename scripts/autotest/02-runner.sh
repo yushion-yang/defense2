@@ -1,6 +1,6 @@
 #!/bin/bash
 # 脚本2 — 自动对局 (Runner)
-# 编译并运行自动对局，产出分拣到 M1(纯JSON) + M2(纯PNG)
+# 编译并运行自动对局，直接分离输出到 M1(纯JSON) + M2(纯PNG)
 # 保留旧数据不删除，新数据按时间戳目录追加
 
 set -euo pipefail
@@ -48,14 +48,17 @@ else
     fi
 fi
 
-# 先输出到临时目录 (autoplay 把 JSON+PNG 混在同一 session 子目录)
-TMP_DIR="/tmp/autoplay-output-${BATCH_ID}"
-mkdir -p "$TMP_DIR"
+# autoplay 直接分离输出: --json-dir → M1, --png-dir → M2
+M1_DIR="${DATA_DIR}/M1/${BATCH_ID}"
+M2_DIR="${DATA_DIR}/M2/${BATCH_ID}"
 
-echo "[$(date)] Running autoplay with args: $ARGS --output $TMP_DIR" >> "$LOG"
+echo "[$(date)] Running autoplay: $ARGS --json-dir $M1_DIR --png-dir $M2_DIR" >> "$LOG"
 
 # 运行自动对局 (超时 10 分钟)
-timeout 600 /tmp/autoplay-bin $ARGS --output "$TMP_DIR" >> "$LOG" 2>&1 || {
+timeout 600 /tmp/autoplay-bin $ARGS \
+    --json-dir "$M1_DIR" \
+    --png-dir "$M2_DIR" \
+    >> "$LOG" 2>&1 || {
     EXIT_CODE=$?
     if [ $EXIT_CODE -eq 124 ]; then
         echo "[$(date)] WARNING: autoplay timed out after 600s" >> "$LOG"
@@ -63,42 +66,6 @@ timeout 600 /tmp/autoplay-bin $ARGS --output "$TMP_DIR" >> "$LOG" 2>&1 || {
         echo "[$(date)] WARNING: autoplay exited with code $EXIT_CODE" >> "$LOG"
     fi
 }
-
-# --- 分拣: 按文件类型拆分到 M1/M2，保留 session 子目录结构 ---
-#
-# 临时目录结构 (autoplay 原生输出):
-#   /tmp/autoplay-output-{batch}/
-#     coverage_summary.json
-#     {sessionID}/
-#       report.json
-#       start.png  wave_5.png  result.png  ...
-#
-# 分拣后:
-#   M1/{batch}/{sessionID}/report.json       (纯 JSON)
-#   M1/{batch}/coverage_summary.json
-#   M2/{batch}/{sessionID}/start.png ...     (纯 PNG)
-
-M1_DIR="${DATA_DIR}/M1/${BATCH_ID}"
-M2_DIR="${DATA_DIR}/M2/${BATCH_ID}"
-
-# 复制 JSON，保留目录结构
-cd "$TMP_DIR"
-find . -name "*.json" -type f | while read -r f; do
-    dest="${M1_DIR}/${f}"
-    mkdir -p "$(dirname "$dest")"
-    mv "$f" "$dest"
-done
-
-# 复制 PNG，保留目录结构
-find . -name "*.png" -type f | while read -r f; do
-    dest="${M2_DIR}/${f}"
-    mkdir -p "$(dirname "$dest")"
-    mv "$f" "$dest"
-done
-cd "$PROJECT_DIR"
-
-# 清理临时目录
-rm -rf "$TMP_DIR"
 
 # 统计本次产出
 JSON_COUNT=$(find "$M1_DIR" -name "*.json" 2>/dev/null | wc -l | tr -d ' ')

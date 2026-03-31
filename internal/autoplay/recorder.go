@@ -7,6 +7,8 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+
+	"defense2/internal/core/telemetry"
 )
 
 // TowerStat 塔使用统计。
@@ -57,6 +59,16 @@ type SessionRecord struct {
 	Screenshots   []string     `json:"screenshots"`
 	Coverage      CoverageData `json:"coverage"`
 	DPSSnapshots  []float64    `json:"dps_snapshots,omitempty"`
+
+	// 遥测覆盖
+	PipelineSteps      []string `json:"pipeline_steps,omitempty"`
+	DamageTypes        []string `json:"damage_types,omitempty"`
+	BuffTypesApplied   []string `json:"buff_types_applied,omitempty"`
+	BuffStackModes     []string `json:"buff_stack_modes,omitempty"`
+	EnemyBuffTemplates []string `json:"enemy_buff_templates,omitempty"`
+	BossSpawned        []string `json:"boss_spawned,omitempty"`
+	InteractionModes   []string `json:"interaction_modes,omitempty"`
+	CCApplied          []string `json:"cc_applied,omitempty"`
 }
 
 // Recorder 对局数据记录器。
@@ -239,7 +251,7 @@ func (r *Recorder) Finalize(state *GameState, anomalies []Anomaly, screenshots [
 		SkillsActivated:     mapKeys(r.skillsSeen),
 	}
 
-	return &SessionRecord{
+	rec := &SessionRecord{
 		SessionID:     r.sessionID,
 		Strategy:      r.strategy,
 		MapID:         r.mapID,
@@ -259,6 +271,19 @@ func (r *Recorder) Finalize(state *GameState, anomalies []Anomaly, screenshots [
 		Coverage:      coverage,
 		DPSSnapshots:  r.dpsSnapshots,
 	}
+
+	// 遥测数据
+	tel := state.Telemetry
+	rec.PipelineSteps = telemetry.Keys(tel.PipelineSteps)
+	rec.DamageTypes = telemetry.Keys(tel.DamageTypes)
+	rec.BuffTypesApplied = telemetry.Keys(tel.BuffTypesApplied)
+	rec.BuffStackModes = telemetry.Keys(tel.BuffStackModes)
+	rec.EnemyBuffTemplates = telemetry.Keys(tel.EnemyBuffTemplates)
+	rec.BossSpawned = telemetry.Keys(tel.BossSpawned)
+	rec.InteractionModes = telemetry.Keys(tel.InteractionModes)
+	rec.CCApplied = telemetry.Keys(tel.CCApplied)
+
+	return rec
 }
 
 // WriteJSON 将对局报告写入 JSON 文件。

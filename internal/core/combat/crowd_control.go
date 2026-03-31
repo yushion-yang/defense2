@@ -2,7 +2,10 @@
 // 统一处理眩晕、减速、定身等控制效果的施加，支持韧性减免和免疫检查。
 package combat
 
-import "defense2/internal/core/enemy"
+import (
+	"defense2/internal/core/enemy"
+	tel "defense2/internal/core/telemetry"
+)
 
 // MinSpeedRatio 全局减速下限：速度不低于初始速度的 20%。
 const MinSpeedRatio = 0.2
@@ -26,6 +29,7 @@ func ApplyStun(e *enemy.Enemy, duration float64, source string) bool {
 	if actualDuration > e.StunTimer {
 		e.StunTimer = actualDuration
 	}
+	tel.T.Record("cc", "stun")
 	return true
 }
 
@@ -55,6 +59,7 @@ func ApplySlow(e *enemy.Enemy, factor, duration float64, source string) bool {
 		e.SlowFactor = factor
 		e.Speed = e.BaseSpeed * factor
 	}
+	tel.T.Record("cc", "slow")
 	return true
 }
 
@@ -77,6 +82,7 @@ func ApplyRoot(e *enemy.Enemy, duration float64, source string) bool {
 	if actualDuration > e.RootTimer {
 		e.RootTimer = actualDuration
 	}
+	tel.T.Record("cc", "root")
 	return true
 }
 

@@ -22,7 +22,9 @@ func main() {
 	mapID := flag.String("map", "map_01", "map ID")
 	difficulty := flag.String("difficulty", "normal", "difficulty ID")
 	warden := flag.String("warden", "prince", "warden type")
-	output := flag.String("output", "./autoplay-results", "output directory")
+	output := flag.String("output", "./autoplay-results", "output directory (JSON+PNG mixed, used when json-dir/png-dir not set)")
+	jsonDir := flag.String("json-dir", "", "JSON report output directory (pure JSON)")
+	pngDir := flag.String("png-dir", "", "screenshot output directory (pure PNG)")
 	sweep := flag.Bool("sweep", false, "run full pairwise sweep (~60 cases)")
 	scenarioName := flag.String("scenario", "", "run single scenario by name")
 	flag.Parse()
@@ -54,14 +56,18 @@ func main() {
 	for i, tc := range cases {
 		log.Printf("[%d/%d] Running session: %s (strategy=%s map=%s diff=%s warden=%s)",
 			i+1, len(cases), tc.ID, tc.Strategy.Name(), tc.MapID, tc.Difficulty, tc.Warden)
-		runSession(tc, *output)
+		runSession(tc, *output, *jsonDir, *pngDir)
 	}
 
-	// 生成汇总报告
-	autoplay.GenerateSummaryReport(*output)
+	// 生成汇总报告 (从 JSON 目录读取)
+	reportDir := *output
+	if *jsonDir != "" {
+		reportDir = *jsonDir
+	}
+	autoplay.GenerateSummaryReport(reportDir)
 }
 
-func runSession(tc autoplay.TestCase, outputDir string) {
+func runSession(tc autoplay.TestCase, outputDir, jsonDir, pngDir string) {
 	// 无头优化：1x1 最小化窗口 + 高 TPS（Draw 被 StageScene 跳过，GPU≈0）
 	ebiten.SetWindowSize(1, 1)
 	ebiten.SetWindowTitle("AutoPlay")
@@ -86,6 +92,8 @@ func runSession(tc autoplay.TestCase, outputDir string) {
 	ctrl := autoplay.NewController(autoplay.ControllerConfig{
 		Strategy:   tc.Strategy,
 		OutputDir:  outputDir,
+		JSONDir:    jsonDir,
+		PNGDir:     pngDir,
 		SessionID:  tc.ID,
 		MapID:      tc.MapID,
 		Difficulty: tc.Difficulty,

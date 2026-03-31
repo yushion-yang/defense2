@@ -64,7 +64,7 @@ func ProcessDamage(input DamageInput) DamageResult {
 	}
 
 	// 遥测：记录伤害类型
-	tel.Record("damage_type", dmgType)
+	tel.T.Record("damage_type", dmgType)
 
 	result := DamageResult{
 		RawDamage: input.RawDamage,
@@ -72,30 +72,30 @@ func ProcessDamage(input DamageInput) DamageResult {
 	damage := input.RawDamage
 
 	// ── 步骤1: 免疫检查 ──
-	tel.Record("pipeline", "immunity_check")
+	tel.T.Record("pipeline", "immunity_check")
 	if !IgnoresInvincible(dmgType) {
 		if e.IsUntargetable {
 			result.Blocked = true
 			result.BlockedReason = "untargetable"
-			tel.Record("pipeline", "immunity_block_untargetable")
+			tel.T.Record("pipeline", "immunity_block_untargetable")
 			return result
 		}
 		if e.IsInvincible {
 			result.Blocked = true
 			result.BlockedReason = "invincible"
-			tel.Record("pipeline", "immunity_block_invincible")
+			tel.T.Record("pipeline", "immunity_block_invincible")
 			return result
 		}
 		if e.IsDamageImmune {
 			result.Blocked = true
 			result.BlockedReason = "damageImmune"
-			tel.Record("pipeline", "immunity_block_immune")
+			tel.T.Record("pipeline", "immunity_block_immune")
 			return result
 		}
 	}
 
 	// ── 步骤2: Boss百分比HP上限 ──
-	tel.Record("pipeline", "boss_hp_cap")
+	tel.T.Record("pipeline", "boss_hp_cap")
 	if input.IsPercentHP && e.Boss {
 		cap := input.PercentCap
 		if cap <= 0 {
@@ -111,21 +111,21 @@ func ProcessDamage(input DamageInput) DamageResult {
 	}
 
 	// ── 步骤3: 攻击者增伤buff ──
-	tel.Record("pipeline", "attacker_buff")
+	tel.T.Record("pipeline", "attacker_buff")
 	if !IgnoresReduction(dmgType) && input.AttackerDamageUp > 0 {
 		damage *= input.AttackerDamageUp
 	}
 	result.AfterAttackerMod = damage
 
 	// ── 步骤4: 目标减伤buff ──
-	tel.Record("pipeline", "target_debuff")
+	tel.T.Record("pipeline", "target_debuff")
 	if !IgnoresReduction(dmgType) && input.TargetDamageDown > 0 {
 		damage *= input.TargetDamageDown
 	}
 	result.AfterTargetMod = damage
 
 	// ── 步骤4.5: 伤害上限 ──
-	tel.Record("pipeline", "damage_cap")
+	tel.T.Record("pipeline", "damage_cap")
 	if !e.Silenced {
 		if e.DamageCap > 0 && damage > e.DamageCap {
 			damage = e.DamageCap
@@ -145,7 +145,7 @@ func ProcessDamage(input DamageInput) DamageResult {
 	}
 
 	// ── 步骤5: 护盾吸收 ──
-	tel.Record("pipeline", "shield_absorb")
+	tel.T.Record("pipeline", "shield_absorb")
 	if !IgnoresShield(dmgType) {
 		absorbed := enemy.AbsorbShields(e, damage)
 		result.ShieldAbsorbed = absorbed
@@ -156,7 +156,7 @@ func ProcessDamage(input DamageInput) DamageResult {
 	}
 
 	// ── 步骤6: HP扣减 ──
-	tel.Record("pipeline", "hp_deduct")
+	tel.T.Record("pipeline", "hp_deduct")
 	result.HPDamage = damage
 	e.HP -= damage
 	if e.HP < 0 {
@@ -165,14 +165,14 @@ func ProcessDamage(input DamageInput) DamageResult {
 	result.FinalDamage = result.ShieldAbsorbed + result.HPDamage
 
 	// ── 步骤7: 阈值触发 ──
-	tel.Record("pipeline", "threshold")
+	tel.T.Record("pipeline", "threshold")
 	result.Thresholds = enemy.CheckThresholds(e)
 
 	// ── 步骤8: 死亡检查 ──
-	tel.Record("pipeline", "death_check")
+	tel.T.Record("pipeline", "death_check")
 	result.Killed = e.HP <= 0
 	if result.Killed {
-		tel.Record("pipeline", "death")
+		tel.T.Record("pipeline", "death")
 	}
 
 	// 最低伤害保底（即使经过护盾/减免，结果伤害不能为负）

@@ -3,6 +3,8 @@
 // 同时提供 flags 标记和旧版类型名映射。
 package enemy
 
+import tel "defense2/internal/core/telemetry"
+
 // BuffTemplate buff 模板定义。
 type BuffTemplate struct {
 	ID          string  // 模板唯一标识
@@ -165,6 +167,8 @@ func ApplyBuffTemplate(e *Enemy, templateID string) bool {
 	if tmpl == nil {
 		return false
 	}
+	// 遥测：记录敌人 buff 模板使用
+	tel.T.Record("enemy_template", templateID)
 
 	// 狂暴参数
 	if tmpl.BerserkThreshold > 0 {

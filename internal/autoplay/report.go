@@ -39,6 +39,13 @@ func GenerateReport(records []*SessionRecord) *CoverageReport {
 	abilitiesSeen := make(map[string]bool)
 	attackStylesSeen := make(map[string]bool)
 	skillsSeen := make(map[string]bool)
+	pipelineStepsSeen := make(map[string]bool)
+	damageTypesSeen := make(map[string]bool)
+	buffTypesSeen := make(map[string]bool)
+	buffModesSeen := make(map[string]bool)
+	enemyTemplatesSeen := make(map[string]bool)
+	interactionModesSeen := make(map[string]bool)
+	ccSeen := make(map[string]bool)
 
 	for _, rec := range records {
 		switch rec.Result {
@@ -74,6 +81,28 @@ func GenerateReport(records []*SessionRecord) *CoverageReport {
 		for _, sk := range rec.Coverage.SkillsActivated {
 			skillsSeen[sk] = true
 		}
+		// 遥测维度
+		for _, v := range rec.PipelineSteps {
+			pipelineStepsSeen[v] = true
+		}
+		for _, v := range rec.DamageTypes {
+			damageTypesSeen[v] = true
+		}
+		for _, v := range rec.BuffTypesApplied {
+			buffTypesSeen[v] = true
+		}
+		for _, v := range rec.BuffStackModes {
+			buffModesSeen[v] = true
+		}
+		for _, v := range rec.EnemyBuffTemplates {
+			enemyTemplatesSeen[v] = true
+		}
+		for _, v := range rec.InteractionModes {
+			interactionModesSeen[v] = true
+		}
+		for _, v := range rec.CCApplied {
+			ccSeen[v] = true
+		}
 	}
 
 	// 检查覆盖缺口
@@ -98,6 +127,37 @@ func GenerateReport(records []*SessionRecord) *CoverageReport {
 		"goldPassive", "goldOnKill",
 	}
 	r.CoverageGaps["abilities"] = findGaps(allAbilities, abilitiesSeen)
+
+	// 遥测维度覆盖
+	allPipeline := []string{"immunity_check", "boss_hp_cap", "attacker_buff", "target_debuff", "damage_cap", "shield_absorb", "hp_deduct", "threshold", "death_check"}
+	r.CoverageGaps["pipeline_steps"] = findGaps(allPipeline, pipelineStepsSeen)
+
+	allDmgTypes := []string{"physical", "magic", "true", "pure"}
+	r.CoverageGaps["damage_types"] = findGaps(allDmgTypes, damageTypesSeen)
+
+	allBuffTypes := []string{
+		"slow", "stun", "knockup", "root", "silence", "disarm",
+		"speedUp", "damageUp", "damageDown", "fireRateUp",
+		"invincible", "damageImmune", "controlImmune", "slowImmune", "stunImmune", "rootImmune", "untargetable",
+		"shield", "dot", "tenacity",
+	}
+	r.CoverageGaps["buff_types"] = findGaps(allBuffTypes, buffTypesSeen)
+
+	allBuffModes := []string{"strongest", "additive", "multiplicative", "override", "independent", "independentPerSource"}
+	r.CoverageGaps["buff_stack_modes"] = findGaps(allBuffModes, buffModesSeen)
+
+	allTemplates := []string{
+		"berserk", "regen", "healAura", "speedAura", "damageReduce",
+		"empBurst", "siphonShield", "blink", "deathSplit", "deathSlow",
+		"reflect", "timewarp", "revive", "spawnMinions",
+	}
+	r.CoverageGaps["enemy_templates"] = findGaps(allTemplates, enemyTemplatesSeen)
+
+	allIModes := []string{"idle", "buildMenu", "buildPlace", "towerSel", "spawnMenu", "spawnPlace", "event", "paused", "wardenSelect"}
+	r.CoverageGaps["interaction_modes"] = findGaps(allIModes, interactionModesSeen)
+
+	allCC := []string{"slow", "stun", "root"}
+	r.CoverageGaps["cc_types"] = findGaps(allCC, ccSeen)
 
 	return r
 }
@@ -154,6 +214,29 @@ func (r *CoverageReport) WriteText(w io.Writer) {
 		fmt.Fprintf(w, "  -- MISSING: %v", r.CoverageGaps["abilities"])
 	}
 	fmt.Fprintln(w)
+
+	// 遥测维度
+	dims := []struct {
+		label string
+		key   string
+		total int
+	}{
+		{"Pipeline:  ", "pipeline_steps", 9},
+		{"DmgTypes:  ", "damage_types", 4},
+		{"BuffTypes: ", "buff_types", 20},
+		{"BuffModes: ", "buff_stack_modes", 6},
+		{"Templates: ", "enemy_templates", 14},
+		{"IModes:    ", "interaction_modes", 9},
+		{"CC Types:  ", "cc_types", 3},
+	}
+	for _, d := range dims {
+		gaps := r.CoverageGaps[d.key]
+		fmt.Fprintf(w, "%s%d/%d", d.label, d.total-len(gaps), d.total)
+		if len(gaps) > 0 {
+			fmt.Fprintf(w, "  -- MISSING: %v", gaps)
+		}
+		fmt.Fprintln(w)
+	}
 
 	if len(r.AnomalySummary) > 0 {
 		fmt.Fprintf(w, "\nAnomalies:\n")

@@ -345,3 +345,23 @@ func (bl *BuffList) deactivate(idx int, target interface{}) {
 		b.OnExpire(target)
 	}
 }
+
+// stackModeName 返回堆叠模式的字符串名称（遥测用）。
+func stackModeName(m StackMode) string {
+	switch m {
+	case ModeStrongest:
+		return "strongest"
+	case ModeAdditive:
+		return "additive"
+	case ModeMultiplicative:
+		return "multiplicative"
+	case ModeOverride:
+		return "override"
+	case ModeIndependent:
+		return "independent"
+	case ModeIndependentPerSource:
+		return "independentPerSource"
+	default:
+		return "unknown"
+	}
+}
