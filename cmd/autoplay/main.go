@@ -41,6 +41,8 @@ func main() {
 	sweep := flag.Bool("sweep", false, "run full pairwise sweep")
 	scenarioName := flag.String("scenario", "", "run single scenario by name")
 	seed := flag.Int64("seed", 0, "master random seed (0=use timestamp, same seed = reproducible results)")
+	modelPath := flag.String("model-path", "", "path to LLM .bin weight file (for llm strategy)")
+	vocabPath := flag.String("vocab-path", "config/llm/vocab.json", "path to LLM vocab.json (for llm strategy)")
 	flag.Parse()
 
 	if *sessionJSON != "" {
@@ -48,7 +50,7 @@ func main() {
 		return
 	}
 
-	orchestrate(*runs, *strategies, *mapID, *difficulty, *warden, *output, *jsonDir, *pngDir, *sweep, *scenarioName, *seed)
+	orchestrate(*runs, *strategies, *mapID, *difficulty, *warden, *output, *jsonDir, *pngDir, *sweep, *scenarioName, *seed, *modelPath, *vocabPath)
 }
 
 // ─── 编排模式 ───
@@ -64,13 +66,15 @@ type sessionConfig struct {
 	Strategy    string `json:"strategy"`
 	TowerKey    string `json:"tower_key,omitempty"`
 	SkillName   string `json:"skill_name,omitempty"`
+	ModelPath   string `json:"model_path,omitempty"`
+	VocabPath   string `json:"vocab_path,omitempty"`
 	OutputDir   string `json:"output_dir"`
 	JSONDir     string `json:"json_dir,omitempty"` // 纯 JSON 输出 (空=混合到 OutputDir)
 	PNGDir      string `json:"png_dir,omitempty"`  // 纯 PNG 输出 (空=混合到 OutputDir)
 	Seed        int64  `json:"seed"`
 }
 
-func orchestrate(runs int, strategies, mapID, difficulty, warden, output, jsonDir, pngDir string, sweep bool, scenarioName string, masterSeed int64) {
+func orchestrate(runs int, strategies, mapID, difficulty, warden, output, jsonDir, pngDir string, sweep bool, scenarioName string, masterSeed int64, modelPath, vocabPath string) {
 	// 分离模式: --json-dir/--png-dir 由调用方管理目录结构
 	// 兼容模式: 生成带时间戳的 run 目录，避免历史结果污染
 	splitMode := jsonDir != "" && pngDir != ""
@@ -139,6 +143,8 @@ func orchestrate(runs int, strategies, mapID, difficulty, warden, output, jsonDi
 			ModeID:      tc.EffectiveModeID(),
 			EnemyFilter: tc.EnemyFilter,
 			Strategy:    tc.Strategy.Name(),
+			ModelPath:   modelPath,
+			VocabPath:   vocabPath,
 			OutputDir:   runDir,
 			JSONDir:     jsonDir,
 			PNGDir:      pngDir,
@@ -240,6 +246,12 @@ func restoreStrategy(cfg sessionConfig) autoplay.Strategy {
 		return autoplay.NewGreedyStrategy()
 	case name == "visual_catalog":
 		return autoplay.NewVisualCatalogStrategy()
+	case name == "llm":
+		s, err := autoplay.NewLLMStrategy(cfg.ModelPath, cfg.VocabPath)
+		if err != nil {
+			log.Fatalf("create LLM strategy: %v", err)
+		}
+		return s
 	case len(name) > 6 && name[:6] == "focus_":
 		return autoplay.NewFocusStrategy(cfg.TowerKey)
 	case len(name) > 6 && name[:6] == "skill_":
