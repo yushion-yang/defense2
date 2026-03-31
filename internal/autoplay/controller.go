@@ -16,7 +16,9 @@ import (
 // ControllerConfig 控制器配置。
 type ControllerConfig struct {
 	Strategy   Strategy
-	OutputDir  string
+	OutputDir  string // 兼容旧用法: JSON+PNG 混合输出 (当 JSONDir/PNGDir 为空时使用)
+	JSONDir    string // JSON 报告输出目录 (纯 JSON)
+	PNGDir     string // 截图输出目录 (纯 PNG)
 	SessionID  string
 	MapID      string
 	Difficulty string
@@ -30,7 +32,8 @@ type Controller struct {
 	anomaly       *AnomalyDetector
 	screenshotter *Screenshotter
 
-	outputDir string
+	jsonDir   string // JSON 报告写入目录
+	pngDir    string // 截图写入目录
 	sessionID string
 
 	prevWave    int
@@ -42,13 +45,22 @@ type Controller struct {
 
 // NewController 创建自动对局控制器。
 func NewController(cfg ControllerConfig) *Controller {
-	outputDir := filepath.Join(cfg.OutputDir, cfg.SessionID)
+	// 分离模式: JSONDir/PNGDir 分别存放; 兼容模式: 全部放 OutputDir
+	jsonDir := filepath.Join(cfg.OutputDir, cfg.SessionID)
+	pngDir := jsonDir
+	if cfg.JSONDir != "" {
+		jsonDir = filepath.Join(cfg.JSONDir, cfg.SessionID)
+	}
+	if cfg.PNGDir != "" {
+		pngDir = filepath.Join(cfg.PNGDir, cfg.SessionID)
+	}
 	return &Controller{
 		strategy:      cfg.Strategy,
 		recorder:      NewRecorder(cfg.SessionID, cfg.Strategy.Name(), cfg.MapID, cfg.Difficulty, cfg.Warden),
 		anomaly:       NewAnomalyDetector(),
-		screenshotter: NewScreenshotter(outputDir),
-		outputDir:     outputDir,
+		screenshotter: NewScreenshotter(pngDir),
+		jsonDir:       jsonDir,
+		pngDir:        pngDir,
 		sessionID:     cfg.SessionID,
 		startTime:     time.Now(),
 	}
@@ -107,6 +119,22 @@ func (c *Controller) OnUpdate(snap scene.AutoPlaySnapshot) []scene.AutoPlayActio
 	// 策略决策
 	actions := c.strategy.Decide(state)
 
+	// 记录操作审计（下帧验证结果）
+	for _, a := range actions {
+		switch a.Type {
+		case ActionBuild:
+			c.anomaly.RecordBuildAction(state.Tick, a.Cell.Row, a.Cell.Col, a.TowerKey)
+		case ActionUpgrade:
+			// 找当前强度
+			for _, t := range state.Towers {
+				if t.Row == a.Row && t.Col == a.Col {
+					c.anomaly.RecordUpgradeAction(state.Tick, a.Row, a.Col, t.Strength)
+					break
+				}
+			}
+		}
+	}
+
 	// 转换为 scene 包的 Action 类型
 	return actionsToSceneActions(actions)
 }
@@ -154,16 +182,26 @@ func (c *Controller) Done() bool {
 // snapshotToGameState 将 scene.AutoPlaySnapshot 转换为 autoplay.GameState。
 func snapshotToGameState(snap scene.AutoPlaySnapshot) *GameState {
 	state := &GameState{
-		Tick:         snap.Tick,
-		Gold:         snap.Gold,
-		Lives:        snap.Lives,
-		Wave:         snap.Wave,
-		MaxWaves:     snap.MaxWaves,
-		WaveActive:   snap.WaveActive,
-		GameOver:     snap.GameOver,
-		Victory:      snap.Victory,
-		WardenReady:  snap.WardenReady,
-		InteractMode: snap.InteractMode,
+		Tick:            snap.Tick,
+		Gold:            snap.Gold,
+		Lives:           snap.Lives,
+		Wave:            snap.Wave,
+		MaxWaves:        snap.MaxWaves,
+		WaveActive:      snap.WaveActive,
+		GameOver:        snap.GameOver,
+		Victory:         snap.Victory,
+		WardenReady:     snap.WardenReady,
+		InteractMode:    snap.InteractMode,
+		TotalKills:      snap.TotalKills,
+		TotalLeaked:     snap.TotalLeaked,
+		EnemyPoolCount:  snap.EnemyPoolCount,
+		ProjectileCount: snap.ProjectileCount,
+		TowerCount:      snap.TowerCount,
+		WardenX:         snap.WardenX,
+		WardenY:         snap.WardenY,
+		MapPixelW:       snap.MapPixelW,
+		MapPixelH:       snap.MapPixelH,
+		GameSpeed:       snap.GameSpeed,
 	}
 
 	for _, e := range snap.Enemies {
@@ -180,6 +218,8 @@ func snapshotToGameState(snap scene.AutoPlaySnapshot) *GameState {
 			Key: t.Key, Row: t.Row, Col: t.Col,
 			X: t.X, Y: t.Y, Damage: t.Damage,
 			Range: t.Range, Cost: t.Cost, Strength: t.Strength,
+			Abilities: t.Abilities, SkillName: t.SkillName,
+			AttackStyle: t.AttackStyle,
 		})
 	}
 
@@ -228,6 +268,10 @@ func actionsToSceneActions(actions []Action) []scene.AutoPlayAction {
 			sa.Type = scene.APActionSelectWarden
 		case ActionChooseEvent:
 			sa.Type = scene.APActionChooseEvent
+		case ActionAssignSkill:
+			sa.Type = scene.APActionAssignSkill
+			sa.SkillName = a.SkillName
+			sa.SkillToWarden = a.SkillToWarden
 		default:
 			continue
 		}

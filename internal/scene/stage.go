@@ -1900,6 +1900,23 @@ func (s *StageScene) Draw(screen *ebiten.Image) {
 	s.perfTracker.BeginDraw()
 	defer s.perfTracker.EndDraw()
 
+	// AutoPlay 无头优化：没有截图请求时跳过全部渲染，GPU 开销≈0
+	if s.autoPlayer != nil {
+		fname := s.autoPlayer.ScreenshotRequested()
+		if fname == "" {
+			return // 跳过渲染
+		}
+		// 有截图请求：执行一次完整渲染 → 捕获 → 返回
+		s.drawFullScene(screen)
+		go captureScreenshot(screen, fname)
+		return
+	}
+
+	s.drawFullScene(screen)
+}
+
+// drawFullScene 执行完整的场景渲染（含屏幕震动）。
+func (s *StageScene) drawFullScene(screen *ebiten.Image) {
 	// 屏幕震动：先画到缓冲，再偏移 blit 到 screen
 	dx, dy := render.ShakeOffset()
 	target := screen
@@ -1918,13 +1935,6 @@ func (s *StageScene) Draw(screen *ebiten.Image) {
 		opts := &ebiten.DrawImageOptions{}
 		opts.GeoM.Translate(dx, dy)
 		screen.DrawImage(target, opts)
-	}
-
-	// AutoPlay 截图钩子
-	if s.autoPlayer != nil {
-		if fname := s.autoPlayer.ScreenshotRequested(); fname != "" {
-			go captureScreenshot(screen, fname)
-		}
 	}
 }
 
@@ -2486,10 +2496,16 @@ func (s *StageScene) buildAutoPlaySnapshot() AutoPlaySnapshot {
 		if t.Strength != nil {
 			str = int(t.Strength.Permanent)
 		}
+		skillName := ""
+		if t.Skill != nil && t.Skill.Inited {
+			skillName = t.Skill.SkillName
+		}
 		snap.Towers = append(snap.Towers, AutoPlayTower{
 			Key: t.Key, Row: t.Row, Col: t.Col,
 			X: t.X, Y: t.Y, Damage: t.Damage,
 			Range: t.Range, Cost: t.Cost, Strength: str,
+			Abilities: t.Abilities, SkillName: skillName,
+			AttackStyle: string(t.AttackStyleID),
 		})
 	})
 
@@ -2562,6 +2578,16 @@ func (s *StageScene) executeAutoPlayAction(a AutoPlayAction) {
 			s.eventPending = nil
 			s.eventHoverIdx = -1
 			s.imode = modeIdle
+		}
+
+	case APActionAssignSkill:
+		if a.SkillToWarden {
+			s.assignWardenSkill(a.SkillName)
+		} else {
+			t := s.towers.At(a.Row, a.Col)
+			if t != nil && t.Skill != nil {
+				skill.AssignSkill(t.Skill, a.SkillName, t)
+			}
 		}
 	}
 }

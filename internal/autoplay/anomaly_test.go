@@ -133,6 +133,82 @@ func TestAnomalyDetector_NoFalsePositives(t *testing.T) {
 	}
 }
 
+func TestAnomalyDetector_WardenRangeLimited(t *testing.T) {
+	d := NewAnomalyDetector()
+
+	// 模拟：地图宽 2400（两屏），但战灵只在 X=200~500 活动
+	for tick := 1; tick <= 700; tick++ {
+		x := 200.0 + float64(tick%300) // 200~500 之间
+		state := &GameState{
+			Tick: tick, Gold: 100, Lives: 20,
+			WardenReady: true,
+			WardenX:     x,
+			WardenY:     270,
+			MapPixelW:   2400,
+			MapPixelH:   540,
+		}
+		anomalies := d.Check(state, 10)
+
+		// 第 600 帧之后应检测到
+		if tick > 600 {
+			for _, a := range anomalies {
+				if a.Type == "warden_range_limited_x" {
+					return // 检测成功
+				}
+			}
+		}
+	}
+	t.Error("expected warden_range_limited_x anomaly for large map with confined warden")
+}
+
+func TestAnomalyDetector_WardenRangeOK(t *testing.T) {
+	d := NewAnomalyDetector()
+
+	// 模拟：地图宽 2400，战灵在 100~2100 之间巡逻
+	// 700帧内从 100 线性移到 2100，跨度 2000 > 960 阈值
+	for tick := 1; tick <= 700; tick++ {
+		x := 100.0 + 2000.0*float64(tick)/700.0 // 100 → 2100
+		state := &GameState{
+			Tick: tick, Gold: 100, Lives: 20,
+			WardenReady: true,
+			WardenX:     x,
+			WardenY:     270,
+			MapPixelW:   2400,
+			MapPixelH:   540,
+		}
+		anomalies := d.Check(state, 10)
+		for _, a := range anomalies {
+			if a.Type == "warden_range_limited_x" {
+				t.Error("should not flag warden range when it covers the map")
+				return
+			}
+		}
+	}
+}
+
+func TestAnomalyDetector_SmallMapNoCheck(t *testing.T) {
+	d := NewAnomalyDetector()
+
+	// 地图只有一屏大小(1200x540)，不应触发范围检查
+	for tick := 1; tick <= 700; tick++ {
+		state := &GameState{
+			Tick: tick, Gold: 100, Lives: 20,
+			WardenReady: true,
+			WardenX:     300,
+			WardenY:     200,
+			MapPixelW:   1200,
+			MapPixelH:   540,
+		}
+		anomalies := d.Check(state, 10)
+		for _, a := range anomalies {
+			if a.Type == "warden_range_limited_x" || a.Type == "warden_range_limited_y" {
+				t.Error("should not check warden range on single-screen maps")
+				return
+			}
+		}
+	}
+}
+
 func TestAnomalySeverity_String(t *testing.T) {
 	tests := []struct {
 		s    AnomalySeverity

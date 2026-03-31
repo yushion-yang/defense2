@@ -23,6 +23,18 @@ type GameState struct {
 	Towers       []TowerInfo
 	BuildCells   []Cell
 	TowerDefs    []TowerDefInfo
+
+	// 扩展字段
+	TotalKills      int
+	TotalLeaked     int
+	EnemyPoolCount  int
+	ProjectileCount int
+	TowerCount      int
+	WardenX         float64
+	WardenY         float64
+	MapPixelW       float64
+	MapPixelH       float64
+	GameSpeed       int
 }
 
 // EnemyInfo 敌人快照。
@@ -39,13 +51,16 @@ type EnemyInfo struct {
 
 // TowerInfo 已建塔快照。
 type TowerInfo struct {
-	Key      string
-	Row, Col int
-	X, Y     float64
-	Damage   float64
-	Range    float64
-	Cost     int
-	Strength int
+	Key         string
+	Row, Col    int
+	X, Y        float64
+	Damage      float64
+	Range       float64
+	Cost        int
+	Strength    int
+	Abilities   []string
+	SkillName   string
+	AttackStyle string
 }
 
 // TowerDefInfo 可用塔类型定义。
@@ -73,17 +88,20 @@ const (
 	ActionStartWave                      // 开始下一波
 	ActionSelectWarden                   // 选择战灵
 	ActionChooseEvent                    // 选择事件
+	ActionAssignSkill                    // 给塔/战灵装技能
 	ActionNoop                           // 空操作
 )
 
 // Action 自动操作指令。
 type Action struct {
-	Type       ActionType
-	TowerKey   string // Build: 要建造的塔类型
-	Cell       Cell   // Build: 建造位置
-	Row, Col   int    // Upgrade/Sell: 目标塔网格坐标
-	WardenKey  string // SelectWarden: 战灵类型
-	EventIndex int    // ChooseEvent: 事件选项索引
+	Type          ActionType
+	TowerKey      string // Build: 要建造的塔类型
+	Cell          Cell   // Build: 建造位置
+	Row, Col      int    // Upgrade/Sell/AssignSkill: 目标塔网格坐标
+	WardenKey     string // SelectWarden: 战灵类型
+	EventIndex    int    // ChooseEvent: 事件选项索引
+	SkillName     string // AssignSkill: 技能名
+	SkillToWarden bool   // AssignSkill: true=战灵, false=塔
 }
 
 // Strategy 自动对局策略接口。

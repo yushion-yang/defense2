@@ -36,9 +36,11 @@ func GenerateReport(records []*SessionRecord) *CoverageReport {
 	towersSeen := make(map[string]bool)
 	archetypesSeen := make(map[string]bool)
 	eventsSeen := make(map[string]bool)
+	abilitiesSeen := make(map[string]bool)
+	attackStylesSeen := make(map[string]bool)
+	skillsSeen := make(map[string]bool)
 
 	for _, rec := range records {
-		// 胜负统计
 		switch rec.Result {
 		case "victory":
 			r.Victories++
@@ -48,12 +50,10 @@ func GenerateReport(records []*SessionRecord) *CoverageReport {
 			r.Timeouts++
 		}
 
-		// 异常统计
 		for _, a := range rec.Anomalies {
 			r.AnomalySummary[a.Type]++
 		}
 
-		// 覆盖率追踪
 		for _, t := range rec.Coverage.TowersUsed {
 			towersSeen[t] = true
 			r.TowerUsage[t]++
@@ -65,21 +65,39 @@ func GenerateReport(records []*SessionRecord) *CoverageReport {
 		for _, e := range rec.Coverage.EventsChosen {
 			eventsSeen[e] = true
 		}
+		for _, ab := range rec.Coverage.AbilitiesTriggered {
+			abilitiesSeen[ab] = true
+		}
+		for _, as := range rec.Coverage.AttackStylesFired {
+			attackStylesSeen[as] = true
+		}
+		for _, sk := range rec.Coverage.SkillsActivated {
+			skillsSeen[sk] = true
+		}
 	}
 
 	// 检查覆盖缺口
 	r.CoverageGaps["towers"] = findGaps(TowerKeys, towersSeen)
-
-	allArchetypes := []string{
-		"normal", "runner", "tank", "armored", "shielded", "swarm",
-		"stealth", "splitter", "teleporter", "healer", "buffer", "flying", "dummy",
-	}
-	r.CoverageGaps["archetypes"] = findGaps(allArchetypes, archetypesSeen)
+	r.CoverageGaps["archetypes"] = findGaps(EnemyArchetypes, archetypesSeen)
 
 	allEvents := []string{
 		"bonusGold", "buildDiscount", "killRewardUp", "outputUp", "rangeUp", "speedUp", "enemySlow",
 	}
 	r.CoverageGaps["events"] = findGaps(allEvents, eventsSeen)
+	r.CoverageGaps["skills"] = findGaps(SkillNames, skillsSeen)
+
+	allAttackStyles := []string{"projectile", "laser", "wideBeam", "scatter", "charge", "spin_aoe", "aura_dot"}
+	r.CoverageGaps["attack_styles"] = findGaps(allAttackStyles, attackStylesSeen)
+
+	allAbilities := []string{
+		"bounce", "chargeShot", "crit", "deathMark", "distanceDamage", "executionBonus",
+		"flatDamage", "multiTarget", "percentHpDamage", "percentHpMinor", "splash", "stackDamage",
+		"bleedDot", "buffPurge", "burn", "onHitSlow", "stun",
+		"attackSpeedAura", "critAura", "damageUpAura", "rangeAura", "soloBoost",
+		"curseZone", "poisonZone", "silenceZone",
+		"goldPassive", "goldOnKill",
+	}
+	r.CoverageGaps["abilities"] = findGaps(allAbilities, abilitiesSeen)
 
 	return r
 }
@@ -116,6 +134,24 @@ func (r *CoverageReport) WriteText(w io.Writer) {
 	fmt.Fprintf(w, "Events:     %d/7", 7-len(r.CoverageGaps["events"]))
 	if len(r.CoverageGaps["events"]) > 0 {
 		fmt.Fprintf(w, "  -- MISSING: %v", r.CoverageGaps["events"])
+	}
+	fmt.Fprintln(w)
+
+	fmt.Fprintf(w, "Skills:     %d/9", 9-len(r.CoverageGaps["skills"]))
+	if len(r.CoverageGaps["skills"]) > 0 {
+		fmt.Fprintf(w, "  -- MISSING: %v", r.CoverageGaps["skills"])
+	}
+	fmt.Fprintln(w)
+
+	fmt.Fprintf(w, "AttackStyle:%d/7", 7-len(r.CoverageGaps["attack_styles"]))
+	if len(r.CoverageGaps["attack_styles"]) > 0 {
+		fmt.Fprintf(w, "  -- MISSING: %v", r.CoverageGaps["attack_styles"])
+	}
+	fmt.Fprintln(w)
+
+	fmt.Fprintf(w, "Abilities:  %d/27", 27-len(r.CoverageGaps["abilities"]))
+	if len(r.CoverageGaps["abilities"]) > 0 {
+		fmt.Fprintf(w, "  -- MISSING: %v", r.CoverageGaps["abilities"])
 	}
 	fmt.Fprintln(w)
 

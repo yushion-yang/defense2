@@ -200,7 +200,7 @@ autoplay-results/
 ### 单元测试
 
 ```
-go test -tags unittest ./internal/autoplay/... -count=1  → PASS (26 tests)
+go test -tags unittest ./internal/autoplay/... -count=1  → PASS (29 tests)
 go test ./internal/core/gamemode/... -count=1            → PASS (8 tests)
 go build ./...                                           → PASS
 go vet ./...                                             → PASS (无新增警告)
@@ -210,12 +210,54 @@ go vet ./...                                             → PASS (无新增警�
 
 1. **Ebitengine GLFW 限制**：`internal/autoplay/` 的测试因 `controller.go` 导入 `scene` 包触发 GLFW 初始化，需要使用 `-tags unittest` 跳过 controller 编译
 2. **单窗口限制**：Ebitengine 每进程只能有一个窗口，多局测试只能串行执行
-3. **截图依赖 GUI**：截图需要有可渲染的窗口，无头环境不可用
+3. **截图依赖 GUI**：仍需窗口存在（1x1 最小化），无法完全无头
 
-## 九、后续扩展
+## 九、v1.1 增强（2026-03-31）
 
-- [ ] 更多脚本化场景（暂停恢复、事件选择、BuildSellRace 等）
+### 9.1 无头优化
+
+- `StageScene.Draw()` 无截图请求时直接 return，GPU 开销≈0
+- `SetTPS(600)` + `SetVsyncEnabled(false)` 加速逻辑帧至 10x
+- 窗口缩小为 1x1 像素
+- 预计一局 25 波从 ~2 分钟降至 ~12 秒
+
+### 9.2 覆盖率增强
+
+新增覆盖维度：
+
+| 维度 | 新增用例数 | 方式 |
+|---|---|---|
+| 技能（9 种） | +9 | `SkillTestStrategy` 给塔+战灵装技能 |
+| 游戏模式（6 种） | +6 | 多模式用例：campaign/endless/timed/bossRush/challenge/test |
+| 敌人定向 | 修复 | 接入 `EnemyFilter`，每种原型专属用例 |
+| 事件多样化 | 修复 | Greedy 按波次轮换选项，Random 随机选 |
+| 能力追踪 | 新增 | Snapshot 暴露塔 Abilities/AttackStyle/SkillName |
+
+新增操作类型：`ActionAssignSkill`（给塔或战灵装技能）
+
+### 9.3 异常检测增强
+
+新增检测项：
+
+| 异常类型 | 检测内容 |
+|---|---|
+| `warden_range_limited_x/y` | 地图超一屏但战灵活动范围被限制 |
+| `pool_high_usage` | 敌人池占用 >75% |
+| `projectile_overflow` | 弹射物 >100 个存活 |
+| `wave_hp_regression` | 后波次敌人 HP 反而更低 |
+| `build_silent_fail` | 建塔操作无效果 |
+| `upgrade_no_effect` | 升级后属性未变 |
+| `kill_count_decrease` | 击杀计数回退 |
+
+### 9.4 覆盖报告扩展
+
+汇总报告新增维度：Abilities (27)、AttackStyles (7)、Skills (9) 的覆盖率和缺口分析。
+
+## 十、后续扩展
+
+- [ ] 视觉正确性检测（截图 AI 分析）
+- [ ] 伤害管线路径追踪（插桩遥测）
+- [ ] Buff 类型覆盖追踪
 - [ ] LLM 驱动的策略（v2）
-- [ ] 自动发现和填充覆盖缺口
-- [ ] 与 CI 集成（GPU runner）
-- [ ] 多线程/多进程并行执行
+- [ ] CI 集成（Linux Xvfb 无头）
+- [ ] 多进程并行执行

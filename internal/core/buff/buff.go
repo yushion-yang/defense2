@@ -6,6 +6,8 @@ package buff
 import (
 	"fmt"
 	"math"
+
+	tel "defense2/internal/core/telemetry"
 	"sync/atomic"
 )
 
@@ -81,7 +83,12 @@ func (bl *BuffList) Add(b Buff, target interface{}) {
 		b.Stacks = 1
 	}
 
+	// 遥测：记录 buff 类型和堆叠模式
+	if b.Type != "" {
+		tel.T.Record("buff_type", b.Type)
+	}
 	rule := GetRule(b.Type, bl.Rules)
+	tel.T.Record("buff_stack_mode", stackModeName(rule.Mode))
 
 	switch rule.Mode {
 	case ModeOverride:

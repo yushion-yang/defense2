@@ -82,9 +82,12 @@ type Recorder struct {
 	waveGoldSpent int
 
 	// 覆盖率追踪
-	towersUsed     map[string]bool
-	archetypesSeen map[string]bool
-	eventsChosen   map[string]bool
+	towersUsed       map[string]bool
+	archetypesSeen   map[string]bool
+	eventsChosen     map[string]bool
+	abilitiesSeen    map[string]bool
+	attackStylesSeen map[string]bool
+	skillsSeen       map[string]bool
 
 	// 累计统计
 	totalKills int
@@ -100,10 +103,13 @@ func NewRecorder(sessionID, strategy, mapID, difficulty, warden string) *Recorde
 		mapID:          mapID,
 		difficulty:     difficulty,
 		warden:         warden,
-		dpsSnapshots:   make([]float64, 0, 128),
-		towersUsed:     make(map[string]bool),
-		archetypesSeen: make(map[string]bool),
-		eventsChosen:   make(map[string]bool),
+		dpsSnapshots:     make([]float64, 0, 128),
+		towersUsed:       make(map[string]bool),
+		archetypesSeen:   make(map[string]bool),
+		eventsChosen:     make(map[string]bool),
+		abilitiesSeen:    make(map[string]bool),
+		attackStylesSeen: make(map[string]bool),
+		skillsSeen:       make(map[string]bool),
 	}
 }
 
@@ -116,9 +122,18 @@ func (r *Recorder) OnTick(state *GameState, gameDT float64) {
 		}
 	}
 
-	// 追踪已建塔类型
+	// 追踪已建塔类型、能力、攻击方式、技能
 	for _, t := range state.Towers {
 		r.towersUsed[t.Key] = true
+		for _, ab := range t.Abilities {
+			r.abilitiesSeen[ab] = true
+		}
+		if t.AttackStyle != "" {
+			r.attackStylesSeen[t.AttackStyle] = true
+		}
+		if t.SkillName != "" {
+			r.skillsSeen[t.SkillName] = true
+		}
 	}
 
 	// 追踪击杀（通过 lives 变化推断泄漏）
@@ -219,6 +234,9 @@ func (r *Recorder) Finalize(state *GameState, anomalies []Anomaly, screenshots [
 		TowersUsed:          mapKeys(r.towersUsed),
 		EnemyArchetypesSeen: mapKeys(r.archetypesSeen),
 		EventsChosen:        mapKeys(r.eventsChosen),
+		AbilitiesTriggered:  mapKeys(r.abilitiesSeen),
+		AttackStylesFired:   mapKeys(r.attackStylesSeen),
+		SkillsActivated:     mapKeys(r.skillsSeen),
 	}
 
 	return &SessionRecord{

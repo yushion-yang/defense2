@@ -62,20 +62,23 @@ func main() {
 }
 
 func runSession(tc autoplay.TestCase, outputDir string) {
-	// 配置最小化窗口
-	ebiten.SetWindowSize(1200, 540)
-	ebiten.SetWindowTitle("AutoPlay: " + tc.ID)
-	ebiten.SetWindowResizingMode(ebiten.WindowResizingModeEnabled)
+	// 无头优化：1x1 最小化窗口 + 高 TPS（Draw 被 StageScene 跳过，GPU≈0）
+	ebiten.SetWindowSize(1, 1)
+	ebiten.SetWindowTitle("AutoPlay")
+	ebiten.SetVsyncEnabled(false)
+	ebiten.SetTPS(600) // 逻辑帧 600/s，实际游戏速度由 gameSpeed 控制
 
 	// 创建 Game
 	g := scene.NewGame()
 
 	// 创建 StageScene
+	modeID := tc.EffectiveModeID()
 	opts := scene.StageOptions{
 		MapID:        tc.MapID,
 		WardenType:   tc.Warden,
-		ModeID:       "autoplay",
+		ModeID:       modeID,
 		DifficultyID: tc.Difficulty,
+		EnemyFilter:  tc.EnemyFilter,
 	}
 	stage := scene.NewStageSceneWithOpts(g, opts)
 
