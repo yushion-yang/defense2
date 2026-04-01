@@ -99,9 +99,6 @@ type Tower struct {
 	StackTarget int // 当前叠伤目标 ID
 	StackCount  int // 叠伤层数
 
-	// momentum (蓄势) 能力计数
-	MomentumCount int // 当前攻击次数计数
-
 	// 能力选项缓存：key=category index(0-5), value=3 个候选 AbilityDef
 	// 建塔时根据全局 wavesCleared 一次性 roll 所有已解锁位；新波次解锁时追加 roll。
 	PendingChoices map[int][]config.AbilityDef

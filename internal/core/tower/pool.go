@@ -69,7 +69,6 @@ func (p *Pool) Place(row, col int, cx, cy float64, def TowerDef) *Tower {
 			t.SpriteKey = "sentinel"
 			t.AbilitySlots = [6]string{}
 			t.UnlockOrder = RollUnlockOrder()
-			t.MomentumCount = 0
 			t.Target = nil
 
 			// 随机属性（tier-presets 驱动，总能力均衡但分布不同）
