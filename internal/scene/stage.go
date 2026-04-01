@@ -262,7 +262,7 @@ func NewStageSceneWithOpts(sw Switcher, opts StageOptions) *StageScene {
 		progressMgr:     pm,
 		lives:           20,
 		gold:            startGold,
-		towerDefs:       loadTowerDefsOrFallback(),
+		towerDefs:       filterUnlockedTowers(loadTowerDefsOrFallback(), pm),
 		selectedDef:     0,
 		wardenType:      opts.WardenType,
 		wardenCfg:       wardenCfg,
@@ -543,6 +543,27 @@ func (s *StageScene) buildModeCtx() *gamemode.Context {
 	}
 }
 
+// finalizeGameStats 结算时最终化游戏统计数据。
+// 从 session 和塔池填充剩余字段（击杀数、波次、Boss、最强塔等）。
+func (s *StageScene) finalizeGameStats() GameStats {
+	gs := s.gameStats
+	gs.TotalKills = s.kills
+	gs.TotalWaves = s.spawner.Wave
+	gs.MaxWave = s.spawner.MaxWaves
+	gs.BossKills = s.session.Stats.BossKills
+	gs.TimePlayed = s.session.ElapsedTime
+
+	// 查找击杀最多的塔
+	s.towers.Each(func(t *tower.Tower) {
+		if t.Kills > gs.BestTowerKills {
+			gs.BestTowerKills = t.Kills
+			gs.BestTowerKey = t.Key
+			gs.BestTowerName = t.Label
+		}
+	})
+	return gs
+}
+
 // spawnAllStatic 生成所有敌人原型，静止排列在地图上（用于全怪展示模式）。
 func (s *StageScene) spawnAllStatic() {
 	archetypes := s.spawner.Archetypes
@@ -639,6 +660,7 @@ func (s *StageScene) Update() error {
 		// 胜利/失败状态：点击/触摸进入结算场景
 		if isTapJustPressed() {
 			s.audioMgr.PlaySafeAt(gameAudio.SFXUIClick, gameAudio.VolUI)
+			stats := s.finalizeGameStats()
 			s.switcher.SwitchScene(NewResultScene(s.switcher, ResultData{
 				MapID:        s.gameMap.Config.ID,
 				MapName:      s.gameMap.Config.Name,
@@ -653,6 +675,7 @@ func (s *StageScene) Update() error {
 				DifficultyID: s.diffID,
 				Score:        s.session.Mode.GetScore(s.buildModeCtx()),
 				ElapsedSecs:  s.session.ElapsedTime,
+				Stats:        stats,
 			}))
 		}
 	}
@@ -1312,11 +1335,15 @@ func (s *StageScene) updatePlaying() {
 			s.state = stateVictory
 			s.audioMgr.StopBGM()
 			s.audioMgr.PlaySafeAt(gameAudio.SFXVictory, gameAudio.VolWave)
-			s.progressMgr.RecordGameResult(s.modeID, s.gameMap.Config.ID, s.kills, true)
+			newUnlocks := s.progressMgr.RecordGameResult(s.modeID, s.gameMap.Config.ID, s.kills, true)
 			if s.tutorial.IsComplete() {
 				s.progressMgr.SetTutorialDone()
 			}
 			s.checkVictoryAchievements()
+			// 显示新解锁提示
+			for _, name := range newUnlocks {
+				hud.ShowToast("解锁: " + name)
+			}
 		} else if s.session.Status == gamemode.StatusDefeat {
 			s.state = stateDefeat
 			s.audioMgr.StopBGM()
@@ -2199,6 +2226,21 @@ func loadTowerDefsOrFallback() []tower.TowerDef {
 		return tower.BaseTowerDefs()
 	}
 	return defs
+}
+
+// filterUnlockedTowers 过滤只保留已解锁的塔定义。
+func filterUnlockedTowers(defs []tower.TowerDef, pm *persistence.ProgressManager) []tower.TowerDef {
+	result := make([]tower.TowerDef, 0, len(defs))
+	for _, d := range defs {
+		if pm.IsTowerUnlocked(d.Key) {
+			result = append(result, d)
+		}
+	}
+	if len(result) == 0 {
+		// 保底：至少有 basic 塔
+		return defs[:1]
+	}
+	return result
 }
 
 // towerLightColor maps a tower attack style to a light color for dynamic lighting.

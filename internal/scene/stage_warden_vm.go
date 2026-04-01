@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"defense2/internal/config"
+	"defense2/internal/core/persistence"
 	"defense2/internal/render/hud"
 )
 
@@ -35,10 +36,16 @@ func categoryName(cat string) string {
 }
 
 // BuildWardenOptions 从 wardens.json 配置构建选择列表。
-func BuildWardenOptions() []hud.WardenOption {
+// pm 可选；若提供则标记未解锁战灵为 Locked。
+func BuildWardenOptions(pm ...*persistence.ProgressManager) []hud.WardenOption {
 	cfgs, err := config.LoadWardenConfigs()
 	if err != nil {
 		return []hud.WardenOption{{Key: "none", Name: "纯塔挑战", Category: "-", Description: "不选择战灵，纯靠塔防御。", Color: color.RGBA{R: 120, G: 120, B: 130, A: 255}}}
+	}
+
+	var mgr *persistence.ProgressManager
+	if len(pm) > 0 {
+		mgr = pm[0]
 	}
 
 	var opts []hud.WardenOption
@@ -55,6 +62,16 @@ func BuildWardenOptions() []hud.WardenOption {
 		growthWave := "-"
 		if c.GrowthOnWaveClear > 0 {
 			growthWave = fmt.Sprintf("+%.0f 强度", c.GrowthOnWaveClear)
+		}
+
+		locked := false
+		lockReason := ""
+		if mgr != nil && !mgr.IsWardenUnlocked(key) {
+			locked = true
+			lockReason = persistence.UnlockRequirement("warden", key)
+			if lockReason == "" {
+				lockReason = "该战灵尚未解锁"
+			}
 		}
 
 		// 用配置基础值替换描述中的占位符
@@ -78,6 +95,8 @@ func BuildWardenOptions() []hud.WardenOption {
 			DoT:         "-",
 			GrowthKill:  growthKill,
 			GrowthWave:  growthWave,
+			Locked:      locked,
+			LockReason:  lockReason,
 		})
 	}
 
@@ -139,13 +158,8 @@ func replaceParams(s string, params map[string]string) string {
 	return s
 }
 
-// wardenOptionsCache 延迟初始化的选项列表（首次访问时从配置构建）。
-var wardenOptionsCache []hud.WardenOption
-
-// GetWardenOptions 返回战灵选项列表（懒加载）。
-func GetWardenOptions() []hud.WardenOption {
-	if wardenOptionsCache == nil {
-		wardenOptionsCache = BuildWardenOptions()
-	}
-	return wardenOptionsCache
+// GetWardenOptions 返回战灵选项列表。
+// pm 可选；若提供则包含解锁状态。不再缓存以确保解锁状态实时刷新。
+func GetWardenOptions(pm ...*persistence.ProgressManager) []hud.WardenOption {
+	return BuildWardenOptions(pm...)
 }
