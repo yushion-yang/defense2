@@ -81,7 +81,9 @@ func ApplyHit(input HitInput, onHit HitCallback) HitOutput {
 	// 击杀处理
 	extraKills := 0
 	if killed && input.Tower != nil {
+		input.Tower.Kills++
 		extraKills = applyDeathExplosionUnified(input.Tower, input.Target, input.Enemies, onHit)
+		input.Tower.Kills += extraKills
 		input.Enemies.Kill(input.Target)
 	}
 

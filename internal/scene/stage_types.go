@@ -53,6 +53,25 @@ const (
 	modeItemDrag                         // 拖拽道具中
 )
 
+// GameStats 单局详细统计数据，从 StageScene 传递到 ResultScene。
+type GameStats struct {
+	TotalKills    int     // 总击杀数
+	TotalWaves    int     // 到达波次
+	MaxWave       int     // 总波次数
+	GoldEarned    int     // 累计获得金币
+	GoldSpent     int     // 累计消耗金币
+	TowersBuilt   int     // 建塔次数
+	TowersSold    int     // 卖塔次数
+	ItemsUsed     int     // 道具使用次数
+	MaxKillStreak int     // 最大连杀数
+	TimePlayed    float64 // 游戏时间（秒）
+	BossKills     int     // Boss 击杀数
+	LeaksTotal    int     // 泄漏数
+	BestTowerKey  string  // 击杀最多的塔类型 Key
+	BestTowerName string  // 击杀最多的塔显示名
+	BestTowerKills int    // 该塔的击杀数
+}
+
 // StageOptions 创建 StageScene 的配置选项。
 type StageOptions struct {
 	MapID        string

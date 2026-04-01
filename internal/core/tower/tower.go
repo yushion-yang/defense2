@@ -103,6 +103,9 @@ type Tower struct {
 	// 建塔时根据全局 wavesCleared 一次性 roll 所有已解锁位；新波次解锁时追加 roll。
 	PendingChoices map[int][]config.AbilityDef
 
+	// 统计
+	Kills int // 累计击杀数（弹射物/直接攻击）
+
 	// 建造/出售动画
 	BuildAnim float64 // >0 during build-in animation (seconds remaining, starts at 0.3)
 	SellAnim  float64 // >0 during sell-out animation (seconds remaining, starts at 0.25)

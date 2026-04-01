@@ -60,6 +60,7 @@ type ResultData struct {
 	DifficultyID string  // 难度 ID（用于重玩）
 	Score        int     // 分数
 	ElapsedSecs  float64 // 游戏用时（秒）
+	Stats        GameStats // 详细游戏统计
 }
 
 // ---------------------------------------------------------------------------
@@ -135,8 +136,8 @@ func (s *ResultScene) Update() error {
 		}
 
 	case resultStatsPhase:
-		// 6 stats * stagger + counting duration
-		dur := 5*statStagger + statCountDur + 0.1 // small buffer
+		// 6 core stats * stagger + counting + 8 detail items * 0.04 stagger + fade
+		dur := 6*statStagger + statCountDur + 8*0.04 + 0.3
 		if s.phaseTimer >= dur {
 			s.phase = resultButtonsPhase
 			s.phaseTimer = 0
@@ -183,7 +184,7 @@ func (s *ResultScene) resultBtnLayout() (replayX, menuX, btnY float32, btnW, btn
 	btnW = 160
 	btnH = 40
 	btnGap := float32(20)
-	btnY = float32(60+50+36) + 220 + 24
+	btnY = float32(s.statsPanelBottom() + 16)
 	replayX = float32(cx) - btnW - btnGap/2
 	menuX = float32(cx) + btnGap/2
 	return
@@ -364,10 +365,17 @@ func starPopScale(t float64) float64 {
 // drawStats — counting numbers with stagger
 // ---------------------------------------------------------------------------
 
+// statsPanelBottom 返回统计面板的底部 Y 坐标（用于按钮定位）。
+func (s *ResultScene) statsPanelBottom() float64 {
+	subY := 60.0 + 50.0
+	return subY + 36 + float64(resultPanelH)
+}
+
+const resultPanelH = float32(250) // 统计面板总高度
+
 func (s *ResultScene) drawStats(screen *ebiten.Image, fm *render.FontManager, cx float64, d ResultData) {
 	const (
 		panelW = float32(500)
-		panelH = float32(220)
 		panelR = float32(16)
 		padX   = 30.0
 		padY   = 20.0
@@ -388,12 +396,12 @@ func (s *ResultScene) drawStats(screen *ebiten.Image, fm *render.FontManager, cx
 		panelAlpha = 1
 	}
 
-	draw.RoundRect(screen, panelX, panelTopY, panelW, panelH, panelR,
+	draw.RoundRect(screen, panelX, panelTopY, panelW, resultPanelH, panelR,
 		colorWithAlpha(theme.ResultStatsBg, panelAlpha))
-	draw.StrokeRoundRect(screen, panelX, panelTopY, panelW, panelH, panelR, 1,
+	draw.StrokeRoundRect(screen, panelX, panelTopY, panelW, resultPanelH, panelR, 1,
 		colorWithAlpha(theme.PanelBorder, panelAlpha))
 
-	// Stat items
+	// ── Section 1: Core stats (big numbers, 3-column grid) ──
 	type statItem struct {
 		label  string
 		target int
@@ -448,13 +456,106 @@ func (s *ResultScene) drawStats(screen *ebiten.Image, fm *render.FontManager, cx
 			displayMax := countUp(d.MaxWaves, progress)
 			valText = strconv.Itoa(displayWaves) + " / " + strconv.Itoa(displayMax)
 		case "time":
-			valText = strconv.Itoa(displayVal) + "s"
+			valText = formatTime(displayVal)
 		default:
 			valText = strconv.Itoa(displayVal)
 		}
 
 		fm.DrawText(screen, valText, ix, iy+labelH, 28, colorWithAlpha(item.clr, alpha))
 	}
+
+	// ── Divider line ──
+	divY := baseY + 2*rowH + 8
+	divAlpha := panelAlpha * 0.3
+	draw.Line(screen,
+		float32(baseX), float32(divY),
+		float32(baseX+float64(panelW)-padX*2), float32(divY),
+		1, colorWithAlpha(theme.TextMuted, divAlpha), false)
+
+	// ── Section 2: Detailed stats (compact 2-column key-value) ──
+	s.drawDetailedStats(screen, fm, baseX, divY+8, float64(panelW)-padX*2, panelAlpha, d)
+}
+
+// ---------------------------------------------------------------------------
+// drawDetailedStats — compact 2-column key-value list below the big numbers
+// ---------------------------------------------------------------------------
+
+func (s *ResultScene) drawDetailedStats(screen *ebiten.Image, fm *render.FontManager, baseX, baseY, totalW, panelAlpha float64, d ResultData) {
+	const (
+		detailRowH = 20.0  // compact row height
+		detailCols = 2     // two columns
+		fontSize   = 12.0  // FontBody
+	)
+
+	gs := d.Stats
+
+	// Detail items: each has a label and a formatted value
+	type detailItem struct {
+		label string
+		value string
+		clr   color.Color
+	}
+
+	// Format gold: "+earned  -spent"
+	goldText := fmt.Sprintf("+%d  -%d", gs.GoldEarned, gs.GoldSpent)
+
+	// Format best tower
+	bestTower := "-"
+	if gs.BestTowerName != "" && gs.BestTowerKills > 0 {
+		bestTower = gs.BestTowerName + " (" + strconv.Itoa(gs.BestTowerKills) + "杀)"
+	}
+
+	// Format time: M:SS
+	timeText := formatTime(int(gs.TimePlayed))
+
+	details := []detailItem{
+		{"金币收支", goldText, theme.ResGold},
+		{"建塔/卖塔", strconv.Itoa(gs.TowersBuilt) + " / " + strconv.Itoa(gs.TowersSold), theme.StatusStrUp},
+		{"Boss击杀", strconv.Itoa(gs.BossKills), theme.StatusExcl},
+		{"泄漏", strconv.Itoa(gs.LeaksTotal), theme.StatusStrDown},
+		{"道具使用", strconv.Itoa(gs.ItemsUsed), theme.StatusSkill},
+		{"最大连杀", strconv.Itoa(gs.MaxKillStreak), theme.StatusWarden},
+		{"最强塔", bestTower, theme.TonePrimary},
+		{"游戏时间", timeText, theme.TextMuted},
+	}
+
+	// Stagger delay: start after core stats finish (6 items × stagger)
+	detailBaseDelay := 6.0 * statStagger
+
+	colW := totalW / detailCols
+	for i, item := range details {
+		col := i % detailCols
+		row := i / detailCols
+		ix := baseX + float64(col)*colW
+		iy := baseY + float64(row)*detailRowH
+
+		// Staggered fade-in
+		delay := detailBaseDelay + float64(i)*0.04
+		var alpha float64
+		if s.phase == resultStatsPhase {
+			alpha = clampF((s.phaseTimer-delay)/0.2, 0, 1)
+		} else {
+			alpha = 1
+		}
+		if !d.Won && s.phase == resultStatsPhase {
+			alpha = clampF((s.phaseTimer-0.15)/0.2, 0, 1)
+		}
+		alpha *= panelAlpha
+
+		// Label (muted) + value (colored)
+		fm.DrawText(screen, item.label, ix, iy, fontSize, colorWithAlpha(theme.TextMuted, alpha))
+		fm.DrawRightText(screen, item.value, ix+colW-4, iy, fontSize, colorWithAlpha(item.clr, alpha))
+	}
+}
+
+// formatTime formats seconds as "M:SS".
+func formatTime(secs int) string {
+	if secs < 0 {
+		secs = 0
+	}
+	m := secs / 60
+	s := secs % 60
+	return strconv.Itoa(m) + ":" + fmt.Sprintf("%02d", s)
 }
 
 // ---------------------------------------------------------------------------
@@ -462,9 +563,7 @@ func (s *ResultScene) drawStats(screen *ebiten.Image, fm *render.FontManager, cx
 // ---------------------------------------------------------------------------
 
 func (s *ResultScene) drawButtons(screen *ebiten.Image, fm *render.FontManager, cx float64) {
-	subY := 60.0 + 50
-	panelTopY := subY + 36
-	btnBaseY := panelTopY + 220 + 24
+	btnBaseY := s.statsPanelBottom() + 16
 
 	btnW := float32(160)
 	btnH := float32(40)
