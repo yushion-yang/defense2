@@ -30,6 +30,11 @@ func getAudioContext() *audio.Context {
 	return audioContext
 }
 
+// AssetFS 嵌入式资源文件系统接口（用于 BGM 按需加载）。
+type AssetFS interface {
+	ReadFile(name string) ([]byte, error)
+}
+
 // Manager 音效管理器。
 type Manager struct {
 	context  *audio.Context       // Ebitengine 音频上下文
@@ -37,15 +42,22 @@ type Manager struct {
 	volume   float64              // 主音量（0.0 ~ 1.0）
 	throttle map[string]time.Time // 每个音效的上次播放时间（per-sound 节流）
 	mu       sync.Mutex           // 并发安全锁
+
+	// BGM（背景音乐）
+	bgmPlayer *audio.Player // 当前 BGM 播放器（nil 表示无 BGM）
+	bgmVolume float64       // BGM 音量（0.0 ~ 1.0），独立于 SFX 主音量
+	bgmName   string        // 当前 BGM 名称（避免重复播放同一首）
+	assetFS   AssetFS       // 嵌入式资源文件系统引用（LoadAllFromFS 时设置）
 }
 
 // NewManager 创建音效管理器。
 func NewManager() *Manager {
 	return &Manager{
-		context:  getAudioContext(),
-		cache:    make(map[string][]byte),
-		throttle: make(map[string]time.Time),
-		volume:   0.8,
+		context:   getAudioContext(),
+		cache:     make(map[string][]byte),
+		throttle:  make(map[string]time.Time),
+		volume:    0.8,
+		bgmVolume: 0.3,
 	}
 }
 
@@ -137,6 +149,14 @@ func (m *Manager) Count() int {
 	defer m.mu.Unlock()
 	return len(m.cache)
 }
+
+// BGM 预定义背景音乐名称常量。
+// 名称对应 assets/audio/{name}.wav 文件（不经过 kebabToCamel 转换）。
+const (
+	BGMMenu   = "bgm-menu"   // 主菜单/选关 BGM
+	BGMBattle = "bgm-battle" // 战斗 BGM
+	BGMBoss   = "bgm-boss"   // Boss 战 BGM
+)
 
 // SFX 预定义音效事件名称常量。
 // 名称必须与 WAV 文件名经 kebabToCamel 转换后一致。
@@ -257,4 +277,90 @@ func (m *Manager) PlaySafeAt(name string, scale float64) {
 		}
 	}()
 	m.PlayAt(name, scale)
+}
+
+// ── BGM（背景音乐） ─────────────────────────────────
+
+// PlayBGM 开始循环播放指定 BGM。如果同名 BGM 已在播放则不重启。
+// BGM 文件从 assetFS 按需加载（assets/audio/{name}.wav）。
+// 若文件不存在或解码失败，仅打印日志，不崩溃。
+func (m *Manager) PlayBGM(name string) {
+	m.mu.Lock()
+	if name == m.bgmName && m.bgmPlayer != nil && m.bgmPlayer.IsPlaying() {
+		m.mu.Unlock()
+		return
+	}
+	m.mu.Unlock()
+
+	m.StopBGM()
+
+	if m.assetFS == nil || name == "" {
+		return
+	}
+
+	path := "assets/audio/" + name + ".wav"
+	data, err := m.assetFS.ReadFile(path)
+	if err != nil {
+		log.Printf("BGM %s not found: %v", name, err)
+		return
+	}
+
+	stream, err := wav.DecodeWithSampleRate(sampleRate, bytes.NewReader(data))
+	if err != nil {
+		log.Printf("BGM decode %s: %v", name, err)
+		return
+	}
+
+	loop := audio.NewInfiniteLoop(stream, stream.Length())
+	player, err := m.context.NewPlayer(loop)
+	if err != nil {
+		log.Printf("BGM player %s: %v", name, err)
+		return
+	}
+
+	m.mu.Lock()
+	player.SetVolume(m.bgmVolume)
+	m.bgmPlayer = player
+	m.bgmName = name
+	m.mu.Unlock()
+
+	player.Play()
+	log.Printf("BGM started: %s", name)
+}
+
+// StopBGM 停止当前 BGM。
+func (m *Manager) StopBGM() {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	if m.bgmPlayer != nil {
+		m.bgmPlayer.Pause()
+		if err := m.bgmPlayer.Close(); err != nil {
+			log.Printf("BGM close: %v", err)
+		}
+		m.bgmPlayer = nil
+		m.bgmName = ""
+	}
+}
+
+// SetBGMVolume 设置 BGM 音量（0.0 ~ 1.0）。
+func (m *Manager) SetBGMVolume(v float64) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	if v < 0 {
+		v = 0
+	}
+	if v > 1 {
+		v = 1
+	}
+	m.bgmVolume = v
+	if m.bgmPlayer != nil {
+		m.bgmPlayer.SetVolume(v)
+	}
+}
+
+// BGMVolume 返回当前 BGM 音量。
+func (m *Manager) BGMVolume() float64 {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	return m.bgmVolume
 }

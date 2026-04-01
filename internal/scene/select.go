@@ -6,6 +6,7 @@ import (
 	"image/color"
 	"math"
 
+	gameAudio "defense2/internal/audio"
 	"defense2/internal/config"
 	"defense2/internal/core/game"
 	"defense2/internal/core/persistence"
@@ -126,6 +127,9 @@ func NewSelectScene(sw Switcher) *SelectScene {
 			mapNames[id] = cfg.Name
 		}
 	}
+
+	// BGM: 播放菜单音乐
+	sw.AudioManager().PlayBGM(gameAudio.BGMMenu)
 
 	return &SelectScene{
 		switcher:     sw,

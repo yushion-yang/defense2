@@ -11,10 +11,12 @@ import (
 )
 
 // LoadAllFromFS 从嵌入式文件系统批量加载所有 WAV 音效。
+// 同时保存 FS 引用供 BGM 按需加载使用。
 func (m *Manager) LoadAllFromFS(fs *embed.FS) {
 	if fs == nil {
 		return
 	}
+	m.assetFS = fs
 
 	entries, err := fs.ReadDir("assets/audio")
 	if err != nil {

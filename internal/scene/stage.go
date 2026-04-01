@@ -363,6 +363,8 @@ func (s *StageScene) subscribeBus() {
 		s.audioMgr.PlaySafeAt(gameAudio.SFXWaveStart, gameAudio.VolWave)
 		if p.IsBoss {
 			s.audioMgr.PlaySafeAt(gameAudio.SFXBossEnter, gameAudio.VolWave)
+			// BGM: Boss 波切换到 Boss 音乐
+			s.audioMgr.PlayBGM(gameAudio.BGMBoss)
 		}
 		s.waveAnnounce.Trigger(p.Wave, s.spawner.MaxWaves, p.IsBoss)
 		s.tutorial.OnEvent("waveStarted")
@@ -392,6 +394,8 @@ func (s *StageScene) subscribeBus() {
 		} else {
 			s.audioMgr.PlaySafeAt(gameAudio.SFXWaveClear, gameAudio.VolWave)
 		}
+		// BGM: 波次清除后恢复战斗音乐（Boss 波结束时从 BGMBoss 切回）
+		s.audioMgr.PlayBGM(gameAudio.BGMBattle)
 		s.tutorial.OnEvent("waveCleared")
 	})
 
@@ -485,6 +489,8 @@ func (s *StageScene) Update() error {
 		s.busSubscribed = true
 		s.subscribeBus()
 		s.tutorial.OnEvent("gameStart")
+		// BGM: 进入战斗场景播放战斗音乐
+		s.audioMgr.PlayBGM(gameAudio.BGMBattle)
 	}
 	s.frame++
 
@@ -1146,6 +1152,7 @@ func (s *StageScene) updatePlaying() {
 	if s.session.CheckEndConditions(ctx) && s.state == statePlaying {
 		if s.session.Status == gamemode.StatusVictory {
 			s.state = stateVictory
+			s.audioMgr.StopBGM()
 			s.audioMgr.PlaySafeAt(gameAudio.SFXVictory, gameAudio.VolWave)
 			s.progressMgr.RecordGameResult(s.modeID, s.gameMap.Config.ID, s.kills, true)
 			if s.tutorial.IsComplete() {
@@ -1153,6 +1160,7 @@ func (s *StageScene) updatePlaying() {
 			}
 		} else if s.session.Status == gamemode.StatusDefeat {
 			s.state = stateDefeat
+			s.audioMgr.StopBGM()
 			s.audioMgr.PlaySafeAt(gameAudio.SFXDefeat, gameAudio.VolWave)
 			s.progressMgr.RecordGameResult(s.modeID, s.gameMap.Config.ID, s.kills, false)
 		}
