@@ -481,12 +481,17 @@ func (s *StageScene) openAbilityChoicePanel() {
 		return
 	}
 
-	// 构建 ChoiceOption
+	// 构建 ChoiceOption（描述替换模板占位符为实际值）
+	var effStr float64
+	if t.Strength != nil {
+		effStr = t.Strength.Effective()
+	}
 	opts := make([]hud.ChoiceOption, len(choices))
 	for i, c := range choices {
+		desc := FormatAbilityDisplay(&c, effStr)
 		opts[i] = hud.ChoiceOption{
 			Label:       c.Label,
-			Description: c.Display,
+			Description: desc,
 			Tier:        "normal",
 			Data:        c.Type,
 		}

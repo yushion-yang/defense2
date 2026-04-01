@@ -1,5 +1,6 @@
 // upgrade.go — 塔升级系统。
-// 每 2 波解锁 1 个能力位，玩家从 3 个候选能力中选 1 个。可保留不选。
+// 建塔时立即解锁第 1 个能力位（攻击模式），之后每 2 波再解锁 1 个。
+// 玩家从 3 个候选能力中选 1 个。可保留不选。
 package tower
 
 import (
@@ -20,8 +21,9 @@ const ChoicesPerUnlock = 3
 // ── 能力位解锁 ──
 
 // UnlockedSlots 根据已完成的波次数计算已解锁的能力位数。
+// 第一个槽位（攻击模式）建塔时立即解锁，后续每 WavesPerUnlock 波再解锁一个。
 func UnlockedSlots(wavesCleared int) int {
-	n := wavesCleared / WavesPerUnlock
+	n := 1 + wavesCleared/WavesPerUnlock
 	if n > MaxAbilitySlots {
 		n = MaxAbilitySlots
 	}

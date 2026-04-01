@@ -1649,9 +1649,6 @@ func towerTypeIcon(key string) string {
 
 // drawUpgradeIndicators 在有待选能力的塔上方绘制脉冲金色菱形指示器。
 func (s *StageScene) drawUpgradeIndicators(target *ebiten.Image, animTime float64) {
-	if s.wavesCleared < tower.WavesPerUnlock {
-		return
-	}
 	pulse := float32(0.7 + 0.3*math.Sin(animTime*4)) // alpha 脉冲
 	s.towers.Each(func(t *tower.Tower) {
 		if t.HasPendingUpgrade(s.wavesCleared) {

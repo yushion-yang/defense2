@@ -41,14 +41,15 @@ func TestRegression_Upgrade_AddAbilitySlot(t *testing.T) {
 func TestRegression_Upgrade_PendingSlots(t *testing.T) {
 	tw := &tower.Tower{Active: true, Level: 1}
 
-	if tw.PendingSlots(0) != 0 {
-		t.Fatalf("0 waves should have 0 pending, got %d", tw.PendingSlots(0))
+	// 建塔时(0波)立即解锁1个槽位（攻击模式）
+	if tw.PendingSlots(0) != 1 {
+		t.Fatalf("0 waves should have 1 pending, got %d", tw.PendingSlots(0))
 	}
-	if tw.PendingSlots(2) != 1 {
-		t.Fatalf("2 waves should have 1 pending, got %d", tw.PendingSlots(2))
+	if tw.PendingSlots(2) != 2 {
+		t.Fatalf("2 waves should have 2 pending, got %d", tw.PendingSlots(2))
 	}
-	if tw.PendingSlots(12) != 6 {
-		t.Fatalf("12 waves should have 6 pending, got %d", tw.PendingSlots(12))
+	if tw.PendingSlots(10) != 6 {
+		t.Fatalf("10 waves should have 6 pending, got %d", tw.PendingSlots(10))
 	}
 	if tw.PendingSlots(100) != 6 {
 		t.Fatalf("100 waves should cap at 6 pending, got %d", tw.PendingSlots(100))
@@ -105,8 +106,9 @@ func TestRegression_Upgrade_CategoryNames(t *testing.T) {
 
 // Verify UnlockedSlots calculation.
 func TestRegression_Upgrade_UnlockedSlots(t *testing.T) {
+	// 公式: 1 + wavesCleared/WavesPerUnlock, cap at 6
 	cases := []struct{ waves, expected int }{
-		{0, 0}, {1, 0}, {2, 1}, {3, 1}, {4, 2}, {10, 5}, {12, 6}, {20, 6},
+		{0, 1}, {1, 1}, {2, 2}, {3, 2}, {4, 3}, {10, 6}, {12, 6}, {20, 6},
 	}
 	for _, tc := range cases {
 		got := tower.UnlockedSlots(tc.waves)

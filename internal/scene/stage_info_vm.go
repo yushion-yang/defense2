@@ -58,15 +58,15 @@ func BuildInfoPanelVM(t *tower.Tower, sellValue int, wavesCleared int) hud.InfoP
 	}
 	vm.AttackStyleText = "攻击: " + attackStyleLabel(style)
 
-	// 6-slot display
+	// Slot display — 只显示已解锁的槽位
 	abTable := config.GlobalAbilityTable()
 	unlocked := tower.UnlockedSlots(wavesCleared)
-	for i := 0; i < len(t.UnlockOrder); i++ {
+	for i := 0; i < unlocked && i < len(t.UnlockOrder); i++ {
 		cat := t.UnlockOrder[i]
 		slot := hud.SlotVM{
 			CategoryIdx:  cat,
 			CategoryName: tower.CategoryName(cat),
-			Unlocked:     i < unlocked,
+			Unlocked:     true,
 		}
 		if abilType := t.AbilitySlots[cat]; abilType != "" {
 			slot.AbilityLabel = abilType
@@ -285,6 +285,48 @@ func buildAbilityVM(abilityType string, abTable config.AbilityTable, effStr floa
 	// Parse Display template into segments
 	vm.Segments = buildAbilitySegments(def, effStr)
 	return vm
+}
+
+// FormatAbilityDisplay replaces template placeholders with actual values for plain text display.
+// Used by the choice panel to show player-friendly descriptions (total values only, no base+scaled breakdown).
+func FormatAbilityDisplay(def *config.AbilityDef, effStr float64) string {
+	tpl := def.Display
+	if tpl == "" {
+		return ""
+	}
+	scaled := def.Potential * (effStr / 100.0)
+	total := def.Base + scaled
+
+	var b strings.Builder
+	i := 0
+	for i < len(tpl) {
+		next := strings.Index(tpl[i:], "{")
+		if next < 0 {
+			b.WriteString(tpl[i:])
+			break
+		}
+		b.WriteString(tpl[i : i+next])
+		i += next
+		end := strings.Index(tpl[i:], "}")
+		if end < 0 {
+			break
+		}
+		ph := tpl[i+1 : i+end]
+		i += end + 1
+		switch ph {
+		case "s%":
+			b.WriteString(fmt.Sprintf("%.0f%%", total*100))
+		case "s":
+			b.WriteString(fmtNum(total))
+		case "si":
+			b.WriteString(fmt.Sprintf("%.0f", math.Floor(total)))
+		case "p":
+			b.WriteString(fmtNum(def.Param))
+		case "p%":
+			b.WriteString(fmtNum(def.Param*100) + "%")
+		}
+	}
+	return b.String()
 }
 
 // buildAbilitySegments parses a Display template and produces rendering segments.

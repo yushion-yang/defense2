@@ -91,10 +91,12 @@ func (p *ChoicePanel) Update(mx, my float64, clicked bool) {
 		}
 	}
 
-	// 点击选择
-	if clicked && p.hovered >= 0 && p.OnSelect != nil {
-		opt := p.Options[p.hovered]
-		p.OnSelect(p.hovered, opt)
+	// 点击选择（命中卡片）或点击外部取消
+	if clicked {
+		if p.hovered >= 0 && p.OnSelect != nil {
+			opt := p.Options[p.hovered]
+			p.OnSelect(p.hovered, opt)
+		}
 		p.Close()
 	}
 }
