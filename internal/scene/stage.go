@@ -29,6 +29,7 @@ import (
 	"defense2/internal/core/event"
 	"defense2/internal/core/game"
 	"defense2/internal/core/gamemap"
+	"defense2/internal/core/item"
 	tel "defense2/internal/core/telemetry"
 	"defense2/internal/core/gamemode"
 	"defense2/internal/core/persistence"
@@ -90,6 +91,11 @@ type StageScene struct {
 	lastWave          int                          // 上一帧的波次号
 	wardenType        string                       // 战灵类型标识（用于重玩传递）
 	wardenCfg         *config.WardenConfig         // 战灵配置（用于面板显示）
+	// 道具系统
+	inventory      *item.Inventory // 道具背包
+	dragItemKind   item.Kind       // 当前拖拽的道具类型
+	dragItemActive bool            // 是否正在拖拽道具
+	itemPanelOpen  bool            // 道具面板是否打开
 	gameSpeed         int                          // 游戏速度倍率（1 或 2）
 	imode             interactMode                 // 交互状态机
 	prePauseMode      interactMode                 // 暂停前的交互模式（恢复用）
@@ -271,6 +277,7 @@ func NewStageSceneWithOpts(sw Switcher, opts StageOptions) *StageScene {
 	s.waveAnnounce = hud.NewWaveAnnounce()
 	s.choicePanel = hud.NewChoicePanel()
 	s.particlePool.MaxActive = game.Settings().MaxParticles
+	s.inventory = item.NewInventory(5)
 
 	// 注入战灵精灵获取函数到覆盖层
 	s.wardenOverlay.SpriteFunc = s.wardenRenderer.GetSprite

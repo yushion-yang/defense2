@@ -49,6 +49,8 @@ const (
 	modePaused                           // 暂停菜单
 	modeWardenSelect                     // 战灵选择覆盖层
 	modeUpgrade                          // 能力选择覆盖层
+	modeItemPanel                        // 道具面板打开
+	modeItemDrag                         // 拖拽道具中
 )
 
 // StageOptions 创建 StageScene 的配置选项。
