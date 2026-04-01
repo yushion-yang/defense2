@@ -698,7 +698,11 @@ func (s *StageScene) debugActions() []hud.DebugAction {
 		hud.DebugAction{Label: "跳到下一波", Action: func() {
 			s.enemies.Each(func(e *enemy.Enemy) { e.HP = 0 })
 			s.spawner.WaveActive = false
+			prevWave := s.spawner.Wave
 			s.spawner.StartNextWave()
+			if s.spawner.Wave > prevWave {
+				s.onWaveTransition(prevWave)
+			}
 		}},
 		hud.DebugAction{Label: "清除全场敌人", Action: func() {
 			s.enemies.Each(func(e *enemy.Enemy) { e.HP = 0 })
@@ -842,10 +846,7 @@ func (s *StageScene) updatePlaying() {
 	// 1. 生成敌人
 	s.spawner.Update(s.enemies, gameDT)
 	if s.spawner.Wave > prevWave {
-		s.waveLivesSnapshot = s.lives
-		s.bus.Emit(event.EvtWaveStarted, event.WaveStartedPayload{
-			Wave: s.spawner.Wave, IsBoss: s.spawner.Wave%5 == 0,
-		})
+		s.onWaveTransition(prevWave)
 	}
 
 	// 波次公告动画更新
@@ -1123,31 +1124,8 @@ func (s *StageScene) updatePlaying() {
 		}
 	}
 
-	// 10. 波次完成奖励 + 事件触发
-	if s.spawner.Wave > prevWave && prevWave > 0 {
-		ctx := s.buildModeCtx()
-		// session 直调（有返回值 WaveClearResult）
-		result := s.session.OnWaveCleared(prevWave, ctx)
-		interest := s.econ.InterestGold(s.gold)
-		totalBonus := result.BonusGold + result.PerfectBonus + interest
-		s.gold += totalBonus
-		perfect := s.lives == s.waveLivesSnapshot && result.PerfectBonus > 0
-		if perfect {
-			render.SpawnText(float64(game.ScreenWidth)/2, float64(game.ScreenHeight)/2-50,
-				"完美!", color.RGBA{255, 215, 0, 255}, 20, 2.0)
-		}
-		msg := result.Message
-		if interest > 0 {
-			msg += fmt.Sprintf(" +$%d 利息", interest)
-		}
-		s.showNotify(msg)
-
-		// 通知订阅者（audio/warden/tutorial）
-		s.bus.Emit(event.EvtWaveCleared, event.WaveClearedPayload{
-			Wave: prevWave, Perfect: perfect,
-		})
-
-	}
+	// 10. 波次完成奖励 + 事件触发（由 onWaveTransition 统一处理，
+	// 此处仅处理 spawner.Update 触发的波次变化；手动开波的变化在 tryStartWave 中处理）
 
 	// 10.5. 后置安全网：清除本帧内被 abilities/skills/combat 击杀但尚未 Kill 的敌人
 	// 前置安全网(step 2)只能处理上一帧残留，本帧新产生的 HP<=0 敌人需要在胜负判定前处理
@@ -1167,6 +1145,12 @@ func (s *StageScene) updatePlaying() {
 			s.state = stateDefeat
 			s.audioMgr.PlaySafeAt(gameAudio.SFXDefeat, gameAudio.VolWave)
 			s.progressMgr.RecordGameResult(s.modeID, s.gameMap.Config.ID, s.kills, false)
+		}
+		// 清除覆盖层状态，防止 ChoicePanel/暂停菜单遮挡结算画面
+		s.imode = modeIdle
+		s.selectedTower = nil
+		if s.choicePanel != nil {
+			s.choicePanel.Close()
 		}
 	}
 
@@ -1805,13 +1789,53 @@ func convertArchetypesToSpawnConfigs(archetypes map[string]*config.EnemyArchetyp
 // ── 战灵选择逻辑 ────────────────────────────────────
 
 // tryStartWave 尝试开波。若战灵未选择则先弹出战灵选择面板。
+// onWaveTransition 处理波次变化（prevWave → 当前 Wave）。
+// 包括：WaveStarted 事件 + WaveCleared 奖励/事件。
+// 由 spawner.Update 自动开波和 tryStartWave 手动开波两条路径统一调用。
+func (s *StageScene) onWaveTransition(prevWave int) {
+	// 新波开始事件
+	s.waveLivesSnapshot = s.lives
+	s.bus.Emit(event.EvtWaveStarted, event.WaveStartedPayload{
+		Wave: s.spawner.Wave, IsBoss: s.spawner.Wave%5 == 0,
+	})
+
+	// 前一波清完奖励（prevWave=0 时无前波）
+	if prevWave > 0 {
+		ctx := s.buildModeCtx()
+		result := s.session.OnWaveCleared(prevWave, ctx)
+		interest := s.econ.InterestGold(s.gold)
+		totalBonus := result.BonusGold + result.PerfectBonus + interest
+		s.gold += totalBonus
+		perfect := s.lives == s.waveLivesSnapshot && result.PerfectBonus > 0
+		if perfect {
+			render.SpawnText(float64(game.ScreenWidth)/2, float64(game.ScreenHeight)/2-50,
+				"完美!", color.RGBA{255, 215, 0, 255}, 20, 2.0)
+		}
+		msg := result.Message
+		if interest > 0 {
+			msg += fmt.Sprintf(" +$%d 利息", interest)
+		}
+		s.showNotify(msg)
+
+		s.bus.Emit(event.EvtWaveCleared, event.WaveClearedPayload{
+			Wave: prevWave, Perfect: perfect,
+		})
+	}
+}
+
 func (s *StageScene) tryStartWave() {
 	if !s.wardenReady {
 		s.showWardenSelect()
 		return
 	}
+	prevWave := s.spawner.Wave
 	s.spawner.StartNextWave()
 	s.audioMgr.PlaySafeAt(gameAudio.SFXUIClick, gameAudio.VolUI)
+	// 手动开波时 Wave 在 handleInput 阶段递增，updatePlaying 的 prevWave
+	// 已经是新值，导致 EvtWaveCleared 不触发。这里补发。
+	if s.spawner.Wave > prevWave && prevWave > 0 {
+		s.onWaveTransition(prevWave)
+	}
 }
 
 // showWardenSelect 弹出战灵选择覆盖层。
@@ -1819,8 +1843,12 @@ func (s *StageScene) showWardenSelect() {
 	s.wardenOverlay.Show(GetWardenOptions(), func(key string) {
 		s.activateWarden(key)
 		// 选完后立即开第一波
+		prevWave := s.spawner.Wave
 		s.spawner.StartNextWave()
 		s.audioMgr.PlaySafeAt(gameAudio.SFXUIClick, gameAudio.VolUI)
+		if s.spawner.Wave > prevWave {
+			s.onWaveTransition(prevWave)
+		}
 	})
 	s.imode = modeWardenSelect
 }
@@ -2038,7 +2066,11 @@ func (s *StageScene) executeAutoPlayAction(a AutoPlayAction) {
 
 	case APActionStartWave:
 		if s.wardenReady {
+			prevWave := s.spawner.Wave
 			s.spawner.StartNextWave()
+			if s.spawner.Wave > prevWave {
+				s.onWaveTransition(prevWave)
+			}
 		}
 
 	case APActionSelectWarden:

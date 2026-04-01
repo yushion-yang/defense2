@@ -22,9 +22,9 @@ import (
 // handleInput 基于手势识别器 + 交互状态机处理输入。
 func (s *StageScene) handleInput() {
 	g := s.gesture
-	// 状态机控制拖拽权限
+	// 状态机控制拖拽权限（modeTowerSel 下禁用，防止点击取消被误判为拖拽）
 	switch s.imode {
-	case modeIdle, modeBuildPlace, modeTowerSel, modeSpawnPlace:
+	case modeIdle, modeBuildPlace, modeSpawnPlace:
 		g.DragEnabled = s.needsCamera()
 	default:
 		g.DragEnabled = false
@@ -105,7 +105,7 @@ func (s *StageScene) handleInput() {
 		s.tryUpgradeTower()
 		return
 	}
-	if inpututil.IsKeyJustPressed(ebiten.KeyS) {
+	if inpututil.IsKeyJustPressed(ebiten.KeyS) && (s.imode == modeIdle || s.imode == modeTowerSel) {
 		if !s.spawner.WaveActive && !s.spawner.AllDone {
 			s.tryStartWave()
 		}
@@ -120,16 +120,14 @@ func (s *StageScene) handleInput() {
 		s.gameSpeed = 3
 	}
 	if inpututil.IsKeyJustPressed(ebiten.KeyP) {
-		if s.imode == modePaused {
-			s.imode = s.prePauseMode
-		} else {
-			s.prePauseMode = s.imode
-			s.imode = modePaused
-		}
+		// modePaused 由 handlePausedInput 处理，此处只处理非暂停→暂停
+		s.prePauseMode = s.imode
+		s.imode = modePaused
 	}
 	if inpututil.IsKeyJustPressed(ebiten.KeyDelete) || inpututil.IsKeyJustPressed(ebiten.KeyBackspace) {
 		if s.imode == modeTowerSel && s.selectedTower != nil {
 			s.trySellTower(s.selectedTower.X, s.selectedTower.Y)
+			s.imode = modeIdle
 		}
 	}
 
@@ -158,7 +156,11 @@ func (s *StageScene) handleInput() {
 				e.HP = 0
 			})
 			s.spawner.WaveActive = false
+			prevWave := s.spawner.Wave
 			s.spawner.StartNextWave()
+			if s.spawner.Wave > prevWave {
+				s.onWaveTransition(prevWave)
+			}
 			hud.ShowToast("跳到下一波")
 		}
 	}
@@ -201,7 +203,7 @@ func (s *StageScene) handleInput() {
 	if hud.ToggleButtonHitTest(ftx, fty, false) {
 		s.wardenPanelOpen = !s.wardenPanelOpen
 		if s.wardenPanelOpen {
-			if s.imode == modeBuildMenu || s.imode == modeBuildPlace {
+			if s.imode == modeBuildMenu || s.imode == modeBuildPlace || s.imode == modeTowerSel {
 				s.imode = modeIdle
 			}
 			s.selectedTower = nil
@@ -238,6 +240,7 @@ func (s *StageScene) handleInput() {
 		}
 		return
 	case "menu":
+		s.prePauseMode = s.imode
 		s.imode = modePaused
 		return
 	case "build":
@@ -375,8 +378,11 @@ func (s *StageScene) handleWardenSelection() {
 		s.imode = modeIdle
 		return
 	}
-	mx, my := draw.CursorPos()
-	s.wardenOverlay.Update(mx, my, isTapJustPressed())
+	g := s.gesture
+	g.DragEnabled = false
+	g.Update()
+	mx, my := g.CursorPos()
+	s.wardenOverlay.Update(mx, my, g.JustTapped())
 }
 
 // tryUpgradeTower 为选中的塔购买 10 点永久强度。

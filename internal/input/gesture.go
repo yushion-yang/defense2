@@ -105,9 +105,14 @@ func (g *Gesture) Update() {
 			// 没移动过 → Tap（用松开时位置，更符合直觉）
 			g.tapped = true
 			g.tapX, g.tapY = px, py
+		} else if !g.dragging && !g.onUI {
+			// 移动过但没启动拖拽（DragEnabled=false 或 UI 区域起点但不是 UI）
+			// → 仍然判定为 Tap，避免轻微移动吞掉点击
+			g.tapped = true
+			g.tapX, g.tapY = px, py
 		}
-		// 移动过但在 UI 起点：不触发任何操作（滑走取消）
-		// 移动过在游戏区：拖拽结束，不触发 Tap
+		// 移动过且在 UI 起点：不触发任何操作（滑走取消）
+		// 移动过在游戏区且正在拖拽：拖拽结束，不触发 Tap
 		g.tracking = false
 		g.dragging = false
 		g.movedBeyond = false
