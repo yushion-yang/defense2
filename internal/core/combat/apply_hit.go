@@ -64,7 +64,7 @@ func ApplyHit(input HitInput, onHit HitCallback) HitOutput {
 			if result.IsCrit {
 				isCrit = true
 			}
-			applyHitEffectsUnified(result, input.Target, synth, input.Enemies, input.Projectiles)
+			applyHitEffectsUnified(result, input.Target, synth, input.Enemies, input.Projectiles, onHit)
 		}
 	}
 
@@ -93,7 +93,7 @@ func ApplyHit(input HitInput, onHit HitCallback) HitOutput {
 }
 
 // applyHitEffectsUnified 施加能力效果（减速、眩晕、流血、灼烧、溅射、弹射）。
-func applyHitEffectsUnified(r *tower.HitResult, target *enemy.Enemy, p *projectile.Projectile, enemies *enemy.Pool, projectiles *projectile.Pool) {
+func applyHitEffectsUnified(r *tower.HitResult, target *enemy.Enemy, p *projectile.Projectile, enemies *enemy.Pool, projectiles *projectile.Pool, onHit HitCallback) {
 	if r.Slow != nil {
 		ApplySlow(target, r.Slow.Factor, r.Slow.Duration, p.SourceTowerKey)
 	}
@@ -116,7 +116,15 @@ func applyHitEffectsUnified(r *tower.HitResult, target *enemy.Enemy, p *projecti
 			}
 			if math.Hypot(e.X-target.X, e.Y-target.Y) <= r.Splash.Radius {
 				e.HP -= splashDamage
-				if e.HP <= 0 {
+				killed := e.HP <= 0
+				// 溅射伤害回调（浮字 + 命中闪白）
+				if onHit != nil {
+					onHit(e, splashDamage, killed, "splash", false)
+				}
+				if e.HitFlash < 0.06 {
+					e.HitFlash = 0.08
+				}
+				if killed {
 					enemies.Kill(e)
 				}
 			}

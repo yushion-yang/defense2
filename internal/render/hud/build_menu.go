@@ -259,21 +259,36 @@ func drawBuildCardTooltip(screen *ebiten.Image, fm *render.FontManager, card Bui
 // drawVariantTooltip renders a tooltip for display-only variant cards.
 func drawVariantTooltip(screen *ebiten.Image, fm *render.FontManager, card BuildCardVM, m buildPanelMetrics) {
 	const (
-		tipW = float32(300)
-		tipH = float32(52)
-		tipR = float32(8)
+		tipPad = float32(12)
+		tipR   = float32(8)
 	)
+
+	// 测量描述文本宽度，自适应 tooltip 宽度
+	descW := fm.MeasureText(card.AbilityDesc, theme.FontXS)
+	labelW := fm.MeasureText(card.Label, theme.FontLG)
+	contentW := descW
+	if labelW > contentW {
+		contentW = labelW
+	}
+	tipW := float32(contentW) + tipPad*2 + 4
+	if tipW < 200 {
+		tipW = 200
+	}
+	if tipW > float32(theme.CanvasW)-40 {
+		tipW = float32(theme.CanvasW) - 40
+	}
+	tipH := float32(48)
 	tipX := (float32(theme.CanvasW) - tipW) / 2
 	tipY := m.panelY - tipH - 6
 
 	draw.RoundRect(screen, tipX, tipY, tipW, tipH, tipR, theme.PanelBg)
 	draw.StrokeRoundRect(screen, tipX, tipY, tipW, tipH, tipR, 1, theme.PanelBorder)
 
-	tx := float64(tipX) + 12
+	tx := float64(tipX) + float64(tipPad)
 	ty := float64(tipY) + 8
 
 	fm.DrawBoldText(screen, card.Label, tx, ty, theme.FontLG, theme.TextTitle)
-	fm.DrawText(screen, card.AbilityDesc, tx, ty+20, theme.FontSM, theme.TextMuted)
+	fm.DrawText(screen, card.AbilityDesc, tx, ty+20, theme.FontXS, theme.TextMuted)
 }
 
 // BuildMenuHitTest returns the buildable tower card index hit by (px, py), or -1.

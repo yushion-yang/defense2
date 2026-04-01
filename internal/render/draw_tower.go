@@ -8,6 +8,7 @@ import (
 	"image/color"
 	"math"
 
+	"defense2/internal/config"
 	"defense2/internal/core/tower"
 	"defense2/internal/render/anim"
 	"defense2/internal/render/draw"
@@ -224,6 +225,33 @@ func (tr *TowerRenderer) DrawTowers(screen *ebiten.Image, pool *tower.Pool, sele
 			}
 		}
 
+		// --- Aura radius circle (for towers with aura abilities) ---
+		if !t.Selling && t.BuildAnim <= 0 {
+			if auraR, auraClr := towerAuraVisual(t, animTime); auraR > 0 {
+				pulse := float32(0.7 + 0.3*math.Sin(animTime*2))
+				a := uint8(float64(25) * float64(pulse))
+				clr := color.RGBA{auraClr.R, auraClr.G, auraClr.B, a}
+				draw.DashedCircle(screen, cx, cy, float32(auraR), 1, 6, 4, clr)
+			}
+		}
+
+		// --- Buff indicator dots (above tower name) ---
+		if !t.Selling && len(t.Buffs) > 0 {
+			dotY := cy - float32(towerSpriteSize*0.5) - 6
+			dotSpacing := float32(6)
+			dotR := float32(2.5)
+			n := len(t.Buffs)
+			if n > 5 {
+				n = 5
+			}
+			startX := cx - float32(n-1)*dotSpacing/2
+			for i := 0; i < n; i++ {
+				dx := startX + float32(i)*dotSpacing
+				draw.FilledCircle(screen, dx, dotY, dotR,
+					color.RGBA{R: 180, G: 140, B: 255, A: 180})
+			}
+		}
+
 		// --- Name label (skip during sell animation) ---
 		if !t.Selling {
 			if fm := GlobalFont(); fm != nil {
@@ -232,10 +260,6 @@ func (tr *TowerRenderer) DrawTowers(screen *ebiten.Image, pool *tower.Pool, sele
 					theme.FontTowerName, theme.TowerNameLabel)
 			}
 		}
-
-		// Tower struct has no Buffs field — buff dots rendering skipped.
-		// When the Buffs field is added, draw colored dots above the tower:
-		// offset = -theme.TowerBuffDotBaseY, spacing = theme.TowerBuffDotSpacing, r = theme.TowerBuffDotRadius
 	})
 }
 
@@ -337,4 +361,28 @@ func DrawTowerRangePreview(screen *ebiten.Image, cx, cy float32, r float64, vali
 
 	// Range circle (outline only)
 	draw.CircleOutline(screen, cx, cy, fr, 1.5, strokeClr)
+}
+
+// aura 类型 → 视觉颜色
+var auraColors = map[string]color.RGBA{
+	"damageUpAura":   {R: 255, G: 160, B: 60, A: 255},  // 橙
+	"attackSpeedAura": {R: 100, G: 220, B: 100, A: 255}, // 绿
+	"rangeAura":      {R: 100, G: 160, B: 255, A: 255},  // 蓝
+	"critAura":       {R: 255, G: 220, B: 60, A: 255},   // 黄
+}
+
+// towerAuraVisual 检查塔是否有光环能力，返回半径和颜色。
+func towerAuraVisual(t *tower.Tower, _ float64) (radius float64, clr color.RGBA) {
+	table := config.GlobalAbilityTable()
+	if table == nil {
+		return 0, color.RGBA{}
+	}
+	for _, abName := range t.Abilities {
+		if c, ok := auraColors[abName]; ok {
+			if def, exists := table[abName]; exists && def.Param > 0 {
+				return def.Param, c
+			}
+		}
+	}
+	return 0, color.RGBA{}
 }

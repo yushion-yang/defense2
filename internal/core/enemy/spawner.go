@@ -204,6 +204,74 @@ func (s *Spawner) startWave() {
 	s.bossQueued = (s.Wave%5 == 0)
 }
 
+// WavePreviewEntry 下一波预览中的一种敌人。
+type WavePreviewEntry struct {
+	Archetype string
+	Label     string
+	Count     int
+}
+
+// NextWavePreview 返回下一波的预览信息。
+func (s *Spawner) NextWavePreview() (entries []WavePreviewEntry, totalCount int, isBoss bool) {
+	nextWave := s.Wave + 1
+	if nextWave > s.MaxWaves {
+		return nil, 0, false
+	}
+
+	// 计算下一波敌人数
+	count := s.EnemiesPerWave + nextWave
+	if s.FixedCount > 0 {
+		count = s.FixedCount
+	}
+	isBoss = nextWave%5 == 0
+	if isBoss {
+		count++ // Boss 额外一个
+	}
+	totalCount = count
+
+	// 获取原型权重分布
+	var comp []waveEntry
+	for _, c := range waveCompositions {
+		if c.maxWave == 0 || nextWave <= c.maxWave {
+			comp = c.entries
+			break
+		}
+	}
+	if comp == nil && len(waveCompositions) > 0 {
+		comp = waveCompositions[len(waveCompositions)-1].entries
+	}
+
+	// 计算各原型大概数量
+	totalWeight := 0
+	for _, e := range comp {
+		totalWeight += e.weight
+	}
+	if totalWeight == 0 {
+		return nil, totalCount, isBoss
+	}
+
+	normalCount := count
+	if isBoss {
+		normalCount-- // Boss 不算在原型分配中
+	}
+	for _, e := range comp {
+		n := normalCount * e.weight / totalWeight
+		if n <= 0 {
+			n = 1
+		}
+		label := e.archetype
+		if cfg := s.getConfig(e.archetype); cfg != nil && cfg.Label != "" {
+			label = cfg.Label
+		}
+		entries = append(entries, WavePreviewEntry{
+			Archetype: e.archetype,
+			Label:     label,
+			Count:     n,
+		})
+	}
+	return entries, totalCount, isBoss
+}
+
 // enemyCount 返回当前波的常规敌人总数（不含 Boss）。
 func (s *Spawner) enemyCount() int {
 	if s.FixedCount > 0 {

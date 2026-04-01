@@ -157,12 +157,7 @@ func (er *EnemyRenderer) DrawEnemies(screen *ebiten.Image, pool *enemy.Pool, ani
 			draw.FilledCircle(screen, cx, cy, spriteR, color.RGBA{R: 255, G: 80, B: 60, A: flashAlpha})
 		}
 
-		// --- Tank overlay ---
-		if e.Archetype == "tank" {
-			size := float32(14)
-			draw.FilledRect(screen, cx-size/2, cy-size/2, size, size,
-				color.RGBA{R: 255, G: 255, B: 255, A: 40}, true)
-		}
+		// (tank overlay removed — was debug placeholder)
 
 		// --- HP bar dimensions ---
 		var barW, barH, barOffY float32

@@ -262,7 +262,7 @@ func (s *StageScene) handleInput() {
 	}
 
 	// 左下角切换按钮（波次面板）
-	if hud.ToggleButtonHitTest(ftx, fty, true) {
+	if hud.WavePanelHandleHitTest(ftx, fty, &s.wavePanelState) {
 		s.wavePanelOpen = !s.wavePanelOpen
 		return
 	}
@@ -516,7 +516,7 @@ func newStageGesture() *input.Gesture {
 		if hud.TopBarHitTest(fx, fy) != "" {
 			return true
 		}
-		if hud.ToggleButtonHitTest(fx, fy, true) || hud.ToggleButtonHitTest(fx, fy, false) {
+		if hud.ToggleButtonHitTest(fx, fy, false) {
 			return true
 		}
 		if y > float64(game.ScreenHeight)-120 {

@@ -40,9 +40,9 @@
 - [ ] 100强度时显示的各属性（包括强度），能力项的描述不对，没有符合我们的根据数值增/减益来显示颜色，例如100那么应该全部都是白色。/Users/yushion/Games/defense2/docs/autotest/pic/screenshot_20260401_123651.png
 - [ ] /Users/yushion/Games/defense2/docs/autotest/pic/screenshot_20260401_124206.png /Users/yushion/Games/defense2/docs/autotest/pic/screenshot_20260401_124207.png 持续扣血的DOT都应该设定较长的触发周期，我记得我曾经规定过全部设定为0.5s，并且需要确保比如3s必然是触发6次。
 - [ ]
+- [ ] 依然是游戏开始之后点击开波了，打开着的炮塔HUD点击外部无法关闭，点击一下炮塔之后似乎才可以关闭炮塔的HUD
+- [ ] /Users/yushion/Games/defense2/docs/autotest/pic/screenshot_20260401_134553.png 建炮塔的hover都描述只需要展示攻击方式的功能，因为没有数值，用户也不需要看到你的占位符。
+- [ ] /Users/yushion/Games/defense2/docs/autotest/pic/screenshot_20260401_134312.png 敌人挂着hit帧的白方框问题还在。
 - [ ]
-- [ ]
-- [ ]
-- [ ]
-- [ ]
-- [ ]
+- [ ] 散弹能力增加了强度，但是子弹的数量并没有增加
+- [ ] 

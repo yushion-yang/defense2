@@ -115,7 +115,8 @@ type StageScene struct {
 	wavesCleared int // 已清除波次数（用于能力解锁）
 	// 测试模式
 	// HUD 面板状态
-	wavePanelOpen   bool // 左下角波次面板是否展开
+	wavePanelOpen   bool             // 左下角波次面板是否展开
+	wavePanelState  hud.WavePanelState // 抽屉动画状态
 	wardenPanelOpen bool // 右下角战灵面板是否展开
 	testMode        bool
 	scenarioID      string
@@ -859,6 +860,7 @@ func (s *StageScene) updatePlaying() {
 
 	// 波次公告动画更新
 	s.waveAnnounce.Update(gameDT)
+	s.wavePanelState.Update(gameDT, s.wavePanelOpen)
 
 	// 2. 敌人状态效果（减速、流血等）
 	pipeline.TickEnemyStatusEffects(s.enemies, gameDT, func(e *enemy.Enemy, dmg float64) {
@@ -1485,16 +1487,8 @@ func (s *StageScene) drawScene(screen *ebiten.Image) {
 		hud.DrawWardenPanel(screen, s.buildWardenPanelData())
 	}
 
-	// 左下角：波次面板（可收起）
-	if s.wavePanelOpen {
-		hud.DrawWavePanel(screen, hud.WavePanelData{
-			WaveNum:    s.spawner.Wave,
-			MaxWaves:   s.spawner.MaxWaves,
-			EnemyCount: s.enemies.Count,
-		})
-	}
-	// 左下角收起按钮
-	hud.DrawToggleButton(screen, true, s.wavePanelOpen, ">")
+	// 左下角：抽屉式波次面板（含 tab handle）
+	hud.DrawWavePanel(screen, s.buildWavePanelData(), &s.wavePanelState)
 
 	// 右下角收起按钮（战灵，选择后才显示）
 	if s.wardenReady && s.wardenUnit != nil && s.wardenUnit.Active {
@@ -1612,7 +1606,7 @@ func (s *StageScene) buildBuildMenuData() hud.BuildMenuData {
 			TypeIcon:    ab.Icon,
 			Sprite:      s.towerRenderer.GetSprite(sprKey),
 			Buildable:   false,
-			AbilityDesc: ab.Display,
+			AbilityDesc: attackStyleDesc(ab.Type),
 		})
 	}
 
@@ -1649,6 +1643,24 @@ func (s *StageScene) buildItemPanelCards() []hud.ItemCardVM {
 		}
 	}
 	return cards
+}
+
+// attackStyleDesc 返回攻击方式的纯功能描述（不含数值）。
+func attackStyleDesc(abilType string) string {
+	m := map[string]string{
+		"enhance":     "一次性全面提升基础属性",
+		"scatter":     "发射多颗弹丸，锥形散布",
+		"wideBeam":    "宽光束穿透所有敌人",
+		"spinAoe":     "旋转范围伤害，内圈额外加伤",
+		"bounce":      "弹射多个敌人",
+		"splash":      "命中后对周围敌人造成溅射伤害",
+		"multiTarget": "同时攻击多个目标",
+		"radial":      "360度发射穿透弹，1.2倍射程",
+	}
+	if d, ok := m[abilType]; ok {
+		return d
+	}
+	return ""
 }
 
 // towerRoleTags 返回塔的角色标签和颜色。
@@ -1740,6 +1752,25 @@ func (s *StageScene) buildMinimapVM() hud.MinimapVM {
 }
 
 // buildWardenPanelData 根据当前战灵状态和配置构建面板显示数据。
+func (s *StageScene) buildWavePanelData() hud.WavePanelData {
+	d := hud.WavePanelData{
+		WaveNum:    s.spawner.Wave,
+		MaxWaves:   s.spawner.MaxWaves,
+		EnemyCount: s.enemies.Count,
+		AllDone:    s.spawner.AllDone,
+	}
+	entries, count, boss := s.spawner.NextWavePreview()
+	d.NextWaveCount = count
+	d.NextWaveBoss = boss
+	for _, e := range entries {
+		d.NextWaveTypes = append(d.NextWaveTypes, hud.WaveTypeEntry{
+			Label: e.Label,
+			Count: e.Count,
+		})
+	}
+	return d
+}
+
 func (s *StageScene) buildWardenPanelData() hud.WardenPanelData {
 	w := s.wardenUnit
 	d := hud.WardenPanelData{
@@ -1902,6 +1933,7 @@ func (s *StageScene) showWardenSelect() {
 			s.onWaveTransition(prevWave)
 		}
 	})
+	s.selectedTower = nil // 进入战灵选择时清除塔选中状态
 	s.imode = modeWardenSelect
 }
 

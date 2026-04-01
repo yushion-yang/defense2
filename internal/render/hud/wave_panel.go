@@ -1,14 +1,15 @@
-// wave_panel.go — Left-side wave preview panel.
-// Uses FlexPanel + AnchoredRect for adaptive layout.
+// wave_panel.go — 左侧抽屉式波次预览面板。
+// 收起时只露出 tab handle（波次号+箭头），展开时滑出完整面板。
 package hud
 
 import (
 	"fmt"
+	"image/color"
 
+	"defense2/internal/core/game"
 	"defense2/internal/render"
 	"defense2/internal/render/draw"
 	"defense2/internal/render/theme"
-	"defense2/internal/render/ui"
 
 	"github.com/hajimehoshi/ebiten/v2"
 )
@@ -17,63 +18,185 @@ import (
 type WavePanelData struct {
 	WaveNum    int
 	MaxWaves   int
-	EnemyCount int
-	WaveLabel  string
+	EnemyCount int // 场上敌人数
+	// 下一波预览
+	NextWaveCount int
+	NextWaveBoss  bool
+	NextWaveTypes []WaveTypeEntry // 原型名×数量
+	AllDone       bool            // 所有波次已出完
 }
 
-// DrawWavePanel renders the left-side wave information panel using FlexPanel.
-func DrawWavePanel(screen *ebiten.Image, d WavePanelData) {
+// WaveTypeEntry 下一波中的一种敌人类型。
+type WaveTypeEntry struct {
+	Label string
+	Count int
+}
+
+// 面板布局常量。
+const (
+	wpHandleW = float32(76)  // tab handle 宽度
+	wpHandleH = float32(32)  // tab handle 高度
+	wpPanelW  = float32(190) // 展开面板宽度（不含 handle）
+	wpRadius  = float32(10)
+	wpPad     = float32(10)
+	wpLineH   = float32(16)
+	wpMarginB = float32(14) // 底部边距
+	wpMarginL = float32(0)  // 左侧贴边
+)
+
+// WavePanelState 波次面板动画状态。
+type WavePanelState struct {
+	SlideT float64 // 0=收起, 1=展开
+	Open   bool
+}
+
+// Update 驱动抽屉滑动动画。
+func (s *WavePanelState) Update(dt float64, open bool) {
+	s.Open = open
+	speed := 6.0 // ~0.17s
+	if open {
+		s.SlideT += dt * speed
+		if s.SlideT > 1 {
+			s.SlideT = 1
+		}
+	} else {
+		s.SlideT -= dt * speed
+		if s.SlideT < 0 {
+			s.SlideT = 0
+		}
+	}
+}
+
+// easeOut 简单的 ease-out 缓动。
+func easeOut(t float64) float64 {
+	return 1 - (1-t)*(1-t)
+}
+
+// DrawWavePanel 绘制抽屉式波次面板。
+func DrawWavePanel(screen *ebiten.Image, d WavePanelData, state *WavePanelState) {
 	fm := render.GlobalFont()
 	if fm == nil {
 		return
 	}
 
-	const (
-		panelW = float32(theme.InfoPanelW)
-		pad    = float32(12)
-		lineH  = float32(20)
-	)
+	t := easeOut(state.SlideT)
 
-	// 计算内容高度
-	contentLines := 2 // wave + enemy count
-	if d.WaveLabel != "" {
-		contentLines++
-	}
-	panelH := pad*2 + lineH*float32(contentLines)
-
-	// 锚定到左下角
-	rect := ui.AnchoredRect(ui.AnchorBottomLeft, panelW, panelH,
-		0, 0, float32(theme.BottomMargin), float32(theme.InfoPanelX))
-
-	// 面板
-	p := ui.NewFlexPanel(rect.X, rect.Y, rect.W, pad)
-	p.Radius = float32(theme.WavePanelRadius)
-	p.BgColor = theme.WavePanelBg
-
-	// 波次号
-	p.AddRow(lineH, func(screen *ebiten.Image, x, y float64, w float64) {
-		waveTxt := fmt.Sprintf("%d波预览", d.WaveNum)
-		fm.DrawText(screen, waveTxt, x, y, theme.FontLG, theme.ResWaves)
-	})
-
-	// 可选标签
-	if d.WaveLabel != "" {
-		p.AddRow(lineH, func(screen *ebiten.Image, x, y float64, w float64) {
-			fm.DrawText(screen, d.WaveLabel, x, y, theme.FontSM, theme.TextMuted)
-		})
-	}
-
-	// 敌人数量
-	p.AddRow(lineH, func(screen *ebiten.Image, x, y float64, w float64) {
-		if im := render.GlobalIcons(); im != nil {
-			if img := im.Get("stat-target"); img != nil {
-				draw.Sprite(screen, img, x+5, y+5, 10)
-				fm.DrawText(screen, fmt.Sprintf("%d", d.EnemyCount), x+16, y, theme.FontSM, theme.TextBody)
-				return
-			}
+	// 计算面板内容高度
+	lines := 2 // 波次号 + 场上敌人
+	if d.NextWaveCount > 0 && !d.AllDone {
+		lines++ // "下一波: N怪"
+		typeLines := len(d.NextWaveTypes)
+		if typeLines > 4 {
+			typeLines = 4 // 最多显示4种
 		}
-		fm.DrawText(screen, fmt.Sprintf("场上: %d", d.EnemyCount), x, y, theme.FontSM, theme.TextBody)
-	})
+		lines += typeLines
+	} else if d.AllDone {
+		lines++ // "最终波!"
+	}
+	panelH := wpPad*2 + wpLineH*float32(lines)
+	if panelH < wpHandleH {
+		panelH = wpHandleH
+	}
 
-	p.Draw(screen)
+	// 面板位置：左侧滑出
+	screenH := float32(game.ScreenHeight)
+	handleY := screenH - panelH - wpMarginB
+	panelX := wpMarginL - wpPanelW + float32(t)*wpPanelW // -panelW ~ 0
+	handleX := panelX + wpPanelW                          // handle 在面板右侧
+
+	// 绘制面板主体（slideT > 0 时）
+	if t > 0.01 {
+		draw.RoundRect(screen, panelX, handleY, wpPanelW, panelH, wpRadius,
+			theme.WavePanelBg)
+
+		x := float64(panelX) + float64(wpPad)
+		y := float64(handleY) + float64(wpPad)
+
+		// 波次号
+		waveTxt := fmt.Sprintf("%d/%d波", d.WaveNum, d.MaxWaves)
+		fm.DrawBoldText(screen, waveTxt, x, y, theme.FontH2, theme.ResWaves)
+		y += float64(wpLineH)
+
+		// 场上敌人
+		enemyTxt := fmt.Sprintf("场上: %d", d.EnemyCount)
+		fm.DrawText(screen, enemyTxt, x, y, theme.FontCaption, theme.TextBody)
+		y += float64(wpLineH)
+
+		// 下一波预览
+		if d.NextWaveCount > 0 && !d.AllDone {
+			nextTxt := fmt.Sprintf("下一波: %d怪", d.NextWaveCount)
+			if d.NextWaveBoss {
+				nextTxt += " [BOSS]"
+			}
+			clr := theme.TextMuted
+			if d.NextWaveBoss {
+				clr = color.RGBA{R: 255, G: 100, B: 80, A: 255}
+			}
+			fm.DrawText(screen, nextTxt, x, y, theme.FontCaption, clr)
+			y += float64(wpLineH)
+
+			// 原型列表
+			for i, entry := range d.NextWaveTypes {
+				if i >= 4 {
+					break
+				}
+				entryTxt := fmt.Sprintf("  %s ×%d", entry.Label, entry.Count)
+				fm.DrawText(screen, entryTxt, x, y, theme.FontCaption, theme.TextMuted)
+				y += float64(wpLineH)
+			}
+		} else if d.AllDone {
+			fm.DrawText(screen, "最终波!", x, y, theme.FontCaption,
+				color.RGBA{R: 255, G: 215, B: 0, A: 255})
+		}
+	}
+
+	// Tab handle（始终可见）
+	draw.RoundRect(screen, handleX, handleY, wpHandleW, wpHandleH, wpRadius,
+		theme.WavePanelBg)
+
+	hx := float64(handleX) + 8
+	hy := float64(handleY) + 8
+	waveLbl := fmt.Sprintf("%d波", d.WaveNum)
+	fm.DrawBoldText(screen, waveLbl, hx, hy, theme.FontBody, theme.ResWaves)
+
+	// 箭头
+	arrow := ">"
+	if state.Open {
+		arrow = "<"
+	}
+	arrowX := float64(handleX) + float64(wpHandleW) - 16
+	fm.DrawText(screen, arrow, arrowX, hy, theme.FontBody, theme.TextMuted)
+}
+
+// wavePanelHandleRect 返回 tab handle 的屏幕矩形（用于点击检测）。
+func wavePanelHandleRect(state *WavePanelState) (x, y, w, h float32) {
+	// 计算与 Draw 一致的 handle 位置
+	t := easeOut(state.SlideT)
+	screenH := float32(game.ScreenHeight)
+	panelX := wpMarginL - wpPanelW + float32(t)*wpPanelW
+	handleX := panelX + wpPanelW
+	handleY := screenH - wpHandleH - wpMarginB
+	return handleX, handleY, wpHandleW, wpHandleH
+}
+
+// WavePanelHandleHitTest 检查点击是否命中波次面板的 tab handle。
+func WavePanelHandleHitTest(px, py float32, state *WavePanelState) bool {
+	x, y, w, h := wavePanelHandleRect(state)
+	return px >= x && px <= x+w && py >= y && py <= y+h
+}
+
+// WavePanelContains 检查点击是否在波次面板（含 handle）区域内。
+func WavePanelContains(px, py float32, state *WavePanelState) bool {
+	if WavePanelHandleHitTest(px, py, state) {
+		return true
+	}
+	// 面板主体
+	if state.SlideT < 0.01 {
+		return false
+	}
+	t := easeOut(state.SlideT)
+	screenH := float32(game.ScreenHeight)
+	panelX := wpMarginL - wpPanelW + float32(t)*wpPanelW
+	panelY := screenH - wpHandleH - wpMarginB // 简化：用 handle 高度近似
+	return px >= panelX && px <= panelX+wpPanelW && py >= panelY && py <= screenH
 }
