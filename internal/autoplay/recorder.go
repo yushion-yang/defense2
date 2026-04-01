@@ -46,6 +46,23 @@ type PaceStat struct {
 	Verdict          string  `json:"verdict"`            // "too_boring" / "ok" / "too_intense"
 }
 
+// ExperienceStat 体验指标（对应手动测试 §八"感觉"测试）。
+type ExperienceStat struct {
+	EarlyLeakWave     int      `json:"early_leak_wave"`      // 首次泄漏波次（0=从未泄漏）
+	EarlyLeakCount    int      `json:"early_leak_count"`     // 前 3 波泄漏总数
+	LateZeroLeakWaves int      `json:"late_zero_leak_waves"` // 最后 3 波连续 0 泄漏的波数
+	SpecialEnemyImpact []SpecialImpact `json:"special_enemy_impact,omitempty"` // 特殊怪影响力
+	DifficultyVerdict string   `json:"difficulty_verdict"`   // too_easy / ok / too_hard / crushing
+}
+
+// SpecialImpact 特殊敌人的影响力度量。
+type SpecialImpact struct {
+	Archetype     string  `json:"archetype"`
+	AvgSurvival   float64 `json:"avg_survival_ticks"` // 平均存活 tick
+	NormalAvg     float64 `json:"normal_avg_ticks"`   // 同期 normal 的平均存活 tick
+	ImpactRatio   float64 `json:"impact_ratio"`       // 存活比（>1.5 有影响, <1.1 形同虚设）
+}
+
 // CoverageData 覆盖率追踪数据。
 type CoverageData struct {
 	TowersUsed          []string `json:"towers_used"`
@@ -78,9 +95,10 @@ type SessionRecord struct {
 	DPSSnapshots  []float64    `json:"dps_snapshots,omitempty"`
 
 	// 节奏与平衡指标
-	BossStats     []BossStat  `json:"boss_stats,omitempty"`      // Boss 存活时间统计
-	PaceStats     *PaceStat   `json:"pace_stats,omitempty"`      // 节奏指标
-	EconomyAlerts []string    `json:"economy_alerts,omitempty"`  // 经济断档事件
+	BossStats       []BossStat     `json:"boss_stats,omitempty"`
+	PaceStats       *PaceStat      `json:"pace_stats,omitempty"`
+	EconomyAlerts   []string       `json:"economy_alerts,omitempty"`
+	ExperienceStats *ExperienceStat `json:"experience_stats,omitempty"` // 体验指标
 
 	// 遥测覆盖
 	PipelineSteps      []string `json:"pipeline_steps,omitempty"`
@@ -138,6 +156,13 @@ type Recorder struct {
 	econStallTicks int      // 连续"买不起最便宜塔"的帧数
 	econAlerts     []string // 断档事件描述
 	minTowerCost   int      // 最便宜的塔价格（首帧缓存）
+
+	// 体验指标追踪
+	firstLeakWave  int            // 首次泄漏波次
+	earlyLeaks     int            // 前 3 波泄漏数
+	perWaveLeaks   map[int]int    // wave → 泄漏数
+	enemySurvival  map[string][]int // archetype → 存活 tick 列表
+	enemySpawnTick map[int]int    // enemyID → spawn tick
 }
 
 // NewRecorder 创建对局数据记录器。
@@ -154,6 +179,9 @@ func NewRecorder(sessionID, strategy, mapID, difficulty, warden string) *Recorde
 		abilitiesSeen:    make(map[string]bool),
 		attackStylesSeen: make(map[string]bool),
 		activeBosses:     make(map[int]BossStat),
+		perWaveLeaks:     make(map[int]int),
+		enemySurvival:    make(map[string][]int),
+		enemySpawnTick:   make(map[int]int),
 	}
 }
 
@@ -179,7 +207,48 @@ func (r *Recorder) OnTick(state *GameState, gameDT float64) {
 
 	// 追踪击杀（通过 lives 变化推断泄漏）
 	if r.prevLives > 0 && state.Lives < r.prevLives {
-		r.waveLeaked += r.prevLives - state.Lives
+		leaked := r.prevLives - state.Lives
+		r.waveLeaked += leaked
+		// 体验指标：泄漏追踪
+		r.perWaveLeaks[state.Wave] += leaked
+		if r.firstLeakWave == 0 {
+			r.firstLeakWave = state.Wave
+		}
+		if state.Wave <= 3 {
+			r.earlyLeaks += leaked
+		}
+	}
+
+	// 体验指标：敌人存活追踪
+	for _, e := range state.Enemies {
+		if !e.Active {
+			continue
+		}
+		if _, tracked := r.enemySpawnTick[e.ID]; !tracked {
+			r.enemySpawnTick[e.ID] = state.Tick
+		}
+	}
+	// 检测消失的敌人 → 记录存活时长
+	activeIDs := make(map[int]bool)
+	for _, e := range state.Enemies {
+		if e.Active {
+			activeIDs[e.ID] = true
+		}
+	}
+	for id, spawnTick := range r.enemySpawnTick {
+		if !activeIDs[id] {
+			survived := state.Tick - spawnTick
+			// 找回原型（从最近帧的 enemies 列表中）
+			arch := "normal"
+			for _, e := range state.Enemies {
+				if e.ID == id {
+					arch = e.Archetype
+					break
+				}
+			}
+			r.enemySurvival[arch] = append(r.enemySurvival[arch], survived)
+			delete(r.enemySpawnTick, id)
+		}
 	}
 
 	// ── Boss 存活追踪 ──
@@ -404,6 +473,54 @@ func (r *Recorder) Finalize(state *GameState, anomalies []Anomaly, screenshots [
 		rec.EconomyAlerts = r.econAlerts
 	}
 
+	// 体验指标
+	exp := &ExperienceStat{
+		EarlyLeakWave:  r.firstLeakWave,
+		EarlyLeakCount: r.earlyLeaks,
+	}
+	// 最后 3 波 0 泄漏检测
+	if state.Wave >= 3 {
+		zeroCount := 0
+		for w := state.Wave; w > state.Wave-3 && w > 0; w-- {
+			if r.perWaveLeaks[w] == 0 {
+				zeroCount++
+			}
+		}
+		exp.LateZeroLeakWaves = zeroCount
+	}
+	// 特殊怪影响力
+	normalAvg := avgTicks(r.enemySurvival["normal"])
+	specials := []string{"runner", "tank", "armored", "stealth", "splitter", "teleporter", "healer", "buffer", "flying", "swarm"}
+	for _, arch := range specials {
+		ticks := r.enemySurvival[arch]
+		if len(ticks) == 0 {
+			continue
+		}
+		avg := avgTicks(ticks)
+		ratio := 0.0
+		if normalAvg > 0 {
+			ratio = avg / normalAvg
+		}
+		exp.SpecialEnemyImpact = append(exp.SpecialEnemyImpact, SpecialImpact{
+			Archetype:   arch,
+			AvgSurvival: avg,
+			NormalAvg:   normalAvg,
+			ImpactRatio: ratio,
+		})
+	}
+	// 难度判定
+	switch {
+	case state.Lives == state.MaxWaves && r.firstLeakWave == 0:
+		exp.DifficultyVerdict = "too_easy" // 全程无泄漏
+	case r.earlyLeaks > 3:
+		exp.DifficultyVerdict = "crushing" // 前 3 波就漏 3+
+	case r.firstLeakWave > 0 && r.firstLeakWave <= 3:
+		exp.DifficultyVerdict = "too_hard" // 前 3 波就开始漏
+	default:
+		exp.DifficultyVerdict = "ok"
+	}
+	rec.ExperienceStats = exp
+
 	// 遥测数据
 	tel := state.Telemetry
 	rec.PipelineSteps = telemetry.Keys(tel.PipelineSteps)
@@ -432,6 +549,17 @@ func WriteJSON(record *SessionRecord, dir string) error {
 		return fmt.Errorf("write %s: %w", path, err)
 	}
 	return nil
+}
+
+func avgTicks(ticks []int) float64 {
+	if len(ticks) == 0 {
+		return 0
+	}
+	sum := 0
+	for _, t := range ticks {
+		sum += t
+	}
+	return float64(sum) / float64(len(ticks))
 }
 
 func mapKeys(m map[string]bool) []string {
