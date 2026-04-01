@@ -2158,8 +2158,7 @@ func (s *StageScene) onWaveTransition(prevWave int) {
 	if prevWave > 0 {
 		ctx := s.buildModeCtx()
 		result := s.session.OnWaveCleared(prevWave, ctx)
-		interest := s.econ.InterestGold(s.gold)
-		totalBonus := result.BonusGold + result.PerfectBonus + interest
+		totalBonus := result.BonusGold + result.PerfectBonus
 		s.gold += totalBonus
 		s.gameStats.GoldEarned += totalBonus
 		perfect := s.lives == s.waveLivesSnapshot && result.PerfectBonus > 0
@@ -2167,11 +2166,7 @@ func (s *StageScene) onWaveTransition(prevWave int) {
 			render.SpawnText(float64(game.ScreenWidth)/2, float64(game.ScreenHeight)/2-50,
 				"完美!", color.RGBA{255, 215, 0, 255}, 20, 2.0)
 		}
-		msg := result.Message
-		if interest > 0 {
-			msg += fmt.Sprintf(" +$%d 利息", interest)
-		}
-		s.showNotify(msg)
+		s.showNotify(result.Message)
 
 		s.bus.Emit(event.EvtWaveCleared, event.WaveClearedPayload{
 			Wave: prevWave, Perfect: perfect,

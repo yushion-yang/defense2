@@ -63,41 +63,15 @@ func ApplySlow(e *enemy.Enemy, factor, duration float64, source string) bool {
 	return true
 }
 
-// ApplyRoot 对敌人施加定身效果。
-// 检查免疫状态，应用韧性减免后设置定身计时器。
-// 返回 true 表示成功施加。
-func ApplyRoot(e *enemy.Enemy, duration float64, source string) bool {
-	// 控制免疫检查
-	if e.IsControlImmune || e.IsRootImmune {
-		return false
-	}
-
-	// 韧性减免
-	actualDuration := duration * (1 - e.Tenacity)
-	if actualDuration <= 0 {
-		return false
-	}
-
-	// 取较长的定身时间
-	if actualDuration > e.RootTimer {
-		e.RootTimer = actualDuration
-	}
-	tel.T.Record("cc", "root")
-	return true
-}
-
 // ApplyControlImmunity 给予敌人一段时间的控制免疫。
-// 设置控制免疫标记以及眩晕、减速、定身的独立免疫标记。
 func ApplyControlImmunity(e *enemy.Enemy, duration float64) {
 	e.IsControlImmune = true
 	e.IsStunImmune = true
 	e.IsSlowImmune = true
-	e.IsRootImmune = true
 
 	// 清除当前正在生效的控制效果
 	e.StunTimer = 0
 	e.SlowTimer = 0
 	e.SlowFactor = 1
 	e.Speed = e.BaseSpeed
-	e.RootTimer = 0
 }

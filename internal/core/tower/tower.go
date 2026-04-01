@@ -20,6 +20,7 @@ const (
 	StyleScatter    AttackStyle = "scatter"    // 锥形散射
 	StyleSpinAoE    AttackStyle = "spin_aoe"   // 旋转范围伤害
 	StyleRadial     AttackStyle = "radial"     // 360度环射穿刺弹
+	StylePierce     AttackStyle = "pierce"    // 直线穿透弹
 
 	// 废弃：保留常量供旧配置兼容，运行时映射到 projectile
 	StyleLaser  AttackStyle = "laser"  // 废弃 → 高弹速 projectile

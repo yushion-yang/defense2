@@ -88,16 +88,6 @@ func InitBuffTemplates() {
 			Category:     "defense",
 			DamageReduce: 0.3, // 减伤 30%
 		},
-		"empBurst": {
-			ID:          "empBurst",
-			Description: "电磁脉冲爆发，干扰塔攻击",
-			Category:    "offense",
-		},
-		"blink": {
-			ID:          "blink",
-			Description: "短距离闪现前进",
-			Category:    "utility",
-		},
 		"deathSplit": {
 			ID:              "deathSplit",
 			Description:     "死亡时分裂为多个小单位",
@@ -118,11 +108,6 @@ func InitBuffTemplates() {
 			Category:       "defense",
 			ReflectPercent: 0.15, // 反伤 15%
 		},
-		"timewarp": {
-			ID:          "timewarp",
-			Description: "时间扭曲，局部加速",
-			Category:    "utility",
-		},
 		"revive": {
 			ID:              "revive",
 			Description:     "死亡后复活一次",
@@ -140,6 +125,18 @@ func InitBuffTemplates() {
 }
 
 // GetBuffTemplate 获取指定 ID 的 buff 模板（未找到返回 nil）。
+// GetBuffTemplates 返回所有 buff 模板的只读副本（契约测试用）。
+func GetBuffTemplates() map[string]BuffTemplate {
+	if templates == nil {
+		InitBuffTemplates()
+	}
+	cp := make(map[string]BuffTemplate, len(templates))
+	for k, v := range templates {
+		cp[k] = v
+	}
+	return cp
+}
+
 func GetBuffTemplate(id string) *BuffTemplate {
 	if templates == nil {
 		InitBuffTemplates()

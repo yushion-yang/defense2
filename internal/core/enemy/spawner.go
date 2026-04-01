@@ -128,8 +128,8 @@ func (s *Spawner) Update(pool *Pool, dt float64) {
 			if spdScale <= 0 {
 				spdScale = 1.0
 			}
-			baseHP := (10.0 + float64(s.Wave)*5) * hpScale
-			baseSpeed := (50.0 + float64(s.Wave)*3) * spdScale
+			baseHP := (52.0 + float64(s.Wave)*21) * hpScale
+			baseSpeed := (58.0 + float64(s.Wave)*5) * spdScale
 
 			var archetype string
 			var cfg *SpawnConfig
@@ -285,6 +285,15 @@ func (s *Spawner) enemyCount() int {
 		return s.FixedCount
 	}
 	return s.EnemiesPerWave + s.Wave
+}
+
+// EnemyCountForWave 返回指定波次的敌人数量（契约测试用）。
+func (s *Spawner) EnemyCountForWave(wave int) int {
+	saved := s.Wave
+	s.Wave = wave
+	count := s.enemyCount()
+	s.Wave = saved
+	return count
 }
 
 // IsClear 判断是否所有波次出完且场上无存活敌人。

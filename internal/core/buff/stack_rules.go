@@ -36,7 +36,6 @@ var DefaultStackRules = map[string]StackRule{
 	"slow":    {Mode: ModeStrongest, Cap: 0.8}, // 最多减速80%（速度不低于20%）
 	"stun":    {Mode: ModeOverride},
 	"knockup": {Mode: ModeOverride},
-	"root":    {Mode: ModeOverride},
 	"silence": {Mode: ModeOverride},
 	"disarm":  {Mode: ModeOverride},
 
@@ -52,7 +51,6 @@ var DefaultStackRules = map[string]StackRule{
 	"controlImmune": {Mode: ModeOverride, Priority: 80},
 	"slowImmune":    {Mode: ModeOverride, Priority: 70},
 	"stunImmune":    {Mode: ModeOverride, Priority: 70},
-	"rootImmune":    {Mode: ModeOverride, Priority: 70},
 	"untargetable":  {Mode: ModeOverride, Priority: 100},
 
 	// 独立类

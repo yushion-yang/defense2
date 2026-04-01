@@ -232,7 +232,7 @@ func (b *Builder) Build() *Sim {
 			e.BleedTimer = eff.duration
 			e.BleedDPS = eff.dps
 		case "root":
-			combat.ApplyRoot(e, eff.duration, "test")
+			e.RootTimer = eff.duration // root 已移除，仅设 timer 兼容旧测试
 		}
 	}
 

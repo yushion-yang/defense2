@@ -72,7 +72,9 @@ tx, ty := draw.TouchPos(touchID)     // 返回逻辑坐标，不要用 ebiten.To
 
 ## 最高优先级规则（违反即事故）
 
-**禁止在 worktree 中操作主仓库工作区。** 在 worktree 工作时，不得对主仓库执行 `git -C 主仓库 merge/stash/checkout/reset` 等任何修改工作区的命令。主仓库可能有大量未 commit 的工作文件（文档、截图、配置），`git stash` 会静默丢失无法干净恢复的文件。合入主干必须由用户在主仓库中手动执行，或等用户明确确认后再操作。曾因 worktree 合入时 stash push→merge→stash pop 丢失 700+ 个文件（review-guides/、visual_review、截图）。
+1. **禁止在 worktree 中操作主仓库工作区。** 在 worktree 工作时，不得对主仓库执行 `git -C 主仓库 merge/stash/checkout/reset` 等任何修改工作区的命令。主仓库可能有大量未 commit 的工作文件（文档、截图、配置），`git stash` 会静默丢失无法干净恢复的文件。合入主干必须由用户在主仓库中手动执行，或等用户明确确认后再操作。曾因 worktree 合入时 stash push→merge→stash pop 丢失 700+ 个文件（review-guides/、visual_review、截图）。
+
+2. **会话结束前 commit 所有变更。** 新建或修改了文件就 `git add` + `git commit`，commit message 根据实际内容写。worktree 是隔离分支，commit 零风险；未 commit 的文件在后续操作中可能丢失。
 
 ## Conventions
 
