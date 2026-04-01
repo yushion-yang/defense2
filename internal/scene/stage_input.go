@@ -53,6 +53,7 @@ func (s *StageScene) handleInput() {
 				s.inventory.Use(s.dragItemKind)
 				hud.ShowToast(item.Defs[s.dragItemKind].Name + " → " + target.Label)
 				s.audioMgr.PlaySafe(gameAudio.SFXUIClick)
+				s.tutorial.Trigger("item_use")
 			}
 			s.dragItemActive = false
 			s.dragHoverTower = nil
@@ -247,6 +248,11 @@ func (s *StageScene) handleInput() {
 	ftx, fty := float32(tapX), float32(tapY)
 	wtx, wty := s.screenToWorld(tapX, tapY)
 
+	// 教程点击推进（无事件要求的步骤可任意点击推进）
+	if s.tutorial.ClickAdvance() {
+		return
+	}
+
 	// 调试面板点击（优先级最高）
 	if s.testMode && s.debugPanelOpen {
 		actions := s.debugActions()
@@ -341,6 +347,7 @@ func (s *StageScene) handleInput() {
 			s.selectedTower = nil
 			s.wardenPanelOpen = false
 			s.itemPanelOpen = false
+			s.tutorial.Trigger("build")
 		}
 		return
 	case "items":
@@ -366,6 +373,7 @@ func (s *StageScene) handleInput() {
 		if clicked != nil {
 			s.selectedTower = clicked
 			s.imode = modeTowerSel
+			s.tutorial.Trigger("tower_select")
 		} else if s.wardenPanelOpen {
 			s.wardenPanelOpen = false
 		}
@@ -459,6 +467,9 @@ func (s *StageScene) handlePausedInput() {
 		case hud.PauseResume:
 			s.audioMgr.PlaySafe(gameAudio.SFXUIClick)
 			s.imode = s.prePauseMode
+		case hud.PauseSettings:
+			s.audioMgr.PlaySafe(gameAudio.SFXUIClick)
+			s.switcher.SwitchScene(NewSettingsScene(s.switcher, s))
 		case hud.PauseRestart:
 			s.audioMgr.PlaySafe(gameAudio.SFXUIClick)
 			s.switcher.SwitchScene(NewStageSceneWithOpts(s.switcher, s.initOpts))

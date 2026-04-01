@@ -352,6 +352,7 @@ func (s *StageScene) subscribeBus() {
 	})
 	event.OnTyped(bus, event.EvtTowerUpgraded, func(_ event.TowerUpgradedPayload) {
 		s.audioMgr.PlaySafeAt(gameAudio.SFXUpgrade, gameAudio.VolBuild)
+		s.tutorial.Trigger("upgrade")
 	})
 	event.OnTyped(bus, event.EvtTowerSold, func(_ event.TowerSoldPayload) {
 		s.audioMgr.PlaySafeAt(gameAudio.SFXTowerSell, gameAudio.VolBuild)
@@ -488,7 +489,6 @@ func (s *StageScene) Update() error {
 	if !s.busSubscribed {
 		s.busSubscribed = true
 		s.subscribeBus()
-		s.tutorial.OnEvent("gameStart")
 		// BGM: 进入战斗场景播放战斗音乐
 		s.audioMgr.PlayBGM(gameAudio.BGMBattle)
 	}
@@ -561,6 +561,12 @@ func (s *StageScene) Update() error {
 
 	// Toast 通知更新
 	hud.UpdateToast(dt)
+
+	// 教程自动推进计时器
+	s.tutorial.Update(dt)
+	if s.tutorial.Done {
+		s.progressMgr.SetTutorialDone()
+	}
 
 	// 自适应画质：根据帧耗时动态调整画质等级
 	totalMs := s.perfTracker.AvgUpdateMs + s.perfTracker.AvgDrawMs
@@ -1542,11 +1548,15 @@ func (s *StageScene) drawScene(screen *ebiten.Image) {
 		hud.DrawToggleButton(screen, false, s.wardenPanelOpen, "⚡")
 	}
 
-	// 教程提示（顶部居中）
-	if msg := s.tutorial.CurrentMessage(); msg != "" {
-		if fm := render.GlobalFont(); fm != nil {
-			fm.DrawCenteredText(screen, msg, float64(game.ScreenWidth)/2, 50, theme.FontH2, theme.TextBody)
-		}
+	// 教程覆盖层
+	if step := s.tutorial.CurrentStep(); step != nil {
+		hud.DrawTutorialOverlay(screen, hud.TutorialVM{
+			Visible:        true,
+			Message:        step.Message,
+			Step:           s.tutorial.StepIndex() + 1,
+			Total:          s.tutorial.StepCount(),
+			ClickToAdvance: step.Event == "",
+		})
 	}
 
 	// 调试面板（测试模式）
