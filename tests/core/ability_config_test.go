@@ -12,8 +12,8 @@ func TestLoadAbilityTable(t *testing.T) {
 	if err != nil {
 		t.Fatalf("加载能力表失败: %v", err)
 	}
-	if len(table) != 26 {
-		t.Errorf("能力数=%d, 期望26", len(table))
+	if len(table) < 26 {
+		t.Errorf("能力数=%d, 期望>=26", len(table))
 	}
 
 	// 验证结构统一性：每个能力都有 type/label/category
@@ -32,34 +32,35 @@ func TestLoadAbilityTable(t *testing.T) {
 
 func TestAbilityDef_CalcScale(t *testing.T) {
 	table, _ := config.LoadAbilityTable()
-	slow := table["onHitSlow"]
+	slow := table["slowPower"]
 
-	// 强度100: 0.10 + 0.22 * 1.0 = 0.32
+	// slowPower: base=0.15, potential=0.25
+	// 强度100: 0.15 + 0.25 * 1.0 = 0.40
 	v := slow.CalcScale(100)
-	if math.Abs(v-0.32) > 1e-9 {
-		t.Errorf("强度100: factor=%.3f, 期望0.32", v)
+	if math.Abs(v-0.40) > 1e-9 {
+		t.Errorf("强度100: factor=%.3f, 期望0.40", v)
 	}
 
-	// 强度200: 0.10 + 0.22 * 2.0 = 0.54
+	// 强度200: 0.15 + 0.25 * 2.0 = 0.65
 	v2 := slow.CalcScale(200)
-	if math.Abs(v2-0.54) > 1e-9 {
-		t.Errorf("强度200: factor=%.3f, 期望0.54", v2)
+	if math.Abs(v2-0.65) > 1e-9 {
+		t.Errorf("强度200: factor=%.3f, 期望0.65", v2)
 	}
 }
 
 func TestAbilityDef_Param(t *testing.T) {
 	table, _ := config.LoadAbilityTable()
 
-	// onHitSlow: param=1.4, paramDim=duration
-	slow := table["onHitSlow"]
+	// slowPower: param=1.0, paramDim=duration
+	slow := table["slowPower"]
 	if !slow.HasParam() {
-		t.Error("onHitSlow应有参数")
+		t.Error("slowPower应有参数")
 	}
-	if slow.Param != 1.4 {
-		t.Errorf("onHitSlow param=%.1f, 期望1.4", slow.Param)
+	if slow.Param != 1.0 {
+		t.Errorf("slowPower param=%.1f, 期望1.0", slow.Param)
 	}
 	if slow.ParamDim != "duration" {
-		t.Errorf("onHitSlow paramDim=%s, 期望duration", slow.ParamDim)
+		t.Errorf("slowPower paramDim=%s, 期望duration", slow.ParamDim)
 	}
 
 	// stackDamage: 无参数

@@ -45,10 +45,11 @@ var tierLabels = map[string]string{
 
 // 选项卡片布局常量。
 const (
-	cpCardW   = float32(180) // 卡片宽度
-	cpCardH   = float32(140) // 卡片高度
+	cpCardW   = float32(220) // 卡片宽度
+	cpCardH   = float32(160) // 卡片高度
 	cpCardGap = float32(16)  // 卡片间距
 	cpCardR   = float32(10)  // 卡片圆角
+	cpCardPad = float32(10)  // 卡片内边距
 )
 
 // NewChoicePanel 创建通用选择面板。
@@ -158,10 +159,11 @@ func (p *ChoicePanel) Draw(screen *ebiten.Image) {
 		fm.DrawCenteredBoldText(screen, opt.Label,
 			float64(cx)+float64(cpCardW)/2, labelY, theme.FontLG, theme.TextTitle)
 
-		// 描述（卡片下部）
+		// 描述（卡片下部，自动换行）
 		descY := float64(cy) + 72
-		fm.DrawCenteredText(screen, opt.Description,
-			float64(cx)+float64(cpCardW)/2, descY, theme.FontSM, theme.TextBody)
+		maxW := float64(cpCardW - cpCardPad*2)
+		drawWrappedText(screen, fm, opt.Description,
+			float64(cx)+float64(cpCardPad), descY, maxW, theme.FontXS, theme.TextBody)
 	}
 }
 
@@ -188,4 +190,28 @@ func tierColor(tier string) color.RGBA {
 		return clr
 	}
 	return tierColors["normal"]
+}
+
+// drawWrappedText 在指定宽度内自动换行绘制文本。
+// 逐字符测量宽度，超出 maxW 时换行。中文不需要空格分词。
+func drawWrappedText(screen *ebiten.Image, fm *render.FontManager, s string, x, y, maxW, fontSize float64, clr color.Color) {
+	lineH := fontSize + 3
+	runes := []rune(s)
+	lineStart := 0
+	curY := y
+	for i := 0; i <= len(runes); i++ {
+		seg := string(runes[lineStart:i])
+		w := fm.MeasureText(seg, fontSize)
+		if w > maxW || i == len(runes) {
+			// 超宽时回退一个字符作为断行点（除非只有一个字符）
+			end := i
+			if w > maxW && i > lineStart+1 {
+				end = i - 1
+			}
+			line := string(runes[lineStart:end])
+			fm.DrawText(screen, line, x, curY, fontSize, clr)
+			curY += lineH
+			lineStart = end
+		}
+	}
 }

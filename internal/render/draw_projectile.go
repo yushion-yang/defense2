@@ -43,8 +43,8 @@ func DrawProjectiles(screen *ebiten.Image, pool *projectile.Pool) {
 			draw.Glow(screen, cx, cy, 8, 16, color.RGBA{R: 255, G: 80, B: 60, A: 220})
 			draw.FilledCircle(screen, cx, cy, 4, color.RGBA{R: 255, G: 255, B: 255, A: 200})
 
-		case p.Pierce:
-			// 穿刺弹：紫色拉长椭圆
+		case p.Penetrate:
+			// 穿透弹：紫色拉长椭圆
 			draw.Glow(screen, cx, cy, 5, 12, color.RGBA{R: 180, G: 100, B: 255, A: 200})
 			draw.FilledCircle(screen, cx, cy, 3, color.RGBA{R: 220, G: 180, B: 255, A: 230})
 

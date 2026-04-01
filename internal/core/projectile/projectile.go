@@ -31,11 +31,8 @@ type Projectile struct {
 	TrailCursor    int                  // 下一个写入位置
 
 	// 攻击方式扩展标志
-	Pierce       bool    // 穿刺弹
-	PierceMax    int     // 最大穿透数
-	PierceCount  int     // 已穿透数
-	PierceDecay  float64 // 伤害衰减
-	PierceHitIDs []int   // 已命中敌人 ID（避免重复）
+	Penetrate  bool  // 直线穿透弹（穿过所有敌人，不追踪）
+	PenHitIDs  []int // 穿透已命中敌人 ID（避免重复伤害）
 
 	ScatterVisual bool    // 散射视觉弹（旧版，不造成伤害）
 	ScatterGroup  int     // 散射组 ID（>0 时为散射弹，同组命中同敌人合并伤害）

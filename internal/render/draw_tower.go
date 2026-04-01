@@ -184,26 +184,20 @@ func (tr *TowerRenderer) DrawTowers(screen *ebiten.Image, pool *tower.Pool, sele
 			}
 		}
 
-		// --- Spin AoE visual: rotating blade arcs + inner zone highlight ---
+		// --- Spin AoE visual: rotating blade arcs (no fill) ---
 		if !t.Selling && t.BuildAnim <= 0 && t.AttackStyleID == tower.StyleSpinAoE && t.SpinActive > 0 {
 			a := t.SpinActive / 0.3
 			if a > 1 {
 				a = 1
 			}
 			outerR := float32(t.Range)
-			innerR := float32(t.Range * 0.5) // spin_aoe 内圈半径比例
 
 			// 4 条旋转弧线
 			for i := 0; i < 4; i++ {
 				ang := t.SpinAngle + float64(i)*math.Pi/2
-				arcR := outerR
-				clr := color.RGBA{R: 163, G: 230, B: 53, A: uint8(100 * a)}
-				draw.Arc(screen, cx, cy, arcR, float32(ang-0.3), float32(ang+0.3), 3, clr)
+				clr := color.RGBA{R: 163, G: 230, B: 53, A: uint8(80 * a)}
+				draw.Arc(screen, cx, cy, outerR, float32(ang-0.3), float32(ang+0.3), 2, clr)
 			}
-
-			// 内圈半透明填充
-			innerClr := color.RGBA{R: 134, G: 239, B: 172, A: uint8(20 * a)}
-			draw.FilledCircle(screen, cx, cy, innerR, innerClr)
 		}
 
 		// --- Strength-based visual tiers (glow / rings) ---

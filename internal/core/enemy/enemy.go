@@ -146,6 +146,10 @@ func TickStatusEffects(e *Enemy, dt float64) {
 	// DoT（流血/灼烧/区域伤害）按固定周期触发
 	hasDot := e.BleedTimer > 0 || e.BurnTimer > 0 || e.ZoneDmgAccum > 0
 	if hasDot {
+		// 首次施加 DOT 时初始化计时器，不立即触发（保证 3s/0.5s = 6 次）
+		if e.DotTickTimer <= 0 {
+			e.DotTickTimer = DotTickInterval
+		}
 		e.DotTickTimer -= dt
 		if e.DotTickTimer <= 0 {
 			e.DotTickTimer += DotTickInterval

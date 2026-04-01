@@ -246,8 +246,8 @@ func (p *Pool) FireScatter(sx, sy, angle, maxRange, speed float64, towerKey stri
 	p.cursor = (p.cursor + 1) % len(p.projectiles)
 }
 
-// FirePierce 发射一颗穿刺弹。
-func (p *Pool) FirePierce(sx, sy, tx, ty, damage, speed float64, target *enemy.Enemy, towerKey string, maxPierce int, decay float64) {
+// FirePenetrate 发射一颗直线穿透弹（穿过所有敌人，不追踪，不衰减）。
+func (p *Pool) FirePenetrate(sx, sy, tx, ty, damage, speed float64, towerKey string) {
 	proj := &p.projectiles[p.cursor]
 	if proj.Active {
 		p.Count--
@@ -269,13 +269,14 @@ func (p *Pool) FirePierce(sx, sy, tx, ty, damage, speed float64, target *enemy.E
 	proj.Speed = speed
 	proj.Radius = 4
 	proj.Active = true
-	proj.MaxLife = 3.0
+	proj.MaxLife = dist / speed * 1.1 // 飞到终点后稍微多一点余量
 	proj.Life = proj.MaxLife
-	proj.Target = target
+	proj.Target = nil // 直线飞行，不追踪
 	proj.SourceTowerKey = towerKey
-	proj.Pierce = true
-	proj.PierceMax = maxPierce
-	proj.PierceDecay = decay
+	proj.Penetrate = true
+	proj.StartX = sx
+	proj.StartY = sy
+	proj.MaxRange = dist
 
 	p.Count++
 	p.cursor = (p.cursor + 1) % len(p.projectiles)

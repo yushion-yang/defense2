@@ -113,10 +113,10 @@ func BuildInfoPanelVM(t *tower.Tower, sellValue int, wavesCleared int) hud.InfoP
 
 // strengthColor returns the color for the strength display value.
 func strengthColor(effStr float64) color.Color {
-	if effStr > 100 {
+	if effStr > 100.5 {
 		return theme.StatusStrUp
 	}
-	if effStr < 100 {
+	if effStr < 99.5 {
 		return theme.StatusStrDown
 	}
 	return theme.StatusStrNorm
@@ -204,7 +204,7 @@ func attackStyleLabel(style string) string {
 
 // scaledColor returns the color based on comparison of scaled value vs potential.
 func scaledColor(scaled, potential float64) color.Color {
-	const eps = 0.001
+	const eps = 0.01
 	diff := scaled - potential
 	if diff > eps {
 		return theme.StatusStrUp
@@ -363,27 +363,40 @@ func buildAbilitySegments(def *config.AbilityDef, effStr float64) []hud.AbilityS
 
 		switch ph {
 		case "s%":
-			segs = append(segs,
-				hud.AbilitySegment{Text: fmt.Sprintf("%.0f%%+", def.Base*100), Kind: "base"},
-				hud.AbilitySegment{Text: fmt.Sprintf("(%.0f%%)", scaled*100), Kind: "scaled", Color: sClr},
-				hud.AbilitySegment{Text: fmt.Sprintf("=%.0f%%", total*100), Kind: "total"},
-			)
+			if def.Base == 0 {
+				// base=0 时只显示缩放值
+				segs = append(segs, hud.AbilitySegment{Text: fmt.Sprintf("%.0f%%", scaled*100), Kind: "scaled", Color: sClr})
+			} else {
+				segs = append(segs,
+					hud.AbilitySegment{Text: fmt.Sprintf("%.0f%%+", def.Base*100), Kind: "base"},
+					hud.AbilitySegment{Text: fmt.Sprintf("(%.0f%%)", scaled*100), Kind: "scaled", Color: sClr},
+					hud.AbilitySegment{Text: fmt.Sprintf("=%.0f%%", total*100), Kind: "total"},
+				)
+			}
 		case "s":
 			nf := "%.0f"
 			if needsDecimal(def.Base) || needsDecimal(scaled) || needsDecimal(total) {
 				nf = "%.1f"
 			}
-			segs = append(segs,
-				hud.AbilitySegment{Text: fmt.Sprintf(nf+"+", def.Base), Kind: "base"},
-				hud.AbilitySegment{Text: fmt.Sprintf("("+nf+")", scaled), Kind: "scaled", Color: sClr},
-				hud.AbilitySegment{Text: fmt.Sprintf("="+nf, total), Kind: "total"},
-			)
+			if def.Base == 0 {
+				segs = append(segs, hud.AbilitySegment{Text: fmt.Sprintf(nf, scaled), Kind: "scaled", Color: sClr})
+			} else {
+				segs = append(segs,
+					hud.AbilitySegment{Text: fmt.Sprintf(nf+"+", def.Base), Kind: "base"},
+					hud.AbilitySegment{Text: fmt.Sprintf("("+nf+")", scaled), Kind: "scaled", Color: sClr},
+					hud.AbilitySegment{Text: fmt.Sprintf("="+nf, total), Kind: "total"},
+				)
+			}
 		case "si":
-			segs = append(segs,
-				hud.AbilitySegment{Text: fmt.Sprintf("%.0f+", math.Floor(def.Base)), Kind: "base"},
-				hud.AbilitySegment{Text: fmt.Sprintf("(%.0f)", math.Floor(scaled)), Kind: "scaled", Color: sClr},
-				hud.AbilitySegment{Text: fmt.Sprintf("=%.0f", math.Floor(total)), Kind: "total"},
-			)
+			if def.Base == 0 {
+				segs = append(segs, hud.AbilitySegment{Text: fmt.Sprintf("%.0f", math.Floor(scaled)), Kind: "scaled", Color: sClr})
+			} else {
+				segs = append(segs,
+					hud.AbilitySegment{Text: fmt.Sprintf("%.0f+", math.Floor(def.Base)), Kind: "base"},
+					hud.AbilitySegment{Text: fmt.Sprintf("(%.0f)", math.Floor(scaled)), Kind: "scaled", Color: sClr},
+					hud.AbilitySegment{Text: fmt.Sprintf("=%.0f", math.Floor(total)), Kind: "total"},
+				)
+			}
 		case "p":
 			segs = append(segs, hud.AbilitySegment{Text: fmtNum(def.Param), Kind: "text"})
 		case "p%":

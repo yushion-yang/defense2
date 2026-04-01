@@ -117,8 +117,8 @@ func TickProjectileHits(projectiles *projectile.Pool, enemies *enemy.Pool, tower
 				return
 			}
 
-			// 追踪弹只和锁定目标碰撞（穿刺弹和散射弹除外）
-			if p.Target != nil && !p.Pierce && p.ScatterGroup == 0 && e != p.Target {
+			// 追踪弹只和锁定目标碰撞（穿透弹和散射弹除外）
+			if p.Target != nil && !p.Penetrate && p.ScatterGroup == 0 && e != p.Target {
 				return
 			}
 
@@ -129,24 +129,18 @@ func TickProjectileHits(projectiles *projectile.Pool, enemies *enemy.Pool, tower
 				return
 			}
 
-			// 穿刺弹：跳过已命中的敌人
-			if p.Pierce {
-				for _, hitID := range p.PierceHitIDs {
+			// 穿透弹/散射弹：跳过已命中的敌人
+			if p.Penetrate || p.ScatterGroup > 0 {
+				for _, hitID := range p.PenHitIDs {
 					if hitID == e.ID {
 						return
 					}
 				}
 			}
 
-			// ── 散射弹（穿透）：跳过已命中敌人，记录命中，延迟合并处理 ──
+			// ── 散射弹（穿透）：记录命中，延迟合并处理 ──
 			if p.ScatterGroup > 0 {
-				// 穿透：跳过已命中的敌人
-				for _, hitID := range p.PierceHitIDs {
-					if hitID == e.ID {
-						return
-					}
-				}
-				p.PierceHitIDs = append(p.PierceHitIDs, e.ID)
+				p.PenHitIDs = append(p.PenHitIDs, e.ID)
 
 				key := int64(p.ScatterGroup)<<32 | int64(e.ID)
 				if sh, ok := scatterHits[key]; ok {
@@ -163,7 +157,7 @@ func TickProjectileHits(projectiles *projectile.Pool, enemies *enemy.Pool, tower
 				return
 			}
 
-			// ── 普通弹/追踪弹/穿刺弹：统一命中处理 ──
+			// ── 普通弹/追踪弹/穿透弹：统一命中处理 ──
 			var srcTower *tower.Tower
 			if p.SourceTowerKey != "" {
 				towers.Each(func(t *tower.Tower) {
@@ -186,15 +180,9 @@ func TickProjectileHits(projectiles *projectile.Pool, enemies *enemy.Pool, tower
 				kills += 1 + out.ExtraKills
 			}
 
-			if p.Pierce {
-				p.PierceHitIDs = append(p.PierceHitIDs, e.ID)
-				p.PierceCount++
-				p.Damage *= p.PierceDecay
-				if p.PierceCount >= p.PierceMax {
-					projectiles.Release(p)
-				} else {
-					retargetPierce(p, e, enemies)
-				}
+			if p.Penetrate {
+				// 穿透弹：记录已命中，继续直线飞行（不追踪，不衰减）
+				p.PenHitIDs = append(p.PenHitIDs, e.ID)
 			} else {
 				projectiles.Release(p)
 			}
@@ -231,31 +219,6 @@ func TickProjectileHits(projectiles *projectile.Pool, enemies *enemy.Pool, tower
 	return kills
 }
 
-// retargetPierce 穿刺弹命中后寻找下一个最近目标。
-func retargetPierce(p *projectile.Projectile, justHit *enemy.Enemy, enemies *enemy.Pool) {
-	var best *enemy.Enemy
-	bestDist := 300.0 // 穿刺搜索范围
-	enemies.Each(func(e *enemy.Enemy) {
-		if e == justHit || e.IsDying() {
-			return
-		}
-		for _, id := range p.PierceHitIDs {
-			if id == e.ID {
-				return
-			}
-		}
-		d := math.Hypot(e.X-justHit.X, e.Y-justHit.Y)
-		if d < bestDist {
-			bestDist = d
-			best = e
-		}
-	})
-	if best != nil {
-		p.Target = best
-	} else {
-		p.Target = nil // 无目标，直线飞行至消亡
-	}
-}
 
 // multiTargetCount 返回塔的多目标额外目标数（不含主目标）。
 // 公式: targets = floor(base + potential * (strength/100)) - 1（减去主目标）。

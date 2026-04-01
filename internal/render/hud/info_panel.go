@@ -207,22 +207,7 @@ func DrawInfoPanel(screen *ebiten.Image, vm InfoPanelVM) {
 		fm.DrawText(screen, vm.AttackStyleText, x, y, theme.FontSM, theme.TextMuted)
 	})
 
-	// Row 4: 6-slot ability grid
-	if len(vm.Slots) > 0 {
-		panel.AddSpace(2)
-		panel.AddRow(14, func(screen *ebiten.Image, x, y float64, _ float64) {
-			fm.DrawBoldText(screen, "能力槽:", x, y, theme.FontSM, theme.TextMuted)
-		})
-		panel.AddSpace(2)
-		for _, slot := range vm.Slots {
-			slot := slot
-			panel.AddRow(abilityH, func(screen *ebiten.Image, x, y float64, w float64) {
-				drawSlotRow(screen, fm, slot, x, y, w)
-			})
-		}
-	}
-
-	// Row 5: 已获取能力详细描述
+	// Row 4: 已获取能力详细描述
 	if len(vm.Abilities) > 0 {
 		panel.AddSpace(2)
 		for _, ab := range vm.Abilities {

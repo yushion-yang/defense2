@@ -30,6 +30,16 @@
 - [x] 让调试模式展示的加技能使用中文名字。（已修复）
 - [ ] 金灵释放的第一次技能，没有给炮塔展示五星芒特效。
 - [ ]
+- [ ] /Users/yushion/Games/defense2/docs/autotest/pic/screenshot_20260401_090836.png 能力的展示，描述有挺多的问题（可能跟配置有关）base+潜力*强度，不应该中间再加个0
+- [ ] 炮塔的HUD只需要显示它获取的能力即可，不需要再在上方重复展示能力的槽位品种啥的。
+- [ ] /Users/yushion/Games/defense2/docs/autotest/pic/screenshot_20260401_091720.png 基础炮塔升级那个强化炮塔，这个操作是一次性是提升炮塔的属性，然后这个强化就不再吃强度的加成，实现跟描述都需要改。
+- [ ] /Users/yushion/Games/defense2/docs/autotest/pic/screenshot_20260401_092248.png 旋刃这个炮塔还是攻击的时候有白圈（这难道是内圈的特效？？） /Users/yushion/Games/defense2/docs/autotest/pic/screenshot_20260401_101932.png
+- [ ]
+- [ ] /Users/yushion/Games/defense2/docs/autotest/pic/screenshot_20260401_091330.png 这个星爆的炮塔，应该是直线穿透（不是穿刺弹，删除我们的穿刺弹的概念，只需要保留弹射即可）直线穿透最远可以达到射程的1.2倍。不会弹射。
+- [ ] /Users/yushion/Games/defense2/docs/autotest/pic/screenshot_20260401_093305.png 还是发现怪物的展示有问题，看boss这里，这不是受攻击的时候，而且怪物出现就播hit帧并且一直保持。
+- [ ] 100强度时显示的各属性（包括强度），能力项的描述不对，没有符合我们的根据数值增/减益来显示颜色，例如100那么应该全部都是白色。/Users/yushion/Games/defense2/docs/autotest/pic/screenshot_20260401_123651.png
+- [ ] /Users/yushion/Games/defense2/docs/autotest/pic/screenshot_20260401_124206.png /Users/yushion/Games/defense2/docs/autotest/pic/screenshot_20260401_124207.png 持续扣血的DOT都应该设定较长的触发周期，我记得我曾经规定过全部设定为0.5s，并且需要确保比如3s必然是触发6次。
+- [ ]
 - [ ]
 - [ ]
 - [ ]

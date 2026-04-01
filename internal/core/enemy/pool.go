@@ -70,6 +70,36 @@ func (p *Pool) Spawn(x, y, baseHP, baseSpeed float64, pathIndex int, archetype s
 			e.Elite = cfg.HpScale >= 4
 			e.DyingTimer = 0
 			e.DyingDuration = 0
+			e.HitFlash = 0
+			e.AnimCur = ""
+			e.AnimFrame = 0
+			e.AnimTimer = 0
+			e.AnimDone = false
+			e.Silenced = false
+			e.ZoneDmgAccum = 0
+			e.DotTickTimer = 0
+			e.LastDotDmg = 0
+			e.DamageCap = 0
+			e.DamageCapPercent = 0
+			e.IsInvincible = false
+			e.IsDamageImmune = false
+			e.IsUntargetable = false
+			e.Thresholds = nil
+			e.Tenacity = 0
+			e.IsControlImmune = false
+			e.IsStunImmune = false
+			e.IsSlowImmune = false
+			e.IsRootImmune = false
+			e.Lifecycle = nil
+			e.BerserkThreshold = 0
+			e.BerserkSpeedScale = 0
+			e.BerserkTriggered = false
+			e.RegenPerSec = 0
+			e.HealPower = 0
+			e.HealRadius = 0
+			e.HealInterval = 0
+			e.HealCooldown = 0
+			e.MovementType = ""
 			p.Count++
 			return e
 		}

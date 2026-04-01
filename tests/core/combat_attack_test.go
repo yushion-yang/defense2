@@ -293,20 +293,16 @@ func TestChargeProjectileFlag(t *testing.T) {
 	})
 }
 
-func TestPierceProjectileFlag(t *testing.T) {
+func TestPenetrateProjectileFlag(t *testing.T) {
 	pool := projectile.NewPool(4)
-	e := &enemy.Enemy{X: 200, Y: 100, Active: true}
-	pool.FirePierce(100, 100, 200, 100, 30, 350, e, "test", 3, 0.7)
+	pool.FirePenetrate(100, 100, 200, 100, 30, 350, "test")
 
 	pool.Each(func(p *projectile.Projectile) {
-		if !p.Pierce {
-			t.Error("should be pierce")
+		if !p.Penetrate {
+			t.Error("should be penetrate")
 		}
-		if p.PierceMax != 3 {
-			t.Errorf("pierceMax=%d, want 3", p.PierceMax)
-		}
-		if p.PierceDecay != 0.7 {
-			t.Errorf("pierceDecay=%f, want 0.7", p.PierceDecay)
+		if p.Target != nil {
+			t.Error("penetrate should have nil target (straight line)")
 		}
 	})
 }
