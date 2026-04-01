@@ -6,15 +6,16 @@ package combat
 import (
 	"math"
 
+	"defense2/internal/config"
 	"defense2/internal/core/enemy"
 	"defense2/internal/core/tower"
 )
 
 // scatter 默认参数
 const (
-	scatterPellets    = 3                  // 弹丸数
-	scatterHalfSpread = 30 * math.Pi / 180 // 半角30度（弧度）
-	scatterPelletR    = 5.0                // 弹丸碰撞半径
+	scatterBasePellets = 3                  // 基础弹丸数
+	scatterDefaultSpread = 60               // 默认扇形角度
+	scatterPelletR     = 5.0                // 弹丸碰撞半径
 )
 
 // ScatterHandler 锥形散射。
@@ -27,12 +28,30 @@ func (h *ScatterHandler) Fire(t *tower.Tower, target *enemy.Enemy, ctx *AttackCo
 		speed = 400
 	}
 
+	// 从能力配置读取 extraPellets 和 spreadAngle
+	pellets := scatterBasePellets
+	spreadDeg := float64(scatterDefaultSpread)
+	if abTable := config.GlobalAbilityTable(); abTable != nil {
+		if def := abTable["scatter"]; def != nil {
+			str := 100.0
+			if t.Strength != nil {
+				str = t.Strength.Effective()
+			}
+			extra := int(def.CalcScale(str))
+			pellets += extra
+			if def.Param > 0 {
+				spreadDeg = def.Param
+			}
+		}
+	}
+	halfSpread := spreadDeg / 2 * math.Pi / 180
+
 	// 同一次散射共享 groupID，TickProjectileHits 据此合并命中
 	groupID := ctx.Projectiles.NextScatterGroup()
 
-	for i := 0; i < scatterPellets; i++ {
-		frac := float64(i) / float64(scatterPellets-1)
-		angle := baseAngle - scatterHalfSpread + frac*2*scatterHalfSpread
+	for i := 0; i < pellets; i++ {
+		frac := float64(i) / float64(pellets-1)
+		angle := baseAngle - halfSpread + frac*2*halfSpread
 		ctx.Projectiles.FireScatterPellet(
 			t.X, t.Y, angle, t.Damage, t.Range, speed,
 			scatterPelletR, t.InstanceKey, groupID,

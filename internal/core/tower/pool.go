@@ -70,6 +70,16 @@ func (p *Pool) Place(row, col int, cx, cy float64, def TowerDef) *Tower {
 			t.AbilitySlots = [6]string{}
 			t.UnlockOrder = RollUnlockOrder()
 			t.Target = nil
+			// 运行时状态重置（对象池复用安全）
+			t.Kills = 0
+			t.StackTarget = 0
+			t.StackCount = 0
+			t.LastPercentHpTarget = 0
+			t.GoldCooldown = 0
+			t.Angle = 0
+			t.FireAnim = 0
+			t.CritBonus = 0
+			t.Faction = ""
 
 			// 随机属性（tier-presets 驱动，总能力均衡但分布不同）
 			stats := RollTowerStats()

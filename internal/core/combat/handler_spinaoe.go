@@ -5,6 +5,7 @@ package combat
 import (
 	"math"
 
+	"defense2/internal/config"
 	"defense2/internal/core/enemy"
 	"defense2/internal/core/tower"
 )
@@ -40,9 +41,21 @@ func (h *SpinAoEHandler) Tick(t *tower.Tower, ctx *AttackContext) {
 		return
 	}
 
-	// spin_aoe 默认参数
-	const innerRatio = 0.5 // 内圈半径比例
-	const innerBonus = 1.5 // 内圈伤害倍率
+	// 从能力配置读取 innerBonus 和 innerRatio
+	innerRatio := 0.5
+	innerBonusMul := 1.5
+	if abTable := config.GlobalAbilityTable(); abTable != nil {
+		if def := abTable["spinAoe"]; def != nil {
+			str := 100.0
+			if t.Strength != nil {
+				str = t.Strength.Effective()
+			}
+			innerBonusMul = 1.0 + def.CalcScale(str) // base=0.5 + potential*str/100
+			if def.Param > 0 {
+				innerRatio = def.Param
+			}
+		}
+	}
 
 	hasTarget := false
 	r := t.Range
@@ -56,7 +69,7 @@ func (h *SpinAoEHandler) Tick(t *tower.Tower, ctx *AttackContext) {
 		hasTarget = true
 		dmg := t.Damage
 		if dist <= innerR {
-			dmg *= innerBonus
+			dmg *= innerBonusMul
 		}
 		ApplyHit(HitInput{
 			Tower: t, Target: e, BaseDamage: dmg, Style: ctx.Style,

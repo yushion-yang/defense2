@@ -162,8 +162,10 @@ func (a *ConfigAbility) OnHit(t *tower.Tower, p *projectile.Projectile, e *enemy
 		}
 
 	case "weaken":
-		// scaleDim=amplify, param=duration — 命中后受伤增加
-		e.DamageAmplify = sv
+		// scaleDim=amplify, param=duration — 命中后受伤增加（取较强效果）
+		if sv > e.DamageAmplify {
+			e.DamageAmplify = sv
+		}
 		e.DamageAmplifyTimer = pm
 		return nil
 

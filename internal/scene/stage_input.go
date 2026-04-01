@@ -511,12 +511,9 @@ func (s *StageScene) tryUpgradeTower() {
 	if s.gold < cost {
 		return
 	}
-	spent := t.BuyStrength()
+	spent := t.BuyStrength() // 内部已调用 AddPermanent + RecalcStats
 	s.gold -= spent
 	s.gameStats.GoldSpent += spent
-	if t.Strength != nil {
-		t.Strength.AddPermanent(10)
-	}
 	s.bus.Emit(event.EvtTowerUpgraded, event.TowerUpgradedPayload{TowerKey: t.Key, Spent: spent})
 	s.showNotify(fmt.Sprintf("强度+10 (-$%d)", spent))
 }

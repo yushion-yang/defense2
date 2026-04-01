@@ -36,7 +36,6 @@ import (
 	"defense2/internal/core/persistence"
 	"defense2/internal/core/pipeline"
 	"defense2/internal/core/projectile"
-	"defense2/internal/core/strength"
 	"defense2/internal/core/tower"
 	"defense2/internal/core/tutorial"
 	"defense2/internal/core/warden"
@@ -736,9 +735,8 @@ func (s *StageScene) tryPlaceTower(px, py float64) bool {
 	placed := s.towers.Place(row, col, center.X, center.Y, def)
 	// 初始化战力系统（base/potential 已在 pool.Place 中从 TowerDef 设置）
 	if placed != nil {
-		placed.Strength = strength.NewStrengthData()
-		placed.RecalcStats() // 用强度100计算初始属性
-		placed.BuildAnim = 0.3 // build-in animation
+		// Strength 已在 pool.Place 中初始化，无需重复创建
+		placed.BuildAnim = 0.3
 		tower.RollAndCachePendingChoices(placed, s.wavesCleared)
 	}
 	s.gold -= cost

@@ -114,11 +114,13 @@ type Tower struct {
 }
 
 // BuyStrength 花费金币购买 10 点永久强度。返回实际花费。
-// 需要塔已挂载 StrengthData（通过 Strength 字段）。
 func (t *Tower) BuyStrength() int {
 	cost := StrengthBuyCost
 	t.Cost += cost // 累计投入（影响卖价）
-	// 通过 strength 包的接口添加永久加成（由调用方做类型断言）
+	if t.Strength != nil {
+		t.Strength.AddPermanent(10)
+	}
+	t.RecalcStats()
 	return cost
 }
 
