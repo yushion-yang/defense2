@@ -124,6 +124,10 @@ func (p *Pool) Spawn(x, y, baseHP, baseSpeed float64, pathIndex int, archetype s
 			e.AuraSpeedUp = cfg.AuraSpeedUp
 			// 减伤
 			e.DamageReduceRatio = 0
+			e.ReflectPercent = 0
+			e.ReviveHPPercent = 0
+			e.ReviveUsed = false
+			e.BossData = nil
 			e.MovementType = ""
 			p.Count++
 			return e
@@ -137,6 +141,14 @@ func (p *Pool) Spawn(x, y, baseHP, baseSpeed float64, pathIndex int, archetype s
 // rendering until FinishDying is called.
 func (p *Pool) Kill(e *Enemy) {
 	if e.Active && e.DyingTimer <= 0 {
+		// 复活检查：首次死亡时复活
+		if e.ReviveHPPercent > 0 && !e.ReviveUsed {
+			e.ReviveUsed = true
+			e.HP = e.MaxHP * e.ReviveHPPercent
+			e.DisplayHP = e.HP
+			e.HitFlash = 0.3 // 复活闪烁
+			return            // 不进入死亡流程
+		}
 		// 死亡分裂：先生成子体再开始死亡动画
 		if e.SplitCount > 0 {
 			children := SpawnSplitChildren(e, p)

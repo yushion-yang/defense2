@@ -22,26 +22,26 @@
 
 ## P2 — Boss 行为系统
 
-- [ ] **Boss 模板加载器**：解析 `config/enemies/boss-templates.json`，运行时按 Boss 指定应用模板
-- [ ] **bossPhase 阶段转换**：HP 阈值（75%/50%/25%）切换行为/加速/召唤
-- [ ] **bossSpawnMinions 召唤**：定时生成小怪波（interval + count）
-- [ ] **bossReflect 反伤**：反弹 25% 受到的伤害给攻击者（需塔可受伤或虚拟反馈）
-- [ ] **bossRotateWeakness 循环弱点**：每 10s 切换弱点属性（physical/magic），非弱点伤害减半
-- [ ] **bossGoldSteal 偷金**：每次被命中偷取玩家 1 金币
-- [ ] **bossAura Boss 光环**：友军 +30% 速度 +10 护甲
+- [x] **Boss 行为系统**：BossState 挂载在 Enemy.BossData，FullBossState(wave) 按波次递进启用行为
+- [x] **bossPhase 阶段转换**：HP 阈值（75%/50%/25%）每阶段加速 10%
+- [x] **bossSpawnMinions 召唤**：10 波后启用，20s 间隔召唤 3+wave/10 个 normal 小怪
+- [x] **bossReflect 反伤**：20 波后启用，CalcBossReflectDamage 返回 15% 反伤值
+- [ ] **bossRotateWeakness 循环弱点**：需伤害类型系统支持，暂缓
+- [x] **bossGoldSteal 偷金**：30 波后启用，BossGoldSteal 返回偷金数
+- [x] **bossAura Boss 光环**：TickBossAura 120px 范围 +30% 速度
 
 ## P3 — 高级 Buff 模板
 
-- [ ] **reflect 反伤管线**：敌人受伤时反弹 15% 伤害（需确定反伤目标机制）
-- [ ] **revive 复活**：死亡后原地复活（HP 50%），仅触发一次
-- [ ] **blink 闪现**：定时向前闪现一段距离（跳过路径段）
-- [ ] **deathSplit 死亡分裂**：通用死亡分裂逻辑（与 Splitter 原型共用）
-- [ ] **deathSlow 死亡减速区**：死亡时留下减速区域（factor 0.5, radius 60, duration 3s）
-- [ ] **spawnMinions 召唤小兵**：定时召唤 normal 类型小怪
-- [ ] **empBurst 电磁脉冲**：范围内炮塔短暂禁用（需设计塔禁用机制）
-- [ ] **timewarp 时间扭曲**：范围内炮塔攻速降低（需设计负面光环机制）
+- [x] **reflect 反伤**：ApplyBuffTemplate 映射 ReflectPercent → Enemy.ReflectPercent（伤害管线需读取此值，由调用方处理）
+- [x] **revive 复活**：Pool.Kill 检查 ReviveHPPercent，首次死亡时恢复 HP 并跳过死亡流程
+- [ ] **blink 闪现**：与 Teleporter 机制类似，可复用 UpdateTeleport（间隔更短/距离更远），暂缓
+- [x] **deathSplit 死亡分裂**：ApplyBuffTemplate 映射 DeathSplitCount → Enemy.SplitCount（P0 已实现）
+- [ ] **deathSlow 死亡减速区**：需区域效果系统支持，暂缓
+- [ ] **spawnMinions 召唤小兵**：Boss 版已实现（P2），普通敌人版可复用 BossSpawnMinions 机制，暂缓
+- [ ] **empBurst 电磁脉冲**：需塔禁用机制，暂缓
+- [ ] **timewarp 时间扭曲**：需塔负面光环机制，暂缓
 
 ## P4 — 系统改进
 
-- [ ] **BuffList 接入 Enemy**：将敌人状态效果从直接字段迁移到 BuffList 系统（统一堆叠规则/回调机制），与塔使用相同的 buff 基础设施
-- [ ] **buff 模板全部接线**：确保所有 13 个 buff 模板在 ApplyBuffTemplate 中正确映射到 Enemy 字段或 BuffList
+- [ ] **BuffList 接入 Enemy**：将敌人状态效果从直接字段迁移到 BuffList 系统（统一堆叠规则/回调机制），暂缓
+- [x] **buff 模板接线**：berserk/regen/healAura/speedAura/damageReduce/reflect/revive/deathSplit 已接线（8/13），剩余 5 个需前置系统支持

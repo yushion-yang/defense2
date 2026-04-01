@@ -129,6 +129,16 @@ type Enemy struct {
 	// ── 减伤 ──
 	DamageReduceRatio float64 // 受伤减免比例（0~1，由 buff 模板设置）
 
+	// ── 反伤 ──
+	ReflectPercent float64 // 反伤比例（0~1，0=无反伤）
+
+	// ── 复活 ──
+	ReviveHPPercent float64 // 复活时 HP 占 MaxHP 比例（0=不复活）
+	ReviveUsed      bool    // 是否已使用过复活
+
+	// ── Boss 行为 ──
+	BossData *BossState // Boss 专属行为状态（非 Boss 为 nil）
+
 	// ── 飞行 ──
 	MovementType string // 移动类型（"ground"/"flying"）
 }

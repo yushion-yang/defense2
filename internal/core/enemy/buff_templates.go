@@ -193,6 +193,16 @@ func ApplyBuffTemplate(e *Enemy, templateID string) bool {
 		e.DamageReduceRatio = tmpl.DamageReduce
 	}
 
+	// 反伤
+	if tmpl.ReflectPercent > 0 {
+		e.ReflectPercent = tmpl.ReflectPercent
+	}
+
+	// 复活
+	if tmpl.ReviveHPPercent > 0 {
+		e.ReviveHPPercent = tmpl.ReviveHPPercent
+	}
+
 	// 死亡分裂
 	if tmpl.DeathSplitCount > 0 {
 		e.SplitCount = tmpl.DeathSplitCount

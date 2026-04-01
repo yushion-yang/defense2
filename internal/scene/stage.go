@@ -885,6 +885,23 @@ func (s *StageScene) updatePlaying() {
 	})
 	enemy.UpdateHealing(activeEnemies, gameDT)
 	enemy.UpdateBufferAura(activeEnemies, gameDT)
+	// Boss 行为
+	for _, e := range activeEnemies {
+		if e.BossData == nil {
+			continue
+		}
+		enemy.TickBossPhase(e)
+		enemy.TickBossAura(e, activeEnemies)
+		if count, arch := enemy.TickBossSpawnMinions(e, gameDT); count > 0 {
+			cfg := s.spawner.Archetypes[arch]
+			for i := 0; i < count; i++ {
+				child := s.enemies.Spawn(e.X, e.Y, e.MaxHP*0.1, e.BaseSpeed*1.2, e.PathIndex, arch, cfg)
+				if child != nil {
+					child.Path = e.Path
+				}
+			}
+		}
+	}
 
 	// 3. 敌人移动（到达终点扣生命）
 	s.enemies.Each(func(e *enemy.Enemy) {

@@ -154,6 +154,10 @@ func (s *Spawner) Update(pool *Pool, dt float64) {
 			e := pool.Spawn(spawn.X, spawn.Y, baseHP, baseSpeed, 1, archetype, cfg)
 			if e != nil {
 				e.Path = path
+				// Boss 行为附加
+				if e.Boss {
+					e.BossData = FullBossState(s.Wave)
+				}
 				// 波次 buff 自动注入
 				s.applyWaveBuffs(e)
 			}
