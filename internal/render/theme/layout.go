@@ -161,3 +161,15 @@ const (
 	ProjSniperR     = 5
 	ProjSniperGlow  = 10
 )
+
+// ---------------------------------------------------------------------------
+// ActionBar (bottom center toolbar)
+// ---------------------------------------------------------------------------
+
+const (
+	ActionBarH      = 40
+	ActionBarBtnW   = 80
+	ActionBarBtnH   = 34
+	ActionBarBtnGap = 8
+	ActionBarBtnR   = 12
+)

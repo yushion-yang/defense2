@@ -10,6 +10,7 @@ import (
 	"defense2/internal/core/enemy"
 	"defense2/internal/core/event"
 	"defense2/internal/core/game"
+	"defense2/internal/core/item"
 	"defense2/internal/core/tower"
 	"defense2/internal/input"
 	"defense2/internal/render/draw"
@@ -30,6 +31,40 @@ func (s *StageScene) handleInput() {
 		g.DragEnabled = false
 	}
 	g.Update()
+
+	// 道具拖拽模式：跟踪松手释放
+	if s.imode == modeItemDrag && s.dragItemActive {
+		// 更新拖拽悬停目标
+		mx, my := g.CursorPos()
+		wtx, wty := s.screenToWorld(mx, my)
+		s.dragHoverTower = s.towerAtPixel(wtx, wty)
+
+		// 检测鼠标/触摸释放
+		released := inpututil.IsMouseButtonJustReleased(ebiten.MouseButtonLeft)
+		if !released {
+			if ids := inpututil.AppendJustReleasedTouchIDs(nil); len(ids) > 0 {
+				released = true
+			}
+		}
+		if released {
+			target := s.dragHoverTower
+			if target != nil && !target.Selling {
+				item.ApplyItem(target, s.dragItemKind)
+				s.inventory.Use(s.dragItemKind)
+				hud.ShowToast(item.Defs[s.dragItemKind].Name + " → " + target.Label)
+				s.audioMgr.PlaySafe(gameAudio.SFXUIClick)
+			}
+			s.dragItemActive = false
+			s.dragHoverTower = nil
+			s.imode = modeItemPanel
+		}
+		if inpututil.IsKeyJustPressed(ebiten.KeyEscape) {
+			s.dragItemActive = false
+			s.dragHoverTower = nil
+			s.imode = modeItemPanel
+		}
+		return
+	}
 
 	mx, my := g.CursorPos()
 	fmx, fmy := float32(mx), float32(my)
@@ -86,6 +121,13 @@ func (s *StageScene) handleInput() {
 			s.spawnMode = false
 			s.spawnType = ""
 			s.imode = modeIdle
+		case modeItemPanel:
+			s.imode = modeIdle
+			s.itemPanelOpen = false
+			s.dragItemActive = false
+		case modeItemDrag:
+			s.dragItemActive = false
+			s.imode = modeItemPanel
 		default:
 			s.prePauseMode = s.imode
 			s.imode = modePaused
@@ -97,6 +139,17 @@ func (s *StageScene) handleInput() {
 			s.imode = modeIdle
 		} else {
 			s.imode = modeBuildMenu
+			s.selectedTower = nil
+		}
+		return
+	}
+	if inpututil.IsKeyJustPressed(ebiten.KeyI) {
+		if s.imode == modeItemPanel {
+			s.imode = modeIdle
+			s.itemPanelOpen = false
+		} else if s.inventory.TotalCount() > 0 {
+			s.imode = modeItemPanel
+			s.itemPanelOpen = true
 			s.selectedTower = nil
 		}
 		return
@@ -172,6 +225,20 @@ func (s *StageScene) handleInput() {
 		s.buildHoverIdx = -1
 	}
 
+	// 道具面板：检测按下开始拖拽（不等松开）
+	if s.imode == modeItemPanel {
+		if inpututil.IsMouseButtonJustPressed(ebiten.MouseButtonLeft) || len(inpututil.AppendJustPressedTouchIDs(nil)) > 0 {
+			cards := s.buildItemPanelCards()
+			idx := hud.ItemPanelHitTest(fmx, fmy, cards)
+			if idx >= 0 {
+				s.dragItemKind = item.Kind(idx)
+				s.dragItemActive = true
+				s.imode = modeItemDrag
+				return
+			}
+		}
+	}
+
 	// ── Tap → 游戏操作 ──
 	if !g.JustTapped() {
 		return
@@ -243,15 +310,6 @@ func (s *StageScene) handleInput() {
 		s.prePauseMode = s.imode
 		s.imode = modePaused
 		return
-	case "build":
-		if s.imode == modeBuildMenu {
-			s.imode = modeIdle
-		} else {
-			s.imode = modeBuildMenu
-			s.selectedTower = nil
-			s.wardenPanelOpen = false
-		}
-		return
 	case "spawn":
 		if s.imode == modeSpawnMenu || s.imode == modeSpawnPlace {
 			s.imode = modeIdle
@@ -269,6 +327,35 @@ func (s *StageScene) handleInput() {
 		return
 	case "screenshot":
 		// 已在 Update() 早期拦截处理，这里只需消费点击防止穿透到交互模式
+		return
+	}
+
+	// ActionBar 按钮
+	actionBtn := hud.ActionBarHitTest(ftx, fty)
+	switch actionBtn {
+	case "build":
+		if s.imode == modeBuildMenu {
+			s.imode = modeIdle
+		} else {
+			s.imode = modeBuildMenu
+			s.selectedTower = nil
+			s.wardenPanelOpen = false
+			s.itemPanelOpen = false
+		}
+		return
+	case "items":
+		if s.inventory.TotalCount() == 0 {
+			return
+		}
+		if s.imode == modeItemPanel {
+			s.imode = modeIdle
+			s.itemPanelOpen = false
+		} else {
+			s.imode = modeItemPanel
+			s.itemPanelOpen = true
+			s.selectedTower = nil
+			s.wardenPanelOpen = false
+		}
 		return
 	}
 
@@ -343,6 +430,16 @@ func (s *StageScene) handleInput() {
 			} else {
 				s.selectedTower = nil
 				s.imode = modeIdle
+			}
+		}
+
+	case modeItemPanel:
+		// 点击面板外 → 关闭（卡片点击已在上面的 press-down 检测中处理）
+		if !hud.ItemPanelContains(ftx, fty) {
+			abtn := hud.ActionBarHitTest(ftx, fty)
+			if abtn == "" {
+				s.imode = modeIdle
+				s.itemPanelOpen = false
 			}
 		}
 	}
@@ -424,6 +521,12 @@ func newStageGesture() *input.Gesture {
 		}
 		if y > float64(game.ScreenHeight)-120 {
 			return true
+		}
+		// ActionBar 区域
+		if abx, aby, abw, abh := hud.ActionBarRect(); abw > 0 {
+			if fx >= abx && fx <= abx+abw && fy >= aby && fy <= aby+abh {
+				return true
+			}
 		}
 		return false
 	}
