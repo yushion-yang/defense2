@@ -168,7 +168,7 @@ func (t *Tower) ResolveAttackStyle() AttackStyle {
 	case "radial":
 		return StyleRadial
 	default:
-		// pierce/bounce/splash/multiTarget/空 → 都用 projectile（pierce 通过弹射物标志实现）
+		// bounce/splash/multiTarget/空 → 都用 projectile
 		if t.AttackStyleID != "" {
 			switch t.AttackStyleID {
 			case StyleLaser, StyleCharge:
@@ -188,7 +188,6 @@ var abilitySpriteMap = map[string]string{
 	"scatter":     "shotgun",
 	"wideBeam":    "prism",
 	"spinAoe":     "cyclone",
-	"pierce":      "railgun",
 	"bounce":      "ricochet",
 	"splash":      "mortar",
 	"multiTarget": "hydra",
@@ -202,7 +201,6 @@ var abilitySpriteLabels = map[string]string{
 	"shotgun":  "霰弹",
 	"prism":    "棱光",
 	"cyclone":  "旋刃",
-	"railgun":  "穿甲",
 	"ricochet": "链弹",
 	"mortar":   "轰炸",
 	"hydra":    "多管",

@@ -359,11 +359,22 @@ func (s *StageScene) subscribeBus() {
 		s.tutorial.OnEvent("waveStarted")
 	})
 	event.OnTyped(bus, event.EvtWaveCleared, func(p event.WaveClearedPayload) {
+		prevUnlocked := tower.UnlockedSlots(s.wavesCleared)
 		s.wavesCleared++
+		newUnlocked := tower.UnlockedSlots(s.wavesCleared)
 		// 为所有塔 roll 新解锁能力位的选项
+		newPending := 0
 		s.towers.Each(func(t *tower.Tower) {
+			before := tower.PendingCount(t)
 			tower.RollAndCachePendingChoices(t, s.wavesCleared)
+			after := tower.PendingCount(t)
+			if after > before {
+				newPending++
+			}
 		})
+		if newUnlocked > prevUnlocked && newPending > 0 {
+			hud.ShowToast(fmt.Sprintf("新能力位解锁! %d座塔可选择能力", newPending))
+		}
 		if s.wardenReady && s.wardenUnit != nil {
 			s.wardenUnit.OnWaveClear()
 		}
@@ -1649,11 +1660,17 @@ func towerTypeIcon(key string) string {
 
 // drawUpgradeIndicators 在有待选能力的塔上方绘制脉冲金色菱形指示器。
 func (s *StageScene) drawUpgradeIndicators(target *ebiten.Image, animTime float64) {
-	pulse := float32(0.7 + 0.3*math.Sin(animTime*4)) // alpha 脉冲
+	pulse := float32(0.6 + 0.4*math.Sin(animTime*5))  // alpha 脉冲
+	scale := float32(1.0 + 0.15*math.Sin(animTime*5)) // 尺寸脉冲
 	s.towers.Each(func(t *tower.Tower) {
 		if t.HasPendingUpgrade(s.wavesCleared) {
-			a := uint8(200 * pulse)
-			draw.Diamond(target, float32(t.X), float32(t.Y-22), 5, 1.5,
+			a := uint8(230 * pulse)
+			r := float32(7) * scale
+			// 外层辉光
+			draw.Diamond(target, float32(t.X), float32(t.Y-24), r+2, 1.0,
+				color.RGBA{R: 250, G: 200, B: 50, A: a / 3})
+			// 内层实体
+			draw.Diamond(target, float32(t.X), float32(t.Y-24), r, 1.8,
 				color.RGBA{R: 250, G: 200, B: 50, A: a})
 		}
 	})

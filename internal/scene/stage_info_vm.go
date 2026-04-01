@@ -193,7 +193,6 @@ func attackStyleLabel(style string) string {
 		"scatter":    "散射",
 		"charge":     "蓄力",
 		"spin_aoe":   "旋转AoE",
-		"pierce":     "穿刺",
 		"aura_dot":   "范围毒伤",
 	}
 	if l, ok := labels[style]; ok {
