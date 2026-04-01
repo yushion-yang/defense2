@@ -259,6 +259,14 @@ func (c *Controller) OnGameEnd(snap scene.AutoPlaySnapshot, won bool) {
 				c.sessionID, record.Result, record.WavesSurvived, record.TotalWaves,
 				record.TotalKills, len(record.Anomalies))
 		}
+
+		// 生成视觉审查 manifest（截图 + 检查清单配对）
+		entries := BuildReviewEntries(c.screenshotter.CapturedFiles())
+		if err := WriteVisualReview(entries, c.pngDir); err != nil {
+			log.Printf("visual review write error: %v", err)
+		} else if len(entries) > 0 {
+			log.Printf("[REVIEW] %d screenshots with checklist -> visual_review.md", len(entries))
+		}
 		return // 不设 done，让 Draw 有机会截到结果画面
 	}
 
@@ -298,6 +306,7 @@ func snapshotToGameState(snap scene.AutoPlaySnapshot) *GameState {
 		Victory:         snap.Victory,
 		WardenReady:     snap.WardenReady,
 		InteractMode:    snap.InteractMode,
+		WavesCleared:    snap.WavesCleared,
 		TotalKills:      snap.TotalKills,
 		TotalLeaked:     snap.TotalLeaked,
 		EnemyPoolCount:  snap.EnemyPoolCount,
@@ -320,6 +329,7 @@ func snapshotToGameState(snap scene.AutoPlaySnapshot) *GameState {
 			IsSlowed: e.IsSlowed, IsStunned: e.IsStunned,
 			IsBurning: e.IsBurning, IsBleeding: e.IsBleeding,
 			IsRooted: e.IsRooted,
+			IsHit: e.IsHit,
 		})
 	}
 

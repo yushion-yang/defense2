@@ -19,17 +19,22 @@ type VisualTracker struct {
 	towerBuilding bool
 	waveAnnounce  bool
 	wardenActive  bool
+	wardenCombat  bool // 战灵战斗中截图
 	wardenType    string
+
+	// 延迟截图：首次建塔/攻击后等几帧再截（让特效有时间出现）
+	pendingDelayed map[string]int // filename -> 剩余延迟帧数
 }
 
 // NewVisualTracker 创建视觉追踪器。
 func NewVisualTracker(ss *Screenshotter) *VisualTracker {
 	return &VisualTracker{
-		screenshotter: ss,
-		towerTypes:    make(map[string]bool),
-		archetypes:    make(map[string]bool),
-		attackStyles:  make(map[string]bool),
-		statusFX:      make(map[string]bool),
+		screenshotter:  ss,
+		towerTypes:     make(map[string]bool),
+		archetypes:     make(map[string]bool),
+		attackStyles:   make(map[string]bool),
+		statusFX:       make(map[string]bool),
+		pendingDelayed: make(map[string]int),
 	}
 }
 
@@ -37,6 +42,17 @@ func NewVisualTracker(ss *Screenshotter) *VisualTracker {
 // 返回本帧需要截图的数量（用于判断是否需要渲染本帧）。
 func (v *VisualTracker) Check(state *GameState) int {
 	count := 0
+
+	// ── 处理延迟截图（等特效出现后再截）──
+	for fname, frames := range v.pendingDelayed {
+		if frames <= 0 {
+			v.screenshotter.RequestCapture(fname)
+			delete(v.pendingDelayed, fname)
+			count++
+		} else {
+			v.pendingDelayed[fname] = frames - 1
+		}
+	}
 
 	// ── 每种塔类型首次出现 ──
 	for _, t := range state.Towers {
@@ -65,12 +81,12 @@ func (v *VisualTracker) Check(state *GameState) int {
 		}
 	}
 
-	// ── 每种攻击方式射击视觉（塔有目标 = 正在射击）──
+	// ── 每种攻击方式射击视觉（延迟 10 帧截图，让弹射物/特效飞出来）──
 	for _, t := range state.Towers {
 		if t.HasTarget && t.AttackStyle != "" && !v.attackStyles[t.AttackStyle] {
 			v.attackStyles[t.AttackStyle] = true
-			v.screenshotter.RequestCapture(fmt.Sprintf("attack_%s.png", t.AttackStyle))
-			count++
+			fname := fmt.Sprintf("attack_%s.png", t.AttackStyle)
+			v.pendingDelayed[fname] = 10 // 延迟 10 帧
 		}
 	}
 
@@ -118,15 +134,27 @@ func (v *VisualTracker) Check(state *GameState) int {
 		}
 	}
 
-	// ── 波次公告（波次刚切换后 5 帧内截图，此时公告动画正在显示）──
-	// 由 controller 在波次变化时调用 RequestWaveAnnounce
-	// 这里不做，交给 controller 处理
-
 	// ── 战灵外观（激活后截图）──
 	if state.WardenReady && !v.wardenActive && (state.WardenX != 0 || state.WardenY != 0) {
 		v.wardenActive = true
 		v.screenshotter.RequestCapture("warden_active.png")
 		count++
+	}
+
+	// ── 战灵战斗中截图（战灵附近有敌人时）──
+	if state.WardenReady && v.wardenActive && !v.wardenCombat {
+		for _, e := range state.Enemies {
+			if !e.Active || e.Dying {
+				continue
+			}
+			dx := e.X - state.WardenX
+			dy := e.Y - state.WardenY
+			if dx*dx+dy*dy < 200*200 { // 战灵 200px 范围内有敌人
+				v.wardenCombat = true
+				v.pendingDelayed["warden_combat.png"] = 15 // 延迟 15 帧让攻击动画出现
+				break
+			}
+		}
 	}
 
 	return count

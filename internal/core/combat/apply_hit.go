@@ -68,13 +68,22 @@ func ApplyHit(input HitInput, onHit HitCallback) HitOutput {
 		}
 	}
 
-	// 扣血
-	input.Target.HP -= totalDmg
-	killed := input.Target.HP <= 0
+	// 扣血 — 走伤害管线（免疫/减免/阈值/遥测统一处理）
+	pipeResult := ProcessDamage(DamageInput{
+		Target:     input.Target,
+		RawDamage:  totalDmg,
+		DamageType: DmgPhysical, // 塔弹射物默认物理伤害
+	})
+
+	killed := pipeResult.Killed
+	finalDmg := pipeResult.FinalDamage
+	if pipeResult.Blocked {
+		finalDmg = 0
+	}
 
 	// 命中回调（飘字、音效等）
 	if onHit != nil {
-		onHit(input.Target, totalDmg, killed, input.Style, isCrit)
+		onHit(input.Target, finalDmg, killed, input.Style, isCrit)
 	}
 
 	// 击杀处理
@@ -85,7 +94,7 @@ func ApplyHit(input HitInput, onHit HitCallback) HitOutput {
 	}
 
 	return HitOutput{
-		TotalDamage: totalDmg,
+		TotalDamage: finalDmg,
 		IsCrit:      isCrit,
 		Killed:      killed,
 		ExtraKills:  extraKills,
@@ -115,16 +124,22 @@ func applyHitEffectsUnified(r *tower.HitResult, target *enemy.Enemy, p *projecti
 				return
 			}
 			if math.Hypot(e.X-target.X, e.Y-target.Y) <= r.Splash.Radius {
-				e.HP -= splashDamage
-				killed := e.HP <= 0
-				// 溅射伤害回调（浮字 + 命中闪白）
+				sr := ProcessDamage(DamageInput{
+					Target:     e,
+					RawDamage:  splashDamage,
+					DamageType: DmgPhysical,
+				})
+				finalDmg := sr.FinalDamage
+				if sr.Blocked {
+					finalDmg = 0
+				}
 				if onHit != nil {
-					onHit(e, splashDamage, killed, "splash", false)
+					onHit(e, finalDmg, sr.Killed, "splash", false)
 				}
 				if e.HitFlash < 0.06 {
 					e.HitFlash = 0.08
 				}
-				if killed {
+				if sr.Killed {
 					enemies.Kill(e)
 				}
 			}
@@ -200,11 +215,19 @@ func deathExplosion(t *tower.Tower, killed *enemy.Enemy, enemies *enemy.Pool, on
 			return
 		}
 		if math.Hypot(e2.X-killed.X, e2.Y-killed.Y) <= explodeR {
-			e2.HP -= explodeDmg
-			if onHit != nil {
-				onHit(e2, explodeDmg, e2.HP <= 0, "explosion", false)
+			er := ProcessDamage(DamageInput{
+				Target:     e2,
+				RawDamage:  explodeDmg,
+				DamageType: DmgPhysical,
+			})
+			finalDmg := er.FinalDamage
+			if er.Blocked {
+				finalDmg = 0
 			}
-			if e2.HP <= 0 {
+			if onHit != nil {
+				onHit(e2, finalDmg, er.Killed, "explosion", false)
+			}
+			if er.Killed {
 				enemies.Kill(e2)
 				extraKills++
 			}

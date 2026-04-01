@@ -28,6 +28,24 @@ type WaveEntry struct {
 	GoldSpent  int `json:"gold_spent"`
 }
 
+// BossStat Boss 存活时间统计。
+type BossStat struct {
+	Archetype    string  `json:"archetype"`
+	Wave         int     `json:"wave"`
+	SpawnTick    int     `json:"spawn_tick"`
+	DeathTick    int     `json:"death_tick"`    // 0 = 存活到结算
+	AliveSeconds float64 `json:"alive_seconds"` // 存活时间（秒）
+	Verdict      string  `json:"verdict"`       // "too_weak"(<5s) / "ok" / "too_strong"(>60s) / "survived"
+}
+
+// PaceStat 节奏指标统计。
+type PaceStat struct {
+	TotalIdleTicks   int     `json:"total_idle_ticks"`   // 无波次活跃的帧数
+	TotalCombatTicks int     `json:"total_combat_ticks"` // 波次活跃的帧数
+	IdleCombatRatio  float64 `json:"idle_combat_ratio"`  // 空闲/战斗比（>3 太无聊, <0.3 太紧张）
+	Verdict          string  `json:"verdict"`            // "too_boring" / "ok" / "too_intense"
+}
+
 // CoverageData 覆盖率追踪数据。
 type CoverageData struct {
 	TowersUsed          []string `json:"towers_used"`
@@ -58,6 +76,11 @@ type SessionRecord struct {
 	Screenshots   []string     `json:"screenshots"`
 	Coverage      CoverageData `json:"coverage"`
 	DPSSnapshots  []float64    `json:"dps_snapshots,omitempty"`
+
+	// 节奏与平衡指标
+	BossStats     []BossStat  `json:"boss_stats,omitempty"`      // Boss 存活时间统计
+	PaceStats     *PaceStat   `json:"pace_stats,omitempty"`      // 节奏指标
+	EconomyAlerts []string    `json:"economy_alerts,omitempty"`  // 经济断档事件
 
 	// 遥测覆盖
 	PipelineSteps      []string `json:"pipeline_steps,omitempty"`
@@ -102,21 +125,35 @@ type Recorder struct {
 	totalKills int
 	prevGold   int
 	prevLives  int
+
+	// Boss 追踪
+	activeBosses map[int]BossStat // enemyID -> spawn info
+	bossStats    []BossStat
+
+	// 节奏追踪
+	idleTicks   int
+	combatTicks int
+
+	// 经济断档追踪
+	econStallTicks int      // 连续"买不起最便宜塔"的帧数
+	econAlerts     []string // 断档事件描述
+	minTowerCost   int      // 最便宜的塔价格（首帧缓存）
 }
 
 // NewRecorder 创建对局数据记录器。
 func NewRecorder(sessionID, strategy, mapID, difficulty, warden string) *Recorder {
 	return &Recorder{
-		sessionID:      sessionID,
-		strategy:       strategy,
-		mapID:          mapID,
-		difficulty:     difficulty,
-		warden:         warden,
+		sessionID:        sessionID,
+		strategy:         strategy,
+		mapID:            mapID,
+		difficulty:       difficulty,
+		warden:           warden,
 		dpsSnapshots:     make([]float64, 0, 128),
 		towersUsed:       make(map[string]bool),
 		archetypesSeen:   make(map[string]bool),
 		abilitiesSeen:    make(map[string]bool),
 		attackStylesSeen: make(map[string]bool),
+		activeBosses:     make(map[int]BossStat),
 	}
 }
 
@@ -145,8 +182,86 @@ func (r *Recorder) OnTick(state *GameState, gameDT float64) {
 		r.waveLeaked += r.prevLives - state.Lives
 	}
 
+	// ── Boss 存活追踪 ──
+	r.trackBosses(state)
+
+	// ── 节奏追踪 ──
+	if state.WaveActive {
+		r.combatTicks++
+	} else if state.Wave > 0 { // 游戏已开始但当前无波
+		r.idleTicks++
+	}
+
+	// ── 经济断档追踪 ──
+	r.trackEconomyStall(state)
+
 	r.prevGold = state.Gold
 	r.prevLives = state.Lives
+}
+
+// trackBosses 追踪 Boss 出生和死亡。
+func (r *Recorder) trackBosses(state *GameState) {
+	activeIDs := make(map[int]bool)
+	for _, e := range state.Enemies {
+		if !e.Active {
+			continue
+		}
+		if e.Boss {
+			activeIDs[e.ID] = true
+			if _, tracked := r.activeBosses[e.ID]; !tracked {
+				r.activeBosses[e.ID] = BossStat{
+					Archetype: e.Archetype,
+					Wave:      state.Wave,
+					SpawnTick: state.Tick,
+				}
+			}
+		}
+	}
+	// 检测已死亡/消失的 Boss
+	for id, bs := range r.activeBosses {
+		if !activeIDs[id] {
+			bs.DeathTick = state.Tick
+			bs.AliveSeconds = float64(bs.DeathTick-bs.SpawnTick) / 60.0
+			switch {
+			case bs.AliveSeconds < 5:
+				bs.Verdict = "too_weak"
+			case bs.AliveSeconds > 60:
+				bs.Verdict = "too_strong"
+			default:
+				bs.Verdict = "ok"
+			}
+			r.bossStats = append(r.bossStats, bs)
+			delete(r.activeBosses, id)
+		}
+	}
+}
+
+// trackEconomyStall 检测经济断档（连续 15s 买不起最便宜的塔）。
+func (r *Recorder) trackEconomyStall(state *GameState) {
+	// 缓存最便宜塔价格
+	if r.minTowerCost == 0 && len(state.TowerDefs) > 0 {
+		r.minTowerCost = state.TowerDefs[0].Cost
+		for _, d := range state.TowerDefs[1:] {
+			if d.Cost < r.minTowerCost {
+				r.minTowerCost = d.Cost
+			}
+		}
+	}
+	if r.minTowerCost == 0 {
+		return
+	}
+
+	// 还有空位且买不起最便宜的塔
+	if len(state.BuildCells) > 0 && state.Gold < r.minTowerCost {
+		r.econStallTicks++
+		if r.econStallTicks == 900 { // 15s @60fps
+			r.econAlerts = append(r.econAlerts, fmt.Sprintf(
+				"wave=%d tick=%d: 连续 15s 金币(%d)不够最便宜的塔(%d)",
+				state.Wave, state.Tick, state.Gold, r.minTowerCost))
+		}
+	} else {
+		r.econStallTicks = 0
+	}
 }
 
 // RecordDamage 记录一次伤害（用于 DPS 计算）。
@@ -255,6 +370,38 @@ func (r *Recorder) Finalize(state *GameState, anomalies []Anomaly, screenshots [
 		Screenshots:   screenshots,
 		Coverage:      coverage,
 		DPSSnapshots:  r.dpsSnapshots,
+	}
+
+	// Boss 存活统计（含未死亡的 Boss 标记为 survived）
+	for _, bs := range r.activeBosses {
+		bs.AliveSeconds = float64(state.Tick-bs.SpawnTick) / 60.0
+		bs.Verdict = "survived"
+		r.bossStats = append(r.bossStats, bs)
+	}
+	if len(r.bossStats) > 0 {
+		rec.BossStats = r.bossStats
+	}
+
+	// 节奏指标
+	if r.combatTicks > 0 {
+		ratio := float64(r.idleTicks) / float64(r.combatTicks)
+		verdict := "ok"
+		if ratio > 3.0 {
+			verdict = "too_boring"
+		} else if ratio < 0.3 {
+			verdict = "too_intense"
+		}
+		rec.PaceStats = &PaceStat{
+			TotalIdleTicks:   r.idleTicks,
+			TotalCombatTicks: r.combatTicks,
+			IdleCombatRatio:  ratio,
+			Verdict:          verdict,
+		}
+	}
+
+	// 经济断档事件
+	if len(r.econAlerts) > 0 {
+		rec.EconomyAlerts = r.econAlerts
 	}
 
 	// 遥测数据

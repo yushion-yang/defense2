@@ -223,6 +223,11 @@ func NewStageSceneWithOpts(sw Switcher, opts StageOptions) *StageScene {
 	mode := gamemode.GetOrDefault(modeID)
 	session := gamemode.NewSession(mode)
 
+	// bossRush 模式：每波都出 Boss
+	if modeID == "bossRush" {
+		spawner.BossEveryWave = true
+	}
+
 	// 战灵：WardenType 为空表示需要在 Stage 内选择
 	var wardenUnit *warden.Warden
 	wardenReady := false
@@ -874,6 +879,9 @@ func (s *StageScene) updatePlaying() {
 		}
 		if enemy.MoveAlongPath(e, s.gameMap.Waypoints, gameDT) {
 			s.lives--
+			if s.lives < 0 {
+				s.lives = 0
+			}
 			s.enemies.KillImmediate(e) // leaked enemies vanish instantly, no dying anim
 			fx := s.postPipeline.Effects
 			fx.HitTintR, fx.HitTintG, fx.HitTintB = 1.0, 0.1, 0.1 // red flash on leak
@@ -2047,6 +2055,7 @@ func (s *StageScene) buildAutoPlaySnapshot() AutoPlaySnapshot {
 		InteractMode:    int(s.imode),
 		GameOver:        s.state != statePlaying,
 		Victory:         s.state == stateVictory,
+		WavesCleared:    s.wavesCleared,
 		TotalKills:      s.kills,
 		EnemyPoolCount:  s.enemies.Count,
 		ProjectileCount: s.projectiles.Count,
@@ -2080,6 +2089,7 @@ func (s *StageScene) buildAutoPlaySnapshot() AutoPlaySnapshot {
 			IsSlowed: e.SlowTimer > 0, IsStunned: e.StunTimer > 0,
 			IsBurning: e.BurnTimer > 0, IsBleeding: e.BleedTimer > 0,
 			IsRooted: e.RootTimer > 0,
+			IsHit:    e.HitFlash > 0,
 		})
 	})
 

@@ -37,6 +37,7 @@ type AutoPlaySnapshot struct {
 	TowerDefs    []AutoPlayTowerDef
 
 	// 扩展字段：用于深层异常检测
+	WavesCleared    int     // 已清除波次数（用于能力解锁回归检测）
 	TotalKills      int     // 累计击杀数
 	TotalLeaked     int     // 累计泄漏数（通过 lives 变化推算）
 	EnemyPoolCount  int     // 敌人池活跃数
@@ -68,6 +69,7 @@ type AutoPlayEnemy struct {
 	IsBurning  bool
 	IsBleeding bool
 	IsRooted   bool
+	IsHit      bool // HitFlash > 0（受击闪白）
 }
 
 // AutoPlayTower 已建塔快照。

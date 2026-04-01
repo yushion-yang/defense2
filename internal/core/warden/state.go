@@ -6,6 +6,7 @@ import (
 	"math"
 	"math/rand"
 
+	"defense2/internal/core/combat"
 	"defense2/internal/core/enemy"
 )
 
@@ -290,13 +291,23 @@ func ApplyDamage(ctx *TickContext, e *enemy.Enemy, dmg float64, crit bool) {
 	if e == nil || !e.Active || dmg <= 0 {
 		return
 	}
-	e.HP -= dmg
+	// 走伤害管线（免疫/减免/阈值/遥测统一处理）
+	r := combat.ProcessDamage(combat.DamageInput{
+		Target:      e,
+		RawDamage:   dmg,
+		DamageType:  combat.DmgPhysical,
+		SourceLabel: "warden",
+	})
+	finalDmg := r.FinalDamage
+	if r.Blocked {
+		finalDmg = 0
+	}
 	if ctx.OnDamage != nil {
-		ctx.OnDamage(e.X, e.Y-10, dmg, crit)
+		ctx.OnDamage(e.X, e.Y-10, finalDmg, crit)
 	}
 	// 不直接设 e.Active=false，由 TickEnemyStatusEffects 安全网调 Pool.Kill()
 	// 确保 Pool.Count 正确递减，否则 CheckVictory 永远不触发。
-	if e.HP <= 0 && e.Active {
+	if r.Killed && e.Active {
 		if ctx.OnKill != nil {
 			ctx.OnKill(e)
 		}

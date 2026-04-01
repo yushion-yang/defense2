@@ -63,6 +63,7 @@ type Spawner struct {
 	SpeedScale        float64                   // 难度速度倍率（默认 1.0）
 	ManualWave        bool                      // 手动开波模式：波间到 0 不自动开波，需外部调用 StartNextWave
 	FixedCount        int                       // >0 时每波固定该数量（不随波次递增）
+	BossEveryWave     bool                      // true 时每波末尾都出 Boss（bossRush 模式用）
 	bossQueued        bool                      // 本波是否需要在末尾追加 Boss
 }
 
@@ -201,7 +202,7 @@ func (s *Spawner) startWave() {
 	s.SpawnIndex = 0
 	s.SpawnTimer = 0
 	s.WaveActive = true
-	s.bossQueued = (s.Wave%5 == 0)
+	s.bossQueued = s.BossEveryWave || (s.Wave%5 == 0)
 }
 
 // WavePreviewEntry 下一波预览中的一种敌人。
@@ -223,7 +224,7 @@ func (s *Spawner) NextWavePreview() (entries []WavePreviewEntry, totalCount int,
 	if s.FixedCount > 0 {
 		count = s.FixedCount
 	}
-	isBoss = nextWave%5 == 0
+	isBoss = s.BossEveryWave || nextWave%5 == 0
 	if isBoss {
 		count++ // Boss 额外一个
 	}

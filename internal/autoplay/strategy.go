@@ -28,6 +28,7 @@ type GameState struct {
 	TowerDefs    []TowerDefInfo
 
 	// 扩展字段
+	WavesCleared    int
 	TotalKills      int
 	TotalLeaked     int
 	EnemyPoolCount  int
@@ -56,6 +57,7 @@ type EnemyInfo struct {
 	IsBurning  bool
 	IsBleeding bool
 	IsRooted   bool
+	IsHit      bool
 }
 
 // TowerInfo 已建塔快照。
