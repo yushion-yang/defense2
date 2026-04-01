@@ -19,7 +19,7 @@ import (
 
 // BuildInfoPanelVM constructs an InfoPanelVM from a tower and sell value.
 // If t is nil, returns a VM with Visible=false.
-func BuildInfoPanelVM(t *tower.Tower, sellValue int, wavesCleared int) hud.InfoPanelVM {
+func BuildInfoPanelVM(t *tower.Tower, sellValue int, wavesCleared int, testMode bool) hud.InfoPanelVM {
 	if t == nil {
 		return hud.InfoPanelVM{Visible: false}
 	}
@@ -98,7 +98,16 @@ func BuildInfoPanelVM(t *tower.Tower, sellValue int, wavesCleared int) hud.InfoP
 	}
 
 	// Pending ability count
-	vm.PendingCount = tower.PendingCount(t)
+	if testMode {
+		// 测试模式：显示空槽数（不依赖 PendingChoices 缓存）
+		for _, a := range t.AbilitySlots {
+			if a == "" {
+				vm.PendingCount++
+			}
+		}
+	} else {
+		vm.PendingCount = tower.PendingCount(t)
+	}
 
 	// Buttons
 	vm.UpgradeButtonText = fmt.Sprintf("强度+10 $%d", tower.StrengthBuyCost)

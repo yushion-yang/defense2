@@ -252,6 +252,16 @@ func (t *Tower) AvailableCategories() []int {
 	return result
 }
 
+// AllChoicesForCategory 返回指定类别的全部能力（不随机不截断），用于测试模式。
+func AllChoicesForCategory(cat int) []config.AbilityDef {
+	pool := AbilitiesForCategory(cat)
+	result := make([]config.AbilityDef, len(pool))
+	for i, p := range pool {
+		result[i] = *p
+	}
+	return result
+}
+
 // AbilitiesForCategory 返回指定类别中可选择的能力列表。
 func AbilitiesForCategory(category int) []*config.AbilityDef {
 	table := config.GlobalAbilityTable()

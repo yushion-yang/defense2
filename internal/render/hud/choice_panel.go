@@ -1,5 +1,6 @@
-// choice_panel.go — 通用选择面板（3 选 1 等）。
+// choice_panel.go — 通用选择面板（N 选 1）。
 // 居中覆盖层，显示 N 个选项卡片，支持品质配色和鼠标悬停。
+// 多选项（>5）时自动切换为双行网格布局+缩小卡片。
 package hud
 
 import (
@@ -20,13 +21,13 @@ type ChoiceOption struct {
 	Data        interface{} // 携带数据（调用方自行断言）
 }
 
-// ChoicePanel 通用选择面板（3 选 1 等）。
+// ChoicePanel 通用选择面板（N 选 1）。
 type ChoicePanel struct {
-	Title    string                              // 面板标题
-	Options  []ChoiceOption                      // 选项列表
-	OnSelect func(idx int, opt ChoiceOption)     // 选择回调
-	Active   bool                                // 是否激活
-	hovered  int                                 // 当前悬停索引(-1=无)
+	Title    string                          // 面板标题
+	Options  []ChoiceOption                  // 选项列表
+	OnSelect func(idx int, opt ChoiceOption) // 选择回调
+	Active   bool                            // 是否激活
+	hovered  int                             // 当前悬停索引(-1=无)
 }
 
 // 品质颜色映射。
@@ -43,14 +44,60 @@ var tierLabels = map[string]string{
 	"epic":   "史诗",
 }
 
-// 选项卡片布局常量。
-const (
-	cpCardW   = float32(220) // 卡片宽度
-	cpCardH   = float32(160) // 卡片高度
-	cpCardGap = float32(16)  // 卡片间距
-	cpCardR   = float32(10)  // 卡片圆角
-	cpCardPad = float32(10)  // 卡片内边距
-)
+// cardLayout 描述卡片布局参数（根据选项数量动态计算）。
+type cardLayout struct {
+	cardW, cardH float32 // 卡片尺寸
+	gap          float32 // 卡片间距
+	radius       float32 // 圆角半径
+	pad          float32 // 内边距
+	cols         int     // 每行列数
+	rows         int     // 行数
+	labelSize    float64 // 标签字号
+	descSize     float64 // 描述字号
+	tierSize     float64 // 品质标签字号
+}
+
+// cpMaxSingleRow 单行布局最大选项数。
+const cpMaxSingleRow = 5
+
+// calcLayout 根据选项数量计算布局参数。
+func calcLayout(n int) cardLayout {
+	if n <= cpMaxSingleRow {
+		return cardLayout{
+			cardW: 220, cardH: 160, gap: 16, radius: 10, pad: 10,
+			cols: n, rows: 1,
+			labelSize: theme.FontLG, descSize: theme.FontXS, tierSize: theme.FontXS,
+		}
+	}
+	// 双行网格布局
+	cols := (n + 1) / 2 // 上取整
+	return cardLayout{
+		cardW: 155, cardH: 120, gap: 10, radius: 8, pad: 8,
+		cols: cols, rows: 2,
+		labelSize: theme.FontSM, descSize: 9, tierSize: 9,
+	}
+}
+
+// cardPos 计算第 i 张卡片的位置。
+func (l *cardLayout) cardPos(n, i int) (x, y float32) {
+	row := i / l.cols
+	col := i % l.cols
+
+	// 该行实际有多少个卡片
+	rowCount := l.cols
+	if row == l.rows-1 && n%l.cols != 0 {
+		rowCount = n % l.cols
+	}
+
+	totalW := float32(rowCount)*l.cardW + float32(rowCount-1)*l.gap
+	startX := (float32(theme.CanvasW) - totalW) / 2
+	x = startX + float32(col)*(l.cardW+l.gap)
+
+	totalH := float32(l.rows)*l.cardH + float32(l.rows-1)*l.gap
+	startY := (float32(theme.CanvasH) - totalH) / 2
+	y = startY + float32(row)*(l.cardH+l.gap)
+	return x, y
+}
 
 // NewChoicePanel 创建通用选择面板。
 func NewChoicePanel() *ChoicePanel {
@@ -80,13 +127,14 @@ func (p *ChoicePanel) Update(mx, my float64, clicked bool) {
 	}
 
 	fmx, fmy := float32(mx), float32(my)
+	n := len(p.Options)
+	lay := calcLayout(n)
 
 	// 悬停检测
 	p.hovered = -1
-	n := len(p.Options)
 	for i := 0; i < n; i++ {
-		cx, cy := choiceCardPos(n, i)
-		if fmx >= cx && fmx <= cx+cpCardW && fmy >= cy && fmy <= cy+cpCardH {
+		cx, cy := lay.cardPos(n, i)
+		if fmx >= cx && fmx <= cx+lay.cardW && fmy >= cy && fmy <= cy+lay.cardH {
 			p.hovered = i
 			break
 		}
@@ -97,6 +145,10 @@ func (p *ChoicePanel) Update(mx, my float64, clicked bool) {
 		if p.hovered >= 0 && p.OnSelect != nil {
 			opt := p.Options[p.hovered]
 			p.OnSelect(p.hovered, opt)
+			// OnSelect 回调可能重新 Show() 了面板（如二级选择），此时不 Close
+			if p.Active {
+				return
+			}
 		}
 		p.Close()
 	}
@@ -114,19 +166,20 @@ func (p *ChoicePanel) Draw(screen *ebiten.Image) {
 	}
 
 	n := len(p.Options)
+	lay := calcLayout(n)
 
 	// 半透明遮罩
 	draw.RoundRect(screen, 0, 0, float32(theme.CanvasW), float32(theme.CanvasH), 0, theme.HUDGameOverlay)
 
 	// 标题
-	_, cardY := choiceCardPos(n, 0)
-	titleY := float64(cardY) - 40
+	_, cardY := lay.cardPos(n, 0)
+	titleY := float64(cardY) - 32
 	fm.DrawCenteredBoldText(screen, p.Title,
 		float64(theme.CanvasW)/2, titleY, theme.FontXL, theme.TextTitle)
 
 	// 选项卡片
 	for i, opt := range p.Options {
-		cx, cy := choiceCardPos(n, i)
+		cx, cy := lay.cardPos(n, i)
 		hovered := i == p.hovered
 
 		// 卡片背景
@@ -134,7 +187,7 @@ func (p *ChoicePanel) Draw(screen *ebiten.Image) {
 		if hovered {
 			cardBg = theme.TonePrimary
 		}
-		draw.RoundRect(screen, cx, cy, cpCardW, cpCardH, cpCardR, cardBg)
+		draw.RoundRect(screen, cx, cy, lay.cardW, lay.cardH, lay.radius, cardBg)
 
 		// 品质描边
 		tierClr := tierColor(opt.Tier)
@@ -142,28 +195,27 @@ func (p *ChoicePanel) Draw(screen *ebiten.Image) {
 		if hovered {
 			borderW = 2.5
 		}
-		draw.StrokeRoundRect(screen, cx, cy, cpCardW, cpCardH, cpCardR, borderW, tierClr)
+		draw.StrokeRoundRect(screen, cx, cy, lay.cardW, lay.cardH, lay.radius, borderW, tierClr)
+
+		centerX := float64(cx) + float64(lay.cardW)/2
 
 		// 品质标签（顶部）
-		tierLabelY := float64(cy) + 12
-		tierLabelClr := tierClr
+		tierLabelY := float64(cy) + 10
 		tierText := opt.Tier
 		if cn, ok := tierLabels[opt.Tier]; ok {
 			tierText = cn
 		}
-		fm.DrawCenteredText(screen, tierText,
-			float64(cx)+float64(cpCardW)/2, tierLabelY, theme.FontXS, tierLabelClr)
+		fm.DrawCenteredText(screen, tierText, centerX, tierLabelY, lay.tierSize, tierClr)
 
 		// 标签（卡片中部偏上）
-		labelY := float64(cy) + 40
-		fm.DrawCenteredBoldText(screen, opt.Label,
-			float64(cx)+float64(cpCardW)/2, labelY, theme.FontLG, theme.TextTitle)
+		labelY := float64(cy) + 30
+		fm.DrawCenteredBoldText(screen, opt.Label, centerX, labelY, lay.labelSize, theme.TextTitle)
 
 		// 描述（卡片下部，自动换行）
-		descY := float64(cy) + 72
-		maxW := float64(cpCardW - cpCardPad*2)
+		descY := float64(cy) + 52
+		maxW := float64(lay.cardW - lay.pad*2)
 		drawWrappedText(screen, fm, opt.Description,
-			float64(cx)+float64(cpCardPad), descY, maxW, theme.FontXS, theme.TextBody)
+			float64(cx)+float64(lay.pad), descY, maxW, lay.descSize, theme.TextBody)
 	}
 }
 
@@ -173,15 +225,6 @@ func (p *ChoicePanel) Close() {
 	p.Options = nil
 	p.OnSelect = nil
 	p.hovered = -1
-}
-
-// choiceCardPos 计算第 i 张选项卡片的位置（居中布局）。
-func choiceCardPos(n, i int) (x, y float32) {
-	totalW := float32(n)*cpCardW + float32(n-1)*cpCardGap
-	startX := (float32(theme.CanvasW) - totalW) / 2
-	x = startX + float32(i)*(cpCardW+cpCardGap)
-	y = (float32(theme.CanvasH) - cpCardH) / 2
-	return x, y
 }
 
 // tierColor 返回品质对应的颜色，默认为 normal。

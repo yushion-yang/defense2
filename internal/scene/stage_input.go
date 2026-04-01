@@ -581,6 +581,12 @@ func (s *StageScene) openAbilityChoicePanel() {
 	if t == nil {
 		return
 	}
+
+	if s.testMode {
+		s.openTestAbilityChoicePanel(t)
+		return
+	}
+
 	nextCat := tower.NextPendingCategory(t)
 	if nextCat < 0 {
 		return
@@ -611,6 +617,78 @@ func (s *StageScene) openAbilityChoicePanel() {
 		abilType, _ := opt.Data.(string)
 		if abilType != "" && t.AddAbility(abilType) {
 			tower.ClearPendingChoice(t, nextCat)
+			hud.ShowToast("获得能力: " + opt.Label)
+		}
+	})
+	s.imode = modeUpgrade
+}
+
+// openTestAbilityChoicePanel 测试模式：先选类别，再展示该类别全部能力。
+func (s *StageScene) openTestAbilityChoicePanel(t *tower.Tower) {
+	// 收集所有空槽类别
+	var emptyCats []int
+	for _, cat := range t.UnlockOrder {
+		if t.AbilitySlots[cat] == "" {
+			emptyCats = append(emptyCats, cat)
+		}
+	}
+	if len(emptyCats) == 0 {
+		hud.ShowToast("所有能力位已满")
+		return
+	}
+
+	// 只剩一个空槽：直接展示该类别全部能力
+	if len(emptyCats) == 1 {
+		s.openTestCategoryAbilities(t, emptyCats[0])
+		return
+	}
+
+	// 多个空槽：先让玩家选类别
+	opts := make([]hud.ChoiceOption, len(emptyCats))
+	for i, cat := range emptyCats {
+		count := len(tower.AbilitiesForCategory(cat))
+		opts[i] = hud.ChoiceOption{
+			Label:       tower.CategoryName(cat),
+			Description: fmt.Sprintf("共%d个能力可选", count),
+			Tier:        "normal",
+			Data:        cat,
+		}
+	}
+	s.choicePanel.Show("选择能力类别", opts, func(idx int, opt hud.ChoiceOption) {
+		cat, _ := opt.Data.(int)
+		s.openTestCategoryAbilities(t, cat)
+	})
+	s.imode = modeUpgrade
+}
+
+// openTestCategoryAbilities 测试模式：展示指定类别的全部能力供选择。
+func (s *StageScene) openTestCategoryAbilities(t *tower.Tower, cat int) {
+	choices := tower.AllChoicesForCategory(cat)
+	if len(choices) == 0 {
+		hud.ShowToast("该类别无可用能力")
+		return
+	}
+
+	var effStr float64
+	if t.Strength != nil {
+		effStr = t.Strength.Effective()
+	}
+	opts := make([]hud.ChoiceOption, len(choices))
+	for i, c := range choices {
+		desc := FormatAbilityDisplay(&c, effStr)
+		opts[i] = hud.ChoiceOption{
+			Label:       c.Label,
+			Description: desc,
+			Tier:        "normal",
+			Data:        c.Type,
+		}
+	}
+
+	catName := tower.CategoryName(cat)
+	s.choicePanel.Show("[测试] "+catName, opts, func(idx int, opt hud.ChoiceOption) {
+		abilType, _ := opt.Data.(string)
+		if abilType != "" && t.AddAbility(abilType) {
+			tower.ClearPendingChoice(t, cat)
 			hud.ShowToast("获得能力: " + opt.Label)
 		}
 	})

@@ -1477,7 +1477,7 @@ func (s *StageScene) drawScene(screen *ebiten.Image) {
 	if s.selectedTower != nil {
 		// 塔选中时显示塔信息面板（底部中央）
 		sellValue := s.econ.SellRefund(s.selectedTower.Cost)
-		vm := BuildInfoPanelVM(s.selectedTower, sellValue, s.wavesCleared)
+		vm := BuildInfoPanelVM(s.selectedTower, sellValue, s.wavesCleared, s.testMode)
 		hud.DrawInfoPanel(screen, vm)
 		// Hover 在面板上时显示升级详情浮窗
 		mx, my := draw.CursorPos()
