@@ -1,0 +1,12 @@
+//kage:unit pixels
+
+package main
+
+// Intensity scales the bloom contribution.
+var Intensity float
+
+func Fragment(dstPos vec4, srcPos vec2, color vec4) vec4 {
+	scene := imageSrc0At(srcPos)
+	bloom := imageSrc1At(srcPos)
+	return vec4(scene.rgb + bloom.rgb*Intensity, scene.a)
+}

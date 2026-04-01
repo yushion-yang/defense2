@@ -1,0 +1,15 @@
+//kage:unit pixels
+
+package main
+
+// Threshold is the luminance cutoff. Pixels below this are output as black.
+var Threshold float
+
+func Fragment(dstPos vec4, srcPos vec2, color vec4) vec4 {
+	src := imageSrc0At(srcPos)
+	lum := 0.2126*src.r + 0.7152*src.g + 0.0722*src.b
+	if lum > Threshold {
+		return src
+	}
+	return vec4(0, 0, 0, 0)
+}

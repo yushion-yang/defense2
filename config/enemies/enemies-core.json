@@ -1,21 +1,4 @@
 {
-  "_meta": {
-    "description": "Core enemy archetypes (Phase 1 simplification). Deleted types migrated to archetype + buff template combos.",
-    "migration": {
-      "berserker": "normal + berserk buff template",
-      "regenerator": "tank + regen buff template",
-      "elite": "tank + armorBuff + shielded stats via wave scaling",
-      "boss": "tank + bossPhase + bossReflect boss templates (use boss-templates.json)",
-      "mirror": "stealth + revive buff template",
-      "devoter": "tank + healAura buff template (onDeath variant)",
-      "reflector": "normal + reflect buff template",
-      "timewarp": "buffer + timewarp buff template",
-      "ironhide": "armored + damageReduce buff template",
-      "colossus": "tank + regen + damageReduce buff templates",
-      "steadfast": "runner + corruptImmune buff template (slowImmune variant)",
-      "ironwill": "armored + corruptImmune buff template (stunImmune variant)"
-    }
-  },
   "normal": {
     "label": "步兵",
     "color": "#ef4444",
@@ -59,7 +42,7 @@
     "speedScale": 1.02,
     "rewardScale": 0.94,
     "radius": 18,
-    "shieldScale": 0.82,
+    "shieldScale": 0,
     "description": "携带能量护盾的战斗单位。护盾值82%最大生命值，伤害优先扣护盾"
   },
   "swarm": {
@@ -139,7 +122,7 @@
   "dummy": {
     "label": "木桩",
     "color": "#78716c",
-    "hpScale": 200,
+    "hpScale": 10000,
     "speedScale": 0,
     "rewardScale": 0,
     "radius": 24,

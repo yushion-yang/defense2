@@ -1,0 +1,106 @@
+// pause_menu.go — 暂停菜单覆盖层。
+// 半透明遮罩 + 居中面板 + 继续/重新开始/返回主菜单三个按钮。
+package hud
+
+import (
+	"image/color"
+
+	"defense2/internal/core/game"
+	"defense2/internal/render"
+	"defense2/internal/render/draw"
+	"defense2/internal/render/theme"
+	"defense2/internal/render/ui"
+
+	"github.com/hajimehoshi/ebiten/v2"
+)
+
+// PauseMenuAction 暂停菜单按钮动作。
+const (
+	PauseNone    = 0
+	PauseResume  = 1
+	PauseRestart = 2
+	PauseQuit    = 3
+)
+
+const (
+	pausePanelW = float32(360)
+	pausePanelH = float32(300)
+	pauseBtnW   = float32(260)
+	pauseBtnH   = float32(46)
+	pauseBtnGap = float32(12)
+	pauseBtnR   = float32(12)
+)
+
+// DrawPauseMenu 渲染暂停菜单覆盖层。
+func DrawPauseMenu(screen *ebiten.Image) {
+	fm := render.GlobalFont()
+	if fm == nil {
+		return
+	}
+
+	sw := float32(game.ScreenWidth)
+	sh := float32(game.ScreenHeight)
+
+	// 半透明全屏遮罩
+	draw.RoundRect(screen, 0, 0, sw, sh, 0, color.RGBA{R: 0, G: 0, B: 0, A: 160})
+
+	// 居中面板
+	px := (sw - pausePanelW) / 2
+	py := (sh - pausePanelH) / 2
+	draw.RoundRect(screen, px, py, pausePanelW, pausePanelH, 14, color.RGBA{R: 18, G: 24, B: 42, A: 245})
+	draw.StrokeRoundRect(screen, px, py, pausePanelW, pausePanelH, 14, 1, color.RGBA{R: 60, G: 80, B: 120, A: 200})
+
+	// 标题
+	cx := float64(sw) / 2
+	titleY := float64(py) + 20
+	fm.DrawCenteredBoldText(screen, "游戏暂停", cx, titleY, 24, color.White)
+
+	// 三个按钮
+	btnX := (sw - pauseBtnW) / 2
+	btnY := py + 80
+
+	buttons := []struct {
+		label string
+		clr   color.RGBA
+	}{
+		{"继续游戏", theme.TonePrimary},
+		{"重新开始", color.RGBA{R: 220, G: 160, B: 50, A: 255}},
+		{"返回主菜单", theme.BtnDanger},
+	}
+
+	for _, btn := range buttons {
+		ui.Button(screen, float32(btnX), float32(btnY), float32(pauseBtnW), float32(pauseBtnH), btn.label, ui.ButtonStyle{
+			BgColor:   btn.clr,
+			TextColor: color.White,
+			FontSize:  18,
+			Radius:    pauseBtnR,
+			Bold:      true,
+		})
+		btnY += pauseBtnH + pauseBtnGap
+	}
+
+	// 底部快捷键提示
+	hintY := float64(py) + float64(pausePanelH) - 16
+	fm.DrawCenteredText(screen, "空格/Esc 继续 · S 开波 · B 建造 · 1/2/3 倍速 · Del 卖塔", cx, hintY, 11, color.RGBA{R: 120, G: 140, B: 170, A: 200})
+}
+
+// PauseMenuHitTest 检测暂停菜单点击，返回 PauseResume/PauseRestart/PauseQuit 或 PauseNone。
+func PauseMenuHitTest(px, py float32) int {
+	sw := float32(game.ScreenWidth)
+	sh := float32(game.ScreenHeight)
+	panelX := (sw - pausePanelW) / 2
+	panelY := (sh - pausePanelH) / 2
+
+	btnX := (sw - pauseBtnW) / 2
+	btnY := panelY + 80
+
+	_ = panelX
+
+	for i := 0; i < 3; i++ {
+		by := btnY + float32(i)*(pauseBtnH+pauseBtnGap)
+		if px >= btnX && px <= btnX+pauseBtnW && py >= by && py <= by+pauseBtnH {
+			return i + 1 // PauseResume=1, PauseRestart=2, PauseQuit=3
+		}
+	}
+	return PauseNone
+}

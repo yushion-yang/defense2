@@ -20,7 +20,7 @@ func (m *mockScene) Draw(_ *ebiten.Image) { m.drawCount++ }
 func TestGameSceneSwitch(t *testing.T) {
 	g := scene.NewGame()
 
-	// Initial scene should be set (TitleScene)
+	// Initial scene should be set (SelectScene)
 	if err := g.Update(); err != nil {
 		t.Fatalf("update failed: %v", err)
 	}

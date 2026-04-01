@@ -1,0 +1,24 @@
+//kage:unit pixels
+
+package main
+
+// Strength controls how dark the edges become (0 = off, 1 = very dark).
+var Strength float
+
+func Fragment(dstPos vec4, srcPos vec2, color vec4) vec4 {
+	src := imageSrc0At(srcPos)
+
+	// Compute UV normalized to -1..1 from image center.
+	origin := imageSrc0Origin()
+	size := imageSrc0Size()
+	center := origin + size/2
+	uv := (srcPos - center) / (size / 2)
+
+	// Distance from center (0 at center, ~1.41 at corners).
+	dist := length(uv)
+
+	// Darken edges via smoothstep ramp.
+	vignette := smoothstep(0.5, 1.2, dist) * Strength
+
+	return vec4(src.rgb*(1-vignette), src.a)
+}

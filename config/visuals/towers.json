@@ -1,0 +1,652 @@
+{
+  "_meta": {
+    "description": "Tower visual descriptions for generate-assets.mjs -- multi-frame SVG + PNG",
+    "type": "tower",
+    "viewBox": "0 0 128 128",
+    "outputSize": 128,
+    "animations": {
+      "idle": { "frames": 2, "fps": 2 },
+      "attack": { "frames": 3, "fps": 8 }
+    },
+    "naming": {
+      "sentinel": "basic tower (no ability chosen yet)",
+      "fortress": "enhance -- all stats boost",
+      "shotgun":  "scatter -- cone pellets",
+      "prism":    "wideBeam -- penetrating beam",
+      "cyclone":  "spinAoe -- spinning area damage",
+      "railgun":  "pierce -- piercing shots",
+      "ricochet": "bounce -- chain lightning bounces",
+      "mortar":   "splash -- area explosion",
+      "hydra":    "multiTarget -- simultaneous multi-target",
+      "nova":     "radial -- 360-degree burst"
+    }
+  },
+
+  "sentinel": {
+    "name": "Sentinel",
+    "label": "哨兵",
+    "description": "Simple grey-white watchtower. Clean circular base with a single slim barrel, minimal adornment. The starting tower before any ability is chosen.",
+    "palette": {
+      "primary": "#94a3b8",
+      "secondary": "#64748b",
+      "accent": "#cbd5e1",
+      "dark": "#334155",
+      "glow": "#94a3b8",
+      "highlight": "#e2e8f0"
+    },
+    "base": {
+      "type": "circle",
+      "cx": 64, "cy": 80, "r": 34,
+      "gradient": { "type": "radial", "stops": [
+        { "offset": "0%", "color": "#64748b" },
+        { "offset": "70%", "color": "#475569" },
+        { "offset": "100%", "color": "#334155" }
+      ]},
+      "stroke": "#94a3b8", "strokeWidth": 1.5,
+      "innerRing": { "r": 24, "stroke": "#475569", "strokeWidth": 1, "opacity": 0.4 }
+    },
+    "turret": {
+      "type": "barrel",
+      "rect": { "x": 58, "y": 32, "width": 12, "height": 38, "rx": 3 },
+      "gradient": { "type": "linear", "y1": "0%", "y2": "100%", "stops": [
+        { "offset": "0%", "color": "#94a3b8" },
+        { "offset": "100%", "color": "#334155" }
+      ]},
+      "lens": { "cx": 64, "cy": 30, "r": 6, "color": "#cbd5e1", "opacity": 0.85,
+        "innerR": 3, "innerColor": "#e2e8f0" }
+    },
+    "core": {
+      "cx": 64, "cy": 68, "r": 4,
+      "color": "#cbd5e1", "opacity": 0.8,
+      "innerR": 2, "innerColor": "#e2e8f0"
+    },
+    "effects": [
+      { "type": "glow-halo", "cx": 64, "cy": 30, "r": 12, "color": "#94a3b8", "opacity": 0.2 }
+    ],
+    "animations": {
+      "idle": { "transforms": [
+        { "target": "core", "property": "opacity", "values": [0.8, 0.5] },
+        { "target": "effects", "property": "opacity", "values": [0.2, 0.1] }
+      ]},
+      "attack": { "transforms": [
+        { "target": "turret", "property": "translateY", "values": [0, -3, 1] },
+        { "target": "effects", "property": "opacity", "values": [0.2, 0.8, 0.15] }
+      ]}
+    }
+  },
+
+  "fortress": {
+    "name": "Fortress",
+    "label": "堡垒",
+    "description": "Steel-blue armored stronghold. Reinforced square base with corner brackets, a thick heavy barrel with armored side plates and a shielding lens. Radiates durability.",
+    "palette": {
+      "primary": "#3b82f6",
+      "secondary": "#2563eb",
+      "accent": "#93c5fd",
+      "dark": "#1e3a5f",
+      "glow": "#3b82f6",
+      "highlight": "#dbeafe"
+    },
+    "base": {
+      "type": "square",
+      "cx": 64, "cy": 86, "size": 66, "rx": 6,
+      "gradient": { "type": "radial", "stops": [
+        { "offset": "0%", "color": "#2563eb" },
+        { "offset": "70%", "color": "#1d4ed8" },
+        { "offset": "100%", "color": "#1e3a5f" }
+      ]},
+      "stroke": "#93c5fd", "strokeWidth": 2,
+      "cornerBrackets": {
+        "size": 12, "width": 2.5,
+        "color": "#93c5fd", "opacity": 0.6
+      }
+    },
+    "turret": {
+      "type": "heavy-barrel",
+      "rect": { "x": 50, "y": 26, "width": 28, "height": 46, "rx": 5 },
+      "gradient": { "type": "linear", "y1": "0%", "y2": "100%", "stops": [
+        { "offset": "0%", "color": "#3b82f6" },
+        { "offset": "50%", "color": "#2563eb" },
+        { "offset": "100%", "color": "#1e3a5f" }
+      ]},
+      "sideRails": [
+        { "x": 46, "y": 36, "width": 4, "height": 28, "rx": 2, "color": "#1d4ed8" },
+        { "x": 78, "y": 36, "width": 4, "height": 28, "rx": 2, "color": "#1d4ed8" }
+      ]
+    },
+    "core": {
+      "cx": 64, "cy": 26, "r": 7,
+      "color": "#93c5fd", "opacity": 0.9,
+      "innerR": 4, "innerColor": "#dbeafe"
+    },
+    "effects": [
+      { "type": "glow-halo", "cx": 64, "cy": 26, "r": 16, "color": "#3b82f6", "opacity": 0.3 },
+      { "type": "glow-halo", "cx": 64, "cy": 64, "r": 10, "color": "#3b82f6", "opacity": 0.15 }
+    ],
+    "animations": {
+      "idle": { "transforms": [
+        { "target": "core", "property": "opacity", "values": [0.9, 0.55] },
+        { "target": "effects", "property": "opacity", "values": [0.3, 0.12] }
+      ]},
+      "attack": { "transforms": [
+        { "target": "turret", "property": "translateY", "values": [0, -5, 2] },
+        { "target": "effects", "property": "opacity", "values": [0.3, 1.0, 0.15] }
+      ]}
+    }
+  },
+
+  "shotgun": {
+    "name": "Shotgun",
+    "label": "霰弹",
+    "description": "Teal triangular scatter cannon. Inverted-triangle base with three fan-spread barrels at 30-degree angles, pellet dots glowing at each muzzle.",
+    "palette": {
+      "primary": "#5eead4",
+      "secondary": "#2dd4bf",
+      "accent": "#99f6e4",
+      "dark": "#134e4a",
+      "glow": "#5eead4",
+      "highlight": "#ccfbf1"
+    },
+    "base": {
+      "type": "triangle",
+      "points": [64, 104, 22, 78, 106, 78],
+      "gradient": { "type": "linear", "y1": "0%", "y2": "100%", "stops": [
+        { "offset": "0%", "color": "#2dd4bf" },
+        { "offset": "100%", "color": "#134e4a" }
+      ]},
+      "stroke": "#99f6e4", "strokeWidth": 1.5,
+      "innerTriangle": {
+        "points": [64, 96, 34, 80, 94, 80],
+        "stroke": "#0d9488", "strokeWidth": 1, "opacity": 0.35
+      }
+    },
+    "turret": {
+      "type": "triple-barrel-fan",
+      "hub": { "cx": 64, "cy": 72, "r": 8, "color": "#2dd4bf" },
+      "barrels": [
+        { "x1": 64, "y1": 72, "x2": 40, "y2": 24, "width": 5 },
+        { "x1": 64, "y1": 72, "x2": 64, "y2": 16, "width": 6 },
+        { "x1": 64, "y1": 72, "x2": 88, "y2": 24, "width": 5 }
+      ],
+      "gradient": { "type": "linear", "y1": "0%", "y2": "100%", "stops": [
+        { "offset": "0%", "color": "#5eead4" },
+        { "offset": "100%", "color": "#134e4a" }
+      ]}
+    },
+    "core": {
+      "cx": 64, "cy": 72, "r": 5,
+      "color": "#99f6e4", "opacity": 0.9,
+      "innerR": 3, "innerColor": "#ccfbf1"
+    },
+    "effects": [
+      { "type": "pellet-dots", "color": "#99f6e4", "pellets": [
+        { "cx": 40, "cy": 24, "r": 4, "opacity": 0.75 },
+        { "cx": 64, "cy": 16, "r": 4, "opacity": 0.85 },
+        { "cx": 88, "cy": 24, "r": 4, "opacity": 0.75 }
+      ]},
+      { "type": "pellet-dots", "color": "#ccfbf1", "pellets": [
+        { "cx": 40, "cy": 24, "r": 2, "opacity": 0.5 },
+        { "cx": 64, "cy": 16, "r": 2, "opacity": 0.6 },
+        { "cx": 88, "cy": 24, "r": 2, "opacity": 0.5 }
+      ]}
+    ],
+    "animations": {
+      "idle": { "transforms": [
+        { "target": "core", "property": "opacity", "values": [0.9, 0.55] },
+        { "target": "effects", "property": "opacity", "values": [0.75, 0.35] }
+      ]},
+      "attack": { "transforms": [
+        { "target": "turret", "property": "translateY", "values": [0, -4, 2] },
+        { "target": "effects", "property": "opacity", "values": [0.5, 1.0, 0.15] }
+      ]}
+    }
+  },
+
+  "prism": {
+    "name": "Prism",
+    "label": "棱光",
+    "description": "Orange-gold wide-beam emitter. Oval armored base supports a trapezoidal emitter housing that narrows to a wide horizontal slit, firing fan-shaped energy waves.",
+    "palette": {
+      "primary": "#f97316",
+      "secondary": "#ea580c",
+      "accent": "#fed7aa",
+      "dark": "#9a3412",
+      "glow": "#f97316",
+      "highlight": "#fff7ed"
+    },
+    "base": {
+      "type": "oval",
+      "cx": 64, "cy": 84, "rx": 42, "ry": 24,
+      "gradient": { "type": "radial", "stops": [
+        { "offset": "0%", "color": "#ea580c" },
+        { "offset": "70%", "color": "#c2410c" },
+        { "offset": "100%", "color": "#9a3412" }
+      ]},
+      "stroke": "#fed7aa", "strokeWidth": 1.5,
+      "innerOval": { "rx": 30, "ry": 14, "stroke": "#c2410c", "strokeWidth": 1, "opacity": 0.4 }
+    },
+    "turret": {
+      "type": "wide-emitter",
+      "trapezoid": { "points": [42, 64, 86, 64, 76, 30, 52, 30] },
+      "gradient": { "type": "linear", "y1": "0%", "y2": "100%", "stops": [
+        { "offset": "0%", "color": "#f97316" },
+        { "offset": "50%", "color": "#ea580c" },
+        { "offset": "100%", "color": "#9a3412" }
+      ]},
+      "emitterSlot": {
+        "x": 50, "y": 28, "width": 28, "height": 5, "rx": 2,
+        "color": "#fed7aa", "opacity": 0.85,
+        "innerSlot": { "x": 54, "y": 29, "width": 20, "height": 3, "rx": 1, "color": "#fff7ed", "opacity": 0.6 }
+      }
+    },
+    "core": {
+      "cx": 64, "cy": 50, "rx": 12, "ry": 3,
+      "type": "horizontal-glow",
+      "color": "#fed7aa", "opacity": 0.85
+    },
+    "effects": [
+      { "type": "spread-indicators", "color": "#f97316", "lines": [
+        { "x1": 52, "y1": 28, "x2": 36, "y2": 10, "strokeWidth": 1.5, "opacity": 0.5 },
+        { "x1": 64, "y1": 28, "x2": 64, "y2": 8, "strokeWidth": 2, "opacity": 0.6 },
+        { "x1": 76, "y1": 28, "x2": 92, "y2": 10, "strokeWidth": 1.5, "opacity": 0.5 }
+      ]},
+      { "type": "glow-halo", "cx": 64, "cy": 28, "r": 18, "color": "#f97316", "opacity": 0.2 }
+    ],
+    "animations": {
+      "idle": { "transforms": [
+        { "target": "core", "property": "opacity", "values": [0.85, 0.5] },
+        { "target": "effects", "property": "opacity", "values": [0.5, 0.2] }
+      ]},
+      "attack": { "transforms": [
+        { "target": "turret", "property": "translateY", "values": [0, -3, 1] },
+        { "target": "effects", "property": "opacity", "values": [0.5, 1.0, 0.3] }
+      ]}
+    }
+  },
+
+  "cyclone": {
+    "name": "Cyclone",
+    "label": "旋刃",
+    "description": "Silver-white spinning blade tower. Circular base with a four-pointed star blade rotating at high speed, motion arc trails showing spin trajectory.",
+    "palette": {
+      "primary": "#e2e8f0",
+      "secondary": "#94a3b8",
+      "accent": "#f1f5f9",
+      "dark": "#334155",
+      "glow": "#cbd5e1",
+      "highlight": "#f8fafc"
+    },
+    "base": {
+      "type": "circle",
+      "cx": 64, "cy": 82, "r": 36,
+      "gradient": { "type": "radial", "stops": [
+        { "offset": "0%", "color": "#94a3b8" },
+        { "offset": "70%", "color": "#64748b" },
+        { "offset": "100%", "color": "#334155" }
+      ]},
+      "stroke": "#e2e8f0", "strokeWidth": 1.5,
+      "innerRing": { "r": 26, "stroke": "#64748b", "strokeWidth": 1, "opacity": 0.4 }
+    },
+    "turret": {
+      "type": "spinning-blade",
+      "blade": {
+        "type": "four-pointed-star",
+        "cx": 64, "cy": 52,
+        "outerR": 30, "innerR": 12,
+        "gradient": { "type": "linear", "x1": "0%", "y1": "0%", "x2": "100%", "y2": "100%", "stops": [
+          { "offset": "0%", "color": "#f1f5f9" },
+          { "offset": "50%", "color": "#e2e8f0" },
+          { "offset": "100%", "color": "#94a3b8" }
+        ]},
+        "stroke": "#94a3b8", "strokeWidth": 1
+      }
+    },
+    "core": {
+      "cx": 64, "cy": 52, "r": 8,
+      "color": "#f1f5f9", "opacity": 0.9,
+      "innerR": 4, "innerColor": "#94a3b8",
+      "ring": { "r": 6, "stroke": "#cbd5e1", "strokeWidth": 1 }
+    },
+    "effects": [
+      { "type": "motion-arcs", "color": "#cbd5e1", "arcs": [
+        { "cx": 64, "cy": 52, "r": 28, "startAngle": 0, "sweepAngle": 60, "strokeWidth": 1.8, "opacity": 0.4 },
+        { "cx": 64, "cy": 52, "r": 34, "startAngle": 120, "sweepAngle": 50, "strokeWidth": 1.4, "opacity": 0.3 },
+        { "cx": 64, "cy": 52, "r": 22, "startAngle": 230, "sweepAngle": 55, "strokeWidth": 1.2, "opacity": 0.25 }
+      ]}
+    ],
+    "animations": {
+      "idle": { "transforms": [
+        { "target": "core", "property": "opacity", "values": [0.9, 0.65] },
+        { "target": "effects", "property": "opacity", "values": [0.4, 0.15] }
+      ]},
+      "attack": { "transforms": [
+        { "target": "turret", "property": "rotate", "values": [0, 45, 90] },
+        { "target": "effects", "property": "opacity", "values": [0.4, 0.85, 0.4] }
+      ]}
+    }
+  },
+
+  "railgun": {
+    "name": "Railgun",
+    "label": "穿甲",
+    "description": "Military green precision platform. Square base with reinforced corner brackets, twin precision barrels with targeting scope and crosshair core.",
+    "palette": {
+      "primary": "#22c55e",
+      "secondary": "#16a34a",
+      "accent": "#86efac",
+      "dark": "#14532d",
+      "glow": "#22c55e",
+      "highlight": "#dcfce7"
+    },
+    "base": {
+      "type": "square",
+      "cx": 64, "cy": 88, "size": 64, "rx": 5,
+      "gradient": { "type": "radial", "stops": [
+        { "offset": "0%", "color": "#16a34a" },
+        { "offset": "70%", "color": "#15803d" },
+        { "offset": "100%", "color": "#14532d" }
+      ]},
+      "stroke": "#86efac", "strokeWidth": 1.5,
+      "cornerBrackets": {
+        "size": 10, "width": 2,
+        "color": "#86efac", "opacity": 0.6
+      }
+    },
+    "turret": {
+      "type": "twin-barrels",
+      "barrels": [
+        { "x": 56, "y": 24, "width": 5, "height": 44, "rx": 2 },
+        { "x": 67, "y": 24, "width": 5, "height": 44, "rx": 2 }
+      ],
+      "gradient": { "type": "linear", "y1": "0%", "y2": "100%", "stops": [
+        { "offset": "0%", "color": "#22c55e" },
+        { "offset": "100%", "color": "#14532d" }
+      ]},
+      "scope": {
+        "cx": 64, "cy": 22, "r": 9,
+        "stroke": "#86efac", "strokeWidth": 1.5, "fill": "none",
+        "crossLines": [
+          { "x1": 64, "y1": 14, "x2": 64, "y2": 30 },
+          { "x1": 56, "y1": 22, "x2": 72, "y2": 22 }
+        ],
+        "crossColor": "#86efac", "crossWidth": 1, "crossOpacity": 0.7
+      }
+    },
+    "core": {
+      "cx": 64, "cy": 68, "r": 6,
+      "type": "crosshair",
+      "crossLines": [
+        { "x1": 64, "y1": 62, "x2": 64, "y2": 74 },
+        { "x1": 58, "y1": 68, "x2": 70, "y2": 68 }
+      ],
+      "ringR": 6,
+      "color": "#86efac", "lineWidth": 1.5, "opacity": 0.85
+    },
+    "effects": [
+      { "type": "targeting-lines", "color": "#86efac", "opacity": 0.4, "lines": [
+        { "x1": 64, "y1": 12, "x2": 64, "y2": 8 },
+        { "x1": 54, "y1": 22, "x2": 50, "y2": 22 },
+        { "x1": 74, "y1": 22, "x2": 78, "y2": 22 }
+      ], "lineWidth": 1 }
+    ],
+    "animations": {
+      "idle": { "transforms": [
+        { "target": "core", "property": "opacity", "values": [0.85, 0.55] },
+        { "target": "effects", "property": "opacity", "values": [0.4, 0.2] }
+      ]},
+      "attack": { "transforms": [
+        { "target": "turret", "property": "translateY", "values": [0, -5, 3] },
+        { "target": "effects", "property": "opacity", "values": [0.4, 1.0, 0.2] }
+      ]}
+    }
+  },
+
+  "ricochet": {
+    "name": "Ricochet",
+    "label": "链弹",
+    "description": "Purple Tesla coil on a ring-shaped platform. Stacked elliptical coils taper upward to a discharge sphere crackling with lightning arcs. Energy bounces between targets.",
+    "palette": {
+      "primary": "#a855f7",
+      "secondary": "#7c3aed",
+      "accent": "#d8b4fe",
+      "dark": "#581c87",
+      "glow": "#a855f7",
+      "highlight": "#ede9fe"
+    },
+    "base": {
+      "type": "circle-with-ring",
+      "cx": 64, "cy": 82, "r": 32,
+      "ringR": 40, "ringStrokeWidth": 2.5,
+      "gradient": { "type": "radial", "stops": [
+        { "offset": "0%", "color": "#7c3aed" },
+        { "offset": "70%", "color": "#6d28d9" },
+        { "offset": "100%", "color": "#581c87" }
+      ]},
+      "ringColor": "#d8b4fe", "ringOpacity": 0.45,
+      "stroke": "#d8b4fe", "strokeWidth": 1
+    },
+    "turret": {
+      "type": "tesla-coil",
+      "spine": { "x": 64, "y1": 72, "y2": 30, "width": 5, "color": "#7c3aed" },
+      "coils": [
+        { "cx": 64, "cy": 68, "rx": 18, "ry": 5, "strokeWidth": 2.5 },
+        { "cx": 64, "cy": 56, "rx": 14, "ry": 4, "strokeWidth": 2 },
+        { "cx": 64, "cy": 46, "rx": 10, "ry": 3.5, "strokeWidth": 1.5 },
+        { "cx": 64, "cy": 38, "rx": 7, "ry": 3, "strokeWidth": 1.2 }
+      ],
+      "coilColor": "#a855f7", "coilStroke": "#d8b4fe",
+      "sphere": { "cx": 64, "cy": 28, "r": 9,
+        "color": "#d8b4fe", "opacity": 0.95,
+        "innerR": 5, "innerColor": "#ede9fe" }
+    },
+    "core": {
+      "cx": 64, "cy": 28, "r": 5,
+      "color": "#ede9fe", "opacity": 0.9
+    },
+    "effects": [
+      { "type": "lightning-arcs", "color": "#d8b4fe", "arcs": [
+        { "path": "M72,28 Q80,20 76,14 L86,8", "strokeWidth": 1.8, "opacity": 0.7 },
+        { "path": "M56,28 Q48,22 52,14 L42,10", "strokeWidth": 1.8, "opacity": 0.6 },
+        { "path": "M64,20 Q62,12 66,6", "strokeWidth": 1.3, "opacity": 0.5 }
+      ]},
+      { "type": "glow-halo", "cx": 64, "cy": 28, "r": 18, "color": "#a855f7", "opacity": 0.25 }
+    ],
+    "animations": {
+      "idle": { "transforms": [
+        { "target": "core", "property": "opacity", "values": [0.9, 0.45] },
+        { "target": "effects", "property": "opacity", "values": [0.7, 0.25] }
+      ]},
+      "attack": { "transforms": [
+        { "target": "turret", "property": "translateY", "values": [0, -2, 1] },
+        { "target": "effects", "property": "opacity", "values": [0.5, 1.0, 0.15] }
+      ]}
+    }
+  },
+
+  "mortar": {
+    "name": "Mortar",
+    "label": "轰炸",
+    "description": "Deep crimson siege cannon. Circular reinforced base with a short wide mortar barrel angled upward, topped by a glowing blast lens. Built for area devastation.",
+    "palette": {
+      "primary": "#ef4444",
+      "secondary": "#dc2626",
+      "accent": "#fca5a5",
+      "dark": "#7f1d1d",
+      "glow": "#ef4444",
+      "highlight": "#fecaca"
+    },
+    "base": {
+      "type": "circle",
+      "cx": 64, "cy": 80, "r": 38,
+      "gradient": { "type": "radial", "stops": [
+        { "offset": "0%", "color": "#dc2626" },
+        { "offset": "70%", "color": "#b91c1c" },
+        { "offset": "100%", "color": "#7f1d1d" }
+      ]},
+      "stroke": "#fca5a5", "strokeWidth": 2,
+      "innerRing": { "r": 28, "stroke": "#b91c1c", "strokeWidth": 1.5, "opacity": 0.5 }
+    },
+    "turret": {
+      "type": "barrel",
+      "rect": { "x": 52, "y": 36, "width": 24, "height": 32, "rx": 5 },
+      "gradient": { "type": "linear", "y1": "0%", "y2": "100%", "stops": [
+        { "offset": "0%", "color": "#ef4444" },
+        { "offset": "50%", "color": "#dc2626" },
+        { "offset": "100%", "color": "#7f1d1d" }
+      ]},
+      "muzzleFlare": { "x": 50, "y": 32, "width": 28, "height": 6, "rx": 3, "color": "#dc2626" },
+      "lens": { "cx": 64, "cy": 34, "r": 9, "color": "#fca5a5", "opacity": 0.95,
+        "innerR": 5, "innerColor": "#fecaca" }
+    },
+    "core": {
+      "cx": 64, "cy": 68, "r": 6,
+      "color": "#fca5a5", "opacity": 0.85,
+      "innerR": 3, "innerColor": "#fecaca"
+    },
+    "effects": [
+      { "type": "glow-halo", "cx": 64, "cy": 34, "r": 18, "color": "#ef4444", "opacity": 0.35 },
+      { "type": "glow-halo", "cx": 64, "cy": 68, "r": 10, "color": "#ef4444", "opacity": 0.15 }
+    ],
+    "animations": {
+      "idle": { "transforms": [
+        { "target": "core", "property": "opacity", "values": [0.85, 0.5] },
+        { "target": "effects", "property": "opacity", "values": [0.35, 0.15] },
+        { "target": "lens", "property": "opacity", "values": [0.95, 0.7] }
+      ]},
+      "attack": { "transforms": [
+        { "target": "turret", "property": "translateY", "values": [0, -6, 3] },
+        { "target": "effects", "property": "opacity", "values": [0.35, 1.0, 0.2] },
+        { "target": "lens", "property": "opacity", "values": [0.95, 1.0, 0.6] }
+      ]}
+    }
+  },
+
+  "hydra": {
+    "name": "Hydra",
+    "label": "多管",
+    "description": "Deep gold multi-barrel weapons platform. Hexagonal base supports a central hub with four barrels radiating outward at slight angles, each independently targeting.",
+    "palette": {
+      "primary": "#eab308",
+      "secondary": "#ca8a04",
+      "accent": "#fef08a",
+      "dark": "#713f12",
+      "glow": "#eab308",
+      "highlight": "#fefce8"
+    },
+    "base": {
+      "type": "hexagon",
+      "cx": 64, "cy": 82, "r": 38,
+      "gradient": { "type": "radial", "stops": [
+        { "offset": "0%", "color": "#ca8a04" },
+        { "offset": "70%", "color": "#a16207" },
+        { "offset": "100%", "color": "#713f12" }
+      ]},
+      "stroke": "#fef08a", "strokeWidth": 1.5,
+      "innerHex": { "r": 26, "stroke": "#a16207", "strokeWidth": 1, "opacity": 0.4 }
+    },
+    "turret": {
+      "type": "triple-barrel-fan",
+      "hub": { "cx": 64, "cy": 68, "r": 10, "color": "#ca8a04" },
+      "barrels": [
+        { "x1": 64, "y1": 68, "x2": 36, "y2": 24, "width": 5 },
+        { "x1": 64, "y1": 68, "x2": 64, "y2": 16, "width": 6 },
+        { "x1": 64, "y1": 68, "x2": 92, "y2": 24, "width": 5 }
+      ],
+      "gradient": { "type": "linear", "y1": "0%", "y2": "100%", "stops": [
+        { "offset": "0%", "color": "#eab308" },
+        { "offset": "50%", "color": "#ca8a04" },
+        { "offset": "100%", "color": "#713f12" }
+      ]}
+    },
+    "core": {
+      "cx": 64, "cy": 68, "r": 7,
+      "color": "#fef08a", "opacity": 0.9,
+      "innerR": 4, "innerColor": "#fefce8"
+    },
+    "effects": [
+      { "type": "pellet-dots", "color": "#fef08a", "pellets": [
+        { "cx": 36, "cy": 24, "r": 4, "opacity": 0.7 },
+        { "cx": 64, "cy": 16, "r": 4, "opacity": 0.8 },
+        { "cx": 92, "cy": 24, "r": 4, "opacity": 0.7 }
+      ]},
+      { "type": "glow-halo", "cx": 64, "cy": 68, "r": 16, "color": "#eab308", "opacity": 0.2 }
+    ],
+    "animations": {
+      "idle": { "transforms": [
+        { "target": "core", "property": "opacity", "values": [0.9, 0.55] },
+        { "target": "effects", "property": "opacity", "values": [0.7, 0.3] }
+      ]},
+      "attack": { "transforms": [
+        { "target": "turret", "property": "translateY", "values": [0, -4, 2] },
+        { "target": "effects", "property": "opacity", "values": [0.5, 1.0, 0.2] }
+      ]}
+    }
+  },
+
+  "nova": {
+    "name": "Nova",
+    "label": "星爆",
+    "description": "Amber radial emitter. Double-ring reinforced base with a massive central energy orb, surrounded by dashed charging rings and swirling vortex arcs. Fires 360-degree bursts.",
+    "palette": {
+      "primary": "#f59e0b",
+      "secondary": "#d97706",
+      "accent": "#fde68a",
+      "dark": "#78350f",
+      "glow": "#f59e0b",
+      "highlight": "#fef3c7"
+    },
+    "base": {
+      "type": "double-ring",
+      "cx": 64, "cy": 82,
+      "innerR": 28, "outerR": 38,
+      "gradient": { "type": "radial", "stops": [
+        { "offset": "0%", "color": "#d97706" },
+        { "offset": "70%", "color": "#b45309" },
+        { "offset": "100%", "color": "#78350f" }
+      ]},
+      "innerStroke": "#fde68a", "innerStrokeWidth": 1.5,
+      "outerStroke": "#f59e0b", "strokeWidth": 2.5
+    },
+    "turret": {
+      "type": "heavy-barrel",
+      "rect": { "x": 52, "y": 24, "width": 24, "height": 48, "rx": 5 },
+      "gradient": { "type": "linear", "y1": "0%", "y2": "100%", "stops": [
+        { "offset": "0%", "color": "#f59e0b" },
+        { "offset": "50%", "color": "#d97706" },
+        { "offset": "100%", "color": "#78350f" }
+      ]},
+      "sideRails": [
+        { "x": 48, "y": 36, "width": 4, "height": 28, "rx": 2, "color": "#b45309" },
+        { "x": 76, "y": 36, "width": 4, "height": 28, "rx": 2, "color": "#b45309" }
+      ],
+      "chargingRing": {
+        "cx": 64, "cy": 42, "r": 20,
+        "strokeWidth": 2.5, "stroke": "#fde68a",
+        "dasharray": "8 4", "opacity": 0.55
+      }
+    },
+    "core": {
+      "cx": 64, "cy": 24, "r": 9,
+      "color": "#fde68a", "opacity": 0.95,
+      "innerR": 5, "innerColor": "#fef3c7"
+    },
+    "effects": [
+      { "type": "energy-vortex", "cx": 64, "cy": 24, "r": 16, "color": "#f59e0b", "arcs": [
+        { "startAngle": 0, "sweepAngle": 80, "strokeWidth": 2, "opacity": 0.6 },
+        { "startAngle": 120, "sweepAngle": 80, "strokeWidth": 2, "opacity": 0.5 },
+        { "startAngle": 240, "sweepAngle": 80, "strokeWidth": 2, "opacity": 0.4 }
+      ]},
+      { "type": "glow-halo", "cx": 64, "cy": 24, "r": 22, "color": "#f59e0b", "opacity": 0.3 }
+    ],
+    "animations": {
+      "idle": { "transforms": [
+        { "target": "core", "property": "opacity", "values": [0.95, 0.6] },
+        { "target": "effects", "property": "opacity", "values": [0.6, 0.25] }
+      ]},
+      "attack": { "transforms": [
+        { "target": "turret", "property": "translateY", "values": [0, -6, 3] },
+        { "target": "effects", "property": "opacity", "values": [0.5, 1.0, 0.15] }
+      ]}
+    }
+  }
+}

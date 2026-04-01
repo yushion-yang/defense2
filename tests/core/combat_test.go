@@ -3,7 +3,9 @@ package core_test
 import (
 	"testing"
 
-	_ "defense2/internal/core/tower/abilities" // register abilities
+	defense2 "defense2"
+	"defense2/internal/config"
+	"defense2/internal/core/tower/abilities"
 
 	"defense2/internal/core/enemy"
 	"defense2/internal/core/pipeline"
@@ -13,9 +15,9 @@ import (
 
 func TestFindNearestEnemy(t *testing.T) {
 	ep := enemy.NewPool(8)
-	ep.Spawn(200, 100, 10, 60, 8, 1)
-	ep.Spawn(300, 100, 10, 60, 8, 1)
-	ep.Spawn(500, 100, 10, 60, 8, 1)
+	ep.Spawn(200, 100, 10, 60, 1, "normal", nil)
+	ep.Spawn(300, 100, 10, 60, 1, "normal", nil)
+	ep.Spawn(500, 100, 10, 60, 1, "normal", nil)
 
 	tw := &tower.Tower{X: 100, Y: 100, Range: 250, Active: true}
 	target := tower.FindNearestEnemy(tw, ep)
@@ -29,7 +31,7 @@ func TestFindNearestEnemy(t *testing.T) {
 
 func TestFindNearestEnemyNoneInRange(t *testing.T) {
 	ep := enemy.NewPool(4)
-	ep.Spawn(500, 500, 10, 60, 8, 1)
+	ep.Spawn(500, 500, 10, 60, 1, "normal", nil)
 
 	tw := &tower.Tower{X: 100, Y: 100, Range: 100, Active: true}
 	target := tower.FindNearestEnemy(tw, ep)
@@ -40,7 +42,7 @@ func TestFindNearestEnemyNoneInRange(t *testing.T) {
 
 func TestProjectileFireAndMove(t *testing.T) {
 	pp := projectile.NewPool(16)
-	pp.Fire(0, 0, 100, 0, 10, 200, 4)
+	pp.Fire(0, 0, 100, 0, 10, 200, 4, nil, "")
 
 	if pp.Count != 1 {
 		t.Fatalf("expected 1 projectile, got %d", pp.Count)
@@ -56,15 +58,15 @@ func TestProjectileFireAndMove(t *testing.T) {
 
 func TestTickProjectileHits(t *testing.T) {
 	ep := enemy.NewPool(4)
-	ep.Spawn(100, 0, 10, 60, 8, 1)
+	ep.Spawn(100, 0, 10, 60, 1, "normal", nil)
 
 	tp := tower.NewPool(1) // empty tower pool (no abilities to resolve)
 
 	pp := projectile.NewPool(16)
-	pp.Fire(95, 0, 100, 0, 15, 200, 4)
+	pp.Fire(95, 0, 100, 0, 15, 200, 4, nil, "")
 	pp.Update(0.01)
 
-	kills := pipeline.TickProjectileHits(pp, ep, tp)
+	kills := pipeline.TickProjectileHits(pp, ep, tp, nil)
 	if kills != 1 {
 		t.Fatalf("expected 1 kill, got %d", kills)
 	}
@@ -80,23 +82,24 @@ func TestTickTowerCombatFires(t *testing.T) {
 	tp.Place(0, 0, 100, 100, def)
 
 	ep := enemy.NewPool(4)
-	ep.Spawn(150, 100, 20, 60, 8, 1)
+	ep.Spawn(150, 100, 20, 60, 1, "normal", nil)
 
 	pp := projectile.NewPool(16)
 
-	pipeline.TickTowerCombat(tp, ep, pp, 1.0/60)
+	pipeline.TickTowerCombat(tp, ep, pp, nil, 1.0/60, nil, nil)
 	if pp.Count != 1 {
 		t.Fatalf("tower should fire, projectile count=%d", pp.Count)
 	}
 
-	pipeline.TickTowerCombat(tp, ep, pp, 1.0/60)
+	pipeline.TickTowerCombat(tp, ep, pp, nil, 1.0/60, nil, nil)
 	if pp.Count != 1 {
 		t.Fatalf("tower should be on cooldown, projectile count=%d", pp.Count)
 	}
 }
 
 func TestAbilityRegistry(t *testing.T) {
-	// Abilities registered via init() in abilities package
+	config.SetDataFS(&defense2.DataFS)
+	abilities.InitConfigAbilities()
 	expected := []string{"splash", "crit", "onHitSlow", "bleedDot"}
 	for _, name := range expected {
 		if _, ok := tower.Registry[name]; !ok {

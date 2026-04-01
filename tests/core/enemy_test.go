@@ -9,7 +9,7 @@ import (
 
 func TestPoolSpawnAndKill(t *testing.T) {
 	p := enemy.NewPool(4)
-	e1 := p.Spawn(100, 100, 10, 60, 8, 1)
+	e1 := p.Spawn(100, 100, 10, 60, 1, "normal", nil)
 	if e1 == nil {
 		t.Fatal("spawn should succeed")
 	}
@@ -17,7 +17,7 @@ func TestPoolSpawnAndKill(t *testing.T) {
 		t.Fatalf("count should be 1, got %d", p.Count)
 	}
 
-	e2 := p.Spawn(200, 200, 20, 60, 8, 1)
+	e2 := p.Spawn(200, 200, 20, 60, 1, "normal", nil)
 	if e2 == nil || p.Count != 2 {
 		t.Fatal("second spawn failed")
 	}
@@ -26,9 +26,22 @@ func TestPoolSpawnAndKill(t *testing.T) {
 	if p.Count != 1 {
 		t.Fatalf("count after kill should be 1, got %d", p.Count)
 	}
+	// Kill starts dying animation; enemy is still Active until FinishDying
+	if !e1.Active {
+		t.Fatal("dying enemy should still be Active")
+	}
+	if !e1.IsDying() {
+		t.Fatal("killed enemy should be dying")
+	}
+
+	// Finish dying to free the slot
+	p.FinishDying(e1)
+	if e1.Active {
+		t.Fatal("finished dying enemy should be inactive")
+	}
 
 	// Killed slot should be reusable
-	e3 := p.Spawn(300, 300, 30, 60, 8, 1)
+	e3 := p.Spawn(300, 300, 30, 60, 1, "normal", nil)
 	if e3 == nil || p.Count != 2 {
 		t.Fatal("respawn into killed slot failed")
 	}
@@ -36,9 +49,9 @@ func TestPoolSpawnAndKill(t *testing.T) {
 
 func TestPoolOverflow(t *testing.T) {
 	p := enemy.NewPool(2)
-	p.Spawn(0, 0, 10, 60, 8, 1)
-	p.Spawn(0, 0, 10, 60, 8, 1)
-	e := p.Spawn(0, 0, 10, 60, 8, 1)
+	p.Spawn(0, 0, 10, 60, 1, "normal", nil)
+	p.Spawn(0, 0, 10, 60, 1, "normal", nil)
+	e := p.Spawn(0, 0, 10, 60, 1, "normal", nil)
 	if e != nil {
 		t.Fatal("overflow spawn should return nil")
 	}
@@ -46,15 +59,24 @@ func TestPoolOverflow(t *testing.T) {
 
 func TestPoolEach(t *testing.T) {
 	p := enemy.NewPool(4)
-	p.Spawn(0, 0, 10, 60, 8, 1)
-	p.Spawn(0, 0, 10, 60, 8, 1)
-	e3 := p.Spawn(0, 0, 10, 60, 8, 1)
+	p.Spawn(0, 0, 10, 60, 1, "normal", nil)
+	p.Spawn(0, 0, 10, 60, 1, "normal", nil)
+	e3 := p.Spawn(0, 0, 10, 60, 1, "normal", nil)
 	p.Kill(e3)
 
+	// Kill starts dying animation: enemy is still Active (visited by Each for rendering)
 	count := 0
 	p.Each(func(_ *enemy.Enemy) { count++ })
+	if count != 3 {
+		t.Fatalf("each should visit 3 active (including dying), got %d", count)
+	}
+
+	// After FinishDying, the slot is freed
+	p.FinishDying(e3)
+	count = 0
+	p.Each(func(_ *enemy.Enemy) { count++ })
 	if count != 2 {
-		t.Fatalf("each should visit 2 active, got %d", count)
+		t.Fatalf("each should visit 2 active after FinishDying, got %d", count)
 	}
 }
 

@@ -1,0 +1,26 @@
+//kage:unit pixels
+
+package main
+
+// TintR, TintG, TintB define the tint color (hit flash).
+// TintA controls the tint strength (0 = no tint, 1 = fully tinted).
+var TintR float
+var TintG float
+var TintB float
+var TintA float
+
+// DayNightR/G/B define the day/night ambient tint color.
+// DayNightA controls the day/night tint strength.
+var DayNightR float
+var DayNightG float
+var DayNightB float
+var DayNightA float
+
+func Fragment(dstPos vec4, srcPos vec2, color vec4) vec4 {
+	src := imageSrc0At(srcPos)
+	// Hit flash tint
+	blended := mix(src.rgb, vec3(TintR, TintG, TintB), TintA)
+	// Day/night ambient tint
+	blended = mix(blended, vec3(DayNightR, DayNightG, DayNightB), DayNightA)
+	return vec4(blended, src.a)
+}

@@ -1,0 +1,32 @@
+//kage:unit pixels
+
+package main
+
+// TexelSize is 1.0 / image height.
+var TexelSize float
+
+func Fragment(dstPos vec4, srcPos vec2, color vec4) vec4 {
+	// 9-tap optimized gaussian blur (vertical).
+	// 5 bilinear taps exploit hardware filtering to cover 9 texels.
+	// Offsets and weights are unrolled for maximum shader compatibility.
+
+	result := imageSrc0At(srcPos) * 0.2270270270
+
+	off1 := 1.3846153846 * TexelSize
+	result += imageSrc0At(srcPos + vec2(0, off1)) * 0.1945945946
+	result += imageSrc0At(srcPos - vec2(0, off1)) * 0.1945945946
+
+	off2 := 3.2307692308 * TexelSize
+	result += imageSrc0At(srcPos + vec2(0, off2)) * 0.1216216216
+	result += imageSrc0At(srcPos - vec2(0, off2)) * 0.1216216216
+
+	off3 := 5.0769230769 * TexelSize
+	result += imageSrc0At(srcPos + vec2(0, off3)) * 0.0540540541
+	result += imageSrc0At(srcPos - vec2(0, off3)) * 0.0540540541
+
+	off4 := 6.9230769231 * TexelSize
+	result += imageSrc0At(srcPos + vec2(0, off4)) * 0.0162162162
+	result += imageSrc0At(srcPos - vec2(0, off4)) * 0.0162162162
+
+	return result
+}

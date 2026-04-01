@@ -202,7 +202,6 @@
       "runner": "速度更快，优先看住拐角别漏怪。",
       "swarm": "数量密集，溅射或近身优先更稳。",
       "tank": "血量更厚，建议先升级主塔。",
-      "shielded": "护盾会吃掉首轮伤害，尽量多塔交叉覆盖。",
       "medic": "会给同伴回血，优先点杀奶妈。",
       "regenerator": "会缓慢回血，尽量集中火力快速击杀。",
       "berserker": "残血会冲刺，留近身优先塔兜底。",
@@ -297,7 +296,6 @@
       "runner": 0.74,
       "normal": 1,
       "tank": 1.1,
-      "shielded": 1.02,
       "medic": 0.98,
       "regenerator": 1.04,
       "berserker": 0.84,
@@ -349,8 +347,7 @@
     "turboDt": 0.05,
     "turboTicksPerFrame": 200,
     "defaultAudioVolume": 0.45,
-    "defaultSoundVolume": 0.4,
-    "summonCapBase": 100
+    "defaultSoundVolume": 0.4
   },
   "combatExtensions": {
     "towerBuffs": [],
@@ -410,10 +407,10 @@
         "status": "draft"
       },
       {
-        "id": "stack_slow_tower_plus_hero",
-        "label": "炮塔减速与英雄减速叠加",
+        "id": "stack_slow_tower",
+        "label": "炮塔减速叠加",
         "category": "status-synergy",
-        "description": "验证炮塔附带减速与英雄命中减速同时作用于同一敌人时，当前实现的结果是什么，并作为后续规则固化测试。第一版先记录当前行为，而不是预设一定要乘法或覆盖。",
+        "description": "验证炮塔附带减速作用于敌人时的行为。",
         "scene": {
           "map": "test-arena",
           "speedMultiplier": 200,
@@ -424,14 +421,6 @@
           "level": 1,
           "x": 430,
           "y": 320
-        },
-        "hero": {
-          "enabled": true,
-          "x": 360,
-          "y": 320,
-          "upgrades": {
-            "slow": 1
-          }
         },
         "enemies": [
           {

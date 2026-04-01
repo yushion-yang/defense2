@@ -1,10 +1,11 @@
 // enemy_config.go — 敌人配置数据结构与加载。
-// 从 enemies-core.json 加载 13 种敌人原型模板。
+// 支持目录模式（config/enemies/defs/{key}.json）和单文件模式（enemies-core.json）。
 package config
 
 import (
 	"encoding/json"
 	"fmt"
+	"path/filepath"
 	"strings"
 )
 
@@ -13,8 +14,9 @@ type EnemyArchetype struct {
 	Label            string  `json:"label"`            // 显示名称
 	HPScale          float64 `json:"hpScale"`          // 血量倍率（相对基准值）
 	SpeedScale       float64 `json:"speedScale"`       // 速度倍率
-	RadiusScale      float64 `json:"radiusScale"`      // 碰撞半径倍率
+	Radius           float64 `json:"radius"`           // 碰撞半径（像素绝对值）
 	RewardScale      float64 `json:"rewardScale"`      // 击杀奖励倍率
+	Boss             bool    `json:"boss"`             // 是否为 Boss
 	ShieldScale      float64 `json:"shieldScale"`      // 护盾倍率（0 = 无护盾）
 	SplitCount       int     `json:"splitCount"`       // 分裂数量（0 = 不分裂）
 	MovementType     string  `json:"movementType"`     // 移动类型："ground" 或 "flying"
@@ -28,11 +30,40 @@ type EnemyArchetype struct {
 	AuraSpeedUp      float64 `json:"auraSpeedUp"`      // 光环加速比例
 }
 
-// LoadEnemyArchetypes 从 enemies-core.json 加载所有敌人原型。
+// LoadEnemyArchetypes 加载所有敌人原型。
+// 优先从目录模式加载（config/enemies/defs/），不存在时回退到单文件模式。
 func LoadEnemyArchetypes() (map[string]*EnemyArchetype, error) {
 	if dataFS == nil {
 		return nil, fmt.Errorf("load enemies: dataFS not initialized")
 	}
+
+	result := make(map[string]*EnemyArchetype)
+
+	// 尝试目录模式
+	if entries, err := dataFS.ReadDir("config/enemies/defs"); err == nil && len(entries) > 0 {
+		for _, entry := range entries {
+			if entry.IsDir() || !strings.HasSuffix(entry.Name(), ".json") {
+				continue
+			}
+			name := strings.TrimSuffix(entry.Name(), ".json")
+			if strings.HasPrefix(name, "_") {
+				continue
+			}
+			data, err := dataFS.ReadFile(filepath.Join("config/enemies/defs", entry.Name()))
+			if err != nil {
+				return nil, fmt.Errorf("read enemy %s: %w", entry.Name(), err)
+			}
+			var a EnemyArchetype
+			if err := json.Unmarshal(data, &a); err != nil {
+				return nil, fmt.Errorf("parse enemy %s: %w", entry.Name(), err)
+			}
+			applyEnemyDefaults(&a)
+			result[name] = &a
+		}
+		return result, nil
+	}
+
+	// 回退到单文件模式
 	data, err := dataFS.ReadFile("config/enemies/enemies-core.json")
 	if err != nil {
 		return nil, fmt.Errorf("load enemies: %w", err)
@@ -43,7 +74,6 @@ func LoadEnemyArchetypes() (map[string]*EnemyArchetype, error) {
 		return nil, fmt.Errorf("parse enemies: %w", err)
 	}
 
-	result := make(map[string]*EnemyArchetype)
 	for key, val := range raw {
 		if strings.HasPrefix(key, "_") {
 			continue
@@ -52,20 +82,24 @@ func LoadEnemyArchetypes() (map[string]*EnemyArchetype, error) {
 		if err := json.Unmarshal(val, &a); err != nil {
 			continue
 		}
-		// 默认倍率
-		if a.HPScale == 0 {
-			a.HPScale = 1
-		}
-		if a.SpeedScale == 0 {
-			a.SpeedScale = 1
-		}
-		if a.RadiusScale == 0 {
-			a.RadiusScale = 1
-		}
-		if a.RewardScale == 0 {
-			a.RewardScale = 1
-		}
+		applyEnemyDefaults(&a)
 		result[key] = &a
 	}
 	return result, nil
+}
+
+// applyEnemyDefaults 为缺省字段设置默认值。
+func applyEnemyDefaults(a *EnemyArchetype) {
+	if a.HPScale == 0 {
+		a.HPScale = 1
+	}
+	if a.SpeedScale == 0 {
+		a.SpeedScale = 1
+	}
+	if a.Radius == 0 {
+		a.Radius = 8
+	}
+	if a.RewardScale == 0 {
+		a.RewardScale = 1
+	}
 }

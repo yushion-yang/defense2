@@ -1,4 +1,4 @@
-.PHONY: run test test-cover lint check-all build-wasm clean arch
+.PHONY: run test test-cover lint check-all build-wasm clean arch generate-wardens generate-assets
 
 # Desktop development
 run:
@@ -29,9 +29,21 @@ build-wasm:
 	cp web/index.html dist/web/
 	@echo "WASM build done. Serve dist/web/"
 
+# Asset generation: visual description JSON → SVG → PNG
+generate-wardens:
+	node scripts/generate-assets.mjs wardens --force
+
+generate-assets:
+	node scripts/generate-assets.mjs all --force
+
 # Architecture visualization (pkg deps + struct diagram + module index)
 arch:
 	./scripts/gen-arch.sh
+
+# Config viewer (read-only web UI)
+preview:
+	@echo "Config viewer: http://localhost:8080/web/config-viewer/"
+	python3 -m http.server 8080
 
 # Clean
 clean:

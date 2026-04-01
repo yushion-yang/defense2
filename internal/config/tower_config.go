@@ -1,6 +1,9 @@
 // tower_config.go — 塔配置数据结构与加载。
-// 从 JSON 文件（towers.json、towers-core.json）反序列化塔定义，
-// 转换为运行时可用的 TowerDef 列表。
+// 支持两种加载方式：
+//  1. 单文件模式：一个 JSON 包含多个塔 { "_meta": {}, "key1": {}, "key2": {} }
+//  2. 目录模式：每个塔一个 JSON 文件 config/towers/defs/{key}.json
+//
+// 优先使用目录模式，不存在时回退到单文件模式。
 package config
 
 import (
@@ -11,19 +14,25 @@ import (
 
 // TowerJSON 塔的 JSON 配置原始结构（与 JS 版 JSON 字段一致）。
 type TowerJSON struct {
-	Label        string          `json:"label"`        // 塔全名
-	ShortLabel   string          `json:"shortLabel"`   // 塔简称（HUD 显示用）
-	BuildCost    int             `json:"buildCost"`    // 建造费用（金币）
-	BaseRange    float64         `json:"baseRange"`    // 基础攻击范围（像素）
-	BaseDamage   float64         `json:"baseDamage"`   // 基础单发伤害
-	BaseFireRate float64         `json:"baseFireRate"` // 基础射击间隔（秒/次，越小越快）
-	Tags         []string        `json:"tags"`         // 标签列表（如 "energy"、"laser"）
-	Abilities    []TowerAbilJSON `json:"abilities"`    // 该塔拥有的能力列表
-}
+	Label     string `json:"label"`     // 塔全名
+	ShortLabel string `json:"shortLabel"` // 塔简称（HUD 显示用）
+	BuildCost int    `json:"buildCost"` // 建造费用（金币）
 
-// TowerAbilJSON 塔能力的 JSON 原始结构。
-type TowerAbilJSON struct {
-	Name string `json:"name"` // 能力注册名称（对应 ability.Registry 中的键）
+	// 基础属性 + 潜力属性（战力缩放）
+	BaseDamage         float64 `json:"baseDamage"`         // 基础伤害（强度0时的底线）
+	PotentialDamage    float64 `json:"potentialDamage"`    // 潜力伤害（强度100时 = base+potential）
+	BaseAttackSpeed    float64 `json:"baseAttackSpeed"`    // 基础攻速（次/秒）
+	PotentialAttackSpeed float64 `json:"potentialAttackSpeed"` // 潜力攻速
+	BaseRange          float64 `json:"baseRange"`          // 基础射程（像素）
+	PotentialRange     float64 `json:"potentialRange"`     // 潜力射程
+
+	Abilities      []string            `json:"abilities"`      // 能力 key 列表（引用 abilities.json）
+	// 攻击方式配置
+	AttackStyle     string  `json:"attackStyle"`     // "projectile"/"wideBeam"/"scatter"/"spin_aoe"
+	ProjectileSpeed float64 `json:"projectileSpeed"` // 弹射物速度（px/s）
+
+	// 升级系统
+	UpgradeCosts []int `json:"upgradeCosts"` // 每次升级费用（长度=最大升级次数）
 }
 
 // TowerFileData 塔配置文件的完整解析结果。
@@ -79,22 +88,11 @@ func LoadTowerFile(path string) (*TowerFileData, error) {
 	return result, nil
 }
 
-// LoadAllTowers 加载所有塔配置文件并合并。
+// LoadAllTowers 加载所有塔配置（从 towers.json）。
 func LoadAllTowers() (map[string]*TowerJSON, error) {
-	all := make(map[string]*TowerJSON)
-
-	files := []string{
-		"config/towers/towers-core.json",
-		"config/towers/towers.json",
+	fd, err := LoadTowerFile("config/towers/towers.json")
+	if err != nil {
+		return nil, err
 	}
-	for _, f := range files {
-		fd, err := LoadTowerFile(f)
-		if err != nil {
-			return nil, err
-		}
-		for k, v := range fd.Towers {
-			all[k] = v
-		}
-	}
-	return all, nil
+	return fd.Towers, nil
 }

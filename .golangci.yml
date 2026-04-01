@@ -1,0 +1,4 @@
+version: "2"
+
+# 禁止直接调用 Ebitengine 底层 API 的规则通过 tests/lint/forbidden_api_test.go 实现。
+# 详见 docs/rendering-hidpi.md。

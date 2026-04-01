@@ -1,0 +1,984 @@
+{
+  "_meta": {
+    "description": "敌人视觉描述文件 — 用于 generate-assets.mjs 生成多帧 SVG + PNG",
+    "type": "enemy",
+    "viewBox": "0 0 128 128",
+    "outputSize": 128,
+    "animations": {
+      "walk": { "frames": 4, "fps": 6 },
+      "hit":  { "frames": 2, "fps": 10 }
+    }
+  },
+
+  "normal": {
+    "name": "步兵",
+    "description": "基础红色圆形敌人，简单干净的基本模板",
+    "palette": {
+      "primary": "#dc2626",
+      "secondary": "#b91c1c",
+      "accent": "#fca5a5",
+      "dark": "#7f1d1d"
+    },
+    "body": {
+      "type": "circle",
+      "cx": 64, "cy": 64, "r": 32,
+      "gradient": {
+        "type": "radial",
+        "stops": [
+          { "offset": "0%",   "color": "#dc2626" },
+          { "offset": "100%", "color": "#b91c1c" }
+        ]
+      }
+    },
+    "head": {
+      "type": "circle",
+      "cx": 64, "cy": 38, "r": 14,
+      "color": "#dc2626",
+      "stroke": "#b91c1c",
+      "strokeWidth": 1.5
+    },
+    "decorations": [
+      {
+        "type": "eyes",
+        "positions": [
+          { "cx": 58, "cy": 36, "r": 3 },
+          { "cx": 70, "cy": 36, "r": 3 }
+        ],
+        "color": "#fff",
+        "pupilR": 1.5,
+        "pupilColor": "#7f1d1d"
+      }
+    ],
+    "animations": {
+      "walk": {
+        "transforms": [
+          { "target": "body", "property": "translateY", "values": [0, -2, 0, 2] },
+          { "target": "head", "property": "translateY", "values": [0, -3, 0, 1] }
+        ]
+      },
+      "hit": {
+        "transforms": [
+          { "target": "*", "property": "opacity", "values": [1.0, 0.3] }
+        ]
+      }
+    }
+  },
+
+  "runner": {
+    "name": "冲刺者",
+    "description": "流线型绿色椭圆体，尾部拖有速度线，形态扁平暗示高速",
+    "palette": {
+      "primary": "#22c55e",
+      "secondary": "#16a34a",
+      "accent": "#86efac",
+      "dark": "#14532d"
+    },
+    "body": {
+      "type": "ellipse",
+      "cx": 64, "cy": 64, "rx": 36, "ry": 24,
+      "gradient": {
+        "type": "linear",
+        "x1": "0%", "x2": "100%",
+        "stops": [
+          { "offset": "0%",   "color": "#16a34a" },
+          { "offset": "50%",  "color": "#22c55e" },
+          { "offset": "100%", "color": "#86efac" }
+        ]
+      }
+    },
+    "head": {
+      "type": "polygon",
+      "points": [100, 58, 108, 64, 100, 70],
+      "color": "#22c55e",
+      "description": "尖锐前端，暗示冲刺方向"
+    },
+    "decorations": [
+      {
+        "type": "speed-lines",
+        "lines": [
+          { "x1": 20, "y1": 56, "x2": 32, "y2": 56 },
+          { "x1": 16, "y1": 64, "x2": 30, "y2": 64 },
+          { "x1": 20, "y1": 72, "x2": 32, "y2": 72 }
+        ],
+        "stroke": "#86efac",
+        "strokeWidth": 2,
+        "opacity": 0.6
+      },
+      {
+        "type": "eyes",
+        "positions": [
+          { "cx": 72, "cy": 60, "r": 2.5 },
+          { "cx": 72, "cy": 68, "r": 2.5 }
+        ],
+        "color": "#fff",
+        "pupilR": 1.5,
+        "pupilColor": "#14532d"
+      }
+    ],
+    "animations": {
+      "walk": {
+        "transforms": [
+          { "target": "body", "property": "translateX", "values": [0, 3, 0, -3] },
+          { "target": "decorations.speed-lines", "property": "opacity", "values": [0.6, 0.3, 0.6, 0.9] }
+        ]
+      },
+      "hit": {
+        "transforms": [
+          { "target": "*", "property": "opacity", "values": [1.0, 0.3] }
+        ]
+      }
+    }
+  },
+
+  "tank": {
+    "name": "重甲",
+    "description": "巨大的灰钢色方形重装体，装甲板与铆钉遍布全身，体型最大",
+    "palette": {
+      "primary": "#6b7280",
+      "secondary": "#4b5563",
+      "accent": "#d1d5db",
+      "dark": "#1f2937"
+    },
+    "body": {
+      "type": "rect",
+      "x": 29, "y": 29, "width": 70, "height": 70,
+      "rx": 12, "ry": 12,
+      "gradient": {
+        "type": "linear",
+        "y1": "0%", "y2": "100%",
+        "stops": [
+          { "offset": "0%",   "color": "#9ca3af" },
+          { "offset": "40%",  "color": "#6b7280" },
+          { "offset": "100%", "color": "#4b5563" }
+        ]
+      },
+      "stroke": "#d1d5db",
+      "strokeWidth": 2
+    },
+    "head": {
+      "type": "polygon",
+      "points": [44, 24, 84, 24, 80, 36, 48, 36],
+      "color": "#4b5563",
+      "stroke": "#9ca3af",
+      "strokeWidth": 1,
+      "description": "棱角分明的头盔形状"
+    },
+    "decorations": [
+      {
+        "type": "armor-plates",
+        "lines": [
+          { "x1": 34, "y1": 50, "x2": 94, "y2": 50 },
+          { "x1": 34, "y1": 64, "x2": 94, "y2": 64 },
+          { "x1": 34, "y1": 78, "x2": 94, "y2": 78 }
+        ],
+        "stroke": "#1f2937",
+        "strokeWidth": 1.5,
+        "opacity": 0.5
+      },
+      {
+        "type": "rivets",
+        "positions": [
+          { "cx": 38, "cy": 38, "r": 2.5 },
+          { "cx": 90, "cy": 38, "r": 2.5 },
+          { "cx": 38, "cy": 90, "r": 2.5 },
+          { "cx": 90, "cy": 90, "r": 2.5 }
+        ],
+        "color": "#d1d5db",
+        "opacity": 0.8
+      },
+      {
+        "type": "eyes",
+        "positions": [
+          { "cx": 56, "cy": 28, "r": 3 },
+          { "cx": 72, "cy": 28, "r": 3 }
+        ],
+        "color": "#fbbf24",
+        "pupilR": 1.5,
+        "pupilColor": "#1f2937"
+      }
+    ],
+    "animations": {
+      "walk": {
+        "transforms": [
+          { "target": "body", "property": "translateY", "values": [0, -1, 0, 1] },
+          { "target": "decorations.rivets", "property": "opacity", "values": [0.8, 1.0, 0.8, 0.6] }
+        ]
+      },
+      "hit": {
+        "transforms": [
+          { "target": "*", "property": "opacity", "values": [1.0, 0.3] }
+        ]
+      }
+    }
+  },
+
+  "armored": {
+    "name": "铠甲兵",
+    "description": "棕铜色中型装甲单位，护甲带横贯身体，两侧肩甲突出",
+    "palette": {
+      "primary": "#92400e",
+      "secondary": "#78350f",
+      "accent": "#d97706",
+      "dark": "#451a03"
+    },
+    "body": {
+      "type": "circle",
+      "cx": 64, "cy": 64, "r": 30,
+      "gradient": {
+        "type": "radial",
+        "stops": [
+          { "offset": "0%",   "color": "#d97706" },
+          { "offset": "60%",  "color": "#92400e" },
+          { "offset": "100%", "color": "#78350f" }
+        ]
+      },
+      "stroke": "#d97706",
+      "strokeWidth": 1.5
+    },
+    "head": {
+      "type": "circle",
+      "cx": 64, "cy": 40, "r": 14,
+      "color": "#92400e",
+      "stroke": "#d97706",
+      "strokeWidth": 1,
+      "visor": {
+        "type": "rect",
+        "x": 52, "y": 38, "width": 24, "height": 5, "rx": 2,
+        "color": "#451a03",
+        "opacity": 0.9
+      }
+    },
+    "decorations": [
+      {
+        "type": "armor-band",
+        "rect": { "x": 36, "y": 58, "width": 56, "height": 12, "rx": 3 },
+        "color": "#78350f",
+        "stroke": "#d97706",
+        "strokeWidth": 1,
+        "opacity": 0.9
+      },
+      {
+        "type": "shoulder-pads",
+        "positions": [
+          { "x": 28, "y": 50, "width": 10, "height": 18, "rx": 3 },
+          { "x": 90, "y": 50, "width": 10, "height": 18, "rx": 3 }
+        ],
+        "color": "#92400e",
+        "stroke": "#d97706",
+        "strokeWidth": 1
+      },
+      {
+        "type": "eyes",
+        "positions": [
+          { "cx": 58, "cy": 38, "r": 2 },
+          { "cx": 70, "cy": 38, "r": 2 }
+        ],
+        "color": "#fef3c7",
+        "pupilR": 1,
+        "pupilColor": "#451a03"
+      }
+    ],
+    "animations": {
+      "walk": {
+        "transforms": [
+          { "target": "body", "property": "translateY", "values": [0, -2, 0, 2] },
+          { "target": "decorations.shoulder-pads", "property": "rotate", "values": [0, 2, 0, -2] }
+        ]
+      },
+      "hit": {
+        "transforms": [
+          { "target": "*", "property": "opacity", "values": [1.0, 0.3] }
+        ]
+      }
+    }
+  },
+
+  "shielded": {
+    "name": "盾兵",
+    "description": "蓝色躯体前方携带大型盾牌，盾面带十字纹章",
+    "palette": {
+      "primary": "#3b82f6",
+      "secondary": "#2563eb",
+      "accent": "#93c5fd",
+      "dark": "#1e3a5f"
+    },
+    "body": {
+      "type": "circle",
+      "cx": 72, "cy": 64, "r": 28,
+      "gradient": {
+        "type": "radial",
+        "stops": [
+          { "offset": "0%",   "color": "#3b82f6" },
+          { "offset": "100%", "color": "#2563eb" }
+        ]
+      }
+    },
+    "head": {
+      "type": "circle",
+      "cx": 72, "cy": 42, "r": 12,
+      "color": "#3b82f6",
+      "stroke": "#93c5fd",
+      "strokeWidth": 1
+    },
+    "decorations": [
+      {
+        "type": "shield",
+        "rect": { "x": 26, "y": 44, "width": 24, "height": 40, "rx": 4 },
+        "gradient": {
+          "type": "linear",
+          "y1": "0%", "y2": "100%",
+          "stops": [
+            { "offset": "0%",   "color": "#93c5fd" },
+            { "offset": "50%",  "color": "#2563eb" },
+            { "offset": "100%", "color": "#1e3a5f" }
+          ]
+        },
+        "stroke": "#93c5fd",
+        "strokeWidth": 2
+      },
+      {
+        "type": "shield-emblem",
+        "cross": {
+          "horizontal": { "x": 31, "y": 60, "width": 14, "height": 4, "rx": 1 },
+          "vertical":   { "x": 35, "y": 52, "width": 4, "height": 22, "rx": 1 }
+        },
+        "color": "#bfdbfe",
+        "opacity": 0.7
+      },
+      {
+        "type": "eyes",
+        "positions": [
+          { "cx": 67, "cy": 40, "r": 2.5 },
+          { "cx": 77, "cy": 40, "r": 2.5 }
+        ],
+        "color": "#fff",
+        "pupilR": 1.5,
+        "pupilColor": "#1e3a5f"
+      }
+    ],
+    "animations": {
+      "walk": {
+        "transforms": [
+          { "target": "body", "property": "translateY", "values": [0, -2, 0, 2] },
+          { "target": "decorations.shield", "property": "translateX", "values": [0, -1, 0, 1] }
+        ]
+      },
+      "hit": {
+        "transforms": [
+          { "target": "*", "property": "opacity", "values": [1.0, 0.3] }
+        ]
+      }
+    }
+  },
+
+  "swarm": {
+    "name": "虫群",
+    "description": "最小的琥珀色虫形单位，触角与腿部细节突出群体特征",
+    "palette": {
+      "primary": "#facc15",
+      "secondary": "#eab308",
+      "accent": "#fef08a",
+      "dark": "#854d0e"
+    },
+    "body": {
+      "type": "circle",
+      "cx": 64, "cy": 64, "r": 18,
+      "gradient": {
+        "type": "radial",
+        "stops": [
+          { "offset": "0%",   "color": "#fef08a" },
+          { "offset": "60%",  "color": "#facc15" },
+          { "offset": "100%", "color": "#eab308" }
+        ]
+      },
+      "stroke": "#854d0e",
+      "strokeWidth": 1
+    },
+    "head": null,
+    "decorations": [
+      {
+        "type": "antennae",
+        "lines": [
+          { "x1": 58, "y1": 48, "x2": 48, "y2": 34 },
+          { "x1": 70, "y1": 48, "x2": 80, "y2": 34 }
+        ],
+        "stroke": "#854d0e",
+        "strokeWidth": 1.5,
+        "tipR": 2,
+        "tipColor": "#facc15"
+      },
+      {
+        "type": "legs",
+        "lines": [
+          { "x1": 50, "y1": 60, "x2": 38, "y2": 54 },
+          { "x1": 50, "y1": 68, "x2": 38, "y2": 74 },
+          { "x1": 78, "y1": 60, "x2": 90, "y2": 54 },
+          { "x1": 78, "y1": 68, "x2": 90, "y2": 74 }
+        ],
+        "stroke": "#854d0e",
+        "strokeWidth": 1,
+        "opacity": 0.7
+      },
+      {
+        "type": "eyes",
+        "positions": [
+          { "cx": 59, "cy": 62, "r": 2 },
+          { "cx": 69, "cy": 62, "r": 2 }
+        ],
+        "color": "#fff",
+        "pupilR": 1,
+        "pupilColor": "#854d0e"
+      }
+    ],
+    "animations": {
+      "walk": {
+        "transforms": [
+          { "target": "body", "property": "translateY", "values": [0, -1, 0, 1] },
+          { "target": "decorations.legs", "property": "rotate", "values": [0, 8, 0, -8] },
+          { "target": "decorations.antennae", "property": "rotate", "values": [0, -5, 0, 5] }
+        ]
+      },
+      "hit": {
+        "transforms": [
+          { "target": "*", "property": "opacity", "values": [1.0, 0.3] }
+        ]
+      }
+    }
+  },
+
+  "stealth": {
+    "name": "隐匿者",
+    "description": "紫色菱形轮廓，虚线边缘暗示隐形斗篷，神秘狭长眼缝",
+    "palette": {
+      "primary": "#7c3aed",
+      "secondary": "#6d28d9",
+      "accent": "#c4b5fd",
+      "dark": "#4c1d95"
+    },
+    "body": {
+      "type": "polygon",
+      "points": [64, 24, 104, 64, 64, 104, 24, 64],
+      "gradient": {
+        "type": "radial",
+        "stops": [
+          { "offset": "0%",   "color": "#7c3aed", "opacity": 0.8 },
+          { "offset": "80%",  "color": "#6d28d9", "opacity": 0.5 },
+          { "offset": "100%", "color": "#4c1d95", "opacity": 0.3 }
+        ]
+      },
+      "stroke": "#c4b5fd",
+      "strokeWidth": 1.5,
+      "strokeDasharray": "6 4",
+      "description": "虚线轮廓表现隐身效果"
+    },
+    "head": null,
+    "decorations": [
+      {
+        "type": "cloak-outline",
+        "polygon": [64, 28, 100, 64, 64, 100, 28, 64],
+        "stroke": "#c4b5fd",
+        "strokeWidth": 1,
+        "strokeDasharray": "3 5",
+        "fill": "none",
+        "opacity": 0.3,
+        "description": "内层虚线，增强隐匿感"
+      },
+      {
+        "type": "eye-slits",
+        "positions": [
+          { "x": 50, "y": 60, "width": 10, "height": 3, "rx": 1.5 },
+          { "x": 68, "y": 60, "width": 10, "height": 3, "rx": 1.5 }
+        ],
+        "color": "#c4b5fd",
+        "opacity": 0.9
+      }
+    ],
+    "animations": {
+      "walk": {
+        "transforms": [
+          { "target": "body", "property": "opacity", "values": [0.7, 0.4, 0.7, 0.5] },
+          { "target": "decorations.cloak-outline", "property": "rotate", "values": [0, 2, 0, -2] }
+        ]
+      },
+      "hit": {
+        "transforms": [
+          { "target": "*", "property": "opacity", "values": [1.0, 0.3] }
+        ]
+      }
+    }
+  },
+
+  "splitter": {
+    "name": "分裂体",
+    "description": "橙色球体表面布满裂纹，内部可见两个子体轮廓，随时准备分裂",
+    "palette": {
+      "primary": "#f97316",
+      "secondary": "#ea580c",
+      "accent": "#fdba74",
+      "dark": "#9a3412"
+    },
+    "body": {
+      "type": "circle",
+      "cx": 64, "cy": 64, "r": 30,
+      "gradient": {
+        "type": "radial",
+        "stops": [
+          { "offset": "0%",   "color": "#fdba74" },
+          { "offset": "50%",  "color": "#f97316" },
+          { "offset": "100%", "color": "#ea580c" }
+        ]
+      },
+      "stroke": "#9a3412",
+      "strokeWidth": 1.5
+    },
+    "head": null,
+    "decorations": [
+      {
+        "type": "crack-lines",
+        "paths": [
+          "M64,34 L58,50 L66,58 L60,72 L64,94",
+          "M44,52 L52,58 L48,68 L42,78",
+          "M84,52 L76,58 L80,68 L86,78",
+          "M46,44 L54,50 L50,56"
+        ],
+        "stroke": "#9a3412",
+        "strokeWidth": 1.5,
+        "fill": "none",
+        "opacity": 0.7,
+        "description": "裂纹线从中心向边缘扩散"
+      },
+      {
+        "type": "child-preview",
+        "circles": [
+          { "cx": 52, "cy": 64, "r": 10, "opacity": 0.35 },
+          { "cx": 76, "cy": 64, "r": 10, "opacity": 0.35 }
+        ],
+        "color": "#fdba74",
+        "stroke": "#ea580c",
+        "strokeWidth": 1,
+        "description": "内部可见的子分裂体"
+      }
+    ],
+    "animations": {
+      "walk": {
+        "transforms": [
+          { "target": "body", "property": "translateY", "values": [0, -2, 0, 2] },
+          { "target": "decorations.crack-lines", "property": "opacity", "values": [0.7, 0.9, 0.7, 0.5] }
+        ]
+      },
+      "hit": {
+        "transforms": [
+          { "target": "*", "property": "opacity", "values": [1.0, 0.3] }
+        ]
+      }
+    }
+  },
+
+  "teleporter": {
+    "name": "传送者",
+    "description": "青色球体外环绕虚线传送圈，圈上散布能量闪点",
+    "palette": {
+      "primary": "#06b6d4",
+      "secondary": "#0891b2",
+      "accent": "#67e8f9",
+      "dark": "#164e63"
+    },
+    "body": {
+      "type": "circle",
+      "cx": 64, "cy": 64, "r": 26,
+      "gradient": {
+        "type": "radial",
+        "stops": [
+          { "offset": "0%",   "color": "#67e8f9" },
+          { "offset": "60%",  "color": "#06b6d4" },
+          { "offset": "100%", "color": "#0891b2" }
+        ]
+      }
+    },
+    "head": {
+      "type": "circle",
+      "cx": 64, "cy": 44, "r": 12,
+      "color": "#06b6d4",
+      "stroke": "#67e8f9",
+      "strokeWidth": 1
+    },
+    "decorations": [
+      {
+        "type": "teleport-ring",
+        "cx": 64, "cy": 64, "r": 40,
+        "stroke": "#67e8f9",
+        "strokeWidth": 2,
+        "strokeDasharray": "8 5",
+        "fill": "none",
+        "opacity": 0.6
+      },
+      {
+        "type": "energy-sparkles",
+        "positions": [
+          { "cx": 64,  "cy": 24,  "r": 2.5 },
+          { "cx": 98,  "cy": 44,  "r": 2.5 },
+          { "cx": 98,  "cy": 84,  "r": 2.5 },
+          { "cx": 64,  "cy": 104, "r": 2.5 },
+          { "cx": 30,  "cy": 84,  "r": 2.5 },
+          { "cx": 30,  "cy": 44,  "r": 2.5 }
+        ],
+        "color": "#67e8f9",
+        "opacity": 0.8
+      },
+      {
+        "type": "eyes",
+        "positions": [
+          { "cx": 59, "cy": 42, "r": 2.5 },
+          { "cx": 69, "cy": 42, "r": 2.5 }
+        ],
+        "color": "#fff",
+        "pupilR": 1.5,
+        "pupilColor": "#164e63"
+      }
+    ],
+    "animations": {
+      "walk": {
+        "transforms": [
+          { "target": "body", "property": "translateY", "values": [0, -2, 0, 2] },
+          { "target": "decorations.teleport-ring", "property": "rotate", "values": [0, 15, 30, 45] },
+          { "target": "decorations.energy-sparkles", "property": "opacity", "values": [0.8, 0.4, 0.8, 1.0] }
+        ]
+      },
+      "hit": {
+        "transforms": [
+          { "target": "*", "property": "opacity", "values": [1.0, 0.3] }
+        ]
+      }
+    }
+  },
+
+  "healer": {
+    "name": "治疗者",
+    "description": "粉色球体正面带医疗十字标记，周围漂浮治愈光点",
+    "palette": {
+      "primary": "#ec4899",
+      "secondary": "#db2777",
+      "accent": "#f9a8d4",
+      "dark": "#831843"
+    },
+    "body": {
+      "type": "circle",
+      "cx": 64, "cy": 64, "r": 28,
+      "gradient": {
+        "type": "radial",
+        "stops": [
+          { "offset": "0%",   "color": "#f9a8d4" },
+          { "offset": "60%",  "color": "#ec4899" },
+          { "offset": "100%", "color": "#db2777" }
+        ]
+      }
+    },
+    "head": {
+      "type": "circle",
+      "cx": 64, "cy": 42, "r": 12,
+      "color": "#ec4899",
+      "stroke": "#f9a8d4",
+      "strokeWidth": 1,
+      "cross": {
+        "horizontal": { "x": 58, "y": 40, "width": 12, "height": 4, "rx": 1 },
+        "vertical":   { "x": 62, "y": 34, "width": 4, "height": 16, "rx": 1 },
+        "color": "#fff",
+        "opacity": 0.8
+      }
+    },
+    "decorations": [
+      {
+        "type": "medical-cross",
+        "horizontal": { "x": 52, "y": 60, "width": 24, "height": 8, "rx": 2 },
+        "vertical":   { "x": 60, "y": 52, "width": 8, "height": 24, "rx": 2 },
+        "color": "#fff",
+        "opacity": 0.7
+      },
+      {
+        "type": "heal-particles",
+        "positions": [
+          { "cx": 40, "cy": 48, "r": 2 },
+          { "cx": 88, "cy": 52, "r": 2.5 },
+          { "cx": 44, "cy": 84, "r": 2 },
+          { "cx": 84, "cy": 80, "r": 2.5 },
+          { "cx": 64, "cy": 96, "r": 2 }
+        ],
+        "color": "#f9a8d4",
+        "opacity": 0.6
+      },
+      {
+        "type": "eyes",
+        "positions": [
+          { "cx": 59, "cy": 40, "r": 2 },
+          { "cx": 69, "cy": 40, "r": 2 }
+        ],
+        "color": "#fff",
+        "pupilR": 1,
+        "pupilColor": "#831843"
+      }
+    ],
+    "animations": {
+      "walk": {
+        "transforms": [
+          { "target": "body", "property": "translateY", "values": [0, -2, 0, 2] },
+          { "target": "decorations.heal-particles", "property": "translateY", "values": [0, -3, -6, -3] },
+          { "target": "decorations.heal-particles", "property": "opacity", "values": [0.6, 0.8, 0.4, 0.6] }
+        ]
+      },
+      "hit": {
+        "transforms": [
+          { "target": "*", "property": "opacity", "values": [1.0, 0.3] }
+        ]
+      }
+    }
+  },
+
+  "buffer": {
+    "name": "旗手",
+    "description": "金色球体右上方插有小旗，外围光环暗示增益范围",
+    "palette": {
+      "primary": "#eab308",
+      "secondary": "#ca8a04",
+      "accent": "#fef08a",
+      "dark": "#713f12"
+    },
+    "body": {
+      "type": "circle",
+      "cx": 64, "cy": 64, "r": 26,
+      "gradient": {
+        "type": "radial",
+        "stops": [
+          { "offset": "0%",   "color": "#fef08a" },
+          { "offset": "60%",  "color": "#eab308" },
+          { "offset": "100%", "color": "#ca8a04" }
+        ]
+      },
+      "stroke": "#713f12",
+      "strokeWidth": 1
+    },
+    "head": {
+      "type": "circle",
+      "cx": 64, "cy": 44, "r": 12,
+      "color": "#eab308",
+      "stroke": "#fef08a",
+      "strokeWidth": 1
+    },
+    "decorations": [
+      {
+        "type": "flag",
+        "pole": { "x1": 80, "y1": 28, "x2": 80, "y2": 56, "stroke": "#713f12", "strokeWidth": 2 },
+        "banner": {
+          "type": "polygon",
+          "points": [80, 28, 100, 34, 80, 42],
+          "color": "#dc2626",
+          "stroke": "#991b1b",
+          "strokeWidth": 1
+        },
+        "description": "右上方的旗帜，标志旗手身份"
+      },
+      {
+        "type": "aura-ring",
+        "cx": 64, "cy": 64, "r": 44,
+        "stroke": "#fef08a",
+        "strokeWidth": 1.5,
+        "strokeDasharray": "4 6",
+        "fill": "none",
+        "opacity": 0.4
+      },
+      {
+        "type": "eyes",
+        "positions": [
+          { "cx": 59, "cy": 42, "r": 2 },
+          { "cx": 69, "cy": 42, "r": 2 }
+        ],
+        "color": "#fff",
+        "pupilR": 1,
+        "pupilColor": "#713f12"
+      }
+    ],
+    "animations": {
+      "walk": {
+        "transforms": [
+          { "target": "body", "property": "translateY", "values": [0, -2, 0, 2] },
+          { "target": "decorations.flag.banner", "property": "rotate", "values": [0, 5, 0, -5] },
+          { "target": "decorations.aura-ring", "property": "opacity", "values": [0.4, 0.6, 0.4, 0.2] }
+        ]
+      },
+      "hit": {
+        "transforms": [
+          { "target": "*", "property": "opacity", "values": [1.0, 0.3] }
+        ]
+      }
+    }
+  },
+
+  "flying": {
+    "name": "飞行者",
+    "description": "天蓝色椭圆飞行体，两侧展开三角翼，尾部羽翼拖尾",
+    "palette": {
+      "primary": "#38bdf8",
+      "secondary": "#0284c7",
+      "accent": "#bae6fd",
+      "dark": "#075985"
+    },
+    "body": {
+      "type": "ellipse",
+      "cx": 64, "cy": 64, "rx": 24, "ry": 20,
+      "gradient": {
+        "type": "radial",
+        "stops": [
+          { "offset": "0%",   "color": "#bae6fd" },
+          { "offset": "60%",  "color": "#38bdf8" },
+          { "offset": "100%", "color": "#0284c7" }
+        ]
+      }
+    },
+    "head": {
+      "type": "polygon",
+      "points": [88, 58, 96, 64, 88, 70],
+      "color": "#38bdf8",
+      "description": "尖锐前端朝飞行方向"
+    },
+    "decorations": [
+      {
+        "type": "wings",
+        "left": {
+          "type": "polygon",
+          "points": [56, 56, 24, 36, 48, 64],
+          "color": "#0284c7",
+          "opacity": 0.8
+        },
+        "right": {
+          "type": "polygon",
+          "points": [56, 72, 24, 92, 48, 64],
+          "color": "#0284c7",
+          "opacity": 0.8
+        },
+        "description": "两侧三角翼展开"
+      },
+      {
+        "type": "tail-feather",
+        "polygon": [40, 60, 28, 64, 40, 68],
+        "color": "#075985",
+        "opacity": 0.6,
+        "description": "尾部羽状拖尾"
+      },
+      {
+        "type": "eyes",
+        "positions": [
+          { "cx": 72, "cy": 60, "r": 2.5 },
+          { "cx": 72, "cy": 68, "r": 2.5 }
+        ],
+        "color": "#fff",
+        "pupilR": 1.5,
+        "pupilColor": "#075985"
+      }
+    ],
+    "animations": {
+      "walk": {
+        "transforms": [
+          { "target": "body", "property": "translateY", "values": [0, -4, 0, 4] },
+          { "target": "decorations.wings.left", "property": "rotate", "values": [0, -6, 0, 6] },
+          { "target": "decorations.wings.right", "property": "rotate", "values": [0, 6, 0, -6] }
+        ]
+      },
+      "hit": {
+        "transforms": [
+          { "target": "*", "property": "opacity", "values": [1.0, 0.3] }
+        ]
+      }
+    }
+  },
+
+  "boss": {
+    "name": "Boss模板",
+    "description": "深红色大型威压体，头顶三尖皇冠，发光双瞳，外围威压光环",
+    "palette": {
+      "primary": "#991b1b",
+      "secondary": "#7f1d1d",
+      "accent": "#fca5a5",
+      "dark": "#450a0a"
+    },
+    "body": {
+      "type": "circle",
+      "cx": 64, "cy": 64, "r": 40,
+      "gradient": {
+        "type": "radial",
+        "stops": [
+          { "offset": "0%",   "color": "#dc2626" },
+          { "offset": "50%",  "color": "#991b1b" },
+          { "offset": "100%", "color": "#7f1d1d" }
+        ]
+      },
+      "stroke": "#fca5a5",
+      "strokeWidth": 2
+    },
+    "head": {
+      "type": "circle",
+      "cx": 64, "cy": 34, "r": 18,
+      "color": "#991b1b",
+      "stroke": "#fca5a5",
+      "strokeWidth": 1.5
+    },
+    "decorations": [
+      {
+        "type": "crown",
+        "spikes": [
+          { "points": [46, 22, 50, 8, 54, 22] },
+          { "points": [58, 20, 64, 4, 70, 20] },
+          { "points": [74, 22, 78, 8, 82, 22] }
+        ],
+        "base": { "x": 44, "y": 20, "width": 40, "height": 6, "rx": 2 },
+        "color": "#fbbf24",
+        "stroke": "#f59e0b",
+        "strokeWidth": 1,
+        "description": "三尖皇冠，金色"
+      },
+      {
+        "type": "glowing-eyes",
+        "positions": [
+          { "cx": 56, "cy": 32, "r": 4, "glowR": 7 },
+          { "cx": 72, "cy": 32, "r": 4, "glowR": 7 }
+        ],
+        "color": "#fca5a5",
+        "glowColor": "#dc2626",
+        "glowOpacity": 0.5,
+        "pupilR": 2,
+        "pupilColor": "#450a0a"
+      },
+      {
+        "type": "aura-ring",
+        "cx": 64, "cy": 64, "r": 54,
+        "stroke": "#fca5a5",
+        "strokeWidth": 2,
+        "strokeDasharray": "6 4",
+        "fill": "none",
+        "opacity": 0.35
+      },
+      {
+        "type": "aura-ring-inner",
+        "cx": 64, "cy": 64, "r": 48,
+        "stroke": "#dc2626",
+        "strokeWidth": 1,
+        "strokeDasharray": "3 5",
+        "fill": "none",
+        "opacity": 0.2
+      }
+    ],
+    "animations": {
+      "walk": {
+        "transforms": [
+          { "target": "body", "property": "translateY", "values": [0, -2, 0, 2] },
+          { "target": "decorations.crown", "property": "translateY", "values": [0, -3, 0, 1] },
+          { "target": "decorations.aura-ring", "property": "rotate", "values": [0, 5, 10, 15] },
+          { "target": "decorations.glowing-eyes", "property": "opacity", "values": [1.0, 0.7, 1.0, 0.8] }
+        ]
+      },
+      "hit": {
+        "transforms": [
+          { "target": "*", "property": "opacity", "values": [1.0, 0.3] }
+        ]
+      }
+    }
+  }
+}

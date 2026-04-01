@@ -1,9 +1,10 @@
-// envoy.go — 使者型战灵。
-// 使者是纯增强型战灵，不攻击敌人。
-// 行为循环：空闲 → 附身（选择周围敌人最多的塔，增强其伤害）→ 冷却 → 空闲。
+// envoy.go — 金灵战灵。
+// 移动型战灵，围绕敌群轨道运动并射击。
+// 定时选择最佳塔施加增强 buff（持续一段时间后自动过期）。
 package types
 
 import (
+	"fmt"
 	"math"
 
 	"defense2/internal/core/enemy"
@@ -15,72 +16,166 @@ func init() {
 	warden.RegisterBehavior(&EnvoyBehavior{})
 }
 
-// EnvoyState 使者的内部状态。
+// EnvoyState 金灵战灵的内部状态。
 type EnvoyState struct {
-	X, Y           float64 // 当前像素位置
-	Phase          string  // "idle" 或 "possessing"
-	Timer          float64 // 当前阶段剩余时间（秒）
-	PossessedTower *tower.Tower // 正在附身的塔（nil 表示空闲）
-	PossessDuration float64     // 附身持续时间（秒）
-	CooldownDuration float64    // 冷却持续时间（秒）
-	DamageBonus    float64      // 附身时给塔增加的伤害
+	warden.WardenState // 嵌入公共基座
+
+	// buff 参数
+	BuffInterval  float64 // buff 施加间隔（秒）
+	BuffDuration  float64 // buff 持续时间（秒）
+	BuffThreshold float64 // 临时 buff = max(0, 强度 - 此阈值)
+	PermGrant     float64 // 每次触发永久赋予塔的强度
+	BuffTimer     float64 // buff 施加倒计时
+
+	// 当前 buff 追踪（用于视觉反馈）
+	BuffedTower *tower.Tower // 当前被 buff 的塔（仅渲染用）
+	BuffExpiry  float64      // 当前 buff 剩余时间
 }
 
-// EnvoyBehavior 使者行为实现。
+// Base 实现 Stateful 接口。
+func (s *EnvoyState) Base() *warden.WardenState { return &s.WardenState }
+
+// EnvoyBehavior 金灵战灵行为实现。
 type EnvoyBehavior struct{}
 
 func (b *EnvoyBehavior) Type() string { return "envoy" }
 
 func (b *EnvoyBehavior) Init(w *warden.Warden) interface{} {
 	return &EnvoyState{
-		Phase:            "idle",
-		PossessDuration:  4.0,
-		CooldownDuration: 3.0,
-		DamageBonus:      5,
+		WardenState: warden.WardenState{
+			Damage:         12,
+			AttackInterval: 1.2,
+			Range:          140,
+			MoveSpeed:      320,
+		},
+		BuffInterval:  10.0,
+		BuffDuration:  6.0, // 比 interval 短 1s，确保 buff 会到期
+		BuffThreshold: 100, // 临时 buff = 强度 - 100
+		PermGrant:     5,   // 每次永久 +5 强度
 	}
 }
+
+// DescParams 返回 HUD 占位符参数。
+func (s *EnvoyState) DescParams(w *warden.Warden) map[string]string {
+	bonus := w.PerceivedStrength - s.BuffThreshold
+	if bonus < 0 {
+		bonus = 0
+	}
+	return map[string]string{
+		"attackInterval": fmt.Sprintf("%.1f", s.AttackInterval),
+		"damage":         fmt.Sprintf("%.0f", s.Damage),
+		"buffInterval":   fmt.Sprintf("%.0f", s.BuffInterval),
+		"buffDuration":   fmt.Sprintf("%.0f", s.BuffDuration),
+		"buffThreshold":  fmt.Sprintf("%.0f", s.BuffThreshold),
+		"buffBonus":      fmt.Sprintf("%.0f", bonus),
+		"permGrant":      fmt.Sprintf("%.0f", s.PermGrant),
+	}
+}
+
+const envoyOrbitDist = 100.0
 
 func (b *EnvoyBehavior) Tick(w *warden.Warden, ctx *warden.TickContext) {
 	s, ok := w.State.(*EnvoyState)
 	if !ok {
 		return
 	}
+	dt := ctx.DT
+	s.ApplyStrength(w)
 
-	switch s.Phase {
-	case "idle":
-		// 寻找最佳附身目标：周围敌人最多的塔
-		best := findBestHost(ctx.Towers, ctx.Enemies)
-		if best != nil {
-			s.PossessedTower = best
-			s.Phase = "possessing"
-			s.Timer = s.PossessDuration
-			s.X = best.X
-			s.Y = best.Y
-			// 增强塔伤害
-			best.Damage += s.DamageBonus
-		}
+	// 1. 移动
+	cx, cy, count := warden.ComputeClusterCenter(ctx.Enemies)
+	if count > 0 {
+		s.MoveOrbit(cx, cy, envoyOrbitDist, dt)
+	} else {
+		s.Wander(dt)
+	}
 
-	case "possessing":
-		s.Timer -= ctx.DT
-		if s.PossessedTower != nil {
-			s.X = s.PossessedTower.X
-			s.Y = s.PossessedTower.Y - 20 // 悬浮在塔上方
-		}
-		if s.Timer <= 0 {
-			// 附身结束，恢复塔伤害，进入冷却
-			if s.PossessedTower != nil {
-				s.PossessedTower.Damage -= s.DamageBonus
-			}
-			s.PossessedTower = nil
-			s.Phase = "idle"
-			s.Timer = s.CooldownDuration
+	// 2. 普通攻击（仅有敌人时计时）
+	if count > 0 {
+		s.AttackTimer -= dt
+		if s.AttackTimer <= 0 {
+			s.AttackTimer += s.AttackInterval
+			s.BasicAttack(ctx)
 		}
 	}
 
-	// 冷却倒计时（idle 状态复用 Timer）
-	if s.Phase == "idle" && s.Timer > 0 {
-		s.Timer -= ctx.DT
+	// 3. 定时施加 buff
+	s.BuffTimer -= dt
+	if s.BuffTimer <= 0 {
+		s.BuffTimer += s.BuffInterval
+		applyEnvoyBuff(w, s, ctx)
+		if ctx.OnSpecial != nil {
+			ctx.OnSpecial()
+		}
 	}
+
+	// 4. buff 过期追踪（用于渲染）
+	if s.BuffExpiry > 0 {
+		s.BuffExpiry -= dt
+		if s.BuffExpiry <= 0 {
+			s.BuffedTower = nil
+		}
+	}
+
+	// 5. 射击线衰减
+	s.DecayShootTimer(dt)
+}
+
+// applyEnvoyBuff 选择最佳塔施加 buff。
+// 每次触发：永久 +PermGrant 强度 + 临时 max(0, 强度-100) 强度。
+// 只要有塔就触发，无需敌人。
+func applyEnvoyBuff(w *warden.Warden, s *EnvoyState, ctx *warden.TickContext) {
+	best := findBestHostOrAny(ctx.Towers, ctx.Enemies)
+	if best == nil {
+		return
+	}
+
+	key := fmt.Sprintf("envoy_buff_%d", w.ID)
+
+	// 切换目标时，主动移除旧塔的临时 buff
+	if s.BuffedTower != nil && s.BuffedTower != best {
+		s.BuffedTower.RemoveBuff(key)
+	}
+
+	ensureStrength(best)
+
+	// 永久增加强度
+	if s.PermGrant > 0 {
+		best.Strength.AddPermanent(s.PermGrant)
+	}
+
+	// 临时 buff = max(0, 强度 - 阈值)
+	tempBonus := w.PerceivedStrength - s.BuffThreshold
+	if tempBonus > 0 {
+		best.ApplyBuff(tower.TowerBuff{
+			Key:       key,
+			Source:    "金灵战灵",
+			Desc:      fmt.Sprintf("+%.0f 强度 (%.0fs)", tempBonus, s.BuffDuration),
+			Value:     tempBonus,
+			Duration:  s.BuffDuration,
+			Remaining: s.BuffDuration,
+		})
+	}
+
+	// 记录用于渲染
+	s.BuffedTower = best
+	s.BuffExpiry = s.BuffDuration
+}
+
+// findBestHostOrAny 有敌人时选射程内敌人最多的塔，无敌人时选任意塔。
+func findBestHostOrAny(towers *tower.Pool, enemies *enemy.Pool) *tower.Tower {
+	best := findBestHost(towers, enemies)
+	if best != nil {
+		return best
+	}
+	// 无敌人或无塔有敌人在射程内：选任意一座塔
+	var any *tower.Tower
+	towers.Each(func(t *tower.Tower) {
+		if any == nil {
+			any = t
+		}
+	})
+	return any
 }
 
 // findBestHost 找到射程内敌人最多的塔。

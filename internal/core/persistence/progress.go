@@ -49,20 +49,41 @@ func (pm *ProgressManager) Progress() *Progress {
 }
 
 // RecordGameResult 记录一场游戏结果。
-func (pm *ProgressManager) RecordGameResult(mapID string, kills int, won bool) {
+// modeID + mapID 组合键存储高分，兼容旧版纯 mapID 键。
+func (pm *ProgressManager) RecordGameResult(modeID, mapID string, kills int, won bool) {
 	p := pm.progress
 	p.TotalGames++
 	p.TotalKills += kills
 	if won {
 		p.TotalWins++
-		// 更新最高分
-		if kills > p.HighScores[mapID] {
-			p.HighScores[mapID] = kills
+		// 使用 modeID_mapID 复合键存储高分
+		scoreKey := modeID + "_" + mapID
+		if kills > p.HighScores[scoreKey] {
+			p.HighScores[scoreKey] = kills
 		}
 		// 解锁下一关
 		pm.unlockNext(mapID)
 	}
 	pm.save()
+}
+
+// LoadBestScore 加载最高分。优先查新键（modeID_mapID），回退旧键（mapID）。
+func (pm *ProgressManager) LoadBestScore(modeID, mapID string) int {
+	// 新键：modeID_mapID
+	newKey := modeID + "_" + mapID
+	if score, ok := pm.progress.HighScores[newKey]; ok {
+		return score
+	}
+	// 旧键兼容：纯 mapID
+	if score, ok := pm.progress.HighScores[mapID]; ok {
+		return score
+	}
+	return 0
+}
+
+// SaveGameResult 保存游戏结果（RecordGameResult 的别名，语义更清晰）。
+func (pm *ProgressManager) SaveGameResult(modeID, mapID string, kills int, won bool) {
+	pm.RecordGameResult(modeID, mapID, kills, won)
 }
 
 // SetTutorialDone 标记教程完成。

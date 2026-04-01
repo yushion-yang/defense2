@@ -21,6 +21,14 @@ docs/architecture/modules.md
 # Binary
 game
 
+# Generated LLM weight files
+config/llm/models/*.bin
+
+# Python venv
+.venv/
+__pycache__/
+.pytest_cache/
+
 # OS
 .DS_Store
 Thumbs.db

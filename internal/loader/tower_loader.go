@@ -4,6 +4,9 @@
 package loader
 
 import (
+	"sort"
+	"strings"
+
 	"defense2/internal/config"
 	"defense2/internal/core/tower"
 )
@@ -13,35 +16,47 @@ var defaultTowerColor = [3]uint8{80, 140, 220}
 
 // TowerJSONToDef 将单个 JSON 塔配置转为运行时 TowerDef。
 func TowerJSONToDef(key string, t *config.TowerJSON) tower.TowerDef {
-	// 攻击速度 = 1 / fireRate（fireRate 是秒/次，转为次/秒）
-	attackSpeed := 1.0
-	if t.BaseFireRate > 0 {
-		attackSpeed = 1.0 / t.BaseFireRate
+	// 攻速直接从 JSON 读取（次/秒），base+potential 在强度100时叠加
+	attackSpeed := t.BaseAttackSpeed + t.PotentialAttackSpeed
+	if attackSpeed <= 0 {
+		attackSpeed = 1.0
 	}
 
-	// 收集能力名称
-	var abilities []string
-	for _, a := range t.Abilities {
-		if a.Name != "" {
-			abilities = append(abilities, a.Name)
-		}
-	}
-
+	// 能力列表（直接从 JSON 字符串数组获取）
+	abilities := make([]string, len(t.Abilities))
+	copy(abilities, t.Abilities)
 	label := t.ShortLabel
 	if label == "" {
 		label = t.Label
 	}
 
-	return tower.TowerDef{
-		Key:         key,
-		Label:       label,
-		Range:       t.BaseRange,
-		Damage:      t.BaseDamage,
-		AttackSpeed: attackSpeed,
-		Cost:        t.BuildCost,
-		Abilities:   abilities,
-		Color:       defaultTowerColor,
+	def := tower.TowerDef{
+		Key:             key,
+		Label:           label,
+		Range:           t.BaseRange + t.PotentialRange,   // 强度100时的默认值
+		Damage:          t.BaseDamage + t.PotentialDamage, // 强度100时的默认值
+		AttackSpeed:     attackSpeed,
+		Cost:            t.BuildCost,
+		Abilities:       abilities,
+		Color:           defaultTowerColor,
+		AttackStyleID:   resolveAttackStyle(t),
+		ProjectileSpeed: t.ProjectileSpeed,
 	}
+
+	// 战力基础值+潜力值
+	def.CfgBaseDamage = t.BaseDamage
+	def.CfgBaseSpeed = t.BaseAttackSpeed
+	def.CfgBaseRange = t.BaseRange
+	def.PotentialDamage = t.PotentialDamage
+	def.PotentialSpeed = t.PotentialAttackSpeed
+	def.PotentialRange = t.PotentialRange
+
+	// 升级费用
+	if len(t.UpgradeCosts) > 0 {
+		def.UpgradeCosts = make([]int, len(t.UpgradeCosts))
+		copy(def.UpgradeCosts, t.UpgradeCosts)
+	}
+	return def
 }
 
 // LoadTowerDefs 加载所有塔 JSON 并转为 TowerDef 切片（按费用升序）。
@@ -51,18 +66,57 @@ func LoadTowerDefs() ([]tower.TowerDef, error) {
 		return nil, err
 	}
 
+	// 先按 key 字典序收集，确保 map 遍历顺序不影响结果
+	keys := make([]string, 0, len(all))
+	for key := range all {
+		keys = append(keys, key)
+	}
+	sort.Strings(keys)
+
 	defs := make([]tower.TowerDef, 0, len(all))
-	for key, t := range all {
-		defs = append(defs, TowerJSONToDef(key, t))
+	for _, key := range keys {
+		defs = append(defs, TowerJSONToDef(key, all[key]))
 	}
 
-	// 冒泡排序按费用升序
-	for i := 0; i < len(defs); i++ {
-		for j := i + 1; j < len(defs); j++ {
-			if defs[j].Cost < defs[i].Cost {
-				defs[i], defs[j] = defs[j], defs[i]
-			}
-		}
-	}
+	// 稳定排序按费用升序（费用相同时保持 key 字典序）
+	sort.SliceStable(defs, func(i, j int) bool {
+		return defs[i].Cost < defs[j].Cost
+	})
 	return defs, nil
+}
+
+// resolveAttackStyle 解析攻击方式。
+func resolveAttackStyle(t *config.TowerJSON) tower.AttackStyle {
+	if t.AttackStyle != "" {
+		return tower.AttackStyle(t.AttackStyle)
+	}
+	return tower.StyleProjectile
+}
+
+// parseHexColor 解析 "#rrggbb" hex 颜色为 [3]uint8。
+func parseHexColor(hex string) [3]uint8 {
+	hex = strings.TrimPrefix(hex, "#")
+	if len(hex) != 6 {
+		return [3]uint8{200, 200, 200}
+	}
+	var r, g, b uint8
+	for i, ptr := range []*uint8{&r, &g, &b} {
+		hi := hexVal(hex[i*2])
+		lo := hexVal(hex[i*2+1])
+		*ptr = hi*16 + lo
+	}
+	return [3]uint8{r, g, b}
+}
+
+func hexVal(c byte) uint8 {
+	switch {
+	case c >= '0' && c <= '9':
+		return c - '0'
+	case c >= 'a' && c <= 'f':
+		return c - 'a' + 10
+	case c >= 'A' && c <= 'F':
+		return c - 'A' + 10
+	default:
+		return 0
+	}
 }

@@ -1,0 +1,301 @@
+// widget.go — 可复用 UI 组件。
+// 基于 draw 包原语，提供高层级的卡片、按钮、面板、进度条等组件。
+// 所有坐标均为逻辑像素（1200×540），HiDPI 缩放由 draw 包自动处理。
+package ui
+
+import (
+	"image/color"
+
+	"defense2/internal/render"
+	"defense2/internal/render/draw"
+
+	"github.com/hajimehoshi/ebiten/v2"
+)
+
+// ---------------------------------------------------------------------------
+// Card — 圆角卡片（模式选择、战灵选择等）
+// ---------------------------------------------------------------------------
+
+// CardStyle 卡片样式。
+// 自适应：宽高由调用者指定，内部元素自动居中。
+// 限制：不自动换行，高亮条位置固定在底部 8px。
+type CardStyle struct {
+	BgColor      color.Color // 背景色
+	BorderColor  color.Color // 边框色
+	Radius       float32     // 圆角半径（0=直角）
+	BorderWidth  float32     // 边框宽度
+	Selected     bool        // 是否选中
+	SelectedColor color.Color // 选中边框/高亮色
+	HighlightBar bool        // 选中时是否在底部画高亮条
+	BarWidth     float32     // 高亮条宽度
+}
+
+// DefaultCardStyle 默认卡片样式。
+func DefaultCardStyle() CardStyle {
+	return CardStyle{
+		BgColor:      color.RGBA{R: 30, G: 38, B: 60, A: 255},
+		BorderColor:  color.RGBA{R: 60, G: 70, B: 95, A: 255},
+		Radius:       12,
+		BorderWidth:  1.5,
+		HighlightBar: true,
+		BarWidth:     40,
+	}
+}
+
+// Card 绘制一个圆角卡片。
+func Card(screen *ebiten.Image, x, y, w, h float32, style CardStyle) {
+	r := style.Radius
+
+	// 背景
+	draw.RoundRect(screen, x, y, w, h, r, style.BgColor)
+
+	// 边框
+	borderClr := style.BorderColor
+	if style.Selected && style.SelectedColor != nil {
+		borderClr = style.SelectedColor
+	}
+	if borderClr != nil {
+		bw := style.BorderWidth
+		if bw <= 0 {
+			bw = 1.5
+		}
+		draw.StrokeRoundRect(screen, x, y, w, h, r, bw, borderClr)
+	}
+
+	// 选中底部高亮条
+	if style.Selected && style.HighlightBar && style.SelectedColor != nil {
+		barW := style.BarWidth
+		if barW <= 0 {
+			barW = 40
+		}
+		barH := float32(3)
+		draw.RoundRect(screen, x+(w-barW)/2, y+h-8, barW, barH, barH/2, style.SelectedColor)
+	}
+}
+
+// ---------------------------------------------------------------------------
+// Button — 圆角按钮
+// ---------------------------------------------------------------------------
+
+// ButtonStyle 按钮样式。
+// 自适应：文字自动垂直居中；Radius=0 时自动 Pill 形状（h/2）。
+// 限制：文字不自动缩放，超出按钮宽度时会溢出。
+type ButtonStyle struct {
+	BgColor   color.Color // 背景色
+	TextColor color.Color // 文字颜色（默认白色）
+	FontSize  float64     // 文字大小
+	Radius    float32     // 圆角半径（0=Pill 自动半圆角）
+	Bold      bool        // 文字是否加粗
+}
+
+// Button 绘制一个圆角按钮 + 居中文字。
+func Button(screen *ebiten.Image, x, y, w, h float32, label string, style ButtonStyle) {
+	r := style.Radius
+	if r <= 0 {
+		r = h / 2 // Pill shape
+	}
+	draw.RoundRect(screen, x, y, w, h, r, style.BgColor)
+
+	fm := render.GlobalFont()
+	if fm == nil {
+		return
+	}
+	textClr := style.TextColor
+	if textClr == nil {
+		textClr = color.White
+	}
+	fontSize := style.FontSize
+	if fontSize <= 0 {
+		fontSize = 14
+	}
+	cx := float64(x) + float64(w)/2
+	cy := float64(y) + float64(h)/2
+	if style.Bold {
+		fm.DrawCenteredVBoldText(screen, label, cx, cy, fontSize, textClr)
+	} else {
+		fm.DrawCenteredVText(screen, label, cx, cy, fontSize, textClr)
+	}
+}
+
+// ---------------------------------------------------------------------------
+// Panel — 圆角面板（半透明背景 + 可选边框）
+// ---------------------------------------------------------------------------
+
+// PanelStyle 面板样式。
+// 自适应：宽高由调用者指定，默认圆角 14px。
+// 限制：不管理内部内容布局，仅绘制背景+边框。
+type PanelStyle struct {
+	BgColor     color.Color // 背景色（通常半透明）
+	BorderColor color.Color // 边框色（nil=无边框）
+	Radius      float32     // 圆角半径
+	BorderWidth float32     // 边框宽度
+}
+
+// Panel 绘制一个圆角面板。
+func Panel(screen *ebiten.Image, x, y, w, h float32, style PanelStyle) {
+	r := style.Radius
+	if r <= 0 {
+		r = 14
+	}
+	draw.RoundRect(screen, x, y, w, h, r, style.BgColor)
+	if style.BorderColor != nil {
+		bw := style.BorderWidth
+		if bw <= 0 {
+			bw = 1
+		}
+		draw.StrokeRoundRect(screen, x, y, w, h, r, bw, style.BorderColor)
+	}
+}
+
+// ---------------------------------------------------------------------------
+// ProgressBar — 圆角进度条（HP/XP/加载等）
+// ---------------------------------------------------------------------------
+
+// ProgressBarStyle 进度条样式。
+// 自适应：宽度由调用者指定，填充宽度按 ratio 计算；Radius=0 时自动 Pill（h/2）。
+// 限制：最小填充宽度 = 2*radius，ratio < 极小值时显示为空。
+type ProgressBarStyle struct {
+	BgColor   color.Color // 槽背景色
+	FillColor color.Color // 填充色
+	Radius    float32     // 圆角半径（0=自动 h/2）
+}
+
+// ProgressBar 绘制一个圆角进度条。ratio 为 0.0~1.0。
+func ProgressBar(screen *ebiten.Image, x, y, w, h float32, ratio float64, style ProgressBarStyle) {
+	r := style.Radius
+	if r <= 0 {
+		r = h / 2
+	}
+	// 背景槽
+	draw.RoundRect(screen, x, y, w, h, r, style.BgColor)
+	// 填充
+	if ratio > 0 {
+		if ratio > 1 {
+			ratio = 1
+		}
+		fillW := w * float32(ratio)
+		if fillW < r*2 {
+			fillW = r * 2 // 最小宽度保证圆角可见
+		}
+		draw.RoundRect(screen, x, y, fillW, h, r, style.FillColor)
+	}
+}
+
+// ---------------------------------------------------------------------------
+// Badge — 小标签/徽章（Pill 形状）
+// ---------------------------------------------------------------------------
+
+// BadgeStyle 徽章样式。
+// 自适应：宽度根据文字长度自动计算（MeasureText + padding）。
+// 限制：单行文字，不支持换行；最大建议字符数 ~20。
+type BadgeStyle struct {
+	BgColor   color.Color
+	TextColor color.Color
+	FontSize  float64
+}
+
+// Badge 绘制一个 Pill 形状的小标签。自动计算宽度。
+func Badge(screen *ebiten.Image, cx, cy float64, label string, style BadgeStyle) {
+	fm := render.GlobalFont()
+	if fm == nil {
+		return
+	}
+	fontSize := style.FontSize
+	if fontSize <= 0 {
+		fontSize = 10
+	}
+	tw := fm.MeasureText(label, fontSize)
+	padX := float32(8)
+	padY := float32(4)
+	h := float32(fontSize) + padY*2
+	w := float32(tw) + padX*2
+	x := float32(cx) - w/2
+	y := float32(cy) - h/2
+
+	draw.RoundRect(screen, x, y, w, h, h/2, style.BgColor)
+
+	textClr := style.TextColor
+	if textClr == nil {
+		textClr = color.White
+	}
+	fm.DrawCenteredText(screen, label, cx, float64(y)+float64(padY), fontSize, textClr)
+}
+
+// ---------------------------------------------------------------------------
+// IconCard — 带图标的卡片（选关/战灵选择场景）
+// ---------------------------------------------------------------------------
+
+// IconCardStyle 图标卡片样式。
+// 自适应：图标/名称/描述垂直排列自动居中，优先使用 PNG 图标回退到文字。
+// 限制：固定垂直布局（icon@y+18, name@y+55, desc@y+78），卡片高度需 ≥ 100px。
+type IconCardStyle struct {
+	CardStyle                  // 嵌入卡片样式
+	IconSize     float64       // 图标字号
+	IconColor    color.Color   // 图标颜色
+	NameSize     float64       // 名称字号
+	NameColor    color.Color   // 名称颜色
+	NameBold     bool          // 名称是否加粗
+	DescSize     float64       // 描述字号
+	DescColor    color.Color   // 描述颜色
+}
+
+// IconCard 绘制带图标、名称、描述的卡片。
+func IconCard(screen *ebiten.Image, x, y, w, h float32, icon, name, desc string, style IconCardStyle) {
+	// 卡片底板
+	Card(screen, x, y, w, h, style.CardStyle)
+
+	fm := render.GlobalFont()
+	if fm == nil {
+		return
+	}
+
+	cx := float64(x) + float64(w)/2
+
+	// 图标：优先尝试 PNG 图标（icon 字符串匹配已注册的图标名），回退到文本渲染
+	iconSize := style.IconSize
+	if iconSize <= 0 {
+		iconSize = 22
+	}
+	iconDrawn := false
+	if im := render.GlobalIcons(); im != nil {
+		if img := im.Get(icon); img != nil {
+			draw.Sprite(screen, img, cx, float64(y)+18+iconSize/2, iconSize)
+			iconDrawn = true
+		}
+	}
+	if !iconDrawn {
+		iconClr := style.IconColor
+		if iconClr == nil {
+			iconClr = color.White
+		}
+		fm.DrawCenteredText(screen, icon, cx, float64(y)+18, iconSize, iconClr)
+	}
+
+	// 名称
+	nameSize := style.NameSize
+	if nameSize <= 0 {
+		nameSize = 14
+	}
+	nameClr := style.NameColor
+	if nameClr == nil {
+		nameClr = color.White
+	}
+	if style.NameBold {
+		fm.DrawCenteredBoldText(screen, name, cx, float64(y)+55, nameSize, nameClr)
+	} else {
+		fm.DrawCenteredText(screen, name, cx, float64(y)+55, nameSize, nameClr)
+	}
+
+	// 描述
+	if desc != "" {
+		descSize := style.DescSize
+		if descSize <= 0 {
+			descSize = 10
+		}
+		descClr := style.DescColor
+		if descClr == nil {
+			descClr = color.RGBA{R: 140, G: 145, B: 160, A: 255}
+		}
+		fm.DrawCenteredText(screen, desc, cx, float64(y)+78, descSize, descClr)
+	}
+}

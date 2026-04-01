@@ -1,59 +1,208 @@
-// top_bar.go — 顶部状态栏渲染。
-// 显示金币、生命值、波次进度、击杀数和 FPS 调试信息。
+// top_bar.go — Centered pill-shaped top status bar.
+// Displays resources on the left, action buttons on the right.
+//
+// Draws directly to the screen each frame (no offscreen cache) so that
+// draw.* auto-scaling works correctly on HiDPI displays.
+// Button hit detection uses rects computed during the last render.
 package hud
 
 import (
-	"fmt"
 	"image/color"
+	"strconv"
 
-	"defense2/internal/core/game"
+	"defense2/internal/render"
+	"defense2/internal/render/draw"
+	"defense2/internal/render/theme"
+	"defense2/internal/render/ui"
 
 	"github.com/hajimehoshi/ebiten/v2"
-	"github.com/hajimehoshi/ebiten/v2/ebitenutil"
-	"github.com/hajimehoshi/ebiten/v2/vector"
 )
 
-// TopBarData 顶部栏所需的运行时数据。
+// TopBarData holds the runtime data the top bar needs to render.
 type TopBarData struct {
-	Gold     int // 当前金币
-	Lives    int // 剩余生命值
-	Wave     int // 当前波次号
-	MaxWaves int // 总波次数
-	Kills    int // 累计击杀数
-	Enemies  int // 场上存活敌人数
+	Gold          int     // current gold
+	Lives         int     // remaining lives
+	Wave          int     // current wave number
+	MaxWaves      int     // total waves
+	Kills         int     // cumulative kills
+	Enemies       int     // alive enemies on field
+	Speed         int     // game speed multiplier (1, 2, 3, 10)
+	WaveCountdown float64 // 波间倒计时剩余秒数（0 表示无倒计时）
+	TestMode      bool    // 测试模式（显示额外按钮）
+	SpawnMode     bool    // 造怪模式激活
+	DebugOpen     bool    // 调试面板打开
 }
 
-// DrawTopBar 渲染顶部半透明信息栏。
+// topBarBtn describes a button inside the top bar.
+type topBarBtn struct {
+	label string
+	w     float32
+	tone  color.RGBA
+}
+
+// DrawTopBar renders the centered pill-shaped top bar directly to screen.
 func DrawTopBar(screen *ebiten.Image, d TopBarData) {
-	L := Layout
+	fm := render.GlobalFont()
+	if fm == nil {
+		return
+	}
 
-	// 半透明背景
-	vector.DrawFilledRect(screen, 0, L.TopBarY, float32(game.ScreenWidth), L.TopBarH,
-		color.RGBA{R: 0, G: 0, B: 0, A: 160}, false)
+	const (
+		pillY      = float32(theme.TopBarY)
+		pillW      = float32(theme.TopBarW)
+		pillH      = float32(theme.TopBarH)
+		pillR      = float32(theme.TopBarRadius)
+		btnH       = float32(theme.TopBarBtnH)
+		btnGap     = float32(theme.TopBarBtnGap)
+		btnR       = float32(theme.BtnRadius)
+		dividerOff = float32(theme.TopBarDividerOffset)
+	)
+	pillX := topBarX
 
-	y := int(L.TopBarY) + 6
+	// ── Pill background + border ──
+	draw.RoundRect(screen, pillX, pillY, pillW, pillH, pillR, theme.HUDTopBarBg)
+	draw.StrokeRoundRect(screen, pillX, pillY, pillW, pillH, pillR, 1, theme.HUDTopBarBorder)
 
-	// 金币（黄色）
-	goldTxt := fmt.Sprintf("Gold: %d", d.Gold)
-	ebitenutil.DebugPrintAt(screen, goldTxt, 12, y)
+	// ── Left section: resources ──
+	resX := float64(pillX) + 16
+	resY := float64(pillY) + 12 // vertically centered baseline
 
-	// 生命值（红色文字用白色代替，DebugPrint 不支持彩色）
-	livesTxt := fmt.Sprintf("Lives: %d", d.Lives)
-	ebitenutil.DebugPrintAt(screen, livesTxt, 120, y)
+	// Heart icon + lives
+	draw.FilledCircle(screen, float32(resX)+6, float32(resY)+2, 6, theme.ResHearts)
+	resX += 16
+	const topFS = theme.FontH1 // 顶栏使用 H1 字号
+	livesTxt := strconv.Itoa(d.Lives)
+	fm.DrawText(screen, livesTxt, resX, resY-5, topFS, color.White)
+	resX += fm.MeasureText(livesTxt, topFS) + 10
 
-	// 波次
-	waveTxt := fmt.Sprintf("Wave: %d/%d", d.Wave, d.MaxWaves)
-	ebitenutil.DebugPrintAt(screen, waveTxt, 230, y)
+	// Coin icon + gold
+	draw.FilledCircle(screen, float32(resX)+6, float32(resY)+2, 6, theme.ResGold)
+	resX += 16
+	goldTxt := strconv.Itoa(d.Gold)
+	fm.DrawText(screen, goldTxt, resX, resY-5, topFS, color.White)
+	resX += fm.MeasureText(goldTxt, topFS) + 10
 
-	// 击杀
-	killTxt := fmt.Sprintf("Kills: %d", d.Kills)
-	ebitenutil.DebugPrintAt(screen, killTxt, 360, y)
+	// Wave icon + wave/maxWaves
+	draw.FilledCircle(screen, float32(resX)+5, float32(resY)+2, 5, theme.ResWaves)
+	resX += 14
+	waveTxt := strconv.Itoa(d.Wave) + "/" + strconv.Itoa(d.MaxWaves)
+	fm.DrawText(screen, waveTxt, resX, resY-5, topFS, color.White)
+	resX += fm.MeasureText(waveTxt, topFS) + 10
 
-	// 场上敌人
-	enemyTxt := fmt.Sprintf("Enemies: %d", d.Enemies)
-	ebitenutil.DebugPrintAt(screen, enemyTxt, 470, y)
+	// Kills icon (stat-target) + kill count
+	if im := render.GlobalIcons(); im != nil {
+		if img := im.Get("stat-target"); img != nil {
+			draw.Sprite(screen, img, resX+5, float64(resY)+1, 10)
+			resX += 14
+			killsTxt := strconv.Itoa(d.Kills)
+			fm.DrawText(screen, killsTxt, resX, resY-5, topFS, color.White)
+		}
+	}
 
-	// FPS（右侧）
-	fpsTxt := fmt.Sprintf("TPS:%.0f", ebiten.ActualTPS())
-	ebitenutil.DebugPrintAt(screen, fpsTxt, game.ScreenWidth-80, y)
+	// ── Divider ──
+	divX := pillX + dividerOff
+	divY1 := pillY + 6
+	divY2 := pillY + pillH - 6
+	draw.Line(screen, divX, divY1, divX, divY2, 1, theme.HUDTopBarDivider, false)
+
+	// ── Right section: buttons (using ButtonRow) ──
+	speedLabel := "x1"
+	switch d.Speed {
+	case 2:
+		speedLabel = "x2"
+	case 3:
+		speedLabel = "x3"
+	case 10:
+		speedLabel = "T"
+	default:
+		speedLabel = "x1"
+	}
+
+	// 构建按钮列表 + 名称映射
+	type btnDef struct {
+		name  string
+		label string
+		clr   color.RGBA
+	}
+	var btns []btnDef
+
+	// 测试模式：造怪 + 调试按钮
+	if d.TestMode {
+		spawnClr := theme.TonePrimary
+		if d.SpawnMode {
+			spawnClr = theme.BtnDanger // 红色表示激活
+		}
+		btns = append(btns, btnDef{"spawn", "造怪", spawnClr})
+	}
+
+	startLabel := "开波"
+	if d.WaveCountdown > 0 {
+		startLabel = "开波(" + strconv.Itoa(int(d.WaveCountdown)+1) + "s)"
+	}
+	btns = append(btns, btnDef{"start", startLabel, theme.TonePrimary})
+	btns = append(btns, btnDef{"speed", speedLabel, theme.ToneAccent})
+	btns = append(btns, btnDef{"menu", "菜单", theme.ToneSecondary})
+
+	if d.TestMode {
+		debugClr := theme.ToneSecondary
+		if d.DebugOpen {
+			debugClr = theme.ToneAccent
+		}
+		btns = append(btns, btnDef{"debug", "调试", debugClr})
+	}
+
+	// 截图按钮（所有模式可用）
+	btns = append(btns, btnDef{"screenshot", "截图", theme.ToneSecondary})
+
+	items := make([]ui.ButtonRowItem, len(btns))
+	names := make([]string, len(btns))
+	for i, b := range btns {
+		items[i] = ui.ButtonRowItem{Label: b.label, Color: b.clr}
+		names[i] = b.name
+	}
+
+	// 计算按钮区域（右对齐，按文本自适应宽度）
+	// pad 必须与 DrawButtonRowAutoWidth 内部的 pad=16 一致
+	const btnPadX float32 = 16
+	totalBtnW := float32(0)
+	for _, item := range items {
+		tw := float32(fm.MeasureText(item.Label, theme.FontH2))
+		w := tw + btnPadX*2
+		if w < 40 {
+			w = 40
+		}
+		totalBtnW += w
+	}
+	totalBtnW += float32(len(items)-1) * btnGap
+
+	btnArea := ui.Rect{
+		X: pillX + pillW - 12 - totalBtnW,
+		Y: pillY + (pillH-btnH)/2,
+		W: totalBtnW,
+		H: btnH,
+	}
+
+	result := ui.DrawButtonRowAutoWidth(screen, btnArea, items, ui.ButtonRowStyle{
+		Height:   btnH,
+		Gap:      btnGap,
+		Radius:   btnR,
+		FontSize: theme.FontH2,
+	})
+	lastTopBarBtnRects = result.Rects
+	lastTopBarBtnNames = names
+}
+
+// ── 按钮碰撞检测（复用 DrawButtonRow 的 Rects） ──
+
+var lastTopBarBtnRects []ui.Rect
+var lastTopBarBtnNames []string
+
+// TopBarHitTest returns the button name hit by (px, py), or "" if none.
+// Uses the Rects computed by the last DrawTopBar call.
+func TopBarHitTest(px, py float32) string {
+	idx := ui.HitTestButtonRow(lastTopBarBtnRects, float64(px), float64(py))
+	if idx >= 0 && idx < len(lastTopBarBtnNames) {
+		return lastTopBarBtnNames[idx]
+	}
+	return ""
 }

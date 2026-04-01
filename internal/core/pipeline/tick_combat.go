@@ -5,122 +5,298 @@ package pipeline
 import (
 	"math"
 
+	"defense2/internal/config"
+	"defense2/internal/core/combat"
 	"defense2/internal/core/enemy"
 	"defense2/internal/core/projectile"
 	"defense2/internal/core/tower"
 )
 
-const projectileSpeed = 300.0 // 弹射物飞行速度（像素/秒）
-const projectileRadius = 4.0  // 弹射物碰撞半径（像素）
+// TickTowerCombat 塔战斗子管线：按攻击方式分发射击逻辑。
+// beams 可为 nil（无 beam 渲染支持时），onFire/onHit 可为 nil。
+func TickTowerCombat(towers *tower.Pool, enemies *enemy.Pool, projectiles *projectile.Pool, beams *combat.BeamPool, dt float64, onFire func(*tower.Tower, string), onHit combat.HitCallback) {
+	ctx := &combat.AttackContext{
+		Enemies:     enemies,
+		Projectiles: projectiles,
+		Beams:       beams,
+		OnFire:      onFire,
+		OnHit:       onHit,
+		DT:          dt,
+		// OnAbilityHit 已废弃：所有 handler 通过 ApplyHit 统一处理
+	}
 
-// TickTowerCombat 塔战斗子管线：索敌 → 冷却检查 → 发射弹射物。
-func TickTowerCombat(towers *tower.Pool, enemies *enemy.Pool, projectiles *projectile.Pool, dt float64) {
 	towers.Each(func(t *tower.Tower) {
+		// 正在出售的塔跳过战斗
+		if t.Selling {
+			return
+		}
+
+		// 射击动画衰减
+		if t.FireAnim > 0 {
+			t.FireAnim -= dt
+		}
+
+		style := t.ResolveAttackStyle()
+		ctx.Style = string(style)
+
+		// 自管理攻击方式：每帧 tick，不走标准冷却
+		if combat.IsSelfManaged(style) {
+			combat.TickSelfManaged(t, ctx)
+			return
+		}
+
+		// 标准冷却流程
 		t.FireTimer -= dt
 		if t.FireTimer > 0 {
 			return
 		}
 
-		target := tower.FindNearestEnemy(t, enemies)
+		target := tower.AcquireTarget(t, enemies)
 		if target == nil {
 			return
 		}
 
-		projectiles.Fire(t.X, t.Y, target.X, target.Y, t.Damage, projectileSpeed, projectileRadius)
-		t.FireTimer = 1.0 / t.AttackSpeed // 冷却时间 = 1 / 攻速
+		t.Angle = math.Atan2(target.Y-t.Y, target.X-t.X)
+
+		handler := combat.Get(style)
+		if handler != nil {
+			handler.Fire(t, target, ctx)
+
+			// 多目标攻击：对额外目标各发射一颗弹
+			if extra := multiTargetCount(t); extra > 0 {
+				targets := tower.FindExtraTargets(t, enemies, extra, target)
+				for _, et := range targets {
+					handler.Fire(t, et, ctx)
+				}
+			}
+		}
+		t.FireTimer = 1.0 / t.AttackSpeed
+		t.FireAnim = 0.15
+		if onFire != nil {
+			onFire(t, string(style))
+		}
 	})
 }
 
+// HitCallback 弹射物命中回调（用于生成飘字、音效等）。
+type HitCallback = combat.HitCallback
+
+// scatterHit 散射弹命中记录（同组同敌人合并）。
+type scatterHit struct {
+	enemy    *enemy.Enemy
+	towerKey string
+	count    int     // 命中弹丸数
+	damage   float64 // 单颗伤害
+}
+
 // TickProjectileHits 弹射物碰撞子管线：检测碰撞 → 触发能力 → 扣血 → 击杀。
-// 返回本帧击杀数。
-func TickProjectileHits(projectiles *projectile.Pool, enemies *enemy.Pool, towers *tower.Pool) int {
+// 返回本帧击杀数。onHit 可为 nil。
+//
+// 碰撞规则（塔防模型）：
+//   - 追踪弹（Target != nil）：只和锁定目标碰撞，穿过其他敌人
+//   - 穿刺弹（Pierce=true）：对路径上所有敌人碰撞，命中后继续飞行
+//   - 散射弹（ScatterGroup>0）：路径碰撞，同组命中同敌人合并为一次伤害
+//   - 散射视觉弹（ScatterVisual）：不参与碰撞（旧版兼容）
+func TickProjectileHits(projectiles *projectile.Pool, enemies *enemy.Pool, towers *tower.Pool, onHit HitCallback) int {
 	kills := 0
+
+	// 散射命中收集（key = groupID<<32|enemyID）
+	scatterHits := map[int64]*scatterHit{}
+
 	projectiles.Each(func(p *projectile.Projectile) {
+		// 散射视觉弹不参与碰撞检测（旧版兼容）
+		if p.ScatterVisual {
+			return
+		}
+
 		enemies.Each(func(e *enemy.Enemy) {
+			if !p.Active {
+				return
+			}
+			if e.IsDying() {
+				return
+			}
+
+			// 追踪弹只和锁定目标碰撞（穿刺弹和散射弹除外）
+			if p.Target != nil && !p.Pierce && p.ScatterGroup == 0 && e != p.Target {
+				return
+			}
+
 			dx := p.X - e.X
 			dy := p.Y - e.Y
 			dist := math.Hypot(dx, dy)
 			if dist > p.Radius+e.Radius {
-				return // 未碰撞
+				return
 			}
 
-			totalDamage := p.Damage
+			// 穿刺弹：跳过已命中的敌人
+			if p.Pierce {
+				for _, hitID := range p.PierceHitIDs {
+					if hitID == e.ID {
+						return
+					}
+				}
+			}
 
-			// 查找发射该弹射物的塔并触发能力
-			// TODO: 后续用弹射物标记来源塔 ID，目前简化处理
+			// ── 散射弹（穿透）：跳过已命中敌人，记录命中，延迟合并处理 ──
+			if p.ScatterGroup > 0 {
+				// 穿透：跳过已命中的敌人
+				for _, hitID := range p.PierceHitIDs {
+					if hitID == e.ID {
+						return
+					}
+				}
+				p.PierceHitIDs = append(p.PierceHitIDs, e.ID)
+
+				key := int64(p.ScatterGroup)<<32 | int64(e.ID)
+				if sh, ok := scatterHits[key]; ok {
+					sh.count++
+				} else {
+					scatterHits[key] = &scatterHit{
+						enemy:    e,
+						towerKey: p.SourceTowerKey,
+						count:    1,
+						damage:   p.Damage,
+					}
+				}
+				// 不 Release：弹丸继续飞行穿透后续敌人，到 MaxRange 自然消亡
+				return
+			}
+
+			// ── 普通弹/追踪弹/穿刺弹：统一命中处理 ──
 			var srcTower *tower.Tower
-			towers.Each(func(t *tower.Tower) {
-				if srcTower == nil {
-					srcTower = t
-				}
-			})
-
-			if srcTower != nil {
-				for _, aName := range srcTower.Abilities {
-					ab, ok := tower.Registry[aName]
-					if !ok {
-						continue
+			if p.SourceTowerKey != "" {
+				towers.Each(func(t *tower.Tower) {
+					if srcTower == nil && t.InstanceKey == p.SourceTowerKey {
+						srcTower = t
 					}
-					result := ab.OnHit(srcTower, p, e)
-					if result == nil {
-						continue
-					}
-					totalDamage += result.BonusDamage
-					applyHitEffects(result, e, p, enemies)
-				}
+				})
 			}
 
-			e.HP -= totalDamage
-			projectiles.Release(p)
-			if e.HP <= 0 {
-				enemies.Kill(e)
-				kills++
+			hitStyle := ""
+			if srcTower != nil {
+				hitStyle = string(srcTower.AttackStyleID)
+			}
+			out := combat.ApplyHit(combat.HitInput{
+				Tower: srcTower, Target: e, BaseDamage: p.Damage, Style: hitStyle,
+				Enemies: enemies, Projectiles: projectiles, Projectile: p,
+			}, onHit)
+
+			if out.Killed {
+				kills += 1 + out.ExtraKills
+			}
+
+			if p.Pierce {
+				p.PierceHitIDs = append(p.PierceHitIDs, e.ID)
+				p.PierceCount++
+				p.Damage *= p.PierceDecay
+				if p.PierceCount >= p.PierceMax {
+					projectiles.Release(p)
+				} else {
+					retargetPierce(p, e, enemies)
+				}
+			} else {
+				projectiles.Release(p)
 			}
 		})
 	})
+
+	// ── 散射命中合并处理 ──
+	for _, sh := range scatterHits {
+		e := sh.enemy
+		if !e.Active || e.IsDying() {
+			continue
+		}
+		mergedDamage := sh.damage * float64(sh.count)
+
+		var srcTower *tower.Tower
+		if sh.towerKey != "" {
+			towers.Each(func(t *tower.Tower) {
+				if srcTower == nil && t.InstanceKey == sh.towerKey {
+					srcTower = t
+				}
+			})
+		}
+
+		out := combat.ApplyHit(combat.HitInput{
+			Tower: srcTower, Target: e, BaseDamage: mergedDamage, Style: "scatter",
+			Enemies: enemies, Projectiles: projectiles,
+		}, onHit)
+
+		if out.Killed {
+			kills += 1 + out.ExtraKills
+		}
+	}
+
 	return kills
 }
 
-// applyHitEffects 将能力效果（减速、眩晕、流血、溅射）施加到目标及周围敌人。
-func applyHitEffects(r *tower.HitResult, target *enemy.Enemy, p *projectile.Projectile, enemies *enemy.Pool) {
-	// 减速
-	if r.Slow != nil {
-		target.SlowTimer = r.Slow.Duration
-		target.SlowFactor = r.Slow.Factor
-		target.Speed = target.BaseSpeed * r.Slow.Factor
-	}
-	// 眩晕
-	if r.Stun != nil {
-		target.StunTimer = r.Stun.Duration
-	}
-	// 流血
-	if r.Bleed != nil {
-		target.BleedTimer = r.Bleed.Duration
-		target.BleedDPS = r.Bleed.DPS
-	}
-	// 溅射：对目标周围敌人造成比例伤害
-	if r.Splash != nil {
-		splashDamage := p.Damage * r.Splash.Ratio
-		enemies.Each(func(e *enemy.Enemy) {
-			if e == target {
-				return // 跳过已命中的目标
+// retargetPierce 穿刺弹命中后寻找下一个最近目标。
+func retargetPierce(p *projectile.Projectile, justHit *enemy.Enemy, enemies *enemy.Pool) {
+	var best *enemy.Enemy
+	bestDist := 300.0 // 穿刺搜索范围
+	enemies.Each(func(e *enemy.Enemy) {
+		if e == justHit || e.IsDying() {
+			return
+		}
+		for _, id := range p.PierceHitIDs {
+			if id == e.ID {
+				return
 			}
-			dx := e.X - target.X
-			dy := e.Y - target.Y
-			if math.Hypot(dx, dy) <= r.Splash.Radius {
-				e.HP -= splashDamage
-				if e.HP <= 0 {
-					enemies.Kill(e)
-				}
-			}
-		})
+		}
+		d := math.Hypot(e.X-justHit.X, e.Y-justHit.Y)
+		if d < bestDist {
+			bestDist = d
+			best = e
+		}
+	})
+	if best != nil {
+		p.Target = best
+	} else {
+		p.Target = nil // 无目标，直线飞行至消亡
 	}
 }
 
+// multiTargetCount 返回塔的多目标额外目标数（不含主目标）。
+// 公式: targets = floor(base + potential * (strength/100)) - 1（减去主目标）。
+// 无 multiTarget 能力时返回 0。
+func multiTargetCount(t *tower.Tower) int {
+	for _, aName := range t.Abilities {
+		if aName == "multiTarget" {
+			abTable := config.GlobalAbilityTable()
+			if abTable == nil {
+				return 1
+			}
+			def, ok := abTable["multiTarget"]
+			if !ok {
+				return 1
+			}
+			str := 100.0
+			if t.Strength != nil {
+				str = t.Strength.Effective()
+			}
+			total := int(def.CalcScale(str)) // 总目标数（含主目标）
+			if total < 1 {
+				total = 1
+			}
+			return total - 1 // 额外目标数
+		}
+	}
+	return 0
+}
+
 // TickEnemyStatusEffects 敌人状态效果子管线：处理所有敌人的减速/流血，击杀血量归零的敌人。
-func TickEnemyStatusEffects(enemies *enemy.Pool, dt float64) {
+func TickEnemyStatusEffects(enemies *enemy.Pool, dt float64, onDotDmg func(e *enemy.Enemy, dmg float64)) {
 	enemies.Each(func(e *enemy.Enemy) {
+		if e.IsDying() {
+			return
+		}
 		enemy.TickStatusEffects(e, dt)
+		// DoT tick 触发时弹浮字
+		if e.LastDotDmg > 0 && onDotDmg != nil {
+			onDotDmg(e, e.LastDotDmg)
+			e.LastDotDmg = 0
+		}
 		if e.HP <= 0 && e.Active {
 			enemies.Kill(e)
 		}
