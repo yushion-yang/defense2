@@ -38,8 +38,7 @@ const (
 	ipPadY    = float32(12)
 	ipTitleH  = float32(28)
 
-	// ActionBar height — defined locally since theme.ActionBarH may not exist yet.
-	actionBarH = float32(40)
+	actionBarH = float32(theme.ActionBarH)
 )
 
 // itemPanelMetrics computes the panel geometry.

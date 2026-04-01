@@ -60,6 +60,8 @@ func DrawActionBar(screen *ebiten.Image, d ActionBarData) {
 	itemClr := theme.ToneSecondary
 	if d.ItemActive {
 		itemClr = theme.ToneAccent
+	} else if d.ItemTotal == 0 {
+		itemClr = theme.ToneDisabled
 	}
 	itemLabel := "道具"
 	if d.ItemTotal > 0 {

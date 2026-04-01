@@ -34,6 +34,11 @@ func (s *StageScene) handleInput() {
 
 	// 道具拖拽模式：跟踪松手释放
 	if s.imode == modeItemDrag && s.dragItemActive {
+		// 更新拖拽悬停目标
+		mx, my := g.CursorPos()
+		wtx, wty := s.screenToWorld(mx, my)
+		s.dragHoverTower = s.towerAtPixel(wtx, wty)
+
 		// 检测鼠标/触摸释放
 		released := inpututil.IsMouseButtonJustReleased(ebiten.MouseButtonLeft)
 		if !released {
@@ -42,19 +47,20 @@ func (s *StageScene) handleInput() {
 			}
 		}
 		if released {
-			mx, my := g.CursorPos()
-			wtx, wty := s.screenToWorld(mx, my)
-			target := s.towerAtPixel(wtx, wty)
-			if target != nil {
+			target := s.dragHoverTower
+			if target != nil && !target.Selling {
 				item.ApplyItem(target, s.dragItemKind)
 				s.inventory.Use(s.dragItemKind)
 				hud.ShowToast(item.Defs[s.dragItemKind].Name + " → " + target.Label)
+				s.audioMgr.PlaySafe(gameAudio.SFXUIClick)
 			}
 			s.dragItemActive = false
+			s.dragHoverTower = nil
 			s.imode = modeItemPanel
 		}
 		if inpututil.IsKeyJustPressed(ebiten.KeyEscape) {
 			s.dragItemActive = false
+			s.dragHoverTower = nil
 			s.imode = modeItemPanel
 		}
 		return
@@ -137,6 +143,17 @@ func (s *StageScene) handleInput() {
 		}
 		return
 	}
+	if inpututil.IsKeyJustPressed(ebiten.KeyI) {
+		if s.imode == modeItemPanel {
+			s.imode = modeIdle
+			s.itemPanelOpen = false
+		} else if s.inventory.TotalCount() > 0 {
+			s.imode = modeItemPanel
+			s.itemPanelOpen = true
+			s.selectedTower = nil
+		}
+		return
+	}
 	if inpututil.IsKeyJustPressed(ebiten.KeyU) && s.imode == modeTowerSel {
 		s.tryUpgradeTower()
 		return
@@ -204,6 +221,20 @@ func (s *StageScene) handleInput() {
 		s.buildHoverIdx = hud.BuildMenuHoverTest(fmx, fmy, s.buildMenuTotalCards())
 	} else {
 		s.buildHoverIdx = -1
+	}
+
+	// 道具面板：检测按下开始拖拽（不等松开）
+	if s.imode == modeItemPanel {
+		if inpututil.IsMouseButtonJustPressed(ebiten.MouseButtonLeft) || len(inpututil.AppendJustPressedTouchIDs(nil)) > 0 {
+			cards := s.buildItemPanelCards()
+			idx := hud.ItemPanelHitTest(fmx, fmy, cards)
+			if idx >= 0 {
+				s.dragItemKind = item.Kind(idx)
+				s.dragItemActive = true
+				s.imode = modeItemDrag
+				return
+			}
+		}
 	}
 
 	// ── Tap → 游戏操作 ──
@@ -276,15 +307,6 @@ func (s *StageScene) handleInput() {
 	case "menu":
 		s.imode = modePaused
 		return
-	case "build":
-		if s.imode == modeBuildMenu {
-			s.imode = modeIdle
-		} else {
-			s.imode = modeBuildMenu
-			s.selectedTower = nil
-			s.wardenPanelOpen = false
-		}
-		return
 	case "spawn":
 		if s.imode == modeSpawnMenu || s.imode == modeSpawnPlace {
 			s.imode = modeIdle
@@ -319,6 +341,9 @@ func (s *StageScene) handleInput() {
 		}
 		return
 	case "items":
+		if s.inventory.TotalCount() == 0 {
+			return
+		}
 		if s.imode == modeItemPanel {
 			s.imode = modeIdle
 			s.itemPanelOpen = false
@@ -406,15 +431,8 @@ func (s *StageScene) handleInput() {
 		}
 
 	case modeItemPanel:
-		cards := s.buildItemPanelCards()
-		idx := hud.ItemPanelHitTest(ftx, fty, cards)
-		if idx >= 0 {
-			// 按下道具卡片 → 进入拖拽模式
-			s.dragItemKind = item.Kind(idx)
-			s.dragItemActive = true
-			s.imode = modeItemDrag
-		} else if !hud.ItemPanelContains(ftx, fty) {
-			// 点击面板外 → 关闭
+		// 点击面板外 → 关闭（卡片点击已在上面的 press-down 检测中处理）
+		if !hud.ItemPanelContains(ftx, fty) {
 			abtn := hud.ActionBarHitTest(ftx, fty)
 			if abtn == "" {
 				s.imode = modeIdle

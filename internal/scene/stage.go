@@ -95,6 +95,7 @@ type StageScene struct {
 	inventory      *item.Inventory // 道具背包
 	dragItemKind   item.Kind       // 当前拖拽的道具类型
 	dragItemActive bool            // 是否正在拖拽道具
+	dragHoverTower *tower.Tower    // 拖拽道具时悬停的目标塔
 	itemPanelOpen  bool            // 道具面板是否打开
 	gameSpeed         int                          // 游戏速度倍率（1 或 2）
 	imode             interactMode                 // 交互状态机
@@ -1409,6 +1410,13 @@ func (s *StageScene) drawScene(screen *ebiten.Image) {
 					float32(base.Range), 1, 6, 4, color.RGBA{R: 180, G: 140, B: 255, A: 100})
 			}
 		}
+	}
+
+	// 道具拖拽目标高亮
+	if s.dragItemActive && s.dragHoverTower != nil {
+		t := s.dragHoverTower
+		draw.CircleOutline(worldTarget, float32(t.X), float32(t.Y), 22, 2,
+			color.RGBA{R: 100, G: 255, B: 100, A: 200})
 	}
 
 	// 放塔预览（鼠标在可建造位置时显示）

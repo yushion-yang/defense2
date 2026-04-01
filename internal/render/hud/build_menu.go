@@ -73,7 +73,7 @@ func calcBuildPanelMetrics(count int) buildPanelMetrics {
 	panelH := bpTitleH + bpHeaderH + gridH + bpPadY*2
 
 	panelX := (float32(theme.CanvasW) - panelW) / 2
-	panelY := float32(theme.CanvasH) - panelH - float32(theme.BottomMargin)
+	panelY := float32(theme.CanvasH) - panelH - float32(theme.BottomMargin) - float32(theme.ActionBarH) - 4
 
 	return buildPanelMetrics{
 		panelX: panelX,

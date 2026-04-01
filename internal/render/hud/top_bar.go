@@ -28,7 +28,6 @@ type TopBarData struct {
 	Enemies       int     // alive enemies on field
 	Speed         int     // game speed multiplier (1, 2, 3, 10)
 	WaveCountdown float64 // 波间倒计时剩余秒数（0 表示无倒计时）
-	BuildMode     bool    // whether build mode is active
 	TestMode      bool    // 测试模式（显示额外按钮）
 	SpawnMode     bool    // 造怪模式激活
 	DebugOpen     bool    // 调试面板打开
@@ -107,10 +106,6 @@ func DrawTopBar(screen *ebiten.Image, d TopBarData) {
 	draw.Line(screen, divX, divY1, divX, divY2, 1, theme.HUDTopBarDivider, false)
 
 	// ── Right section: buttons (using ButtonRow) ──
-	buildTone := theme.ToneSecondary
-	if d.BuildMode {
-		buildTone = theme.TonePrimary
-	}
 	speedLabel := "x1"
 	switch d.Speed {
 	case 2:
@@ -130,8 +125,6 @@ func DrawTopBar(screen *ebiten.Image, d TopBarData) {
 		clr   color.RGBA
 	}
 	var btns []btnDef
-
-	btns = append(btns, btnDef{"build", "造塔", buildTone})
 
 	// 测试模式：造怪 + 调试按钮
 	if d.TestMode {
