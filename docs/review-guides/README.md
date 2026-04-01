@@ -23,6 +23,8 @@
 | 08 | `08-event-lifecycle.md` | 事件总线、数据流、生命周期 | 5 min |
 | 09 | `09-config-consistency.md` | JSON↔Go 映射、常量一致性 | 5 min |
 | 10 | `10-buff-strength.md` | Buff 叠加、战力系统、连锁网络 | 5 min |
+| 11 | `11-rendering-visual.md` | 渲染代码、精灵/动画/HP bar/HUD 布局 | 10 min |
+| 12 | `12-interaction-statemachine.md` | 交互状态机、ESC 路径、输入冲突 | 10 min |
 
 ## 新增审核文档
 
