@@ -191,34 +191,30 @@ func drawVariantCard(screen *ebiten.Image, fm *render.FontManager, card BuildCar
 	}
 	draw.RoundRect(screen, cx, cy, bpCardW, bpCardH, bpCardR, cardBg)
 
-	// Dashed border to indicate non-buildable
+	// Subtle border
 	draw.StrokeRoundRect(screen, cx, cy, bpCardW, bpCardH, bpCardR, 1,
 		color.RGBA{R: 100, G: 120, B: 160, A: 80})
 
 	nameX := float64(cx) + 8
 	nameY := float64(cy) + 6
 
-	// Ability icon (top-right)
-	if card.TypeIcon != "" {
-		if im := render.GlobalIcons(); im != nil {
-			if img := im.Get(card.TypeIcon); img != nil {
-				badgeX := float64(cx) + float64(bpCardW) - 16
-				badgeY := float64(cy) + 4
-				draw.Sprite(screen, img, badgeX, badgeY+6, 14)
-			}
-		}
-	}
-
-	// Ability label
+	// Tower name (bold)
 	fm.DrawBoldText(screen, card.Label, nameX, nameY, theme.FontMD,
 		color.RGBA{R: 180, G: 200, B: 230, A: 220})
 
-	// Short description (truncated to fit card)
-	fm.DrawText(screen, card.RoleTag, nameX, nameY+18, theme.FontXS, theme.TextMuted)
+	// Ability type label (short, e.g. "弹射", "散射")
+	fm.DrawText(screen, card.RoleTag, nameX, nameY+18, theme.FontXS, card.RoleColor)
 
-	// "展示" tag at bottom
+	// "选择能力后" tag at bottom-left
 	fm.DrawText(screen, "选择能力后", nameX, float64(cy)+float64(bpCardH)-16, theme.FontXS,
 		color.RGBA{R: 120, G: 140, B: 170, A: 140})
+
+	// Sprite preview (right side, same as buildable cards)
+	if card.Sprite != nil {
+		spriteX := float64(cx) + float64(bpCardW) - 26
+		spriteY := float64(cy) + float64(bpCardH)/2
+		draw.Sprite(screen, card.Sprite, spriteX, spriteY, 36)
+	}
 }
 
 // drawBuildCardTooltip renders a small stats tooltip above the build panel.
