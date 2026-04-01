@@ -39,6 +39,7 @@ type Tower struct {
 	Key         string   // 塔类型标识（如 "basic"、"splash"）
 	InstanceKey string   // 实例唯一标识（"key_row_col"，用于弹射物来源匹配）
 	Label       string   // 显示名称
+	SpriteKey   string   // 精灵资源标识（根据攻击能力变化：sentinel/fortress/shotgun/...）
 	Active      bool     // 是否存活（对象池复用标记）
 	Abilities   []string // 该塔拥有的能力名称列表（兼容旧配置）
 	// 六大类别能力槽 [0]=攻击模式 [1]=CC [2]=命中加伤 [3]=光环 [4]=DoT [5]=范围效果
@@ -179,6 +180,49 @@ func (t *Tower) ResolveAttackStyle() AttackStyle {
 		}
 		return StyleProjectile
 	}
+}
+
+// abilitySpriteMap 攻击能力 → 精灵资源标识映射。
+var abilitySpriteMap = map[string]string{
+	"enhance":     "fortress",
+	"scatter":     "shotgun",
+	"wideBeam":    "prism",
+	"spinAoe":     "cyclone",
+	"pierce":      "railgun",
+	"bounce":      "ricochet",
+	"splash":      "mortar",
+	"multiTarget": "hydra",
+	"radial":      "nova",
+}
+
+// abilitySpriteLabels 精灵标识 → 中文名映射。
+var abilitySpriteLabels = map[string]string{
+	"sentinel": "哨兵",
+	"fortress": "堡垒",
+	"shotgun":  "霰弹",
+	"prism":    "棱光",
+	"cyclone":  "旋刃",
+	"railgun":  "穿甲",
+	"ricochet": "链弹",
+	"mortar":   "轰炸",
+	"hydra":    "多管",
+	"nova":     "星爆",
+}
+
+// AbilitySpriteKey 根据攻击能力类型返回精灵资源标识。
+func AbilitySpriteKey(abilityType string) string {
+	if key, ok := abilitySpriteMap[abilityType]; ok {
+		return key
+	}
+	return "sentinel"
+}
+
+// SpriteLabelFor 返回精灵标识对应的中文名称。
+func SpriteLabelFor(spriteKey string) string {
+	if label, ok := abilitySpriteLabels[spriteKey]; ok {
+		return label
+	}
+	return "哨兵"
 }
 
 // DPS 返回当前每秒伤害。

@@ -66,6 +66,7 @@ func (p *Pool) Place(row, col int, cx, cy float64, def TowerDef) *Tower {
 			t.AuraPulse = 0
 			t.Branch = ""
 			t.Level = 1
+			t.SpriteKey = "sentinel"
 			t.AbilitySlots = [6]string{}
 			t.UnlockOrder = RollUnlockOrder()
 			t.MomentumCount = 0

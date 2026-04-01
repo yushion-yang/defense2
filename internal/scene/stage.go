@@ -1565,7 +1565,7 @@ func (s *StageScene) buildBuildMenuData() hud.BuildMenuData {
 			Damage: def.Damage, AttackSpeed: def.AttackSpeed, Range: def.Range,
 			RoleTag: roleTag, RoleColor: roleClr,
 			TypeIcon: towerTypeIcon(def.Key),
-			Sprite:   s.towerRenderer.GetSprite(def.Key),
+			Sprite:   s.towerRenderer.GetSprite("sentinel"),
 			Buildable: true,
 		})
 	}
@@ -1576,12 +1576,14 @@ func (s *StageScene) buildBuildMenuData() hud.BuildMenuData {
 		return attackAbils[i].Type < attackAbils[j].Type
 	})
 	for _, ab := range attackAbils {
+		sprKey := tower.AbilitySpriteKey(ab.Type)
 		cards = append(cards, hud.BuildCardVM{
 			Key:         ab.Type,
-			Label:       ab.Label,
+			Label:       tower.SpriteLabelFor(sprKey),
 			RoleTag:     ab.Display,
 			RoleColor:   color.RGBA{R: 140, G: 160, B: 200, A: 180},
 			TypeIcon:    ab.Icon,
+			Sprite:      s.towerRenderer.GetSprite(sprKey),
 			Buildable:   false,
 			AbilityDesc: ab.Display,
 		})

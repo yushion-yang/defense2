@@ -1,8 +1,8 @@
 {
   "basic": {
-    "label": "基础炮塔",
-    "shortLabel": "基础",
-    "description": "基础追踪弹射击。升级后可选择攻击模式和特殊能力。",
+    "label": "哨兵",
+    "shortLabel": "哨兵",
+    "description": "基础追踪弹射击。选择攻击模式后变身为对应炮塔。",
     "buildCost": 50,
     "baseDamage": 8,
     "potentialDamage": 14,

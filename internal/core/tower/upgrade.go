@@ -153,9 +153,11 @@ func (t *Tower) AddAbility(abilityType string) bool {
 	t.Abilities = t.AllAbilities()
 	t.Level++
 
-	// 攻击模式 → 更新 AttackStyleID
+	// 攻击模式 → 更新 AttackStyleID + 外观
 	if cat == config.AbilityCatAttack {
 		t.AttackStyleID = t.ResolveAttackStyle()
+		t.SpriteKey = AbilitySpriteKey(abilityType)
+		t.Label = SpriteLabelFor(t.SpriteKey)
 	}
 
 	// 强化 → 提升基础属性

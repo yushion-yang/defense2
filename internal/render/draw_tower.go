@@ -251,7 +251,11 @@ func (tr *TowerRenderer) loadTowerImage(t *tower.Tower) *ebiten.Image {
 	if tr.assetFS == nil {
 		return nil
 	}
-	path := fmt.Sprintf("assets/towers/%s/tower-%s.png", t.Key, t.Key)
+	key := t.SpriteKey
+	if key == "" {
+		key = t.Key
+	}
+	path := fmt.Sprintf("assets/towers/%s/tower-%s.png", key, key)
 	cached := tr.cache.Get(path, towerSpriteSize, towerSpriteSize)
 	if cached != nil {
 		return cached
@@ -299,11 +303,15 @@ func (tr *TowerRenderer) loadPNG(path string) *ebiten.Image {
 
 // getTowerFrame returns the current animation frame for a tower, falling back to static sprite.
 func (tr *TowerRenderer) getTowerFrame(t *tower.Tower, dt float64) *ebiten.Image {
-	// Lazy-load animator
-	a, ok := tr.animators[t.Key]
+	// Lazy-load animator (keyed by SpriteKey for visual swap)
+	sprKey := t.SpriteKey
+	if sprKey == "" {
+		sprKey = t.Key
+	}
+	a, ok := tr.animators[sprKey]
 	if !ok {
-		a = anim.LoadTowerAnimator(tr.assetFS, t.Key)
-		tr.animators[t.Key] = a
+		a = anim.LoadTowerAnimator(tr.assetFS, sprKey)
+		tr.animators[sprKey] = a
 	}
 
 	// Choose animation state
