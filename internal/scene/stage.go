@@ -1033,6 +1033,22 @@ func (s *StageScene) updatePlaying() {
 		lightCount++
 	})
 
+	// CC 效果音效回调（塔战斗 + 弹射物共用）
+	onCC := func(x, y float64, ccType string) {
+		switch ccType {
+		case "slow":
+			s.audioMgr.PlayThrottledAt(gameAudio.SFXSlowApply, 120, gameAudio.VolHit)
+		case "freeze":
+			s.audioMgr.PlayThrottledAt(gameAudio.SFXFreezeHit, 120, gameAudio.VolHit)
+		case "stun":
+			s.audioMgr.PlayThrottledAt(gameAudio.SFXStunImpact, 150, gameAudio.VolHit)
+		case "burn":
+			s.audioMgr.PlayThrottledAt(gameAudio.SFXBurnIgnite, 200, gameAudio.VolHit)
+		case "root":
+			s.audioMgr.PlayThrottledAt(gameAudio.SFXRootApply, 150, gameAudio.VolHit)
+		}
+	}
+
 	// 7. 塔索敌射击（按攻击方式分发）
 	pipeline.TickTowerCombat(s.towers, s.enemies, s.projectiles, s.beams, gameDT, func(t *tower.Tower, style string) {
 		s.audioMgr.PlayThrottledAt(gameAudio.FireSFXForStyle(style), 100, gameAudio.VolFire)
@@ -1048,7 +1064,10 @@ func (s *StageScene) updatePlaying() {
 		if damage > 0 {
 			render.SpawnDamageText(e.X, e.Y-15, damage, crit)
 		}
-	})
+		if crit {
+			s.audioMgr.PlayThrottledAt(gameAudio.SFXCritHit, 150, gameAudio.VolHit)
+		}
+	}, onCC)
 
 	// 7. 弹射物移动 + 光束衰减
 	s.projectiles.Update(gameDT)
@@ -1103,7 +1122,10 @@ func (s *StageScene) updatePlaying() {
 				s.audioMgr.PlayThrottledAt(gameAudio.HitSFXForStyle(attackStyle), 60, gameAudio.VolHit)
 			}
 		}
-	})
+		if crit {
+			s.audioMgr.PlayThrottledAt(gameAudio.SFXCritHit, 150, gameAudio.VolHit)
+		}
+	}, onCC)
 	// 击杀统计/金币/session/tutorial/warden 由 emitKill → Bus 订阅者统一处理
 	_ = kills
 
@@ -1550,7 +1572,7 @@ func (s *StageScene) drawScene(screen *ebiten.Image) {
 	if s.dragItemActive {
 		mx, my := s.gesture.CursorPos()
 		def := item.Defs[s.dragItemKind]
-		hud.DrawDragItem(screen, float32(mx), float32(my), def.Color, def.Name)
+		hud.DrawDragItem(screen, float32(mx), float32(my), def.Color, def.Name, int(s.dragItemKind))
 	}
 
 	// Toast 通知

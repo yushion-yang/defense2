@@ -14,13 +14,14 @@ import (
 
 // TickTowerCombat 塔战斗子管线：按攻击方式分发射击逻辑。
 // beams 可为 nil（无 beam 渲染支持时），onFire/onHit 可为 nil。
-func TickTowerCombat(towers *tower.Pool, enemies *enemy.Pool, projectiles *projectile.Pool, beams *combat.BeamPool, dt float64, onFire func(*tower.Tower, string), onHit combat.HitCallback) {
+func TickTowerCombat(towers *tower.Pool, enemies *enemy.Pool, projectiles *projectile.Pool, beams *combat.BeamPool, dt float64, onFire func(*tower.Tower, string), onHit combat.HitCallback, onCC combat.CCCallback) {
 	ctx := &combat.AttackContext{
 		Enemies:     enemies,
 		Projectiles: projectiles,
 		Beams:       beams,
 		OnFire:      onFire,
 		OnHit:       onHit,
+		OnCC:        onCC,
 		DT:          dt,
 		// OnAbilityHit 已废弃：所有 handler 通过 ApplyHit 统一处理
 	}
@@ -97,7 +98,7 @@ type scatterHit struct {
 //   - 穿刺弹（Pierce=true）：对路径上所有敌人碰撞，命中后继续飞行
 //   - 散射弹（ScatterGroup>0）：路径碰撞，同组命中同敌人合并为一次伤害
 //   - 散射视觉弹（ScatterVisual）：不参与碰撞（旧版兼容）
-func TickProjectileHits(projectiles *projectile.Pool, enemies *enemy.Pool, towers *tower.Pool, onHit HitCallback) int {
+func TickProjectileHits(projectiles *projectile.Pool, enemies *enemy.Pool, towers *tower.Pool, onHit HitCallback, onCC combat.CCCallback) int {
 	kills := 0
 
 	// 散射命中收集（key = groupID<<32|enemyID）
@@ -173,7 +174,7 @@ func TickProjectileHits(projectiles *projectile.Pool, enemies *enemy.Pool, tower
 			}
 			out := combat.ApplyHit(combat.HitInput{
 				Tower: srcTower, Target: e, BaseDamage: p.Damage, Style: hitStyle,
-				Enemies: enemies, Projectiles: projectiles, Projectile: p,
+				Enemies: enemies, Projectiles: projectiles, Projectile: p, OnCC: onCC,
 			}, onHit)
 
 			if out.Killed {
@@ -208,7 +209,7 @@ func TickProjectileHits(projectiles *projectile.Pool, enemies *enemy.Pool, tower
 
 		out := combat.ApplyHit(combat.HitInput{
 			Tower: srcTower, Target: e, BaseDamage: mergedDamage, Style: "scatter",
-			Enemies: enemies, Projectiles: projectiles,
+			Enemies: enemies, Projectiles: projectiles, OnCC: onCC,
 		}, onHit)
 
 		if out.Killed {

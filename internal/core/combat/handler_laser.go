@@ -21,7 +21,7 @@ func (h *LaserHandler) Fire(t *tower.Tower, target *enemy.Enemy, ctx *AttackCont
 	// 统一命中处理（能力触发 + 扣血 + 击杀）
 	ApplyHit(HitInput{
 		Tower: t, Target: target, BaseDamage: t.Damage, Style: ctx.Style,
-		Enemies: ctx.Enemies, Projectiles: ctx.Projectiles,
+		Enemies: ctx.Enemies, Projectiles: ctx.Projectiles, OnCC: ctx.OnCC,
 	}, ctx.OnHit)
 
 	// 创建 beam 视觉

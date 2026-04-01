@@ -49,7 +49,7 @@ func (h *WideBeamHandler) Fire(t *tower.Tower, target *enemy.Enemy, ctx *AttackC
 		}
 		ApplyHit(HitInput{
 			Tower: t, Target: e, BaseDamage: t.Damage, Style: ctx.Style,
-			Enemies: ctx.Enemies, Projectiles: ctx.Projectiles,
+			Enemies: ctx.Enemies, Projectiles: ctx.Projectiles, OnCC: ctx.OnCC,
 		}, ctx.OnHit)
 	})
 

@@ -66,7 +66,7 @@ func TestTickProjectileHits(t *testing.T) {
 	pp.Fire(95, 0, 100, 0, 15, 200, 4, nil, "")
 	pp.Update(0.01)
 
-	kills := pipeline.TickProjectileHits(pp, ep, tp, nil)
+	kills := pipeline.TickProjectileHits(pp, ep, tp, nil, nil)
 	if kills != 1 {
 		t.Fatalf("expected 1 kill, got %d", kills)
 	}
@@ -86,12 +86,12 @@ func TestTickTowerCombatFires(t *testing.T) {
 
 	pp := projectile.NewPool(16)
 
-	pipeline.TickTowerCombat(tp, ep, pp, nil, 1.0/60, nil, nil)
+	pipeline.TickTowerCombat(tp, ep, pp, nil, 1.0/60, nil, nil, nil)
 	if pp.Count != 1 {
 		t.Fatalf("tower should fire, projectile count=%d", pp.Count)
 	}
 
-	pipeline.TickTowerCombat(tp, ep, pp, nil, 1.0/60, nil, nil)
+	pipeline.TickTowerCombat(tp, ep, pp, nil, 1.0/60, nil, nil, nil)
 	if pp.Count != 1 {
 		t.Fatalf("tower should be on cooldown, projectile count=%d", pp.Count)
 	}

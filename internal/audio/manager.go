@@ -194,6 +194,19 @@ const (
 	SFXChoiceAppear       = "uiOpen"             // 事件选择弹窗出现（复用 uiOpen）
 	SFXChoiceSelect       = "uiClick"            // 事件选择确认（复用 uiClick）
 
+	// CC/状态效果音
+	SFXSlowApply  = "slowApply"  // slow-apply.wav — 减速命中
+	SFXStunImpact = "stunImpact" // stun-impact.wav — 眩晕命中
+	SFXFreezeHit  = "freezeHit"  // freeze-hit.wav — 冰冻命中（低 factor 减速）
+	SFXRootApply  = "rootApply"  // root-apply.wav — 定身命中
+	SFXKnockback  = "knockback"  // knockback.wav — 击退（预留）
+	// 护盾
+	SFXShieldBreak = "shieldBreak" // shield-break.wav — 护盾击碎（预留）
+	SFXHitShield   = "hitShield"   // hit-shield.wav — 命中护盾（预留）
+	// 暴击
+	SFXCritHit = "critHit" // crit-hit.wav — 暴击命中
+	// 灼烧
+	SFXBurnIgnite = "burnIgnite" // burn-ignite.wav — 灼烧点燃
 )
 
 // FireSFXForStyle 根据攻击方式返回射击音效名称。

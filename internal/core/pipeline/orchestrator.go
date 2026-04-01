@@ -71,6 +71,9 @@ type TickCallbacks struct {
 	// 弹射物
 	OnProjectileHit func(e *enemy.Enemy, dmg float64, killed bool, style string, crit bool)
 
+	// CC 效果（减速/眩晕/灼烧等命中时回调）
+	OnCC func(x, y float64, ccType string)
+
 	// 战灵
 	OnWardenFire    func()
 	OnWardenSpecial func()
