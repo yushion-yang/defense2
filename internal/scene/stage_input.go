@@ -10,6 +10,7 @@ import (
 	"defense2/internal/core/enemy"
 	"defense2/internal/core/event"
 	"defense2/internal/core/game"
+	"defense2/internal/core/item"
 	"defense2/internal/core/tower"
 	"defense2/internal/input"
 	"defense2/internal/render/draw"
@@ -30,6 +31,34 @@ func (s *StageScene) handleInput() {
 		g.DragEnabled = false
 	}
 	g.Update()
+
+	// 道具拖拽模式：跟踪松手释放
+	if s.imode == modeItemDrag && s.dragItemActive {
+		// 检测鼠标/触摸释放
+		released := inpututil.IsMouseButtonJustReleased(ebiten.MouseButtonLeft)
+		if !released {
+			if ids := inpututil.AppendJustReleasedTouchIDs(nil); len(ids) > 0 {
+				released = true
+			}
+		}
+		if released {
+			mx, my := g.CursorPos()
+			wtx, wty := s.screenToWorld(mx, my)
+			target := s.towerAtPixel(wtx, wty)
+			if target != nil {
+				item.ApplyItem(target, s.dragItemKind)
+				s.inventory.Use(s.dragItemKind)
+				hud.ShowToast(item.Defs[s.dragItemKind].Name + " → " + target.Label)
+			}
+			s.dragItemActive = false
+			s.imode = modeItemPanel
+		}
+		if inpututil.IsKeyJustPressed(ebiten.KeyEscape) {
+			s.dragItemActive = false
+			s.imode = modeItemPanel
+		}
+		return
+	}
 
 	mx, my := g.CursorPos()
 	fmx, fmy := float32(mx), float32(my)
@@ -86,6 +115,13 @@ func (s *StageScene) handleInput() {
 			s.spawnMode = false
 			s.spawnType = ""
 			s.imode = modeIdle
+		case modeItemPanel:
+			s.imode = modeIdle
+			s.itemPanelOpen = false
+			s.dragItemActive = false
+		case modeItemDrag:
+			s.dragItemActive = false
+			s.imode = modeItemPanel
 		default:
 			s.prePauseMode = s.imode
 			s.imode = modePaused
@@ -269,6 +305,32 @@ func (s *StageScene) handleInput() {
 		return
 	}
 
+	// ActionBar 按钮
+	actionBtn := hud.ActionBarHitTest(ftx, fty)
+	switch actionBtn {
+	case "build":
+		if s.imode == modeBuildMenu {
+			s.imode = modeIdle
+		} else {
+			s.imode = modeBuildMenu
+			s.selectedTower = nil
+			s.wardenPanelOpen = false
+			s.itemPanelOpen = false
+		}
+		return
+	case "items":
+		if s.imode == modeItemPanel {
+			s.imode = modeIdle
+			s.itemPanelOpen = false
+		} else {
+			s.imode = modeItemPanel
+			s.itemPanelOpen = true
+			s.selectedTower = nil
+			s.wardenPanelOpen = false
+		}
+		return
+	}
+
 	// 按交互模式分发 Tap
 	switch s.imode {
 	case modeIdle:
@@ -340,6 +402,23 @@ func (s *StageScene) handleInput() {
 			} else {
 				s.selectedTower = nil
 				s.imode = modeIdle
+			}
+		}
+
+	case modeItemPanel:
+		cards := s.buildItemPanelCards()
+		idx := hud.ItemPanelHitTest(ftx, fty, cards)
+		if idx >= 0 {
+			// 按下道具卡片 → 进入拖拽模式
+			s.dragItemKind = item.Kind(idx)
+			s.dragItemActive = true
+			s.imode = modeItemDrag
+		} else if !hud.ItemPanelContains(ftx, fty) {
+			// 点击面板外 → 关闭
+			abtn := hud.ActionBarHitTest(ftx, fty)
+			if abtn == "" {
+				s.imode = modeIdle
+				s.itemPanelOpen = false
 			}
 		}
 	}
@@ -418,6 +497,12 @@ func newStageGesture() *input.Gesture {
 		}
 		if y > float64(game.ScreenHeight)-120 {
 			return true
+		}
+		// ActionBar 区域
+		if abx, aby, abw, abh := hud.ActionBarRect(); abw > 0 {
+			if fx >= abx && fx <= abx+abw && fy >= aby && fy <= aby+abh {
+				return true
+			}
 		}
 		return false
 	}

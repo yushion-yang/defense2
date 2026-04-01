@@ -1455,8 +1455,18 @@ func (s *StageScene) drawScene(screen *ebiten.Image) {
 		DebugOpen:     s.debugPanelOpen,
 	})
 
+	// HUD：底部动作栏
+	hud.DrawActionBar(screen, hud.ActionBarData{
+		BuildActive: s.imode == modeBuildMenu || s.imode == modeBuildPlace,
+		ItemActive:  s.imode == modeItemPanel || s.imode == modeItemDrag,
+		ItemTotal:   s.inventory.TotalCount(),
+	})
+
 	// HUD：底部建塔菜单
 	hud.DrawBuildMenu(screen, s.buildBuildMenuData())
+
+	// HUD：道具面板
+	hud.DrawItemPanel(screen, s.buildItemPanelData())
 
 	// HUD：底部中央面板（塔信息 和 战灵信息 互斥）
 	if s.selectedTower != nil {
@@ -1529,6 +1539,13 @@ func (s *StageScene) drawScene(screen *ebiten.Image) {
 	// 暂停菜单覆盖层
 	if s.imode == modePaused {
 		hud.DrawPauseMenu(screen)
+	}
+
+	// 道具拖拽指示器
+	if s.dragItemActive {
+		mx, my := s.gesture.CursorPos()
+		def := item.Defs[s.dragItemKind]
+		hud.DrawDragItem(screen, float32(mx), float32(my), def.Color, def.Name)
 	}
 
 	// Toast 通知
@@ -1609,6 +1626,26 @@ func (s *StageScene) buildBuildMenuData() hud.BuildMenuData {
 // buildMenuTotalCards returns total card count (buildable + attack variants) for layout.
 func (s *StageScene) buildMenuTotalCards() int {
 	return len(s.towerDefs) + len(tower.AbilitiesForCategory(config.AbilityCatAttack))
+}
+
+func (s *StageScene) buildItemPanelData() hud.ItemPanelData {
+	if s.imode != modeItemPanel && s.imode != modeItemDrag {
+		return hud.ItemPanelData{Visible: false}
+	}
+	return hud.ItemPanelData{Cards: s.buildItemPanelCards(), Visible: true}
+}
+
+func (s *StageScene) buildItemPanelCards() []hud.ItemCardVM {
+	cards := make([]hud.ItemCardVM, item.KindCount)
+	for _, k := range item.AllKinds {
+		cards[k] = hud.ItemCardVM{
+			Name:  item.Defs[k].Name,
+			Count: s.inventory.Count(k),
+			Color: item.Defs[k].Color,
+			Kind:  int(k),
+		}
+	}
+	return cards
 }
 
 // towerRoleTags 返回塔的角色标签和颜色。
