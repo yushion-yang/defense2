@@ -204,6 +204,10 @@ func (s *SelectScene) Update() error {
 			playUIClick(s.switcher)
 			s.startGame()
 		}
+		if s.hitTestSettingsButton(mxf, myf) {
+			playUIClick(s.switcher)
+			s.switcher.SwitchScene(NewSettingsScene(s.switcher, s))
+		}
 	}
 
 	return nil
@@ -257,6 +261,19 @@ func (s *SelectScene) hitTestDiffButtons(mx, my float64) int {
 func (s *SelectScene) hitTestStartButton(mx, my float64) bool {
 	x := (scW - btnW) / 2
 	return mx >= x && mx <= x+btnW && my >= btnY && my <= btnY+btnH
+}
+
+// settingsBtn 布局常量（右下角）。
+const (
+	settingsBtnW = 70.0
+	settingsBtnH = 28.0
+	settingsBtnX = scW - settingsBtnW - 16
+	settingsBtnY = scH - settingsBtnH - 16
+)
+
+func (s *SelectScene) hitTestSettingsButton(mx, my float64) bool {
+	return mx >= settingsBtnX && mx <= settingsBtnX+settingsBtnW &&
+		my >= settingsBtnY && my <= settingsBtnY+settingsBtnH
 }
 
 // ── Draw ────────────────────────────────────────
@@ -391,6 +408,14 @@ func (s *SelectScene) Draw(screen *ebiten.Image) {
 		mapName = mapID
 	}
 	fm.DrawCenteredText(screen, "地图: "+mapName, scW/2, 358, 10, textGray)
+
+	// ── 设置按钮（右下角） ──
+	ui.Button(screen, float32(settingsBtnX), float32(settingsBtnY), float32(settingsBtnW), float32(settingsBtnH), "设置", ui.ButtonStyle{
+		BgColor:   theme.BtnSecondary,
+		TextColor: textGray,
+		FontSize:  12,
+		Radius:    8,
+	})
 
 	// ── 底部提示 ──
 	fm.DrawCenteredText(screen, "点击卡片选择模式和难度", scW/2, scH-30, 10, textDim)
