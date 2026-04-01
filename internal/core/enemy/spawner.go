@@ -155,6 +155,12 @@ func (s *Spawner) Update(pool *Pool, dt float64) {
 			e := pool.Spawn(spawn.X, spawn.Y, baseHP, baseSpeed, 1, archetype, cfg)
 			if e != nil {
 				e.Path = path
+				// Boss 行为附加
+				if e.Boss {
+					e.BossData = FullBossState(s.Wave)
+				}
+				// 波次 buff 自动注入
+				s.applyWaveBuffs(e)
 			}
 		}
 		s.SpawnIndex++
@@ -398,4 +404,56 @@ func (s *Spawner) getConfig(archetype string) *SpawnConfig {
 		return nil
 	}
 	return cfg
+}
+
+// ── 波次 buff 自动注入 ──
+// 按波次段从 buff 模板池中随机注入 0~2 个 buff。
+// 1-5 波：无 buff
+// 6-15 波：最多 1 个（基础池）
+// 16-25 波：最多 2 个（扩展池）
+// 26+ 波：最多 2 个（完整池）
+
+var waveBuffPools = []struct {
+	minWave  int
+	maxBuffs int
+	pool     []string
+}{
+	{6, 1, []string{"berserk", "regen", "healAura", "speedAura"}},
+	{16, 2, []string{"berserk", "regen", "healAura", "speedAura", "reflect", "damageReduce"}},
+	{26, 2, []string{"berserk", "regen", "healAura", "speedAura", "reflect", "damageReduce", "revive", "deathSplit"}},
+}
+
+// applyWaveBuffs 根据当前波次为刚生成的敌人随机注入 buff 模板。
+// Boss 和 Elite 不注入（它们有自己的强化）。
+func (s *Spawner) applyWaveBuffs(e *Enemy) {
+	if e.Boss || e.Elite {
+		return
+	}
+
+	var buffPool []string
+	maxBuffs := 0
+	for _, tier := range waveBuffPools {
+		if s.Wave >= tier.minWave {
+			buffPool = tier.pool
+			maxBuffs = tier.maxBuffs
+		}
+	}
+	if maxBuffs <= 0 || len(buffPool) == 0 {
+		return
+	}
+
+	// 30% 概率注入 buff（不是每个敌人都有）
+	if rand.Float64() > 0.3 {
+		return
+	}
+
+	// 随机选 1~maxBuffs 个不重复 buff
+	count := 1 + rand.Intn(maxBuffs)
+	if count > len(buffPool) {
+		count = len(buffPool)
+	}
+	perm := rand.Perm(len(buffPool))
+	for i := 0; i < count; i++ {
+		ApplyBuffTemplate(e, buffPool[perm[i]])
+	}
 }

@@ -112,6 +112,33 @@ type Enemy struct {
 	HealInterval      float64 // 治疗光环间隔（秒）
 	HealCooldown      float64 // 治疗光环当前冷却
 
+	// ── 死亡分裂 ──
+	SplitCount      int     // 死亡分裂子体数量（0=不分裂）
+	SplitHPRatio    float64 // 子体 HP 占父体 MaxHP 的比例
+	SplitSpeedScale float64 // 子体速度倍率
+
+	// ── 传送 ──
+	TeleportInterval float64 // 传送间隔（秒，0=不传送）
+	TeleportSkip     int     // 每次传送跳过的路径段数
+	TeleportTimer    float64 // 传送冷却倒计时
+
+	// ── 旗手光环 ──
+	AuraRange   float64 // 光环范围（像素，0=无光环）
+	AuraSpeedUp float64 // 光环加速比例（如 0.2 = +20%）
+
+	// ── 减伤 ──
+	DamageReduceRatio float64 // 受伤减免比例（0~1，由 buff 模板设置）
+
+	// ── 反伤 ──
+	ReflectPercent float64 // 反伤比例（0~1，0=无反伤）
+
+	// ── 复活 ──
+	ReviveHPPercent float64 // 复活时 HP 占 MaxHP 比例（0=不复活）
+	ReviveUsed      bool    // 是否已使用过复活
+
+	// ── Boss 行为 ──
+	BossData *BossState // Boss 专属行为状态（非 Boss 为 nil）
+
 	// ── 飞行 ──
 	MovementType string // 移动类型（"ground"/"flying"）
 }

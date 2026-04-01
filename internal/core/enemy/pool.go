@@ -9,6 +9,8 @@ type Pool struct {
 	enemies []Enemy // 预分配的敌人槽位数组
 	Count   int     // 当前存活敌人数量
 	nextID  int     // 递增 ID 计数器
+	// OnSplit 击杀时分裂回调（可选，由 stage 层注册）。
+	OnSplit func(children []*Enemy)
 }
 
 // NewPool 创建指定容量的敌人对象池。
@@ -95,10 +97,37 @@ func (p *Pool) Spawn(x, y, baseHP, baseSpeed float64, pathIndex int, archetype s
 			e.BerserkSpeedScale = 0
 			e.BerserkTriggered = false
 			e.RegenPerSec = 0
-			e.HealPower = 0
-			e.HealRadius = 0
-			e.HealInterval = 0
+			// 治疗光环（从 SpawnConfig 计算）
+			if cfg.HealScale > 0 {
+				e.HealPower = hp * cfg.HealScale // healScale 是 maxHP 的比例
+				e.HealRadius = cfg.HealRadius
+				e.HealInterval = cfg.HealInterval
+				if e.HealInterval <= 0 {
+					e.HealInterval = 2.0
+				}
+			} else {
+				e.HealPower = 0
+				e.HealRadius = 0
+				e.HealInterval = 0
+			}
 			e.HealCooldown = 0
+			// 死亡分裂
+			e.SplitCount = cfg.SplitCount
+			e.SplitHPRatio = cfg.SplitHPRatio
+			e.SplitSpeedScale = cfg.SplitSpeedScale
+			// 传送
+			e.TeleportInterval = cfg.TeleportInterval
+			e.TeleportSkip = cfg.TeleportSkip
+			e.TeleportTimer = cfg.TeleportInterval // 首次传送需等满间隔
+			// 旗手光环
+			e.AuraRange = cfg.AuraRange
+			e.AuraSpeedUp = cfg.AuraSpeedUp
+			// 减伤
+			e.DamageReduceRatio = 0
+			e.ReflectPercent = 0
+			e.ReviveHPPercent = 0
+			e.ReviveUsed = false
+			e.BossData = nil
 			e.MovementType = ""
 			p.Count++
 			return e
@@ -112,6 +141,21 @@ func (p *Pool) Spawn(x, y, baseHP, baseSpeed float64, pathIndex int, archetype s
 // rendering until FinishDying is called.
 func (p *Pool) Kill(e *Enemy) {
 	if e.Active && e.DyingTimer <= 0 {
+		// 复活检查：首次死亡时复活
+		if e.ReviveHPPercent > 0 && !e.ReviveUsed {
+			e.ReviveUsed = true
+			e.HP = e.MaxHP * e.ReviveHPPercent
+			e.DisplayHP = e.HP
+			e.HitFlash = 0.3 // 复活闪烁
+			return            // 不进入死亡流程
+		}
+		// 死亡分裂：先生成子体再开始死亡动画
+		if e.SplitCount > 0 {
+			children := SpawnSplitChildren(e, p)
+			if p.OnSplit != nil && len(children) > 0 {
+				p.OnSplit(children)
+			}
+		}
 		e.DyingTimer = 0.3
 		e.DyingDuration = 0.3
 		if e.Boss {

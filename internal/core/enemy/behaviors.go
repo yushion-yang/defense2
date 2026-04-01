@@ -104,6 +104,41 @@ func UpdateHealing(enemies []*Enemy, dt float64) []HealEvent {
 	return events
 }
 
+// SpawnSplitChildren 在敌人死亡时生成分裂子体。
+// 返回生成的子体列表。调用方负责传入 pool 和路径信息。
+func SpawnSplitChildren(parent *Enemy, pool *Pool) []*Enemy {
+	if parent.SplitCount <= 0 {
+		return nil
+	}
+
+	childHP := parent.MaxHP * parent.SplitHPRatio
+	if childHP < 1 {
+		childHP = 1
+	}
+	childSpeed := parent.BaseSpeed * parent.SplitSpeedScale
+
+	var children []*Enemy
+	for i := 0; i < parent.SplitCount; i++ {
+		// 子体在父体位置附近偏移
+		offsetX := float64(i-parent.SplitCount/2) * parent.Radius
+		child := pool.Spawn(
+			parent.X+offsetX, parent.Y,
+			childHP, childSpeed, parent.PathIndex,
+			parent.Archetype, DefaultSpawnConfig(),
+		)
+		if child == nil {
+			break // 池满
+		}
+		// 子体不再分裂（防止无限递归）
+		child.SplitCount = 0
+		// 继承父体路径
+		child.Path = parent.Path
+		child.Radius = parent.Radius * 0.7
+		children = append(children, child)
+	}
+	return children
+}
+
 // UpdateRegeneration 处理敌人自然回血。
 // 返回本帧实际回复的血量。
 func UpdateRegeneration(e *Enemy, dt float64) float64 {
@@ -115,4 +150,61 @@ func UpdateRegeneration(e *Enemy, dt float64) float64 {
 	healed := math.Min(e.RegenPerSec*dt, e.MaxHP-e.HP)
 	e.HP += healed
 	return healed
+}
+
+// UpdateTeleport 处理传送兵定时跳跃。
+// 返回 true 表示本帧发生了传送。
+func UpdateTeleport(e *Enemy, dt float64) bool {
+	if e.TeleportInterval <= 0 || e.Path == nil {
+		return false
+	}
+	e.TeleportTimer -= dt
+	if e.TeleportTimer > 0 {
+		return false
+	}
+	e.TeleportTimer = e.TeleportInterval
+
+	// 跳过 N 个路径段
+	skip := e.TeleportSkip
+	if skip <= 0 {
+		skip = 1
+	}
+	newIdx := e.PathIndex + skip
+	if newIdx >= len(e.Path) {
+		newIdx = len(e.Path) - 1
+	}
+	e.PathIndex = newIdx
+	e.X = e.Path[newIdx].X
+	e.Y = e.Path[newIdx].Y
+	return true
+}
+
+// UpdateBufferAura 处理旗手光环：加速周围友军。
+// 每帧重置受影响友军的速度加成（需要在移动前调用）。
+func UpdateBufferAura(enemies []*Enemy, dt float64) {
+	// 先收集所有光环源
+	for _, buffer := range enemies {
+		if buffer.AuraRange <= 0 || !buffer.Active || buffer.IsDying() {
+			continue
+		}
+		radiusSq := buffer.AuraRange * buffer.AuraRange
+		for _, target := range enemies {
+			if !target.Active || target.IsDying() || target.ID == buffer.ID {
+				continue
+			}
+			dx := target.X - buffer.X
+			dy := target.Y - buffer.Y
+			if dx*dx+dy*dy > radiusSq {
+				continue
+			}
+			// 加速：直接修改 BaseSpeed 临时加成
+			// 注意：这是每帧覆盖，需要在移动前调用
+			boost := target.BaseSpeed * buffer.AuraSpeedUp
+			if target.SlowTimer <= 0 {
+				target.Speed = target.BaseSpeed + boost
+			} else {
+				target.Speed = (target.BaseSpeed + boost) * target.SlowFactor
+			}
+		}
+	}
 }

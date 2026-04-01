@@ -872,6 +872,42 @@ func (s *StageScene) updatePlaying() {
 		render.SpawnDamageText(e.X, e.Y-10, dmg, false)
 	})
 
+	// 2.5. 敌人行为 tick（狂暴/回血/传送）
+	s.enemies.Each(func(e *enemy.Enemy) {
+		if e.IsDying() {
+			return
+		}
+		enemy.UpdateBerserk(e)
+		enemy.UpdateRegeneration(e, gameDT)
+		enemy.UpdateTeleport(e, gameDT)
+	})
+	// 群体行为（需要遍历所有敌人的交叉操作）
+	var activeEnemies []*enemy.Enemy
+	s.enemies.Each(func(e *enemy.Enemy) {
+		if e.Active && !e.IsDying() {
+			activeEnemies = append(activeEnemies, e)
+		}
+	})
+	enemy.UpdateHealing(activeEnemies, gameDT)
+	enemy.UpdateBufferAura(activeEnemies, gameDT)
+	// Boss 行为
+	for _, e := range activeEnemies {
+		if e.BossData == nil {
+			continue
+		}
+		enemy.TickBossPhase(e)
+		enemy.TickBossAura(e, activeEnemies)
+		if count, arch := enemy.TickBossSpawnMinions(e, gameDT); count > 0 {
+			cfg := s.spawner.Archetypes[arch]
+			for i := 0; i < count; i++ {
+				child := s.enemies.Spawn(e.X, e.Y, e.MaxHP*0.1, e.BaseSpeed*1.2, e.PathIndex, arch, cfg)
+				if child != nil {
+					child.Path = e.Path
+				}
+			}
+		}
+	}
+
 	// 3. 敌人移动（到达终点扣生命）
 	s.enemies.Each(func(e *enemy.Enemy) {
 		if e.IsDying() {
@@ -1872,6 +1908,20 @@ func convertArchetypesToSpawnConfigs(archetypes map[string]*config.EnemyArchetyp
 			SpeedScale: a.SpeedScale,
 			Radius:     a.Radius,
 			Boss:       a.Boss,
+			// 治疗光环
+			HealScale:    a.HealScale,
+			HealRadius:   a.HealRadius,
+			HealInterval: a.HealInterval,
+			// 死亡分裂
+			SplitCount:      a.SplitCount,
+			SplitHPRatio:    0.3,
+			SplitSpeedScale: 1.4,
+			// 传送
+			TeleportInterval: a.TeleportInterval,
+			TeleportSkip:     a.TeleportSkip,
+			// 旗手光环
+			AuraRange:   a.AuraRange,
+			AuraSpeedUp: a.AuraSpeedUp,
 		}
 	}
 	return result
