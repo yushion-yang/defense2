@@ -36,6 +36,8 @@ type WardenOption struct {
 	DoT         string
 	GrowthKill  string
 	GrowthWave  string
+	Locked      bool   // 是否锁定
+	LockReason  string // 解锁条件文本
 }
 
 // ── 布局常量 ────────────────────────────────────
@@ -110,11 +112,18 @@ func (o *WardenSelectOverlay) Update(mx, my float64, clicked bool) {
 
 	// 列表选择
 	if idx := o.hitTestList(mx, my); idx >= 0 {
-		o.selectedIdx = idx
+		if idx < len(o.options) && o.options[idx].Locked {
+			// 点击锁定战灵：显示解锁条件
+			ShowToast(o.options[idx].LockReason)
+		} else {
+			o.selectedIdx = idx
+		}
 	}
-	// 确认按钮
+	// 确认按钮（锁定状态不可确认）
 	if o.hitTestBtn(mx, my, 0) {
-		o.confirm()
+		if o.selectedIdx < len(o.options) && !o.options[o.selectedIdx].Locked {
+			o.confirm()
+		}
 	}
 	// 跳过按钮
 	if o.hitTestBtn(mx, my, 1) {
@@ -182,9 +191,12 @@ func (o *WardenSelectOverlay) Draw(screen *ebiten.Image) {
 		h := float32(woListH)
 		selected := i == o.selectedIdx
 		hovered := i == o.hoverIdx
+		locked := opt.Locked
 
 		bg := theme.PanelBg
-		if selected {
+		if locked {
+			bg = color.RGBA{R: 20, G: 25, B: 40, A: 220}
+		} else if selected {
 			bg = opt.Color
 			bg.A = 180
 		} else if hovered {
@@ -192,24 +204,31 @@ func (o *WardenSelectOverlay) Draw(screen *ebiten.Image) {
 		}
 		draw.RoundRect(screen, x, y, w, h, 8, bg)
 
-		if selected {
+		if selected && !locked {
 			draw.StrokeRoundRect(screen, x, y, w, h, 8, 2, opt.Color)
 		}
 
 		nameClr := theme.TextBody
-		if selected {
+		if locked {
+			nameClr = theme.TextLocked
+		} else if selected {
 			nameClr = color.RGBA{R: 255, G: 255, B: 255, A: 255}
 		}
-		fm.DrawBoldText(screen, opt.Name, float64(x)+12, float64(y)+8, theme.FontLG, nameClr)
 
-		if opt.Category != "-" {
-			catClr := theme.TextMuted
-			if opt.Category == "移动型" {
-				catClr = color.RGBA{R: 100, G: 200, B: 130, A: 200}
-			} else {
-				catClr = color.RGBA{R: 200, G: 160, B: 100, A: 200}
+		if locked {
+			fm.DrawBoldText(screen, opt.Name, float64(x)+12, float64(y)+8, theme.FontLG, nameClr)
+			fm.DrawText(screen, "[ 锁定 ]", float64(x)+12, float64(y)+26, theme.FontXS, theme.TextLocked)
+		} else {
+			fm.DrawBoldText(screen, opt.Name, float64(x)+12, float64(y)+8, theme.FontLG, nameClr)
+			if opt.Category != "-" {
+				catClr := theme.TextMuted
+				if opt.Category == "移动型" {
+					catClr = color.RGBA{R: 100, G: 200, B: 130, A: 200}
+				} else {
+					catClr = color.RGBA{R: 200, G: 160, B: 100, A: 200}
+				}
+				fm.DrawText(screen, opt.Category, float64(x)+12, float64(y)+26, theme.FontXS, catClr)
 			}
-			fm.DrawText(screen, opt.Category, float64(x)+12, float64(y)+26, theme.FontXS, catClr)
 		}
 	}
 
@@ -249,6 +268,15 @@ func (o *WardenSelectOverlay) drawDetail(screen *ebiten.Image, fm *render.FontMa
 
 	if opt.Key == "none" {
 		fm.DrawCenteredText(screen, "不使用战灵，纯塔防御模式", float64(x)+float64(w)/2, float64(y)+float64(h)/2-10, theme.FontLG, theme.TextMuted)
+		return
+	}
+
+	if opt.Locked {
+		fm.DrawCenteredBoldText(screen, opt.Name, float64(x)+float64(w)/2, float64(y)+float64(h)/2-20, 20, theme.TextLocked)
+		fm.DrawCenteredText(screen, "[ 锁定 ]", float64(x)+float64(w)/2, float64(y)+float64(h)/2+10, theme.FontLG, theme.TextLocked)
+		if opt.LockReason != "" {
+			fm.DrawCenteredText(screen, opt.LockReason, float64(x)+float64(w)/2, float64(y)+float64(h)/2+34, theme.FontMD, theme.TextLocked)
+		}
 		return
 	}
 

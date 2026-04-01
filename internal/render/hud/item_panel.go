@@ -103,6 +103,20 @@ func DrawItemPanel(screen *ebiten.Image, d ItemPanelData) {
 	}
 }
 
+// itemIconName maps item Kind (as int) to the corresponding stat icon name.
+func itemIconName(kind int) string {
+	switch kind {
+	case 0, 1: // BaseDamage, PotentialDamage
+		return "stat-damage"
+	case 2, 3: // BaseSpeed, PotentialSpeed
+		return "stat-atkspd"
+	case 4, 5: // BaseRange, PotentialRange
+		return "stat-range"
+	default:
+		return "stat-damage"
+	}
+}
+
 // drawItemCard renders a single item card.
 func drawItemCard(screen *ebiten.Image, fm *render.FontManager, card ItemCardVM, cx, cy float32) {
 	available := card.Count > 0
@@ -114,18 +128,26 @@ func drawItemCard(screen *ebiten.Image, fm *render.FontManager, card ItemCardVM,
 	}
 	draw.RoundRect(screen, cx, cy, ipCardW, ipCardH, ipCardR, cardBg)
 
-	// Colored circle indicator (left side)
-	circleR := float32(8)
-	circleCX := cx + 16
-	circleCY := cy + ipCardH/2
+	// Stat icon with colored circle background (left side)
+	iconCX := cx + 16
+	iconCY := cy + ipCardH/2
 	circleClr := card.Color
 	if !available {
 		circleClr.A = 80
 	}
-	draw.FilledCircle(screen, circleCX, circleCY, circleR, circleClr)
+	// Colored circle behind icon for base/potential differentiation
+	draw.FilledCircle(screen, iconCX, iconCY, 12, color.RGBA{
+		R: circleClr.R, G: circleClr.G, B: circleClr.B, A: circleClr.A / 2,
+	})
+	// Stat icon on top
+	if im := render.GlobalIcons(); im != nil {
+		if img := im.Get(itemIconName(card.Kind)); img != nil {
+			draw.Sprite(screen, img, float64(iconCX), float64(iconCY), 18)
+		}
+	}
 
 	// Name text
-	textX := float64(circleCX) + float64(circleR) + 8
+	textX := float64(iconCX) + 12 + 8
 	textY := float64(cy) + 10
 	nameClr := color.RGBA{R: 220, G: 230, B: 245, A: 255}
 	if !available {
@@ -184,16 +206,22 @@ func ItemPanelContains(px, py float32) bool {
 }
 
 // DrawDragItem renders a floating item at cursor position during drag.
-func DrawDragItem(screen *ebiten.Image, x, y float32, clr color.RGBA, name string) {
+func DrawDragItem(screen *ebiten.Image, x, y float32, clr color.RGBA, name string, kind int) {
 	fm := render.GlobalFont()
 
-	// Filled circle
-	draw.FilledCircle(screen, x, y, 14, clr)
+	// Colored circle background
+	draw.FilledCircle(screen, x, y, 16, color.RGBA{R: clr.R, G: clr.G, B: clr.B, A: 150})
 	// White outline
-	draw.CircleOutline(screen, x, y, 14, 2, color.RGBA{R: 255, G: 255, B: 255, A: 220})
+	draw.CircleOutline(screen, x, y, 16, 2, color.RGBA{R: 255, G: 255, B: 255, A: 220})
+	// Stat icon on top
+	if im := render.GlobalIcons(); im != nil {
+		if img := im.Get(itemIconName(kind)); img != nil {
+			draw.Sprite(screen, img, float64(x), float64(y), 20)
+		}
+	}
 
 	// Name text below
 	if fm != nil {
-		fm.DrawText(screen, name, float64(x)-20, float64(y)+18, theme.FontXS, color.White)
+		fm.DrawText(screen, name, float64(x)-20, float64(y)+20, theme.FontXS, color.White)
 	}
 }

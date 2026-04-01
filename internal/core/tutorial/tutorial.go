@@ -1,71 +1,131 @@
 // tutorial.go — 新手教程系统。
-// 基于步骤驱动的教程，每步由特定游戏事件触发推进。
+// 8 步引导式教程，支持事件触发推进和自动倒计时推进。
 // 完成后通过持久化标记不再重复显示。
 package tutorial
 
 // Step 单个教程步骤。
 type Step struct {
-	ID      string // 步骤唯一标识
-	Message string // 显示给玩家的提示文本
-	Trigger string // 触发推进的事件名称
+	Message     string  // 显示给玩家的提示文本
+	Event       string  // 触发推进的事件名称（空 = 无事件要求，点击推进）
+	AutoAdvance float64 // 超时自动推进秒数（0 = 仅靠事件/点击推进）
 }
 
 // Tutorial 教程状态。
 type Tutorial struct {
-	Steps       []Step // 步骤列表
-	CurrentStep int    // 当前步骤索引（完成全部时 == len(Steps)）
-	Active      bool   // 是否正在运行
-	Done        bool   // 是否已全部完成
+	Steps       []Step  // 步骤列表
+	CurrentIdx  int     // 当前步骤索引（完成全部时 == len(Steps)）
+	Active      bool    // 是否正在运行
+	Done        bool    // 是否已全部完成
+	autoTimer   float64 // 当前步骤的自动推进计时器
 }
 
-// DefaultTutorial 创建默认 5 步教程。
+// DefaultTutorial 创建默认 8 步教程。
 func DefaultTutorial() *Tutorial {
 	return &Tutorial{
 		Steps: []Step{
-			{ID: "welcome", Message: "Welcome! Click a green circle to build a tower.", Trigger: "gameStart"},
-			{ID: "build", Message: "Tower built! Towers auto-attack enemies in range.", Trigger: "towerBuilt"},
-			{ID: "wave", Message: "Enemies incoming! They follow the path to your base.", Trigger: "waveStarted"},
-			{ID: "kill", Message: "Enemy killed! You earn gold for each kill.", Trigger: "enemyKilled"},
-			{ID: "clear", Message: "Wave cleared! Bonus gold + interest awarded.", Trigger: "waveCleared"},
+			{Message: "欢迎！点击任意位置继续"},
+			{Message: "点击「造塔」建造第一座防御塔", Event: "build"},
+			{Message: "选择塔型，点击空位放置", Event: "tower_placed"},
+			{Message: "点击「开波」开始战斗！", Event: "wave_start"},
+			{Message: "干得好！点击已建的塔查看详情", Event: "tower_select", AutoAdvance: 8},
+			{Message: "点击「升级」提升战力", Event: "upgrade", AutoAdvance: 8},
+			{Message: "打开「道具」拖拽道具到塔上强化", Event: "item_use", AutoAdvance: 10},
+			{Message: "教程完成！祝你好运！", AutoAdvance: 3},
 		},
 		Active: true,
 	}
 }
 
+// CurrentStep 返回当前步骤数据（教程结束时返回 nil）。
+func (t *Tutorial) CurrentStep() *Step {
+	if !t.Active || t.Done || t.CurrentIdx >= len(t.Steps) {
+		return nil
+	}
+	return &t.Steps[t.CurrentIdx]
+}
+
 // CurrentMessage 返回当前步骤的提示文本（教程结束时返回空字符串）。
+// 兼容旧调用。
 func (t *Tutorial) CurrentMessage() string {
-	if !t.Active || t.Done || t.CurrentStep >= len(t.Steps) {
+	s := t.CurrentStep()
+	if s == nil {
 		return ""
 	}
-	return t.Steps[t.CurrentStep].Message
+	return s.Message
 }
 
-// CurrentTrigger 返回当前步骤等待的事件名称。
-func (t *Tutorial) CurrentTrigger() string {
-	if !t.Active || t.Done || t.CurrentStep >= len(t.Steps) {
-		return ""
+// StepIndex 返回当前步骤索引（0-based）。
+func (t *Tutorial) StepIndex() int {
+	return t.CurrentIdx
+}
+
+// StepCount 返回总步骤数。
+func (t *Tutorial) StepCount() int {
+	return len(t.Steps)
+}
+
+// Update 每帧更新自动推进计时器。dt 为秒。
+func (t *Tutorial) Update(dt float64) {
+	step := t.CurrentStep()
+	if step == nil {
+		return
 	}
-	return t.Steps[t.CurrentStep].Trigger
+	if step.AutoAdvance <= 0 {
+		return
+	}
+	t.autoTimer += dt
+	if t.autoTimer >= step.AutoAdvance {
+		t.advance()
+	}
 }
 
-// OnEvent 响应游戏事件，匹配则推进到下一步。
+// Trigger 响应游戏事件，匹配当前步骤则推进。
 // 返回 true 表示教程状态发生了变化。
-func (t *Tutorial) OnEvent(eventName string) bool {
-	if !t.Active || t.Done {
+func (t *Tutorial) Trigger(eventName string) bool {
+	step := t.CurrentStep()
+	if step == nil {
 		return false
 	}
-	if t.CurrentStep >= len(t.Steps) {
-		t.Done = true
-		return true
-	}
-	if t.Steps[t.CurrentStep].Trigger == eventName {
-		t.CurrentStep++
-		if t.CurrentStep >= len(t.Steps) {
-			t.Done = true
-		}
+	if step.Event != "" && step.Event == eventName {
+		t.advance()
 		return true
 	}
 	return false
+}
+
+// ClickAdvance 点击推进：仅当当前步骤无事件要求时推进。
+// 用于欢迎/完成等步骤的任意点击推进。
+// 返回 true 表示教程状态发生了变化。
+func (t *Tutorial) ClickAdvance() bool {
+	step := t.CurrentStep()
+	if step == nil {
+		return false
+	}
+	if step.Event == "" {
+		t.advance()
+		return true
+	}
+	return false
+}
+
+// OnEvent 兼容旧 API，映射旧事件名到新事件名。
+func (t *Tutorial) OnEvent(eventName string) bool {
+	// 映射旧事件名
+	switch eventName {
+	case "gameStart":
+		// 旧版 gameStart 触发欢迎步骤，新版欢迎步骤靠点击推进，忽略
+		return false
+	case "towerBuilt":
+		return t.Trigger("tower_placed")
+	case "waveStarted":
+		return t.Trigger("wave_start")
+	case "waveCleared":
+		return t.Trigger("wave_clear")
+	case "enemyKilled":
+		return t.Trigger("enemy_killed")
+	default:
+		return t.Trigger(eventName)
+	}
 }
 
 // Skip 跳过教程。
@@ -77,4 +137,13 @@ func (t *Tutorial) Skip() {
 // IsComplete 教程是否已完成。
 func (t *Tutorial) IsComplete() bool {
 	return t.Done
+}
+
+// advance 推进到下一步。
+func (t *Tutorial) advance() {
+	t.CurrentIdx++
+	t.autoTimer = 0
+	if t.CurrentIdx >= len(t.Steps) {
+		t.Done = true
+	}
 }

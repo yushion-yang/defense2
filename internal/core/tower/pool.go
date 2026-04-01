@@ -66,7 +66,7 @@ func (p *Pool) Place(row, col int, cx, cy float64, def TowerDef) *Tower {
 			t.AuraPulse = 0
 			t.Branch = ""
 			t.Level = 1
-			t.SpriteKey = "sentinel"
+			t.SpriteKey = spriteKeyForStyle(def.AttackStyleID)
 			t.AbilitySlots = [6]string{}
 			t.UnlockOrder = RollUnlockOrder()
 			t.Target = nil
@@ -144,6 +144,22 @@ type TowerDef struct {
 
 	// 升级费用
 	UpgradeCosts []int // 每次升级费用（索引0=第1次升级，索引5=第6次升级）
+}
+
+// spriteKeyForStyle maps attack style to initial sprite key.
+func spriteKeyForStyle(style AttackStyle) string {
+	switch style {
+	case StyleScatter:
+		return "shotgun"
+	case StyleWideBeam:
+		return "prism"
+	case StyleSpinAoE:
+		return "cyclone"
+	case "pierce":
+		return "railgun"
+	default:
+		return "sentinel"
+	}
 }
 
 // BaseTowerDefs 返回 4 种基础塔定义。

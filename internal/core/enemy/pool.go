@@ -94,6 +94,7 @@ func (p *Pool) Spawn(x, y, baseHP, baseSpeed float64, pathIndex int, archetype s
 			e.IsSlowImmune = false
 			e.IsRootImmune = false
 			e.Lifecycle = nil
+			e.Behavior = ""
 			e.BerserkThreshold = 0
 			e.BerserkSpeedScale = 0
 			e.BerserkTriggered = false
@@ -112,8 +113,10 @@ func (p *Pool) Spawn(x, y, baseHP, baseSpeed float64, pathIndex int, archetype s
 				e.HealInterval = 0
 			}
 			e.HealCooldown = 0
-			// 死亡分裂
-			e.SplitCount = cfg.SplitCount
+			e.Stealthed = false
+			e.StealthTimer = 0
+			e.SplitCount = 0
+			e.SplitScale = 0
 			e.SplitHPRatio = cfg.SplitHPRatio
 			e.SplitSpeedScale = cfg.SplitSpeedScale
 			// 传送
@@ -121,6 +124,9 @@ func (p *Pool) Spawn(x, y, baseHP, baseSpeed float64, pathIndex int, archetype s
 			e.TeleportSkip = cfg.TeleportSkip
 			e.TeleportTimer = cfg.TeleportInterval // 首次传送需等满间隔
 			// 旗手光环
+			e.BuffRadius = 0
+			e.BuffAmount = 0
+			e.SpeedBuff = 0
 			e.AuraRange = cfg.AuraRange
 			e.AuraSpeedUp = cfg.AuraSpeedUp
 			// 减伤
@@ -130,6 +136,33 @@ func (p *Pool) Spawn(x, y, baseHP, baseSpeed float64, pathIndex int, archetype s
 			e.ReviveUsed = false
 			e.BossData = nil
 			e.MovementType = ""
+
+			// 应用行为配置
+			e.Behavior = cfg.Behavior
+			if cfg.StealthDuration > 0 {
+				e.Stealthed = true
+				e.StealthTimer = cfg.StealthDuration
+			}
+			if cfg.SplitCount > 0 {
+				e.SplitCount = cfg.SplitCount
+				e.SplitScale = cfg.SplitScale
+				if e.SplitScale <= 0 {
+					e.SplitScale = 0.3
+				}
+			}
+			if cfg.HealScale > 0 {
+				e.HealPower = hp * cfg.HealScale // 治疗量 = 本体HP * healScale
+				e.HealRadius = cfg.HealRadius
+				e.HealInterval = cfg.HealInterval
+				if e.HealInterval <= 0 {
+					e.HealInterval = 2.5
+				}
+			}
+			if cfg.AuraRange > 0 {
+				e.BuffRadius = cfg.AuraRange
+				e.BuffAmount = cfg.AuraSpeedUp
+			}
+
 			p.Count++
 			return e
 		}
@@ -140,6 +173,7 @@ func (p *Pool) Spawn(x, y, baseHP, baseSpeed float64, pathIndex int, archetype s
 // Kill starts the dying animation for an enemy. Count drops immediately so
 // gameplay systems see the enemy as "gone", but the enemy stays Active for
 // rendering until FinishDying is called.
+// If the enemy is a splitter, children are spawned at the same position.
 func (p *Pool) Kill(e *Enemy) {
 	if e.Active && e.DyingTimer <= 0 {
 		// 复活检查：首次死亡时复活
@@ -150,13 +184,16 @@ func (p *Pool) Kill(e *Enemy) {
 			e.HitFlash = 0.3 // 复活闪烁
 			return            // 不进入死亡流程
 		}
-		// 死亡分裂：先生成子体再开始死亡动画
-		if e.SplitCount > 0 {
+		// 分裂体死亡时生成子体（必须在 dying 标记前执行，否则子体无法获取父体路径）
+		if e.Behavior == "splitter" && e.SplitCount > 0 {
+			HandleSplitterDeath(e, p)
+		} else if e.SplitCount > 0 {
 			children := SpawnSplitChildren(e, p)
 			if p.OnSplit != nil && len(children) > 0 {
 				p.OnSplit(children)
 			}
 		}
+
 		e.DyingTimer = 0.3
 		e.DyingDuration = 0.3
 		if e.Boss {

@@ -60,7 +60,7 @@ func (h *SpinAoEHandler) Tick(t *tower.Tower, ctx *AttackContext) {
 		}
 		ApplyHit(HitInput{
 			Tower: t, Target: e, BaseDamage: dmg, Style: ctx.Style,
-			Enemies: ctx.Enemies, Projectiles: ctx.Projectiles,
+			Enemies: ctx.Enemies, Projectiles: ctx.Projectiles, OnCC: ctx.OnCC,
 		}, ctx.OnHit)
 	})
 

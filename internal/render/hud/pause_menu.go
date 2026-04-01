@@ -1,5 +1,5 @@
 // pause_menu.go — 暂停菜单覆盖层。
-// 半透明遮罩 + 居中面板 + 继续/重新开始/返回主菜单三个按钮。
+// 半透明遮罩 + 居中面板 + 继续/设置/重新开始/返回主菜单四个按钮。
 package hud
 
 import (
@@ -16,15 +16,16 @@ import (
 
 // PauseMenuAction 暂停菜单按钮动作。
 const (
-	PauseNone    = 0
-	PauseResume  = 1
-	PauseRestart = 2
-	PauseQuit    = 3
+	PauseNone     = 0
+	PauseResume   = 1
+	PauseSettings = 2
+	PauseRestart  = 3
+	PauseQuit     = 4
 )
 
 const (
 	pausePanelW = float32(360)
-	pausePanelH = float32(300)
+	pausePanelH = float32(360)
 	pauseBtnW   = float32(260)
 	pauseBtnH   = float32(46)
 	pauseBtnGap = float32(12)
@@ -55,7 +56,7 @@ func DrawPauseMenu(screen *ebiten.Image) {
 	titleY := float64(py) + 20
 	fm.DrawCenteredBoldText(screen, "游戏暂停", cx, titleY, 24, color.White)
 
-	// 三个按钮
+	// 四个按钮
 	btnX := (sw - pauseBtnW) / 2
 	btnY := py + 80
 
@@ -64,6 +65,7 @@ func DrawPauseMenu(screen *ebiten.Image) {
 		clr   color.RGBA
 	}{
 		{"继续游戏", theme.TonePrimary},
+		{"设置", theme.BtnSecondary},
 		{"重新开始", color.RGBA{R: 220, G: 160, B: 50, A: 255}},
 		{"返回主菜单", theme.BtnDanger},
 	}
@@ -96,10 +98,10 @@ func PauseMenuHitTest(px, py float32) int {
 
 	_ = panelX
 
-	for i := 0; i < 3; i++ {
+	for i := 0; i < 4; i++ {
 		by := btnY + float32(i)*(pauseBtnH+pauseBtnGap)
 		if px >= btnX && px <= btnX+pauseBtnW && py >= by && py <= by+pauseBtnH {
-			return i + 1 // PauseResume=1, PauseRestart=2, PauseQuit=3
+			return i + 1 // PauseResume=1, PauseSettings=2, PauseRestart=3, PauseQuit=4
 		}
 	}
 	return PauseNone

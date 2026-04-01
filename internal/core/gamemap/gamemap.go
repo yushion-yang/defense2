@@ -30,6 +30,7 @@ type GameMap struct {
 	CellSize  int              // 单元格边长（像素）
 	OffsetX   float64          // 水平偏移量（用于居中显示）
 	OffsetY   float64          // 垂直偏移量（用于居中显示）
+	Theme     string           // 地图环境主题（desert/forest/tech/...）
 }
 
 // NewGameMap 从 MapConfig 创建运行时地图。
@@ -37,6 +38,7 @@ func NewGameMap(cfg *config.MapConfig) *GameMap {
 	gm := &GameMap{
 		Config:   cfg,
 		CellSize: cfg.CellSize,
+		Theme:    cfg.Theme,
 	}
 
 	// 默认路径

@@ -45,11 +45,17 @@ func MoveAlongPath(e *Enemy, fallbackWaypoints []gamemap.Point, dt float64) bool
 		return false
 	}
 
+	// 应用旗手光环加速（SpeedBuff 由 TickBehaviors 每帧写入）
+	speed := e.Speed
+	if e.SpeedBuff > 0 {
+		speed *= (1 + e.SpeedBuff)
+	}
+
 	target := waypoints[e.PathIndex]
 	dx := target.X - e.X
 	dy := target.Y - e.Y
 	dist := math.Hypot(dx, dy)
-	step := e.Speed * dt
+	step := speed * dt
 
 	if dist <= step {
 		// 足够接近，吸附到路径点并切换下一个

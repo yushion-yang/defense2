@@ -103,6 +103,20 @@ func (er *EnemyRenderer) DrawEnemies(screen *ebiten.Image, pool *enemy.Pool, ani
 			draw.FilledCircle(screen, cx, cy+r, r*0.8, color.RGBA{100, 70, 40, 60})
 		}
 
+		// --- Buffer aura ring (drawn UNDER body) ---
+		if e.Behavior == "buffer" && e.BuffRadius > 0 {
+			auraAlpha := uint8(clampF(40+20*math.Sin(animTime*3), 20, 70))
+			draw.CircleOutline(screen, cx, cy, float32(e.BuffRadius), 1.5,
+				color.RGBA{R: 245, G: 158, B: 11, A: auraAlpha}) // amber/gold
+		}
+
+		// --- Healer aura ring (drawn UNDER body) ---
+		if e.Behavior == "healer" && e.HealRadius > 0 {
+			healAlpha := uint8(clampF(30+15*math.Sin(animTime*2.5), 15, 55))
+			draw.CircleOutline(screen, cx, cy, float32(e.HealRadius)*0.5, 1,
+				color.RGBA{R: 52, G: 211, B: 153, A: healAlpha}) // green
+		}
+
 		// --- Enemy body (animated or static) ---
 		img := er.getEnemyFrame(e, 1.0/60.0)
 		if img != nil {
@@ -121,11 +135,22 @@ func (er *EnemyRenderer) DrawEnemies(screen *ebiten.Image, pool *enemy.Pool, ani
 			} else if e.Elite {
 				displaySize *= 1.0 + 0.02*math.Sin(animTime*2.2)
 			}
-			draw.SpriteRotated(screen, img, float64(cx), float64(cy), displaySize, wobbleRot, wobbleY)
+
+			if e.Stealthed {
+				// 隐身敌人：半透明渲染（alpha ≈ 15%）
+				logicalScale := displaySize / float64(img.Bounds().Dx())
+				draw.SpriteScaledRotatedAlpha(screen, img, float64(cx), float64(cy)+wobbleY,
+					logicalScale, wobbleRot, 0.15)
+			} else {
+				draw.SpriteRotated(screen, img, float64(cx), float64(cy), displaySize, wobbleRot, wobbleY)
+			}
 		} else {
 			bodyColor := color.RGBA{R: 200, G: 60, B: 60, A: 255}
 			if e.Boss {
 				bodyColor = color.RGBA{R: 220, G: 160, B: 40, A: 255}
+			}
+			if e.Stealthed {
+				bodyColor.A = 38 // ~15% alpha
 			}
 			draw.FilledCircle(screen, cx, cy, r, bodyColor)
 		}
@@ -158,6 +183,11 @@ func (er *EnemyRenderer) DrawEnemies(screen *ebiten.Image, pool *enemy.Pool, ani
 		}
 
 		// (tank overlay removed — was debug placeholder)
+
+		// Stealthed enemies: skip HP bar and status dots (nearly invisible)
+		if e.Stealthed {
+			return
+		}
 
 		// --- HP bar dimensions ---
 		var barW, barH, barOffY float32

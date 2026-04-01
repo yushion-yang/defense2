@@ -106,6 +106,39 @@ func LoadEnemyAnimLib(fs AssetReader, archetype string) *AnimLib {
 	return lib
 }
 
+// WardenAnimConfig 战灵动画配置。
+var WardenAnimConfig = map[string]struct {
+	FPS  float64
+	Loop bool
+}{
+	"idle":   {FPS: 4, Loop: true},
+	"attack": {FPS: 8, Loop: false},
+}
+
+// LoadWardenAnimator 加载战灵的动画帧。
+// 路径约定：assets/wardens/warden-{type}-{state}-{frame}.png
+// 回退：assets/wardens/warden-{type}.png（单帧作为 idle）
+func LoadWardenAnimator(fs AssetReader, typ string) *Animator {
+	a := NewAnimator()
+
+	for state, cfg := range WardenAnimConfig {
+		frames := loadFrames(fs, fmt.Sprintf("assets/wardens/warden-%s-%s", typ, state))
+		if len(frames) > 0 {
+			a.AddAnim(state, frames, cfg.FPS, cfg.Loop)
+		}
+	}
+
+	// 如果没有任何动画帧，尝试加载单帧静态 PNG 作为 idle
+	if len(a.Anims) == 0 {
+		img := loadSinglePNG(fs, fmt.Sprintf("assets/wardens/warden-%s.png", typ))
+		if img != nil {
+			a.AddAnim("idle", []*ebiten.Image{img}, 1, true)
+		}
+	}
+
+	return a
+}
+
 // loadFrames 尝试加载 {prefix}-0.png, {prefix}-1.png, ... 直到文件不存在。
 func loadFrames(fs AssetReader, prefix string) []*ebiten.Image {
 	var frames []*ebiten.Image

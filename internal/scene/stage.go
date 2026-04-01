@@ -22,6 +22,7 @@ import (
 
 	gameAudio "defense2/internal/audio"
 	"defense2/internal/config"
+	"defense2/internal/core/achievement"
 	"defense2/internal/core/combat"
 	"defense2/internal/core/debug"
 	"defense2/internal/core/economy"
@@ -140,6 +141,8 @@ type StageScene struct {
 	choicePanel       *hud.ChoicePanel            // 能力选择覆盖层
 	autoPlayer        AutoPlayer                 // 自动对局驱动（nil=手动模式）
 	screenshotPending bool                       // F12 截图请求标志
+	achieveTracker    *achievement.Tracker       // 成就追踪器
+	gameStats         GameStats                  // 详细游戏统计
 }
 
 // NewStageScene 创建游戏主场景，默认加载 map_01。
@@ -175,6 +178,7 @@ func NewStageSceneWithOpts(sw Switcher, opts StageOptions) *StageScene {
 	// 初始化持久化
 	store, _ := persistence.DefaultStorage()
 	pm := persistence.NewProgressManager(store)
+	achTracker := achievement.NewTracker(store)
 
 	// 教程（已完成则不再显示）
 	tut := tutorial.DefaultTutorial()
@@ -263,7 +267,7 @@ func NewStageSceneWithOpts(sw Switcher, opts StageOptions) *StageScene {
 		progressMgr:     pm,
 		lives:           20,
 		gold:            startGold,
-		towerDefs:       loadTowerDefsOrFallback(),
+		towerDefs:       filterUnlockedTowers(loadTowerDefsOrFallback(), pm),
 		selectedDef:     0,
 		wardenType:      opts.WardenType,
 		wardenCfg:       wardenCfg,
@@ -271,6 +275,7 @@ func NewStageSceneWithOpts(sw Switcher, opts StageOptions) *StageScene {
 		gesture:         newStageGesture(),
 		wavePanelOpen:   true,
 		wardenPanelOpen: false,
+		achieveTracker:  achTracker,
 	}
 
 	// 后处理管线（bloom）+ 粒子系统
@@ -354,9 +359,23 @@ func (s *StageScene) subscribeBus() {
 		s.session.OnTowerBuilt()
 		s.audioMgr.PlaySafeAt(gameAudio.SFXBuild, gameAudio.VolBuild)
 		s.tutorial.OnEvent("towerBuilt")
+		// 成就: 累计建塔 + 单局塔种类
+		s.achieveTracker.IncrTowersBuilt()
+		if s.achieveTracker.TotalTowersBuilt >= 10 {
+			if s.achieveTracker.Unlock("builder_10") {
+				hud.ShowToast("成就解锁: 塔防新手")
+			}
+		}
+		s.achieveTracker.SessionTowerTypes[p.TowerKey] = true
+		if len(s.achieveTracker.SessionTowerTypes) >= 5 {
+			if s.achieveTracker.Unlock("all_towers") {
+				hud.ShowToast("成就解锁: 全能战士")
+			}
+		}
 	})
 	event.OnTyped(bus, event.EvtTowerUpgraded, func(_ event.TowerUpgradedPayload) {
 		s.audioMgr.PlaySafeAt(gameAudio.SFXUpgrade, gameAudio.VolBuild)
+		s.tutorial.Trigger("upgrade")
 	})
 	event.OnTyped(bus, event.EvtTowerSold, func(_ event.TowerSoldPayload) {
 		s.audioMgr.PlaySafeAt(gameAudio.SFXTowerSell, gameAudio.VolBuild)
@@ -368,6 +387,8 @@ func (s *StageScene) subscribeBus() {
 		s.audioMgr.PlaySafeAt(gameAudio.SFXWaveStart, gameAudio.VolWave)
 		if p.IsBoss {
 			s.audioMgr.PlaySafeAt(gameAudio.SFXBossEnter, gameAudio.VolWave)
+			// BGM: Boss 波切换到 Boss 音乐
+			s.audioMgr.PlayBGM(gameAudio.BGMBoss)
 		}
 		s.waveAnnounce.Trigger(p.Wave, s.spawner.MaxWaves, p.IsBoss)
 		s.tutorial.OnEvent("waveStarted")
@@ -397,21 +418,51 @@ func (s *StageScene) subscribeBus() {
 		} else {
 			s.audioMgr.PlaySafeAt(gameAudio.SFXWaveClear, gameAudio.VolWave)
 		}
+		// BGM: 波次清除后恢复战斗音乐（Boss 波结束时从 BGMBoss 切回）
+		s.audioMgr.PlayBGM(gameAudio.BGMBattle)
 		s.tutorial.OnEvent("waveCleared")
+		// 成就: Endless 模式 50 波
+		if s.modeID == "endless" && p.Wave >= 50 {
+			if s.achieveTracker.Unlock("endless_50") {
+				hud.ShowToast("成就解锁: 不灭传说")
+			}
+		}
 	})
 
 	// ── 敌人事件 ─────────────────────────────────
 	event.OnTyped(bus, event.EvtEnemyLeaked, func(_ event.EnemyLeakedPayload) {
 		s.session.OnEnemyLeaked(s.buildModeCtx())
+		s.gameStats.LeaksTotal++
 		s.audioMgr.PlaySafeAt(gameAudio.SFXEnemyLeak, gameAudio.VolWave)
 	})
 	event.OnTyped(bus, event.EvtEnemyKilled, func(p event.EnemyKilledPayload) {
 		s.kills++
 		s.gold += p.GoldValue
+		s.gameStats.GoldEarned += p.GoldValue
 		s.session.OnEnemyKilled(p.IsBoss, s.buildModeCtx())
 		s.tutorial.OnEvent("enemyKilled")
 		if s.wardenReady && s.wardenUnit != nil {
 			s.wardenUnit.OnKill()
+		}
+		// 成就: 击杀数 + Boss + 金币
+		s.achieveTracker.SessionKills++
+		if s.achieveTracker.SessionKills >= 100 {
+			if s.achieveTracker.Unlock("centurion") {
+				hud.ShowToast("成就解锁: 百杀")
+			}
+		}
+		if p.IsBoss {
+			if s.achieveTracker.Unlock("first_boss") {
+				hud.ShowToast("成就解锁: 首个Boss")
+			}
+		}
+		if s.gold > s.achieveTracker.SessionMaxGold {
+			s.achieveTracker.SessionMaxGold = s.gold
+		}
+		if s.achieveTracker.SessionMaxGold >= 1000 {
+			if s.achieveTracker.Unlock("rich") {
+				hud.ShowToast("成就解锁: 富甲一方")
+			}
 		}
 	})
 }
@@ -423,6 +474,58 @@ func (s *StageScene) emitKill(isBoss bool, killerID string) {
 		KillerID:  killerID,
 		GoldValue: s.econ.KillGold() + s.killRewardBonus,
 	})
+}
+
+// checkVictoryAchievements checks and unlocks all victory-related achievements.
+func (s *StageScene) checkVictoryAchievements() {
+	t := s.achieveTracker
+
+	// first_win — any victory
+	if t.Unlock("first_win") {
+		hud.ShowToast("成就解锁: 初次胜利")
+	}
+
+	// Star rating (same logic as result.go calcStars)
+	stars := 1
+	if s.spawner.MaxWaves > 0 && s.spawner.Wave >= s.spawner.MaxWaves {
+		stars = 3
+	} else if s.spawner.MaxWaves > 0 && float64(s.spawner.Wave) >= float64(s.spawner.MaxWaves)*0.8 {
+		stars = 2
+	}
+
+	// perfect_star — any map 3 stars
+	if stars == 3 {
+		if t.Unlock("perfect_star") {
+			hud.ShowToast("成就解锁: 完美主义")
+		}
+	}
+
+	// no_leak_hard — Hard difficulty, zero leaks
+	if s.diffID == "hard" && s.session.Stats.Leaked == 0 {
+		if t.Unlock("no_leak_hard") {
+			hud.ShowToast("成就解锁: 零泄漏")
+		}
+	}
+
+	// speedrun — victory within 10 minutes
+	if s.session.ElapsedTime <= 600 {
+		if t.Unlock("speedrun") {
+			hud.ShowToast("成就解锁: 速通")
+		}
+	}
+
+	// extreme_master — any Extreme victory
+	if s.diffID == "extreme" {
+		if t.Unlock("extreme_master") {
+			hud.ShowToast("成就解锁: 大师")
+		}
+		// extreme_perfect — Extreme + 3 stars
+		if stars == 3 {
+			if t.Unlock("extreme_perfect") {
+				hud.ShowToast("成就解锁: 完美大师")
+			}
+		}
+	}
 }
 
 // buildModeCtx 构建游戏模式上下文快照。
@@ -443,6 +546,27 @@ func (s *StageScene) buildModeCtx() *gamemode.Context {
 		AddGold:      func(v int) { s.gold += v },
 		SetMaxWaves:  func(v int) { s.spawner.MaxWaves = v },
 	}
+}
+
+// finalizeGameStats 结算时最终化游戏统计数据。
+// 从 session 和塔池填充剩余字段（击杀数、波次、Boss、最强塔等）。
+func (s *StageScene) finalizeGameStats() GameStats {
+	gs := s.gameStats
+	gs.TotalKills = s.kills
+	gs.TotalWaves = s.spawner.Wave
+	gs.MaxWave = s.spawner.MaxWaves
+	gs.BossKills = s.session.Stats.BossKills
+	gs.TimePlayed = s.session.ElapsedTime
+
+	// 查找击杀最多的塔
+	s.towers.Each(func(t *tower.Tower) {
+		if t.Kills > gs.BestTowerKills {
+			gs.BestTowerKills = t.Kills
+			gs.BestTowerKey = t.Key
+			gs.BestTowerName = t.Label
+		}
+	})
+	return gs
 }
 
 // spawnAllStatic 生成所有敌人原型，静止排列在地图上（用于全怪展示模式）。
@@ -489,7 +613,8 @@ func (s *StageScene) Update() error {
 	if !s.busSubscribed {
 		s.busSubscribed = true
 		s.subscribeBus()
-		s.tutorial.OnEvent("gameStart")
+		// BGM: 进入战斗场景播放战斗音乐
+		s.audioMgr.PlayBGM(gameAudio.BGMBattle)
 	}
 	s.frame++
 
@@ -540,6 +665,7 @@ func (s *StageScene) Update() error {
 		// 胜利/失败状态：点击/触摸进入结算场景
 		if isTapJustPressed() {
 			s.audioMgr.PlaySafeAt(gameAudio.SFXUIClick, gameAudio.VolUI)
+			stats := s.finalizeGameStats()
 			s.switcher.SwitchScene(NewResultScene(s.switcher, ResultData{
 				MapID:        s.gameMap.Config.ID,
 				MapName:      s.gameMap.Config.Name,
@@ -554,12 +680,19 @@ func (s *StageScene) Update() error {
 				DifficultyID: s.diffID,
 				Score:        s.session.Mode.GetScore(s.buildModeCtx()),
 				ElapsedSecs:  s.session.ElapsedTime,
+				Stats:        stats,
 			}))
 		}
 	}
 
 	// Toast 通知更新
 	hud.UpdateToast(dt)
+
+	// 教程自动推进计时器
+	s.tutorial.Update(dt)
+	if s.tutorial.Done {
+		s.progressMgr.SetTutorialDone()
+	}
 
 	// 自适应画质：根据帧耗时动态调整画质等级
 	totalMs := s.perfTracker.AvgUpdateMs + s.perfTracker.AvgDrawMs
@@ -609,6 +742,8 @@ func (s *StageScene) tryPlaceTower(px, py float64) bool {
 		tower.RollAndCachePendingChoices(placed, s.wavesCleared)
 	}
 	s.gold -= cost
+	s.gameStats.GoldSpent += cost
+	s.gameStats.TowersBuilt++
 	render.InvalidateMapCache() // slot occupancy changed
 	s.bus.Emit(event.EvtTowerBuilt, event.TowerBuiltPayload{TowerKey: def.Key, Cost: cost})
 	return true
@@ -632,6 +767,7 @@ func (s *StageScene) trySellTower(px, py float64) {
 	}
 	refund := s.econ.SellRefund(t.Cost)
 	s.gold += refund
+	s.gameStats.TowersSold++
 	// Start sell animation instead of immediate removal
 	t.SellAnim = 0.25
 	t.Selling = true
@@ -936,6 +1072,19 @@ func (s *StageScene) updatePlaying() {
 		}
 	})
 
+	// 3.6. 敌人行为 tick（治疗/隐身/旗手光环/回血）
+	behaviorEvents := enemy.TickBehaviors(s.enemies, gameDT)
+	if len(behaviorEvents.Heals) > 0 {
+		s.audioMgr.PlayThrottledAt(gameAudio.SFXMedicHeal, 500, gameAudio.VolHit)
+	}
+	for _, rev := range behaviorEvents.Reveals {
+		_ = rev
+		s.audioMgr.PlaySafeAt(gameAudio.SFXStealthReveal, gameAudio.VolKill)
+	}
+	if behaviorEvents.Regens > 0 {
+		s.audioMgr.PlayThrottledAt(gameAudio.SFXRegenTick, 2000, gameAudio.VolHit*0.5)
+	}
+
 	// 4. 战灵行为（未选择前跳过）
 	if s.wardenReady && s.wardenUnit != nil {
 		s.wardenUnit.Tick(&warden.TickContext{
@@ -996,6 +1145,7 @@ func (s *StageScene) updatePlaying() {
 	// 必须在索敌射击之前执行，确保 Range 等属性是本帧最新值
 	abilityGold := pipeline.TickTowerAbilities(s.towers, s.enemies, gameDT)
 	s.gold += abilityGold
+	s.gameStats.GoldEarned += abilityGold
 
 	// 6.6. 收集光源（优先级：路径端点 > Boss > 战灵 > 塔）
 	s.postPipeline.Lighting.Clear()
@@ -1071,6 +1221,22 @@ func (s *StageScene) updatePlaying() {
 		lightCount++
 	})
 
+	// CC 效果音效回调（塔战斗 + 弹射物共用）
+	onCC := func(x, y float64, ccType string) {
+		switch ccType {
+		case "slow":
+			s.audioMgr.PlayThrottledAt(gameAudio.SFXSlowApply, 120, gameAudio.VolHit)
+		case "freeze":
+			s.audioMgr.PlayThrottledAt(gameAudio.SFXFreezeHit, 120, gameAudio.VolHit)
+		case "stun":
+			s.audioMgr.PlayThrottledAt(gameAudio.SFXStunImpact, 150, gameAudio.VolHit)
+		case "burn":
+			s.audioMgr.PlayThrottledAt(gameAudio.SFXBurnIgnite, 200, gameAudio.VolHit)
+		case "root":
+			s.audioMgr.PlayThrottledAt(gameAudio.SFXRootApply, 150, gameAudio.VolHit)
+		}
+	}
+
 	// 7. 塔索敌射击（按攻击方式分发）
 	pipeline.TickTowerCombat(s.towers, s.enemies, s.projectiles, s.beams, gameDT, func(t *tower.Tower, style string) {
 		s.audioMgr.PlayThrottledAt(gameAudio.FireSFXForStyle(style), 100, gameAudio.VolFire)
@@ -1086,7 +1252,10 @@ func (s *StageScene) updatePlaying() {
 		if damage > 0 {
 			render.SpawnDamageText(e.X, e.Y-15, damage, crit)
 		}
-	})
+		if crit {
+			s.audioMgr.PlayThrottledAt(gameAudio.SFXCritHit, 150, gameAudio.VolHit)
+		}
+	}, onCC)
 
 	// 7. 弹射物移动 + 光束衰减
 	s.projectiles.Update(gameDT)
@@ -1115,9 +1284,24 @@ func (s *StageScene) updatePlaying() {
 		if killed {
 			particle.EmitDeathBurst(s.particlePool, e.X, e.Y)
 			particle.EmitGoldCollect(s.particlePool, e.X, e.Y)
+			// 分裂体死亡音效（子体已由 Pool.Kill 自动生成）
+			if e.Behavior == "splitter" && e.SplitCount > 0 {
+				s.audioMgr.PlaySafeAt(gameAudio.SFXSplitPop, gameAudio.VolKill)
+			}
 			// Multi-kill tracker
 			s.multiKillCount++
 			s.multiKillTimer = 1.5
+			if s.multiKillCount > s.gameStats.MaxKillStreak {
+				s.gameStats.MaxKillStreak = s.multiKillCount
+			}
+			if s.multiKillCount > s.achieveTracker.SessionMaxStreak {
+				s.achieveTracker.SessionMaxStreak = s.multiKillCount
+			}
+			if s.multiKillCount >= 20 {
+				if s.achieveTracker.Unlock("killstreak_20") {
+					hud.ShowToast("成就解锁: 连杀达人")
+				}
+			}
 			if s.multiKillCount == 5 {
 				render.SpawnText(float64(game.ScreenWidth)/2, float64(game.ScreenHeight)/2-30,
 					"连杀 x5", color.RGBA{255, 200, 50, 255}, 16, 1.5)
@@ -1141,7 +1325,10 @@ func (s *StageScene) updatePlaying() {
 				s.audioMgr.PlayThrottledAt(gameAudio.HitSFXForStyle(attackStyle), 60, gameAudio.VolHit)
 			}
 		}
-	})
+		if crit {
+			s.audioMgr.PlayThrottledAt(gameAudio.SFXCritHit, 150, gameAudio.VolHit)
+		}
+	}, onCC)
 	// 击杀统计/金币/session/tutorial/warden 由 emitKill → Bus 订阅者统一处理
 	_ = kills
 
@@ -1190,13 +1377,20 @@ func (s *StageScene) updatePlaying() {
 	if s.session.CheckEndConditions(ctx) && s.state == statePlaying {
 		if s.session.Status == gamemode.StatusVictory {
 			s.state = stateVictory
+			s.audioMgr.StopBGM()
 			s.audioMgr.PlaySafeAt(gameAudio.SFXVictory, gameAudio.VolWave)
-			s.progressMgr.RecordGameResult(s.modeID, s.gameMap.Config.ID, s.kills, true)
+			newUnlocks := s.progressMgr.RecordGameResult(s.modeID, s.gameMap.Config.ID, s.kills, true)
 			if s.tutorial.IsComplete() {
 				s.progressMgr.SetTutorialDone()
 			}
+			s.checkVictoryAchievements()
+			// 显示新解锁提示
+			for _, name := range newUnlocks {
+				hud.ShowToast("解锁: " + name)
+			}
 		} else if s.session.Status == gamemode.StatusDefeat {
 			s.state = stateDefeat
+			s.audioMgr.StopBGM()
 			s.audioMgr.PlaySafeAt(gameAudio.SFXDefeat, gameAudio.VolWave)
 			s.progressMgr.RecordGameResult(s.modeID, s.gameMap.Config.ID, s.kills, false)
 		}
@@ -1539,11 +1733,15 @@ func (s *StageScene) drawScene(screen *ebiten.Image) {
 		hud.DrawToggleButton(screen, false, s.wardenPanelOpen, "⚡")
 	}
 
-	// 教程提示（顶部居中）
-	if msg := s.tutorial.CurrentMessage(); msg != "" {
-		if fm := render.GlobalFont(); fm != nil {
-			fm.DrawCenteredText(screen, msg, float64(game.ScreenWidth)/2, 50, theme.FontH2, theme.TextBody)
-		}
+	// 教程覆盖层
+	if step := s.tutorial.CurrentStep(); step != nil {
+		hud.DrawTutorialOverlay(screen, hud.TutorialVM{
+			Visible:        true,
+			Message:        step.Message,
+			Step:           s.tutorial.StepIndex() + 1,
+			Total:          s.tutorial.StepCount(),
+			ClickToAdvance: step.Event == "",
+		})
 	}
 
 	// 调试面板（测试模式）
@@ -1586,7 +1784,7 @@ func (s *StageScene) drawScene(screen *ebiten.Image) {
 	if s.dragItemActive {
 		mx, my := s.gesture.CursorPos()
 		def := item.Defs[s.dragItemKind]
-		hud.DrawDragItem(screen, float32(mx), float32(my), def.Color, def.Name)
+		hud.DrawDragItem(screen, float32(mx), float32(my), def.Color, def.Name, int(s.dragItemKind))
 	}
 
 	// Toast 通知
@@ -1897,32 +2095,48 @@ func replaceDescParams(desc string, params map[string]string) string {
 	return result
 }
 
+// archetypeBehavior 从原型名推导行为类型。
+// 原型配置中有对应字段的优先使用配置值，否则按名称映射。
+var archetypeBehavior = map[string]string{
+	"healer":      "healer",
+	"medic":       "healer",
+	"stealth":     "stealth",
+	"splitter":    "splitter",
+	"buffer":      "buffer",
+	"regenerator": "regenerator",
+	"troll":       "regenerator",
+}
+
 // convertArchetypesToSpawnConfigs 将 config.EnemyArchetype 转换为 enemy.SpawnConfig。
 // 使 enemy 包不依赖 config 包。
 func convertArchetypesToSpawnConfigs(archetypes map[string]*config.EnemyArchetype) map[string]*enemy.SpawnConfig {
 	result := make(map[string]*enemy.SpawnConfig, len(archetypes))
 	for key, a := range archetypes {
-		result[key] = &enemy.SpawnConfig{
-			Label:      a.Label,
-			HpScale:    a.HPScale,
-			SpeedScale: a.SpeedScale,
-			Radius:     a.Radius,
-			Boss:       a.Boss,
-			// 治疗光环
-			HealScale:    a.HealScale,
-			HealRadius:   a.HealRadius,
-			HealInterval: a.HealInterval,
-			// 死亡分裂
+		sc := &enemy.SpawnConfig{
+			Label:           a.Label,
+			HpScale:         a.HPScale,
+			SpeedScale:      a.SpeedScale,
+			Radius:          a.Radius,
+			Boss:            a.Boss,
+			StealthDuration: a.StealthDuration,
 			SplitCount:      a.SplitCount,
+			SplitScale:      0.3,  // 默认子体血量 30%
 			SplitHPRatio:    0.3,
 			SplitSpeedScale: 1.4,
+			HealScale:       a.HealScale,
+			HealRadius:      a.HealRadius,
+			HealInterval:    a.HealInterval,
+			AuraRange:       a.AuraRange,
+			AuraSpeedUp:     a.AuraSpeedUp,
 			// 传送
 			TeleportInterval: a.TeleportInterval,
 			TeleportSkip:     a.TeleportSkip,
-			// 旗手光环
-			AuraRange:   a.AuraRange,
-			AuraSpeedUp: a.AuraSpeedUp,
 		}
+		// 根据原型名推导行为类型
+		if b, ok := archetypeBehavior[key]; ok {
+			sc.Behavior = b
+		}
+		result[key] = sc
 	}
 	return result
 }
@@ -1947,6 +2161,7 @@ func (s *StageScene) onWaveTransition(prevWave int) {
 		interest := s.econ.InterestGold(s.gold)
 		totalBonus := result.BonusGold + result.PerfectBonus + interest
 		s.gold += totalBonus
+		s.gameStats.GoldEarned += totalBonus
 		perfect := s.lives == s.waveLivesSnapshot && result.PerfectBonus > 0
 		if perfect {
 			render.SpawnText(float64(game.ScreenWidth)/2, float64(game.ScreenHeight)/2-50,
@@ -1981,7 +2196,7 @@ func (s *StageScene) tryStartWave() {
 
 // showWardenSelect 弹出战灵选择覆盖层。
 func (s *StageScene) showWardenSelect() {
-	s.wardenOverlay.Show(GetWardenOptions(), func(key string) {
+	s.wardenOverlay.Show(GetWardenOptions(s.progressMgr), func(key string) {
 		s.activateWarden(key)
 		// 选完后立即开第一波
 		prevWave := s.spawner.Wave
@@ -2060,6 +2275,21 @@ func loadTowerDefsOrFallback() []tower.TowerDef {
 		return tower.BaseTowerDefs()
 	}
 	return defs
+}
+
+// filterUnlockedTowers 过滤只保留已解锁的塔定义。
+func filterUnlockedTowers(defs []tower.TowerDef, pm *persistence.ProgressManager) []tower.TowerDef {
+	result := make([]tower.TowerDef, 0, len(defs))
+	for _, d := range defs {
+		if pm.IsTowerUnlocked(d.Key) {
+			result = append(result, d)
+		}
+	}
+	if len(result) == 0 {
+		// 保底：至少有 basic 塔
+		return defs[:1]
+	}
+	return result
 }
 
 // towerLightColor maps a tower attack style to a light color for dynamic lighting.

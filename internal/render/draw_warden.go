@@ -10,23 +10,26 @@ import (
 
 	"defense2/internal/core/warden"
 	wardenTypes "defense2/internal/core/warden/types"
+	"defense2/internal/render/anim"
 	"defense2/internal/render/draw"
 	"defense2/internal/render/sprite"
 
 	"github.com/hajimehoshi/ebiten/v2"
 )
 
-// WardenRenderer manages warden PNG sprite rendering.
+// WardenRenderer manages warden PNG sprite rendering with optional frame animation.
 type WardenRenderer struct {
-	cache   *sprite.Cache
-	assetFS AssetReader
+	cache     *sprite.Cache
+	assetFS   AssetReader
+	animators map[string]*anim.Animator // per warden type, lazy initialized
 }
 
 // NewWardenRenderer creates a warden renderer.
 func NewWardenRenderer(assetFS AssetReader) *WardenRenderer {
 	return &WardenRenderer{
-		cache:   sprite.NewCache(),
-		assetFS: assetFS,
+		cache:     sprite.NewCache(),
+		assetFS:   assetFS,
+		animators: make(map[string]*anim.Animator),
 	}
 }
 
@@ -52,6 +55,35 @@ func (wr *WardenRenderer) loadSprite(typ string) *ebiten.Image {
 
 // GetSprite returns the cached sprite image for a warden type (for UI preview).
 func (wr *WardenRenderer) GetSprite(typ string) *ebiten.Image {
+	return wr.loadSprite(typ)
+}
+
+// getWardenFrame returns the current animation frame for a warden, falling back to static sprite.
+// Mirrors TowerRenderer.getTowerFrame pattern.
+func (wr *WardenRenderer) getWardenFrame(w *warden.Warden, dt float64) *ebiten.Image {
+	typ := w.Type
+	a, ok := wr.animators[typ]
+	if !ok {
+		a = anim.LoadWardenAnimator(wr.assetFS, typ)
+		wr.animators[typ] = a
+	}
+
+	// Choose animation state based on warden behavior:
+	// ShootTimer > 0 means the warden just fired (attack visual window).
+	base := w.BaseState()
+	isAttacking := base != nil && base.ShootTimer > 0
+	if isAttacking && a.HasAnim("attack") {
+		a.Play("attack")
+	} else if a.HasAnim("idle") {
+		a.Play("idle")
+	}
+	a.Update(dt)
+
+	img := a.CurrentImage()
+	if img != nil {
+		return img
+	}
+	// Fallback to static sprite cache
 	return wr.loadSprite(typ)
 }
 
@@ -107,7 +139,8 @@ func (wr *WardenRenderer) DrawWarden(screen *ebiten.Image, w *warden.Warden, ani
 	bobY := math.Sin(animTime*2.5) * 3.0
 	displaySize := float64(wardenSpriteSize) * (1.0 + 0.015*math.Sin(animTime*2.0))
 
-	img := wr.loadSprite(w.Type)
+	const wardenDT = 1.0 / 60.0
+	img := wr.getWardenFrame(w, wardenDT)
 	if img != nil {
 		rotation := wardenSpriteRotation(w.Type, base.FacingAngle)
 		draw.SpriteRotated(screen, img, float64(base.X), float64(base.Y),

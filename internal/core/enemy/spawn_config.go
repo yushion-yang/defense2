@@ -12,23 +12,22 @@ type SpawnConfig struct {
 	Boss        bool    // 是否为 Boss
 	Reward      int     // 击杀奖励金币
 
-	// 治疗光环（healer 原型）
-	HealScale    float64 // 治疗量占 maxHP 的比例（0=不治疗）
-	HealRadius   float64 // 治疗范围（像素）
-	HealInterval float64 // 治疗冷却（秒）
-
-	// 死亡分裂（splitter 原型）
-	SplitCount      int     // 死亡时分裂子体数量（0=不分裂）
+	// ── 行为配置 ──
+	Behavior        string  // 行为类型标识（"healer"/"stealth"/"splitter"/"buffer"/"regenerator"/""）
+	StealthDuration float64 // 隐身持续时间（秒）
+	SplitCount      int     // 分裂子体数量
+	SplitScale      float64 // 子体血量倍率
 	SplitHPRatio    float64 // 子体 HP 占父体 MaxHP 的比例（默认 0.3）
 	SplitSpeedScale float64 // 子体速度倍率（默认 1.4）
+	HealScale       float64 // 治疗量倍率（占目标 MaxHP 比例）
+	HealRadius      float64 // 治疗范围（像素）
+	HealInterval    float64 // 治疗间隔（秒）
+	AuraRange       float64 // 光环范围（像素）
+	AuraSpeedUp     float64 // 光环移速加成比例
 
 	// 传送（teleporter 原型）
 	TeleportInterval float64 // 传送间隔（秒，0=不传送）
 	TeleportSkip     int     // 每次传送跳过的路径段数
-
-	// 旗手光环（buffer 原型）
-	AuraRange   float64 // 光环范围（像素）
-	AuraSpeedUp float64 // 光环加速比例
 }
 
 // DefaultSpawnConfig 返回默认生成配置（普通敌人）。

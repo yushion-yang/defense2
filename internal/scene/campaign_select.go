@@ -8,8 +8,10 @@ import (
 
 	"defense2/internal/config"
 	"defense2/internal/core/game"
+	"defense2/internal/core/persistence"
 	"defense2/internal/render"
 	"defense2/internal/render/draw"
+	"defense2/internal/render/hud"
 	"defense2/internal/render/particle"
 	"defense2/internal/render/theme"
 	"defense2/internal/render/ui"
@@ -50,6 +52,7 @@ var diffColors = map[string]color.RGBA{
 type CampaignSelectScene struct {
 	switcher     Switcher
 	fontMgr      *render.FontManager
+	progressMgr  *persistence.ProgressManager
 	levels       []config.LevelEntry
 	difficulties []difficultyUI
 	selectedMap  int // 0-based index into levels
@@ -70,9 +73,13 @@ func NewCampaignSelectScene(sw Switcher) *CampaignSelectScene {
 		levels = nil
 	}
 
+	store, _ := persistence.DefaultStorage()
+	pm := persistence.NewProgressManager(store)
+
 	return &CampaignSelectScene{
 		switcher:     sw,
 		fontMgr:      render.GlobalFont(),
+		progressMgr:  pm,
 		levels:       levels,
 		difficulties: loadDifficulties(),
 		selectedMap:  0,
@@ -110,16 +117,29 @@ func (s *CampaignSelectScene) Update() error {
 			return nil
 		}
 		if idx := s.hitTestMapCards(mx, my); idx >= 0 {
-			s.selectedMap = idx
-			playUIClick(s.switcher)
+			if idx < len(s.levels) && s.progressMgr.IsMapUnlocked(s.levels[idx].ID) {
+				s.selectedMap = idx
+				playUIClick(s.switcher)
+			} else if idx < len(s.levels) {
+				// 点击锁定关卡：显示解锁条件
+				req := persistence.UnlockRequirement("map", s.levels[idx].ID)
+				if req != "" {
+					hud.ShowToast(req)
+				} else {
+					hud.ShowToast("该关卡尚未解锁")
+				}
+			}
 		}
 		if idx := s.hitTestDiffBtns(mx, my); idx >= 0 {
 			s.selectedDiff = idx
 			playUIClick(s.switcher)
 		}
 		if s.hoverStart && len(s.levels) > 0 {
-			playUIClick(s.switcher)
-			s.startGame()
+			// 检查选中关卡是否已解锁
+			if s.selectedMap < len(s.levels) && s.progressMgr.IsMapUnlocked(s.levels[s.selectedMap].ID) {
+				playUIClick(s.switcher)
+				s.startGame()
+			}
 		}
 	}
 
@@ -213,9 +233,17 @@ func (s *CampaignSelectScene) Draw(screen *ebiten.Image) {
 
 	// ── 选中关卡描述 ──
 	if s.selectedMap >= 0 && s.selectedMap < len(s.levels) {
-		desc := s.levels[s.selectedMap].Description
-		if desc != "" {
-			fm.DrawCenteredText(screen, desc, sw/2, csDescY, 12, theme.TextMuted)
+		level := s.levels[s.selectedMap]
+		if s.progressMgr.IsMapUnlocked(level.ID) {
+			if level.Description != "" {
+				fm.DrawCenteredText(screen, level.Description, sw/2, csDescY, 12, theme.TextMuted)
+			}
+		} else {
+			req := persistence.UnlockRequirement("map", level.ID)
+			if req == "" {
+				req = "该关卡尚未解锁"
+			}
+			fm.DrawCenteredText(screen, req, sw/2, csDescY, 12, theme.TextLocked)
 		}
 	}
 
@@ -228,8 +256,11 @@ func (s *CampaignSelectScene) Draw(screen *ebiten.Image) {
 	// ── 开始按钮 ──
 	bx := float32((sw - csBtnW) / 2)
 	by := float32(csBtnY)
+	selectedLocked := s.selectedMap < len(s.levels) && !s.progressMgr.IsMapUnlocked(s.levels[s.selectedMap].ID)
 	btnClr := greenAccent
-	if s.hoverStart {
+	if selectedLocked {
+		btnClr = color.RGBA{R: 60, G: 70, B: 85, A: 255} // 灰色禁用
+	} else if s.hoverStart {
 		btnClr = greenBtnHover
 	}
 	ui.Button(screen, bx, by, float32(csBtnW), float32(csBtnH), "开始游戏", ui.ButtonStyle{
@@ -262,48 +293,66 @@ func (s *CampaignSelectScene) drawMapCards(screen *ebiten.Image, fm *render.Font
 		h := float32(csCardH)
 		selected := i == s.selectedMap
 		hovered := i == s.hoverMap
+		locked := !s.progressMgr.IsMapUnlocked(level.ID)
 
 		// 卡片背景
 		bg := cardBg
-		if hovered && !selected {
+		if locked {
+			bg = color.RGBA{R: 20, G: 25, B: 40, A: 255} // 更暗的锁定背景
+		} else if hovered && !selected {
 			bg = cardHoverBg
+		}
+
+		borderClr := cardBorder
+		if locked {
+			borderClr = color.RGBA{R: 40, G: 45, B: 60, A: 255} // 暗淡边框
 		}
 		ui.Card(screen, x, y, w, h, ui.CardStyle{
 			BgColor:       bg,
-			BorderColor:   cardBorder,
+			BorderColor:   borderClr,
 			Radius:        12,
 			BorderWidth:   1.5,
-			Selected:      selected,
+			Selected:      selected && !locked,
 			SelectedColor: greenAccent,
-			HighlightBar:  true,
+			HighlightBar:  !locked,
 			BarWidth:      40,
 		})
 
 		cx := float64(x) + float64(w)/2
 
-		// 编号（左上）
-		numStr := strconv.Itoa(i + 1)
-		if i+1 < 10 {
-			numStr = "0" + numStr
+		if locked {
+			// 锁定状态：显示锁图标和解锁条件
+			fm.DrawCenteredBoldText(screen, level.Name, cx, float64(y)+28, 13, theme.TextLocked)
+			fm.DrawCenteredText(screen, "[ 锁定 ]", cx, float64(y)+52, 14, theme.TextLocked)
+			req := persistence.UnlockRequirement("map", level.ID)
+			if req != "" {
+				fm.DrawCenteredText(screen, req, cx, float64(y)+74, 10, theme.TextLocked)
+			}
+		} else {
+			// 编号（左上）
+			numStr := strconv.Itoa(i + 1)
+			if i+1 < 10 {
+				numStr = "0" + numStr
+			}
+			fm.DrawBoldText(screen, numStr, float64(x)+10, float64(y)+8, 12, theme.TextMuted)
+
+			// 星级占位（右上）
+			fm.DrawText(screen, "\u2606\u2606\u2606", float64(x)+float64(w)-50, float64(y)+8, 11, theme.TextLocked)
+
+			// 名称（居中）
+			fm.DrawCenteredBoldText(screen, level.Name, cx, float64(y)+42, 14, theme.TextTitle)
+
+			// 波数 + 难度标签（底部）
+			waveTxt := strconv.Itoa(level.Waves) + "波"
+			diffTxt := diffLabel(level.Difficulty)
+			infoTxt := waveTxt + "  " + diffTxt
+			diffClr := diffLabelColor(level.Difficulty)
+			// 用两段绘制：波数白色，难度着色
+			waveW := fm.MeasureText(waveTxt+"  ", 11)
+			infoX := cx - fm.MeasureText(infoTxt, 11)/2
+			fm.DrawText(screen, waveTxt+"  ", infoX, float64(y)+float64(h)-24, 11, theme.TextBody)
+			fm.DrawText(screen, diffTxt, infoX+waveW, float64(y)+float64(h)-24, 11, diffClr)
 		}
-		fm.DrawBoldText(screen, numStr, float64(x)+10, float64(y)+8, 12, theme.TextMuted)
-
-		// 星级占位（右上）
-		fm.DrawText(screen, "\u2606\u2606\u2606", float64(x)+float64(w)-50, float64(y)+8, 11, theme.TextLocked)
-
-		// 名称（居中）
-		fm.DrawCenteredBoldText(screen, level.Name, cx, float64(y)+42, 14, theme.TextTitle)
-
-		// 波数 + 难度标签（底部）
-		waveTxt := strconv.Itoa(level.Waves) + "波"
-		diffTxt := diffLabel(level.Difficulty)
-		infoTxt := waveTxt + "  " + diffTxt
-		diffClr := diffLabelColor(level.Difficulty)
-		// 用两段绘制：波数白色，难度着色
-		waveW := fm.MeasureText(waveTxt+"  ", 11)
-		infoX := cx - fm.MeasureText(infoTxt, 11)/2
-		fm.DrawText(screen, waveTxt+"  ", infoX, float64(y)+float64(h)-24, 11, theme.TextBody)
-		fm.DrawText(screen, diffTxt, infoX+waveW, float64(y)+float64(h)-24, 11, diffClr)
 	}
 }
 

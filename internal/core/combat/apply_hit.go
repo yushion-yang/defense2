@@ -20,6 +20,7 @@ type HitInput struct {
 	Enemies     *enemy.Pool        // 用于 splash/bounce
 	Projectiles *projectile.Pool   // 用于 bounce
 	Projectile  *projectile.Projectile // 原始弹射物（弹射物路径传入，即时伤害传 nil）
+	OnCC        CCCallback         // CC 效果命中回调（可为 nil）
 }
 
 // HitOutput 命中结果。
@@ -65,7 +66,7 @@ func ApplyHit(input HitInput, onHit HitCallback) HitOutput {
 			if result.IsCrit {
 				isCrit = true
 			}
-			applyHitEffectsUnified(result, input.Target, synth, input.Enemies, input.Projectiles, onHit)
+			applyHitEffectsUnified(result, input.Target, synth, input.Enemies, input.Projectiles, onHit, input.OnCC)
 		}
 	}
 
@@ -90,7 +91,9 @@ func ApplyHit(input HitInput, onHit HitCallback) HitOutput {
 	// 击杀处理
 	extraKills := 0
 	if killed && input.Tower != nil {
+		input.Tower.Kills++
 		extraKills = applyDeathExplosionUnified(input.Tower, input.Target, input.Enemies, onHit)
+		input.Tower.Kills += extraKills
 		input.Enemies.Kill(input.Target)
 	}
 
@@ -103,13 +106,21 @@ func ApplyHit(input HitInput, onHit HitCallback) HitOutput {
 }
 
 // applyHitEffectsUnified 施加能力效果（减速、眩晕、流血、灼烧、溅射、弹射）。
-func applyHitEffectsUnified(r *tower.HitResult, target *enemy.Enemy, p *projectile.Projectile, enemies *enemy.Pool, projectiles *projectile.Pool, onHit HitCallback) {
+func applyHitEffectsUnified(r *tower.HitResult, target *enemy.Enemy, p *projectile.Projectile, enemies *enemy.Pool, projectiles *projectile.Pool, onHit HitCallback, onCC CCCallback) {
 	if r.Slow != nil {
-		ApplySlow(target, r.Slow.Factor, r.Slow.Duration, p.SourceTowerKey)
+		if ApplySlow(target, r.Slow.Factor, r.Slow.Duration, p.SourceTowerKey) && onCC != nil {
+			if r.Slow.Factor < 0.4 {
+				onCC(target.X, target.Y, "freeze")
+			} else {
+				onCC(target.X, target.Y, "slow")
+			}
+		}
 		tel.T.Record("ability", "slow")
 	}
 	if r.Stun != nil {
-		ApplyStun(target, r.Stun.Duration, p.SourceTowerKey)
+		if ApplyStun(target, r.Stun.Duration, p.SourceTowerKey) && onCC != nil {
+			onCC(target.X, target.Y, "stun")
+		}
 		tel.T.Record("ability", "stun")
 	}
 	if r.Bleed != nil {
@@ -118,9 +129,13 @@ func applyHitEffectsUnified(r *tower.HitResult, target *enemy.Enemy, p *projecti
 		tel.T.Record("ability", "bleed")
 	}
 	if r.Burn != nil {
+		wasBurning := target.BurnTimer > 0
 		target.BurnTimer = r.Burn.Duration
 		target.BurnDPS = r.Burn.DPS
 		tel.T.Record("ability", "burn")
+		if !wasBurning && onCC != nil {
+			onCC(target.X, target.Y, "burn")
+		}
 	}
 	if r.Splash != nil && enemies != nil {
 		tel.T.Record("ability", "splash")
