@@ -13,6 +13,7 @@ import (
 type WardenConfig struct {
 	Key         string `json:"key"` // 类型标识（prince/core/chain/skystrike/envoy）
 	Name        string `json:"name"`
+	Icon        string `json:"icon"`
 	Description string `json:"description"`
 	Category    string `json:"category"` // "mobile" or "indirect"
 

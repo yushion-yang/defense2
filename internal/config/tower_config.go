@@ -14,9 +14,10 @@ import (
 
 // TowerJSON 塔的 JSON 配置原始结构（与 JS 版 JSON 字段一致）。
 type TowerJSON struct {
-	Label     string `json:"label"`     // 塔全名
-	ShortLabel string `json:"shortLabel"` // 塔简称（HUD 显示用）
-	BuildCost int    `json:"buildCost"` // 建造费用（金币）
+	Label       string `json:"label"`       // 塔全名
+	ShortLabel  string `json:"shortLabel"`  // 塔简称（HUD 显示用）
+	Description string `json:"description"` // 塔描述文本
+	BuildCost   int    `json:"buildCost"`   // 建造费用（金币）
 
 	// 基础属性 + 潜力属性（战力缩放）
 	BaseDamage         float64 `json:"baseDamage"`         // 基础伤害（强度0时的底线）

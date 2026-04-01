@@ -172,31 +172,3 @@ func spriteKeyForStyle(style AttackStyle) string {
 	}
 }
 
-// BaseTowerDefs 返回 4 种基础塔定义。
-func BaseTowerDefs() []TowerDef {
-	return []TowerDef{
-		{
-			Key: "basic", Label: "Arrow",
-			Range: 150, Damage: 10, AttackSpeed: 1.5, Cost: 50,
-			Color: [3]uint8{80, 140, 220},
-		},
-		{
-			Key: "splash", Label: "Cannon",
-			Range: 120, Damage: 20, AttackSpeed: 0.8, Cost: 80,
-			Abilities: []string{"splash"},
-			Color:     [3]uint8{200, 120, 60},
-		},
-		{
-			Key: "slow", Label: "Frost",
-			Range: 130, Damage: 5, AttackSpeed: 1.2, Cost: 60,
-			Abilities: []string{"onHitSlow"},
-			Color:     [3]uint8{100, 180, 220},
-		},
-		{
-			Key: "sniper", Label: "Sniper",
-			Range: 220, Damage: 35, AttackSpeed: 0.5, Cost: 100,
-			Abilities: []string{"crit"},
-			Color:     [3]uint8{180, 60, 180},
-		},
-	}
-}

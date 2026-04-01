@@ -12,6 +12,8 @@ import (
 // EnemyArchetype 敌人原型模板（JSON 配置）。
 type EnemyArchetype struct {
 	Label            string  `json:"label"`            // 显示名称
+	Color            string  `json:"color"`            // 显示颜色（hex）
+	Description      string  `json:"description"`      // 描述文本
 	HPScale          float64 `json:"hpScale"`          // 血量倍率（相对基准值）
 	SpeedScale       float64 `json:"speedScale"`       // 速度倍率
 	Radius           float64 `json:"radius"`           // 碰撞半径（像素绝对值）
@@ -28,6 +30,7 @@ type EnemyArchetype struct {
 	HealInterval     float64 `json:"healInterval"`     // 治疗间隔（秒）
 	AuraRange        float64 `json:"auraRange"`        // 光环范围
 	AuraSpeedUp      float64 `json:"auraSpeedUp"`      // 光环加速比例
+	AuraArmor        float64 `json:"auraArmor"`        // 光环护甲值
 }
 
 // LoadEnemyArchetypes 加载所有敌人原型。

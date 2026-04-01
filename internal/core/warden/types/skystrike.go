@@ -1,11 +1,10 @@
 // skystrike.go — 水灵战灵。
 // 移动型战灵，围绕敌群轨道运动。
-// 被动：每隔一段时间随机施展三种攻击之一（多目标/连击/百分比）。
+// 被动：每隔一段时间轮流施展三种攻击之一（多目标/连击/百分比）。
 package types
 
 import (
 	"fmt"
-	"math"
 	"math/rand"
 
 	"defense2/internal/core/enemy"
@@ -73,11 +72,11 @@ func (b *SkystrikeBehavior) Init(w *warden.Warden) interface{} {
 		},
 		SpecialInterval: 1.0,
 		MultiTargets:    3,
-		MultiDmgRatio:   2.0, // 300% 攻击力
+		MultiDmgRatio:   2.0, // 200% 攻击力
 		BurstHits:       5,
-		BurstDmgRatio:   1.0, // 200% 攻击力 × 4 段
+		BurstDmgRatio:   1.0, // 100% 攻击力 x 5 段
 		HpTargets:       3,
-		HpPercent:       0.10, // 20% 最大生命值
+		HpPercent:       0.10, // 10% 最大生命值
 	}
 }
 
@@ -154,7 +153,7 @@ func (b *SkystrikeBehavior) Tick(w *warden.Warden, ctx *warden.TickContext) {
 	s.DecayShootTimer(dt)
 }
 
-// skystrikeSpecial 轮流施展三种攻击模式（1→2→3→1→...）。
+// skystrikeSpecial 轮流施展三种攻击模式（1->2->3->1->...）。
 func skystrikeSpecial(s *SkystrikeState, ctx *warden.TickContext) {
 	alive := collectAlive(ctx.Enemies)
 	if len(alive) == 0 {
@@ -276,6 +275,3 @@ func tickStrikes(s *SkystrikeState, dt float64) {
 	}
 	s.Strikes = s.Strikes[:n]
 }
-
-// unused import guard
-var _ = math.Hypot

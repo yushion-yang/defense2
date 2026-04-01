@@ -58,11 +58,17 @@ func (p *Pool) Spawn(x, y, baseHP, baseSpeed float64, pathIndex int, archetype s
 			e.Archetype = archetype
 			e.Boss = cfg.Boss
 			e.Reward = cfg.Reward
+			e.RewardScale = cfg.RewardScale
+			if e.RewardScale <= 0 {
+				e.RewardScale = 1
+			}
 			e.StunTimer = 0
 			e.SlowTimer = 0
 			e.SlowFactor = 1
 			e.BleedTimer = 0
 			e.BleedDPS = 0
+			e.PoisonTimer = 0
+			e.PoisonDPS = 0
 			e.BurnTimer = 0
 			e.BurnDPS = 0
 			e.RootTimer = 0
@@ -89,6 +95,7 @@ func (p *Pool) Spawn(x, y, baseHP, baseSpeed float64, pathIndex int, archetype s
 			e.IsUntargetable = false
 			e.Thresholds = nil
 			e.Tenacity = 0
+			e.ControlImmuneTimer = 0
 			e.IsControlImmune = false
 			e.IsStunImmune = false
 			e.IsSlowImmune = false

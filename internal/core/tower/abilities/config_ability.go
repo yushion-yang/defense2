@@ -109,7 +109,7 @@ func (a *ConfigAbility) OnHit(t *tower.Tower, p *projectile.Projectile, e *enemy
 		bonus := p.Damage * ratio * sv
 		return &tower.HitResult{BonusDamage: bonus}
 
-	case "onHitSlow", "slowPower":
+	case "slowPower":
 		// scaleDim=factor(强度提升减速值), param=duration(固定时长)
 		return &tower.HitResult{
 			Slow: &tower.SlowEffect{Factor: 1 - sv, Duration: pm},
@@ -156,10 +156,10 @@ func (a *ConfigAbility) OnHit(t *tower.Tower, p *projectile.Projectile, e *enemy
 		}
 
 	case "poison":
-		// scaleDim=dps, param=duration — 固定 DPS 中毒
-		return &tower.HitResult{
-			Bleed: &tower.BleedEffect{DPS: sv, Duration: pm},
-		}
+		// scaleDim=dps, param=duration — 固定 DPS 中毒（独立于 bleed）
+		e.PoisonTimer = pm
+		e.PoisonDPS = sv
+		return nil
 
 	case "weaken":
 		// scaleDim=amplify, param=duration — 命中后受伤增加（取较强效果）
@@ -181,9 +181,6 @@ func (a *ConfigAbility) OnHit(t *tower.Tower, p *projectile.Projectile, e *enemy
 		// 无缩放，param=targets — 逻辑在 pipeline 层处理
 		return nil
 
-	case "goldOnKill":
-		// 击杀产金 — 在 OnHit 中无效果
-		return nil
 	}
 
 	return nil
@@ -304,8 +301,6 @@ func (a *ConfigAbility) OnTick(t *tower.Tower, ctx *tower.TickContext) *tower.Ti
 			return &tower.TickResult{GoldEarned: gold}
 		}
 
-	case "goldOnKill":
-		// 击杀产金 — 由管线在击杀时处理，tick 无操作
 	}
 
 	return nil

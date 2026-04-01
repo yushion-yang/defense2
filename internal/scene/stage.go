@@ -213,7 +213,6 @@ func NewStageSceneWithOpts(sw Switcher, opts StageOptions) *StageScene {
 	startGold := diff.StartGold
 	econ := economy.DefaultConfig()
 	econ.KillReward = int(float64(econ.KillReward) * diff.RewardScale)
-	econ.WaveBonus = int(float64(econ.WaveBonus) * diff.RewardScale)
 
 	// 创建游戏模式和会话
 	modeID := opts.ModeID
@@ -467,11 +466,16 @@ func (s *StageScene) subscribeBus() {
 }
 
 // emitKill 统一发出击杀事件（弹射物/战灵/技能共用）。
-func (s *StageScene) emitKill(isBoss bool, killerID string) {
+// rewardScale 为敌人原型奖励倍率（如 tank=1.35, runner=0.72），0 或 1 表示无缩放。
+func (s *StageScene) emitKill(isBoss bool, killerID string, rewardScale float64) {
+	gold := s.econ.KillGold() + s.killRewardBonus
+	if rewardScale > 0 && rewardScale != 1 {
+		gold = int(float64(gold) * rewardScale)
+	}
 	s.bus.Emit(event.EvtEnemyKilled, event.EnemyKilledPayload{
 		IsBoss:    isBoss,
 		KillerID:  killerID,
-		GoldValue: s.econ.KillGold() + s.killRewardBonus,
+		GoldValue: gold,
 	})
 }
 
@@ -1092,7 +1096,7 @@ func (s *StageScene) updatePlaying() {
 			DT:          gameDT,
 			OnKill: func(e *enemy.Enemy) {
 				s.audioMgr.PlaySafeAt(gameAudio.SFXEnemyDeath, gameAudio.VolKill)
-				s.emitKill(e.Boss, "warden")
+				s.emitKill(e.Boss, "warden", e.RewardScale)
 			},
 			OnFire: func() {
 				s.audioMgr.PlayThrottledAt(gameAudio.SFXWardenFire, 100, gameAudio.VolWarden)
@@ -1313,7 +1317,7 @@ func (s *StageScene) updatePlaying() {
 			} else {
 				s.audioMgr.PlayThrottledAt(gameAudio.SFXEnemyDeath, 50, gameAudio.VolKill)
 			}
-			s.emitKill(e.Boss, "projectile") // 统一击杀事件：kills/gold/session/tutorial/warden
+			s.emitKill(e.Boss, "projectile", e.RewardScale) // 统一击杀事件：kills/gold/session/tutorial/warden
 		} else {
 			// 命中音效：per-sound 节流，优先按敌人状态区分
 			switch {
@@ -2261,15 +2265,12 @@ func (s *StageScene) activateWarden(key string) {
 
 // handleWardenSelection 已移至 stage_input.go。
 
-// loadTowerDefsOrFallback 从 JSON 配置加载塔定义，失败时回退到硬编码定义。
+// loadTowerDefsOrFallback 从 JSON 配置加载塔定义，失败时返回空列表。
 func loadTowerDefsOrFallback() []tower.TowerDef {
 	defs, err := loader.LoadTowerDefs()
 	if err != nil {
-		log.Printf("塔配置加载失败，使用硬编码定义: %v", err)
-		return tower.BaseTowerDefs()
-	}
-	if len(defs) == 0 {
-		return tower.BaseTowerDefs()
+		log.Printf("塔配置加载失败: %v", err)
+		return nil
 	}
 	return defs
 }

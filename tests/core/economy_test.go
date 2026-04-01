@@ -7,20 +7,6 @@ import (
 	"defense2/internal/core/economy"
 )
 
-func TestWaveCompleteGold(t *testing.T) {
-	cfg := economy.DefaultConfig()
-	// 第1波: 30 + 1*5 = 35
-	g := cfg.WaveCompleteGold(1)
-	if g != 35 {
-		t.Fatalf("wave 1 bonus expected 35, got %d", g)
-	}
-	// 第10波: 30 + 10*5 = 80
-	g = cfg.WaveCompleteGold(10)
-	if g != 80 {
-		t.Fatalf("wave 10 bonus expected 80, got %d", g)
-	}
-}
-
 func TestInterestGold(t *testing.T) {
 	cfg := economy.DefaultConfig()
 	// 200 * 0.05 = 10

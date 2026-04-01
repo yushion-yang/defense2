@@ -56,11 +56,14 @@ type Enemy struct {
 	Archetype    string          // 敌人原型标识（如 "normal"、"runner"、"tank"）
 	Boss         bool            // 是否为 Boss
 	Reward       int             // 击杀奖励金币
+	RewardScale  float64         // 原型奖励倍率（如 tank=1.35, runner=0.72）
 	StunTimer    float64         // 眩晕剩余时间（秒），>0 时无法移动
 	SlowTimer    float64         // 减速剩余时间（秒）
 	SlowFactor   float64         // 减速倍率（0.5 表示半速）
 	BleedTimer   float64         // 流血剩余时间（秒）
 	BleedDPS     float64         // 流血每秒伤害
+	PoisonTimer  float64         // 中毒剩余时间（秒）
+	PoisonDPS    float64         // 中毒每秒伤害
 	BurnTimer    float64         // 灼烧剩余时间（秒）
 	BurnDPS      float64         // 灼烧每秒伤害
 	DotTickTimer float64         // DoT 触发计时器（每 DotTickInterval 触发一次伤害）
@@ -94,8 +97,9 @@ type Enemy struct {
 	Thresholds []Threshold // HP阈值触发器列表
 
 	// ── 控制减免 ──
-	Tenacity        float64 // 韧性（0~1，减少控制效果持续时间）
-	IsControlImmune bool    // 控制免疫
+	Tenacity            float64 // 韧性（0~1，减少控制效果持续时间）
+	ControlImmuneTimer  float64 // 控制免疫剩余时间（秒，>0 时免疫所有控制效果）
+	IsControlImmune     bool    // 控制免疫
 	IsStunImmune    bool    // 眩晕免疫
 	IsSlowImmune    bool    // 减速免疫
 	IsRootImmune    bool    // 定身免疫
@@ -182,8 +186,8 @@ func TickStatusEffects(e *Enemy, dt float64) {
 		}
 	}
 
-	// DoT（流血/灼烧/区域伤害）按固定周期触发
-	hasDot := e.BleedTimer > 0 || e.BurnTimer > 0 || e.ZoneDmgAccum > 0
+	// DoT（流血/灼烧/中毒/区域伤害）按固定周期触发
+	hasDot := e.BleedTimer > 0 || e.BurnTimer > 0 || e.PoisonTimer > 0 || e.ZoneDmgAccum > 0
 	if hasDot {
 		// 首次施加 DOT 时初始化计时器，不立即触发（保证 3s/0.5s = 6 次）
 		if e.DotTickTimer <= 0 {
@@ -199,6 +203,9 @@ func TickStatusEffects(e *Enemy, dt float64) {
 			if e.BurnTimer > 0 {
 				dotDmg += e.BurnDPS * DotTickInterval
 			}
+			if e.PoisonTimer > 0 {
+				dotDmg += e.PoisonDPS * DotTickInterval
+			}
 			// 区域伤害（curseZone/poisonZone 每帧累积，tick 时一次性结算）
 			if e.ZoneDmgAccum > 0 {
 				dotDmg += e.ZoneDmgAccum
@@ -213,6 +220,9 @@ func TickStatusEffects(e *Enemy, dt float64) {
 		}
 		if e.BurnTimer > 0 {
 			e.BurnTimer -= dt
+		}
+		if e.PoisonTimer > 0 {
+			e.PoisonTimer -= dt
 		}
 	} else {
 		e.DotTickTimer = 0
@@ -230,6 +240,17 @@ func TickStatusEffects(e *Enemy, dt float64) {
 	// 定身：倒计时
 	if e.RootTimer > 0 {
 		e.RootTimer -= dt
+	}
+
+	// 控制免疫：倒计时归零后清除免疫标志
+	if e.ControlImmuneTimer > 0 {
+		e.ControlImmuneTimer -= dt
+		if e.ControlImmuneTimer <= 0 {
+			e.ControlImmuneTimer = 0
+			e.IsControlImmune = false
+			e.IsStunImmune = false
+			e.IsSlowImmune = false
+		}
 	}
 
 	// 受击闪白衰减

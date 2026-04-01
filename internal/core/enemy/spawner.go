@@ -34,11 +34,11 @@ var waveCompositions = []struct {
 	}},
 	{maxWave: 14, entries: []waveEntry{
 		{"normal", 40}, {"runner", 15}, {"tank", 15}, {"armored", 10},
-		{"flying", 10}, {"healer", 5}, {"stealth", 5},
+		{"flying", 10}, {"healer", 5}, {"stealth", 5}, {"shielded", 5},
 	}},
 	{maxWave: 0, entries: []waveEntry{ // wave 15+
 		{"normal", 30}, {"runner", 10}, {"tank", 15}, {"armored", 10},
-		{"flying", 10}, {"healer", 5}, {"stealth", 5},
+		{"flying", 10}, {"healer", 5}, {"stealth", 5}, {"shielded", 5},
 		{"splitter", 5}, {"buffer", 5}, {"teleporter", 5},
 	}},
 }

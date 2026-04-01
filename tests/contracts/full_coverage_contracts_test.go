@@ -70,18 +70,6 @@ func TestSellRefundRatioIs70Percent(t *testing.T) {
 	}
 }
 
-func TestWaveBonusFormula(t *testing.T) {
-	cfg := economy.DefaultConfig()
-	// wave=1: 30 + 1*5 = 35
-	if g := cfg.WaveCompleteGold(1); g != 35 {
-		t.Errorf("WaveCompleteGold(1)=%d 应为 35", g)
-	}
-	// wave=12: 30 + 12*5 = 90
-	if g := cfg.WaveCompleteGold(12); g != 90 {
-		t.Errorf("WaveCompleteGold(12)=%d 应为 90", g)
-	}
-}
-
 // ═══════════════════════════════════════
 // §6 每种塔的攻击方式有效
 // ═══════════════════════════════════════

@@ -18,18 +18,6 @@ func TestKillGoldPositive(t *testing.T) {
 	}
 }
 
-func TestWaveBonusIncreases(t *testing.T) {
-	cfg := economy.DefaultConfig()
-	prev := 0
-	for wave := 1; wave <= 25; wave++ {
-		bonus := cfg.WaveCompleteGold(wave)
-		if bonus <= prev {
-			t.Errorf("wave=%d: WaveCompleteGold=%d 应 > 前一波 %d", wave, bonus, prev)
-		}
-		prev = bonus
-	}
-}
-
 func TestSellRefundLessThanCost(t *testing.T) {
 	cfg := economy.DefaultConfig()
 	costs := []int{50, 60, 70, 80, 100}

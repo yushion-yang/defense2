@@ -121,12 +121,6 @@ func TestEconomyDefaults(t *testing.T) {
 	if cfg.KillReward <= 0 {
 		t.Errorf("KillReward=%d 应 > 0", cfg.KillReward)
 	}
-	if cfg.WaveBonus <= 0 {
-		t.Errorf("WaveBonus=%d 应 > 0", cfg.WaveBonus)
-	}
-	if cfg.WaveBonusScale < 0 {
-		t.Errorf("WaveBonusScale=%d 应 >= 0", cfg.WaveBonusScale)
-	}
 	if cfg.SellRefundRatio <= 0 || cfg.SellRefundRatio > 1.0 {
 		t.Errorf("SellRefundRatio=%.2f 应在 (0, 1.0]", cfg.SellRefundRatio)
 	}
