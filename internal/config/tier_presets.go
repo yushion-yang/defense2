@@ -21,9 +21,9 @@ type AttrTiers struct {
 
 // TierPresets 完整预设表。
 type TierPresets struct {
-	Damage   AttrTiers `json:"damage"`
-	FireRate AttrTiers `json:"fireRate"`
-	Range    AttrTiers `json:"range"`
+	Damage      AttrTiers `json:"damage"`
+	AttackSpeed AttrTiers `json:"attackSpeed"`
+	Range       AttrTiers `json:"range"`
 }
 
 var globalTierPresets *TierPresets
@@ -44,17 +44,17 @@ func LoadTierPresets() (*TierPresets, error) {
 		return nil, fmt.Errorf("load tier-presets: %w", err)
 	}
 	var raw struct {
-		Damage   AttrTiers `json:"damage"`
-		FireRate AttrTiers `json:"fireRate"`
-		Range    AttrTiers `json:"range"`
+		Damage      AttrTiers `json:"damage"`
+		AttackSpeed AttrTiers `json:"attackSpeed"`
+		Range       AttrTiers `json:"range"`
 	}
 	if err := json.Unmarshal(data, &raw); err != nil {
 		return nil, fmt.Errorf("parse tier-presets: %w", err)
 	}
 	tp := &TierPresets{
-		Damage:   raw.Damage,
-		FireRate: raw.FireRate,
-		Range:    raw.Range,
+		Damage:      raw.Damage,
+		AttackSpeed: raw.AttackSpeed,
+		Range:       raw.Range,
 	}
 	globalTierPresets = tp
 	return tp, nil

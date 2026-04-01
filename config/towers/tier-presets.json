@@ -1,24 +1,25 @@
 {
   "_meta": {
-    "description": "塔属性档位预设表——基础值5档(S/A/B/C/D)",
-    "version": "1.1"
+    "description": "塔属性档位预设表——基础值5档(S/A/B/C/D)，重击风格(高伤低速)",
+    "version": "1.2",
+    "note": "attackSpeed 为每秒攻击次数（非间隔），S=快/D=慢"
   },
   "damage": {
     "tiers": {
-      "S": { "min": 28, "max": 35, "ref": 30 },
-      "A": { "min": 20, "max": 26, "ref": 22 },
-      "B": { "min": 14, "max": 19, "ref": 16 },
-      "C": { "min": 8,  "max": 13, "ref": 10 },
-      "D": { "min": 0,  "max": 7,  "ref": 0  }
+      "S": { "min": 35, "max": 45, "ref": 40 },
+      "A": { "min": 25, "max": 33, "ref": 28 },
+      "B": { "min": 18, "max": 24, "ref": 20 },
+      "C": { "min": 10, "max": 16, "ref": 12 },
+      "D": { "min": 2,  "max": 8,  "ref": 4  }
     }
   },
-  "fireRate": {
+  "attackSpeed": {
     "tiers": {
-      "S": { "min": 0.40, "max": 0.55, "ref": 0.50 },
-      "A": { "min": 0.60, "max": 0.75, "ref": 0.68 },
-      "B": { "min": 0.80, "max": 0.95, "ref": 0.85 },
-      "C": { "min": 1.00, "max": 1.50, "ref": 1.20 },
-      "D": { "min": 1.80, "max": 2.50, "ref": 2.00 }
+      "S": { "min": 1.43, "max": 1.82, "ref": 1.61 },
+      "A": { "min": 1.05, "max": 1.33, "ref": 1.18 },
+      "B": { "min": 0.83, "max": 1.00, "ref": 0.91 },
+      "C": { "min": 0.56, "max": 0.77, "ref": 0.67 },
+      "D": { "min": 0.33, "max": 0.50, "ref": 0.40 }
     }
   },
   "range": {
