@@ -211,8 +211,11 @@ func TickStatusEffects(e *Enemy, dt float64) {
 				dotDmg += e.ZoneDmgAccum
 				e.ZoneDmgAccum = 0
 			}
-			e.HP -= dotDmg
-			e.LastDotDmg = dotDmg
+			// 无敌/伤害免疫时跳过 HP 扣减（DoT 仍正常倒计时以便状态图标消失）
+			if !e.IsInvincible && !e.IsDamageImmune {
+				e.HP -= dotDmg
+				e.LastDotDmg = dotDmg
+			}
 		}
 		// 倒计时递减
 		if e.BleedTimer > 0 {

@@ -28,6 +28,7 @@ type coreBehavior struct{}
 
 func (b *coreBehavior) Type() string { return "core" }
 
+// 注意：以下硬编码值应与 config/wardens/wardens.json 保持一致
 func (b *coreBehavior) Init(w *warden.Warden) interface{} {
 	return &CoreState{
 		WardenState: warden.WardenState{

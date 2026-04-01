@@ -283,6 +283,7 @@ func (a *ConfigAbility) OnTick(t *tower.Tower, ctx *tower.TickContext) *tower.Ti
 				if sv > e.DamageAmplify {
 					e.DamageAmplify = sv // 取最强的一个 zone 效果，不叠加
 				}
+				e.DamageAmplifyTimer = 0.2 // 短 timer，每帧在 zone 内刷新；离开后自然过期
 			}
 		})
 

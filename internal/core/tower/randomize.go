@@ -78,13 +78,18 @@ func RollTowerStats() RandomStats {
 
 	// 随机分配三个档位，约束总分 == TierBudget
 	var dt, st, rt string
+	found := false
 	for attempts := 0; attempts < 100; attempts++ {
 		dt = config.TierNames[rand.Intn(5)]
 		st = config.TierNames[rand.Intn(5)]
 		rt = config.TierNames[rand.Intn(5)]
 		if tierScore[dt]+tierScore[st]+tierScore[rt] == TierBudget {
+			found = true
 			break
 		}
+	}
+	if !found {
+		dt, st, rt = "B", "B", "B"
 	}
 
 	// 档内随机取值（attackSpeed 已是次/秒，无需转换）

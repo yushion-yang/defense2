@@ -24,6 +24,8 @@ func (b *baseMode) GetScore(_ *Context) int          { return 0 }
 func (b *baseMode) VictoryWaveTarget() int           { return -1 }
 func (b *baseMode) EnableEvents() bool               { return false }
 
+// OnWaveCleared returns wave-clear rewards. PerfectBonus is 0 by default;
+// modes that support perfect-wave bonuses (e.g. campaign) should override.
 func (b *baseMode) OnWaveCleared(wave int, _ *Context) WaveClearResult {
 	bonus := 12 + wave*4
 	return WaveClearResult{

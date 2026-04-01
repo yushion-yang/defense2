@@ -40,6 +40,7 @@ type EnvoyBehavior struct{}
 
 func (b *EnvoyBehavior) Type() string { return "envoy" }
 
+// 注意：以下硬编码值应与 config/wardens/wardens.json 保持一致
 func (b *EnvoyBehavior) Init(w *warden.Warden) interface{} {
 	return &EnvoyState{
 		WardenState: warden.WardenState{

@@ -6,7 +6,7 @@ package gamemode
 type SessionStatus int
 
 const (
-	StatusIdle    SessionStatus = iota // 未开始
+	StatusIdle    SessionStatus = iota // reserved for future start-game flow
 	StatusPlaying                      // 进行中
 	StatusVictory                      // 胜利
 	StatusDefeat                       // 失败
@@ -79,9 +79,7 @@ func (s *Session) OnWaveCleared(wave int, ctx *Context) WaveClearResult {
 	s.Stats.WavesCleared++
 	// 完美波次检测：波次期间零泄漏
 	result := s.Mode.OnWaveCleared(wave, ctx)
-	if s.waveLeaked == 0 {
-		result.PerfectBonus = result.PerfectBonus // mode already set
-	} else {
+	if s.waveLeaked > 0 {
 		result.PerfectBonus = 0
 	}
 	s.Stats.GoldEarned += result.BonusGold + result.PerfectBonus

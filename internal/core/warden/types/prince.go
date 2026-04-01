@@ -74,6 +74,7 @@ type princeBehavior struct{}
 
 func (b *princeBehavior) Type() string { return "prince" }
 
+// 注意：以下硬编码值应与 config/wardens/wardens.json 保持一致
 func (b *princeBehavior) Init(w *warden.Warden) interface{} {
 	return &PrinceState{
 		WardenState: warden.WardenState{
@@ -235,6 +236,8 @@ func tickFireballs(s *PrinceState, ctx *warden.TickContext) {
 		fb.Y = fb.StartY + dy*fb.Progress
 
 		// 穿透伤害 = 攻击力伤害 + 5% MaxHP（boss 免疫百分比部分）
+		// 注意：此处手动检查 e.Boss 跳过百分比伤害，而非设置 DamageInput.IsPercentHP，
+		// 因为 warden.ApplyDamage 固定 IsPercentHP=false 且火球混合了固定+百分比两部分伤害。
 		ctx.Enemies.Each(func(e *enemy.Enemy) {
 			if fb.HitSet[e] {
 				return

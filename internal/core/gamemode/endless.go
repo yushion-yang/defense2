@@ -33,6 +33,7 @@ func (m *EndlessMode) GetScore(ctx *Context) int {
 }
 
 func (m *EndlessMode) OnWaveCleared(wave int, ctx *Context) WaveClearResult {
+	// 当前与 campaign 共用奖励公式，若需差异化可在此覆盖
 	result := m.CampaignMode.OnWaveCleared(wave, ctx)
 	if wave%5 == 0 {
 		result.Message = fmt.Sprintf("Wave %d clear! Boss 波! +$%d", wave, result.BonusGold)

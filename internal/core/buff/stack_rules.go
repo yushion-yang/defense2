@@ -1,5 +1,5 @@
 // stack_rules.go — Buff 堆叠规则系统。
-// 定义 6 种堆叠模式和 19 种 buff 类型的默认规则。
+// 定义 6 种堆叠模式和 20 种 buff 类型的默认规则。
 package buff
 
 import "math"
@@ -30,7 +30,7 @@ type StackRule struct {
 	Priority float64   // 优先级（Override 模式下高优先覆盖低优先）
 }
 
-// DefaultStackRules 19 种 buff 类型的默认堆叠规则。
+// DefaultStackRules 20 种 buff 类型的默认堆叠规则。
 var DefaultStackRules = map[string]StackRule{
 	// 控制类
 	"slow":    {Mode: ModeStrongest, Cap: 0.8}, // 最多减速80%（速度不低于20%）
@@ -41,7 +41,7 @@ var DefaultStackRules = map[string]StackRule{
 
 	// 增益类
 	"speedUp":    {Mode: ModeAdditive, Cap: 1.4},
-	"damageUp":   {Mode: ModeMultiplicative},
+	"damageUp":   {Mode: ModeMultiplicative, Cap: 3.0},
 	"damageDown": {Mode: ModeMultiplicative, Floor: 0.2},
 	"fireRateUp": {Mode: ModeAdditive, Cap: 0.5},
 
@@ -51,6 +51,7 @@ var DefaultStackRules = map[string]StackRule{
 	"controlImmune": {Mode: ModeOverride, Priority: 80},
 	"slowImmune":    {Mode: ModeOverride, Priority: 70},
 	"stunImmune":    {Mode: ModeOverride, Priority: 70},
+	"rootImmune":    {Mode: ModeOverride, Priority: 70},
 	"untargetable":  {Mode: ModeOverride, Priority: 100},
 
 	// 独立类

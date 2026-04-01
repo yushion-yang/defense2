@@ -17,7 +17,7 @@ type AbilityDef struct {
 	Type      string  `json:"type"`      // 能力类型标识
 	Label     string  `json:"label"`     // 显示名称
 	Icon      string  `json:"icon"`      // 图标名称
-	Category  string  `json:"category"`  // 分类（combat/control/aura/zone/economy）
+	Category  string  `json:"category"`  // 分类（attack/cc/damage/buff/dot/zone）
 	ScaleDim  string  `json:"scaleDim"`  // 可提升维度名（空=无缩放，运行时按 type 解读）
 	Base      float64 `json:"base"`      // 缩放维度的基础值
 	Potential float64 `json:"potential"` // 缩放维度的潜力值

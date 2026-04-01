@@ -62,6 +62,7 @@ type SkystrikeBehavior struct{}
 
 func (b *SkystrikeBehavior) Type() string { return "skystrike" }
 
+// 注意：以下硬编码值应与 config/wardens/wardens.json 保持一致
 func (b *SkystrikeBehavior) Init(w *warden.Warden) interface{} {
 	return &SkystrikeState{
 		WardenState: warden.WardenState{

@@ -106,19 +106,10 @@ func (p *Pool) Spawn(x, y, baseHP, baseSpeed float64, pathIndex int, archetype s
 			e.BerserkSpeedScale = 0
 			e.BerserkTriggered = false
 			e.RegenPerSec = 0
-			// 治疗光环（从 SpawnConfig 计算）
-			if cfg.HealScale > 0 {
-				e.HealPower = hp * cfg.HealScale // healScale 是 maxHP 的比例
-				e.HealRadius = cfg.HealRadius
-				e.HealInterval = cfg.HealInterval
-				if e.HealInterval <= 0 {
-					e.HealInterval = 2.0
-				}
-			} else {
-				e.HealPower = 0
-				e.HealRadius = 0
-				e.HealInterval = 0
-			}
+			// 治疗光环初始化为零值，下方"应用行为配置"段按 cfg 设置实际值
+			e.HealPower = 0
+			e.HealRadius = 0
+			e.HealInterval = 0
 			e.HealCooldown = 0
 			e.Stealthed = false
 			e.StealthTimer = 0

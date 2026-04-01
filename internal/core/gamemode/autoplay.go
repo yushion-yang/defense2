@@ -1,5 +1,5 @@
 // autoplay.go — 自动对局游戏模式。
-// 不可失败（immortal）、自动开波、短间歇、启用事件路径。
+// 不可失败（immortal）、自动开波、短间歇、事件路径禁用。
 package gamemode
 
 // AutoPlayMode 自动对局模式。

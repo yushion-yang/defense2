@@ -1,13 +1,14 @@
-// damage_pipeline.go — 7步伤害管线。
+// damage_pipeline.go — 8步伤害管线。
 // 所有伤害（弹射物、光束、技能、DOT）最终都应通过 ProcessDamage 处理，
 // 确保免疫/减免/阈值等机制统一生效。
 //
-// 7步管线:
+// 8步管线:
 //
 //  1. 免疫检查（不可选中/无敌/伤害免疫，pure穿透所有）
 //  2. Boss百分比HP上限（%HP伤害对Boss额外限制）
 //  3. 攻击者增伤buff（damageUp乘数，true/pure跳过）
 //  4. 目标减伤buff（damageDown乘数，true/pure跳过）
+//     4.1 减伤比例（damageReduce buff模板）
 //     4.25 虚弱增伤（weaken/weakenZone，上限50%）
 //     4.5 伤害上限（damageCap/damageCapPercent，沉默时失效）
 //  5. HP扣减
@@ -56,7 +57,7 @@ type DamageResult struct {
 	Thresholds []enemy.Threshold // 步骤6: 本次触发的阈值列表
 }
 
-// ProcessDamage 执行7步伤害管线。
+// ProcessDamage 执行8步伤害管线。
 // 这是所有伤害的统一入口，确保免疫/减免/阈值等机制一致生效。
 func ProcessDamage(input DamageInput) DamageResult {
 	e := input.Target

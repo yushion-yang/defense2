@@ -136,6 +136,9 @@ func (s *WardenState) MoveOrbit(cx, cy, idealDist, dt float64) {
 	}
 	scx, scy := s.smoothCX, s.smoothCY
 
+	if idealDist <= 0 {
+		return
+	}
 	// 始终推进轨道角度
 	angularSpeed := s.MoveSpeed / idealDist
 	s.OrbitAngle += angularSpeed * dt

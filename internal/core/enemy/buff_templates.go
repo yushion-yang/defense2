@@ -1,5 +1,5 @@
 // buff_templates.go — Buff 模板系统。
-// 预定义 14 种敌人 buff 模板，支持通过 ID 快速施加。
+// 预定义 10 种敌人 buff 模板，支持通过 ID 快速施加。
 // 同时提供 flags 标记和旧版类型名映射。
 package enemy
 
@@ -52,7 +52,7 @@ type BuffTemplate struct {
 // templates buff 模板注册表。
 var templates map[string]BuffTemplate
 
-// InitBuffTemplates 初始化 14 种预定义 buff 模板。
+// InitBuffTemplates 初始化 10 种预定义 buff 模板。
 func InitBuffTemplates() {
 	templates = map[string]BuffTemplate{
 		"berserk": {
