@@ -29,14 +29,14 @@ var (
 	Maps         = []string{"map_01", "map_02", "map_03", "map_04", "map_05", "map_06", "map_07", "map_08"}
 	Difficulties = []string{"easy", "normal", "hard", "extreme"}
 	Wardens      = []string{"prince", "core", "chain", "skystrike", "envoy"}
-	TowerKeys    = []string{"laser", "freeze", "electric", "hunter", "en-04", "en-05", "en-08", "wl-02"}
+	TowerKeys    = []string{"basic"} // 单塔系统：所有差异化来自能力选择
 
 	// GameModes 需要测试的游戏模式。
-	GameModes = []string{"campaign", "endless", "timed", "bossRush", "challenge", "test"}
+	GameModes = []string{"campaign", "endless", "timed", "bossRush", "challenge", "test", "autoplay"}
 
-	// EnemyArchetypes 所有敌人原型。
+	// EnemyArchetypes 所有敌人原型（13 个）。
 	EnemyArchetypes = []string{
-		"normal", "runner", "tank", "armored", "swarm",
+		"normal", "runner", "tank", "armored", "shielded", "swarm",
 		"stealth", "splitter", "teleporter", "healer", "buffer", "flying", "dummy",
 	}
 )

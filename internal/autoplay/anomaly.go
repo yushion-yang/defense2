@@ -896,16 +896,15 @@ func (d *AnomalyDetector) checkAbilitySilent(state *GameState) []Anomaly {
 
 	// 能力 → 遥测关键词映射（能力触发应在某个遥测维度有记录）
 	abilToTelemetry := map[string][]string{
-		"bounce":      {"bounce"},
-		"splash":      {"splash"},
-		"burn":        {"burn"},
-		"bleed":       {"bleed"},
-		"stun":        {"stun"},
-		"freeze":      {"slow"},
-		"slow":        {"slow"},
-		"shield":      {"shield"},
-		"hunter":      {"hunter"},
-		"shieldBreak": {"shieldBreak", "shield_break"},
+		"bounce":       {"bounce"},
+		"splash":       {"splash"},
+		"burn":         {"burn"},
+		"bleedDot":     {"bleed"},
+		"stun":         {"stun"},
+		"slowPower":    {"slow"},
+		"slowDuration": {"slow"},
+		"stunChance":   {"stun"},
+		"stunDuration": {"stun"},
 	}
 
 	var found []Anomaly

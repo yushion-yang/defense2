@@ -36,7 +36,6 @@ import (
 	"defense2/internal/core/persistence"
 	"defense2/internal/core/pipeline"
 	"defense2/internal/core/projectile"
-	"defense2/internal/core/strength"
 	"defense2/internal/core/tower"
 	"defense2/internal/core/tutorial"
 	"defense2/internal/core/warden"
@@ -214,7 +213,6 @@ func NewStageSceneWithOpts(sw Switcher, opts StageOptions) *StageScene {
 	startGold := diff.StartGold
 	econ := economy.DefaultConfig()
 	econ.KillReward = int(float64(econ.KillReward) * diff.RewardScale)
-	econ.WaveBonus = int(float64(econ.WaveBonus) * diff.RewardScale)
 
 	// 创建游戏模式和会话
 	modeID := opts.ModeID
@@ -468,11 +466,16 @@ func (s *StageScene) subscribeBus() {
 }
 
 // emitKill 统一发出击杀事件（弹射物/战灵/技能共用）。
-func (s *StageScene) emitKill(isBoss bool, killerID string) {
+// rewardScale 为敌人原型奖励倍率（如 tank=1.35, runner=0.72），0 或 1 表示无缩放。
+func (s *StageScene) emitKill(isBoss bool, killerID string, rewardScale float64) {
+	gold := s.econ.KillGold() + s.killRewardBonus
+	if rewardScale > 0 && rewardScale != 1 {
+		gold = int(float64(gold) * rewardScale)
+	}
 	s.bus.Emit(event.EvtEnemyKilled, event.EnemyKilledPayload{
 		IsBoss:    isBoss,
 		KillerID:  killerID,
-		GoldValue: s.econ.KillGold() + s.killRewardBonus,
+		GoldValue: gold,
 	})
 }
 
@@ -736,9 +739,8 @@ func (s *StageScene) tryPlaceTower(px, py float64) bool {
 	placed := s.towers.Place(row, col, center.X, center.Y, def)
 	// 初始化战力系统（base/potential 已在 pool.Place 中从 TowerDef 设置）
 	if placed != nil {
-		placed.Strength = strength.NewStrengthData()
-		placed.RecalcStats() // 用强度100计算初始属性
-		placed.BuildAnim = 0.3 // build-in animation
+		// Strength 已在 pool.Place 中初始化，无需重复创建
+		placed.BuildAnim = 0.3
 		tower.RollAndCachePendingChoices(placed, s.wavesCleared)
 	}
 	s.gold -= cost
@@ -1094,7 +1096,7 @@ func (s *StageScene) updatePlaying() {
 			DT:          gameDT,
 			OnKill: func(e *enemy.Enemy) {
 				s.audioMgr.PlaySafeAt(gameAudio.SFXEnemyDeath, gameAudio.VolKill)
-				s.emitKill(e.Boss, "warden")
+				s.emitKill(e.Boss, "warden", e.RewardScale)
 			},
 			OnFire: func() {
 				s.audioMgr.PlayThrottledAt(gameAudio.SFXWardenFire, 100, gameAudio.VolWarden)
@@ -1315,7 +1317,7 @@ func (s *StageScene) updatePlaying() {
 			} else {
 				s.audioMgr.PlayThrottledAt(gameAudio.SFXEnemyDeath, 50, gameAudio.VolKill)
 			}
-			s.emitKill(e.Boss, "projectile") // 统一击杀事件：kills/gold/session/tutorial/warden
+			s.emitKill(e.Boss, "projectile", e.RewardScale) // 统一击杀事件：kills/gold/session/tutorial/warden
 		} else {
 			// 命中音效：per-sound 节流，优先按敌人状态区分
 			switch {
@@ -2131,6 +2133,9 @@ func convertArchetypesToSpawnConfigs(archetypes map[string]*config.EnemyArchetyp
 			// 传送
 			TeleportInterval: a.TeleportInterval,
 			TeleportSkip:     a.TeleportSkip,
+			// 移动类型 + 奖励倍率
+			MovementType: a.MovementType,
+			RewardScale:  a.RewardScale,
 		}
 		// 根据原型名推导行为类型
 		if b, ok := archetypeBehavior[key]; ok {
@@ -2148,13 +2153,8 @@ func convertArchetypesToSpawnConfigs(archetypes map[string]*config.EnemyArchetyp
 // 包括：WaveStarted 事件 + WaveCleared 奖励/事件。
 // 由 spawner.Update 自动开波和 tryStartWave 手动开波两条路径统一调用。
 func (s *StageScene) onWaveTransition(prevWave int) {
-	// 新波开始事件
-	s.waveLivesSnapshot = s.lives
-	s.bus.Emit(event.EvtWaveStarted, event.WaveStartedPayload{
-		Wave: s.spawner.Wave, IsBoss: s.spawner.Wave%5 == 0,
-	})
-
 	// 前一波清完奖励（prevWave=0 时无前波）
+	// 注意：必须在更新 waveLivesSnapshot 之前检查完美波次
 	if prevWave > 0 {
 		ctx := s.buildModeCtx()
 		result := s.session.OnWaveCleared(prevWave, ctx)
@@ -2172,6 +2172,12 @@ func (s *StageScene) onWaveTransition(prevWave int) {
 			Wave: prevWave, Perfect: perfect,
 		})
 	}
+
+	// 新波开始：更新快照 + 发事件
+	s.waveLivesSnapshot = s.lives
+	s.bus.Emit(event.EvtWaveStarted, event.WaveStartedPayload{
+		Wave: s.spawner.Wave, IsBoss: s.spawner.Wave%5 == 0,
+	})
 }
 
 func (s *StageScene) tryStartWave() {
@@ -2259,15 +2265,12 @@ func (s *StageScene) activateWarden(key string) {
 
 // handleWardenSelection 已移至 stage_input.go。
 
-// loadTowerDefsOrFallback 从 JSON 配置加载塔定义，失败时回退到硬编码定义。
+// loadTowerDefsOrFallback 从 JSON 配置加载塔定义，失败时返回空列表。
 func loadTowerDefsOrFallback() []tower.TowerDef {
 	defs, err := loader.LoadTowerDefs()
 	if err != nil {
-		log.Printf("塔配置加载失败，使用硬编码定义: %v", err)
-		return tower.BaseTowerDefs()
-	}
-	if len(defs) == 0 {
-		return tower.BaseTowerDefs()
+		log.Printf("塔配置加载失败: %v", err)
+		return nil
 	}
 	return defs
 }

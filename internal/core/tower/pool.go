@@ -70,6 +70,16 @@ func (p *Pool) Place(row, col int, cx, cy float64, def TowerDef) *Tower {
 			t.AbilitySlots = [6]string{}
 			t.UnlockOrder = RollUnlockOrder()
 			t.Target = nil
+			// 运行时状态重置（对象池复用安全）
+			t.Kills = 0
+			t.StackTarget = 0
+			t.StackCount = 0
+			t.LastPercentHpTarget = 0
+			t.GoldCooldown = 0
+			t.Angle = 0
+			t.FireAnim = 0
+			t.CritBonus = 0
+			t.Faction = ""
 
 			// 随机属性（tier-presets 驱动，总能力均衡但分布不同）
 			stats := RollTowerStats()
@@ -162,31 +172,3 @@ func spriteKeyForStyle(style AttackStyle) string {
 	}
 }
 
-// BaseTowerDefs 返回 4 种基础塔定义。
-func BaseTowerDefs() []TowerDef {
-	return []TowerDef{
-		{
-			Key: "basic", Label: "Arrow",
-			Range: 150, Damage: 10, AttackSpeed: 1.5, Cost: 50,
-			Color: [3]uint8{80, 140, 220},
-		},
-		{
-			Key: "splash", Label: "Cannon",
-			Range: 120, Damage: 20, AttackSpeed: 0.8, Cost: 80,
-			Abilities: []string{"splash"},
-			Color:     [3]uint8{200, 120, 60},
-		},
-		{
-			Key: "slow", Label: "Frost",
-			Range: 130, Damage: 5, AttackSpeed: 1.2, Cost: 60,
-			Abilities: []string{"onHitSlow"},
-			Color:     [3]uint8{100, 180, 220},
-		},
-		{
-			Key: "sniper", Label: "Sniper",
-			Range: 220, Damage: 35, AttackSpeed: 0.5, Cost: 100,
-			Abilities: []string{"crit"},
-			Color:     [3]uint8{180, 60, 180},
-		},
-	}
-}

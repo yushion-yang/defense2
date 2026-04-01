@@ -17,7 +17,7 @@ func TestWardenCalcStrength(t *testing.T) {
 	w.SelfStrength = 10
 
 	tp := tower.NewPool(4)
-	def := tower.BaseTowerDefs()[0]
+	def := tower.TowerDef{Key: "basic", Label: "Arrow", Range: 150, Damage: 10, AttackSpeed: 1.5, Cost: 50}
 	tp.Place(0, 0, 100, 100, def)
 	// 给塔设置默认战力(100)，overflow = max(0, 100-100) = 0
 	tp.Each(func(t2 *tower.Tower) {

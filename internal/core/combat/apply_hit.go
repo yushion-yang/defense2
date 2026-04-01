@@ -5,6 +5,7 @@ package combat
 import (
 	"math"
 
+	"defense2/internal/config"
 	"defense2/internal/core/enemy"
 	"defense2/internal/core/projectile"
 	tel "defense2/internal/core/telemetry"
@@ -221,15 +222,20 @@ func applyDeathExplosionUnified(t *tower.Tower, killed *enemy.Enemy, enemies *en
 // deathExplosion 执行死亡爆炸 AoE。
 func deathExplosion(t *tower.Tower, killed *enemy.Enemy, enemies *enemy.Pool, onHit HitCallback) int {
 	// 从全局能力表读取 deathMark 参数
-	// 这里需要避免循环依赖，所以用简化版本
 	str := 100.0
 	if t.Strength != nil {
 		str = t.Strength.Effective()
 	}
-	// deathMark: base=10, potential=15, param=50(radius)
-	// CalcScale = 10 + 15 * (str/100)
-	explodeDmg := 10 + 15*(str/100.0)
+	explodeDmg := 10 + 15*(str/100.0) // 默认值
 	explodeR := 50.0
+	if abTable := config.GlobalAbilityTable(); abTable != nil {
+		if def := abTable["deathMark"]; def != nil {
+			explodeDmg = def.CalcScale(str)
+			if def.Param > 0 {
+				explodeR = def.Param
+			}
+		}
+	}
 
 	extraKills := 0
 	enemies.Each(func(e2 *enemy.Enemy) {

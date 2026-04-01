@@ -64,7 +64,10 @@ func ApplySlow(e *enemy.Enemy, factor, duration float64, source string) bool {
 }
 
 // ApplyControlImmunity 给予敌人一段时间的控制免疫。
+// duration > 0 时为限时免疫（由 TickStatusEffects 倒计时清除），
+// duration <= 0 时为永久免疫。
 func ApplyControlImmunity(e *enemy.Enemy, duration float64) {
+	e.ControlImmuneTimer = duration
 	e.IsControlImmune = true
 	e.IsStunImmune = true
 	e.IsSlowImmune = true
@@ -74,4 +77,5 @@ func ApplyControlImmunity(e *enemy.Enemy, duration float64) {
 	e.SlowTimer = 0
 	e.SlowFactor = 1
 	e.Speed = e.BaseSpeed
+	e.RootTimer = 0
 }

@@ -534,12 +534,9 @@ func (s *StageScene) tryUpgradeTower() {
 	if s.gold < cost {
 		return
 	}
-	spent := t.BuyStrength()
+	spent := t.BuyStrength() // 内部已调用 AddPermanent + RecalcStats
 	s.gold -= spent
 	s.gameStats.GoldSpent += spent
-	if t.Strength != nil {
-		t.Strength.AddPermanent(10)
-	}
 	s.bus.Emit(event.EvtTowerUpgraded, event.TowerUpgradedPayload{TowerKey: t.Key, Spent: spent})
 	s.showNotify(fmt.Sprintf("强度+10 (-$%d)", spent))
 }
@@ -661,6 +658,7 @@ func (s *StageScene) openAbilityChoicePanel() {
 		if abilType != "" && t.AddAbility(abilType) {
 			tower.ClearPendingChoice(t, nextCat)
 			hud.ShowToast("获得能力: " + opt.Label)
+			s.bus.Emit(event.EvtTowerUpgraded, event.TowerUpgradedPayload{TowerKey: t.Key})
 		}
 	})
 	s.imode = modeUpgrade
@@ -733,6 +731,7 @@ func (s *StageScene) openTestCategoryAbilities(t *tower.Tower, cat int) {
 		if abilType != "" && t.AddAbility(abilType) {
 			tower.ClearPendingChoice(t, cat)
 			hud.ShowToast("获得能力: " + opt.Label)
+			s.bus.Emit(event.EvtTowerUpgraded, event.TowerUpgradedPayload{TowerKey: t.Key})
 		}
 	})
 	s.imode = modeUpgrade
