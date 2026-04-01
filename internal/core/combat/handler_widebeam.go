@@ -37,6 +37,9 @@ func (h *WideBeamHandler) Fire(t *tower.Tower, target *enemy.Enemy, ctx *AttackC
 
 	// 对路径上所有敌人造成伤害（垂直距离检查）
 	ctx.Enemies.Each(func(e *enemy.Enemy) {
+		if e.IsDying() {
+			return
+		}
 		ex := e.X - t.X
 		ey := e.Y - t.Y
 		proj := ex*dirX + ey*dirY

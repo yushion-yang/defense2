@@ -261,14 +261,13 @@ func (a *ConfigAbility) OnTick(t *tower.Tower, ctx *tower.TickContext) *tower.Ti
 
 	case "silenceZone":
 		// scaleDim=slowFactor — 射程内敌人沉默（禁用 DamageCap）+ 减速
-		factor := 1 - sv
-		if factor < combat.MinSpeedRatio {
-			factor = combat.MinSpeedRatio
-		}
 		ctx.Enemies.Each(func(e *enemy.Enemy) {
+			if e.IsDying() || e.IsSlowImmune {
+				return
+			}
 			if math.Hypot(e.X-t.X, e.Y-t.Y) <= t.Range {
 				e.Silenced = true
-				e.Speed = e.BaseSpeed * factor
+				combat.ApplySlow(e, sv, 0.1, "silenceZone") // 短持续时间，每帧刷新
 			}
 		})
 

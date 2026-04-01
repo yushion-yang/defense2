@@ -635,6 +635,7 @@ func (s *StageScene) openAbilityChoicePanel() {
 		if abilType != "" && t.AddAbility(abilType) {
 			tower.ClearPendingChoice(t, nextCat)
 			hud.ShowToast("获得能力: " + opt.Label)
+			s.bus.Emit(event.EvtTowerUpgraded, event.TowerUpgradedPayload{TowerKey: t.Key})
 		}
 	})
 	s.imode = modeUpgrade
@@ -707,6 +708,7 @@ func (s *StageScene) openTestCategoryAbilities(t *tower.Tower, cat int) {
 		if abilType != "" && t.AddAbility(abilType) {
 			tower.ClearPendingChoice(t, cat)
 			hud.ShowToast("获得能力: " + opt.Label)
+			s.bus.Emit(event.EvtTowerUpgraded, event.TowerUpgradedPayload{TowerKey: t.Key})
 		}
 	})
 	s.imode = modeUpgrade

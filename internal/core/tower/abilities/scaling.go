@@ -139,10 +139,13 @@ func (a *PeriodicCast) OnTick(t *tower.Tower, ctx *tower.TickContext) *tower.Tic
 	castType := rand.Intn(3)
 	switch castType {
 	case 0:
-		// stunAoe：范围眩晕
+		// stunAoe：范围眩晕（走 CC 系统）
 		ctx.Enemies.Each(func(e *enemy.Enemy) {
+			if e.IsDying() {
+				return
+			}
 			if distToEnemy(t, e) <= periodicCastRadius {
-				e.StunTimer = 0.6
+				combat.ApplyStun(e, 0.6, "stunAoe")
 			}
 		})
 	case 1:

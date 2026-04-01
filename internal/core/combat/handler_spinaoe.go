@@ -62,6 +62,9 @@ func (h *SpinAoEHandler) Tick(t *tower.Tower, ctx *AttackContext) {
 	innerR := r * innerRatio
 
 	ctx.Enemies.Each(func(e *enemy.Enemy) {
+		if e.IsDying() {
+			return
+		}
 		dist := math.Hypot(e.X-t.X, e.Y-t.Y)
 		if dist > r {
 			return

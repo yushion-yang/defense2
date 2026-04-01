@@ -245,6 +245,9 @@ func (s *WardenState) FindNearest(enemies *enemy.Pool) *enemy.Enemy {
 	nearestDist := math.MaxFloat64
 
 	enemies.Each(func(e *enemy.Enemy) {
+		if e.IsDying() {
+			return
+		}
 		d := math.Hypot(e.X-s.X, e.Y-s.Y)
 		if d <= s.Range && d < nearestDist {
 			nearestDist = d
@@ -288,7 +291,7 @@ func (s *WardenState) BasicAttack(ctx *TickContext) *enemy.Enemy {
 // ApplyDamage 对敌人造成伤害的统一入口。
 // 处理：扣 HP → 浮字回调 → 击杀回调。所有战灵伤害都应走此方法。
 func ApplyDamage(ctx *TickContext, e *enemy.Enemy, dmg float64, crit bool) {
-	if e == nil || !e.Active || dmg <= 0 {
+	if e == nil || !e.Active || e.IsDying() || dmg <= 0 {
 		return
 	}
 	// 走伤害管线（免疫/减免/阈值/遥测统一处理）
