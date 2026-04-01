@@ -55,6 +55,9 @@ func towerAnimScaleAlpha(t *tower.Tower) (float64, float64) {
 	// Sell animation: expand slightly then shrink to 0
 	if t.Selling && t.SellAnim > 0 {
 		progress := 1.0 - t.SellAnim/0.25 // 0→1
+		if progress > 1 {
+			progress = 1
+		}
 		var scale float64
 		if progress < 0.2 {
 			scale = 1.0 + progress*1.0 // 1.0 → 1.2
@@ -143,9 +146,10 @@ func (tr *TowerRenderer) DrawTowers(screen *ebiten.Image, pool *tower.Pool, sele
 			if animAlpha < 1.0 {
 				barrelClr.A = uint8(float64(barrelClr.A) * animAlpha)
 			}
-			bw := float32(8 * animScale)
-			bh := float32(14 * animScale)
-			draw.FilledRect(screen, cx-bw/2, cy-bh, bw, bh, barrelClr, true)
+			barrelLen := 14.0 * animScale
+			bx2 := float64(cx) + math.Cos(t.Angle)*barrelLen
+			by2 := float64(cy) + math.Sin(t.Angle)*barrelLen
+			draw.ThickLine(screen, float32(cx), float32(cy), float32(bx2), float32(by2), float32(8*animScale), barrelClr)
 		}
 
 		// 射击反馈已由 shoot pulse（精灵放大 15%）+ muzzle flash 粒子提供，
@@ -326,10 +330,14 @@ func (tr *TowerRenderer) getTowerFrame(t *tower.Tower, dt float64) *ebiten.Image
 	if sprKey == "" {
 		sprKey = t.Key
 	}
-	a, ok := tr.animators[sprKey]
+	animKey := t.InstanceKey
+	if animKey == "" {
+		animKey = sprKey
+	}
+	a, ok := tr.animators[animKey]
 	if !ok {
 		a = anim.LoadTowerAnimator(tr.assetFS, sprKey)
-		tr.animators[sprKey] = a
+		tr.animators[animKey] = a
 	}
 
 	// Choose animation state

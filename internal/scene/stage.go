@@ -987,8 +987,8 @@ func (s *StageScene) updatePlaying() {
 	// 模式每帧 tick（限时模式倒计时等）
 	s.session.Tick(gameDT, s.buildModeCtx())
 
-	// 0. 非手动模式：第一波倒计时结束时自动弹出战灵选择
-	if !s.wardenReady && s.spawner.Wave == 0 && s.spawner.TimeToNextWave() <= 0 && !s.testMode {
+	// 0. 非手动模式：第一波倒计时结束时自动弹出战灵选择（仅 idle 时触发，避免打断其他操作）
+	if !s.wardenReady && s.spawner.Wave == 0 && s.spawner.TimeToNextWave() <= 0 && !s.testMode && s.imode == modeIdle {
 		s.showWardenSelect()
 		return
 	}
@@ -2456,6 +2456,10 @@ func (s *StageScene) executeAutoPlayAction(a AutoPlayAction) {
 // runAutoPlayFrame 在 updatePlaying 末尾调用，驱动自动对局逻辑。
 func (s *StageScene) runAutoPlayFrame() {
 	if s.autoPlayer == nil {
+		return
+	}
+	// 仅 idle 模式下执行自动决策，避免打断暂停/升级/道具等交互
+	if s.imode != modeIdle {
 		return
 	}
 	snap := s.buildAutoPlaySnapshot()

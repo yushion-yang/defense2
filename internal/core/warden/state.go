@@ -233,6 +233,10 @@ func (s *WardenState) RecordTrail(dt float64) {
 		return
 	}
 	s.TrailRecordCD = trailInterval
+	// Skip recording zero position (warden not yet placed)
+	if s.X == 0 && s.Y == 0 {
+		return
+	}
 	s.TrailHistory[s.TrailCursor] = [2]float64{s.X, s.Y}
 	s.TrailCursor = (s.TrailCursor + 1) % len(s.TrailHistory)
 }

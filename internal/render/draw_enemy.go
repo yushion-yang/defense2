@@ -36,36 +36,48 @@ func NewEnemyRenderer(assetFS AssetReader) *EnemyRenderer {
 const enemySpriteSize = 24
 
 // DrawEnemies renders all alive enemies.
+// Two-pass rendering: dying enemies first (behind), then active enemies on top.
 func (er *EnemyRenderer) DrawEnemies(screen *ebiten.Image, pool *enemy.Pool, animTime float64) {
+	// Pass 1: dying enemies (rendered behind active ones)
 	pool.Each(func(e *enemy.Enemy) {
+		if !e.IsDying() {
+			return
+		}
+		if e.DyingDuration <= 0 {
+			return
+		}
 		cx := float32(e.X)
 		cy := float32(e.Y)
+		progress := 1.0 - e.DyingTimer/e.DyingDuration // 0→1 (0=just died, 1=gone)
+		scale := 1.0 - progress                         // shrink from 1 to 0
+		alpha := float32(1.0 - progress)                // fade from 1 to 0
+		offsetY := -progress * 8                         // float up 8px
 
-		// --- Dying animation: fade + shrink + float upward ---
-		if e.IsDying() {
-			progress := 1.0 - e.DyingTimer/e.DyingDuration // 0→1 (0=just died, 1=gone)
-			scale := 1.0 - progress                         // shrink from 1 to 0
-			alpha := float32(1.0 - progress)                // fade from 1 to 0
-			offsetY := -progress * 8                         // float up 8px
-
-			img := er.getEnemyFrame(e, 1.0/60.0)
-			if img != nil {
-				displaySize := float64(enemySpriteSize) * scale
-				if displaySize < 0.5 {
-					return // too small to see
-				}
-				w := float64(img.Bounds().Dx())
-				h := float64(img.Bounds().Dy())
-				s := displaySize / w * draw.Scale
-				var op ebiten.DrawImageOptions
-				op.GeoM.Translate(-w/2, -h/2)
-				op.GeoM.Scale(s, s)
-				op.GeoM.Translate(float64(cx)*draw.Scale, (float64(cy)+offsetY)*draw.Scale)
-				op.ColorScale.ScaleAlpha(alpha)
-				screen.DrawImage(img, &op)
+		img := er.getEnemyFrame(e, 1.0/60.0)
+		if img != nil {
+			displaySize := float64(enemySpriteSize) * scale
+			if displaySize < 0.5 {
+				return // too small to see
 			}
-			return // skip normal rendering for dying enemies
+			w := float64(img.Bounds().Dx())
+			h := float64(img.Bounds().Dy())
+			s := displaySize / w * draw.Scale
+			var op ebiten.DrawImageOptions
+			op.GeoM.Translate(-w/2, -h/2)
+			op.GeoM.Scale(s, s)
+			op.GeoM.Translate(float64(cx)*draw.Scale, (float64(cy)+offsetY)*draw.Scale)
+			op.ColorScale.ScaleAlpha(alpha)
+			screen.DrawImage(img, &op)
 		}
+	})
+
+	// Pass 2: active (non-dying) enemies
+	pool.Each(func(e *enemy.Enemy) {
+		if e.IsDying() {
+			return
+		}
+		cx := float32(e.X)
+		cy := float32(e.Y)
 
 		r := float32(e.Radius)
 
@@ -161,7 +173,7 @@ func (er *EnemyRenderer) DrawEnemies(screen *ebiten.Image, pool *enemy.Pool, ani
 			draw.CircleOutline(screen, cx, cy, spriteR+1, 1.5, color.RGBA{80, 160, 255, 80})
 		}
 		if e.BurnTimer > 0 {
-			draw.FilledCircle(screen, cx, cy+spriteR*0.5, spriteR*0.5, color.RGBA{255, 120, 30, 35})
+			draw.FilledCircle(screen, cx, cy, spriteR*0.5, color.RGBA{255, 120, 30, 35})
 		}
 
 		// --- Stun rotating stars (3 yellow circles orbiting above head) ---
@@ -178,7 +190,7 @@ func (er *EnemyRenderer) DrawEnemies(screen *ebiten.Image, pool *enemy.Pool, ani
 
 		// --- Hit flash overlay (red tint, sprite-sized, NOT collision-radius) ---
 		if e.HitFlash > 0 && !e.IsDying() {
-			flashAlpha := uint8(clampF(float64(e.HitFlash)/0.12*60, 0, 90))
+			flashAlpha := uint8(clampF(float64(e.HitFlash)*300, 0, 90))
 			draw.FilledCircle(screen, cx, cy, spriteR, color.RGBA{R: 255, G: 80, B: 60, A: flashAlpha})
 		}
 
@@ -264,9 +276,14 @@ func (er *EnemyRenderer) DrawEnemies(screen *ebiten.Image, pool *enemy.Pool, ani
 				color.RGBA{R: 125, G: 211, B: 252, A: 235})
 			dotX += 6
 		}
-		if e.StunTimer > 0 || e.RootTimer > 0 {
+		if e.StunTimer > 0 {
 			draw.FilledCircle(screen, dotX, dotY, dotR,
-				color.RGBA{R: 245, G: 208, B: 254, A: 235})
+				color.RGBA{R: 255, G: 255, B: 100, A: 235}) // yellow (matches rotating stars)
+			dotX += 6
+		}
+		if e.RootTimer > 0 {
+			draw.FilledCircle(screen, dotX, dotY, dotR,
+				color.RGBA{R: 139, G: 90, B: 43, A: 235}) // brown
 			dotX += 6
 		}
 		if e.BleedTimer > 0 {

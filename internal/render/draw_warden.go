@@ -107,7 +107,7 @@ func (wr *WardenRenderer) DrawWarden(screen *ebiten.Image, w *warden.Warden, ani
 	for i := 0; i < len(base.TrailHistory); i++ {
 		idx := (cursor - 1 - i + len(base.TrailHistory)) % len(base.TrailHistory)
 		tx, ty := base.TrailHistory[idx][0], base.TrailHistory[idx][1]
-		if tx == 0 && ty == 0 {
+		if tx == 0 && ty == 0 || tx < -1000 {
 			break
 		}
 		age := float64(i+1) / float64(len(base.TrailHistory))

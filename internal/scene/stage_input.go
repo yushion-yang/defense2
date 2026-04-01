@@ -62,6 +62,8 @@ func (s *StageScene) handleInput() {
 						hud.ShowToast("成就解锁: 道具大师")
 					}
 				}
+			} else {
+				hud.ShowToast("请拖拽到炮塔上使用")
 			}
 			s.dragItemActive = false
 			s.dragHoverTower = nil
@@ -105,6 +107,11 @@ func (s *StageScene) handleInput() {
 	// ── 键盘快捷键 ──
 	// modeUpgrade: ChoicePanel 每帧更新（在键盘和 tap 之前）
 	if s.imode == modeUpgrade && s.choicePanel != nil && s.choicePanel.IsActive() {
+		if inpututil.IsKeyJustPressed(ebiten.KeyEscape) {
+			s.choicePanel.Close()
+			s.imode = modeTowerSel
+			return
+		}
 		mx, my := draw.CursorPos()
 		clicked := g.JustTapped()
 		s.choicePanel.Update(mx, my, clicked)
@@ -147,6 +154,11 @@ func (s *StageScene) handleInput() {
 		if s.imode == modeBuildMenu {
 			s.imode = modeIdle
 		} else {
+			// 清除造怪/道具状态
+			s.spawnMode = false
+			s.spawnType = ""
+			s.itemPanelOpen = false
+			s.dragItemActive = false
 			s.imode = modeBuildMenu
 			s.selectedTower = nil
 		}
@@ -157,6 +169,9 @@ func (s *StageScene) handleInput() {
 			s.imode = modeIdle
 			s.itemPanelOpen = false
 		} else if s.inventory.TotalCount() > 0 {
+			// 清除造怪/建造状态
+			s.spawnMode = false
+			s.spawnType = ""
 			s.imode = modeItemPanel
 			s.itemPanelOpen = true
 			s.selectedTower = nil
@@ -171,6 +186,7 @@ func (s *StageScene) handleInput() {
 		if !s.spawner.WaveActive && !s.spawner.AllDone {
 			s.tryStartWave()
 		}
+		return
 	}
 	if inpututil.IsKeyJustPressed(ebiten.Key1) {
 		s.gameSpeed = 1
@@ -185,6 +201,7 @@ func (s *StageScene) handleInput() {
 		// modePaused 由 handlePausedInput 处理，此处只处理非暂停→暂停
 		s.prePauseMode = s.imode
 		s.imode = modePaused
+		return
 	}
 	if inpututil.IsKeyJustPressed(ebiten.KeyDelete) || inpututil.IsKeyJustPressed(ebiten.KeyBackspace) {
 		if s.imode == modeTowerSel && s.selectedTower != nil {
@@ -427,7 +444,7 @@ func (s *StageScene) handleInput() {
 			if cfg.Label != "" {
 				label = cfg.Label
 			}
-			hud.ShowToast("已放置: " + label)
+			hud.ShowToast("已放置: " + label + "  (ESC退出造怪)")
 		}
 
 	case modeTowerSel:
@@ -497,6 +514,12 @@ func (s *StageScene) handleWardenSelection() {
 	g := s.gesture
 	g.DragEnabled = false
 	g.Update()
+	// ESC: 跳过战灵选择，直接进入战斗
+	if inpututil.IsKeyJustPressed(ebiten.KeyEscape) {
+		s.wardenReady = true
+		s.imode = modeIdle
+		return
+	}
 	mx, my := g.CursorPos()
 	s.wardenOverlay.Update(mx, my, g.JustTapped())
 }

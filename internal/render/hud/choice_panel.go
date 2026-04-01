@@ -23,11 +23,12 @@ type ChoiceOption struct {
 
 // ChoicePanel 通用选择面板（N 选 1）。
 type ChoicePanel struct {
-	Title    string                          // 面板标题
-	Options  []ChoiceOption                  // 选项列表
-	OnSelect func(idx int, opt ChoiceOption) // 选择回调
-	Active   bool                            // 是否激活
-	hovered  int                             // 当前悬停索引(-1=无)
+	Title       string                          // 面板标题
+	Options     []ChoiceOption                  // 选项列表
+	OnSelect    func(idx int, opt ChoiceOption) // 选择回调
+	Active      bool                            // 是否激活
+	Dismissible bool                            // 点击外部是否可关闭（默认 false）
+	hovered     int                             // 当前悬停索引(-1=无)
 }
 
 // 品质颜色映射。
@@ -150,7 +151,10 @@ func (p *ChoicePanel) Update(mx, my float64, clicked bool) {
 				return
 			}
 		}
-		p.Close()
+		// Only dismiss on click-outside if Dismissible is true
+		if p.Dismissible {
+			p.Close()
+		}
 	}
 }
 

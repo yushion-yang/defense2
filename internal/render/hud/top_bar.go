@@ -8,6 +8,7 @@ package hud
 
 import (
 	"image/color"
+	"math"
 	"strconv"
 
 	"defense2/internal/render"
@@ -137,7 +138,7 @@ func DrawTopBar(screen *ebiten.Image, d TopBarData) {
 
 	startLabel := "开波"
 	if d.WaveCountdown > 0 {
-		startLabel = "开波(" + strconv.Itoa(int(d.WaveCountdown)+1) + "s)"
+		startLabel = "开波(" + strconv.Itoa(int(math.Ceil(d.WaveCountdown))) + "s)"
 	}
 	btns = append(btns, btnDef{"start", startLabel, theme.TonePrimary})
 	btns = append(btns, btnDef{"speed", speedLabel, theme.ToneAccent})

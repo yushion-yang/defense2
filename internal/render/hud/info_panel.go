@@ -285,7 +285,7 @@ func DrawInfoPanel(screen *ebiten.Image, vm InfoPanelVM) {
 	// --- Position panel at bottom-center ---
 	totalH := panel.Height()
 	anchor := ui.AnchoredRect(ui.AnchorBottomCenter, panelW, totalH,
-		0, 0, float32(theme.BottomMargin), 0)
+		0, 0, float32(theme.BottomMargin)+float32(theme.ActionBarH)+4, 0)
 	panel.X = anchor.X
 	panel.Y = anchor.Y
 
