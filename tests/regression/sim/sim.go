@@ -48,6 +48,9 @@ func (s *Sim) Step() {
 		reached := enemy.MoveAlongPath(e, s.Waypoints, dt)
 		if reached {
 			s.Lives--
+			if s.Lives < 0 {
+				s.Lives = 0
+			}
 			s.Leaked++
 			s.Enemies.KillImmediate(e)
 		}

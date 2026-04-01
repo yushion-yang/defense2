@@ -36,5 +36,6 @@ func DefaultSpawnConfig() *SpawnConfig {
 		HpScale:    1,
 		SpeedScale: 1,
 		Radius:     8,
+		Reward:     15, // 默认击杀奖金
 	}
 }
