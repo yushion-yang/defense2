@@ -1580,7 +1580,7 @@ func (s *StageScene) buildBuildMenuData() hud.BuildMenuData {
 		cards = append(cards, hud.BuildCardVM{
 			Key:         ab.Type,
 			Label:       tower.SpriteLabelFor(sprKey),
-			RoleTag:     ab.Display,
+			RoleTag:     ab.Label,
 			RoleColor:   color.RGBA{R: 140, G: 160, B: 200, A: 180},
 			TypeIcon:    ab.Icon,
 			Sprite:      s.towerRenderer.GetSprite(sprKey),
