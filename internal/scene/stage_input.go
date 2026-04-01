@@ -264,6 +264,9 @@ func (s *StageScene) handleInput() {
 	case "debug":
 		s.debugPanelOpen = !s.debugPanelOpen
 		return
+	case "screenshot":
+		// 已在 Update() 早期拦截处理，这里只需消费点击防止穿透到交互模式
+		return
 	}
 
 	// 按交互模式分发 Tap
