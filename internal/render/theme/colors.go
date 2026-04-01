@@ -110,6 +110,38 @@ var (
 )
 
 // ---------------------------------------------------------------------------
+// Map Themes
+// ---------------------------------------------------------------------------
+
+// MapTheme holds per-map color palette for visual variety.
+type MapTheme struct {
+	GradientTop color.RGBA
+	GradientBot color.RGBA
+	PathColor   color.RGBA
+	DotColor    color.RGBA
+}
+
+// MapThemes maps theme name → palette.
+var MapThemes = map[string]MapTheme{
+	"desert": {hex(0x2a1a0a), hex(0x1a1208), hex(0xd4a574), rgba(255, 220, 180, 8)},
+	"forest": {hex(0x0a1a0f), hex(0x051208), hex(0x8fbc8f), rgba(180, 255, 180, 8)},
+	"tech":   {hex(0x0a0f1a), hex(0x080a15), hex(0x88aacc), rgba(150, 200, 255, 8)},
+	"stone":  {hex(0x1a150f), hex(0x0f0a08), hex(0xc8b090), rgba(220, 200, 170, 8)},
+	"ice":    {hex(0x0a1520), hex(0x051018), hex(0xa8d8ea), rgba(200, 230, 255, 8)},
+	"dark":   {hex(0x0a0a10), hex(0x050508), hex(0x9080b0), rgba(180, 160, 220, 8)},
+	"lava":   {hex(0x200a0a), hex(0x150505), hex(0xe07050), rgba(255, 150, 100, 8)},
+	"void":   {hex(0x0a0520), hex(0x050315), hex(0xb090e0), rgba(200, 180, 255, 8)},
+}
+
+// MapThemeFor returns the theme for a given name, falling back to default.
+func MapThemeFor(name string) MapTheme {
+	if t, ok := MapThemes[name]; ok {
+		return t
+	}
+	return MapTheme{MapGradientTop, MapGradientBot, MapPathStroke, MapDotGrid}
+}
+
+// ---------------------------------------------------------------------------
 // Tower Slots
 // ---------------------------------------------------------------------------
 

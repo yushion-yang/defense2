@@ -24,23 +24,25 @@ import (
 // ---------------------------------------------------------------------------
 
 var (
-	cachedBg  *draw.CachedGradient
-	cachedBgW int
-	cachedBgH int
+	cachedBg    *draw.CachedGradient
+	cachedBgW   int
+	cachedBgH   int
+	cachedBgTop color.RGBA
+	cachedBgBot color.RGBA
 )
 
 // ensureBg lazily initializes the cached background gradient sized to cover
 // the full map (which may be larger than one screen).
-func ensureBg(w, h int) *draw.CachedGradient {
-	if cachedBg != nil && cachedBgW == w && cachedBgH == h {
+func ensureBg(w, h int, top, bot color.RGBA) *draw.CachedGradient {
+	if cachedBg != nil && cachedBgW == w && cachedBgH == h &&
+		cachedBgTop == top && cachedBgBot == bot {
 		return cachedBg
 	}
-	cachedBg = draw.NewCachedGradient(
-		w, h,
-		theme.MapGradientTop, theme.MapGradientBot,
-	)
+	cachedBg = draw.NewCachedGradient(w, h, top, bot)
 	cachedBgW = w
 	cachedBgH = h
+	cachedBgTop = top
+	cachedBgBot = bot
 	return cachedBg
 }
 
@@ -121,6 +123,8 @@ func drawMapFull(
 	towerAt func(row, col int) bool,
 	buildMode bool,
 ) {
+	mt := theme.MapThemeFor(gm.Theme)
+
 	// ── 1. Background gradient covering full map ──
 	mapW := gm.Config.Cols * gm.CellSize
 	mapH := gm.Config.Rows * gm.CellSize
@@ -130,14 +134,14 @@ func drawMapFull(
 	if mapH < theme.CanvasH {
 		mapH = theme.CanvasH
 	}
-	bg := ensureBg(mapW, mapH)
+	bg := ensureBg(mapW, mapH, mt.GradientTop, mt.GradientBot)
 	bg.Draw(screen, 0, 0)
 
 	// ── 2. Path: thick rounded line + dashed center ──
-	drawPaths(screen, gm)
+	drawPaths(screen, gm, mt.PathColor)
 
 	// ── 2.5. Terrain decorations on empty cells (deterministic, no rand) ──
-	drawTerrainDecorations(screen, gm)
+	drawTerrainDecorations(screen, gm, mt.DotColor)
 
 	// ── 3. Tower slots ──
 	drawSlots(screen, gm, fm, towerAt, buildMode, animTime)
@@ -156,18 +160,18 @@ func drawMapFull(
 // ---------------------------------------------------------------------------
 
 // drawPaths draws all path lines (multi-path and single-path).
-func drawPaths(screen *ebiten.Image, gm *gamemap.GameMap) {
+func drawPaths(screen *ebiten.Image, gm *gamemap.GameMap, pathClr color.RGBA) {
 	if gm.MultiPath && len(gm.Paths) > 0 {
 		for _, pe := range gm.Paths {
-			drawWaypointPath(screen, pe.Waypoints)
+			drawWaypointPath(screen, pe.Waypoints, pathClr)
 		}
 	} else {
-		drawWaypointPath(screen, gm.Waypoints)
+		drawWaypointPath(screen, gm.Waypoints, pathClr)
 	}
 }
 
 // drawWaypointPath draws thick stroke + dashed center for a single waypoint sequence.
-func drawWaypointPath(screen *ebiten.Image, waypoints []gamemap.Point) {
+func drawWaypointPath(screen *ebiten.Image, waypoints []gamemap.Point, pathClr color.RGBA) {
 	if len(waypoints) < 2 {
 		return
 	}
@@ -184,13 +188,19 @@ func drawWaypointPath(screen *ebiten.Image, waypoints []gamemap.Point) {
 
 		// Thick rounded base stroke.
 		draw.ThickLine(screen, x1, y1, x2, y2,
-			theme.MapPathStrokeW, theme.MapPathStroke)
+			theme.MapPathStrokeW, pathClr)
 
-		// Center dashed line.
+		// Center dashed line (slightly muted variant of path color).
+		dashClr := color.RGBA{
+			R: uint8(float64(pathClr.R) * 0.7),
+			G: uint8(float64(pathClr.G) * 0.7),
+			B: uint8(float64(pathClr.B) * 0.7),
+			A: pathClr.A,
+		}
 		draw.DashedLine(screen, x1, y1, x2, y2,
 			theme.MapPathDashW,
 			theme.MapPathDashOn, theme.MapPathDashOff,
-			theme.MapPathDash)
+			dashClr)
 	}
 }
 
@@ -319,8 +329,14 @@ func drawPathLabels(screen *ebiten.Image, gm *gamemap.GameMap, fm *FontManager) 
 
 // drawTerrainDecorations scatters subtle decorative elements on empty cells.
 // Uses a deterministic hash based on cell position — no rand, fully reproducible.
-func drawTerrainDecorations(screen *ebiten.Image, gm *gamemap.GameMap) {
+func drawTerrainDecorations(screen *ebiten.Image, gm *gamemap.GameMap, dotClr color.RGBA) {
 	cfg := gm.Config
+
+	// Derive decoration colors from the theme dot color.
+	decoA := color.RGBA{R: dotClr.R, G: dotClr.G, B: dotClr.B, A: 25}
+	decoB := color.RGBA{R: dotClr.R, G: dotClr.G, B: dotClr.B, A: 20}
+	decoC := color.RGBA{R: dotClr.R, G: dotClr.G, B: dotClr.B, A: 15}
+
 	for row := 0; row < cfg.Rows; row++ {
 		for col := 0; col < cfg.Cols; col++ {
 			if cfg.Grid[row][col] != config.CellEmpty {
@@ -341,12 +357,12 @@ func drawTerrainDecorations(screen *ebiten.Image, gm *gamemap.GameMap) {
 
 			switch (hash / 100) % 4 {
 			case 0: // small dot
-				draw.FilledCircle(screen, cx, cy, 1.5, color.RGBA{60, 80, 100, 25})
+				draw.FilledCircle(screen, cx, cy, 1.5, decoA)
 			case 1: // tiny cross
-				draw.Line(screen, cx-2, cy, cx+2, cy, 0.5, color.RGBA{50, 70, 90, 20}, false)
-				draw.Line(screen, cx, cy-2, cx, cy+2, 0.5, color.RGBA{50, 70, 90, 20}, false)
+				draw.Line(screen, cx-2, cy, cx+2, cy, 0.5, decoB, false)
+				draw.Line(screen, cx, cy-2, cx, cy+2, 0.5, decoB, false)
 			case 2: // faint ring
-				draw.CircleOutline(screen, cx, cy, 3, 0.5, color.RGBA{40, 60, 80, 15})
+				draw.CircleOutline(screen, cx, cy, 3, 0.5, decoC)
 			case 3: // nothing (variation)
 			}
 		}
