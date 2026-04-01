@@ -207,6 +207,13 @@ const (
 	SFXCritHit = "critHit" // crit-hit.wav — 暴击命中
 	// 灼烧
 	SFXBurnIgnite = "burnIgnite" // burn-ignite.wav — 灼烧点燃
+
+	// 敌人行为音效
+	SFXMedicHeal    = "medicHeal"    // medic-heal.wav — 治疗兵治疗
+	SFXStealthReveal = "stealthReveal" // stealth-reveal.wav — 隐身破解
+	SFXSplitPop     = "splitPop"     // split-pop.wav — 分裂体死亡分裂
+	SFXBannerAura   = "bannerAura"   // banner-aura.wav — 旗手光环（预留）
+	SFXRegenTick    = "regenTick"    // regen-tick.wav — 回血 tick
 )
 
 // FireSFXForStyle 根据攻击方式返回射击音效名称。

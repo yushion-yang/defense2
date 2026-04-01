@@ -898,6 +898,19 @@ func (s *StageScene) updatePlaying() {
 		}
 	})
 
+	// 3.6. 敌人行为 tick（治疗/隐身/旗手光环/回血）
+	behaviorEvents := enemy.TickBehaviors(s.enemies, gameDT)
+	if len(behaviorEvents.Heals) > 0 {
+		s.audioMgr.PlayThrottledAt(gameAudio.SFXMedicHeal, 500, gameAudio.VolHit)
+	}
+	for _, rev := range behaviorEvents.Reveals {
+		_ = rev
+		s.audioMgr.PlaySafeAt(gameAudio.SFXStealthReveal, gameAudio.VolKill)
+	}
+	if behaviorEvents.Regens > 0 {
+		s.audioMgr.PlayThrottledAt(gameAudio.SFXRegenTick, 2000, gameAudio.VolHit*0.5)
+	}
+
 	// 4. 战灵行为（未选择前跳过）
 	if s.wardenReady && s.wardenUnit != nil {
 		s.wardenUnit.Tick(&warden.TickContext{
@@ -1096,6 +1109,10 @@ func (s *StageScene) updatePlaying() {
 		if killed {
 			particle.EmitDeathBurst(s.particlePool, e.X, e.Y)
 			particle.EmitGoldCollect(s.particlePool, e.X, e.Y)
+			// 分裂体死亡音效（子体已由 Pool.Kill 自动生成）
+			if e.Behavior == "splitter" && e.SplitCount > 0 {
+				s.audioMgr.PlaySafeAt(gameAudio.SFXSplitPop, gameAudio.VolKill)
+			}
 			// Multi-kill tracker
 			s.multiKillCount++
 			s.multiKillTimer = 1.5
@@ -1883,18 +1900,43 @@ func replaceDescParams(desc string, params map[string]string) string {
 	return result
 }
 
+// archetypeBehavior 从原型名推导行为类型。
+// 原型配置中有对应字段的优先使用配置值，否则按名称映射。
+var archetypeBehavior = map[string]string{
+	"healer":      "healer",
+	"medic":       "healer",
+	"stealth":     "stealth",
+	"splitter":    "splitter",
+	"buffer":      "buffer",
+	"regenerator": "regenerator",
+	"troll":       "regenerator",
+}
+
 // convertArchetypesToSpawnConfigs 将 config.EnemyArchetype 转换为 enemy.SpawnConfig。
 // 使 enemy 包不依赖 config 包。
 func convertArchetypesToSpawnConfigs(archetypes map[string]*config.EnemyArchetype) map[string]*enemy.SpawnConfig {
 	result := make(map[string]*enemy.SpawnConfig, len(archetypes))
 	for key, a := range archetypes {
-		result[key] = &enemy.SpawnConfig{
-			Label:      a.Label,
-			HpScale:    a.HPScale,
-			SpeedScale: a.SpeedScale,
-			Radius:     a.Radius,
-			Boss:       a.Boss,
+		sc := &enemy.SpawnConfig{
+			Label:           a.Label,
+			HpScale:         a.HPScale,
+			SpeedScale:      a.SpeedScale,
+			Radius:          a.Radius,
+			Boss:            a.Boss,
+			StealthDuration: a.StealthDuration,
+			SplitCount:      a.SplitCount,
+			SplitScale:      0.3, // 默认子体血量 30%
+			HealScale:       a.HealScale,
+			HealRadius:      a.HealRadius,
+			HealInterval:    a.HealInterval,
+			AuraRange:       a.AuraRange,
+			AuraSpeedUp:     a.AuraSpeedUp,
 		}
+		// 根据原型名推导行为类型
+		if b, ok := archetypeBehavior[key]; ok {
+			sc.Behavior = b
+		}
+		result[key] = sc
 	}
 	return result
 }

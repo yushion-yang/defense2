@@ -103,6 +103,7 @@ type Enemy struct {
 	Lifecycle *LifecycleHandlers // 生命周期回调
 
 	// ── 行为 ──
+	Behavior          string  // 行为类型标识（"healer"/"stealth"/"splitter"/"buffer"/"regenerator"/""）
 	BerserkThreshold  float64 // 狂暴触发血量比例（如0.5=50%HP）
 	BerserkSpeedScale float64 // 狂暴速度倍率
 	BerserkTriggered  bool    // 狂暴是否已触发（一次性）
@@ -111,6 +112,19 @@ type Enemy struct {
 	HealRadius        float64 // 治疗光环范围
 	HealInterval      float64 // 治疗光环间隔（秒）
 	HealCooldown      float64 // 治疗光环当前冷却
+
+	// ── 隐身 ──
+	Stealthed    bool    // 当前是否隐身
+	StealthTimer float64 // 隐身剩余持续时间（秒）
+
+	// ── 分裂 ──
+	SplitCount int     // 死亡分裂子体数量（0=不分裂）
+	SplitScale float64 // 子体血量倍率（相对父体 MaxHP）
+
+	// ── 旗手光环 ──
+	BuffRadius float64 // 光环加速范围（像素）
+	BuffAmount float64 // 光环移速加成（如 0.2 = +20%）
+	SpeedBuff  float64 // 当前帧受到的光环加速值（由 buffer 每帧写入，movement 读取）
 
 	// ── 飞行 ──
 	MovementType string // 移动类型（"ground"/"flying"）
