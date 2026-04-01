@@ -126,6 +126,11 @@ func ProcessDamage(input DamageInput) DamageResult {
 	}
 	result.AfterTargetMod = damage
 
+	// ── 步骤4.1: 减伤比例（damageReduce buff 模板） ──
+	if !IgnoresReduction(dmgType) && e.DamageReduceRatio > 0 {
+		damage *= (1 - e.DamageReduceRatio)
+	}
+
 	// ── 步骤4.25: 虚弱增伤（weaken/weakenZone） ──
 	tel.T.Record("pipeline", "damage_amplify")
 	if e.DamageAmplify > 0 {

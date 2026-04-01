@@ -180,6 +180,30 @@ func ApplyBuffTemplate(e *Enemy, templateID string) bool {
 		e.HealCooldown = 0
 	}
 
+	// 速度光环（buff 模板设置光环参数）
+	if tmpl.SpeedAuraFactor > 0 {
+		e.AuraSpeedUp = tmpl.SpeedAuraFactor
+		if e.AuraRange <= 0 {
+			e.AuraRange = 80 // 默认光环范围
+		}
+	}
+
+	// 减伤
+	if tmpl.DamageReduce > 0 {
+		e.DamageReduceRatio = tmpl.DamageReduce
+	}
+
+	// 死亡分裂
+	if tmpl.DeathSplitCount > 0 {
+		e.SplitCount = tmpl.DeathSplitCount
+		if e.SplitHPRatio <= 0 {
+			e.SplitHPRatio = 0.3
+		}
+		if e.SplitSpeedScale <= 0 {
+			e.SplitSpeedScale = 1.4
+		}
+	}
+
 	// 应用附加标记
 	if len(tmpl.Flags) > 0 {
 		ApplyFlags(e, tmpl.Flags)
