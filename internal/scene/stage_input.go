@@ -51,9 +51,17 @@ func (s *StageScene) handleInput() {
 			if target != nil && !target.Selling {
 				item.ApplyItem(target, s.dragItemKind)
 				s.inventory.Use(s.dragItemKind)
+				s.gameStats.ItemsUsed++
 				hud.ShowToast(item.Defs[s.dragItemKind].Name + " → " + target.Label)
 				s.audioMgr.PlaySafe(gameAudio.SFXUIClick)
 				s.tutorial.Trigger("item_use")
+				// 成就: 道具使用次数
+				s.achieveTracker.SessionItemsUsed++
+				if s.achieveTracker.SessionItemsUsed >= 10 {
+					if s.achieveTracker.Unlock("item_master") {
+						hud.ShowToast("成就解锁: 道具大师")
+					}
+				}
 			}
 			s.dragItemActive = false
 			s.dragHoverTower = nil
@@ -505,6 +513,7 @@ func (s *StageScene) tryUpgradeTower() {
 	}
 	spent := t.BuyStrength()
 	s.gold -= spent
+	s.gameStats.GoldSpent += spent
 	if t.Strength != nil {
 		t.Strength.AddPermanent(10)
 	}
