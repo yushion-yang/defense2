@@ -58,25 +58,26 @@ func BuildInfoPanelVM(t *tower.Tower, sellValue int, wavesCleared int) hud.InfoP
 	}
 	vm.AttackStyleText = "攻击: " + attackStyleLabel(style)
 
-	// Slot display — 只显示已解锁的槽位
+	// Slot display — 只显示已选能力和待选的槽位，未解锁/空闲的不占位
 	abTable := config.GlobalAbilityTable()
-	unlocked := tower.UnlockedSlots(wavesCleared)
-	for i := 0; i < unlocked && i < len(t.UnlockOrder); i++ {
+	for i := 0; i < len(t.UnlockOrder); i++ {
 		cat := t.UnlockOrder[i]
+		abilType := t.AbilitySlots[cat]
+		hasPending := t.PendingChoices != nil && len(t.PendingChoices[cat]) > 0 && abilType == ""
+		if abilType == "" && !hasPending {
+			continue // 跳过未选且无待选的槽位
+		}
 		slot := hud.SlotVM{
 			CategoryIdx:  cat,
 			CategoryName: tower.CategoryName(cat),
 			Unlocked:     true,
+			HasPending:   hasPending,
 		}
-		if abilType := t.AbilitySlots[cat]; abilType != "" {
+		if abilType != "" {
 			slot.AbilityLabel = abilType
 			if def, ok := abTable[abilType]; ok {
 				slot.AbilityLabel = def.Label
 				slot.AbilityIcon = def.Icon
-			}
-		} else if t.PendingChoices != nil {
-			if _, has := t.PendingChoices[cat]; has {
-				slot.HasPending = true
 			}
 		}
 		vm.Slots = append(vm.Slots, slot)
