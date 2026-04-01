@@ -69,37 +69,46 @@ func TickThunderStrike(state *ThunderStrikeState, cfg ThunderStrikeConfig, enemi
 
 	for _, t := range targets {
 		// 百分比 maxHP + 固定伤害
-		dmg := t.MaxHP*cfg.DamageRatio + cfg.FlatDamage
-		if dmg < 1 {
-			dmg = 1
+		rawDmg := t.MaxHP*cfg.DamageRatio + cfg.FlatDamage
+		if rawDmg < 1 {
+			rawDmg = 1
 		}
-		t.HP -= dmg
+		// 走伤害管线（免疫/上限/阈值/死亡检查）
+		r := ProcessDamage(DamageInput{
+			Target:    t,
+			RawDamage: rawDmg,
+			DamageType: DmgMagic,
+		})
 
 		hits = append(hits, ThunderHit{
 			EnemyID:   t.ID,
 			X:         t.X,
 			Y:         t.Y,
-			Damage:    dmg,
+			Damage:    r.FinalDamage,
 			IsPrimary: true,
 		})
 
 		// 溅射：对主目标附近非 Boss 敌人施加衰减伤害
 		if cfg.Radius > 0 {
-			splashDmg := dmg * splashRatio
+			splashRaw := rawDmg * splashRatio
 			for _, e := range enemies {
-				if !e.Active || e.HP <= 0 || e.Boss || e.ID == t.ID {
+				if !e.Active || e.HP <= 0 || e.Boss || e.ID == t.ID || e.IsDying() {
 					continue
 				}
 				dx := e.X - t.X
 				dy := e.Y - t.Y
 				dist := math.Sqrt(dx*dx + dy*dy)
 				if dist <= cfg.Radius {
-					e.HP -= splashDmg
+					sr := ProcessDamage(DamageInput{
+						Target:    e,
+						RawDamage: splashRaw,
+						DamageType: DmgMagic,
+					})
 					hits = append(hits, ThunderHit{
 						EnemyID:   e.ID,
 						X:         e.X,
 						Y:         e.Y,
-						Damage:    splashDmg,
+						Damage:    sr.FinalDamage,
 						IsPrimary: false,
 					})
 				}

@@ -8,6 +8,7 @@ import (
 	"math"
 	"math/rand"
 
+	"defense2/internal/core/combat"
 	"defense2/internal/core/enemy"
 	"defense2/internal/core/projectile"
 	"defense2/internal/core/tower"
@@ -145,10 +146,17 @@ func (a *PeriodicCast) OnTick(t *tower.Tower, ctx *tower.TickContext) *tower.Tic
 			}
 		})
 	case 1:
-		// damageAoe：范围伤害
+		// damageAoe：范围伤害（走伤害管线）
 		ctx.Enemies.Each(func(e *enemy.Enemy) {
+			if e.IsDying() {
+				return
+			}
 			if distToEnemy(t, e) <= periodicCastRadius {
-				e.HP -= t.Damage * 0.5
+				combat.ProcessDamage(combat.DamageInput{
+					Target:     e,
+					RawDamage:  t.Damage * 0.5,
+					DamageType: combat.DmgPhysical,
+				})
 			}
 		})
 	case 2:
@@ -263,10 +271,17 @@ func (a *ElementSwitch) OnTick(t *tower.Tower, ctx *tower.TickContext) *tower.Ti
 		// 雷元素：+15% 攻速
 		return &tower.TickResult{SpeedBoost: 0.15}
 	case "poison":
-		// 毒元素：范围内敌人每秒 2 点伤害
+		// 毒元素：范围内敌人每秒 2 点伤害（走伤害管线）
 		ctx.Enemies.Each(func(e *enemy.Enemy) {
+			if e.IsDying() {
+				return
+			}
 			if distToEnemy(t, e) <= t.Range {
-				e.HP -= 2.0 * ctx.DT
+				combat.ProcessDamage(combat.DamageInput{
+					Target:     e,
+					RawDamage:  2.0 * ctx.DT,
+					DamageType: combat.DmgMagic,
+				})
 			}
 		})
 		return nil

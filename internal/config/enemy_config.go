@@ -89,14 +89,10 @@ func LoadEnemyArchetypes() (map[string]*EnemyArchetype, error) {
 }
 
 // applyEnemyDefaults 为缺省字段设置默认值。
+// 注意：SpeedScale=0 是合法值（dummy 原型不移动），不做默认覆盖。
 func applyEnemyDefaults(a *EnemyArchetype) {
-	if a.HPScale == 0 {
-		a.HPScale = 1
-	}
-	if a.SpeedScale == 0 {
-		a.SpeedScale = 1
-	}
-	if a.Radius == 0 {
+	// HPScale 和 SpeedScale 由 JSON 显式指定，不设默认（0=合法值）
+	if a.Radius <= 0 {
 		a.Radius = 8
 	}
 	if a.RewardScale == 0 {

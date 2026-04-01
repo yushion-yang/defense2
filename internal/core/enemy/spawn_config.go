@@ -28,6 +28,12 @@ type SpawnConfig struct {
 	// 传送（teleporter 原型）
 	TeleportInterval float64 // 传送间隔（秒，0=不传送）
 	TeleportSkip     int     // 每次传送跳过的路径段数
+
+	// 移动类型
+	MovementType string // "ground"(默认) / "flying"
+
+	// 击杀奖励倍率
+	RewardScale float64 // 原型奖励倍率（如 tank=1.35, runner=0.72）
 }
 
 // DefaultSpawnConfig 返回默认生成配置（普通敌人）。

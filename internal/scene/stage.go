@@ -2129,6 +2129,9 @@ func convertArchetypesToSpawnConfigs(archetypes map[string]*config.EnemyArchetyp
 			// 传送
 			TeleportInterval: a.TeleportInterval,
 			TeleportSkip:     a.TeleportSkip,
+			// 移动类型 + 奖励倍率
+			MovementType: a.MovementType,
+			RewardScale:  a.RewardScale,
 		}
 		// 根据原型名推导行为类型
 		if b, ok := archetypeBehavior[key]; ok {
@@ -2146,13 +2149,8 @@ func convertArchetypesToSpawnConfigs(archetypes map[string]*config.EnemyArchetyp
 // 包括：WaveStarted 事件 + WaveCleared 奖励/事件。
 // 由 spawner.Update 自动开波和 tryStartWave 手动开波两条路径统一调用。
 func (s *StageScene) onWaveTransition(prevWave int) {
-	// 新波开始事件
-	s.waveLivesSnapshot = s.lives
-	s.bus.Emit(event.EvtWaveStarted, event.WaveStartedPayload{
-		Wave: s.spawner.Wave, IsBoss: s.spawner.Wave%5 == 0,
-	})
-
 	// 前一波清完奖励（prevWave=0 时无前波）
+	// 注意：必须在更新 waveLivesSnapshot 之前检查完美波次
 	if prevWave > 0 {
 		ctx := s.buildModeCtx()
 		result := s.session.OnWaveCleared(prevWave, ctx)
@@ -2170,6 +2168,12 @@ func (s *StageScene) onWaveTransition(prevWave int) {
 			Wave: prevWave, Perfect: perfect,
 		})
 	}
+
+	// 新波开始：更新快照 + 发事件
+	s.waveLivesSnapshot = s.lives
+	s.bus.Emit(event.EvtWaveStarted, event.WaveStartedPayload{
+		Wave: s.spawner.Wave, IsBoss: s.spawner.Wave%5 == 0,
+	})
 }
 
 func (s *StageScene) tryStartWave() {

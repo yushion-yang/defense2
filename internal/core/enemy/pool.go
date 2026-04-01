@@ -135,7 +135,7 @@ func (p *Pool) Spawn(x, y, baseHP, baseSpeed float64, pathIndex int, archetype s
 			e.ReviveHPPercent = 0
 			e.ReviveUsed = false
 			e.BossData = nil
-			e.MovementType = ""
+			e.MovementType = cfg.MovementType
 
 			// 应用行为配置
 			e.Behavior = cfg.Behavior
