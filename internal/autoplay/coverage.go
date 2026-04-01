@@ -42,53 +42,127 @@ var (
 )
 
 // GenerateTestPlan 生成完整测试计划。
+// 设计原则：每项游戏内容有且只有 1 个专项用例，去掉冗余组合。
 func GenerateTestPlan() []TestCase {
 	var cases []TestCase
 
-	// 1. Pairwise 组合覆盖 (~32)
-	cases = append(cases, generatePairwise()...)
+	// 1. 地图覆盖 — 每地图 1 局 normal (8)
+	cases = append(cases, generateMapCoverage()...)
 
-	// 2. 单塔极限 (8)
+	// 2. 难度覆盖 — 固定 map_01 × 4 难度 (4)
+	cases = append(cases, generateDifficultyCoverage()...)
+
+	// 3. 单塔极限 — 每种塔 1 局 focus (8)
 	cases = append(cases, generateFocusTower()...)
 
-	// 3. 敌人定向 — 使用 EnemyFilter (13)
+	// 4. 敌人定向 — 每种原型 1 局 EnemyFilter (12)
 	cases = append(cases, generateEnemySpecific()...)
 
-	// 4. 游戏模式覆盖 (6)
+	// 5. 战灵覆盖 — 每种战灵 1 局 (5)
+	cases = append(cases, generateWardenCoverage()...)
+
+	// 6. 游戏模式 — 各模式 1 局 (6)
 	cases = append(cases, generateModeCoverage()...)
 
-	// 5. 交互场景 (~4)
-	cases = append(cases, generateInteractionScenarios()...)
+	// 7. 手动测试对照 scenario (~11)
+	cases = append(cases, generateManualTestScenarios()...)
 
-	// 6. 视觉目录 (1-2)
+	// 8. 平衡验证 (4)
+	cases = append(cases, generateBalanceTests()...)
+
+	// 9. 特殊组合 (3)
+	cases = append(cases, generateCombinationTests()...)
+
+	// 10. 视觉目录 (2)
 	cases = append(cases, generateVisualCatalog()...)
 
-	// 7. 边界测试 (~4)
+	// 11. 边界测试 (4)
 	cases = append(cases, generateEdgeCases()...)
 
 	return cases
 }
 
-// generatePairwise 生成 pairwise 组合（map × difficulty 全覆盖，warden/strategy 轮换）。
-func generatePairwise() []TestCase {
-	strategies := []string{"random", "greedy"}
+// generateMapCoverage 每张地图 1 局 normal 难度 greedy。
+func generateMapCoverage() []TestCase {
 	var cases []TestCase
-	idx := 0
-	for _, m := range Maps {
-		for _, d := range Difficulties {
-			w := Wardens[idx%len(Wardens)]
-			sName := strategies[idx%len(strategies)]
-			cases = append(cases, TestCase{
-				ID:         fmt.Sprintf("pw_%03d_%s_%s", idx, m, d),
-				MapID:      m,
-				Difficulty: d,
-				Warden:     w,
-				Strategy:   makeStrategy(sName, ""),
-			})
-			idx++
-		}
+	for i, m := range Maps {
+		cases = append(cases, TestCase{
+			ID:         fmt.Sprintf("map_%s", m),
+			MapID:      m,
+			Difficulty: "normal",
+			Warden:     Wardens[i%len(Wardens)],
+			Strategy:   NewGreedyStrategy(),
+		})
 	}
 	return cases
+}
+
+// generateDifficultyCoverage 固定 map_01 × 4 难度。
+func generateDifficultyCoverage() []TestCase {
+	var cases []TestCase
+	for _, d := range Difficulties {
+		cases = append(cases, TestCase{
+			ID:         fmt.Sprintf("diff_%s", d),
+			MapID:      "map_01",
+			Difficulty: d,
+			Warden:     "prince",
+			Strategy:   NewGreedyStrategy(),
+		})
+	}
+	return cases
+}
+
+// generateWardenCoverage 每种战灵 1 局。
+func generateWardenCoverage() []TestCase {
+	var cases []TestCase
+	for i, w := range Wardens {
+		g := NewGreedyStrategy()
+		g.wardenKey = w
+		cases = append(cases, TestCase{
+			ID:         fmt.Sprintf("warden_%s", w),
+			MapID:      Maps[i%len(Maps)],
+			Difficulty: "normal",
+			Warden:     w,
+			Strategy:   g,
+		})
+	}
+	return cases
+}
+
+// generateManualTestScenarios 对照手动测试文档的 scenario。
+func generateManualTestScenarios() []TestCase {
+	scenarios := AllScenariosMap()
+	var cases []TestCase
+	for name, factory := range scenarios {
+		cases = append(cases, TestCase{
+			ID:         fmt.Sprintf("scenario_%s", name),
+			MapID:      "map_01",
+			Difficulty: "normal",
+			Warden:     "prince",
+			Strategy:   factory(),
+		})
+	}
+	return cases
+}
+
+// generateBalanceTests 极限平衡验证。
+func generateBalanceTests() []TestCase {
+	noSell := NewGreedyNoSellStrategy()
+	return []TestCase{
+		{ID: "balance_min_config", MapID: "map_07", Difficulty: "extreme", Warden: "prince", Strategy: NewGreedyStrategy()},
+		{ID: "balance_max_config", MapID: "map_01", Difficulty: "easy", Warden: "prince", Strategy: NewGreedyStrategy()},
+		{ID: "balance_no_sell", MapID: "map_03", Difficulty: "normal", Warden: "prince", Strategy: noSell},
+		{ID: "balance_endless", MapID: "map_06", Difficulty: "normal", Warden: "prince", ModeID: "endless", Strategy: NewGreedyStrategy()},
+	}
+}
+
+// generateCombinationTests 特殊敌人组合。
+func generateCombinationTests() []TestCase {
+	return []TestCase{
+		{ID: "combo_medic_tank", MapID: "map_01", Difficulty: "hard", Warden: "prince", EnemyFilter: "mixed", Strategy: NewGreedyStrategy()},
+		{ID: "combo_splitter_swarm", MapID: "map_01", Difficulty: "normal", Warden: "prince", EnemyFilter: "stress", Strategy: NewGreedyStrategy()},
+		{ID: "combo_stealth_runner", MapID: "map_01", Difficulty: "normal", Warden: "prince", EnemyFilter: "mixed", Strategy: NewGreedyStrategy()},
+	}
 }
 
 // generateFocusTower 为每种塔生成单塔极限用例。
@@ -142,22 +216,6 @@ func generateModeCoverage() []TestCase {
 			Warden:     "prince",
 			ModeID:     mode,
 			Strategy:   NewGreedyStrategy(),
-		})
-	}
-	return cases
-}
-
-// generateInteractionScenarios 生成交互 FSM 场景。
-func generateInteractionScenarios() []TestCase {
-	scenarios := AllScenariosMap()
-	var cases []TestCase
-	for name, factory := range scenarios {
-		cases = append(cases, TestCase{
-			ID:       fmt.Sprintf("scenario_%s", name),
-			MapID:    "map_01",
-			Difficulty: "normal",
-			Warden:  "prince",
-			Strategy: factory(),
 		})
 	}
 	return cases

@@ -1096,7 +1096,7 @@ func (s *StageScene) updatePlaying() {
 	kills := pipeline.TickProjectileHits(s.projectiles, s.enemies, s.towers, func(e *enemy.Enemy, damage float64, killed bool, attackStyle string, crit bool) {
 		if damage > 0 {
 			render.SpawnDamageText(e.X, e.Y-15, damage, crit)
-			if e.HitFlash < 0.06 {
+			if e.HitFlash < 0.06 && e.Age > 0.1 { // 出生 0.1s 内不闪白
 				e.HitFlash = 0.12
 			}
 			// 元素类型化命中特效
@@ -2219,6 +2219,12 @@ func (s *StageScene) executeAutoPlayAction(a AutoPlayAction) {
 
 	case APActionSelectWarden:
 		s.activateWarden(a.WardenKey)
+
+	case APActionAddAbility:
+		t := s.towers.At(a.Row, a.Col)
+		if t != nil {
+			t.AddAbility(a.AbilityName)
+		}
 	}
 }
 

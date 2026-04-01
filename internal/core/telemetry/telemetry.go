@@ -35,6 +35,9 @@ type Telemetry struct {
 
 	// CC 类型（已施加的）
 	CCApplied map[string]int // "slow", "stun", "root", "silence", "knockup"
+
+	// 能力触发
+	AbilityTriggered map[string]int // "bounce", "splash", "burn", etc.
 }
 
 // New 创建空的遥测实例。
@@ -48,6 +51,7 @@ func New() *Telemetry {
 		BossSpawned:        make(map[string]int),
 		InteractionModes:   make(map[string]int),
 		CCApplied:          make(map[string]int),
+		AbilityTriggered:   make(map[string]int),
 	}
 }
 
@@ -63,6 +67,7 @@ func (t *Telemetry) Reset() {
 	t.BossSpawned = make(map[string]int)
 	t.InteractionModes = make(map[string]int)
 	t.CCApplied = make(map[string]int)
+	t.AbilityTriggered = make(map[string]int)
 }
 
 // Record 记录一个维度的一次触发。
@@ -86,6 +91,8 @@ func (t *Telemetry) Record(dimension string, key string) {
 		t.InteractionModes[key]++
 	case "cc":
 		t.CCApplied[key]++
+	case "ability":
+		t.AbilityTriggered[key]++
 	}
 }
 
@@ -102,6 +109,7 @@ func (t *Telemetry) Snapshot() TelemetrySnapshot {
 		BossSpawned:        copyMap(t.BossSpawned),
 		InteractionModes:   copyMap(t.InteractionModes),
 		CCApplied:          copyMap(t.CCApplied),
+		AbilityTriggered:   copyMap(t.AbilityTriggered),
 	}
 }
 
@@ -115,6 +123,7 @@ type TelemetrySnapshot struct {
 	BossSpawned        map[string]int `json:"boss_spawned"`
 	InteractionModes   map[string]int `json:"interaction_modes"`
 	CCApplied          map[string]int `json:"cc_applied"`
+	AbilityTriggered   map[string]int `json:"ability_triggered"`
 }
 
 // Keys 返回某个 map 的所有键。

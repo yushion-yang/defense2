@@ -70,6 +70,7 @@ type Enemy struct {
 	DisplayHP    float64         // 显示用血量（伤害拖尾缓慢衰减到实际 HP）
 	Elite        bool            // 是否为精英怪
 	HitFlash     float64         // 受击闪白剩余时间（秒，>0 时渲染白色叠加）
+	Age          float64         // 存活时间（秒），用于出生保护期
 	AnimCur      string          // 当前动画名（per-instance）
 	AnimFrame    int             // 当前帧索引
 	AnimTimer    float64         // 帧计时器
@@ -157,6 +158,8 @@ const DotTickInterval = 0.5
 // TickStatusEffects 处理敌人身上的状态效果（减速、流血）。
 // 眩晕在 movement.go 中处理。
 func TickStatusEffects(e *Enemy, dt float64) {
+	e.Age += dt
+
 	// 减速：倒计时归零后恢复基础速度（受全局减速下限约束）
 	if e.SlowTimer > 0 {
 		e.SlowTimer -= dt

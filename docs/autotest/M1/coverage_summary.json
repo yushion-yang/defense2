@@ -1,0 +1,125 @@
+{
+  "total_sessions": 68,
+  "victories": 64,
+  "defeats": 4,
+  "timeouts": 0,
+  "coverage_gaps": {
+    "abilities": [
+      "chargeShot",
+      "executionBonus",
+      "multiTarget",
+      "percentHpDamage",
+      "percentHpMinor",
+      "splash",
+      "stackDamage",
+      "onHitSlow",
+      "stun",
+      "goldPassive",
+      "goldOnKill"
+    ],
+    "archetypes": [
+      "dummy"
+    ],
+    "attack_styles": [
+      "laser",
+      "charge",
+      "aura_dot"
+    ],
+    "buff_stack_modes": [
+      "strongest",
+      "additive",
+      "multiplicative",
+      "override",
+      "independent",
+      "independentPerSource"
+    ],
+    "buff_types": [
+      "slow",
+      "stun",
+      "knockup",
+      "root",
+      "silence",
+      "disarm",
+      "speedUp",
+      "damageUp",
+      "damageDown",
+      "fireRateUp",
+      "invincible",
+      "damageImmune",
+      "controlImmune",
+      "slowImmune",
+      "stunImmune",
+      "rootImmune",
+      "untargetable",
+      "dot",
+      "tenacity"
+    ],
+    "cc_types": [
+      "root"
+    ],
+    "damage_types": [
+      "magic",
+      "true",
+      "pure"
+    ],
+    "enemy_templates": [
+      "empBurst",
+      "blink",
+      "deathSplit",
+      "deathSlow",
+      "timewarp",
+      "revive",
+      "spawnMinions"
+    ],
+    "interaction_modes": [
+      "buildMenu",
+      "buildPlace",
+      "towerSel",
+      "spawnMenu",
+      "spawnPlace",
+      "paused",
+      "wardenSelect"
+    ],
+    "pipeline_steps": null,
+    "towers": [
+      "laser",
+      "freeze",
+      "electric",
+      "hunter",
+      "en-04",
+      "en-05",
+      "en-08",
+      "wl-02"
+    ]
+  },
+  "anomaly_summary": {
+    "ability_silent": 1,
+    "archetype_monoculture": 2,
+    "boss_too_weak": 43,
+    "build_silent_fail": 29,
+    "economy_stall": 25,
+    "fps_drop": 7,
+    "projectile_orphan_burst": 23,
+    "warden_origin_stuck": 4,
+    "warden_range_limited_x": 56,
+    "warden_range_limited_y": 46,
+    "wave_hp_regression": 8
+  },
+  "tower_usage": {
+    "basic": 45
+  },
+  "archetypes_seen": {
+    "armored": 65,
+    "buffer": 34,
+    "flying": 65,
+    "healer": 62,
+    "normal": 68,
+    "runner": 65,
+    "shielded": 53,
+    "splitter": 33,
+    "stealth": 61,
+    "swarm": 62,
+    "tank": 68,
+    "teleporter": 33
+  }
+}

@@ -107,6 +107,9 @@ type AnomalyDetector struct {
 	econStallMinCost  int  // 最便宜塔缓存
 	econStallReported bool
 
+	// boss_too_weak: Boss 存活时间过短
+	activeBosses map[int]int // bossEnemyID -> spawnTick
+
 	// interact_mode_stuck: 交互模式停滞
 	imodeStuckMode  int // 当前追踪的模式
 	imodeStuckTick  int // 进入该模式的 tick
@@ -152,6 +155,7 @@ func NewAnomalyDetector() *AnomalyDetector {
 		nanReported:         make(map[int]bool),
 		imodeStuckReported:  make(map[int]bool),
 		enemyFirstSeen:      make(map[int]bool),
+		activeBosses:        make(map[int]int),
 	}
 }
 
@@ -345,6 +349,9 @@ func (d *AnomalyDetector) Check(state *GameState, updateMs float64) []Anomaly {
 
 	// ── 25. 经济断档检测 ──
 	found = append(found, d.checkEconomyStall(state)...)
+
+	// ── 26. Boss 存活过短检测 ──
+	found = append(found, d.checkBossTooWeak(state)...)
 
 	// 更新前帧状态
 	d.prevGold = state.Gold
@@ -875,13 +882,12 @@ func (d *AnomalyDetector) checkAbilitySilent(state *GameState) []Anomaly {
 		return nil
 	}
 
-	// 遥测中已触发的能力（使用 pipeline 维度中的 ability_ 前缀计数）
-	// 注意: 不同能力可能记录在不同遥测维度，这里检查 buff_type 和 pipeline 两个维度
+	// 遥测中已触发的能力（检查 ability + buff_type + cc 维度）
 	triggered := make(map[string]bool)
-	for k := range state.Telemetry.BuffTypesApplied {
+	for k := range state.Telemetry.AbilityTriggered {
 		triggered[k] = true
 	}
-	for k := range state.Telemetry.PipelineSteps {
+	for k := range state.Telemetry.BuffTypesApplied {
 		triggered[k] = true
 	}
 	for k := range state.Telemetry.CCApplied {
@@ -1062,6 +1068,44 @@ func (d *AnomalyDetector) checkEnemyBornWithHit(state *GameState) []Anomaly {
 		if !activeIDs[id] {
 			delete(d.enemyFirstSeen, id)
 		}
+	}
+	return found
+}
+
+// checkBossTooWeak 检测 Boss 存活时间过短（<5 秒 = 300 帧）。
+// 对应手动测试文档 §3.3: "Boss 和小怪没区别"。
+func (d *AnomalyDetector) checkBossTooWeak(state *GameState) []Anomaly {
+	const weakThreshold = 300 // 5 秒 @60fps
+
+	var found []Anomaly
+	activeIDs := make(map[int]bool)
+
+	// 追踪新出现的 Boss
+	for _, e := range state.Enemies {
+		if !e.Active || !e.Boss {
+			continue
+		}
+		activeIDs[e.ID] = true
+		if _, tracked := d.activeBosses[e.ID]; !tracked {
+			d.activeBosses[e.ID] = state.Tick
+		}
+	}
+
+	// 检测消失的 Boss
+	for id, spawnTick := range d.activeBosses {
+		if activeIDs[id] {
+			continue
+		}
+		aliveTicks := state.Tick - spawnTick
+		if aliveTicks < weakThreshold {
+			found = append(found, Anomaly{
+				Tick:     state.Tick,
+				Type:     "boss_too_weak",
+				Detail:   fmt.Sprintf("boss (spawned tick=%d) died after %.1fs (%d ticks), threshold=5s", spawnTick, float64(aliveTicks)/60.0, aliveTicks),
+				Severity: SeverityMedium,
+			})
+		}
+		delete(d.activeBosses, id)
 	}
 	return found
 }

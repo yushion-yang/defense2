@@ -142,7 +142,7 @@ func (s *Spawner) Update(pool *Pool, dt float64) {
 					// 复制一份避免修改原始配置
 					bossCfg := *cfg
 					bossCfg.Boss = true
-					bossCfg.HpScale *= 3   // Boss 额外 3 倍 HP
+					bossCfg.HpScale *= 8   // Boss 额外 8 倍 HP
 					bossCfg.Radius *= 1.5  // Boss 体型更大
 					cfg = &bossCfg
 					tel.T.Record("boss", archetype)

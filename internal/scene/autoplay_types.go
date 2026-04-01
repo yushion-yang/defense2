@@ -113,6 +113,7 @@ const (
 	APActionSelectWarden                     // 选择战灵
 	APActionChooseEvent                      // 选择事件
 	APActionAssignSkill                      // 挂载技能
+	APActionAddAbility                       // 给塔添加能力
 )
 
 // AutoPlayAction 自动操作指令。
@@ -124,4 +125,5 @@ type AutoPlayAction struct {
 	EventIndex    int    // ChooseEvent: 选择的事件索引
 	SkillName     string // AssignSkill: 技能名称
 	SkillToWarden bool   // AssignSkill: true=战灵, false=塔
+	AbilityName   string // AddAbility: 能力名称
 }

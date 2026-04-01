@@ -10,14 +10,23 @@ import (
 // GreedyStrategy 贪心策略。
 type GreedyStrategy struct {
 	wardenKey string
-	phase     int // 0=early(build), 1=mid(upgrade), 2=late(optimize)
-	lastBuild int // 上次建塔的 tick
+	phase     int  // 0=early(build), 1=mid(upgrade), 2=late(optimize)
+	lastBuild int  // 上次建塔的 tick
+	NoSell    bool // true 时禁止卖塔（经济压力测试用）
 }
 
 // NewGreedyStrategy 创建贪心策略。
 func NewGreedyStrategy() *GreedyStrategy {
 	return &GreedyStrategy{
 		wardenKey: "prince",
+	}
+}
+
+// NewGreedyNoSellStrategy 创建禁卖塔的贪心策略。
+func NewGreedyNoSellStrategy() *GreedyStrategy {
+	return &GreedyStrategy{
+		wardenKey: "prince",
+		NoSell:    true,
 	}
 }
 

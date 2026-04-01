@@ -73,6 +73,7 @@ func (p *Pool) Spawn(x, y, baseHP, baseSpeed float64, pathIndex int, archetype s
 			e.DyingTimer = 0
 			e.DyingDuration = 0
 			e.HitFlash = 0
+			e.Age = 0
 			e.AnimCur = ""
 			e.AnimFrame = 0
 			e.AnimTimer = 0

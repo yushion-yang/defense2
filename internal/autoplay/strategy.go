@@ -98,6 +98,7 @@ const (
 	ActionSell                           // 出售塔
 	ActionStartWave                      // 开始下一波
 	ActionSelectWarden                   // 选择战灵
+	ActionAddAbility                     // 给塔添加能力
 	ActionNoop                           // 空操作
 )
 
@@ -108,6 +109,7 @@ type Action struct {
 	Cell          Cell   // Build: 建造位置
 	Row, Col      int    // Upgrade/Sell: 目标塔网格坐标
 	WardenKey     string // SelectWarden: 战灵类型
+	AbilityName   string // AddAbility: 能力名称
 }
 
 // Strategy 自动对局策略接口。

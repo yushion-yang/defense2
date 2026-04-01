@@ -7,6 +7,7 @@ import (
 
 	"defense2/internal/core/enemy"
 	"defense2/internal/core/projectile"
+	tel "defense2/internal/core/telemetry"
 	"defense2/internal/core/tower"
 )
 
@@ -105,19 +106,24 @@ func ApplyHit(input HitInput, onHit HitCallback) HitOutput {
 func applyHitEffectsUnified(r *tower.HitResult, target *enemy.Enemy, p *projectile.Projectile, enemies *enemy.Pool, projectiles *projectile.Pool, onHit HitCallback) {
 	if r.Slow != nil {
 		ApplySlow(target, r.Slow.Factor, r.Slow.Duration, p.SourceTowerKey)
+		tel.T.Record("ability", "slow")
 	}
 	if r.Stun != nil {
 		ApplyStun(target, r.Stun.Duration, p.SourceTowerKey)
+		tel.T.Record("ability", "stun")
 	}
 	if r.Bleed != nil {
 		target.BleedTimer = r.Bleed.Duration
 		target.BleedDPS = r.Bleed.DPS
+		tel.T.Record("ability", "bleed")
 	}
 	if r.Burn != nil {
 		target.BurnTimer = r.Burn.Duration
 		target.BurnDPS = r.Burn.DPS
+		tel.T.Record("ability", "burn")
 	}
 	if r.Splash != nil && enemies != nil {
+		tel.T.Record("ability", "splash")
 		splashDamage := p.Damage * r.Splash.Ratio
 		enemies.Each(func(e *enemy.Enemy) {
 			if e == target || e.IsDying() {
@@ -136,7 +142,7 @@ func applyHitEffectsUnified(r *tower.HitResult, target *enemy.Enemy, p *projecti
 				if onHit != nil {
 					onHit(e, finalDmg, sr.Killed, "splash", false)
 				}
-				if e.HitFlash < 0.06 {
+				if e.HitFlash < 0.06 && e.Age > 0.1 {
 					e.HitFlash = 0.08
 				}
 				if sr.Killed {
@@ -171,6 +177,7 @@ func applyHitEffectsUnified(r *tower.HitResult, target *enemy.Enemy, p *projecti
 		if best != nil {
 			bounceDmg := r.Bounce.SrcDamage * r.Bounce.DamageRatio
 			projectiles.FireBounce(target.X, target.Y, best, bounceDmg, p.Speed, p.Radius, p.SourceTowerKey, p.BounceCount+1, hitIDs)
+			tel.T.Record("ability", "bounce")
 		}
 	}
 }

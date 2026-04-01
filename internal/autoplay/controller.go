@@ -386,6 +386,9 @@ func actionsToSceneActions(actions []Action) []scene.AutoPlayAction {
 			sa.Type = scene.APActionStartWave
 		case ActionSelectWarden:
 			sa.Type = scene.APActionSelectWarden
+		case ActionAddAbility:
+			sa.Type = scene.APActionAddAbility
+			sa.AbilityName = a.AbilityName
 		default:
 			continue
 		}
