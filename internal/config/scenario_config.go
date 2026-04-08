@@ -40,6 +40,7 @@ type TowerSnapshot struct {
 	PotentialSpeed  float64   `json:"potentialSpeed"`
 	BaseRange       float64   `json:"baseRange"`
 	PotentialRange  float64   `json:"potentialRange"`
+	Strength        float64   `json:"strength,omitempty"` // 永久强度加成（0=默认无加成）
 }
 
 // EnemySnapshot captures a spawned enemy's state for scenario restore.

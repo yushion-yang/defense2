@@ -1024,6 +1024,10 @@ func (s *StageScene) drawSaveNaming(screen *ebiten.Image) {
 func (s *StageScene) saveScenario(name string) {
 	var towers []config.TowerSnapshot
 	s.towers.Each(func(t *tower.Tower) {
+		var permStr float64
+		if t.Strength != nil {
+			permStr = t.Strength.Permanent
+		}
 		towers = append(towers, config.TowerSnapshot{
 			Row:             t.Row,
 			Col:             t.Col,
@@ -1038,6 +1042,7 @@ func (s *StageScene) saveScenario(name string) {
 			PotentialSpeed:  t.PotentialSpeed,
 			BaseRange:       t.BaseRange,
 			PotentialRange:  t.PotentialRange,
+			Strength:        permStr,
 		})
 	})
 
@@ -1125,6 +1130,10 @@ func (s *StageScene) restoreScenario(sd *config.ScenarioData) {
 			if abilityType != "" {
 				t.AddAbility(abilityType)
 			}
+		}
+		// Restore permanent strength
+		if snap.Strength != 0 && t.Strength != nil {
+			t.Strength.AddPermanent(snap.Strength)
 		}
 		t.RecalcStats()
 		s.gold -= def.Cost
