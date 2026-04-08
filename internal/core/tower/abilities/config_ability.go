@@ -194,13 +194,12 @@ func (a *ConfigAbility) OnTick(t *tower.Tower, ctx *tower.TickContext) *tower.Ti
 
 	switch a.Def.Type {
 	case "damageUpAura":
-		// scaleDim=bonus(比例), param=radius — 写入 Mods.PctDamage
+		// scaleDim=bonus(比例), param=radius — 写入 DamageAmp（伤害管线统一乘算）
 		srcKey := fmt.Sprintf("dmgAura_%s_%d_%d", t.Key, t.Row, t.Col)
-		desc := fmt.Sprintf("+%.0f%%伤害", sv*100)
+		desc := fmt.Sprintf("+%.0f%%全伤害", sv*100)
 		ctx.Towers.Each(func(other *tower.Tower) {
 			if math.Hypot(t.X-other.X, t.Y-other.Y) <= pm {
-				other.Mods.PctDamage += sv
-				other.RecalcStats()
+				other.DamageAmp += sv
 				applyBuffDisplay(other, srcKey, "伤害光环", desc)
 			} else {
 				removeBuffDisplay(other, srcKey)

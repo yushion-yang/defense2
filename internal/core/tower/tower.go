@@ -93,6 +93,7 @@ type Tower struct {
 
 	// 光环加成（每帧由 Ticker 能力重置+重算）
 	CritBonus float64 // 暴击光环加成的暴击率（由 critAura 设置）
+	DamageAmp float64 // 伤害增幅（由 damageUpAura 设置，所有伤害输出 ×(1+DamageAmp)）
 
 	// 索敌锁定
 	Target              *enemy.Enemy // 当前锁定目标
@@ -155,6 +156,7 @@ func (t *Tower) RecalcStats() {
 	t.Range = baseRng*(1+t.Mods.PctRange) + t.Mods.FlatRange
 
 	t.CritBonus = 0 // 每帧重置，由 critAura OnTick 重新设置
+	t.DamageAmp = 0 // 每帧重置，由 damageUpAura OnTick 重新设置
 }
 
 // AllAbilities 返回所有生效能力（合并 AbilitySlots 和旧 Abilities）。

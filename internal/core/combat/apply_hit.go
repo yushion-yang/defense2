@@ -80,6 +80,11 @@ func ApplyHit(input HitInput, onHit HitCallback) HitOutput {
 		}
 	}
 
+	// DamageAmp 全伤害增幅（damageUpAura 提供，所有伤害类型统一乘算）
+	if input.Tower != nil && input.Tower.DamageAmp > 0 {
+		totalDmg *= 1 + input.Tower.DamageAmp
+	}
+
 	// 扣血 — 走伤害管线（免疫/减免/阈值/遥测统一处理）
 	pipeResult := ProcessDamage(DamageInput{
 		Target:     input.Target,
