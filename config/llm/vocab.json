@@ -51,7 +51,7 @@
     "str8": 184, "str9": 185,
     "as_projectile": 186, "as_laser": 187, "as_wideBeam": 188,
     "as_scatter": 189, "as_charge": 190, "as_spin_aoe": 191,
-    "as_pierce": 192, "as_aura_dot": 193,
+    "as_aura_dot": 193,
     "TGTYES": 194, "TGTNO": 195,
     "CELL": 196,
     "WDN": 197,

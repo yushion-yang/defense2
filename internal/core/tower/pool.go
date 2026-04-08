@@ -234,8 +234,6 @@ func spriteKeyForStyle(style AttackStyle) string {
 		return "prism"
 	case StyleSpinAoE:
 		return "cyclone"
-	case StylePierce:
-		return "railgun"
 	default:
 		return "sentinel"
 	}

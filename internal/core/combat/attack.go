@@ -79,7 +79,6 @@ func init() {
 	Register(tower.StyleScatter, &ScatterHandler{})
 	Register(tower.StyleSpinAoE, &SpinAoEHandler{})
 	Register(tower.StyleRadial, &RadialHandler{})
-	Register(tower.StylePierce, &RadialHandler{}) // pierce = 直线穿透，复用 radial handler
 
 	// 废弃的攻击方式 → 映射到保留的 handler
 	Register(tower.StyleLaser, &ProjectileHandler{})   // laser → 高弹速 projectile

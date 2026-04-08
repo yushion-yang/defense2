@@ -66,7 +66,7 @@
   "railgun": {
     "label": "穿甲",
     "shortLabel": "穿甲",
-    "description": "超远程穿刺弹，极高单发伤害。",
+    "description": "超远程狙击弹，极高单发伤害。",
     "buildCost": 100,
     "baseDamage": 15,
     "potentialDamage": 25,
@@ -74,7 +74,7 @@
     "potentialAttackSpeed": 0.2,
     "baseRange": 175,
     "potentialRange": 35,
-    "attackStyle": "pierce",
+    "attackStyle": "projectile",
     "projectileSpeed": 600,
     "abilities": [],
     "upgradeCosts": [80, 120, 180, 260, 400, 600]

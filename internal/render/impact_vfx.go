@@ -53,7 +53,7 @@ func SpawnTypedImpact(x, y float64, attackStyle string) {
 		spawnImpact(x, y, color.RGBA{R: 100, G: 180, B: 255, A: 200}, 8, 0.18)
 	case "spin_aoe", "projectile": // fire/physical — orange
 		spawnImpact(x, y, color.RGBA{R: 255, G: 140, B: 40, A: 200}, 8, 0.15)
-	case "laser", "wideBeam", "pierce": // energy — purple
+	case "laser", "wideBeam": // energy — purple
 		spawnImpact(x, y, color.RGBA{R: 200, G: 100, B: 255, A: 200}, 6, 0.12)
 	case "charge": // keep existing large charge impact
 		SpawnChargeImpact(x, y)

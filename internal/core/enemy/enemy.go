@@ -42,7 +42,7 @@ func CheckThresholds(e *Enemy) []Threshold {
 
 // Enemy 单个敌人实体。
 type Enemy struct {
-	ID           int             // 唯一标识（用于穿刺弹已命中检查）
+	ID           int             // 唯一标识（用于穿透弹已命中检查）
 	X, Y         float64         // 当前像素位置
 	HP           float64         // 当前血量
 	MaxHP        float64         // 最大血量

@@ -95,7 +95,7 @@ type scatterHit struct {
 //
 // 碰撞规则（塔防模型）：
 //   - 追踪弹（Target != nil）：只和锁定目标碰撞，穿过其他敌人
-//   - 穿刺弹（Pierce=true）：对路径上所有敌人碰撞，命中后继续飞行
+//   - 穿透弹（Penetrate=true）：对路径上所有敌人碰撞，命中后继续飞行
 //   - 散射弹（ScatterGroup>0）：路径碰撞，同组命中同敌人合并为一次伤害
 //   - 散射视觉弹（ScatterVisual）：不参与碰撞（旧版兼容）
 func TickProjectileHits(projectiles *projectile.Pool, enemies *enemy.Pool, towers *tower.Pool, onHit HitCallback, onCC combat.CCCallback) int {

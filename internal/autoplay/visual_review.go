@@ -94,9 +94,6 @@ var specificChecks = map[string][]CheckItem{
 	"attack_laser": {
 		{Question: "激光束是否从塔延伸到目标敌人？"},
 	},
-	"attack_pierce": {
-		{Question: "弹射物是否沿直线穿透（非弹射到其他敌人）？", BugRef: "星爆应直线穿透"},
-	},
 	"hud_towerSel": {
 		{Question: "能力描述是否格式正确（base+scaled=total, 无多余的 0）？", BugRef: "能力描述加 0"},
 		{Question: "是否只显示该塔已获取的能力（无冗余空槽位）？", BugRef: "HUD 冗余槽位"},

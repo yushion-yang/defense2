@@ -14,7 +14,7 @@
       "shotgun":  "scatter -- cone pellets",
       "prism":    "wideBeam -- penetrating beam",
       "cyclone":  "spinAoe -- spinning area damage",
-      "railgun":  "pierce -- piercing shots",
+      "railgun":  "projectile -- long-range sniper shots",
       "ricochet": "bounce -- chain lightning bounces",
       "mortar":   "splash -- area explosion",
       "hydra":    "multiTarget -- simultaneous multi-target",

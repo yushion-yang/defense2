@@ -203,7 +203,7 @@ func TestAllTowerAttackStylesHaveHandlers(t *testing.T) {
 	// 所有活跃的攻击方式
 	styles := []tower.AttackStyle{
 		tower.StyleProjectile, tower.StyleWideBeam, tower.StyleScatter,
-		tower.StyleSpinAoE, tower.StyleRadial, tower.StylePierce,
+		tower.StyleSpinAoE, tower.StyleRadial,
 	}
 	for _, style := range styles {
 		if h := combat.Get(style); h == nil {

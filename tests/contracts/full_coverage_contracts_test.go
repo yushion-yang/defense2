@@ -97,7 +97,7 @@ func TestEachTowerHasProjectileSpeedIfNeeded(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	needsSpeed := map[string]bool{"projectile": true, "scatter": true, "pierce": true, "radial": true}
+	needsSpeed := map[string]bool{"projectile": true, "scatter": true, "radial": true}
 	for key, tw := range towers {
 		if needsSpeed[tw.AttackStyle] && tw.ProjectileSpeed <= 0 {
 			t.Errorf("塔 %q (style=%s) 需要 projectileSpeed > 0，当前=%.0f", key, tw.AttackStyle, tw.ProjectileSpeed)
