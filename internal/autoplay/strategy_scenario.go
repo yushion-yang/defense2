@@ -397,7 +397,7 @@ type AbilityCoverageStrategy struct {
 }
 
 // 攻击方式能力列表（每座塔 1 种）
-var atkAbils = []string{"scatter", "wideBeam", "spinAoe", "pierce", "bounce"}
+var atkAbils = []string{"scatter", "wideBeam", "spinAoe", "bounce"}
 var ccAbils2 = []string{"slowPower", "stunChance", "slowDuration", "stunDuration", "slowPower"}
 var dmgAbils2 = []string{"crit", "splash", "flatDamage", "deathMark", "distanceDamage"}
 var dotAbils2 = []string{"burn", "bleedDot", "poison", "weaken", "burn"}
