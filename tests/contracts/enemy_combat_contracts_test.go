@@ -59,7 +59,16 @@ func TestEnemyArchetype_SwarmSmallRadius(t *testing.T) {
 	}
 }
 
-func TestEnemyArchetype_SplitterHasSplitCount(t *testing.T) {
+func hasAbility(a *config.EnemyArchetype, abilType string) bool {
+	for _, ref := range a.Abilities {
+		if ref.Type == abilType {
+			return true
+		}
+	}
+	return false
+}
+
+func TestEnemyArchetype_SplitterHasDeathSplit(t *testing.T) {
 	archs, err := config.LoadEnemyArchetypes()
 	if err != nil {
 		t.Fatal(err)
@@ -68,12 +77,12 @@ func TestEnemyArchetype_SplitterHasSplitCount(t *testing.T) {
 	if sp == nil {
 		t.Fatal("缺少 splitter 原型")
 	}
-	if sp.SplitCount <= 0 {
-		t.Errorf("splitter splitCount=%d 应 > 0", sp.SplitCount)
+	if !hasAbility(sp, "deathSplit") {
+		t.Error("splitter 应装配 deathSplit 能力")
 	}
 }
 
-func TestEnemyArchetype_StealthHasDuration(t *testing.T) {
+func TestEnemyArchetype_StealthHasAbility(t *testing.T) {
 	archs, err := config.LoadEnemyArchetypes()
 	if err != nil {
 		t.Fatal(err)
@@ -82,12 +91,12 @@ func TestEnemyArchetype_StealthHasDuration(t *testing.T) {
 	if st == nil {
 		t.Fatal("缺少 stealth 原型")
 	}
-	if st.StealthDuration <= 0 {
-		t.Errorf("stealth stealthDuration=%.1f 应 > 0", st.StealthDuration)
+	if !hasAbility(st, "stealth") {
+		t.Error("stealth 应装配 stealth 能力")
 	}
 }
 
-func TestEnemyArchetype_HealerHasHealScale(t *testing.T) {
+func TestEnemyArchetype_HealerHasAbility(t *testing.T) {
 	archs, err := config.LoadEnemyArchetypes()
 	if err != nil {
 		t.Fatal(err)
@@ -96,12 +105,12 @@ func TestEnemyArchetype_HealerHasHealScale(t *testing.T) {
 	if h == nil {
 		t.Fatal("缺少 healer 原型")
 	}
-	if h.HealScale <= 0 {
-		t.Errorf("healer healScale=%.2f 应 > 0", h.HealScale)
+	if !hasAbility(h, "healAura") {
+		t.Error("healer 应装配 healAura 能力")
 	}
 }
 
-func TestEnemyArchetype_TeleporterHasInterval(t *testing.T) {
+func TestEnemyArchetype_TeleporterHasAbility(t *testing.T) {
 	archs, err := config.LoadEnemyArchetypes()
 	if err != nil {
 		t.Fatal(err)
@@ -110,12 +119,12 @@ func TestEnemyArchetype_TeleporterHasInterval(t *testing.T) {
 	if tp == nil {
 		t.Fatal("缺少 teleporter 原型")
 	}
-	if tp.TeleportInterval <= 0 {
-		t.Errorf("teleporter teleportInterval=%.1f 应 > 0", tp.TeleportInterval)
+	if !hasAbility(tp, "teleport") {
+		t.Error("teleporter 应装配 teleport 能力")
 	}
 }
 
-func TestEnemyArchetype_BufferHasAura(t *testing.T) {
+func TestEnemyArchetype_BufferHasAbility(t *testing.T) {
 	archs, err := config.LoadEnemyArchetypes()
 	if err != nil {
 		t.Fatal(err)
@@ -124,8 +133,8 @@ func TestEnemyArchetype_BufferHasAura(t *testing.T) {
 	if b == nil {
 		t.Fatal("缺少 buffer 原型")
 	}
-	if b.AuraRange <= 0 {
-		t.Errorf("buffer auraRange=%.0f 应 > 0", b.AuraRange)
+	if !hasAbility(b, "speedAura") {
+		t.Error("buffer 应装配 speedAura 能力")
 	}
 }
 

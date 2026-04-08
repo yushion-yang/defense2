@@ -189,6 +189,9 @@ func NewStageSceneWithOpts(sw Switcher, opts StageOptions) *StageScene {
 
 	spawner := enemy.NewSpawner(gm, cfg.Waves)
 
+	// 加载怪物能力配置表
+	config.LoadEnemyAbilities()
+
 	// 加载敌人原型配置并注入到 spawner
 	if archetypes, err := config.LoadEnemyArchetypes(); err == nil {
 		spawner.Archetypes = convertArchetypesToSpawnConfigs(archetypes)
@@ -2564,53 +2567,62 @@ func replaceDescParams(desc string, params map[string]string) string {
 	return result
 }
 
-// archetypeBehavior 从原型名推导行为类型。
-// 原型配置中有对应字段的优先使用配置值，否则按名称映射。
-var archetypeBehavior = map[string]string{
-	"healer":      "healer",
-	"medic":       "healer",
-	"stealth":     "stealth",
-	"splitter":    "splitter",
-	"buffer":      "buffer",
-	"regenerator": "regenerator",
-	"troll":       "regenerator",
-}
-
 // convertArchetypesToSpawnConfigs 将 config.EnemyArchetype 转换为 enemy.SpawnConfig。
-// 使 enemy 包不依赖 config 包。
+// 能力驱动：从 abilities 配置中读取行为参数，取代旧的硬编码字段。
 func convertArchetypesToSpawnConfigs(archetypes map[string]*config.EnemyArchetype) map[string]*enemy.SpawnConfig {
 	result := make(map[string]*enemy.SpawnConfig, len(archetypes))
 	for key, a := range archetypes {
 		sc := &enemy.SpawnConfig{
-			Label:           a.Label,
-			HpScale:         a.HPScale,
-			SpeedScale:      a.SpeedScale,
-			Radius:          a.Radius,
-			Boss:            a.Boss,
-			StealthDuration: a.StealthDuration,
-			SplitCount:      a.SplitCount,
-			SplitScale:      0.3, // 默认子体血量 30%
-			SplitHPRatio:    0.3,
-			SplitSpeedScale: 1.4,
-			HealScale:       a.HealScale,
-			HealRadius:      a.HealRadius,
-			HealInterval:    a.HealInterval,
-			AuraRange:       a.AuraRange,
-			AuraSpeedUp:     a.AuraSpeedUp,
-			// 传送
-			TeleportInterval: a.TeleportInterval,
-			TeleportSkip:     a.TeleportSkip,
-			// 移动类型 + 奖励倍率
+			Label:        a.Label,
+			HpScale:      a.HPScale,
+			SpeedScale:   a.SpeedScale,
+			Radius:       a.Radius,
+			Boss:         a.Boss,
 			MovementType: a.MovementType,
 			RewardScale:  a.RewardScale,
+			// 分裂默认值（被 deathSplit 能力覆盖时使用）
+			SplitScale:      0.3,
+			SplitHPRatio:    0.3,
+			SplitSpeedScale: 1.4,
 		}
-		// 根据原型名推导行为类型
-		if b, ok := archetypeBehavior[key]; ok {
-			sc.Behavior = b
+		// 从能力配置装配行为
+		for _, ref := range a.Abilities {
+			def := config.ResolveEnemyAbility(ref)
+			if def == nil {
+				fmt.Printf("convertArchetypes: unknown enemy ability %q for %s\n", ref.Type, key)
+				continue
+			}
+			applyEnemyAbilityToSpawnConfig(sc, def)
 		}
 		result[key] = sc
 	}
 	return result
+}
+
+// applyEnemyAbilityToSpawnConfig 将一个怪物能力应用到 SpawnConfig。
+func applyEnemyAbilityToSpawnConfig(sc *enemy.SpawnConfig, def *config.EnemyAbilityDef) {
+	switch def.Type {
+	case "stealth":
+		sc.StealthDuration = def.Base // base=隐身秒数
+		sc.Behavior = "stealth"
+	case "deathSplit":
+		sc.SplitCount = int(def.Base)     // base=分裂数
+		sc.SplitHPRatio = def.Param       // param=HP比例
+		sc.Behavior = "splitter"
+	case "teleport":
+		sc.TeleportInterval = def.Base    // base=间隔秒数
+		sc.TeleportSkip = int(def.Param)  // param=跳过段数
+	case "healAura":
+		sc.HealScale = def.Base           // base=治疗量比例
+		sc.HealRadius = def.Param         // param=治疗半径
+		sc.HealInterval = 2.5             // 固定间隔
+		sc.Behavior = "healer"
+	case "speedAura":
+		sc.AuraSpeedUp = def.Base         // base=加速比例
+		sc.AuraRange = def.Param          // param=光环半径
+		sc.Behavior = "buffer"
+	// 未来新能力在此扩展
+	}
 }
 
 // ── 战灵选择逻辑 ────────────────────────────────────

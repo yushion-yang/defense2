@@ -11,26 +11,42 @@ import (
 
 // EnemyArchetype 敌人原型模板（JSON 配置）。
 type EnemyArchetype struct {
-	Label            string  `json:"label"`            // 显示名称
-	Color            string  `json:"color"`            // 显示颜色（hex）
-	Description      string  `json:"description"`      // 描述文本
-	HPScale          float64 `json:"hpScale"`          // 血量倍率（相对基准值）
-	SpeedScale       float64 `json:"speedScale"`       // 速度倍率
-	Radius           float64 `json:"radius"`           // 碰撞半径（像素绝对值）
-	RewardScale      float64 `json:"rewardScale"`      // 击杀奖励倍率
-	Boss             bool    `json:"boss"`             // 是否为 Boss
-	ShieldScale      float64 `json:"shieldScale"`      // 护盾倍率（0 = 无护盾）
-	SplitCount       int     `json:"splitCount"`       // 分裂数量（0 = 不分裂）
-	MovementType     string  `json:"movementType"`     // 移动类型："ground" 或 "flying"
-	StealthDuration  float64 `json:"stealthDuration"`  // 隐身持续时间（秒）
-	TeleportInterval float64 `json:"teleportInterval"` // 瞬移间隔（秒）
-	TeleportSkip     int     `json:"teleportSkipSegments"` // 瞬移跳过路径段数
-	HealScale        float64 `json:"healScale"`        // 治疗量倍率
-	HealRadius       float64 `json:"healRadius"`       // 治疗范围（像素）
-	HealInterval     float64 `json:"healInterval"`     // 治疗间隔（秒）
-	AuraRange        float64 `json:"auraRange"`        // 光环范围
-	AuraSpeedUp      float64 `json:"auraSpeedUp"`      // 光环加速比例
-	AuraArmor        float64 `json:"auraArmor"`        // 光环护甲值
+	Label        string  `json:"label"`        // 显示名称
+	Color        string  `json:"color"`        // 显示颜色（hex）
+	Description  string  `json:"description"`  // 描述文本
+	HPScale      float64 `json:"hpScale"`      // 血量倍率（相对基准值）
+	SpeedScale   float64 `json:"speedScale"`   // 速度倍率
+	Radius       float64 `json:"radius"`       // 碰撞半径（像素绝对值）
+	RewardScale  float64 `json:"rewardScale"`  // 击杀奖励倍率
+	Boss         bool    `json:"boss"`         // 是否为 Boss
+	MovementType string  `json:"movementType"` // 移动类型："ground" 或 "flying"
+
+	// 能力装配（能力驱动行为，取代旧的硬编码字段）
+	// 支持两种写法：字符串（用默认参数）或对象（覆盖参数）
+	// 例: ["stealth"] 或 [{"type":"healAura","base":0.24,"param":105}]
+	RawAbilities []json.RawMessage `json:"abilities"`
+	Abilities    []EnemyAbilityRef `json:"-"` // 解析后的能力引用列表
+}
+
+// EnemyAbilityRef 怪物装配的能力引用（可覆盖默认参数）。
+type EnemyAbilityRef struct {
+	Type  string  // 能力类型标识
+	Base  float64 // 覆盖 base（0=用默认）
+	Param float64 // 覆盖 param（0=用默认）
+}
+
+// EnemyAbilityDef 怪物能力定义（从 abilities.json 加载）。
+type EnemyAbilityDef struct {
+	Type        string  `json:"type"`
+	Label       string  `json:"label"`
+	Icon        string  `json:"icon"`
+	Category    string  `json:"category"`
+	ScaleDim    string  `json:"scaleDim"`
+	Base        float64 `json:"base"`
+	Potential   float64 `json:"potential"`
+	Param       float64 `json:"param"`
+	ParamDim    string  `json:"paramDim"`
+	Description string  `json:"description"`
 }
 
 // LoadEnemyArchetypes 加载所有敌人原型。
@@ -94,11 +110,93 @@ func LoadEnemyArchetypes() (map[string]*EnemyArchetype, error) {
 // applyEnemyDefaults 为缺省字段设置默认值。
 // 注意：SpeedScale=0 是合法值（dummy 原型不移动），不做默认覆盖。
 func applyEnemyDefaults(a *EnemyArchetype) {
-	// HPScale 和 SpeedScale 由 JSON 显式指定，不设默认（0=合法值）
 	if a.Radius <= 0 {
 		a.Radius = 8
 	}
 	if a.RewardScale == 0 {
 		a.RewardScale = 1
 	}
+	// 解析能力引用
+	for _, raw := range a.RawAbilities {
+		ref := parseAbilityRef(raw)
+		if ref.Type != "" {
+			a.Abilities = append(a.Abilities, ref)
+		}
+	}
+}
+
+// parseAbilityRef 解析能力引用：字符串 "stealth" 或对象 {"type":"healAura","base":0.24}。
+func parseAbilityRef(raw json.RawMessage) EnemyAbilityRef {
+	// 先尝试字符串
+	var s string
+	if json.Unmarshal(raw, &s) == nil && s != "" {
+		return EnemyAbilityRef{Type: s}
+	}
+	// 再尝试对象
+	var obj struct {
+		Type  string  `json:"type"`
+		Base  float64 `json:"base"`
+		Param float64 `json:"param"`
+	}
+	if json.Unmarshal(raw, &obj) == nil && obj.Type != "" {
+		return EnemyAbilityRef{Type: obj.Type, Base: obj.Base, Param: obj.Param}
+	}
+	return EnemyAbilityRef{}
+}
+
+// enemyAbilityTable 全局怪物能力配置表。
+var enemyAbilityTable map[string]*EnemyAbilityDef
+
+// LoadEnemyAbilities 加载怪物能力配置表。
+func LoadEnemyAbilities() (map[string]*EnemyAbilityDef, error) {
+	if dataFS == nil {
+		return nil, fmt.Errorf("load enemy abilities: dataFS not initialized")
+	}
+	data, err := dataFS.ReadFile("config/enemies/abilities.json")
+	if err != nil {
+		return nil, nil // 文件不存在 = 无能力
+	}
+	var raw map[string]json.RawMessage
+	if err := json.Unmarshal(data, &raw); err != nil {
+		return nil, fmt.Errorf("parse enemy abilities: %w", err)
+	}
+	result := make(map[string]*EnemyAbilityDef)
+	for key, val := range raw {
+		if strings.HasPrefix(key, "_") {
+			continue
+		}
+		var d EnemyAbilityDef
+		if err := json.Unmarshal(val, &d); err != nil {
+			continue
+		}
+		result[key] = &d
+	}
+	enemyAbilityTable = result
+	return result, nil
+}
+
+// GlobalEnemyAbilityTable 返回全局怪物能力表。
+func GlobalEnemyAbilityTable() map[string]*EnemyAbilityDef {
+	return enemyAbilityTable
+}
+
+// ResolveEnemyAbility 解析能力引用，合并默认参数和覆盖参数。
+func ResolveEnemyAbility(ref EnemyAbilityRef) *EnemyAbilityDef {
+	table := GlobalEnemyAbilityTable()
+	if table == nil {
+		return nil
+	}
+	def, ok := table[ref.Type]
+	if !ok {
+		return nil
+	}
+	// 覆盖参数
+	resolved := *def
+	if ref.Base != 0 {
+		resolved.Base = ref.Base
+	}
+	if ref.Param != 0 {
+		resolved.Param = ref.Param
+	}
+	return &resolved
 }

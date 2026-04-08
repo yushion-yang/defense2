@@ -119,6 +119,20 @@
     "counteredBy": "高频施加(scatter+slow多次覆盖), 短爆发窗口"
   },
 
+  "stealth": {
+    "type": "stealth",
+    "label": "隐身",
+    "icon": "stealth",
+    "category": "movement",
+    "scaleDim": "duration",
+    "base": 3,
+    "potential": 0,
+    "param": 0,
+    "paramDim": "",
+    "description": "出场隐身3秒，不可被选为目标，溅射/AoE命中可强制显形",
+    "counters": "单体锁定攻击(projectile, bounce)",
+    "counteredBy": "AoE/溅射(splash, spinAoe, poisonZone)"
+  },
   "teleport": {
     "type": "teleport",
     "label": "传送",

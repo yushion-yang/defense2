@@ -51,7 +51,7 @@
     "speedScale": 1.32,
     "rewardScale": 1.1,
     "radius": 16,
-    "stealthDuration": 3,
+    "abilities": ["stealth"],
     "description": "装备隐形装置的渗透单位。出场隐身3秒，期间不可被选为目标，溅射可强制显形"
   },
   "splitter": {
@@ -61,7 +61,7 @@
     "speedScale": 0.86,
     "rewardScale": 0.7,
     "radius": 20,
-    "splitCount": 2,
+    "abilities": ["deathSplit"],
     "description": "由不稳定物质构成的生物。死亡分裂为2个子体(30%血量/×1.4速度)"
   },
   "teleporter": {
@@ -71,8 +71,7 @@
     "speedScale": 1,
     "rewardScale": 1.2,
     "radius": 16,
-    "teleportInterval": 5,
-    "teleportSkipSegments": 1,
+    "abilities": ["teleport"],
     "description": "空间折叠者。每5秒传送跳过1段路径，行动难以预测"
   },
   "healer": {
@@ -82,9 +81,7 @@
     "speedScale": 1.14,
     "rewardScale": 1.02,
     "radius": 20,
-    "healScale": 0.24,
-    "healRadius": 105,
-    "healInterval": 2.5,
+    "abilities": [{"type": "healAura", "base": 0.24, "param": 105}],
     "description": "战场医疗兵。每2.5秒治疗半径105内友方24%生命值"
   },
   "buffer": {
@@ -94,10 +91,8 @@
     "speedScale": 1.08,
     "rewardScale": 1.3,
     "radius": 16,
-    "auraRange": 100,
-    "auraSpeedUp": 0.2,
-    "auraArmor": 10,
-    "description": "军阵指挥官，自身血薄。光环范围100：+20%移速，+10护甲"
+    "abilities": [{"type": "speedAura", "base": 0.2, "param": 100}],
+    "description": "军阵指挥官，自身血薄。光环范围100：+20%移速"
   },
   "flying": {
     "label": "飞行斥候",
