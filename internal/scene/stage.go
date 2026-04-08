@@ -1073,148 +1073,180 @@ func (s *StageScene) drawEnemyTooltip(screen *ebiten.Image, e *enemy.Enemy) {
 	var lines []enemyTooltipLine
 
 	// ── 标识 ──
-	tag := "ground"
+	tag := ""
 	if e.Boss {
-		tag += " BOSS"
+		tag = " Boss"
 	} else if e.Elite {
-		tag += " Elite"
+		tag = " 精英"
 	}
 	if e.Behavior != "" {
 		tag += " [" + e.Behavior + "]"
 	}
-	lines = append(lines, L(ttHeader, "%s  %s", e.Archetype, tag))
-	lines = append(lines, L(ttDim, "ID:%d  Pos:(%.0f,%.0f)  R:%.0f  Age:%.1fs", e.ID, e.X, e.Y, e.Radius, e.Age))
+	lines = append(lines, L(ttHeader, "%s%s", e.Archetype, tag))
+	lines = append(lines, L(ttDim, "编号:%d  坐标:(%.0f,%.0f)  半径:%.0f  存活:%.1f秒", e.ID, e.X, e.Y, e.Radius, e.Age))
 
 	// ── 生命 ──
-	lines = append(lines, L(ttHeader, "--- HP ---"))
-	lines = append(lines, L(ttWhite, "HP: %.0f / %.0f  (%.1f%%)", e.HP, e.MaxHP, e.HP/e.MaxHP*100))
-	lines = append(lines, L(ttDim, "DisplayHP: %.0f  Reward: %d (×%.2f)", e.DisplayHP, e.Reward, e.RewardScale))
+	lines = append(lines, L(ttHeader, "--- 生命 ---"))
+	lines = append(lines, L(ttWhite, "血量: %.0f / %.0f  (%.1f%%)", e.HP, e.MaxHP, e.HP/e.MaxHP*100))
+	lines = append(lines, L(ttDim, "显示血量: %.0f  奖励: %d金 (×%.2f)", e.DisplayHP, e.Reward, e.RewardScale))
 
 	// ── 移动 ──
-	lines = append(lines, L(ttHeader, "--- Move ---"))
-	lines = append(lines, L(ttWhite, "Speed: %.1f / %.1f  PathIdx: %d/%d", e.Speed, e.BaseSpeed, e.PathIndex, len(e.Path)))
+	lines = append(lines, L(ttHeader, "--- 移动 ---"))
+	lines = append(lines, L(ttWhite, "速度: %.1f / %.1f  路径: %d/%d", e.Speed, e.BaseSpeed, e.PathIndex, len(e.Path)))
 	if e.SpeedBuff > 0 {
-		lines = append(lines, L(ttOrange, "  SpeedBuff: +%.0f%%", e.SpeedBuff*100))
+		lines = append(lines, L(ttOrange, "  光环加速: +%.0f%%", e.SpeedBuff*100))
+	}
+	if e.DashActiveT > 0 {
+		lines = append(lines, L(ttOrange, "  冲刺中: +%.0f%% 剩余%.1f秒", e.DashSpeedBoost*100, e.DashActiveT))
+	} else if e.DashCooldownT > 0 {
+		lines = append(lines, L(ttDim, "  冲刺冷却: %.1f秒", e.DashCooldownT))
 	}
 	if e.BerserkThreshold > 0 {
-		triggered := ""
+		state := "待触发"
 		if e.BerserkTriggered {
-			triggered = " [ACTIVE]"
+			state = "已激活"
 		}
-		lines = append(lines, L(ttOrange, "  Berserk: <%.0f%% → ×%.1f spd%s", e.BerserkThreshold*100, e.BerserkSpeedScale, triggered))
+		lines = append(lines, L(ttOrange, "  狂暴: <%.0f%%血 → ×%.1f速 [%s]", e.BerserkThreshold*100, e.BerserkSpeedScale, state))
 	}
 	if e.TeleportInterval > 0 {
-		lines = append(lines, L(ttCyan, "  Teleport: skip %d every %.1fs (cd: %.1fs)", e.TeleportSkip, e.TeleportInterval, e.TeleportTimer))
+		lines = append(lines, L(ttCyan, "  传送: 每%.0f秒跳%d段 (冷却:%.1f秒)", e.TeleportInterval, e.TeleportSkip, e.TeleportTimer))
 	}
 
-	// ── CC (控制效果) ──
+	// ── 控制效果 ──
 	hasCC := e.SlowTimer > 0 || e.StunTimer > 0 || e.RootTimer > 0
 	if hasCC || e.Tenacity > 0 || e.IsControlImmune || e.IsStunImmune || e.IsSlowImmune || e.IsRootImmune || e.ControlImmuneTimer > 0 {
-		lines = append(lines, L(ttHeader, "--- CC ---"))
+		lines = append(lines, L(ttHeader, "--- 控制 ---"))
 	}
 	if e.SlowTimer > 0 {
-		lines = append(lines, L(ttIce, "  SLOW: ×%.0f%%  %.1fs left", e.SlowFactor*100, e.SlowTimer))
+		lines = append(lines, L(ttIce, "  减速: ×%.0f%%速度  剩余%.1f秒", e.SlowFactor*100, e.SlowTimer))
 	}
 	if e.StunTimer > 0 {
-		lines = append(lines, L(ttYellow, "  STUN: %.1fs left", e.StunTimer))
+		lines = append(lines, L(ttYellow, "  眩晕: 剩余%.1f秒", e.StunTimer))
 	}
 	if e.RootTimer > 0 {
-		lines = append(lines, L(ttIce, "  ROOT: %.1fs left", e.RootTimer))
+		lines = append(lines, L(ttIce, "  定身: 剩余%.1f秒", e.RootTimer))
 	}
 	if e.Tenacity > 0 {
-		lines = append(lines, L(ttDim, "  Tenacity: %.0f%%", e.Tenacity*100))
+		lines = append(lines, L(ttDim, "  韧性: %.0f%%", e.Tenacity*100))
 	}
 	if e.ControlImmuneTimer > 0 {
-		lines = append(lines, L(ttGray, "  CC Immune: %.1fs left", e.ControlImmuneTimer))
+		lines = append(lines, L(ttGray, "  控制免疫: 剩余%.1f秒", e.ControlImmuneTimer))
 	}
 	if e.IsControlImmune {
-		lines = append(lines, L(ttGray, "  CC Immune (permanent)"))
+		lines = append(lines, L(ttGray, "  全控制免疫(永久)"))
 	}
 	if e.IsStunImmune {
-		lines = append(lines, L(ttGray, "  Stun Immune"))
+		lines = append(lines, L(ttGray, "  眩晕免疫"))
 	}
 	if e.IsSlowImmune {
-		lines = append(lines, L(ttGray, "  Slow Immune"))
+		lines = append(lines, L(ttGray, "  减速免疫"))
 	}
 	if e.IsRootImmune {
-		lines = append(lines, L(ttGray, "  Root Immune"))
+		lines = append(lines, L(ttGray, "  定身免疫"))
 	}
 
-	// ── DoT (持续伤害) ──
+	// ── 持续伤害 ──
 	hasDot := e.BleedTimer > 0 || e.PoisonTimer > 0 || e.BurnTimer > 0 || e.ZoneDmgAccum > 0
 	if hasDot {
-		lines = append(lines, L(ttHeader, "--- DoT ---"))
+		lines = append(lines, L(ttHeader, "--- 持续伤害 ---"))
 	}
 	if e.BleedTimer > 0 {
-		lines = append(lines, L(ttRed, "  BLEED: %.1f dps  %.1fs left", e.BleedDPS, e.BleedTimer))
+		lines = append(lines, L(ttRed, "  流血: %.1f/秒  剩余%.1f秒", e.BleedDPS, e.BleedTimer))
 	}
 	if e.PoisonTimer > 0 {
-		lines = append(lines, L(ttGreen, "  POISON: %.1f dps  %.1fs left", e.PoisonDPS, e.PoisonTimer))
+		lines = append(lines, L(ttGreen, "  中毒: %.1f/秒  剩余%.1f秒", e.PoisonDPS, e.PoisonTimer))
 	}
 	if e.BurnTimer > 0 {
-		lines = append(lines, L(ttRed, "  BURN: %.1f dps  %.1fs left", e.BurnDPS, e.BurnTimer))
+		lines = append(lines, L(ttRed, "  灼烧: %.1f/秒  剩余%.1f秒", e.BurnDPS, e.BurnTimer))
 	}
 	if e.ZoneDmgAccum > 0 {
-		lines = append(lines, L(ttPurple, "  ZoneDmg: %.1f pending", e.ZoneDmgAccum))
+		lines = append(lines, L(ttPurple, "  区域伤害: %.1f待结算", e.ZoneDmgAccum))
 	}
 
-	// ── Debuff (减益) ──
-	hasDebuff := e.DamageAmplify > 0 || e.Silenced || e.Stealthed
+	// ── 减益状态 ──
+	hasDebuff := e.DamageAmplify > 0 || e.Silenced || e.Stealthed || e.AbilitySilenced
 	if hasDebuff {
-		lines = append(lines, L(ttHeader, "--- Debuff ---"))
+		lines = append(lines, L(ttHeader, "--- 减益 ---"))
 	}
 	if e.DamageAmplify > 0 {
-		lines = append(lines, L(ttPurple, "  WEAKEN: +%.0f%% dmg  %.1fs left", e.DamageAmplify*100, e.DamageAmplifyTimer))
+		lines = append(lines, L(ttPurple, "  虚弱: 受伤+%.0f%%  剩余%.1f秒", e.DamageAmplify*100, e.DamageAmplifyTimer))
 	}
 	if e.Silenced {
-		lines = append(lines, L(ttGray, "  SILENCED (DmgCap disabled)"))
+		lines = append(lines, L(ttGray, "  沉默(伤害上限失效)"))
+	}
+	if e.AbilitySilenced {
+		lines = append(lines, L(ttGray, "  能力沉默(主动能力禁用)"))
 	}
 	if e.Stealthed {
-		lines = append(lines, L(ttDim, "  STEALTH: %.1fs left", e.StealthTimer))
+		lines = append(lines, L(ttDim, "  隐身: 剩余%.1f秒", e.StealthTimer))
 	}
 
 	// ── 防御 ──
 	hasDef := e.DamageCap > 0 || e.DamageCapPercent > 0 || e.DamageReduceRatio > 0 ||
+		e.ProjectileBlockChance > 0 || e.ArmorFlat > 0 || e.EvasionChance > 0 ||
 		e.IsInvincible || e.IsDamageImmune || e.IsUntargetable
 	if hasDef {
-		lines = append(lines, L(ttHeader, "--- Defense ---"))
+		lines = append(lines, L(ttHeader, "--- 防御 ---"))
+	}
+	if e.ProjectileBlockChance > 0 {
+		lines = append(lines, L(ttGray, "  弹幕盾: %.0f%%格挡弹射物", e.ProjectileBlockChance*100))
+	}
+	if e.ArmorFlat > 0 {
+		lines = append(lines, L(ttGray, "  装甲: 每次减免%.0f伤害", e.ArmorFlat))
+	}
+	if e.EvasionChance > 0 {
+		lines = append(lines, L(ttGray, "  闪避: %.0f%%概率", e.EvasionChance*100))
 	}
 	if e.DamageCap > 0 {
-		lines = append(lines, L(ttGray, "  DmgCap: %.0f per hit", e.DamageCap))
+		lines = append(lines, L(ttGray, "  坚韧: 单次上限%.0f", e.DamageCap))
 	}
 	if e.DamageCapPercent > 0 {
-		lines = append(lines, L(ttGray, "  DmgCap%%: %.0f%% MaxHP per hit", e.DamageCapPercent*100))
+		lines = append(lines, L(ttGray, "  坚韧: 单次上限%.0f%%血量", e.DamageCapPercent*100))
 	}
 	if e.DamageReduceRatio > 0 {
-		lines = append(lines, L(ttGray, "  DmgReduce: %.0f%%", e.DamageReduceRatio*100))
+		lines = append(lines, L(ttGray, "  减伤: %.0f%%", e.DamageReduceRatio*100))
 	}
-	// TODO: reflect/revive 迁移到能力系统后在此显示
-	if e.IsInvincible {
-		lines = append(lines, L(ttYellow, "  INVINCIBLE"))
+	if e.PhaseActive {
+		lines = append(lines, L(ttYellow, "  相位免伤中: 剩余%.1f秒", e.PhaseTimer))
+	} else if e.PhaseCooldown > 0 {
+		lines = append(lines, L(ttDim, "  相位冷却: %.1f秒", e.PhaseTimer))
+	}
+	if e.IsInvincible && !e.PhaseActive {
+		lines = append(lines, L(ttYellow, "  无敌"))
 	}
 	if e.IsDamageImmune {
-		lines = append(lines, L(ttYellow, "  DAMAGE IMMUNE"))
+		lines = append(lines, L(ttYellow, "  伤害免疫"))
 	}
-	if e.IsUntargetable {
-		lines = append(lines, L(ttYellow, "  UNTARGETABLE"))
+	if e.IsUntargetable && !e.PhaseActive {
+		lines = append(lines, L(ttYellow, "  不可选中"))
 	}
 
 	// ── 能力 ──
-	hasAbil := e.RegenPerSec > 0 || e.HealPower > 0 || e.SplitCount > 0 || e.AuraRange > 0
+	hasAbil := e.RegenPerSec > 0 || e.HealPower > 0 || e.SplitCount > 0 || e.AuraRange > 0 ||
+		e.DeathSpawnCount > 0 || e.StrDrainRatio > 0 || e.PurgeInterval > 0
 	if hasAbil {
-		lines = append(lines, L(ttHeader, "--- Ability ---"))
+		lines = append(lines, L(ttHeader, "--- 能力 ---"))
 	}
 	if e.RegenPerSec > 0 {
-		lines = append(lines, L(ttGreen, "  Regen: %.1f/s", e.RegenPerSec))
+		lines = append(lines, L(ttGreen, "  回血: %.1f/秒", e.RegenPerSec))
 	}
 	if e.HealPower > 0 {
-		lines = append(lines, L(ttGreen, "  Heal: %.0f power  R:%.0f  every %.1fs (cd:%.1fs)", e.HealPower, e.HealRadius, e.HealInterval, e.HealCooldown))
-	}
-	if e.SplitCount > 0 {
-		lines = append(lines, L(ttCyan, "  Split: %d×%.0f%% HP (spd ×%.1f)", e.SplitCount, e.SplitHPRatio*100, e.SplitSpeedScale))
+		lines = append(lines, L(ttGreen, "  治疗光环: %.0f治疗量 半径%.0f 每%.1f秒 (冷却:%.1f秒)", e.HealPower, e.HealRadius, e.HealInterval, e.HealCooldown))
 	}
 	if e.AuraRange > 0 {
-		lines = append(lines, L(ttOrange, "  Aura: +%.0f%% spd  R:%.0f", e.AuraSpeedUp*100, e.AuraRange))
+		lines = append(lines, L(ttOrange, "  加速光环: +%.0f%%速度 半径%.0f", e.AuraSpeedUp*100, e.AuraRange))
+	}
+	if e.SplitCount > 0 {
+		lines = append(lines, L(ttCyan, "  死亡分裂: %d子体 %.0f%%血量 ×%.1f速", e.SplitCount, e.SplitHPRatio*100, e.SplitSpeedScale))
+	}
+	if e.DeathSpawnCount > 0 {
+		lines = append(lines, L(ttCyan, "  死亡召唤: %d个%s", e.DeathSpawnCount, e.DeathSpawnArch))
+	}
+	if e.StrDrainRatio > 0 {
+		lines = append(lines, L(ttPurple, "  削强: -%.0f%%强度 每%.0f秒 持续%.0f秒 (冷却:%.1f秒)", e.StrDrainRatio*100, e.StrDrainInterval, e.StrDrainDuration, e.StrDrainTimer))
+	}
+	if e.PurgeInterval > 0 {
+		lines = append(lines, L(ttCyan, "  净化: 每%.0f秒清除全debuff+免疫%.0f秒 (计时:%.1f秒)", e.PurgeInterval, e.PurgeImmuneDur, e.PurgeTimer))
 	}
 
 	// ── 绘制 ──
