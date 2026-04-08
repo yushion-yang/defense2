@@ -30,12 +30,12 @@ import (
 	"defense2/internal/core/event"
 	"defense2/internal/core/game"
 	"defense2/internal/core/gamemap"
-	"defense2/internal/core/item"
-	tel "defense2/internal/core/telemetry"
 	"defense2/internal/core/gamemode"
+	"defense2/internal/core/item"
 	"defense2/internal/core/persistence"
 	"defense2/internal/core/pipeline"
 	"defense2/internal/core/projectile"
+	tel "defense2/internal/core/telemetry"
 	"defense2/internal/core/tower"
 	"defense2/internal/core/tutorial"
 	"defense2/internal/core/warden"
@@ -56,53 +56,51 @@ import (
 
 // StageScene 游戏主场景，包含所有运行时游戏状态。
 type StageScene struct {
-	switcher          Switcher                     // 场景切换器引用
-	bus               *event.Bus                   // 事件总线（从 Switcher 获取）
-	busSubscribed     bool                         // Bus 订阅是否已完成（延迟到首次 Update）
-	session           *gamemode.Session            // 游戏模式会话
-	modeID            string                       // 模式 ID（用于重玩）
-	diffID            string                       // 难度 ID（用于重玩）
-	frame             int                          // 当前帧计数
-	state             stageState                   // 当前游戏状态（进行中/胜利/失败）
-	gameMap           *gamemap.GameMap             // 运行时地图
-	enemies           *enemy.Pool                  // 敌人对象池
-	spawner           *enemy.Spawner               // 波次出怪管理器
-	towers            *tower.Pool                  // 塔对象池
-	projectiles       *projectile.Pool             // 弹射物对象池
-	beams             *combat.BeamPool             // 光束视觉对象池
-	econ              economy.Config               // 经济配置
-	lives             int                          // 剩余生命值
-	gold              int                          // 当前金币
-	kills             int                          // 累计击杀数
-	towerDefs         []tower.TowerDef             // 可建造的塔类型列表
-	selectedDef       int                          // 当前选中的塔类型索引
-	selectedTower     *tower.Tower                 // 点击选中的塔（显示信息面板+射程）
-	towerRenderer     *render.TowerRenderer        // 塔 SVG 渲染器
-	enemyRenderer     *render.EnemyRenderer        // 敌人 SVG 渲染器
-	wardenRenderer    *render.WardenRenderer       // 战灵精灵渲染器
-	audioMgr          *gameAudio.Manager           // 音效管理器
-	wardenUnit        *warden.Warden               // 战灵实体（选择前为 nil）
-	wardenOverlay     *hud.WardenSelectOverlay     // 战灵选择覆盖层
-	wardenReady       bool                         // 战灵已选择并激活
-	killRewardBonus   int                          // 额外击杀金币（事件增益）
-	buildDiscount     float64                      // 建造折扣比例（事件增益）
-	tutorial          *tutorial.Tutorial           // 新手教程
-	progressMgr       *persistence.ProgressManager // 持久化进度管理器
-	lastWave          int                          // 上一帧的波次号
-	wardenType        string                       // 战灵类型标识（用于重玩传递）
-	wardenCfg         *config.WardenConfig         // 战灵配置（用于面板显示）
+	switcher       Switcher                     // 场景切换器引用
+	bus            *event.Bus                   // 事件总线（从 Switcher 获取）
+	busSubscribed  bool                         // Bus 订阅是否已完成（延迟到首次 Update）
+	session        *gamemode.Session            // 游戏模式会话
+	modeID         string                       // 模式 ID（用于重玩）
+	diffID         string                       // 难度 ID（用于重玩）
+	frame          int                          // 当前帧计数
+	state          stageState                   // 当前游戏状态（进行中/胜利/失败）
+	gameMap        *gamemap.GameMap             // 运行时地图
+	enemies        *enemy.Pool                  // 敌人对象池
+	spawner        *enemy.Spawner               // 波次出怪管理器
+	towers         *tower.Pool                  // 塔对象池
+	projectiles    *projectile.Pool             // 弹射物对象池
+	beams          *combat.BeamPool             // 光束视觉对象池
+	econ           economy.Config               // 经济配置
+	lives          int                          // 剩余生命值
+	gold           int                          // 当前金币
+	kills          int                          // 累计击杀数
+	towerDefs      []tower.TowerDef             // 可建造的塔类型列表
+	selectedDef    int                          // 当前选中的塔类型索引
+	selectedTower  *tower.Tower                 // 点击选中的塔（显示信息面板+射程）
+	towerRenderer  *render.TowerRenderer        // 塔 SVG 渲染器
+	enemyRenderer  *render.EnemyRenderer        // 敌人 SVG 渲染器
+	wardenRenderer *render.WardenRenderer       // 战灵精灵渲染器
+	audioMgr       *gameAudio.Manager           // 音效管理器
+	wardenUnit     *warden.Warden               // 战灵实体（选择前为 nil）
+	wardenOverlay  *hud.WardenSelectOverlay     // 战灵选择覆盖层
+	wardenReady    bool                         // 战灵已选择并激活
+	tutorial       *tutorial.Tutorial           // 新手教程
+	progressMgr    *persistence.ProgressManager // 持久化进度管理器
+	lastWave       int                          // 上一帧的波次号
+	wardenType     string                       // 战灵类型标识（用于重玩传递）
+	wardenCfg      *config.WardenConfig         // 战灵配置（用于面板显示）
 	// 道具系统
-	inventory      *item.Inventory // 道具背包
-	dragItemKind   item.Kind       // 当前拖拽的道具类型
-	dragItemActive bool            // 是否正在拖拽道具
-	dragHoverTower *tower.Tower    // 拖拽道具时悬停的目标塔
-	itemPanelOpen  bool            // 道具面板是否打开
-	gameSpeed         int                          // 游戏速度倍率（1 或 2）
-	imode             interactMode                 // 交互状态机
-	prePauseMode      interactMode                 // 暂停前的交互模式（恢复用）
-	buildHoverIdx     int                          // 建塔面板鼠标悬停索引
-	gesture           *input.Gesture               // 统一手势识别器
-	waveLivesSnapshot int                          // 波开始时的生命快照（用于完美波次检测）
+	inventory         *item.Inventory // 道具背包
+	dragItemKind      item.Kind       // 当前拖拽的道具类型
+	dragItemActive    bool            // 是否正在拖拽道具
+	dragHoverTower    *tower.Tower    // 拖拽道具时悬停的目标塔
+	itemPanelOpen     bool            // 道具面板是否打开
+	gameSpeed         int             // 游戏速度倍率（1 或 2）
+	imode             interactMode    // 交互状态机
+	prePauseMode      interactMode    // 暂停前的交互模式（恢复用）
+	buildHoverIdx     int             // 建塔面板鼠标悬停索引
+	gesture           *input.Gesture  // 统一手势识别器
+	waveLivesSnapshot int             // 波开始时的生命快照（用于完美波次检测）
 	// 相机（大地图拖拽）
 	camX, camY    float64 // 相机偏移（世界坐标）
 	dragging      bool    // 是否正在拖拽
@@ -115,33 +113,33 @@ type StageScene struct {
 	wavesCleared int // 已清除波次数（用于能力解锁）
 	// 测试模式
 	// HUD 面板状态
-	wavePanelOpen   bool             // 左下角波次面板是否展开
-	wavePanelState  hud.WavePanelState // 抽屉动画状态
-	wardenPanelOpen bool // 右下角战灵面板是否展开
-	testMode        bool
-	scenarioID      string
-	enemyFilter     string
-	manualWave      bool
-	debugPanelOpen  bool
-	debugShowRange  bool
-	spawnMode       bool
-	spawnType       string
-	spawnHoverIdx   int
-	initOpts        StageOptions // 保存原始配置（重新开始用）
-	postPipeline    *postprocess.Pipeline      // 后处理管线（bloom 等）
-	particlePool    *particle.Pool             // GPU 粒子系统
-	debugOverlay    *hud.DebugOverlay          // 调试覆盖层（F2 切换）
-	perfTracker     *debug.PerfTracker         // 性能追踪器
-	qualityAdaptive *game.QualityAdaptive     // 自适应画质调节器
-	waveAnnounce    *hud.WaveAnnounce          // 波次开始公告动画
-	ambientTimer    float64                    // 环境粒子发射计时器（每秒一次）
-	multiKillCount  int                        // 连续击杀计数
-	multiKillTimer  float64                    // 连杀窗口倒计时（1.5s 无击杀后重置）
-	choicePanel       *hud.ChoicePanel            // 能力选择覆盖层
-	autoPlayer        AutoPlayer                 // 自动对局驱动（nil=手动模式）
-	screenshotPending bool                       // F12 截图请求标志
-	achieveTracker    *achievement.Tracker       // 成就追踪器
-	gameStats         GameStats                  // 详细游戏统计
+	wavePanelOpen     bool               // 左下角波次面板是否展开
+	wavePanelState    hud.WavePanelState // 抽屉动画状态
+	wardenPanelOpen   bool               // 右下角战灵面板是否展开
+	testMode          bool
+	scenarioID        string
+	enemyFilter       string
+	manualWave        bool
+	debugPanelOpen    bool
+	debugShowRange    bool
+	spawnMode         bool
+	spawnType         string
+	spawnHoverIdx     int
+	initOpts          StageOptions          // 保存原始配置（重新开始用）
+	postPipeline      *postprocess.Pipeline // 后处理管线（bloom 等）
+	particlePool      *particle.Pool        // GPU 粒子系统
+	debugOverlay      *hud.DebugOverlay     // 调试覆盖层（F2 切换）
+	perfTracker       *debug.PerfTracker    // 性能追踪器
+	qualityAdaptive   *game.QualityAdaptive // 自适应画质调节器
+	waveAnnounce      *hud.WaveAnnounce     // 波次开始公告动画
+	ambientTimer      float64               // 环境粒子发射计时器（每秒一次）
+	multiKillCount    int                   // 连续击杀计数
+	multiKillTimer    float64               // 连杀窗口倒计时（1.5s 无击杀后重置）
+	choicePanel       *hud.ChoicePanel      // 能力选择覆盖层
+	autoPlayer        AutoPlayer            // 自动对局驱动（nil=手动模式）
+	screenshotPending bool                  // F12 截图请求标志
+	achieveTracker    *achievement.Tracker  // 成就追踪器
+	gameStats         GameStats             // 详细游戏统计
 }
 
 // NewStageScene 创建游戏主场景，默认加载 map_01。
@@ -468,7 +466,7 @@ func (s *StageScene) subscribeBus() {
 // emitKill 统一发出击杀事件（弹射物/战灵/技能共用）。
 // rewardScale 为敌人原型奖励倍率（如 tank=1.35, runner=0.72），0 或 1 表示无缩放。
 func (s *StageScene) emitKill(isBoss bool, killerID string, rewardScale float64) {
-	gold := s.econ.KillGold() + s.killRewardBonus
+	gold := s.econ.KillGold()
 	if rewardScale > 0 && rewardScale != 1 {
 		gold = int(float64(gold) * rewardScale)
 	}
@@ -705,9 +703,7 @@ func (s *StageScene) Update() error {
 	return nil
 }
 
-
 // handleInput 等输入方法已移至 stage_input.go。
-
 
 // tryPlaceTower 尝试在像素位置放置当前选中类型的塔。
 func (s *StageScene) tryPlaceTower(px, py float64) bool {
@@ -725,12 +721,6 @@ func (s *StageScene) tryPlaceTower(px, py float64) bool {
 	}
 	def := s.towerDefs[s.selectedDef]
 	cost := def.Cost
-	if s.buildDiscount > 0 {
-		cost = int(float64(cost) * (1 - s.buildDiscount))
-		if cost < 1 {
-			cost = 1
-		}
-	}
 	if s.gold < cost {
 		return false // 金币不足
 	}
@@ -1408,28 +1398,7 @@ func (s *StageScene) updatePlaying() {
 	s.runAutoPlayFrame()
 }
 
-
-// ─── GameState 接口实现（供事件处理器调用）───
-
-func (s *StageScene) AddGold(amount int)             { s.gold += amount }
-func (s *StageScene) SetBuildDiscount(ratio float64) { s.buildDiscount = ratio }
-func (s *StageScene) SetKillRewardBonus(extra int)   { s.killRewardBonus = extra }
-
-func (s *StageScene) BuffAllTowersDamage(ratio float64) {
-	s.towers.Each(func(t *tower.Tower) { t.Damage *= (1 + ratio) })
-}
-func (s *StageScene) BuffAllTowersRange(ratio float64) {
-	s.towers.Each(func(t *tower.Tower) { t.Range *= (1 + ratio) })
-}
-func (s *StageScene) BuffAllTowersSpeed(ratio float64) {
-	s.towers.Each(func(t *tower.Tower) { t.AttackSpeed *= (1 + ratio) })
-}
-func (s *StageScene) SlowAllEnemies(ratio float64) {
-	s.enemies.Each(func(e *enemy.Enemy) {
-		e.BaseSpeed *= (1 - ratio)
-		e.Speed = e.BaseSpeed
-	})
-}
+func (s *StageScene) AddGold(amount int) { s.gold += amount }
 
 // Draw 渲染游戏画面：地图 → 塔 → 敌人 → 弹射物 → 预览 → HUD → 通知 → 胜负覆盖。
 // shakeBuffer 屏幕震动用的离屏缓冲（懒初始化）。
@@ -1829,8 +1798,8 @@ func (s *StageScene) buildBuildMenuData() hud.BuildMenuData {
 			Key: def.Key, Label: def.Label, Cost: def.Cost,
 			Damage: def.Damage, AttackSpeed: def.AttackSpeed, Range: def.Range,
 			RoleTag: roleTag, RoleColor: roleClr,
-			TypeIcon: towerTypeIcon(def.Key),
-			Sprite:   s.towerRenderer.GetSprite("sentinel"),
+			TypeIcon:  towerTypeIcon(def.Key),
+			Sprite:    s.towerRenderer.GetSprite("sentinel"),
 			Buildable: true,
 		})
 	}
@@ -2122,7 +2091,7 @@ func convertArchetypesToSpawnConfigs(archetypes map[string]*config.EnemyArchetyp
 			Boss:            a.Boss,
 			StealthDuration: a.StealthDuration,
 			SplitCount:      a.SplitCount,
-			SplitScale:      0.3,  // 默认子体血量 30%
+			SplitScale:      0.3, // 默认子体血量 30%
 			SplitHPRatio:    0.3,
 			SplitSpeedScale: 1.4,
 			HealScale:       a.HealScale,
@@ -2381,9 +2350,9 @@ func (s *StageScene) buildAutoPlaySnapshot() AutoPlaySnapshot {
 			Key: t.Key, Row: t.Row, Col: t.Col,
 			X: t.X, Y: t.Y, Damage: t.Damage,
 			Range: t.Range, Cost: t.Cost, Strength: str,
-			Abilities: t.Abilities,
+			Abilities:   t.Abilities,
 			AttackStyle: string(t.AttackStyleID),
-			HasTarget: t.Target != nil,
+			HasTarget:   t.Target != nil,
 		})
 	})
 

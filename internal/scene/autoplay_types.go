@@ -83,7 +83,6 @@ type AutoPlayTower struct {
 	Strength    int
 	Abilities   []string // 已装载能力列表
 	AttackStyle string   // 攻击方式 ID
-	SkillName   string   // 挂载的技能名称（空=无技能）
 	HasTarget   bool     // 是否正在锁定目标（视觉目录用）
 }
 
@@ -111,19 +110,14 @@ const (
 	APActionSell                             // 出售塔
 	APActionStartWave                        // 开始下一波
 	APActionSelectWarden                     // 选择战灵
-	APActionChooseEvent                      // 选择事件
-	APActionAssignSkill                      // 挂载技能
 	APActionAddAbility                       // 给塔添加能力
 )
 
 // AutoPlayAction 自动操作指令。
 type AutoPlayAction struct {
-	Type          APActionType
-	TowerKey      string // Build: 塔类型 Key
-	Row, Col      int    // Build/Upgrade/Sell: 网格坐标
-	WardenKey     string // SelectWarden: 战灵类型
-	EventIndex    int    // ChooseEvent: 选择的事件索引
-	SkillName     string // AssignSkill: 技能名称
-	SkillToWarden bool   // AssignSkill: true=战灵, false=塔
-	AbilityName   string // AddAbility: 能力名称
+	Type        APActionType
+	TowerKey    string // Build: 塔类型 Key
+	Row, Col    int    // Build/Upgrade/Sell: 网格坐标
+	WardenKey   string // SelectWarden: 战灵类型
+	AbilityName string // AddAbility: 能力名称
 }
