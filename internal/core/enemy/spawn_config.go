@@ -31,6 +31,28 @@ type SpawnConfig struct {
 
 	// 击杀奖励倍率
 	RewardScale float64 // 原型奖励倍率（如 tank=1.35, runner=0.72）
+
+	// ── 能力系统字段 ──
+	DamageCap         float64 // 坚韧(固定)
+	DamageCapPercent  float64 // 坚韧(百分比)
+	ProjectileBlockChance float64 // 弹幕盾
+	ArmorFlat             float64 // 装甲固定减免
+	EvasionChance         float64 // 闪避概率
+	DashSpeedBoost        float64 // 受击冲刺速度提升
+	DashDuration          float64 // 受击冲刺持续时间
+	DashCooldown          float64 // 受击冲刺冷却
+	PhaseDuration         float64 // 相位偏移免伤时间
+	PhaseCooldown         float64 // 相位偏移冷却
+	StrDrainRatio         float64 // 削强比例
+	StrDrainInterval      float64 // 削强间隔
+	StrDrainDuration      float64 // 削强持续时间
+	DeathSpawnCount       int     // 死亡召唤数量
+	DeathSpawnArch        string  // 死亡召唤原型
+	PurgeInterval         float64 // 净化间隔
+	PurgeImmuneDur        float64 // 净化免疫时间
+	// 免疫
+	CCImmune   bool // 全控制免疫
+	SlowImmune bool // 减速免疫
 }
 
 // DefaultSpawnConfig 返回默认生成配置（普通敌人）。

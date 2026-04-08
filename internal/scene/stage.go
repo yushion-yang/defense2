@@ -2576,26 +2576,67 @@ func convertArchetypesToSpawnConfigs(archetypes map[string]*config.EnemyArchetyp
 // applyEnemyAbilityToSpawnConfig 将一个怪物能力应用到 SpawnConfig。
 func applyEnemyAbilityToSpawnConfig(sc *enemy.SpawnConfig, def *config.EnemyAbilityDef) {
 	switch def.Type {
+	// ── defense ──
+	case "projectileBlock":
+		sc.ProjectileBlockChance = def.Base
+	case "armorPlating":
+		sc.ArmorFlat = def.Base
+	case "evasion":
+		sc.EvasionChance = def.Base
+	case "damageCap":
+		sc.DamageCap = def.Base
+	case "damageCapPercent":
+		sc.DamageCapPercent = def.Base
+
+	// ── resist ──
+	case "ccImmune":
+		sc.CCImmune = true
+	case "slowImmune":
+		sc.SlowImmune = true
+	case "purge":
+		sc.PurgeInterval = def.Base  // base=间隔秒数
+		sc.PurgeImmuneDur = def.Param // param=免疫时间
+
+	// ── movement ──
 	case "stealth":
-		sc.StealthDuration = def.Base // base=隐身秒数
+		sc.StealthDuration = def.Base
 		sc.Behavior = "stealth"
-	case "deathSplit":
-		sc.SplitCount = int(def.Base)     // base=分裂数
-		sc.SplitHPRatio = def.Param       // param=HP比例
-		sc.Behavior = "splitter"
+	case "dashOnHit":
+		sc.DashSpeedBoost = def.Base   // base=速度提升比例
+		sc.DashDuration = def.Param    // param=持续时间
+		sc.DashCooldown = 5            // 固定冷却5s
+	case "phaseShift":
+		sc.PhaseDuration = def.Base    // base=免伤时间
+		sc.PhaseCooldown = def.Param   // param=冷却时间
 	case "teleport":
-		sc.TeleportInterval = def.Base    // base=间隔秒数
-		sc.TeleportSkip = int(def.Param)  // param=跳过段数
+		sc.TeleportInterval = def.Base
+		sc.TeleportSkip = int(def.Param)
+
+	// ── offense ──
+	case "strengthDrain":
+		sc.StrDrainRatio = def.Base    // base=减益比例
+		sc.StrDrainInterval = def.Param // param=间隔
+		sc.StrDrainDuration = 6        // 固定6s
+
+	// ── support ──
 	case "healAura":
-		sc.HealScale = def.Base           // base=治疗量比例
-		sc.HealRadius = def.Param         // param=治疗半径
-		sc.HealInterval = 2.5             // 固定间隔
+		sc.HealScale = def.Base
+		sc.HealRadius = def.Param
+		sc.HealInterval = 3            // 固定3s
 		sc.Behavior = "healer"
 	case "speedAura":
-		sc.AuraSpeedUp = def.Base         // base=加速比例
-		sc.AuraRange = def.Param          // param=光环半径
+		sc.AuraSpeedUp = def.Base
+		sc.AuraRange = def.Param
 		sc.Behavior = "buffer"
-	// 未来新能力在此扩展
+
+	// ── death ──
+	case "deathSplit":
+		sc.SplitCount = int(def.Base)
+		sc.SplitHPRatio = def.Param
+		sc.Behavior = "splitter"
+	case "deathSpawn":
+		sc.DeathSpawnCount = int(def.Base)
+		sc.DeathSpawnArch = "normal"
 	}
 }
 

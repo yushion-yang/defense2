@@ -45,10 +45,13 @@ func MoveAlongPath(e *Enemy, fallbackWaypoints []gamemap.Point, dt float64) bool
 		return false
 	}
 
-	// 应用旗手光环加速（SpeedBuff 由 TickBehaviors 每帧写入）
+	// 应用光环/受击冲刺加速
 	speed := e.Speed
 	if e.SpeedBuff > 0 {
 		speed *= (1 + e.SpeedBuff)
+	}
+	if e.DashActiveT > 0 {
+		speed *= (1 + e.DashSpeedBoost)
 	}
 
 	target := waypoints[e.PathIndex]

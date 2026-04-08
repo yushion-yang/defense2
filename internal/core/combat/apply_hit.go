@@ -35,8 +35,40 @@ type HitOutput struct {
 
 // ApplyHit 统一命中处理：遍历能力 → 计算最终伤害 → 扣血 → 击杀检查。
 func ApplyHit(input HitInput, onHit HitCallback) HitOutput {
+	e := input.Target
+
+	// ── 怪物闪避（完全回避，不触发任何 OnHit）──
+	if e.EvasionChance > 0 && !e.AbilitySilenced {
+		if rand.Float64() < e.EvasionChance {
+			return HitOutput{} // 完全闪避
+		}
+	}
+
+	// ── 弹幕盾（阻挡弹射物类攻击）──
+	if e.ProjectileBlockChance > 0 && !e.AbilitySilenced {
+		isProjectile := input.Style == "projectile" || input.Style == "scatter" ||
+			input.Style == "bounce" || input.Style == "radial" || input.Style == "splash"
+		if isProjectile && rand.Float64() < e.ProjectileBlockChance {
+			return HitOutput{} // 被盾挡住
+		}
+	}
+
 	totalDmg := input.BaseDamage
 	isCrit := false
+
+	// ── 装甲固定减免 ──
+	if e.ArmorFlat > 0 && !e.AbilitySilenced {
+		totalDmg -= e.ArmorFlat
+		if totalDmg < 1 {
+			totalDmg = 1
+		}
+	}
+
+	// ── 受击冲刺触发 ──
+	if e.DashSpeedBoost > 0 && e.DashCooldownT <= 0 && !e.AbilitySilenced {
+		e.DashActiveT = e.DashDuration
+		e.DashCooldownT = e.DashCooldown
+	}
 
 	// 构建合成弹射物用于能力 OnHit 调用
 	var synth *projectile.Projectile

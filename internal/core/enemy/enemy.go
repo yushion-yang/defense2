@@ -142,6 +142,42 @@ type Enemy struct {
 
 	// ── 减伤 ──
 	DamageReduceRatio float64 // 受伤减免比例（0~1，由 buff 模板设置）
+
+	// ── 能力系统字段 ──
+	// defense
+	ProjectileBlockChance float64 // 弹幕盾：阻挡弹射物概率（0=无）
+	ArmorFlat             float64 // 装甲：每次受击固定减免
+	EvasionChance         float64 // 闪避：完全闪避概率（0=无）
+	// DamageCap/DamageCapPercent 已有字段
+
+	// movement
+	DashSpeedBoost  float64 // 受击冲刺：速度提升比例
+	DashDuration    float64 // 受击冲刺：提升持续时间（秒）
+	DashCooldown    float64 // 受击冲刺：冷却时间（秒）
+	DashCooldownT   float64 // 受击冲刺：当前冷却倒计时
+	DashActiveT     float64 // 受击冲刺：当前激活倒计时
+	PhaseDuration   float64 // 相位偏移：免伤持续时间（秒）
+	PhaseCooldown   float64 // 相位偏移：冷却时间（秒）
+	PhaseTimer      float64 // 相位偏移：当前计时（>0 免伤中, <0 冷却中）
+	PhaseActive     bool    // 相位偏移：当前是否免伤
+
+	// offense
+	StrDrainRatio    float64 // 削强：强度减益比例（0.5 = -50%）
+	StrDrainInterval float64 // 削强：施加间隔（秒）
+	StrDrainDuration float64 // 削强：减益持续时间（秒）
+	StrDrainTimer    float64 // 削强：冷却倒计时
+
+	// death
+	DeathSpawnCount int    // 死亡召唤：召唤数量（0=不召唤）
+	DeathSpawnArch  string // 死亡召唤：召唤原型（默认 "normal"）
+
+	// resist
+	PurgeInterval   float64 // 净化：清除间隔（秒，0=无净化）
+	PurgeImmuneDur  float64 // 净化：清除后免疫持续时间（秒）
+	PurgeTimer      float64 // 净化：当前计时
+
+	// 能力沉默状态（silenceZone 对怪物能力的影响）
+	AbilitySilenced bool // 当前帧是否被沉默（每帧重置）
 }
 
 // IsDying returns true if the enemy is playing its death animation.

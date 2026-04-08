@@ -157,6 +157,41 @@ func (p *Pool) Spawn(x, y, baseHP, baseSpeed float64, pathIndex int, archetype s
 				e.BuffAmount = cfg.AuraSpeedUp
 			}
 
+			// 能力系统字段
+			e.DamageCap = cfg.DamageCap
+			e.DamageCapPercent = cfg.DamageCapPercent
+			e.ProjectileBlockChance = cfg.ProjectileBlockChance
+			e.ArmorFlat = cfg.ArmorFlat
+			e.EvasionChance = cfg.EvasionChance
+			e.DashSpeedBoost = cfg.DashSpeedBoost
+			e.DashDuration = cfg.DashDuration
+			e.DashCooldown = cfg.DashCooldown
+			e.DashCooldownT = 0
+			e.DashActiveT = 0
+			e.PhaseDuration = cfg.PhaseDuration
+			e.PhaseCooldown = cfg.PhaseCooldown
+			e.PhaseTimer = cfg.PhaseCooldown // 首次需等满冷却
+			e.PhaseActive = false
+			e.StrDrainRatio = cfg.StrDrainRatio
+			e.StrDrainInterval = cfg.StrDrainInterval
+			e.StrDrainDuration = cfg.StrDrainDuration
+			e.StrDrainTimer = cfg.StrDrainInterval
+			e.DeathSpawnCount = cfg.DeathSpawnCount
+			e.DeathSpawnArch = cfg.DeathSpawnArch
+			e.PurgeInterval = cfg.PurgeInterval
+			e.PurgeImmuneDur = cfg.PurgeImmuneDur
+			e.PurgeTimer = 0
+			e.AbilitySilenced = false
+			if cfg.CCImmune {
+				e.IsControlImmune = true
+				e.IsStunImmune = true
+				e.IsSlowImmune = true
+				e.IsRootImmune = true
+			}
+			if cfg.SlowImmune {
+				e.IsSlowImmune = true
+			}
+
 			p.Count++
 			return e
 		}
@@ -178,6 +213,20 @@ func (p *Pool) Kill(e *Enemy) {
 			children := SpawnSplitChildren(e, p)
 			if p.OnSplit != nil && len(children) > 0 {
 				p.OnSplit(children)
+			}
+		}
+
+		// 死亡召唤（deathSpawn 能力）
+		if e.DeathSpawnCount > 0 {
+			arch := e.DeathSpawnArch
+			if arch == "" {
+				arch = "normal"
+			}
+			for i := 0; i < e.DeathSpawnCount; i++ {
+				child := p.Spawn(e.X+float64(i)*8, e.Y, e.MaxHP*0.2, e.BaseSpeed, e.PathIndex, arch, DefaultSpawnConfig())
+				if child != nil {
+					child.Path = e.Path
+				}
 			}
 		}
 

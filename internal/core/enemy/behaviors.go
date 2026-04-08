@@ -60,7 +60,69 @@ func TickBehaviors(pool *Pool, dt float64) BehaviorEvents {
 		case "buffer":
 			tickBuffer(e, pool)
 		}
-		// splitter 在死亡时触发，不在此处 tick
+		// splitter/deathSpawn 在死亡时触发，不在此处 tick
+
+		// ── 能力系统 tick ──
+
+		// 受击冲刺计时器衰减
+		if e.DashActiveT > 0 {
+			e.DashActiveT -= dt
+			if e.DashActiveT <= 0 {
+				e.DashActiveT = 0
+			}
+		}
+		if e.DashCooldownT > 0 {
+			e.DashCooldownT -= dt
+		}
+
+		// 相位偏移
+		if e.PhaseCooldown > 0 && !e.AbilitySilenced {
+			e.PhaseTimer -= dt
+			if e.PhaseTimer <= 0 && !e.PhaseActive {
+				// 进入免伤相位
+				e.PhaseActive = true
+				e.IsInvincible = true
+				e.IsUntargetable = true
+				e.PhaseTimer = e.PhaseDuration
+			} else if e.PhaseActive && e.PhaseTimer <= 0 {
+				// 相位结束
+				e.PhaseActive = false
+				e.IsInvincible = false
+				e.IsUntargetable = false
+				e.PhaseTimer = e.PhaseCooldown
+			}
+		}
+
+		// 净化
+		if e.PurgeInterval > 0 {
+			e.PurgeTimer -= dt
+			if e.PurgeTimer <= 0 {
+				e.PurgeTimer = e.PurgeInterval
+				// 清除所有负面效果
+				e.SlowTimer = 0
+				e.SlowFactor = 1
+				e.Speed = e.BaseSpeed
+				e.StunTimer = 0
+				e.RootTimer = 0
+				e.BleedTimer = 0
+				e.BleedDPS = 0
+				e.PoisonTimer = 0
+				e.PoisonDPS = 0
+				e.BurnTimer = 0
+				e.BurnDPS = 0
+				e.DamageAmplify = 0
+				e.DamageAmplifyTimer = 0
+				e.ZoneDmgAccum = 0
+				// 净化后短暂免疫
+				if e.PurgeImmuneDur > 0 {
+					e.ControlImmuneTimer = e.PurgeImmuneDur
+					e.IsControlImmune = true
+					e.IsStunImmune = true
+					e.IsSlowImmune = true
+					e.IsRootImmune = true
+				}
+			}
+		}
 	})
 
 	return events
