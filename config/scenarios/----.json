@@ -1,0 +1,179 @@
+{
+  "id": "----",
+  "name": "持续伤害",
+  "description": "4 towers, 9 enemies on map_test_large",
+  "mapID": "map_test_large",
+  "gold": 99999,
+  "lives": 999,
+  "waves": 99,
+  "enemyFilter": "dummy",
+  "manualWave": false,
+  "towers": [
+    {
+      "row": 4,
+      "col": 8,
+      "key": "basic",
+      "abilitySlots": [
+        "spinAoe",
+        "",
+        "",
+        "",
+        "bleedDot",
+        ""
+      ],
+      "damageTier": "B",
+      "speedTier": "B",
+      "rangeTier": "B",
+      "baseDamage": 7.208625268463255,
+      "potentialDamage": 8.099043656616548,
+      "baseSpeed": 0.3746215827380091,
+      "potentialSpeed": 0.4753784172619909,
+      "baseRange": 44.520561761810804,
+      "potentialRange": 86.04635559936467,
+      "strength": 400
+    },
+    {
+      "row": 4,
+      "col": 18,
+      "key": "basic",
+      "abilitySlots": [
+        "",
+        "",
+        "",
+        "",
+        "burn",
+        ""
+      ],
+      "damageTier": "B",
+      "speedTier": "B",
+      "rangeTier": "B",
+      "baseDamage": 9.434987854713963,
+      "potentialDamage": 10.50234294200005,
+      "baseSpeed": 0.17973476567646213,
+      "potentialSpeed": 0.36426523432353786,
+      "baseRange": 46.9567933561143,
+      "potentialRange": 85.17996634410873,
+      "strength": 400
+    },
+    {
+      "row": 10,
+      "col": 8,
+      "key": "basic",
+      "abilitySlots": [
+        "",
+        "",
+        "",
+        "",
+        "weaken",
+        ""
+      ],
+      "damageTier": "B",
+      "speedTier": "B",
+      "rangeTier": "B",
+      "baseDamage": 5.860463485798542,
+      "potentialDamage": 6.939536514201458,
+      "baseSpeed": 0.37906100930666503,
+      "potentialSpeed": 0.44334973677724826,
+      "baseRange": 52.88135649059982,
+      "potentialRange": 97.06923025425324,
+      "strength": 180
+    },
+    {
+      "row": 10,
+      "col": 18,
+      "key": "basic",
+      "abilitySlots": [
+        "",
+        "",
+        "",
+        "",
+        "poison",
+        ""
+      ],
+      "damageTier": "B",
+      "speedTier": "B",
+      "rangeTier": "B",
+      "baseDamage": 5.572718561701906,
+      "potentialDamage": 8.652096538215005,
+      "baseSpeed": 0.26417097321748617,
+      "potentialSpeed": 0.5262276409754196,
+      "baseRange": 46.76846645705626,
+      "potentialRange": 93.23153354294375,
+      "strength": 410
+    }
+  ],
+  "enemies": [
+    {
+      "archetype": "dummy",
+      "x": 427,
+      "y": 186,
+      "pathIndex": 0,
+      "hp": 764211.785795325,
+      "maxHP": 1000000
+    },
+    {
+      "archetype": "dummy",
+      "x": 426,
+      "y": 398.5,
+      "pathIndex": 0,
+      "hp": 771270.1966300695,
+      "maxHP": 1000000
+    },
+    {
+      "archetype": "dummy",
+      "x": 691,
+      "y": 360.5,
+      "pathIndex": 0,
+      "hp": 777090.0655433541,
+      "maxHP": 1000000
+    },
+    {
+      "archetype": "dummy",
+      "x": 399,
+      "y": 350,
+      "pathIndex": 0,
+      "hp": 771270.1966300695,
+      "maxHP": 1000000
+    },
+    {
+      "archetype": "dummy",
+      "x": 680,
+      "y": 214,
+      "pathIndex": 0,
+      "hp": 379915.1804617015,
+      "maxHP": 1000000
+    },
+    {
+      "archetype": "dummy",
+      "x": 428,
+      "y": 146.5,
+      "pathIndex": 0,
+      "hp": 771270.1966300695,
+      "maxHP": 1000000
+    },
+    {
+      "archetype": "dummy",
+      "x": 782.5,
+      "y": 380.5,
+      "pathIndex": 0,
+      "hp": 982613.3305917558,
+      "maxHP": 1000000
+    },
+    {
+      "archetype": "dummy",
+      "x": 684,
+      "y": 134,
+      "pathIndex": 0,
+      "hp": 777090.0655433541,
+      "maxHP": 1000000
+    },
+    {
+      "archetype": "dummy",
+      "x": 343,
+      "y": 184,
+      "pathIndex": 0,
+      "hp": 771270.1966300695,
+      "maxHP": 1000000
+    }
+  ]
+}

@@ -1,0 +1,639 @@
+{
+  "id": "--------",
+  "name": "全阵营  高强度",
+  "description": "8 towers, 55 enemies on map_test_large",
+  "mapID": "map_test_large",
+  "gold": 99999,
+  "lives": 999,
+  "waves": 99,
+  "enemyFilter": "dummy",
+  "manualWave": false,
+  "towers": [
+    {
+      "row": 4,
+      "col": 10,
+      "key": "basic",
+      "abilitySlots": [
+        "enhance",
+        "",
+        "",
+        "",
+        "",
+        ""
+      ],
+      "damageTier": "B",
+      "speedTier": "B",
+      "rangeTier": "B",
+      "baseDamage": 17.956574419683086,
+      "potentialDamage": 21.40942558031692,
+      "baseSpeed": 0.9390057388666576,
+      "potentialSpeed": 1.0931074684251432,
+      "baseRange": 92.33132798854996,
+      "potentialRange": 111.95840093972815,
+      "strength": 500
+    },
+    {
+      "row": 4,
+      "col": 18,
+      "key": "basic",
+      "abilitySlots": [
+        "bounce",
+        "",
+        "",
+        "",
+        "",
+        ""
+      ],
+      "damageTier": "B",
+      "speedTier": "B",
+      "rangeTier": "B",
+      "baseDamage": 6.496833660135137,
+      "potentialDamage": 11.07872821837779,
+      "baseSpeed": 0.330192869537852,
+      "potentialSpeed": 0.3928879581230329,
+      "baseRange": 45.241143197504215,
+      "potentialRange": 84.69395533270179,
+      "strength": 500
+    },
+    {
+      "row": 8,
+      "col": 4,
+      "key": "basic",
+      "abilitySlots": [
+        "radial",
+        "",
+        "",
+        "",
+        "",
+        ""
+      ],
+      "damageTier": "B",
+      "speedTier": "B",
+      "rangeTier": "B",
+      "baseDamage": 5.246312932761489,
+      "potentialDamage": 9.714357987767716,
+      "baseSpeed": 0.37019695920762674,
+      "potentialSpeed": 0.5691470031157702,
+      "baseRange": 48.4143435771205,
+      "potentialRange": 58.344172446518186,
+      "strength": 500
+    },
+    {
+      "row": 10,
+      "col": 10,
+      "key": "basic",
+      "abilitySlots": [
+        "wideBeam",
+        "",
+        "",
+        "",
+        "",
+        ""
+      ],
+      "damageTier": "B",
+      "speedTier": "B",
+      "rangeTier": "B",
+      "baseDamage": 7.890352835861046,
+      "potentialDamage": 10.077040230661527,
+      "baseSpeed": 0.27061952933768385,
+      "potentialSpeed": 0.5793804706623161,
+      "baseRange": 46.052266783962416,
+      "potentialRange": 70.41711077085617,
+      "strength": 500
+    },
+    {
+      "row": 10,
+      "col": 22,
+      "key": "basic",
+      "abilitySlots": [
+        "multiTarget",
+        "",
+        "",
+        "",
+        "",
+        ""
+      ],
+      "damageTier": "B",
+      "speedTier": "B",
+      "rangeTier": "B",
+      "baseDamage": 4.722434983043316,
+      "potentialDamage": 8.077565016956685,
+      "baseSpeed": 0.4130924582218967,
+      "potentialSpeed": 0.43690754177810326,
+      "baseRange": 54.69047294025861,
+      "potentialRange": 98.64679970427632,
+      "strength": 500
+    },
+    {
+      "row": 2,
+      "col": 22,
+      "key": "basic",
+      "abilitySlots": [
+        "splash",
+        "",
+        "",
+        "",
+        "",
+        ""
+      ],
+      "damageTier": "B",
+      "speedTier": "B",
+      "rangeTier": "B",
+      "baseDamage": 5.689266001948341,
+      "potentialDamage": 7.11073399805166,
+      "baseSpeed": 0.3432921360055908,
+      "potentialSpeed": 0.5575530880941171,
+      "baseRange": 48.50114649175472,
+      "potentialRange": 80.28666165385468,
+      "strength": 500
+    },
+    {
+      "row": 6,
+      "col": 22,
+      "key": "basic",
+      "abilitySlots": [
+        "spinAoe",
+        "",
+        "",
+        "",
+        "",
+        ""
+      ],
+      "damageTier": "B",
+      "speedTier": "B",
+      "rangeTier": "B",
+      "baseDamage": 4.987313329977487,
+      "potentialDamage": 5.252686670022513,
+      "baseSpeed": 0.46750798950645583,
+      "potentialSpeed": 0.48023355113691035,
+      "baseRange": 49.39651694398475,
+      "potentialRange": 90.69946365466957,
+      "strength": 500
+    },
+    {
+      "row": 10,
+      "col": 16,
+      "key": "basic",
+      "abilitySlots": [
+        "scatter",
+        "",
+        "",
+        "",
+        "",
+        ""
+      ],
+      "damageTier": "B",
+      "speedTier": "B",
+      "rangeTier": "B",
+      "baseDamage": 9.652569762530057,
+      "potentialDamage": 10.77818988827425,
+      "baseSpeed": 0.28283023956920117,
+      "potentialSpeed": 0.4779138484281418,
+      "baseRange": 42.94277123454522,
+      "potentialRange": 49.35597855391863,
+      "strength": 500
+    }
+  ],
+  "enemies": [
+    {
+      "archetype": "dummy",
+      "x": 184,
+      "y": 97.5,
+      "pathIndex": 0,
+      "hp": 997520,
+      "maxHP": 1000000
+    },
+    {
+      "archetype": "dummy",
+      "x": 225.5,
+      "y": 97.5,
+      "pathIndex": 0,
+      "hp": 961114.4624851971,
+      "maxHP": 1000000
+    },
+    {
+      "archetype": "dummy",
+      "x": 383,
+      "y": 95,
+      "pathIndex": 0,
+      "hp": 985764.1261779671,
+      "maxHP": 1000000
+    },
+    {
+      "archetype": "dummy",
+      "x": 439.5,
+      "y": 95,
+      "pathIndex": 0,
+      "hp": 896769.6574731915,
+      "maxHP": 1000000
+    },
+    {
+      "archetype": "dummy",
+      "x": 704.5,
+      "y": 106,
+      "pathIndex": 0,
+      "hp": 933382.1143334529,
+      "maxHP": 1000000
+    },
+    {
+      "archetype": "dummy",
+      "x": 676,
+      "y": 138.5,
+      "pathIndex": 0,
+      "hp": 929433.8577173969,
+      "maxHP": 1000000
+    },
+    {
+      "archetype": "dummy",
+      "x": 985,
+      "y": 93.5,
+      "pathIndex": 0,
+      "hp": 936619.3220874367,
+      "maxHP": 1000000
+    },
+    {
+      "archetype": "dummy",
+      "x": 984.5,
+      "y": 119,
+      "pathIndex": 0,
+      "hp": 933490.117329709,
+      "maxHP": 1000000
+    },
+    {
+      "archetype": "dummy",
+      "x": 951.5,
+      "y": 233,
+      "pathIndex": 0,
+      "hp": 960793.7972417473,
+      "maxHP": 1000000
+    },
+    {
+      "archetype": "dummy",
+      "x": 958,
+      "y": 276.5,
+      "pathIndex": 0,
+      "hp": 960812.2292417473,
+      "maxHP": 1000000
+    },
+    {
+      "archetype": "dummy",
+      "x": 979,
+      "y": 454,
+      "pathIndex": 0,
+      "hp": 952044.3401478733,
+      "maxHP": 1000000
+    },
+    {
+      "archetype": "dummy",
+      "x": 960.5,
+      "y": 472.5,
+      "pathIndex": 0,
+      "hp": 951413.1013653625,
+      "maxHP": 1000000
+    },
+    {
+      "archetype": "dummy",
+      "x": 913.5,
+      "y": 495.5,
+      "pathIndex": 0,
+      "hp": 950630.4558062879,
+      "maxHP": 1000000
+    },
+    {
+      "archetype": "dummy",
+      "x": 870.5,
+      "y": 502.5,
+      "pathIndex": 0,
+      "hp": 954238.0048488771,
+      "maxHP": 1000000
+    },
+    {
+      "archetype": "dummy",
+      "x": 614.5,
+      "y": 332.5,
+      "pathIndex": 0,
+      "hp": 946550.3899490085,
+      "maxHP": 1000000
+    },
+    {
+      "archetype": "dummy",
+      "x": 661.5,
+      "y": 302.5,
+      "pathIndex": 0,
+      "hp": 911945.4236727369,
+      "maxHP": 1000000
+    },
+    {
+      "archetype": "dummy",
+      "x": 380.5,
+      "y": 352,
+      "pathIndex": 0,
+      "hp": 965279.7762382606,
+      "maxHP": 1000000
+    },
+    {
+      "archetype": "dummy",
+      "x": 408,
+      "y": 329,
+      "pathIndex": 0,
+      "hp": 990344.9745655622,
+      "maxHP": 1000000
+    },
+    {
+      "archetype": "dummy",
+      "x": 348.5,
+      "y": 302,
+      "pathIndex": 0,
+      "hp": 946388.8327567978,
+      "maxHP": 1000000
+    },
+    {
+      "archetype": "dummy",
+      "x": 248.5,
+      "y": 400.5,
+      "pathIndex": 0,
+      "hp": 977041.5372222427,
+      "maxHP": 1000000
+    },
+    {
+      "archetype": "dummy",
+      "x": 203.5,
+      "y": 251,
+      "pathIndex": 0,
+      "hp": 977071.4585640838,
+      "maxHP": 1000000
+    },
+    {
+      "archetype": "dummy",
+      "x": 103,
+      "y": 367,
+      "pathIndex": 0,
+      "hp": 975699.7744276308,
+      "maxHP": 1000000
+    },
+    {
+      "archetype": "dummy",
+      "x": 714,
+      "y": 307.5,
+      "pathIndex": 0,
+      "hp": 929246.2820415077,
+      "maxHP": 1000000
+    },
+    {
+      "archetype": "dummy",
+      "x": 185,
+      "y": 183,
+      "pathIndex": 0,
+      "hp": 979524.7035791423,
+      "maxHP": 1000000
+    },
+    {
+      "archetype": "dummy",
+      "x": 681,
+      "y": 355.5,
+      "pathIndex": 0,
+      "hp": 893013.4094344578,
+      "maxHP": 1000000
+    },
+    {
+      "archetype": "dummy",
+      "x": 477.5,
+      "y": 96,
+      "pathIndex": 0,
+      "hp": 990001.4817254216,
+      "maxHP": 1000000
+    },
+    {
+      "archetype": "dummy",
+      "x": 730.5,
+      "y": 82,
+      "pathIndex": 0,
+      "hp": 936957.7662009492,
+      "maxHP": 1000000
+    },
+    {
+      "archetype": "dummy",
+      "x": 772,
+      "y": 60.5,
+      "pathIndex": 0,
+      "hp": 954767.2521817207,
+      "maxHP": 1000000
+    },
+    {
+      "archetype": "dummy",
+      "x": 638,
+      "y": 134.5,
+      "pathIndex": 0,
+      "hp": 937291.3283661526,
+      "maxHP": 1000000
+    },
+    {
+      "archetype": "dummy",
+      "x": 1014,
+      "y": 89,
+      "pathIndex": 0,
+      "hp": 946954.9945628933,
+      "maxHP": 1000000
+    },
+    {
+      "archetype": "dummy",
+      "x": 982.5,
+      "y": 61,
+      "pathIndex": 0,
+      "hp": 946999.1912649105,
+      "maxHP": 1000000
+    },
+    {
+      "archetype": "dummy",
+      "x": 958.5,
+      "y": 86,
+      "pathIndex": 0,
+      "hp": 934439.3282702386,
+      "maxHP": 1000000
+    },
+    {
+      "archetype": "dummy",
+      "x": 1025.5,
+      "y": 60.5,
+      "pathIndex": 0,
+      "hp": 967584.1732949878,
+      "maxHP": 1000000
+    },
+    {
+      "archetype": "dummy",
+      "x": 1015.5,
+      "y": 118,
+      "pathIndex": 0,
+      "hp": 946750.3712544797,
+      "maxHP": 1000000
+    },
+    {
+      "archetype": "dummy",
+      "x": 952,
+      "y": 117.5,
+      "pathIndex": 0,
+      "hp": 946697.4042091278,
+      "maxHP": 1000000
+    },
+    {
+      "archetype": "dummy",
+      "x": 946.5,
+      "y": 54,
+      "pathIndex": 0,
+      "hp": 954234.5804168241,
+      "maxHP": 1000000
+    },
+    {
+      "archetype": "dummy",
+      "x": 1013.5,
+      "y": 44,
+      "pathIndex": 0,
+      "hp": 967584.1732949878,
+      "maxHP": 1000000
+    },
+    {
+      "archetype": "dummy",
+      "x": 1037,
+      "y": 91,
+      "pathIndex": 0,
+      "hp": 966933.2188540571,
+      "maxHP": 1000000
+    },
+    {
+      "archetype": "dummy",
+      "x": 924,
+      "y": 249.5,
+      "pathIndex": 0,
+      "hp": 966028.4852417557,
+      "maxHP": 1000000
+    },
+    {
+      "archetype": "dummy",
+      "x": 1015.5,
+      "y": 259,
+      "pathIndex": 0,
+      "hp": 966289.1742232621,
+      "maxHP": 1000000
+    },
+    {
+      "archetype": "dummy",
+      "x": 1002,
+      "y": 409,
+      "pathIndex": 0,
+      "hp": 954024.3291684994,
+      "maxHP": 1000000
+    },
+    {
+      "archetype": "dummy",
+      "x": 841.5,
+      "y": 503,
+      "pathIndex": 0,
+      "hp": 954460.8846716566,
+      "maxHP": 1000000
+    },
+    {
+      "archetype": "dummy",
+      "x": 806.5,
+      "y": 500.5,
+      "pathIndex": 0,
+      "hp": 955325.7267052296,
+      "maxHP": 1000000
+    },
+    {
+      "archetype": "dummy",
+      "x": 733,
+      "y": 344.5,
+      "pathIndex": 0,
+      "hp": 928998.0493534645,
+      "maxHP": 1000000
+    },
+    {
+      "archetype": "dummy",
+      "x": 628,
+      "y": 276.5,
+      "pathIndex": 0,
+      "hp": 949066.6537095645,
+      "maxHP": 1000000
+    },
+    {
+      "archetype": "dummy",
+      "x": 704,
+      "y": 259,
+      "pathIndex": 0,
+      "hp": 930898.2488176103,
+      "maxHP": 1000000
+    },
+    {
+      "archetype": "dummy",
+      "x": 586,
+      "y": 275,
+      "pathIndex": 0,
+      "hp": 989793.7626186814,
+      "maxHP": 1000000
+    },
+    {
+      "archetype": "dummy",
+      "x": 655.5,
+      "y": 253.5,
+      "pathIndex": 0,
+      "hp": 948910.3581790231,
+      "maxHP": 1000000
+    },
+    {
+      "archetype": "dummy",
+      "x": 327,
+      "y": 318.5,
+      "pathIndex": 0,
+      "hp": 990472.6038956175,
+      "maxHP": 1000000
+    },
+    {
+      "archetype": "dummy",
+      "x": 371,
+      "y": 278,
+      "pathIndex": 0,
+      "hp": 971460.004054925,
+      "maxHP": 1000000
+    },
+    {
+      "archetype": "dummy",
+      "x": 238.5,
+      "y": 311,
+      "pathIndex": 0,
+      "hp": 980957.7447884632,
+      "maxHP": 1000000
+    },
+    {
+      "archetype": "dummy",
+      "x": 142,
+      "y": 294,
+      "pathIndex": 0,
+      "hp": 979998.3441608238,
+      "maxHP": 1000000
+    },
+    {
+      "archetype": "dummy",
+      "x": 180.5,
+      "y": 411,
+      "pathIndex": 0,
+      "hp": 979998.3441608238,
+      "maxHP": 1000000
+    },
+    {
+      "archetype": "dummy",
+      "x": 130.5,
+      "y": 400,
+      "pathIndex": 0,
+      "hp": 1000000,
+      "maxHP": 1000000
+    },
+    {
+      "archetype": "dummy",
+      "x": 106.5,
+      "y": 313.5,
+      "pathIndex": 0,
+      "hp": 981384.9889681974,
+      "maxHP": 1000000
+    }
+  ]
+}
