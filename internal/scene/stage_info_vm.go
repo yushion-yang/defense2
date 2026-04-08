@@ -180,7 +180,7 @@ func fmtAttr(numFmt string, base, potential, effStr float64) string {
 	ratio := effStr / 100.0
 	scaled := potential * ratio
 	total := base + scaled
-	return fmt.Sprintf(numFmt+"+("+numFmt+")="+numFmt, base, scaled, total)
+	return fmt.Sprintf(numFmt+"+("+numFmt+")→"+numFmt, base, scaled, total)
 }
 
 // buildAttrSegs builds colored segments for a tower attribute.
@@ -202,7 +202,7 @@ func buildAttrSegs(numFmt string, base, potential, effStr float64, auraBonus ...
 	segs := []hud.AbilitySegment{
 		{Text: fmt.Sprintf(numFmt+"+", base), Kind: "base"},
 		{Text: fmt.Sprintf("("+numFmt+")", scaled), Kind: "scaled", Color: scaledColor(scaled, potential)},
-		{Text: fmt.Sprintf("="+numFmt, total), Kind: "total"},
+		{Text: fmt.Sprintf("→"+numFmt, total), Kind: "total"},
 	}
 	// 光环加成（绿色追加显示）
 	if bonus > 0.005 || bonus < -0.005 {
@@ -398,7 +398,7 @@ func buildAbilitySegments(def *config.AbilityDef, effStr float64) []hud.AbilityS
 				segs = append(segs,
 					hud.AbilitySegment{Text: fmt.Sprintf("%.0f%%+", def.Base*100), Kind: "base"},
 					hud.AbilitySegment{Text: fmt.Sprintf("(%.0f%%)", scaled*100), Kind: "scaled", Color: sClr},
-					hud.AbilitySegment{Text: fmt.Sprintf("=%.0f%%", total*100), Kind: "total"},
+					hud.AbilitySegment{Text: fmt.Sprintf("→%.0f%%", total*100), Kind: "total"},
 				)
 			}
 		case "s":
@@ -412,7 +412,7 @@ func buildAbilitySegments(def *config.AbilityDef, effStr float64) []hud.AbilityS
 				segs = append(segs,
 					hud.AbilitySegment{Text: fmt.Sprintf(nf+"+", def.Base), Kind: "base"},
 					hud.AbilitySegment{Text: fmt.Sprintf("("+nf+")", scaled), Kind: "scaled", Color: sClr},
-					hud.AbilitySegment{Text: fmt.Sprintf("="+nf, total), Kind: "total"},
+					hud.AbilitySegment{Text: fmt.Sprintf("→"+nf, total), Kind: "total"},
 				)
 			}
 		case "si":
@@ -422,7 +422,7 @@ func buildAbilitySegments(def *config.AbilityDef, effStr float64) []hud.AbilityS
 				segs = append(segs,
 					hud.AbilitySegment{Text: fmt.Sprintf("%.0f+", math.Floor(def.Base)), Kind: "base"},
 					hud.AbilitySegment{Text: fmt.Sprintf("(%.0f)", math.Floor(scaled)), Kind: "scaled", Color: sClr},
-					hud.AbilitySegment{Text: fmt.Sprintf("=%.0f", math.Floor(total)), Kind: "total"},
+					hud.AbilitySegment{Text: fmt.Sprintf("→%.0f", math.Floor(total)), Kind: "total"},
 				)
 			}
 		case "p":
