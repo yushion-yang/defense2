@@ -124,6 +124,8 @@ type StageScene struct {
 	debugPanelOpen    bool
 	debugShowRange    bool
 	spawnMode         bool
+	saveNaming        bool   // 场景命名输入中
+	saveNameBuf       string // 命名缓冲区
 	spawnType         string
 	spawnHoverIdx     int
 	initOpts          StageOptions          // 保存原始配置（重新开始用）
@@ -643,6 +645,12 @@ func (s *StageScene) Update() error {
 		}
 	}
 
+	// 场景命名输入（拦截所有其他输入）
+	if s.saveNaming {
+		s.updateSaveNaming()
+		return nil
+	}
+
 	switch s.state {
 	case statePlaying:
 		// 交互状态机驱动
@@ -899,7 +907,10 @@ func (s *StageScene) debugActions() []hud.DebugAction {
 	// ── 场景快照 ──
 	actions = append(actions,
 		hud.DebugAction{Label: "场景快照", IsSection: true},
-		hud.DebugAction{Label: "Save Scenario", Action: func() { s.saveScenario() }},
+		hud.DebugAction{Label: "Save Scenario", Action: func() {
+			s.saveNaming = true
+			s.saveNameBuf = ""
+		}},
 	)
 
 	// ── 配置审计 ──
@@ -929,8 +940,88 @@ func (s *StageScene) debugActions() []hud.DebugAction {
 	return actions
 }
 
+// updateSaveNaming handles text input for scenario naming overlay.
+func (s *StageScene) updateSaveNaming() {
+	// Append typed characters
+	chars := ebiten.AppendInputChars(nil)
+	for _, ch := range chars {
+		if len(s.saveNameBuf) < 40 {
+			s.saveNameBuf += string(ch)
+		}
+	}
+
+	// Backspace
+	if inpututil.IsKeyJustPressed(ebiten.KeyBackspace) && len(s.saveNameBuf) > 0 {
+		// Remove last rune (handles multi-byte UTF-8)
+		runes := []rune(s.saveNameBuf)
+		s.saveNameBuf = string(runes[:len(runes)-1])
+	}
+
+	// Enter = confirm
+	if inpututil.IsKeyJustPressed(ebiten.KeyEnter) {
+		name := strings.TrimSpace(s.saveNameBuf)
+		if name == "" {
+			name = fmt.Sprintf("Snapshot %s", time.Now().Format("15:04:05"))
+		}
+		s.saveNaming = false
+		s.saveScenario(name)
+	}
+
+	// Escape = cancel
+	if inpututil.IsKeyJustPressed(ebiten.KeyEscape) {
+		s.saveNaming = false
+		hud.ShowToast("Save cancelled")
+	}
+}
+
+// drawSaveNaming renders the scenario naming input overlay.
+func (s *StageScene) drawSaveNaming(screen *ebiten.Image) {
+	fm := render.GlobalFont()
+	if fm == nil {
+		return
+	}
+	sw := float64(game.ScreenWidth)
+	sh := float64(game.ScreenHeight)
+
+	// Dim background
+	draw.FilledRect(screen, 0, 0, float32(sw), float32(sh), color.RGBA{A: 160}, false)
+
+	// Dialog box
+	boxW, boxH := float32(400), float32(120)
+	boxX := float32(sw)/2 - boxW/2
+	boxY := float32(sh)/2 - boxH/2
+	draw.RoundRect(screen, boxX, boxY, boxW, boxH, 12, color.RGBA{R: 30, G: 35, B: 50, A: 245})
+	draw.StrokeRoundRect(screen, boxX, boxY, boxW, boxH, 12, 1.5, color.RGBA{R: 80, G: 120, B: 200, A: 200})
+
+	// Title
+	fm.DrawCenteredText(screen, "Save Scenario", sw/2, float64(boxY)+16, 16, color.RGBA{R: 220, G: 230, B: 255, A: 255})
+
+	// Input field background
+	fieldX := boxX + 20
+	fieldY := boxY + 50
+	fieldW := boxW - 40
+	fieldH := float32(30)
+	draw.RoundRect(screen, fieldX, fieldY, fieldW, fieldH, 6, color.RGBA{R: 15, G: 18, B: 30, A: 255})
+	draw.StrokeRoundRect(screen, fieldX, fieldY, fieldW, fieldH, 6, 1, color.RGBA{R: 60, G: 80, B: 140, A: 200})
+
+	// Text content with blinking cursor
+	display := s.saveNameBuf
+	if int(time.Now().UnixMilli()/500)%2 == 0 {
+		display += "|"
+	}
+	if display == "|" {
+		// Show placeholder when empty
+		fm.DrawText(screen, "Enter scenario name...", float64(fieldX)+8, float64(fieldY)+7, 13, color.RGBA{R: 80, G: 90, B: 110, A: 200})
+	} else {
+		fm.DrawText(screen, display, float64(fieldX)+8, float64(fieldY)+7, 13, color.RGBA{R: 200, G: 210, B: 230, A: 255})
+	}
+
+	// Hint
+	fm.DrawCenteredText(screen, "Enter: Save  |  Esc: Cancel", sw/2, float64(boxY+boxH)-14, 10, color.RGBA{R: 100, G: 110, B: 140, A: 200})
+}
+
 // saveScenario exports the current tower layout + scene config to a JSON file.
-func (s *StageScene) saveScenario() {
+func (s *StageScene) saveScenario(name string) {
 	var towers []config.TowerSnapshot
 	s.towers.Each(func(t *tower.Tower) {
 		towers = append(towers, config.TowerSnapshot{
@@ -950,9 +1041,20 @@ func (s *StageScene) saveScenario() {
 		})
 	})
 
+	// Generate file-safe ID from name
+	id := strings.Map(func(r rune) rune {
+		if r >= 'a' && r <= 'z' || r >= 'A' && r <= 'Z' || r >= '0' && r <= '9' || r == '-' || r == '_' {
+			return r
+		}
+		return '-'
+	}, name)
+	if id == "" {
+		id = fmt.Sprintf("scenario-%s", time.Now().Format("20060102-150405"))
+	}
+
 	sd := config.ScenarioData{
-		ID:          fmt.Sprintf("scenario-%s", time.Now().Format("20060102-150405")),
-		Name:        fmt.Sprintf("Snapshot %s", time.Now().Format("15:04:05")),
+		ID:          id,
+		Name:        name,
 		Description: fmt.Sprintf("%d towers on %s", len(towers), s.initOpts.MapID),
 		MapID:       s.initOpts.MapID,
 		Gold:        s.initOpts.Gold,
@@ -1594,6 +1696,11 @@ func (s *StageScene) Draw(screen *ebiten.Image) {
 	}
 
 	s.drawFullScene(screen)
+
+	// 场景命名输入覆盖层（画在最上层）
+	if s.saveNaming {
+		s.drawSaveNaming(screen)
+	}
 
 	// F12 截图：渲染完成后读取像素并异步保存
 	if s.screenshotPending {
