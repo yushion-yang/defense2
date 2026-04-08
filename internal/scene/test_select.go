@@ -1,10 +1,11 @@
 // test_select.go — 测试模式场景选择器。
-// 提供 14 种测试场景，按类别筛选，卡片式网格布局。
+// 提供预设测试场景 + 自定义 JSON 场景，按类别筛选，卡片式网格布局。
 package scene
 
 import (
 	"image/color"
 
+	"defense2/internal/config"
 	"defense2/internal/core/game"
 	"defense2/internal/render"
 	"defense2/internal/render/draw"
@@ -28,6 +29,7 @@ var testCategories = []testCategory{
 	{"ability", "能力测试"},
 	{"dps", "DPS测试"},
 	{"bench", "基准测试"},
+	{"custom", "自定义"},
 }
 
 type testScenario struct {
@@ -69,29 +71,30 @@ var testScenarios = []testScenario{
 // ── 布局常量 ────────────────────────────────────
 
 const (
-	tsCardW    = 210.0
-	tsCardH    = 100.0
-	tsCardGap  = 12.0
-	tsCols     = 5
-	tsCardY0   = 120.0 // 第一行卡片 Y
-	tsTabH     = 28.0
-	tsTabGap   = 8.0
-	tsTabY     = 78.0
-	tsBtnW     = 220.0
-	tsBtnH     = 38.0
+	tsCardW   = 210.0
+	tsCardH   = 100.0
+	tsCardGap = 12.0
+	tsCols    = 5
+	tsCardY0  = 120.0 // 第一行卡片 Y
+	tsTabH    = 28.0
+	tsTabGap  = 8.0
+	tsTabY    = 78.0
+	tsBtnW    = 220.0
+	tsBtnH    = 38.0
 )
 
 // ── TestSelectScene ──────────────────────────────
 
 // TestSelectScene 测试场景选择器。
 type TestSelectScene struct {
-	switcher    Switcher
-	selectedIdx int // 选中的场景索引 (-1 = 未选)
-	hoverIdx    int // 鼠标悬停场景索引
-	activeTab   int // 当前活跃的分类标签索引 (0=全部)
-	hoverTab    int // 鼠标悬停标签索引
-	hoverStart  bool
-	filtered    []int // 当前筛选后的场景索引列表
+	switcher        Switcher
+	selectedIdx     int // 选中的场景索引 (-1 = 未选)，>=len(testScenarios) 为自定义场景
+	hoverIdx        int // 鼠标悬停场景索引
+	activeTab       int // 当前活跃的分类标签索引 (0=全部)
+	hoverTab        int // 鼠标悬停标签索引
+	hoverStart      bool
+	filtered        []int          // 当前筛选后的场景索引列表
+	customScenarios []testScenario // 从 JSON 加载的自定义场景
 }
 
 // NewTestSelectScene 创建测试场景选择器。
@@ -102,8 +105,49 @@ func NewTestSelectScene(sw Switcher) *TestSelectScene {
 		hoverIdx:    -1,
 		hoverTab:    -1,
 	}
+	s.loadCustomScenarios()
 	s.updateFilter()
 	return s
+}
+
+// loadCustomScenarios 从 config/scenarios/ 加载自定义场景。
+func (s *TestSelectScene) loadCustomScenarios() {
+	scenarios, err := config.LoadScenarios()
+	if err != nil || len(scenarios) == 0 {
+		return
+	}
+	for _, sd := range scenarios {
+		s.customScenarios = append(s.customScenarios, testScenario{
+			ID:          sd.ID,
+			Name:        sd.Name,
+			Icon:        "multishot",
+			Description: sd.Description,
+			Category:    "custom",
+			MapID:       sd.MapID,
+			Gold:        sd.Gold,
+			Lives:       sd.Lives,
+			Waves:       sd.Waves,
+			Color:       color.RGBA{R: 180, G: 140, B: 220, A: 255},
+			EnemyFilter: sd.EnemyFilter,
+			ManualWave:  sd.ManualWave,
+		})
+	}
+}
+
+// scenarioAt returns the scenario at the given combined index
+// (0..len(testScenarios)-1 = builtin, len(testScenarios).. = custom).
+func (s *TestSelectScene) scenarioAt(idx int) *testScenario {
+	if idx < 0 {
+		return nil
+	}
+	if idx < len(testScenarios) {
+		return &testScenarios[idx]
+	}
+	ci := idx - len(testScenarios)
+	if ci < len(s.customScenarios) {
+		return &s.customScenarios[ci]
+	}
+	return nil
 }
 
 func (s *TestSelectScene) updateFilter() {
@@ -112,6 +156,13 @@ func (s *TestSelectScene) updateFilter() {
 	for i, sc := range testScenarios {
 		if cat == "all" || sc.Category == cat {
 			s.filtered = append(s.filtered, i)
+		}
+	}
+	// Append custom scenarios with offset indices
+	base := len(testScenarios)
+	for i, sc := range s.customScenarios {
+		if cat == "all" || sc.Category == cat {
+			s.filtered = append(s.filtered, base+i)
 		}
 	}
 	// 切换分类后清除选择
@@ -155,10 +206,10 @@ func (s *TestSelectScene) Update() error {
 }
 
 func (s *TestSelectScene) startScenario() {
-	if s.selectedIdx < 0 || s.selectedIdx >= len(testScenarios) {
+	sc := s.scenarioAt(s.selectedIdx)
+	if sc == nil {
 		return
 	}
-	sc := testScenarios[s.selectedIdx]
 	s.switcher.SwitchScene(NewStageSceneWithOpts(s.switcher, StageOptions{
 		MapID:       sc.MapID,
 		WardenType:  "", // 在 Stage 内第一次开波时选择战灵
@@ -274,7 +325,10 @@ func (s *TestSelectScene) Draw(screen *ebiten.Image) {
 	cardStartX := (sw - totalCardW) / 2
 
 	for i, scIdx := range s.filtered {
-		sc := testScenarios[scIdx]
+		sc := s.scenarioAt(scIdx)
+		if sc == nil {
+			continue
+		}
 		col := i % tsCols
 		row := i / tsCols
 		x := float32(cardStartX + float64(col)*(tsCardW+tsCardGap))

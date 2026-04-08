@@ -3,6 +3,7 @@
 package scene
 
 import (
+	"encoding/json"
 	"fmt"
 	"image"
 	"image/color"
@@ -337,6 +338,18 @@ func NewStageSceneWithOpts(sw Switcher, opts StageOptions) *StageScene {
 	// all-static 模式：一次性生成所有原型静止展示
 	if opts.EnemyFilter == "all-static" {
 		s.spawnAllStatic()
+	}
+
+	// Restore saved scenario towers (custom JSON scenarios)
+	if opts.ScenarioID != "" {
+		if scenarios, err := config.LoadScenarios(); err == nil {
+			for _, sd := range scenarios {
+				if sd.ID == opts.ScenarioID {
+					s.restoreScenario(sd)
+					break
+				}
+			}
+		}
 	}
 
 	// 事件总线引用（订阅延迟到首次 Update，避免被场景切换淡出的 bus.Clear 清掉）
@@ -883,6 +896,12 @@ func (s *StageScene) debugActions() []hud.DebugAction {
 	)
 
 	// ── 技能 ──
+	// ── 场景快照 ──
+	actions = append(actions,
+		hud.DebugAction{Label: "场景快照", IsSection: true},
+		hud.DebugAction{Label: "Save Scenario", Action: func() { s.saveScenario() }},
+	)
+
 	// ── 配置审计 ──
 	actions = append(actions,
 		hud.DebugAction{Label: "配置审计", IsSection: true},
@@ -908,6 +927,89 @@ func (s *StageScene) debugActions() []hud.DebugAction {
 	)
 
 	return actions
+}
+
+// saveScenario exports the current tower layout + scene config to a JSON file.
+func (s *StageScene) saveScenario() {
+	var towers []config.TowerSnapshot
+	s.towers.Each(func(t *tower.Tower) {
+		towers = append(towers, config.TowerSnapshot{
+			Row:             t.Row,
+			Col:             t.Col,
+			Key:             t.Key,
+			AbilitySlots:    t.AbilitySlots,
+			DamageTier:      t.DamageTier,
+			SpeedTier:       t.SpeedTier,
+			RangeTier:       t.RangeTier,
+			BaseDamage:      t.BaseDamage,
+			PotentialDamage: t.PotentialDamage,
+			BaseSpeed:       t.BaseSpeed,
+			PotentialSpeed:  t.PotentialSpeed,
+			BaseRange:       t.BaseRange,
+			PotentialRange:  t.PotentialRange,
+		})
+	})
+
+	sd := config.ScenarioData{
+		ID:          fmt.Sprintf("scenario-%s", time.Now().Format("20060102-150405")),
+		Name:        fmt.Sprintf("Snapshot %s", time.Now().Format("15:04:05")),
+		Description: fmt.Sprintf("%d towers on %s", len(towers), s.initOpts.MapID),
+		MapID:       s.initOpts.MapID,
+		Gold:        s.initOpts.Gold,
+		Lives:       s.initOpts.Lives,
+		Waves:       s.initOpts.Waves,
+		EnemyFilter: s.initOpts.EnemyFilter,
+		ManualWave:  s.initOpts.ManualWave,
+		Towers:      towers,
+	}
+
+	data, err := json.MarshalIndent(sd, "", "  ")
+	if err != nil {
+		hud.ShowToast("Save failed: " + err.Error())
+		return
+	}
+
+	path := filepath.Join("config", "scenarios", sd.ID+".json")
+	if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
+		hud.ShowToast("Save failed: " + err.Error())
+		return
+	}
+	if err := os.WriteFile(path, data, 0o644); err != nil {
+		hud.ShowToast("Save failed: " + err.Error())
+		return
+	}
+
+	hud.ShowToast(fmt.Sprintf("Saved: %s", path))
+	fmt.Printf("Scenario saved: %s\n", path)
+}
+
+// restoreScenario places towers from a saved scenario snapshot.
+func (s *StageScene) restoreScenario(sd *config.ScenarioData) {
+	defMap := make(map[string]tower.TowerDef)
+	for _, d := range s.towerDefs {
+		defMap[d.Key] = d
+	}
+	for _, snap := range sd.Towers {
+		def, ok := defMap[snap.Key]
+		if !ok {
+			fmt.Printf("restoreScenario: unknown tower key %q, skip\n", snap.Key)
+			continue
+		}
+		center := s.gameMap.CellCenter(snap.Row, snap.Col)
+		t := s.towers.PlaceFromSnapshot(snap.Row, snap.Col, center.X, center.Y, def, snap)
+		if t == nil {
+			fmt.Printf("restoreScenario: pool full, cannot place %s at (%d,%d)\n", snap.Key, snap.Row, snap.Col)
+			continue
+		}
+		// Restore abilities (order matters: attack mode first changes style/sprite)
+		for _, abilityType := range snap.AbilitySlots {
+			if abilityType != "" {
+				t.AddAbility(abilityType)
+			}
+		}
+		t.RecalcStats()
+		s.gold -= def.Cost
+	}
 }
 
 // spawnEntries 构建排序后的造怪菜单条目列表。

@@ -5,6 +5,7 @@ package tower
 import (
 	"fmt"
 
+	"defense2/internal/config"
 	"defense2/internal/core/game"
 	"defense2/internal/core/strength"
 )
@@ -93,6 +94,74 @@ func (p *Pool) Place(row, col int, cx, cy float64, def TowerDef) *Tower {
 			t.Strength = strength.NewStrengthData() // Base=100，确保强度系统从放置起就生效
 			t.Buffs = nil
 			t.PendingChoices = nil // Place 后由调用方调用 RollAndCachePendingChoices
+			p.Count++
+			return t
+		}
+	}
+	return nil
+}
+
+// PlaceFromSnapshot places a tower from a saved snapshot, skipping random rolls.
+// Uses the snapshot's base/potential/tier values directly instead of RollTowerStats.
+func (p *Pool) PlaceFromSnapshot(row, col int, cx, cy float64, def TowerDef, snap config.TowerSnapshot) *Tower {
+	for i := range p.towers {
+		if !p.towers[i].Active {
+			t := &p.towers[i]
+			t.Row = row
+			t.Col = col
+			t.X = cx
+			t.Y = cy
+			t.Range = def.Range
+			t.Damage = def.Damage
+			t.AttackSpeed = def.AttackSpeed
+			t.FireTimer = 0
+			t.Cost = def.Cost
+			t.Key = def.Key
+			t.InstanceKey = fmt.Sprintf("%s_%d_%d", def.Key, row, col)
+			t.Label = def.Label
+			t.Abilities = def.Abilities
+			t.Color = def.Color
+			t.Active = true
+			t.AttackStyleID = def.AttackStyleID
+			t.ProjectileSpeed = def.ProjectileSpeed
+			t.ChargeProgress = 0
+			t.ChargeReady = false
+			t.SpinAngle = 0
+			t.SpinActive = 0
+			t.AuraPulse = 0
+			t.Branch = ""
+			t.Level = 1
+			t.SpriteKey = spriteKeyForStyle(def.AttackStyleID)
+			t.AbilitySlots = [6]string{}
+			t.UnlockOrder = RollUnlockOrder()
+			t.Target = nil
+			t.Kills = 0
+			t.StackTarget = 0
+			t.StackCount = 0
+			t.LastPercentHpTarget = 0
+			t.GoldCooldown = 0
+			t.Angle = 0
+			t.FireAnim = 0
+			t.CritBonus = 0
+			t.Faction = ""
+
+			// Apply snapshot attributes (skip random roll)
+			t.BaseDamage = snap.BaseDamage
+			t.PotentialDamage = snap.PotentialDamage
+			t.BaseSpeed = snap.BaseSpeed
+			t.PotentialSpeed = snap.PotentialSpeed
+			t.BaseRange = snap.BaseRange
+			t.PotentialRange = snap.PotentialRange
+			t.DamageTier = snap.DamageTier
+			t.SpeedTier = snap.SpeedTier
+			t.RangeTier = snap.RangeTier
+
+			t.BuildAnim = 0
+			t.SellAnim = 0
+			t.Selling = false
+			t.Strength = strength.NewStrengthData()
+			t.Buffs = nil
+			t.PendingChoices = nil
 			p.Count++
 			return t
 		}
