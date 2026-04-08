@@ -145,7 +145,7 @@ func (p *Pool) Spawn(x, y, baseHP, baseSpeed float64, pathIndex int, archetype s
 				}
 			}
 			if cfg.HealScale > 0 {
-				e.HealPower = hp * cfg.HealScale // 治疗量 = 本体HP * healScale
+				e.HealPower = cfg.HealScale // 治疗比例（如0.05=5%目标MaxHP）
 				e.HealRadius = cfg.HealRadius
 				e.HealInterval = cfg.HealInterval
 				if e.HealInterval <= 0 {

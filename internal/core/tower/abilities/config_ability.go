@@ -279,8 +279,9 @@ func (a *ConfigAbility) OnTick(t *tower.Tower, ctx *tower.TickContext) *tower.Ti
 				return
 			}
 			if math.Hypot(e.X-t.X, e.Y-t.Y) <= t.Range {
-				e.Silenced = true
-				combat.ApplySlow(e, 1-sv, 0.1, "silenceZone") // sv=减速比例, factor=1-sv=保留速度比例
+				e.Silenced = true         // 禁用 DamageCap
+				e.AbilitySilenced = true  // 禁用可沉默的怪物能力
+				combat.ApplySlow(e, 1-sv, 0.1, "silenceZone")
 			}
 		})
 

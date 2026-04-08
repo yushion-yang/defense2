@@ -13,11 +13,19 @@ type HealEvent struct {
 	TargetY  float64 // 被治疗者 Y 坐标
 }
 
+// StrDrainEvent 削强事件（由 stage.go 执行实际的塔强度减益）。
+type StrDrainEvent struct {
+	EnemyX, EnemyY float64 // 敌人位置（用于查找最近塔）
+	Ratio          float64 // 减益比例（0.5 = -50%）
+	Duration       float64 // 持续时间（秒）
+}
+
 // BehaviorEvents 一帧内行为系统产生的事件（供外部播放音效/VFX）。
 type BehaviorEvents struct {
-	Heals   []HealEvent // 治疗事件（位置信息用于音效/特效）
-	Reveals []RevealEvent // 隐身破解事件
-	Regens  int         // 本帧有回血的敌人数（用于判断是否播放 regen 音效）
+	Heals     []HealEvent     // 治疗事件
+	Reveals   []RevealEvent   // 隐身破解事件
+	Regens    int             // 本帧有回血的敌人数
+	StrDrains []StrDrainEvent // 削强事件
 }
 
 // RevealEvent 隐身破解事件。
@@ -93,6 +101,18 @@ func TickBehaviors(pool *Pool, dt float64) BehaviorEvents {
 			}
 		}
 
+		// 削强
+		if e.StrDrainRatio > 0 && !e.AbilitySilenced {
+			e.StrDrainTimer -= dt
+			if e.StrDrainTimer <= 0 {
+				e.StrDrainTimer = e.StrDrainInterval
+				events.StrDrains = append(events.StrDrains, StrDrainEvent{
+					EnemyX: e.X, EnemyY: e.Y,
+					Ratio: e.StrDrainRatio, Duration: e.StrDrainDuration,
+				})
+			}
+		}
+
 		// 净化
 		if e.PurgeInterval > 0 {
 			e.PurgeTimer -= dt
@@ -153,7 +173,9 @@ func tickHealer(e *Enemy, pool *Pool, dt float64, events *BehaviorEvents) {
 		if dx*dx+dy*dy > r2 {
 			return
 		}
-		restored := math.Min(e.HealPower, other.MaxHP-other.HP)
+		// HealPower 作为比例（如0.05=5%），按目标MaxHP计算治疗量
+		healAmount := other.MaxHP * e.HealPower
+		restored := math.Min(healAmount, other.MaxHP-other.HP)
 		other.HP += restored
 		events.Heals = append(events.Heals, HealEvent{
 			HealerID: e.ID,

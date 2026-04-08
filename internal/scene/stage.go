@@ -1588,6 +1588,24 @@ func (s *StageScene) updatePlaying() {
 	if behaviorEvents.Regens > 0 {
 		s.audioMgr.PlayThrottledAt(gameAudio.SFXRegenTick, 2000, gameAudio.VolHit*0.5)
 	}
+	// 削强事件：找最近的塔施加临时强度减益
+	for _, drain := range behaviorEvents.StrDrains {
+		var bestTower *tower.Tower
+		bestDist := 200.0 // 最大作用距离
+		s.towers.Each(func(t *tower.Tower) {
+			d := math.Hypot(t.X-drain.EnemyX, t.Y-drain.EnemyY)
+			if d < bestDist {
+				bestDist = d
+				bestTower = t
+			}
+		})
+		if bestTower != nil && bestTower.Strength != nil {
+			key := fmt.Sprintf("strDrain_%.0f_%.0f", drain.EnemyX, drain.EnemyY)
+			bestTower.Strength.SetEnemySub(key, bestTower.Strength.Effective()*drain.Ratio)
+			bestTower.RecalcStats()
+			// TODO: 持续时间 drain.Duration 后移除（当前简化为每次覆盖）
+		}
+	}
 
 	// 4. 战灵行为（未选择前跳过）
 	if s.wardenReady && s.wardenUnit != nil {

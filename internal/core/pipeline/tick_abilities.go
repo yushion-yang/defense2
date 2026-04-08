@@ -46,6 +46,7 @@ func TickTowerAbilities(towers *tower.Pool, enemies *enemy.Pool, dt float64, cha
 	// --- Phase 1.5: 重置敌人每帧临时状态（沉默/区域虚弱等，由区域能力重新设置） ---
 	enemies.Each(func(e *enemy.Enemy) {
 		e.Silenced = false
+		e.AbilitySilenced = false
 		// zone 型虚弱每帧由 weakenZone 重新设置；
 		// OnHit 型虚弱(DamageAmplifyTimer>0)不在此清零，由 TickStatusEffects 倒计时管理。
 		if e.DamageAmplifyTimer <= 0 {
