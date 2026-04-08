@@ -52,11 +52,7 @@ func ApplyHit(input HitInput, onHit HitCallback) HitOutput {
 		}
 	}
 
-	// 快照虚弱状态（OnHit 前），weaken 施加的增伤不应对本次命中生效
-	prevAmplify := input.Target.DamageAmplify
-	prevAmplifyTimer := input.Target.DamageAmplifyTimer
-
-	// 遍历塔能力，触发 OnHit
+	// 遍历塔能力，触发 OnHit（weaken 等 debuff 在此设置，立即对本次命中生效）
 	if input.Tower != nil {
 		for _, aName := range input.Tower.Abilities {
 			ab, ok := tower.Registry[aName]
@@ -75,22 +71,12 @@ func ApplyHit(input HitInput, onHit HitCallback) HitOutput {
 		}
 	}
 
-	// 扣血前恢复虚弱快照，确保本次命中不享受自己施加的增伤
-	newAmplify := input.Target.DamageAmplify
-	newAmplifyTimer := input.Target.DamageAmplifyTimer
-	input.Target.DamageAmplify = prevAmplify
-	input.Target.DamageAmplifyTimer = prevAmplifyTimer
-
 	// 扣血 — 走伤害管线（免疫/减免/阈值/遥测统一处理）
 	pipeResult := ProcessDamage(DamageInput{
 		Target:     input.Target,
 		RawDamage:  totalDmg,
 		DamageType: DmgPhysical, // 塔弹射物默认物理伤害
 	})
-
-	// 恢复 OnHit 施加的虚弱（下次命中生效）
-	input.Target.DamageAmplify = newAmplify
-	input.Target.DamageAmplifyTimer = newAmplifyTimer
 
 	killed := pipeResult.Killed
 	finalDmg := pipeResult.FinalDamage
