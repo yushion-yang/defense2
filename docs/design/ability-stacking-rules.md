@@ -169,9 +169,9 @@ Step 7. 死亡检查 (HP ≤ 0)
 
 | 规则 | 值 |
 |------|-----|
-| crit 能力概率 | sv + CritBonus (来自 critAura) |
-| crit 能力倍率 | 1.8x (配置 param) |
-| critAura 独立暴击 | CritBonus 概率, 1.5x 固定 |
+| 暴击倍率 | **固定 2x** (所有来源统一) |
+| crit 能力概率 | sv + CritBonus (与 critAura 加法叠加) |
+| 无 crit 能力时 | CritBonus 独立判定, 同样 2x |
 | 防双暴 | crit 触发后 CritBonus 判定跳过 |
 | 多 critAura 叠加 | CritBonus **加法累加** |
 

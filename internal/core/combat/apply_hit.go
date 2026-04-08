@@ -72,10 +72,10 @@ func ApplyHit(input HitInput, onHit HitCallback) HitOutput {
 		}
 	}
 
-	// CritBonus 独立暴击（critAura 提供，即使没有 crit 能力也生效）
+	// CritBonus 暴击（无 crit 能力时 critAura 仍可独立触发，统一 2x）
 	if !isCrit && input.Tower != nil && input.Tower.CritBonus > 0 {
 		if rand.Float64() < input.Tower.CritBonus {
-			totalDmg *= 1.5 // 光环暴击固定 1.5 倍
+			totalDmg *= 2 // 固定 2 倍
 			isCrit = true
 		}
 	}

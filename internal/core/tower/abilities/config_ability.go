@@ -57,10 +57,10 @@ func (a *ConfigAbility) OnHit(t *tower.Tower, p *projectile.Projectile, e *enemy
 		}
 
 	case "crit":
-		// scaleDim=chance, param=multiplier（加上 critAura 加成）
+		// scaleDim=chance — 概率 = sv + CritBonus(critAura), 固定 2 倍伤害
 		if rand.Float64() < sv+t.CritBonus {
 			return &tower.HitResult{
-				BonusDamage: p.Damage * (pm - 1), // multiplier 1.8 → +0.8x
+				BonusDamage: p.Damage, // 2x = base + base
 				IsCrit:      true,
 			}
 		}
