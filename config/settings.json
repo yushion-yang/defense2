@@ -346,6 +346,7 @@
     "maxRawDt": 0.033,
     "turboDt": 0.05,
     "turboTicksPerFrame": 200,
+    "sfxEnabled": false,
     "defaultAudioVolume": 0.45,
     "defaultSoundVolume": 0.4
   },
