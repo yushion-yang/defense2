@@ -129,11 +129,7 @@ func (p *Pool) Spawn(x, y, baseHP, baseSpeed float64, pathIndex int, archetype s
 			e.AuraSpeedUp = cfg.AuraSpeedUp
 			// 减伤
 			e.DamageReduceRatio = 0
-			e.ReflectPercent = 0
-			e.ReviveHPPercent = 0
-			e.ReviveUsed = false
-			e.BossData = nil
-			e.MovementType = cfg.MovementType
+			// 已迁移到能力系统的字段不再在此设置
 
 			// 应用行为配置
 			e.Behavior = cfg.Behavior
@@ -174,14 +170,7 @@ func (p *Pool) Spawn(x, y, baseHP, baseSpeed float64, pathIndex int, archetype s
 // If the enemy is a splitter, children are spawned at the same position.
 func (p *Pool) Kill(e *Enemy) {
 	if e.Active && e.DyingTimer <= 0 {
-		// 复活检查：首次死亡时复活
-		if e.ReviveHPPercent > 0 && !e.ReviveUsed {
-			e.ReviveUsed = true
-			e.HP = e.MaxHP * e.ReviveHPPercent
-			e.DisplayHP = e.HP
-			e.HitFlash = 0.3 // 复活闪烁
-			return            // 不进入死亡流程
-		}
+		// TODO: 复活能力将通过能力系统实现
 		// 分裂体死亡时生成子体（必须在 dying 标记前执行，否则子体无法获取父体路径）
 		if e.Behavior == "splitter" && e.SplitCount > 0 {
 			HandleSplitterDeath(e, p)

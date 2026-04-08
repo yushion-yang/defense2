@@ -1058,7 +1058,7 @@ func (s *StageScene) drawEnemyTooltip(screen *ebiten.Image, e *enemy.Enemy) {
 	var lines []enemyTooltipLine
 
 	// ── 标识 ──
-	tag := e.MovementType
+	tag := "ground"
 	if e.Boss {
 		tag += " BOSS"
 	} else if e.Elite {
@@ -1159,8 +1159,8 @@ func (s *StageScene) drawEnemyTooltip(screen *ebiten.Image, e *enemy.Enemy) {
 	}
 
 	// ── 防御 ──
-	hasDef := e.DamageCap > 0 || e.DamageCapPercent > 0 || e.DamageReduceRatio > 0 || e.ReflectPercent > 0 ||
-		e.IsInvincible || e.IsDamageImmune || e.IsUntargetable || e.ReviveHPPercent > 0
+	hasDef := e.DamageCap > 0 || e.DamageCapPercent > 0 || e.DamageReduceRatio > 0 ||
+		e.IsInvincible || e.IsDamageImmune || e.IsUntargetable
 	if hasDef {
 		lines = append(lines, L(ttHeader, "--- Defense ---"))
 	}
@@ -1173,16 +1173,7 @@ func (s *StageScene) drawEnemyTooltip(screen *ebiten.Image, e *enemy.Enemy) {
 	if e.DamageReduceRatio > 0 {
 		lines = append(lines, L(ttGray, "  DmgReduce: %.0f%%", e.DamageReduceRatio*100))
 	}
-	if e.ReflectPercent > 0 {
-		lines = append(lines, L(ttOrange, "  Reflect: %.0f%%", e.ReflectPercent*100))
-	}
-	if e.ReviveHPPercent > 0 {
-		used := ""
-		if e.ReviveUsed {
-			used = " [USED]"
-		}
-		lines = append(lines, L(ttCyan, "  Revive: %.0f%% HP%s", e.ReviveHPPercent*100, used))
-	}
+	// TODO: reflect/revive 迁移到能力系统后在此显示
 	if e.IsInvincible {
 		lines = append(lines, L(ttYellow, "  INVINCIBLE"))
 	}
@@ -1508,23 +1499,7 @@ func (s *StageScene) updatePlaying() {
 	})
 	enemy.UpdateHealing(activeEnemies, gameDT)
 	enemy.UpdateBufferAura(activeEnemies, gameDT)
-	// Boss 行为
-	for _, e := range activeEnemies {
-		if e.BossData == nil {
-			continue
-		}
-		enemy.TickBossPhase(e)
-		enemy.TickBossAura(e, activeEnemies)
-		if count, arch := enemy.TickBossSpawnMinions(e, gameDT); count > 0 {
-			cfg := s.spawner.Archetypes[arch]
-			for i := 0; i < count; i++ {
-				child := s.enemies.Spawn(e.X, e.Y, e.MaxHP*0.1, e.BaseSpeed*1.2, e.PathIndex, arch, cfg)
-				if child != nil {
-					child.Path = e.Path
-				}
-			}
-		}
-	}
+	// TODO: Boss 行为将通过能力系统装配
 
 	// 3. 敌人移动（到达终点扣生命）
 	s.enemies.Each(func(e *enemy.Enemy) {
@@ -2578,8 +2553,7 @@ func convertArchetypesToSpawnConfigs(archetypes map[string]*config.EnemyArchetyp
 			SpeedScale:   a.SpeedScale,
 			Radius:       a.Radius,
 			Boss:         a.Boss,
-			MovementType: a.MovementType,
-			RewardScale:  a.RewardScale,
+			RewardScale: a.RewardScale,
 			// 分裂默认值（被 deathSplit 能力覆盖时使用）
 			SplitScale:      0.3,
 			SplitHPRatio:    0.3,

@@ -37,16 +37,17 @@ type EnemyAbilityRef struct {
 
 // EnemyAbilityDef 怪物能力定义（从 abilities.json 加载）。
 type EnemyAbilityDef struct {
-	Type        string  `json:"type"`
-	Label       string  `json:"label"`
-	Icon        string  `json:"icon"`
-	Category    string  `json:"category"`
-	ScaleDim    string  `json:"scaleDim"`
-	Base        float64 `json:"base"`
-	Potential   float64 `json:"potential"`
-	Param       float64 `json:"param"`
-	ParamDim    string  `json:"paramDim"`
-	Description string  `json:"description"`
+	Type         string  `json:"type"`
+	Label        string  `json:"label"`
+	Icon         string  `json:"icon"`
+	Category     string  `json:"category"`
+	ScaleDim     string  `json:"scaleDim"`
+	Base         float64 `json:"base"`
+	Potential    float64 `json:"potential"`
+	Param        float64 `json:"param"`
+	ParamDim     string  `json:"paramDim"`
+	Description  string  `json:"description"`
+	Silenceable  bool    `json:"silenceable"` // 是否可被沉默禁用
 }
 
 // LoadEnemyArchetypes 加载所有敌人原型。

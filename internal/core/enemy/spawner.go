@@ -155,10 +155,7 @@ func (s *Spawner) Update(pool *Pool, dt float64) {
 			e := pool.Spawn(spawn.X, spawn.Y, baseHP, baseSpeed, 1, archetype, cfg)
 			if e != nil {
 				e.Path = path
-				// Boss 行为附加
-				if e.Boss {
-					e.BossData = FullBossState(s.Wave)
-				}
+				// TODO: Boss 行为将通过能力系统装配
 				// 波次 buff 自动注入
 				s.applyWaveBuffs(e)
 			}
@@ -428,8 +425,8 @@ var waveBuffPools = []struct {
 	pool     []string
 }{
 	{6, 1, []string{"berserk", "regen", "healAura", "speedAura"}},
-	{16, 2, []string{"berserk", "regen", "healAura", "speedAura", "reflect", "damageReduce"}},
-	{26, 2, []string{"berserk", "regen", "healAura", "speedAura", "reflect", "damageReduce", "revive", "deathSplit"}},
+	{16, 2, []string{"berserk", "regen", "healAura", "speedAura", "damageReduce"}},
+	{26, 2, []string{"berserk", "regen", "healAura", "speedAura", "damageReduce", "deathSplit"}},
 }
 
 // applyWaveBuffs 根据当前波次为刚生成的敌人随机注入 buff 模板。

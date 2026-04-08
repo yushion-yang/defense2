@@ -311,12 +311,4 @@ func TestBuffTemplate_RegenHasRate(t *testing.T) {
 	}
 }
 
-func TestBuffTemplate_ReviveHasHPPercent(t *testing.T) {
-	tmpl := enemy.GetBuffTemplate("revive")
-	if tmpl == nil {
-		t.Fatal("revive 模板不存在")
-	}
-	if tmpl.ReviveHPPercent <= 0 || tmpl.ReviveHPPercent > 1 {
-		t.Errorf("revive HPPercent=%.2f 应在 (0, 1]", tmpl.ReviveHPPercent)
-	}
-}
+// TestBuffTemplate_ReviveHasHPPercent 已迁移到能力系统

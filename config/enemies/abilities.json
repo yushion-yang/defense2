@@ -1,10 +1,16 @@
 {
   "_meta": {
     "description": "怪物能力配置表 — 6大类别，每类别最多装配1个",
-    "categories": ["defense", "resist", "movement", "offense", "support", "death"],
+    "categories": [
+      "defense",
+      "resist",
+      "movement",
+      "offense",
+      "support",
+      "death"
+    ],
     "design": "每个能力针对性克制特定炮塔策略，形成攻防博弈"
   },
-
   "projectileBlock": {
     "type": "projectileBlock",
     "label": "弹幕盾",
@@ -17,7 +23,8 @@
     "paramDim": "",
     "description": "40%概率阻挡弹射物(projectile/scatter/bounce/radial)，光束和AoE无视",
     "counters": "projectile, scatter, bounce, radial",
-    "counteredBy": "wideBeam, spinAoe, poisonZone, curseZone"
+    "counteredBy": "wideBeam, spinAoe, poisonZone, curseZone",
+    "silenceable": true
   },
   "armorPlating": {
     "type": "armorPlating",
@@ -31,7 +38,8 @@
     "paramDim": "",
     "description": "每次受击固定减免5点伤害(最低1伤害)",
     "counters": "低伤害高攻速塔(scatter, multiTarget)",
-    "counteredBy": "高单发伤害(momentum, crit), DoT(burn, poison)"
+    "counteredBy": "高单发伤害(momentum, crit), DoT(burn, poison)",
+    "silenceable": false
   },
   "evasion": {
     "type": "evasion",
@@ -45,7 +53,8 @@
     "paramDim": "",
     "description": "15%概率完全闪避攻击(含所有命中效果)",
     "counters": "高爆发单发(crit, momentum, executionBonus)",
-    "counteredBy": "高攻速多段(scatter, multiTarget), AoE(spinAoe, splash)"
+    "counteredBy": "高攻速多段(scatter, multiTarget), AoE(spinAoe, splash)",
+    "silenceable": true
   },
   "damageCap": {
     "type": "damageCap",
@@ -59,9 +68,9 @@
     "paramDim": "",
     "description": "单次受击伤害上限60(沉默时失效)",
     "counters": "高爆发(crit, momentum, damageUpAura叠加)",
-    "counteredBy": "高攻速多段, silenceZone, DoT"
+    "counteredBy": "高攻速多段, silenceZone, DoT",
+    "silenceable": false
   },
-
   "ccImmune": {
     "type": "ccImmune",
     "label": "意志坚定",
@@ -74,7 +83,8 @@
     "paramDim": "",
     "description": "免疫所有控制效果(减速/眩晕/定身)",
     "counters": "slowPower, slowDuration, stunChance, stunDuration, silenceZone减速",
-    "counteredBy": "纯输出策略, weaken增伤, DoT"
+    "counteredBy": "纯输出策略, weaken增伤, DoT",
+    "silenceable": false
   },
   "slowImmune": {
     "type": "slowImmune",
@@ -88,7 +98,8 @@
     "paramDim": "",
     "description": "免疫减速效果(眩晕/定身仍然有效)",
     "counters": "slowPower, slowDuration, silenceZone减速",
-    "counteredBy": "stunChance, stunDuration, 纯输出"
+    "counteredBy": "stunChance, stunDuration, 纯输出",
+    "silenceable": false
   },
   "dotResist": {
     "type": "dotResist",
@@ -102,7 +113,8 @@
     "paramDim": "",
     "description": "DoT伤害(灼烧/中毒/流血/区域毒)减免50%",
     "counters": "burn, poison, bleedDot, poisonZone, curseZone",
-    "counteredBy": "直接伤害(crit, flatDamage, momentum)"
+    "counteredBy": "直接伤害(crit, flatDamage, momentum)",
+    "silenceable": false
   },
   "purge": {
     "type": "purge",
@@ -116,9 +128,9 @@
     "paramDim": "",
     "description": "每4秒清除所有负面效果(减速/眩晕/DoT/虚弱)",
     "counters": "所有持续性debuff",
-    "counteredBy": "高频施加(scatter+slow多次覆盖), 短爆发窗口"
+    "counteredBy": "高频施加(scatter+slow多次覆盖), 短爆发窗口",
+    "silenceable": true
   },
-
   "stealth": {
     "type": "stealth",
     "label": "隐身",
@@ -131,7 +143,8 @@
     "paramDim": "",
     "description": "出场隐身3秒，不可被选为目标，溅射/AoE命中可强制显形",
     "counters": "单体锁定攻击(projectile, bounce)",
-    "counteredBy": "AoE/溅射(splash, spinAoe, poisonZone)"
+    "counteredBy": "AoE/溅射(splash, spinAoe, poisonZone)",
+    "silenceable": true
   },
   "teleport": {
     "type": "teleport",
@@ -145,7 +158,8 @@
     "paramDim": "skipSegments",
     "description": "每5秒传送跳过1段路径",
     "counters": "固定位置防线(前段集中放塔)",
-    "counteredBy": "全路径覆盖布防, 高射程塔"
+    "counteredBy": "全路径覆盖布防, 高射程塔",
+    "silenceable": true
   },
   "dashOnHit": {
     "type": "dashOnHit",
@@ -159,7 +173,8 @@
     "paramDim": "cooldown",
     "description": "受击后冲刺前进30像素(冷却2秒)",
     "counters": "高攻速持续射击(反而帮它加速前进)",
-    "counteredBy": "低攻速高爆发, AoE/区域控制"
+    "counteredBy": "低攻速高爆发, AoE/区域控制",
+    "silenceable": true
   },
   "phaseShift": {
     "type": "phaseShift",
@@ -173,7 +188,8 @@
     "paramDim": "cooldown",
     "description": "每6秒进入1.5秒无敌相位(不可选中+免疫伤害)",
     "counters": "高爆发窗口伤害(暴击+蓄势一波)",
-    "counteredBy": "持续输出等待相位结束, DoT在相位前施加"
+    "counteredBy": "持续输出等待相位结束, DoT在相位前施加",
+    "silenceable": true
   },
   "burrow": {
     "type": "burrow",
@@ -187,9 +203,9 @@
     "paramDim": "interval",
     "description": "每3秒钻入地下1秒(不可选中+移速+50%)",
     "counters": "持续锁定型攻击",
-    "counteredBy": "AoE/区域效果(spinAoe, poisonZone)"
+    "counteredBy": "AoE/区域效果(spinAoe, poisonZone)",
+    "silenceable": true
   },
-
   "reflect": {
     "type": "reflect",
     "label": "反伤",
@@ -202,7 +218,8 @@
     "paramDim": "",
     "description": "反弹15%受到的伤害给攻击塔(降低塔攻速20% 2秒)",
     "counters": "单塔集火高DPS策略",
-    "counteredBy": "多塔分散攻击, DoT(不触发反伤)"
+    "counteredBy": "多塔分散攻击, DoT(不触发反伤)",
+    "silenceable": false
   },
   "goldDrain": {
     "type": "goldDrain",
@@ -216,7 +233,8 @@
     "paramDim": "",
     "description": "每次被命中时玩家损失1金币",
     "counters": "高攻速多次命中(scatter每颗弹丸各扣1金)",
-    "counteredBy": "低攻速高爆发, DoT/区域伤害"
+    "counteredBy": "低攻速高爆发, DoT/区域伤害",
+    "silenceable": false
   },
   "towerWeaken": {
     "type": "towerWeaken",
@@ -230,7 +248,8 @@
     "paramDim": "radius",
     "description": "半径100内塔攻击力-15%",
     "counters": "密集塔阵(多塔集中被一起削弱)",
-    "counteredBy": "分散布阵, 射程光环从远处输出"
+    "counteredBy": "分散布阵, 射程光环从远处输出",
+    "silenceable": true
   },
   "strengthDrain": {
     "type": "strengthDrain",
@@ -244,9 +263,9 @@
     "paramDim": "interval",
     "description": "每3秒对最近的塔施加-5临时强度减益",
     "counters": "高强度高投入的核心塔",
-    "counteredBy": "多塔均匀投资, 远程塔不受影响"
+    "counteredBy": "多塔均匀投资, 远程塔不受影响",
+    "silenceable": true
   },
-
   "healAura": {
     "type": "healAura",
     "label": "治疗光环",
@@ -259,7 +278,8 @@
     "paramDim": "radius",
     "description": "每秒治疗半径80内友方3%MaxHP",
     "counters": "低DPS持续输出(伤害被治疗抵消)",
-    "counteredBy": "集火秒杀治疗者, 高爆发突破治疗量"
+    "counteredBy": "集火秒杀治疗者, 高爆发突破治疗量",
+    "silenceable": true
   },
   "speedAura": {
     "type": "speedAura",
@@ -273,7 +293,8 @@
     "paramDim": "radius",
     "description": "半径80内友方移速+20%",
     "counters": "减速策略(被加速抵消)",
-    "counteredBy": "优先击杀旗手, 眩晕定身(不受加速影响)"
+    "counteredBy": "优先击杀旗手, 眩晕定身(不受加速影响)",
+    "silenceable": true
   },
   "armorAura": {
     "type": "armorAura",
@@ -287,7 +308,8 @@
     "paramDim": "radius",
     "description": "半径80内友方每次受击减免3点伤害",
     "counters": "低伤害高攻速塔",
-    "counteredBy": "高单发伤害, DoT(不受护甲影响)"
+    "counteredBy": "高单发伤害, DoT(不受护甲影响)",
+    "silenceable": true
   },
   "shieldAlly": {
     "type": "shieldAlly",
@@ -301,9 +323,9 @@
     "paramDim": "radius",
     "description": "半径60内最弱友方受伤时分摊30%伤害到自身",
     "counters": "集火策略(伤害被分摊)",
-    "counteredBy": "AoE/溅射同时打多目标, 先杀援护者"
+    "counteredBy": "AoE/溅射同时打多目标, 先杀援护者",
+    "silenceable": true
   },
-
   "deathSplit": {
     "type": "deathSplit",
     "label": "分裂",
@@ -316,7 +338,8 @@
     "paramDim": "hpRatio",
     "description": "死亡分裂为2个子体(30%HP/×1.4速度/不递归)",
     "counters": "单体集火(击杀后还有子体)",
-    "counteredBy": "AoE/溅射清理子体"
+    "counteredBy": "AoE/溅射清理子体",
+    "silenceable": false
   },
   "deathExplode": {
     "type": "deathExplode",
@@ -330,7 +353,8 @@
     "paramDim": "radius",
     "description": "死亡时对半径60内所有塔施加-30%攻速 3秒",
     "counters": "前排密集塔阵",
-    "counteredBy": "分散布阵, 远程塔"
+    "counteredBy": "分散布阵, 远程塔",
+    "silenceable": false
   },
   "deathCurse": {
     "type": "deathCurse",
@@ -344,7 +368,8 @@
     "paramDim": "",
     "description": "死亡时玩家损失20金币",
     "counters": "快速击杀策略(击杀越多扣金越多)",
-    "counteredBy": "控制不杀(减速/定身让它走到底扣命而非击杀扣金)"
+    "counteredBy": "控制不杀(减速/定身让它走到底扣命而非击杀扣金)",
+    "silenceable": false
   },
   "deathSpawn": {
     "type": "deathSpawn",
@@ -358,6 +383,7 @@
     "paramDim": "",
     "description": "死亡时在原地召唤3个普通步兵",
     "counters": "单体伤害(击杀后涌出更多)",
-    "counteredBy": "AoE清场, 留火力覆盖死亡位置"
+    "counteredBy": "AoE清场, 留火力覆盖死亡位置",
+    "silenceable": false
   }
 }

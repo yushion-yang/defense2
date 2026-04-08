@@ -35,11 +35,7 @@ type BuffTemplate struct {
 	DeathSlowRadius float64 // 死亡减速范围
 	DeathSlowDura   float64 // 死亡减速持续时间
 
-	// ── 反伤参数 ──
-	ReflectPercent float64 // 反伤比例
-
-	// ── 复活参数 ──
-	ReviveHPPercent float64 // 复活血量百分比
+	// 反伤/复活已迁移到能力系统
 
 	// ── 召唤参数 ──
 	SpawnCount int    // 召唤数量
@@ -102,18 +98,7 @@ func InitBuffTemplates() {
 			DeathSlowRadius: 60,
 			DeathSlowDura:   3.0,
 		},
-		"reflect": {
-			ID:             "reflect",
-			Description:    "反弹部分受到的伤害",
-			Category:       "defense",
-			ReflectPercent: 0.15, // 反伤 15%
-		},
-		"revive": {
-			ID:              "revive",
-			Description:     "死亡后复活一次",
-			Category:        "death",
-			ReviveHPPercent: 0.5, // 50% 血量复活
-		},
+		// reflect 和 revive 已迁移到能力系统
 		"spawnMinions": {
 			ID:          "spawnMinions",
 			Description: "周期性召唤小兵",
@@ -190,15 +175,7 @@ func ApplyBuffTemplate(e *Enemy, templateID string) bool {
 		e.DamageReduceRatio = tmpl.DamageReduce
 	}
 
-	// 反伤
-	if tmpl.ReflectPercent > 0 {
-		e.ReflectPercent = tmpl.ReflectPercent
-	}
-
-	// 复活
-	if tmpl.ReviveHPPercent > 0 {
-		e.ReviveHPPercent = tmpl.ReviveHPPercent
-	}
+	// reflect/revive 已迁移到能力系统
 
 	// 死亡分裂
 	if tmpl.DeathSplitCount > 0 {

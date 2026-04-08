@@ -149,8 +149,8 @@ func TestWaveBuffPoolTemplatesExist(t *testing.T) {
 	// 波次 buff 池定义（与 spawner.go waveBuffPools 保持一致）
 	buffPools := [][]string{
 		{"berserk", "regen", "healAura", "speedAura"},
-		{"berserk", "regen", "healAura", "speedAura", "reflect", "damageReduce"},
-		{"berserk", "regen", "healAura", "speedAura", "reflect", "damageReduce", "revive", "deathSplit"},
+		{"berserk", "regen", "healAura", "speedAura", "damageReduce"},
+		{"berserk", "regen", "healAura", "speedAura", "damageReduce", "deathSplit"},
 	}
 
 	templates := enemy.GetBuffTemplates()
