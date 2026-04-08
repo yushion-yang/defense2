@@ -1041,6 +1041,22 @@ func (s *StageScene) saveScenario(name string) {
 		})
 	})
 
+	// Capture enemies
+	var enemies []config.EnemySnapshot
+	s.enemies.Each(func(e *enemy.Enemy) {
+		if e.DyingTimer > 0 {
+			return // skip dying enemies
+		}
+		enemies = append(enemies, config.EnemySnapshot{
+			Archetype: e.Archetype,
+			X:         e.X,
+			Y:         e.Y,
+			PathIndex: e.PathIndex,
+			HP:        e.HP,
+			MaxHP:     e.MaxHP,
+		})
+	})
+
 	// Generate file-safe ID from name
 	id := strings.Map(func(r rune) rune {
 		if r >= 'a' && r <= 'z' || r >= 'A' && r <= 'Z' || r >= '0' && r <= '9' || r == '-' || r == '_' {
@@ -1055,7 +1071,7 @@ func (s *StageScene) saveScenario(name string) {
 	sd := config.ScenarioData{
 		ID:          id,
 		Name:        name,
-		Description: fmt.Sprintf("%d towers on %s", len(towers), s.initOpts.MapID),
+		Description: fmt.Sprintf("%d towers, %d enemies on %s", len(towers), len(enemies), s.initOpts.MapID),
 		MapID:       s.initOpts.MapID,
 		Gold:        s.initOpts.Gold,
 		Lives:       s.initOpts.Lives,
@@ -1063,6 +1079,7 @@ func (s *StageScene) saveScenario(name string) {
 		EnemyFilter: s.initOpts.EnemyFilter,
 		ManualWave:  s.initOpts.ManualWave,
 		Towers:      towers,
+		Enemies:     enemies,
 	}
 
 	data, err := json.MarshalIndent(sd, "", "  ")
@@ -1111,6 +1128,35 @@ func (s *StageScene) restoreScenario(sd *config.ScenarioData) {
 		}
 		t.RecalcStats()
 		s.gold -= def.Cost
+	}
+
+	// Restore enemies
+	for _, snap := range sd.Enemies {
+		cfg, ok := s.spawner.Archetypes[snap.Archetype]
+		if !ok {
+			fmt.Printf("restoreScenario: unknown enemy archetype %q, skip\n", snap.Archetype)
+			continue
+		}
+		// Use snapshot HP as base (bypass wave scaling), scale=1
+		baseHP := snap.MaxHP
+		if baseHP <= 0 {
+			baseHP = 100 * cfg.HpScale // fallback
+		}
+		unitCfg := *cfg            // copy to avoid mutating original
+		unitCfg.HpScale = 1        // HP already baked in
+		unitCfg.SpeedScale = 1     // use archetype base speed directly
+		e := s.enemies.Spawn(snap.X, snap.Y, baseHP, 50*cfg.SpeedScale, snap.PathIndex, snap.Archetype, &unitCfg)
+		if e == nil {
+			fmt.Printf("restoreScenario: enemy pool full, cannot spawn %s\n", snap.Archetype)
+			continue
+		}
+		// Override HP if snapshot captured partial health
+		if snap.HP > 0 && snap.HP < e.MaxHP {
+			e.HP = snap.HP
+			e.DisplayHP = snap.HP
+		}
+		// Assign path from map
+		e.Path = s.gameMap.PickPath()
 	}
 }
 

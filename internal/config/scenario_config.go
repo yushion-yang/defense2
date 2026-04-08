@@ -22,6 +22,7 @@ type ScenarioData struct {
 	EnemyFilter string          `json:"enemyFilter"`
 	ManualWave  bool            `json:"manualWave"`
 	Towers      []TowerSnapshot `json:"towers"`
+	Enemies     []EnemySnapshot `json:"enemies,omitempty"`
 }
 
 // TowerSnapshot captures a placed tower's full state for scenario restore.
@@ -39,6 +40,16 @@ type TowerSnapshot struct {
 	PotentialSpeed  float64   `json:"potentialSpeed"`
 	BaseRange       float64   `json:"baseRange"`
 	PotentialRange  float64   `json:"potentialRange"`
+}
+
+// EnemySnapshot captures a spawned enemy's state for scenario restore.
+type EnemySnapshot struct {
+	Archetype string  `json:"archetype"`       // 原型标识（如 "orc_warrior"）
+	X         float64 `json:"x"`               // 像素位置
+	Y         float64 `json:"y"`               // 像素位置
+	PathIndex int     `json:"pathIndex"`       // 当前路径点索引
+	HP        float64 `json:"hp,omitempty"`    // 当前 HP（0=使用原型默认满血）
+	MaxHP     float64 `json:"maxHP,omitempty"` // 最大 HP（0=使用原型默认）
 }
 
 // ParseScenarioData parses a single scenario JSON.
