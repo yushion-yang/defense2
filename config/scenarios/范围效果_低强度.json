@@ -1,0 +1,135 @@
+{
+  "id": "范围效果_低强度",
+  "name": "范围效果 低强度",
+  "description": "4 towers, 4 enemies on map_test_large",
+  "mapID": "map_test_large",
+  "gold": 99999,
+  "lives": 999,
+  "waves": 99,
+  "enemyFilter": "dummy",
+  "manualWave": false,
+  "towers": [
+    {
+      "row": 4,
+      "col": 8,
+      "key": "basic",
+      "abilitySlots": [
+        "",
+        "",
+        "",
+        "",
+        "",
+        "curseZone"
+      ],
+      "damageTier": "B",
+      "speedTier": "B",
+      "rangeTier": "B",
+      "baseDamage": 6.906664083495633,
+      "potentialDamage": 12.322224181675958,
+      "baseSpeed": 0.2468794226272801,
+      "potentialSpeed": 0.43760268312853,
+      "baseRange": 47.591076472546284,
+      "potentialRange": 74.77945129568326
+    },
+    {
+      "row": 4,
+      "col": 18,
+      "key": "basic",
+      "abilitySlots": [
+        "",
+        "",
+        "",
+        "",
+        "",
+        "poisonZone"
+      ],
+      "damageTier": "B",
+      "speedTier": "B",
+      "rangeTier": "B",
+      "baseDamage": 7.285011108823346,
+      "potentialDamage": 10.258767949697774,
+      "baseSpeed": 0.3804933614242134,
+      "potentialSpeed": 0.40637024341974815,
+      "baseRange": 54.51229943215891,
+      "potentialRange": 70.81174918495363
+    },
+    {
+      "row": 10,
+      "col": 8,
+      "key": "basic",
+      "abilitySlots": [
+        "",
+        "",
+        "",
+        "",
+        "",
+        "silenceZone"
+      ],
+      "damageTier": "B",
+      "speedTier": "B",
+      "rangeTier": "B",
+      "baseDamage": 6.430229610946241,
+      "potentialDamage": 6.310009852438976,
+      "baseSpeed": 0.44282699195753034,
+      "potentialSpeed": 0.5055112112153034,
+      "baseRange": 63.17349088337467,
+      "potentialRange": 62.907341432174896
+    },
+    {
+      "row": 10,
+      "col": 18,
+      "key": "basic",
+      "abilitySlots": [
+        "",
+        "",
+        "",
+        "",
+        "",
+        "weakenZone"
+      ],
+      "damageTier": "B",
+      "speedTier": "B",
+      "rangeTier": "B",
+      "baseDamage": 7.478018247262973,
+      "potentialDamage": 8.576563906031513,
+      "baseSpeed": 0.44071522778642214,
+      "potentialSpeed": 0.40696257670149544,
+      "baseRange": 46.725904314333285,
+      "potentialRange": 72.93080489455176
+    }
+  ],
+  "enemies": [
+    {
+      "archetype": "dummy",
+      "x": 788.5,
+      "y": 164,
+      "pathIndex": 0,
+      "hp": 997801.4407569746,
+      "maxHP": 1000000
+    },
+    {
+      "archetype": "dummy",
+      "x": 786,
+      "y": 398,
+      "pathIndex": 0,
+      "hp": 997969.0953576146,
+      "maxHP": 1000000
+    },
+    {
+      "archetype": "dummy",
+      "x": 386.5,
+      "y": 387.5,
+      "pathIndex": 0,
+      "hp": 998445.6907854655,
+      "maxHP": 1000000
+    },
+    {
+      "archetype": "dummy",
+      "x": 738.5,
+      "y": 419.5,
+      "pathIndex": 0,
+      "hp": 1000000,
+      "maxHP": 1000000
+    }
+  ]
+}

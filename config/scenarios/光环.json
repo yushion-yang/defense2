@@ -1,0 +1,337 @@
+{
+  "id": "光环",
+  "name": "光环",
+  "description": "11 towers, 10 enemies on map_test_large",
+  "mapID": "map_test_large",
+  "gold": 99999,
+  "lives": 999,
+  "waves": 99,
+  "enemyFilter": "dummy",
+  "manualWave": false,
+  "towers": [
+    {
+      "row": 4,
+      "col": 8,
+      "key": "basic",
+      "abilitySlots": [
+        "",
+        "",
+        "",
+        "attackSpeedAura",
+        "",
+        ""
+      ],
+      "damageTier": "B",
+      "speedTier": "B",
+      "rangeTier": "B",
+      "baseDamage": 10.56635833697193,
+      "potentialDamage": 10.066718537376905,
+      "baseSpeed": 0.22792408207695716,
+      "potentialSpeed": 0.3747449576780006,
+      "baseRange": 58.8008281265862,
+      "potentialRange": 65.82768793525085
+    },
+    {
+      "row": 10,
+      "col": 8,
+      "key": "basic",
+      "abilitySlots": [
+        "",
+        "",
+        "",
+        "damageUpAura",
+        "",
+        ""
+      ],
+      "damageTier": "B",
+      "speedTier": "B",
+      "rangeTier": "B",
+      "baseDamage": 4.980641219718663,
+      "potentialDamage": 7.891041612556921,
+      "baseSpeed": 0.6232122561837093,
+      "potentialSpeed": 0.5000575314401978,
+      "baseRange": 46.33522053866768,
+      "potentialRange": 51.50527593814953
+    },
+    {
+      "row": 10,
+      "col": 18,
+      "key": "basic",
+      "abilitySlots": [
+        "",
+        "",
+        "",
+        "goldPassive",
+        "",
+        ""
+      ],
+      "damageTier": "B",
+      "speedTier": "B",
+      "rangeTier": "B",
+      "baseDamage": 6.852150633541638,
+      "potentialDamage": 10.685248201891843,
+      "baseSpeed": 0.3331728297948708,
+      "potentialSpeed": 0.39091955705451775,
+      "baseRange": 53.002831764637676,
+      "potentialRange": 86.99716823536232
+    },
+    {
+      "row": 4,
+      "col": 18,
+      "key": "basic",
+      "abilitySlots": [
+        "",
+        "",
+        "",
+        "critAura",
+        "",
+        ""
+      ],
+      "damageTier": "B",
+      "speedTier": "B",
+      "rangeTier": "B",
+      "baseDamage": 8.577869456659373,
+      "potentialDamage": 8.824454998281764,
+      "baseSpeed": 0.22921896428546765,
+      "potentialSpeed": 0.5194073333141707,
+      "baseRange": 67.77349321354241,
+      "potentialRange": 72.22650678645759
+    },
+    {
+      "row": 10,
+      "col": 14,
+      "key": "basic",
+      "abilitySlots": [
+        "",
+        "",
+        "",
+        "rangeAura",
+        "",
+        ""
+      ],
+      "damageTier": "B",
+      "speedTier": "B",
+      "rangeTier": "B",
+      "baseDamage": 6.638401641612185,
+      "potentialDamage": 9.361598358387816,
+      "baseSpeed": 0.37291320097165714,
+      "potentialSpeed": 0.5478592649100046,
+      "baseRange": 53.190656967454544,
+      "potentialRange": 67.63454821042363
+    },
+    {
+      "row": 10,
+      "col": 22,
+      "key": "basic",
+      "abilitySlots": [
+        "",
+        "",
+        "",
+        "soloBoost",
+        "",
+        ""
+      ],
+      "damageTier": "B",
+      "speedTier": "B",
+      "rangeTier": "B",
+      "baseDamage": 8.376917400909521,
+      "potentialDamage": 8.960806891899907,
+      "baseSpeed": 0.16859802781771843,
+      "potentialSpeed": 0.3754019721822816,
+      "baseRange": 58.01083935916616,
+      "potentialRange": 93.09359340836242
+    },
+    {
+      "row": 4,
+      "col": 16,
+      "key": "basic",
+      "abilitySlots": [
+        "",
+        "",
+        "",
+        "soloBoost",
+        "",
+        ""
+      ],
+      "damageTier": "B",
+      "speedTier": "B",
+      "rangeTier": "B",
+      "baseDamage": 8.8912532098311,
+      "potentialDamage": 11.792405469993517,
+      "baseSpeed": 0.20206287645042104,
+      "potentialSpeed": 0.4050566812869693,
+      "baseRange": 52.80512806469526,
+      "potentialRange": 66.8438220841823
+    },
+    {
+      "row": 2,
+      "col": 8,
+      "key": "basic",
+      "abilitySlots": [
+        "",
+        "",
+        "",
+        "",
+        "",
+        ""
+      ],
+      "damageTier": "B",
+      "speedTier": "B",
+      "rangeTier": "B",
+      "baseDamage": 5.1747738957323595,
+      "potentialDamage": 10.258413484806427,
+      "baseSpeed": 0.2693166830055837,
+      "potentialSpeed": 0.4851570410135797,
+      "baseRange": 46.144224744180974,
+      "potentialRange": 86.97546406857154
+    },
+    {
+      "row": 8,
+      "col": 6,
+      "key": "basic",
+      "abilitySlots": [
+        "",
+        "",
+        "",
+        "",
+        "",
+        ""
+      ],
+      "damageTier": "B",
+      "speedTier": "B",
+      "rangeTier": "B",
+      "baseDamage": 7.832985644865805,
+      "potentialDamage": 8.167014355134196,
+      "baseSpeed": 0.39542493498611786,
+      "potentialSpeed": 0.40328212680585185,
+      "baseRange": 59.334691820725304,
+      "potentialRange": 68.03097559928727
+    },
+    {
+      "row": 8,
+      "col": 14,
+      "key": "basic",
+      "abilitySlots": [
+        "",
+        "",
+        "",
+        "",
+        "",
+        ""
+      ],
+      "damageTier": "B",
+      "speedTier": "B",
+      "rangeTier": "B",
+      "baseDamage": 7.88789829082361,
+      "potentialDamage": 10.178728687042561,
+      "baseSpeed": 0.2129673366038698,
+      "potentialSpeed": 0.47559362966262564,
+      "baseRange": 56.746156238733256,
+      "potentialRange": 83.25384376126675
+    },
+    {
+      "row": 10,
+      "col": 6,
+      "key": "basic",
+      "abilitySlots": [
+        "",
+        "",
+        "",
+        "",
+        "",
+        ""
+      ],
+      "damageTier": "B",
+      "speedTier": "B",
+      "rangeTier": "B",
+      "baseDamage": 7.653566533628573,
+      "potentialDamage": 8.346433466371426,
+      "baseSpeed": 0.43248944981206106,
+      "potentialSpeed": 0.5106279263310216,
+      "baseRange": 48.09656675951175,
+      "potentialRange": 68.0778743281977
+    }
+  ],
+  "enemies": [
+    {
+      "archetype": "dummy",
+      "x": 383,
+      "y": 482.5,
+      "pathIndex": 0,
+      "hp": 997168.2297769049,
+      "maxHP": 1000000
+    },
+    {
+      "archetype": "dummy",
+      "x": 123,
+      "y": 287.5,
+      "pathIndex": 0,
+      "hp": 1000000,
+      "maxHP": 1000000
+    },
+    {
+      "archetype": "dummy",
+      "x": 145.5,
+      "y": 274.5,
+      "pathIndex": 0,
+      "hp": 1000000,
+      "maxHP": 1000000
+    },
+    {
+      "archetype": "dummy",
+      "x": 167.5,
+      "y": 282.5,
+      "pathIndex": 0,
+      "hp": 997568,
+      "maxHP": 1000000
+    },
+    {
+      "archetype": "dummy",
+      "x": 431.5,
+      "y": 180,
+      "pathIndex": 0,
+      "hp": 995528.4491568008,
+      "maxHP": 1000000
+    },
+    {
+      "archetype": "dummy",
+      "x": 539.5,
+      "y": 72.5,
+      "pathIndex": 0,
+      "hp": 1000000,
+      "maxHP": 1000000
+    },
+    {
+      "archetype": "dummy",
+      "x": 539,
+      "y": 119,
+      "pathIndex": 0,
+      "hp": 1000000,
+      "maxHP": 1000000
+    },
+    {
+      "archetype": "dummy",
+      "x": 543,
+      "y": 161,
+      "pathIndex": 0,
+      "hp": 997766.1648625783,
+      "maxHP": 1000000
+    },
+    {
+      "archetype": "dummy",
+      "x": 648,
+      "y": 458,
+      "pathIndex": 0,
+      "hp": 993215.5671879977,
+      "maxHP": 1000000
+    },
+    {
+      "archetype": "dummy",
+      "x": 976.5,
+      "y": 501.5,
+      "pathIndex": 0,
+      "hp": 998439.604813651,
+      "maxHP": 1000000
+    }
+  ]
+}
