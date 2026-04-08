@@ -216,7 +216,7 @@ Step 7. 死亡检查 (HP ≤ 0)
 | spinAoe | 每个范围敌人 1 次 | AoE 全触发 |
 | radial | 每颗弹 × 每个敌人 | 环射弹丸穿透 |
 | multiTarget | 每个目标 1 次 | 同时多目标 |
-| splash (溅射效果) | **不触发 OnHit** | 只走 ProcessDamage |
+| splash (溅射效果) | 每个溅射目标 1 次 | 完整 OnHit (不递归溅射) |
 
 ---
 

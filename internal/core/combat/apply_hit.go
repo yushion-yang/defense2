@@ -68,7 +68,7 @@ func ApplyHit(input HitInput, onHit HitCallback) HitOutput {
 			if result.IsCrit {
 				isCrit = true
 			}
-			applyHitEffectsUnified(result, input.Target, synth, input.Enemies, input.Projectiles, onHit, input.OnCC)
+			applyHitEffectsUnified(result, input.Target, synth, input.Tower, input.Enemies, input.Projectiles, onHit, input.OnCC)
 		}
 	}
 
@@ -121,7 +121,7 @@ func ApplyHit(input HitInput, onHit HitCallback) HitOutput {
 }
 
 // applyHitEffectsUnified 施加能力效果（减速、眩晕、流血、灼烧、溅射、弹射）。
-func applyHitEffectsUnified(r *tower.HitResult, target *enemy.Enemy, p *projectile.Projectile, enemies *enemy.Pool, projectiles *projectile.Pool, onHit HitCallback, onCC CCCallback) {
+func applyHitEffectsUnified(r *tower.HitResult, target *enemy.Enemy, p *projectile.Projectile, srcTower *tower.Tower, enemies *enemy.Pool, projectiles *projectile.Pool, onHit HitCallback, onCC CCCallback) {
 	if r.Slow != nil {
 		if ApplySlow(target, r.Slow.Factor, r.Slow.Duration, p.SourceTowerKey) && onCC != nil {
 			if r.Slow.Factor < 0.4 {
@@ -155,27 +155,27 @@ func applyHitEffectsUnified(r *tower.HitResult, target *enemy.Enemy, p *projecti
 	if r.Splash != nil && enemies != nil {
 		tel.T.Record("ability", "splash")
 		splashDamage := p.Damage * r.Splash.Ratio
+		splashTower := srcTower
 		enemies.Each(func(e *enemy.Enemy) {
 			if e == target || e.IsDying() {
 				return
 			}
 			if math.Hypot(e.X-target.X, e.Y-target.Y) <= r.Splash.Radius {
-				sr := ProcessDamage(DamageInput{
+				// 溅射走完整 ApplyHit（含 OnHit 能力触发），但 Enemies=nil 防止递归溅射
+				splashResult := ApplyHit(HitInput{
+					Tower:      splashTower,
 					Target:     e,
-					RawDamage:  splashDamage,
-					DamageType: DmgPhysical,
-				})
-				finalDmg := sr.FinalDamage
-				if sr.Blocked {
-					finalDmg = 0
-				}
-				if onHit != nil {
-					onHit(e, finalDmg, sr.Killed, "splash", false)
-				}
+					BaseDamage: splashDamage,
+					Style:      "splash",
+					Enemies:    nil, // 阻断递归溅射
+					Projectiles: projectiles,
+					Projectile: p,
+					OnCC:       onCC,
+				}, onHit)
 				if e.HitFlash < 0.06 && e.Age > 0.1 {
 					e.HitFlash = 0.08
 				}
-				if sr.Killed {
+				if splashResult.Killed {
 					enemies.Kill(e)
 				}
 			}
