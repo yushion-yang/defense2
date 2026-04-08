@@ -48,24 +48,24 @@ type testScenario struct {
 }
 
 var testScenarios = []testScenario{
-	{"tower-core", "核心炮塔", "tower-laser", "全部核心炮塔，基础战斗测试", "tower", "map_test", 9999, 999, 10, color.RGBA{R: 100, G: 150, B: 220, A: 255}, "mixed", false},
-	{"enemy-ground", "地面怪物", "stat-movspd", "仅出地面普通怪，路径测试", "enemy", "map_test", 9999, 999, 10, color.RGBA{R: 220, G: 120, B: 80, A: 255}, "ground-only", false},
-	{"enemy-flying", "飞行怪物", "stat-range", "仅出飞行怪，防空能力测试", "enemy", "map_test", 9999, 999, 10, color.RGBA{R: 100, G: 180, B: 220, A: 255}, "flying-only", false},
-	{"enemy-elite", "精英怪物", "pulse", "仅出精英怪，特殊能力测试", "enemy", "map_test", 9999, 999, 10, color.RGBA{R: 160, G: 120, B: 220, A: 255}, "elite-only", false},
-	{"enemy-boss", "Boss 怪物", "execute", "仅出Boss，机制和伤害上限", "enemy", "map_test", 99999, 999, 8, color.RGBA{R: 220, G: 80, B: 80, A: 255}, "boss-only", false},
+	{"tower-core", "核心炮塔", "tower-laser", "全部核心炮塔，基础战斗测试", "tower", "map_test_large", 9999, 999, 10, color.RGBA{R: 100, G: 150, B: 220, A: 255}, "mixed", false},
+	{"enemy-ground", "地面怪物", "stat-movspd", "仅出地面普通怪，路径测试", "enemy", "map_test_large", 9999, 999, 10, color.RGBA{R: 220, G: 120, B: 80, A: 255}, "ground-only", false},
+	{"enemy-flying", "飞行怪物", "stat-range", "仅出飞行怪，防空能力测试", "enemy", "map_test_large", 9999, 999, 10, color.RGBA{R: 100, G: 180, B: 220, A: 255}, "flying-only", false},
+	{"enemy-elite", "精英怪物", "pulse", "仅出精英怪，特殊能力测试", "enemy", "map_test_large", 9999, 999, 10, color.RGBA{R: 160, G: 120, B: 220, A: 255}, "elite-only", false},
+	{"enemy-boss", "Boss 怪物", "execute", "仅出Boss，机制和伤害上限", "enemy", "map_test_large", 99999, 999, 8, color.RGBA{R: 220, G: 80, B: 80, A: 255}, "boss-only", false},
 
-	{"combo-static", "全怪静止展示", "stat-target", "所有怪物静止排列展示", "combo", "map_test", 9999, 999, 0, color.RGBA{R: 80, G: 180, B: 120, A: 255}, "all-static", false},
-	{"combo-mixed", "混合波次", "bounce", "地面+飞行+精英混合波次", "combo", "map_test", 9999, 999, 12, color.RGBA{R: 80, G: 140, B: 200, A: 255}, "mixed", false},
-	{"combo-stress", "压力测试", "stat-splash", "大量怪物高速刷出，性能极限", "combo", "map_test", 99999, 99999, 5, color.RGBA{R: 220, G: 100, B: 60, A: 255}, "stress", false},
-	{"combo-sandbox", "沙盒模式", "multishot", "无限金币，手动开波，自由测试", "combo", "map_test", 99999, 99999, 0, color.RGBA{R: 200, G: 180, B: 80, A: 255}, "none", true},
+	{"combo-static", "全怪静止展示", "stat-target", "所有怪物静止排列展示", "combo", "map_test_large", 9999, 999, 0, color.RGBA{R: 80, G: 180, B: 120, A: 255}, "all-static", false},
+	{"combo-mixed", "混合波次", "bounce", "地面+飞行+精英混合波次", "combo", "map_test_large", 9999, 999, 12, color.RGBA{R: 80, G: 140, B: 200, A: 255}, "mixed", false},
+	{"combo-stress", "压力测试", "stat-splash", "大量怪物高速刷出，性能极限", "combo", "map_test_large", 99999, 99999, 5, color.RGBA{R: 220, G: 100, B: 60, A: 255}, "stress", false},
+	{"combo-sandbox", "沙盒模式", "multishot", "无限金币，手动开波，自由测试", "combo", "map_test_large", 99999, 99999, 0, color.RGBA{R: 200, G: 180, B: 80, A: 255}, "none", true},
 
-	{"ability-zone", "区域控制塔", "slow", "减速/定身/范围DOT效果测试", "ability", "map_test", 9999, 999, 8, color.RGBA{R: 120, G: 160, B: 200, A: 255}, "mixed", false},
-	{"ability-periodic", "周期释放塔", "thunder", "周期AoE/增益/变异效果测试", "ability", "map_test", 9999, 999, 8, color.RGBA{R: 180, G: 120, B: 180, A: 255}, "mixed", false},
-	{"ability-aura", "光环体系", "tower-aura", "多种光环叠加效果测试", "ability", "map_test", 9999, 999, 10, color.RGBA{R: 220, G: 180, B: 80, A: 255}, "mixed", false},
-	{"ability-silence", "沉默 vs Boss", "stun", "沉默塔对Boss伤害上限影响", "ability", "map_test", 99999, 999, 5, color.RGBA{R: 180, G: 100, B: 100, A: 255}, "boss-only", false},
+	{"ability-zone", "区域控制塔", "slow", "减速/定身/范围DOT效果测试", "ability", "map_test_large", 9999, 999, 8, color.RGBA{R: 120, G: 160, B: 200, A: 255}, "mixed", false},
+	{"ability-periodic", "周期释放塔", "thunder", "周期AoE/增益/变异效果测试", "ability", "map_test_large", 9999, 999, 8, color.RGBA{R: 180, G: 120, B: 180, A: 255}, "mixed", false},
+	{"ability-aura", "光环体系", "tower-aura", "多种光环叠加效果测试", "ability", "map_test_large", 9999, 999, 10, color.RGBA{R: 220, G: 180, B: 80, A: 255}, "mixed", false},
+	{"ability-silence", "沉默 vs Boss", "stun", "沉默塔对Boss伤害上限影响", "ability", "map_test_large", 99999, 999, 5, color.RGBA{R: 180, G: 100, B: 100, A: 255}, "boss-only", false},
 
 	{"dps-dummy", "木桩靶场", "hunterInstinct", "超高HP木桩怪，DPS输出测试", "dps", "map_dummy", 99999, 999, 99, color.RGBA{R: 220, G: 160, B: 60, A: 255}, "dummy", false},
-	{"bench-lineup", "阵容编辑器", "armorPen", "手动放塔升级，保存阵容仿真", "bench", "map_test", 99999, 20, 12, color.RGBA{R: 140, G: 160, B: 180, A: 255}, "mixed", false},
+	{"bench-lineup", "阵容编辑器", "armorPen", "手动放塔升级，保存阵容仿真", "bench", "map_test_large", 99999, 20, 12, color.RGBA{R: 140, G: 160, B: 180, A: 255}, "mixed", false},
 }
 
 // ── 布局常量 ────────────────────────────────────
