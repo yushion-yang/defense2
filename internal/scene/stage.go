@@ -124,8 +124,9 @@ type StageScene struct {
 	debugPanelOpen    bool
 	debugShowRange    bool
 	spawnMode         bool
-	saveNaming        bool   // 场景命名输入中
-	saveNameBuf       string // 命名缓冲区
+	saveNaming        bool           // 场景命名输入中
+	saveNameBuf       string         // 命名缓冲区
+	hoveredEnemy      *enemy.Enemy   // 测试模式：鼠标悬浮的敌人
 	spawnType         string
 	spawnHoverIdx     int
 	initOpts          StageOptions          // 保存原始配置（重新开始用）
@@ -1018,6 +1019,127 @@ func (s *StageScene) drawSaveNaming(screen *ebiten.Image) {
 
 	// Hint
 	fm.DrawCenteredText(screen, "Enter: Save  |  Esc: Cancel", sw/2, float64(boxY+boxH)-14, 10, color.RGBA{R: 100, G: 110, B: 140, A: 200})
+}
+
+// drawEnemyTooltip 绘制敌人属性浮窗（测试模式悬浮检测）。
+func (s *StageScene) drawEnemyTooltip(screen *ebiten.Image, e *enemy.Enemy) {
+	fm := render.GlobalFont()
+	if fm == nil {
+		return
+	}
+
+	// 收集显示行
+	var lines []string
+	lines = append(lines, fmt.Sprintf("[%s] %s", e.Archetype, func() string {
+		if e.Boss {
+			return "BOSS"
+		}
+		if e.Elite {
+			return "Elite"
+		}
+		return ""
+	}()))
+	lines = append(lines, fmt.Sprintf("HP: %.0f / %.0f (%.0f%%)", e.HP, e.MaxHP, e.HP/e.MaxHP*100))
+	lines = append(lines, fmt.Sprintf("Speed: %.0f / %.0f", e.Speed, e.BaseSpeed))
+
+	// Debuffs
+	if e.SlowTimer > 0 {
+		lines = append(lines, fmt.Sprintf("  SLOW: ×%.0f%% %.1fs", e.SlowFactor*100, e.SlowTimer))
+	}
+	if e.StunTimer > 0 {
+		lines = append(lines, fmt.Sprintf("  STUN: %.1fs", e.StunTimer))
+	}
+	if e.RootTimer > 0 {
+		lines = append(lines, fmt.Sprintf("  ROOT: %.1fs", e.RootTimer))
+	}
+	if e.BleedTimer > 0 {
+		lines = append(lines, fmt.Sprintf("  BLEED: %.1f/s %.1fs", e.BleedDPS, e.BleedTimer))
+	}
+	if e.PoisonTimer > 0 {
+		lines = append(lines, fmt.Sprintf("  POISON: %.1f/s %.1fs", e.PoisonDPS, e.PoisonTimer))
+	}
+	if e.BurnTimer > 0 {
+		lines = append(lines, fmt.Sprintf("  BURN: %.1f/s %.1fs", e.BurnDPS, e.BurnTimer))
+	}
+	if e.DamageAmplify > 0 {
+		lines = append(lines, fmt.Sprintf("  WEAKEN: +%.0f%% %.1fs", e.DamageAmplify*100, e.DamageAmplifyTimer))
+	}
+	if e.Silenced {
+		lines = append(lines, "  SILENCED")
+	}
+	if e.Stealthed {
+		lines = append(lines, fmt.Sprintf("  STEALTH: %.1fs", e.StealthTimer))
+	}
+
+	// Immunities
+	if e.DamageCap > 0 {
+		lines = append(lines, fmt.Sprintf("  DmgCap: %.0f", e.DamageCap))
+	}
+	if e.DamageCapPercent > 0 {
+		lines = append(lines, fmt.Sprintf("  DmgCap%%: %.0f%%", e.DamageCapPercent*100))
+	}
+	if e.DamageReduceRatio > 0 {
+		lines = append(lines, fmt.Sprintf("  DmgReduce: %.0f%%", e.DamageReduceRatio*100))
+	}
+	if e.RegenPerSec > 0 {
+		lines = append(lines, fmt.Sprintf("  Regen: %.1f/s", e.RegenPerSec))
+	}
+	if e.SpeedBuff > 0 {
+		lines = append(lines, fmt.Sprintf("  SpdBuff: +%.0f%%", e.SpeedBuff*100))
+	}
+
+	// Layout: tooltip at cursor offset
+	mx, my := draw.CursorPos()
+	const (
+		fontSize  = 11.0
+		lineH     = 14.0
+		padX      = 8.0
+		padY      = 6.0
+		offsetX   = 16.0
+		offsetY   = 8.0
+	)
+	boxW := float32(200)
+	boxH := float32(float64(len(lines))*lineH + padY*2)
+	bx := float32(mx + offsetX)
+	by := float32(my + offsetY)
+
+	// Clamp to screen
+	sw := float32(game.ScreenWidth)
+	sh := float32(game.ScreenHeight)
+	if bx+boxW > sw {
+		bx = float32(mx) - boxW - 4
+	}
+	if by+boxH > sh {
+		by = sh - boxH - 4
+	}
+
+	// Background
+	draw.RoundRect(screen, bx, by, boxW, boxH, 6, color.RGBA{R: 10, G: 14, B: 24, A: 230})
+	draw.StrokeRoundRect(screen, bx, by, boxW, boxH, 6, 1, color.RGBA{R: 60, G: 80, B: 120, A: 180})
+
+	// Lines
+	for i, line := range lines {
+		clr := color.RGBA{R: 200, G: 210, B: 230, A: 255}
+		if len(line) > 2 && line[:2] == "  " {
+			// Debuff lines: colored
+			if strings.Contains(line, "SLOW") || strings.Contains(line, "ROOT") {
+				clr = color.RGBA{R: 100, G: 180, B: 255, A: 255} // ice blue
+			} else if strings.Contains(line, "STUN") {
+				clr = color.RGBA{R: 255, G: 220, B: 80, A: 255} // yellow
+			} else if strings.Contains(line, "BLEED") || strings.Contains(line, "BURN") {
+				clr = color.RGBA{R: 255, G: 100, B: 80, A: 255} // red
+			} else if strings.Contains(line, "POISON") {
+				clr = color.RGBA{R: 100, G: 220, B: 80, A: 255} // green
+			} else if strings.Contains(line, "WEAKEN") {
+				clr = color.RGBA{R: 220, G: 140, B: 255, A: 255} // purple
+			} else if strings.Contains(line, "SILENCE") {
+				clr = color.RGBA{R: 180, G: 180, B: 200, A: 255} // gray
+			} else if strings.Contains(line, "STEALTH") {
+				clr = color.RGBA{R: 160, G: 200, B: 220, A: 200} // dim
+			}
+		}
+		fm.DrawText(screen, line, float64(bx)+padX, float64(by)+padY+float64(i)*lineH, fontSize, clr)
+	}
 }
 
 // saveScenario exports the current tower layout + scene config to a JSON file.
@@ -1981,6 +2103,11 @@ func (s *StageScene) drawScene(screen *ebiten.Image) {
 			Total:          s.tutorial.StepCount(),
 			ClickToAdvance: step.Event == "",
 		})
+	}
+
+	// 测试模式：敌人属性浮窗
+	if s.testMode && s.hoveredEnemy != nil {
+		s.drawEnemyTooltip(screen, s.hoveredEnemy)
 	}
 
 	// 调试面板（测试模式）

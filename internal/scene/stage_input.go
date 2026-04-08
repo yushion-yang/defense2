@@ -251,6 +251,11 @@ func (s *StageScene) handleInput() {
 		s.buildHoverIdx = -1
 	}
 
+	// 测试模式：检测鼠标下的敌人
+	if s.testMode {
+		s.hoveredEnemy = s.enemyAtPixel(fmx, fmy)
+	}
+
 	// 道具面板：检测按下开始拖拽（不等松开）
 	if s.imode == modeItemPanel {
 		if inpututil.IsMouseButtonJustPressed(ebiten.MouseButtonLeft) || len(inpututil.AppendJustPressedTouchIDs(nil)) > 0 {
@@ -745,6 +750,29 @@ func (s *StageScene) openTestCategoryAbilities(t *tower.Tower, cat int) {
 		}
 	})
 	s.imode = modeUpgrade
+}
+
+// enemyAtPixel 返回像素位置上最近的敌人（碰撞半径内），无则返回 nil。
+func (s *StageScene) enemyAtPixel(px, py float64) *enemy.Enemy {
+	var best *enemy.Enemy
+	bestDist := 20.0 // 最大拾取半径
+	s.enemies.Each(func(e *enemy.Enemy) {
+		if e.IsDying() {
+			return
+		}
+		dx := e.X - px
+		dy := e.Y - py
+		d := math.Sqrt(dx*dx + dy*dy)
+		r := e.Radius
+		if r < 12 {
+			r = 12 // 最小拾取半径
+		}
+		if d <= r && d < bestDist {
+			bestDist = d
+			best = e
+		}
+	})
+	return best
 }
 
 // towerAtPixel 返回像素位置上的塔，无塔返回 nil。
