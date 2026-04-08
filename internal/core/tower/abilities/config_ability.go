@@ -194,12 +194,13 @@ func (a *ConfigAbility) OnTick(t *tower.Tower, ctx *tower.TickContext) *tower.Ti
 
 	switch a.Def.Type {
 	case "damageUpAura":
-		// scaleDim=bonus(比例), param=radius — 直接加 Damage，不走 Strength
+		// scaleDim=bonus(比例), param=radius — 写入 Mods.PctDamage
 		srcKey := fmt.Sprintf("dmgAura_%s_%d_%d", t.Key, t.Row, t.Col)
 		desc := fmt.Sprintf("+%.0f%%伤害", sv*100)
 		ctx.Towers.Each(func(other *tower.Tower) {
 			if math.Hypot(t.X-other.X, t.Y-other.Y) <= pm {
-				other.Damage += other.Damage * sv
+				other.Mods.PctDamage += sv
+				other.RecalcStats()
 				applyBuffDisplay(other, srcKey, "伤害光环", desc)
 			} else {
 				removeBuffDisplay(other, srcKey)
@@ -207,12 +208,13 @@ func (a *ConfigAbility) OnTick(t *tower.Tower, ctx *tower.TickContext) *tower.Ti
 		})
 
 	case "attackSpeedAura":
-		// scaleDim=bonus(比例), param=radius — 直接加 AttackSpeed，不走 Strength
+		// scaleDim=bonus(比例), param=radius — 写入 Mods.PctSpeed
 		srcKey := fmt.Sprintf("spdAura_%s_%d_%d", t.Key, t.Row, t.Col)
 		desc := fmt.Sprintf("+%.0f%%攻速", sv*100)
 		ctx.Towers.Each(func(other *tower.Tower) {
 			if math.Hypot(t.X-other.X, t.Y-other.Y) <= pm {
-				other.AttackSpeed += other.AttackSpeed * sv
+				other.Mods.PctSpeed += sv
+				other.RecalcStats()
 				applyBuffDisplay(other, srcKey, "攻速光环", desc)
 			} else {
 				removeBuffDisplay(other, srcKey)
@@ -220,12 +222,13 @@ func (a *ConfigAbility) OnTick(t *tower.Tower, ctx *tower.TickContext) *tower.Ti
 		})
 
 	case "rangeAura":
-		// scaleDim=bonus(像素), param=radius — 直接加 Range，不走 Strength
+		// scaleDim=bonus(像素), param=radius — 写入 Mods.FlatRange
 		srcKey := fmt.Sprintf("rngAura_%s_%d_%d", t.Key, t.Row, t.Col)
 		desc := fmt.Sprintf("+%.0f射程", sv)
 		ctx.Towers.Each(func(other *tower.Tower) {
 			if math.Hypot(t.X-other.X, t.Y-other.Y) <= pm {
-				other.Range += sv
+				other.Mods.FlatRange += sv
+				other.RecalcStats()
 				applyBuffDisplay(other, srcKey, "射程光环", desc)
 			} else {
 				removeBuffDisplay(other, srcKey)
@@ -233,14 +236,12 @@ func (a *ConfigAbility) OnTick(t *tower.Tower, ctx *tower.TickContext) *tower.Ti
 		})
 
 	case "critAura":
-		// scaleDim=bonus(暴击率加成), param=radius — 含自身
-		// critAura 用 CritBonus（每帧重置），不走 Strength
+		// scaleDim=bonus(暴击率加成), param=radius — CritBonus 每帧重置
 		srcKey := fmt.Sprintf("critAura_%s_%d_%d", t.Key, t.Row, t.Col)
 		desc := fmt.Sprintf("+%.0f%%暴击", sv*100)
 		ctx.Towers.Each(func(other *tower.Tower) {
 			if math.Hypot(t.X-other.X, t.Y-other.Y) <= pm {
 				other.CritBonus += sv
-				// 追加到 Buffs 供 HUD 展示（不走 Strength）
 				applyBuffDisplay(other, srcKey, "暴击光环", desc)
 			} else {
 				removeBuffDisplay(other, srcKey)
@@ -248,7 +249,7 @@ func (a *ConfigAbility) OnTick(t *tower.Tower, ctx *tower.TickContext) *tower.Ti
 		})
 
 	case "soloBoost":
-		// scaleDim=bonus, param=checkRadius — 周围无塔时直接加 Damage
+		// scaleDim=bonus, param=checkRadius — 写入 Mods.PctDamage
 		alone := true
 		ctx.Towers.Each(func(other *tower.Tower) {
 			if other != t && math.Hypot(t.X-other.X, t.Y-other.Y) <= pm {
@@ -257,7 +258,8 @@ func (a *ConfigAbility) OnTick(t *tower.Tower, ctx *tower.TickContext) *tower.Ti
 		})
 		srcKey := fmt.Sprintf("solo_%s_%d_%d", t.Key, t.Row, t.Col)
 		if alone {
-			t.Damage += t.Damage * sv
+			t.Mods.PctDamage += sv
+			t.RecalcStats()
 			applyBuffDisplay(t, srcKey, "独行加成", fmt.Sprintf("+%.0f%%伤害", sv*100))
 		} else {
 			removeBuffDisplay(t, srcKey)

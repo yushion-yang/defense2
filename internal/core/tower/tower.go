@@ -88,6 +88,9 @@ type Tower struct {
 	Strength *strength.StrengthData // 战力运行时数据
 	Buffs    []TowerBuff            // 当前生效的 buff 列表（含来源/描述/时长）
 
+	// 属性修饰层（每帧 Phase 1 清零，Phase 2 光环/buff 累加，RecalcStats 统一计算）
+	Mods AttrMods
+
 	// 光环加成（每帧由 Ticker 能力重置+重算）
 	CritBonus float64 // 暴击光环加成的暴击率（由 critAura 设置）
 
@@ -112,6 +115,17 @@ type Tower struct {
 	Selling   bool    // true when tower is in sell animation (skip gameplay logic)
 }
 
+// AttrMods 属性临时修饰（每帧清零重算）。
+// 光环、独行等 buff 写入此处，RecalcStats 统一应用。
+type AttrMods struct {
+	PctDamage  float64 // +X% 伤害（乘法累加，如 0.15 = +15%）
+	PctSpeed   float64 // +X% 攻速
+	PctRange   float64 // +X% 射程
+	FlatDamage float64 // +X 伤害（加法）
+	FlatSpeed  float64 // +X 攻速
+	FlatRange  float64 // +X 射程
+}
+
 // BuyStrength 花费金币购买 10 点永久强度。返回实际花费。
 func (t *Tower) BuyStrength() int {
 	cost := StrengthBuyCost
@@ -123,17 +137,23 @@ func (t *Tower) BuyStrength() int {
 	return cost
 }
 
-// RecalcStats 根据当前强度重算 Damage/AttackSpeed/Range。
-// 公式与 AbilityDef 一致: value = base + potential * (strength / 100)
-// 无 Strength 时使用强度100的默认值（base + potential）。
+// RecalcStats 根据当前强度和临时修饰重算 Damage/AttackSpeed/Range。
+// 公式: final = (Base + Potential × str/100) × (1 + PctMod) + FlatMod
+// 无 Strength 时使用强度100的默认值。
 func (t *Tower) RecalcStats() {
 	ratio := 1.0 // 默认强度100
 	if t.Strength != nil {
 		ratio = t.Strength.Effective() / 100.0
 	}
-	t.Damage = t.BaseDamage + t.PotentialDamage*ratio
-	t.AttackSpeed = t.BaseSpeed + t.PotentialSpeed*ratio
-	t.Range = t.BaseRange + t.PotentialRange*ratio
+	baseDmg := t.BaseDamage + t.PotentialDamage*ratio
+	t.Damage = baseDmg*(1+t.Mods.PctDamage) + t.Mods.FlatDamage
+
+	baseSpd := t.BaseSpeed + t.PotentialSpeed*ratio
+	t.AttackSpeed = baseSpd*(1+t.Mods.PctSpeed) + t.Mods.FlatSpeed
+
+	baseRng := t.BaseRange + t.PotentialRange*ratio
+	t.Range = baseRng*(1+t.Mods.PctRange) + t.Mods.FlatRange
+
 	t.CritBonus = 0 // 每帧重置，由 critAura OnTick 重新设置
 }
 

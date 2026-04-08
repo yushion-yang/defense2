@@ -46,18 +46,10 @@ func BuildInfoPanelVM(t *tower.Tower, sellValue int, wavesCleared int, testMode 
 		vm.StrengthText = strTxt
 	}
 
-	// Attribute segments (colored base + scaled + total + aura bonus)
-	// 计算光环增量 = 运行时属性 - 强度公式值
-	ratio := effStr / 100.0
-	baseDmg := t.BaseDamage + t.PotentialDamage*ratio
-	baseSpd := t.BaseSpeed + t.PotentialSpeed*ratio
-	baseRng := t.BaseRange + t.PotentialRange*ratio
-	dmgBonus := t.Damage - baseDmg
-	spdBonus := t.AttackSpeed - baseSpd
-	rngBonus := t.Range - baseRng
-	vm.DamageSegs = buildAttrSegs("%.0f", t.BaseDamage, t.PotentialDamage, effStr, dmgBonus)
-	vm.SpeedSegs = buildAttrSegs("%.2f", t.BaseSpeed, t.PotentialSpeed, effStr, spdBonus)
-	vm.RangeSegs = buildAttrSegs("%.0f", t.BaseRange, t.PotentialRange, effStr, rngBonus)
+	// Attribute segments (colored base + scaled + total + mods bonus)
+	vm.DamageSegs = buildAttrSegsWithMods("%.0f", t.BaseDamage, t.PotentialDamage, effStr, t.Mods.PctDamage, t.Mods.FlatDamage)
+	vm.SpeedSegs = buildAttrSegsWithMods("%.2f", t.BaseSpeed, t.PotentialSpeed, effStr, t.Mods.PctSpeed, t.Mods.FlatSpeed)
+	vm.RangeSegs = buildAttrSegsWithMods("%.0f", t.BaseRange, t.PotentialRange, effStr, t.Mods.PctRange, t.Mods.FlatRange)
 
 	// Attack style
 	style := t.AttackStyleID
@@ -185,30 +177,31 @@ func fmtAttr(numFmt string, base, potential, effStr float64) string {
 
 // buildAttrSegs builds colored segments for a tower attribute.
 // base(white) + (scaled)(colored) + =total(white).
-func buildAttrSegs(numFmt string, base, potential, effStr float64, auraBonus ...float64) []hud.AbilitySegment {
-	bonus := 0.0
-	if len(auraBonus) > 0 {
-		bonus = auraBonus[0]
-	}
-	if potential == 0 && (bonus < 0.005 && bonus > -0.005) {
+func buildAttrSegs(numFmt string, base, potential, effStr float64) []hud.AbilitySegment {
+	return buildAttrSegsWithMods(numFmt, base, potential, effStr, 0, 0)
+}
+
+// buildAttrSegsWithMods builds attribute display with pct/flat modifier bonus.
+func buildAttrSegsWithMods(numFmt string, base, potential, effStr, pctMod, flatMod float64) []hud.AbilitySegment {
+	hasMods := pctMod > 0.001 || pctMod < -0.001 || flatMod > 0.005 || flatMod < -0.005
+	if potential == 0 && !hasMods {
 		return []hud.AbilitySegment{
 			{Text: fmt.Sprintf(numFmt, base), Kind: "base"},
 		}
 	}
 	ratio := effStr / 100.0
 	scaled := potential * ratio
-	total := base + scaled
+	baseTotal := base + scaled
 
 	segs := []hud.AbilitySegment{
 		{Text: fmt.Sprintf(numFmt+"+", base), Kind: "base"},
 		{Text: fmt.Sprintf("("+numFmt+")", scaled), Kind: "scaled", Color: scaledColor(scaled, potential)},
-		{Text: fmt.Sprintf("→"+numFmt, total), Kind: "total"},
+		{Text: fmt.Sprintf("→"+numFmt, baseTotal), Kind: "total"},
 	}
-	// 光环加成（绿色追加显示）
-	if bonus > 0.005 || bonus < -0.005 {
-		segs = append(segs, hud.AbilitySegment{
-			Text: fmt.Sprintf("+"+numFmt, bonus), Kind: "aura",
-		})
+	if hasMods {
+		finalTotal := baseTotal*(1+pctMod) + flatMod
+		modText := fmt.Sprintf("→"+numFmt, finalTotal)
+		segs = append(segs, hud.AbilitySegment{Text: modText, Kind: "aura"})
 	}
 	return segs
 }

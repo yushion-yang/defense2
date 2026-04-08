@@ -86,5 +86,6 @@ func TickTowerAbilities(towers *tower.Pool, enemies *enemy.Pool, dt float64, cha
 // resetTowerStats 根据战力系统重算塔的 Damage/Range/AttackSpeed。
 // 公式: attr = base + potential * (strength / 100)
 func resetTowerStats(t *tower.Tower) {
+	t.Mods = tower.AttrMods{} // 清零临时修饰
 	t.RecalcStats()
 }
