@@ -145,11 +145,14 @@ func (p *ChoicePanel) Update(mx, my float64, clicked bool) {
 	if clicked {
 		if p.hovered >= 0 && p.OnSelect != nil {
 			opt := p.Options[p.hovered]
+			prevTitle := p.Title
 			p.OnSelect(p.hovered, opt)
-			// OnSelect 回调可能重新 Show() 了面板（如二级选择），此时不 Close
-			if p.Active {
-				return
+			// OnSelect 回调可能重新 Show() 了面板（如二级选择），
+			// 通过 Title 变化判断：Title 变了说明回调内调了 Show()，保持打开。
+			if p.Active && p.Title == prevTitle {
+				p.Close()
 			}
+			return
 		}
 		// Only dismiss on click-outside if Dismissible is true
 		if p.Dismissible {

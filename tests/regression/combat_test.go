@@ -135,8 +135,9 @@ func TestRegression_DoT_BurnIndependentOfBleed(t *testing.T) {
 		t.Fatalf("DPS values wrong: burn=%.0f bleed=%.0f", e.BurnDPS, e.BleedDPS)
 	}
 
-	// Run 1 DoT tick cycle (0.5s = 30 ticks)
-	s.RunTicks(30)
+	// Run 1 DoT tick cycle (0.5s = 30 ticks + 1 init tick)
+	// First tick initializes DotTickTimer to 0.5, so damage fires at tick 31.
+	s.RunTicks(31)
 
 	// Combined DoT per tick: (100+50) * 0.5 = 75
 	expectedHP := 1000.0 - 75.0

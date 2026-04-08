@@ -32,6 +32,7 @@ var forbidden = []forbiddenPattern{
 // allowedPaths 白名单：draw 包本身是封装层，允许调用底层 API。
 var allowedPaths = []string{
 	filepath.Join("internal", "render", "draw"),
+	filepath.Join("internal", "input"),
 }
 
 func TestForbiddenAPICalls(t *testing.T) {

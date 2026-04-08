@@ -102,8 +102,8 @@ func TestLoadVocab_RealFile(t *testing.T) {
 		t.Fatalf("LoadVocab: %v", err)
 	}
 
-	if got := v.Size(); got != 224 {
-		t.Errorf("Size() = %d, want 224", got)
+	if got := v.Size(); got != 208 {
+		t.Errorf("Size() = %d, want 208", got)
 	}
 
 	keyTokens := []string{

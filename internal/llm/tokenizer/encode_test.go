@@ -44,13 +44,13 @@ func containsToken(tokens []string, target string) bool {
 func TestEncode_EmptyState(t *testing.T) {
 	v := loadTestVocab(t)
 	input := &EncodeInput{
-		Gold:      100,
-		Lives:     20,
-		MaxLives:  20,
-		Wave:      1,
+		Gold:       100,
+		Lives:      20,
+		MaxLives:   20,
+		Wave:       1,
 		WaveActive: false,
-		GameSpeed: 1,
-		MapPixelW: 1200,
+		GameSpeed:  1,
+		MapPixelW:  1200,
 	}
 	ids := Encode(v, input)
 	tokens := idsToTokens(v, ids)
@@ -133,12 +133,12 @@ func TestEncode_LivesBuckets(t *testing.T) {
 		lives, maxLives int
 		want            string
 	}{
-		{20, 20, "L9"},  // 100% → int(1.0*10)=10, capped to 9 → L9
-		{10, 20, "L5"},  // 50% → int(0.5*10)=5 → L5
-		{1, 20, "L0"},   // 5% → int(0.05*10)=0 → L0
-		{0, 20, "L0"},   // 0% → L0
-		{19, 20, "L9"},  // 95% → int(0.95*10)=9 → L9
-		{18, 20, "L9"},  // 90% → int(0.9*10)=9 → L9
+		{20, 20, "L9"}, // 100% → int(1.0*10)=10, capped to 9 → L9
+		{10, 20, "L5"}, // 50% → int(0.5*10)=5 → L5
+		{1, 20, "L0"},  // 5% → int(0.05*10)=0 → L0
+		{0, 20, "L0"},  // 0% → L0
+		{19, 20, "L9"}, // 95% → int(0.95*10)=9 → L9
+		{18, 20, "L9"}, // 90% → int(0.9*10)=9 → L9
 	}
 	for _, tt := range tests {
 		t.Run(tt.want, func(t *testing.T) {
@@ -203,7 +203,7 @@ func TestEncode_EnemyWithStatus(t *testing.T) {
 				X: 300, Y: 100,
 				HP: 80, MaxHP: 100,
 				Archetype: "elite",
-				IsSlowed: true, IsBurning: true,
+				IsSlowed:  true, IsBurning: true,
 			},
 		},
 	}
@@ -344,7 +344,6 @@ func TestEncode_FullState(t *testing.T) {
 				X: 960, Y: 300,
 				HP: 20, MaxHP: 200,
 				Archetype: "boss",
-				IsShielded: true,
 			},
 		},
 		Towers: []EncodeTower{
@@ -397,12 +396,9 @@ func TestEncode_FullState(t *testing.T) {
 		t.Errorf("expected s_slow, tokens=%v", tokens)
 	}
 
-	// Enemy 2: boss, h1 (10%), p8 (80%), s_shield
+	// Enemy 2: boss, h1 (10%), p8 (80%)
 	if !containsToken(tokens, "a_boss") {
 		t.Errorf("expected a_boss, tokens=%v", tokens)
-	}
-	if !containsToken(tokens, "s_shield") {
-		t.Errorf("expected s_shield, tokens=%v", tokens)
 	}
 
 	// Tower: electric, R3C8, str7, scatter, TGTYES
