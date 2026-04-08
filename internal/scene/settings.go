@@ -43,6 +43,7 @@ const (
 type SettingsScene struct {
 	switcher    Switcher
 	returnScene Scene   // 返回时切换到的场景
+	sfxEnabled  bool    // 音效总开关
 	sfxVol      float64 // 0.0–1.0
 	bgmVol      float64 // 0.0–1.0
 	quality     int     // 0=High, 1=Medium, 2=Low
@@ -61,9 +62,12 @@ func NewSettingsScene(sw Switcher, returnTo Scene) *SettingsScene {
 		sfx = am.Volume()
 		bgm = am.BGMVolume()
 	}
+	// 从持久化设置读取 sfxEnabled（而非从 Manager，因为 Manager 没有 getter）
+	sd := LoadSettings()
 	return &SettingsScene{
 		switcher:    sw,
 		returnScene: returnTo,
+		sfxEnabled:  sd.SFXEnabled,
 		sfxVol:      sfx,
 		bgmVol:      bgm,
 		quality:     int(game.CurrentQuality),
@@ -196,9 +200,10 @@ func (s *SettingsScene) hitSlider(mx, my float64, bx, by, bw, bh float32) bool {
 // persist 将当前设置写入磁盘。
 func (s *SettingsScene) persist() {
 	SaveSettings(SettingsData{
-		SFXVolume: s.sfxVol,
-		BGMVolume: s.bgmVol,
-		Quality:   s.quality,
+		SFXEnabled: s.sfxEnabled,
+		SFXVolume:  s.sfxVol,
+		BGMVolume:  s.bgmVol,
+		Quality:    s.quality,
 	})
 }
 

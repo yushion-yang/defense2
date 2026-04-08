@@ -80,6 +80,7 @@ func NewGame() *Game {
 	// 加载持久化设置（音量/画质）
 	if !HeadlessMode {
 		sd := LoadSettings()
+		log.Printf("[settings] sfxEnabled=%v sfxVol=%.2f bgmVol=%.2f", sd.SFXEnabled, sd.SFXVolume, sd.BGMVolume)
 		am.SetSFXEnabled(sd.SFXEnabled)
 		am.SetVolume(sd.SFXVolume)
 		am.SetBGMVolume(sd.BGMVolume)
