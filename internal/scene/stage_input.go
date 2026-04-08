@@ -151,7 +151,7 @@ func (s *StageScene) handleInput() {
 		return
 	}
 	if inpututil.IsKeyJustPressed(ebiten.KeyB) {
-		if s.imode == modeBuildMenu {
+		if s.imode == modeBuildMenu || s.imode == modeBuildPlace {
 			s.imode = modeIdle
 		} else {
 			// 清除造怪/道具状态
@@ -159,8 +159,8 @@ func (s *StageScene) handleInput() {
 			s.spawnType = ""
 			s.itemPanelOpen = false
 			s.dragItemActive = false
-			s.imode = modeBuildMenu
 			s.selectedTower = nil
+			s.enterBuildMode()
 		}
 		return
 	}
@@ -365,14 +365,14 @@ func (s *StageScene) handleInput() {
 	actionBtn := hud.ActionBarHitTest(ftx, fty)
 	switch actionBtn {
 	case "build":
-		if s.imode == modeBuildMenu {
+		if s.imode == modeBuildMenu || s.imode == modeBuildPlace {
 			s.imode = modeIdle
 		} else {
-			s.imode = modeBuildMenu
 			s.selectedTower = nil
 			s.wardenPanelOpen = false
 			s.itemPanelOpen = false
 			s.tutorial.Trigger("build")
+			s.enterBuildMode()
 		}
 		return
 	case "items":
@@ -605,6 +605,16 @@ func (s *StageScene) clampCamera() {
 	}
 	if s.camY > maxY {
 		s.camY = maxY
+	}
+}
+
+// enterBuildMode enters build mode. If only one tower type, skip menu and go directly to place mode.
+func (s *StageScene) enterBuildMode() {
+	if len(s.towerDefs) == 1 {
+		s.selectedDef = 0
+		s.imode = modeBuildPlace
+	} else {
+		s.imode = modeBuildMenu
 	}
 }
 
