@@ -168,42 +168,43 @@ func DrawInfoPanel(screen *ebiten.Image, vm InfoPanelVM) {
 		}
 	})
 
-	// Row 2: 属性行（伤害/攻速/射程）— 三段式着色
-	panel.AddRow(attrH, func(screen *ebiten.Image, x, y float64, w float64) {
-		colW := w / 3
-		const (
-			iconSize = 16.0
-			iconGap  = 5.0
-		)
-		im := render.GlobalIcons()
-		textOff := iconSize + iconGap
-
-		drawAttrSegs := func(segs []AbilitySegment, sx, sy float64) {
-			for _, seg := range segs {
-				var clr color.Color = theme.TextBody
-				switch {
-				case seg.Kind == "scaled" && seg.Color != nil:
-					clr = seg.Color
-				case seg.Kind == "aura":
-					clr = color.RGBA{R: 80, G: 220, B: 120, A: 255} // green for aura buff
-				}
-				fm.DrawText(screen, seg.Text, sx, sy, theme.FontLG, clr)
-				sx += fm.MeasureText(seg.Text, theme.FontLG)
+	// Row 2~4: 属性行（每行一个属性：图标 + 标签 + 着色数值）
+	drawAttrSegs := func(segs []AbilitySegment, sx, sy float64) {
+		for _, seg := range segs {
+			var clr color.Color = theme.TextBody
+			switch {
+			case seg.Kind == "scaled" && seg.Color != nil:
+				clr = seg.Color
+			case seg.Kind == "aura":
+				clr = color.RGBA{R: 80, G: 220, B: 120, A: 255}
 			}
+			fm.DrawText(screen, seg.Text, sx, sy, theme.FontLG, clr)
+			sx += fm.MeasureText(seg.Text, theme.FontLG)
 		}
-
-		// 伤害
-		drawStatIcon(screen, im, "stat-damage", x, y, iconSize)
-		drawAttrSegs(vm.DamageSegs, x+textOff, y)
-
-		// 攻速
-		drawStatIcon(screen, im, "stat-atkspd", x+colW, y, iconSize)
-		drawAttrSegs(vm.SpeedSegs, x+colW+textOff, y)
-
-		// 射程
-		drawStatIcon(screen, im, "stat-range", x+colW*2, y, iconSize)
-		drawAttrSegs(vm.RangeSegs, x+colW*2+textOff, y)
-	})
+	}
+	const (
+		iconSize = 16.0
+		iconGap  = 4.0
+		labelW   = 36.0
+	)
+	im := render.GlobalIcons()
+	attrRows := []struct {
+		icon  string
+		label string
+		segs  []AbilitySegment
+	}{
+		{"stat-damage", "伤害", vm.DamageSegs},
+		{"stat-atkspd", "攻速", vm.SpeedSegs},
+		{"stat-range", "射程", vm.RangeSegs},
+	}
+	for _, ar := range attrRows {
+		ar := ar
+		panel.AddRow(attrH, func(screen *ebiten.Image, x, y float64, _ float64) {
+			drawStatIcon(screen, im, ar.icon, x, y, iconSize)
+			fm.DrawText(screen, ar.label, x+iconSize+iconGap, y, theme.FontSM, theme.TextMuted)
+			drawAttrSegs(ar.segs, x+iconSize+iconGap+labelW, y)
+		})
+	}
 
 	// Row 3: 攻击方式
 	panel.AddRow(abilityH, func(screen *ebiten.Image, x, y float64, _ float64) {
