@@ -1,4 +1,131 @@
-# 怪物能力配置表
+# 怪物设计体系
+
+## 0. 设计架构
+
+### 0.1 组合模型 (Composition Pipeline)
+
+怪物不使用继承，而是通过四层组合构建：
+
+```
+Layer 1: JSON 原型 (enemies-core.json)
+  → 基础属性倍率 (HP/速度/奖励/半径) + 特殊字段 (隐身/分裂/传送/治疗/光环)
+    ↓
+Layer 2: SpawnConfig 转换 (stage.go 桥接)
+  → 映射字段 + 行为标识 (healer/stealth/splitter/buffer/regenerator)
+    ↓
+Layer 3: Pool.Spawn 实例化
+  → 实际HP = baseHP × hpScale, 速度 = baseSpeed × speedScale
+  → 应用特殊能力参数 (隐身timer/分裂数/治疗量/光环范围)
+    ↓
+Layer 4: 后置增强
+  → 路径分配 + Boss状态 + 波次Buff注入 (30%概率, 0~2个buff模板)
+```
+
+### 0.2 核心数据结构
+
+**Enemy 实体**: 44+ 字段的扁平 struct（无指针嵌套），固定大小数组对象池 (256 容量)。
+
+**SpawnConfig**: 纯数据值对象，隔离 config 包和 enemy 包的依赖。
+
+**行为系统**: `e.Behavior` 字符串 + `TickBehaviors()` switch 分发，无接口多态。
+
+**Boss 状态**: 独立 `BossState` struct，位掩码能力组合 (Phase/Spawn/Aura/Reflect/GoldSteal)。
+
+### 0.3 每帧处理顺序
+
+```
+1. TickBehaviors()
+   1.1 清零所有敌人 SpeedBuff
+   1.2 全局: 狂暴检查 (HP<50% → 速度×1.5, 一次性)
+   1.3 全局: 回血 (RegenPerSec > 0 → 回复)
+   1.4 按 Behavior 分发:
+       - healer: 冷却到期 → 范围治疗友方
+       - stealth: 计时器到期 → 解除隐身
+       - buffer: 每帧设置范围内友方 SpeedBuff (取max不叠加)
+       - splitter: 不在此处理 (死亡时触发)
+       - regenerator: 由全局回血处理
+
+2. 移动 (movement.go / flying.go)
+   - 眩晕/定身检查 → 跳过移动
+   - 速度 = Speed × (1 + SpeedBuff)
+   - 沿路径点前进, 到达终点设 ReachedEnd
+
+3. TickStatusEffects (enemy.go)
+   - Slow 衰减 + 速度恢复
+   - DoT tick (每 0.5s): burn + poison + bleed + zone 累积
+   - Weaken/Root/ControlImmune 计时器衰减
+   - DisplayHP 拖尾
+```
+
+### 0.4 死亡流程
+
+```
+Pool.Kill(e):
+  1. 复活检查 → ReviveHPPercent > 0 且未用过 → 恢复HP, 中止死亡
+  2. 分裂检查 → SplitCount > 0 → 生成子体 (30%HP, ×1.4速, ×0.7半径)
+  3. 进入死亡动画 → DyingTimer = 0.3s (Boss 0.5s)
+  4. Count-- (立即从计数中移除, 但 Active 保持用于渲染)
+  5. FinishDying() → Active = false (完全回收槽位)
+```
+
+### 0.5 已实装 vs 待实装
+
+| 状态 | 数量 | 说明 |
+|------|------|------|
+| ✅ 已实装原型 | 13 | enemies-core.json 中定义 |
+| ✅ 已实装 Buff 模板 | 10 | buff_templates.go 中定义 |
+| ⚠️ 可组合但无独立原型 | 12 | 通过原型+buff模板组合 (如 berserker = normal + berserk) |
+| ❌ 仅有描述未实装 | ~55 | settings.json specialHints 中有描述 |
+
+### 0.6 已知缺陷 / 待修复
+
+| 问题 | 说明 |
+|------|------|
+| ShieldScale 未接入 | shielded 原型 JSON 有 shieldScale=0.82, 但 SpawnConfig/Enemy 无对应字段 |
+| AuraArmor 未接入 | buffer 原型 JSON 有 auraArmor=10, 但未传入运行时 |
+| 飞行移动未接入 | MoveFlyingEnemy() 函数存在但 stage.go 未调用, 飞行怪走地面路径 |
+| 行为双重执行 | healer/buffer 的 TickBehaviors + UpdateHealing/UpdateBufferAura 两套并存, 可能执行两次 |
+| Lifecycle Hooks 空置 | OnDeath/OnSpawn/OnDamaged 框架就绪但无注册者 |
+| Boss 模板部分未实装 | bossTeleport / bossRotateWeakness / armorBonus 无代码 |
+| 反伤无实际效果 | ReflectPercent 字段存在但塔无HP, 反伤对塔无效 |
+
+### 0.7 扩展新怪物的方式
+
+**方式 A: 纯数据 (最简)**
+
+在 `enemies-core.json` 加一个原型，只用已有字段组合：
+```json
+"berserker": {
+  "label": "狂战士",
+  "hpScale": 1.5, "speedScale": 1.2,
+  "berserkThreshold": 0.5, "berserkSpeedScale": 1.5
+}
+```
+
+**方式 B: 原型 + Buff 模板**
+
+用已有原型 + 注入 buff 模板：
+```
+ironhide = tank + damageReduce(设DamageCap=60)
+```
+
+**方式 C: 新行为 (需写代码)**
+
+1. 在 `behaviors.go` 的 `TickBehaviors` switch 中加 case
+2. Enemy struct 加需要的字段
+3. SpawnConfig 加对应配置字段
+4. enemies-core.json 加原型定义
+
+**方式 D: Lifecycle Hook (框架已就绪)**
+
+用 `e.Lifecycle.OnDeath` 注册死亡回调，无需改 behaviors.go：
+```go
+e.Lifecycle.Register("death", "deathExplosion", func(e *Enemy) {
+    // 死亡爆炸逻辑
+})
+```
+
+---
 
 ## 1. 基础原型 (enemies-core.json)
 
