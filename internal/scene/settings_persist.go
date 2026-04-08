@@ -11,17 +11,19 @@ import (
 
 // SettingsData 可序列化的用户设置。
 type SettingsData struct {
-	SFXVolume float64 `json:"sfxVolume"`
-	BGMVolume float64 `json:"bgmVolume"`
-	Quality   int     `json:"quality"` // 0=High, 1=Medium, 2=Low
+	SFXEnabled bool    `json:"sfxEnabled"`
+	SFXVolume  float64 `json:"sfxVolume"`
+	BGMVolume  float64 `json:"bgmVolume"`
+	Quality    int     `json:"quality"` // 0=High, 1=Medium, 2=Low
 }
 
 // DefaultSettings 返回默认设置。
 func DefaultSettings() SettingsData {
 	return SettingsData{
-		SFXVolume: 0.8,
-		BGMVolume: 0.5,
-		Quality:   0, // High
+		SFXEnabled: false,
+		SFXVolume:  0.8,
+		BGMVolume:  0.5,
+		Quality:    0, // High
 	}
 }
 

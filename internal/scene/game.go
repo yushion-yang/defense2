@@ -80,6 +80,7 @@ func NewGame() *Game {
 	// 加载持久化设置（音量/画质）
 	if !HeadlessMode {
 		sd := LoadSettings()
+		am.SetSFXEnabled(sd.SFXEnabled)
 		am.SetVolume(sd.SFXVolume)
 		am.SetBGMVolume(sd.BGMVolume)
 		if sd.Quality >= 0 && sd.Quality <= 2 {

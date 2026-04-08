@@ -37,11 +37,12 @@ type AssetFS interface {
 
 // Manager 音效管理器。
 type Manager struct {
-	context  *audio.Context       // Ebitengine 音频上下文
-	cache    map[string][]byte    // 音效 PCM 数据缓存（名称 → 解码后数据）
-	volume   float64              // 主音量（0.0 ~ 1.0）
-	throttle map[string]time.Time // 每个音效的上次播放时间（per-sound 节流）
-	mu       sync.Mutex           // 并发安全锁
+	context    *audio.Context       // Ebitengine 音频上下文
+	cache      map[string][]byte    // 音效 PCM 数据缓存（名称 → 解码后数据）
+	volume     float64              // 主音量（0.0 ~ 1.0）
+	sfxEnabled bool                 // 音效总开关
+	throttle   map[string]time.Time // 每个音效的上次播放时间（per-sound 节流）
+	mu         sync.Mutex           // 并发安全锁
 
 	// BGM（背景音乐）
 	bgmPlayer *audio.Player // 当前 BGM 播放器（nil 表示无 BGM）
@@ -96,9 +97,20 @@ func (m *Manager) Play(name string) {
 	m.PlayAt(name, 1.0)
 }
 
+// SetSFXEnabled 设置音效总开关。
+func (m *Manager) SetSFXEnabled(enabled bool) {
+	m.mu.Lock()
+	m.sfxEnabled = enabled
+	m.mu.Unlock()
+}
+
 // PlayAt 以指定音量倍率播放音效。finalVol = masterVolume * scale。
 func (m *Manager) PlayAt(name string, scale float64) {
 	m.mu.Lock()
+	if !m.sfxEnabled {
+		m.mu.Unlock()
+		return
+	}
 	pcm, ok := m.cache[name]
 	vol := m.volume * scale
 	m.mu.Unlock()
