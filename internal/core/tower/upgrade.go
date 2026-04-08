@@ -5,6 +5,7 @@ package tower
 
 import (
 	"math/rand"
+	"sort"
 
 	"defense2/internal/config"
 )
@@ -262,7 +263,7 @@ func AllChoicesForCategory(cat int) []config.AbilityDef {
 	return result
 }
 
-// AbilitiesForCategory 返回指定类别中可选择的能力列表。
+// AbilitiesForCategory 返回指定类别中可选择的能力列表，按 Type 字母序排列。
 func AbilitiesForCategory(category int) []*config.AbilityDef {
 	table := config.GlobalAbilityTable()
 	if table == nil {
@@ -274,6 +275,9 @@ func AbilitiesForCategory(category int) []*config.AbilityDef {
 			result = append(result, def)
 		}
 	}
+	sort.Slice(result, func(i, j int) bool {
+		return result[i].Type < result[j].Type
+	})
 	return result
 }
 
