@@ -196,12 +196,14 @@ func buildAttrSegsWithMods(numFmt string, base, potential, effStr, pctMod, flatM
 	segs := []hud.AbilitySegment{
 		{Text: fmt.Sprintf(numFmt+"+", base), Kind: "base"},
 		{Text: fmt.Sprintf("("+numFmt+")", scaled), Kind: "scaled", Color: scaledColor(scaled, potential)},
-		{Text: fmt.Sprintf("→"+numFmt, baseTotal), Kind: "total"},
 	}
 	if hasMods {
+		// 有 buff 时直接显示最终值（绿色）: 8+(12)→23
 		finalTotal := baseTotal*(1+pctMod) + flatMod
-		modText := fmt.Sprintf("→"+numFmt, finalTotal)
-		segs = append(segs, hud.AbilitySegment{Text: modText, Kind: "aura"})
+		segs = append(segs, hud.AbilitySegment{Text: fmt.Sprintf("→"+numFmt, finalTotal), Kind: "aura"})
+	} else {
+		// 无 buff: 8+(12)→20
+		segs = append(segs, hud.AbilitySegment{Text: fmt.Sprintf("→"+numFmt, baseTotal), Kind: "total"})
 	}
 	return segs
 }
