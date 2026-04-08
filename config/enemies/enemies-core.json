@@ -15,7 +15,8 @@
     "speedScale": 1.84,
     "rewardScale": 0.72,
     "radius": 16,
-    "description": "轻装快速突击兵，血量薄弱但移速极高，擅长趁防线空隙突破"
+    "abilities": ["dashOnHit"],
+    "description": "轻装快速突击兵，被攻击后短暂加速冲刺，越打越快"
   },
   "tank": {
     "label": "重甲",
@@ -24,7 +25,8 @@
     "speedScale": 0.78,
     "rewardScale": 1.35,
     "radius": 24,
-    "description": "身形壮硕的重型单位，血量极高但行动缓慢，纯粹依靠高血量硬扛"
+    "abilities": ["damageCap"],
+    "description": "身形壮硕的重型单位，单次受击伤害上限60，需要高攻速多段输出"
   },
   "armored": {
     "label": "护甲兵",
@@ -33,7 +35,8 @@
     "speedScale": 0.85,
     "rewardScale": 1.1,
     "radius": 20,
-    "description": "身披重甲的坚固单位，血量较高且行动迟缓，以数量和硬度拖延防线"
+    "abilities": ["armorPlating"],
+    "description": "身披重甲的坚固单位，每次受击固定减免5点伤害，克制低伤害多段攻击"
   },
   "swarm": {
     "label": "虫群",
@@ -42,37 +45,77 @@
     "speedScale": 2.08,
     "rewardScale": 0.6,
     "radius": 12,
-    "description": "体型最小的蜂拥单位，单体极其脆弱但速度最快、数量最多，成群涌来容易压垮单体火力"
+    "description": "体型最小的蜂拥单位，单体极其脆弱但速度最快、数量最多"
   },
-  "stealth": {
-    "label": "隐身兵",
+  "phantom": {
+    "label": "幻影",
     "color": "#a3a3a3",
-    "hpScale": 0.92,
-    "speedScale": 1.32,
-    "rewardScale": 1.1,
+    "hpScale": 0.88,
+    "speedScale": 1.4,
+    "rewardScale": 1.15,
     "radius": 16,
-    "abilities": ["stealth"],
-    "description": "装备隐形装置的渗透单位。出场隐身3秒，期间不可被选为目标，溅射可强制显形"
+    "abilities": ["evasion"],
+    "description": "虚幻的渗透单位，30%概率闪避攻击，需要高攻速或AoE应对"
   },
-  "splitter": {
-    "label": "分裂体",
-    "color": "#a78bfa",
-    "hpScale": 1.6,
-    "speedScale": 0.86,
-    "rewardScale": 0.7,
-    "radius": 20,
-    "abilities": ["deathSplit"],
-    "description": "由不稳定物质构成的生物。死亡分裂为2个子体(30%血量/×1.4速度)"
-  },
-  "teleporter": {
-    "label": "传送兵",
-    "color": "#8b5cf6",
-    "hpScale": 0.8,
-    "speedScale": 1,
+  "shielder": {
+    "label": "盾卫",
+    "color": "#60a5fa",
+    "hpScale": 1.5,
+    "speedScale": 0.9,
     "rewardScale": 1.2,
+    "radius": 22,
+    "abilities": ["projectileBlock"],
+    "description": "持盾重装单位，阻挡弹射物攻击，光束和AoE可以无视盾牌"
+  },
+  "colossus": {
+    "label": "巨像",
+    "color": "#7c3aed",
+    "hpScale": 4.0,
+    "speedScale": 0.6,
+    "rewardScale": 1.8,
+    "radius": 28,
+    "abilities": ["damageCapPercent"],
+    "description": "巨型单位，单次受击伤害上限5%最大生命值，需要持续高频输出"
+  },
+  "ironwill": {
+    "label": "铁意",
+    "color": "#dc2626",
+    "hpScale": 1.6,
+    "speedScale": 1.1,
+    "rewardScale": 1.2,
+    "radius": 20,
+    "abilities": ["ccImmune"],
+    "description": "意志坚定的精锐，免疫所有控制效果，只能靠纯输出击杀"
+  },
+  "steadfast": {
+    "label": "稳行者",
+    "color": "#0891b2",
+    "hpScale": 1.3,
+    "speedScale": 1.2,
+    "rewardScale": 1.0,
+    "radius": 18,
+    "abilities": ["slowImmune"],
+    "description": "步伐稳健不受减速影响，冰冻塔对它无效，用眩晕或纯DPS应对"
+  },
+  "phaser": {
+    "label": "相位兵",
+    "color": "#8b5cf6",
+    "hpScale": 0.9,
+    "speedScale": 1.15,
+    "rewardScale": 1.3,
     "radius": 16,
-    "abilities": ["teleport"],
-    "description": "空间折叠者。每5秒传送跳过1段路径，行动难以预测"
+    "abilities": ["phaseShift"],
+    "description": "每10秒进入3秒免伤相位状态，需要持续火力覆盖等待相位结束"
+  },
+  "drainer": {
+    "label": "削弱者",
+    "color": "#be185d",
+    "hpScale": 0.85,
+    "speedScale": 1.1,
+    "rewardScale": 1.4,
+    "radius": 16,
+    "abilities": ["strengthDrain"],
+    "description": "每10秒对最近的塔施加-50%临时强度减益持续6s，优先击杀"
   },
   "healer": {
     "label": "治疗兵",
@@ -81,8 +124,8 @@
     "speedScale": 1.14,
     "rewardScale": 1.02,
     "radius": 20,
-    "abilities": [{"type": "healAura", "base": 0.24, "param": 105}],
-    "description": "战场医疗兵。每2.5秒治疗半径105内友方24%生命值"
+    "abilities": [{"type": "healAura", "base": 0.05, "param": 80}],
+    "description": "战场医疗兵，每3秒治疗半径80内友方5%最大生命值"
   },
   "buffer": {
     "label": "旗手",
@@ -92,17 +135,27 @@
     "rewardScale": 1.3,
     "radius": 16,
     "abilities": [{"type": "speedAura", "base": 0.2, "param": 100}],
-    "description": "军阵指挥官，自身血薄。光环范围100：+20%移速"
+    "description": "军阵指挥官，半径100内友方移速+20%，自身血薄优先击杀"
   },
-  "flying": {
-    "label": "飞行斥候",
-    "color": "#93c5fd",
-    "movementType": "flying",
-    "hpScale": 0.9,
-    "speedScale": 1.1,
-    "rewardScale": 0.85,
-    "radius": 16,
-    "description": "基础飞行单位，无特殊能力。对空火力的入门检验"
+  "splitter": {
+    "label": "分裂体",
+    "color": "#a78bfa",
+    "hpScale": 1.6,
+    "speedScale": 0.86,
+    "rewardScale": 0.7,
+    "radius": 20,
+    "abilities": ["deathSplit"],
+    "description": "死亡分裂为2个子体(30%血量/×1.4速度)，需要AoE清理子体"
+  },
+  "summoner": {
+    "label": "召唤者",
+    "color": "#ea580c",
+    "hpScale": 1.2,
+    "speedScale": 0.95,
+    "rewardScale": 0.8,
+    "radius": 20,
+    "abilities": ["deathSpawn"],
+    "description": "死亡时在原地召唤3个普通步兵，需要留火力覆盖死亡位置"
   },
   "dummy": {
     "label": "木桩",

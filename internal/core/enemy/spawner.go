@@ -27,19 +27,23 @@ var waveCompositions = []struct {
 		{"normal", 100},
 	}},
 	{maxWave: 6, entries: []waveEntry{
-		{"normal", 70}, {"runner", 20}, {"swarm", 10},
+		{"normal", 60}, {"runner", 20}, {"swarm", 20},
 	}},
 	{maxWave: 9, entries: []waveEntry{
-		{"normal", 50}, {"runner", 20}, {"tank", 15}, {"armored", 10}, {"swarm", 5},
+		{"normal", 40}, {"runner", 15}, {"tank", 10}, {"armored", 10},
+		{"swarm", 10}, {"shielder", 5}, {"phantom", 5}, {"steadfast", 5},
 	}},
 	{maxWave: 14, entries: []waveEntry{
-		{"normal", 40}, {"runner", 15}, {"tank", 15}, {"armored", 10},
-		{"flying", 10}, {"healer", 5}, {"stealth", 5},
+		{"normal", 25}, {"runner", 10}, {"tank", 8}, {"armored", 8},
+		{"swarm", 8}, {"shielder", 5}, {"phantom", 5}, {"steadfast", 5},
+		{"healer", 5}, {"buffer", 5}, {"ironwill", 5}, {"colossus", 3},
+		{"splitter", 4}, {"phaser", 4},
 	}},
 	{maxWave: 0, entries: []waveEntry{ // wave 15+
-		{"normal", 30}, {"runner", 10}, {"tank", 15}, {"armored", 10},
-		{"flying", 10}, {"healer", 5}, {"stealth", 5},
-		{"splitter", 5}, {"buffer", 5}, {"teleporter", 5},
+		{"normal", 15}, {"runner", 8}, {"tank", 7}, {"armored", 7},
+		{"swarm", 6}, {"shielder", 5}, {"phantom", 5}, {"steadfast", 4},
+		{"healer", 5}, {"buffer", 5}, {"ironwill", 5}, {"colossus", 4},
+		{"splitter", 4}, {"phaser", 4}, {"drainer", 4}, {"summoner", 4},
 	}},
 }
 

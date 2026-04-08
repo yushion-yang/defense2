@@ -87,12 +87,12 @@ func TestEnemyArchetype_StealthHasAbility(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	st := archs["stealth"]
+	st := archs["phantom"]
 	if st == nil {
-		t.Fatal("缺少 stealth 原型")
+		t.Fatal("缺少 phantom 原型")
 	}
-	if !hasAbility(st, "stealth") {
-		t.Error("stealth 应装配 stealth 能力")
+	if !hasAbility(st, "evasion") {
+		t.Error("phantom 应装配 evasion 能力")
 	}
 }
 
@@ -115,12 +115,12 @@ func TestEnemyArchetype_TeleporterHasAbility(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	tp := archs["teleporter"]
+	tp := archs["phaser"]
 	if tp == nil {
-		t.Fatal("缺少 teleporter 原型")
+		t.Fatal("缺少 phaser 原型")
 	}
-	if !hasAbility(tp, "teleport") {
-		t.Error("teleporter 应装配 teleport 能力")
+	if !hasAbility(tp, "phaseShift") {
+		t.Error("phaser 应装配 phaseShift 能力")
 	}
 }
 
@@ -138,19 +138,7 @@ func TestEnemyArchetype_BufferHasAbility(t *testing.T) {
 	}
 }
 
-func TestEnemyArchetype_FlyingHasMovementType(t *testing.T) {
-	archs, err := config.LoadEnemyArchetypes()
-	if err != nil {
-		t.Fatal(err)
-	}
-	f := archs["flying"]
-	if f == nil {
-		t.Fatal("缺少 flying 原型")
-	}
-	if f.MovementType != "flying" {
-		t.Errorf("flying movementType=%q 应为 \"flying\"", f.MovementType)
-	}
-}
+// TestEnemyArchetype_FlyingHasMovementType 已移除（飞行概念已删除）
 
 // ═══════════════════════════════════════
 // 战斗系统契约
