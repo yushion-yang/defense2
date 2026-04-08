@@ -1021,6 +1021,26 @@ func (s *StageScene) drawSaveNaming(screen *ebiten.Image) {
 	fm.DrawCenteredText(screen, "Enter: Save  |  Esc: Cancel", sw/2, float64(boxY+boxH)-14, 10, color.RGBA{R: 100, G: 110, B: 140, A: 200})
 }
 
+// enemyTooltipLine 带颜色的 tooltip 行。
+type enemyTooltipLine struct {
+	text string
+	clr  color.RGBA
+}
+
+var (
+	ttWhite  = color.RGBA{R: 220, G: 230, B: 245, A: 255}
+	ttDim    = color.RGBA{R: 140, G: 150, B: 170, A: 220}
+	ttHeader = color.RGBA{R: 100, G: 160, B: 220, A: 255}
+	ttIce    = color.RGBA{R: 100, G: 180, B: 255, A: 255}
+	ttYellow = color.RGBA{R: 255, G: 220, B: 80, A: 255}
+	ttRed    = color.RGBA{R: 255, G: 100, B: 80, A: 255}
+	ttGreen  = color.RGBA{R: 100, G: 220, B: 80, A: 255}
+	ttPurple = color.RGBA{R: 220, G: 140, B: 255, A: 255}
+	ttGray   = color.RGBA{R: 160, G: 170, B: 190, A: 200}
+	ttOrange = color.RGBA{R: 255, G: 180, B: 60, A: 255}
+	ttCyan   = color.RGBA{R: 80, G: 220, B: 220, A: 255}
+)
+
 // drawEnemyTooltip 绘制敌人属性浮窗（测试模式悬浮检测）。
 func (s *StageScene) drawEnemyTooltip(screen *ebiten.Image, e *enemy.Enemy) {
 	fm := render.GlobalFont()
@@ -1028,77 +1048,177 @@ func (s *StageScene) drawEnemyTooltip(screen *ebiten.Image, e *enemy.Enemy) {
 		return
 	}
 
-	// 收集显示行
-	var lines []string
-	lines = append(lines, fmt.Sprintf("[%s] %s", e.Archetype, func() string {
-		if e.Boss {
-			return "BOSS"
-		}
-		if e.Elite {
-			return "Elite"
-		}
-		return ""
-	}()))
-	lines = append(lines, fmt.Sprintf("HP: %.0f / %.0f (%.0f%%)", e.HP, e.MaxHP, e.HP/e.MaxHP*100))
-	lines = append(lines, fmt.Sprintf("Speed: %.0f / %.0f", e.Speed, e.BaseSpeed))
+	L := func(c color.RGBA, f string, a ...any) enemyTooltipLine {
+		return enemyTooltipLine{text: fmt.Sprintf(f, a...), clr: c}
+	}
 
-	// Debuffs
+	var lines []enemyTooltipLine
+
+	// ── 标识 ──
+	tag := e.MovementType
+	if e.Boss {
+		tag += " BOSS"
+	} else if e.Elite {
+		tag += " Elite"
+	}
+	if e.Behavior != "" {
+		tag += " [" + e.Behavior + "]"
+	}
+	lines = append(lines, L(ttHeader, "%s  %s", e.Archetype, tag))
+	lines = append(lines, L(ttDim, "ID:%d  Pos:(%.0f,%.0f)  R:%.0f  Age:%.1fs", e.ID, e.X, e.Y, e.Radius, e.Age))
+
+	// ── 生命 ──
+	lines = append(lines, L(ttHeader, "--- HP ---"))
+	lines = append(lines, L(ttWhite, "HP: %.0f / %.0f  (%.1f%%)", e.HP, e.MaxHP, e.HP/e.MaxHP*100))
+	lines = append(lines, L(ttDim, "DisplayHP: %.0f  Reward: %d (×%.2f)", e.DisplayHP, e.Reward, e.RewardScale))
+
+	// ── 移动 ──
+	lines = append(lines, L(ttHeader, "--- Move ---"))
+	lines = append(lines, L(ttWhite, "Speed: %.1f / %.1f  PathIdx: %d/%d", e.Speed, e.BaseSpeed, e.PathIndex, len(e.Path)))
+	if e.SpeedBuff > 0 {
+		lines = append(lines, L(ttOrange, "  SpeedBuff: +%.0f%%", e.SpeedBuff*100))
+	}
+	if e.BerserkThreshold > 0 {
+		triggered := ""
+		if e.BerserkTriggered {
+			triggered = " [ACTIVE]"
+		}
+		lines = append(lines, L(ttOrange, "  Berserk: <%.0f%% → ×%.1f spd%s", e.BerserkThreshold*100, e.BerserkSpeedScale, triggered))
+	}
+	if e.TeleportInterval > 0 {
+		lines = append(lines, L(ttCyan, "  Teleport: skip %d every %.1fs (cd: %.1fs)", e.TeleportSkip, e.TeleportInterval, e.TeleportTimer))
+	}
+
+	// ── CC (控制效果) ──
+	hasCC := e.SlowTimer > 0 || e.StunTimer > 0 || e.RootTimer > 0
+	if hasCC || e.Tenacity > 0 || e.IsControlImmune || e.IsStunImmune || e.IsSlowImmune || e.IsRootImmune || e.ControlImmuneTimer > 0 {
+		lines = append(lines, L(ttHeader, "--- CC ---"))
+	}
 	if e.SlowTimer > 0 {
-		lines = append(lines, fmt.Sprintf("  SLOW: ×%.0f%% %.1fs", e.SlowFactor*100, e.SlowTimer))
+		lines = append(lines, L(ttIce, "  SLOW: ×%.0f%%  %.1fs left", e.SlowFactor*100, e.SlowTimer))
 	}
 	if e.StunTimer > 0 {
-		lines = append(lines, fmt.Sprintf("  STUN: %.1fs", e.StunTimer))
+		lines = append(lines, L(ttYellow, "  STUN: %.1fs left", e.StunTimer))
 	}
 	if e.RootTimer > 0 {
-		lines = append(lines, fmt.Sprintf("  ROOT: %.1fs", e.RootTimer))
+		lines = append(lines, L(ttIce, "  ROOT: %.1fs left", e.RootTimer))
+	}
+	if e.Tenacity > 0 {
+		lines = append(lines, L(ttDim, "  Tenacity: %.0f%%", e.Tenacity*100))
+	}
+	if e.ControlImmuneTimer > 0 {
+		lines = append(lines, L(ttGray, "  CC Immune: %.1fs left", e.ControlImmuneTimer))
+	}
+	if e.IsControlImmune {
+		lines = append(lines, L(ttGray, "  CC Immune (permanent)"))
+	}
+	if e.IsStunImmune {
+		lines = append(lines, L(ttGray, "  Stun Immune"))
+	}
+	if e.IsSlowImmune {
+		lines = append(lines, L(ttGray, "  Slow Immune"))
+	}
+	if e.IsRootImmune {
+		lines = append(lines, L(ttGray, "  Root Immune"))
+	}
+
+	// ── DoT (持续伤害) ──
+	hasDot := e.BleedTimer > 0 || e.PoisonTimer > 0 || e.BurnTimer > 0 || e.ZoneDmgAccum > 0
+	if hasDot {
+		lines = append(lines, L(ttHeader, "--- DoT ---"))
 	}
 	if e.BleedTimer > 0 {
-		lines = append(lines, fmt.Sprintf("  BLEED: %.1f/s %.1fs", e.BleedDPS, e.BleedTimer))
+		lines = append(lines, L(ttRed, "  BLEED: %.1f dps  %.1fs left", e.BleedDPS, e.BleedTimer))
 	}
 	if e.PoisonTimer > 0 {
-		lines = append(lines, fmt.Sprintf("  POISON: %.1f/s %.1fs", e.PoisonDPS, e.PoisonTimer))
+		lines = append(lines, L(ttGreen, "  POISON: %.1f dps  %.1fs left", e.PoisonDPS, e.PoisonTimer))
 	}
 	if e.BurnTimer > 0 {
-		lines = append(lines, fmt.Sprintf("  BURN: %.1f/s %.1fs", e.BurnDPS, e.BurnTimer))
+		lines = append(lines, L(ttRed, "  BURN: %.1f dps  %.1fs left", e.BurnDPS, e.BurnTimer))
+	}
+	if e.ZoneDmgAccum > 0 {
+		lines = append(lines, L(ttPurple, "  ZoneDmg: %.1f pending", e.ZoneDmgAccum))
+	}
+
+	// ── Debuff (减益) ──
+	hasDebuff := e.DamageAmplify > 0 || e.Silenced || e.Stealthed
+	if hasDebuff {
+		lines = append(lines, L(ttHeader, "--- Debuff ---"))
 	}
 	if e.DamageAmplify > 0 {
-		lines = append(lines, fmt.Sprintf("  WEAKEN: +%.0f%% %.1fs", e.DamageAmplify*100, e.DamageAmplifyTimer))
+		lines = append(lines, L(ttPurple, "  WEAKEN: +%.0f%% dmg  %.1fs left", e.DamageAmplify*100, e.DamageAmplifyTimer))
 	}
 	if e.Silenced {
-		lines = append(lines, "  SILENCED")
+		lines = append(lines, L(ttGray, "  SILENCED (DmgCap disabled)"))
 	}
 	if e.Stealthed {
-		lines = append(lines, fmt.Sprintf("  STEALTH: %.1fs", e.StealthTimer))
+		lines = append(lines, L(ttDim, "  STEALTH: %.1fs left", e.StealthTimer))
 	}
 
-	// Immunities
+	// ── 防御 ──
+	hasDef := e.DamageCap > 0 || e.DamageCapPercent > 0 || e.DamageReduceRatio > 0 || e.ReflectPercent > 0 ||
+		e.IsInvincible || e.IsDamageImmune || e.IsUntargetable || e.ReviveHPPercent > 0
+	if hasDef {
+		lines = append(lines, L(ttHeader, "--- Defense ---"))
+	}
 	if e.DamageCap > 0 {
-		lines = append(lines, fmt.Sprintf("  DmgCap: %.0f", e.DamageCap))
+		lines = append(lines, L(ttGray, "  DmgCap: %.0f per hit", e.DamageCap))
 	}
 	if e.DamageCapPercent > 0 {
-		lines = append(lines, fmt.Sprintf("  DmgCap%%: %.0f%%", e.DamageCapPercent*100))
+		lines = append(lines, L(ttGray, "  DmgCap%%: %.0f%% MaxHP per hit", e.DamageCapPercent*100))
 	}
 	if e.DamageReduceRatio > 0 {
-		lines = append(lines, fmt.Sprintf("  DmgReduce: %.0f%%", e.DamageReduceRatio*100))
+		lines = append(lines, L(ttGray, "  DmgReduce: %.0f%%", e.DamageReduceRatio*100))
 	}
-	if e.RegenPerSec > 0 {
-		lines = append(lines, fmt.Sprintf("  Regen: %.1f/s", e.RegenPerSec))
+	if e.ReflectPercent > 0 {
+		lines = append(lines, L(ttOrange, "  Reflect: %.0f%%", e.ReflectPercent*100))
 	}
-	if e.SpeedBuff > 0 {
-		lines = append(lines, fmt.Sprintf("  SpdBuff: +%.0f%%", e.SpeedBuff*100))
+	if e.ReviveHPPercent > 0 {
+		used := ""
+		if e.ReviveUsed {
+			used = " [USED]"
+		}
+		lines = append(lines, L(ttCyan, "  Revive: %.0f%% HP%s", e.ReviveHPPercent*100, used))
+	}
+	if e.IsInvincible {
+		lines = append(lines, L(ttYellow, "  INVINCIBLE"))
+	}
+	if e.IsDamageImmune {
+		lines = append(lines, L(ttYellow, "  DAMAGE IMMUNE"))
+	}
+	if e.IsUntargetable {
+		lines = append(lines, L(ttYellow, "  UNTARGETABLE"))
 	}
 
-	// Layout: tooltip at cursor offset
+	// ── 能力 ──
+	hasAbil := e.RegenPerSec > 0 || e.HealPower > 0 || e.SplitCount > 0 || e.AuraRange > 0
+	if hasAbil {
+		lines = append(lines, L(ttHeader, "--- Ability ---"))
+	}
+	if e.RegenPerSec > 0 {
+		lines = append(lines, L(ttGreen, "  Regen: %.1f/s", e.RegenPerSec))
+	}
+	if e.HealPower > 0 {
+		lines = append(lines, L(ttGreen, "  Heal: %.0f power  R:%.0f  every %.1fs (cd:%.1fs)", e.HealPower, e.HealRadius, e.HealInterval, e.HealCooldown))
+	}
+	if e.SplitCount > 0 {
+		lines = append(lines, L(ttCyan, "  Split: %d×%.0f%% HP (spd ×%.1f)", e.SplitCount, e.SplitHPRatio*100, e.SplitSpeedScale))
+	}
+	if e.AuraRange > 0 {
+		lines = append(lines, L(ttOrange, "  Aura: +%.0f%% spd  R:%.0f", e.AuraSpeedUp*100, e.AuraRange))
+	}
+
+	// ── 绘制 ──
 	mx, my := draw.CursorPos()
 	const (
-		fontSize  = 11.0
-		lineH     = 14.0
-		padX      = 8.0
-		padY      = 6.0
-		offsetX   = 16.0
-		offsetY   = 8.0
+		fontSize = 10.0
+		lineH    = 13.0
+		padX     = 8.0
+		padY     = 5.0
+		offsetX  = 18.0
+		offsetY  = 8.0
 	)
-	boxW := float32(200)
+	boxW := float32(260)
 	boxH := float32(float64(len(lines))*lineH + padY*2)
 	bx := float32(mx + offsetX)
 	by := float32(my + offsetY)
@@ -1112,33 +1232,15 @@ func (s *StageScene) drawEnemyTooltip(screen *ebiten.Image, e *enemy.Enemy) {
 	if by+boxH > sh {
 		by = sh - boxH - 4
 	}
+	if by < 0 {
+		by = 4
+	}
 
-	// Background
-	draw.RoundRect(screen, bx, by, boxW, boxH, 6, color.RGBA{R: 10, G: 14, B: 24, A: 230})
+	draw.RoundRect(screen, bx, by, boxW, boxH, 6, color.RGBA{R: 10, G: 14, B: 24, A: 235})
 	draw.StrokeRoundRect(screen, bx, by, boxW, boxH, 6, 1, color.RGBA{R: 60, G: 80, B: 120, A: 180})
 
-	// Lines
 	for i, line := range lines {
-		clr := color.RGBA{R: 200, G: 210, B: 230, A: 255}
-		if len(line) > 2 && line[:2] == "  " {
-			// Debuff lines: colored
-			if strings.Contains(line, "SLOW") || strings.Contains(line, "ROOT") {
-				clr = color.RGBA{R: 100, G: 180, B: 255, A: 255} // ice blue
-			} else if strings.Contains(line, "STUN") {
-				clr = color.RGBA{R: 255, G: 220, B: 80, A: 255} // yellow
-			} else if strings.Contains(line, "BLEED") || strings.Contains(line, "BURN") {
-				clr = color.RGBA{R: 255, G: 100, B: 80, A: 255} // red
-			} else if strings.Contains(line, "POISON") {
-				clr = color.RGBA{R: 100, G: 220, B: 80, A: 255} // green
-			} else if strings.Contains(line, "WEAKEN") {
-				clr = color.RGBA{R: 220, G: 140, B: 255, A: 255} // purple
-			} else if strings.Contains(line, "SILENCE") {
-				clr = color.RGBA{R: 180, G: 180, B: 200, A: 255} // gray
-			} else if strings.Contains(line, "STEALTH") {
-				clr = color.RGBA{R: 160, G: 200, B: 220, A: 200} // dim
-			}
-		}
-		fm.DrawText(screen, line, float64(bx)+padX, float64(by)+padY+float64(i)*lineH, fontSize, clr)
+		fm.DrawText(screen, line.text, float64(bx)+padX, float64(by)+padY+float64(i)*lineH, fontSize, line.clr)
 	}
 }
 
