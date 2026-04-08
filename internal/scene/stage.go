@@ -124,6 +124,7 @@ type StageScene struct {
 	debugPanelOpen    bool
 	debugShowRange    bool
 	spawnMode         bool
+	spawnMoving       bool   // true=造动怪（放在路径上行走），false=造静怪
 	saveNaming        bool           // 场景命名输入中
 	saveNameBuf       string         // 命名缓冲区
 	hoveredEnemy      *enemy.Enemy   // 测试模式：鼠标悬浮的敌人
@@ -807,10 +808,6 @@ func (s *StageScene) debugActions() []hud.DebugAction {
 		rangeLabel = "隐藏射程圈"
 	}
 	inSpawn := s.imode == modeSpawnMenu || s.imode == modeSpawnPlace
-	spawnLabel := "造怪模式"
-	if inSpawn {
-		spawnLabel = "退出造怪"
-	}
 
 	actions := []hud.DebugAction{
 		// ── 强度 ──
@@ -878,19 +875,37 @@ func (s *StageScene) debugActions() []hud.DebugAction {
 	)
 
 	// ── 塔操作 ──
-	actions = append(actions,
-		hud.DebugAction{Label: "塔操作", IsSection: true},
-		hud.DebugAction{Label: spawnLabel, Action: func() {
-			if inSpawn {
+	// ── 造怪 ──
+	if inSpawn {
+		actions = append(actions,
+			hud.DebugAction{Label: "造怪", IsSection: true},
+			hud.DebugAction{Label: "退出造怪", Action: func() {
 				s.imode = modeIdle
 				s.spawnMode = false
 				s.spawnType = ""
-			} else {
+			}},
+		)
+	} else {
+		actions = append(actions,
+			hud.DebugAction{Label: "造怪", IsSection: true},
+			hud.DebugAction{Label: "造静怪", Action: func() {
 				s.imode = modeSpawnMenu
 				s.spawnMode = true
+				s.spawnMoving = false
 				s.spawnType = ""
-			}
-		}},
+			}},
+			hud.DebugAction{Label: "造动怪", Action: func() {
+				s.imode = modeSpawnMenu
+				s.spawnMode = true
+				s.spawnMoving = true
+				s.spawnType = ""
+			}},
+		)
+	}
+
+	// ── 塔操作 ──
+	actions = append(actions,
+		hud.DebugAction{Label: "塔操作", IsSection: true},
 	)
 
 	// ── 敌方 ──

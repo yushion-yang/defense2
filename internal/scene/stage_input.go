@@ -445,12 +445,34 @@ func (s *StageScene) handleInput() {
 
 	case modeSpawnPlace:
 		if cfg, ok := s.spawner.Archetypes[s.spawnType]; ok {
-			s.enemies.Spawn(wtx, wty, 100, 0, 0, s.spawnType, cfg)
 			label := s.spawnType
 			if cfg.Label != "" {
 				label = cfg.Label
 			}
-			hud.ShowToast("已放置: " + label + "  (ESC退出造怪)")
+			if s.spawnMoving {
+				// 造动怪：找最近路径点放置，赋予路径让它行走
+				path := s.gameMap.PickPath()
+				bestIdx, bestDist := 0, math.MaxFloat64
+				for i, pt := range path {
+					d := math.Hypot(pt.X-wtx, pt.Y-wty)
+					if d < bestDist {
+						bestDist = d
+						bestIdx = i
+					}
+				}
+				pt := path[bestIdx]
+				baseHP := 100.0 * cfg.HpScale
+				baseSpd := 50.0 * cfg.SpeedScale
+				e := s.enemies.Spawn(pt.X, pt.Y, baseHP, baseSpd, bestIdx+1, s.spawnType, cfg)
+				if e != nil {
+					e.Path = path
+				}
+				hud.ShowToast("动怪: " + label + "  (ESC退出)")
+			} else {
+				// 造静怪：原地不动
+				s.enemies.Spawn(wtx, wty, 100, 0, 0, s.spawnType, cfg)
+				hud.ShowToast("静怪: " + label + "  (ESC退出)")
+			}
 		}
 
 	case modeTowerSel:
