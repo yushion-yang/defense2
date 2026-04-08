@@ -676,9 +676,9 @@ func (s *StageScene) openAbilityChoicePanel() {
 
 // openTestAbilityChoicePanel 测试模式：先选类别，再展示该类别全部能力。
 func (s *StageScene) openTestAbilityChoicePanel(t *tower.Tower) {
-	// 收集所有空槽类别
+	// 收集所有空槽类别（按类别索引固定顺序：攻击/CC/命中/光环/DoT/范围）
 	var emptyCats []int
-	for _, cat := range t.UnlockOrder {
+	for cat := 0; cat < len(t.AbilitySlots); cat++ {
 		if t.AbilitySlots[cat] == "" {
 			emptyCats = append(emptyCats, cat)
 		}
