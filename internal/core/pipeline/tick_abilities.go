@@ -5,7 +5,6 @@ package pipeline
 
 import (
 	"defense2/internal/core/enemy"
-	"defense2/internal/core/strength"
 	"defense2/internal/core/tower"
 )
 
@@ -25,16 +24,7 @@ func TickTowerAbilities(towers *tower.Pool, enemies *enemy.Pool, dt float64) int
 		resetTowerStats(t)
 	})
 
-	// --- Phase 1.05: 重建链网络（Union-Find 连锁加成）---
-	var chainTowers []strength.ChainTower
-	idx := 0
-	towers.Each(func(t *tower.Tower) {
-		chainTowers = append(chainTowers, strength.ChainTower{
-			Index: idx, X: t.X, Y: t.Y, Strength: t.Strength,
-		})
-		idx++
-	})
-	strength.RebuildChainNetwork(chainTowers)
+	// Phase 1.05: 链网络已禁用（条件增长强度移除）
 
 	// --- Phase 1.1: tick 塔 buff（递减时间，移除过期 buff）---
 	towers.Each(func(t *tower.Tower) {
