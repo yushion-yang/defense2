@@ -1062,12 +1062,16 @@ func (s *StageScene) saveScenario(name string) {
 		})
 	})
 
-	// Generate file-safe ID from name
+	// Generate file-safe ID from name: spaces → underscore, keep unicode letters/digits
 	id := strings.Map(func(r rune) rune {
-		if r >= 'a' && r <= 'z' || r >= 'A' && r <= 'Z' || r >= '0' && r <= '9' || r == '-' || r == '_' {
+		if r == ' ' {
+			return '_'
+		}
+		// Keep letters (including CJK), digits, dash, underscore
+		if r >= 'a' && r <= 'z' || r >= 'A' && r <= 'Z' || r >= '0' && r <= '9' || r == '-' || r == '_' || r > 0x7F {
 			return r
 		}
-		return '-'
+		return -1 // drop other special chars
 	}, name)
 	if id == "" {
 		id = fmt.Sprintf("scenario-%s", time.Now().Format("20060102-150405"))
