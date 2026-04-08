@@ -35,16 +35,6 @@
     "radius": 20,
     "description": "身披重甲的坚固单位，血量较高且行动迟缓，以数量和硬度拖延防线"
   },
-  "shielded": {
-    "label": "护盾兵",
-    "color": "#60a5fa",
-    "hpScale": 1.28,
-    "speedScale": 1.02,
-    "rewardScale": 0.94,
-    "radius": 18,
-    "shieldScale": 0.82,
-    "description": "携带能量护盾的战斗单位。护盾值82%最大生命值，伤害优先扣护盾"
-  },
   "swarm": {
     "label": "虫群",
     "color": "#fde047",
