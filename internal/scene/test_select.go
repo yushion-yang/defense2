@@ -64,7 +64,7 @@ var testScenarios = []testScenario{
 	{"ability-aura", "光环体系", "tower-aura", "多种光环叠加效果测试", "ability", "map_test_large", 9999, 999, 10, color.RGBA{R: 220, G: 180, B: 80, A: 255}, "mixed", false},
 	{"ability-silence", "沉默 vs Boss", "stun", "沉默塔对Boss伤害上限影响", "ability", "map_test_large", 99999, 999, 5, color.RGBA{R: 180, G: 100, B: 100, A: 255}, "boss-only", false},
 
-	{"dps-dummy", "木桩靶场", "hunterInstinct", "超高HP木桩怪，DPS输出测试", "dps", "map_dummy", 99999, 999, 99, color.RGBA{R: 220, G: 160, B: 60, A: 255}, "dummy", false},
+	{"dps-dummy", "木桩靶场", "hunterInstinct", "超高HP木桩怪，DPS输出测试", "dps", "map_test_large", 99999, 999, 99, color.RGBA{R: 220, G: 160, B: 60, A: 255}, "dummy", false},
 	{"bench-lineup", "阵容编辑器", "armorPen", "手动放塔升级，保存阵容仿真", "bench", "map_test_large", 99999, 20, 12, color.RGBA{R: 140, G: 160, B: 180, A: 255}, "mixed", false},
 }
 
