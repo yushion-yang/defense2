@@ -5,6 +5,7 @@ package scene
 
 import (
 	"fmt"
+	"math"
 
 	gameAudio "defense2/internal/audio"
 	"defense2/internal/core/enemy"
@@ -253,7 +254,7 @@ func (s *StageScene) handleInput() {
 
 	// 测试模式：检测鼠标下的敌人
 	if s.testMode {
-		s.hoveredEnemy = s.enemyAtPixel(fmx, fmy)
+		s.hoveredEnemy = s.enemyAtPixel(float64(fmx), float64(fmy))
 	}
 
 	// 道具面板：检测按下开始拖拽（不等松开）
