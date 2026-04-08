@@ -46,10 +46,18 @@ func BuildInfoPanelVM(t *tower.Tower, sellValue int, wavesCleared int, testMode 
 		vm.StrengthText = strTxt
 	}
 
-	// Attribute segments (colored base + scaled + total)
-	vm.DamageSegs = buildAttrSegs("%.0f", t.BaseDamage, t.PotentialDamage, effStr)
-	vm.SpeedSegs = buildAttrSegs("%.1f", t.BaseSpeed, t.PotentialSpeed, effStr)
-	vm.RangeSegs = buildAttrSegs("%.0f", t.BaseRange, t.PotentialRange, effStr)
+	// Attribute segments (colored base + scaled + total + aura bonus)
+	// 计算光环增量 = 运行时属性 - 强度公式值
+	ratio := effStr / 100.0
+	baseDmg := t.BaseDamage + t.PotentialDamage*ratio
+	baseSpd := t.BaseSpeed + t.PotentialSpeed*ratio
+	baseRng := t.BaseRange + t.PotentialRange*ratio
+	dmgBonus := t.Damage - baseDmg
+	spdBonus := t.AttackSpeed - baseSpd
+	rngBonus := t.Range - baseRng
+	vm.DamageSegs = buildAttrSegs("%.0f", t.BaseDamage, t.PotentialDamage, effStr, dmgBonus)
+	vm.SpeedSegs = buildAttrSegs("%.2f", t.BaseSpeed, t.PotentialSpeed, effStr, spdBonus)
+	vm.RangeSegs = buildAttrSegs("%.0f", t.BaseRange, t.PotentialRange, effStr, rngBonus)
 
 	// Attack style
 	style := t.AttackStyleID
@@ -177,8 +185,12 @@ func fmtAttr(numFmt string, base, potential, effStr float64) string {
 
 // buildAttrSegs builds colored segments for a tower attribute.
 // base(white) + (scaled)(colored) + =total(white).
-func buildAttrSegs(numFmt string, base, potential, effStr float64) []hud.AbilitySegment {
-	if potential == 0 {
+func buildAttrSegs(numFmt string, base, potential, effStr float64, auraBonus ...float64) []hud.AbilitySegment {
+	bonus := 0.0
+	if len(auraBonus) > 0 {
+		bonus = auraBonus[0]
+	}
+	if potential == 0 && (bonus < 0.005 && bonus > -0.005) {
 		return []hud.AbilitySegment{
 			{Text: fmt.Sprintf(numFmt, base), Kind: "base"},
 		}
@@ -186,12 +198,19 @@ func buildAttrSegs(numFmt string, base, potential, effStr float64) []hud.Ability
 	ratio := effStr / 100.0
 	scaled := potential * ratio
 	total := base + scaled
-	sClr := scaledColor(scaled, potential)
-	return []hud.AbilitySegment{
+
+	segs := []hud.AbilitySegment{
 		{Text: fmt.Sprintf(numFmt+"+", base), Kind: "base"},
-		{Text: fmt.Sprintf("("+numFmt+")", scaled), Kind: "scaled", Color: sClr},
+		{Text: fmt.Sprintf("("+numFmt+")", scaled), Kind: "scaled", Color: scaledColor(scaled, potential)},
 		{Text: fmt.Sprintf("="+numFmt, total), Kind: "total"},
 	}
+	// 光环加成（绿色追加显示）
+	if bonus > 0.005 || bonus < -0.005 {
+		segs = append(segs, hud.AbilitySegment{
+			Text: fmt.Sprintf("+"+numFmt, bonus), Kind: "aura",
+		})
+	}
+	return segs
 }
 
 // attackStyleLabel returns the Chinese label for an attack style ID.

@@ -181,8 +181,11 @@ func DrawInfoPanel(screen *ebiten.Image, vm InfoPanelVM) {
 		drawAttrSegs := func(segs []AbilitySegment, sx, sy float64) {
 			for _, seg := range segs {
 				var clr color.Color = theme.TextBody
-				if seg.Kind == "scaled" && seg.Color != nil {
+				switch {
+				case seg.Kind == "scaled" && seg.Color != nil:
 					clr = seg.Color
+				case seg.Kind == "aura":
+					clr = color.RGBA{R: 80, G: 220, B: 120, A: 255} // green for aura buff
 				}
 				fm.DrawText(screen, seg.Text, sx, sy, theme.FontLG, clr)
 				sx += fm.MeasureText(seg.Text, theme.FontLG)
