@@ -5,6 +5,7 @@ package pipeline
 
 import (
 	"defense2/internal/core/enemy"
+	"defense2/internal/core/strength"
 	"defense2/internal/core/tower"
 )
 
@@ -14,7 +15,7 @@ import (
 //  1. 重置所有塔属性为等级基准值（清除上帧光环 buff）
 //  2. 遍历每座塔的每个能力，对实现 Ticker 接口的能力调用 OnTick
 //  3. 累计金币收入并返回
-func TickTowerAbilities(towers *tower.Pool, enemies *enemy.Pool, dt float64) int {
+func TickTowerAbilities(towers *tower.Pool, enemies *enemy.Pool, dt float64, chainEnabled ...bool) int {
 	// --- Phase 1: 清除临时战力 + 重置塔属性 ---
 	// 光环/链网络的临时加成每帧重算，先清除再重建。
 	towers.Each(func(t *tower.Tower) {
@@ -24,7 +25,18 @@ func TickTowerAbilities(towers *tower.Pool, enemies *enemy.Pool, dt float64) int
 		resetTowerStats(t)
 	})
 
-	// Phase 1.05: 链网络已禁用（条件增长强度移除）
+	// --- Phase 1.05: 链网络（仅聚能战灵启用时生效）---
+	if len(chainEnabled) > 0 && chainEnabled[0] {
+		var chainTowers []strength.ChainTower
+		idx := 0
+		towers.Each(func(t *tower.Tower) {
+			chainTowers = append(chainTowers, strength.ChainTower{
+				Index: idx, X: t.X, Y: t.Y, Strength: t.Strength,
+			})
+			idx++
+		})
+		strength.RebuildChainNetwork(chainTowers)
+	}
 
 	// --- Phase 1.1: tick 塔 buff（递减时间，移除过期 buff）---
 	towers.Each(func(t *tower.Tower) {

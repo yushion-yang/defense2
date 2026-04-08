@@ -1622,7 +1622,8 @@ func (s *StageScene) updatePlaying() {
 
 	// 6. 能力 tick（重置属性 + 光环 buff + 区域效果 + 经济产出）
 	// 必须在索敌射击之前执行，确保 Range 等属性是本帧最新值
-	abilityGold := pipeline.TickTowerAbilities(s.towers, s.enemies, gameDT)
+	chainActive := s.wardenType == "envoy" && s.wardenReady
+	abilityGold := pipeline.TickTowerAbilities(s.towers, s.enemies, gameDT, chainActive)
 	s.gold += abilityGold
 	s.gameStats.GoldEarned += abilityGold
 
