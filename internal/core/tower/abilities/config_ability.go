@@ -248,7 +248,7 @@ func (a *ConfigAbility) OnTick(t *tower.Tower, ctx *tower.TickContext) *tower.Ti
 		})
 
 	case "soloBoost":
-		// scaleDim=bonus, param=checkRadius
+		// scaleDim=bonus, param=checkRadius — 周围无塔时直接加 Damage
 		alone := true
 		ctx.Towers.Each(func(other *tower.Tower) {
 			if other != t && math.Hypot(t.X-other.X, t.Y-other.Y) <= pm {
@@ -256,14 +256,11 @@ func (a *ConfigAbility) OnTick(t *tower.Tower, ctx *tower.TickContext) *tower.Ti
 			}
 		})
 		srcKey := fmt.Sprintf("solo_%s_%d_%d", t.Key, t.Row, t.Col)
-		ensureStr(t)
 		if alone {
-			t.ApplyBuff(tower.TowerBuff{
-				Key: srcKey, Source: "独行加成", Desc: fmt.Sprintf("+%.0f%%伤害", sv*100),
-				Value: t.BaseDamage * sv, Duration: -1, Remaining: -1,
-			})
+			t.Damage += t.Damage * sv
+			applyBuffDisplay(t, srcKey, "独行加成", fmt.Sprintf("+%.0f%%伤害", sv*100))
 		} else {
-			t.RemoveBuff(srcKey)
+			removeBuffDisplay(t, srcKey)
 		}
 
 	case "poisonZone":

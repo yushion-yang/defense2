@@ -4,6 +4,7 @@ package combat
 
 import (
 	"math"
+	"math/rand"
 
 	"defense2/internal/config"
 	"defense2/internal/core/enemy"
@@ -68,6 +69,14 @@ func ApplyHit(input HitInput, onHit HitCallback) HitOutput {
 				isCrit = true
 			}
 			applyHitEffectsUnified(result, input.Target, synth, input.Enemies, input.Projectiles, onHit, input.OnCC)
+		}
+	}
+
+	// CritBonus 独立暴击（critAura 提供，即使没有 crit 能力也生效）
+	if !isCrit && input.Tower != nil && input.Tower.CritBonus > 0 {
+		if rand.Float64() < input.Tower.CritBonus {
+			totalDmg *= 1.5 // 光环暴击固定 1.5 倍
+			isCrit = true
 		}
 	}
 
