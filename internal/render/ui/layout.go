@@ -357,3 +357,72 @@ func (p *FlexPanel) Draw(screen *ebiten.Image) {
 func (p *FlexPanel) Rect() Rect {
 	return Rect{X: p.X, Y: p.Y, W: p.W, H: p.Height()}
 }
+
+// ---------------------------------------------------------------------------
+// FlexRow — 水平布局器（FlexPanel 行内使用）
+// ---------------------------------------------------------------------------
+
+// FlexRow 将一行水平空间分配给多个子项。
+// AddFixed: 固定宽度子项。AddFill: 填充剩余空间子项。
+// Draw 时先计算 fixed 总宽，剩余平分给 fill 子项（不足时 fill 宽度为 0）。
+type FlexRow struct {
+	x, y, w float64
+	items   []flexRowItem
+}
+
+type flexRowItem struct {
+	fixedW float64 // >0 = 固定宽度, 0 = 填充剩余
+	drawFn func(screen *ebiten.Image, x, y, w, h float64)
+}
+
+// NewFlexRow 创建水平布局器。
+func NewFlexRow(x, y, w float64) *FlexRow {
+	return &FlexRow{x: x, y: y, w: w}
+}
+
+// AddFixed 添加固定宽度子项。
+func (r *FlexRow) AddFixed(w float64, fn func(screen *ebiten.Image, x, y, w, h float64)) {
+	r.items = append(r.items, flexRowItem{fixedW: w, drawFn: fn})
+}
+
+// AddFill 添加填充剩余空间的子项。多个 fill 子项平分剩余。
+func (r *FlexRow) AddFill(fn func(screen *ebiten.Image, x, y, w, h float64)) {
+	r.items = append(r.items, flexRowItem{fixedW: 0, drawFn: fn})
+}
+
+// Draw 执行布局并渲染所有子项。
+func (r *FlexRow) Draw(screen *ebiten.Image, h float64) {
+	// 计算 fixed 总宽和 fill 项数
+	var fixedTotal float64
+	fillCount := 0
+	for _, item := range r.items {
+		if item.fixedW > 0 {
+			fixedTotal += item.fixedW
+		} else {
+			fillCount++
+		}
+	}
+
+	// 剩余空间分给 fill 项
+	remaining := r.w - fixedTotal
+	if remaining < 0 {
+		remaining = 0
+	}
+	fillW := 0.0
+	if fillCount > 0 {
+		fillW = remaining / float64(fillCount)
+	}
+
+	// 从左到右渲染
+	cx := r.x
+	for _, item := range r.items {
+		w := item.fixedW
+		if w <= 0 {
+			w = fillW
+		}
+		if w > 0 && item.drawFn != nil {
+			item.drawFn(screen, cx, r.y, w, h)
+		}
+		cx += w
+	}
+}

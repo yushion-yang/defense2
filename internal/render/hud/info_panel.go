@@ -168,20 +168,7 @@ func DrawInfoPanel(screen *ebiten.Image, vm InfoPanelVM) {
 		}
 	})
 
-	// Row 2~4: 属性行（每行一个属性：图标 + 标签 + 着色数值）
-	drawAttrSegs := func(segs []AbilitySegment, sx, sy float64) {
-		for _, seg := range segs {
-			var clr color.Color = theme.TextBody
-			switch {
-			case seg.Kind == "scaled" && seg.Color != nil:
-				clr = seg.Color
-			case seg.Kind == "aura":
-				clr = color.RGBA{R: 80, G: 220, B: 120, A: 255}
-			}
-			fm.DrawText(screen, seg.Text, sx, sy, theme.FontLG, clr)
-			sx += fm.MeasureText(seg.Text, theme.FontLG)
-		}
-	}
+	// Row 2~4: 属性行（每行一个属性，FlexRow 布局：图标 | 标签 | 数值段）
 	const (
 		iconSize = 16.0
 		iconGap  = 4.0
@@ -199,10 +186,33 @@ func DrawInfoPanel(screen *ebiten.Image, vm InfoPanelVM) {
 	}
 	for _, ar := range attrRows {
 		ar := ar
-		panel.AddRow(attrH, func(screen *ebiten.Image, x, y float64, _ float64) {
-			drawStatIcon(screen, im, ar.icon, x, y, iconSize)
-			fm.DrawText(screen, ar.label, x+iconSize+iconGap, y, theme.FontSM, theme.TextMuted)
-			drawAttrSegs(ar.segs, x+iconSize+iconGap+labelW, y)
+		panel.AddRow(attrH, func(screen *ebiten.Image, x, y float64, w float64) {
+			row := ui.NewFlexRow(x, y, w)
+			row.AddFixed(iconSize+iconGap, func(screen *ebiten.Image, rx, ry, rw, rh float64) {
+				drawStatIcon(screen, im, ar.icon, rx, ry, iconSize)
+			})
+			row.AddFixed(labelW, func(screen *ebiten.Image, rx, ry, rw, rh float64) {
+				fm.DrawText(screen, ar.label, rx, ry, theme.FontSM, theme.TextMuted)
+			})
+			row.AddFill(func(screen *ebiten.Image, rx, ry, rw, rh float64) {
+				sx := rx
+				for _, seg := range ar.segs {
+					var clr color.Color = theme.TextBody
+					switch {
+					case seg.Kind == "scaled" && seg.Color != nil:
+						clr = seg.Color
+					case seg.Kind == "aura":
+						clr = color.RGBA{R: 80, G: 220, B: 120, A: 255}
+					}
+					segW := fm.MeasureText(seg.Text, theme.FontLG)
+					if sx+segW > rx+rw {
+						break // 超出可用宽度则截断
+					}
+					fm.DrawText(screen, seg.Text, sx, ry, theme.FontLG, clr)
+					sx += segW
+				}
+			})
+			row.Draw(screen, float64(attrH))
 		})
 	}
 
@@ -211,23 +221,54 @@ func DrawInfoPanel(screen *ebiten.Image, vm InfoPanelVM) {
 		fm.DrawText(screen, vm.AttackStyleText, x, y, theme.FontSM, theme.TextMuted)
 	})
 
-	// Row 4: 已获取能力详细描述
+	// 高度预算：预估按钮区域高度，限制能力+buff 可用空间
+	const infoPanelMaxH float32 = 420
+	fixedH := panel.Height() + detailGap + btnH + botPad // 当前高度 + 按钮 + 底部
+	budgetH := infoPanelMaxH - fixedH                    // 能力+buff 可用高度
+
+	// Row 4: 已获取能力详细描述（受高度预算限制）
+	var usedH float32
 	if len(vm.Abilities) > 0 {
 		panel.AddSpace(2)
-		for _, ab := range vm.Abilities {
+		usedH += 2
+		maxAbil := len(vm.Abilities)
+		for i, ab := range vm.Abilities {
+			if usedH+abilityH > budgetH-14 { // 预留一行给截断指示
+				remaining := maxAbil - i
+				if remaining > 0 {
+					panel.AddRow(abilityH, func(screen *ebiten.Image, x, y float64, _ float64) {
+						fm.DrawText(screen, fmt.Sprintf("...+%d个能力", remaining), x, y, theme.FontXS, theme.TextMuted)
+					})
+					usedH += abilityH
+				}
+				break
+			}
 			ab := ab
 			panel.AddRow(abilityH, func(screen *ebiten.Image, x, y float64, w float64) {
 				drawAbilityRowVM(screen, fm, ab, x, y)
 			})
+			usedH += abilityH
 		}
 	}
 
-	// Row 6: Buff 列表
+	// Row 6: Buff 列表（受剩余高度预算限制）
 	if len(vm.Buffs) > 0 {
 		panel.AddSpace(2)
-		for _, b := range vm.Buffs {
+		usedH += 2
+		const buffH float32 = 14
+		for i, b := range vm.Buffs {
+			if usedH+buffH > budgetH-14 {
+				remaining := len(vm.Buffs) - i
+				if remaining > 0 {
+					panel.AddRow(buffH, func(screen *ebiten.Image, x, y float64, _ float64) {
+						fm.DrawText(screen, fmt.Sprintf("...+%d个buff", remaining), x, y, theme.FontXS, theme.TextMuted)
+					})
+					usedH += buffH
+				}
+				break
+			}
 			b := b
-			panel.AddRow(14, func(screen *ebiten.Image, x, y float64, w float64) {
+			panel.AddRow(buffH, func(screen *ebiten.Image, x, y float64, w float64) {
 				srcClr := color.RGBA{R: 180, G: 140, B: 255, A: 220}
 				fm.DrawText(screen, b.Source, x, y, theme.FontXS, srcClr)
 				srcW := fm.MeasureText(b.Source, theme.FontXS)
@@ -237,6 +278,7 @@ func DrawInfoPanel(screen *ebiten.Image, vm InfoPanelVM) {
 					fm.DrawRightText(screen, timeStr, x+w, y, theme.FontXS, theme.TextMuted)
 				}
 			})
+			usedH += buffH
 		}
 	}
 

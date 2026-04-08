@@ -64,39 +64,46 @@ func DrawTopBar(screen *ebiten.Image, d TopBarData) {
 	draw.RoundRect(screen, pillX, pillY, pillW, pillH, pillR, theme.HUDTopBarBg)
 	draw.StrokeRoundRect(screen, pillX, pillY, pillW, pillH, pillR, 1, theme.HUDTopBarBorder)
 
-	// ── Left section: resources ──
+	// ── Left section: resources (clamped to divider boundary) ──
 	resX := float64(pillX) + 16
 	resY := float64(pillY) + 12 // vertically centered baseline
+	maxResX := float64(pillX) + float64(dividerOff) - 8 // 不超过分隔线
+	const topFS = theme.FontH1                           // 顶栏使用 H1 字号
 
 	// Heart icon + lives
 	draw.FilledCircle(screen, float32(resX)+6, float32(resY)+2, 6, theme.ResHearts)
 	resX += 16
-	const topFS = theme.FontH1 // 顶栏使用 H1 字号
 	livesTxt := strconv.Itoa(d.Lives)
 	fm.DrawText(screen, livesTxt, resX, resY-5, topFS, color.White)
 	resX += fm.MeasureText(livesTxt, topFS) + 10
 
 	// Coin icon + gold
-	draw.FilledCircle(screen, float32(resX)+6, float32(resY)+2, 6, theme.ResGold)
-	resX += 16
-	goldTxt := strconv.Itoa(d.Gold)
-	fm.DrawText(screen, goldTxt, resX, resY-5, topFS, color.White)
-	resX += fm.MeasureText(goldTxt, topFS) + 10
+	if resX+30 < maxResX {
+		draw.FilledCircle(screen, float32(resX)+6, float32(resY)+2, 6, theme.ResGold)
+		resX += 16
+		goldTxt := strconv.Itoa(d.Gold)
+		fm.DrawText(screen, goldTxt, resX, resY-5, topFS, color.White)
+		resX += fm.MeasureText(goldTxt, topFS) + 10
+	}
 
 	// Wave icon + wave/maxWaves
-	draw.FilledCircle(screen, float32(resX)+5, float32(resY)+2, 5, theme.ResWaves)
-	resX += 14
-	waveTxt := strconv.Itoa(d.Wave) + "/" + strconv.Itoa(d.MaxWaves)
-	fm.DrawText(screen, waveTxt, resX, resY-5, topFS, color.White)
-	resX += fm.MeasureText(waveTxt, topFS) + 10
+	if resX+30 < maxResX {
+		draw.FilledCircle(screen, float32(resX)+5, float32(resY)+2, 5, theme.ResWaves)
+		resX += 14
+		waveTxt := strconv.Itoa(d.Wave) + "/" + strconv.Itoa(d.MaxWaves)
+		fm.DrawText(screen, waveTxt, resX, resY-5, topFS, color.White)
+		resX += fm.MeasureText(waveTxt, topFS) + 10
+	}
 
 	// Kills icon (stat-target) + kill count
-	if im := render.GlobalIcons(); im != nil {
-		if img := im.Get("stat-target"); img != nil {
-			draw.Sprite(screen, img, resX+5, float64(resY)+1, 10)
-			resX += 14
-			killsTxt := strconv.Itoa(d.Kills)
-			fm.DrawText(screen, killsTxt, resX, resY-5, topFS, color.White)
+	if resX+30 < maxResX {
+		if im := render.GlobalIcons(); im != nil {
+			if img := im.Get("stat-target"); img != nil {
+				draw.Sprite(screen, img, resX+5, float64(resY)+1, 10)
+				resX += 14
+				killsTxt := strconv.Itoa(d.Kills)
+				fm.DrawText(screen, killsTxt, resX, resY-5, topFS, color.White)
+			}
 		}
 	}
 

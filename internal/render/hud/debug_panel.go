@@ -66,7 +66,7 @@ func debugPanelRect() (panelX, panelY, panelW, panelH float32) {
 	panelX = float32(game.ScreenWidth) - debugPanelW - 8
 	panelY = debugPanelTop
 	panelW = debugPanelW
-	panelH = float32(game.ScreenHeight) - debugPanelTop - 10
+	panelH = float32(game.ScreenHeight) - debugPanelTop - 75 // 预留 minimap(55px) + 间距
 	return
 }
 
