@@ -318,6 +318,10 @@ func (m *Manager) PlaySafeAt(name string, scale float64) {
 // 若文件不存在或解码失败，仅打印日志，不崩溃。
 func (m *Manager) PlayBGM(name string) {
 	m.mu.Lock()
+	if !m.sfxEnabled {
+		m.mu.Unlock()
+		return
+	}
 	if name == m.bgmName && m.bgmPlayer != nil && m.bgmPlayer.IsPlaying() {
 		m.mu.Unlock()
 		return
