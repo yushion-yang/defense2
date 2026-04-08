@@ -208,11 +208,17 @@ func (a *ConfigAbility) OnTick(t *tower.Tower, ctx *tower.TickContext) *tower.Ti
 		}, "攻速光环", fmt.Sprintf("+%.0f%%攻速", sv*100))
 
 	case "rangeAura":
-		// scaleDim=bonus(像素), param=radius — 含自身
+		// scaleDim=bonus(像素), param=radius — 直接加 Range，不走 Strength
 		srcKey := fmt.Sprintf("rngAura_%s_%d_%d", t.Key, t.Row, t.Col)
-		applyAura(t, ctx, srcKey, pm, func(other *tower.Tower) float64 {
-			return sv
-		}, "射程光环", fmt.Sprintf("+%.0f射程", sv))
+		desc := fmt.Sprintf("+%.0f射程", sv)
+		ctx.Towers.Each(func(other *tower.Tower) {
+			if math.Hypot(t.X-other.X, t.Y-other.Y) <= pm {
+				other.Range += sv
+				applyBuffDisplay(other, srcKey, "射程光环", desc)
+			} else {
+				removeBuffDisplay(other, srcKey)
+			}
+		})
 
 	case "critAura":
 		// scaleDim=bonus(暴击率加成), param=radius — 含自身
