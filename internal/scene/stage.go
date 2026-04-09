@@ -20,7 +20,7 @@ import (
 	"time"
 
 	"defense2/internal/core/tower/abilities" // 通过 init() 注册塔能力；Remove hook
-	_ "defense2/internal/core/warden/types"    // 通过 init() 注册战灵类型
+	_ "defense2/internal/core/warden/types"  // 通过 init() 注册战灵类型
 
 	gameAudio "defense2/internal/audio"
 	"defense2/internal/config"
@@ -3229,7 +3229,12 @@ func (s *StageScene) executeAutoPlayAction(a AutoPlayAction) {
 	case APActionAddAbility:
 		t := s.towers.At(a.Row, a.Col)
 		if t != nil {
-			t.AddAbility(a.AbilityName)
+			ok := t.AddAbility(a.AbilityName)
+			if !ok {
+				log.Printf("[autoplay] AddAbility(%s) at (%d,%d) FAILED (slots=%v)", a.AbilityName, a.Row, a.Col, t.AbilitySlots)
+			}
+		} else {
+			log.Printf("[autoplay] AddAbility(%s): no tower at (%d,%d)", a.AbilityName, a.Row, a.Col)
 		}
 	}
 }

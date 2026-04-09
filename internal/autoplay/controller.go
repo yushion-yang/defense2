@@ -309,6 +309,8 @@ func actionsToSceneActions(actions []Action) []scene.AutoPlayAction {
 			sa.Type = scene.APActionSelectWarden
 		case ActionAddAbility:
 			sa.Type = scene.APActionAddAbility
+			sa.Row = a.Row
+			sa.Col = a.Col
 			sa.AbilityName = a.AbilityName
 		default:
 			continue

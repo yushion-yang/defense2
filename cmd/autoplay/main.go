@@ -74,6 +74,9 @@ type sessionConfig struct {
 
 func orchestrate(runs int, strategies, mapID, difficulty, warden, output, jsonDir string, sweep, abilitySweep bool, scenarioName string, masterSeed int64, modelPath, vocabPath string) {
 	// 分离模式: --json-dir 由调用方管理目录结构
+	// 初始化 dataFS（父进程需要读取 ability_tests.json 生成测试计划）
+	config.SetDataFS(&defense2.DataFS)
+
 	// 兼容模式: 生成带时间戳的 run 目录，避免历史结果污染
 	splitMode := jsonDir != ""
 	runDir := output
