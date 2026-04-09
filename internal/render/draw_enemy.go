@@ -146,11 +146,17 @@ func (er *EnemyRenderer) DrawEnemies(screen *ebiten.Image, pool *enemy.Pool, ani
 				displaySize *= 1.0 + 0.04*math.Sin(animTime*1.8)
 			}
 
+			// 计算 alpha（隐身/相位）
+			bodyAlpha := 1.0
 			if e.Stealthed {
-				// 隐身敌人：半透明渲染（alpha ≈ 15%）
+				bodyAlpha = 0.15
+			} else if e.PhaseActive {
+				bodyAlpha = 0.35
+			}
+			if bodyAlpha < 1.0 {
 				logicalScale := displaySize / float64(img.Bounds().Dx())
 				draw.SpriteScaledRotatedAlpha(screen, img, float64(cx), float64(cy)+wobbleY,
-					logicalScale, wobbleRot, 0.15)
+					logicalScale, wobbleRot, bodyAlpha)
 			} else {
 				draw.SpriteRotated(screen, img, float64(cx), float64(cy), displaySize, wobbleRot, wobbleY)
 			}
@@ -160,7 +166,9 @@ func (er *EnemyRenderer) DrawEnemies(screen *ebiten.Image, pool *enemy.Pool, ani
 				bodyColor = color.RGBA{R: 220, G: 160, B: 40, A: 255}
 			}
 			if e.Stealthed {
-				bodyColor.A = 38 // ~15% alpha
+				bodyColor.A = 38
+			} else if e.PhaseActive {
+				bodyColor.A = 90
 			}
 			draw.FilledCircle(screen, cx, cy, r, bodyColor)
 		}
@@ -289,7 +297,71 @@ func (er *EnemyRenderer) DrawEnemies(screen *ebiten.Image, pool *enemy.Pool, ani
 				color.RGBA{R: 255, G: 140, B: 40, A: 255})
 			dotX += 6
 		}
+
+		// --- 能力常驻视觉（被沉默时全部隐藏）---
+		if !e.AbilitySilenced {
+			// 免疫脚环
+			footR := float32(e.Radius) + 2
+			if e.IsControlImmune {
+				draw.CircleOutline(screen, cx, cy+footR*0.3, footR, 1, color.RGBA{R: 220, G: 60, B: 60, A: 80})
+			} else if e.IsSlowImmune {
+				draw.CircleOutline(screen, cx, cy+footR*0.3, footR, 1, color.RGBA{R: 60, G: 180, B: 200, A: 80})
+			}
+
+			// 盾牌叠加（能力对应颜色盾牌）
+			shieldOffset := float32(e.Radius) * 0.6
+			if e.ProjectileBlockChance > 0 {
+				if img := er.loadShield("shield-white"); img != nil {
+					draw.Sprite(screen, img, float64(cx+shieldOffset), float64(cy), 14)
+				}
+			}
+			if e.ArmorFlat > 0 {
+				if img := er.loadShield("shield-blue"); img != nil {
+					draw.Sprite(screen, img, float64(cx+shieldOffset), float64(cy), 14)
+				}
+			}
+			if e.DamageCap > 0 || e.DamageCapPercent > 0 {
+				if img := er.loadShield("shield-orange"); img != nil {
+					draw.Sprite(screen, img, float64(cx+shieldOffset), float64(cy), 14)
+				}
+			}
+
+			// 净化免疫期白色微光
+			if e.PurgeInterval > 0 && e.ControlImmuneTimer > 0 {
+				glowAlpha := uint8(60 + 30*math.Sin(animTime*6))
+				draw.CircleOutline(screen, cx, cy, float32(e.Radius)+3, 1.5, color.RGBA{R: 255, G: 255, B: 255, A: glowAlpha})
+			}
+		}
+
+		// --- 飘字渲染 ---
+		if e.FloatText != "" && e.FloatTextTimer > 0 {
+			fm := GlobalFont()
+			if fm != nil {
+				progress := 1 - e.FloatTextTimer/0.6
+				floatY := float64(cy) - float64(e.Radius) - 10 - progress*12
+				alpha := uint8(255 * (1 - progress))
+				fm.DrawCenteredText(screen, e.FloatText, float64(cx), floatY, 10,
+					color.RGBA{R: e.FloatTextR, G: e.FloatTextG, B: e.FloatTextB, A: alpha})
+			}
+		}
 	})
+}
+
+// loadShield 加载盾牌 PNG（缓存）。
+func (er *EnemyRenderer) loadShield(name string) *ebiten.Image {
+	path := fmt.Sprintf("assets/enemies/shields/%s.png", name)
+	if cached := er.cache.Get(path, 12, 16); cached != nil {
+		return cached
+	}
+	if er.assetFS == nil {
+		return nil
+	}
+	data, err := er.assetFS.ReadFile(path)
+	if err != nil {
+		return nil
+	}
+	img, _ := er.cache.GetOrParse(path, data, 12, 16)
+	return img
 }
 
 // loadEnemyImage loads an enemy's PNG sprite.

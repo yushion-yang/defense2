@@ -145,14 +145,21 @@ func ProcessDamage(input DamageInput) DamageResult {
 	// ── 步骤4.5: 伤害上限 ──
 	tel.T.Record("pipeline", "damage_cap")
 	if !e.Silenced {
+		capped := false
 		if e.DamageCap > 0 && damage > e.DamageCap {
 			damage = e.DamageCap
+			capped = true
 		}
 		if e.DamageCapPercent > 0 {
 			pctCap := e.MaxHP * e.DamageCapPercent
 			if damage > pctCap {
 				damage = pctCap
+				capped = true
 			}
+		}
+		if capped {
+			e.DamageCapHit = 0.3
+			e.SetFloatText("CAP", 255, 180, 40)
 		}
 	}
 	result.AfterDamageCap = damage

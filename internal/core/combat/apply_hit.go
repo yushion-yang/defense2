@@ -40,7 +40,8 @@ func ApplyHit(input HitInput, onHit HitCallback) HitOutput {
 	// ── 怪物闪避（完全回避，不触发任何 OnHit）──
 	if e.EvasionChance > 0 && !e.AbilitySilenced {
 		if rand.Float64() < e.EvasionChance {
-			e.DodgeFlash = 0.3 // 触发闪避视觉
+			e.DodgeFlash = 0.3
+			e.SetFloatText("MISS", 255, 255, 255)
 			return HitOutput{}
 		}
 	}

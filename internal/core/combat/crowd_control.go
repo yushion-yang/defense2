@@ -16,6 +16,7 @@ const MinSpeedRatio = 0.2
 func ApplyStun(e *enemy.Enemy, duration float64, source string) bool {
 	// 控制免疫检查
 	if e.IsControlImmune || e.IsStunImmune {
+		e.SetFloatText("免疫", 220, 60, 60)
 		return false
 	}
 
@@ -39,6 +40,11 @@ func ApplyStun(e *enemy.Enemy, duration float64, source string) bool {
 func ApplySlow(e *enemy.Enemy, factor, duration float64, source string) bool {
 	// 控制免疫检查
 	if e.IsControlImmune || e.IsSlowImmune {
+		if e.IsControlImmune {
+			e.SetFloatText("免疫", 220, 60, 60)
+		} else {
+			e.SetFloatText("免疫", 60, 180, 200)
+		}
 		return false
 	}
 

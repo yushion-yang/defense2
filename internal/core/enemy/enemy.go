@@ -188,12 +188,29 @@ type Enemy struct {
 	DodgeFlash  float64 // 闪避残影
 	ArmorSpark  float64 // 装甲火花
 	PurgeFlash  float64 // 净化脉冲
+	DamageCapHit float64 // 坚韧触发闪光
+
+	// 飘字系统
+	FloatText      string  // 当前飘字内容（空=无）
+	FloatTextTimer float64 // 飘字剩余时间
+	FloatTextR     uint8   // 飘字颜色
+	FloatTextG     uint8
+	FloatTextB     uint8
 }
 
 // IsDying returns true if the enemy is playing its death animation.
 // Dying enemies are still Active (for rendering) but should be skipped by
 // targeting, collision, movement, and status-effect systems.
 func (e *Enemy) IsDying() bool { return e.DyingTimer > 0 }
+
+// SetFloatText 设置飘字（会覆盖已有的飘字）。
+func (e *Enemy) SetFloatText(text string, r, g, b uint8) {
+	e.FloatText = text
+	e.FloatTextTimer = 0.6
+	e.FloatTextR = r
+	e.FloatTextG = g
+	e.FloatTextB = b
+}
 
 // MinSpeedRatio 全局减速下限：速度不低于初始速度的 20%。
 const MinSpeedRatio = 0.2
@@ -305,6 +322,15 @@ func TickStatusEffects(e *Enemy, dt float64) {
 	}
 	if e.ArmorSpark > 0 {
 		e.ArmorSpark -= dt
+	}
+	if e.DamageCapHit > 0 {
+		e.DamageCapHit -= dt
+	}
+	if e.FloatTextTimer > 0 {
+		e.FloatTextTimer -= dt
+		if e.FloatTextTimer <= 0 {
+			e.FloatText = ""
+		}
 	}
 	if e.PurgeFlash > 0 {
 		e.PurgeFlash -= dt
