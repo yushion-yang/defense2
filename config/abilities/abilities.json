@@ -32,7 +32,7 @@
   "weaken"         : {"type":"weaken"         , "label":"虚弱"    , "icon":"armorPen"       , "category":"dot"     , "scaleDim":"amplify"          , "base":0.1   , "potential":0.15       , "param":3.0    , "paramDim":"duration"    , "display":"使敌人变脆弱, 受到所有伤害+{s%}, 持续{p}秒"    },
 
   "poisonZone"     : {"type":"poisonZone"     , "label":"毒区"    , "icon":"tower-poison"   , "category":"zone"    , "scaleDim":"dps"              , "base":1     , "potential":2          , "param":0      , "paramDim":""            , "display":"射程内敌人持续受到每秒{s}毒伤"                 },
-  "silenceZone"    : {"type":"silenceZone"    , "label":"沉默区"   , "icon":"slow"           , "category":"zone"    , "scaleDim":"slowFactor"       , "base":0.08  , "potential":0.12       , "param":0      , "paramDim":""            , "display":"射程内敌人被沉默并减速{s%}"                    },
+  "silenceZone"    : {"type":"silenceZone"    , "label":"沉默区"   , "icon":"slow"           , "category":"zone"    , "scaleDim":""                 , "base":0     , "potential":0          , "param":0      , "paramDim":""            , "display":"射程内敌人被沉默(禁用伤害上限+怪物能力)"         },
   "curseZone"      : {"type":"curseZone"      , "label":"诅咒区"   , "icon":"tower-poison"   , "category":"zone"    , "scaleDim":"hpPercentPerSec"  , "base":0.005 , "potential":0.01       , "param":0      , "paramDim":""            , "display":"射程内敌人每秒损失{s%}生命"                    },
   "weakenZone"     : {"type":"weakenZone"     , "label":"脆弱区"   , "icon":"armorPen"       , "category":"zone"    , "scaleDim":"amplify"          , "base":0.05  , "potential":0.1        , "param":0      , "paramDim":""            , "display":"射程内敌人受到所有伤害+{s%}"                   }
 }
