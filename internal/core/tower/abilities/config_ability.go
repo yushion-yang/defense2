@@ -9,7 +9,6 @@ import (
 	"math/rand"
 
 	"defense2/internal/config"
-	"defense2/internal/core/combat"
 	"defense2/internal/core/enemy"
 	"defense2/internal/core/projectile"
 	"defense2/internal/core/strength"

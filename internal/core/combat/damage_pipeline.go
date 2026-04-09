@@ -94,6 +94,7 @@ func ProcessDamage(input DamageInput) DamageResult {
 		if e.IsDamageImmune {
 			result.Blocked = true
 			result.BlockedReason = "damageImmune"
+			e.SetFloatText("免伤", 160, 80, 255)
 			tel.T.Record("pipeline", "immunity_block_immune")
 			return result
 		}
