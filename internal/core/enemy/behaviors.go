@@ -79,16 +79,14 @@ func TickBehaviors(pool *Pool, dt float64) BehaviorEvents {
 		if e.PhaseCooldown > 0 && !e.AbilitySilenced {
 			e.PhaseTimer -= dt
 			if e.PhaseTimer <= 0 && !e.PhaseActive {
-				// 进入免伤相位
+				// 进入免伤相位（可被选中/命中，但免疫伤害）
 				e.PhaseActive = true
-				e.IsInvincible = true
-				e.IsUntargetable = true
+				e.IsDamageImmune = true
 				e.PhaseTimer = e.PhaseDuration
 			} else if e.PhaseActive && e.PhaseTimer <= 0 {
 				// 相位结束
 				e.PhaseActive = false
-				e.IsInvincible = false
-				e.IsUntargetable = false
+				e.IsDamageImmune = false
 				e.PhaseTimer = e.PhaseCooldown
 			}
 		}
