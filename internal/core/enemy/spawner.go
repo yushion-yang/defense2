@@ -70,6 +70,7 @@ type Spawner struct {
 	FixedCount        int                     // >0 时每波固定该数量（不随波次递增）
 	BossEveryWave     bool                    // true 时每波末尾都出 Boss（bossRush 模式用）
 	bossQueued        bool                    // 本波是否需要在末尾追加 Boss
+	EntranceDelay     float64                 // Boss 波入场延迟（秒），>0 时暂停出怪
 }
 
 // NewSpawner 创建出怪管理器。
@@ -112,6 +113,15 @@ func (s *Spawner) Update(pool *Pool, dt float64) {
 		}
 		if s.WaveTimer <= 0 {
 			s.startWave()
+		}
+		return
+	}
+
+	// Boss 入场延迟：倒计时结束前不出怪
+	if s.EntranceDelay > 0 {
+		s.EntranceDelay -= dt
+		if s.EntranceDelay < 0 {
+			s.EntranceDelay = 0
 		}
 		return
 	}
@@ -213,6 +223,12 @@ func (s *Spawner) startWave() {
 	s.SpawnTimer = 0
 	s.WaveActive = true
 	s.bossQueued = s.BossEveryWave || (s.Wave%config.GlobalBalance().Spawner.BossEveryNWaves == 0)
+	// Boss 波入场延迟：给玩家 3 秒准备时间
+	if s.bossQueued {
+		s.EntranceDelay = 3.0
+	} else {
+		s.EntranceDelay = 0
+	}
 }
 
 // WavePreviewEntry 下一波预览中的一种敌人。

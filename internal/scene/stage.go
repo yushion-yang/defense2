@@ -408,6 +408,8 @@ func (s *StageScene) subscribeBus() {
 			s.audioMgr.PlaySafeAt(gameAudio.SFXBossEnter, gameAudio.VolWave)
 			// BGM: Boss 波切换到 Boss 音乐
 			s.audioMgr.PlayBGM(gameAudio.BGMBoss)
+			// Screen shake for boss entrance drama
+			render.TriggerShake(4.0, 0.5)
 		}
 		s.waveAnnounce.Trigger(p.Wave, s.spawner.MaxWaves, p.IsBoss)
 		s.tutorial.OnEvent("waveStarted")
@@ -1709,7 +1711,7 @@ func (s *StageScene) updatePlaying() {
 
 	// 2. 敌人状态效果（减速、流血等）
 	pipeline.TickEnemyStatusEffects(s.enemies, gameDT, func(e *enemy.Enemy, dmg float64) {
-		render.SpawnDamageText(e.X, e.Y-10, dmg, false)
+		render.SpawnDamageText(e.X, e.Y-10, dmg, false, e.Boss)
 	})
 
 	// 2.5. 敌人行为 tick（狂暴/回血/传送）
@@ -1810,7 +1812,7 @@ func (s *StageScene) updatePlaying() {
 				s.audioMgr.PlayThrottledAt(sfx, 200, gameAudio.VolWarden)
 			},
 			OnDamage: func(x, y, dmg float64, crit bool) {
-				render.SpawnDamageText(x, y, dmg, crit)
+				render.SpawnDamageText(x, y, dmg, crit, false)
 			},
 		})
 	}
@@ -1960,7 +1962,7 @@ func (s *StageScene) updatePlaying() {
 	}, func(e *enemy.Enemy, damage float64, killed bool, _ string, crit bool) {
 		// 直接攻击方式（laser/beam/spin_aoe等）的伤害飘字
 		if damage > 0 {
-			render.SpawnDamageText(e.X, e.Y-15, damage, crit)
+			render.SpawnDamageText(e.X, e.Y-15, damage, crit, e.Boss)
 		}
 		if crit {
 			s.audioMgr.PlayThrottledAt(gameAudio.SFXCritHit, 150, gameAudio.VolHit)
@@ -1974,7 +1976,7 @@ func (s *StageScene) updatePlaying() {
 	// 8. 弹射物命中检测（含能力触发）
 	kills := pipeline.TickProjectileHits(s.projectiles, s.enemies, s.towers, func(e *enemy.Enemy, damage float64, killed bool, attackStyle string, crit bool) {
 		if damage > 0 {
-			render.SpawnDamageText(e.X, e.Y-15, damage, crit)
+			render.SpawnDamageText(e.X, e.Y-15, damage, crit, e.Boss)
 			if e.HitFlash < 0.06 && e.Age > 0.1 { // 出生 0.1s 内不闪白
 				e.HitFlash = 0.12
 			}

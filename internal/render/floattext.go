@@ -8,6 +8,8 @@ import (
 	"math/rand"
 	"strconv"
 
+	"defense2/internal/core/game"
+
 	"github.com/hajimehoshi/ebiten/v2"
 )
 
@@ -29,7 +31,23 @@ var floatTexts [maxFloatTexts]FloatText
 var ftCursor int
 
 // SpawnDamageText 在指定位置弹出伤害数字。
-func SpawnDamageText(x, y, damage float64, crit bool) {
+// Quality-adaptive filtering: suppress minor damage numbers on lower quality settings.
+func SpawnDamageText(x, y, damage float64, crit, isBoss bool) {
+	// Quality-adaptive filtering: suppress minor damage numbers
+	if !crit && !isBoss {
+		q := game.CurrentQuality
+		switch q {
+		case game.QualityMedium:
+			if damage < 3 {
+				return
+			}
+		case game.QualityLow:
+			if damage < 20 {
+				return
+			}
+		}
+		// QualityHigh: show all
+	}
 	clr := color.RGBA{R: 255, G: 255, B: 255, A: 255}
 	size := 11.0
 	if crit {

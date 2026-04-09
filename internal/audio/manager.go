@@ -7,6 +7,7 @@ import (
 	"bytes"
 	"io"
 	"log"
+	"math/rand"
 	"strings"
 	"sync"
 	"time"
@@ -44,6 +45,10 @@ type Manager struct {
 	throttle   map[string]time.Time // 每个音效的上次播放时间（per-sound 节流）
 	mu         sync.Mutex           // 并发安全锁
 
+	// Pitch variation（音高随机化）
+	PitchVariation float64         // 音高随机偏移幅度（±），0 = 禁用
+	noPitchSFX     map[string]bool // 不参与音高随机的 SFX 名称集合
+
 	// BGM（背景音乐）
 	bgmPlayer *audio.Player // 当前 BGM 播放器（nil 表示无 BGM）
 	bgmVolume float64       // BGM 音量（0.0 ~ 1.0），独立于 SFX 主音量
@@ -54,11 +59,22 @@ type Manager struct {
 // NewManager 创建音效管理器。
 func NewManager() *Manager {
 	return &Manager{
-		context:   getAudioContext(),
-		cache:     make(map[string][]byte),
-		throttle:  make(map[string]time.Time),
-		volume:    0.8,
-		bgmVolume: 0.3,
+		context:        getAudioContext(),
+		cache:          make(map[string][]byte),
+		throttle:       make(map[string]time.Time),
+		volume:         0.8,
+		bgmVolume:      0.3,
+		PitchVariation: 0.08, // ±8% 默认音高随机
+		noPitchSFX: map[string]bool{
+			// UI / 成就音效应保持一致音高
+			SFXUIClick:     true,
+			SFXUIOpen:      true,
+			SFXUIClose:     true,
+			SFXVictory:     true,
+			SFXDefeat:      true,
+			SFXSpeedToggle: true,
+			SFXUpgrade:     true,
+		},
 	}
 }
 
@@ -105,6 +121,7 @@ func (m *Manager) SetSFXEnabled(enabled bool) {
 }
 
 // PlayAt 以指定音量倍率播放音效。finalVol = masterVolume * scale。
+// 对非 UI 类音效自动施加 ±PitchVariation 的随机音高偏移，以防止听觉疲劳。
 func (m *Manager) PlayAt(name string, scale float64) {
 	m.mu.Lock()
 	if !m.sfxEnabled {
@@ -113,6 +130,8 @@ func (m *Manager) PlayAt(name string, scale float64) {
 	}
 	pcm, ok := m.cache[name]
 	vol := m.volume * scale
+	pitchVar := m.PitchVariation
+	skipPitch := m.noPitchSFX[name]
 	m.mu.Unlock()
 
 	if !ok || vol <= 0 {
@@ -122,7 +141,14 @@ func (m *Manager) PlayAt(name string, scale float64) {
 		vol = 1
 	}
 
-	player := m.context.NewPlayerFromBytes(pcm)
+	// Apply pitch variation for combat SFX (pcm from cache is shared — never mutate)
+	playData := pcm
+	if pitchVar > 0 && !skipPitch {
+		pitch := 1.0 + (rand.Float64()*2-1)*pitchVar
+		playData = ResamplePCM(pcm, pitch)
+	}
+
+	player := m.context.NewPlayerFromBytes(playData)
 	player.SetVolume(vol)
 	player.Play()
 }

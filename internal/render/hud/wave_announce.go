@@ -19,6 +19,7 @@ type announcePhase int
 
 const (
 	announceIdle     announcePhase = iota
+	announceEntrance               // boss/final: extended warning flashes before slide-in
 	announceSlideIn                // 0.3s: text slides down from top
 	announceHold                   // 0.8s (1.0s for boss): text stays visible
 	announceSlideOut               // 0.3s: text slides up and disappears
@@ -26,13 +27,15 @@ const (
 
 // Timing constants for the announcement animation.
 const (
-	slideInDuration  = 0.3
-	holdNormal       = 0.8
-	holdBoss         = 1.0
-	slideOutDuration = 0.3
-	flashInterval    = 0.15 // boss warning flash interval
-	targetY          = 80.0 // vertical center position for the text
-	offscreenY       = -40.0
+	slideInDuration      = 0.3
+	holdNormal           = 0.8
+	holdBoss             = 1.0
+	slideOutDuration     = 0.3
+	flashInterval        = 0.15 // normal boss warning flash interval
+	entranceFlashCount   = 6    // boss entrance: 6 dramatic pulses
+	entranceFlashInterval = 0.4 // boss entrance: slower interval for drama
+	targetY              = 80.0 // vertical center position for the text
+	offscreenY           = -40.0
 )
 
 // WaveAnnounce manages the animated text overlay shown when a new wave begins.
@@ -45,8 +48,9 @@ type WaveAnnounce struct {
 	isFinal  bool
 
 	// Boss warning: flash red border before showing wave text.
-	warningFlashes int     // remaining flashes (2 for boss)
-	warningTimer   float64 // countdown to next flash toggle
+	warningFlashes      int     // remaining flashes (2 for normal boss, 6 for entrance)
+	warningTimer        float64 // countdown to next flash toggle
+	warningTotalFlashes int     // total flashes for this sequence (used for intensity calc)
 }
 
 // NewWaveAnnounce creates a new idle wave announcement overlay.
@@ -60,13 +64,18 @@ func (wa *WaveAnnounce) Trigger(wave, maxWaves int, isBoss bool) {
 	wa.maxWaves = maxWaves
 	wa.isBoss = isBoss
 	wa.isFinal = wave == maxWaves && maxWaves > 0
-	wa.phase = announceSlideIn
-	wa.timer = slideInDuration
 	if isBoss || wa.isFinal {
-		wa.warningFlashes = 2
-		wa.warningTimer = flashInterval
+		// Boss/final waves: extended entrance phase with 6 dramatic pulses
+		wa.phase = announceEntrance
+		wa.timer = 0
+		wa.warningFlashes = entranceFlashCount
+		wa.warningTotalFlashes = entranceFlashCount
+		wa.warningTimer = entranceFlashInterval
 	} else {
+		wa.phase = announceSlideIn
+		wa.timer = slideInDuration
 		wa.warningFlashes = 0
+		wa.warningTotalFlashes = 0
 	}
 }
 
@@ -76,7 +85,23 @@ func (wa *WaveAnnounce) Update(dt float64) {
 		return
 	}
 
-	// Boss/final warning phase (red border flashes before slide-in).
+	// Boss entrance phase: extended dramatic pulses before slide-in.
+	if wa.phase == announceEntrance {
+		wa.warningTimer -= dt
+		if wa.warningTimer <= 0 {
+			wa.warningFlashes--
+			if wa.warningFlashes <= 0 {
+				// Entrance done → transition to slide-in
+				wa.phase = announceSlideIn
+				wa.timer = slideInDuration
+			} else {
+				wa.warningTimer = entranceFlashInterval
+			}
+		}
+		return
+	}
+
+	// Legacy warning flashes (kept for any non-entrance path).
 	if wa.warningFlashes > 0 {
 		wa.warningTimer -= dt
 		if wa.warningTimer <= 0 {
@@ -111,7 +136,11 @@ func (wa *WaveAnnounce) Draw(screen *ebiten.Image) {
 		return
 	}
 
-	// Draw boss/final warning border flashes first.
+	// Draw entrance phase or legacy warning flashes.
+	if wa.phase == announceEntrance {
+		wa.drawEntranceFlash(screen)
+		return
+	}
 	if wa.warningFlashes > 0 {
 		wa.drawWarningFlash(screen)
 		return
@@ -173,6 +202,38 @@ func (wa *WaveAnnounce) currentY() float64 {
 	default:
 		return offscreenY
 	}
+}
+
+// drawEntranceFlash renders dramatic escalating border flashes during the boss entrance phase.
+// Each successive flash is brighter/wider: intensity = (total - remaining) / total.
+func (wa *WaveAnnounce) drawEntranceFlash(screen *ebiten.Image) {
+	// Flicker: visible on even "ticks" of the warning timer.
+	if int(wa.warningTimer*20)%2 != 0 {
+		return
+	}
+
+	// Intensity ramps up as flashes progress: 0.17 → 0.33 → ... → 1.0
+	intensity := float64(wa.warningTotalFlashes-wa.warningFlashes) / float64(wa.warningTotalFlashes)
+	if intensity < 0.15 {
+		intensity = 0.15
+	}
+
+	baseAlpha := uint8(60 + intensity*140) // 60 → 200
+	var borderClr color.RGBA
+	if wa.isFinal {
+		borderClr = color.RGBA{R: 255, G: 200, B: 50, A: baseAlpha} // gold
+	} else {
+		borderClr = color.RGBA{R: 255, G: 40, B: 40, A: baseAlpha} // red
+	}
+
+	w := float32(game.ScreenWidth)
+	h := float32(game.ScreenHeight)
+	thickness := float32(3 + intensity*4) // 3px → 7px
+
+	draw.FilledRect(screen, 0, 0, w, thickness, borderClr, false)          // top
+	draw.FilledRect(screen, 0, h-thickness, w, thickness, borderClr, false) // bottom
+	draw.FilledRect(screen, 0, 0, thickness, h, borderClr, false)           // left
+	draw.FilledRect(screen, w-thickness, 0, thickness, h, borderClr, false) // right
 }
 
 // drawWarningFlash renders pulsing red (boss) or gold (final) border edges.
