@@ -33,12 +33,18 @@ func (m *EndlessMode) GetScore(ctx *Context) int {
 }
 
 func (m *EndlessMode) OnWaveCleared(wave int, ctx *Context) WaveClearResult {
-	// 当前与 campaign 共用奖励公式，若需差异化可在此覆盖
-	result := m.CampaignMode.OnWaveCleared(wave, ctx)
+	// 无尽模式奖金递增更快以补偿无限波次难度
+	bonus := 15 + wave*6
+	perfect := 10 + wave*3 // Session.OnWaveCleared 会在有泄漏时清零
+	msg := fmt.Sprintf("Wave %d clear! +$%d", wave, bonus)
 	if wave%5 == 0 {
-		result.Message = fmt.Sprintf("Wave %d clear! Boss 波! +$%d", wave, result.BonusGold)
+		msg = fmt.Sprintf("Wave %d clear! Boss 波! +$%d", wave, bonus)
 	}
-	return result
+	return WaveClearResult{
+		BonusGold:    bonus,
+		PerfectBonus: perfect,
+		Message:      msg,
+	}
 }
 
 func (m *EndlessMode) GetEndData(ctx *Context) EndData {

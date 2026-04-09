@@ -468,3 +468,8 @@ func (s *Spawner) applyWaveBuffs(e *Enemy) {
 		ApplyBuffTemplate(e, buffPool[perm[i]])
 	}
 }
+
+// IsBossWave 返回当前波次是否为 Boss 波。
+func (s *Spawner) IsBossWave() bool {
+	return s.BossEveryWave || (s.Wave > 0 && s.Wave%config.GlobalBalance().Spawner.BossEveryNWaves == 0)
+}

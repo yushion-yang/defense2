@@ -241,11 +241,12 @@ func TickStatusEffects(e *Enemy, dt float64) {
 		}
 	}
 
-	// DoT（流血/灼烧/中毒/区域伤害）按固定周期触发
+	// DoT（流血/灼烧/中毒/区域伤害）按固定 0.5s 周期触发，走 ProcessDamage 管线。
+	// 持续时间以 tick 计数实现（如 3.0s = 6 ticks），确保触发次数精确匹配。
 	dotInterval := bal.Combat.DotTickInterval
 	hasDot := e.BleedTimer > 0 || e.BurnTimer > 0 || e.PoisonTimer > 0 || e.ZoneDmgAccum > 0
 	if hasDot {
-		// 首次施加 DOT 时初始化计时器，不立即触发（保证 3s/0.5s = 6 次）
+		// 首次施加 DOT 时初始化计时器
 		if e.DotTickTimer <= 0 {
 			e.DotTickTimer = dotInterval
 		}
@@ -255,33 +256,25 @@ func TickStatusEffects(e *Enemy, dt float64) {
 			dotDmg := 0.0
 			if e.BleedTimer > 0 {
 				dotDmg += e.BleedDPS * dotInterval
+				e.BleedTimer -= dotInterval // tick 计数递减
 			}
 			if e.BurnTimer > 0 {
 				dotDmg += e.BurnDPS * dotInterval
+				e.BurnTimer -= dotInterval
 			}
 			if e.PoisonTimer > 0 {
 				dotDmg += e.PoisonDPS * dotInterval
+				e.PoisonTimer -= dotInterval
 			}
 			// 区域伤害（curseZone/poisonZone 每帧累积，tick 时一次性结算）
 			if e.ZoneDmgAccum > 0 {
 				dotDmg += e.ZoneDmgAccum
 				e.ZoneDmgAccum = 0
 			}
-			// 无敌/伤害免疫时跳过 HP 扣减（DoT 仍正常倒计时以便状态图标消失）
-			if !e.IsInvincible && !e.IsDamageImmune {
-				e.HP -= dotDmg
+			// 伤害存入 LastDotDmg，由 pipeline 层通过 ProcessDamage 管线结算
+			if dotDmg > 0 {
 				e.LastDotDmg = dotDmg
 			}
-		}
-		// 倒计时递减
-		if e.BleedTimer > 0 {
-			e.BleedTimer -= dt
-		}
-		if e.BurnTimer > 0 {
-			e.BurnTimer -= dt
-		}
-		if e.PoisonTimer > 0 {
-			e.PoisonTimer -= dt
 		}
 	} else {
 		e.DotTickTimer = 0
@@ -309,6 +302,7 @@ func TickStatusEffects(e *Enemy, dt float64) {
 			e.IsControlImmune = false
 			e.IsStunImmune = false
 			e.IsSlowImmune = false
+			e.IsRootImmune = false
 		}
 	}
 

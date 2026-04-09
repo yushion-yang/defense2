@@ -51,9 +51,11 @@ func (m *BossRushMode) CheckDefeat(ctx *Context) bool {
 
 func (m *BossRushMode) OnWaveCleared(wave int, _ *Context) WaveClearResult {
 	bonus := 20 + wave*10
+	perfect := 15 + wave*5
 	return WaveClearResult{
-		BonusGold: bonus,
-		Message:   fmt.Sprintf("Boss %d defeated! +$%d", wave, bonus),
+		BonusGold:    bonus,
+		PerfectBonus: perfect,
+		Message:      fmt.Sprintf("Boss %d defeated! +$%d", wave, bonus),
 	}
 }
 

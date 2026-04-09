@@ -49,9 +49,11 @@ func (m *TimedMode) CheckDefeat(ctx *Context) bool {
 
 func (m *TimedMode) OnWaveCleared(wave int, _ *Context) WaveClearResult {
 	bonus := 8 + wave*3
+	perfect := 6 + wave*2
 	return WaveClearResult{
-		BonusGold: bonus,
-		Message:   fmt.Sprintf("Wave %d clear! +$%d", wave, bonus),
+		BonusGold:    bonus,
+		PerfectBonus: perfect,
+		Message:      fmt.Sprintf("Wave %d clear! +$%d", wave, bonus),
 	}
 }
 

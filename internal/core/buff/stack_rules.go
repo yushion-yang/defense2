@@ -41,7 +41,7 @@ var DefaultStackRules = map[string]StackRule{
 
 	// 增益类
 	"speedUp":    {Mode: ModeAdditive, Cap: 1.4},
-	"damageUp":   {Mode: ModeMultiplicative, Cap: 3.0},
+	"damageUp":   {Mode: ModeAdditive, Cap: 3.0},
 	"damageDown": {Mode: ModeMultiplicative, Floor: 0.2},
 	"fireRateUp": {Mode: ModeAdditive, Cap: 0.5},
 

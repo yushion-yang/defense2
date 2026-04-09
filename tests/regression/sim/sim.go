@@ -153,10 +153,23 @@ func (s *Sim) Step() {
 		})
 	})
 
-	// 5. Status effects
+	// 5. Status effects + DoT damage via pipeline
 	s.Enemies.Each(func(e *enemy.Enemy) {
 		if !e.IsDying() {
 			enemy.TickStatusEffects(e, dt)
+			if e.LastDotDmg > 0 {
+				r := combat.ProcessDamage(combat.DamageInput{
+					Target:     e,
+					RawDamage:  e.LastDotDmg,
+					DamageType: combat.DmgMagic,
+				})
+				if r.Killed {
+					s.Kills++
+					s.Gold += e.Reward
+					s.Enemies.Kill(e)
+				}
+				e.LastDotDmg = 0
+			}
 		}
 	})
 }
