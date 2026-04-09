@@ -1396,7 +1396,10 @@ func (s *StageScene) tickStrengthDrain() {
 func (s *StageScene) drawStrengthDrainLinks(screen *ebiten.Image) {
 	animTime := float64(s.frame) / 60.0
 	s.enemies.Each(func(e *enemy.Enemy) {
-		if e.IsDying() || e.StrDrainActiveT <= 0 {
+		if e.IsDying() || e.StrDrainRatio <= 0 || e.StrDrainActiveT <= 0 {
+			return
+		}
+		if e.StrDrainTargetRC == ([2]int{}) {
 			return
 		}
 		t := s.towers.At(e.StrDrainTargetRC[0], e.StrDrainTargetRC[1])
