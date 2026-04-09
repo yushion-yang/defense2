@@ -1,6 +1,10 @@
 // telemetry.go — 全局遥测计数器。
 // 各游戏子系统在运行时写入，autoplay 系统读取以追踪代码路径覆盖率。
 // 零依赖设计：不导入任何游戏包，仅用基础类型，避免循环依赖。
+//
+// Thread safety: The global T instance is protected by a sync.Mutex for all
+// public methods (Record, Reset, Snapshot). Safe for concurrent goroutine access,
+// though primary usage is from Ebitengine's single-threaded game loop.
 package telemetry
 
 import "sync"

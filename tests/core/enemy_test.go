@@ -120,7 +120,7 @@ func TestMoveAlongPath(t *testing.T) {
 
 func TestMoveStunned(t *testing.T) {
 	waypoints := []gamemap.Point{{X: 0, Y: 0}, {X: 100, Y: 0}}
-	e := &enemy.Enemy{X: 0, Y: 0, Speed: 200, Active: true, PathIndex: 1, StunTimer: 1.0}
+	e := &enemy.Enemy{X: 0, Y: 0, Speed: 200, Active: true, PathIndex: 1, StatusEffects: enemy.StatusEffects{StunTimer: 1.0}}
 
 	enemy.MoveAlongPath(e, waypoints, 0.5)
 	if e.X != 0 {

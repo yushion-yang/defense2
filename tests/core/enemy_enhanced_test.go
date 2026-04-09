@@ -25,7 +25,7 @@ func TestCC_ApplyStun(t *testing.T) {
 }
 
 func TestCC_StunImmune(t *testing.T) {
-	e := &enemy.Enemy{HP: 100, MaxHP: 100, Active: true, IsStunImmune: true}
+	e := &enemy.Enemy{HP: 100, MaxHP: 100, Active: true, StatusEffects: enemy.StatusEffects{IsStunImmune: true}}
 	ok := combat.ApplyStun(e, 2.0, "tower1")
 	if ok {
 		t.Error("眩晕免疫敌人不应被眩晕")
@@ -33,7 +33,7 @@ func TestCC_StunImmune(t *testing.T) {
 }
 
 func TestCC_ControlImmune(t *testing.T) {
-	e := &enemy.Enemy{HP: 100, MaxHP: 100, Active: true, IsControlImmune: true}
+	e := &enemy.Enemy{HP: 100, MaxHP: 100, Active: true, StatusEffects: enemy.StatusEffects{IsControlImmune: true}}
 	if combat.ApplyStun(e, 2.0, "") {
 		t.Error("控制免疫应阻止眩晕")
 	}
@@ -44,7 +44,7 @@ func TestCC_ControlImmune(t *testing.T) {
 }
 
 func TestCC_Tenacity(t *testing.T) {
-	e := &enemy.Enemy{HP: 100, MaxHP: 100, Active: true, Tenacity: 0.5}
+	e := &enemy.Enemy{HP: 100, MaxHP: 100, Active: true, StatusEffects: enemy.StatusEffects{Tenacity: 0.5}}
 	combat.ApplyStun(e, 4.0, "test")
 	// 韧性0.5: 实际持续 = 4.0 * (1-0.5) = 2.0
 	if math.Abs(e.StunTimer-2.0) > 1e-9 {

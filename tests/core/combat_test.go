@@ -129,7 +129,7 @@ func TestSlowEffect(t *testing.T) {
 func TestBleedEffect(t *testing.T) {
 	e := &enemy.Enemy{
 		HP: 100, MaxHP: 100, Speed: 100, BaseSpeed: 100, Active: true,
-		BleedTimer: 2.0, BleedDPS: 10,
+		StatusEffects: enemy.StatusEffects{BleedTimer: 2.0, BleedDPS: 10},
 	}
 
 	enemy.TickStatusEffects(e, 1.0) // DotTickInterval=0.5: first tick at 0.5s, damage = 10 DPS * 0.5s = 5

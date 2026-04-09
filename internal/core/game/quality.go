@@ -2,6 +2,9 @@
 // Defines High/Medium/Low presets controlling post-processing, particles,
 // lights, trail length and target TPS. An adaptive ticker monitors frame
 // times and automatically shifts between quality levels.
+//
+// Thread safety: CurrentQuality is accessed from Ebitengine's single-threaded
+// game loop (Update/Draw are serialized). Not safe for concurrent goroutine access.
 package game
 
 // QualityLevel represents a visual quality tier.
