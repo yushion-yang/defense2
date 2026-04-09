@@ -83,7 +83,7 @@ func LoadEnemyArchetypes() (map[string]*EnemyArchetype, error) {
 		return result, nil
 	}
 
-	// 回退到单文件模式
+	// 回退到单文件模式（用 Decoder 保留 JSON key 顺序）
 	data, err := dataFS.ReadFile("config/enemies/enemies-core.json")
 	if err != nil {
 		return nil, fmt.Errorf("load enemies: %w", err)
@@ -92,6 +92,25 @@ func LoadEnemyArchetypes() (map[string]*EnemyArchetype, error) {
 	var raw map[string]json.RawMessage
 	if err := json.Unmarshal(data, &raw); err != nil {
 		return nil, fmt.Errorf("parse enemies: %w", err)
+	}
+
+	// 用 Decoder 按 JSON 顺序提取 key
+	enemyArchetypeOrder = nil
+	dec := json.NewDecoder(strings.NewReader(string(data)))
+	dec.Token() // consume opening {
+	for dec.More() {
+		tok, _ := dec.Token()
+		key, ok := tok.(string)
+		if !ok {
+			break
+		}
+		// skip the value
+		var skip json.RawMessage
+		dec.Decode(&skip)
+		if strings.HasPrefix(key, "_") {
+			continue
+		}
+		enemyArchetypeOrder = append(enemyArchetypeOrder, key)
 	}
 
 	for key, val := range raw {
@@ -144,6 +163,12 @@ func parseAbilityRef(raw json.RawMessage) EnemyAbilityRef {
 	}
 	return EnemyAbilityRef{}
 }
+
+// enemyArchetypeOrder JSON 中的原型 key 顺序。
+var enemyArchetypeOrder []string
+
+// EnemyArchetypeOrder 返回原型的 JSON 定义顺序。
+func EnemyArchetypeOrder() []string { return enemyArchetypeOrder }
 
 // enemyAbilityTable 全局怪物能力配置表。
 var enemyAbilityTable map[string]*EnemyAbilityDef

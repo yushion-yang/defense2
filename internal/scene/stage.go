@@ -1550,7 +1550,12 @@ func (s *StageScene) restoreScenario(sd *config.ScenarioData) {
 // spawnEntries 构建排序后的造怪菜单条目列表。
 func (s *StageScene) spawnEntries() []hud.SpawnEntry {
 	var entries []hud.SpawnEntry
-	for name, cfg := range s.spawner.Archetypes {
+	// 按 JSON 定义顺序排列
+	for _, name := range config.EnemyArchetypeOrder() {
+		cfg, ok := s.spawner.Archetypes[name]
+		if !ok {
+			continue
+		}
 		entries = append(entries, hud.SpawnEntry{
 			Name: name, Label: cfg.Label,
 			HpScale: cfg.HpScale, SpeedScale: cfg.SpeedScale,
@@ -1558,7 +1563,6 @@ func (s *StageScene) spawnEntries() []hud.SpawnEntry {
 			Reward: cfg.Reward, Boss: cfg.Boss,
 		})
 	}
-	sort.Slice(entries, func(i, j int) bool { return entries[i].Name < entries[j].Name })
 	return entries
 }
 
