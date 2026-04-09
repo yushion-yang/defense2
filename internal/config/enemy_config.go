@@ -11,6 +11,7 @@ import (
 
 // EnemyArchetype 敌人原型模板（JSON 配置）。
 type EnemyArchetype struct {
+	ID           string  `json:"id"`           // 原型标识
 	Label        string  `json:"label"`        // 显示名称
 	Color        string  `json:"color"`        // 显示颜色（hex）
 	Description  string  `json:"description"`  // 描述文本
@@ -19,7 +20,6 @@ type EnemyArchetype struct {
 	Radius       float64 `json:"radius"`       // 碰撞半径（像素绝对值）
 	RewardScale  float64 `json:"rewardScale"`  // 击杀奖励倍率
 	Boss         bool    `json:"boss"`         // 是否为 Boss
-	MovementType string  `json:"movementType"` // 移动类型："ground" 或 "flying"
 
 	// 能力装配（能力驱动行为，取代旧的硬编码字段）
 	// 支持两种写法：字符串（用默认参数）或对象（覆盖参数）
@@ -83,46 +83,29 @@ func LoadEnemyArchetypes() (map[string]*EnemyArchetype, error) {
 		return result, nil
 	}
 
-	// 回退到单文件模式（用 Decoder 保留 JSON key 顺序）
+	// 回退到单文件模式（数组格式，天然保序）
 	data, err := dataFS.ReadFile("config/enemies/enemies-core.json")
 	if err != nil {
 		return nil, fmt.Errorf("load enemies: %w", err)
 	}
 
-	var raw map[string]json.RawMessage
-	if err := json.Unmarshal(data, &raw); err != nil {
-		return nil, fmt.Errorf("parse enemies: %w", err)
+	var list []json.RawMessage
+	if err := json.Unmarshal(data, &list); err != nil {
+		return nil, fmt.Errorf("parse enemies array: %w", err)
 	}
 
-	// 用 Decoder 按 JSON 顺序提取 key
 	enemyArchetypeOrder = nil
-	dec := json.NewDecoder(strings.NewReader(string(data)))
-	dec.Token() // consume opening {
-	for dec.More() {
-		tok, _ := dec.Token()
-		key, ok := tok.(string)
-		if !ok {
-			break
-		}
-		// skip the value
-		var skip json.RawMessage
-		dec.Decode(&skip)
-		if strings.HasPrefix(key, "_") {
-			continue
-		}
-		enemyArchetypeOrder = append(enemyArchetypeOrder, key)
-	}
-
-	for key, val := range raw {
-		if strings.HasPrefix(key, "_") {
-			continue
-		}
+	for _, raw := range list {
 		var a EnemyArchetype
-		if err := json.Unmarshal(val, &a); err != nil {
+		if err := json.Unmarshal(raw, &a); err != nil {
+			continue
+		}
+		if a.ID == "" || strings.HasPrefix(a.ID, "_") {
 			continue
 		}
 		applyEnemyDefaults(&a)
-		result[key] = &a
+		result[a.ID] = &a
+		enemyArchetypeOrder = append(enemyArchetypeOrder, a.ID)
 	}
 	return result, nil
 }
