@@ -10,7 +10,8 @@
 | 文件 | 审核内容 |
 |------|---------|
 | `internal/render/draw_tower.go` | 塔精灵、fallback 圆形、建塔/卖塔动画、射程圈、蓄能光效 |
-| `internal/render/draw_enemy.go` | 敌人精灵、HP bar、dying 动画、状态效果叠加(5种)、hit flash |
+| `internal/render/draw_enemy.go` | 敌人精灵、HP bar、dying 动画、状态效果叠加、**怪物能力视觉**（盾牌/脚环/飘字/触发特效） |
+| `internal/scene/stage.go` drawEnemyAbilityVFX/drawStrengthDrainLinks | 范围圈、连接线、冲刺速度线 |
 | `internal/render/draw_projectile.go` | 弹射物拖尾、穿透视觉 |
 | `internal/render/draw_beam.go` | 光束多层 glow + 端点光斑 |
 | `internal/render/draw_warden.go` | 战灵精灵、拖尾、射击线、轨道 |
@@ -70,12 +71,24 @@
 | E6 | 波次倒计时精度 | 读 countdown 显示逻辑 | 应用 Ceil() 不用 int()+1 |
 | E7 | ChoicePanel 关闭行为 | 读 click-outside 处理 | 是否应该可关闭？能力选择应否为强制？ |
 
-### F. Z-Order
+### F. 怪物能力视觉（新）
 
 | # | 检查 | 方法 | 预期 |
 |---|------|------|------|
-| F1 | Dying 敌人渲染顺序 | 读 pool.Each 遍历顺序 | dying 应在 active 之下（先渲 dying 再渲 active） |
-| F2 | HUD 在特效之上 | 读 Draw 函数调用顺序 | HUD 最后绘制，不被粒子/光效遮挡 |
+| F1 | 盾牌叠加 | 读 draw_enemy.go 盾牌块 | projectileBlock→shield-white, armorPlating→shield-blue, damageCap→shield-orange |
+| F2 | 免疫脚环 | 读 draw_enemy.go 脚环块 | ccImmune→红色（用 hasAbility 而非 IsControlImmune），slowImmune→青色 |
+| F3 | 触发特效衰减 | 读 enemy.go TickStatusEffects | BlockFlash/DodgeFlash/ArmorSpark/DamageCapHit/PurgeFlash 全部每帧递减 |
+| F4 | 飘字系统 | 读 draw_enemy.go 飘字渲染 | FloatText 上浮+淡出，MISS/CAP/免伤/免疫 各有颜色 |
+| F5 | 相位 alpha | 读 draw_enemy.go PhaseActive | body alpha 35% |
+| F6 | 沉默隐藏 | 读 draw_enemy.go AbilitySilenced 守卫 | 所有常驻视觉（盾牌/脚环/范围圈）在沉默时隐藏 |
+| F7 | 净化白色微光 | 读 draw_enemy.go ControlImmuneTimer | 净化免疫期显示白色微光圈（不显示红色脚环） |
+
+### G. Z-Order
+
+| # | 检查 | 方法 | 预期 |
+|---|------|------|------|
+| G1 | Dying 敌人渲染顺序 | 读 pool.Each 遍历顺序 | dying 应在 active 之下（先渲 dying 再渲 active） |
+| G2 | HUD 在特效之上 | 读 Draw 函数调用顺序 | HUD 最后绘制，不被粒子/光效遮挡 |
 
 ## 已知问题模式（历史 bug）
 

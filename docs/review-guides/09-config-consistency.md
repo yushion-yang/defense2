@@ -12,6 +12,7 @@
 | `config/towers/towers.json` ↔ `internal/config/tower_config.go` | TowerJSON struct 的 json tag |
 | `config/abilities/abilities.json` ↔ `internal/config/ability_config.go` | AbilityDef struct 的 json tag |
 | `config/enemies/enemies-core.json` ↔ `internal/config/enemy_config.go` | EnemyArchetype struct 的 json tag |
+| `config/enemies/abilities.json` ↔ `internal/config/enemy_config.go` | EnemyAbilityDef struct 的 json tag（15 种怪物能力） |
 | `config/wardens/wardens.json` ↔ `internal/config/warden_config.go` | WardenConfig struct 的 json tag |
 | `config/settings.json` ↔ `internal/config/settings_config.go` | DifficultyMode struct 的 json tag |
 | `config/level-list.json` ↔ `internal/config/loader.go` | LevelEntry struct 的 json tag |
@@ -29,7 +30,8 @@
 |---|------|------|------|
 | A1 | towers.json 字段 | 对照 TowerJSON | 所有 JSON 字段有对应 tag |
 | A2 | abilities.json 字段 | 对照 AbilityDef | type/label/icon/category/scaleDim/base/potential/param/paramDim/display 全匹配 |
-| A3 | enemies-core.json 字段 | 对照 EnemyArchetype | hpScale/speedScale/radius/rewardScale/boss 等全匹配 |
+| A3 | enemies-core.json 字段 | 对照 EnemyArchetype | hpScale/speedScale/radius/rewardScale/boss/abilities 等全匹配 |
+| A3b | enemies abilities.json 字段 | 对照 EnemyAbilityDef | type/label/icon/category/scaleDim/base/potential/param/paramDim/silenceable/description/visual 全匹配 |
 | A4 | wardens.json 字段 | 对照 WardenConfig | 全匹配 |
 | A5 | settings.json 字段 | 对照 DifficultyMode | hpScale/speedScale/rewardScale/startGold 全匹配 |
 

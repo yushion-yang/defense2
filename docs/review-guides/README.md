@@ -14,7 +14,7 @@
 | 编号 | 文件 | 审核范围 | 预计耗时 |
 |------|------|---------|---------|
 | 01 | `01-tower-system.md` | 塔定义、建造、卖塔、战力系统 | 5 min |
-| 02 | `02-ability-system.md` | 34 种能力的实现完整性 | 15 min |
+| 02 | `02-ability-system.md` | 塔能力的实现完整性（含 goldOnKill/deathMark） | 15 min |
 | 03 | `03-enemy-system.md` | 敌人原型、行为、Boss、buff 模板 | 10 min |
 | 04 | `04-combat-system.md` | 伤害管线、攻击方式、碰撞、CC | 10 min |
 | 05 | `05-warden-system.md` | 5 种战灵行为、成长、伤害 | 5 min |

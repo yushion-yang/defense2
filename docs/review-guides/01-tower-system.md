@@ -1,7 +1,5 @@
 # 01 塔系统审核指导
 
-> ⚠️ 部分检查项的期望值已过时，以代码实际行为为准。详见 docs/review-report-2026-04-01.md
-
 ## 审核目标
 
 验证塔的定义、建造、卖塔、战力缩放、升级流程的正确性。
@@ -57,10 +55,13 @@
 
 | # | 检查 | 方法 | 预期 |
 |---|------|------|------|
-| D1 | RecalcStats 公式 | 读 tower.go RecalcStats | `Damage = BaseDamage + PotentialDamage * Ratio()` |
+| D1 | RecalcStats 公式 | 读 tower.go RecalcStats | `final = (Base + Potential * str/100) * (1 + Mods.Pct) + Mods.Flat`，含 BaseDamage/BaseSpeed/BaseRange 保底 |
 | D2 | Ratio() 计算 | 读 strength/strength.go | `Effective() / 100.0`，Effective = Base(100)+Permanent+sum(Temp)... |
 | D3 | BuyStrength 扣金 | 读 tower.go BuyStrength | 扣 10 gold，Permanent += 10 |
 | D4 | 强度下限 | 读 strength.go AddPermanent | Permanent 不低于 -Base |
+| D5 | AttrMods 系统 | 读 tower.go AttrMods struct | PctDamage/PctSpeed/PctRange + FlatDamage/FlatSpeed/FlatRange，由光环能力每帧设置 |
+| D6 | CritBonus/DamageAmp | 读 tower.go | 每帧在 resetTowerStats 清零，由 critAura/damageUpAura 重设 |
+| D7 | 属性保底 | 读 RecalcStats | Damage ≥ BaseDamage, AttackSpeed ≥ 0.1, Range ≥ BaseRange |
 
 ## 跨系统关联
 

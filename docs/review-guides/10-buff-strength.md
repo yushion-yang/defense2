@@ -44,7 +44,7 @@
 | C2 | Base = 100 | 读 strength.go | 初始值 100 |
 | C3 | Ratio() | 读 strength.go | `Effective() / 100.0` |
 | C4 | AddPermanent clamp | 读 strength.go | `Permanent 不低于 -Base`（Effective 不会负） |
-| C5 | RecalcStats 依赖 | 读 tower.go RecalcStats | `Damage = BaseDamage + PotentialDamage * Ratio()` |
+| C5 | RecalcStats 公式 | 读 tower.go RecalcStats | `final = (Base + Potential * str/100) * (1 + Mods.Pct) + Mods.Flat`，含保底（Damage≥Base, Speed≥0.1, Range≥Base） |
 | C6 | BuyStrength | 读 tower.go | `gold -= 10, AddPermanent(10)` |
 
 ### D. 连锁网络
@@ -54,12 +54,12 @@
 | D1 | 距离阈值 | 读 chain.go | ChainDistance = 150px |
 | D2 | 强度加成 | 读 chain.go | ChainStrengthPerTower = 10，每组内每座塔 +10 |
 | D3 | Union-Find 正确性 | 读 RebuildChainNetwork | 路径压缩 + 按秩合并 |
-| D4 | 每帧重建 | 读 pipeline/sys_tower.go | 每帧调用 RebuildChainNetwork 重算连锁 |
+| D4 | 每帧重建 | 读 tick_abilities.go Phase 1.05 | 每帧调用 RebuildChainNetwork 重算连锁（仅 chain warden 启用时） |
 | D5 | Temp 清理 | 读 tick_abilities.go | 每帧先 resetTowerStats（清 Temp），再重建 chain（设 Temp） |
 
 ## 跨系统关联
 
 - 塔 buff ← TickTowerAbilities（光环能力每帧重设）
 - 战力 ← Strength.Effective() ← RecalcStats ← TickTowerAbilities
-- 连锁 ← RebuildChainNetwork ← sys_tower.go ← orchestrator
+- 连锁 ← RebuildChainNetwork ← tick_abilities.go Phase 1.05（直接调用，非 orchestrator）
 - 敌人 buff ← buff_templates.go ← spawner.applyWaveBuffs

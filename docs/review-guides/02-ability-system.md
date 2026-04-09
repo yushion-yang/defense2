@@ -4,14 +4,15 @@
 
 ## 审核目标
 
-验证 33 种塔能力的配置→代码映射完整性、参数使用正确性、遥测覆盖。
+验证塔能力的配置→代码映射完整性、参数使用正确性、遥测覆盖。
+abilities.json 中有合并冲突（HEAD 删除了 pierce，另一分支保留），以实际合并结果为准。
 **历史 bug 重灾区**：曾因 JSON tag 错误导致整个能力系统失效。
 
 ## 必读文件
 
 | 文件 | 读取内容 |
 |------|---------|
-| `config/abilities/abilities.json` | 34 种能力的配置定义 |
+| `config/abilities/abilities.json` | 塔能力配置定义（注意：文件中可能存在合并冲突标记） |
 | `internal/config/ability_config.go` | AbilityDef struct、CalcScale()、6 类别常量 |
 | `internal/core/tower/abilities/config_ability.go` | ConfigAbility.OnHit() 的 switch 分支（核心！逐 case 审查） |
 | `internal/core/tower/ability.go` | Ability/Ticker 接口、HitResult struct、Register() |
@@ -27,7 +28,7 @@
 | # | 能力 type | 检查要点 |
 |---|-----------|---------|
 | A1 | `enhance` | 是否一次性提升属性，不随强度持续变化 |
-| A2 | `scatter` | `scatterPellets` 是否读取 `extraPellets` scaleDim（已知 bug：handler_scatter.go 硬编码 3） |
+| A2 | `scatter` | 使用 FirePenetrate 发射独立穿透弹（已重构），3+extraPellets 颗弹丸 |
 | A3 | `wideBeam` | 返回的 attackStyle 是否 = wideBeam |
 | A4 | `spinAoe` | 自管理模式 `SelfManaged()=true`，跳过标准冷却 |
 | A5 | `bounce` | maxBounces = floor(sv)，Range = max(towerRange, 150)，DamageRatio = param(0.8) |
@@ -38,27 +39,28 @@
 | A11 | `slowDuration` | SlowEffect.Duration = sv |
 | A12 | `stunChance` | 概率触发，未触发时返回 nil |
 | A13 | `stunDuration` | StunEffect.Duration = sv |
-| A14 | `crit` | IsCrit=true 时 BonusDamage = p.Damage（固定 2 倍 = base + base） |
+| A14 | `crit` | IsCrit=true 时 BonusDamage = p.Damage * (param-1)，param=1.8 倍暴击；critAura 加成在概率上叠加 |
 | A15 | `deathMark` | 击杀后 AoE，爆炸半径 = param，爆炸伤害 = sv |
 | A16 | `distanceDamage` | 距离越远伤害越高，bonus = sv * (dist/range) |
 | A17 | `executionBonus` | 低 HP 斩杀，阈值 = param(%), bonus = sv |
 | A18 | `flatDamage` | BonusDamage = sv（固定值，不乘以任何系数） |
-| A19 | `momentum` | 连续攻击同目标递增伤害 |
-| A20 | `damageUpAura` | OnTick 遍历范围内友方塔，添加 TowerBuff |
-| A21 | `attackSpeedAura` | 同上，buff 类型 = attackSpeed |
-| A22 | `rangeAura` | 同上，buff 类型 = range |
-| A23 | `critAura` | 同上，buff 类型 = crit |
-| A24 | `soloBoost` | 无邻居(150px 内无友方塔)时自身增伤 |
+| A19 | `momentum` | 每次攻击附加 sv% 额外伤害（固定加成，非递增） |
+| A20 | `damageUpAura` | OnTick 遍历范围内塔，通过 applyAura 施加 TowerBuff（走 Strength 系统） |
+| A21 | `attackSpeedAura` | 同上，applyAura 施加攻速 buff |
+| A22 | `rangeAura` | 同上，applyAura 施加射程 buff |
+| A23 | `critAura` | OnTick 直接写入 other.CritBonus（不走 Strength，走 applyBuffDisplay 仅显示） |
+| A24 | `soloBoost` | 无邻居(param=120px 内无友方塔)时自身增伤，通过 ApplyBuff 走 Strength |
 | A25 | `goldPassive` | OnTick 返回 TickResult.GoldEarned > 0 |
 | A26 | `burn` | BurnEffect{Duration, DPS}，DPS = sv |
 | A27 | `bleedDot` | BleedEffect{Duration, DPS}，DPS = sv |
 | A28 | `poison` | 类似 burn/bleed，检查独立 timer |
-| A29 | `weaken` | DamageAmplify = sv，上限 MaxDamageAmplify(0.5) |
+| A29 | `weaken` | DamageAmplify = sv + DamageAmplifyTimer = pm（有持续时间，在管线 step 4.25 上限 0.5） |
 | A30 | `poisonZone` | OnTick 遍历范围内敌人，累加 ZoneDmgAccum |
-| A31 | `silenceZone` | OnTick 设 e.Silenced + e.AbilitySilenced = true（禁用 damageCap + 怪物可沉默能力） |
+| A31 | `silenceZone` | OnTick 设 e.Silenced=true（禁用 damageCap）+ 减速 factor=1-sv（scaleDim=slowFactor） |
 | A32 | `curseZone` | OnTick %HP 扣血到 ZoneDmgAccum |
 | A33 | `weakenZone` | OnTick 设 e.DamageAmplify = sv |
-| A34 | 缺失的 case | 是否有 abilities.json 中定义但 switch 中无 case 的能力 |
+| A34 | `goldOnKill` | 击杀产金 — OnHit/OnTick 均无效果，由管线在击杀时处理 |
+| A35 | 缺失的 case | 是否有 abilities.json 中定义但 switch 中无 case 的能力 |
 
 ### B. CalcScale 正确性
 
