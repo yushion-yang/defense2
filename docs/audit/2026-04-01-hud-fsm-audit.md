@@ -5,15 +5,18 @@
 两层状态机控制游戏交互：
 
 - **stageState** (3 值): `statePlaying` / `stateVictory` / `stateDefeat` — 外层生命周期
-- **interactMode** (9 值): 控制 `statePlaying` 内的玩家交互
+- **interactMode** (11 值): 控制 `statePlaying` 内的玩家交互
 
 ```
 modeIdle ──┬── modeBuildMenu ── modeBuildPlace
            ├── modeTowerSel ── modeUpgrade
            ├── modeSpawnMenu ── modeSpawnPlace
            ├── modePaused
-           └── modeWardenSelect
+           ├── modeWardenSelect
+           ├── modeItemPanel ── modeItemDrag
 ```
+
+> 2026-04-09 更新：新增 modeItemPanel（道具面板）和 modeItemDrag（道具拖拽）。
 
 `Update()` 先分派 stageState，再按 interactMode 路由。`Draw()` 按 interactMode 决定 HUD 可见性。
 
@@ -147,17 +150,19 @@ debug panel 点击检测在 mode switch 之前执行。debug 按钮若与 build 
 ## 状态转换矩阵
 
 ```
-From \ To        | Idle | BuildMenu | BuildPlace | TowerSel | Upgrade | SpawnMenu | SpawnPlace | Paused | WardenSel
-─────────────────|──────|───────────|────────────|──────────|─────────|───────────|────────────|────────|──────────
-modeIdle         |  -   | B/造塔btn |            | tap塔    |         | 调试btn   |            | ESC/P  | 首波倒计时
-modeBuildMenu    | ESC  |    -      | tap格子    |          |         |           |            | ESC/P  |
-modeBuildPlace   | ESC  |           |     -      |          |         |           |            | ESC/P  |
-modeTowerSel     | ESC  |           |            |    -     | 选能力  |           |            | ESC/P  |
-modeUpgrade      |      |           |            | 选完/ESC |    -    |           |            |        |
-modeSpawnMenu    | ESC  |           |            |          |         |     -     | tap类型    | ESC/P  |
-modeSpawnPlace   | ESC  |           |            |          |         |           |     -      | ESC/P  |
-modePaused       |      |           |            |          |         |           |            |   -    |
-modeWardenSelect |      |           |            |          |         |           |            |        |    -
+From \ To        | Idle | BuildMenu | BuildPlace | TowerSel | Upgrade | SpawnMenu | SpawnPlace | Paused | WardenSel | ItemPanel | ItemDrag
+─────────────────|──────|───────────|────────────|──────────|─────────|───────────|────────────|────────|───────────|───────────|─────────
+modeIdle         |  -   | B/造塔btn |            | tap塔    |         | 调试btn   |            | ESC/P  | 首波倒计时 | I键       |
+modeBuildMenu    | ESC  |    -      | tap格子    |          |         |           |            | ESC/P  |           |           |
+modeBuildPlace   | ESC  |           |     -      |          |         |           |            | ESC/P  |           |           |
+modeTowerSel     | ESC  |           |            |    -     | 选能力  |           |            | ESC/P  |           |           |
+modeUpgrade      |      |           |            | 选完/ESC |    -    |           |            |        |           |           |
+modeSpawnMenu    | ESC  |           |            |          |         |     -     | tap类型    | ESC/P  |           |           |
+modeSpawnPlace   | ESC  |           |            |          |         |           |     -      | ESC/P  |           |           |
+modePaused       |      |           |            |          |         |           |            |   -    |           |           |
+modeWardenSelect |      |           |            |          |         |           |            |        |    -      |           |
+modeItemPanel    | ESC/I|           |            |          |         |           |            |        |           |    -      | 拖拽开始
+modeItemDrag     |      |           |            |          |         |           |            |        |           | 释放/ESC  |    -
 ```
 
 注：Paused 恢复到 prePauseMode（任意模式）。WardenSelect 完成后回到 modeIdle。

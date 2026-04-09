@@ -1,6 +1,6 @@
 # 怪物系统实现状态
 
-> 截至 2026-04-01 的完整系统状态快照。基于 Go 代码实际审查。
+> 截至 2026-04-09 更新。基于 Go 代码实际审查。
 
 ---
 
@@ -11,8 +11,8 @@
 | Enemy 实体 | **完成** | 60+ 字段，含状态效果/CC免疫/伤害管线/死亡动画 |
 | 对象池 | **完成** | 256 容量，slot 复用，dying 动画支持 |
 | 地面移动 | **完成** | 路径点跟随，stun/root 阻断 |
-| 飞行移动 | **完成** | 直线飞行，独立路径计算 |
-| 伤害管线 | **完成** | 7 步管线，4 种伤害类型 |
+| ~~飞行移动~~ | **已删除** | flying.go 为死代码 stub，飞行概念已取消 |
+| 伤害管线 | **完成** | 8 步管线，4 种伤害类型 |
 | CC 系统 | **完成** | 减速/眩晕/定身 + 韧性减免 + 免疫 |
 | 波次出怪 | **完成** | 5 阶段权重 + Boss 每 5 波 + 难度缩放 |
 | 死亡动画 | **完成** | 缩小+淡出+上浮，Boss 延长 |
@@ -25,10 +25,11 @@
 | 波次事件 buff | **完成** | 4 种事件类型（HP%/回血%/速度%/奖励%） |
 | 精英晋升 | **完成** | HP×4/速度×0.9/奖励×2/半径×1.4 |
 | 标志系统 | **完成** | elite(×3HP)/boss(×30HP) |
-| Buff 模板注册 | **部分** | 13 个模板已定义，仅 3 个实际接线 |
-| 波次 buff 注入 | **未实现** | Spawner 不会自动给敌人注入 buff 模板 |
-| 原型特殊能力 | **未实现** | stealth/shield/split/teleport/buffer aura 仅有 config |
-| Boss 模板 | **未实现** | JSON 数据存在，无加载/应用代码 |
+| Buff 模板注册 | **完成** | 8 个模板已接线（reflect/revive 迁移到能力系统） |
+| 波次 buff 注入 | **完成** | Spawner.applyWaveBuffs 按波次段 30% 概率注入 |
+| **能力装配系统** | **完成** | 15 种能力，7 类别，数据驱动（config/enemies/abilities.json） |
+| 原型特殊能力 | **完成** | 18 种原型各装配对应能力（splitter/healer/buffer/phaser/drainer 等） |
+| Boss 模板 | **stub** | JSON 数据存在，boss_behavior.go 全是 no-op，Boss 仅数值强化 |
 | 测试 | **良好** | 35+ 测试覆盖核心/增强/死亡动画/回归 |
 
 ---
@@ -157,57 +158,25 @@ Elite     = HpScale >= 4 自动标记
 
 ---
 
-## 三、已定义但未实现的功能
+## 三、待实现/部分实现的功能
 
-### 3.1 Buff 模板未接线（10/13）
+### 3.1 Boss 行为系统（stub）
 
-`ApplyBuffTemplate()` 实际接线的模板：
+`boss_behavior.go` 所有函数为 no-op：FullBossState 返回 nil，TickBossPhase/TickBossAura 为空。
+Boss 仅获得数值强化（HP×30, 奖励×5），7 个 boss-templates.json 模板未激活。
+**计划迁移到能力系统。**
 
-| 模板 | 映射到 Enemy 字段 | 状态 |
-|------|-----------------|------|
-| berserk | BerserkThreshold, BerserkSpeedScale | **已接线** |
-| regen | RegenPerSec（= MaxHP × 0.02） | **已接线** |
-| healAura | HealPower, HealRadius, HealInterval | **已接线** |
+### 3.2 BuffList 系统与 Enemy 脱节
 
-以下模板有数据定义但 `ApplyBuffTemplate()` **未映射到 Enemy 字段**：
+BuffList 系统（6 种堆叠模式、19 条规则）仅用于 tower/strength。
+敌人状态效果全部通过直接字段管理（SlowTimer/StunTimer 等）。**暂缓迁移。**
 
-| 模板 | 缺失说明 |
-|------|---------|
-| speedAura | SpeedAuraFactor 存储在模板，不影响敌人 Speed |
-| damageReduce | DamageReduce 存储在模板，不影响伤害管线 |
-| empBurst | 无参数，无逻辑 |
-| blink | 无参数，无逻辑 |
-| deathSplit | DeathSplitCount 存储在模板，无死亡分裂生成逻辑 |
-| deathSlow | 参数存储在模板，无死亡减速区域逻辑 |
-| reflect | ReflectPercent 存储在模板，无反伤管线接入 |
-| timewarp | 无参数，无逻辑 |
-| revive | ReviveHPPercent 存储在模板，无复活逻辑 |
-| spawnMinions | SpawnCount/Type 存储在模板，无召唤逻辑 |
+### 3.3 已删除的概念
 
-### 3.2 原型特殊能力未实现
-
-`enemies-core.json` 定义了以下特殊字段，但 Spawner/Pool 不读取也不应用：
-
-| 原型 | config 字段 | 预期行为 | 实际 |
-|------|-----------|---------|------|
-| stealth | stealthDuration:3 | 出场隐身 3s | **无隐身逻辑** |
-| shielded | shieldScale:0 | 自带护盾 | **shieldScale=0，且无护盾系统** |
-| splitter | splitCount:2 | 死后分裂 2 子体 | **无分裂生成逻辑** |
-| teleporter | teleportInterval:5, skip:1 | 每 5s 跳路径段 | **无传送逻辑** |
-| buffer | auraRange:100, speedUp:0.2, armor:10 | 光环加速+护甲 | **无光环应用逻辑** |
-| healer | healScale:0.24, radius:105, interval:2.5 | 治疗友军 | **config 值未映射到 Enemy 字段**（behaviors.go 的 HealAura 能力存在，但 Spawner 不传配置参数）|
-
-### 3.3 Boss 模板未实现
-
-`config/enemies/boss-templates.json` 定义了 7 个 Boss 行为模板：
-
-- bossPhase、bossTeleport、bossSpawnMinions、bossReflect、bossRotateWeakness、bossGoldSteal、bossAura
-
-**无代码加载此文件**。当前 Boss 仅获得数值强化（HP×30, 奖励×5）。
-
-### 3.4 BuffList 系统与 Enemy 脱节
-
-`internal/core/buff/buff.go` 实现了完整的 BuffList 系统（6 种堆叠模式、19 条默认规则、OnApply/OnExpire/OnTick 回调），但 **Enemy 结构体不使用 BuffList**。敌人的状态效果全部通过直接字段（SlowTimer/StunTimer 等）管理。BuffList 仅用于 tower/strength 系统。
+- **飞行**: flying.go 为 stub，IsFlying() 始终返回 false
+- **护盾**: shieldScale 概念已删除，被 projectileBlock（弹幕盾）能力取代
+- **反伤**: ReflectPercent 字段已删除
+- **复活**: ReviveHPPercent 字段已删除
 
 ---
 
@@ -268,31 +237,6 @@ Elite     = HpScale >= 4 自动标记
 
 ## 七、待实现优先级建议
 
-### P0 — 核心遗漏（直接影响游戏玩法多样性）
-
-1. **Healer config 接线**：Spawner 应将 `healScale/healRadius/healInterval` 映射到 Enemy 字段
-2. **Stealth 隐身**：实现出场隐身 + targeting 跳过 + 揭隐条件
-3. **Shield 护盾**：实现 shieldScale → 护盾值 + 伤害优先扣盾
-4. **Splitter 死亡分裂**：实现 splitCount → 死亡时生成子体
-
-### P1 — 差异化增强
-
-5. **Teleporter 传送**：实现定时跳过路径段
-6. **Buffer 光环**：实现范围加速友军
-7. **波次 buff 自动注入**：Spawner 按波次段从模板池随机注入
-8. **speedAura/damageReduce 模板接线**
-
-### P2 — Boss 行为
-
-9. **Boss 模板加载器**：解析 boss-templates.json
-10. **bossPhase 阶段转换**：HP 阈值切换行为
-11. **bossSpawnMinions 召唤**：定时生成小怪
-12. **其余 Boss 模板逐步实现**
-
-### P3 — 高级 buff 模板
-
-13. **reflect 反伤管线**
-14. **revive 复活**
-15. **blink 闪现**
-16. **deathSplit/deathSlow 死亡效果**
-17. **spawnMinions/empBurst/timewarp**
+1. **Boss 行为系统迁移到能力系统**：将 boss-templates.json 的 7 种行为转化为怪物能力
+2. **BuffList 接入 Enemy**：将敌人状态效果从直接字段迁移到 BuffList（统一堆叠规则）
+3. **清理死代码**：flying.go stub、boss_behavior.go stub
