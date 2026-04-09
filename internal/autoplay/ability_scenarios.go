@@ -170,10 +170,21 @@ func buildSteps(towerAbils []string, towerAbility2 string, enemyFilter string) [
 
 	var steps []ScenarioStep
 
-	// Step 0: 选战灵
+	// Step 0: 选战灵（如果已就绪则跳过）
+	wardenSelected := false
 	steps = append(steps, ScenarioStep{
-		WaitUntil: func(s *GameState) bool { return !s.WardenReady },
+		WaitUntil: func(s *GameState) bool {
+			if s.WardenReady {
+				wardenSelected = true // 已就绪，跳过选择
+				return true
+			}
+			return true // 总是通过，尝试选择
+		},
 		Actions: func(s *GameState) []Action {
+			if wardenSelected {
+				return nil
+			}
+			wardenSelected = true
 			return []Action{{Type: ActionSelectWarden, WardenKey: "prince"}}
 		},
 	})

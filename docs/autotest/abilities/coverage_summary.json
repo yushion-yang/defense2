@@ -5,31 +5,13 @@
   "timeouts": 0,
   "coverage_gaps": {
     "abilities": [
-      "bounce",
       "chargeShot",
-      "crit",
       "deathMark",
-      "distanceDamage",
-      "executionBonus",
-      "flatDamage",
-      "multiTarget",
       "percentHpDamage",
       "percentHpMinor",
-      "splash",
       "stackDamage",
-      "bleedDot",
-      "burn",
       "onHitSlow",
-      "stun",
-      "attackSpeedAura",
-      "critAura",
-      "damageUpAura",
-      "rangeAura",
-      "soloBoost",
-      "curseZone",
-      "poisonZone",
-      "silenceZone",
-      "goldPassive"
+      "stun"
     ],
     "archetypes": [
       "drainer",
@@ -37,13 +19,7 @@
       "purifier",
       "dummy"
     ],
-    "attack_styles": [
-      "projectile",
-      "wideBeam",
-      "scatter",
-      "spin_aoe",
-      "radial"
-    ],
+    "attack_styles": null,
     "buff_stack_modes": [
       "strongest",
       "additive",
@@ -74,12 +50,9 @@
       "tenacity"
     ],
     "cc_types": [
-      "slow",
-      "stun",
       "root"
     ],
     "damage_types": [
-      "magic",
       "true",
       "pure"
     ],
@@ -104,28 +77,28 @@
       "wardenSelect"
     ],
     "pipeline_steps": null,
-    "towers": [
-      "basic"
-    ]
+    "towers": null
   },
   "anomaly_summary": {
-    "warden_range_limited_x": 62,
-    "warden_range_limited_y": 42
+    "warden_range_limited_x": 81,
+    "warden_range_limited_y": 61
   },
-  "tower_usage": {},
+  "tower_usage": {
+    "basic": 81
+  },
   "archetypes_seen": {
     "armored": 81,
-    "buffer": 75,
-    "colossus": 58,
-    "healer": 72,
-    "ironwill": 75,
+    "buffer": 72,
+    "colossus": 64,
+    "healer": 77,
+    "ironwill": 76,
     "normal": 81,
-    "phantom": 78,
-    "phaser": 71,
+    "phantom": 80,
+    "phaser": 69,
     "runner": 81,
     "shielder": 80,
-    "splitter": 65,
-    "steadfast": 80,
+    "splitter": 74,
+    "steadfast": 81,
     "swarm": 81,
     "tank": 81
   }

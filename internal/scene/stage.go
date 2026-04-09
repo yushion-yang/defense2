@@ -3229,12 +3229,7 @@ func (s *StageScene) executeAutoPlayAction(a AutoPlayAction) {
 	case APActionAddAbility:
 		t := s.towers.At(a.Row, a.Col)
 		if t != nil {
-			ok := t.AddAbility(a.AbilityName)
-			if !ok {
-				log.Printf("[autoplay] AddAbility(%s) at (%d,%d) FAILED (slots=%v)", a.AbilityName, a.Row, a.Col, t.AbilitySlots)
-			}
-		} else {
-			log.Printf("[autoplay] AddAbility(%s): no tower at (%d,%d)", a.AbilityName, a.Row, a.Col)
+			t.AddAbility(a.AbilityName)
 		}
 	}
 }

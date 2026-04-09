@@ -44,9 +44,12 @@ func (s *ScenarioStrategy) Decide(state *GameState) []Action {
 	}
 
 	// 执行操作
-	actions := step.Actions(state)
 	s.stepIdx++
-	return actions
+	if step.Actions == nil {
+		// 无操作步骤（纯等待），立即尝试下一步
+		return s.Decide(state)
+	}
+	return step.Actions(state)
 }
 
 // ─── 预定义场景 ───

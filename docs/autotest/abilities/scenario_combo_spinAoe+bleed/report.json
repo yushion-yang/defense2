@@ -4,62 +4,69 @@
   "map_id": "map_01",
   "difficulty": "normal",
   "warden": "prince",
-  "seed": 1775752495938092037,
+  "seed": 1775753881651954037,
   "result": "victory",
   "waves_survived": 12,
   "total_waves": 12,
-  "final_gold": 655,
+  "final_gold": 699,
   "final_lives": 0,
-  "total_kills": 12,
-  "duration_ticks": 8540,
-  "towers_built": null,
+  "total_kills": 20,
+  "duration_ticks": 7465,
+  "towers_built": [
+    {
+      "key": "basic",
+      "count": 1,
+      "total_cost": 50,
+      "total_dps": 14.539387672505391
+    }
+  ],
   "wave_log": [
     {
       "wave": 1,
-      "enemies": 0,
+      "enemies": 1,
       "leaked": 0,
       "gold_earned": 16,
       "gold_spent": 0
     },
     {
       "wave": 2,
-      "enemies": 6,
+      "enemies": 5,
       "leaked": 0,
-      "gold_earned": 20,
+      "gold_earned": 32,
       "gold_spent": 0
     },
     {
       "wave": 3,
-      "enemies": 13,
+      "enemies": 8,
       "leaked": 0,
       "gold_earned": 84,
       "gold_spent": 0
     },
     {
       "wave": 4,
-      "enemies": 16,
+      "enemies": 11,
       "leaked": 0,
-      "gold_earned": 28,
+      "gold_earned": 37,
       "gold_spent": 0
     },
     {
       "wave": 5,
-      "enemies": 25,
-      "leaked": 8,
-      "gold_earned": 111,
+      "enemies": 19,
+      "leaked": 3,
+      "gold_earned": 114,
       "gold_spent": 0
     },
     {
       "wave": 6,
-      "enemies": 21,
-      "leaked": 12,
-      "gold_earned": 36,
+      "enemies": 20,
+      "leaked": 9,
+      "gold_earned": 70,
       "gold_spent": 0
     },
     {
       "wave": 7,
-      "enemies": 20,
-      "leaked": 0,
+      "enemies": 19,
+      "leaked": 8,
       "gold_earned": 40,
       "gold_spent": 0
     },
@@ -67,26 +74,26 @@
       "wave": 8,
       "enemies": 23,
       "leaked": 0,
-      "gold_earned": 44,
+      "gold_earned": 80,
       "gold_spent": 0
     },
     {
       "wave": 9,
-      "enemies": 22,
+      "enemies": 25,
       "leaked": 0,
       "gold_earned": 48,
       "gold_spent": 0
     },
     {
       "wave": 10,
-      "enemies": 24,
+      "enemies": 18,
       "leaked": 0,
       "gold_earned": 52,
       "gold_spent": 0
     },
     {
       "wave": 11,
-      "enemies": 18,
+      "enemies": 19,
       "leaked": 0,
       "gold_earned": 56,
       "gold_spent": 0
@@ -103,47 +110,46 @@
     {
       "tick": 1801,
       "type": "warden_range_limited_x",
-      "detail": "map width=1320 (\u003e1200) but warden X range=[2,918] (span=916), never reached beyond first screen",
+      "detail": "map width=1320 (\u003e1200) but warden X range=[0,749] (span=749), never reached beyond first screen",
+      "severity": 2
+    },
+    {
+      "tick": 1801,
+      "type": "warden_range_limited_y",
+      "detail": "map height=600 (\u003e540) but warden Y range=[0,420] (span=420), never reached beyond first screen",
       "severity": 2
     }
   ],
   "coverage": {
-    "towers_used": [],
+    "towers_used": [
+      "basic"
+    ],
+    "abilities_triggered": [
+      "spinAoe",
+      "bleedDot"
+    ],
+    "attack_styles_fired": [
+      "projectile",
+      "spin_aoe"
+    ],
     "enemy_archetypes_seen": [
-      "steadfast",
-      "armored",
-      "shielder",
-      "healer",
-      "splitter",
       "swarm",
-      "runner",
+      "tank",
       "phantom",
-      "ironwill",
+      "shielder",
+      "armored",
       "phaser",
+      "colossus",
       "buffer",
       "normal",
-      "tank"
+      "runner",
+      "steadfast",
+      "healer",
+      "ironwill",
+      "splitter"
     ]
   },
   "dps_snapshots": [
-    0,
-    0,
-    0,
-    0,
-    0,
-    0,
-    0,
-    0,
-    0,
-    0,
-    0,
-    0,
-    0,
-    0,
-    0,
-    0,
-    0,
-    0,
     0,
     0,
     0,
@@ -273,24 +279,24 @@
     {
       "archetype": "tank",
       "wave": 5,
-      "spawn_tick": 3166,
-      "death_tick": 4876,
+      "spawn_tick": 1971,
+      "death_tick": 3681,
       "alive_seconds": 28.5,
       "verdict": "ok"
     },
     {
       "archetype": "tank",
       "wave": 10,
-      "spawn_tick": 6153,
-      "death_tick": 7473,
-      "alive_seconds": 22,
+      "spawn_tick": 4958,
+      "death_tick": 6274,
+      "alive_seconds": 21.933333333333334,
       "verdict": "ok"
     }
   ],
   "pace_stats": {
-    "total_idle_ticks": 2358,
-    "total_combat_ticks": 4982,
-    "idle_combat_ratio": 0.47330389401846645,
+    "total_idle_ticks": 2478,
+    "total_combat_ticks": 4981,
+    "idle_combat_ratio": 0.4974904637622967,
     "verdict": "ok"
   },
   "experience_stats": {
@@ -302,31 +308,32 @@
   "assertions": [
     {
       "name": "combo_spinAoe+bleed:enemy_bleeding",
-      "passed": false,
-      "tick": 8540,
-      "detail": "assertion 'combo_spinAoe+bleed:enemy_bleeding' (type=enemy_bleeding) never passed within 8540 ticks"
+      "passed": true,
+      "tick": 300
     }
   ],
   "pipeline_steps": [
-    "immunity_check",
     "target_debuff",
-    "damage_amplify",
-    "threshold",
-    "boss_hp_cap",
-    "hp_deduct",
-    "attacker_buff",
     "damage_cap",
+    "hp_deduct",
+    "death",
+    "immunity_check",
+    "boss_hp_cap",
+    "threshold",
+    "damage_amplify",
     "death_check",
-    "death"
+    "immunity_block_immune",
+    "attacker_buff"
   ],
   "damage_types": [
-    "physical"
+    "physical",
+    "magic"
   ],
   "enemy_buff_templates": [
-    "speedAura",
-    "berserk",
     "healAura",
-    "regen"
+    "regen",
+    "berserk",
+    "speedAura"
   ],
   "boss_spawned": [
     "tank"
