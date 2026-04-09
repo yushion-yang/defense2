@@ -274,7 +274,7 @@ func (a *ConfigAbility) OnTick(t *tower.Tower, ctx *tower.TickContext) *tower.Ti
 	case "silenceZone":
 		// 射程内敌人沉默（禁用 DamageCap + 禁用怪物可沉默能力）
 		ctx.Enemies.Each(func(e *enemy.Enemy) {
-			if e.IsDying() {
+			if e.IsDying() || e.IsSpawning() {
 				return
 			}
 			if math.Hypot(e.X-t.X, e.Y-t.Y) <= t.Range {

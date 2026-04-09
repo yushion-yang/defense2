@@ -92,7 +92,7 @@ func TickThunderStrike(state *ThunderStrikeState, cfg ThunderStrikeConfig, enemi
 		if cfg.Radius > 0 {
 			splashRaw := rawDmg * splashRatio
 			for _, e := range enemies {
-				if !e.Active || e.HP <= 0 || e.Boss || e.ID == t.ID || e.IsDying() {
+				if !e.Active || e.HP <= 0 || e.Boss || e.ID == t.ID || e.IsDying() || e.IsSpawning() {
 					continue
 				}
 				dx := e.X - t.X

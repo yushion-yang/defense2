@@ -93,8 +93,9 @@ func AnchoredRect(anchor Anchor, w, h float32, marginTop, marginRight, marginBot
 // ButtonRowItem 按钮行中的一个按钮。
 type ButtonRowItem struct {
 	Label string
-	Color color.Color // 背景色
+	Color color.Color    // 背景色
 	Bold  bool
+	State *ButtonState   // optional interactive animation state
 }
 
 // ButtonRowStyle 按钮行样式。
@@ -220,11 +221,26 @@ func DrawButtonRowAutoWidth(screen *ebiten.Image, area Rect, items []ButtonRowIt
 		if bgClr == nil {
 			bgClr = color.RGBA{R: 60, G: 70, B: 95, A: 255}
 		}
-		draw.RoundRect(screen, bx, by, bw, btnH, btnR, bgClr)
+
+		// Apply micro-interaction transforms if ButtonState is present
+		drawX, drawY, drawW, drawH := bx, by, bw, btnH
+		if st := item.State; st != nil {
+			scale := float32(st.Scale())
+			shakeX := float32(st.ShakeOffsetX())
+			drawW = bw * scale
+			drawH = btnH * scale
+			drawX = bx + (bw-drawW)/2 + shakeX
+			drawY = by + (btnH-drawH)/2
+			if st.Pressed {
+				bgClr = darkenColor(bgClr, 0.15)
+			}
+		}
+
+		draw.RoundRect(screen, drawX, drawY, drawW, drawH, btnR, bgClr)
 
 		if fm != nil {
-			cx := float64(bx) + float64(bw)/2
-			cy := float64(by) + float64(btnH)/2
+			cx := float64(drawX) + float64(drawW)/2
+			cy := float64(drawY) + float64(drawH)/2
 			if item.Bold {
 				fm.DrawCenteredVBoldText(screen, item.Label, cx, cy, fontSize, color.White)
 			} else {

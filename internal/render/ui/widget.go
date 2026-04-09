@@ -5,6 +5,7 @@ package ui
 
 import (
 	"image/color"
+	"math"
 
 	"defense2/internal/render"
 	"defense2/internal/render/draw"
@@ -114,6 +115,102 @@ func Button(screen *ebiten.Image, x, y, w, h float32, label string, style Button
 		fm.DrawCenteredVBoldText(screen, label, cx, cy, fontSize, textClr)
 	} else {
 		fm.DrawCenteredVText(screen, label, cx, cy, fontSize, textClr)
+	}
+}
+
+// ---------------------------------------------------------------------------
+// ButtonState — 按钮交互动画状态
+// ---------------------------------------------------------------------------
+
+// ButtonState tracks interactive animation state for a button.
+type ButtonState struct {
+	ScaleT     float64 // animation timer (1.0 = just pressed, decays to 0)
+	ShakeT     float64 // disabled-tap shake timer
+	Pressed    bool    // currently pressed
+	wasPressed bool    // previous frame state (for detecting release)
+}
+
+// Update advances the button animation state.
+// hovered: mouse is over the button. pressed: mouse button is down on the button.
+func (bs *ButtonState) Update(dt float64, hovered, pressed bool) {
+	// Detect press edge
+	if pressed && !bs.wasPressed {
+		bs.ScaleT = 1.0
+	}
+	bs.wasPressed = pressed
+	bs.Pressed = pressed
+
+	// Decay animation timers
+	const decaySpeed = 8.0
+	if bs.ScaleT > 0 {
+		bs.ScaleT -= dt * decaySpeed
+		if bs.ScaleT < 0 {
+			bs.ScaleT = 0
+		}
+	}
+	if bs.ShakeT > 0 {
+		bs.ShakeT -= dt * decaySpeed
+		if bs.ShakeT < 0 {
+			bs.ShakeT = 0
+		}
+	}
+}
+
+// TriggerDisabledShake starts the shake animation for a disabled button tap.
+func (bs *ButtonState) TriggerDisabledShake() {
+	bs.ShakeT = 1.0
+}
+
+// Scale returns the current scale factor for the button.
+func (bs *ButtonState) Scale() float64 {
+	if bs.Pressed {
+		return 1.0 - 0.07*bs.ScaleT // press-down: shrink
+	}
+	return 1.0 + 0.03*bs.ScaleT // release bounce: slight grow
+}
+
+// ShakeOffsetX returns horizontal shake offset for disabled buttons.
+func (bs *ButtonState) ShakeOffsetX() float64 {
+	if bs.ShakeT <= 0 {
+		return 0
+	}
+	return math.Sin(bs.ShakeT*math.Pi*4) * 3.0 * bs.ShakeT // decaying oscillation
+}
+
+// ButtonWithState draws a button with interactive animation applied.
+func ButtonWithState(screen *ebiten.Image, x, y, w, h float32, label string, style ButtonStyle, state *ButtonState) {
+	if state == nil {
+		Button(screen, x, y, w, h, label, style)
+		return
+	}
+
+	scale := float32(state.Scale())
+	shakeX := float32(state.ShakeOffsetX())
+
+	// Apply scale transform (centered)
+	scaledW := w * scale
+	scaledH := h * scale
+	scaledX := x + (w-scaledW)/2 + shakeX
+	scaledY := y + (h-scaledH)/2
+
+	// Darken color when pressed
+	drawStyle := style
+	if state.Pressed {
+		drawStyle.BgColor = darkenColor(style.BgColor, 0.15)
+	}
+
+	Button(screen, scaledX, scaledY, scaledW, scaledH, label, drawStyle)
+}
+
+// darkenColor reduces the brightness of a color by the given factor.
+func darkenColor(c color.Color, factor float64) color.Color {
+	r, g, b, a := c.RGBA()
+	mult := 1.0 - factor
+	return color.RGBA{
+		R: uint8(float64(r>>8) * mult),
+		G: uint8(float64(g>>8) * mult),
+		B: uint8(float64(b>>8) * mult),
+		A: uint8(a >> 8),
 	}
 }
 

@@ -20,9 +20,11 @@ import (
 
 // ActionBarData holds the runtime data the action bar needs to render.
 type ActionBarData struct {
-	BuildActive bool // whether build mode is active
-	ItemActive  bool // whether item mode is active
-	ItemTotal   int  // total items in inventory
+	BuildActive   bool            // whether build mode is active
+	ItemActive    bool            // whether item mode is active
+	ItemTotal     int             // total items in inventory
+	BuildBtnState *ui.ButtonState // optional micro-interaction state for build button
+	ItemBtnState  *ui.ButtonState // optional micro-interaction state for items button
 }
 
 // DrawActionBar renders the centered pill-shaped action bar at the bottom of the screen.
@@ -69,13 +71,19 @@ func DrawActionBar(screen *ebiten.Image, d ActionBarData) {
 	}
 	btns = append(btns, btnDef{"items", itemLabel, itemClr})
 
+	// Map button names to their interactive states
+	btnStates := map[string]*ui.ButtonState{
+		"build": d.BuildBtnState,
+		"items": d.ItemBtnState,
+	}
+
 	// ── Measure total button width ──
 	const btnPadX float32 = 16
 	items := make([]ui.ButtonRowItem, len(btns))
 	names := make([]string, len(btns))
 	totalBtnW := float32(0)
 	for i, b := range btns {
-		items[i] = ui.ButtonRowItem{Label: b.label, Color: b.clr}
+		items[i] = ui.ButtonRowItem{Label: b.label, Color: b.clr, State: btnStates[b.name]}
 		names[i] = b.name
 		tw := float32(fm.MeasureText(b.label, theme.FontH2))
 		w := tw + btnPadX*2

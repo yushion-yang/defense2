@@ -37,6 +37,7 @@ import (
 	"defense2/internal/core/pipeline"
 	"defense2/internal/core/projectile"
 	tel "defense2/internal/core/telemetry"
+	"defense2/internal/core/timescale"
 	"defense2/internal/core/tower"
 	"defense2/internal/core/tutorial"
 	"defense2/internal/core/warden"
@@ -48,6 +49,7 @@ import (
 	"defense2/internal/render/particle"
 	"defense2/internal/render/postprocess"
 	"defense2/internal/render/theme"
+	"defense2/internal/render/ui"
 
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/hajimehoshi/ebiten/v2/inpututil"
@@ -96,7 +98,11 @@ type StageScene struct {
 	dragItemActive    bool            // 是否正在拖拽道具
 	dragHoverTower    *tower.Tower    // 拖拽道具时悬停的目标塔
 	itemPanelOpen     bool            // 道具面板是否打开
+	// 按钮微交互动画状态
+	buildBtnState ui.ButtonState // 造塔按钮动画
+	itemBtnState  ui.ButtonState // 道具按钮动画
 	gameSpeed         int             // 游戏速度倍率（1 或 2）
+	timeScale         *timescale.Controller // 慢动作时间缩放控制器
 	imode             interactMode    // 交互状态机
 	prePauseMode      interactMode    // 暂停前的交互模式（恢复用）
 	buildHoverIdx     int             // 建塔面板鼠标悬停索引
@@ -276,6 +282,7 @@ func NewStageSceneWithOpts(sw Switcher, opts StageOptions) *StageScene {
 		wardenType:      opts.WardenType,
 		wardenCfg:       wardenCfg,
 		gameSpeed:       1,
+		timeScale:       timescale.New(),
 		gesture:         newStageGesture(),
 		wavePanelOpen:   true,
 		wardenPanelOpen: false,
@@ -405,6 +412,8 @@ func (s *StageScene) subscribeBus() {
 			s.audioMgr.PlaySafeAt(gameAudio.SFXBossEnter, gameAudio.VolWave)
 			// BGM: Boss 波切换到 Boss 音乐
 			s.audioMgr.PlayBGM(gameAudio.BGMBoss)
+			// Screen shake for boss entrance drama
+			render.TriggerShake(4.0, 0.5)
 		}
 		s.waveAnnounce.Trigger(p.Wave, s.spawner.MaxWaves, p.IsBoss)
 		s.tutorial.OnEvent("waveStarted")
@@ -638,6 +647,15 @@ func (s *StageScene) Update() error {
 		s.audioMgr.PlayBGM(gameAudio.BGMBattle)
 	}
 	s.frame++
+
+	// 按钮微交互动画更新（每帧 tick，不受暂停影响）
+	{
+		mx, my := draw.CursorPos()
+		mouseDown := ebiten.IsMouseButtonPressed(ebiten.MouseButtonLeft)
+		hoveredBtn := hud.ActionBarHitTest(float32(mx), float32(my))
+		s.buildBtnState.Update(dt, hoveredBtn == "build", hoveredBtn == "build" && mouseDown)
+		s.itemBtnState.Update(dt, hoveredBtn == "items", hoveredBtn == "items" && mouseDown)
+	}
 
 	// F12 / 截图按钮：任意状态可用（不受交互模式限制）
 	if inpututil.IsKeyJustPressed(ebiten.KeyF12) {
@@ -1256,8 +1274,8 @@ func (s *StageScene) saveScenario(name string) {
 	// Capture enemies
 	var enemies []config.EnemySnapshot
 	s.enemies.Each(func(e *enemy.Enemy) {
-		if e.DyingTimer > 0 {
-			return // skip dying enemies
+		if e.DyingTimer > 0 || e.SpawnTimer > 0 {
+			return // skip dying/spawning enemies
 		}
 		enemies = append(enemies, config.EnemySnapshot{
 			Archetype: e.Archetype,
@@ -1660,7 +1678,7 @@ func (s *StageScene) updatePlaying() {
 		return
 	}
 	// 游戏速度倍率
-	gameDT := dt * float64(s.gameSpeed)
+	gameDT := dt * float64(s.gameSpeed) * s.timeScale.Update(dt)
 
 	// Screen effects update (hit-stop freezes game logic for this frame).
 	if s.postPipeline.Effects.Update(gameDT) {
@@ -1697,6 +1715,12 @@ func (s *StageScene) updatePlaying() {
 
 	// 1. 生成敌人
 	s.spawner.Update(s.enemies, gameDT)
+	// Emit spawn burst particles for newly spawned enemies
+	s.enemies.Each(func(e *enemy.Enemy) {
+		if e.IsSpawning() && e.SpawnTimer >= e.SpawnDuration-gameDT*1.5 {
+			particle.EmitSpawnBurst(s.particlePool, e.X, e.Y)
+		}
+	})
 	if s.spawner.Wave > prevWave {
 		s.onWaveTransition(prevWave)
 	}
@@ -1707,12 +1731,12 @@ func (s *StageScene) updatePlaying() {
 
 	// 2. 敌人状态效果（减速、流血等）
 	pipeline.TickEnemyStatusEffects(s.enemies, gameDT, func(e *enemy.Enemy, dmg float64) {
-		render.SpawnDamageText(e.X, e.Y-10, dmg, false)
+		render.SpawnDamageText(e.X, e.Y-10, dmg, false, e.Boss)
 	})
 
 	// 2.5. 敌人行为 tick（狂暴/回血/传送）
 	s.enemies.Each(func(e *enemy.Enemy) {
-		if e.IsDying() {
+		if e.IsDying() || e.IsSpawning() {
 			return
 		}
 		enemy.UpdateBerserk(e)
@@ -1722,7 +1746,7 @@ func (s *StageScene) updatePlaying() {
 	// 群体行为（需要遍历所有敌人的交叉操作）
 	var activeEnemies []*enemy.Enemy
 	s.enemies.Each(func(e *enemy.Enemy) {
-		if e.Active && !e.IsDying() {
+		if e.Active && !e.IsDying() && !e.IsSpawning() {
 			activeEnemies = append(activeEnemies, e)
 		}
 	})
@@ -1730,8 +1754,8 @@ func (s *StageScene) updatePlaying() {
 
 	// 3. 敌人移动（到达终点扣生命）
 	s.enemies.Each(func(e *enemy.Enemy) {
-		if e.IsDying() {
-			return // dying enemies don't move
+		if e.IsDying() || e.IsSpawning() {
+			return // dying/spawning enemies don't move
 		}
 		if enemy.MoveAlongPath(e, s.gameMap.Waypoints, gameDT) {
 			s.lives--
@@ -1746,7 +1770,17 @@ func (s *StageScene) updatePlaying() {
 		}
 	})
 
-	// 3.5. Tick dying enemies (shrink+fade animation countdown)
+	// 3.5. Tick spawn animation countdown
+	s.enemies.Each(func(e *enemy.Enemy) {
+		if e.SpawnTimer > 0 {
+			e.SpawnTimer -= gameDT
+			if e.SpawnTimer < 0 {
+				e.SpawnTimer = 0
+			}
+		}
+	})
+
+	// 3.6. Tick dying enemies (shrink+fade animation countdown)
 	s.enemies.Each(func(e *enemy.Enemy) {
 		if e.IsDying() {
 			e.DyingTimer -= gameDT
@@ -1798,7 +1832,7 @@ func (s *StageScene) updatePlaying() {
 				s.audioMgr.PlayThrottledAt(sfx, 200, gameAudio.VolWarden)
 			},
 			OnDamage: func(x, y, dmg float64, crit bool) {
-				render.SpawnDamageText(x, y, dmg, crit)
+				render.SpawnDamageText(x, y, dmg, crit, false)
 			},
 		})
 	}
@@ -1948,7 +1982,7 @@ func (s *StageScene) updatePlaying() {
 	}, func(e *enemy.Enemy, damage float64, killed bool, _ string, crit bool) {
 		// 直接攻击方式（laser/beam/spin_aoe等）的伤害飘字
 		if damage > 0 {
-			render.SpawnDamageText(e.X, e.Y-15, damage, crit)
+			render.SpawnDamageText(e.X, e.Y-15, damage, crit, e.Boss)
 		}
 		if crit {
 			s.audioMgr.PlayThrottledAt(gameAudio.SFXCritHit, 150, gameAudio.VolHit)
@@ -1962,7 +1996,7 @@ func (s *StageScene) updatePlaying() {
 	// 8. 弹射物命中检测（含能力触发）
 	kills := pipeline.TickProjectileHits(s.projectiles, s.enemies, s.towers, func(e *enemy.Enemy, damage float64, killed bool, attackStyle string, crit bool) {
 		if damage > 0 {
-			render.SpawnDamageText(e.X, e.Y-15, damage, crit)
+			render.SpawnDamageText(e.X, e.Y-15, damage, crit, e.Boss)
 			if e.HitFlash < 0.06 && e.Age > 0.1 { // 出生 0.1s 内不闪白
 				e.HitFlash = 0.12
 			}
@@ -1978,11 +2012,22 @@ func (s *StageScene) updatePlaying() {
 			}
 		}
 		if killed {
-			particle.EmitDeathBurst(s.particlePool, e.X, e.Y)
+			// Death particles: scale with multi-kill streak
+			if s.multiKillCount >= 3 {
+				particle.EmitDeathBurstLarge(s.particlePool, e.X, e.Y)
+			} else {
+				particle.EmitDeathBurst(s.particlePool, e.X, e.Y)
+			}
 			particle.EmitGoldCollect(s.particlePool, e.X, e.Y)
 			// 分裂体死亡音效（子体已由 Pool.Kill 自动生成）
 			if e.Behavior == "splitter" && e.SplitCount > 0 {
 				s.audioMgr.PlaySafeAt(gameAudio.SFXSplitPop, gameAudio.VolKill)
+			}
+			// Overkill detection: damage > 2x MaxHP on non-boss
+			if e.MaxHP > 0 && damage/e.MaxHP > 2.0 && !e.Boss {
+				render.SpawnText(e.X, e.Y-20, "OVERKILL", color.RGBA{R: 255, G: 215, B: 0, A: 255}, 16, 1.5)
+				particle.EmitDeathBurstLarge(s.particlePool, e.X, e.Y)
+				render.TriggerShake(2.0, 0.15)
 			}
 			// Multi-kill tracker
 			s.multiKillCount++
@@ -1998,17 +2043,34 @@ func (s *StageScene) updatePlaying() {
 					hud.ShowToast("成就解锁: 连杀达人")
 				}
 			}
-			gp := config.GlobalBalance().Gameplay
-			if s.multiKillCount == gp.MultiKillAnnounce1 {
-				render.SpawnText(float64(game.ScreenWidth)/2, float64(game.ScreenHeight)/2-30,
-					fmt.Sprintf("连杀 x%d", gp.MultiKillAnnounce1), color.RGBA{255, 200, 50, 255}, 16, 1.5)
-			} else if s.multiKillCount == gp.MultiKillAnnounce2 {
-				render.SpawnText(float64(game.ScreenWidth)/2, float64(game.ScreenHeight)/2-30,
-					fmt.Sprintf("超级连杀 x%d", gp.MultiKillAnnounce2), color.RGBA{255, 100, 50, 255}, 18, 2.0)
+			// Multi-kill tier feedback
+			cx := float64(game.ScreenWidth) / 2
+			cy := float64(game.ScreenHeight)/2 - 30
+			switch {
+			case s.multiKillCount == 3:
+				render.SpawnText(cx, cy, "×3 连杀!", color.RGBA{R: 255, G: 255, B: 255, A: 220}, 14, 1.2)
+			case s.multiKillCount == 5:
+				render.SpawnText(cx, cy, "×5 连杀!", color.RGBA{R: 255, G: 220, B: 60, A: 255}, 16, 1.5)
+				render.TriggerShake(1.5, 0.1)
+			case s.multiKillCount == 10:
+				render.SpawnText(cx, cy, "×10 超级连杀!", color.RGBA{R: 255, G: 140, B: 40, A: 255}, 18, 2.0)
+				render.TriggerShake(2.0, 0.15)
+			case s.multiKillCount == 20:
+				render.SpawnText(cx, cy, "×20 无双!", color.RGBA{R: 255, G: 60, B: 40, A: 255}, 22, 2.0)
+				render.TriggerShake(3.0, 0.2)
+			case s.multiKillCount == 50:
+				render.SpawnText(cx, cy, "×50 传说!", color.RGBA{R: 255, G: 215, B: 0, A: 255}, 24, 2.5)
+				s.timeScale.Trigger(0.3, 0.1, 0.3, 0.3)
 			}
+			// Kill audio + boss-specific feedback
 			if e.Boss {
 				s.audioMgr.PlayThrottledAt(gameAudio.SFXEnemyDeathBoss, 50, gameAudio.VolKill)
-				s.postPipeline.Effects.TriggerHitStop(3)
+				s.postPipeline.Effects.TriggerHitStop(5)
+				s.timeScale.Trigger(0.2, 0.1, 0.4, 0.3)
+				render.TriggerShake(5.0, 0.4)
+				s.postPipeline.Effects.TriggerRadialBlur(e.X, e.Y, 0.04, 0.6)
+				s.postPipeline.Effects.TriggerRipple(e.X, e.Y, 20)
+				particle.EmitBossDeathBurst(s.particlePool, e.X, e.Y)
 			} else {
 				s.audioMgr.PlayThrottledAt(gameAudio.SFXEnemyDeath, 50, gameAudio.VolKill)
 			}
@@ -2090,6 +2152,7 @@ func (s *StageScene) updatePlaying() {
 			s.audioMgr.StopBGM()
 			s.audioMgr.PlaySafeAt(gameAudio.SFXDefeat, gameAudio.VolWave)
 			s.progressMgr.RecordGameResult(s.modeID, s.gameMap.Config.ID, s.kills, false)
+			s.postPipeline.Effects.SetDesaturation(0.8, 1.5, 0.8, 0.2, 0.2)
 		}
 		// 清除覆盖层状态，防止 ChoicePanel/暂停菜单遮挡结算画面
 		s.imode = modeIdle
@@ -2307,9 +2370,11 @@ func (s *StageScene) drawScene(screen *ebiten.Image) {
 	s.drawStrengthDrainLinks(worldTarget)
 	s.drawEnemyAbilityVFX(worldTarget)
 
-	// 弹射物
+	// 弹射物 — glow pass wraps projectile/beam rendering for additive bloom
+	draw.BeginGlowPass(worldTarget)
 	render.DrawProjectiles(worldTarget, s.projectiles)
 	render.DrawBeams(worldTarget, s.beams)
+	draw.EndGlowPass(worldTarget)
 
 	// 冲击特效（蓄力弹命中）
 	render.DrawImpactVFX(worldTarget)
@@ -2385,9 +2450,11 @@ func (s *StageScene) drawScene(screen *ebiten.Image) {
 
 	// HUD：底部动作栏
 	hud.DrawActionBar(screen, hud.ActionBarData{
-		BuildActive: s.imode == modeBuildMenu || s.imode == modeBuildPlace,
-		ItemActive:  s.imode == modeItemPanel || s.imode == modeItemDrag,
-		ItemTotal:   s.inventory.TotalCount(),
+		BuildActive:   s.imode == modeBuildMenu || s.imode == modeBuildPlace,
+		ItemActive:    s.imode == modeItemPanel || s.imode == modeItemDrag,
+		ItemTotal:     s.inventory.TotalCount(),
+		BuildBtnState: &s.buildBtnState,
+		ItemBtnState:  &s.itemBtnState,
 	})
 
 	// HUD：底部建塔菜单

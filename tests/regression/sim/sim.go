@@ -36,6 +36,16 @@ func (s *Sim) Step() {
 	s.Tick++
 	dt := s.DT
 
+	// 0.5. Tick spawn animation
+	s.Enemies.Each(func(e *enemy.Enemy) {
+		if e.SpawnTimer > 0 {
+			e.SpawnTimer -= dt
+			if e.SpawnTimer < 0 {
+				e.SpawnTimer = 0
+			}
+		}
+	})
+
 	// 1. Enemy movement + dying cleanup
 	s.Enemies.Each(func(e *enemy.Enemy) {
 		if e.IsDying() {
@@ -44,6 +54,9 @@ func (s *Sim) Step() {
 				s.Enemies.FinishDying(e)
 			}
 			return
+		}
+		if e.IsSpawning() {
+			return // spawning enemies don't move
 		}
 		reached := enemy.MoveAlongPath(e, s.Waypoints, dt)
 		if reached {
@@ -78,7 +91,7 @@ func (s *Sim) Step() {
 		case tower.StyleSpinAoE:
 			// AoE damage: hit all enemies in range
 			s.Enemies.Each(func(e *enemy.Enemy) {
-				if e.IsDying() {
+				if e.IsDying() || e.IsSpawning() {
 					return
 				}
 				dist := math.Hypot(e.X-tw.X, e.Y-tw.Y)
@@ -123,7 +136,7 @@ func (s *Sim) Step() {
 	// 4. Projectile hit detection
 	s.Projectiles.Each(func(p *projectile.Projectile) {
 		s.Enemies.Each(func(e *enemy.Enemy) {
-			if e.IsDying() || !p.Active {
+			if e.IsDying() || e.IsSpawning() || !p.Active {
 				return
 			}
 			// Standard tracking: only hit locked target
@@ -155,7 +168,7 @@ func (s *Sim) Step() {
 
 	// 5. Status effects + DoT damage via pipeline
 	s.Enemies.Each(func(e *enemy.Enemy) {
-		if !e.IsDying() {
+		if !e.IsDying() && !e.IsSpawning() {
 			enemy.TickStatusEffects(e, dt)
 			if e.LastDotDmg > 0 {
 				r := combat.ProcessDamage(combat.DamageInput{

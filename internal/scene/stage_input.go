@@ -149,6 +149,7 @@ func (s *StageScene) handleInput() {
 		default:
 			s.prePauseMode = s.imode
 			s.imode = modePaused
+			s.postPipeline.Effects.SetDesaturation(0.7, 3.0, 0.5, 0.5, 0.6)
 		}
 		return
 	}
@@ -203,6 +204,7 @@ func (s *StageScene) handleInput() {
 		// modePaused 由 handlePausedInput 处理，此处只处理非暂停→暂停
 		s.prePauseMode = s.imode
 		s.imode = modePaused
+		s.postPipeline.Effects.SetDesaturation(0.7, 3.0, 0.5, 0.5, 0.6)
 		return
 	}
 	if inpututil.IsKeyJustPressed(ebiten.KeyDelete) || inpututil.IsKeyJustPressed(ebiten.KeyBackspace) {
@@ -354,6 +356,7 @@ func (s *StageScene) handleInput() {
 	case "menu":
 		s.prePauseMode = s.imode
 		s.imode = modePaused
+		s.postPipeline.Effects.SetDesaturation(0.7, 3.0, 0.5, 0.5, 0.6)
 		return
 	case "spawn":
 		if s.imode == modeSpawnMenu || s.imode == modeSpawnPlace {
@@ -391,6 +394,7 @@ func (s *StageScene) handleInput() {
 		return
 	case "items":
 		if s.inventory.TotalCount() == 0 {
+			s.itemBtnState.TriggerDisabledShake()
 			return
 		}
 		if s.imode == modeItemPanel {
@@ -530,6 +534,7 @@ func (s *StageScene) handlePausedInput() {
 	s.gesture.Update()
 	if inpututil.IsKeyJustPressed(ebiten.KeyEscape) || inpututil.IsKeyJustPressed(ebiten.KeyP) || inpututil.IsKeyJustPressed(ebiten.KeySpace) {
 		s.imode = s.prePauseMode
+		s.postPipeline.Effects.SetDesaturation(0.0, 4.0, 0.5, 0.5, 0.6)
 		return
 	}
 	if s.gesture.JustTapped() {
@@ -539,6 +544,7 @@ func (s *StageScene) handlePausedInput() {
 		case hud.PauseResume:
 			s.audioMgr.PlaySafe(gameAudio.SFXUIClick)
 			s.imode = s.prePauseMode
+			s.postPipeline.Effects.SetDesaturation(0.0, 4.0, 0.5, 0.5, 0.6)
 		case hud.PauseSettings:
 			s.audioMgr.PlaySafe(gameAudio.SFXUIClick)
 			s.switcher.SwitchScene(NewSettingsScene(s.switcher, s))

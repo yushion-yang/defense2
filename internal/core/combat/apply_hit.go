@@ -200,7 +200,7 @@ func applyHitEffectsUnified(r *tower.HitResult, target *enemy.Enemy, p *projecti
 		splashDamage := p.Damage * r.Splash.Ratio
 		splashTower := srcTower
 		enemies.Each(func(e *enemy.Enemy) {
-			if e == target || e.IsDying() {
+			if e == target || e.IsDying() || e.IsSpawning() {
 				return
 			}
 			if math.Hypot(e.X-target.X, e.Y-target.Y) <= r.Splash.Radius {
@@ -233,7 +233,7 @@ func applyHitEffectsUnified(r *tower.HitResult, target *enemy.Enemy, p *projecti
 		bestDist := r.Bounce.Range
 		if enemies != nil {
 			enemies.Each(func(e2 *enemy.Enemy) {
-				if e2.IsDying() {
+				if e2.IsDying() || e2.IsSpawning() {
 					return
 				}
 				for _, id := range hitIDs {
@@ -297,7 +297,7 @@ func deathExplosion(t *tower.Tower, killed *enemy.Enemy, enemies *enemy.Pool, on
 
 	extraKills := 0
 	enemies.Each(func(e2 *enemy.Enemy) {
-		if e2 == killed || e2.IsDying() {
+		if e2 == killed || e2.IsDying() || e2.IsSpawning() {
 			return
 		}
 		if math.Hypot(e2.X-killed.X, e2.Y-killed.Y) <= explodeR {

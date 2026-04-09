@@ -24,18 +24,25 @@ func FilledCircle(screen *ebiten.Image, cx, cy, r float32, clr color.Color) {
 }
 
 // Glow draws a soft glow effect: an outer transparent ring fading into an
-// inner solid circle.
+// inner solid circle. When a glow pass is active (BeginGlowPass), draws are
+// redirected to the offscreen glow buffer for additive compositing.
 func Glow(screen *ebiten.Image, cx, cy, innerR, outerR float32, clr color.RGBA) {
 	if outerR <= 0 {
 		return
 	}
 
+	// Redirect to glow buffer when a glow pass is active.
+	target := screen
+	if GlowPassActive() {
+		target = GlowTarget()
+	}
+
 	scx, scy := S32(cx), S32(cy)
 	outerClr := color.RGBA{R: clr.R, G: clr.G, B: clr.B, A: clr.A / 4}
-	vector.DrawFilledCircle(screen, scx, scy, S32(outerR), outerClr, true)
+	vector.DrawFilledCircle(target, scx, scy, S32(outerR), outerClr, true)
 
 	if innerR > 0 {
-		vector.DrawFilledCircle(screen, scx, scy, S32(innerR), clr, true)
+		vector.DrawFilledCircle(target, scx, scy, S32(innerR), clr, true)
 	}
 }
 

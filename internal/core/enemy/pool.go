@@ -148,6 +148,14 @@ func (p *Pool) Spawn(x, y, baseHP, baseSpeed float64, pathIndex int, archetype s
 				e.IsSlowImmune = true
 			}
 
+			// 出生动画
+			if cfg.Boss {
+				e.SpawnTimer = 0.5
+			} else {
+				e.SpawnTimer = 0.3
+			}
+			e.SpawnDuration = e.SpawnTimer
+
 			p.Count++
 			return e
 		}

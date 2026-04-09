@@ -93,7 +93,7 @@ func TickProjectileHits(projectiles *projectile.Pool, enemies *enemy.Pool, tower
 
 	projectiles.Each(func(p *projectile.Projectile) {
 		enemies.Each(func(e *enemy.Enemy) {
-			if !p.Active || e.IsDying() {
+			if !p.Active || e.IsDying() || e.IsSpawning() {
 				return
 			}
 
@@ -193,7 +193,7 @@ func multiTargetCount(t *tower.Tower) int {
 // DoT 伤害通过 ProcessDamage 管线结算（走虚弱/坚韧/免疫/减伤等完整流程）。
 func TickEnemyStatusEffects(enemies *enemy.Pool, dt float64, onDotDmg func(e *enemy.Enemy, dmg float64)) {
 	enemies.Each(func(e *enemy.Enemy) {
-		if e.IsDying() {
+		if e.IsDying() || e.IsSpawning() {
 			return
 		}
 		enemy.TickStatusEffects(e, dt)
