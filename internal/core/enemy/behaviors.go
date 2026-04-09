@@ -138,6 +138,7 @@ func TickBehaviors(pool *Pool, dt float64) BehaviorEvents {
 				e.DamageAmplify = 0
 				e.DamageAmplifyTimer = 0
 				e.ZoneDmgAccum = 0
+				e.PurgeFlash = 0.4 // 触发净化脉冲视觉
 				// 净化后短暂免疫
 				if e.PurgeImmuneDur > 0 {
 					e.ControlImmuneTimer = e.PurgeImmuneDur

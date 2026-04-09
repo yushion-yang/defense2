@@ -181,6 +181,12 @@ type Enemy struct {
 
 	// 能力沉默状态（silenceZone 对怪物能力的影响）
 	AbilitySilenced bool // 当前帧是否被沉默（每帧重置）
+
+	// ── 视觉特效触发器（>0 时渲染对应特效，每帧衰减）──
+	BlockFlash  float64 // 弹幕盾格挡闪光
+	DodgeFlash  float64 // 闪避残影
+	ArmorSpark  float64 // 装甲火花
+	PurgeFlash  float64 // 净化脉冲
 }
 
 // IsDying returns true if the enemy is playing its death animation.
@@ -288,6 +294,19 @@ func TickStatusEffects(e *Enemy, dt float64) {
 		if e.HitFlash < 0 {
 			e.HitFlash = 0
 		}
+	}
+	// 能力视觉特效衰减
+	if e.BlockFlash > 0 {
+		e.BlockFlash -= dt
+	}
+	if e.DodgeFlash > 0 {
+		e.DodgeFlash -= dt
+	}
+	if e.ArmorSpark > 0 {
+		e.ArmorSpark -= dt
+	}
+	if e.PurgeFlash > 0 {
+		e.PurgeFlash -= dt
 	}
 
 	// DisplayHP 伤害拖尾衰减（每秒衰减 120% MaxHP）

@@ -40,7 +40,8 @@ func ApplyHit(input HitInput, onHit HitCallback) HitOutput {
 	// ── 怪物闪避（完全回避，不触发任何 OnHit）──
 	if e.EvasionChance > 0 && !e.AbilitySilenced {
 		if rand.Float64() < e.EvasionChance {
-			return HitOutput{} // 完全闪避
+			e.DodgeFlash = 0.3 // 触发闪避视觉
+			return HitOutput{}
 		}
 	}
 
@@ -49,7 +50,8 @@ func ApplyHit(input HitInput, onHit HitCallback) HitOutput {
 		isProjectile := input.Style == "projectile" || input.Style == "scatter" ||
 			input.Style == "bounce" || input.Style == "radial" || input.Style == "splash"
 		if isProjectile && rand.Float64() < e.ProjectileBlockChance {
-			return HitOutput{} // 被盾挡住
+			e.BlockFlash = 0.25 // 触发格挡视觉
+			return HitOutput{}
 		}
 	}
 
@@ -62,6 +64,7 @@ func ApplyHit(input HitInput, onHit HitCallback) HitOutput {
 		if totalDmg < 1 {
 			totalDmg = 1
 		}
+		e.ArmorSpark = 0.15 // 触发装甲火花视觉
 	}
 
 	// ── 受击冲刺触发 ──

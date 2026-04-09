@@ -1482,6 +1482,95 @@ func (s *StageScene) drawStrengthDrainLinks(screen *ebiten.Image) {
 	})
 }
 
+// drawEnemyAbilityVFX 绘制怪物能力视觉特效（触发特效 + 范围/连接）。
+func (s *StageScene) drawEnemyAbilityVFX(screen *ebiten.Image) {
+	animTime := float64(s.frame) / 60.0
+	s.enemies.Each(func(e *enemy.Enemy) {
+		if !e.Active {
+			return
+		}
+		ex, ey := float32(e.X), float32(e.Y)
+
+		// ── 触发特效 ──
+
+		// 格挡闪光（蓝色盾形脉冲）
+		if e.BlockFlash > 0 {
+			r := float32(e.Radius) + 6
+			alpha := uint8(200 * (e.BlockFlash / 0.25))
+			draw.CircleOutline(screen, ex, ey, r, 2, color.RGBA{R: 80, G: 160, B: 255, A: alpha})
+			draw.CircleOutline(screen, ex, ey, r+3, 1, color.RGBA{R: 120, G: 200, B: 255, A: alpha / 2})
+		}
+
+		// 闪避残影（白色偏移残影）
+		if e.DodgeFlash > 0 {
+			alpha := uint8(150 * (e.DodgeFlash / 0.3))
+			offset := float32(6 * (e.DodgeFlash / 0.3))
+			draw.FilledCircle(screen, ex-offset, ey, float32(e.Radius)*0.8, color.RGBA{R: 255, G: 255, B: 255, A: alpha})
+		}
+
+		// 装甲火花（灰色小火花）
+		if e.ArmorSpark > 0 {
+			alpha := uint8(200 * (e.ArmorSpark / 0.15))
+			sparkR := float32(e.Radius) + float32(4*(1-e.ArmorSpark/0.15))
+			draw.CircleOutline(screen, ex, ey, sparkR, 1.5, color.RGBA{R: 180, G: 180, B: 180, A: alpha})
+		}
+
+		// 净化脉冲（白色扩散圈）
+		if e.PurgeFlash > 0 {
+			progress := 1 - e.PurgeFlash/0.4
+			r := float32(e.Radius) + float32(40*progress)
+			alpha := uint8(200 * (1 - progress))
+			draw.CircleOutline(screen, ex, ey, r, 2, color.RGBA{R: 255, G: 255, B: 255, A: alpha})
+		}
+
+		// ── 持续状态 ──
+
+		// 相位偏移：紫色脉冲光环（免伤中）
+		if e.PhaseActive {
+			pulseR := float32(e.Radius) + 4 + float32(3*math.Sin(animTime*6))
+			draw.CircleOutline(screen, ex, ey, pulseR, 2, color.RGBA{R: 160, G: 80, B: 255, A: 160})
+			draw.CircleOutline(screen, ex, ey, pulseR+4, 1, color.RGBA{R: 160, G: 80, B: 255, A: 60})
+		}
+
+		// 受击冲刺：速度拖尾线
+		if e.DashActiveT > 0 {
+			// 从敌人身后画 3 条速度线
+			for i := 0; i < 3; i++ {
+				offset := float32(6 + i*5)
+				alpha := uint8(160 - i*50)
+				length := float32(12 + i*4)
+				// 速度线朝行进反方向
+				draw.ThickLine(screen, ex, ey+float32(i*3)-3, ex-length, ey+float32(i*3)-3, 1.5,
+					color.RGBA{R: 255, G: 200, B: 80, A: alpha})
+				_ = offset
+			}
+		}
+
+		// ── 范围/光环 （不被沉默时显示）──
+
+		if e.AbilitySilenced {
+			return
+		}
+
+		// 治疗光环范围圈（绿色虚线圈）
+		if e.HealPower > 0 && e.HealRadius > 0 && !e.IsDying() {
+			alpha := uint8(40 + 20*math.Sin(animTime*2))
+			draw.CircleOutline(screen, ex, ey, float32(e.HealRadius), 1, color.RGBA{R: 60, G: 220, B: 100, A: alpha})
+			// 治疗冷却快到时脉冲更亮
+			if e.HealCooldown < 0.5 {
+				pulseAlpha := uint8(100 * (1 - e.HealCooldown/0.5))
+				draw.CircleOutline(screen, ex, ey, float32(e.HealRadius)*0.5, 1, color.RGBA{R: 80, G: 255, B: 120, A: pulseAlpha})
+			}
+		}
+
+		// 加速光环范围圈（橙色虚线圈）
+		if e.AuraRange > 0 && e.AuraSpeedUp > 0 && !e.IsDying() {
+			alpha := uint8(35 + 15*math.Sin(animTime*1.5))
+			draw.CircleOutline(screen, ex, ey, float32(e.AuraRange), 1, color.RGBA{R: 255, G: 180, B: 60, A: alpha})
+		}
+	})
+}
+
 func (s *StageScene) restoreScenario(sd *config.ScenarioData) {
 	defMap := make(map[string]tower.TowerDef)
 	for _, d := range s.towerDefs {
@@ -2231,6 +2320,7 @@ func (s *StageScene) drawScene(screen *ebiten.Image) {
 
 	// 削强连接线
 	s.drawStrengthDrainLinks(worldTarget)
+	s.drawEnemyAbilityVFX(worldTarget)
 
 	// 弹射物
 	render.DrawProjectiles(worldTarget, s.projectiles)
