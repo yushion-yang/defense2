@@ -377,13 +377,13 @@ func (s *StageScene) subscribeBus() {
 		s.tutorial.OnEvent("towerBuilt")
 		// 成就: 累计建塔 + 单局塔种类
 		s.achieveTracker.IncrTowersBuilt()
-		if s.achieveTracker.TotalTowersBuilt >= 10 {
+		if s.achieveTracker.TotalTowersBuilt >= achievement.ThresholdOf("builder_10") {
 			if s.achieveTracker.Unlock("builder_10") {
 				hud.ShowToast("成就解锁: 塔防新手")
 			}
 		}
 		s.achieveTracker.SessionTowerTypes[p.TowerKey] = true
-		if len(s.achieveTracker.SessionTowerTypes) >= 5 {
+		if len(s.achieveTracker.SessionTowerTypes) >= achievement.ThresholdOf("all_towers") {
 			if s.achieveTracker.Unlock("all_towers") {
 				hud.ShowToast("成就解锁: 全能战士")
 			}
@@ -438,7 +438,7 @@ func (s *StageScene) subscribeBus() {
 		s.audioMgr.PlayBGM(gameAudio.BGMBattle)
 		s.tutorial.OnEvent("waveCleared")
 		// 成就: Endless 模式 50 波
-		if s.modeID == "endless" && p.Wave >= 50 {
+		if s.modeID == "endless" && p.Wave >= achievement.ThresholdOf("endless_50") {
 			if s.achieveTracker.Unlock("endless_50") {
 				hud.ShowToast("成就解锁: 不灭传说")
 			}
@@ -462,7 +462,7 @@ func (s *StageScene) subscribeBus() {
 		}
 		// 成就: 击杀数 + Boss + 金币
 		s.achieveTracker.SessionKills++
-		if s.achieveTracker.SessionKills >= 100 {
+		if s.achieveTracker.SessionKills >= achievement.ThresholdOf("centurion") {
 			if s.achieveTracker.Unlock("centurion") {
 				hud.ShowToast("成就解锁: 百杀")
 			}
@@ -475,7 +475,7 @@ func (s *StageScene) subscribeBus() {
 		if s.gold > s.achieveTracker.SessionMaxGold {
 			s.achieveTracker.SessionMaxGold = s.gold
 		}
-		if s.achieveTracker.SessionMaxGold >= 1000 {
+		if s.achieveTracker.SessionMaxGold >= achievement.ThresholdOf("rich") {
 			if s.achieveTracker.Unlock("rich") {
 				hud.ShowToast("成就解锁: 富甲一方")
 			}
@@ -510,7 +510,7 @@ func (s *StageScene) checkVictoryAchievements() {
 	stars := 1
 	if s.spawner.MaxWaves > 0 && s.spawner.Wave >= s.spawner.MaxWaves {
 		stars = 3
-	} else if s.spawner.MaxWaves > 0 && float64(s.spawner.Wave) >= float64(s.spawner.MaxWaves)*0.8 {
+	} else if s.spawner.MaxWaves > 0 && float64(s.spawner.Wave) >= float64(s.spawner.MaxWaves)*config.GlobalBalance().Gameplay.StarRatingThreshold {
 		stars = 2
 	}
 
@@ -529,7 +529,7 @@ func (s *StageScene) checkVictoryAchievements() {
 	}
 
 	// speedrun — victory within 10 minutes
-	if s.session.ElapsedTime <= 600 {
+	if s.session.ElapsedTime <= float64(achievement.ThresholdOf("speedrun")) {
 		if t.Unlock("speedrun") {
 			hud.ShowToast("成就解锁: 速通")
 		}
@@ -1979,24 +1979,25 @@ func (s *StageScene) updatePlaying() {
 			}
 			// Multi-kill tracker
 			s.multiKillCount++
-			s.multiKillTimer = 1.5
+			s.multiKillTimer = config.GlobalBalance().Gameplay.MultiKillWindow
 			if s.multiKillCount > s.gameStats.MaxKillStreak {
 				s.gameStats.MaxKillStreak = s.multiKillCount
 			}
 			if s.multiKillCount > s.achieveTracker.SessionMaxStreak {
 				s.achieveTracker.SessionMaxStreak = s.multiKillCount
 			}
-			if s.multiKillCount >= 20 {
+			if s.multiKillCount >= achievement.ThresholdOf("killstreak_20") {
 				if s.achieveTracker.Unlock("killstreak_20") {
 					hud.ShowToast("成就解锁: 连杀达人")
 				}
 			}
-			if s.multiKillCount == 5 {
+			gp := config.GlobalBalance().Gameplay
+			if s.multiKillCount == gp.MultiKillAnnounce1 {
 				render.SpawnText(float64(game.ScreenWidth)/2, float64(game.ScreenHeight)/2-30,
-					"连杀 x5", color.RGBA{255, 200, 50, 255}, 16, 1.5)
-			} else if s.multiKillCount == 10 {
+					fmt.Sprintf("连杀 x%d", gp.MultiKillAnnounce1), color.RGBA{255, 200, 50, 255}, 16, 1.5)
+			} else if s.multiKillCount == gp.MultiKillAnnounce2 {
 				render.SpawnText(float64(game.ScreenWidth)/2, float64(game.ScreenHeight)/2-30,
-					"超级连杀 x10", color.RGBA{255, 100, 50, 255}, 18, 2.0)
+					fmt.Sprintf("超级连杀 x%d", gp.MultiKillAnnounce2), color.RGBA{255, 100, 50, 255}, 18, 2.0)
 			}
 			if e.Boss {
 				s.audioMgr.PlayThrottledAt(gameAudio.SFXEnemyDeathBoss, 50, gameAudio.VolKill)

@@ -70,5 +70,11 @@
     "initialStrength": 100,
     "defaultGrowthOnKill": 2,
     "defaultGrowthOnWaveClear": 5
+  },
+  "gameplay": {
+    "starRatingThreshold": 0.8,
+    "multiKillWindow": 1.5,
+    "multiKillAnnounce1": 5,
+    "multiKillAnnounce2": 10
   }
 }

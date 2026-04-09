@@ -100,7 +100,7 @@ func TestTickTowerCombatFires(t *testing.T) {
 func TestAbilityRegistry(t *testing.T) {
 	config.SetDataFS(&defense2.DataFS)
 	abilities.InitConfigAbilities()
-	expected := []string{"splash", "crit", "onHitSlow", "bleedDot"}
+	expected := []string{"splash", "crit", "slowPower", "bleedDot"}
 	for _, name := range expected {
 		if _, ok := tower.Registry[name]; !ok {
 			t.Fatalf("ability %q not registered", name)
@@ -132,8 +132,8 @@ func TestBleedEffect(t *testing.T) {
 		BleedTimer: 2.0, BleedDPS: 10,
 	}
 
-	enemy.TickStatusEffects(e, 1.0) // 10 DPS * 1s = 10 damage
-	if e.HP != 90 {
-		t.Fatalf("expected HP 90 after 1s bleed, got %.0f", e.HP)
+	enemy.TickStatusEffects(e, 1.0) // DotTickInterval=0.5: first tick at 0.5s, damage = 10 DPS * 0.5s = 5
+	if e.HP != 95 {
+		t.Fatalf("expected HP 95 after 1s bleed (one tick of 5 dmg), got %.0f", e.HP)
 	}
 }

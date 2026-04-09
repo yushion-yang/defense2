@@ -96,6 +96,14 @@ type WardenBalance struct {
 	DefaultGrowthOnWaveClear float64 `json:"defaultGrowthOnWaveClear"`
 }
 
+// GameplayBalance 通用游戏性参数。
+type GameplayBalance struct {
+	StarRatingThreshold float64 `json:"starRatingThreshold"`
+	MultiKillWindow     float64 `json:"multiKillWindow"`
+	MultiKillAnnounce1  int     `json:"multiKillAnnounce1"`
+	MultiKillAnnounce2  int     `json:"multiKillAnnounce2"`
+}
+
 // BalanceConfig 游戏平衡参数总配置。
 type BalanceConfig struct {
 	Spawner    SpawnerBalance    `json:"spawner"`
@@ -108,6 +116,7 @@ type BalanceConfig struct {
 	DeathSpawn DeathSpawnBalance `json:"deathSpawn"`
 	Dying      DyingBalance      `json:"dying"`
 	Warden     WardenBalance     `json:"warden"`
+	Gameplay   GameplayBalance   `json:"gameplay"`
 }
 
 // globalBalance 全局缓存。
@@ -172,5 +181,6 @@ func defaultBalance() *BalanceConfig {
 		DeathSpawn: DeathSpawnBalance{HpRatio: 0.2, DefaultArch: "normal", ChildOffset: 8},
 		Dying:      DyingBalance{NormalDuration: 0.3, BossDuration: 0.5},
 		Warden:     WardenBalance{InitialStrength: 100, DefaultGrowthOnKill: 2, DefaultGrowthOnWaveClear: 5},
+		Gameplay:   GameplayBalance{StarRatingThreshold: 0.8, MultiKillWindow: 1.5, MultiKillAnnounce1: 5, MultiKillAnnounce2: 10},
 	}
 }

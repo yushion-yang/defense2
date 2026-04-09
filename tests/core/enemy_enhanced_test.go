@@ -216,13 +216,14 @@ func TestBuffTemplate_ApplyBerserk(t *testing.T) {
 }
 
 func TestBuffTemplate_ApplyFlags_Elite(t *testing.T) {
+	// "elite" flag was removed from ApplyFlags — it is now a no-op.
 	e := &enemy.Enemy{HP: 100, MaxHP: 100, Speed: 50, BaseSpeed: 50, Reward: 10}
 	enemy.ApplyFlags(e, []string{"elite"})
-	if math.Abs(e.MaxHP-300) > 1e-9 {
-		t.Errorf("elite flag MaxHP=%.1f, 期望300", e.MaxHP)
+	if math.Abs(e.MaxHP-100) > 1e-9 {
+		t.Errorf("elite flag (removed) MaxHP=%.1f, 期望100(不变)", e.MaxHP)
 	}
-	if e.Reward != 20 {
-		t.Errorf("elite flag Reward=%d, 期望20", e.Reward)
+	if e.Reward != 10 {
+		t.Errorf("elite flag (removed) Reward=%d, 期望10(不变)", e.Reward)
 	}
 }
 

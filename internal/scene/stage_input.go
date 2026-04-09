@@ -8,6 +8,7 @@ import (
 	"math"
 
 	gameAudio "defense2/internal/audio"
+	"defense2/internal/core/achievement"
 	"defense2/internal/core/enemy"
 	"defense2/internal/core/event"
 	"defense2/internal/core/game"
@@ -58,7 +59,7 @@ func (s *StageScene) handleInput() {
 				s.tutorial.Trigger("item_use")
 				// 成就: 道具使用次数
 				s.achieveTracker.SessionItemsUsed++
-				if s.achieveTracker.SessionItemsUsed >= 10 {
+				if s.achieveTracker.SessionItemsUsed >= achievement.ThresholdOf("item_master") {
 					if s.achieveTracker.Unlock("item_master") {
 						hud.ShowToast("成就解锁: 道具大师")
 					}

@@ -26,8 +26,10 @@ func TestTowerPlaceAndRemove(t *testing.T) {
 	if t1.Row != 2 || t1.Col != 3 {
 		t.Fatalf("expected (2,3), got (%d,%d)", t1.Row, t1.Col)
 	}
-	if t1.Range != 150 || t1.Damage != 10 {
-		t.Fatalf("stats mismatch: range=%.0f damage=%.0f", t1.Range, t1.Damage)
+	// Range and Damage are randomized by RollTowerStats+ApplyRandomStats;
+	// verify they are positive (exact values depend on random rolls).
+	if t1.Range <= 0 || t1.Damage <= 0 {
+		t.Fatalf("stats should be positive after random rolls: range=%.0f damage=%.0f", t1.Range, t1.Damage)
 	}
 
 	p.Remove(t1)
