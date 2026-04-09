@@ -47,11 +47,10 @@ func ApplyHit(input HitInput, onHit HitCallback) HitOutput {
 		}
 	}
 
-	// ── 弹幕盾：吸收弹幕类攻击（散射/弹射/穿透），普通单发和光束不阻挡 ──
+	// ── 弹幕盾：吸收弹射链/穿透弹（bounce/radial 零伤害），散射在碰撞层处理 ──
 	hasShield := e.ProjectileBlockChance > 0 && !e.AbilitySilenced
 	if hasShield {
-		blocked := input.Style == "scatter" || input.Style == "bounce" || input.Style == "radial"
-		if blocked {
+		if input.Style == "bounce" || input.Style == "radial" {
 			e.BlockFlash = 0.25
 			return HitOutput{ProjectileBlocked: true}
 		}

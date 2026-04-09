@@ -141,12 +141,7 @@ func TickProjectileHits(projectiles *projectile.Pool, enemies *enemy.Pool, tower
 
 			// ── 散射弹（穿透）：记录命中，延迟合并处理 ──
 			if p.ScatterGroup > 0 {
-				// 弹幕盾：吸收散射弹丸（不记录命中，释放弹丸）
-				if e.ProjectileBlockChance > 0 && !e.AbilitySilenced {
-					e.BlockFlash = 0.25
-					projectiles.Release(p)
-					return
-				}
+				shielded := e.ProjectileBlockChance > 0 && !e.AbilitySilenced
 				p.PenHitIDs = append(p.PenHitIDs, e.ID)
 
 				key := int64(p.ScatterGroup)<<32 | int64(e.ID)
@@ -160,7 +155,12 @@ func TickProjectileHits(projectiles *projectile.Pool, enemies *enemy.Pool, tower
 						damage:   p.Damage,
 					}
 				}
-				// 不 Release：弹丸继续飞行穿透后续敌人，到 MaxRange 自然消亡
+				// 弹幕盾：记录命中（正常受伤）但释放弹丸（停止飞行）
+				if shielded {
+					e.BlockFlash = 0.25
+					projectiles.Release(p)
+				}
+				// 无盾：弹丸继续飞行穿透后续敌人，到 MaxRange 自然消亡
 				return
 			}
 
