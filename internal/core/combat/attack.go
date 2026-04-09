@@ -17,7 +17,7 @@ type AttackHandler interface {
 // TickHandler 自管理攻击方式（每帧调用，不走标准冷却）。
 type TickHandler interface {
 	AttackHandler
-	// Tick 每帧更新（charge 蓄力、spin_aoe 旋转、aura_dot 毒伤等）。
+	// Tick 每帧更新（spin_aoe 旋转等自管理攻击方式）。
 	Tick(t *tower.Tower, ctx *AttackContext)
 	// SelfManaged 返回 true 表示跳过标准冷却循环。
 	SelfManaged() bool
@@ -79,9 +79,4 @@ func init() {
 	Register(tower.StyleScatter, &ScatterHandler{})
 	Register(tower.StyleSpinAoE, &SpinAoEHandler{})
 	Register(tower.StyleRadial, &RadialHandler{})
-
-	// 废弃的攻击方式 → 映射到保留的 handler
-	Register(tower.StyleLaser, &ProjectileHandler{})   // laser → 高弹速 projectile
-	Register(tower.StyleCharge, &ProjectileHandler{})   // charge → 低攻速 projectile
-	Register(tower.StyleAuraDot, &SpinAoEHandler{})     // aura_dot → 合并到 spinAoe
 }

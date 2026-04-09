@@ -214,12 +214,10 @@ func buildAttrSegsWithMods(numFmt string, base, potential, effStr, pctMod, flatM
 func attackStyleLabel(style string) string {
 	labels := map[string]string{
 		"projectile": "投射物",
-		"laser":      "激光",
 		"wideBeam":   "宽光束",
 		"scatter":    "散射",
-		"charge":     "蓄力",
 		"spin_aoe":   "旋转AoE",
-		"aura_dot":   "范围毒伤",
+		"radial":     "环射",
 	}
 	if l, ok := labels[style]; ok {
 		return l

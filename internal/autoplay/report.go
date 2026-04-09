@@ -101,7 +101,7 @@ func GenerateReport(records []*SessionRecord) *CoverageReport {
 	r.CoverageGaps["towers"] = findGaps(TowerKeys, towersSeen)
 	r.CoverageGaps["archetypes"] = findGaps(EnemyArchetypes, archetypesSeen)
 
-	allAttackStyles := []string{"projectile", "laser", "wideBeam", "scatter", "charge", "spin_aoe", "aura_dot"}
+	allAttackStyles := []string{"projectile", "wideBeam", "scatter", "spin_aoe", "radial"}
 	r.CoverageGaps["attack_styles"] = findGaps(allAttackStyles, attackStylesSeen)
 
 	allAbilities := []string{

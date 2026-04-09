@@ -1968,8 +1968,6 @@ func (s *StageScene) updatePlaying() {
 				s.postPipeline.Effects.TriggerRipple(e.X, e.Y, 6.0)
 			case "spin_aoe":
 				particle.EmitFireParticles(s.particlePool, e.X, e.Y, 2)
-			case "charge":
-				particle.EmitElectricSparks(s.particlePool, e.X, e.Y, 4)
 			}
 		}
 		if killed {
@@ -2627,8 +2625,6 @@ func towerTypeIcon(key string) string {
 		return "tower-electric"
 	case "hunter":
 		return "tower-hunter"
-	case "laser":
-		return "tower-laser"
 	default:
 		return ""
 	}
@@ -3032,16 +3028,12 @@ func filterUnlockedTowers(defs []tower.TowerDef, pm *persistence.ProgressManager
 // towerLightColor maps a tower attack style to a light color for dynamic lighting.
 func towerLightColor(style string) color.RGBA {
 	switch style {
-	case "laser", "wideBeam":
+	case "wideBeam":
 		return color.RGBA{R: 255, G: 80, B: 80, A: 255} // red
 	case "scatter":
 		return color.RGBA{R: 100, G: 180, B: 255, A: 255} // ice blue
-	case "charge":
-		return color.RGBA{R: 255, G: 255, B: 100, A: 255} // electric yellow
 	case "spin_aoe":
 		return color.RGBA{R: 255, G: 120, B: 30, A: 255} // fire orange
-	case "aura_dot":
-		return color.RGBA{R: 150, G: 255, B: 150, A: 255} // poison green
 	default:
 		return color.RGBA{R: 255, G: 240, B: 220, A: 255} // warm white
 	}

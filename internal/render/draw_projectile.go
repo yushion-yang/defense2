@@ -38,11 +38,6 @@ func DrawProjectiles(screen *ebiten.Image, pool *projectile.Pool) {
 
 		// 特殊弹丸类型优先判断
 		switch {
-		case p.ChargeShot:
-			// 蓄力弹：大红色 glow + 白芯
-			draw.Glow(screen, cx, cy, 8, 16, color.RGBA{R: 255, G: 80, B: 60, A: 220})
-			draw.FilledCircle(screen, cx, cy, 4, color.RGBA{R: 255, G: 255, B: 255, A: 200})
-
 		case p.Penetrate:
 			// 穿透弹：紫色拉长椭圆
 			draw.Glow(screen, cx, cy, 5, 12, color.RGBA{R: 180, G: 100, B: 255, A: 200})

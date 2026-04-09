@@ -112,12 +112,12 @@ func TestRegression_Tower_StrengthFullStats(t *testing.T) {
 // ============================================================
 
 // BUG: Laser tower direct-damage didn't kill enemies.
-// Fix: Sim handles direct-damage styles (laser/wideBeam/spinAoE/auraDot) without projectiles.
+// Fix: Sim handles direct-damage styles (wideBeam/spinAoE) without projectiles.
 func TestRegression_Tower_DirectDamageKill(t *testing.T) {
 	s := sim.New().
 		WithStraightPath(500).
 		WithEnemyAt(250, 100, 50, 0). // stationary enemy right next to tower
-		WithTowerFull("laser", tower.StyleLaser, 250, 100, 100, 200, 2.0, 0).
+		WithTowerFull("basic", tower.StyleWideBeam, 250, 100, 100, 200, 2.0, 0).
 		Build()
 
 	s.RunTicks(60) // 1 second, tower should fire twice (atkSpd=2)

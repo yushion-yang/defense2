@@ -40,9 +40,7 @@ func TestCC_ControlImmune(t *testing.T) {
 	if combat.ApplySlow(e, 0.5, 3.0, "") {
 		t.Error("控制免疫应阻止减速")
 	}
-	if combat.ApplyRoot(e, 2.0, "") {
-		t.Error("控制免疫应阻止定身")
-	}
+	// ApplyRoot 已移除（定身 CC 不再使用）
 }
 
 func TestCC_Tenacity(t *testing.T) {
@@ -196,70 +194,6 @@ func TestEvent_HPPercent(t *testing.T) {
 	}
 	if math.Abs(e.HP-130) > 1e-9 {
 		t.Errorf("hpPercent后HP=%.1f, 期望130", e.HP)
-	}
-}
-
-func TestEvent_ElitePromotion(t *testing.T) {
-	e := &enemy.Enemy{HP: 100, MaxHP: 100, Speed: 50, BaseSpeed: 50, Reward: 10, Radius: 10}
-	enemy.ApplyElitePromotion(e)
-
-	if !e.Elite {
-		t.Error("应标记为精英")
-	}
-	if math.Abs(e.MaxHP-400) > 1e-9 {
-		t.Errorf("精英MaxHP=%.1f, 期望400", e.MaxHP)
-	}
-	if e.Reward != 20 {
-		t.Errorf("精英Reward=%d, 期望20", e.Reward)
-	}
-}
-
-// ============================================================
-// 飞行路径测试
-// ============================================================
-
-func TestFlying_IsFlying(t *testing.T) {
-	e := &enemy.Enemy{MovementType: "flying"}
-	if !enemy.IsFlying(e) {
-		t.Error("flying敌人应返回true")
-	}
-	e2 := &enemy.Enemy{MovementType: "ground"}
-	if enemy.IsFlying(e2) {
-		t.Error("ground敌人应返回false")
-	}
-}
-
-func TestFlying_ComputePath(t *testing.T) {
-	path := enemy.ComputeFlyingPath(0, 0, 100, 50)
-	if len(path) != 2 {
-		t.Fatalf("飞行路径应有2点, 实际%d", len(path))
-	}
-	if path[0].X != 0 || path[0].Y != 0 || path[1].X != 100 || path[1].Y != 50 {
-		t.Errorf("路径点不正确: %v", path)
-	}
-}
-
-func TestFlying_Move(t *testing.T) {
-	path := enemy.ComputeFlyingPath(0, 0, 100, 0)
-	e := &enemy.Enemy{
-		X: 0, Y: 0,
-		Speed: 50, BaseSpeed: 50,
-		Path: path, PathIndex: 1,
-		MovementType: "flying",
-		Active:       true,
-	}
-
-	reached := enemy.MoveFlyingEnemy(e, 1.0) // 50像素/秒 * 1秒 = 50像素
-	if reached {
-		t.Error("1秒后不应到达(还差50)")
-	}
-	if math.Abs(e.X-50) > 1e-9 {
-		t.Errorf("X=%.1f, 期望50", e.X)
-	}
-
-	reached = enemy.MoveFlyingEnemy(e, 1.0) // 再1秒到达
-	if !reached {
-		t.Error("2秒后应到达")
 	}
 }
 

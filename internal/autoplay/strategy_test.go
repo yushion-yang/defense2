@@ -16,7 +16,7 @@ func mockState() *GameState {
 			{Row: 3, Col: 4, X: 300, Y: 300},
 		},
 		TowerDefs: []TowerDefInfo{
-			{Key: "laser", Cost: 50, Range: 120, Damage: 10, Index: 0},
+			{Key: "basic", Cost: 50, Range: 120, Damage: 10, Index: 0},
 			{Key: "freeze", Cost: 40, Range: 100, Damage: 5, Index: 1},
 		},
 		Towers:      nil,
@@ -84,29 +84,29 @@ func TestGreedyStrategy_BuildsWhenGoldAvailable(t *testing.T) {
 }
 
 func TestFocusStrategy_Name(t *testing.T) {
-	s := NewFocusStrategy("laser")
-	if s.Name() != "focus_laser" {
-		t.Errorf("expected 'focus_laser', got %q", s.Name())
+	s := NewFocusStrategy("basic")
+	if s.Name() != "focus_basic" {
+		t.Errorf("expected 'focus_basic', got %q", s.Name())
 	}
 }
 
 func TestFocusStrategy_BuildsOnlyTargetType(t *testing.T) {
-	s := NewFocusStrategy("laser")
+	s := NewFocusStrategy("basic")
 	state := mockState()
 
 	actions := s.Decide(state)
 	for _, a := range actions {
-		if a.Type == ActionBuild && a.TowerKey != "laser" {
+		if a.Type == ActionBuild && a.TowerKey != "basic" {
 			t.Errorf("focus_laser built %q instead of laser", a.TowerKey)
 		}
 	}
 }
 
 func TestFocusStrategy_UpgradesAfterAllBuilt(t *testing.T) {
-	s := NewFocusStrategy("laser")
+	s := NewFocusStrategy("basic")
 	state := mockState()
 	state.BuildCells = nil // 没有可建位置
-	state.Towers = []TowerInfo{{Key: "laser", Row: 1, Col: 2, Damage: 10, Cost: 50}}
+	state.Towers = []TowerInfo{{Key: "basic", Row: 1, Col: 2, Damage: 10, Cost: 50}}
 	state.Gold = 100
 
 	actions := s.Decide(state)

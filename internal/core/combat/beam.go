@@ -1,5 +1,5 @@
 // beam.go — 光束数据与对象池。
-// Beam 是纯视觉对象，用于 laser/wideBeam 的渲染（无碰撞逻辑）。
+// Beam 是纯视觉对象，用于 wideBeam 的渲染（无碰撞逻辑）。
 package combat
 
 // Beam 光束视觉对象。

@@ -44,7 +44,7 @@ func TestResetSession(t *testing.T) {
 	tr.SessionKills = 50
 	tr.SessionMaxStreak = 10
 	tr.SessionItemsUsed = 5
-	tr.SessionTowerTypes["laser"] = true
+	tr.SessionTowerTypes["basic"] = true
 	tr.SessionMaxGold = 999
 
 	tr.ResetSession()

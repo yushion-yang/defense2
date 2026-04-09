@@ -46,9 +46,10 @@ func TestParseCLICases(t *testing.T) {
 
 func TestParseCLICases_Focus(t *testing.T) {
 	cases := ParseCLICases(1, "focus", "map_01", "normal", "prince")
-	// 1 run × 8 towers = 8
-	if len(cases) != 8 {
-		t.Errorf("expected 8 focus cases, got %d", len(cases))
+	// 1 run × len(TowerKeys) towers
+	expected := len(TowerKeys)
+	if len(cases) != expected {
+		t.Errorf("expected %d focus cases, got %d", expected, len(cases))
 	}
 }
 

@@ -11,8 +11,8 @@ func TestOnTyped_BasicDispatch(t *testing.T) {
 	event.OnTyped(bus, event.EvtTowerBuilt, func(p event.TowerBuiltPayload) {
 		got = p
 	})
-	bus.Emit(event.EvtTowerBuilt, event.TowerBuiltPayload{TowerKey: "laser", Cost: 80})
-	if got.TowerKey != "laser" || got.Cost != 80 {
+	bus.Emit(event.EvtTowerBuilt, event.TowerBuiltPayload{TowerKey: "basic", Cost: 80})
+	if got.TowerKey != "basic" || got.Cost != 80 {
 		t.Fatalf("expected {laser,80}, got {%s,%d}", got.TowerKey, got.Cost)
 	}
 }

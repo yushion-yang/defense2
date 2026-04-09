@@ -155,40 +155,6 @@ func (tr *TowerRenderer) DrawTowers(screen *ebiten.Image, pool *tower.Pool, sele
 		// 射击反馈已由 shoot pulse（精灵放大 15%）+ muzzle flash 粒子提供，
 		// 不再叠加白色圆——高攻速塔会导致持续白圈。
 
-		// --- Charge visual: red glow at muzzle position (follows aim angle) ---
-		if !t.Selling && t.BuildAnim <= 0 && t.AttackStyleID == tower.StyleCharge && (t.ChargeProgress > 0 || t.ChargeReady) {
-			progress := t.ChargeProgress
-			if progress > 1 {
-				progress = 1
-			}
-			// 炮口位置（沿瞄准方向偏移 24px）
-			const muzzleDist = 24.0
-			mx := float64(cx) + math.Cos(t.Angle)*muzzleDist
-			my := float64(cy) + math.Sin(t.Angle)*muzzleDist
-			fmx, fmy := float32(mx), float32(my)
-
-			// Layer 1: 聚能光晕（红色半透明填充圆，随进度增大）
-			glowR := float32(16 * progress)
-			glowA := uint8(38 + 64*progress) // alpha 0.15~0.40
-			draw.Glow(screen, fmx, fmy, glowR*0.2, glowR,
-				color.RGBA{R: 239, G: 68, B: 68, A: glowA})
-
-			// Layer 2: 脉冲环（浅红色描边圆，快速脉动）
-			pulse := 1.0 + math.Sin(animTime*8)*0.2
-			ringR := float32(float64(glowR) * pulse)
-			ringA := uint8(76 + 128*progress) // alpha 0.3~0.8
-			draw.CircleOutline(screen, fmx, fmy, ringR, 1.5,
-				color.RGBA{R: 248, G: 113, B: 113, A: ringA})
-
-			// Layer 3: 中心亮点（>50% 进度时出现，近白色）
-			if progress > 0.5 {
-				dotR := float32(2 + (progress-0.5)*6)
-				dotA := uint8((progress - 0.5) * 1.5 * 255)
-				draw.FilledCircle(screen, fmx, fmy, dotR,
-					color.RGBA{R: 254, G: 242, B: 242, A: dotA})
-			}
-		}
-
 		// --- Spin AoE visual: rotating blade arcs (no fill) ---
 		if !t.Selling && t.BuildAnim <= 0 && t.AttackStyleID == tower.StyleSpinAoE && t.SpinActive > 0 {
 			a := t.SpinActive / 0.3

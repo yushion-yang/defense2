@@ -71,19 +71,11 @@ type InfoPanelVM struct {
 	Buffs []BuffVM
 
 	// Pending ability selection
-	PendingCount int               // 待选能力位数量
-	UpgradeChoices []UpgradeChoiceVM // 兼容旧代码（废弃路径）
+	PendingCount int // 待选能力位数量
 
 	// Buttons
 	UpgradeButtonText string // e.g. "强度+10 $10"
 	SellButtonText    string // e.g. "卖60"
-}
-
-// UpgradeChoiceVM 单个候选能力按钮的展示数据。
-type UpgradeChoiceVM struct {
-	Type  string // 能力类型标识（用于回调）
-	Label string // 显示名
-	Desc  string // 描述文本
 }
 
 // SlotVM 能力槽展示数据。
@@ -106,18 +98,7 @@ var (
 	lastAbilityBtnRect   ui.Rect   // "选择能力(N)" 按钮
 	lastPanelRect        ui.Rect   // entire info panel bounding box
 	lastPanelVisible     bool
-	lastChoiceRects      []ui.Rect // 候选能力按钮 rects (legacy)
 )
-
-// HitTestUpgradeChoice 检测点击是否在候选能力按钮上，返回索引(-1=未命中)。
-func HitTestUpgradeChoice(mx, my float32) int {
-	for i, r := range lastChoiceRects {
-		if mx >= r.X && mx <= r.X+r.W && my >= r.Y && my <= r.Y+r.H {
-			return i
-		}
-	}
-	return -1
-}
 
 // HitTestAbilityBtn 检测点击是否在"选择能力(N)"按钮上。
 func HitTestAbilityBtn(mx, my float32) bool {
@@ -283,7 +264,6 @@ func DrawInfoPanel(screen *ebiten.Image, vm InfoPanelVM) {
 	}
 
 	// "选择能力(N)" 按钮
-	lastChoiceRects = lastChoiceRects[:0]
 	lastAbilityBtnRect = ui.Rect{}
 	if vm.PendingCount > 0 {
 		panel.AddSpace(detailGap)

@@ -1,5 +1,5 @@
 // draw_beam.go — 光束渲染。
-// 渲染 laser/wideBeam 的视觉效果：多层 glow + 亮芯 + 端点光斑。
+// 渲染 wideBeam 的视觉效果：多层 glow + 亮芯 + 端点光斑。
 package render
 
 import (

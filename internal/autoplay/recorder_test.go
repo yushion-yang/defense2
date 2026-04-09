@@ -16,8 +16,8 @@ func TestRecorder_Finalize(t *testing.T) {
 		MaxWaves: 25,
 		Victory:  false,
 		Towers: []TowerInfo{
-			{Key: "laser", Row: 1, Col: 2, Damage: 15, Cost: 60},
-			{Key: "laser", Row: 2, Col: 3, Damage: 15, Cost: 60},
+			{Key: "basic", Row: 1, Col: 2, Damage: 15, Cost: 60},
+			{Key: "basic", Row: 2, Col: 3, Damage: 15, Cost: 60},
 			{Key: "freeze", Row: 3, Col: 4, Damage: 8, Cost: 40},
 		},
 		Enemies: []EnemyInfo{
@@ -62,7 +62,7 @@ func TestRecorder_CoverageTracking(t *testing.T) {
 	state := &GameState{
 		Tick: 100, Gold: 200, Lives: 20,
 		Towers: []TowerInfo{
-			{Key: "laser"},
+			{Key: "basic"},
 			{Key: "freeze"},
 		},
 		Enemies: []EnemyInfo{
