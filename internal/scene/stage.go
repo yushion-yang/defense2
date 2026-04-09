@@ -1434,7 +1434,7 @@ func (s *StageScene) tickStrengthDrain() {
 				return
 			}
 			if t.Strength != nil {
-				t.Strength.SetEnemySub(key, t.Strength.Base*e.StrDrainRatio)
+				t.Strength.SetEnemySub(key, t.Strength.Effective()*e.StrDrainRatio)
 				t.RecalcStats()
 			}
 		} else {
