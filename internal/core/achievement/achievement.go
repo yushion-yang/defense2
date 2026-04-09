@@ -4,8 +4,10 @@
 package achievement
 
 import (
-	"defense2/internal/core/persistence"
+	"log"
 	"sync"
+
+	"defense2/internal/core/persistence"
 )
 
 // Tier represents the rarity/difficulty tier of an achievement.
@@ -156,7 +158,9 @@ func (t *Tracker) saveLocked() {
 		Unlocked:         t.Unlocked,
 		TotalTowersBuilt: t.TotalTowersBuilt,
 	}
-	_ = t.storage.Set(storageKey, &data)
+	if err := t.storage.Set(storageKey, &data); err != nil {
+		log.Printf("warning: failed to save achievements: %v", err)
+	}
 }
 
 // Load restores tracker state from storage.

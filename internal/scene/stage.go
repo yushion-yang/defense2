@@ -19,7 +19,7 @@ import (
 	"sync"
 	"time"
 
-	_ "defense2/internal/core/tower/abilities" // 通过 init() 注册塔能力
+	"defense2/internal/core/tower/abilities" // 通过 init() 注册塔能力；Remove hook
 	_ "defense2/internal/core/warden/types"    // 通过 init() 注册战灵类型
 
 	gameAudio "defense2/internal/audio"
@@ -292,6 +292,9 @@ func NewStageSceneWithOpts(sw Switcher, opts StageOptions) *StageScene {
 		wardenPanelOpen: false,
 		achieveTracker:  achTracker,
 	}
+
+	// 塔移除时清理缩放能力的运行时状态（防止 map 泄漏）
+	s.towers.RemoveHook = abilities.ClearTowerScalingState
 
 	// 后处理管线（bloom）+ 粒子系统
 	s.postPipeline = postprocess.NewPipeline()

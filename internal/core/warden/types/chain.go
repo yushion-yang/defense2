@@ -107,23 +107,10 @@ func chainTowerBuff(w *warden.Warden, s *ChainState, ctx *warden.TickContext) {
 		return
 	}
 
-	// Union-Find
+	// Union-Find（复用 strength 包的实现，rank=nil 使用简单合并）
 	parent := make([]int, len(towers))
 	for i := range parent {
 		parent[i] = i
-	}
-	var find func(int) int
-	find = func(x int) int {
-		if parent[x] != x {
-			parent[x] = find(parent[x])
-		}
-		return parent[x]
-	}
-	union := func(a, b int) {
-		ra, rb := find(a), find(b)
-		if ra != rb {
-			parent[ra] = rb
-		}
 	}
 
 	// 串联 ChainRange 内的塔，同时记录连接对（供渲染用）
@@ -131,7 +118,7 @@ func chainTowerBuff(w *warden.Warden, s *ChainState, ctx *warden.TickContext) {
 	for i := 0; i < len(towers); i++ {
 		for j := i + 1; j < len(towers); j++ {
 			if math.Hypot(towers[i].X-towers[j].X, towers[i].Y-towers[j].Y) <= s.ChainRange {
-				union(i, j)
+				strength.UFUnion(parent, nil, i, j)
 				s.ChainLinks = append(s.ChainLinks, ChainLink{
 					X1: towers[i].X, Y1: towers[i].Y,
 					X2: towers[j].X, Y2: towers[j].Y,
@@ -143,14 +130,14 @@ func chainTowerBuff(w *warden.Warden, s *ChainState, ctx *warden.TickContext) {
 	// 统计各组大小
 	groups := make(map[int]int)
 	for i := range towers {
-		groups[find(i)]++
+		groups[strength.UFFind(parent, i)]++
 	}
 
 	// 应用加成
 	key := fmt.Sprintf("chain_warden_%d", w.ID)
 	newBonuses := make(map[*tower.Tower]float64, len(towers))
 	for i, t := range towers {
-		groupSize := groups[find(i)]
+		groupSize := groups[strength.UFFind(parent, i)]
 		bonus := float64(groupSize) * s.BonusPerTower
 		ensureStrength(t)
 		t.ApplyBuff(tower.TowerBuff{

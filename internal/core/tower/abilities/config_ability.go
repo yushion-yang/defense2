@@ -11,7 +11,6 @@ import (
 	"defense2/internal/config"
 	"defense2/internal/core/enemy"
 	"defense2/internal/core/projectile"
-	"defense2/internal/core/strength"
 	"defense2/internal/core/tower"
 )
 
@@ -322,36 +321,12 @@ func (a *ConfigAbility) OnTick(t *tower.Tower, ctx *tower.TickContext) *tower.Ti
 	return nil
 }
 
-// ensureStr 确保塔有战力数据。
-func ensureStr(t *tower.Tower) {
-	if t.Strength == nil {
-		t.Strength = strength.NewStrengthData()
-	}
-}
-
 // RegisterConfigAbilities 从能力表注册所有数据驱动的能力。
 // 替代各文件 init() 中的硬编码注册。
 func RegisterConfigAbilities(table config.AbilityTable) {
 	for _, def := range table {
 		tower.Register(&ConfigAbility{Def: def})
 	}
-}
-
-// applyAura 通用光环施加：对范围内塔（含自身）ApplyBuff，范围外 RemoveBuff。
-func applyAura(src *tower.Tower, ctx *tower.TickContext, srcKey string, radius float64,
-	calcValue func(other *tower.Tower) float64, source, desc string) {
-	ctx.Towers.Each(func(other *tower.Tower) {
-		ensureStr(other)
-		if math.Hypot(src.X-other.X, src.Y-other.Y) <= radius {
-			val := calcValue(other)
-			other.ApplyBuff(tower.TowerBuff{
-				Key: srcKey, Source: source, Desc: desc,
-				Value: val, Duration: -1, Remaining: -1,
-			})
-		} else {
-			other.RemoveBuff(srcKey)
-		}
-	})
 }
 
 // applyBuffDisplay 仅在 Tower.Buffs 中添加/更新一条显示记录（不走 Strength）。

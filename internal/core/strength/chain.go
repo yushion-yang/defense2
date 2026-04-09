@@ -52,7 +52,7 @@ func RebuildChainNetwork(towers []ChainTower) map[int]ChainInfo {
 			dy := towers[i].Y - towers[j].Y
 			dist := math.Sqrt(dx*dx + dy*dy)
 			if dist <= ChainDistance {
-				ufUnion(parent, rank, i, j)
+				UFUnion(parent, rank, i, j)
 			}
 		}
 	}
@@ -60,14 +60,14 @@ func RebuildChainNetwork(towers []ChainTower) map[int]ChainInfo {
 	// 统计每个链组的大小
 	groupSize := make(map[int]int)
 	for i := 0; i < n; i++ {
-		root := ufFind(parent, i)
+		root := UFFind(parent, i)
 		groupSize[root]++
 	}
 
 	// 构建结果
 	result := make(map[int]ChainInfo, n)
 	for i := 0; i < n; i++ {
-		root := ufFind(parent, i)
+		root := UFFind(parent, i)
 		size := groupSize[root]
 
 		var bonus float64
@@ -90,19 +90,24 @@ func RebuildChainNetwork(towers []ChainTower) map[int]ChainInfo {
 	return result
 }
 
-// ufFind 查找根节点（带路径压缩）。
-func ufFind(parent []int, x int) int {
+// UFFind 查找根节点（带路径压缩）。
+func UFFind(parent []int, x int) int {
 	if parent[x] != x {
-		parent[x] = ufFind(parent, parent[x])
+		parent[x] = UFFind(parent, parent[x])
 	}
 	return parent[x]
 }
 
-// ufUnion 合并两个集合（按秩合并）。
-func ufUnion(parent, rank []int, x, y int) {
-	rx := ufFind(parent, x)
-	ry := ufFind(parent, y)
+// UFUnion 合并两个集合（按秩合并）。
+// rank 可为 nil，此时退化为简单合并（无秩优化）。
+func UFUnion(parent, rank []int, x, y int) {
+	rx := UFFind(parent, x)
+	ry := UFFind(parent, y)
 	if rx == ry {
+		return
+	}
+	if rank == nil {
+		parent[rx] = ry
 		return
 	}
 	if rank[rx] < rank[ry] {

@@ -293,6 +293,17 @@ func (a *ElementSwitch) OnTick(t *tower.Tower, ctx *tower.TickContext) *tower.Ti
 	return nil
 }
 
+// ClearTowerScalingState 清除指定塔的所有缩放类能力运行时状态。
+// 在塔被出售/移除时调用，防止 map 泄漏。
+func ClearTowerScalingState(key string) {
+	delete(killUpgradeStacks, key)
+	delete(waveScaleCounters, key)
+	delete(periodicCastTimers, key)
+	delete(neighborBoostTimers, key)
+	delete(elementSwitchTimers, key)
+	delete(elementSwitchActiveElement, key)
+}
+
 // ResetScalingState 清空所有缩放类能力的运行时状态（测试辅助函数）。
 func ResetScalingState() {
 	killUpgradeStacks = map[string]int{}
