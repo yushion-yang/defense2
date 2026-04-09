@@ -34,12 +34,12 @@ var (
 	// GameModes 需要测试的游戏模式。
 	GameModes = []string{"campaign", "endless", "timed", "bossRush", "challenge", "test", "autoplay"}
 
-	// EnemyArchetypes 所有敌人原型（17 个）。
+	// EnemyArchetypes 所有敌人原型（18 个）。
 	EnemyArchetypes = []string{
 		"normal", "runner", "tank", "armored", "swarm",
 		"phantom", "shielder", "colossus", "ironwill", "steadfast",
 		"phaser", "drainer", "healer", "buffer",
-		"splitter", "summoner", "dummy",
+		"splitter", "summoner", "purifier", "dummy",
 	}
 )
 

@@ -43,7 +43,7 @@ var waveCompositions = []struct {
 		{"normal", 15}, {"runner", 8}, {"tank", 7}, {"armored", 7},
 		{"swarm", 6}, {"shielder", 5}, {"phantom", 5}, {"steadfast", 4},
 		{"healer", 5}, {"buffer", 5}, {"ironwill", 5}, {"colossus", 4},
-		{"splitter", 4}, {"phaser", 4}, {"drainer", 4}, {"summoner", 4},
+		{"splitter", 4}, {"phaser", 4}, {"drainer", 4}, {"summoner", 4}, {"purifier", 2},
 	}},
 }
 
