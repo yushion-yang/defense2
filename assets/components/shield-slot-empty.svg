@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 12 10" width="12" height="10">
+  <!-- 空槽位（可独立使用，放置于盾牌的三个槽位中） -->
+  <rect x="0" y="0" width="12" height="10" rx="2" fill="#3a1a08" stroke="#6b3410" stroke-width="0.8"/>
+  <rect x="1" y="1" width="10" height="8" rx="1.5" fill="#2a1005" opacity="0.6"/>
+  <!-- 中心十字刻痕（表示空） -->
+  <line x1="4" y1="5" x2="8" y2="5" stroke="#5a3818" stroke-width="0.5" opacity="0.4"/>
+  <line x1="6" y1="3" x2="6" y2="7" stroke="#5a3818" stroke-width="0.5" opacity="0.4"/>
+</svg>
