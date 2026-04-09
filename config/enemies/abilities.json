@@ -1,9 +1,9 @@
 {
-  "_meta": {"description":"怪物能力配置表 — 6大类别，每类别最多装配1个", "categories":["defense","resist","movement","offense","support","death"]},
+  "_meta": {"description":"怪物能力配置表 — 6大类别，每类别最多装配1个", "categories":["defense","passive","resist","movement","offense","support","death"]},
 
   "projectileBlock" : {"type":"projectileBlock" , "label":"弹幕盾"     , "icon":"shield"   , "category":"defense"  , "scaleDim":"blockChance"     , "base":0.4   , "potential":0  , "param":0    , "paramDim":""            , "silenceable":true  , "description":"阻挡弹射物(projectile/scatter/bounce/radial)，光束和AoE无视"                  },
   "armorPlating"    : {"type":"armorPlating"    , "label":"装甲"       , "icon":"armor"    , "category":"defense"  , "scaleDim":"flatReduce"      , "base":5     , "potential":0  , "param":0    , "paramDim":""            , "silenceable":true  , "description":"每次受击固定减免5点伤害(最低1伤害)"                                            },
-  "evasion"         : {"type":"evasion"         , "label":"闪避"       , "icon":"dodge"    , "category":"defense"  , "scaleDim":"chance"          , "base":0.3   , "potential":0  , "param":0    , "paramDim":""            , "silenceable":true  , "description":"30%概率完全闪避攻击(含所有命中效果)"                                            },
+  "evasion"         : {"type":"evasion"         , "label":"闪避"       , "icon":"dodge"    , "category":"passive"  , "scaleDim":"chance"          , "base":0.3   , "potential":0  , "param":0    , "paramDim":""            , "silenceable":true  , "description":"30%概率完全闪避攻击(含所有命中效果)"                                            },
   "damageCap"       : {"type":"damageCap"       , "label":"坚韧(固定)"  , "icon":"cap"      , "category":"defense"  , "scaleDim":"maxDamage"       , "base":60    , "potential":0  , "param":0    , "paramDim":""            , "silenceable":true  , "description":"单次受击伤害上限为60"                                                        },
   "damageCapPercent": {"type":"damageCapPercent", "label":"坚韧(百分比)", "icon":"cap"      , "category":"defense"  , "scaleDim":"maxDamagePercent", "base":0.05  , "potential":0  , "param":0    , "paramDim":""            , "silenceable":true  , "description":"单次受击伤害上限为5%最大生命值"                                                 },
 
