@@ -1076,8 +1076,6 @@ func (s *StageScene) drawEnemyTooltip(screen *ebiten.Image, e *enemy.Enemy) {
 	tag := ""
 	if e.Boss {
 		tag = " Boss"
-	} else if e.Elite {
-		tag = " 精英"
 	}
 	if e.Behavior != "" {
 		tag += " [" + e.Behavior + "]"

@@ -144,8 +144,6 @@ func (er *EnemyRenderer) DrawEnemies(screen *ebiten.Image, pool *enemy.Pool, ani
 			displaySize := float64(enemySpriteSize)
 			if e.Boss {
 				displaySize *= 1.0 + 0.04*math.Sin(animTime*1.8)
-			} else if e.Elite {
-				displaySize *= 1.0 + 0.02*math.Sin(animTime*2.2)
 			}
 
 			if e.Stealthed {
@@ -258,12 +256,7 @@ func (er *EnemyRenderer) DrawEnemies(screen *ebiten.Image, pool *enemy.Pool, ani
 				}
 			}
 
-			// Elite center tick (single 50% divider)
-			if e.Elite && !e.Boss {
-				divX := barX + barW*0.5
-				draw.FilledRect(screen, divX, barY, 1, barH,
-					color.RGBA{R: 15, G: 23, B: 42, A: 128}, true)
-			}
+			// (Elite center tick removed)
 		}
 
 		// --- Status effect dots ---

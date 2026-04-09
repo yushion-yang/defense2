@@ -198,23 +198,11 @@ func ApplyBuffTemplate(e *Enemy, templateID string) bool {
 
 // ApplyFlags 对敌人应用标记效果。
 // 支持的标记：
-//   - "elite": HP*3, Speed*1.1, Reward*2
+//   (elite 已移除)
 //   - "boss": HP*30, Reward*5
 func ApplyFlags(e *Enemy, flags []string) {
 	for _, flag := range flags {
 		switch flag {
-		case "elite":
-			e.MaxHP *= 3
-			e.HP *= 3
-			e.BaseSpeed *= 1.1
-			if e.SlowTimer <= 0 {
-				e.Speed = e.BaseSpeed
-			} else {
-				e.Speed = e.BaseSpeed * e.SlowFactor
-			}
-			e.Reward *= 2
-			e.Elite = true
-
 		case "boss":
 			e.MaxHP *= 30
 			e.HP *= 30
@@ -248,8 +236,6 @@ func MapLegacyType(typeName string) (archetype string, flags []string, buffIDs [
 		return "summoner", nil, []string{"spawnMinions"}
 	case "reflector":
 		return "reflector", nil, []string{"reflect"}
-	case "elite":
-		return "normal", []string{"elite"}, nil
 	case "boss":
 		return "normal", []string{"boss"}, nil
 	default:

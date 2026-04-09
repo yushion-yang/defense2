@@ -49,27 +49,4 @@ func ApplyEnemyEvent(e *Enemy, kind string, value float64) {
 	}
 }
 
-// ApplyElitePromotion 将普通敌人晋升为精英。
-// 提升属性：HP*4, Speed*0.9, Reward*2, Radius*1.4。
-func ApplyElitePromotion(e *Enemy) {
-	// 血量翻 4 倍
-	e.MaxHP *= 4
-	e.HP *= 4
-
-	// 速度降低 10%
-	e.BaseSpeed *= 0.9
-	if e.SlowTimer <= 0 {
-		e.Speed = e.BaseSpeed
-	} else {
-		e.Speed = e.BaseSpeed * e.SlowFactor
-	}
-
-	// 奖励翻倍
-	e.Reward *= 2
-
-	// 碰撞体积增大
-	e.Radius *= 1.4
-
-	// 标记为精英
-	e.Elite = true
-}
+// ApplyElitePromotion 已移除（精英概念取消）。

@@ -366,15 +366,13 @@ func (s *Spawner) filteredArchetypes() []string {
 func (s *Spawner) matchesFilter(name string, cfg *SpawnConfig) bool {
 	isBoss := cfg != nil && cfg.Boss
 	isFlying := strings.HasPrefix(name, "fly-") || strings.HasPrefix(name, "flying")
-	isElite := strings.HasPrefix(name, "el-") || strings.Contains(name, "elite")
+	_, _ = name, isFlying // flying 已移除但保留过滤逻辑
 
 	switch s.EnemyFilter {
 	case "ground-only":
 		return !isBoss && !isFlying
 	case "flying-only":
 		return isFlying
-	case "elite-only":
-		return isElite
 	case "boss-only":
 		return isBoss
 	case "dummy":
@@ -434,9 +432,9 @@ var waveBuffPools = []struct {
 }
 
 // applyWaveBuffs 根据当前波次为刚生成的敌人随机注入 buff 模板。
-// Boss 和 Elite 不注入（它们有自己的强化）。
+// Boss 不注入波次 buff。
 func (s *Spawner) applyWaveBuffs(e *Enemy) {
-	if e.Boss || e.Elite {
+	if e.Boss {
 		return
 	}
 

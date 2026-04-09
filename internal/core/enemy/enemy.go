@@ -72,7 +72,7 @@ type Enemy struct {
 	ZoneDmgAccum float64         // 区域能力（curseZone/poisonZone）每帧累积伤害，DotTick 时结算
 	RootTimer    float64         // 定身剩余时间（秒）
 	DisplayHP    float64         // 显示用血量（伤害拖尾缓慢衰减到实际 HP）
-	Elite        bool            // 是否为精英怪
+	// Elite 已移除
 	HitFlash     float64         // 受击闪白剩余时间（秒，>0 时渲染白色叠加）
 	Age          float64         // 存活时间（秒），用于出生保护期
 	AnimCur      string          // 当前动画名（per-instance）

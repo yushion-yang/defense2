@@ -75,7 +75,7 @@ func (p *Pool) Spawn(x, y, baseHP, baseSpeed float64, pathIndex int, archetype s
 			e.DamageAmplify = 0
 			e.DamageAmplifyTimer = 0
 			e.DisplayHP = hp
-			e.Elite = cfg.HpScale >= 4
+			// Elite 已移除
 			e.DyingTimer = 0
 			e.DyingDuration = 0
 			e.HitFlash = 0

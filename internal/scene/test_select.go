@@ -51,7 +51,6 @@ var testScenarios = []testScenario{
 	{"tower-core", "核心炮塔", "tower-laser", "全部核心炮塔，基础战斗测试", "tower", "map_test_large", 9999, 999, 10, color.RGBA{R: 100, G: 150, B: 220, A: 255}, "mixed", false},
 	{"enemy-ground", "地面怪物", "stat-movspd", "仅出地面普通怪，路径测试", "enemy", "map_test_large", 9999, 999, 10, color.RGBA{R: 220, G: 120, B: 80, A: 255}, "ground-only", false},
 	{"enemy-flying", "飞行怪物", "stat-range", "仅出飞行怪，防空能力测试", "enemy", "map_test_large", 9999, 999, 10, color.RGBA{R: 100, G: 180, B: 220, A: 255}, "flying-only", false},
-	{"enemy-elite", "精英怪物", "pulse", "仅出精英怪，特殊能力测试", "enemy", "map_test_large", 9999, 999, 10, color.RGBA{R: 160, G: 120, B: 220, A: 255}, "elite-only", false},
 	{"enemy-boss", "Boss 怪物", "execute", "仅出Boss，机制和伤害上限", "enemy", "map_test_large", 99999, 999, 8, color.RGBA{R: 220, G: 80, B: 80, A: 255}, "boss-only", false},
 
 	{"combo-static", "全怪静止展示", "stat-target", "所有怪物静止排列展示", "combo", "map_test_large", 9999, 999, 0, color.RGBA{R: 80, G: 180, B: 120, A: 255}, "all-static", false},
