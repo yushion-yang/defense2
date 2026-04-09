@@ -91,6 +91,11 @@ type MemoryStorage struct {
 	mu   sync.Mutex        // 并发安全锁
 }
 
+// NewMemoryStorage 创建内存存储实例。
+func NewMemoryStorage() *MemoryStorage {
+	return &MemoryStorage{data: make(map[string][]byte)}
+}
+
 // Get 从内存读取。
 func (s *MemoryStorage) Get(key string, target interface{}) error {
 	s.mu.Lock()

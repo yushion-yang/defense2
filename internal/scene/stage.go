@@ -184,7 +184,10 @@ func NewStageSceneWithOpts(sw Switcher, opts StageOptions) *StageScene {
 	gm := gamemap.NewGameMap(cfg)
 
 	// 初始化持久化
-	store, _ := persistence.DefaultStorage()
+	store, err := persistence.DefaultStorage()
+	if err != nil {
+		store = persistence.NewMemoryStorage()
+	}
 	pm := persistence.NewProgressManager(store)
 	achTracker := achievement.NewTracker(store)
 
@@ -1734,23 +1737,13 @@ func (s *StageScene) updatePlaying() {
 		render.SpawnDamageText(e.X, e.Y-10, dmg, false, e.Boss)
 	})
 
-	// 2.5. 敌人行为 tick（狂暴/回血/传送）
+	// 2.5. 敌人行为 tick（传送；狂暴/回血由 TickBehaviors 统一处理）
 	s.enemies.Each(func(e *enemy.Enemy) {
 		if e.IsDying() || e.IsSpawning() {
 			return
 		}
-		enemy.UpdateBerserk(e)
-		enemy.UpdateRegeneration(e, gameDT)
 		enemy.UpdateTeleport(e, gameDT)
 	})
-	// 群体行为（需要遍历所有敌人的交叉操作）
-	var activeEnemies []*enemy.Enemy
-	s.enemies.Each(func(e *enemy.Enemy) {
-		if e.Active && !e.IsDying() && !e.IsSpawning() {
-			activeEnemies = append(activeEnemies, e)
-		}
-	})
-	// UpdateHealing/UpdateBufferAura 已由 TickBehaviors 统一处理，不再重复调用
 
 	// 3. 敌人移动（到达终点扣生命）
 	s.enemies.Each(func(e *enemy.Enemy) {
@@ -3087,6 +3080,9 @@ func loadTowerDefsOrFallback() []tower.TowerDef {
 
 // filterUnlockedTowers 过滤只保留已解锁的塔定义。
 func filterUnlockedTowers(defs []tower.TowerDef, pm *persistence.ProgressManager) []tower.TowerDef {
+	if len(defs) == 0 {
+		return nil
+	}
 	result := make([]tower.TowerDef, 0, len(defs))
 	for _, d := range defs {
 		if pm.IsTowerUnlocked(d.Key) {

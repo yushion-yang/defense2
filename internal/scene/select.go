@@ -107,7 +107,10 @@ type SelectScene struct {
 
 // NewSelectScene 创建选关场景。
 func NewSelectScene(sw Switcher) *SelectScene {
-	store, _ := persistence.DefaultStorage()
+	store, err := persistence.DefaultStorage()
+	if err != nil {
+		store = persistence.NewMemoryStorage()
+	}
 	pm := persistence.NewProgressManager(store)
 
 	// 加载难度配置

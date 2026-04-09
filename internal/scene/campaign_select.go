@@ -73,7 +73,10 @@ func NewCampaignSelectScene(sw Switcher) *CampaignSelectScene {
 		levels = nil
 	}
 
-	store, _ := persistence.DefaultStorage()
+	store, err := persistence.DefaultStorage()
+	if err != nil {
+		store = persistence.NewMemoryStorage()
+	}
 	pm := persistence.NewProgressManager(store)
 
 	return &CampaignSelectScene{
