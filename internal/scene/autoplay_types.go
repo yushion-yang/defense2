@@ -70,6 +70,19 @@ type AutoPlayEnemy struct {
 	IsBleeding bool
 	IsRooted   bool
 	IsHit      bool // HitFlash > 0（受击闪白）
+
+	BaseSpeed       float64
+	DamageAmplify   float64
+	AbilitySilenced bool
+	PhaseActive     bool
+	ArmorFlat       float64
+	EvasionChance   float64
+	DamageCap       float64
+	DamageCapPct    float64
+	HealRadius      float64
+	BuffRadius      float64
+	SplitCount      int
+	AbilityIDs      []string
 }
 
 // AutoPlayTower 已建塔快照。
@@ -84,6 +97,8 @@ type AutoPlayTower struct {
 	Abilities   []string // 已装载能力列表
 	AttackStyle string   // 攻击方式 ID
 	HasTarget   bool     // 是否正在锁定目标（视觉目录用）
+	AttackSpeed float64
+	BaseDamage  float64
 }
 
 // AutoPlayCell 可建造位置。

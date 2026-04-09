@@ -93,21 +93,21 @@ type StageScene struct {
 	wardenType     string                       // 战灵类型标识（用于重玩传递）
 	wardenCfg      *config.WardenConfig         // 战灵配置（用于面板显示）
 	// 道具系统
-	inventory         *item.Inventory // 道具背包
-	dragItemKind      item.Kind       // 当前拖拽的道具类型
-	dragItemActive    bool            // 是否正在拖拽道具
-	dragHoverTower    *tower.Tower    // 拖拽道具时悬停的目标塔
-	itemPanelOpen     bool            // 道具面板是否打开
+	inventory      *item.Inventory // 道具背包
+	dragItemKind   item.Kind       // 当前拖拽的道具类型
+	dragItemActive bool            // 是否正在拖拽道具
+	dragHoverTower *tower.Tower    // 拖拽道具时悬停的目标塔
+	itemPanelOpen  bool            // 道具面板是否打开
 	// 按钮微交互动画状态
-	buildBtnState ui.ButtonState // 造塔按钮动画
-	itemBtnState  ui.ButtonState // 道具按钮动画
-	gameSpeed         int             // 游戏速度倍率（1 或 2）
+	buildBtnState     ui.ButtonState        // 造塔按钮动画
+	itemBtnState      ui.ButtonState        // 道具按钮动画
+	gameSpeed         int                   // 游戏速度倍率（1 或 2）
 	timeScale         *timescale.Controller // 慢动作时间缩放控制器
-	imode             interactMode    // 交互状态机
-	prePauseMode      interactMode    // 暂停前的交互模式（恢复用）
-	buildHoverIdx     int             // 建塔面板鼠标悬停索引
-	gesture           *input.Gesture  // 统一手势识别器
-	waveLivesSnapshot int             // 波开始时的生命快照（用于完美波次检测）
+	imode             interactMode          // 交互状态机
+	prePauseMode      interactMode          // 暂停前的交互模式（恢复用）
+	buildHoverIdx     int                   // 建塔面板鼠标悬停索引
+	gesture           *input.Gesture        // 统一手势识别器
+	waveLivesSnapshot int                   // 波开始时的生命快照（用于完美波次检测）
 	// 相机（大地图拖拽）
 	camX, camY    float64 // 相机偏移（世界坐标）
 	dragging      bool    // 是否正在拖拽
@@ -2006,7 +2006,7 @@ func (s *StageScene) updatePlaying() {
 			switch attackStyle {
 			case "scatter":
 				particle.EmitIceParticles(s.particlePool, e.X, e.Y, 2)
-				s.postPipeline.Effects.TriggerRipple(e.X, e.Y, 6.0)
+				s.postPipeline.Effects.TriggerRipple(e.X, e.Y, 1.5)
 			case "spin_aoe":
 				particle.EmitFireParticles(s.particlePool, e.X, e.Y, 2)
 			}
@@ -2270,7 +2270,7 @@ func (s *StageScene) Draw(screen *ebiten.Image) {
 	if s.screenshotPending {
 		s.screenshotPending = false
 		if img := readScreenPixels(screen); img != nil {
-			fname := filepath.Join("docs", "autotest", "pic",
+			fname := filepath.Join("docs", "bug", "pic",
 				fmt.Sprintf("screenshot_%s.png", time.Now().Format("20060102_150405")))
 			saveImageAsync(img, fname)
 			hud.ShowToast("截图已保存")
@@ -3172,8 +3172,14 @@ func (s *StageScene) buildAutoPlaySnapshot() AutoPlaySnapshot {
 			Active: e.Active, Dying: e.IsDying(),
 			IsSlowed: e.SlowTimer > 0, IsStunned: e.StunTimer > 0,
 			IsBurning: e.BurnTimer > 0, IsBleeding: e.BleedTimer > 0,
-			IsRooted: e.RootTimer > 0,
-			IsHit:    e.HitFlash > 0,
+			IsRooted:  e.RootTimer > 0,
+			IsHit:     e.HitFlash > 0,
+			BaseSpeed: e.BaseSpeed, DamageAmplify: e.DamageAmplify,
+			AbilitySilenced: e.AbilitySilenced, PhaseActive: e.PhaseActive,
+			ArmorFlat: e.ArmorFlat, EvasionChance: e.EvasionChance,
+			DamageCap: e.DamageCap, DamageCapPct: e.DamageCapPercent,
+			HealRadius: e.HealRadius, BuffRadius: e.BuffRadius,
+			SplitCount: e.SplitCount, AbilityIDs: e.AbilityIDs,
 		})
 	})
 
@@ -3190,6 +3196,7 @@ func (s *StageScene) buildAutoPlaySnapshot() AutoPlaySnapshot {
 			Abilities:   t.Abilities,
 			AttackStyle: string(t.AttackStyleID),
 			HasTarget:   t.Target != nil,
+			AttackSpeed: t.AttackSpeed, BaseDamage: t.BaseDamage,
 		})
 	})
 

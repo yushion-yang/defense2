@@ -26,7 +26,7 @@ type ControllerConfig struct {
 	MapID      string
 	Difficulty string
 	Warden     string
-	Seed int64 // 随机种子（记录到报告，用于复现）
+	Seed       int64 // 随机种子（记录到报告，用于复现）
 }
 
 // Controller 自动对局控制器，实现 scene.AutoPlayer。
@@ -53,7 +53,7 @@ type Controller struct {
 	startTime   time.Time
 
 	// HUD 截图追踪（每种模式只截一次）
-	modeCaptured map[int]bool
+	modeCaptured       map[int]bool
 	firstTowerCaptured bool
 }
 
@@ -329,8 +329,14 @@ func snapshotToGameState(snap scene.AutoPlaySnapshot) *GameState {
 			Active: e.Active, Dying: e.Dying,
 			IsSlowed: e.IsSlowed, IsStunned: e.IsStunned,
 			IsBurning: e.IsBurning, IsBleeding: e.IsBleeding,
-			IsRooted: e.IsRooted,
-			IsHit: e.IsHit,
+			IsRooted:  e.IsRooted,
+			IsHit:     e.IsHit,
+			BaseSpeed: e.BaseSpeed, DamageAmplify: e.DamageAmplify,
+			AbilitySilenced: e.AbilitySilenced, PhaseActive: e.PhaseActive,
+			ArmorFlat: e.ArmorFlat, EvasionChance: e.EvasionChance,
+			DamageCap: e.DamageCap, DamageCapPct: e.DamageCapPct,
+			HealRadius: e.HealRadius, BuffRadius: e.BuffRadius,
+			SplitCount: e.SplitCount, AbilityIDs: e.AbilityIDs,
 		})
 	}
 
@@ -339,9 +345,10 @@ func snapshotToGameState(snap scene.AutoPlaySnapshot) *GameState {
 			Key: t.Key, Row: t.Row, Col: t.Col,
 			X: t.X, Y: t.Y, Damage: t.Damage,
 			Range: t.Range, Cost: t.Cost, Strength: t.Strength,
-			Abilities: t.Abilities,
+			Abilities:   t.Abilities,
 			AttackStyle: t.AttackStyle,
-			HasTarget: t.HasTarget,
+			HasTarget:   t.HasTarget,
+			AttackSpeed: t.AttackSpeed, BaseDamage: t.BaseDamage,
 		})
 	}
 

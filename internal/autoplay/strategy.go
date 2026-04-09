@@ -44,20 +44,33 @@ type GameState struct {
 
 // EnemyInfo 敌人快照。
 type EnemyInfo struct {
-	ID        int
-	X, Y      float64
-	HP, MaxHP float64
-	Speed     float64
-	Archetype string
-	Boss      bool
-	Active    bool
-	Dying     bool
+	ID         int
+	X, Y       float64
+	HP, MaxHP  float64
+	Speed      float64
+	Archetype  string
+	Boss       bool
+	Active     bool
+	Dying      bool
 	IsSlowed   bool
 	IsStunned  bool
 	IsBurning  bool
 	IsBleeding bool
 	IsRooted   bool
 	IsHit      bool
+
+	BaseSpeed       float64
+	DamageAmplify   float64
+	AbilitySilenced bool
+	PhaseActive     bool
+	ArmorFlat       float64
+	EvasionChance   float64
+	DamageCap       float64
+	DamageCapPct    float64
+	HealRadius      float64
+	BuffRadius      float64
+	SplitCount      int
+	AbilityIDs      []string
 }
 
 // TowerInfo 已建塔快照。
@@ -72,6 +85,8 @@ type TowerInfo struct {
 	Abilities   []string
 	AttackStyle string
 	HasTarget   bool
+	AttackSpeed float64
+	BaseDamage  float64
 }
 
 // TowerDefInfo 可用塔类型定义。
@@ -104,12 +119,12 @@ const (
 
 // Action 自动操作指令。
 type Action struct {
-	Type          ActionType
-	TowerKey      string // Build: 要建造的塔类型
-	Cell          Cell   // Build: 建造位置
-	Row, Col      int    // Upgrade/Sell: 目标塔网格坐标
-	WardenKey     string // SelectWarden: 战灵类型
-	AbilityName   string // AddAbility: 能力名称
+	Type        ActionType
+	TowerKey    string // Build: 要建造的塔类型
+	Cell        Cell   // Build: 建造位置
+	Row, Col    int    // Upgrade/Sell: 目标塔网格坐标
+	WardenKey   string // SelectWarden: 战灵类型
+	AbilityName string // AddAbility: 能力名称
 }
 
 // Strategy 自动对局策略接口。
