@@ -137,9 +137,11 @@ func ApplyHit(input HitInput, onHit HitCallback) HitOutput {
 	extraKills := 0
 	if killed && input.Tower != nil {
 		input.Tower.Kills++
-		extraKills = applyDeathExplosionUnified(input.Tower, input.Target, input.Enemies, onHit)
-		input.Tower.Kills += extraKills
-		input.Enemies.Kill(input.Target)
+		if input.Enemies != nil {
+			extraKills = applyDeathExplosionUnified(input.Tower, input.Target, input.Enemies, onHit)
+			input.Tower.Kills += extraKills
+			input.Enemies.Kill(input.Target)
+		}
 	}
 
 	// 弹幕盾：正常受伤后阻止弹射物继续传播
