@@ -1094,80 +1094,57 @@ func (s *StageScene) drawEnemyTooltip(screen *ebiten.Image, e *enemy.Enemy) {
 	if e.SpeedBuff > 0 {
 		lines = append(lines, L(ttOrange, "  光环加速: +%.0f%%", e.SpeedBuff*100))
 	}
-	if e.DashActiveT > 0 {
-		lines = append(lines, L(ttOrange, "  冲刺中: +%.0f%% 剩余%.1f秒", e.DashSpeedBoost*100, e.DashActiveT))
-	} else if e.DashCooldownT > 0 {
-		lines = append(lines, L(ttDim, "  冲刺冷却: %.1f秒", e.DashCooldownT))
-	}
-	if e.BerserkThreshold > 0 {
-		state := "待触发"
-		if e.BerserkTriggered {
-			state = "已激活"
+
+	// ── 装配能力（从能力配置表读取描述）──
+	abilTable := config.GlobalEnemyAbilityTable()
+	if len(e.AbilityIDs) > 0 && abilTable != nil {
+		lines = append(lines, L(ttHeader, "--- 能力 ---"))
+		for _, aid := range e.AbilityIDs {
+			def := abilTable[aid]
+			if def == nil {
+				lines = append(lines, L(ttDim, "  [%s] 未知能力", aid))
+				continue
+			}
+			silenced := e.AbilitySilenced && def.Silenceable
+			label := def.Label
+			if silenced {
+				label += " [沉默]"
+			}
+			lines = append(lines, L(ttCyan, "  %s: %s", label, def.Description))
 		}
-		lines = append(lines, L(ttOrange, "  狂暴: <%.0f%%血 → ×%.1f速 [%s]", e.BerserkThreshold*100, e.BerserkSpeedScale, state))
-	}
-	if e.TeleportInterval > 0 {
-		lines = append(lines, L(ttCyan, "  传送: 每%.0f秒跳%d段 (冷却:%.1f秒)", e.TeleportInterval, e.TeleportSkip, e.TeleportTimer))
 	}
 
-	// ── 控制效果 ──
-	hasCC := e.SlowTimer > 0 || e.StunTimer > 0 || e.RootTimer > 0
-	if hasCC || e.Tenacity > 0 || e.IsControlImmune || e.IsStunImmune || e.IsSlowImmune || e.IsRootImmune || e.ControlImmuneTimer > 0 {
-		lines = append(lines, L(ttHeader, "--- 控制 ---"))
+	// ── 实时状态（debuff/控制）──
+	hasStatus := e.SlowTimer > 0 || e.StunTimer > 0 || e.RootTimer > 0 ||
+		e.DamageAmplify > 0 || e.Silenced || e.AbilitySilenced || e.Stealthed ||
+		e.BleedTimer > 0 || e.PoisonTimer > 0 || e.BurnTimer > 0 || e.ZoneDmgAccum > 0 ||
+		e.DashActiveT > 0 || e.PhaseActive || e.StrDrainActiveT > 0 || e.ControlImmuneTimer > 0
+	if hasStatus {
+		lines = append(lines, L(ttHeader, "--- 实时状态 ---"))
 	}
 	if e.SlowTimer > 0 {
-		lines = append(lines, L(ttIce, "  减速: ×%.0f%%速度  剩余%.1f秒", e.SlowFactor*100, e.SlowTimer))
+		lines = append(lines, L(ttIce, "  减速: ×%.0f%%  %.1f秒", e.SlowFactor*100, e.SlowTimer))
 	}
 	if e.StunTimer > 0 {
-		lines = append(lines, L(ttYellow, "  眩晕: 剩余%.1f秒", e.StunTimer))
+		lines = append(lines, L(ttYellow, "  眩晕: %.1f秒", e.StunTimer))
 	}
 	if e.RootTimer > 0 {
-		lines = append(lines, L(ttIce, "  定身: 剩余%.1f秒", e.RootTimer))
-	}
-	if e.Tenacity > 0 {
-		lines = append(lines, L(ttDim, "  韧性: %.0f%%", e.Tenacity*100))
-	}
-	if e.ControlImmuneTimer > 0 {
-		lines = append(lines, L(ttGray, "  控制免疫: 剩余%.1f秒", e.ControlImmuneTimer))
-	}
-	if e.IsControlImmune {
-		lines = append(lines, L(ttGray, "  全控制免疫(永久)"))
-	}
-	if e.IsStunImmune {
-		lines = append(lines, L(ttGray, "  眩晕免疫"))
-	}
-	if e.IsSlowImmune {
-		lines = append(lines, L(ttGray, "  减速免疫"))
-	}
-	if e.IsRootImmune {
-		lines = append(lines, L(ttGray, "  定身免疫"))
-	}
-
-	// ── 持续伤害 ──
-	hasDot := e.BleedTimer > 0 || e.PoisonTimer > 0 || e.BurnTimer > 0 || e.ZoneDmgAccum > 0
-	if hasDot {
-		lines = append(lines, L(ttHeader, "--- 持续伤害 ---"))
+		lines = append(lines, L(ttIce, "  定身: %.1f秒", e.RootTimer))
 	}
 	if e.BleedTimer > 0 {
-		lines = append(lines, L(ttRed, "  流血: %.1f/秒  剩余%.1f秒", e.BleedDPS, e.BleedTimer))
+		lines = append(lines, L(ttRed, "  流血: %.1f/秒 %.1f秒", e.BleedDPS, e.BleedTimer))
 	}
 	if e.PoisonTimer > 0 {
-		lines = append(lines, L(ttGreen, "  中毒: %.1f/秒  剩余%.1f秒", e.PoisonDPS, e.PoisonTimer))
+		lines = append(lines, L(ttGreen, "  中毒: %.1f/秒 %.1f秒", e.PoisonDPS, e.PoisonTimer))
 	}
 	if e.BurnTimer > 0 {
-		lines = append(lines, L(ttRed, "  灼烧: %.1f/秒  剩余%.1f秒", e.BurnDPS, e.BurnTimer))
+		lines = append(lines, L(ttRed, "  灼烧: %.1f/秒 %.1f秒", e.BurnDPS, e.BurnTimer))
 	}
 	if e.ZoneDmgAccum > 0 {
 		lines = append(lines, L(ttPurple, "  区域伤害: %.1f待结算", e.ZoneDmgAccum))
 	}
-
-	// ── 减益状态 ──
-	hasDebuff := e.DamageAmplify > 0 || e.Silenced || e.Stealthed || e.AbilitySilenced
-	if hasDebuff {
-		lines = append(lines, L(ttHeader, "--- 减益 ---"))
-	}
 	if e.DamageAmplify > 0 {
-		lines = append(lines, L(ttPurple, "  虚弱: 受伤+%.0f%%  剩余%.1f秒", e.DamageAmplify*100, e.DamageAmplifyTimer))
+		lines = append(lines, L(ttPurple, "  虚弱: +%.0f%% %.1f秒", e.DamageAmplify*100, e.DamageAmplifyTimer))
 	}
 	if e.Silenced {
 		lines = append(lines, L(ttGray, "  沉默(伤害上限失效)"))
@@ -1176,75 +1153,19 @@ func (s *StageScene) drawEnemyTooltip(screen *ebiten.Image, e *enemy.Enemy) {
 		lines = append(lines, L(ttGray, "  能力沉默(主动能力禁用)"))
 	}
 	if e.Stealthed {
-		lines = append(lines, L(ttDim, "  隐身: 剩余%.1f秒", e.StealthTimer))
+		lines = append(lines, L(ttDim, "  隐身: %.1f秒", e.StealthTimer))
 	}
-
-	// ── 防御 ──
-	hasDef := e.DamageCap > 0 || e.DamageCapPercent > 0 || e.DamageReduceRatio > 0 ||
-		e.ProjectileBlockChance > 0 || e.ArmorFlat > 0 || e.EvasionChance > 0 ||
-		e.IsInvincible || e.IsDamageImmune || e.IsUntargetable
-	if hasDef {
-		lines = append(lines, L(ttHeader, "--- 防御 ---"))
-	}
-	if e.ProjectileBlockChance > 0 {
-		lines = append(lines, L(ttGray, "  弹幕盾: %.0f%%格挡弹射物", e.ProjectileBlockChance*100))
-	}
-	if e.ArmorFlat > 0 {
-		lines = append(lines, L(ttGray, "  装甲: 每次减免%.0f伤害", e.ArmorFlat))
-	}
-	if e.EvasionChance > 0 {
-		lines = append(lines, L(ttGray, "  闪避: %.0f%%概率", e.EvasionChance*100))
-	}
-	if e.DamageCap > 0 {
-		lines = append(lines, L(ttGray, "  坚韧: 单次上限%.0f", e.DamageCap))
-	}
-	if e.DamageCapPercent > 0 {
-		lines = append(lines, L(ttGray, "  坚韧: 单次上限%.0f%%血量", e.DamageCapPercent*100))
-	}
-	if e.DamageReduceRatio > 0 {
-		lines = append(lines, L(ttGray, "  减伤: %.0f%%", e.DamageReduceRatio*100))
+	if e.DashActiveT > 0 {
+		lines = append(lines, L(ttOrange, "  冲刺中: +%.0f%% %.1f秒", e.DashSpeedBoost*100, e.DashActiveT))
 	}
 	if e.PhaseActive {
-		lines = append(lines, L(ttYellow, "  相位免伤中: 剩余%.1f秒", e.PhaseTimer))
-	} else if e.PhaseCooldown > 0 {
-		lines = append(lines, L(ttDim, "  相位冷却: %.1f秒", e.PhaseTimer))
+		lines = append(lines, L(ttPurple, "  相位免伤中: %.1f秒", e.PhaseTimer))
 	}
-	if e.IsInvincible && !e.PhaseActive {
-		lines = append(lines, L(ttYellow, "  无敌"))
+	if e.StrDrainActiveT > 0 {
+		lines = append(lines, L(ttPurple, "  削强连接中: %.1f秒", e.StrDrainActiveT))
 	}
-	if e.IsDamageImmune {
-		lines = append(lines, L(ttYellow, "  伤害免疫"))
-	}
-	if e.IsUntargetable && !e.PhaseActive {
-		lines = append(lines, L(ttYellow, "  不可选中"))
-	}
-
-	// ── 能力 ──
-	hasAbil := e.RegenPerSec > 0 || e.HealPower > 0 || e.SplitCount > 0 || e.AuraRange > 0 ||
-		e.DeathSpawnCount > 0 || e.StrDrainRatio > 0 || e.PurgeInterval > 0
-	if hasAbil {
-		lines = append(lines, L(ttHeader, "--- 能力 ---"))
-	}
-	if e.RegenPerSec > 0 {
-		lines = append(lines, L(ttGreen, "  回血: %.1f/秒", e.RegenPerSec))
-	}
-	if e.HealPower > 0 {
-		lines = append(lines, L(ttGreen, "  治疗光环: %.0f治疗量 半径%.0f 每%.1f秒 (冷却:%.1f秒)", e.HealPower, e.HealRadius, e.HealInterval, e.HealCooldown))
-	}
-	if e.AuraRange > 0 {
-		lines = append(lines, L(ttOrange, "  加速光环: +%.0f%%速度 半径%.0f", e.AuraSpeedUp*100, e.AuraRange))
-	}
-	if e.SplitCount > 0 {
-		lines = append(lines, L(ttCyan, "  死亡分裂: %d子体 %.0f%%血量 ×%.1f速", e.SplitCount, e.SplitHPRatio*100, e.SplitSpeedScale))
-	}
-	if e.DeathSpawnCount > 0 {
-		lines = append(lines, L(ttCyan, "  死亡召唤: %d个%s", e.DeathSpawnCount, e.DeathSpawnArch))
-	}
-	if e.StrDrainRatio > 0 {
-		lines = append(lines, L(ttPurple, "  削强: -%.0f%%强度 每%.0f秒 持续%.0f秒 (冷却:%.1f秒)", e.StrDrainRatio*100, e.StrDrainInterval, e.StrDrainDuration, e.StrDrainTimer))
-	}
-	if e.PurgeInterval > 0 {
-		lines = append(lines, L(ttCyan, "  净化: 每%.0f秒清除全debuff+免疫%.0f秒 (计时:%.1f秒)", e.PurgeInterval, e.PurgeImmuneDur, e.PurgeTimer))
+	if e.ControlImmuneTimer > 0 {
+		lines = append(lines, L(ttGray, "  控制免疫: %.1f秒", e.ControlImmuneTimer))
 	}
 
 	// ── 绘制 ──
@@ -1257,7 +1178,7 @@ func (s *StageScene) drawEnemyTooltip(screen *ebiten.Image, e *enemy.Enemy) {
 		offsetX  = 18.0
 		offsetY  = 8.0
 	)
-	boxW := float32(260)
+	boxW := float32(340)
 	boxH := float32(float64(len(lines))*lineH + padY*2)
 	bx := float32(mx + offsetX)
 	by := float32(my + offsetY)
@@ -2830,6 +2751,7 @@ func convertArchetypesToSpawnConfigs(archetypes map[string]*config.EnemyArchetyp
 				continue
 			}
 			applyEnemyAbilityToSpawnConfig(sc, def)
+			sc.AbilityIDs = append(sc.AbilityIDs, def.Type)
 		}
 		result[key] = sc
 	}

@@ -180,8 +180,9 @@ type Enemy struct {
 	PurgeImmuneDur  float64 // 净化：清除后免疫持续时间（秒）
 	PurgeTimer      float64 // 净化：当前计时
 
-	// 能力沉默状态（silenceZone 对怪物能力的影响）
-	AbilitySilenced bool // 当前帧是否被沉默（每帧重置）
+	// 能力系统
+	AbilityIDs      []string // 装配的能力类型 ID 列表（用于 HUD 展示）
+	AbilitySilenced bool     // 当前帧是否被沉默（每帧重置）
 
 	// ── 视觉特效触发器（>0 时渲染对应特效，每帧衰减）──
 	BlockFlash  float64 // 弹幕盾格挡闪光

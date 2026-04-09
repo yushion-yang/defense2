@@ -31,7 +31,8 @@ type SpawnConfig struct {
 	TeleportSkip     int     // 每次传送跳过的路径段数
 
 	// 击杀奖励倍率
-	RewardScale float64 // 原型奖励倍率（如 tank=1.35, runner=0.72）
+	RewardScale float64  // 原型奖励倍率（如 tank=1.35, runner=0.72）
+	AbilityIDs  []string // 装配的能力 ID 列表
 
 	// ── 能力系统字段 ──
 	DamageCap         float64 // 坚韧(固定)
