@@ -124,10 +124,10 @@ type StageScene struct {
 	debugPanelOpen    bool
 	debugShowRange    bool
 	spawnMode         bool
-	spawnMoving       bool   // true=造动怪（放在路径上行走），false=造静怪
-	saveNaming        bool           // 场景命名输入中
-	saveNameBuf       string         // 命名缓冲区
-	hoveredEnemy      *enemy.Enemy   // 测试模式：鼠标悬浮的敌人
+	spawnMoving       bool         // true=造动怪（放在路径上行走），false=造静怪
+	saveNaming        bool         // 场景命名输入中
+	saveNameBuf       string       // 命名缓冲区
+	hoveredEnemy      *enemy.Enemy // 测试模式：鼠标悬浮的敌人
 	spawnType         string
 	spawnHoverIdx     int
 	initOpts          StageOptions          // 保存原始配置（重新开始用）
@@ -1515,19 +1515,25 @@ func (s *StageScene) drawEnemyAbilityVFX(screen *ebiten.Image) {
 		// 治疗光环范围圈（绿色虚线圈）
 		if e.HealPower > 0 && e.HealRadius > 0 && !e.IsDying() {
 			hr := float32(e.HealRadius)
-			// 治疗刚触发时圈变亮变粗（0.3s），平时淡显
-			justHealed := e.HealCooldown > e.HealInterval-0.3
-			var circleAlpha uint8
-			var circleWidth float32
+			// 单个治疗圈：平时淡显范围，触发时从中心扩散到范围边缘
+			justHealed := e.HealCooldown > e.HealInterval-0.4
 			if justHealed {
-				fade := (e.HealInterval - e.HealCooldown) / 0.3
-				circleAlpha = uint8(200 - fade*160)
-				circleWidth = 2.5 - float32(fade)*1.5
+				// 扩散脉冲（0.4s 内从身体扩到范围边缘）
+				progress := (e.HealInterval - e.HealCooldown) / 0.4
+				pulseR := float32(e.Radius) + float32(progress)*hr
+				pulseAlpha := uint8(200 * (1 - progress))
+				draw.CircleOutline(screen, ex, ey, pulseR, 2, color.RGBA{R: 60, G: 255, B: 100, A: pulseAlpha})
 			} else {
-				circleAlpha = uint8(30 + 10*math.Sin(animTime*2))
-				circleWidth = 1
+				// 常驻范围圈 + 旋转光点
+				alpha := uint8(25 + 10*math.Sin(animTime*2))
+				draw.CircleOutline(screen, ex, ey, hr, 1, color.RGBA{R: 60, G: 220, B: 100, A: alpha})
+				for i := 0; i < 3; i++ {
+					angle := animTime*1.5 + float64(i)*2.094
+					px := ex + float32(math.Cos(angle))*hr*0.7
+					py := ey + float32(math.Sin(angle))*hr*0.7
+					draw.FilledCircle(screen, px, py, 2, color.RGBA{R: 80, G: 255, B: 120, A: 100})
+				}
 			}
-			draw.CircleOutline(screen, ex, ey, hr, circleWidth, color.RGBA{R: 60, G: 220, B: 100, A: circleAlpha})
 		}
 
 		// 加速光环范围圈（橙色虚线圈）
@@ -1581,9 +1587,9 @@ func (s *StageScene) restoreScenario(sd *config.ScenarioData) {
 		if baseHP <= 0 {
 			baseHP = 100 * cfg.HpScale // fallback
 		}
-		unitCfg := *cfg            // copy to avoid mutating original
-		unitCfg.HpScale = 1        // HP already baked in
-		unitCfg.SpeedScale = 1     // use archetype base speed directly
+		unitCfg := *cfg        // copy to avoid mutating original
+		unitCfg.HpScale = 1    // HP already baked in
+		unitCfg.SpeedScale = 1 // use archetype base speed directly
 		e := s.enemies.Spawn(snap.X, snap.Y, baseHP, 50*cfg.SpeedScale, snap.PathIndex, snap.Archetype, &unitCfg)
 		if e == nil {
 			fmt.Printf("restoreScenario: enemy pool full, cannot spawn %s\n", snap.Archetype)
@@ -2785,12 +2791,12 @@ func convertArchetypesToSpawnConfigs(archetypes map[string]*config.EnemyArchetyp
 			sprite = a.ID // 回退：用 id 作为精灵目录名
 		}
 		sc := &enemy.SpawnConfig{
-			Label:        a.Label,
-			Sprite:       sprite,
-			HpScale:      a.HPScale,
-			SpeedScale:   a.SpeedScale,
-			Radius:       a.Radius,
-			Boss:         a.Boss,
+			Label:       a.Label,
+			Sprite:      sprite,
+			HpScale:     a.HPScale,
+			SpeedScale:  a.SpeedScale,
+			Radius:      a.Radius,
+			Boss:        a.Boss,
 			RewardScale: a.RewardScale,
 			// 分裂默认值（被 deathSplit 能力覆盖时使用）
 			SplitScale:      0.3,
@@ -2833,7 +2839,7 @@ func applyEnemyAbilityToSpawnConfig(sc *enemy.SpawnConfig, def *config.EnemyAbil
 	case "slowImmune":
 		sc.SlowImmune = true
 	case "purge":
-		sc.PurgeInterval = def.Base  // base=间隔秒数
+		sc.PurgeInterval = def.Base   // base=间隔秒数
 		sc.PurgeImmuneDur = def.Param // param=免疫时间
 
 	// ── movement ──
@@ -2841,27 +2847,27 @@ func applyEnemyAbilityToSpawnConfig(sc *enemy.SpawnConfig, def *config.EnemyAbil
 		sc.StealthDuration = def.Base
 		sc.Behavior = "stealth"
 	case "dashOnHit":
-		sc.DashSpeedBoost = def.Base   // base=速度提升比例
-		sc.DashDuration = def.Param    // param=持续时间
-		sc.DashCooldown = 5            // 固定冷却5s
+		sc.DashSpeedBoost = def.Base // base=速度提升比例
+		sc.DashDuration = def.Param  // param=持续时间
+		sc.DashCooldown = 5          // 固定冷却5s
 	case "phaseShift":
-		sc.PhaseDuration = def.Base    // base=免伤时间
-		sc.PhaseCooldown = def.Param   // param=冷却时间
+		sc.PhaseDuration = def.Base  // base=免伤时间
+		sc.PhaseCooldown = def.Param // param=冷却时间
 	case "teleport":
 		sc.TeleportInterval = def.Base
 		sc.TeleportSkip = int(def.Param)
 
 	// ── offense ──
 	case "strengthDrain":
-		sc.StrDrainRatio = def.Base    // base=减益比例
+		sc.StrDrainRatio = def.Base     // base=减益比例
 		sc.StrDrainInterval = def.Param // param=间隔
-		sc.StrDrainDuration = 6        // 固定6s
+		sc.StrDrainDuration = 6         // 固定6s
 
 	// ── support ──
 	case "healAura":
 		sc.HealScale = def.Base
 		sc.HealRadius = def.Param
-		sc.HealInterval = 3            // 固定3s
+		sc.HealInterval = 3 // 固定3s
 		sc.Behavior = "healer"
 	case "speedAura":
 		sc.AuraSpeedUp = def.Base

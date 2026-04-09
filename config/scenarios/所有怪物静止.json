@@ -1,0 +1,199 @@
+{
+  "id": "所有怪物静止",
+  "name": "所有怪物静止",
+  "description": "1 towers, 18 enemies on map_test_large",
+  "mapID": "map_test_large",
+  "gold": 99999,
+  "lives": 999,
+  "waves": 99,
+  "enemyFilter": "dummy",
+  "manualWave": false,
+  "towers": [
+    {
+      "row": 6,
+      "col": 22,
+      "key": "basic",
+      "abilitySlots": [
+        "",
+        "",
+        "",
+        "",
+        "",
+        ""
+      ],
+      "damageTier": "B",
+      "speedTier": "B",
+      "rangeTier": "B",
+      "baseDamage": 5.097779768215769,
+      "potentialDamage": 10.90222023178423,
+      "baseSpeed": 0.3094250326245019,
+      "potentialSpeed": 0.37800812983952214,
+      "baseRange": 57.25024563217564,
+      "potentialRange": 96.3269538508819
+    }
+  ],
+  "enemies": [
+    {
+      "archetype": "normal",
+      "x": 199,
+      "y": 124,
+      "pathIndex": 0,
+      "hp": 118,
+      "maxHP": 118,
+      "isDummy": true
+    },
+    {
+      "archetype": "runner",
+      "x": 299,
+      "y": 127,
+      "pathIndex": 0,
+      "hp": 74,
+      "maxHP": 74,
+      "isDummy": true
+    },
+    {
+      "archetype": "tank",
+      "x": 388,
+      "y": 131,
+      "pathIndex": 0,
+      "hp": 285,
+      "maxHP": 285,
+      "isDummy": true
+    },
+    {
+      "archetype": "armored",
+      "x": 475,
+      "y": 131,
+      "pathIndex": 0,
+      "hp": 140,
+      "maxHP": 140,
+      "isDummy": true
+    },
+    {
+      "archetype": "swarm",
+      "x": 593,
+      "y": 131,
+      "pathIndex": 0,
+      "hp": 50,
+      "maxHP": 50,
+      "isDummy": true
+    },
+    {
+      "archetype": "phantom",
+      "x": 200.5,
+      "y": 216,
+      "pathIndex": 0,
+      "hp": 88,
+      "maxHP": 88,
+      "isDummy": true
+    },
+    {
+      "archetype": "shielder",
+      "x": 298.5,
+      "y": 218.5,
+      "pathIndex": 0,
+      "hp": 150,
+      "maxHP": 150,
+      "isDummy": true
+    },
+    {
+      "archetype": "colossus",
+      "x": 394,
+      "y": 215.5,
+      "pathIndex": 0,
+      "hp": 400,
+      "maxHP": 400,
+      "isDummy": true
+    },
+    {
+      "archetype": "ironwill",
+      "x": 476.5,
+      "y": 214.5,
+      "pathIndex": 0,
+      "hp": 160,
+      "maxHP": 160,
+      "isDummy": true
+    },
+    {
+      "archetype": "steadfast",
+      "x": 593.5,
+      "y": 215,
+      "pathIndex": 0,
+      "hp": 130,
+      "maxHP": 130,
+      "isDummy": true
+    },
+    {
+      "archetype": "splitter",
+      "x": 592.5,
+      "y": 325,
+      "pathIndex": 0,
+      "hp": 160,
+      "maxHP": 160,
+      "isDummy": true
+    },
+    {
+      "archetype": "buffer",
+      "x": 473.5,
+      "y": 316.5,
+      "pathIndex": 0,
+      "hp": 68,
+      "maxHP": 68,
+      "isDummy": true
+    },
+    {
+      "archetype": "healer",
+      "x": 390.5,
+      "y": 307.5,
+      "pathIndex": 0,
+      "hp": 106,
+      "maxHP": 106,
+      "isDummy": true
+    },
+    {
+      "archetype": "drainer",
+      "x": 292,
+      "y": 306,
+      "pathIndex": 0,
+      "hp": 85,
+      "maxHP": 85,
+      "isDummy": true
+    },
+    {
+      "archetype": "phaser",
+      "x": 197,
+      "y": 306.5,
+      "pathIndex": 0,
+      "hp": 90,
+      "maxHP": 90,
+      "isDummy": true
+    },
+    {
+      "archetype": "summoner",
+      "x": 208.5,
+      "y": 395.5,
+      "pathIndex": 0,
+      "hp": 120,
+      "maxHP": 120,
+      "isDummy": true
+    },
+    {
+      "archetype": "purifier",
+      "x": 295,
+      "y": 389,
+      "pathIndex": 0,
+      "hp": 350,
+      "maxHP": 350,
+      "isDummy": true
+    },
+    {
+      "archetype": "dummy",
+      "x": 791,
+      "y": 393.5,
+      "pathIndex": 0,
+      "hp": 1000000,
+      "maxHP": 1000000,
+      "isDummy": true
+    }
+  ]
+}

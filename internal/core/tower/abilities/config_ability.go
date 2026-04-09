@@ -273,18 +273,15 @@ func (a *ConfigAbility) OnTick(t *tower.Tower, ctx *tower.TickContext) *tower.Ti
 		})
 
 	case "silenceZone":
-		// scaleDim=slowFactor — 射程内敌人沉默（禁用 DamageCap + 可沉默能力）+ 减速
+		// scaleDim=slowFactor — 射程内敌人沉默（禁用 DamageCap）+ 减速
 		ctx.Enemies.Each(func(e *enemy.Enemy) {
-			if e.IsDying() {
+			if e.IsDying() || e.IsSlowImmune {
 				return
 			}
 			if math.Hypot(e.X-t.X, e.Y-t.Y) <= t.Range {
-				e.Silenced = true         // 禁用 DamageCap
-				e.AbilitySilenced = true  // 禁用可沉默的怪物能力
-				// 减速独立判断免疫
-				if !e.IsSlowImmune {
-					combat.ApplySlow(e, 1-sv, 0.1, "silenceZone")
-				}
+				e.Silenced = true        // 禁用 DamageCap
+				e.AbilitySilenced = true // 禁用可沉默的怪物能力
+				combat.ApplySlow(e, 1-sv, 0.1, "silenceZone")
 			}
 		})
 
