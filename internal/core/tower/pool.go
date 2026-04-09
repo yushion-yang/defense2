@@ -34,15 +34,16 @@ func (p *Pool) Place(row, col int, cx, cy float64, def TowerDef) *Tower {
 	for i := range p.towers {
 		if !p.towers[i].Active {
 			t := &p.towers[i]
+			*t = Tower{} // 清零所有字段，防止复用残留
+
+			// 定义属性
 			t.Row = row
 			t.Col = col
 			t.X = cx
 			t.Y = cy
-			// 初始属性 = base+potential（强度100默认值），RecalcStats 会覆盖
 			t.Range = def.Range
 			t.Damage = def.Damage
 			t.AttackSpeed = def.AttackSpeed
-			t.FireTimer = 0
 			t.Cost = def.Cost
 			t.Key = def.Key
 			t.InstanceKey = fmt.Sprintf("%s_%d_%d", def.Key, row, col)
@@ -50,48 +51,30 @@ func (p *Pool) Place(row, col int, cx, cy float64, def TowerDef) *Tower {
 			t.Abilities = def.Abilities
 			t.Color = def.Color
 			t.Active = true
-			// 战力缩放参数（JSON 原始 base/potential）
+
+			// 战力缩放参数
 			t.BaseDamage = def.CfgBaseDamage
 			t.BaseRange = def.CfgBaseRange
 			t.BaseSpeed = def.CfgBaseSpeed
 			t.PotentialDamage = def.PotentialDamage
 			t.PotentialSpeed = def.PotentialSpeed
 			t.PotentialRange = def.PotentialRange
+
 			// 攻击方式
 			t.AttackStyleID = def.AttackStyleID
 			t.ProjectileSpeed = def.ProjectileSpeed
-			t.SpinAngle = 0
-			t.SpinActive = 0
-			t.AuraPulse = 0
-			t.Branch = ""
 			t.Level = 1
 			t.SpriteKey = spriteKeyForStyle(def.AttackStyleID)
-			t.AbilitySlots = [6]string{}
 			t.UnlockOrder = RollUnlockOrder()
-			t.Target = nil
-			// 运行时状态重置（对象池复用安全）
-			t.Kills = 0
-			t.StackTarget = 0
-			t.StackCount = 0
-			t.LastPercentHpTarget = 0
-			t.GoldCooldown = 0
-			t.Angle = 0
-			t.FireAnim = 0
-			t.CritBonus = 0
-			t.Faction = ""
 
-			// 随机属性（tier-presets 驱动，总能力均衡但分布不同）
+			// 随机属性
 			stats := RollTowerStats()
 			ApplyRandomStats(t, stats)
 			t.DamageTier = stats.DamageTier
 			t.SpeedTier = stats.SpeedTier
 			t.RangeTier = stats.RangeTier
-			t.BuildAnim = 0
-			t.SellAnim = 0
-			t.Selling = false
-			t.Strength = strength.NewStrengthData() // Base=100，确保强度系统从放置起就生效
-			t.Buffs = nil
-			t.PendingChoices = nil // Place 后由调用方调用 RollAndCachePendingChoices
+			t.Strength = strength.NewStrengthData()
+
 			p.Count++
 			return t
 		}
@@ -105,6 +88,9 @@ func (p *Pool) PlaceFromSnapshot(row, col int, cx, cy float64, def TowerDef, sna
 	for i := range p.towers {
 		if !p.towers[i].Active {
 			t := &p.towers[i]
+			*t = Tower{} // 清零所有字段，防止复用残留
+
+			// 定义属性
 			t.Row = row
 			t.Col = col
 			t.X = cx
@@ -112,7 +98,6 @@ func (p *Pool) PlaceFromSnapshot(row, col int, cx, cy float64, def TowerDef, sna
 			t.Range = def.Range
 			t.Damage = def.Damage
 			t.AttackSpeed = def.AttackSpeed
-			t.FireTimer = 0
 			t.Cost = def.Cost
 			t.Key = def.Key
 			t.InstanceKey = fmt.Sprintf("%s_%d_%d", def.Key, row, col)
@@ -120,28 +105,15 @@ func (p *Pool) PlaceFromSnapshot(row, col int, cx, cy float64, def TowerDef, sna
 			t.Abilities = def.Abilities
 			t.Color = def.Color
 			t.Active = true
+
+			// 攻击方式
 			t.AttackStyleID = def.AttackStyleID
 			t.ProjectileSpeed = def.ProjectileSpeed
-			t.SpinAngle = 0
-			t.SpinActive = 0
-			t.AuraPulse = 0
-			t.Branch = ""
 			t.Level = 1
 			t.SpriteKey = spriteKeyForStyle(def.AttackStyleID)
-			t.AbilitySlots = [6]string{}
 			t.UnlockOrder = RollUnlockOrder()
-			t.Target = nil
-			t.Kills = 0
-			t.StackTarget = 0
-			t.StackCount = 0
-			t.LastPercentHpTarget = 0
-			t.GoldCooldown = 0
-			t.Angle = 0
-			t.FireAnim = 0
-			t.CritBonus = 0
-			t.Faction = ""
 
-			// Apply snapshot attributes (skip random roll)
+			// 快照属性（跳过随机 roll）
 			t.BaseDamage = snap.BaseDamage
 			t.PotentialDamage = snap.PotentialDamage
 			t.BaseSpeed = snap.BaseSpeed
@@ -151,13 +123,8 @@ func (p *Pool) PlaceFromSnapshot(row, col int, cx, cy float64, def TowerDef, sna
 			t.DamageTier = snap.DamageTier
 			t.SpeedTier = snap.SpeedTier
 			t.RangeTier = snap.RangeTier
-
-			t.BuildAnim = 0
-			t.SellAnim = 0
-			t.Selling = false
 			t.Strength = strength.NewStrengthData()
-			t.Buffs = nil
-			t.PendingChoices = nil
+
 			p.Count++
 			return t
 		}

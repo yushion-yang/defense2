@@ -42,98 +42,50 @@ func (p *Pool) Spawn(x, y, baseHP, baseSpeed float64, pathIndex int, archetype s
 	for i := range p.enemies {
 		if !p.enemies[i].Active {
 			e := &p.enemies[i]
+			*e = Enemy{} // 清零所有字段，防止复用残留
 			p.nextID++
+
+			// 基础属性
 			e.ID = p.nextID
 			e.X = x
 			e.Y = y
 			e.HP = hp
 			e.MaxHP = hp
+			e.DisplayHP = hp
 			e.Speed = speed
 			e.BaseSpeed = speed
 			e.Radius = cfg.Radius
 			e.PathIndex = pathIndex
-			e.ReachedEnd = false
 			e.Active = true
-			e.Path = nil
 			e.Archetype = archetype
+			e.SlowFactor = 1 // 非零默认值
+
+			// 外观
 			e.SpriteDir = cfg.Sprite
 			if e.SpriteDir == "" {
 				e.SpriteDir = archetype
 			}
+
+			// 基础配置
 			e.Boss = cfg.Boss
 			e.Reward = cfg.Reward
 			e.RewardScale = cfg.RewardScale
 			if e.RewardScale <= 0 {
 				e.RewardScale = 1
 			}
-			e.StunTimer = 0
-			e.SlowTimer = 0
-			e.SlowFactor = 1
-			e.BleedTimer = 0
-			e.BleedDPS = 0
-			e.PoisonTimer = 0
-			e.PoisonDPS = 0
-			e.BurnTimer = 0
-			e.BurnDPS = 0
-			e.RootTimer = 0
-			e.DamageAmplify = 0
-			e.DamageAmplifyTimer = 0
-			e.DisplayHP = hp
-			// Elite 已移除
-			e.DyingTimer = 0
-			e.DyingDuration = 0
-			e.HitFlash = 0
-			e.Age = 0
-			e.AnimCur = ""
-			e.AnimFrame = 0
-			e.AnimTimer = 0
-			e.AnimDone = false
-			e.Silenced = false
-			e.ZoneDmgAccum = 0
-			e.DotTickTimer = 0
-			e.LastDotDmg = 0
-			e.DamageCap = 0
-			e.DamageCapPercent = 0
-			e.IsInvincible = false
-			e.IsDamageImmune = false
-			e.IsUntargetable = false
-			e.Thresholds = nil
-			e.Tenacity = 0
-			e.ControlImmuneTimer = 0
-			e.IsControlImmune = false
-			e.IsStunImmune = false
-			e.IsSlowImmune = false
-			e.IsRootImmune = false
-			e.Lifecycle = nil
-			e.Behavior = ""
-			e.BerserkThreshold = 0
-			e.BerserkSpeedScale = 0
-			e.BerserkTriggered = false
-			e.RegenPerSec = 0
-			// 治疗光环初始化为零值，下方"应用行为配置"段按 cfg 设置实际值
-			e.HealPower = 0
-			e.HealRadius = 0
-			e.HealInterval = 0
-			e.HealCooldown = 0
-			e.Stealthed = false
-			e.StealthTimer = 0
-			e.SplitCount = 0
-			e.SplitScale = 0
+
+			// 分裂
 			e.SplitHPRatio = cfg.SplitHPRatio
 			e.SplitSpeedScale = cfg.SplitSpeedScale
+
 			// 传送
 			e.TeleportInterval = cfg.TeleportInterval
 			e.TeleportSkip = cfg.TeleportSkip
 			e.TeleportTimer = cfg.TeleportInterval // 首次传送需等满间隔
+
 			// 旗手光环
-			e.BuffRadius = 0
-			e.BuffAmount = 0
-			e.SpeedBuff = 0
 			e.AuraRange = cfg.AuraRange
 			e.AuraSpeedUp = cfg.AuraSpeedUp
-			// 减伤
-			e.DamageReduceRatio = 0
-			// 已迁移到能力系统的字段不再在此设置
 
 			// 应用行为配置
 			e.Behavior = cfg.Behavior
@@ -149,7 +101,7 @@ func (p *Pool) Spawn(x, y, baseHP, baseSpeed float64, pathIndex int, archetype s
 				}
 			}
 			if cfg.HealScale > 0 {
-				e.HealPower = cfg.HealScale // 治疗比例（如0.05=5%目标MaxHP）
+				e.HealPower = cfg.HealScale
 				e.HealRadius = cfg.HealRadius
 				e.HealInterval = cfg.HealInterval
 				if e.HealInterval <= 0 {
@@ -170,12 +122,9 @@ func (p *Pool) Spawn(x, y, baseHP, baseSpeed float64, pathIndex int, archetype s
 			e.DashSpeedBoost = cfg.DashSpeedBoost
 			e.DashDuration = cfg.DashDuration
 			e.DashCooldown = cfg.DashCooldown
-			e.DashCooldownT = 0
-			e.DashActiveT = 0
 			e.PhaseDuration = cfg.PhaseDuration
 			e.PhaseCooldown = cfg.PhaseCooldown
 			e.PhaseTimer = cfg.PhaseCooldown // 首次需等满冷却
-			e.PhaseActive = false
 			e.StrDrainRatio = cfg.StrDrainRatio
 			e.StrDrainInterval = cfg.StrDrainInterval
 			e.StrDrainDuration = cfg.StrDrainDuration
@@ -184,9 +133,7 @@ func (p *Pool) Spawn(x, y, baseHP, baseSpeed float64, pathIndex int, archetype s
 			e.DeathSpawnArch = cfg.DeathSpawnArch
 			e.PurgeInterval = cfg.PurgeInterval
 			e.PurgeImmuneDur = cfg.PurgeImmuneDur
-			e.PurgeTimer = 0
 			e.AbilityIDs = cfg.AbilityIDs
-			e.AbilitySilenced = false
 			if cfg.CCImmune {
 				e.IsControlImmune = true
 				e.IsStunImmune = true
@@ -275,7 +222,7 @@ func (p *Pool) Each(fn func(e *Enemy)) {
 // ClearAll 清空所有敌人（重置对象池）。
 func (p *Pool) ClearAll() {
 	for i := range p.enemies {
-		p.enemies[i].Active = false
+		p.enemies[i] = Enemy{}
 	}
 	p.Count = 0
 }
