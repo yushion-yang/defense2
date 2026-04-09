@@ -1515,22 +1515,24 @@ func (s *StageScene) drawEnemyAbilityVFX(screen *ebiten.Image) {
 		// 治疗光环范围圈（绿色虚线圈）
 		if e.HealPower > 0 && e.HealRadius > 0 && !e.IsDying() {
 			hr := float32(e.HealRadius)
-			// 范围圈（呼吸 alpha）
-			alpha := uint8(30 + 15*math.Sin(animTime*2))
-			draw.CircleOutline(screen, ex, ey, hr, 1, color.RGBA{R: 60, G: 220, B: 100, A: alpha})
-			// 旋转治疗光点（3 个绿色圆点绕圈）
-			for i := 0; i < 3; i++ {
-				angle := animTime*1.5 + float64(i)*2.094 // 120度间隔
-				px := ex + float32(math.Cos(angle))*hr*0.7
-				py := ey + float32(math.Sin(angle))*hr*0.7
-				draw.FilledCircle(screen, px, py, 2, color.RGBA{R: 80, G: 255, B: 120, A: 120})
-			}
-			// 治疗触发时：向外扩散的脉冲环
-			if e.HealCooldown > e.HealInterval-0.3 {
-				progress := (e.HealInterval - e.HealCooldown) / 0.3
+			// 单个治疗圈：平时淡显范围，触发时从中心扩散到范围边缘
+			justHealed := e.HealCooldown > e.HealInterval-0.4
+			if justHealed {
+				// 扩散脉冲（0.4s 内从身体扩到范围边缘）
+				progress := (e.HealInterval - e.HealCooldown) / 0.4
 				pulseR := float32(e.Radius) + float32(progress)*hr
-				pulseAlpha := uint8(180 * (1 - progress))
+				pulseAlpha := uint8(200 * (1 - progress))
 				draw.CircleOutline(screen, ex, ey, pulseR, 2, color.RGBA{R: 60, G: 255, B: 100, A: pulseAlpha})
+			} else {
+				// 常驻范围圈 + 旋转光点
+				alpha := uint8(25 + 10*math.Sin(animTime*2))
+				draw.CircleOutline(screen, ex, ey, hr, 1, color.RGBA{R: 60, G: 220, B: 100, A: alpha})
+				for i := 0; i < 3; i++ {
+					angle := animTime*1.5 + float64(i)*2.094
+					px := ex + float32(math.Cos(angle))*hr*0.7
+					py := ey + float32(math.Sin(angle))*hr*0.7
+					draw.FilledCircle(screen, px, py, 2, color.RGBA{R: 80, G: 255, B: 120, A: 100})
+				}
 			}
 		}
 
