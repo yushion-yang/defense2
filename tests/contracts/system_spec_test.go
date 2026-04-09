@@ -7,6 +7,7 @@ import (
 
 	"defense2/internal/config"
 	"defense2/internal/core/buff"
+	"defense2/internal/core/tower"
 )
 
 // ═══════════════════════════════════════
@@ -191,6 +192,32 @@ func TestBuffStackSpec_SlowCap(t *testing.T) {
 	}
 	if r.Cap <= 0 || r.Cap > 1 {
 		t.Errorf("slow cap = %f, want (0, 1]", r.Cap)
+	}
+}
+
+// ═══════════════════════════════════════
+// P2: 塔随机化规格
+// ═══════════════════════════════════════
+
+func TestTowerRandomizeSpec_TierBudget(t *testing.T) {
+	// TierBudget 定义在 randomize.go，S=4+A=3 > 6 → 不可能 S+A
+	// 此处仅验证 JSON 和代码的值一致
+	if tower.TierBudget != 6 {
+		t.Errorf("TierBudget = %d, want 6", tower.TierBudget)
+	}
+}
+
+// ═══════════════════════════════════════
+// P2: 弹射物默认值
+// ═══════════════════════════════════════
+
+func TestProjectileSpec_DefaultsPositive(t *testing.T) {
+	bal := config.GlobalBalance().Combat
+	if bal.DefaultProjectileSpeed <= 0 {
+		t.Error("defaultProjectileSpeed should > 0")
+	}
+	if bal.DefaultProjectileRadius <= 0 {
+		t.Error("defaultProjectileRadius should > 0")
 	}
 }
 

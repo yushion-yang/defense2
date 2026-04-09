@@ -1,0 +1,18 @@
+{
+  "_description": "弹射物默认参数规格 — 各攻击方式的默认速度和半径",
+
+  "defaults": {
+    "speed": "balance.combat.defaultProjectileSpeed",
+    "radius": "balance.combat.defaultProjectileRadius",
+    "description": "塔未配置 projectileSpeed 时的默认值"
+  },
+
+  "perStyle": {
+    "projectile": {"speed": 300, "radius": 4, "description": "标准追踪弹"},
+    "scatter":    {"speed": 400, "radius": 3, "description": "散弹（更快）"},
+    "radial":     {"speed": 350, "radius": 4, "description": "环射弹"},
+    "warden":     {"speed": 350, "radius": 4, "description": "战灵弹射物"}
+  },
+
+  "knownInconsistency": "balance.json 定义了 defaultProjectileSpeed=300 和 defaultProjectileRadius=4，但 scatter/radial/warden 各用不同硬编码值。此规格记录实际使用值。"
+}

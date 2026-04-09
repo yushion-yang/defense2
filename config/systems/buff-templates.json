@@ -1,0 +1,52 @@
+{
+  "_description": "敌人 Buff 模板规格 — 波次注入的 8 种 buff 模板参数",
+
+  "templates": {
+    "berserk": {
+      "category": "offense",
+      "threshold": 0.5,
+      "speedScale": 1.5,
+      "description": "低于 50% HP 时速度 ×1.5（一次性触发，不可逆）"
+    },
+    "regen": {
+      "category": "defense",
+      "regenPerSec": 0.02,
+      "description": "每秒回复 2% 最大 HP"
+    },
+    "healAura": {
+      "category": "utility",
+      "healPower": 10,
+      "healRadius": 80,
+      "healInterval": 2.0,
+      "description": "每 2 秒治疗 80px 内友方 10 点 HP"
+    },
+    "speedAura": {
+      "category": "utility",
+      "speedFactor": 0.2,
+      "description": "范围内友方移速 +20%（每帧刷新）"
+    },
+    "damageReduce": {
+      "category": "defense",
+      "reduceRatio": 0.3,
+      "description": "受到伤害减少 30%（在管线步骤 4.1 执行）"
+    },
+    "deathSplit": {
+      "category": "death",
+      "splitCount": 2,
+      "description": "死亡分裂为 2 个子体（HP = MaxHP × splitHpRatio，不递归）"
+    },
+    "deathSlow": {
+      "category": "death",
+      "slowFactor": 0.5,
+      "slowRadius": 60,
+      "slowDuration": 3.0,
+      "description": "死亡时对 60px 内敌人施加 50% 减速 3 秒"
+    },
+    "spawnMinions": {
+      "category": "offense",
+      "spawnCount": 3,
+      "spawnType": "normal",
+      "description": "死亡时召唤 3 个 normal 原型小兵"
+    }
+  }
+}

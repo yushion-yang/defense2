@@ -1,0 +1,37 @@
+{
+  "_description": "塔随机属性系统规格 — tier 预算、base/potential 分配、属性划转参数",
+
+  "tierBudget": 6,
+  "tierBudgetDescription": "三属性(S=4/A=3/B=2/C=1/D=0)总分上限，避免全 S",
+
+  "baseRatio": {
+    "min": 0.30,
+    "max": 0.50,
+    "description": "基础值占总值的比例范围。基础值即时生效，潜力值随强度成长"
+  },
+
+  "redistribution": {
+    "minRounds": 1,
+    "maxRounds": 3,
+    "minUnits": 1.0,
+    "maxUnits": 2.0,
+    "maxTake": 0.20,
+    "baseWeight": 1.0,
+    "potWeight": 0.3,
+    "description": "属性划转：每轮从一个属性取走最多 20%，分配给另一个属性（base 权重 1.0，potential 权重 0.3）"
+  },
+
+  "unitSizes": {
+    "damage": 2.0,
+    "attackSpeed": 0.091,
+    "range": 14.0,
+    "description": "1 划转单位对应各属性的数值量（基于 B 档参考值的 ~10%）"
+  },
+
+  "minBase": {
+    "damage": 1,
+    "attackSpeed": 0.1,
+    "range": 40,
+    "description": "各属性基础值的绝对下限"
+  }
+}
