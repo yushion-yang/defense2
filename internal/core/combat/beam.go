@@ -1,4 +1,7 @@
 // beam.go — 光束数据与对象池。
+// Slice-compaction pool. Chosen for: low entity count (beams are rare,
+// typically <10 active), simpler code than fixed-size pools, and no
+// fixed capacity limit — the slice grows on demand and compacts each frame.
 // Beam 是纯视觉对象，用于 wideBeam 的渲染（无碰撞逻辑）。
 package combat
 

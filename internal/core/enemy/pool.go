@@ -1,5 +1,7 @@
 // pool.go — 敌人对象池。
-// 固定大小数组实现零分配对象池，通过 Active 标记复用槽位。
+// Fixed-size array pool (256 slots). Linear scan for spawn/each.
+// Chosen for: stable pointers (enemies referenced by combat/render systems),
+// no GC pressure from allocations, and simple slot reuse via Active flag.
 package enemy
 
 import (
