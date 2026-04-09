@@ -1,8 +1,10 @@
 # 02 能力系统审核指导
 
+> 本文档审查**塔能力**单独完整性。塔能力与怪物能力的**交叉交互**审查见 `13-ability-interaction.md`。
+
 ## 审核目标
 
-验证 34 种能力的配置→代码映射完整性、参数使用正确性、遥测覆盖。
+验证 33 种塔能力的配置→代码映射完整性、参数使用正确性、遥测覆盖。
 **历史 bug 重灾区**：曾因 JSON tag 错误导致整个能力系统失效。
 
 ## 必读文件
@@ -28,8 +30,7 @@
 | A2 | `scatter` | `scatterPellets` 是否读取 `extraPellets` scaleDim（已知 bug：handler_scatter.go 硬编码 3） |
 | A3 | `wideBeam` | 返回的 attackStyle 是否 = wideBeam |
 | A4 | `spinAoe` | 自管理模式 `SelfManaged()=true`，跳过标准冷却 |
-| A5 | `pierce` | maxRange = range * param(1.2)，穿透弹射物标记 |
-| A6 | `bounce` | maxBounces = floor(sv)，Range = max(towerRange, 150)，DamageRatio = param(0.8) |
+| A5 | `bounce` | maxBounces = floor(sv)，Range = max(towerRange, 150)，DamageRatio = param(0.8) |
 | A7 | `splash` | splashRadius = param(px)，splashRatio 从 scaledValue 取 |
 | A8 | `multiTarget` | 多目标锁定数 = floor(sv) |
 | A9 | `radial` | 360 度射击 |
@@ -37,7 +38,7 @@
 | A11 | `slowDuration` | SlowEffect.Duration = sv |
 | A12 | `stunChance` | 概率触发，未触发时返回 nil |
 | A13 | `stunDuration` | StunEffect.Duration = sv |
-| A14 | `crit` | IsCrit=true 时 BonusDamage = towerDamage * (sv - 1) |
+| A14 | `crit` | IsCrit=true 时 BonusDamage = p.Damage（固定 2 倍 = base + base） |
 | A15 | `deathMark` | 击杀后 AoE，爆炸半径 = param，爆炸伤害 = sv |
 | A16 | `distanceDamage` | 距离越远伤害越高，bonus = sv * (dist/range) |
 | A17 | `executionBonus` | 低 HP 斩杀，阈值 = param(%), bonus = sv |
@@ -54,7 +55,7 @@
 | A28 | `poison` | 类似 burn/bleed，检查独立 timer |
 | A29 | `weaken` | DamageAmplify = sv，上限 MaxDamageAmplify(0.5) |
 | A30 | `poisonZone` | OnTick 遍历范围内敌人，累加 ZoneDmgAccum |
-| A31 | `silenceZone` | OnTick 设 e.Silenced = true（禁用 damageCap） |
+| A31 | `silenceZone` | OnTick 设 e.Silenced + e.AbilitySilenced = true（禁用 damageCap + 怪物可沉默能力） |
 | A32 | `curseZone` | OnTick %HP 扣血到 ZoneDmgAccum |
 | A33 | `weakenZone` | OnTick 设 e.DamageAmplify = sv |
 | A34 | 缺失的 case | 是否有 abilities.json 中定义但 switch 中无 case 的能力 |

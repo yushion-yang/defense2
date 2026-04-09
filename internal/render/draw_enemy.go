@@ -295,11 +295,11 @@ func (er *EnemyRenderer) DrawEnemies(screen *ebiten.Image, pool *enemy.Pool, ani
 
 		// --- 能力常驻视觉（被沉默时全部隐藏）---
 		if !e.AbilitySilenced {
-			// 免疫脚环
+			// 免疫脚环（只显示天生能力，净化临时免疫用白色微光）
 			footR := float32(e.Radius) + 2
-			if e.IsControlImmune {
+			if hasAbility(e, "ccImmune") {
 				draw.CircleOutline(screen, cx, cy+footR*0.3, footR, 1, color.RGBA{R: 220, G: 60, B: 60, A: 80})
-			} else if e.IsSlowImmune {
+			} else if hasAbility(e, "slowImmune") {
 				draw.CircleOutline(screen, cx, cy+footR*0.3, footR, 1, color.RGBA{R: 60, G: 180, B: 200, A: 80})
 			}
 
@@ -340,6 +340,16 @@ func (er *EnemyRenderer) DrawEnemies(screen *ebiten.Image, pool *enemy.Pool, ani
 			}
 		}
 	})
+}
+
+// hasAbility 检查敌人是否装配了指定能力。
+func hasAbility(e *enemy.Enemy, abilityType string) bool {
+	for _, id := range e.AbilityIDs {
+		if id == abilityType {
+			return true
+		}
+	}
+	return false
 }
 
 // loadShield 加载盾牌 PNG（缓存）。
