@@ -73,6 +73,17 @@ func TickSelfManaged(t *tower.Tower, ctx *AttackContext) {
 	}
 }
 
+// ProjectileHandler 标准追踪弹。
+type ProjectileHandler struct{}
+
+func (h *ProjectileHandler) Fire(t *tower.Tower, target *enemy.Enemy, ctx *AttackContext) {
+	speed := t.ProjectileSpeed
+	if speed <= 0 {
+		speed = 300
+	}
+	ctx.Projectiles.Fire(t.X, t.Y, target.X, target.Y, t.Damage, speed, 4, target, t.InstanceKey)
+}
+
 func init() {
 	Register(tower.StyleProjectile, &ProjectileHandler{})
 	Register(tower.StyleWideBeam, &WideBeamHandler{})

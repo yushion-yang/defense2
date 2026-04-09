@@ -246,12 +246,6 @@ func HitSFXForStyle(style string) string {
 	return "hit" + snakeToCamel(style) // "spin_aoe" → "hitSpinAoe"
 }
 
-// SkillSFX 根据技能名称返回音效名称（stub：返回空字符串）。
-func SkillSFX(skillKey string) string {
-	// TODO: implement skill-specific SFX mapping
-	return ""
-}
-
 // ucFirst 首字母大写（简单 ASCII）。
 func ucFirst(s string) string {
 	if s == "" {

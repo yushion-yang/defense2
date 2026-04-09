@@ -48,5 +48,3 @@ func ApplyEnemyEvent(e *Enemy, kind string, value float64) {
 		}
 	}
 }
-
-// ApplyElitePromotion 已移除（精英概念取消）。

@@ -1,6 +1,5 @@
 // mode.go — 游戏模式框架。
 // 定义游戏模式接口、运行时上下文和注册表。
-// 新模式只需实现 Mode 接口并在 register.go 中注册。
 package gamemode
 
 // Mode 游戏模式接口。
@@ -136,4 +135,14 @@ func List() []string {
 		names = append(names, name)
 	}
 	return names
+}
+
+func init() {
+	Register(NewCampaignMode())
+	Register(NewEndlessMode())
+	Register(NewTimedMode())
+	Register(NewBossRushMode())
+	Register(NewChallengeMode())
+	Register(NewTestMode())
+	Register(NewAutoPlayMode())
 }
