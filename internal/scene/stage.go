@@ -1090,10 +1090,38 @@ func (s *StageScene) drawEnemyInfoPanel(screen *ebiten.Image, e *enemy.Enemy) {
 
 	// ── 移动 ──
 	lines = append(lines, L(ttHeader, "--- 移动 ---"))
-	lines = append(lines, L(ttWhite, "速度: %.1f / %.1f  路径: %d/%d", e.Speed, e.BaseSpeed, e.PathIndex, len(e.Path)))
+	// 计算实际移动速度（与 movement.go 一致）
+	actualSpeed := e.Speed
 	if e.SpeedBuff > 0 {
-		lines = append(lines, L(ttOrange, "  光环加速: +%.0f%%", e.SpeedBuff*100))
+		actualSpeed *= (1 + e.SpeedBuff)
 	}
+	if e.DashActiveT > 0 {
+		actualSpeed *= (1 + e.DashSpeedBoost)
+	}
+	if e.StunTimer > 0 || e.RootTimer > 0 || e.IsDummy {
+		actualSpeed = 0
+	}
+	speedInfo := fmt.Sprintf("速度: %.1f", actualSpeed)
+	if actualSpeed != e.BaseSpeed {
+		speedInfo += fmt.Sprintf(" (基础:%.1f", e.BaseSpeed)
+		if e.SlowTimer > 0 {
+			speedInfo += fmt.Sprintf(" 减速:×%.0f%%", e.SlowFactor*100)
+		}
+		if e.SpeedBuff > 0 {
+			speedInfo += fmt.Sprintf(" 光环:+%.0f%%", e.SpeedBuff*100)
+		}
+		if e.DashActiveT > 0 {
+			speedInfo += fmt.Sprintf(" 冲刺:+%.0f%%", e.DashSpeedBoost*100)
+		}
+		if e.StunTimer > 0 {
+			speedInfo += " 眩晕"
+		}
+		if e.RootTimer > 0 {
+			speedInfo += " 定身"
+		}
+		speedInfo += ")"
+	}
+	lines = append(lines, L(ttWhite, "%s  路径:%d/%d", speedInfo, e.PathIndex, len(e.Path)))
 
 	// ── 装配能力（从能力配置表读取描述）──
 	abilTable := config.GlobalEnemyAbilityTable()
