@@ -2,7 +2,10 @@
 // 定义敌人的核心属性（位置、血量、速度、状态效果、类型等）及状态效果处理逻辑。
 package enemy
 
-import "defense2/internal/core/gamemap"
+import (
+	"defense2/internal/config"
+	"defense2/internal/core/gamemap"
+)
 
 // Threshold HP阈值触发器。
 // 当敌人 HP 比例降到 Ratio 以下时触发一次。
@@ -74,12 +77,12 @@ type Enemy struct {
 	RootTimer    float64         // 定身剩余时间（秒）
 	DisplayHP    float64         // 显示用血量（伤害拖尾缓慢衰减到实际 HP）
 	// Elite 已移除
-	HitFlash     float64         // 受击闪白剩余时间（秒，>0 时渲染白色叠加）
-	Age          float64         // 存活时间（秒），用于出生保护期
-	AnimCur      string          // 当前动画名（per-instance）
-	AnimFrame    int             // 当前帧索引
-	AnimTimer    float64         // 帧计时器
-	AnimDone     bool            // 非循环动画是否播完
+	HitFlash  float64 // 受击闪白剩余时间（秒，>0 时渲染白色叠加）
+	Age       float64 // 存活时间（秒），用于出生保护期
+	AnimCur   string  // 当前动画名（per-instance）
+	AnimFrame int     // 当前帧索引
+	AnimTimer float64 // 帧计时器
+	AnimDone  bool    // 非循环动画是否播完
 
 	// ── 死亡动画 ──
 	DyingTimer    float64 // >0 means dying animation in progress (seconds remaining)
@@ -99,12 +102,12 @@ type Enemy struct {
 	Thresholds []Threshold // HP阈值触发器列表
 
 	// ── 控制减免 ──
-	Tenacity            float64 // 韧性（0~1，减少控制效果持续时间）
-	ControlImmuneTimer  float64 // 控制免疫剩余时间（秒，>0 时免疫所有控制效果）
-	IsControlImmune     bool    // 控制免疫
-	IsStunImmune    bool    // 眩晕免疫
-	IsSlowImmune    bool    // 减速免疫
-	IsRootImmune    bool    // 定身免疫
+	Tenacity           float64 // 韧性（0~1，减少控制效果持续时间）
+	ControlImmuneTimer float64 // 控制免疫剩余时间（秒，>0 时免疫所有控制效果）
+	IsControlImmune    bool    // 控制免疫
+	IsStunImmune       bool    // 眩晕免疫
+	IsSlowImmune       bool    // 减速免疫
+	IsRootImmune       bool    // 定身免疫
 
 	// ── 生命周期 ──
 	Lifecycle *LifecycleHandlers // 生命周期回调
@@ -153,15 +156,15 @@ type Enemy struct {
 	// DamageCap/DamageCapPercent 已有字段
 
 	// movement
-	DashSpeedBoost  float64 // 受击冲刺：速度提升比例
-	DashDuration    float64 // 受击冲刺：提升持续时间（秒）
-	DashCooldown    float64 // 受击冲刺：冷却时间（秒）
-	DashCooldownT   float64 // 受击冲刺：当前冷却倒计时
-	DashActiveT     float64 // 受击冲刺：当前激活倒计时
-	PhaseDuration   float64 // 相位偏移：免伤持续时间（秒）
-	PhaseCooldown   float64 // 相位偏移：冷却时间（秒）
-	PhaseTimer      float64 // 相位偏移：当前计时（>0 免伤中, <0 冷却中）
-	PhaseActive     bool    // 相位偏移：当前是否免伤
+	DashSpeedBoost float64 // 受击冲刺：速度提升比例
+	DashDuration   float64 // 受击冲刺：提升持续时间（秒）
+	DashCooldown   float64 // 受击冲刺：冷却时间（秒）
+	DashCooldownT  float64 // 受击冲刺：当前冷却倒计时
+	DashActiveT    float64 // 受击冲刺：当前激活倒计时
+	PhaseDuration  float64 // 相位偏移：免伤持续时间（秒）
+	PhaseCooldown  float64 // 相位偏移：冷却时间（秒）
+	PhaseTimer     float64 // 相位偏移：当前计时（>0 免伤中, <0 冷却中）
+	PhaseActive    bool    // 相位偏移：当前是否免伤
 
 	// offense — 削强
 	StrDrainRatio    float64 // 减益比例（0.5 = -50%）
@@ -176,19 +179,19 @@ type Enemy struct {
 	DeathSpawnArch  string // 死亡召唤：召唤原型（默认 "normal"）
 
 	// resist
-	PurgeInterval   float64 // 净化：清除间隔（秒，0=无净化）
-	PurgeImmuneDur  float64 // 净化：清除后免疫持续时间（秒）
-	PurgeTimer      float64 // 净化：当前计时
+	PurgeInterval  float64 // 净化：清除间隔（秒，0=无净化）
+	PurgeImmuneDur float64 // 净化：清除后免疫持续时间（秒）
+	PurgeTimer     float64 // 净化：当前计时
 
 	// 能力系统
 	AbilityIDs      []string // 装配的能力类型 ID 列表（用于 HUD 展示）
 	AbilitySilenced bool     // 当前帧是否被沉默（每帧重置）
 
 	// ── 视觉特效触发器（>0 时渲染对应特效，每帧衰减）──
-	BlockFlash  float64 // 弹幕盾格挡闪光
-	DodgeFlash  float64 // 闪避残影
-	ArmorSpark  float64 // 装甲火花
-	PurgeFlash  float64 // 净化脉冲
+	BlockFlash   float64 // 弹幕盾格挡闪光
+	DodgeFlash   float64 // 闪避残影
+	ArmorSpark   float64 // 装甲火花
+	PurgeFlash   float64 // 净化脉冲
 	DamageCapHit float64 // 坚韧触发闪光
 
 	// 飘字系统
@@ -213,23 +216,24 @@ func (e *Enemy) SetFloatText(text string, r, g, b uint8) {
 	e.FloatTextB = b
 }
 
-// MinSpeedRatio 全局减速下限：速度不低于初始速度的 20%。
-const MinSpeedRatio = 0.2
+// MinSpeedRatio 全局减速下限（向后兼容导出变量，实际值从 balance.json 读取）。
+var MinSpeedRatio = config.GlobalBalance().Combat.MinSpeedRatio
 
-// DotTickInterval DoT（流血/灼烧）伤害触发周期（秒）。
-const DotTickInterval = 0.5
+// DotTickInterval DoT 伤害触发周期（向后兼容导出变量，实际值从 balance.json 读取）。
+var DotTickInterval = config.GlobalBalance().Combat.DotTickInterval
 
 // TickStatusEffects 处理敌人身上的状态效果（减速、流血）。
 // 眩晕在 movement.go 中处理。
 func TickStatusEffects(e *Enemy, dt float64) {
+	bal := config.GlobalBalance()
 	e.Age += dt
 
 	// 减速：倒计时归零后恢复基础速度（受全局减速下限约束）
 	if e.SlowTimer > 0 {
 		e.SlowTimer -= dt
 		factor := e.SlowFactor
-		if factor < MinSpeedRatio {
-			factor = MinSpeedRatio
+		if factor < bal.Combat.MinSpeedRatio {
+			factor = bal.Combat.MinSpeedRatio
 		}
 		e.Speed = e.BaseSpeed * factor
 		if e.SlowTimer <= 0 {
@@ -238,24 +242,25 @@ func TickStatusEffects(e *Enemy, dt float64) {
 	}
 
 	// DoT（流血/灼烧/中毒/区域伤害）按固定周期触发
+	dotInterval := bal.Combat.DotTickInterval
 	hasDot := e.BleedTimer > 0 || e.BurnTimer > 0 || e.PoisonTimer > 0 || e.ZoneDmgAccum > 0
 	if hasDot {
 		// 首次施加 DOT 时初始化计时器，不立即触发（保证 3s/0.5s = 6 次）
 		if e.DotTickTimer <= 0 {
-			e.DotTickTimer = DotTickInterval
+			e.DotTickTimer = dotInterval
 		}
 		e.DotTickTimer -= dt
 		if e.DotTickTimer <= 0 {
-			e.DotTickTimer += DotTickInterval
+			e.DotTickTimer += dotInterval
 			dotDmg := 0.0
 			if e.BleedTimer > 0 {
-				dotDmg += e.BleedDPS * DotTickInterval
+				dotDmg += e.BleedDPS * dotInterval
 			}
 			if e.BurnTimer > 0 {
-				dotDmg += e.BurnDPS * DotTickInterval
+				dotDmg += e.BurnDPS * dotInterval
 			}
 			if e.PoisonTimer > 0 {
-				dotDmg += e.PoisonDPS * DotTickInterval
+				dotDmg += e.PoisonDPS * dotInterval
 			}
 			// 区域伤害（curseZone/poisonZone 每帧累积，tick 时一次性结算）
 			if e.ZoneDmgAccum > 0 {

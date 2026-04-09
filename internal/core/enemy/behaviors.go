@@ -2,7 +2,11 @@
 // 实现狂暴、治疗光环、自然回血、隐身、分裂、旗手光环等敌人主动行为。
 package enemy
 
-import "math"
+import (
+	"math"
+
+	"defense2/internal/config"
+)
 
 // HealEvent 治疗事件记录（用于渲染治疗特效）。
 type HealEvent struct {
@@ -227,26 +231,27 @@ func tickBuffer(e *Enemy, pool *Pool) {
 
 // HandleSplitterDeath 处理分裂体死亡：在死亡位置生成子体。
 // 返回成功生成的子体数量。子体继承父体的路径和 PathIndex，
-// 血量为 MaxHP * SplitScale，速度 ×1.4。
+// 血量为 MaxHP * SplitScale，速度按 balance 配置缩放。
 func HandleSplitterDeath(e *Enemy, pool *Pool) int {
 	if e.SplitCount <= 0 {
 		return 0
 	}
 
+	bal := config.GlobalBalance()
 	spawned := 0
 	childHP := e.MaxHP * e.SplitScale
 	if childHP < 1 {
 		childHP = 1
 	}
-	childSpeed := e.BaseSpeed * 1.4
+	childSpeed := e.BaseSpeed * bal.Split.SpeedScale
 
 	for i := 0; i < e.SplitCount; i++ {
 		// 子体在父体位置略微偏移
-		offsetX := float64(i-e.SplitCount/2) * 6
+		offsetX := float64(i-e.SplitCount/2) * bal.Split.ChildOffset
 		child := pool.Spawn(e.X+offsetX, e.Y, childHP, childSpeed, e.PathIndex, e.Archetype, &SpawnConfig{
 			HpScale:    1, // 已经计算好绝对值
 			SpeedScale: 1, // 已经计算好绝对值
-			Radius:     e.Radius * 0.7,
+			Radius:     e.Radius * bal.Split.RadiusRatio,
 		})
 		if child != nil {
 			child.Path = e.Path
@@ -376,7 +381,7 @@ func SpawnSplitChildren(parent *Enemy, pool *Pool) []*Enemy {
 		child.SplitCount = 0
 		// 继承父体路径
 		child.Path = parent.Path
-		child.Radius = parent.Radius * 0.7
+		child.Radius = parent.Radius * config.GlobalBalance().Split.RadiusRatio
 		children = append(children, child)
 	}
 	return children

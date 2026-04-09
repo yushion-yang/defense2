@@ -10,15 +10,11 @@ import (
 	"defense2/internal/core/tower"
 )
 
-const (
-	scatterBasePellets   = 3  // 基础弹丸数
-	scatterDefaultSpread = 60 // 默认扇形角度（度）
-)
-
 // ScatterHandler 锥形散射。
 type ScatterHandler struct{}
 
 func (h *ScatterHandler) Fire(t *tower.Tower, target *enemy.Enemy, ctx *AttackContext) {
+	bal := config.GlobalBalance()
 	baseAngle := math.Atan2(target.Y-t.Y, target.X-t.X)
 	speed := t.ProjectileSpeed
 	if speed <= 0 {
@@ -26,8 +22,8 @@ func (h *ScatterHandler) Fire(t *tower.Tower, target *enemy.Enemy, ctx *AttackCo
 	}
 
 	// 从能力配置读取 extraPellets 和 spreadAngle
-	pellets := scatterBasePellets
-	spreadDeg := float64(scatterDefaultSpread)
+	pellets := bal.Combat.ScatterBasePellets
+	spreadDeg := bal.Combat.ScatterSpreadAngle
 	if abTable := config.GlobalAbilityTable(); abTable != nil {
 		if def := abTable["scatter"]; def != nil {
 			str := 100.0

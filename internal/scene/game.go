@@ -61,6 +61,7 @@ func NewGame() *Game {
 	initFont()
 	render.InitGlobalIcons(config.GetAssetFS())
 	abilities.InitConfigAbilities()
+	config.LoadBalance() // 加载平衡参数配置
 	if err := postprocess.InitShaders(); err != nil {
 		log.Printf("后处理着色器编译失败（bloom 禁用）: %v", err)
 	}

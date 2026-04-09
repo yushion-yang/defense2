@@ -13,11 +13,11 @@ import (
 // MaxAbilitySlots 最大能力槽位数（6 大类别各一个）。
 const MaxAbilitySlots = config.AbilityCatCount
 
-// WavesPerUnlock 每隔多少波解锁 1 个能力位。
-const WavesPerUnlock = 2
+// WavesPerUnlock 每隔多少波解锁 1 个能力位（从 balance.json 读取）。
+var WavesPerUnlock = config.GlobalBalance().Tower.WavesPerUnlock
 
-// ChoicesPerUnlock 每次解锁提供的候选能力数。
-const ChoicesPerUnlock = 3
+// ChoicesPerUnlock 每次解锁提供的候选能力数（从 balance.json 读取）。
+var ChoicesPerUnlock = config.GlobalBalance().Tower.ChoicesPerUnlock
 
 // ── 能力位解锁 ──
 

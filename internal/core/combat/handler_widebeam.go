@@ -4,15 +4,17 @@ package combat
 import (
 	"math"
 
+	"defense2/internal/config"
 	"defense2/internal/core/enemy"
 	"defense2/internal/core/tower"
 )
 
 // wideBeam 默认视觉参数
 const (
-	wideBeamDuration = 0.15           // 光束显示时长（秒）
-	wideBeamWidth    = 6.0            // 光束宽度（像素）
+	wideBeamDuration = 0.15 // 光束显示时长（秒）
+	wideBeamWidth    = 6.0  // 光束宽度（像素）
 )
+
 var wideBeamColor = [3]uint8{147, 197, 253} // #93c5fd 蓝
 
 // WideBeamHandler 宽光束。
@@ -29,8 +31,8 @@ func (h *WideBeamHandler) Fire(t *tower.Tower, target *enemy.Enemy, ctx *AttackC
 	dirX := dx / dist
 	dirY := dy / dist
 
-	// 射线延伸 3 倍射程
-	beamLen := t.Range * 3
+	// 射线延伸 N 倍射程
+	beamLen := t.Range * config.GlobalBalance().Combat.WideBeamRangeMult
 	endX := t.X + dirX*beamLen
 	endY := t.Y + dirY*beamLen
 	halfW := wideBeamWidth / 2

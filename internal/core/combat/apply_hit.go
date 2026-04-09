@@ -15,14 +15,14 @@ import (
 
 // HitInput 描述一次命中事件。
 type HitInput struct {
-	Tower       *tower.Tower       // 来源塔（可为 nil，如战灵弹射物）
-	Target      *enemy.Enemy       // 命中目标
-	BaseDamage  float64            // 基础伤害
-	Style       string             // 攻击方式标识
-	Enemies     *enemy.Pool        // 用于 splash/bounce
-	Projectiles *projectile.Pool   // 用于 bounce
+	Tower       *tower.Tower           // 来源塔（可为 nil，如战灵弹射物）
+	Target      *enemy.Enemy           // 命中目标
+	BaseDamage  float64                // 基础伤害
+	Style       string                 // 攻击方式标识
+	Enemies     *enemy.Pool            // 用于 splash/bounce
+	Projectiles *projectile.Pool       // 用于 bounce
 	Projectile  *projectile.Projectile // 原始弹射物（弹射物路径传入，即时伤害传 nil）
-	OnCC        CCCallback         // CC 效果命中回调（可为 nil）
+	OnCC        CCCallback             // CC 效果命中回调（可为 nil）
 }
 
 // HitOutput 命中结果。
@@ -107,10 +107,10 @@ func ApplyHit(input HitInput, onHit HitCallback) HitOutput {
 		}
 	}
 
-	// CritBonus 暴击（无 crit 能力时 critAura 仍可独立触发，统一 2x）
+	// CritBonus 暴击（无 crit 能力时 critAura 仍可独立触发）
 	if !isCrit && input.Tower != nil && input.Tower.CritBonus > 0 {
 		if rand.Float64() < input.Tower.CritBonus {
-			totalDmg *= 2 // 固定 2 倍
+			totalDmg *= config.GlobalBalance().Combat.CritMultiplier
 			isCrit = true
 		}
 	}
@@ -206,14 +206,14 @@ func applyHitEffectsUnified(r *tower.HitResult, target *enemy.Enemy, p *projecti
 			if math.Hypot(e.X-target.X, e.Y-target.Y) <= r.Splash.Radius {
 				// 溅射走完整 ApplyHit（含 OnHit 能力触发），但 Enemies=nil 防止递归溅射
 				splashResult := ApplyHit(HitInput{
-					Tower:      splashTower,
-					Target:     e,
-					BaseDamage: splashDamage,
-					Style:      "splash",
-					Enemies:    nil, // 阻断递归溅射
+					Tower:       splashTower,
+					Target:      e,
+					BaseDamage:  splashDamage,
+					Style:       "splash",
+					Enemies:     nil, // 阻断递归溅射
 					Projectiles: projectiles,
-					Projectile: p,
-					OnCC:       onCC,
+					Projectile:  p,
+					OnCC:        onCC,
 				}, onHit)
 				if e.HitFlash < 0.06 && e.Age > 0.1 {
 					e.HitFlash = 0.08

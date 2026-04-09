@@ -4,6 +4,7 @@
 package warden
 
 import (
+	"defense2/internal/config"
 	"defense2/internal/core/enemy"
 	"defense2/internal/core/projectile"
 	"defense2/internal/core/tower"
@@ -57,15 +58,16 @@ func RegisterBehavior(b Behavior) {
 
 // NewWarden 创建一个战灵。
 func NewWarden(id int, name, typ string) *Warden {
+	bal := config.GlobalBalance()
 	w := &Warden{
 		ID:                id,
 		Name:              name,
 		Type:              typ,
 		Active:            true,
 		Level:             1,
-		SelfStrength:      100, // 初始强度 100
-		GrowthOnKill:      2,   // 默认值，可被配置覆盖
-		GrowthOnWaveClear: 5,   // 默认值，可被配置覆盖
+		SelfStrength:      bal.Warden.InitialStrength,
+		GrowthOnKill:      bal.Warden.DefaultGrowthOnKill,
+		GrowthOnWaveClear: bal.Warden.DefaultGrowthOnWaveClear,
 	}
 	if b, ok := behaviors[typ]; ok {
 		w.State = b.Init(w)
