@@ -1,0 +1,32 @@
+{
+  "_description": "波次/出怪系统规格 — HP/速度公式、波次组合、buff 注入规则",
+
+  "baseFormulas": {
+    "hp":    {"base": "balance.spawner.hpBase",    "perWave": "balance.spawner.hpPerWave",    "formula": "(hpBase + wave × hpPerWave) × hpScale"},
+    "speed": {"base": "balance.spawner.speedBase", "perWave": "balance.spawner.speedPerWave", "formula": "(speedBase + wave × speedPerWave) × speedScale"},
+    "count": {"base": "balance.spawner.countBase", "perWave": "balance.spawner.countPerWave", "formula": "countBase + wave × countPerWave"},
+    "description": "基础值从 balance.json 读取，乘以难度倍率"
+  },
+
+  "waveComposition": {
+    "description": "波次组合表：按波次区间决定敌人原型权重。当前硬编码在 spawner.go，应迁移至此。",
+    "phases": [
+      {"maxWave": 3,  "archetypes": [{"type": "normal", "weight": 100}],                                                    "description": "wave 1-3: 纯 normal"},
+      {"maxWave": 6,  "archetypes": [{"type": "normal", "weight": 80}, {"type": "runner", "weight": 20}],                   "description": "wave 4-6: normal + runner"},
+      {"maxWave": 9,  "archetypes": [{"type": "normal", "weight": 50}, {"type": "runner", "weight": 25}, {"type": "tank", "weight": 25}], "description": "wave 7-9: 三种混合"},
+      {"maxWave": 14, "archetypes": [{"type": "normal", "weight": 30}, {"type": "runner", "weight": 25}, {"type": "tank", "weight": 25}, {"type": "swarm", "weight": 20}], "description": "wave 10-14: 四种混合"},
+      {"maxWave": 0,  "archetypes": [{"type": "normal", "weight": 20}, {"type": "runner", "weight": 20}, {"type": "tank", "weight": 20}, {"type": "swarm", "weight": 20}, {"type": "stealth", "weight": 10}, {"type": "healer", "weight": 10}], "description": "wave 15+: 全原型"}
+    ]
+  },
+
+  "buffInjection": {
+    "probability": "balance.spawner.buffChance",
+    "tiers": [
+      {"minWave": 6,  "maxBuffs": 1, "description": "wave 6+: 30% 概率 1 个 buff"},
+      {"minWave": 16, "maxBuffs": 2, "description": "wave 16+: 30% 概率最多 2 个 buff"},
+      {"minWave": 26, "maxBuffs": 2, "description": "wave 26+: 30% 概率最多 2 个 buff"}
+    ],
+    "exemptions": ["Boss"],
+    "description": "Boss 豁免 buff 注入。注意：balance.json 有 buffMaxBuffs 字段但代码未使用（已知不一致）"
+  }
+}

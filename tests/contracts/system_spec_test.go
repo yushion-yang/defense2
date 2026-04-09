@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"defense2/internal/config"
+	"defense2/internal/core/buff"
 )
 
 // ═══════════════════════════════════════
@@ -106,3 +107,90 @@ func TestBossSpec_RadiusScale(t *testing.T) {
 		t.Error("bossRadiusScale should > 1")
 	}
 }
+
+// ═══════════════════════════════════════
+// CC 系统规格
+// ═══════════════════════════════════════
+
+func TestCCSpec_MinSpeedRatio(t *testing.T) {
+	bal := config.GlobalBalance()
+	if bal.Combat.MinSpeedRatio <= 0 || bal.Combat.MinSpeedRatio >= 1 {
+		t.Errorf("minSpeedRatio = %f, want (0, 1)", bal.Combat.MinSpeedRatio)
+	}
+}
+
+// ═══════════════════════════════════════
+// 属性管线规格
+// ═══════════════════════════════════════
+
+func TestAttributeSpec_AttackSpeedFloor(t *testing.T) {
+	bal := config.GlobalBalance()
+	if bal.Tower.AttackSpeedFloor <= 0 {
+		t.Error("attackSpeedFloor should > 0")
+	}
+}
+
+func TestAttributeSpec_StrengthBuyCost(t *testing.T) {
+	bal := config.GlobalBalance()
+	if bal.Tower.StrengthBuyCost <= 0 {
+		t.Error("strengthBuyCost should > 0")
+	}
+}
+
+// ═══════════════════════════════════════
+// 波次出怪规格
+// ═══════════════════════════════════════
+
+func TestWaveSpec_BuffTiersConsistent(t *testing.T) {
+	bal := config.GlobalBalance()
+	if len(bal.Spawner.BuffMinWaves) != len(bal.Spawner.BuffMaxBuffs) {
+		t.Errorf("BuffMinWaves len=%d != BuffMaxBuffs len=%d",
+			len(bal.Spawner.BuffMinWaves), len(bal.Spawner.BuffMaxBuffs))
+	}
+	// minWaves 应递增
+	for i := 1; i < len(bal.Spawner.BuffMinWaves); i++ {
+		if bal.Spawner.BuffMinWaves[i] <= bal.Spawner.BuffMinWaves[i-1] {
+			t.Errorf("BuffMinWaves[%d]=%d should > BuffMinWaves[%d]=%d",
+				i, bal.Spawner.BuffMinWaves[i], i-1, bal.Spawner.BuffMinWaves[i-1])
+		}
+	}
+}
+
+func TestWaveSpec_HpPerWavePositive(t *testing.T) {
+	bal := config.GlobalBalance()
+	if bal.Spawner.HpPerWave <= 0 {
+		t.Error("hpPerWave should > 0")
+	}
+	if bal.Spawner.SpeedPerWave <= 0 {
+		t.Error("speedPerWave should > 0")
+	}
+}
+
+// ═══════════════════════════════════════
+// Buff 堆叠规格
+// ═══════════════════════════════════════
+
+func TestBuffStackSpec_DamageUpAdditive(t *testing.T) {
+	// 已在 full_coverage_contracts_test.go TestBuffDamageUpUsesAdditive 中覆盖
+	// 此处验证 cap > 0
+	rules := buff.DefaultStackRules
+	r, ok := rules["damageUp"]
+	if !ok {
+		t.Fatal("缺少 damageUp 规则")
+	}
+	if r.Cap <= 0 {
+		t.Error("damageUp cap should > 0")
+	}
+}
+
+func TestBuffStackSpec_SlowCap(t *testing.T) {
+	rules := buff.DefaultStackRules
+	r, ok := rules["slow"]
+	if !ok {
+		t.Fatal("缺少 slow 规则")
+	}
+	if r.Cap <= 0 || r.Cap > 1 {
+		t.Errorf("slow cap = %f, want (0, 1]", r.Cap)
+	}
+}
+

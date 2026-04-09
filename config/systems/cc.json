@@ -1,0 +1,39 @@
+{
+  "_description": "CC（人群控制）系统规格 — 减速/眩晕/定身的施加规则、免疫层级、韧性公式",
+
+  "types": {
+    "stun":  {"description": "眩晕：完全停止移动和攻击，持续 duration 秒。刷新制（取较长者）不叠加"},
+    "slow":  {"description": "减速：降低移动速度至 BaseSpeed × factor，持续 duration 秒。取更强效果"},
+    "root":  {"description": "定身：完全停止移动但不停止攻击，持续 duration 秒"}
+  },
+
+  "tenacity": {
+    "formula": "actualDuration = duration × (1 - Tenacity)",
+    "fullImmune": "Tenacity ≥ 1.0 时免疫该 CC",
+    "description": "韧性减免公式，应用于所有 CC 类型"
+  },
+
+  "slowRules": {
+    "minSpeedRatio": "balance.combat.minSpeedRatio",
+    "formula": "Speed = BaseSpeed × max(factor, minSpeedRatio)",
+    "stacking": "取更强效果（更低 factor 或更长 duration）",
+    "recovery": "SlowTimer 归零后 Speed 恢复 BaseSpeed",
+    "description": "减速下限保证敌人不会完全停止"
+  },
+
+  "immunityHierarchy": {
+    "IsControlImmune": {"blocks": ["stun", "slow", "root"], "description": "完全控制免疫（Boss ccImmune 能力/净化后临时免疫）"},
+    "IsStunImmune":    {"blocks": ["stun"],                  "description": "仅免疫眩晕"},
+    "IsSlowImmune":    {"blocks": ["slow"],                  "description": "仅免疫减速"},
+    "IsRootImmune":    {"blocks": ["root"],                  "description": "仅免疫定身"},
+    "description": "IsControlImmune 是所有免疫的超集"
+  },
+
+  "purgeInteraction": {
+    "clearsAll": ["StunTimer", "SlowTimer", "RootTimer", "BleedTimer", "BurnTimer", "PoisonTimer", "DamageAmplify"],
+    "grantsImmunity": "ControlImmuneTimer = PurgeImmuneDur",
+    "immuneFlags": ["IsControlImmune", "IsStunImmune", "IsSlowImmune", "IsRootImmune"],
+    "notSilenceable": true,
+    "description": "净化清除所有负面效果 + 短暂全控制免疫（不可被沉默）"
+  }
+}
