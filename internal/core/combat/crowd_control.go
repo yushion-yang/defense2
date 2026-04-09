@@ -3,12 +3,13 @@
 package combat
 
 import (
+	"defense2/internal/config"
 	"defense2/internal/core/enemy"
 	tel "defense2/internal/core/telemetry"
 )
 
-// MinSpeedRatio 全局减速下限：速度不低于初始速度的 20%。
-const MinSpeedRatio = 0.2
+// MinSpeedRatio 全局减速下限（向后兼容导出变量，实际值从 balance.json 读取）。
+var MinSpeedRatio = config.GlobalBalance().Combat.MinSpeedRatio
 
 // ApplyStun 对敌人施加眩晕效果。
 // 检查免疫状态，应用韧性减免后设置眩晕计时器。
@@ -55,8 +56,9 @@ func ApplySlow(e *enemy.Enemy, factor, duration float64, source string) bool {
 	}
 
 	// 减速倍率下限限制（速度不低于初始速度的 MinSpeedRatio）
-	if factor < MinSpeedRatio {
-		factor = MinSpeedRatio
+	bal := config.GlobalBalance()
+	if factor < bal.Combat.MinSpeedRatio {
+		factor = bal.Combat.MinSpeedRatio
 	}
 
 	// 取更强的减速效果（更低的 factor = 更慢）

@@ -7,6 +7,7 @@ import (
 	"math/rand"
 	"strings"
 
+	"defense2/internal/config"
 	"defense2/internal/core/gamemap"
 	tel "defense2/internal/core/telemetry"
 )
@@ -49,38 +50,39 @@ var waveCompositions = []struct {
 
 // Spawner 波次出怪控制器。
 type Spawner struct {
-	Wave              int                       // 当前波次号（从 1 开始）
-	MaxWaves          int                       // 总波次数
-	SpawnTimer        float64                   // 单波内两个敌人之间的倒计时（秒）
-	SpawnIndex        int                       // 当前波已出第几个敌人
-	EnemiesPerWave    int                       // 每波基础敌人数
-	SpawnInterval     float64                   // 同波内敌人生成间隔（秒）
-	WaveInterval      float64                   // 两波之间的间隔（秒）
-	WaveTimer         float64                   // 波间等待倒计时（秒）
-	FirstWaveInterval float64                   // 第一波等待时间（秒），默认 20
-	WaveActive        bool                      // 当前波是否正在出怪
-	AllDone           bool                      // 是否所有波次已出完
-	GameMap           *gamemap.GameMap          // 运行时地图（用于获取路径）
-	Archetypes        map[string]*SpawnConfig   // 原型名 → 生成配置（由外部注入）
-	EnemyFilter       string                    // 敌人过滤器（ground-only/flying-only/elite-only/boss-only/dummy/stress/none/mixed/""）
-	HPScale           float64                   // 难度 HP 倍率（默认 1.0）
-	SpeedScale        float64                   // 难度速度倍率（默认 1.0）
-	ManualWave        bool                      // 手动开波模式：波间到 0 不自动开波，需外部调用 StartNextWave
-	FixedCount        int                       // >0 时每波固定该数量（不随波次递增）
-	BossEveryWave     bool                      // true 时每波末尾都出 Boss（bossRush 模式用）
-	bossQueued        bool                      // 本波是否需要在末尾追加 Boss
+	Wave              int                     // 当前波次号（从 1 开始）
+	MaxWaves          int                     // 总波次数
+	SpawnTimer        float64                 // 单波内两个敌人之间的倒计时（秒）
+	SpawnIndex        int                     // 当前波已出第几个敌人
+	EnemiesPerWave    int                     // 每波基础敌人数
+	SpawnInterval     float64                 // 同波内敌人生成间隔（秒）
+	WaveInterval      float64                 // 两波之间的间隔（秒）
+	WaveTimer         float64                 // 波间等待倒计时（秒）
+	FirstWaveInterval float64                 // 第一波等待时间（秒），默认 20
+	WaveActive        bool                    // 当前波是否正在出怪
+	AllDone           bool                    // 是否所有波次已出完
+	GameMap           *gamemap.GameMap        // 运行时地图（用于获取路径）
+	Archetypes        map[string]*SpawnConfig // 原型名 → 生成配置（由外部注入）
+	EnemyFilter       string                  // 敌人过滤器（ground-only/flying-only/elite-only/boss-only/dummy/stress/none/mixed/""）
+	HPScale           float64                 // 难度 HP 倍率（默认 1.0）
+	SpeedScale        float64                 // 难度速度倍率（默认 1.0）
+	ManualWave        bool                    // 手动开波模式：波间到 0 不自动开波，需外部调用 StartNextWave
+	FixedCount        int                     // >0 时每波固定该数量（不随波次递增）
+	BossEveryWave     bool                    // true 时每波末尾都出 Boss（bossRush 模式用）
+	bossQueued        bool                    // 本波是否需要在末尾追加 Boss
 }
 
 // NewSpawner 创建出怪管理器。
 func NewSpawner(gm *gamemap.GameMap, maxWaves int) *Spawner {
+	bal := config.GlobalBalance().Spawner
 	return &Spawner{
 		Wave:              0,
 		MaxWaves:          maxWaves,
-		EnemiesPerWave:    5,
-		SpawnInterval:     0.6,
-		WaveInterval:      10.0,
-		FirstWaveInterval: 20.0,
-		WaveTimer:         20.0,
+		EnemiesPerWave:    bal.EnemiesPerWave,
+		SpawnInterval:     bal.SpawnInterval,
+		WaveInterval:      bal.WaveInterval,
+		FirstWaveInterval: bal.FirstWaveInterval,
+		WaveTimer:         bal.FirstWaveInterval,
 		GameMap:           gm,
 	}
 }
@@ -132,8 +134,9 @@ func (s *Spawner) Update(pool *Pool, dt float64) {
 			if spdScale <= 0 {
 				spdScale = 1.0
 			}
-			baseHP := (52.0 + float64(s.Wave)*21) * hpScale
-			baseSpeed := (58.0 + float64(s.Wave)*5) * spdScale
+			bal := config.GlobalBalance().Spawner
+			baseHP := (bal.HpBase + float64(s.Wave)*bal.HpPerWave) * hpScale
+			baseSpeed := (bal.SpeedBase + float64(s.Wave)*bal.SpeedPerWave) * spdScale
 
 			var archetype string
 			var cfg *SpawnConfig
@@ -146,8 +149,8 @@ func (s *Spawner) Update(pool *Pool, dt float64) {
 					// 复制一份避免修改原始配置
 					bossCfg := *cfg
 					bossCfg.Boss = true
-					bossCfg.HpScale *= float64(8 + s.Wave) // Boss HP 随波次增长
-					bossCfg.Radius *= 1.5                   // Boss 体型更大
+					bossCfg.HpScale *= bal.BossHpMultBase + float64(s.Wave) // Boss HP 随波次增长
+					bossCfg.Radius *= bal.BossRadiusScale                   // Boss 体型更大
 					cfg = &bossCfg
 					tel.T.Record("boss", archetype)
 				}
@@ -209,7 +212,7 @@ func (s *Spawner) startWave() {
 	s.SpawnIndex = 0
 	s.SpawnTimer = 0
 	s.WaveActive = true
-	s.bossQueued = s.BossEveryWave || (s.Wave%5 == 0)
+	s.bossQueued = s.BossEveryWave || (s.Wave%config.GlobalBalance().Spawner.BossEveryNWaves == 0)
 }
 
 // WavePreviewEntry 下一波预览中的一种敌人。
@@ -231,7 +234,7 @@ func (s *Spawner) NextWavePreview() (entries []WavePreviewEntry, totalCount int,
 	if s.FixedCount > 0 {
 		count = s.FixedCount
 	}
-	isBoss = s.BossEveryWave || nextWave%5 == 0
+	isBoss = s.BossEveryWave || nextWave%config.GlobalBalance().Spawner.BossEveryNWaves == 0
 	if isBoss {
 		count++ // Boss 额外一个
 	}
@@ -450,8 +453,8 @@ func (s *Spawner) applyWaveBuffs(e *Enemy) {
 		return
 	}
 
-	// 30% 概率注入 buff（不是每个敌人都有）
-	if rand.Float64() > 0.3 {
+	// buffChance 概率注入 buff（不是每个敌人都有）
+	if rand.Float64() > config.GlobalBalance().Spawner.BuffChance {
 		return
 	}
 

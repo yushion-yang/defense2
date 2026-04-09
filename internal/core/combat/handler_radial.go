@@ -14,10 +14,11 @@ import (
 type RadialHandler struct{}
 
 func (h *RadialHandler) Fire(t *tower.Tower, target *enemy.Enemy, ctx *AttackContext) {
+	bal := config.GlobalBalance()
 	// 从能力配置读取参数
-	baseShots := 3
+	baseShots := bal.Combat.RadialBaseShots
 	extraShots := 0
-	rangeMult := 1.2
+	rangeMult := bal.Combat.RadialRangeMult
 	if abTable := config.GlobalAbilityTable(); abTable != nil {
 		if def, ok := abTable["radial"]; ok {
 			str := 100.0

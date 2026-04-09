@@ -2,7 +2,10 @@
 // 固定大小数组实现零分配对象池，通过 Active 标记复用槽位。
 package enemy
 
-import "defense2/internal/core/game"
+import (
+	"defense2/internal/config"
+	"defense2/internal/core/game"
+)
 
 // Pool 固定大小的敌人对象池。
 type Pool struct {
@@ -145,7 +148,7 @@ func (p *Pool) Spawn(x, y, baseHP, baseSpeed float64, pathIndex int, archetype s
 				e.SplitCount = cfg.SplitCount
 				e.SplitScale = cfg.SplitScale
 				if e.SplitScale <= 0 {
-					e.SplitScale = 0.3
+					e.SplitScale = config.GlobalBalance().Split.HpRatio
 				}
 			}
 			if cfg.HealScale > 0 {
@@ -223,23 +226,25 @@ func (p *Pool) Kill(e *Enemy) {
 
 		// 死亡召唤（deathSpawn 能力）
 		if e.DeathSpawnCount > 0 {
+			bal := config.GlobalBalance()
 			arch := e.DeathSpawnArch
 			if arch == "" {
-				arch = "normal"
+				arch = bal.DeathSpawn.DefaultArch
 			}
 			for i := 0; i < e.DeathSpawnCount; i++ {
-				child := p.Spawn(e.X+float64(i)*8, e.Y, e.MaxHP*0.2, e.BaseSpeed, e.PathIndex, arch, DefaultSpawnConfig())
+				child := p.Spawn(e.X+float64(i)*bal.DeathSpawn.ChildOffset, e.Y, e.MaxHP*bal.DeathSpawn.HpRatio, e.BaseSpeed, e.PathIndex, arch, DefaultSpawnConfig())
 				if child != nil {
 					child.Path = e.Path
 				}
 			}
 		}
 
-		e.DyingTimer = 0.3
-		e.DyingDuration = 0.3
+		dying := config.GlobalBalance().Dying
+		e.DyingTimer = dying.NormalDuration
+		e.DyingDuration = dying.NormalDuration
 		if e.Boss {
-			e.DyingTimer = 0.5
-			e.DyingDuration = 0.5
+			e.DyingTimer = dying.BossDuration
+			e.DyingDuration = dying.BossDuration
 		}
 		p.Count--
 	}

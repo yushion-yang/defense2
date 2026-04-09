@@ -2,14 +2,17 @@
 // 相邻塔形成链组，组内塔获得战力加成。
 package strength
 
-import "math"
+import (
+	"math"
 
-const (
-	// ChainDistance 链连接最大距离（像素）。
-	ChainDistance = 150.0
-	// ChainStrengthPerTower 每个链组成员贡献的战力值。
-	ChainStrengthPerTower = 10.0
+	"defense2/internal/config"
 )
+
+// ChainDistance 链连接最大距离（像素，从 balance.json 读取）。
+var ChainDistance = config.GlobalBalance().Chain.Distance
+
+// ChainStrengthPerTower 每个链组成员贡献的战力值（从 balance.json 读取）。
+var ChainStrengthPerTower = config.GlobalBalance().Chain.StrengthPerTower
 
 // ChainTower 链网络输入（避免直接依赖 tower 包）。
 type ChainTower struct {

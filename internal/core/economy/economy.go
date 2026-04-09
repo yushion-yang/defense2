@@ -2,17 +2,20 @@
 // 管理金币收入来源：击杀奖励、波次通过奖励。
 package economy
 
+import "defense2/internal/config"
+
 // Config 经济系统配置。
 type Config struct {
 	KillReward      int     // 每击杀一个敌人的基础金币
 	SellRefundRatio float64 // 卖塔返还比例
 }
 
-// DefaultConfig 返回默认经济配置。
+// DefaultConfig 返回默认经济配置（从 balance.json 读取）。
 func DefaultConfig() Config {
+	bal := config.GlobalBalance()
 	return Config{
-		KillReward:      15,
-		SellRefundRatio: 0.7,
+		KillReward:      int(bal.Economy.KillReward),
+		SellRefundRatio: bal.Economy.SellRefundRatio,
 	}
 }
 

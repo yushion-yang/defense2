@@ -19,12 +19,10 @@ package combat
 import (
 	"math"
 
+	"defense2/internal/config"
 	"defense2/internal/core/enemy"
 	tel "defense2/internal/core/telemetry"
 )
-
-// MaxDamageAmplify 虚弱增伤上限（0.5 = 最多 +50% 受伤）。
-const MaxDamageAmplify = 0.5
 
 // DamageInput 伤害管线输入参数。
 type DamageInput struct {
@@ -139,8 +137,9 @@ func ProcessDamage(input DamageInput) DamageResult {
 	tel.T.Record("pipeline", "damage_amplify")
 	if e.DamageAmplify > 0 {
 		amp := e.DamageAmplify
-		if amp > MaxDamageAmplify {
-			amp = MaxDamageAmplify
+		maxAmp := config.GlobalBalance().Combat.MaxDamageAmplify
+		if amp > maxAmp {
+			amp = maxAmp
 		}
 		damage *= 1 + amp
 	}

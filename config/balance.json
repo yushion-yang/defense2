@@ -1,0 +1,74 @@
+{
+  "spawner": {
+    "hpBase": 52,
+    "hpPerWave": 21,
+    "speedBase": 58,
+    "speedPerWave": 5,
+    "enemiesPerWave": 5,
+    "spawnInterval": 0.6,
+    "waveInterval": 10,
+    "firstWaveInterval": 20,
+    "bossEveryNWaves": 5,
+    "bossHpMultBase": 8,
+    "bossRadiusScale": 1.5,
+    "buffChance": 0.3,
+    "buffMinWaves": [6, 16, 26],
+    "buffMaxBuffs": [1, 1, 2]
+  },
+  "economy": {
+    "killReward": 15,
+    "sellRefundRatio": 0.7
+  },
+  "combat": {
+    "maxDamageAmplify": 0.5,
+    "minSpeedRatio": 0.2,
+    "dotTickInterval": 0.5,
+    "critMultiplier": 2,
+    "defaultProjectileSpeed": 300,
+    "defaultProjectileRadius": 4,
+    "scatterBasePellets": 3,
+    "scatterSpreadAngle": 60,
+    "radialBaseShots": 3,
+    "radialRangeMult": 1.2,
+    "wideBeamRangeMult": 3
+  },
+  "tower": {
+    "strengthBuyCost": 10,
+    "strengthBuyAmount": 10,
+    "wavesPerUnlock": 2,
+    "choicesPerUnlock": 3,
+    "attackSpeedFloor": 0.1
+  },
+  "chain": {
+    "distance": 150,
+    "strengthPerTower": 10
+  },
+  "items": [
+    {"kind": "baseDamage",      "label": "攻击磨石", "boost": 2},
+    {"kind": "potentialDamage",  "label": "攻击秘卷", "boost": 3},
+    {"kind": "baseSpeed",        "label": "速射齿轮", "boost": 0.15},
+    {"kind": "potentialSpeed",   "label": "速射秘卷", "boost": 0.2},
+    {"kind": "baseRange",        "label": "瞄准镜片", "boost": 12},
+    {"kind": "potentialRange",   "label": "瞄准秘卷", "boost": 18}
+  ],
+  "split": {
+    "hpRatio": 0.3,
+    "speedScale": 1.4,
+    "radiusRatio": 0.7,
+    "childOffset": 6
+  },
+  "deathSpawn": {
+    "hpRatio": 0.2,
+    "defaultArch": "normal",
+    "childOffset": 8
+  },
+  "dying": {
+    "normalDuration": 0.3,
+    "bossDuration": 0.5
+  },
+  "warden": {
+    "initialStrength": 100,
+    "defaultGrowthOnKill": 2,
+    "defaultGrowthOnWaveClear": 5
+  }
+}

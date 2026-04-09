@@ -1,6 +1,10 @@
 package item
 
-import "image/color"
+import (
+	"image/color"
+
+	"defense2/internal/config"
+)
 
 // Kind identifies an item type.
 type Kind int
@@ -30,14 +34,46 @@ type Def struct {
 	Color    color.RGBA
 }
 
-// Defs holds the definition for every item kind.
-var Defs = [KindCount]Def{
-	KindBaseDamage:      {KindBaseDamage, "攻击磨石", 2, color.RGBA{R: 239, G: 68, B: 68, A: 255}},
-	KindPotentialDamage: {KindPotentialDamage, "攻击秘卷", 3, color.RGBA{R: 185, G: 28, B: 28, A: 255}},
-	KindBaseSpeed:       {KindBaseSpeed, "速射齿轮", 0.15, color.RGBA{R: 250, G: 204, B: 21, A: 255}},
-	KindPotentialSpeed:  {KindPotentialSpeed, "速射秘卷", 0.2, color.RGBA{R: 202, G: 138, B: 4, A: 255}},
-	KindBaseRange:       {KindBaseRange, "瞄准镜片", 12, color.RGBA{R: 59, G: 130, B: 246, A: 255}},
-	KindPotentialRange:  {KindPotentialRange, "瞄准秘卷", 18, color.RGBA{R: 30, G: 64, B: 175, A: 255}},
+// itemColors 每种道具的显示颜色（固定，不受 balance 影响）。
+var itemColors = [KindCount]color.RGBA{
+	KindBaseDamage:      {R: 239, G: 68, B: 68, A: 255},
+	KindPotentialDamage: {R: 185, G: 28, B: 28, A: 255},
+	KindBaseSpeed:       {R: 250, G: 204, B: 21, A: 255},
+	KindPotentialSpeed:  {R: 202, G: 138, B: 4, A: 255},
+	KindBaseRange:       {R: 59, G: 130, B: 246, A: 255},
+	KindPotentialRange:  {R: 30, G: 64, B: 175, A: 255},
+}
+
+// kindFromString 将 balance.json 中的 kind 字符串映射为 Kind 枚举。
+var kindFromString = map[string]Kind{
+	"baseDamage":      KindBaseDamage,
+	"potentialDamage": KindPotentialDamage,
+	"baseSpeed":       KindBaseSpeed,
+	"potentialSpeed":  KindPotentialSpeed,
+	"baseRange":       KindBaseRange,
+	"potentialRange":  KindPotentialRange,
+}
+
+// Defs holds the definition for every item kind (populated from balance.json).
+var Defs = initDefs()
+
+// initDefs 从 balance.json 构建道具定义表。
+func initDefs() [KindCount]Def {
+	var defs [KindCount]Def
+	items := config.GlobalBalance().Items
+	for _, it := range items {
+		k, ok := kindFromString[it.Kind]
+		if !ok {
+			continue
+		}
+		defs[k] = Def{
+			Kind:     k,
+			Name:     it.Label,
+			BoostVal: it.Boost,
+			Color:    itemColors[k],
+		}
+	}
+	return defs
 }
 
 // Inventory tracks how many of each item the player owns.
