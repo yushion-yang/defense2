@@ -10,10 +10,17 @@ import (
 	"defense2/internal/core/strength"
 )
 
+// grid index dimensions (covers max map size 40 cols × 18 rows with margin)
+const (
+	gridMaxRows = 20
+	gridMaxCols = 42
+)
+
 // Pool 固定大小的塔对象池。
 type Pool struct {
 	towers []Tower // 预分配的塔槽位数组
 	Count  int     // 当前已放置的塔数量
+	grid   [gridMaxRows][gridMaxCols]*Tower // spatial index for O(1) At() lookup
 }
 
 // NewPool 创建指定容量的塔对象池。
@@ -76,6 +83,9 @@ func (p *Pool) Place(row, col int, cx, cy float64, def TowerDef) *Tower {
 			t.Strength = strength.NewStrengthData()
 
 			p.Count++
+			if row >= 0 && row < gridMaxRows && col >= 0 && col < gridMaxCols {
+				p.grid[row][col] = t
+			}
 			return t
 		}
 	}
@@ -126,6 +136,9 @@ func (p *Pool) PlaceFromSnapshot(row, col int, cx, cy float64, def TowerDef, sna
 			t.Strength = strength.NewStrengthData()
 
 			p.Count++
+			if row >= 0 && row < gridMaxRows && col >= 0 && col < gridMaxCols {
+				p.grid[row][col] = t
+			}
 			return t
 		}
 	}
@@ -135,6 +148,9 @@ func (p *Pool) PlaceFromSnapshot(row, col int, cx, cy float64, def TowerDef, sna
 // Remove 出售塔（标记为非存活，回收槽位）。
 func (p *Pool) Remove(t *Tower) {
 	if t.Active {
+		if t.Row >= 0 && t.Row < gridMaxRows && t.Col >= 0 && t.Col < gridMaxCols {
+			p.grid[t.Row][t.Col] = nil
+		}
 		t.Active = false
 		t.Target = nil
 		p.Count--
@@ -150,14 +166,16 @@ func (p *Pool) Each(fn func(t *Tower)) {
 	}
 }
 
-// At 返回指定网格位置 (row, col) 上的塔，无塔则返回 nil。
+// At 返回指定网格位置 (row, col) 上的塔，无塔则返回 nil。O(1) via grid index.
 func (p *Pool) At(row, col int) *Tower {
-	for i := range p.towers {
-		if p.towers[i].Active && p.towers[i].Row == row && p.towers[i].Col == col {
-			return &p.towers[i]
-		}
+	if row < 0 || row >= gridMaxRows || col < 0 || col >= gridMaxCols {
+		return nil
 	}
-	return nil
+	t := p.grid[row][col]
+	if t != nil && !t.Active {
+		return nil
+	}
+	return t
 }
 
 // TowerDef 塔类型定义，用于建造时初始化塔属性。

@@ -171,10 +171,8 @@ func (p *Pool) Kill(e *Enemy) {
 	if e.Active && e.DyingTimer <= 0 {
 		// TODO: 复活能力将通过能力系统实现
 		// 分裂体死亡时生成子体（必须在 dying 标记前执行，否则子体无法获取父体路径）
-		if e.Behavior == "splitter" && e.SplitCount > 0 {
-			HandleSplitterDeath(e, p)
-		} else if e.SplitCount > 0 {
-			children := SpawnSplitChildren(e, p)
+		if e.SplitCount > 0 {
+			children := HandleSplitterDeath(e, p)
 			if p.OnSplit != nil && len(children) > 0 {
 				p.OnSplit(children)
 			}

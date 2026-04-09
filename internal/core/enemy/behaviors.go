@@ -15,6 +15,7 @@ type HealEvent struct {
 	Restored float64 // 实际回复量
 	TargetX  float64 // 被治疗者 X 坐标
 	TargetY  float64 // 被治疗者 Y 坐标
+	Target   *Enemy  // 被治疗者指针（避免外部按 ID 遍历查找）
 }
 
 // BehaviorEvents 一帧内行为系统产生的事件（供外部播放音效/VFX）。
@@ -191,6 +192,7 @@ func tickHealer(e *Enemy, pool *Pool, dt float64, events *BehaviorEvents) {
 			Restored: restored,
 			TargetX:  other.X,
 			TargetY:  other.Y,
+			Target:   other,
 		})
 	})
 }
@@ -230,21 +232,21 @@ func tickBuffer(e *Enemy, pool *Pool) {
 }
 
 // HandleSplitterDeath 处理分裂体死亡：在死亡位置生成子体。
-// 返回成功生成的子体数量。子体继承父体的路径和 PathIndex，
+// 返回成功生成的子体列表。子体继承父体的路径和 PathIndex，
 // 血量为 MaxHP * SplitScale，速度按 balance 配置缩放。
-func HandleSplitterDeath(e *Enemy, pool *Pool) int {
+func HandleSplitterDeath(e *Enemy, pool *Pool) []*Enemy {
 	if e.SplitCount <= 0 {
-		return 0
+		return nil
 	}
 
 	bal := config.GlobalBalance()
-	spawned := 0
 	childHP := e.MaxHP * e.SplitScale
 	if childHP < 1 {
 		childHP = 1
 	}
 	childSpeed := e.BaseSpeed * bal.Split.SpeedScale
 
+	var children []*Enemy
 	for i := 0; i < e.SplitCount; i++ {
 		// 子体在父体位置略微偏移
 		offsetX := float64(i-e.SplitCount/2) * bal.Split.ChildOffset
@@ -253,12 +255,13 @@ func HandleSplitterDeath(e *Enemy, pool *Pool) int {
 			SpeedScale: 1, // 已经计算好绝对值
 			Radius:     e.Radius * bal.Split.RadiusRatio,
 		})
-		if child != nil {
-			child.Path = e.Path
-			spawned++
+		if child == nil {
+			break // 池满
 		}
+		child.Path = e.Path
+		children = append(children, child)
 	}
-	return spawned
+	return children
 }
 
 // UpdateBerserk 检查并触发狂暴状态。
@@ -295,97 +298,7 @@ func UpdateBerserk(e *Enemy) bool {
 	return true
 }
 
-// UpdateHealing 处理治疗光环行为。
-// 遍历所有存活敌人中的治疗者，对范围内受伤友军施加治疗。
-// 返回本帧发生的所有治疗事件。
-func UpdateHealing(enemies []*Enemy, dt float64) []HealEvent {
-	var events []HealEvent
 
-	for _, healer := range enemies {
-		// 跳过非治疗者或已死亡的
-		if healer.HealPower <= 0 || !healer.Active {
-			continue
-		}
-
-		// 冷却中
-		healer.HealCooldown -= dt
-		if healer.HealCooldown > 0 {
-			continue
-		}
-
-		// 重置冷却
-		healer.HealCooldown = healer.HealInterval
-
-		// 遍历范围内的友军
-		radiusSq := healer.HealRadius * healer.HealRadius
-		for _, target := range enemies {
-			if !target.Active || target.ID == healer.ID {
-				continue
-			}
-
-			// 满血不治疗
-			if target.HP >= target.MaxHP {
-				continue
-			}
-
-			// 距离检查
-			dx := target.X - healer.X
-			dy := target.Y - healer.Y
-			distSq := dx*dx + dy*dy
-			if distSq > radiusSq {
-				continue
-			}
-
-			// 施加治疗（不超过最大血量）
-			restored := math.Min(healer.HealPower, target.MaxHP-target.HP)
-			target.HP += restored
-
-			events = append(events, HealEvent{
-				HealerID: healer.ID,
-				TargetID: target.ID,
-				Restored: restored,
-				TargetX:  target.X,
-				TargetY:  target.Y,
-			})
-		}
-	}
-	return events
-}
-
-// SpawnSplitChildren 在敌人死亡时生成分裂子体。
-// 返回生成的子体列表。调用方负责传入 pool 和路径信息。
-func SpawnSplitChildren(parent *Enemy, pool *Pool) []*Enemy {
-	if parent.SplitCount <= 0 {
-		return nil
-	}
-
-	childHP := parent.MaxHP * parent.SplitHPRatio
-	if childHP < 1 {
-		childHP = 1
-	}
-	childSpeed := parent.BaseSpeed * parent.SplitSpeedScale
-
-	var children []*Enemy
-	for i := 0; i < parent.SplitCount; i++ {
-		// 子体在父体位置附近偏移
-		offsetX := float64(i-parent.SplitCount/2) * parent.Radius
-		child := pool.Spawn(
-			parent.X+offsetX, parent.Y,
-			childHP, childSpeed, parent.PathIndex,
-			parent.Archetype, DefaultSpawnConfig(),
-		)
-		if child == nil {
-			break // 池满
-		}
-		// 子体不再分裂（防止无限递归）
-		child.SplitCount = 0
-		// 继承父体路径
-		child.Path = parent.Path
-		child.Radius = parent.Radius * config.GlobalBalance().Split.RadiusRatio
-		children = append(children, child)
-	}
-	return children
-}
 
 // UpdateRegeneration 处理敌人自然回血。
 // 返回本帧实际回复的血量。
@@ -427,32 +340,3 @@ func UpdateTeleport(e *Enemy, dt float64) bool {
 	return true
 }
 
-// UpdateBufferAura 处理旗手光环：加速周围友军。
-// 每帧重置受影响友军的速度加成（需要在移动前调用）。
-func UpdateBufferAura(enemies []*Enemy, dt float64) {
-	// 先收集所有光环源
-	for _, buffer := range enemies {
-		if buffer.AuraRange <= 0 || !buffer.Active || buffer.IsDying() || buffer.IsSpawning() {
-			continue
-		}
-		radiusSq := buffer.AuraRange * buffer.AuraRange
-		for _, target := range enemies {
-			if !target.Active || target.IsDying() || target.IsSpawning() || target.ID == buffer.ID {
-				continue
-			}
-			dx := target.X - buffer.X
-			dy := target.Y - buffer.Y
-			if dx*dx+dy*dy > radiusSq {
-				continue
-			}
-			// 加速：直接修改 BaseSpeed 临时加成
-			// 注意：这是每帧覆盖，需要在移动前调用
-			boost := target.BaseSpeed * buffer.AuraSpeedUp
-			if target.SlowTimer <= 0 {
-				target.Speed = target.BaseSpeed + boost
-			} else {
-				target.Speed = (target.BaseSpeed + boost) * target.SlowFactor
-			}
-		}
-	}
-}

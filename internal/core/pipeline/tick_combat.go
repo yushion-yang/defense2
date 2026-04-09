@@ -91,6 +91,12 @@ type HitCallback = combat.HitCallback
 func TickProjectileHits(projectiles *projectile.Pool, enemies *enemy.Pool, towers *tower.Pool, onHit HitCallback, onCC combat.CCCallback) int {
 	kills := 0
 
+	// Build tower lookup map once per frame (avoids O(N) scan per projectile hit)
+	towerByKey := make(map[string]*tower.Tower, towers.Count)
+	towers.Each(func(t *tower.Tower) {
+		towerByKey[t.InstanceKey] = t
+	})
+
 	projectiles.Each(func(p *projectile.Projectile) {
 		enemies.Each(func(e *enemy.Enemy) {
 			if !p.Active || e.IsDying() || e.IsSpawning() {
@@ -121,11 +127,7 @@ func TickProjectileHits(projectiles *projectile.Pool, enemies *enemy.Pool, tower
 			// ── 统一命中处理 ──
 			var srcTower *tower.Tower
 			if p.SourceTowerKey != "" {
-				towers.Each(func(t *tower.Tower) {
-					if srcTower == nil && t.InstanceKey == p.SourceTowerKey {
-						srcTower = t
-					}
-				})
+				srcTower = towerByKey[p.SourceTowerKey]
 			}
 
 			hitStyle := ""

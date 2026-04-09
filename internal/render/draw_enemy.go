@@ -4,7 +4,6 @@
 package render
 
 import (
-	"fmt"
 	"image/color"
 	"math"
 
@@ -34,6 +33,28 @@ func NewEnemyRenderer(assetFS AssetReader) *EnemyRenderer {
 }
 
 const enemySpriteSize = 24
+
+// spritePathCache caches fmt.Sprintf results to avoid per-frame allocations.
+var spritePathCache = map[string]string{}
+
+func cachedEnemySpritePath(dir string) string {
+	if p, ok := spritePathCache[dir]; ok {
+		return p
+	}
+	p := "assets/enemies/sprites/" + dir + "/" + dir + ".png"
+	spritePathCache[dir] = p
+	return p
+}
+
+func cachedShieldPath(name string) string {
+	key := "shield:" + name
+	if p, ok := spritePathCache[key]; ok {
+		return p
+	}
+	p := "assets/enemies/shields/" + name + ".png"
+	spritePathCache[key] = p
+	return p
+}
 
 // DrawEnemies renders all alive enemies.
 // Two-pass rendering: dying enemies first (behind), then active enemies on top.
@@ -379,7 +400,7 @@ func hasAbility(e *enemy.Enemy, abilityType string) bool {
 
 // loadShield 加载盾牌 PNG（缓存）。
 func (er *EnemyRenderer) loadShield(name string) *ebiten.Image {
-	path := fmt.Sprintf("assets/enemies/shields/%s.png", name)
+	path := cachedShieldPath(name)
 	if cached := er.cache.Get(path, 12, 16); cached != nil {
 		return cached
 	}
@@ -404,7 +425,7 @@ func (er *EnemyRenderer) loadEnemyImage(e *enemy.Enemy) *ebiten.Image {
 	if er.assetFS == nil || spriteDir == "" {
 		return nil
 	}
-	path := fmt.Sprintf("assets/enemies/sprites/%s/%s.png", spriteDir, spriteDir)
+	path := cachedEnemySpritePath(spriteDir)
 	cached := er.cache.Get(path, enemySpriteSize, enemySpriteSize)
 	if cached != nil {
 		return cached
@@ -425,7 +446,7 @@ func (er *EnemyRenderer) GetSprite(archetype string) *ebiten.Image {
 	if er.assetFS == nil || archetype == "" {
 		return nil
 	}
-	path := fmt.Sprintf("assets/enemies/sprites/%s/%s.png", archetype, archetype)
+	path := cachedEnemySpritePath(archetype)
 	if cached := er.cache.Get(path, enemySpriteSize, enemySpriteSize); cached != nil {
 		return cached
 	}
