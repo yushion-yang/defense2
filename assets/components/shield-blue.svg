@@ -1,0 +1,33 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 38 48" width="38" height="48">
+  <!-- 蓝色盾牌：圆润型，冰晶风格 -->
+
+  <!-- 盾牌主体（圆顶平底收窄） -->
+  <path d="M3 16 Q3 0 19 0 Q35 0 35 16 L35 30 Q35 40 19 48 Q3 40 3 30 Z"
+        fill="#2563eb" stroke="#1e3a8a" stroke-width="1.5"/>
+
+  <!-- 内层面板 -->
+  <path d="M6 16 Q6 3 19 3 Q32 3 32 16 L32 29 Q32 38 19 45 Q6 38 6 29 Z"
+        fill="#3b82f6" stroke="#1d4ed8" stroke-width="0.8"/>
+
+  <!-- 冰晶纹路 -->
+  <line x1="19" y1="6" x2="19" y2="42" stroke="#93c5fd" stroke-width="0.8" opacity="0.5"/>
+  <line x1="8" y1="16" x2="30" y2="16" stroke="#93c5fd" stroke-width="0.6" opacity="0.4"/>
+  <line x1="19" y1="6" x2="10" y2="20" stroke="#93c5fd" stroke-width="0.5" opacity="0.3"/>
+  <line x1="19" y1="6" x2="28" y2="20" stroke="#93c5fd" stroke-width="0.5" opacity="0.3"/>
+  <line x1="19" y1="28" x2="10" y2="36" stroke="#93c5fd" stroke-width="0.5" opacity="0.3"/>
+  <line x1="19" y1="28" x2="28" y2="36" stroke="#93c5fd" stroke-width="0.5" opacity="0.3"/>
+
+  <!-- 顶部高光弧 -->
+  <path d="M10 10 Q19 4 28 10" fill="none" stroke="#bfdbfe" stroke-width="1" opacity="0.6"/>
+
+  <!-- 中心宝石 -->
+  <circle cx="19" cy="22" r="4" fill="#1d4ed8" stroke="#1e3a8a" stroke-width="0.6"/>
+  <circle cx="19" cy="22" r="2.5" fill="#60a5fa"/>
+  <circle cx="18" cy="21" r="1" fill="#bfdbfe" opacity="0.6"/>
+
+  <!-- 边缘铆钉 -->
+  <circle cx="8"  cy="12" r="1.2" fill="#93c5fd" stroke="#3b82f6" stroke-width="0.3"/>
+  <circle cx="30" cy="12" r="1.2" fill="#93c5fd" stroke="#3b82f6" stroke-width="0.3"/>
+  <circle cx="8"  cy="32" r="1.2" fill="#93c5fd" stroke="#3b82f6" stroke-width="0.3"/>
+  <circle cx="30" cy="32" r="1.2" fill="#93c5fd" stroke="#3b82f6" stroke-width="0.3"/>
+</svg>
