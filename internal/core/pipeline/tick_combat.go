@@ -132,6 +132,10 @@ func TickProjectileHits(projectiles *projectile.Pool, enemies *enemy.Pool, tower
 			if srcTower != nil {
 				hitStyle = string(srcTower.AttackStyleID)
 			}
+			// 弹射弹强制标记为 bounce（不依赖塔的 AttackStyleID）
+			if p.BounceCount > 0 {
+				hitStyle = "bounce"
+			}
 			out := combat.ApplyHit(combat.HitInput{
 				Tower: srcTower, Target: e, BaseDamage: p.Damage, Style: hitStyle,
 				Enemies: enemies, Projectiles: projectiles, Projectile: p, OnCC: onCC,
