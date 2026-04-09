@@ -167,6 +167,58 @@ func EmitSpawnBurst(pool *Pool, x, y float64) {
 	}
 }
 
+// EmitDeathBurstLarge emits a larger death burst for multi-kills and overkills.
+// 16-24 particles with wider spread and warmer colors.
+func EmitDeathBurstLarge(pool *Pool, x, y float64) {
+	if pool == nil {
+		return
+	}
+	count := 16 + rand.Intn(9) // 16-24
+	for i := 0; i < count; i++ {
+		r := uint8(200 + rand.Intn(56))
+		g := uint8(100 + rand.Intn(80))
+		pool.Spawn(ParticleConfig{
+			X: x, Y: y,
+			Speed: 50, SpeedVar: 40,
+			Angle: rand.Float64() * 2 * math.Pi, AngleVar: 0.3,
+			Life: 0.55, LifeVar: 0.2,
+			Size: 4, SizeEnd: 1.5,
+			Color:    color.RGBA{R: r, G: g, B: 40, A: 220},
+			EndAlpha: 0,
+			Gravity:  100,
+		})
+	}
+}
+
+// EmitBossDeathBurst emits a massive multi-color burst for boss kills.
+// 30-40 particles with vibrant colors and large radius.
+func EmitBossDeathBurst(pool *Pool, x, y float64) {
+	if pool == nil {
+		return
+	}
+	colors := []color.RGBA{
+		{R: 255, G: 80, B: 40, A: 240},  // orange-red
+		{R: 255, G: 200, B: 40, A: 240},  // gold
+		{R: 255, G: 120, B: 60, A: 240},  // amber
+		{R: 200, G: 60, B: 255, A: 240},  // purple
+		{R: 80, G: 200, B: 255, A: 240},  // cyan
+	}
+	count := 30 + rand.Intn(11) // 30-40
+	for i := 0; i < count; i++ {
+		c := colors[rand.Intn(len(colors))]
+		pool.Spawn(ParticleConfig{
+			X: x, Y: y,
+			Speed: 60, SpeedVar: 60,
+			Angle: rand.Float64() * 2 * math.Pi, AngleVar: 0.3,
+			Life: 0.7, LifeVar: 0.3,
+			Size: 5, SizeEnd: 2,
+			Color:    c,
+			EndAlpha: 0,
+			Gravity:  80,
+		})
+	}
+}
+
 // EmitElectricSparks spawns fast electric spark particles in random directions.
 func EmitElectricSparks(pool *Pool, x, y float64, count int) {
 	for i := 0; i < count; i++ {

@@ -49,6 +49,7 @@ import (
 	"defense2/internal/render/particle"
 	"defense2/internal/render/postprocess"
 	"defense2/internal/render/theme"
+	"defense2/internal/render/ui"
 
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/hajimehoshi/ebiten/v2/inpututil"
@@ -97,6 +98,9 @@ type StageScene struct {
 	dragItemActive    bool            // 是否正在拖拽道具
 	dragHoverTower    *tower.Tower    // 拖拽道具时悬停的目标塔
 	itemPanelOpen     bool            // 道具面板是否打开
+	// 按钮微交互动画状态
+	buildBtnState ui.ButtonState // 造塔按钮动画
+	itemBtnState  ui.ButtonState // 道具按钮动画
 	gameSpeed         int             // 游戏速度倍率（1 或 2）
 	timeScale         *timescale.Controller // 慢动作时间缩放控制器
 	imode             interactMode    // 交互状态机
@@ -643,6 +647,15 @@ func (s *StageScene) Update() error {
 		s.audioMgr.PlayBGM(gameAudio.BGMBattle)
 	}
 	s.frame++
+
+	// 按钮微交互动画更新（每帧 tick，不受暂停影响）
+	{
+		mx, my := draw.CursorPos()
+		mouseDown := ebiten.IsMouseButtonPressed(ebiten.MouseButtonLeft)
+		hoveredBtn := hud.ActionBarHitTest(float32(mx), float32(my))
+		s.buildBtnState.Update(dt, hoveredBtn == "build", hoveredBtn == "build" && mouseDown)
+		s.itemBtnState.Update(dt, hoveredBtn == "items", hoveredBtn == "items" && mouseDown)
+	}
 
 	// F12 / 截图按钮：任意状态可用（不受交互模式限制）
 	if inpututil.IsKeyJustPressed(ebiten.KeyF12) {
@@ -1992,15 +2005,26 @@ func (s *StageScene) updatePlaying() {
 			}
 		}
 		if killed {
-			particle.EmitDeathBurst(s.particlePool, e.X, e.Y)
+			// Death particles: scale with multi-kill streak
+			if s.multiKillCount >= 3 {
+				particle.EmitDeathBurstLarge(s.particlePool, e.X, e.Y)
+			} else {
+				particle.EmitDeathBurst(s.particlePool, e.X, e.Y)
+			}
 			particle.EmitGoldCollect(s.particlePool, e.X, e.Y)
 			// 分裂体死亡音效（子体已由 Pool.Kill 自动生成）
 			if e.Behavior == "splitter" && e.SplitCount > 0 {
 				s.audioMgr.PlaySafeAt(gameAudio.SFXSplitPop, gameAudio.VolKill)
 			}
+			// Overkill detection: damage > 2x MaxHP on non-boss
+			if e.MaxHP > 0 && damage/e.MaxHP > 2.0 && !e.Boss {
+				render.SpawnText(e.X, e.Y-20, "OVERKILL", color.RGBA{R: 255, G: 215, B: 0, A: 255}, 16, 1.5)
+				particle.EmitDeathBurstLarge(s.particlePool, e.X, e.Y)
+				render.TriggerShake(2.0, 0.15)
+			}
 			// Multi-kill tracker
 			s.multiKillCount++
-			s.multiKillTimer = 1.5
+			s.multiKillTimer = 2.0
 			if s.multiKillCount > s.gameStats.MaxKillStreak {
 				s.gameStats.MaxKillStreak = s.multiKillCount
 			}
@@ -2012,16 +2036,34 @@ func (s *StageScene) updatePlaying() {
 					hud.ShowToast("成就解锁: 连杀达人")
 				}
 			}
-			if s.multiKillCount == 5 {
-				render.SpawnText(float64(game.ScreenWidth)/2, float64(game.ScreenHeight)/2-30,
-					"连杀 x5", color.RGBA{255, 200, 50, 255}, 16, 1.5)
-			} else if s.multiKillCount == 10 {
-				render.SpawnText(float64(game.ScreenWidth)/2, float64(game.ScreenHeight)/2-30,
-					"超级连杀 x10", color.RGBA{255, 100, 50, 255}, 18, 2.0)
+			// Multi-kill tier feedback
+			cx := float64(game.ScreenWidth) / 2
+			cy := float64(game.ScreenHeight)/2 - 30
+			switch {
+			case s.multiKillCount == 3:
+				render.SpawnText(cx, cy, "×3 连杀!", color.RGBA{R: 255, G: 255, B: 255, A: 220}, 14, 1.2)
+			case s.multiKillCount == 5:
+				render.SpawnText(cx, cy, "×5 连杀!", color.RGBA{R: 255, G: 220, B: 60, A: 255}, 16, 1.5)
+				render.TriggerShake(1.5, 0.1)
+			case s.multiKillCount == 10:
+				render.SpawnText(cx, cy, "×10 超级连杀!", color.RGBA{R: 255, G: 140, B: 40, A: 255}, 18, 2.0)
+				render.TriggerShake(2.0, 0.15)
+			case s.multiKillCount == 20:
+				render.SpawnText(cx, cy, "×20 无双!", color.RGBA{R: 255, G: 60, B: 40, A: 255}, 22, 2.0)
+				render.TriggerShake(3.0, 0.2)
+			case s.multiKillCount == 50:
+				render.SpawnText(cx, cy, "×50 传说!", color.RGBA{R: 255, G: 215, B: 0, A: 255}, 24, 2.5)
+				s.timeScale.Trigger(0.3, 0.1, 0.3, 0.3)
 			}
+			// Kill audio + boss-specific feedback
 			if e.Boss {
 				s.audioMgr.PlayThrottledAt(gameAudio.SFXEnemyDeathBoss, 50, gameAudio.VolKill)
-				s.postPipeline.Effects.TriggerHitStop(3)
+				s.postPipeline.Effects.TriggerHitStop(5)
+				s.timeScale.Trigger(0.2, 0.1, 0.4, 0.3)
+				render.TriggerShake(5.0, 0.4)
+				s.postPipeline.Effects.TriggerRadialBlur(e.X, e.Y, 0.04, 0.6)
+				s.postPipeline.Effects.TriggerRipple(e.X, e.Y, 20)
+				particle.EmitBossDeathBurst(s.particlePool, e.X, e.Y)
 			} else {
 				s.audioMgr.PlayThrottledAt(gameAudio.SFXEnemyDeath, 50, gameAudio.VolKill)
 			}
@@ -2321,9 +2363,11 @@ func (s *StageScene) drawScene(screen *ebiten.Image) {
 	s.drawStrengthDrainLinks(worldTarget)
 	s.drawEnemyAbilityVFX(worldTarget)
 
-	// 弹射物
+	// 弹射物 — glow pass wraps projectile/beam rendering for additive bloom
+	draw.BeginGlowPass(worldTarget)
 	render.DrawProjectiles(worldTarget, s.projectiles)
 	render.DrawBeams(worldTarget, s.beams)
+	draw.EndGlowPass(worldTarget)
 
 	// 冲击特效（蓄力弹命中）
 	render.DrawImpactVFX(worldTarget)
@@ -2399,9 +2443,11 @@ func (s *StageScene) drawScene(screen *ebiten.Image) {
 
 	// HUD：底部动作栏
 	hud.DrawActionBar(screen, hud.ActionBarData{
-		BuildActive: s.imode == modeBuildMenu || s.imode == modeBuildPlace,
-		ItemActive:  s.imode == modeItemPanel || s.imode == modeItemDrag,
-		ItemTotal:   s.inventory.TotalCount(),
+		BuildActive:   s.imode == modeBuildMenu || s.imode == modeBuildPlace,
+		ItemActive:    s.imode == modeItemPanel || s.imode == modeItemDrag,
+		ItemTotal:     s.inventory.TotalCount(),
+		BuildBtnState: &s.buildBtnState,
+		ItemBtnState:  &s.itemBtnState,
 	})
 
 	// HUD：底部建塔菜单

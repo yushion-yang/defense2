@@ -393,6 +393,7 @@ func (s *StageScene) handleInput() {
 		return
 	case "items":
 		if s.inventory.TotalCount() == 0 {
+			s.itemBtnState.TriggerDisabledShake()
 			return
 		}
 		if s.imode == modeItemPanel {
