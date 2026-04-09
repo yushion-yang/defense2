@@ -298,7 +298,7 @@ func (er *EnemyRenderer) loadEnemyImage(e *enemy.Enemy) *ebiten.Image {
 	if er.assetFS == nil || e.Archetype == "" {
 		return nil
 	}
-	path := fmt.Sprintf("assets/enemies/%s.png", e.Archetype)
+	path := fmt.Sprintf("assets/enemies/sprites/%s/%s.png", e.Archetype, e.Archetype)
 	cached := er.cache.Get(path, enemySpriteSize, enemySpriteSize)
 	if cached != nil {
 		return cached
@@ -319,7 +319,7 @@ func (er *EnemyRenderer) GetSprite(archetype string) *ebiten.Image {
 	if er.assetFS == nil || archetype == "" {
 		return nil
 	}
-	path := fmt.Sprintf("assets/enemies/%s.png", archetype)
+	path := fmt.Sprintf("assets/enemies/sprites/%s/%s.png", archetype, archetype)
 	if cached := er.cache.Get(path, enemySpriteSize, enemySpriteSize); cached != nil {
 		return cached
 	}

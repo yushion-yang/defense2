@@ -60,13 +60,13 @@ func LoadTowerAnimator(fs AssetReader, key string) *Animator {
 }
 
 // LoadEnemyAnimator 加载敌人的动画帧。
-// 路径约定：assets/enemies/{archetype}-{state}-{frame}.png
-// 回退：assets/enemies/{archetype}.png（单帧）
+// 路径约定：assets/enemies/sprites/{archetype}/{archetype}-{state}-{frame}.png
+// 回退：assets/enemies/sprites/{archetype}/{archetype}.png（单帧）
 func LoadEnemyAnimator(fs AssetReader, archetype string) *Animator {
 	a := NewAnimator()
 
 	for state, cfg := range EnemyAnimConfig {
-		frames := loadFrames(fs, fmt.Sprintf("assets/enemies/%s-%s", archetype, state))
+		frames := loadFrames(fs, fmt.Sprintf("assets/enemies/sprites/%s/%s-%s", archetype, archetype, state))
 		if len(frames) > 0 {
 			a.AddAnim(state, frames, cfg.FPS, cfg.Loop)
 		}
@@ -74,7 +74,7 @@ func LoadEnemyAnimator(fs AssetReader, archetype string) *Animator {
 
 	// 回退到单帧静态 PNG
 	if len(a.Anims) == 0 {
-		img := loadSinglePNG(fs, fmt.Sprintf("assets/enemies/%s.png", archetype))
+		img := loadSinglePNG(fs, fmt.Sprintf("assets/enemies/sprites/%s/%s.png", archetype, archetype))
 		if img != nil {
 			a.AddAnim("walk", []*ebiten.Image{img}, 1, true)
 		}
@@ -89,7 +89,7 @@ func LoadEnemyAnimLib(fs AssetReader, archetype string) *AnimLib {
 	lib := NewAnimLib()
 
 	for state, cfg := range EnemyAnimConfig {
-		frames := loadFrames(fs, fmt.Sprintf("assets/enemies/%s-%s", archetype, state))
+		frames := loadFrames(fs, fmt.Sprintf("assets/enemies/sprites/%s/%s-%s", archetype, archetype, state))
 		if len(frames) > 0 {
 			lib.Anims[state] = &Animation{Frames: frames, FPS: cfg.FPS, Loop: cfg.Loop}
 		}
@@ -97,7 +97,7 @@ func LoadEnemyAnimLib(fs AssetReader, archetype string) *AnimLib {
 
 	// 回退到单帧静态 PNG
 	if len(lib.Anims) == 0 {
-		img := loadSinglePNG(fs, fmt.Sprintf("assets/enemies/%s.png", archetype))
+		img := loadSinglePNG(fs, fmt.Sprintf("assets/enemies/sprites/%s/%s.png", archetype, archetype))
 		if img != nil {
 			lib.Anims["walk"] = &Animation{Frames: []*ebiten.Image{img}, FPS: 1, Loop: true}
 		}
