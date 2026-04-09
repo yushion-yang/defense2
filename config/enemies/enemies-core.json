@@ -11,8 +11,8 @@
   {"id":"steadfast", "label":"稳行者", "color":"#0891b2", "hpScale":1.3   , "speedScale":1.2 , "rewardScale":1.0 , "radius":18, "sprite":"steadfast", "abilities":["slowImmune"]                                },
   {"id":"phaser"   , "label":"相位兵", "color":"#8b5cf6", "hpScale":0.9   , "speedScale":1.15, "rewardScale":1.3 , "radius":16, "sprite":"teleporter","abilities":["phaseShift"]                                },
   {"id":"drainer"  , "label":"削弱者", "color":"#be185d", "hpScale":0.85  , "speedScale":1.1 , "rewardScale":1.4 , "radius":16, "sprite":"devoter"  , "abilities":["strengthDrain"]                             },
-  {"id":"healer"   , "label":"治疗兵", "color":"#34d399", "hpScale":1.06  , "speedScale":1.14, "rewardScale":1.02, "radius":20, "sprite":"healer"   , "abilities":[{"type":"healAura","base":0.05,"param":80}]  },
-  {"id":"buffer"   , "label":"旗手"  , "color":"#f59e0b", "hpScale":0.68  , "speedScale":1.08, "rewardScale":1.3 , "radius":16, "sprite":"buffer"   , "abilities":[{"type":"speedAura","base":0.2,"param":100}] },
+  {"id":"healer"   , "label":"治疗兵", "color":"#34d399", "hpScale":1.06  , "speedScale":1.14, "rewardScale":1.02, "radius":20, "sprite":"healer"   , "abilities":["healAura"]                                  },
+  {"id":"buffer"   , "label":"旗手"  , "color":"#f59e0b", "hpScale":0.68  , "speedScale":1.08, "rewardScale":1.3 , "radius":16, "sprite":"buffer"   , "abilities":["speedAura"]                                 },
   {"id":"splitter" , "label":"分裂体", "color":"#a78bfa", "hpScale":1.6   , "speedScale":0.86, "rewardScale":0.7 , "radius":20, "sprite":"splitter" , "abilities":["deathSplit"]                                },
   {"id":"summoner" , "label":"召唤者", "color":"#ea580c", "hpScale":1.2   , "speedScale":0.95, "rewardScale":0.8 , "radius":20, "sprite":"mirror"   , "abilities":["deathSpawn"]                                },
   {"id":"dummy"    , "label":"木桩"  , "color":"#78716c", "hpScale":10000 , "speedScale":0   , "rewardScale":0   , "radius":24, "sprite":"dummy"    , "abilities":[]                                            }
