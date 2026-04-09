@@ -162,7 +162,7 @@ func tickHealer(e *Enemy, pool *Pool, dt float64, events *BehaviorEvents) {
 
 	r2 := e.HealRadius * e.HealRadius
 	pool.Each(func(other *Enemy) {
-		if other == e || !other.Active || other.IsDying() {
+		if !other.Active || other.IsDying() {
 			return
 		}
 		if other.HP >= other.MaxHP {
