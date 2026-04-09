@@ -151,12 +151,15 @@ func (t *Tower) RecalcStats() {
 
 	baseSpd := t.BaseSpeed + t.PotentialSpeed*ratio
 	t.AttackSpeed = baseSpd*(1+t.Mods.PctSpeed) + t.Mods.FlatSpeed
+	if t.AttackSpeed < 0.1 {
+		t.AttackSpeed = 0.1 // 攻速保底
+	}
 
 	baseRng := t.BaseRange + t.PotentialRange*ratio
 	t.Range = baseRng*(1+t.Mods.PctRange) + t.Mods.FlatRange
 
-	t.CritBonus = 0 // 每帧重置，由 critAura OnTick 重新设置
-	t.DamageAmp = 0 // 每帧重置，由 damageUpAura OnTick 重新设置
+	// CritBonus/DamageAmp 由 resetTowerStats 重置，不在此处清零
+	// （RecalcStats 可能被 tickStrengthDrain 额外调用，不应清掉光环值）
 }
 
 // AllAbilities 返回所有生效能力（合并 AbilitySlots 和旧 Abilities）。

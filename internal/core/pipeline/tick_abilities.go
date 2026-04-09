@@ -88,5 +88,7 @@ func TickTowerAbilities(towers *tower.Pool, enemies *enemy.Pool, dt float64, cha
 // 公式: attr = base + potential * (strength / 100)
 func resetTowerStats(t *tower.Tower) {
 	t.Mods = tower.AttrMods{} // 清零临时修饰
+	t.CritBonus = 0           // 每帧重置，由 critAura OnTick 重新设置
+	t.DamageAmp = 0           // 每帧重置，由 damageUpAura OnTick 重新设置
 	t.RecalcStats()
 }
