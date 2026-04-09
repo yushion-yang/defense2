@@ -141,6 +141,12 @@ func TickProjectileHits(projectiles *projectile.Pool, enemies *enemy.Pool, tower
 
 			// ── 散射弹（穿透）：记录命中，延迟合并处理 ──
 			if p.ScatterGroup > 0 {
+				// 弹幕盾：吸收散射弹丸（不记录命中，释放弹丸）
+				if e.ProjectileBlockChance > 0 && !e.AbilitySilenced {
+					e.BlockFlash = 0.25
+					projectiles.Release(p)
+					return
+				}
 				p.PenHitIDs = append(p.PenHitIDs, e.ID)
 
 				key := int64(p.ScatterGroup)<<32 | int64(e.ID)
