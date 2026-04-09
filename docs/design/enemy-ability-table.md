@@ -184,6 +184,68 @@ e.Lifecycle.Register("death", "deathExplosion", func(e *Enemy) {
 
 ---
 
+### 0.9 Boss 与普通怪的差异
+
+#### 属性差异
+
+| 维度 | 普通怪 | Boss |
+|------|--------|------|
+| 生成方式 | 按波次权重随机选原型 | 每 5 波末尾固定出(wave%5==0)，基于 tank 原型 |
+| HP 倍率 | 原型 hpScale (0.5~4.0) | `cfg.HpScale × (8 + wave)`，如 wave 10 = tank(2.85) × 18 = 51.3 倍基准HP |
+| 碰撞半径 | 原型 radius (12~28) | `cfg.Radius × 1.5`，如 tank(24) → 36 |
+| 击杀奖励 | 原型 rewardScale | `cfg.RewardScale`（继承 tank 的 1.35） |
+| 波次 buff 注入 | 30% 概率获得 0~2 个 buff | **不注入**（`e.Boss` 直接跳过） |
+
+#### 伤害管线差异
+
+| 规则 | 普通怪 | Boss |
+|------|--------|------|
+| %HP 伤害上限 | 无限制 | `damage_pipeline Step 2`：%HP 伤害上限 5%MaxHP（最低 1） |
+| 流血(bleedDot) | 正常生效（每秒 sv% MaxHP） | **完全免疫**（`config_ability.go`：`if e.Boss { return nil }`） |
+| 雷击(thunderStrike) | 正常被选为目标 | **跳过**（`thunder_strike.go`：`if e.Boss { continue }`） |
+
+#### 视觉表现差异
+
+| 表现 | 普通怪 | Boss |
+|------|--------|------|
+| 体型脉动 | 无 | 呼吸脉动 `×(1 + 0.04×sin(t×1.8))` |
+| 身体颜色 | 红色 `(200,60,60)` | 金色 `(220,160,40)` |
+| 脉冲光环 | 无 | 双层光环（内圈+外圈），alpha 随时间呼吸 |
+| 血条尺寸 | 标准 `(theme.EnemyHPBarW/H)` | 加大 `(theme.EnemyBossHPBarW/H)` |
+| 血条分段 | 无分割线 | 5 段分割线（每 20% 一条） |
+| 死亡动画 | 0.3 秒 | 0.5 秒 |
+
+#### 行为差异
+
+| 行为 | 普通怪 | Boss |
+|------|--------|------|
+| Boss 阶段系统 | 无 | **已移除**（BossData 已清除，待能力系统重建） |
+| Boss 召唤小兵 | 无 | **已移除**（待能力系统重建） |
+| Boss 光环 | 无 | **已移除**（待能力系统重建） |
+| Boss 反伤 | 无 | **已移除**（待能力系统重建） |
+| Boss 偷金 | 无 | **已移除**（待能力系统重建） |
+
+#### 其他差异
+
+| 场景 | 普通怪 | Boss |
+|------|--------|------|
+| 击杀音效 | `SFXEnemyDeath` | `SFXEnemyDeathBoss` |
+| 击杀事件 | `EvtEnemyKilled{IsBoss:false}` | `EvtEnemyKilled{IsBoss:true}` |
+| 小地图显示 | 红色小点 (radius=1) | 红色大点 (radius=2) |
+| 战灵百分比伤害 | 正常生效 | 跳过百分比部分（prince/skystrike/core_mech 各自判断） |
+
+#### 当前 Boss 系统状态
+
+Boss 行为系统（阶段转换/召唤/光环/反伤/偷金）已从代码中移除（`BossData` 字段删除，`boss_behavior.go` 清空为 stub）。当前 Boss 仅保留：
+- 属性差异（HP 高、半径大）
+- 伤害管线特殊规则（%HP 上限、流血免疫、雷击跳过）
+- 视觉差异（金色、脉动、大血条）
+- 死亡动画更长
+
+**待重建**：Boss 能力将通过怪物能力装配系统实现，Boss = 高属性原型 + 多个强力能力。
+
+---
+
 ## 1. 基础原型 (enemies-core.json)
 
 | 原型 | 中文名 | HP倍率 | 速度倍率 | 奖励倍率 | 半径 | 移动 | 特殊能力 |
