@@ -103,7 +103,7 @@ func ProcessDamage(input DamageInput) DamageResult {
 	if input.IsPercentHP && e.Boss {
 		cap := input.PercentCap
 		if cap <= 0 {
-			cap = 0.05 // 默认5%maxHP
+			cap = config.GlobalBalance().Combat.BossPercentHpCap
 		}
 		maxDmg := e.MaxHP * cap
 		if maxDmg < 1 {
@@ -225,5 +225,5 @@ func ApplyDamageDown(buffValue float64) float64 {
 	if buffValue <= 0 {
 		return 0 // 无 buff
 	}
-	return math.Max(buffValue, 0.2) // 最低减到 20%
+	return math.Max(buffValue, config.GlobalBalance().Combat.DamageDownFloor)
 }

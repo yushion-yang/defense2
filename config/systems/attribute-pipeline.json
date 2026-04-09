@@ -1,0 +1,33 @@
+{
+  "_description": "属性/强度管线规格 — RecalcStats 公式、Mods 系统、保底规则",
+
+  "strengthSystem": {
+    "base": 100,
+    "buyAmount": "balance.tower.strengthBuyAmount",
+    "buyCost": "balance.tower.strengthBuyCost",
+    "formula": "Effective() = Base + Permanent + sum(TempBuffs)",
+    "ratio": "Effective() / 100.0",
+    "description": "强度基础值 100，购买 +10 花费 10 金。Ratio 1.0 = 100 强度"
+  },
+
+  "recalcFormula": {
+    "damage":      "Damage = (BaseDamage + PotentialDamage × ratio) × (1 + Mods.PctDamage) + Mods.FlatDamage",
+    "attackSpeed": "AttackSpeed = (BaseSpeed + PotentialSpeed × ratio) × (1 + Mods.PctSpeed) + Mods.FlatSpeed",
+    "range":       "Range = (BaseRange + PotentialRange × ratio) × (1 + Mods.PctRange) + Mods.FlatRange",
+    "description": "三属性公式一致：(base + potential × strengthRatio) × (1 + pctMod) + flatMod"
+  },
+
+  "floors": {
+    "damage": "≥ BaseDamage",
+    "attackSpeed": "balance.tower.attackSpeedFloor",
+    "range": "≥ BaseRange",
+    "description": "属性保底确保不会因削强/负 Mods 降到 0"
+  },
+
+  "modsSystem": {
+    "dimensions": ["PctDamage", "FlatDamage", "PctSpeed", "FlatSpeed", "PctRange", "FlatRange"],
+    "resetTiming": "帧头 resetTowerStats 清零 → TickAllAbilities 光环写入 → tickStrengthDrain 削强",
+    "extraFields": ["CritBonus", "DamageAmp"],
+    "description": "Mods 每帧由光环能力重写，非持久状态"
+  }
+}

@@ -225,7 +225,7 @@ func (s *Spawner) startWave() {
 	s.bossQueued = s.BossEveryWave || (s.Wave%config.GlobalBalance().Spawner.BossEveryNWaves == 0)
 	// Boss 波入场延迟：给玩家 3 秒准备时间
 	if s.bossQueued {
-		s.EntranceDelay = 3.0
+		s.EntranceDelay = config.GlobalBalance().Spawner.BossEntranceDelay
 	} else {
 		s.EntranceDelay = 0
 	}
@@ -440,29 +440,27 @@ func (s *Spawner) getConfig(archetype string) *SpawnConfig {
 // 16-25 波：最多 2 个（扩展池）
 // 26+ 波：最多 2 个（完整池）
 
-var waveBuffPools = []struct {
-	minWave  int
-	maxBuffs int
-	pool     []string
-}{
-	{6, 1, []string{"berserk", "regen", "healAura", "speedAura"}},
-	{16, 2, []string{"berserk", "regen", "healAura", "speedAura", "damageReduce"}},
-	{26, 2, []string{"berserk", "regen", "healAura", "speedAura", "damageReduce", "deathSplit"}},
+// buffPoolsByTier 各 tier 可用的 buff 模板池（从低到高）。
+var buffPoolsByTier = [][]string{
+	{"berserk", "regen", "healAura", "speedAura"},
+	{"berserk", "regen", "healAura", "speedAura", "damageReduce"},
+	{"berserk", "regen", "healAura", "speedAura", "damageReduce", "deathSplit"},
 }
 
 // applyWaveBuffs 根据当前波次为刚生成的敌人随机注入 buff 模板。
-// Boss 不注入波次 buff。
+// Boss 不注入波次 buff。minWaves/maxBuffs 从 balance.json 读取。
 func (s *Spawner) applyWaveBuffs(e *Enemy) {
 	if e.Boss {
 		return
 	}
 
+	bal := config.GlobalBalance().Spawner
 	var buffPool []string
 	maxBuffs := 0
-	for _, tier := range waveBuffPools {
-		if s.Wave >= tier.minWave {
-			buffPool = tier.pool
-			maxBuffs = tier.maxBuffs
+	for i, minW := range bal.BuffMinWaves {
+		if s.Wave >= minW && i < len(bal.BuffMaxBuffs) && i < len(buffPoolsByTier) {
+			buffPool = buffPoolsByTier[i]
+			maxBuffs = bal.BuffMaxBuffs[i]
 		}
 	}
 	if maxBuffs <= 0 || len(buffPool) == 0 {

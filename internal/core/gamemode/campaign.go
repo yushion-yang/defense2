@@ -28,8 +28,9 @@ func (m *CampaignMode) CheckDefeat(ctx *Context) bool {
 }
 
 func (m *CampaignMode) OnWaveCleared(wave int, _ *Context) WaveClearResult {
-	bonus := 12 + wave*4
-	perfect := 8 + wave*2
+	econ := modeEcon("campaign")
+	bonus := econ.WaveBonus.Calc(wave)
+	perfect := econ.PerfectBonus.Calc(wave)
 	return WaveClearResult{
 		BonusGold:    bonus,
 		PerfectBonus: perfect,

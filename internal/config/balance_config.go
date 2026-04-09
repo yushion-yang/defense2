@@ -20,6 +20,7 @@ type SpawnerBalance struct {
 	BossEveryNWaves   int     `json:"bossEveryNWaves"`
 	BossHpMultBase    float64 `json:"bossHpMultBase"`
 	BossRadiusScale   float64 `json:"bossRadiusScale"`
+	BossEntranceDelay float64 `json:"bossEntranceDelay"`
 	BuffChance        float64 `json:"buffChance"`
 	BuffMinWaves      []int   `json:"buffMinWaves"`
 	BuffMaxBuffs      []int   `json:"buffMaxBuffs"`
@@ -36,6 +37,8 @@ type CombatBalance struct {
 	MaxDamageAmplify        float64 `json:"maxDamageAmplify"`
 	MinSpeedRatio           float64 `json:"minSpeedRatio"`
 	DotTickInterval         float64 `json:"dotTickInterval"`
+	BossPercentHpCap        float64 `json:"bossPercentHpCap"`
+	DamageDownFloor         float64 `json:"damageDownFloor"`
 	CritMultiplier          float64 `json:"critMultiplier"`
 	DefaultProjectileSpeed  float64 `json:"defaultProjectileSpeed"`
 	DefaultProjectileRadius float64 `json:"defaultProjectileRadius"`
@@ -154,12 +157,12 @@ func defaultBalance() *BalanceConfig {
 		Spawner: SpawnerBalance{
 			HpBase: 52, HpPerWave: 21, SpeedBase: 58, SpeedPerWave: 5,
 			EnemiesPerWave: 5, SpawnInterval: 0.6, WaveInterval: 10, FirstWaveInterval: 20,
-			BossEveryNWaves: 5, BossHpMultBase: 8, BossRadiusScale: 1.5,
+			BossEveryNWaves: 5, BossHpMultBase: 8, BossRadiusScale: 1.5, BossEntranceDelay: 3.0,
 			BuffChance: 0.3, BuffMinWaves: []int{6, 16, 26}, BuffMaxBuffs: []int{1, 1, 2},
 		},
 		Economy: EconomyBalance{KillReward: 15, SellRefundRatio: 0.7},
 		Combat: CombatBalance{
-			MaxDamageAmplify: 0.5, MinSpeedRatio: 0.2, DotTickInterval: 0.5,
+			MaxDamageAmplify: 0.5, MinSpeedRatio: 0.2, DotTickInterval: 0.5, BossPercentHpCap: 0.05, DamageDownFloor: 0.2,
 			CritMultiplier: 2, DefaultProjectileSpeed: 300, DefaultProjectileRadius: 4,
 			ScatterBasePellets: 3, ScatterSpreadAngle: 60,
 			RadialBaseShots: 3, RadialRangeMult: 1.2, WideBeamRangeMult: 3,

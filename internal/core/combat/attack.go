@@ -3,6 +3,7 @@
 package combat
 
 import (
+	"defense2/internal/config"
 	"defense2/internal/core/enemy"
 	"defense2/internal/core/projectile"
 	"defense2/internal/core/tower"
@@ -77,11 +78,12 @@ func TickSelfManaged(t *tower.Tower, ctx *AttackContext) {
 type ProjectileHandler struct{}
 
 func (h *ProjectileHandler) Fire(t *tower.Tower, target *enemy.Enemy, ctx *AttackContext) {
+	bal := config.GlobalBalance().Combat
 	speed := t.ProjectileSpeed
 	if speed <= 0 {
-		speed = 300
+		speed = bal.DefaultProjectileSpeed
 	}
-	ctx.Projectiles.Fire(t.X, t.Y, target.X, target.Y, t.Damage, speed, 4, target, t.InstanceKey)
+	ctx.Projectiles.Fire(t.X, t.Y, target.X, target.Y, t.Damage, speed, bal.DefaultProjectileRadius, target, t.InstanceKey)
 }
 
 func init() {

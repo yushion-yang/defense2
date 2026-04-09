@@ -1,0 +1,38 @@
+{
+  "_description": "伤害管线规格 — 8 步伤害处理流程的阈值、上限、执行顺序",
+
+  "steps": [
+    {"step": 1, "name": "immunity",      "description": "免疫检查：IsInvincible（pure 穿透）、IsDamageImmune（phaseShift）、IsUntargetable"},
+    {"step": 2, "name": "bossPercentCap", "description": "Boss %HP 上限：IsPercentHP 类伤害对 Boss 最高造成 MaxHP × bossPercentHpCap"},
+    {"step": 3, "name": "attackerBuff",   "description": "攻击者增伤：true/pure 类型跳过"},
+    {"step": 4, "name": "targetDebuff",   "description": "目标减伤：true/pure 类型跳过"},
+    {"step": 4.1, "name": "damageReduce", "description": "固定减伤比例（buff 模板 damageReduce）：true/pure 类型跳过"},
+    {"step": 4.25, "name": "weakenAmplify", "description": "虚弱增伤：damage *= (1 + min(DamageAmplify, maxDamageAmplify))"},
+    {"step": 4.5, "name": "damageCap",    "description": "伤害上限：被沉默时跳过。先检查固定 DamageCap，再检查 DamageCapPercent"},
+    {"step": 5, "name": "hpDeduct",       "description": "HP 扣减：最低 1 伤害保底，HP 不低于 0"},
+    {"step": 6, "name": "threshold",      "description": "血量阈值触发（预留）"},
+    {"step": 7, "name": "death",          "description": "死亡判定：HP ≤ 0 标记 Killed（由调用方执行 Kill）"}
+  ],
+
+  "thresholds": {
+    "bossPercentHpCap":  0.05,
+    "maxDamageAmplify":  0.5,
+    "minDamageFloor":    1,
+    "damageDownFloor":   0.2,
+    "description": "管线各步骤使用的阈值常量"
+  },
+
+  "damageTypes": {
+    "physical": {"ignoresReduction": false, "ignoresInvincible": false, "description": "物理伤害（受增减伤影响）"},
+    "magic":    {"ignoresReduction": false, "ignoresInvincible": false, "description": "魔法伤害（受增减伤影响）"},
+    "true":     {"ignoresReduction": true,  "ignoresInvincible": false, "description": "真实伤害（忽略增减伤）"},
+    "pure":     {"ignoresReduction": true,  "ignoresInvincible": true,  "description": "纯粹伤害（忽略增减伤+无敌）"}
+  },
+
+  "dotPath": {
+    "tickInterval":  0.5,
+    "damageType":    "magic",
+    "usePipeline":   true,
+    "description":   "DoT（灼烧/流血/中毒/区域）每 0.5s 触发一次，走完整 ProcessDamage 管线（magic 类型）"
+  }
+}

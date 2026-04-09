@@ -2,7 +2,11 @@
 // 各具体模式 embed baseMode 减少样板代码，只需覆写关注的方法。
 package gamemode
 
-import "fmt"
+import (
+	"fmt"
+
+	"defense2/internal/config"
+)
 
 // baseMode 提供 Mode 接口的零值默认实现。
 type baseMode struct {
@@ -27,11 +31,30 @@ func (b *baseMode) EnableEvents() bool               { return false }
 // OnWaveCleared returns wave-clear rewards. PerfectBonus is 0 by default;
 // modes that support perfect-wave bonuses (e.g. campaign) should override.
 func (b *baseMode) OnWaveCleared(wave int, _ *Context) WaveClearResult {
-	bonus := 12 + wave*4
+	econ := modeEcon(b.id)
+	bonus := econ.WaveBonus.Calc(wave)
 	return WaveClearResult{
 		BonusGold: bonus,
 		Message:   fmt.Sprintf("Wave %d clear! +$%d", wave, bonus),
 	}
+}
+
+// modeEcon 返回指定模式的经济配置，回退到 campaign。
+func modeEcon(modeID string) config.ModeEconomy {
+	spec := config.GlobalEconomySpec()
+	if spec == nil || spec.Modes == nil {
+		return config.ModeEconomy{
+			WaveBonus:    config.BonusFormula{Base: 12, PerWave: 4},
+			PerfectBonus: config.BonusFormula{Base: 8, PerWave: 2},
+		}
+	}
+	if m, ok := spec.Modes[modeID]; ok {
+		return m
+	}
+	if m, ok := spec.Modes["campaign"]; ok {
+		return m
+	}
+	return config.ModeEconomy{}
 }
 
 func (b *baseMode) GetHUDConfig(_ *Context) HUDConfig {

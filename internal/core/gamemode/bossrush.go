@@ -50,8 +50,9 @@ func (m *BossRushMode) CheckDefeat(ctx *Context) bool {
 }
 
 func (m *BossRushMode) OnWaveCleared(wave int, _ *Context) WaveClearResult {
-	bonus := 20 + wave*10
-	perfect := 15 + wave*5
+	econ := modeEcon("bossRush")
+	bonus := econ.WaveBonus.Calc(wave)
+	perfect := econ.PerfectBonus.Calc(wave)
 	return WaveClearResult{
 		BonusGold:    bonus,
 		PerfectBonus: perfect,

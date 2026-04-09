@@ -33,9 +33,9 @@ func (m *EndlessMode) GetScore(ctx *Context) int {
 }
 
 func (m *EndlessMode) OnWaveCleared(wave int, ctx *Context) WaveClearResult {
-	// 无尽模式奖金递增更快以补偿无限波次难度
-	bonus := 15 + wave*6
-	perfect := 10 + wave*3 // Session.OnWaveCleared 会在有泄漏时清零
+	econ := modeEcon("endless")
+	bonus := econ.WaveBonus.Calc(wave)
+	perfect := econ.PerfectBonus.Calc(wave)
 	msg := fmt.Sprintf("Wave %d clear! +$%d", wave, bonus)
 	if wave%5 == 0 {
 		msg = fmt.Sprintf("Wave %d clear! Boss 波! +$%d", wave, bonus)

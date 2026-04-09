@@ -1,0 +1,21 @@
+{
+  "_description": "能力维度缩放规格 — 各 scaleDim 的缩放类型和上限/下限",
+
+  "dimensions": {
+    "chance":      {"scale": "addCapped",    "cap": 0.6,  "description": "概率类（暴击/眩晕）加法上限 60%"},
+    "cooldown":    {"scale": "inverse",      "floor": 0.5, "description": "冷却类，越低越好，下限 0.5s"},
+    "interval":    {"scale": "inverse",      "floor": 2.0, "description": "间隔类，越低越好，下限 2s"},
+    "factor":      {"scale": "inverseRatio", "floor": 0.30, "description": "减速因子类，越低越强，下限 30%"},
+    "damageDecay": {"scale": "inverseRatio", "floor": 0.10, "description": "伤害衰减类，越低越强，下限 10%"},
+    "statBoost":   {"scale": "multiply",     "description": "属性加成，直接乘算"},
+    "maxBounces":  {"scale": "floor",        "description": "弹射次数，取整"},
+    "targets":     {"scale": "floor",        "description": "目标数，取整"},
+    "extraPellets":{"scale": "floor",        "description": "额外弹丸数，取整"},
+    "extraShots":  {"scale": "floor",        "description": "额外射击数，取整"},
+    "damage":      {"scale": "multiply",     "description": "固定伤害，直接乘算"},
+    "dps":         {"scale": "multiply",     "description": "每秒伤害，直接乘算"},
+    "ratio":       {"scale": "multiply",     "description": "伤害比例，直接乘算"},
+    "bonus":       {"scale": "multiply",     "description": "加成值，直接乘算"},
+    "amount":      {"scale": "multiply",     "description": "产出量，直接乘算"}
+  }
+}

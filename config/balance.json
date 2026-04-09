@@ -11,6 +11,7 @@
     "bossEveryNWaves": 5,
     "bossHpMultBase": 8,
     "bossRadiusScale": 1.5,
+    "bossEntranceDelay": 3.0,
     "buffChance": 0.3,
     "buffMinWaves": [6, 16, 26],
     "buffMaxBuffs": [1, 1, 2]
@@ -23,6 +24,8 @@
     "maxDamageAmplify": 0.5,
     "minSpeedRatio": 0.2,
     "dotTickInterval": 0.5,
+    "bossPercentHpCap": 0.05,
+    "damageDownFloor": 0.2,
     "critMultiplier": 2,
     "defaultProjectileSpeed": 300,
     "defaultProjectileRadius": 4,
