@@ -467,9 +467,17 @@ func (s *StageScene) handleInput() {
 						bestIdx = i
 					}
 				}
+				// 确保前方至少有一个路径点可走
+				if bestIdx >= len(path)-1 {
+					bestIdx = len(path) - 2
+				}
+				if bestIdx < 0 {
+					bestIdx = 0
+				}
 				pt := path[bestIdx]
-				baseHP := 100.0 * cfg.HpScale
-				baseSpd := 50.0 * cfg.SpeedScale
+				// baseHP/baseSpd 传原始基准值，Spawn 内部会乘 cfg 的 Scale
+				baseHP := 100.0
+				baseSpd := 50.0
 				e := s.enemies.Spawn(pt.X, pt.Y, baseHP, baseSpd, bestIdx+1, s.spawnType, cfg)
 				if e != nil {
 					e.Path = path
