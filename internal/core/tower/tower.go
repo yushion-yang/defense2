@@ -136,7 +136,7 @@ func (t *Tower) BuyStrength() int {
 func (t *Tower) RecalcStats() {
 	ratio := 1.0 // 默认强度100
 	if t.Strength != nil {
-		ratio = t.Strength.Effective() / 100.0
+		ratio = t.Strength.Ratio()
 	}
 	baseDmg := t.BaseDamage + t.PotentialDamage*ratio
 	t.Damage = baseDmg*(1+t.Mods.PctDamage) + t.Mods.FlatDamage
@@ -151,10 +151,10 @@ func (t *Tower) RecalcStats() {
 	}
 
 	baseRng := t.BaseRange + t.PotentialRange*ratio
-	if baseRng < t.BaseRange {
-		baseRng = t.BaseRange // 射程不低于基础值
-	}
 	t.Range = baseRng*(1+t.Mods.PctRange) + t.Mods.FlatRange
+	if t.Range < t.BaseRange {
+		t.Range = t.BaseRange // 射程不低于基础值（含 Mods 后保底）
+	}
 
 	// CritBonus/DamageAmp 由 resetTowerStats 重置，不在此处清零
 	// （RecalcStats 可能被 tickStrengthDrain 额外调用，不应清掉光环值）

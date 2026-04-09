@@ -47,7 +47,8 @@ type EnemyAbilityDef struct {
 	Param        float64 `json:"param"`
 	ParamDim     string  `json:"paramDim"`
 	Description  string  `json:"description"`
-	Silenceable  bool    `json:"silenceable"` // 是否可被沉默禁用
+	Visual       string  `json:"visual"`       // 视觉效果描述
+	Silenceable  bool    `json:"silenceable"`  // 是否可被沉默禁用
 }
 
 // LoadEnemyArchetypes 加载所有敌人原型。

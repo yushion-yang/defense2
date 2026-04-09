@@ -11,6 +11,7 @@ import (
 	"path/filepath"
 	"time"
 
+	"defense2/internal/config"
 	"defense2/internal/core/telemetry"
 	"defense2/internal/scene"
 )
@@ -223,7 +224,7 @@ func (c *Controller) OnUpdate(snap scene.AutoPlaySnapshot) []scene.AutoPlayActio
 				}
 			}
 			// 记录升级花费到波次统计
-			c.recorder.OnTowerBuilt(10) // tower.StrengthBuyCost = 10
+			c.recorder.OnTowerBuilt(config.GlobalBalance().Tower.StrengthBuyCost)
 		}
 	}
 

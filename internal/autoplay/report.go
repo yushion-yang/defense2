@@ -110,7 +110,7 @@ func GenerateReport(records []*SessionRecord) *CoverageReport {
 		"bleedDot", "burn", "onHitSlow", "stun",
 		"attackSpeedAura", "critAura", "damageUpAura", "rangeAura", "soloBoost",
 		"curseZone", "poisonZone", "silenceZone",
-		"goldPassive", "goldOnKill",
+		"goldPassive",
 	}
 	r.CoverageGaps["abilities"] = findGaps(allAbilities, abilitiesSeen)
 

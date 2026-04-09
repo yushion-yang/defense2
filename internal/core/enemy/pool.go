@@ -136,6 +136,7 @@ func (p *Pool) Spawn(x, y, baseHP, baseSpeed float64, pathIndex int, archetype s
 			e.DeathSpawnArch = cfg.DeathSpawnArch
 			e.PurgeInterval = cfg.PurgeInterval
 			e.PurgeImmuneDur = cfg.PurgeImmuneDur
+			e.PurgeTimer = cfg.PurgeInterval // 首次净化需等满间隔
 			e.AbilityIDs = cfg.AbilityIDs
 			if cfg.CCImmune {
 				e.IsControlImmune = true

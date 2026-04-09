@@ -753,12 +753,11 @@ func (s *StageScene) tryPlaceTower(px, py float64) bool {
 
 	center := gm.CellCenter(row, col)
 	placed := s.towers.Place(row, col, center.X, center.Y, def)
-	// 初始化战力系统（base/potential 已在 pool.Place 中从 TowerDef 设置）
-	if placed != nil {
-		// Strength 已在 pool.Place 中初始化，无需重复创建
-		placed.BuildAnim = 0.3
-		tower.RollAndCachePendingChoices(placed, s.wavesCleared)
+	if placed == nil {
+		return false // 池满，不扣金
 	}
+	placed.BuildAnim = 0.3
+	tower.RollAndCachePendingChoices(placed, s.wavesCleared)
 	s.gold -= cost
 	s.gameStats.GoldSpent += cost
 	s.gameStats.TowersBuilt++
@@ -786,6 +785,7 @@ func (s *StageScene) trySellTower(px, py float64) {
 	refund := s.econ.SellRefund(t.Cost)
 	s.gold += refund
 	s.gameStats.TowersSold++
+	s.session.Stats.TowersSold++
 	// Start sell animation instead of immediate removal
 	t.SellAnim = 0.25
 	t.Selling = true
@@ -1460,6 +1460,13 @@ func (s *StageScene) drawEnemyAbilityVFX(screen *ebiten.Image) {
 			alpha := uint8(200 * (e.ArmorSpark / 0.15))
 			sparkR := float32(e.Radius) + float32(4*(1-e.ArmorSpark/0.15))
 			draw.CircleOutline(screen, ex, ey, sparkR, 1.5, color.RGBA{R: 180, G: 180, B: 180, A: alpha})
+		}
+
+		// 坚韧触发脉冲（橙色扩散圈）
+		if e.DamageCapHit > 0 {
+			alpha := uint8(180 * (e.DamageCapHit / 0.3))
+			r := float32(e.Radius) + float32(6*(1-e.DamageCapHit/0.3))
+			draw.CircleOutline(screen, ex, ey, r, 1.5, color.RGBA{R: 255, G: 180, B: 40, A: alpha})
 		}
 
 		// 净化脉冲（白色扩散圈）
@@ -2609,7 +2616,7 @@ func towerRoleTags(def tower.TowerDef) (string, color.RGBA) {
 			return "辅助·光环", color.RGBA{R: 80, G: 200, B: 120, A: 255}
 		case "poisonZone", "silenceZone":
 			return "控制·区域", color.RGBA{R: 100, G: 160, B: 200, A: 255}
-		case "goldOnKill", "goldPassive":
+		case "goldPassive":
 			return "经济", color.RGBA{R: 220, G: 200, B: 80, A: 255}
 		}
 	}
@@ -2911,7 +2918,7 @@ func (s *StageScene) onWaveTransition(prevWave int) {
 	// 新波开始：更新快照 + 发事件
 	s.waveLivesSnapshot = s.lives
 	s.bus.Emit(event.EvtWaveStarted, event.WaveStartedPayload{
-		Wave: s.spawner.Wave, IsBoss: s.spawner.Wave%5 == 0,
+		Wave: s.spawner.Wave, IsBoss: s.spawner.IsBossWave(),
 	})
 }
 

@@ -16,7 +16,8 @@ const (
 type Stats struct {
 	Kills        int // 击杀数
 	Leaked       int // 泄漏数
-	TowersBuilt int // 放置塔数
+	TowersBuilt  int // 放置塔数
+	TowersSold   int // 卖塔数
 	WavesCleared int // 通过波数
 	GoldEarned   int // 累计获得金币
 	BossKills    int // Boss 击杀数

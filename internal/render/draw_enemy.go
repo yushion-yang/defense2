@@ -115,8 +115,8 @@ func (er *EnemyRenderer) DrawEnemies(screen *ebiten.Image, pool *enemy.Pool, ani
 			draw.FilledCircle(screen, cx, cy+r, r*0.8, color.RGBA{100, 70, 40, 60})
 		}
 
-		// --- Buffer aura ring (drawn UNDER body) ---
-		if e.Behavior == "buffer" && e.BuffRadius > 0 {
+		// --- Buffer aura ring (drawn UNDER body, hidden when silenced) ---
+		if e.Behavior == "buffer" && e.BuffRadius > 0 && !e.AbilitySilenced {
 			auraAlpha := uint8(clampF(40+20*math.Sin(animTime*3), 20, 70))
 			draw.CircleOutline(screen, cx, cy, float32(e.BuffRadius), 1.5,
 				color.RGBA{R: 245, G: 158, B: 11, A: auraAlpha}) // amber/gold
@@ -237,6 +237,8 @@ func (er *EnemyRenderer) DrawEnemies(screen *ebiten.Image, pool *enemy.Pool, ani
 			ratio := float32(e.HP / e.MaxHP)
 			if ratio < 0 {
 				ratio = 0
+			} else if ratio > 1 {
+				ratio = 1
 			}
 			fillW := barW * ratio
 
