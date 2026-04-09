@@ -218,6 +218,13 @@ func (s *StageScene) handleInput() {
 
 	// 测试模式专用快捷键
 	if s.testMode {
+		// Delete: 消灭距离鼠标最近的怪物
+		if inpututil.IsKeyJustPressed(ebiten.KeyDelete) || inpututil.IsKeyJustPressed(ebiten.KeyBackspace) {
+			if s.hoveredEnemy != nil && s.hoveredEnemy.Active && !s.hoveredEnemy.IsDying() {
+				s.enemies.Kill(s.hoveredEnemy)
+				hud.ShowToast("已消灭: " + s.hoveredEnemy.Archetype)
+			}
+		}
 		if inpututil.IsKeyJustPressed(ebiten.KeyD) {
 			s.debugPanelOpen = !s.debugPanelOpen
 		}
