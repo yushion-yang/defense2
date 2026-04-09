@@ -202,14 +202,14 @@ func TestBuffSlowUsesStrongestMode(t *testing.T) {
 	}
 }
 
-func TestBuffDamageUpUsesMultiplicative(t *testing.T) {
+func TestBuffDamageUpUsesAdditive(t *testing.T) {
 	rules := buff.DefaultStackRules
 	r, ok := rules["damageUp"]
 	if !ok {
 		t.Fatal("缺少 damageUp 规则")
 	}
-	if r.Mode != buff.ModeMultiplicative {
-		t.Errorf("damageUp 应为 ModeMultiplicative，实际=%d", r.Mode)
+	if r.Mode != buff.ModeAdditive {
+		t.Errorf("damageUp 应为 ModeAdditive，实际=%d", r.Mode)
 	}
 }
 

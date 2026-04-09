@@ -1,5 +1,0 @@
-greedy
-random
-focus
-scenario
-skill_test
