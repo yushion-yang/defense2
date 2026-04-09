@@ -2805,8 +2805,13 @@ func replaceDescParams(desc string, params map[string]string) string {
 func convertArchetypesToSpawnConfigs(archetypes map[string]*config.EnemyArchetype) map[string]*enemy.SpawnConfig {
 	result := make(map[string]*enemy.SpawnConfig, len(archetypes))
 	for key, a := range archetypes {
+		sprite := a.Sprite
+		if sprite == "" {
+			sprite = a.ID // 回退：用 id 作为精灵目录名
+		}
 		sc := &enemy.SpawnConfig{
 			Label:        a.Label,
+			Sprite:       sprite,
 			HpScale:      a.HPScale,
 			SpeedScale:   a.SpeedScale,
 			Radius:       a.Radius,

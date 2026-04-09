@@ -293,12 +293,16 @@ func (er *EnemyRenderer) DrawEnemies(screen *ebiten.Image, pool *enemy.Pool, ani
 }
 
 // loadEnemyImage loads an enemy's PNG sprite.
-// Convention: assets/enemies/{archetype}.png
+// Convention: assets/enemies/sprites/{spriteDir}/{spriteDir}.png
 func (er *EnemyRenderer) loadEnemyImage(e *enemy.Enemy) *ebiten.Image {
-	if er.assetFS == nil || e.Archetype == "" {
+	spriteDir := e.SpriteDir
+	if spriteDir == "" {
+		spriteDir = e.Archetype
+	}
+	if er.assetFS == nil || spriteDir == "" {
 		return nil
 	}
-	path := fmt.Sprintf("assets/enemies/sprites/%s/%s.png", e.Archetype, e.Archetype)
+	path := fmt.Sprintf("assets/enemies/sprites/%s/%s.png", spriteDir, spriteDir)
 	cached := er.cache.Get(path, enemySpriteSize, enemySpriteSize)
 	if cached != nil {
 		return cached
@@ -338,10 +342,14 @@ func (er *EnemyRenderer) getEnemyFrame(e *enemy.Enemy, dt float64) *ebiten.Image
 		return nil
 	}
 
-	lib, ok := er.animLibs[e.Archetype]
+	sprKey := e.SpriteDir
+	if sprKey == "" {
+		sprKey = e.Archetype
+	}
+	lib, ok := er.animLibs[sprKey]
 	if !ok {
-		lib = anim.LoadEnemyAnimLib(er.assetFS, e.Archetype)
-		er.animLibs[e.Archetype] = lib
+		lib = anim.LoadEnemyAnimLib(er.assetFS, sprKey)
+		er.animLibs[sprKey] = lib
 	}
 
 	// Determine target animation

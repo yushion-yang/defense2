@@ -54,6 +54,7 @@ type Enemy struct {
 	ReachedEnd   bool            // 是否已到达路径终点（基地）
 	Active       bool            // 是否存活（对象池复用标记）
 	Archetype    string          // 敌人原型标识（如 "normal"、"runner"、"tank"）
+	SpriteDir    string          // 精灵目录名（加载贴图用，可与 Archetype 不同）
 	Boss         bool            // 是否为 Boss
 	IsDummy      bool            // 是否为木桩怪（不移动）
 	Reward       int             // 击杀奖励金币

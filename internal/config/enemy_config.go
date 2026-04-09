@@ -14,7 +14,7 @@ type EnemyArchetype struct {
 	ID           string  `json:"id"`           // 原型标识
 	Label        string  `json:"label"`        // 显示名称
 	Color        string  `json:"color"`        // 显示颜色（hex）
-	Description  string  `json:"description"`  // 描述文本
+	Sprite       string  `json:"sprite"`       // 精灵目录名（assets/enemies/sprites/{sprite}/）
 	HPScale      float64 `json:"hpScale"`      // 血量倍率（相对基准值）
 	SpeedScale   float64 `json:"speedScale"`   // 速度倍率
 	Radius       float64 `json:"radius"`       // 碰撞半径（像素绝对值）

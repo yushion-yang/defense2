@@ -56,6 +56,10 @@ func (p *Pool) Spawn(x, y, baseHP, baseSpeed float64, pathIndex int, archetype s
 			e.Active = true
 			e.Path = nil
 			e.Archetype = archetype
+			e.SpriteDir = cfg.Sprite
+			if e.SpriteDir == "" {
+				e.SpriteDir = archetype
+			}
 			e.Boss = cfg.Boss
 			e.Reward = cfg.Reward
 			e.RewardScale = cfg.RewardScale

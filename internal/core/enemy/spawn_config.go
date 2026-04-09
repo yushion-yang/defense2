@@ -6,6 +6,7 @@ package enemy
 // 由调用者从 config.EnemyArchetype 转换而来，传入 Pool.Spawn。
 type SpawnConfig struct {
 	Label       string  // 中文显示名称
+	Sprite      string  // 精灵目录名（用于加载贴图）
 	HpScale     float64 // 血量倍率（应用于 baseHP）
 	SpeedScale  float64 // 速度倍率（应用于 baseSpeed）
 	Radius      float64 // 碰撞半径（像素绝对值）
