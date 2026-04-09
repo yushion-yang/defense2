@@ -1377,7 +1377,16 @@ func (s *StageScene) saveScenario(name string) {
 
 // restoreScenario places towers from a saved scenario snapshot.
 // tickStrengthDrain 每帧管理削强敌人→塔的连接、施加/移除减益。
+// 多个削强怪优先连接不同的塔。
 func (s *StageScene) tickStrengthDrain() {
+	// 收集已被占用的塔位
+	occupied := map[[2]int]bool{}
+	s.enemies.Each(func(e *enemy.Enemy) {
+		if e.StrDrainActiveT > 0 && e.StrDrainTargetRC != ([2]int{}) {
+			occupied[e.StrDrainTargetRC] = true
+		}
+	})
+
 	s.enemies.Each(func(e *enemy.Enemy) {
 		if e.IsDying() || e.StrDrainRatio <= 0 {
 			return
@@ -1385,20 +1394,31 @@ func (s *StageScene) tickStrengthDrain() {
 		key := fmt.Sprintf("strDrain_%d", e.ID)
 
 		if e.StrDrainActiveT > 0 && e.StrDrainTargetRC == ([2]int{}) {
-			// 刚进入激活状态，需要找最近的塔建立连接
-			var bestTower *tower.Tower
-			bestDist := 999.0
+			// 刚进入激活状态，找塔建立连接（优先未被占用的）
+			var bestTower, fallback *tower.Tower
+			bestDist, fallDist := 9999.0, 9999.0
 			s.towers.Each(func(t *tower.Tower) {
 				d := math.Hypot(t.X-e.X, t.Y-e.Y)
-				if d < bestDist {
-					bestDist = d
-					bestTower = t
+				rc := [2]int{t.Row, t.Col}
+				if !occupied[rc] {
+					if d < bestDist {
+						bestDist = d
+						bestTower = t
+					}
+				} else if d < fallDist {
+					fallDist = d
+					fallback = t
 				}
 			})
-			if bestTower != nil {
-				e.StrDrainTargetRC = [2]int{bestTower.Row, bestTower.Col}
+			target := bestTower
+			if target == nil {
+				target = fallback // 全部被占用时退而求其次
+			}
+			if target != nil {
+				e.StrDrainTargetRC = [2]int{target.Row, target.Col}
+				occupied[e.StrDrainTargetRC] = true
 			} else {
-				e.StrDrainActiveT = 0 // 没有塔可连接
+				e.StrDrainActiveT = 0
 				return
 			}
 		}
