@@ -1,6 +1,10 @@
 // scaling.go — 缩放类能力实现。
 // 包含击杀升级、波次缩放、周期释放、邻居增益、元素切换等动态增长能力。
 // 通过 init() 自注册到全局注册表。
+//
+// Scaling ability state is stored in package-level maps keyed by tower InstanceKey.
+// Thread safety: All access is from Ebitengine's single-threaded game loop.
+// Maps are cleaned up via ClearTowerScalingState on tower sell.
 package abilities
 
 import (
@@ -291,6 +295,17 @@ func (a *ElementSwitch) OnTick(t *tower.Tower, ctx *tower.TickContext) *tower.Ti
 	}
 
 	return nil
+}
+
+// ClearTowerScalingState 清除指定塔的所有缩放类能力运行时状态。
+// 在塔被出售/移除时调用，防止 map 泄漏。
+func ClearTowerScalingState(key string) {
+	delete(killUpgradeStacks, key)
+	delete(waveScaleCounters, key)
+	delete(periodicCastTimers, key)
+	delete(neighborBoostTimers, key)
+	delete(elementSwitchTimers, key)
+	delete(elementSwitchActiveElement, key)
 }
 
 // ResetScalingState 清空所有缩放类能力的运行时状态（测试辅助函数）。

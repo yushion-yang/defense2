@@ -9,6 +9,9 @@ import (
 	"defense2/internal/core/tower"
 )
 
+// chainTowersBuf is a package-level pre-allocated buffer to avoid per-frame allocation.
+var chainTowersBuf []strength.ChainTower
+
 // TickTowerAbilities 执行所有塔的 Ticker 能力，返回本帧总金币收入。
 //
 // 调用流程：
@@ -27,15 +30,15 @@ func TickTowerAbilities(towers *tower.Pool, enemies *enemy.Pool, dt float64, cha
 
 	// --- Phase 1.05: 链网络（仅聚能战灵启用时生效）---
 	if len(chainEnabled) > 0 && chainEnabled[0] {
-		var chainTowers []strength.ChainTower
+		chainTowersBuf = chainTowersBuf[:0]
 		idx := 0
 		towers.Each(func(t *tower.Tower) {
-			chainTowers = append(chainTowers, strength.ChainTower{
+			chainTowersBuf = append(chainTowersBuf, strength.ChainTower{
 				Index: idx, X: t.X, Y: t.Y, Strength: t.Strength,
 			})
 			idx++
 		})
-		strength.RebuildChainNetwork(chainTowers)
+		strength.RebuildChainNetwork(chainTowersBuf)
 	}
 
 	// --- Phase 1.1: tick 塔 buff（递减时间，移除过期 buff）---

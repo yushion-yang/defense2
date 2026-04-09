@@ -1,5 +1,7 @@
 // pool.go — 弹射物对象池。
-// 环形缓冲区实现，写入时覆盖最老的槽位，支持发射、移动更新和释放。
+// Ring buffer pool (1024 slots). Chosen for: high churn rate (projectiles
+// created/destroyed rapidly), FIFO ordering ensures oldest slots are
+// reclaimed first, and cursor-based insertion avoids linear scan overhead.
 //
 // ── 弹射物生命周期（塔防模型） ──
 //

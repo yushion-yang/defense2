@@ -1,5 +1,9 @@
 // economy.go — 经济系统。
 // 管理金币收入来源：击杀奖励、波次通过奖励。
+//
+// 此包虽然只有 ~30 行，但提供击杀/卖塔经济计算的单一入口，
+// 被 stage.go 和多个测试文件引用。保留独立包可避免 scene 层
+// 直接耦合 config.GlobalBalance() 的内部结构。
 package economy
 
 import "defense2/internal/config"

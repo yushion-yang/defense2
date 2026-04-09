@@ -10,10 +10,18 @@ import (
 	"defense2/internal/core/strength"
 )
 
+// grid index dimensions (covers max map size 40 cols × 18 rows with margin)
+const (
+	gridMaxRows = 20
+	gridMaxCols = 42
+)
+
 // Pool 固定大小的塔对象池。
 type Pool struct {
-	towers []Tower // 预分配的塔槽位数组
-	Count  int     // 当前已放置的塔数量
+	towers     []Tower // 预分配的塔槽位数组
+	Count      int     // 当前已放置的塔数量
+	grid       [gridMaxRows][gridMaxCols]*Tower // spatial index for O(1) At() lookup
+	RemoveHook func(instanceKey string) // 可选：塔移除时的清理回调（由上层设置，避免循环依赖）
 }
 
 // NewPool 创建指定容量的塔对象池。
@@ -28,31 +36,56 @@ func DefaultPool() *Pool {
 	return NewPool(game.MaxTowers)
 }
 
+// initTower 初始化塔的公共属性（Place 和 PlaceFromSnapshot 共享）。
+// 清零 → 设置定义属性 → 设置攻击方式 → 初始化战力。
+func initTower(t *Tower, row, col int, cx, cy float64, def TowerDef) {
+	*t = Tower{} // 清零所有字段，防止复用残留
+
+	// 定义属性
+	t.Row = row
+	t.Col = col
+	t.X = cx
+	t.Y = cy
+	t.Range = def.Range
+	t.Damage = def.Damage
+	t.AttackSpeed = def.AttackSpeed
+	t.Cost = def.Cost
+	t.Key = def.Key
+	t.InstanceKey = fmt.Sprintf("%s_%d_%d", def.Key, row, col)
+	t.Label = def.Label
+	t.Abilities = def.Abilities
+	t.Color = def.Color
+	t.Active = true
+
+	// 攻击方式
+	t.AttackStyleID = def.AttackStyleID
+	t.ProjectileSpeed = def.ProjectileSpeed
+	t.Level = 1
+	t.SpriteKey = spriteKeyForStyle(def.AttackStyleID)
+	t.UnlockOrder = RollUnlockOrder()
+
+	// 战力系统
+	t.Strength = strength.NewStrengthData()
+}
+
+// allocSlot 从池中分配一个空闲槽位，注册到空间索引。池满时返回 nil。
+func (p *Pool) allocSlot(t *Tower, row, col int) *Tower {
+	p.Count++
+	if row >= 0 && row < gridMaxRows && col >= 0 && col < gridMaxCols {
+		p.grid[row][col] = t
+	}
+	return t
+}
+
 // Place 在指定网格位置放置一座塔，从 TowerDef 初始化属性。
 // 池满时返回 nil。
 func (p *Pool) Place(row, col int, cx, cy float64, def TowerDef) *Tower {
 	for i := range p.towers {
 		if !p.towers[i].Active {
 			t := &p.towers[i]
-			*t = Tower{} // 清零所有字段，防止复用残留
+			initTower(t, row, col, cx, cy, def)
 
-			// 定义属性
-			t.Row = row
-			t.Col = col
-			t.X = cx
-			t.Y = cy
-			t.Range = def.Range
-			t.Damage = def.Damage
-			t.AttackSpeed = def.AttackSpeed
-			t.Cost = def.Cost
-			t.Key = def.Key
-			t.InstanceKey = fmt.Sprintf("%s_%d_%d", def.Key, row, col)
-			t.Label = def.Label
-			t.Abilities = def.Abilities
-			t.Color = def.Color
-			t.Active = true
-
-			// 战力缩放参数
+			// 战力缩放参数（从配置定义）
 			t.BaseDamage = def.CfgBaseDamage
 			t.BaseRange = def.CfgBaseRange
 			t.BaseSpeed = def.CfgBaseSpeed
@@ -60,23 +93,14 @@ func (p *Pool) Place(row, col int, cx, cy float64, def TowerDef) *Tower {
 			t.PotentialSpeed = def.PotentialSpeed
 			t.PotentialRange = def.PotentialRange
 
-			// 攻击方式
-			t.AttackStyleID = def.AttackStyleID
-			t.ProjectileSpeed = def.ProjectileSpeed
-			t.Level = 1
-			t.SpriteKey = spriteKeyForStyle(def.AttackStyleID)
-			t.UnlockOrder = RollUnlockOrder()
-
 			// 随机属性
 			stats := RollTowerStats()
 			ApplyRandomStats(t, stats)
 			t.DamageTier = stats.DamageTier
 			t.SpeedTier = stats.SpeedTier
 			t.RangeTier = stats.RangeTier
-			t.Strength = strength.NewStrengthData()
 
-			p.Count++
-			return t
+			return p.allocSlot(t, row, col)
 		}
 	}
 	return nil
@@ -88,30 +112,7 @@ func (p *Pool) PlaceFromSnapshot(row, col int, cx, cy float64, def TowerDef, sna
 	for i := range p.towers {
 		if !p.towers[i].Active {
 			t := &p.towers[i]
-			*t = Tower{} // 清零所有字段，防止复用残留
-
-			// 定义属性
-			t.Row = row
-			t.Col = col
-			t.X = cx
-			t.Y = cy
-			t.Range = def.Range
-			t.Damage = def.Damage
-			t.AttackSpeed = def.AttackSpeed
-			t.Cost = def.Cost
-			t.Key = def.Key
-			t.InstanceKey = fmt.Sprintf("%s_%d_%d", def.Key, row, col)
-			t.Label = def.Label
-			t.Abilities = def.Abilities
-			t.Color = def.Color
-			t.Active = true
-
-			// 攻击方式
-			t.AttackStyleID = def.AttackStyleID
-			t.ProjectileSpeed = def.ProjectileSpeed
-			t.Level = 1
-			t.SpriteKey = spriteKeyForStyle(def.AttackStyleID)
-			t.UnlockOrder = RollUnlockOrder()
+			initTower(t, row, col, cx, cy, def)
 
 			// 快照属性（跳过随机 roll）
 			t.BaseDamage = snap.BaseDamage
@@ -123,10 +124,8 @@ func (p *Pool) PlaceFromSnapshot(row, col int, cx, cy float64, def TowerDef, sna
 			t.DamageTier = snap.DamageTier
 			t.SpeedTier = snap.SpeedTier
 			t.RangeTier = snap.RangeTier
-			t.Strength = strength.NewStrengthData()
 
-			p.Count++
-			return t
+			return p.allocSlot(t, row, col)
 		}
 	}
 	return nil
@@ -135,6 +134,12 @@ func (p *Pool) PlaceFromSnapshot(row, col int, cx, cy float64, def TowerDef, sna
 // Remove 出售塔（标记为非存活，回收槽位）。
 func (p *Pool) Remove(t *Tower) {
 	if t.Active {
+		if p.RemoveHook != nil {
+			p.RemoveHook(t.InstanceKey)
+		}
+		if t.Row >= 0 && t.Row < gridMaxRows && t.Col >= 0 && t.Col < gridMaxCols {
+			p.grid[t.Row][t.Col] = nil
+		}
 		t.Active = false
 		t.Target = nil
 		p.Count--
@@ -150,14 +155,16 @@ func (p *Pool) Each(fn func(t *Tower)) {
 	}
 }
 
-// At 返回指定网格位置 (row, col) 上的塔，无塔则返回 nil。
+// At 返回指定网格位置 (row, col) 上的塔，无塔则返回 nil。O(1) via grid index.
 func (p *Pool) At(row, col int) *Tower {
-	for i := range p.towers {
-		if p.towers[i].Active && p.towers[i].Row == row && p.towers[i].Col == col {
-			return &p.towers[i]
-		}
+	if row < 0 || row >= gridMaxRows || col < 0 || col >= gridMaxCols {
+		return nil
 	}
-	return nil
+	t := p.grid[row][col]
+	if t != nil && !t.Active {
+		return nil
+	}
+	return t
 }
 
 // TowerDef 塔类型定义，用于建造时初始化塔属性。

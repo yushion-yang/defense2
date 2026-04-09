@@ -143,8 +143,3 @@ func (gm *GameMap) PixelHeight() float64 {
 	return float64(gm.Config.Rows * gm.CellSize)
 }
 
-// Width 返回地图网格的总像素宽度（PixelWidth 的别名）。
-func (gm *GameMap) Width() float64 { return gm.PixelWidth() }
-
-// Height 返回地图网格的总像素高度（PixelHeight 的别名）。
-func (gm *GameMap) Height() float64 { return gm.PixelHeight() }

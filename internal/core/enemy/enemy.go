@@ -43,41 +43,129 @@ func CheckThresholds(e *Enemy) []Threshold {
 	return triggered
 }
 
+// StatusEffects 敌人身上的状态效果（CC/DoT/减免/免疫等）。
+// 嵌入 Enemy 中，外部代码通过 e.SlowFactor 等直接访问。
+type StatusEffects struct {
+	StunTimer    float64 // 眩晕剩余时间（秒），>0 时无法移动
+	SlowTimer    float64 // 减速剩余时间（秒）
+	SlowFactor   float64 // 减速倍率（0.5 表示半速）
+	BleedTimer   float64 // 流血剩余时间（秒）
+	BleedDPS     float64 // 流血每秒伤害
+	PoisonTimer  float64 // 中毒剩余时间（秒）
+	PoisonDPS    float64 // 中毒每秒伤害
+	BurnTimer    float64 // 灼烧剩余时间（秒）
+	BurnDPS      float64 // 灼烧每秒伤害
+	DotTickTimer float64 // DoT 触发计时器（每 DotTickInterval 触发一次伤害）
+	LastDotDmg   float64 // 上次 DoT tick 的伤害量（>0 时由 pipeline 弹浮字后清零）
+	ZoneDmgAccum float64 // 区域能力（curseZone/poisonZone）每帧累积伤害，DotTick 时结算
+	RootTimer    float64 // 定身剩余时间（秒）
+
+	// 增伤/减伤
+	DamageAmplify      float64 // 受伤增加倍率（weaken/weakenZone 施加）
+	DamageAmplifyTimer float64 // weaken OnHit 的持续时间（秒），zone 型每帧由区域重设
+	Silenced           bool    // 是否被沉默（沉默时 DamageCap 失效）
+	AbilitySilenced    bool    // 当前帧是否被沉默（每帧重置）
+	IsInvincible       bool    // 无敌状态（pure 伤害可穿透）
+	IsDamageImmune     bool    // 伤害免疫（pure 伤害可穿透）
+	IsUntargetable     bool    // 不可选中
+
+	// 控制减免
+	Tenacity           float64 // 韧性（0~1，减少控制效果持续时间）
+	ControlImmuneTimer float64 // 控制免疫剩余时间（秒，>0 时免疫所有控制效果）
+	IsControlImmune    bool    // 控制免疫
+	IsStunImmune       bool    // 眩晕免疫
+	IsSlowImmune       bool    // 减速免疫
+	IsRootImmune       bool    // 定身免疫
+}
+
+// VisualState 敌人的视觉/渲染状态（闪光、飘字、血条拖尾）。
+// 嵌入 Enemy 中，外部代码通过 e.HitFlash 等直接访问。
+type VisualState struct {
+	HitFlash     float64 // 受击闪白剩余时间（秒，>0 时渲染白色叠加）
+	BlockFlash   float64 // 弹幕盾格挡闪光
+	DodgeFlash   float64 // 闪避残影
+	ArmorSpark   float64 // 装甲火花
+	PurgeFlash   float64 // 净化脉冲
+	DamageCapHit float64 // 坚韧触发闪光
+	DisplayHP    float64 // 显示用血量（伤害拖尾缓慢衰减到实际 HP）
+
+	// 飘字系统
+	FloatText      string  // 当前飘字内容（空=无）
+	FloatTextTimer float64 // 飘字剩余时间
+	FloatTextR     uint8   // 飘字颜色
+	FloatTextG     uint8
+	FloatTextB     uint8
+}
+
+// AbilityFields 敌人能力系统字段（防御/移动/攻击/死亡/净化等）。
+// 嵌入 Enemy 中，外部代码通过 e.DamageCap 等直接访问。
+type AbilityFields struct {
+	// defense
+	DamageCap             float64 // 单次伤害上限（0=无上限，如铁甲怪 60）
+	DamageCapPercent      float64 // 单次伤害百分比上限（0=无上限，如巨人 0.08=8%maxHP）
+	ProjectileBlockChance float64 // 弹幕盾：阻挡弹射物概率（0=无）
+	ArmorFlat             float64 // 装甲：每次受击固定减免
+	EvasionChance         float64 // 闪避：完全闪避概率（0=无）
+	DamageReduceRatio     float64 // 受伤减免比例（0~1，由 buff 模板设置）
+
+	// movement
+	DashSpeedBoost float64 // 受击冲刺：速度提升比例
+	DashDuration   float64 // 受击冲刺：提升持续时间（秒）
+	DashCooldown   float64 // 受击冲刺：冷却时间（秒）
+	DashCooldownT  float64 // 受击冲刺：当前冷却倒计时
+	DashActiveT    float64 // 受击冲刺：当前激活倒计时
+	PhaseDuration  float64 // 相位偏移：免伤持续时间（秒）
+	PhaseCooldown  float64 // 相位偏移：冷却时间（秒）
+	PhaseTimer     float64 // 相位偏移：当前计时（>0 免伤中, <0 冷却中）
+	PhaseActive    bool    // 相位偏移：当前是否免伤
+
+	// offense — 削强
+	StrDrainRatio    float64 // 减益比例（0.5 = -50%）
+	StrDrainInterval float64 // 施加间隔（秒）
+	StrDrainDuration float64 // 减益持续时间（秒）
+	StrDrainTimer    float64 // 冷却倒计时
+	StrDrainTargetRC [2]int  // 连接的塔 [row,col]（[0,0]=无连接）
+	StrDrainActiveT  float64 // 减益剩余持续时间（>0 表示连接中）
+
+	// death
+	DeathSpawnCount int    // 死亡召唤：召唤数量（0=不召唤）
+	DeathSpawnArch  string // 死亡召唤：召唤原型（默认 "normal"）
+
+	// resist
+	PurgeInterval  float64 // 净化：清除间隔（秒，0=无净化）
+	PurgeImmuneDur float64 // 净化：清除后免疫持续时间（秒）
+	PurgeTimer     float64 // 净化：当前计时
+
+	// 能力系统
+	AbilityIDs []string // 装配的能力类型 ID 列表（用于 HUD 展示）
+}
+
 // Enemy 单个敌人实体。
 type Enemy struct {
-	ID           int             // 唯一标识（用于穿透弹已命中检查）
-	X, Y         float64         // 当前像素位置
-	HP           float64         // 当前血量
-	MaxHP        float64         // 最大血量
-	Speed        float64         // 当前移动速度（像素/秒，受减速影响）
-	BaseSpeed    float64         // 基础移动速度（无减速时的速度）
-	Radius       float64         // 碰撞半径（像素）
-	PathIndex    int             // 当前目标路径点索引
-	Path         []gamemap.Point // 该敌人的行进路径（多路径地图时各敌人可能不同）
-	ReachedEnd   bool            // 是否已到达路径终点（基地）
-	Active       bool            // 是否存活（对象池复用标记）
-	Archetype    string          // 敌人原型标识（如 "normal"、"runner"、"tank"）
-	SpriteDir    string          // 精灵目录名（加载贴图用，可与 Archetype 不同）
-	Boss         bool            // 是否为 Boss
-	IsDummy      bool            // 是否为木桩怪（不移动）
-	Reward       int             // 击杀奖励金币
-	RewardScale  float64         // 原型奖励倍率（如 tank=1.35, runner=0.72）
-	StunTimer    float64         // 眩晕剩余时间（秒），>0 时无法移动
-	SlowTimer    float64         // 减速剩余时间（秒）
-	SlowFactor   float64         // 减速倍率（0.5 表示半速）
-	BleedTimer   float64         // 流血剩余时间（秒）
-	BleedDPS     float64         // 流血每秒伤害
-	PoisonTimer  float64         // 中毒剩余时间（秒）
-	PoisonDPS    float64         // 中毒每秒伤害
-	BurnTimer    float64         // 灼烧剩余时间（秒）
-	BurnDPS      float64         // 灼烧每秒伤害
-	DotTickTimer float64         // DoT 触发计时器（每 DotTickInterval 触发一次伤害）
-	LastDotDmg   float64         // 上次 DoT tick 的伤害量（>0 时由 pipeline 弹浮字后清零）
-	ZoneDmgAccum float64         // 区域能力（curseZone/poisonZone）每帧累积伤害，DotTick 时结算
-	RootTimer    float64         // 定身剩余时间（秒）
-	DisplayHP    float64         // 显示用血量（伤害拖尾缓慢衰减到实际 HP）
-	// Elite 已移除
-	HitFlash  float64 // 受击闪白剩余时间（秒，>0 时渲染白色叠加）
+	// ── 身份 ──
+	ID        int    // 唯一标识（用于穿透弹已命中检查）
+	Active    bool   // 是否存活（对象池复用标记）
+	Archetype string // 敌人原型标识（如 "normal"、"runner"、"tank"）
+	SpriteDir string // 精灵目录名（加载贴图用，可与 Archetype 不同）
+	Boss      bool   // 是否为 Boss
+	IsDummy   bool   // 是否为木桩怪（不移动）
+
+	// ── 核心属性 ──
+	X, Y      float64         // 当前像素位置
+	HP        float64         // 当前血量
+	MaxHP     float64         // 最大血量
+	Speed     float64         // 当前移动速度（像素/秒，受减速影响）
+	BaseSpeed float64         // 基础移动速度（无减速时的速度）
+	Radius    float64         // 碰撞半径（像素）
+	PathIndex int             // 当前目标路径点索引
+	Path      []gamemap.Point // 该敌人的行进路径（多路径地图时各敌人可能不同）
+
+	// ── 经济 ──
+	Reward      int     // 击杀奖励金币
+	RewardScale float64 // 原型奖励倍率（如 tank=1.35, runner=0.72）
+	ReachedEnd  bool    // 是否已到达路径终点（基地）
+
+	// ── 时间/动画 ──
 	Age       float64 // 存活时间（秒），用于出生保护期
 	AnimCur   string  // 当前动画名（per-instance）
 	AnimFrame int     // 当前帧索引
@@ -92,26 +180,8 @@ type Enemy struct {
 	DyingTimer    float64 // >0 means dying animation in progress (seconds remaining)
 	DyingDuration float64 // total dying time (for progress calculation)
 
-	// ── 伤害管线扩展字段 ──
-
-	DamageCap          float64 // 单次伤害上限（0=无上限，如铁甲怪 60）
-	DamageCapPercent   float64 // 单次伤害百分比上限（0=无上限，如巨人 0.08=8%maxHP）
-	Silenced           bool    // 是否被沉默（沉默时 DamageCap 失效）
-	DamageAmplify      float64 // 受伤增加倍率（weaken/weakenZone 施加）
-	DamageAmplifyTimer float64 // weaken OnHit 的持续时间（秒），zone 型每帧由区域重设
-	IsInvincible       bool    // 无敌状态（pure 伤害可穿透）
-	IsDamageImmune     bool    // 伤害免疫（pure 伤害可穿透）
-	IsUntargetable     bool    // 不可选中
-
+	// ── HP阈值触发器 ──
 	Thresholds []Threshold // HP阈值触发器列表
-
-	// ── 控制减免 ──
-	Tenacity           float64 // 韧性（0~1，减少控制效果持续时间）
-	ControlImmuneTimer float64 // 控制免疫剩余时间（秒，>0 时免疫所有控制效果）
-	IsControlImmune    bool    // 控制免疫
-	IsStunImmune       bool    // 眩晕免疫
-	IsSlowImmune       bool    // 减速免疫
-	IsRootImmune       bool    // 定身免疫
 
 	// ── 生命周期 ──
 	Lifecycle *LifecycleHandlers // 生命周期回调
@@ -149,61 +219,10 @@ type Enemy struct {
 	AuraRange   float64 // 光环范围（像素，0=无光环）
 	AuraSpeedUp float64 // 光环加速比例（如 0.2 = +20%）
 
-	// ── 减伤 ──
-	DamageReduceRatio float64 // 受伤减免比例（0~1，由 buff 模板设置）
-
-	// ── 能力系统字段 ──
-	// defense
-	ProjectileBlockChance float64 // 弹幕盾：阻挡弹射物概率（0=无）
-	ArmorFlat             float64 // 装甲：每次受击固定减免
-	EvasionChance         float64 // 闪避：完全闪避概率（0=无）
-	// DamageCap/DamageCapPercent 已有字段
-
-	// movement
-	DashSpeedBoost float64 // 受击冲刺：速度提升比例
-	DashDuration   float64 // 受击冲刺：提升持续时间（秒）
-	DashCooldown   float64 // 受击冲刺：冷却时间（秒）
-	DashCooldownT  float64 // 受击冲刺：当前冷却倒计时
-	DashActiveT    float64 // 受击冲刺：当前激活倒计时
-	PhaseDuration  float64 // 相位偏移：免伤持续时间（秒）
-	PhaseCooldown  float64 // 相位偏移：冷却时间（秒）
-	PhaseTimer     float64 // 相位偏移：当前计时（>0 免伤中, <0 冷却中）
-	PhaseActive    bool    // 相位偏移：当前是否免伤
-
-	// offense — 削强
-	StrDrainRatio    float64 // 减益比例（0.5 = -50%）
-	StrDrainInterval float64 // 施加间隔（秒）
-	StrDrainDuration float64 // 减益持续时间（秒）
-	StrDrainTimer    float64 // 冷却倒计时
-	StrDrainTargetRC [2]int  // 连接的塔 [row,col]（[0,0]=无连接）
-	StrDrainActiveT  float64 // 减益剩余持续时间（>0 表示连接中）
-
-	// death
-	DeathSpawnCount int    // 死亡召唤：召唤数量（0=不召唤）
-	DeathSpawnArch  string // 死亡召唤：召唤原型（默认 "normal"）
-
-	// resist
-	PurgeInterval  float64 // 净化：清除间隔（秒，0=无净化）
-	PurgeImmuneDur float64 // 净化：清除后免疫持续时间（秒）
-	PurgeTimer     float64 // 净化：当前计时
-
-	// 能力系统
-	AbilityIDs      []string // 装配的能力类型 ID 列表（用于 HUD 展示）
-	AbilitySilenced bool     // 当前帧是否被沉默（每帧重置）
-
-	// ── 视觉特效触发器（>0 时渲染对应特效，每帧衰减）──
-	BlockFlash   float64 // 弹幕盾格挡闪光
-	DodgeFlash   float64 // 闪避残影
-	ArmorSpark   float64 // 装甲火花
-	PurgeFlash   float64 // 净化脉冲
-	DamageCapHit float64 // 坚韧触发闪光
-
-	// 飘字系统
-	FloatText      string  // 当前飘字内容（空=无）
-	FloatTextTimer float64 // 飘字剩余时间
-	FloatTextR     uint8   // 飘字颜色
-	FloatTextG     uint8
-	FloatTextB     uint8
+	// ── 嵌入子结构体（向后兼容，e.SlowFactor 等字段访问不变）──
+	StatusEffects
+	VisualState
+	AbilityFields
 }
 
 // IsSpawning returns true if the enemy is playing its spawn-in animation.
@@ -225,11 +244,11 @@ func (e *Enemy) SetFloatText(text string, r, g, b uint8) {
 	e.FloatTextB = b
 }
 
-// MinSpeedRatio 全局减速下限（向后兼容导出变量，实际值从 balance.json 读取）。
-var MinSpeedRatio = config.GlobalBalance().Combat.MinSpeedRatio
+// MinSpeedRatio 返回全局减速下限（从 balance.json 实时读取，不再冻结于 init 时刻）。
+func MinSpeedRatio() float64 { return config.GlobalBalance().Combat.MinSpeedRatio }
 
-// DotTickInterval DoT 伤害触发周期（向后兼容导出变量，实际值从 balance.json 读取）。
-var DotTickInterval = config.GlobalBalance().Combat.DotTickInterval
+// DotTickInterval 返回 DoT 伤害触发周期（从 balance.json 实时读取，不再冻结于 init 时刻）。
+func DotTickInterval() float64 { return config.GlobalBalance().Combat.DotTickInterval }
 
 // TickStatusEffects 处理敌人身上的状态效果（减速、流血）。
 // 眩晕在 movement.go 中处理。

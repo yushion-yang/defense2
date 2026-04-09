@@ -216,9 +216,9 @@ func TestAllTowerAttackStylesHaveHandlers(t *testing.T) {
 func TestCC_SlowRespectsMinSpeedRatio(t *testing.T) {
 	e := &enemy.Enemy{HP: 100, MaxHP: 100, Speed: 60, BaseSpeed: 60, Active: true}
 	combat.ApplySlow(e, 0.01, 5.0, "test") // 极端减速
-	minSpeed := e.BaseSpeed * combat.MinSpeedRatio
+	minSpeed := e.BaseSpeed * combat.MinSpeedRatio()
 	if e.Speed < minSpeed {
-		t.Errorf("Speed=%.1f < MinSpeed=%.1f (BaseSpeed*%.1f)", e.Speed, minSpeed, combat.MinSpeedRatio)
+		t.Errorf("Speed=%.1f < MinSpeed=%.1f (BaseSpeed*%.1f)", e.Speed, minSpeed, combat.MinSpeedRatio())
 	}
 }
 

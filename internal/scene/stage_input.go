@@ -583,7 +583,7 @@ func (s *StageScene) tryUpgradeTower() {
 	if t == nil {
 		return
 	}
-	cost := tower.StrengthBuyCost
+	cost := tower.StrengthBuyCost()
 	if s.gold < cost {
 		return
 	}
@@ -633,8 +633,8 @@ func (s *StageScene) screenToWorld(sx, sy float64) (float64, float64) {
 
 // clampCamera 将相机偏移夹紧到地图范围内。
 func (s *StageScene) clampCamera() {
-	mapW := s.gameMap.Width()
-	mapH := s.gameMap.Height()
+	mapW := s.gameMap.PixelWidth()
+	mapH := s.gameMap.PixelHeight()
 	screenW := float64(game.ScreenWidth)
 	screenH := float64(game.ScreenHeight)
 
@@ -673,8 +673,8 @@ func (s *StageScene) enterBuildMode() {
 
 // needsCamera 返回地图是否需要相机。
 func (s *StageScene) needsCamera() bool {
-	mapW := s.gameMap.Width() + s.gameMap.OffsetX*2
-	mapH := s.gameMap.Height() + s.gameMap.OffsetY*2
+	mapW := s.gameMap.PixelWidth() + s.gameMap.OffsetX*2
+	mapH := s.gameMap.PixelHeight() + s.gameMap.OffsetY*2
 	return mapW > float64(game.ScreenWidth) || mapH > float64(game.ScreenHeight)
 }
 

@@ -8,11 +8,11 @@ import (
 	"defense2/internal/config"
 )
 
-// ChainDistance 链连接最大距离（像素，从 balance.json 读取）。
-var ChainDistance = config.GlobalBalance().Chain.Distance
+// ChainDistance 返回链连接最大距离（像素，从 balance.json 实时读取）。
+func ChainDistance() float64 { return config.GlobalBalance().Chain.Distance }
 
-// ChainStrengthPerTower 每个链组成员贡献的战力值（从 balance.json 读取）。
-var ChainStrengthPerTower = config.GlobalBalance().Chain.StrengthPerTower
+// ChainStrengthPerTower 返回每个链组成员贡献的战力值（从 balance.json 实时读取）。
+func ChainStrengthPerTower() float64 { return config.GlobalBalance().Chain.StrengthPerTower }
 
 // ChainTower 链网络输入（避免直接依赖 tower 包）。
 type ChainTower struct {
@@ -46,13 +46,14 @@ func RebuildChainNetwork(towers []ChainTower) map[int]ChainInfo {
 	}
 
 	// O(n²) 距离检查，距离 <= ChainDistance 的塔合并
+	chainDist := ChainDistance()
 	for i := 0; i < n; i++ {
 		for j := i + 1; j < n; j++ {
 			dx := towers[i].X - towers[j].X
 			dy := towers[i].Y - towers[j].Y
 			dist := math.Sqrt(dx*dx + dy*dy)
-			if dist <= ChainDistance {
-				ufUnion(parent, rank, i, j)
+			if dist <= chainDist {
+				UFUnion(parent, rank, i, j)
 			}
 		}
 	}
@@ -60,19 +61,19 @@ func RebuildChainNetwork(towers []ChainTower) map[int]ChainInfo {
 	// 统计每个链组的大小
 	groupSize := make(map[int]int)
 	for i := 0; i < n; i++ {
-		root := ufFind(parent, i)
+		root := UFFind(parent, i)
 		groupSize[root]++
 	}
 
 	// 构建结果
 	result := make(map[int]ChainInfo, n)
 	for i := 0; i < n; i++ {
-		root := ufFind(parent, i)
+		root := UFFind(parent, i)
 		size := groupSize[root]
 
 		var bonus float64
 		if size >= 2 {
-			bonus = float64(size) * ChainStrengthPerTower
+			bonus = float64(size) * ChainStrengthPerTower()
 		}
 
 		result[towers[i].Index] = ChainInfo{
@@ -90,19 +91,24 @@ func RebuildChainNetwork(towers []ChainTower) map[int]ChainInfo {
 	return result
 }
 
-// ufFind 查找根节点（带路径压缩）。
-func ufFind(parent []int, x int) int {
+// UFFind 查找根节点（带路径压缩）。
+func UFFind(parent []int, x int) int {
 	if parent[x] != x {
-		parent[x] = ufFind(parent, parent[x])
+		parent[x] = UFFind(parent, parent[x])
 	}
 	return parent[x]
 }
 
-// ufUnion 合并两个集合（按秩合并）。
-func ufUnion(parent, rank []int, x, y int) {
-	rx := ufFind(parent, x)
-	ry := ufFind(parent, y)
+// UFUnion 合并两个集合（按秩合并）。
+// rank 可为 nil，此时退化为简单合并（无秩优化）。
+func UFUnion(parent, rank []int, x, y int) {
+	rx := UFFind(parent, x)
+	ry := UFFind(parent, y)
 	if rx == ry {
+		return
+	}
+	if rank == nil {
+		parent[rx] = ry
 		return
 	}
 	if rank[rx] < rank[ry] {

@@ -14,11 +14,12 @@ import (
 	"os"
 	"path/filepath"
 	"sort"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
 
-	_ "defense2/internal/core/tower/abilities" // 通过 init() 注册塔能力
+	"defense2/internal/core/tower/abilities" // 通过 init() 注册塔能力；Remove hook
 	_ "defense2/internal/core/warden/types"    // 通过 init() 注册战灵类型
 
 	gameAudio "defense2/internal/audio"
@@ -184,7 +185,10 @@ func NewStageSceneWithOpts(sw Switcher, opts StageOptions) *StageScene {
 	gm := gamemap.NewGameMap(cfg)
 
 	// 初始化持久化
-	store, _ := persistence.DefaultStorage()
+	store, err := persistence.DefaultStorage()
+	if err != nil {
+		store = persistence.NewMemoryStorage()
+	}
 	pm := persistence.NewProgressManager(store)
 	achTracker := achievement.NewTracker(store)
 
@@ -289,6 +293,9 @@ func NewStageSceneWithOpts(sw Switcher, opts StageOptions) *StageScene {
 		achieveTracker:  achTracker,
 	}
 
+	// 塔移除时清理缩放能力的运行时状态（防止 map 泄漏）
+	s.towers.RemoveHook = abilities.ClearTowerScalingState
+
 	// 后处理管线（bloom）+ 粒子系统
 	s.postPipeline = postprocess.NewPipeline()
 	s.particlePool = particle.NewPool()
@@ -385,15 +392,11 @@ func (s *StageScene) subscribeBus() {
 		// 成就: 累计建塔 + 单局塔种类
 		s.achieveTracker.IncrTowersBuilt()
 		if s.achieveTracker.TotalTowersBuilt >= achievement.ThresholdOf("builder_10") {
-			if s.achieveTracker.Unlock("builder_10") {
-				hud.ShowToast("成就解锁: 塔防新手")
-			}
+			s.unlockAchievement("builder_10", "塔防新手")
 		}
 		s.achieveTracker.SessionTowerTypes[p.TowerKey] = true
 		if len(s.achieveTracker.SessionTowerTypes) >= achievement.ThresholdOf("all_towers") {
-			if s.achieveTracker.Unlock("all_towers") {
-				hud.ShowToast("成就解锁: 全能战士")
-			}
+			s.unlockAchievement("all_towers", "全能战士")
 		}
 	})
 	event.OnTyped(bus, event.EvtTowerUpgraded, func(_ event.TowerUpgradedPayload) {
@@ -448,9 +451,7 @@ func (s *StageScene) subscribeBus() {
 		s.tutorial.OnEvent("waveCleared")
 		// 成就: Endless 模式 50 波
 		if s.modeID == "endless" && p.Wave >= achievement.ThresholdOf("endless_50") {
-			if s.achieveTracker.Unlock("endless_50") {
-				hud.ShowToast("成就解锁: 不灭传说")
-			}
+			s.unlockAchievement("endless_50", "不灭传说")
 		}
 	})
 
@@ -472,24 +473,25 @@ func (s *StageScene) subscribeBus() {
 		// 成就: 击杀数 + Boss + 金币
 		s.achieveTracker.SessionKills++
 		if s.achieveTracker.SessionKills >= achievement.ThresholdOf("centurion") {
-			if s.achieveTracker.Unlock("centurion") {
-				hud.ShowToast("成就解锁: 百杀")
-			}
+			s.unlockAchievement("centurion", "百杀")
 		}
 		if p.IsBoss {
-			if s.achieveTracker.Unlock("first_boss") {
-				hud.ShowToast("成就解锁: 首个Boss")
-			}
+			s.unlockAchievement("first_boss", "首个Boss")
 		}
 		if s.gold > s.achieveTracker.SessionMaxGold {
 			s.achieveTracker.SessionMaxGold = s.gold
 		}
 		if s.achieveTracker.SessionMaxGold >= achievement.ThresholdOf("rich") {
-			if s.achieveTracker.Unlock("rich") {
-				hud.ShowToast("成就解锁: 富甲一方")
-			}
+			s.unlockAchievement("rich", "富甲一方")
 		}
 	})
+}
+
+// unlockAchievement 尝试解锁成就并显示 Toast 提示。
+func (s *StageScene) unlockAchievement(id, name string) {
+	if s.achieveTracker.Unlock(id) {
+		hud.ShowToast("成就解锁: " + name)
+	}
 }
 
 // emitKill 统一发出击杀事件（弹射物/战灵/技能共用）。
@@ -508,12 +510,8 @@ func (s *StageScene) emitKill(isBoss bool, killerID string, rewardScale float64)
 
 // checkVictoryAchievements checks and unlocks all victory-related achievements.
 func (s *StageScene) checkVictoryAchievements() {
-	t := s.achieveTracker
-
 	// first_win — any victory
-	if t.Unlock("first_win") {
-		hud.ShowToast("成就解锁: 初次胜利")
-	}
+	s.unlockAchievement("first_win", "初次胜利")
 
 	// Star rating (same logic as result.go calcStars)
 	stars := 1
@@ -525,35 +523,25 @@ func (s *StageScene) checkVictoryAchievements() {
 
 	// perfect_star — any map 3 stars
 	if stars == 3 {
-		if t.Unlock("perfect_star") {
-			hud.ShowToast("成就解锁: 完美主义")
-		}
+		s.unlockAchievement("perfect_star", "完美主义")
 	}
 
 	// no_leak_hard — Hard difficulty, zero leaks
 	if s.diffID == "hard" && s.session.Stats.Leaked == 0 {
-		if t.Unlock("no_leak_hard") {
-			hud.ShowToast("成就解锁: 零泄漏")
-		}
+		s.unlockAchievement("no_leak_hard", "零泄漏")
 	}
 
 	// speedrun — victory within 10 minutes
 	if s.session.ElapsedTime <= float64(achievement.ThresholdOf("speedrun")) {
-		if t.Unlock("speedrun") {
-			hud.ShowToast("成就解锁: 速通")
-		}
+		s.unlockAchievement("speedrun", "速通")
 	}
 
 	// extreme_master — any Extreme victory
 	if s.diffID == "extreme" {
-		if t.Unlock("extreme_master") {
-			hud.ShowToast("成就解锁: 大师")
-		}
+		s.unlockAchievement("extreme_master", "大师")
 		// extreme_perfect — Extreme + 3 stars
 		if stars == 3 {
-			if t.Unlock("extreme_perfect") {
-				hud.ShowToast("成就解锁: 完美大师")
-			}
+			s.unlockAchievement("extreme_perfect", "完美大师")
 		}
 	}
 }
@@ -892,7 +880,6 @@ func (s *StageScene) debugActions() []hud.DebugAction {
 		hud.DebugAction{Label: "生成 Boss", Action: func() { s.spawnBoss() }},
 	)
 
-	// ── 塔操作 ──
 	// ── 造怪 ──
 	if inSpawn {
 		actions = append(actions,
@@ -940,7 +927,6 @@ func (s *StageScene) debugActions() []hud.DebugAction {
 		hud.DebugAction{Label: rangeLabel, Action: func() { s.debugShowRange = !s.debugShowRange }},
 	)
 
-	// ── 技能 ──
 	// ── 场景快照 ──
 	actions = append(actions,
 		hud.DebugAction{Label: "场景快照", IsSection: true},
@@ -1341,11 +1327,14 @@ func (s *StageScene) saveScenario(name string) {
 // tickStrengthDrain 每帧管理削强敌人→塔的连接、施加/移除减益。
 // 多个削强怪优先连接不同的塔。
 func (s *StageScene) tickStrengthDrain() {
-	// 收集已被占用的塔位
-	occupied := map[[2]int]bool{}
+	// 收集已被占用的塔位 (fixed-size array avoids map allocation)
+	var occupied [20][42]bool
 	s.enemies.Each(func(e *enemy.Enemy) {
 		if e.StrDrainActiveT > 0 && e.StrDrainTargetRC != ([2]int{}) {
-			occupied[e.StrDrainTargetRC] = true
+			r, c := e.StrDrainTargetRC[0], e.StrDrainTargetRC[1]
+			if r >= 0 && r < 20 && c >= 0 && c < 42 {
+				occupied[r][c] = true
+			}
 		}
 	})
 
@@ -1353,7 +1342,7 @@ func (s *StageScene) tickStrengthDrain() {
 		if e.IsDying() || e.StrDrainRatio <= 0 {
 			return
 		}
-		key := fmt.Sprintf("strDrain_%d", e.ID)
+		key := "strDrain_" + strconv.Itoa(e.ID)
 
 		if e.StrDrainActiveT > 0 && e.StrDrainTargetRC == ([2]int{}) {
 			// 刚进入激活状态，找塔建立连接（优先未被占用的）
@@ -1361,8 +1350,8 @@ func (s *StageScene) tickStrengthDrain() {
 			bestDist, fallDist := 9999.0, 9999.0
 			s.towers.Each(func(t *tower.Tower) {
 				d := math.Hypot(t.X-e.X, t.Y-e.Y)
-				rc := [2]int{t.Row, t.Col}
-				if !occupied[rc] {
+				isOccupied := t.Row >= 0 && t.Row < 20 && t.Col >= 0 && t.Col < 42 && occupied[t.Row][t.Col]
+				if !isOccupied {
 					if d < bestDist {
 						bestDist = d
 						bestTower = t
@@ -1378,7 +1367,9 @@ func (s *StageScene) tickStrengthDrain() {
 			}
 			if target != nil {
 				e.StrDrainTargetRC = [2]int{target.Row, target.Col}
-				occupied[e.StrDrainTargetRC] = true
+				if target.Row >= 0 && target.Row < 20 && target.Col >= 0 && target.Col < 42 {
+					occupied[target.Row][target.Col] = true
+				}
 			} else {
 				e.StrDrainActiveT = 0
 				return
@@ -1734,23 +1725,13 @@ func (s *StageScene) updatePlaying() {
 		render.SpawnDamageText(e.X, e.Y-10, dmg, false, e.Boss)
 	})
 
-	// 2.5. 敌人行为 tick（狂暴/回血/传送）
+	// 2.5. 敌人行为 tick（传送；狂暴/回血由 TickBehaviors 统一处理）
 	s.enemies.Each(func(e *enemy.Enemy) {
 		if e.IsDying() || e.IsSpawning() {
 			return
 		}
-		enemy.UpdateBerserk(e)
-		enemy.UpdateRegeneration(e, gameDT)
 		enemy.UpdateTeleport(e, gameDT)
 	})
-	// 群体行为（需要遍历所有敌人的交叉操作）
-	var activeEnemies []*enemy.Enemy
-	s.enemies.Each(func(e *enemy.Enemy) {
-		if e.Active && !e.IsDying() && !e.IsSpawning() {
-			activeEnemies = append(activeEnemies, e)
-		}
-	})
-	// UpdateHealing/UpdateBufferAura 已由 TickBehaviors 统一处理，不再重复调用
 
 	// 3. 敌人移动（到达终点扣生命）
 	s.enemies.Each(func(e *enemy.Enemy) {
@@ -1793,18 +1774,15 @@ func (s *StageScene) updatePlaying() {
 	// 3.6. 敌人行为 tick（治疗/隐身/旗手光环/回血）
 	behaviorEvents := enemy.TickBehaviors(s.enemies, gameDT)
 	for _, heal := range behaviorEvents.Heals {
-		// 被治疗的怪物飘绿色回血数字
-		s.enemies.Each(func(e *enemy.Enemy) {
-			if e.ID == heal.TargetID && e.Active {
-				e.SetFloatText(fmt.Sprintf("+%.0f", heal.Restored), 60, 220, 100)
-			}
-		})
+		// 被治疗的怪物飘绿色回血数字（使用事件中的 Target 指针，避免遍历敌人池）
+		if heal.Target != nil && heal.Target.Active {
+			heal.Target.SetFloatText(fmt.Sprintf("+%.0f", heal.Restored), 60, 220, 100)
+		}
 	}
 	if len(behaviorEvents.Heals) > 0 {
 		s.audioMgr.PlayThrottledAt(gameAudio.SFXMedicHeal, 500, gameAudio.VolHit)
 	}
-	for _, rev := range behaviorEvents.Reveals {
-		_ = rev
+	for range behaviorEvents.Reveals {
 		s.audioMgr.PlaySafeAt(gameAudio.SFXStealthReveal, gameAudio.VolKill)
 	}
 	if behaviorEvents.Regens > 0 {
@@ -1994,7 +1972,7 @@ func (s *StageScene) updatePlaying() {
 	s.beams.Update(gameDT)
 
 	// 8. 弹射物命中检测（含能力触发）
-	kills := pipeline.TickProjectileHits(s.projectiles, s.enemies, s.towers, func(e *enemy.Enemy, damage float64, killed bool, attackStyle string, crit bool) {
+	pipeline.TickProjectileHits(s.projectiles, s.enemies, s.towers, func(e *enemy.Enemy, damage float64, killed bool, attackStyle string, crit bool) {
 		if damage > 0 {
 			render.SpawnDamageText(e.X, e.Y-15, damage, crit, e.Boss)
 			if e.HitFlash < 0.06 && e.Age > 0.1 { // 出生 0.1s 内不闪白
@@ -2039,9 +2017,7 @@ func (s *StageScene) updatePlaying() {
 				s.achieveTracker.SessionMaxStreak = s.multiKillCount
 			}
 			if s.multiKillCount >= achievement.ThresholdOf("killstreak_20") {
-				if s.achieveTracker.Unlock("killstreak_20") {
-					hud.ShowToast("成就解锁: 连杀达人")
-				}
+				s.unlockAchievement("killstreak_20", "连杀达人")
 			}
 			// Multi-kill tier feedback
 			cx := float64(game.ScreenWidth) / 2
@@ -2089,7 +2065,6 @@ func (s *StageScene) updatePlaying() {
 		}
 	}, onCC)
 	// 击杀统计/金币/session/tutorial/warden 由 emitKill → Bus 订阅者统一处理
-	_ = kills
 
 	// 8.5. Bleed drip particles for bleeding enemies
 	s.enemies.Each(func(e *enemy.Enemy) {
@@ -2304,8 +2279,8 @@ func (s *StageScene) drawScene(screen *ebiten.Image) {
 	worldTarget := sceneTarget
 	if useCamera {
 		// worldBuffer 按地图完整尺寸 × draw.Scale 创建（覆盖整个世界）
-		logicalW := s.gameMap.Width() + s.gameMap.OffsetX*2
-		logicalH := s.gameMap.Height() + s.gameMap.OffsetY*2
+		logicalW := s.gameMap.PixelWidth() + s.gameMap.OffsetX*2
+		logicalH := s.gameMap.PixelHeight() + s.gameMap.OffsetY*2
 		// 至少覆盖屏幕大小
 		screenLogW := float64(game.ScreenWidth)
 		screenLogH := float64(game.ScreenHeight)
@@ -2332,7 +2307,7 @@ func (s *StageScene) drawScene(screen *ebiten.Image) {
 	render.DrawMap(worldTarget, s.gameMap, render.GlobalFont(), animTime, func(row, col int) bool {
 		return s.towers.At(row, col) != nil
 	}, inBuildMode)
-	render.DrawParallaxBG(worldTarget, animTime, s.gameMap.Width()+s.gameMap.OffsetX*2, s.gameMap.Height()+s.gameMap.OffsetY*2)
+	render.DrawParallaxBG(worldTarget, animTime, s.gameMap.PixelWidth()+s.gameMap.OffsetX*2, s.gameMap.PixelHeight()+s.gameMap.OffsetY*2)
 
 	// 塔（优先 SVG 渲染，回退到彩色方块）
 	s.towerRenderer.DrawTowers(worldTarget, s.towers, s.selectedTower, animTime)
@@ -2741,7 +2716,7 @@ func (s *StageScene) buildMinimapVM() hud.MinimapVM {
 	return vm
 }
 
-// buildWardenPanelData 根据当前战灵状态和配置构建面板显示数据。
+// buildWavePanelData 根据当前波次和出怪状态构建波次面板显示数据。
 func (s *StageScene) buildWavePanelData() hud.WavePanelData {
 	d := hud.WavePanelData{
 		WaveNum:    s.spawner.Wave,
@@ -2761,6 +2736,7 @@ func (s *StageScene) buildWavePanelData() hud.WavePanelData {
 	return d
 }
 
+// buildWardenPanelData 根据当前战灵状态和配置构建面板显示数据。
 func (s *StageScene) buildWardenPanelData() hud.WardenPanelData {
 	w := s.wardenUnit
 	d := hud.WardenPanelData{
@@ -3078,6 +3054,9 @@ func loadTowerDefsOrFallback() []tower.TowerDef {
 
 // filterUnlockedTowers 过滤只保留已解锁的塔定义。
 func filterUnlockedTowers(defs []tower.TowerDef, pm *persistence.ProgressManager) []tower.TowerDef {
+	if len(defs) == 0 {
+		return nil
+	}
 	result := make([]tower.TowerDef, 0, len(defs))
 	for _, d := range defs {
 		if pm.IsTowerUnlocked(d.Key) {

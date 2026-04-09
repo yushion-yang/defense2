@@ -8,8 +8,8 @@ import (
 	"defense2/internal/core/strength"
 )
 
-// StrengthBuyCost 购买强度的金币花费（从 balance.json 读取）。
-var StrengthBuyCost = config.GlobalBalance().Tower.StrengthBuyCost
+// StrengthBuyCost 返回购买强度的金币花费（从 balance.json 实时读取）。
+func StrengthBuyCost() int { return config.GlobalBalance().Tower.StrengthBuyCost }
 
 // AttackStyle 攻击方式标识。
 type AttackStyle = string

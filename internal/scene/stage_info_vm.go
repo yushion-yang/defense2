@@ -110,7 +110,7 @@ func BuildInfoPanelVM(t *tower.Tower, sellValue int, wavesCleared int, testMode 
 	}
 
 	// Buttons
-	vm.UpgradeButtonText = fmt.Sprintf("强度+10 $%d", tower.StrengthBuyCost)
+	vm.UpgradeButtonText = fmt.Sprintf("强度+10 $%d", tower.StrengthBuyCost())
 	vm.SellButtonText = fmt.Sprintf("卖%d", sellValue)
 
 	return vm

@@ -7,6 +7,7 @@ import (
 	"defense2/internal/core/combat"
 	"defense2/internal/core/enemy"
 	"defense2/internal/core/gamemap"
+	"defense2/internal/render"
 )
 
 // makePipelineEnemy 创建测试用敌人
@@ -45,12 +46,12 @@ func TestDamageType_BypassRules(t *testing.T) {
 }
 
 func TestDamageTypeColor(t *testing.T) {
-	c := combat.DamageTypeColor(combat.DmgPhysical)
+	c := render.DamageTypeColor(combat.DmgPhysical)
 	if c.R != 0xef {
 		t.Errorf("物理伤害颜色R=%d, 期望0xef", c.R)
 	}
 	// 未知类型降级到物理
-	c2 := combat.DamageTypeColor("unknown")
+	c2 := render.DamageTypeColor("unknown")
 	if c2.R != 0xef {
 		t.Errorf("未知类型应降级到物理颜色")
 	}

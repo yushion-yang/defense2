@@ -163,11 +163,11 @@ func TestStrengthNeverNegative(t *testing.T) {
 // ═══════════════════════════════════════
 
 func TestChainConstants(t *testing.T) {
-	if strength.ChainDistance <= 0 {
-		t.Errorf("ChainDistance=%.0f 应 > 0", strength.ChainDistance)
+	if strength.ChainDistance() <= 0 {
+		t.Errorf("ChainDistance=%.0f 应 > 0", strength.ChainDistance())
 	}
-	if strength.ChainStrengthPerTower <= 0 {
-		t.Errorf("ChainStrengthPerTower=%.0f 应 > 0", strength.ChainStrengthPerTower)
+	if strength.ChainStrengthPerTower() <= 0 {
+		t.Errorf("ChainStrengthPerTower=%.0f 应 > 0", strength.ChainStrengthPerTower())
 	}
 }
 
@@ -362,14 +362,14 @@ func TestTickerAbilitiesReturnNonNilResult(t *testing.T) {
 
 func TestMinSpeedRatioConsistency(t *testing.T) {
 	// combat 包和 enemy 包各定义一份，必须一致
-	if combat.MinSpeedRatio != enemy.MinSpeedRatio {
-		t.Errorf("combat.MinSpeedRatio=%.2f != enemy.MinSpeedRatio=%.2f", combat.MinSpeedRatio, enemy.MinSpeedRatio)
+	if combat.MinSpeedRatio() != enemy.MinSpeedRatio() {
+		t.Errorf("combat.MinSpeedRatio=%.2f != enemy.MinSpeedRatio=%.2f", combat.MinSpeedRatio(), enemy.MinSpeedRatio())
 	}
 }
 
 func TestDotTickIntervalPositive(t *testing.T) {
-	if enemy.DotTickInterval <= 0 {
-		t.Errorf("DotTickInterval=%.2f 应 > 0", enemy.DotTickInterval)
+	if enemy.DotTickInterval() <= 0 {
+		t.Errorf("DotTickInterval=%.2f 应 > 0", enemy.DotTickInterval())
 	}
 }
 

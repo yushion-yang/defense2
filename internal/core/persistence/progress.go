@@ -4,6 +4,7 @@ package persistence
 
 import (
 	"fmt"
+	"log"
 	"strings"
 )
 
@@ -350,5 +351,7 @@ func (pm *ProgressManager) unlockNext(mapID string) {
 }
 
 func (pm *ProgressManager) save() {
-	_ = pm.storage.Set(progressKey, pm.progress)
+	if err := pm.storage.Set(progressKey, pm.progress); err != nil {
+		log.Printf("warning: failed to save progress: %v", err)
+	}
 }

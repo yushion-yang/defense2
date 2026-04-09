@@ -28,7 +28,9 @@ type coreBehavior struct{}
 
 func (b *coreBehavior) Type() string { return "core" }
 
-// 注意：以下硬编码值应与 config/wardens/wardens.json 保持一致
+// Init initializes core mech warden behavior.
+// NOTE: Stats are currently hardcoded. See config/wardens/wardens.json for planned externalization.
+// Hardcoded: damage=20, attackInterval=1.2, range=160, moveSpeed=360, aoeRadius=60
 func (b *coreBehavior) Init(w *warden.Warden) interface{} {
 	return &CoreState{
 		WardenState: warden.WardenState{

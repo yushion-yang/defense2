@@ -135,7 +135,7 @@ func TestSlowEffect(t *testing.T) {
 func TestBleedEffect(t *testing.T) {
 	e := &enemy.Enemy{
 		HP: 100, MaxHP: 100, Speed: 100, BaseSpeed: 100, Active: true,
-		BleedTimer: 2.0, BleedDPS: 10,
+		StatusEffects: enemy.StatusEffects{BleedTimer: 2.0, BleedDPS: 10},
 	}
 
 	// DoT damage is now deferred to LastDotDmg (applied by pipeline via ProcessDamage).
