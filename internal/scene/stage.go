@@ -1719,9 +1719,7 @@ func (s *StageScene) updatePlaying() {
 			activeEnemies = append(activeEnemies, e)
 		}
 	})
-	enemy.UpdateHealing(activeEnemies, gameDT)
-	enemy.UpdateBufferAura(activeEnemies, gameDT)
-	// TODO: Boss 行为将通过能力系统装配
+	// UpdateHealing/UpdateBufferAura 已由 TickBehaviors 统一处理，不再重复调用
 
 	// 3. 敌人移动（到达终点扣生命）
 	s.enemies.Each(func(e *enemy.Enemy) {
