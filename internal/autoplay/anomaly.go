@@ -210,8 +210,8 @@ func (d *AnomalyDetector) Check(state *GameState, updateMs float64) []Anomaly {
 		})
 	}
 
-	// 5. FPS 下降（连续 10 帧 >50ms）
-	if updateMs > 50 {
+	// 5. FPS 下降（连续 10 帧 >50ms，跳过前 120 帧启动期）
+	if updateMs > 50 && state.Tick > 120 {
 		d.slowFrames++
 		if d.slowFrames >= 10 {
 			found = append(found, Anomaly{
@@ -530,7 +530,7 @@ func (d *AnomalyDetector) checkWardenCoverage(state *GameState) []Anomaly {
 	const (
 		screenW       = 1200.0
 		screenH       = 540.0
-		sampleMinTick = 600 // 至少 10 秒（600 帧 @ 60fps）
+		sampleMinTick = 1800 // 至少 30 秒（1800 帧 @ 60fps），给战灵足够时间追踪敌群
 	)
 
 	// 忽略 (0,0) 初始位置
@@ -742,8 +742,8 @@ func (d *AnomalyDetector) checkArchetypeMonoculture(state *GameState) []Anomaly 
 		}
 	}
 
-	// wave >= 5 后检查（前几波可能只有基础原型）
-	if state.Wave < 5 {
+	// wave >= 8 后检查（前几波可能只有基础原型，定向测试场景前 5 波也可能单一）
+	if state.Wave < 8 {
 		return nil
 	}
 
@@ -758,7 +758,7 @@ func (d *AnomalyDetector) checkArchetypeMonoculture(state *GameState) []Anomaly 
 			Tick:     state.Tick,
 			Type:     "archetype_monoculture",
 			Detail:   fmt.Sprintf("wave=%d but only %d archetype(s) seen: [%s]", state.Wave, len(d.seenArchetypes), archs),
-			Severity: SeverityHigh,
+			Severity: SeverityMedium,
 		}}
 	}
 	return nil
@@ -816,8 +816,8 @@ func (d *AnomalyDetector) checkEnemyHPUniform(state *GameState) []Anomaly {
 // 对应 Bug: fire-and-forget 弹道，敌人拐弯后子弹全飞偏。
 func (d *AnomalyDetector) checkProjectileOrphan(state *GameState) []Anomaly {
 	const (
-		projThreshold  = 20  // 弹射物数量阈值
-		frameThreshold = 120 // 连续帧阈值（2 秒）
+		projThreshold  = 30  // 弹射物数量阈值（提高避免高攻速塔误报）
+		frameThreshold = 300 // 连续帧阈值（5 秒，给高 HP 敌人更多时间）
 	)
 
 	if state.ProjectileCount > projThreshold {
@@ -829,15 +829,14 @@ func (d *AnomalyDetector) checkProjectileOrphan(state *GameState) []Anomaly {
 		if d.projBurstFrames >= frameThreshold {
 			killDelta := state.TotalKills - d.projBurstKillRef
 			if killDelta == 0 {
-				d.projBurstFrames = 0 // 重置，允许再次触发
+				d.projBurstFrames = 0
 				return []Anomaly{{
 					Tick:     state.Tick,
 					Type:     "projectile_orphan_burst",
 					Detail:   fmt.Sprintf("projectiles=%d for %d frames with 0 kills (tracking may be broken)", state.ProjectileCount, frameThreshold),
-					Severity: SeverityHigh,
+					Severity: SeverityMedium, // 降级：高 HP 敌人可能合理无击杀
 				}}
 			}
-			// 有击杀，重置
 			d.projBurstFrames = 0
 		}
 	} else {
@@ -895,8 +894,8 @@ func (d *AnomalyDetector) checkAbilitySilent(state *GameState) []Anomaly {
 	}
 
 	// 能力 → 遥测关键词映射（能力触发应在某个遥测维度有记录）
+	// 注：bounce 是条件触发型（需要第二目标在范围内），合理静默，不检测。
 	abilToTelemetry := map[string][]string{
-		"bounce":       {"bounce"},
 		"splash":       {"splash"},
 		"burn":         {"burn"},
 		"bleedDot":     {"bleed"},

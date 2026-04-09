@@ -98,7 +98,11 @@ func (s *WardenState) ApplyStrength(w *Warden) {
 // ── 移动 ────────────────────────────────────────
 
 // smoothSpeed 平滑追踪速度（像素/秒）。越大追踪越快。
-const smoothSpeed = 200.0
+// 600px/s 确保战灵在 2400px 宽地图上 ~4 秒内跟上敌群。
+const smoothSpeed = 600.0
+
+// smoothSnapDist 超过此距离时直接跳到目标中心（防止长距离追踪延迟）。
+const smoothSnapDist = 800.0
 
 func (s *WardenState) mapW() float64 {
 	if s.MapWidth > 0 {
@@ -125,13 +129,19 @@ func (s *WardenState) MoveOrbit(cx, cy, idealDist, dt float64) {
 		dx := cx - s.smoothCX
 		dy := cy - s.smoothCY
 		dist := math.Hypot(dx, dy)
-		maxMove := smoothSpeed * dt
-		if dist > maxMove {
-			s.smoothCX += (dx / dist) * maxMove
-			s.smoothCY += (dy / dist) * maxMove
-		} else {
+		if dist > smoothSnapDist {
+			// 距离过大直接跳到目标（跨屏切换场景）
 			s.smoothCX = cx
 			s.smoothCY = cy
+		} else {
+			maxMove := smoothSpeed * dt
+			if dist > maxMove {
+				s.smoothCX += (dx / dist) * maxMove
+				s.smoothCY += (dy / dist) * maxMove
+			} else {
+				s.smoothCX = cx
+				s.smoothCY = cy
+			}
 		}
 	}
 	scx, scy := s.smoothCX, s.smoothCY

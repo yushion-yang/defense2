@@ -137,7 +137,7 @@ func TestAnomalyDetector_WardenRangeLimited(t *testing.T) {
 	d := NewAnomalyDetector()
 
 	// 模拟：地图宽 2400（两屏），但战灵只在 X=200~500 活动
-	for tick := 1; tick <= 700; tick++ {
+	for tick := 1; tick <= 2000; tick++ {
 		x := 200.0 + float64(tick%300) // 200~500 之间
 		state := &GameState{
 			Tick: tick, Gold: 100, Lives: 20,
@@ -149,8 +149,8 @@ func TestAnomalyDetector_WardenRangeLimited(t *testing.T) {
 		}
 		anomalies := d.Check(state, 10)
 
-		// 第 600 帧之后应检测到
-		if tick > 600 {
+		// 第 1800 帧之后应检测到
+		if tick > 1800 {
 			for _, a := range anomalies {
 				if a.Type == "warden_range_limited_x" {
 					return // 检测成功

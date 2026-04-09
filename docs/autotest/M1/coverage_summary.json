@@ -1,0 +1,116 @@
+{
+  "total_sessions": 68,
+  "victories": 64,
+  "defeats": 4,
+  "timeouts": 0,
+  "coverage_gaps": {
+    "abilities": [
+      "chargeShot",
+      "deathMark",
+      "distanceDamage",
+      "executionBonus",
+      "multiTarget",
+      "percentHpDamage",
+      "percentHpMinor",
+      "splash",
+      "stackDamage",
+      "onHitSlow",
+      "stun",
+      "soloBoost",
+      "goldPassive"
+    ],
+    "archetypes": [
+      "dummy"
+    ],
+    "attack_styles": [
+      "radial"
+    ],
+    "buff_stack_modes": [
+      "strongest",
+      "additive",
+      "multiplicative",
+      "override",
+      "independent",
+      "independentPerSource"
+    ],
+    "buff_types": [
+      "slow",
+      "stun",
+      "knockup",
+      "root",
+      "silence",
+      "disarm",
+      "speedUp",
+      "damageUp",
+      "damageDown",
+      "fireRateUp",
+      "invincible",
+      "damageImmune",
+      "controlImmune",
+      "slowImmune",
+      "stunImmune",
+      "rootImmune",
+      "untargetable",
+      "dot",
+      "tenacity"
+    ],
+    "cc_types": [
+      "root"
+    ],
+    "damage_types": [
+      "true",
+      "pure"
+    ],
+    "enemy_templates": [
+      "empBurst",
+      "blink",
+      "deathSplit",
+      "deathSlow",
+      "reflect",
+      "timewarp",
+      "revive",
+      "spawnMinions"
+    ],
+    "interaction_modes": [
+      "buildMenu",
+      "buildPlace",
+      "towerSel",
+      "spawnMenu",
+      "spawnPlace",
+      "paused",
+      "wardenSelect"
+    ],
+    "pipeline_steps": null,
+    "towers": null
+  },
+  "anomaly_summary": {
+    "build_silent_fail": 56,
+    "economy_stall": 46,
+    "warden_origin_stuck": 1,
+    "warden_range_limited_x": 57,
+    "warden_range_limited_y": 45,
+    "wave_hp_regression": 7
+  },
+  "tower_usage": {
+    "basic": 55
+  },
+  "archetypes_seen": {
+    "armored": 66,
+    "buffer": 60,
+    "colossus": 58,
+    "drainer": 26,
+    "healer": 62,
+    "ironwill": 63,
+    "normal": 68,
+    "phantom": 64,
+    "phaser": 58,
+    "purifier": 28,
+    "runner": 67,
+    "shielder": 66,
+    "splitter": 60,
+    "steadfast": 64,
+    "summoner": 32,
+    "swarm": 67,
+    "tank": 68
+  }
+}
