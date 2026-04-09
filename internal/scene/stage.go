@@ -1681,7 +1681,7 @@ func (s *StageScene) updatePlaying() {
 		s.audioMgr.PlayThrottledAt(gameAudio.SFXRegenTick, 2000, gameAudio.VolHit*0.5)
 	}
 	// 削强能力：每帧管理敌人→塔连接
-	s.tickStrengthDrain()
+	// 削强在 TickTowerAbilities 之后执行（避免被 ClearTransient 清掉）
 
 	// 4. 战灵行为（未选择前跳过）
 	if s.wardenReady && s.wardenUnit != nil {
@@ -1745,6 +1745,9 @@ func (s *StageScene) updatePlaying() {
 	abilityGold := pipeline.TickTowerAbilities(s.towers, s.enemies, gameDT, chainActive)
 	s.gold += abilityGold
 	s.gameStats.GoldEarned += abilityGold
+
+	// 6.1 削强：必须在 TickTowerAbilities（ClearTransient）之后，确保 EnemySub 不被清掉
+	s.tickStrengthDrain()
 
 	// 6.6. 收集光源（优先级：路径端点 > Boss > 战灵 > 塔）
 	s.postPipeline.Lighting.Clear()
