@@ -51,6 +51,7 @@ type EnemySnapshot struct {
 	PathIndex int     `json:"pathIndex"`       // 当前路径点索引
 	HP        float64 `json:"hp,omitempty"`    // 当前 HP（0=使用原型默认满血）
 	MaxHP     float64 `json:"maxHP,omitempty"` // 最大 HP（0=使用原型默认）
+	IsDummy   bool    `json:"isDummy,omitempty"` // 是否为木桩怪（不移动）
 }
 
 // ParseScenarioData parses a single scenario JSON.

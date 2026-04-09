@@ -1324,6 +1324,7 @@ func (s *StageScene) saveScenario(name string) {
 			PathIndex: e.PathIndex,
 			HP:        e.HP,
 			MaxHP:     e.MaxHP,
+			IsDummy:   e.IsDummy,
 		})
 	})
 
@@ -1435,6 +1436,10 @@ func (s *StageScene) restoreScenario(sd *config.ScenarioData) {
 		}
 		// Assign path from map
 		e.Path = s.gameMap.PickPath()
+		// 木桩怪标记
+		if snap.IsDummy {
+			e.IsDummy = true
+		}
 	}
 }
 

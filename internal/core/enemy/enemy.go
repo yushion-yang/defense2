@@ -55,6 +55,7 @@ type Enemy struct {
 	Active       bool            // 是否存活（对象池复用标记）
 	Archetype    string          // 敌人原型标识（如 "normal"、"runner"、"tank"）
 	Boss         bool            // 是否为 Boss
+	IsDummy      bool            // 是否为木桩怪（不移动）
 	Reward       int             // 击杀奖励金币
 	RewardScale  float64         // 原型奖励倍率（如 tank=1.35, runner=0.72）
 	StunTimer    float64         // 眩晕剩余时间（秒），>0 时无法移动
