@@ -2288,8 +2288,8 @@ func (s *StageScene) drawScene(screen *ebiten.Image) {
 	worldTarget := sceneTarget
 	if useCamera {
 		// worldBuffer 按地图完整尺寸 × draw.Scale 创建（覆盖整个世界）
-		logicalW := s.gameMap.Width() + s.gameMap.OffsetX*2
-		logicalH := s.gameMap.Height() + s.gameMap.OffsetY*2
+		logicalW := s.gameMap.PixelWidth() + s.gameMap.OffsetX*2
+		logicalH := s.gameMap.PixelHeight() + s.gameMap.OffsetY*2
 		// 至少覆盖屏幕大小
 		screenLogW := float64(game.ScreenWidth)
 		screenLogH := float64(game.ScreenHeight)
@@ -2316,7 +2316,7 @@ func (s *StageScene) drawScene(screen *ebiten.Image) {
 	render.DrawMap(worldTarget, s.gameMap, render.GlobalFont(), animTime, func(row, col int) bool {
 		return s.towers.At(row, col) != nil
 	}, inBuildMode)
-	render.DrawParallaxBG(worldTarget, animTime, s.gameMap.Width()+s.gameMap.OffsetX*2, s.gameMap.Height()+s.gameMap.OffsetY*2)
+	render.DrawParallaxBG(worldTarget, animTime, s.gameMap.PixelWidth()+s.gameMap.OffsetX*2, s.gameMap.PixelHeight()+s.gameMap.OffsetY*2)
 
 	// 塔（优先 SVG 渲染，回退到彩色方块）
 	s.towerRenderer.DrawTowers(worldTarget, s.towers, s.selectedTower, animTime)

@@ -62,7 +62,11 @@ type SkystrikeBehavior struct{}
 
 func (b *SkystrikeBehavior) Type() string { return "skystrike" }
 
-// 注意：以下硬编码值应与 config/wardens/wardens.json 保持一致
+// Init initializes skystrike warden behavior.
+// NOTE: Stats are currently hardcoded. See config/wardens/wardens.json for planned externalization.
+// Hardcoded: damage=10, attackInterval=1.5, range=140, moveSpeed=320,
+//            specialInterval=1, multiTargets=3, multiDmgRatio=2.0,
+//            burstHits=5, burstDmgRatio=1.0, hpTargets=3, hpPercent=0.10
 func (b *SkystrikeBehavior) Init(w *warden.Warden) interface{} {
 	return &SkystrikeState{
 		WardenState: warden.WardenState{

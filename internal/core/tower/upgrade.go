@@ -13,18 +13,18 @@ import (
 // MaxAbilitySlots 最大能力槽位数（6 大类别各一个）。
 const MaxAbilitySlots = config.AbilityCatCount
 
-// WavesPerUnlock 每隔多少波解锁 1 个能力位（从 balance.json 读取）。
-var WavesPerUnlock = config.GlobalBalance().Tower.WavesPerUnlock
+// WavesPerUnlock 返回每隔多少波解锁 1 个能力位（从 balance.json 实时读取）。
+func WavesPerUnlock() int { return config.GlobalBalance().Tower.WavesPerUnlock }
 
-// ChoicesPerUnlock 每次解锁提供的候选能力数（从 balance.json 读取）。
-var ChoicesPerUnlock = config.GlobalBalance().Tower.ChoicesPerUnlock
+// ChoicesPerUnlock 返回每次解锁提供的候选能力数（从 balance.json 实时读取）。
+func ChoicesPerUnlock() int { return config.GlobalBalance().Tower.ChoicesPerUnlock }
 
 // ── 能力位解锁 ──
 
 // UnlockedSlots 根据已完成的波次数计算已解锁的能力位数。
 // 第一个槽位（攻击模式）建塔时立即解锁，后续每 WavesPerUnlock 波再解锁一个。
 func UnlockedSlots(wavesCleared int) int {
-	n := 1 + wavesCleared/WavesPerUnlock
+	n := 1 + wavesCleared/WavesPerUnlock()
 	if n > MaxAbilitySlots {
 		n = MaxAbilitySlots
 	}
@@ -69,7 +69,7 @@ func RollAndCachePendingChoices(t *Tower, wavesCleared int) {
 		if _, exists := t.PendingChoices[cat]; exists {
 			continue // 已缓存
 		}
-		choices := rollChoicesForCategory(cat, ChoicesPerUnlock)
+		choices := rollChoicesForCategory(cat, ChoicesPerUnlock())
 		if len(choices) > 0 {
 			t.PendingChoices[cat] = choices
 		}

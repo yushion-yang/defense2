@@ -225,11 +225,11 @@ func (e *Enemy) SetFloatText(text string, r, g, b uint8) {
 	e.FloatTextB = b
 }
 
-// MinSpeedRatio 全局减速下限（向后兼容导出变量，实际值从 balance.json 读取）。
-var MinSpeedRatio = config.GlobalBalance().Combat.MinSpeedRatio
+// MinSpeedRatio 返回全局减速下限（从 balance.json 实时读取，不再冻结于 init 时刻）。
+func MinSpeedRatio() float64 { return config.GlobalBalance().Combat.MinSpeedRatio }
 
-// DotTickInterval DoT 伤害触发周期（向后兼容导出变量，实际值从 balance.json 读取）。
-var DotTickInterval = config.GlobalBalance().Combat.DotTickInterval
+// DotTickInterval 返回 DoT 伤害触发周期（从 balance.json 实时读取，不再冻结于 init 时刻）。
+func DotTickInterval() float64 { return config.GlobalBalance().Combat.DotTickInterval }
 
 // TickStatusEffects 处理敌人身上的状态效果（减速、流血）。
 // 眩晕在 movement.go 中处理。

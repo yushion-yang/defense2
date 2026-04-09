@@ -8,8 +8,8 @@ import (
 	tel "defense2/internal/core/telemetry"
 )
 
-// MinSpeedRatio 全局减速下限（向后兼容导出变量，实际值从 balance.json 读取）。
-var MinSpeedRatio = config.GlobalBalance().Combat.MinSpeedRatio
+// MinSpeedRatio 返回全局减速下限（从 balance.json 实时读取，不再冻结于 init 时刻）。
+func MinSpeedRatio() float64 { return config.GlobalBalance().Combat.MinSpeedRatio }
 
 // ApplyStun 对敌人施加眩晕效果。
 // 检查免疫状态，应用韧性减免后设置眩晕计时器。
