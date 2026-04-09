@@ -190,15 +190,24 @@ func multiTargetCount(t *tower.Tower) int {
 }
 
 // TickEnemyStatusEffects 敌人状态效果子管线：处理所有敌人的减速/流血，击杀血量归零的敌人。
+// DoT 伤害通过 ProcessDamage 管线结算（走虚弱/坚韧/免疫/减伤等完整流程）。
 func TickEnemyStatusEffects(enemies *enemy.Pool, dt float64, onDotDmg func(e *enemy.Enemy, dmg float64)) {
 	enemies.Each(func(e *enemy.Enemy) {
 		if e.IsDying() {
 			return
 		}
 		enemy.TickStatusEffects(e, dt)
-		// DoT tick 触发时弹浮字
-		if e.LastDotDmg > 0 && onDotDmg != nil {
-			onDotDmg(e, e.LastDotDmg)
+		// DoT tick 触发时走伤害管线
+		if e.LastDotDmg > 0 {
+			result := combat.ProcessDamage(combat.DamageInput{
+				Target:      e,
+				RawDamage:   e.LastDotDmg,
+				DamageType:  combat.DmgMagic, // DoT 为魔法伤害（受虚弱/坚韧影响，不穿无敌）
+				SourceLabel: "dot",
+			})
+			if onDotDmg != nil && result.FinalDamage > 0 {
+				onDotDmg(e, result.FinalDamage)
+			}
 			e.LastDotDmg = 0
 		}
 		if e.HP <= 0 && e.Active {
