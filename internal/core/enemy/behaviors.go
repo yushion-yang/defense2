@@ -156,7 +156,7 @@ func TickBehaviors(pool *Pool, dt float64) BehaviorEvents {
 
 // tickHealer 治疗兵行为：周期性治疗范围内友军。
 func tickHealer(e *Enemy, pool *Pool, dt float64, events *BehaviorEvents) {
-	if e.HealPower <= 0 {
+	if e.HealPower <= 0 || e.AbilitySilenced {
 		return
 	}
 
@@ -208,7 +208,7 @@ func tickStealth(e *Enemy, dt float64, events *BehaviorEvents) {
 
 // tickBuffer 旗手行为：每帧对范围内友军施加移速加成。
 func tickBuffer(e *Enemy, pool *Pool) {
-	if e.BuffRadius <= 0 {
+	if e.BuffRadius <= 0 || e.AbilitySilenced {
 		return
 	}
 	r2 := e.BuffRadius * e.BuffRadius
