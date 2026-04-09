@@ -1455,15 +1455,31 @@ func (s *StageScene) drawEnemyAbilityVFX(screen *ebiten.Image) {
 
 		// 受击冲刺：速度拖尾线
 		if e.DashActiveT > 0 {
-			// 从敌人身后画 3 条速度线
+			// 计算行进方向（从当前位置到目标路径点）
+			dirX, dirY := -1.0, 0.0
+			if e.PathIndex < len(e.Path) {
+				target := e.Path[e.PathIndex]
+				dx := target.X - e.X
+				dy := target.Y - e.Y
+				dist := math.Hypot(dx, dy)
+				if dist > 0.1 {
+					dirX = dx / dist
+					dirY = dy / dist
+				}
+			}
+			// 速度线朝行进反方向拖尾
 			for i := 0; i < 3; i++ {
-				offset := float32(6 + i*5)
 				alpha := uint8(160 - i*50)
 				length := float32(12 + i*4)
-				// 速度线朝行进反方向
-				draw.ThickLine(screen, ex, ey+float32(i*3)-3, ex-length, ey+float32(i*3)-3, 1.5,
+				// 尾端 = 敌人位置 - 行进方向 × 长度，加垂直偏移分散
+				perpX := -dirY * float64(i*3-3) // 垂直于行进方向的偏移
+				perpY := dirX * float64(i*3-3)
+				tailX := ex + float32(perpX) - float32(dirX)*length
+				tailY := ey + float32(perpY) - float32(dirY)*length
+				headX := ex + float32(perpX)
+				headY := ey + float32(perpY)
+				draw.ThickLine(screen, headX, headY, tailX, tailY, 1.5,
 					color.RGBA{R: 255, G: 200, B: 80, A: alpha})
-				_ = offset
 			}
 		}
 
