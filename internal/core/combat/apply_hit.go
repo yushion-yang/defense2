@@ -47,12 +47,11 @@ func ApplyHit(input HitInput, onHit HitCallback) HitOutput {
 		}
 	}
 
-	// ── 弹幕盾：吸收弹射链/穿透弹（bounce/radial/scatter 零伤害+停止传播）──
-	hasShield := e.ProjectileBlockChance > 0 && !e.AbilitySilenced
-	if hasShield {
+	// 弹幕盾标记（正常受伤，末尾标记阻止弹射物继续传播）
+	shieldBlocked := false
+	if e.ProjectileBlockChance > 0 && !e.AbilitySilenced {
 		if input.Style == "bounce" || input.Style == "radial" || input.Style == "scatter" {
-			e.BlockFlash = 0.25
-			return HitOutput{ProjectileBlocked: true}
+			shieldBlocked = true
 		}
 	}
 
@@ -150,11 +149,17 @@ func ApplyHit(input HitInput, onHit HitCallback) HitOutput {
 		}
 	}
 
+	// 弹幕盾：正常受伤后标记阻止传播 + 触发视觉
+	if shieldBlocked {
+		e.BlockFlash = 0.25
+	}
+
 	return HitOutput{
-		TotalDamage: finalDmg,
-		IsCrit:      isCrit,
-		Killed:      killed,
-		ExtraKills:  extraKills,
+		TotalDamage:       finalDmg,
+		IsCrit:            isCrit,
+		Killed:            killed,
+		ExtraKills:        extraKills,
+		ProjectileBlocked: shieldBlocked,
 	}
 }
 
