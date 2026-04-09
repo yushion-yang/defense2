@@ -122,12 +122,7 @@ func (er *EnemyRenderer) DrawEnemies(screen *ebiten.Image, pool *enemy.Pool, ani
 				color.RGBA{R: 245, G: 158, B: 11, A: auraAlpha}) // amber/gold
 		}
 
-		// --- Healer aura ring (drawn UNDER body) ---
-		if e.Behavior == "healer" && e.HealRadius > 0 {
-			healAlpha := uint8(clampF(30+15*math.Sin(animTime*2.5), 15, 55))
-			draw.CircleOutline(screen, cx, cy, float32(e.HealRadius)*0.5, 1,
-				color.RGBA{R: 52, G: 211, B: 153, A: healAlpha}) // green
-		}
+		// (旧 healer aura ring 已移到能力 VFX 系统)
 
 		// --- Enemy body (animated or static) ---
 		img := er.getEnemyFrame(e, 1.0/60.0)
