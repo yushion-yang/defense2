@@ -82,44 +82,23 @@ func TickTowerCombat(towers *tower.Pool, enemies *enemy.Pool, projectiles *proje
 // HitCallback 弹射物命中回调（用于生成飘字、音效等）。
 type HitCallback = combat.HitCallback
 
-// scatterHit 散射弹命中记录（同组同敌人合并）。
-type scatterHit struct {
-	enemy    *enemy.Enemy
-	towerKey string
-	count    int     // 命中弹丸数
-	damage   float64 // 单颗伤害
-}
-
 // TickProjectileHits 弹射物碰撞子管线：检测碰撞 → 触发能力 → 扣血 → 击杀。
 // 返回本帧击杀数。onHit 可为 nil。
 //
 // 碰撞规则（塔防模型）：
 //   - 追踪弹（Target != nil）：只和锁定目标碰撞，穿过其他敌人
-//   - 穿透弹（Penetrate=true）：对路径上所有敌人碰撞，命中后继续飞行
-//   - 散射弹（ScatterGroup>0）：路径碰撞，同组命中同敌人合并为一次伤害
-//   - 散射视觉弹（ScatterVisual）：不参与碰撞（旧版兼容）
+//   - 穿透弹（Penetrate=true, 含散射/环射）：对路径上所有敌人碰撞，命中后继续飞行
 func TickProjectileHits(projectiles *projectile.Pool, enemies *enemy.Pool, towers *tower.Pool, onHit HitCallback, onCC combat.CCCallback) int {
 	kills := 0
 
-	// 散射命中收集（key = groupID<<32|enemyID）
-	scatterHits := map[int64]*scatterHit{}
-
 	projectiles.Each(func(p *projectile.Projectile) {
-		// 散射视觉弹不参与碰撞检测（旧版兼容）
-		if p.ScatterVisual {
-			return
-		}
-
 		enemies.Each(func(e *enemy.Enemy) {
-			if !p.Active {
-				return
-			}
-			if e.IsDying() {
+			if !p.Active || e.IsDying() {
 				return
 			}
 
-			// 追踪弹只和锁定目标碰撞（穿透弹和散射弹除外）
-			if p.Target != nil && !p.Penetrate && p.ScatterGroup == 0 && e != p.Target {
+			// 追踪弹只和锁定目标碰撞（穿透弹除外）
+			if p.Target != nil && !p.Penetrate && e != p.Target {
 				return
 			}
 
@@ -130,8 +109,8 @@ func TickProjectileHits(projectiles *projectile.Pool, enemies *enemy.Pool, tower
 				return
 			}
 
-			// 穿透弹/散射弹：跳过已命中的敌人
-			if p.Penetrate || p.ScatterGroup > 0 {
+			// 穿透弹：跳过已命中的敌人
+			if p.Penetrate {
 				for _, hitID := range p.PenHitIDs {
 					if hitID == e.ID {
 						return
@@ -139,32 +118,7 @@ func TickProjectileHits(projectiles *projectile.Pool, enemies *enemy.Pool, tower
 				}
 			}
 
-			// ── 散射弹（穿透）：记录命中，延迟合并处理 ──
-			if p.ScatterGroup > 0 {
-				shielded := e.ProjectileBlockChance > 0 && !e.AbilitySilenced
-				p.PenHitIDs = append(p.PenHitIDs, e.ID)
-
-				key := int64(p.ScatterGroup)<<32 | int64(e.ID)
-				if sh, ok := scatterHits[key]; ok {
-					sh.count++
-				} else {
-					scatterHits[key] = &scatterHit{
-						enemy:    e,
-						towerKey: p.SourceTowerKey,
-						count:    1,
-						damage:   p.Damage,
-					}
-				}
-				// 弹幕盾：记录命中（正常受伤）但释放弹丸（停止飞行）
-				if shielded {
-					e.BlockFlash = 0.25
-					projectiles.Release(p)
-				}
-				// 无盾：弹丸继续飞行穿透后续敌人，到 MaxRange 自然消亡
-				return
-			}
-
-			// ── 普通弹/追踪弹/穿透弹：统一命中处理 ──
+			// ── 统一命中处理 ──
 			var srcTower *tower.Tower
 			if p.SourceTowerKey != "" {
 				towers.Each(func(t *tower.Tower) {
@@ -198,33 +152,6 @@ func TickProjectileHits(projectiles *projectile.Pool, enemies *enemy.Pool, tower
 			}
 		})
 	})
-
-	// ── 散射命中合并处理 ──
-	for _, sh := range scatterHits {
-		e := sh.enemy
-		if !e.Active || e.IsDying() {
-			continue
-		}
-		mergedDamage := sh.damage * float64(sh.count)
-
-		var srcTower *tower.Tower
-		if sh.towerKey != "" {
-			towers.Each(func(t *tower.Tower) {
-				if srcTower == nil && t.InstanceKey == sh.towerKey {
-					srcTower = t
-				}
-			})
-		}
-
-		out := combat.ApplyHit(combat.HitInput{
-			Tower: srcTower, Target: e, BaseDamage: mergedDamage, Style: "scatter",
-			Enemies: enemies, Projectiles: projectiles, OnCC: onCC,
-		}, onHit)
-
-		if out.Killed {
-			kills += 1 + out.ExtraKills
-		}
-	}
 
 	return kills
 }
