@@ -1514,12 +1514,23 @@ func (s *StageScene) drawEnemyAbilityVFX(screen *ebiten.Image) {
 
 		// 治疗光环范围圈（绿色虚线圈）
 		if e.HealPower > 0 && e.HealRadius > 0 && !e.IsDying() {
-			alpha := uint8(40 + 20*math.Sin(animTime*2))
-			draw.CircleOutline(screen, ex, ey, float32(e.HealRadius), 1, color.RGBA{R: 60, G: 220, B: 100, A: alpha})
-			// 治疗冷却快到时脉冲更亮
-			if e.HealCooldown < 0.5 {
-				pulseAlpha := uint8(100 * (1 - e.HealCooldown/0.5))
-				draw.CircleOutline(screen, ex, ey, float32(e.HealRadius)*0.5, 1, color.RGBA{R: 80, G: 255, B: 120, A: pulseAlpha})
+			hr := float32(e.HealRadius)
+			// 范围圈（呼吸 alpha）
+			alpha := uint8(30 + 15*math.Sin(animTime*2))
+			draw.CircleOutline(screen, ex, ey, hr, 1, color.RGBA{R: 60, G: 220, B: 100, A: alpha})
+			// 旋转治疗光点（3 个绿色圆点绕圈）
+			for i := 0; i < 3; i++ {
+				angle := animTime*1.5 + float64(i)*2.094 // 120度间隔
+				px := ex + float32(math.Cos(angle))*hr*0.7
+				py := ey + float32(math.Sin(angle))*hr*0.7
+				draw.FilledCircle(screen, px, py, 2, color.RGBA{R: 80, G: 255, B: 120, A: 120})
+			}
+			// 治疗触发时：向外扩散的脉冲环
+			if e.HealCooldown > e.HealInterval-0.3 {
+				progress := (e.HealInterval - e.HealCooldown) / 0.3
+				pulseR := float32(e.Radius) + float32(progress)*hr
+				pulseAlpha := uint8(180 * (1 - progress))
+				draw.CircleOutline(screen, ex, ey, pulseR, 2, color.RGBA{R: 60, G: 255, B: 100, A: pulseAlpha})
 			}
 		}
 
@@ -1740,6 +1751,14 @@ func (s *StageScene) updatePlaying() {
 
 	// 3.6. 敌人行为 tick（治疗/隐身/旗手光环/回血）
 	behaviorEvents := enemy.TickBehaviors(s.enemies, gameDT)
+	for _, heal := range behaviorEvents.Heals {
+		// 被治疗的怪物飘绿色回血数字
+		s.enemies.Each(func(e *enemy.Enemy) {
+			if e.ID == heal.TargetID && e.Active {
+				e.SetFloatText(fmt.Sprintf("+%.0f", heal.Restored), 60, 220, 100)
+			}
+		})
+	}
 	if len(behaviorEvents.Heals) > 0 {
 		s.audioMgr.PlayThrottledAt(gameAudio.SFXMedicHeal, 500, gameAudio.VolHit)
 	}
