@@ -37,6 +37,7 @@ import (
 	"defense2/internal/core/pipeline"
 	"defense2/internal/core/projectile"
 	tel "defense2/internal/core/telemetry"
+	"defense2/internal/core/timescale"
 	"defense2/internal/core/tower"
 	"defense2/internal/core/tutorial"
 	"defense2/internal/core/warden"
@@ -97,6 +98,7 @@ type StageScene struct {
 	dragHoverTower    *tower.Tower    // 拖拽道具时悬停的目标塔
 	itemPanelOpen     bool            // 道具面板是否打开
 	gameSpeed         int             // 游戏速度倍率（1 或 2）
+	timeScale         *timescale.Controller // 慢动作时间缩放控制器
 	imode             interactMode    // 交互状态机
 	prePauseMode      interactMode    // 暂停前的交互模式（恢复用）
 	buildHoverIdx     int             // 建塔面板鼠标悬停索引
@@ -276,6 +278,7 @@ func NewStageSceneWithOpts(sw Switcher, opts StageOptions) *StageScene {
 		wardenType:      opts.WardenType,
 		wardenCfg:       wardenCfg,
 		gameSpeed:       1,
+		timeScale:       timescale.New(),
 		gesture:         newStageGesture(),
 		wavePanelOpen:   true,
 		wardenPanelOpen: false,
@@ -1256,8 +1259,8 @@ func (s *StageScene) saveScenario(name string) {
 	// Capture enemies
 	var enemies []config.EnemySnapshot
 	s.enemies.Each(func(e *enemy.Enemy) {
-		if e.DyingTimer > 0 {
-			return // skip dying enemies
+		if e.DyingTimer > 0 || e.SpawnTimer > 0 {
+			return // skip dying/spawning enemies
 		}
 		enemies = append(enemies, config.EnemySnapshot{
 			Archetype: e.Archetype,
@@ -1653,7 +1656,7 @@ func (s *StageScene) updatePlaying() {
 		return
 	}
 	// 游戏速度倍率
-	gameDT := dt * float64(s.gameSpeed)
+	gameDT := dt * float64(s.gameSpeed) * s.timeScale.Update(dt)
 
 	// Screen effects update (hit-stop freezes game logic for this frame).
 	if s.postPipeline.Effects.Update(gameDT) {
@@ -1690,6 +1693,12 @@ func (s *StageScene) updatePlaying() {
 
 	// 1. 生成敌人
 	s.spawner.Update(s.enemies, gameDT)
+	// Emit spawn burst particles for newly spawned enemies
+	s.enemies.Each(func(e *enemy.Enemy) {
+		if e.IsSpawning() && e.SpawnTimer >= e.SpawnDuration-gameDT*1.5 {
+			particle.EmitSpawnBurst(s.particlePool, e.X, e.Y)
+		}
+	})
 	if s.spawner.Wave > prevWave {
 		s.onWaveTransition(prevWave)
 	}
@@ -1705,7 +1714,7 @@ func (s *StageScene) updatePlaying() {
 
 	// 2.5. 敌人行为 tick（狂暴/回血/传送）
 	s.enemies.Each(func(e *enemy.Enemy) {
-		if e.IsDying() {
+		if e.IsDying() || e.IsSpawning() {
 			return
 		}
 		enemy.UpdateBerserk(e)
@@ -1715,7 +1724,7 @@ func (s *StageScene) updatePlaying() {
 	// 群体行为（需要遍历所有敌人的交叉操作）
 	var activeEnemies []*enemy.Enemy
 	s.enemies.Each(func(e *enemy.Enemy) {
-		if e.Active && !e.IsDying() {
+		if e.Active && !e.IsDying() && !e.IsSpawning() {
 			activeEnemies = append(activeEnemies, e)
 		}
 	})
@@ -1723,8 +1732,8 @@ func (s *StageScene) updatePlaying() {
 
 	// 3. 敌人移动（到达终点扣生命）
 	s.enemies.Each(func(e *enemy.Enemy) {
-		if e.IsDying() {
-			return // dying enemies don't move
+		if e.IsDying() || e.IsSpawning() {
+			return // dying/spawning enemies don't move
 		}
 		if enemy.MoveAlongPath(e, s.gameMap.Waypoints, gameDT) {
 			s.lives--
@@ -1739,7 +1748,17 @@ func (s *StageScene) updatePlaying() {
 		}
 	})
 
-	// 3.5. Tick dying enemies (shrink+fade animation countdown)
+	// 3.5. Tick spawn animation countdown
+	s.enemies.Each(func(e *enemy.Enemy) {
+		if e.SpawnTimer > 0 {
+			e.SpawnTimer -= gameDT
+			if e.SpawnTimer < 0 {
+				e.SpawnTimer = 0
+			}
+		}
+	})
+
+	// 3.6. Tick dying enemies (shrink+fade animation countdown)
 	s.enemies.Each(func(e *enemy.Enemy) {
 		if e.IsDying() {
 			e.DyingTimer -= gameDT
@@ -2082,6 +2101,7 @@ func (s *StageScene) updatePlaying() {
 			s.audioMgr.StopBGM()
 			s.audioMgr.PlaySafeAt(gameAudio.SFXDefeat, gameAudio.VolWave)
 			s.progressMgr.RecordGameResult(s.modeID, s.gameMap.Config.ID, s.kills, false)
+			s.postPipeline.Effects.SetDesaturation(0.8, 1.5, 0.8, 0.2, 0.2)
 		}
 		// 清除覆盖层状态，防止 ChoicePanel/暂停菜单遮挡结算画面
 		s.imode = modeIdle

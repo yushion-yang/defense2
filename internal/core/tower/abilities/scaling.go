@@ -141,7 +141,7 @@ func (a *PeriodicCast) OnTick(t *tower.Tower, ctx *tower.TickContext) *tower.Tic
 	case 0:
 		// stunAoe：范围眩晕（走 CC 系统）
 		ctx.Enemies.Each(func(e *enemy.Enemy) {
-			if e.IsDying() {
+			if e.IsDying() || e.IsSpawning() {
 				return
 			}
 			if distToEnemy(t, e) <= periodicCastRadius {
@@ -151,7 +151,7 @@ func (a *PeriodicCast) OnTick(t *tower.Tower, ctx *tower.TickContext) *tower.Tic
 	case 1:
 		// damageAoe：范围伤害（走伤害管线）
 		ctx.Enemies.Each(func(e *enemy.Enemy) {
-			if e.IsDying() {
+			if e.IsDying() || e.IsSpawning() {
 				return
 			}
 			if distToEnemy(t, e) <= periodicCastRadius {
@@ -276,7 +276,7 @@ func (a *ElementSwitch) OnTick(t *tower.Tower, ctx *tower.TickContext) *tower.Ti
 	case "poison":
 		// 毒元素：范围内敌人每秒 2 点伤害（走伤害管线）
 		ctx.Enemies.Each(func(e *enemy.Enemy) {
-			if e.IsDying() {
+			if e.IsDying() || e.IsSpawning() {
 				return
 			}
 			if distToEnemy(t, e) <= t.Range {

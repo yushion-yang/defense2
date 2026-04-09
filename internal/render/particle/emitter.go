@@ -143,6 +143,30 @@ func EmitBleedDrip(pool *Pool, x, y, radius float64) {
 	})
 }
 
+// EmitSpawnBurst emits a brief burst of white/cyan particles at spawn point.
+func EmitSpawnBurst(pool *Pool, x, y float64) {
+	if pool == nil {
+		return
+	}
+	count := 6 + rand.Intn(3) // 6-8 particles
+	for i := 0; i < count; i++ {
+		angle := rand.Float64() * 2 * math.Pi
+		speed := 20 + rand.Float64()*30
+		g := uint8(200 + rand.Intn(56))
+		b := uint8(220 + rand.Intn(36))
+		pool.Spawn(ParticleConfig{
+			X: x, Y: y,
+			Speed: speed, SpeedVar: 5,
+			Angle: angle, AngleVar: 0.2,
+			Life: 0.4 + rand.Float64()*0.2, LifeVar: 0.05,
+			Size: 2, SizeEnd: 0.5,
+			Color:    color.RGBA{R: 230, G: g, B: b, A: 200},
+			EndAlpha: 0,
+			Gravity:  -30, // mostly upward drift
+		})
+	}
+}
+
 // EmitElectricSparks spawns fast electric spark particles in random directions.
 func EmitElectricSparks(pool *Pool, x, y float64, count int) {
 	for i := 0; i < count; i++ {

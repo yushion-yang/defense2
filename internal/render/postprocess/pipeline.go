@@ -43,6 +43,7 @@ type Pipeline struct {
 	uRadialBlur map[string]any
 	uLighting   map[string]any
 	uRipple     map[string]any
+	uDesat      map[string]any
 
 	// Pre-allocated shader options (avoids per-frame heap allocation).
 	opBloomExt  ebiten.DrawRectShaderOptions
@@ -54,6 +55,7 @@ type Pipeline struct {
 	opRadialBl  ebiten.DrawRectShaderOptions
 	opLighting  ebiten.DrawRectShaderOptions
 	opRipple    ebiten.DrawRectShaderOptions
+	opDesat     ebiten.DrawRectShaderOptions
 }
 
 // NewPipeline creates a pipeline with default bloom settings.
@@ -84,6 +86,9 @@ func NewPipeline() *Pipeline {
 		"Ripple2X": float32(0), "Ripple2Y": float32(0), "Ripple2T": float32(0), "Ripple2A": float32(0),
 		"Ripple3X": float32(0), "Ripple3Y": float32(0), "Ripple3T": float32(0), "Ripple3A": float32(0),
 		"ScreenW": float32(0), "ScreenH": float32(0),
+	}
+	p.uDesat = map[string]any{
+		"Strength": float32(0), "TintR": float32(0), "TintG": float32(0), "TintB": float32(0),
 	}
 	p.uLighting = map[string]any{
 		"Ambient": float32(0), "LightCount": float32(0),
@@ -158,9 +163,10 @@ func (p *Pipeline) Apply(dst *ebiten.Image) {
 	needColorGrade := fx != nil && (fx.HitFlash.Active || fx.DayNightA > 0)
 	needRadialBlur := fx != nil && fx.RadialBlur.Active && qs.PostProcessing
 	needRipple := fx != nil && qs.PostProcessing && hasActiveRipples(fx)
+	needDesat := fx != nil && fx.DesatStrength > 0.01
 
 	// If no bloom and no effects, fast blit.
-	if !p.BloomEnabled && !needLighting && !needVignette && !needColorGrade && !needRadialBlur && !needRipple {
+	if !p.BloomEnabled && !needLighting && !needVignette && !needColorGrade && !needRadialBlur && !needRipple && !needDesat {
 		dst.DrawImage(p.sceneBuffer, nil)
 		return
 	}
@@ -206,7 +212,7 @@ func (p *Pipeline) Apply(dst *ebiten.Image) {
 		p.uBloomComb["Intensity"] = float32(p.BloomIntensity)
 		p.opBloomComb.Uniforms = p.uBloomComb
 		p.opBloomComb.Images = [4]*ebiten.Image{p.sceneBuffer, p.bloomUpscaled}
-		if needLighting || needVignette || needColorGrade || needRadialBlur || needRipple {
+		if needLighting || needVignette || needColorGrade || needRadialBlur || needRipple || needDesat {
 			// Bloom combine into fxPingPong for further chaining.
 			p.fxPingPong.Clear()
 			p.fxPingPong.DrawRectShader(p.sceneW, p.sceneH, shaderBloomCombine, &p.opBloomComb)
@@ -237,6 +243,9 @@ func (p *Pipeline) Apply(dst *ebiten.Image) {
 		remaining++
 	}
 	if needRipple {
+		remaining++
+	}
+	if needDesat {
 		remaining++
 	}
 
@@ -321,6 +330,19 @@ func (p *Pipeline) Apply(dst *ebiten.Image) {
 		p.opColorGr.Uniforms = p.uColorGrade
 		p.opColorGr.Images = [4]*ebiten.Image{fxSrc}
 		target.DrawRectShader(p.sceneW, p.sceneH, shaderColorGrade, &p.opColorGr)
+		fxSrc = target
+	}
+
+	// Desaturation (pause/defeat grayscale + tint).
+	if needDesat {
+		p.uDesat["Strength"] = float32(fx.DesatStrength)
+		p.uDesat["TintR"] = float32(fx.DesatTintR)
+		p.uDesat["TintG"] = float32(fx.DesatTintG)
+		p.uDesat["TintB"] = float32(fx.DesatTintB)
+		target := fxTarget()
+		p.opDesat.Uniforms = p.uDesat
+		p.opDesat.Images = [4]*ebiten.Image{fxSrc}
+		target.DrawRectShader(p.sceneW, p.sceneH, shaderDesaturate, &p.opDesat)
 		fxSrc = target
 	}
 

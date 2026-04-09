@@ -64,7 +64,7 @@ type SysEnemyMove struct{}
 
 func (SysEnemyMove) Tick(ctx *TickCtx) bool {
 	ctx.Enemies.Each(func(e *enemy.Enemy) {
-		if e.IsDying() {
+		if e.IsDying() || e.IsSpawning() {
 			return
 		}
 		if enemy.MoveAlongPath(e, ctx.GameMap.Waypoints, ctx.DT) {
@@ -72,6 +72,21 @@ func (SysEnemyMove) Tick(ctx *TickCtx) bool {
 			ctx.Enemies.KillImmediate(e)
 			if ctx.CB.OnEnemyLeak != nil {
 				ctx.CB.OnEnemyLeak(e)
+			}
+		}
+	})
+	return false
+}
+
+// SysSpawnAnim tick 出生动画倒计时。
+type SysSpawnAnim struct{}
+
+func (SysSpawnAnim) Tick(ctx *TickCtx) bool {
+	ctx.Enemies.Each(func(e *enemy.Enemy) {
+		if e.SpawnTimer > 0 {
+			e.SpawnTimer -= ctx.DT
+			if e.SpawnTimer < 0 {
+				e.SpawnTimer = 0
 			}
 		}
 	})

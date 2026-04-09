@@ -93,7 +93,7 @@ func TickProjectileHits(projectiles *projectile.Pool, enemies *enemy.Pool, tower
 
 	projectiles.Each(func(p *projectile.Projectile) {
 		enemies.Each(func(e *enemy.Enemy) {
-			if !p.Active || e.IsDying() {
+			if !p.Active || e.IsDying() || e.IsSpawning() {
 				return
 			}
 
@@ -192,7 +192,7 @@ func multiTargetCount(t *tower.Tower) int {
 // TickEnemyStatusEffects 敌人状态效果子管线：处理所有敌人的减速/流血，击杀血量归零的敌人。
 func TickEnemyStatusEffects(enemies *enemy.Pool, dt float64, onDotDmg func(e *enemy.Enemy, dmg float64)) {
 	enemies.Each(func(e *enemy.Enemy) {
-		if e.IsDying() {
+		if e.IsDying() || e.IsSpawning() {
 			return
 		}
 		enemy.TickStatusEffects(e, dt)

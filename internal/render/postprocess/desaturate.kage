@@ -1,0 +1,21 @@
+//kage:unit pixels
+
+package main
+
+var Strength float
+var TintR float
+var TintG float
+var TintB float
+
+func Fragment(dst vec4, src vec2, color vec4) vec4 {
+	c := imageSrc0At(src)
+	if c.a == 0 {
+		return c
+	}
+	lum := dot(c.rgb, vec3(0.299, 0.587, 0.114))
+	gray := vec3(lum, lum, lum)
+	mixed := mix(c.rgb, gray, Strength)
+	tint := vec3(TintR, TintG, TintB)
+	mixed = mix(mixed, tint, Strength*0.15)
+	return vec4(mixed, c.a)
+}

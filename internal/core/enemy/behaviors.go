@@ -42,7 +42,7 @@ func TickBehaviors(pool *Pool, dt float64) BehaviorEvents {
 
 	// Phase 2: 执行各行为
 	pool.Each(func(e *Enemy) {
-		if e.IsDying() {
+		if e.IsDying() || e.IsSpawning() {
 			return
 		}
 
@@ -170,7 +170,7 @@ func tickHealer(e *Enemy, pool *Pool, dt float64, events *BehaviorEvents) {
 
 	r2 := e.HealRadius * e.HealRadius
 	pool.Each(func(other *Enemy) {
-		if !other.Active || other.IsDying() {
+		if !other.Active || other.IsDying() || other.IsSpawning() {
 			return
 		}
 		if other.HP >= other.MaxHP {
@@ -215,7 +215,7 @@ func tickBuffer(e *Enemy, pool *Pool) {
 	}
 	r2 := e.BuffRadius * e.BuffRadius
 	pool.Each(func(other *Enemy) {
-		if other == e || !other.Active || other.IsDying() {
+		if other == e || !other.Active || other.IsDying() || other.IsSpawning() {
 			return
 		}
 		dx := other.X - e.X
@@ -432,12 +432,12 @@ func UpdateTeleport(e *Enemy, dt float64) bool {
 func UpdateBufferAura(enemies []*Enemy, dt float64) {
 	// 先收集所有光环源
 	for _, buffer := range enemies {
-		if buffer.AuraRange <= 0 || !buffer.Active || buffer.IsDying() {
+		if buffer.AuraRange <= 0 || !buffer.Active || buffer.IsDying() || buffer.IsSpawning() {
 			continue
 		}
 		radiusSq := buffer.AuraRange * buffer.AuraRange
 		for _, target := range enemies {
-			if !target.Active || target.IsDying() || target.ID == buffer.ID {
+			if !target.Active || target.IsDying() || target.IsSpawning() || target.ID == buffer.ID {
 				continue
 			}
 			dx := target.X - buffer.X

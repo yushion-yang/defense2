@@ -192,6 +192,9 @@ func (b *Builder) Build() *Sim {
 		}
 		e := s.Enemies.Spawn(x, y, spec.hp, spec.speed, 1, spec.archetype, spec.cfg)
 		if e != nil {
+			// Clear spawn animation for test-spawned enemies so they are
+			// immediately targetable and damageable in regression tests.
+			e.SpawnTimer = 0
 			s.SpawnedEnemies = append(s.SpawnedEnemies, e)
 		}
 	}

@@ -124,6 +124,22 @@ func (er *EnemyRenderer) DrawEnemies(screen *ebiten.Image, pool *enemy.Pool, ani
 
 		// (旧 healer aura ring 已移到能力 VFX 系统)
 
+		// --- Spawn animation modifiers ---
+		var spawnScale float64 = 1.0
+		var spawnAlpha float64 = 1.0
+		if e.IsSpawning() && e.SpawnDuration > 0 {
+			progress := 1.0 - e.SpawnTimer/e.SpawnDuration // 0 at start -> 1 at end
+			// Scale: overshoot from 0 to 1.15 then settle to 1.0
+			if progress < 0.7 {
+				spawnScale = progress / 0.7 * 1.15
+			} else {
+				t := (progress - 0.7) / 0.3
+				spawnScale = 1.15 - 0.15*t
+			}
+			// Alpha: ease in (easeInQuad)
+			spawnAlpha = progress * progress
+		}
+
 		// --- Enemy body (animated or static) ---
 		img := er.getEnemyFrame(e, 1.0/60.0)
 		if img != nil {
@@ -140,6 +156,8 @@ func (er *EnemyRenderer) DrawEnemies(screen *ebiten.Image, pool *enemy.Pool, ani
 			if e.Boss {
 				displaySize *= 1.0 + 0.04*math.Sin(animTime*1.8)
 			}
+			// Apply spawn scale
+			displaySize *= spawnScale
 
 			// 计算 alpha（隐身/相位）
 			bodyAlpha := 1.0
@@ -148,7 +166,10 @@ func (er *EnemyRenderer) DrawEnemies(screen *ebiten.Image, pool *enemy.Pool, ani
 			} else if e.PhaseActive {
 				bodyAlpha = 0.35
 			}
-			if bodyAlpha < 1.0 {
+			// Apply spawn alpha
+			bodyAlpha *= spawnAlpha
+
+			if bodyAlpha < 1.0 || spawnScale != 1.0 {
 				logicalScale := displaySize / float64(img.Bounds().Dx())
 				draw.SpriteScaledRotatedAlpha(screen, img, float64(cx), float64(cy)+wobbleY,
 					logicalScale, wobbleRot, bodyAlpha)
@@ -165,7 +186,9 @@ func (er *EnemyRenderer) DrawEnemies(screen *ebiten.Image, pool *enemy.Pool, ani
 			} else if e.PhaseActive {
 				bodyColor.A = 90
 			}
-			draw.FilledCircle(screen, cx, cy, r, bodyColor)
+			// Apply spawn alpha to fallback circle
+			bodyColor.A = uint8(float64(bodyColor.A) * spawnAlpha)
+			draw.FilledCircle(screen, cx, cy, r*float32(spawnScale), bodyColor)
 		}
 
 		// --- Status effect body overlays (subtle, sprite-sized) ---

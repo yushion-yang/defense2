@@ -84,6 +84,10 @@ type Enemy struct {
 	AnimTimer float64 // 帧计时器
 	AnimDone  bool    // 非循环动画是否播完
 
+	// ── 出生动画 ──
+	SpawnTimer    float64 // >0 means spawning animation in progress (seconds remaining)
+	SpawnDuration float64 // total spawn animation time (for progress calc)
+
 	// ── 死亡动画 ──
 	DyingTimer    float64 // >0 means dying animation in progress (seconds remaining)
 	DyingDuration float64 // total dying time (for progress calculation)
@@ -201,6 +205,11 @@ type Enemy struct {
 	FloatTextG     uint8
 	FloatTextB     uint8
 }
+
+// IsSpawning returns true if the enemy is playing its spawn-in animation.
+// Spawning enemies are Active and visible but should be skipped by targeting
+// and combat systems (invulnerable during materialisation).
+func (e *Enemy) IsSpawning() bool { return e.SpawnTimer > 0 }
 
 // IsDying returns true if the enemy is playing its death animation.
 // Dying enemies are still Active (for rendering) but should be skipped by

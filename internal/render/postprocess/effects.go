@@ -46,6 +46,14 @@ type Effects struct {
 
 	// HitStop: freeze frames (game logic pauses, rendering continues).
 	HitStopFrames int
+
+	// Desaturation: animated grayscale + tint (pause/defeat).
+	DesatStrength float64 // current desaturation (0=normal, 1=full grayscale)
+	DesatTarget   float64 // animation target
+	DesatSpeed    float64 // units per second toward target
+	DesatTintR    float64 // tint color when desaturated
+	DesatTintG    float64
+	DesatTintB    float64
 }
 
 // NewEffects creates an Effects instance with sensible defaults.
@@ -85,6 +93,15 @@ func (fx *Effects) TriggerHitStop(frames int) {
 	if frames > fx.HitStopFrames {
 		fx.HitStopFrames = frames
 	}
+}
+
+// SetDesaturation sets the desaturation animation target and speed.
+func (fx *Effects) SetDesaturation(target, speed, r, g, b float64) {
+	fx.DesatTarget = target
+	fx.DesatSpeed = speed
+	fx.DesatTintR = r
+	fx.DesatTintG = g
+	fx.DesatTintB = b
 }
 
 // Ripple represents a single active ripple distortion.
@@ -144,6 +161,21 @@ func (fx *Effects) Update(dt float64) bool {
 			fx.Ripples[i].Time += dt
 			if fx.Ripples[i].Time > 1.0 {
 				fx.Ripples[i].Amplitude = 0
+			}
+		}
+	}
+
+	// Desaturation lerp toward target.
+	if fx.DesatStrength != fx.DesatTarget {
+		if fx.DesatStrength < fx.DesatTarget {
+			fx.DesatStrength += fx.DesatSpeed * dt
+			if fx.DesatStrength > fx.DesatTarget {
+				fx.DesatStrength = fx.DesatTarget
+			}
+		} else {
+			fx.DesatStrength -= fx.DesatSpeed * dt
+			if fx.DesatStrength < fx.DesatTarget {
+				fx.DesatStrength = fx.DesatTarget
 			}
 		}
 	}
