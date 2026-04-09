@@ -1059,8 +1059,8 @@ var (
 	ttCyan   = color.RGBA{R: 80, G: 220, B: 220, A: 255}
 )
 
-// drawEnemyTooltip 绘制敌人属性浮窗（测试模式悬浮检测）。
-func (s *StageScene) drawEnemyTooltip(screen *ebiten.Image, e *enemy.Enemy) {
+// drawEnemyInfoPanel 绘制敌人信息面板（左下角固定位置，测试模式专用）。
+func (s *StageScene) drawEnemyInfoPanel(screen *ebiten.Image, e *enemy.Enemy) {
 	fm := render.GlobalFont()
 	if fm == nil {
 		return
@@ -1168,29 +1168,24 @@ func (s *StageScene) drawEnemyTooltip(screen *ebiten.Image, e *enemy.Enemy) {
 		lines = append(lines, L(ttGray, "  控制免疫: %.1f秒", e.ControlImmuneTimer))
 	}
 
-	// ── 绘制 ──
-	mx, my := draw.CursorPos()
+	// ── 绘制（左下角固定位置）──
 	const (
 		fontSize = 10.0
 		lineH    = 13.0
 		padX     = 8.0
 		padY     = 5.0
-		offsetX  = 18.0
-		offsetY  = 8.0
+		margin   = 10.0
 	)
 	boxW := float32(340)
 	boxH := float32(float64(len(lines))*lineH + padY*2)
-	bx := float32(mx + offsetX)
-	by := float32(my + offsetY)
-
-	// Clamp to screen
-	sw := float32(game.ScreenWidth)
 	sh := float32(game.ScreenHeight)
-	if bx+boxW > sw {
-		bx = float32(mx) - boxW - 4
-	}
-	if by+boxH > sh {
-		by = sh - boxH - 4
+	// 左下角，底部留 margin
+	bx := float32(margin)
+	by := sh - boxH - float32(margin)
+	// 防止超出屏幕顶部
+	if by < float32(margin) {
+		by = float32(margin)
+		boxH = sh - float32(margin)*2
 	}
 	if by < 0 {
 		by = 4
@@ -2362,8 +2357,10 @@ func (s *StageScene) drawScene(screen *ebiten.Image) {
 		hud.DrawWardenPanel(screen, s.buildWardenPanelData())
 	}
 
-	// 左下角：抽屉式波次面板（含 tab handle）
-	hud.DrawWavePanel(screen, s.buildWavePanelData(), &s.wavePanelState)
+	// 左下角：测试模式显示敌人信息，正常模式显示波次面板
+	if !s.testMode {
+		hud.DrawWavePanel(screen, s.buildWavePanelData(), &s.wavePanelState)
+	}
 
 	// 右下角收起按钮（战灵，选择后才显示）
 	if s.wardenReady && s.wardenUnit != nil && s.wardenUnit.Active {
@@ -2381,9 +2378,9 @@ func (s *StageScene) drawScene(screen *ebiten.Image) {
 		})
 	}
 
-	// 测试模式：敌人属性浮窗
+	// 测试模式：左下角敌人信息面板（替代波次面板）
 	if s.testMode && s.hoveredEnemy != nil {
-		s.drawEnemyTooltip(screen, s.hoveredEnemy)
+		s.drawEnemyInfoPanel(screen, s.hoveredEnemy)
 	}
 
 	// 调试面板（测试模式）

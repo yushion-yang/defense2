@@ -252,9 +252,9 @@ func (s *StageScene) handleInput() {
 		s.buildHoverIdx = -1
 	}
 
-	// 测试模式：检测鼠标下的敌人
+	// 测试模式：始终跟踪距离鼠标最近的敌人
 	if s.testMode {
-		s.hoveredEnemy = s.enemyAtPixel(float64(fmx), float64(fmy))
+		s.hoveredEnemy = s.nearestEnemy(float64(fmx), float64(fmy))
 	}
 
 	// 道具面板：检测按下开始拖拽（不等松开）
@@ -779,6 +779,23 @@ func (s *StageScene) openTestCategoryAbilities(t *tower.Tower, cat int) {
 }
 
 // enemyAtPixel 返回像素位置上最近的敌人（碰撞半径内），无则返回 nil。
+// nearestEnemy 返回距离像素位置最近的活跃敌人（无距离限制）。
+func (s *StageScene) nearestEnemy(px, py float64) *enemy.Enemy {
+	var best *enemy.Enemy
+	bestDist := math.MaxFloat64
+	s.enemies.Each(func(e *enemy.Enemy) {
+		if e.IsDying() {
+			return
+		}
+		d := math.Hypot(e.X-px, e.Y-py)
+		if d < bestDist {
+			bestDist = d
+			best = e
+		}
+	})
+	return best
+}
+
 func (s *StageScene) enemyAtPixel(px, py float64) *enemy.Enemy {
 	var best *enemy.Enemy
 	bestDist := 20.0 // 最大拾取半径
