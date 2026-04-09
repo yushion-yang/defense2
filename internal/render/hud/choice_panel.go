@@ -113,6 +113,7 @@ func (p *ChoicePanel) Show(title string, options []ChoiceOption, onSelect func(i
 	p.Options = options
 	p.OnSelect = onSelect
 	p.Active = true
+	p.Dismissible = true
 	p.hovered = -1
 }
 
