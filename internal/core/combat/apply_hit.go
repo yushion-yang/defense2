@@ -47,8 +47,16 @@ func ApplyHit(input HitInput, onHit HitCallback) HitOutput {
 		}
 	}
 
-	// 弹幕盾标记（稍后用于阻止弹射物继续传播，但不阻止本次伤害）
+	// ── 弹幕盾：完全吸收弹射物类攻击（伤害归零 + 阻止传播）──
 	hasShield := e.ProjectileBlockChance > 0 && !e.AbilitySilenced
+	if hasShield {
+		isProjectile := input.Style == "projectile" || input.Style == "scatter" ||
+			input.Style == "bounce" || input.Style == "radial"
+		if isProjectile {
+			e.BlockFlash = 0.25
+			return HitOutput{ProjectileBlocked: true}
+		}
+	}
 
 	totalDmg := input.BaseDamage
 	isCrit := false
@@ -142,19 +150,11 @@ func ApplyHit(input HitInput, onHit HitCallback) HitOutput {
 		input.Enemies.Kill(input.Target)
 	}
 
-	// 弹幕盾：触发视觉 + 标记阻止传播
-	blocked := false
-	if hasShield && !killed {
-		e.BlockFlash = 0.25
-		blocked = true
-	}
-
 	return HitOutput{
-		TotalDamage:       finalDmg,
-		IsCrit:            isCrit,
-		Killed:            killed,
-		ExtraKills:        extraKills,
-		ProjectileBlocked: blocked,
+		TotalDamage: finalDmg,
+		IsCrit:      isCrit,
+		Killed:      killed,
+		ExtraKills:  extraKills,
 	}
 }
 
