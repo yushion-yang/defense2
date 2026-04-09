@@ -182,8 +182,11 @@ func TickProjectileHits(projectiles *projectile.Pool, enemies *enemy.Pool, tower
 			}
 
 			if p.Penetrate {
-				// 穿透弹：记录已命中，继续直线飞行（不追踪，不衰减）
 				p.PenHitIDs = append(p.PenHitIDs, e.ID)
+				// 弹幕盾：阻止穿透弹继续飞行
+				if e.ProjectileBlockChance > 0 && !e.AbilitySilenced {
+					projectiles.Release(p)
+				}
 			} else {
 				projectiles.Release(p)
 			}

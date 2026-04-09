@@ -27,10 +27,11 @@ type HitInput struct {
 
 // HitOutput 命中结果。
 type HitOutput struct {
-	TotalDamage float64
-	IsCrit      bool
-	Killed      bool
-	ExtraKills  int // deathMark 等额外击杀
+	TotalDamage       float64
+	IsCrit            bool
+	Killed            bool
+	ExtraKills        int  // deathMark 等额外击杀
+	ProjectileBlocked bool // 弹幕盾：阻止弹射物继续传播（弹射/穿透停止）
 }
 
 // ApplyHit 统一命中处理：遍历能力 → 计算最终伤害 → 扣血 → 击杀检查。
@@ -46,15 +47,8 @@ func ApplyHit(input HitInput, onHit HitCallback) HitOutput {
 		}
 	}
 
-	// ── 弹幕盾（阻挡弹射物类攻击）──
-	if e.ProjectileBlockChance > 0 && !e.AbilitySilenced {
-		isProjectile := input.Style == "projectile" || input.Style == "scatter" ||
-			input.Style == "bounce" || input.Style == "radial" || input.Style == "splash"
-		if isProjectile && rand.Float64() < e.ProjectileBlockChance {
-			e.BlockFlash = 0.25 // 触发格挡视觉
-			return HitOutput{}
-		}
-	}
+	// 弹幕盾标记（稍后用于阻止弹射物继续传播，但不阻止本次伤害）
+	hasShield := e.ProjectileBlockChance > 0 && !e.AbilitySilenced
 
 	totalDmg := input.BaseDamage
 	isCrit := false
@@ -148,11 +142,19 @@ func ApplyHit(input HitInput, onHit HitCallback) HitOutput {
 		input.Enemies.Kill(input.Target)
 	}
 
+	// 弹幕盾：触发视觉 + 标记阻止传播
+	blocked := false
+	if hasShield && !killed {
+		e.BlockFlash = 0.25
+		blocked = true
+	}
+
 	return HitOutput{
-		TotalDamage: finalDmg,
-		IsCrit:      isCrit,
-		Killed:      killed,
-		ExtraKills:  extraKills,
+		TotalDamage:       finalDmg,
+		IsCrit:            isCrit,
+		Killed:            killed,
+		ExtraKills:        extraKills,
+		ProjectileBlocked: blocked,
 	}
 }
 
@@ -217,7 +219,8 @@ func applyHitEffectsUnified(r *tower.HitResult, target *enemy.Enemy, p *projecti
 			}
 		})
 	}
-	if r.Bounce != nil && p.BounceCount < r.Bounce.MaxBounces && projectiles != nil {
+	// 弹幕盾阻止弹射继续链接
+	if r.Bounce != nil && p.BounceCount < r.Bounce.MaxBounces && projectiles != nil && !(target.ProjectileBlockChance > 0 && !target.AbilitySilenced) {
 		hitIDs := append([]int{}, p.BounceHitIDs...)
 		hitIDs = append(hitIDs, target.ID)
 
