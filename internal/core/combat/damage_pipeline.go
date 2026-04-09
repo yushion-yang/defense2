@@ -80,12 +80,14 @@ func ProcessDamage(input DamageInput) DamageResult {
 		if e.IsUntargetable {
 			result.Blocked = true
 			result.BlockedReason = "untargetable"
+			e.SetFloatText("免伤", 160, 80, 255)
 			tel.T.Record("pipeline", "immunity_block_untargetable")
 			return result
 		}
 		if e.IsInvincible {
 			result.Blocked = true
 			result.BlockedReason = "invincible"
+			e.SetFloatText("免伤", 160, 80, 255)
 			tel.T.Record("pipeline", "immunity_block_invincible")
 			return result
 		}
