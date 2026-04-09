@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 14" width="32" height="14">
+  <!-- 盾牌下部：收窄锥尖 -->
+  <path d="M2 0 L30 0 L26 6 Q22 12 16 14 Q10 12 6 6 L2 0 Z"
+        fill="#4a7ab5" stroke="#2a4a75" stroke-width="1.5"/>
+  <!-- 底部纹饰弧线 -->
+  <path d="M8 3 Q16 10 24 3" fill="none" stroke="#7ab5e8" stroke-width="0.8" opacity="0.5"/>
+  <!-- 底部尖端铆钉 -->
+  <circle cx="16" cy="9" r="1.5" fill="#c0a040" stroke="#8a7030" stroke-width="0.4"/>
+</svg>

@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 14" width="32" height="14">
+  <!-- 盾牌中部：主体面板 + 十字纹章 -->
+  <rect x="2" y="0" width="28" height="14" fill="#4a7ab5" stroke="#2a4a75" stroke-width="1.5"/>
+  <!-- 十字纹章 -->
+  <rect x="14" y="1" width="4" height="12" rx="1" fill="#c0a040" opacity="0.8"/>
+  <rect x="8" y="5" width="16" height="4" rx="1" fill="#c0a040" opacity="0.8"/>
+  <!-- 左右铆钉 -->
+  <circle cx="5" cy="7" r="1.5" fill="#c0a040" stroke="#8a7030" stroke-width="0.4"/>
+  <circle cx="27" cy="7" r="1.5" fill="#c0a040" stroke="#8a7030" stroke-width="0.4"/>
+  <!-- 金属质感条纹 -->
+  <line x1="2" y1="0" x2="30" y2="0" stroke="#7ab5e8" stroke-width="0.5" opacity="0.3"/>
+  <line x1="2" y1="14" x2="30" y2="14" stroke="#1a3a55" stroke-width="0.5" opacity="0.5"/>
+</svg>

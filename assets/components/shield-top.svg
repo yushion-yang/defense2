@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 12" width="32" height="12">
+  <!-- 盾牌上部：圆弧顶 + 装饰铆钉 -->
+  <path d="M2 12 L2 6 Q2 1 8 0 L16 0 L24 0 Q30 1 30 6 L30 12"
+        fill="#4a7ab5" stroke="#2a4a75" stroke-width="1.5"/>
+  <!-- 顶部高光 -->
+  <path d="M6 4 Q16 0 26 4" fill="none" stroke="#7ab5e8" stroke-width="1" opacity="0.6"/>
+  <!-- 中央铆钉 -->
+  <circle cx="16" cy="5" r="2" fill="#c0a040" stroke="#8a7030" stroke-width="0.5"/>
+</svg>
