@@ -1448,8 +1448,9 @@ func (s *StageScene) tickStrengthDrain() {
 	})
 }
 
-// drawStrengthDrainLinks 绘制削强连接线。
+// drawStrengthDrainLinks 绘制削强连接线 + 流动粒子（塔→怪物方向，表示被吸取）。
 func (s *StageScene) drawStrengthDrainLinks(screen *ebiten.Image) {
+	animTime := float64(s.frame) / 60.0
 	s.enemies.Each(func(e *enemy.Enemy) {
 		if e.IsDying() || e.StrDrainActiveT <= 0 {
 			return
@@ -1458,10 +1459,26 @@ func (s *StageScene) drawStrengthDrainLinks(screen *ebiten.Image) {
 		if t == nil || !t.Active {
 			return
 		}
-		// 脉冲紫色连接线
-		alpha := uint8(120 + 60*math.Sin(e.Age*4))
-		clr := color.RGBA{R: 180, G: 60, B: 220, A: alpha}
-		draw.ThickLine(screen, float32(e.X), float32(e.Y), float32(t.X), float32(t.Y), 2, clr)
+		tx, ty := float32(t.X), float32(t.Y)
+		ex, ey := float32(e.X), float32(e.Y)
+
+		// 底层连接线（半透明）
+		draw.ThickLine(screen, ex, ey, tx, ty, 1.5, color.RGBA{R: 140, G: 40, B: 180, A: 60})
+
+		// 流动粒子：从塔→怪物方向，3 个粒子均匀分布沿线移动
+		const particleCount = 3
+		speed := 1.2 // 粒子移动速度
+		for i := 0; i < particleCount; i++ {
+			// 每个粒子偏移不同相位
+			phase := math.Mod(animTime*speed+float64(i)/particleCount, 1.0)
+			// phase 0=塔位置, 1=怪物位置
+			px := float32(float64(tx) + float64(ex-tx)*phase)
+			py := float32(float64(ty) + float64(ey-ty)*phase)
+			// 粒子大小和亮度随位置变化（靠近怪物时更亮更大）
+			size := float32(2 + phase*2)
+			alpha := uint8(100 + phase*155)
+			draw.FilledCircle(screen, px, py, size, color.RGBA{R: 200, G: 80, B: 255, A: alpha})
+		}
 	})
 }
 
