@@ -1376,6 +1376,75 @@ func (s *StageScene) saveScenario(name string) {
 }
 
 // restoreScenario places towers from a saved scenario snapshot.
+// tickStrengthDrain 每帧管理削强敌人→塔的连接、施加/移除减益。
+func (s *StageScene) tickStrengthDrain() {
+	s.enemies.Each(func(e *enemy.Enemy) {
+		if e.IsDying() || e.StrDrainRatio <= 0 {
+			return
+		}
+		key := fmt.Sprintf("strDrain_%d", e.ID)
+
+		if e.StrDrainActiveT > 0 && e.StrDrainTargetRC == ([2]int{}) {
+			// 刚进入激活状态，需要找最近的塔建立连接
+			var bestTower *tower.Tower
+			bestDist := 999.0
+			s.towers.Each(func(t *tower.Tower) {
+				d := math.Hypot(t.X-e.X, t.Y-e.Y)
+				if d < bestDist {
+					bestDist = d
+					bestTower = t
+				}
+			})
+			if bestTower != nil {
+				e.StrDrainTargetRC = [2]int{bestTower.Row, bestTower.Col}
+			} else {
+				e.StrDrainActiveT = 0 // 没有塔可连接
+				return
+			}
+		}
+
+		if e.StrDrainActiveT > 0 {
+			// 连接中：施加减益
+			t := s.towers.At(e.StrDrainTargetRC[0], e.StrDrainTargetRC[1])
+			if t == nil || !t.Active {
+				// 塔被卖了 → 断开
+				e.StrDrainActiveT = 0
+				e.StrDrainTargetRC = [2]int{}
+				e.StrDrainTimer = e.StrDrainInterval
+				return
+			}
+			if t.Strength != nil {
+				t.Strength.SetEnemySub(key, t.Strength.Base*e.StrDrainRatio)
+				t.RecalcStats()
+			}
+		} else {
+			// 不在激活状态：清除之前的减益（SetEnemySub 传 0 会自动删除）
+			s.towers.Each(func(t *tower.Tower) {
+				if t.Strength != nil {
+					t.Strength.SetEnemySub(key, 0)
+				}
+			})
+		}
+	})
+}
+
+// drawStrengthDrainLinks 绘制削强连接线。
+func (s *StageScene) drawStrengthDrainLinks(screen *ebiten.Image) {
+	s.enemies.Each(func(e *enemy.Enemy) {
+		if e.IsDying() || e.StrDrainActiveT <= 0 {
+			return
+		}
+		t := s.towers.At(e.StrDrainTargetRC[0], e.StrDrainTargetRC[1])
+		if t == nil || !t.Active {
+			return
+		}
+		// 脉冲紫色连接线
+		alpha := uint8(120 + 60*math.Sin(e.Age*4))
+		clr := color.RGBA{R: 180, G: 60, B: 220, A: alpha}
+		draw.ThickLine(screen, float32(e.X), float32(e.Y), float32(t.X), float32(t.Y), 2, clr)
+	})
+}
+
 func (s *StageScene) restoreScenario(sd *config.ScenarioData) {
 	defMap := make(map[string]tower.TowerDef)
 	for _, d := range s.towerDefs {
@@ -1591,24 +1660,8 @@ func (s *StageScene) updatePlaying() {
 	if behaviorEvents.Regens > 0 {
 		s.audioMgr.PlayThrottledAt(gameAudio.SFXRegenTick, 2000, gameAudio.VolHit*0.5)
 	}
-	// 削强事件：找最近的塔施加临时强度减益
-	for _, drain := range behaviorEvents.StrDrains {
-		var bestTower *tower.Tower
-		bestDist := 200.0 // 最大作用距离
-		s.towers.Each(func(t *tower.Tower) {
-			d := math.Hypot(t.X-drain.EnemyX, t.Y-drain.EnemyY)
-			if d < bestDist {
-				bestDist = d
-				bestTower = t
-			}
-		})
-		if bestTower != nil && bestTower.Strength != nil {
-			key := fmt.Sprintf("strDrain_%.0f_%.0f", drain.EnemyX, drain.EnemyY)
-			bestTower.Strength.SetEnemySub(key, bestTower.Strength.Effective()*drain.Ratio)
-			bestTower.RecalcStats()
-			// TODO: 持续时间 drain.Duration 后移除（当前简化为每次覆盖）
-		}
-	}
+	// 削强能力：每帧管理敌人→塔连接
+	s.tickStrengthDrain()
 
 	// 4. 战灵行为（未选择前跳过）
 	if s.wardenReady && s.wardenUnit != nil {
@@ -2131,6 +2184,9 @@ func (s *StageScene) drawScene(screen *ebiten.Image) {
 
 	// 敌人（优先 SVG 渲染）
 	s.enemyRenderer.DrawEnemies(worldTarget, s.enemies, animTime)
+
+	// 削强连接线
+	s.drawStrengthDrainLinks(worldTarget)
 
 	// 弹射物
 	render.DrawProjectiles(worldTarget, s.projectiles)

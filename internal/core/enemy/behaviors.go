@@ -13,19 +13,11 @@ type HealEvent struct {
 	TargetY  float64 // 被治疗者 Y 坐标
 }
 
-// StrDrainEvent 削强事件（由 stage.go 执行实际的塔强度减益）。
-type StrDrainEvent struct {
-	EnemyX, EnemyY float64 // 敌人位置（用于查找最近塔）
-	Ratio          float64 // 减益比例（0.5 = -50%）
-	Duration       float64 // 持续时间（秒）
-}
-
 // BehaviorEvents 一帧内行为系统产生的事件（供外部播放音效/VFX）。
 type BehaviorEvents struct {
-	Heals     []HealEvent     // 治疗事件
-	Reveals   []RevealEvent   // 隐身破解事件
-	Regens    int             // 本帧有回血的敌人数
-	StrDrains []StrDrainEvent // 削强事件
+	Heals   []HealEvent   // 治疗事件
+	Reveals []RevealEvent // 隐身破解事件
+	Regens  int           // 本帧有回血的敌人数
 }
 
 // RevealEvent 隐身破解事件。
@@ -101,15 +93,28 @@ func TickBehaviors(pool *Pool, dt float64) BehaviorEvents {
 			}
 		}
 
-		// 削强
-		if e.StrDrainRatio > 0 && !e.AbilitySilenced {
-			e.StrDrainTimer -= dt
-			if e.StrDrainTimer <= 0 {
-				e.StrDrainTimer = e.StrDrainInterval
-				events.StrDrains = append(events.StrDrains, StrDrainEvent{
-					EnemyX: e.X, EnemyY: e.Y,
-					Ratio: e.StrDrainRatio, Duration: e.StrDrainDuration,
-				})
+		// 削强：维护连接计时（实际找塔+施加/移除在 stage.go 中执行）
+		if e.StrDrainRatio > 0 {
+			if e.AbilitySilenced {
+				// 被沉默时断开连接
+				if e.StrDrainActiveT > 0 {
+					e.StrDrainActiveT = 0
+					e.StrDrainTargetRC = [2]int{}
+				}
+			} else if e.StrDrainActiveT > 0 {
+				// 连接中：衰减持续时间
+				e.StrDrainActiveT -= dt
+				if e.StrDrainActiveT <= 0 {
+					e.StrDrainActiveT = 0
+					e.StrDrainTargetRC = [2]int{}
+					e.StrDrainTimer = e.StrDrainInterval // 重新进入冷却
+				}
+			} else {
+				// 冷却中
+				e.StrDrainTimer -= dt
+				if e.StrDrainTimer <= 0 {
+					e.StrDrainActiveT = e.StrDrainDuration // 标记需要连接
+				}
 			}
 		}
 

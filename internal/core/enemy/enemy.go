@@ -162,11 +162,13 @@ type Enemy struct {
 	PhaseTimer      float64 // 相位偏移：当前计时（>0 免伤中, <0 冷却中）
 	PhaseActive     bool    // 相位偏移：当前是否免伤
 
-	// offense
-	StrDrainRatio    float64 // 削强：强度减益比例（0.5 = -50%）
-	StrDrainInterval float64 // 削强：施加间隔（秒）
-	StrDrainDuration float64 // 削强：减益持续时间（秒）
-	StrDrainTimer    float64 // 削强：冷却倒计时
+	// offense — 削强
+	StrDrainRatio    float64 // 减益比例（0.5 = -50%）
+	StrDrainInterval float64 // 施加间隔（秒）
+	StrDrainDuration float64 // 减益持续时间（秒）
+	StrDrainTimer    float64 // 冷却倒计时
+	StrDrainTargetRC [2]int  // 连接的塔 [row,col]（[0,0]=无连接）
+	StrDrainActiveT  float64 // 减益剩余持续时间（>0 表示连接中）
 
 	// death
 	DeathSpawnCount int    // 死亡召唤：召唤数量（0=不召唤）
