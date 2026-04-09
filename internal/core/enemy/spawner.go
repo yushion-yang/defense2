@@ -225,7 +225,7 @@ func (s *Spawner) startWave() {
 	s.bossQueued = s.BossEveryWave || (s.Wave%config.GlobalBalance().Spawner.BossEveryNWaves == 0)
 	// Boss 波入场延迟：给玩家 3 秒准备时间
 	if s.bossQueued {
-		s.EntranceDelay = 3.0
+		s.EntranceDelay = config.GlobalBalance().Spawner.BossEntranceDelay
 	} else {
 		s.EntranceDelay = 0
 	}

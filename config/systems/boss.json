@@ -1,0 +1,66 @@
+{
+  "_description": "Boss 机制规格 — 触发条件、属性缩放、免疫列表、入场演出",
+
+  "trigger": {
+    "everyNWaves": "balance.spawner.bossEveryNWaves",
+    "archetype": "tank",
+    "description": "每 N 波的最后一个敌人为 Boss，使用 tank 原型作为基底"
+  },
+
+  "scaling": {
+    "hpFormula": "baseHP * archetype.hpScale * (bossHpMultBase + wave)",
+    "hpMultBase": "balance.spawner.bossHpMultBase",
+    "radiusScale": "balance.spawner.bossRadiusScale",
+    "description": "Boss HP 随波次线性增长，半径放大 1.5 倍"
+  },
+
+  "entrance": {
+    "delaySecs": 3.0,
+    "announceFlashes": 6,
+    "bgm": "bgm-boss",
+    "screenShake": true,
+    "sfx": "bossEnter",
+    "description": "Boss 波入场：3 秒延迟 + 6 次闪光公告 + BGM 切换 + 屏幕震动"
+  },
+
+  "immunities": [
+    {"type": "bleedDot",           "location": "config_ability.go",  "description": "完全免疫流血（Boss 检查跳过 bleedDot OnHit）"},
+    {"type": "thunderStrike",      "location": "thunder_strike.go",  "description": "完全免疫雷击（目标选择和溅射都排除 Boss）"},
+    {"type": "execute",            "location": "core_mech.go",       "description": "免疫斩杀（core_mech <20% 处决跳过 Boss）"},
+    {"type": "percentHP_prince",   "location": "prince.go",          "description": "Prince 战灵 %HP 伤害跳过 Boss"},
+    {"type": "percentHP_skystrike","location": "skystrike.go",       "description": "Skystrike 模式3 %HP 伤害排除 Boss"},
+    {"type": "waveBuff",           "location": "spawner.go",         "description": "Boss 豁免波次随机 buff 注入"}
+  ],
+
+  "caps": {
+    "percentDamageCap": "balance.combat.bossPercentHpCap",
+    "description": "单次 %HP 伤害上限（默认 5% MaxHP），在伤害管线步骤 2 执行"
+  },
+
+  "death": {
+    "dyingDuration": "balance.dying.bossDuration",
+    "sfx": "enemyDeathBoss",
+    "particles": "EmitBossDeathBurst",
+    "achievement": "first_boss",
+    "description": "Boss 死亡：0.5s 动画 + 专属音效 + 大型粒子爆发 + 首杀成就"
+  },
+
+  "visual": {
+    "pulsingRings": {"innerColor": "#F43F5E", "outerColor": "#FB7193", "description": "玫红色脉冲同心环"},
+    "breathingScale": true,
+    "hpBar": {"width": 48, "height": 7, "segments": 5, "description": "加大分段血条（5 格 = 20% 每段）"},
+    "minimapDot": "distinct",
+    "lightPriority": 2,
+    "description": "Boss 专属视觉：脉冲环 + 呼吸缩放 + 加大血条 + 高优先级光源"
+  },
+
+  "notImplemented": [
+    {"template": "bossPhase",           "description": "75%/50%/25% HP 阶段转换（配置存在但未接入）"},
+    {"template": "bossTeleport",        "description": "定时传送（配置存在但未接入）"},
+    {"template": "bossSpawnMinions",    "description": "定时召唤小怪（配置存在但未接入）"},
+    {"template": "bossReflect",         "description": "伤害反射（配置存在但未接入）"},
+    {"template": "bossRotateWeakness",  "description": "轮换弱点（配置存在但未接入）"},
+    {"template": "bossGoldSteal",       "description": "偷取金币（配置存在但未接入）"},
+    {"template": "bossAura",            "description": "友方增益光环（配置存在但未接入）"}
+  ]
+}
