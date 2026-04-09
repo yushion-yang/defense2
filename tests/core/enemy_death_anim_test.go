@@ -61,6 +61,9 @@ func TestDyingEnemyNotTargeted(t *testing.T) {
 	p := enemy.NewPool(4)
 	e1 := p.Spawn(100, 100, 50, 60, 1, "normal", nil)
 	e2 := p.Spawn(110, 100, 50, 60, 1, "normal", nil)
+	// Clear spawn animation so enemies are targetable
+	e1.SpawnTimer = 0
+	e2.SpawnTimer = 0
 
 	tw := &tower.Tower{X: 100, Y: 100, Range: 200}
 

@@ -389,7 +389,7 @@ func CCStunStopScenario() *ScenarioStrategy {
 
 // AbilityCoverageStrategy 一局中建多座塔，赋予不同攻击方式 + 能力，然后打波验证。
 type AbilityCoverageStrategy struct {
-	phase      int  // 0=warden, 1=build, 2=addAbility, 3=play
+	phase      int // 0=warden, 1=build, 2=addAbility, 3=play
 	builtCount int
 	abilDone   bool
 	// 塔位置记录
@@ -408,7 +408,7 @@ func AttackStyleCoverageScenario() Strategy {
 	return &AbilityCoverageStrategy{}
 }
 
-func (s *AbilityCoverageStrategy) Name() string    { return "scenario_attack-style-coverage" }
+func (s *AbilityCoverageStrategy) Name() string      { return "scenario_attack-style-coverage" }
 func (s *AbilityCoverageStrategy) Init(_ *GameState) {}
 
 func (s *AbilityCoverageStrategy) Decide(state *GameState) []Action {
@@ -476,13 +476,14 @@ func (s *AbilityCoverageStrategy) Decide(state *GameState) []Action {
 }
 
 // AllScenariosMap 返回所有预定义场景的名称→构造函数映射。
+// 包含手写场景 + 自动生成的能力测试场景。
 func AllScenariosMap() map[string]func() Strategy {
-	return map[string]func() Strategy{
+	m := map[string]func() Strategy{
 		// 原有
-		"build-flow":       func() Strategy { return BuildFlowScenario() },
-		"tower-lifecycle":  func() Strategy { return TowerLifecycleScenario() },
-		"zero-gold-build":  func() Strategy { return ZeroGoldBuildScenario() },
-		"rapid-actions":    func() Strategy { return RapidActionScenario() },
+		"build-flow":      func() Strategy { return BuildFlowScenario() },
+		"tower-lifecycle": func() Strategy { return TowerLifecycleScenario() },
+		"zero-gold-build": func() Strategy { return ZeroGoldBuildScenario() },
+		"rapid-actions":   func() Strategy { return RapidActionScenario() },
 		// 经济验证
 		"econ-sell-refund": func() Strategy { return EconSellRefundScenario() },
 		"econ-rapid-build": func() Strategy { return EconRapidBuildScenario() },
@@ -496,4 +497,27 @@ func AllScenariosMap() map[string]func() Strategy {
 		// 攻击方式 × 能力覆盖
 		"attack-style-coverage": func() Strategy { return AttackStyleCoverageScenario() },
 	}
+
+	// 能力级别测试场景（自动生成）
+	for _, as := range GenerateAbilityScenarios() {
+		name := as.Name
+		strat := as.Strategy
+		m[name] = func() Strategy { return strat }
+	}
+
+	return m
+}
+
+// abilityAssertionMap 缓存能力场景断言映射。
+var abilityAssertionMap map[string][]Assertion
+
+// AbilityAssertionsMap 返回能力场景名称→断言列表映射。
+func AbilityAssertionsMap() map[string][]Assertion {
+	if abilityAssertionMap == nil {
+		abilityAssertionMap = make(map[string][]Assertion)
+		for _, as := range GenerateAbilityScenarios() {
+			abilityAssertionMap[as.Name] = as.Assertions
+		}
+	}
+	return abilityAssertionMap
 }

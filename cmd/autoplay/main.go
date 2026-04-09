@@ -35,12 +35,12 @@ func main() {
 	mapID := flag.String("map", "map_01", "map ID")
 	difficulty := flag.String("difficulty", "normal", "difficulty ID")
 	warden := flag.String("warden", "prince", "warden type")
-	output := flag.String("output", "./autoplay-results", "output directory (mixed JSON+PNG, used when json-dir/png-dir not set)")
-	jsonDir := flag.String("json-dir", "", "JSON report output directory (pure JSON, overrides output for JSON)")
-	pngDir := flag.String("png-dir", "", "screenshot output directory (pure PNG, overrides output for PNG)")
+	output := flag.String("output", "./autoplay-results", "output directory for JSON reports")
+	jsonDir := flag.String("json-dir", "", "JSON report output directory (overrides output for JSON)")
 	sweep := flag.Bool("sweep", false, "run full pairwise sweep")
 	scenarioName := flag.String("scenario", "", "run single scenario by name")
 	seed := flag.Int64("seed", 0, "master random seed (0=use timestamp, same seed = reproducible results)")
+	abilitySweep := flag.Bool("ability-sweep", false, "run all ability-level test scenarios")
 	modelPath := flag.String("model-path", "", "path to LLM .bin weight file (for llm strategy)")
 	vocabPath := flag.String("vocab-path", "config/llm/vocab.json", "path to LLM vocab.json (for llm strategy)")
 	flag.Parse()
@@ -50,7 +50,7 @@ func main() {
 		return
 	}
 
-	orchestrate(*runs, *strategies, *mapID, *difficulty, *warden, *output, *jsonDir, *pngDir, *sweep, *scenarioName, *seed, *modelPath, *vocabPath)
+	orchestrate(*runs, *strategies, *mapID, *difficulty, *warden, *output, *jsonDir, *sweep, *abilitySweep, *scenarioName, *seed, *modelPath, *vocabPath)
 }
 
 // ─── 编排模式 ───
@@ -69,14 +69,13 @@ type sessionConfig struct {
 	VocabPath   string `json:"vocab_path,omitempty"`
 	OutputDir   string `json:"output_dir"`
 	JSONDir     string `json:"json_dir,omitempty"` // 纯 JSON 输出 (空=混合到 OutputDir)
-	PNGDir      string `json:"png_dir,omitempty"`  // 纯 PNG 输出 (空=混合到 OutputDir)
 	Seed        int64  `json:"seed"`
 }
 
-func orchestrate(runs int, strategies, mapID, difficulty, warden, output, jsonDir, pngDir string, sweep bool, scenarioName string, masterSeed int64, modelPath, vocabPath string) {
-	// 分离模式: --json-dir/--png-dir 由调用方管理目录结构
+func orchestrate(runs int, strategies, mapID, difficulty, warden, output, jsonDir string, sweep, abilitySweep bool, scenarioName string, masterSeed int64, modelPath, vocabPath string) {
+	// 分离模式: --json-dir 由调用方管理目录结构
 	// 兼容模式: 生成带时间戳的 run 目录，避免历史结果污染
-	splitMode := jsonDir != "" && pngDir != ""
+	splitMode := jsonDir != ""
 	runDir := output
 	if !splitMode {
 		runDir = filepath.Join(output, time.Now().Format("run_20060102_150405"))
@@ -88,9 +87,6 @@ func orchestrate(runs int, strategies, mapID, difficulty, warden, output, jsonDi
 		if err := os.MkdirAll(jsonDir, 0o755); err != nil {
 			log.Fatalf("create json dir: %v", err)
 		}
-		if err := os.MkdirAll(pngDir, 0o755); err != nil {
-			log.Fatalf("create png dir: %v", err)
-		}
 	}
 
 	// 生成测试用例
@@ -99,6 +95,11 @@ func orchestrate(runs int, strategies, mapID, difficulty, warden, output, jsonDi
 	case sweep:
 		cases = autoplay.GenerateTestPlan()
 		log.Printf("Sweep mode: %d test cases", len(cases))
+	case abilitySweep:
+		for _, name := range autoplay.AbilityScenarioNames() {
+			cases = append(cases, autoplay.ScenarioCase(name, mapID))
+		}
+		log.Printf("Ability sweep mode: %d test cases", len(cases))
 	case scenarioName != "":
 		cases = []autoplay.TestCase{autoplay.ScenarioCase(scenarioName, mapID)}
 	default:
@@ -146,7 +147,6 @@ func orchestrate(runs int, strategies, mapID, difficulty, warden, output, jsonDi
 			VocabPath:   vocabPath,
 			OutputDir:   runDir,
 			JSONDir:     jsonDir,
-			PNGDir:      pngDir,
 			Seed:        sessionSeed,
 		}
 		// 特殊策略参数
@@ -192,12 +192,12 @@ func runSingleSession(cfgJSON string) {
 	// 确定性随机种子（同 seed = 同结果）
 	autoplay.SeedAll(cfg.Seed)
 
-	// Turbo 模式: 跳过音效 + 每帧跑数千 tick + 截图时渲染一帧
+	// Turbo 模式: 跳过音效 + 每帧跑数千 tick（纯无头，无渲染）
 	scene.HeadlessMode = true
 	ebiten.SetWindowSize(game.ScreenWidth, game.ScreenHeight)
 	ebiten.SetWindowTitle("AutoPlay: " + cfg.ID)
 	ebiten.SetVsyncEnabled(false)
-	ebiten.SetTPS(ebiten.SyncWithFPS)           // Update:Draw = 1:1，turbo 循环在 Update 内加速
+	ebiten.SetTPS(ebiten.SyncWithFPS) // Update:Draw = 1:1，turbo 循环在 Update 内加速
 	ebiten.SetScreenClearedEveryFrame(false)
 	ebiten.SetRunnableOnUnfocused(true)
 
@@ -212,24 +212,30 @@ func runSingleSession(cfgJSON string) {
 
 	strategy := restoreStrategy(cfg)
 	ctrl := autoplay.NewController(autoplay.ControllerConfig{
-		Strategy:  strategy,
-		OutputDir: cfg.OutputDir,
-		JSONDir:   cfg.JSONDir,
-		PNGDir:    cfg.PNGDir,
-		SessionID: cfg.ID,
-		MapID:     cfg.MapID,
+		Strategy:   strategy,
+		OutputDir:  cfg.OutputDir,
+		JSONDir:    cfg.JSONDir,
+		SessionID:  cfg.ID,
+		MapID:      cfg.MapID,
 		Difficulty: cfg.Difficulty,
-		Warden:    cfg.Warden,
-		Seed:      cfg.Seed,
+		Warden:     cfg.Warden,
+		Seed:       cfg.Seed,
 	})
+	// 为能力测试场景加载断言
+	stratName := strategy.Name()
+	if len(stratName) > 9 && stratName[:9] == "scenario_" {
+		scenName := stratName[9:]
+		if assertions, ok := autoplay.AbilityAssertionsMap()[scenName]; ok {
+			ctrl.SetAssertions(assertions)
+		}
+	}
+
 	stage.SetAutoPlayer(ctrl)
 	g.SwitchScene(stage)
 
 	if err := ebiten.RunGame(g); err != nil {
 		log.Printf("session %s error: %v", cfg.ID, err)
 	}
-	// 等待所有异步截图 goroutine 完成（result.png 等可能还在写入）
-	scene.WaitScreenshots()
 }
 
 // restoreStrategy 从序列化配置还原策略实例。

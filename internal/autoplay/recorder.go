@@ -48,28 +48,28 @@ type PaceStat struct {
 
 // ExperienceStat 体验指标（对应手动测试 §八"感觉"测试）。
 type ExperienceStat struct {
-	EarlyLeakWave     int      `json:"early_leak_wave"`      // 首次泄漏波次（0=从未泄漏）
-	EarlyLeakCount    int      `json:"early_leak_count"`     // 前 3 波泄漏总数
-	LateZeroLeakWaves int      `json:"late_zero_leak_waves"` // 最后 3 波连续 0 泄漏的波数
+	EarlyLeakWave      int             `json:"early_leak_wave"`                // 首次泄漏波次（0=从未泄漏）
+	EarlyLeakCount     int             `json:"early_leak_count"`               // 前 3 波泄漏总数
+	LateZeroLeakWaves  int             `json:"late_zero_leak_waves"`           // 最后 3 波连续 0 泄漏的波数
 	SpecialEnemyImpact []SpecialImpact `json:"special_enemy_impact,omitempty"` // 特殊怪影响力
-	DifficultyVerdict string   `json:"difficulty_verdict"`   // too_easy / ok / too_hard / crushing
+	DifficultyVerdict  string          `json:"difficulty_verdict"`             // too_easy / ok / too_hard / crushing
 }
 
 // SpecialImpact 特殊敌人的影响力度量。
 type SpecialImpact struct {
-	Archetype     string  `json:"archetype"`
-	AvgSurvival   float64 `json:"avg_survival_ticks"` // 平均存活 tick
-	NormalAvg     float64 `json:"normal_avg_ticks"`   // 同期 normal 的平均存活 tick
-	ImpactRatio   float64 `json:"impact_ratio"`       // 存活比（>1.5 有影响, <1.1 形同虚设）
+	Archetype   string  `json:"archetype"`
+	AvgSurvival float64 `json:"avg_survival_ticks"` // 平均存活 tick
+	NormalAvg   float64 `json:"normal_avg_ticks"`   // 同期 normal 的平均存活 tick
+	ImpactRatio float64 `json:"impact_ratio"`       // 存活比（>1.5 有影响, <1.1 形同虚设）
 }
 
 // CoverageData 覆盖率追踪数据。
 type CoverageData struct {
 	TowersUsed          []string `json:"towers_used"`
-	AbilitiesTriggered   []string `json:"abilities_triggered,omitempty"`
-	AttackStylesFired    []string `json:"attack_styles_fired,omitempty"`
-	EnemyArchetypesSeen  []string `json:"enemy_archetypes_seen"`
-	InteractionModes     []string `json:"interaction_modes_entered,omitempty"`
+	AbilitiesTriggered  []string `json:"abilities_triggered,omitempty"`
+	AttackStylesFired   []string `json:"attack_styles_fired,omitempty"`
+	EnemyArchetypesSeen []string `json:"enemy_archetypes_seen"`
+	InteractionModes    []string `json:"interaction_modes_entered,omitempty"`
 }
 
 // SessionRecord 完整的对局报告。
@@ -90,15 +90,17 @@ type SessionRecord struct {
 	TowersBuilt   []TowerStat  `json:"towers_built"`
 	WaveLog       []WaveEntry  `json:"wave_log"`
 	Anomalies     []Anomaly    `json:"anomalies"`
-	Screenshots   []string     `json:"screenshots"`
 	Coverage      CoverageData `json:"coverage"`
 	DPSSnapshots  []float64    `json:"dps_snapshots,omitempty"`
 
 	// 节奏与平衡指标
-	BossStats       []BossStat     `json:"boss_stats,omitempty"`
-	PaceStats       *PaceStat      `json:"pace_stats,omitempty"`
-	EconomyAlerts   []string       `json:"economy_alerts,omitempty"`
+	BossStats       []BossStat      `json:"boss_stats,omitempty"`
+	PaceStats       *PaceStat       `json:"pace_stats,omitempty"`
+	EconomyAlerts   []string        `json:"economy_alerts,omitempty"`
 	ExperienceStats *ExperienceStat `json:"experience_stats,omitempty"` // 体验指标
+
+	// 断言结果（能力测试场景）
+	Assertions []AssertionResult `json:"assertions,omitempty"`
 
 	// 遥测覆盖
 	PipelineSteps      []string `json:"pipeline_steps,omitempty"`
@@ -157,12 +159,15 @@ type Recorder struct {
 	econAlerts     []string // 断档事件描述
 	minTowerCost   int      // 最便宜的塔价格（首帧缓存）
 
+	// 断言结果（由 Controller 注入）
+	Assertions []AssertionResult
+
 	// 体验指标追踪
-	firstLeakWave  int            // 首次泄漏波次
-	earlyLeaks     int            // 前 3 波泄漏数
-	perWaveLeaks   map[int]int    // wave → 泄漏数
+	firstLeakWave  int              // 首次泄漏波次
+	earlyLeaks     int              // 前 3 波泄漏数
+	perWaveLeaks   map[int]int      // wave → 泄漏数
 	enemySurvival  map[string][]int // archetype → 存活 tick 列表
-	enemySpawnTick map[int]int    // enemyID → spawn tick
+	enemySpawnTick map[int]int      // enemyID → spawn tick
 }
 
 // NewRecorder 创建对局数据记录器。
@@ -387,7 +392,7 @@ func (r *Recorder) OnKill() {
 }
 
 // Finalize 生成最终对局报告。
-func (r *Recorder) Finalize(state *GameState, anomalies []Anomaly, screenshots []string) *SessionRecord {
+func (r *Recorder) Finalize(state *GameState, anomalies []Anomaly) *SessionRecord {
 	result := "timeout"
 	if state.Victory {
 		result = "victory"
@@ -436,7 +441,6 @@ func (r *Recorder) Finalize(state *GameState, anomalies []Anomaly, screenshots [
 		TowersBuilt:   towerStats,
 		WaveLog:       r.waveLog,
 		Anomalies:     anomalies,
-		Screenshots:   screenshots,
 		Coverage:      coverage,
 		DPSSnapshots:  r.dpsSnapshots,
 	}
@@ -531,6 +535,11 @@ func (r *Recorder) Finalize(state *GameState, anomalies []Anomaly, screenshots [
 	rec.BossSpawned = telemetry.Keys(tel.BossSpawned)
 	rec.InteractionModes = telemetry.Keys(tel.InteractionModes)
 	rec.CCApplied = telemetry.Keys(tel.CCApplied)
+
+	// 断言结果
+	if len(r.Assertions) > 0 {
+		rec.Assertions = r.Assertions
+	}
 
 	return rec
 }

@@ -88,6 +88,10 @@ func TestWideBeamHitsMultiple(t *testing.T) {
 	e1 := ePool.Spawn(150, 100, 100, 50, 1, "normal", nil)
 	e2 := ePool.Spawn(200, 100, 100, 50, 1, "normal", nil)
 	e3 := ePool.Spawn(100, 200, 100, 50, 1, "normal", nil) // off-axis
+	// Clear spawn animation so enemies are targetable
+	e1.SpawnTimer = 0
+	e2.SpawnTimer = 0
+	e3.SpawnTimer = 0
 
 	pool := projectile.NewPool(16)
 	beams := combat.NewBeamPool()
@@ -135,6 +139,10 @@ func TestSpinAoEDamagesAllInRange(t *testing.T) {
 	e1 := ePool.Spawn(150, 100, 100, 50, 1, "normal", nil) // 50px away (in range)
 	e2 := ePool.Spawn(170, 100, 100, 50, 1, "normal", nil) // 70px away (in range)
 	e3 := ePool.Spawn(300, 100, 100, 50, 1, "normal", nil) // 200px away (out of range)
+	// Clear spawn animation so enemies are targetable
+	e1.SpawnTimer = 0
+	e2.SpawnTimer = 0
+	e3.SpawnTimer = 0
 
 	pool := projectile.NewPool(16)
 	beams := combat.NewBeamPool()

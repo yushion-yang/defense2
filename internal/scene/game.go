@@ -52,12 +52,11 @@ type Game struct {
 var HeadlessMode bool
 
 // turboTicksPerFrame turbo 模式下每帧推进的 tick 数上限。
-// 遇到截图请求时提前 break 让 Draw 渲染一帧。
 const turboTicksPerFrame = 5000
 
 // NewGame 创建游戏实例，初始场景为标题画面。
 func NewGame() *Game {
-	// 字体/图标/着色器始终加载（截图渲染需要）
+	// 字体/图标/着色器始终加载
 	initFont()
 	render.InitGlobalIcons(config.GetAssetFS())
 	abilities.InitConfigAbilities()
@@ -148,16 +147,11 @@ func (g *Game) SwitchScene(next Scene) {
 
 // Update 每帧逻辑更新：处理过渡动画 + 更新当前场景。
 func (g *Game) Update() error {
-	// HeadlessMode turbo: 每帧跑数千 tick，截图时 break 让 Draw 渲染
+	// HeadlessMode turbo: 每帧跑数千 tick
 	if HeadlessMode && g.current != nil {
 		for range turboTicksPerFrame {
 			if err := g.current.Update(); err != nil {
 				return err
-			}
-			// 有截图请求 → break 让 Draw 渲染一帧
-			type screenshotChecker interface{ HasPendingScreenshot() bool }
-			if c, ok := g.current.(screenshotChecker); ok && c.HasPendingScreenshot() {
-				break
 			}
 		}
 		return nil

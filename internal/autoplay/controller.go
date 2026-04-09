@@ -1,12 +1,11 @@
 //go:build !unittest
 
 // controller.go — AutoPlay 控制器。
-// 实现 scene.AutoPlayer 接口，编排策略/录制/异常检测/截图。
+// 实现 scene.AutoPlayer 接口，编排策略/录制/异常检测。
 // 使用 unittest build tag 排除此文件以避免 Ebitengine GLFW 初始化。
 package autoplay
 
 import (
-	"fmt"
 	"log"
 	"path/filepath"
 	"time"
@@ -21,7 +20,6 @@ type ControllerConfig struct {
 	Strategy   Strategy
 	OutputDir  string
 	JSONDir    string
-	PNGDir     string
 	SessionID  string
 	MapID      string
 	Difficulty string
@@ -34,67 +32,43 @@ type Controller struct {
 	strategy      Strategy
 	recorder      *Recorder
 	anomaly       *AnomalyDetector
-	screenshotter *Screenshotter
-	visualTracker *VisualTracker
+	assertChecker *AssertionChecker
 
 	jsonDir   string
-	pngDir    string
 	sessionID string
 	seed      int64
 
 	prevWave    int
 	prevLives   int
-	prevKills   int  // 上一帧累计击杀数（用于增量检测）
-	prevMode    int  // 上一帧交互模式
-	modeDelay   bool // 模式切换延迟标志：先截图，下帧再操作
+	prevKills   int // 上一帧累计击杀数（用于增量检测）
 	gameStarted bool
 	done        bool
-	resultDrawn bool // 结果画面已截图
+	resultDrawn bool // 结果画面已绘制
 	startTime   time.Time
-
-	// HUD 截图追踪（每种模式只截一次）
-	modeCaptured       map[int]bool
-	firstTowerCaptured bool
 }
 
 // NewController 创建自动对局控制器。
 func NewController(cfg ControllerConfig) *Controller {
-	// 分离模式: JSONDir/PNGDir 分别存放; 兼容模式: 全部放 OutputDir
 	jsonDir := filepath.Join(cfg.OutputDir, cfg.SessionID)
-	pngDir := jsonDir
 	if cfg.JSONDir != "" {
 		jsonDir = filepath.Join(cfg.JSONDir, cfg.SessionID)
 	}
-	if cfg.PNGDir != "" {
-		pngDir = filepath.Join(cfg.PNGDir, cfg.SessionID)
-	}
 	return &Controller{
-		strategy:      cfg.Strategy,
-		recorder:      NewRecorder(cfg.SessionID, cfg.Strategy.Name(), cfg.MapID, cfg.Difficulty, cfg.Warden),
-		anomaly:       NewAnomalyDetector(),
-		screenshotter: NewScreenshotter(pngDir),
-		visualTracker: nil, // 延迟初始化
-		jsonDir:       jsonDir,
-		pngDir:        pngDir,
-		sessionID:     cfg.SessionID,
-		seed:          cfg.Seed,
-		startTime:     time.Now(),
-		modeCaptured:  make(map[int]bool),
+		strategy:  cfg.Strategy,
+		recorder:  NewRecorder(cfg.SessionID, cfg.Strategy.Name(), cfg.MapID, cfg.Difficulty, cfg.Warden),
+		anomaly:   NewAnomalyDetector(),
+		jsonDir:   jsonDir,
+		sessionID: cfg.SessionID,
+		seed:      cfg.Seed,
+		startTime: time.Now(),
 	}
 }
 
-// 交互模式名称（与 scene.interactMode 对应）。
-var modeNames = map[int]string{
-	0: "idle", 1: "buildMenu", 2: "buildPlace", 3: "towerSel",
-	4: "spawnMenu", 5: "spawnPlace", 7: "paused", 8: "wardenSelect",
-}
-
-// hudModes 需要截图的 HUD 模式（进入时截一张以验证面板渲染正确）。
-var hudModes = map[int]bool{
-	1: true, // buildMenu
-	3: true, // towerSel
-	7: true, // paused
-	8: true, // wardenSelect
+// SetAssertions 初始化断言检查器（用于能力测试场景）。
+func (c *Controller) SetAssertions(assertions []Assertion) {
+	if len(assertions) > 0 {
+		c.assertChecker = NewAssertionChecker(assertions)
+	}
 }
 
 // maxSessionTicks 单局最大 tick 数，超过强制结束防止死循环。
@@ -115,28 +89,8 @@ func (c *Controller) OnUpdate(snap scene.AutoPlaySnapshot) []scene.AutoPlayActio
 	if !c.gameStarted {
 		c.gameStarted = true
 		c.prevLives = state.Lives
-		c.prevMode = state.InteractMode
 		telemetry.T.Reset()
-		c.visualTracker = NewVisualTracker(c.screenshotter)
 		c.strategy.Init(state)
-		c.screenshotter.RequestStart()
-	}
-
-	// ── HUD 模式截图：检测模式切换，先截图再操作 ──
-	if state.InteractMode != c.prevMode {
-		if hudModes[state.InteractMode] && !c.modeCaptured[state.InteractMode] {
-			// 新进入一个 HUD 模式 → 请求截图，本帧不执行操作
-			name := modeNames[state.InteractMode]
-			c.screenshotter.RequestCapture(fmt.Sprintf("hud_%s_%d.png", name, state.Tick))
-			c.modeCaptured[state.InteractMode] = true
-			c.modeDelay = true
-		}
-		c.prevMode = state.InteractMode
-	}
-	// 模式延迟：上帧刚请求截图，本帧 Draw 会渲染，下帧再操作
-	if c.modeDelay {
-		c.modeDelay = false
-		return nil // 空操作，让 Draw 有机会截到 HUD
 	}
 
 	// 异常检测
@@ -146,7 +100,11 @@ func (c *Controller) OnUpdate(snap scene.AutoPlaySnapshot) []scene.AutoPlayActio
 	for _, a := range anomalies {
 		log.Printf("[ANOMALY] tick=%d type=%s severity=%s detail=%s",
 			a.Tick, a.Type, a.Severity.String(), a.Detail)
-		c.screenshotter.RequestAnomaly(a.Type, a.Tick)
+	}
+
+	// 断言检查（能力测试场景）
+	if c.assertChecker != nil {
+		c.assertChecker.Check(state)
 	}
 
 	// 波次变化检测
@@ -155,29 +113,11 @@ func (c *Controller) OnUpdate(snap scene.AutoPlaySnapshot) []scene.AutoPlayActio
 			c.recorder.OnWaveEnd(c.prevWave, state)
 		}
 		c.recorder.OnWaveStart(state.Wave, state)
-
-		if state.Wave > 0 && state.Wave%5 == 0 {
-			c.screenshotter.RequestBossWave(state.Wave)
-		}
 	}
 
 	// 泄漏检测
-	if state.Lives < c.prevLives {
-		c.screenshotter.RequestLeak(state.Wave, state.Tick)
-	}
 	c.prevLives = state.Lives
 	c.prevWave = state.Wave
-
-	// 视觉内容追踪：检测首次出现的塔/敌人/攻击方式/状态效果等
-	if c.visualTracker != nil {
-		c.visualTracker.Check(state)
-	}
-
-	// 波次公告截图（波次变化后立即请求，公告动画正在显示）
-	if state.Wave > c.prevWave && state.Wave > 1 && state.Wave <= 3 {
-		// 只对前几波截公告（避免重复）
-		c.screenshotter.RequestCapture(fmt.Sprintf("wave_announce_%d.png", state.Wave))
-	}
 
 	// 击杀增量同步 (BUG-001: total_kills always 0)
 	if state.TotalKills > c.prevKills {
@@ -233,60 +173,33 @@ func (c *Controller) OnUpdate(snap scene.AutoPlaySnapshot) []scene.AutoPlayActio
 }
 
 // OnGameEnd 游戏结束时调用。实现 scene.AutoPlayer。
-// 第一次调用：请求结果截图 + 写报告，但 Done() 返回 false（让 Draw 截图）。
-// 第二次调用：设置 done=true，触发 Termination。
 func (c *Controller) OnGameEnd(snap scene.AutoPlaySnapshot, won bool) {
 	if c.done {
 		return
 	}
 
-	if !c.resultDrawn {
-		// 第一次：请求截图 + 写报告
-		c.resultDrawn = true
+	state := snapshotToGameState(snap)
 
-		state := snapshotToGameState(snap)
-		c.screenshotter.RequestResult()
-
-		if c.prevWave > 0 {
-			c.recorder.OnWaveEnd(c.prevWave, state)
-		}
-
-		record := c.recorder.Finalize(state, c.anomaly.Anomalies(), c.screenshotter.CapturedFiles())
-		record.Seed = c.seed
-		if err := WriteJSON(record, c.jsonDir); err != nil {
-			log.Printf("report write error: %v", err)
-		} else {
-			log.Printf("[DONE] session=%s result=%s waves=%d/%d kills=%d anomalies=%d",
-				c.sessionID, record.Result, record.WavesSurvived, record.TotalWaves,
-				record.TotalKills, len(record.Anomalies))
-		}
-
-		// 生成视觉审查 manifest（截图 + 检查清单配对）
-		entries := BuildReviewEntries(c.screenshotter.CapturedFiles())
-		if err := WriteVisualReview(entries, c.pngDir); err != nil {
-			log.Printf("visual review write error: %v", err)
-		} else if len(entries) > 0 {
-			log.Printf("[REVIEW] %d screenshots with checklist -> visual_review.md", len(entries))
-		}
-		return // 不设 done，让 Draw 有机会截到结果画面
+	if c.prevWave > 0 {
+		c.recorder.OnWaveEnd(c.prevWave, state)
 	}
 
-	// 第二次：截图已完成，可以退出
+	// 断言结果收集
+	if c.assertChecker != nil {
+		c.recorder.Assertions = c.assertChecker.Finalize(state.Tick)
+	}
+
+	record := c.recorder.Finalize(state, c.anomaly.Anomalies())
+	record.Seed = c.seed
+	if err := WriteJSON(record, c.jsonDir); err != nil {
+		log.Printf("report write error: %v", err)
+	} else {
+		log.Printf("[DONE] session=%s result=%s waves=%d/%d kills=%d anomalies=%d",
+			c.sessionID, record.Result, record.WavesSurvived, record.TotalWaves,
+			record.TotalKills, len(record.Anomalies))
+	}
+
 	c.done = true
-}
-
-// ScreenshotRequested 返回下一个截图路径。实现 scene.AutoPlayer。
-func (c *Controller) ScreenshotRequested() string {
-	fname := c.screenshotter.NextPending()
-	if fname == "" {
-		return ""
-	}
-	return filepath.Join(c.pngDir, fname)
-}
-
-// HasPendingScreenshot 检查是否有待截图请求。实现 scene.AutoPlayer。
-func (c *Controller) HasPendingScreenshot() bool {
-	return c.screenshotter.HasPending()
 }
 
 // Done 返回是否已完成。实现 scene.AutoPlayer。

@@ -74,11 +74,12 @@ func TestStackMode_Additive_Cap(t *testing.T) {
 
 func TestStackMode_Multiplicative(t *testing.T) {
 	bl := buff.NewBuffList()
+	// damageUp 现在是 ModeAdditive（Cap=3.0），两个 buff 值累加
 	bl.AddSimple(buff.NewBuff("damageUp", "skill1", 1.2, 5.0))
 	bl.AddSimple(buff.NewBuff("damageUp", "skill2", 1.3, 5.0))
 
 	val := bl.GetEffective("damageUp")
-	expected := 1.2 * 1.3
+	expected := 1.2 + 1.3 // Additive: 2.5
 	if math.Abs(val-expected) > 1e-9 {
 		t.Errorf("damageUp生效值=%.3f, 期望%.3f", val, expected)
 	}

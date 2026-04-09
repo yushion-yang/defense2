@@ -31,7 +31,7 @@ func TestRecorder_Finalize(t *testing.T) {
 		r.OnTick(state, 1.0/60.0)
 	}
 
-	record := r.Finalize(state, nil, []string{"start.png"})
+	record := r.Finalize(state, nil)
 
 	if record.SessionID != "test-001" {
 		t.Errorf("expected session ID 'test-001', got %q", record.SessionID)
@@ -41,9 +41,6 @@ func TestRecorder_Finalize(t *testing.T) {
 	}
 	if record.WavesSurvived != 10 {
 		t.Errorf("expected waves 10, got %d", record.WavesSurvived)
-	}
-	if len(record.Screenshots) != 1 {
-		t.Errorf("expected 1 screenshot, got %d", len(record.Screenshots))
 	}
 
 	// 验证 JSON 可序列化
@@ -74,7 +71,7 @@ func TestRecorder_CoverageTracking(t *testing.T) {
 
 	r.OnTick(state, 1.0/60.0)
 
-	record := r.Finalize(state, nil, nil)
+	record := r.Finalize(state, nil)
 
 	// 应追踪到使用的塔
 	if len(record.Coverage.TowersUsed) < 2 {

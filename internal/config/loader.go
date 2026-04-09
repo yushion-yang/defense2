@@ -19,6 +19,11 @@ func SetDataFS(fs *embed.FS) {
 	dataFS = fs
 }
 
+// GetDataFS 返回配置文件系统引用。
+func GetDataFS() *embed.FS {
+	return dataFS
+}
+
 // SetAssetFS 注入资源文件系统。
 func SetAssetFS(fs *embed.FS) {
 	assetFS = fs

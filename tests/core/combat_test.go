@@ -15,9 +15,13 @@ import (
 
 func TestFindNearestEnemy(t *testing.T) {
 	ep := enemy.NewPool(8)
-	ep.Spawn(200, 100, 10, 60, 1, "normal", nil)
-	ep.Spawn(300, 100, 10, 60, 1, "normal", nil)
-	ep.Spawn(500, 100, 10, 60, 1, "normal", nil)
+	e1 := ep.Spawn(200, 100, 10, 60, 1, "normal", nil)
+	e2 := ep.Spawn(300, 100, 10, 60, 1, "normal", nil)
+	e3 := ep.Spawn(500, 100, 10, 60, 1, "normal", nil)
+	// Clear spawn animation so enemies are targetable
+	e1.SpawnTimer = 0
+	e2.SpawnTimer = 0
+	e3.SpawnTimer = 0
 
 	tw := &tower.Tower{X: 100, Y: 100, Range: 250, Active: true}
 	target := tower.FindNearestEnemy(tw, ep)
@@ -58,7 +62,8 @@ func TestProjectileFireAndMove(t *testing.T) {
 
 func TestTickProjectileHits(t *testing.T) {
 	ep := enemy.NewPool(4)
-	ep.Spawn(100, 0, 10, 60, 1, "normal", nil)
+	e := ep.Spawn(100, 0, 10, 60, 1, "normal", nil)
+	e.SpawnTimer = 0 // Clear spawn animation so enemy is hittable
 
 	tp := tower.NewPool(1) // empty tower pool (no abilities to resolve)
 
@@ -82,7 +87,8 @@ func TestTickTowerCombatFires(t *testing.T) {
 	tp.Place(0, 0, 100, 100, def)
 
 	ep := enemy.NewPool(4)
-	ep.Spawn(150, 100, 20, 60, 1, "normal", nil)
+	en := ep.Spawn(150, 100, 20, 60, 1, "normal", nil)
+	en.SpawnTimer = 0 // Clear spawn animation so enemy is targetable
 
 	pp := projectile.NewPool(16)
 
@@ -132,8 +138,10 @@ func TestBleedEffect(t *testing.T) {
 		BleedTimer: 2.0, BleedDPS: 10,
 	}
 
-	enemy.TickStatusEffects(e, 1.0) // DotTickInterval=0.5: first tick at 0.5s, damage = 10 DPS * 0.5s = 5
-	if e.HP != 95 {
-		t.Fatalf("expected HP 95 after 1s bleed (one tick of 5 dmg), got %.0f", e.HP)
+	// DoT damage is now deferred to LastDotDmg (applied by pipeline via ProcessDamage).
+	// DotTickInterval=0.5: after 1s, one tick fires with damage = 10 DPS * 0.5s = 5.
+	enemy.TickStatusEffects(e, 1.0)
+	if e.LastDotDmg != 5 {
+		t.Fatalf("expected LastDotDmg 5 after 1s bleed, got %.0f", e.LastDotDmg)
 	}
 }

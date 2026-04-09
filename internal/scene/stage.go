@@ -2245,17 +2245,8 @@ func (s *StageScene) Draw(screen *ebiten.Image) {
 	s.perfTracker.BeginDraw()
 	defer s.perfTracker.EndDraw()
 
-	// AutoPlay 无头优化：没有截图请求时跳过全部渲染，GPU 开销≈0
+	// AutoPlay 无头模式：跳过全部渲染，GPU 开销≈0
 	if s.autoPlayer != nil {
-		fname := s.autoPlayer.ScreenshotRequested()
-		if fname == "" {
-			return // 跳过渲染
-		}
-		// 有截图请求：执行一次完整渲染 → 同步读像素 → 异步保存 PNG
-		s.drawFullScene(screen)
-		if img := readScreenPixels(screen); img != nil {
-			saveImageAsync(img, fname)
-		}
 		return
 	}
 
@@ -3119,11 +3110,6 @@ func towerLightColor(style string) color.RGBA {
 // SetAutoPlayer 注入自动对局驱动器。设为 nil 恢复手动模式。
 func (s *StageScene) SetAutoPlayer(ap AutoPlayer) {
 	s.autoPlayer = ap
-}
-
-// HasPendingScreenshot 检查 autoPlayer 是否有待截图请求（turbo 循环用）。
-func (s *StageScene) HasPendingScreenshot() bool {
-	return s.autoPlayer != nil && s.autoPlayer.HasPendingScreenshot()
 }
 
 // buildAutoPlaySnapshot 构建当前游戏状态快照。
