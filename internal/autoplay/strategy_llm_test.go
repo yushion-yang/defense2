@@ -55,7 +55,7 @@ func TestFilterValid_RejectsInsuffGold(t *testing.T) {
 	s := &LLMStrategy{}
 	state := mockState()
 	state.Gold = 10
-	actions := []Action{{Type: ActionBuild, TowerKey: "laser", Cell: state.BuildCells[0], Row: state.BuildCells[0].Row, Col: state.BuildCells[0].Col}}
+	actions := []Action{{Type: ActionBuild, TowerKey: "basic", Cell: state.BuildCells[0], Row: state.BuildCells[0].Row, Col: state.BuildCells[0].Col}}
 	valid := s.filterValid(actions, state)
 	if len(valid) != 0 {
 		t.Error("should reject build when gold insufficient")
@@ -66,7 +66,7 @@ func TestFilterValid_AcceptsValidBuild(t *testing.T) {
 	s := &LLMStrategy{}
 	state := mockState()
 	state.Gold = 200
-	actions := []Action{{Type: ActionBuild, TowerKey: "laser", Cell: state.BuildCells[0], Row: state.BuildCells[0].Row, Col: state.BuildCells[0].Col}}
+	actions := []Action{{Type: ActionBuild, TowerKey: "basic", Cell: state.BuildCells[0], Row: state.BuildCells[0].Row, Col: state.BuildCells[0].Col}}
 	valid := s.filterValid(actions, state)
 	if len(valid) != 1 {
 		t.Error("should accept valid build")
@@ -78,7 +78,7 @@ func TestFilterValid_RejectsOccupiedCell(t *testing.T) {
 	state := mockState()
 	state.Gold = 200
 	// Build on row=5, col=5 which is NOT in BuildCells
-	actions := []Action{{Type: ActionBuild, TowerKey: "laser", Row: 5, Col: 5}}
+	actions := []Action{{Type: ActionBuild, TowerKey: "basic", Row: 5, Col: 5}}
 	valid := s.filterValid(actions, state)
 	if len(valid) != 0 {
 		t.Error("should reject build on non-available cell")
@@ -122,7 +122,7 @@ func TestLLMStrategy_ShouldDecide_TowersChanged(t *testing.T) {
 	s := &LLMStrategy{}
 	state := mockState()
 	s.snapshot(state)
-	state.Towers = append(state.Towers, TowerInfo{Key: "laser", Row: 1, Col: 2})
+	state.Towers = append(state.Towers, TowerInfo{Key: "basic", Row: 1, Col: 2})
 	if !s.shouldDecide(state) {
 		t.Error("should decide when tower count changes")
 	}
@@ -131,7 +131,7 @@ func TestLLMStrategy_ShouldDecide_TowersChanged(t *testing.T) {
 func TestFilterValid_UpgradeExistingTower(t *testing.T) {
 	s := &LLMStrategy{}
 	state := mockState()
-	state.Towers = []TowerInfo{{Key: "laser", Row: 1, Col: 2}}
+	state.Towers = []TowerInfo{{Key: "basic", Row: 1, Col: 2}}
 	actions := []Action{{Type: ActionUpgrade, Row: 1, Col: 2}}
 	valid := s.filterValid(actions, state)
 	if len(valid) != 1 {
@@ -152,7 +152,7 @@ func TestFilterValid_UpgradeNonExistent(t *testing.T) {
 func TestFilterValid_SellExistingTower(t *testing.T) {
 	s := &LLMStrategy{}
 	state := mockState()
-	state.Towers = []TowerInfo{{Key: "laser", Row: 1, Col: 2}}
+	state.Towers = []TowerInfo{{Key: "basic", Row: 1, Col: 2}}
 	actions := []Action{{Type: ActionSell, Row: 1, Col: 2}}
 	valid := s.filterValid(actions, state)
 	if len(valid) != 1 {
@@ -185,14 +185,14 @@ func TestConvertActions_Build(t *testing.T) {
 	s := &LLMStrategy{}
 	state := mockState()
 	decoded := []decodedAction{
-		{typ: actBuild, towerKey: "laser", row: 1, col: 2},
+		{typ: actBuild, towerKey: "basic", row: 1, col: 2},
 	}
 	actions := s.convertActions(decoded, state)
 	if len(actions) != 1 {
 		t.Fatalf("expected 1 action, got %d", len(actions))
 	}
 	a := actions[0]
-	if a.Type != ActionBuild || a.TowerKey != "laser" || a.Row != 1 || a.Col != 2 {
+	if a.Type != ActionBuild || a.TowerKey != "basic" || a.Row != 1 || a.Col != 2 {
 		t.Errorf("unexpected build action: %+v", a)
 	}
 	// Cell should be filled from BuildCells

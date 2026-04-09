@@ -20,13 +20,12 @@ const ZH = {
   'boss-hive': '虫潮之母', 'boss-shadow': '暗影主宰', 'boss-abyss': '虚空巨兽', 'boss-chaos': '混沌化身',
   'boss-sky': '天空霸主', 'boss-omega': '终焉审判',
   // Tower types
-  basic: '基础塔', laser: '激光塔', freeze: '冰冻塔', targeter: '增益塔',
+  basic: '基础塔', freeze: '冰冻塔', targeter: '增益塔',
   judicator: '裁决塔', poison: '毒素塔', electric: '电击塔', hunter: '猎手塔',
   // Attack modes
   balanced: '均衡', rapid: '速射', sniper: '重炮',
   // Attack styles
-  projectile: '投射物', aura_dot: '范围持续',
-  wideBeam: '宽束', scatter: '散射', charge: '蓄力', spin_aoe: '旋转AOE', pierce: '贯穿',
+  projectile: '投射物', wideBeam: '宽束', scatter: '散射', spin_aoe: '旋转AOE', radial: '环射',
   // Ability types
   bounce: '弹射', stackDamage: '叠加伤害', splash: '溅射',
   distanceDamage: '距离伤害', percentHpDamage: '百分比血量伤害', executionBonus: '斩杀加成',
@@ -89,7 +88,7 @@ async function loadConfig() {
   );
   return {
     enemies: { types: stripMeta(enemies), specialHints: settings.enemies?.specialHints || {} },
-    towers: { types: stripMeta(towers), defaultType: settings.towers?.defaultType || 'laser' },
+    towers: { types: stripMeta(towers), defaultType: settings.towers?.defaultType || 'basic' },
     economy: settings.economy,
     waves: settings.waves,
     difficulty: settings.difficulty,

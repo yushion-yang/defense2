@@ -20,11 +20,6 @@ const (
 	StyleScatter    AttackStyle = "scatter"    // 锥形散射
 	StyleSpinAoE    AttackStyle = "spin_aoe"   // 旋转范围伤害
 	StyleRadial     AttackStyle = "radial"     // 360度环射弹
-
-	// 废弃：保留常量供旧配置兼容，运行时映射到 projectile
-	StyleLaser  AttackStyle = "laser"  // 废弃 → 高弹速 projectile
-	StyleCharge AttackStyle = "charge" // 废弃 → 低攻速 projectile + momentum
-	StyleAuraDot AttackStyle = "aura_dot" // 废弃 → 合并到 spinAoe
 )
 
 // Tower 已放置的塔实体。
@@ -64,12 +59,8 @@ type Tower struct {
 	PotentialSpeed  float64 // JSON potentialAttackSpeed
 
 	// 攻击方式
-	AttackStyleID   AttackStyle // 攻击方式（"projectile"/"laser"/...）
+	AttackStyleID   AttackStyle // 攻击方式（"projectile"/"wideBeam"/...）
 	ProjectileSpeed float64     // 弹射物速度（px/s，0=默认300）
-
-	// Charge 运行时状态（由 handler_charge 管理）
-	ChargeProgress float64 // 蓄力进度 0-1
-	ChargeReady    bool    // 蓄力完成
 
 	// SpinAoE 运行时状态
 	SpinAngle  float64 // 旋转角度（弧度）
@@ -203,12 +194,6 @@ func (t *Tower) ResolveAttackStyle() AttackStyle {
 	default:
 		// bounce/splash/multiTarget/空 → 都用 projectile
 		if t.AttackStyleID != "" {
-			switch t.AttackStyleID {
-			case StyleLaser, StyleCharge:
-				return StyleProjectile
-			case StyleAuraDot:
-				return StyleSpinAoE
-			}
 			return t.AttackStyleID
 		}
 		return StyleProjectile

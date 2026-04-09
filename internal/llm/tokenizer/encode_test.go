@@ -236,8 +236,8 @@ func TestEncode_OneTower(t *testing.T) {
 		MapPixelW: 1200,
 		Towers: []EncodeTower{
 			{
-				Key: "laser", Row: 2, Col: 5,
-				Strength: 35, AttackStyle: "laser",
+				Key: "basic", Row: 2, Col: 5,
+				Strength: 35, AttackStyle: "projectile",
 				HasTarget: true,
 			},
 		},
@@ -248,7 +248,7 @@ func TestEncode_OneTower(t *testing.T) {
 	if !containsToken(tokens, "TWR") {
 		t.Fatalf("expected TWR token, tokens=%v", tokens)
 	}
-	if !containsToken(tokens, "k_laser") {
+	if !containsToken(tokens, "k_basic") {
 		t.Errorf("expected k_laser, tokens=%v", tokens)
 	}
 	if !containsToken(tokens, "R2C5") {
@@ -258,8 +258,8 @@ func TestEncode_OneTower(t *testing.T) {
 	if !containsToken(tokens, "str3") {
 		t.Errorf("expected str3 for strength=35, tokens=%v", tokens)
 	}
-	if !containsToken(tokens, "as_laser") {
-		t.Errorf("expected as_laser, tokens=%v", tokens)
+	if !containsToken(tokens, "as_projectile") {
+		t.Errorf("expected as_projectile, tokens=%v", tokens)
 	}
 	if !containsToken(tokens, "TGTYES") {
 		t.Errorf("expected TGTYES, tokens=%v", tokens)

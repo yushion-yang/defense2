@@ -1,6 +1,5 @@
 // impact_vfx.go — 命中冲击特效系统。
 // 全局对象池，单目标 impact ring + 中心闪光。
-// 由 SpawnChargeImpact 触发（蓄力弹命中时）。
 package render
 
 import (
@@ -17,7 +16,6 @@ type ImpactVFX struct {
 	Life    float64
 	MaxLife float64
 	Active  bool
-	Large   bool           // true=蓄力弹大号特效, false=通用小型特效
 	Color   color.RGBA     // 扩散环颜色
 	Radius  float32        // 最大扩散半径
 }
@@ -32,20 +30,6 @@ func SpawnHitImpact(x, y float64) {
 	spawnImpact(x, y, color.RGBA{R: 255, G: 220, B: 100, A: 200}, 12, 0.15)
 }
 
-// SpawnChargeImpact 在指定位置生成蓄力弹命中特效（大号扩散环）。
-func SpawnChargeImpact(x, y float64) {
-	v := &impactPool[impactCursor]
-	impactCursor = (impactCursor + 1) % maxImpactVFX
-	v.X = x
-	v.Y = y
-	v.Life = 0.25
-	v.MaxLife = 0.25
-	v.Active = true
-	v.Large = true
-	v.Color = color.RGBA{R: 239, G: 68, B: 68, A: 220}
-	v.Radius = 25
-}
-
 // SpawnTypedImpact 根据攻击方式生成对应元素颜色的命中特效。
 func SpawnTypedImpact(x, y float64, attackStyle string) {
 	switch attackStyle {
@@ -53,10 +37,8 @@ func SpawnTypedImpact(x, y float64, attackStyle string) {
 		spawnImpact(x, y, color.RGBA{R: 100, G: 180, B: 255, A: 200}, 8, 0.18)
 	case "spin_aoe", "projectile": // fire/physical — orange
 		spawnImpact(x, y, color.RGBA{R: 255, G: 140, B: 40, A: 200}, 8, 0.15)
-	case "laser", "wideBeam": // energy — purple
+	case "wideBeam": // energy — purple
 		spawnImpact(x, y, color.RGBA{R: 200, G: 100, B: 255, A: 200}, 6, 0.12)
-	case "charge": // keep existing large charge impact
-		SpawnChargeImpact(x, y)
 	default: // warm yellow default
 		spawnImpact(x, y, color.RGBA{R: 255, G: 220, B: 100, A: 200}, 7, 0.15)
 	}
@@ -71,7 +53,6 @@ func spawnImpact(x, y float64, clr color.RGBA, radius float32, life float64) {
 	v.Life = life
 	v.MaxLife = life
 	v.Active = true
-	v.Large = false
 	v.Color = clr
 	v.Radius = radius
 }
@@ -103,34 +84,18 @@ func DrawImpactVFX(screen *ebiten.Image) {
 		cx := float32(v.X)
 		cy := float32(v.Y)
 
-		if v.Large {
-			// 蓄力弹：白色闪光 + 红色大扩散环
-			if alpha > 0.3 {
-				flashR := float32(6 * alpha)
-				draw.FilledCircle(screen, cx, cy, flashR,
-					color.RGBA{R: 254, G: 242, B: 242, A: uint8(255 * alpha)})
-			}
-			ringR := float32(25 * progress)
-			ringW := float32(2.5 * alpha)
-			if ringW < 0.5 {
-				ringW = 0.5
-			}
-			draw.CircleOutline(screen, cx, cy, ringR, ringW,
-				color.RGBA{R: 239, G: 68, B: 68, A: uint8(220 * alpha)})
-		} else {
-			// 通用命中：白色小闪光 + 淡黄扩散环
-			if alpha > 0.4 {
-				flashR := float32(3 * alpha)
-				draw.FilledCircle(screen, cx, cy, flashR,
-					color.RGBA{R: 255, G: 255, B: 240, A: uint8(200 * alpha)})
-			}
-			ringR := float32(12 * progress)
-			ringW := float32(1.5 * alpha)
-			if ringW < 0.3 {
-				ringW = 0.3
-			}
-			draw.CircleOutline(screen, cx, cy, ringR, ringW,
-				color.RGBA{R: 253, G: 224, B: 71, A: uint8(160 * alpha)})
+		// 通用命中：白色小闪光 + 扩散环
+		if alpha > 0.4 {
+			flashR := float32(3 * alpha)
+			draw.FilledCircle(screen, cx, cy, flashR,
+				color.RGBA{R: 255, G: 255, B: 240, A: uint8(200 * alpha)})
 		}
+		ringR := v.Radius * float32(progress)
+		ringW := float32(1.5 * alpha)
+		if ringW < 0.3 {
+			ringW = 0.3
+		}
+		draw.CircleOutline(screen, cx, cy, ringR, ringW,
+			color.RGBA{R: v.Color.R, G: v.Color.G, B: v.Color.B, A: uint8(float64(v.Color.A) * alpha)})
 	}
 }

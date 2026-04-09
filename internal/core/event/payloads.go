@@ -4,7 +4,7 @@ package event
 
 // TowerBuiltPayload 塔建造完成事件载荷。
 type TowerBuiltPayload struct {
-	TowerKey string // 塔类型 ID（如 "laser", "freeze"）
+	TowerKey string // 塔类型 ID（如 "sentinel", "prism"）
 	Cost     int    // 建造花费
 }
 

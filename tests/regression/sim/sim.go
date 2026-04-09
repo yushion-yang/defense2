@@ -75,7 +75,7 @@ func (s *Sim) Step() {
 		tw.Angle = math.Atan2(target.Y-tw.Y, target.X-tw.X)
 
 		switch tw.AttackStyleID {
-		case tower.StyleSpinAoE, tower.StyleAuraDot:
+		case tower.StyleSpinAoE:
 			// AoE damage: hit all enemies in range
 			s.Enemies.Each(func(e *enemy.Enemy) {
 				if e.IsDying() {
@@ -95,7 +95,7 @@ func (s *Sim) Step() {
 					s.Enemies.Kill(e)
 				}
 			})
-		case tower.StyleLaser, tower.StyleWideBeam:
+		case tower.StyleWideBeam:
 			// Direct single-target damage
 			result := combat.ProcessDamage(combat.DamageInput{
 				Target:    target,

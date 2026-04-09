@@ -60,8 +60,6 @@ func (p *Pool) Place(row, col int, cx, cy float64, def TowerDef) *Tower {
 			// 攻击方式
 			t.AttackStyleID = def.AttackStyleID
 			t.ProjectileSpeed = def.ProjectileSpeed
-			t.ChargeProgress = 0
-			t.ChargeReady = false
 			t.SpinAngle = 0
 			t.SpinActive = 0
 			t.AuraPulse = 0
@@ -124,8 +122,6 @@ func (p *Pool) PlaceFromSnapshot(row, col int, cx, cy float64, def TowerDef, sna
 			t.Active = true
 			t.AttackStyleID = def.AttackStyleID
 			t.ProjectileSpeed = def.ProjectileSpeed
-			t.ChargeProgress = 0
-			t.ChargeReady = false
 			t.SpinAngle = 0
 			t.SpinActive = 0
 			t.AuraPulse = 0

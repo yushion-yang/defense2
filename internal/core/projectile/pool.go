@@ -282,38 +282,6 @@ func (p *Pool) FirePenetrate(sx, sy, tx, ty, damage, speed float64, towerKey str
 	p.cursor = (p.cursor + 1) % len(p.projectiles)
 }
 
-// FireCharge 发射一颗蓄力弹。
-func (p *Pool) FireCharge(sx, sy, tx, ty, damage, speed float64, target *enemy.Enemy, towerKey string) {
-	proj := &p.projectiles[p.cursor]
-	if proj.Active {
-		p.Count--
-	}
-	*proj = Projectile{} // 清零
-
-	dx := tx - sx
-	dy := ty - sy
-	dist := math.Hypot(dx, dy)
-	if dist < 1 {
-		dist = 1
-	}
-
-	proj.X = sx
-	proj.Y = sy
-	proj.VX = (dx / dist) * speed
-	proj.VY = (dy / dist) * speed
-	proj.Damage = damage
-	proj.Speed = speed
-	proj.Radius = 8 // 蓄力弹更大
-	proj.Active = true
-	proj.MaxLife = 3.0
-	proj.Life = proj.MaxLife
-	proj.Target = target
-	proj.SourceTowerKey = towerKey
-	proj.ChargeShot = true
-
-	p.Count++
-	p.cursor = (p.cursor + 1) % len(p.projectiles)
-}
 
 // ClearAll 清空所有弹射物（重置对象池）。
 func (p *Pool) ClearAll() {

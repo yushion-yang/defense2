@@ -36,7 +36,6 @@ type Projectile struct {
 
 	ScatterVisual bool    // 散射视觉弹（旧版，不造成伤害）
 	ScatterGroup  int     // 散射组 ID（>0 时为散射弹，同组命中同敌人合并伤害）
-	ChargeShot    bool    // 蓄力弹
 	Angle         float64 // 固定飞行角度（scatter/directional）
 	MaxRange      float64 // 最大飞行距离
 	StartX        float64 // 起始位置 X

@@ -15,7 +15,7 @@ func tokenIDs(v *Vocab, tokens ...string) []int {
 
 func TestDecodeActions_Build(t *testing.T) {
 	v := loadTestVocab(t)
-	actions := DecodeActions(v, tokenIDs(v, "ACT_BUILD", "k_laser", "R1C4"))
+	actions := DecodeActions(v, tokenIDs(v, "ACT_BUILD", "k_basic", "R1C4"))
 
 	if len(actions) != 1 {
 		t.Fatalf("got %d actions, want 1", len(actions))
@@ -24,8 +24,8 @@ func TestDecodeActions_Build(t *testing.T) {
 	if a.Type != ActBuild {
 		t.Errorf("Type = %d, want ActBuild(%d)", a.Type, ActBuild)
 	}
-	if a.TowerKey != "laser" {
-		t.Errorf("TowerKey = %q, want %q", a.TowerKey, "laser")
+	if a.TowerKey != "basic" {
+		t.Errorf("TowerKey = %q, want %q", a.TowerKey, "basic")
 	}
 	if a.Row != 1 || a.Col != 4 {
 		t.Errorf("Row,Col = %d,%d, want 1,4", a.Row, a.Col)
@@ -133,7 +133,7 @@ func TestDecodeActions_Multiple(t *testing.T) {
 func TestDecodeActions_Incomplete(t *testing.T) {
 	v := loadTestVocab(t)
 	// ACT_BUILD needs k_type + grid, but only k_laser follows (no grid)
-	actions := DecodeActions(v, tokenIDs(v, "ACT_BUILD", "k_laser"))
+	actions := DecodeActions(v, tokenIDs(v, "ACT_BUILD", "k_basic"))
 
 	if len(actions) != 0 {
 		t.Errorf("got %d actions, want 0 (incomplete sequence)", len(actions))
@@ -161,7 +161,7 @@ func TestParseGridToken(t *testing.T) {
 		{"R5C11", 5, 11, true},
 		{"R1C4", 1, 4, true},
 		{"", 0, 0, false},
-		{"k_laser", 0, 0, false},
+		{"k_basic", 0, 0, false},
 		{"RC", 0, 0, false},
 		{"R-1C0", 0, 0, false},
 		{"RxCy", 0, 0, false},

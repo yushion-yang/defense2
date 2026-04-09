@@ -102,15 +102,15 @@ func TestLoadVocab_RealFile(t *testing.T) {
 		t.Fatalf("LoadVocab: %v", err)
 	}
 
-	if got := v.Size(); got != 208 {
-		t.Errorf("Size() = %d, want 208", got)
+	if got := v.Size(); got != 205 {
+		t.Errorf("Size() = %d, want 205", got)
 	}
 
 	keyTokens := []string{
 		"PAD", "BOS", "EOS", "SEP",
 		"G0", "ENM", "TWR",
 		"ACT_BUILD", "ACT_WAIT", "ACT_WAVE",
-		"k_laser", "R0C0",
+		"k_basic", "R0C0",
 		"WDN", "w_prince",
 	}
 	for _, tok := range keyTokens {

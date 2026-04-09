@@ -36,9 +36,8 @@ func makeCtx(enemies *enemy.Pool, projs *projectile.Pool, beams *combat.BeamPool
 
 func TestAllHandlersRegistered(t *testing.T) {
 	styles := []tower.AttackStyle{
-		tower.StyleProjectile, tower.StyleLaser, tower.StyleWideBeam,
-		tower.StyleScatter, tower.StyleCharge, tower.StyleSpinAoE,
-		tower.StyleAuraDot,
+		tower.StyleProjectile, tower.StyleWideBeam,
+		tower.StyleScatter, tower.StyleSpinAoE, tower.StyleRadial,
 	}
 	for _, s := range styles {
 		if combat.Get(s) == nil {
@@ -48,13 +47,13 @@ func TestAllHandlersRegistered(t *testing.T) {
 }
 
 func TestSelfManagedStyles(t *testing.T) {
-	selfManaged := []tower.AttackStyle{tower.StyleCharge, tower.StyleSpinAoE, tower.StyleAuraDot}
+	selfManaged := []tower.AttackStyle{tower.StyleSpinAoE}
 	for _, s := range selfManaged {
 		if !combat.IsSelfManaged(s) {
 			t.Errorf("%s should be self-managed", s)
 		}
 	}
-	notSelfManaged := []tower.AttackStyle{tower.StyleProjectile, tower.StyleLaser, tower.StyleWideBeam, tower.StyleScatter}
+	notSelfManaged := []tower.AttackStyle{tower.StyleProjectile, tower.StyleWideBeam, tower.StyleScatter}
 	for _, s := range notSelfManaged {
 		if combat.IsSelfManaged(s) {
 			t.Errorf("%s should NOT be self-managed", s)
@@ -77,33 +76,6 @@ func TestProjectileHandlerFires(t *testing.T) {
 
 	if pool.Count != 1 {
 		t.Errorf("expected 1 projectile, got %d", pool.Count)
-	}
-}
-
-// ── Laser Handler ──
-
-func TestLaserInstantDamage(t *testing.T) {
-	tw := makeTower(tower.StyleLaser, 25, 200, 1)
-	e := makeEnemy(150, 100, 100)
-	pool := projectile.NewPool(16)
-	beams := combat.NewBeamPool()
-	ePool := enemy.NewPool(4)
-	ctx := makeCtx(ePool, pool, beams)
-
-	h := combat.Get(tower.StyleLaser)
-	h.Fire(tw, e, ctx)
-
-	// Laser does instant damage
-	if e.HP != 75 {
-		t.Errorf("expected HP=75, got %f", e.HP)
-	}
-	// Should create a beam visual
-	if beams.Count() != 1 {
-		t.Errorf("expected 1 beam, got %d", beams.Count())
-	}
-	// No projectile created
-	if pool.Count != 0 {
-		t.Errorf("laser should not create projectiles, got %d", pool.Count)
 	}
 }
 
@@ -155,40 +127,6 @@ func TestScatterCreatesVisualProjectiles(t *testing.T) {
 	}
 }
 
-// ── Charge Handler ──
-
-func TestChargeAccumulation(t *testing.T) {
-	tw := makeTower(tower.StyleCharge, 30, 200, 1)
-	tw.AttackSpeed = 0.4 // 2.5 sec to charge
-	ePool := enemy.NewPool(4)
-	ePool.Spawn(150, 100, 500, 50, 1, "normal", nil)
-	pool := projectile.NewPool(16)
-	beams := combat.NewBeamPool()
-	ctx := makeCtx(ePool, pool, beams)
-
-	h := combat.Get(tower.StyleCharge).(combat.TickHandler)
-
-	// Tick for 2 seconds (should not fire yet with attackSpeed=0.4 → chargeTime=2.5s)
-	for i := 0; i < 120; i++ {
-		ctx.DT = 1.0 / 60
-		h.Tick(tw, ctx)
-	}
-	if tw.ChargeReady {
-		t.Error("should not be ready after 2s (needs 2.5s)")
-	}
-
-	// Tick another 1 second (total 3s > 2.5s)
-	for i := 0; i < 60; i++ {
-		ctx.DT = 1.0 / 60
-		h.Tick(tw, ctx)
-	}
-
-	// Should have fired at some point (pool has a projectile)
-	if pool.Count == 0 {
-		t.Error("should have fired a charge projectile")
-	}
-}
-
 // ── SpinAoE Handler ──
 
 func TestSpinAoEDamagesAllInRange(t *testing.T) {
@@ -214,30 +152,6 @@ func TestSpinAoEDamagesAllInRange(t *testing.T) {
 	}
 	if e3.HP < 100 {
 		t.Error("e3 should NOT be damaged (out of range)")
-	}
-}
-
-// ── AuraDot Handler ──
-
-func TestAuraDotDamagesInRange(t *testing.T) {
-	tw := makeTower(tower.StyleAuraDot, 5, 80, 1)
-	ePool := enemy.NewPool(4)
-	e1 := ePool.Spawn(150, 100, 100, 50, 1, "normal", nil) // 50px
-	e2 := ePool.Spawn(300, 100, 100, 50, 1, "normal", nil) // 200px (out)
-
-	pool := projectile.NewPool(16)
-	beams := combat.NewBeamPool()
-	ctx := makeCtx(ePool, pool, beams)
-	ctx.DT = 2.0 // enough to clear cooldown
-
-	h := combat.Get(tower.StyleAuraDot).(combat.TickHandler)
-	h.Tick(tw, ctx)
-
-	if e1.HP >= 100 {
-		t.Error("e1 should be damaged (in range)")
-	}
-	if e2.HP < 100 {
-		t.Error("e2 should NOT be damaged (out of range)")
 	}
 }
 
@@ -271,24 +185,6 @@ func TestScatterProjectileNoDamage(t *testing.T) {
 		}
 		if p.Damage != 0 {
 			t.Errorf("scatter visual damage=%f, want 0", p.Damage)
-		}
-	})
-}
-
-func TestChargeProjectileFlag(t *testing.T) {
-	pool := projectile.NewPool(4)
-	e := &enemy.Enemy{X: 200, Y: 100, Active: true}
-	pool.FireCharge(100, 100, 200, 100, 90, 600, e, "test")
-
-	pool.Each(func(p *projectile.Projectile) {
-		if !p.ChargeShot {
-			t.Error("should be charge shot")
-		}
-		if p.Damage != 90 {
-			t.Errorf("damage=%f, want 90", p.Damage)
-		}
-		if p.Radius != 8 {
-			t.Errorf("radius=%f, want 8 (larger charge projectile)", p.Radius)
 		}
 	})
 }
