@@ -1,0 +1,535 @@
+{
+  "_doc": "Stage 场景中所有 HUD 元素的交互定义",
+  "hudElements": [
+    {
+      "id": "topBar",
+      "name": "顶部信息栏",
+      "description": "屏幕顶部居中的药丸状面板。左侧显示生命/金币/波次/击杀数据，右侧排列操作按钮。",
+      "sourceFile": "internal/render/hud/top_bar.go",
+      "position": "topCenter",
+      "shape": "pill",
+      "alwaysVisible": true,
+      "displayFields": [
+        { "field": "lives", "icon": "heart", "description": "剩余生命值" },
+        { "field": "gold", "icon": "coin", "description": "当前金币" },
+        { "field": "wave", "format": "current/max", "description": "当前波次/总波次" },
+        { "field": "kills", "icon": "skull", "description": "总击杀数" }
+      ],
+      "buttons": [
+        {
+          "id": "start",
+          "label": "动态（倒计时/开始）",
+          "description": "开始下一波。波间歇显示倒计时数字，可点击跳过等待立即开始",
+          "hitTestFn": "TopBarHitTest → 'start'",
+          "action": "startNextWave",
+          "condition": "waveNotActive && notAllWavesDone",
+          "visualState": {
+            "countdown": "显示倒计时秒数",
+            "ready": "显示开始图标"
+          }
+        },
+        {
+          "id": "speed",
+          "label": "速度",
+          "description": "循环切换游戏速度",
+          "hitTestFn": "TopBarHitTest → 'speed'",
+          "action": "cycleSpeed",
+          "speeds": {
+            "normal": [1, 2],
+            "testMode": [1, 2, 3, 10]
+          }
+        },
+        {
+          "id": "menu",
+          "label": "菜单",
+          "description": "打开暂停菜单",
+          "hitTestFn": "TopBarHitTest → 'menu'",
+          "action": "openPauseMenu → modePaused"
+        },
+        {
+          "id": "spawn",
+          "label": "造怪",
+          "description": "切换造怪菜单（仅测试模式显示）",
+          "hitTestFn": "TopBarHitTest → 'spawn'",
+          "action": "toggleSpawnMenu",
+          "condition": "testMode == true"
+        },
+        {
+          "id": "debug",
+          "label": "调试",
+          "description": "切换调试操作面板（仅测试模式显示）",
+          "hitTestFn": "TopBarHitTest → 'debug'",
+          "action": "toggleDebugPanel",
+          "condition": "testMode == true"
+        },
+        {
+          "id": "screenshot",
+          "label": "截图",
+          "description": "截取当前屏幕",
+          "hitTestFn": "TopBarHitTest → 'screenshot'",
+          "action": "takeScreenshot"
+        }
+      ]
+    },
+    {
+      "id": "actionBar",
+      "name": "底部操作栏",
+      "description": "屏幕底部居中的药丸状面板。包含造塔和道具两个主要操作按钮。",
+      "sourceFile": "internal/render/hud/action_bar.go",
+      "position": "bottomCenter",
+      "shape": "pill",
+      "alwaysVisible": true,
+      "buttons": [
+        {
+          "id": "build",
+          "label": "造塔",
+          "description": "切换造塔菜单。激活时按钮颜色变化。",
+          "hitTestFn": "ActionBarHitTest → 'build'",
+          "action": "toggleBuildMenu",
+          "visualState": {
+            "active": "按钮颜色变为高亮",
+            "inactive": "默认颜色"
+          }
+        },
+        {
+          "id": "items",
+          "label": "道具",
+          "description": "切换道具面板。右上角显示道具数量角标。无道具时点击触发抖动动画。",
+          "hitTestFn": "ActionBarHitTest → 'items'",
+          "action": "toggleItemPanel",
+          "condition": "inventoryCount > 0",
+          "badge": "道具总数量",
+          "disabledBehavior": {
+            "trigger": "inventoryCount == 0",
+            "effect": "TriggerDisabledShake() — 按钮微抖动动画",
+            "system": "ui.ButtonState 状态机"
+          }
+        }
+      ]
+    },
+    {
+      "id": "buildMenu",
+      "name": "造塔菜单",
+      "description": "居中面板，ActionBar 上方。5列网格排列塔卡片。分为可建造卡和变种展示卡。",
+      "sourceFile": "internal/render/hud/build_menu.go",
+      "position": "centerAboveActionBar",
+      "layout": "5-column grid",
+      "visibleInMode": "modeBuildMenu",
+      "cardTypes": {
+        "buildable": {
+          "description": "可建造的塔，显示精灵图标+名称+费用",
+          "interactive": true,
+          "hoverTooltip": "塔名 + 角色标签 + 费用 + 伤害/攻速/射程图标数值"
+        },
+        "variant": {
+          "description": "变种展示卡（展示未来攻击方式），不可点击",
+          "interactive": false,
+          "hoverTooltip": "塔名 + 能力描述文字"
+        }
+      },
+      "interactions": [
+        {
+          "trigger": "tap",
+          "target": "buildableCard",
+          "hitTestFn": "BuildMenuHitTest → cardIndex (≥0)",
+          "action": "selectTowerType → modeBuildPlace"
+        },
+        {
+          "trigger": "tap",
+          "target": "closeButton",
+          "hitTestFn": "BuildMenuHitTest → -2",
+          "action": "closeBuildMenu → modeIdle",
+          "position": "topRight",
+          "label": "关闭"
+        },
+        {
+          "trigger": "hover",
+          "target": "anyCard",
+          "hitTestFn": "BuildMenuHoverTest → cardIndex",
+          "action": "showTooltip",
+          "tooltipPosition": "abovePanel",
+          "tracked": "buildHoverIdx"
+        }
+      ]
+    },
+    {
+      "id": "infoPanel",
+      "name": "炮塔信息面板",
+      "description": "选中炮塔时底部弹出。内容驱动高度，显示属性/能力/buff 详情。含升级、出售、能力选择按钮。",
+      "sourceFile": "internal/render/hud/info_panel.go",
+      "position": "bottomCenterAboveActionBar",
+      "visibleInMode": "modeTowerSel",
+      "displaySections": [
+        { "section": "header", "content": "塔名 + 强度数值" },
+        { "section": "stats", "content": "伤害/攻速/射程 三段式图标条" },
+        { "section": "attackStyle", "content": "攻击方式名称" },
+        { "section": "abilities", "content": "已装备能力列表 + 描述" },
+        { "section": "buffs", "content": "当前 buff 状态列表" }
+      ],
+      "interactions": [
+        {
+          "id": "abilityBtn",
+          "trigger": "tap",
+          "target": "abilityButton",
+          "label": "选择能力(N)",
+          "hitTestFn": "HitTestAbilityBtn",
+          "action": "openChoicePanel → modeUpgrade",
+          "condition": "pendingAbilities > 0",
+          "style": {
+            "color": "gold (200,160,40)",
+            "hoverColor": "brighter gold (230,190,60)"
+          },
+          "hoverDetection": "DrawInfoPanel 渲染时内联检测 draw.CursorPos()"
+        },
+        {
+          "id": "upgradeBtn",
+          "trigger": "tap",
+          "target": "upgradeButton",
+          "label": "强度+10 $N",
+          "hitTestFn": "InfoPanelUpgradeHitTest",
+          "action": "buyStrengthUpgrade",
+          "condition": "gold >= upgradeCost"
+        },
+        {
+          "id": "sellBtn",
+          "trigger": "tap",
+          "target": "sellButton",
+          "label": "卖N",
+          "hitTestFn": "InfoPanelSellHitTest",
+          "action": "sellTower → modeIdle",
+          "style": { "color": "red" }
+        }
+      ]
+    },
+    {
+      "id": "pauseMenu",
+      "name": "暂停菜单",
+      "description": "全屏半透明遮罩上的居中菜单。4个按钮纵向排列，底部显示快捷键提示。",
+      "sourceFile": "internal/render/hud/pause_menu.go",
+      "position": "center",
+      "overlay": "dimmedFullScreen",
+      "visibleInMode": "modePaused",
+      "interactions": [
+        {
+          "id": "resume",
+          "trigger": "tap",
+          "hitTestFn": "PauseMenuHitTest → 1 (PauseResume)",
+          "label": "继续游戏",
+          "style": { "color": "green" },
+          "action": "resumeGame → prePauseMode"
+        },
+        {
+          "id": "settings",
+          "trigger": "tap",
+          "hitTestFn": "PauseMenuHitTest → 2 (PauseSettings)",
+          "label": "设置",
+          "style": { "color": "gray" },
+          "action": "navigateToSettings"
+        },
+        {
+          "id": "restart",
+          "trigger": "tap",
+          "hitTestFn": "PauseMenuHitTest → 3 (PauseRestart)",
+          "label": "重新开始",
+          "style": { "color": "gold" },
+          "action": "restartStage"
+        },
+        {
+          "id": "quit",
+          "trigger": "tap",
+          "hitTestFn": "PauseMenuHitTest → 4 (PauseQuit)",
+          "label": "返回主菜单",
+          "style": { "color": "red" },
+          "action": "navigateToSelect"
+        }
+      ],
+      "bottomHint": "显示 Esc/P/Space 恢复游戏的快捷键提示"
+    },
+    {
+      "id": "spawnMenu",
+      "name": "造怪菜单",
+      "description": "仅测试模式。全屏半透明遮罩上的居中面板，5列网格排列敌人原型卡片。",
+      "sourceFile": "internal/render/hud/spawn_menu.go",
+      "position": "center",
+      "overlay": "dimmedFullScreen",
+      "layout": "5-column grid",
+      "visibleInMode": "modeSpawnMenu",
+      "condition": "testMode == true",
+      "cardContent": {
+        "icon": "敌人精灵图标",
+        "name": "中文名称",
+        "tags": "boss/elite 标签（如有）",
+        "hp": "生命值数字"
+      },
+      "interactions": [
+        {
+          "trigger": "tap",
+          "target": "enemyCard",
+          "hitTestFn": "SpawnMenuHitTest → cardIndex",
+          "action": "selectEnemyType → modeSpawnPlace"
+        },
+        {
+          "trigger": "hover",
+          "target": "enemyCard",
+          "hitTestFn": "SpawnMenuHoverTest → cardIndex",
+          "action": "showTooltip",
+          "tooltipPosition": "belowPanel",
+          "tooltipContent": "名称 + boss/elite 标签 + HP/速度/半径/击杀奖励图标数值",
+          "tracked": "spawnHoverIdx"
+        }
+      ]
+    },
+    {
+      "id": "choicePanel",
+      "name": "能力选择面板",
+      "description": "居中覆盖层。N 选 1 能力卡片排列。≤5 张单行大卡，>5 张双行小卡。卡片带品质边框色。",
+      "sourceFile": "internal/render/hud/choice_panel.go",
+      "position": "center",
+      "visibleInMode": "modeUpgrade",
+      "layout": {
+        "singleRow": "≤5 选项时，单行大卡片",
+        "dualRow": ">5 选项时，双行网格小卡片"
+      },
+      "cardContent": {
+        "border": "品质颜色（normal/rare/epic）",
+        "label": "能力名称",
+        "description": "能力说明（自动换行）",
+        "tier": "品质标签"
+      },
+      "interactions": [
+        {
+          "trigger": "tap",
+          "target": "choiceCard",
+          "action": "selectAbility → modeTowerSel",
+          "note": "测试模式支持两步选择：OnSelect 回调可再次 Show 面板（先选类别→再选具体能力）"
+        },
+        {
+          "trigger": "tap",
+          "target": "outside",
+          "action": "dismiss → modeTowerSel",
+          "condition": "dismissible == true"
+        },
+        {
+          "trigger": "hover",
+          "target": "choiceCard",
+          "effect": "卡片填充主色 + 边框加粗 (1.5→2.5)",
+          "tracked": "ChoicePanel.hovered"
+        }
+      ]
+    },
+    {
+      "id": "itemPanel",
+      "name": "道具面板",
+      "description": "居中面板，ActionBar 上方。2×3 网格排列道具卡片。按下(非点击)启动拖拽。",
+      "sourceFile": "internal/render/hud/item_panel.go",
+      "position": "centerAboveActionBar",
+      "layout": "2x3 grid",
+      "visibleInMode": "modeItemPanel",
+      "cardContent": {
+        "icon": "属性类型图标 + 彩色背景",
+        "name": "道具名称",
+        "count": "剩余数量 (xN)"
+      },
+      "interactions": [
+        {
+          "id": "startDrag",
+          "trigger": "pressDown",
+          "triggerType": "IsMouseButtonJustPressed|JustPressedTouchIDs",
+          "target": "itemCard",
+          "hitTestFn": "ItemPanelHitTest → cardIndex",
+          "action": "beginDrag → modeItemDrag",
+          "condition": "card.count > 0",
+          "note": "使用 press-down 而非 tap/release，因为拖拽操作需要在按下瞬间启动"
+        }
+      ],
+      "dragRendering": {
+        "fn": "DrawDragItem(screen, x, y, clr, name, kind)",
+        "description": "光标位置显示浮动道具图标"
+      }
+    },
+    {
+      "id": "wavePanel",
+      "name": "波次信息面板",
+      "description": "左侧抽屉式面板，带标签把手。默认收起只显示把手，点击展开显示波次详情。",
+      "sourceFile": "internal/render/hud/wave_panel.go",
+      "position": "leftEdge",
+      "style": "drawer",
+      "alwaysVisible": true,
+      "tabHandle": {
+        "alwaysVisible": true,
+        "content": "N波 + 展开/收起箭头",
+        "hitTestFn": "WavePanelHandleHitTest"
+      },
+      "panelContent": {
+        "waveNumber": "当前波次编号",
+        "enemiesOnField": "场上敌人数量",
+        "nextWavePreview": "下一波预览（数量/boss 标记/敌人类型分布）"
+      },
+      "animation": "slide-out (展开/收起滑动动画)",
+      "interactions": [
+        {
+          "trigger": "tap",
+          "target": "tabHandle",
+          "hitTestFn": "WavePanelHandleHitTest",
+          "action": "togglePanelOpen",
+          "description": "点击标签把手切换面板展开/收起"
+        }
+      ]
+    },
+    {
+      "id": "toggleButtons",
+      "name": "切换按钮",
+      "description": "屏幕边角的小型方形切换按钮。",
+      "sourceFile": "internal/render/hud/toggle_btn.go",
+      "buttons": [
+        {
+          "id": "wardenToggle",
+          "position": "rightBottom",
+          "size": "36x36",
+          "shape": "roundedSquare",
+          "description": "切换战灵信息面板显示/隐藏",
+          "hitTestFn": "ToggleButtonHitTest(px, py, false)",
+          "action": "toggleWardenPanel"
+        }
+      ]
+    },
+    {
+      "id": "wardenPanel",
+      "name": "战灵信息面板",
+      "description": "底部居中（与 InfoPanel 同位置）。仅在 wardenPanelOpen=true 且无炮塔选中时显示。纯展示，不可交互。",
+      "sourceFile": "internal/render/hud/warden_panel.go",
+      "position": "bottomCenter",
+      "interactive": false,
+      "displayContent": "战灵名称/强度/伤害/攻击间隔/攻击描述/特殊能力/成长信息",
+      "visibleCondition": "wardenPanelOpen && mode != modeTowerSel"
+    },
+    {
+      "id": "wardenSelectOverlay",
+      "name": "战灵选择覆盖层",
+      "description": "Stage 内的战前战灵选择覆盖层。全屏遮罩 + 左侧列表 + 右侧详情 + 底部按钮。",
+      "sourceFile": "internal/render/hud/warden_select_overlay.go",
+      "position": "fullScreen",
+      "overlay": "dimmedFullScreen",
+      "visibleInMode": "modeWardenSelect",
+      "interactions": [
+        {
+          "trigger": "tap",
+          "target": "wardenListItem",
+          "action": "选中战灵 → 右侧展示详情"
+        },
+        {
+          "trigger": "tap",
+          "target": "confirmButton",
+          "label": "选择 [Name]",
+          "action": "confirmWarden → modeIdle"
+        },
+        {
+          "trigger": "tap",
+          "target": "skipButton",
+          "label": "不选(纯塔挑战)",
+          "action": "skipWarden → modeIdle"
+        },
+        {
+          "trigger": "tap",
+          "target": "lockedWardenItem",
+          "action": "显示 Toast 解锁条件提示"
+        },
+        {
+          "trigger": "hover",
+          "targets": ["listItem", "confirmButton", "skipButton"],
+          "effect": "背景/颜色变化高亮",
+          "tracked": ["hoverIdx", "hoverConfirm", "hoverSkip"]
+        }
+      ]
+    },
+    {
+      "id": "debugPanel",
+      "name": "调试面板",
+      "description": "仅测试模式。右侧固定宽度面板（190px），可滚动。分区排列调试操作按钮。",
+      "sourceFile": "internal/render/hud/debug_panel.go",
+      "position": "rightSide",
+      "width": 190,
+      "scrollable": true,
+      "condition": "testMode == true",
+      "interactions": [
+        {
+          "trigger": "tap",
+          "target": "actionButton",
+          "hitTestFn": "DebugPanelHitTest → buttonIndex (≥0)",
+          "action": "executeDebugAction",
+          "description": "点击调试按钮执行对应操作"
+        },
+        {
+          "trigger": "tap",
+          "target": "closeButton",
+          "hitTestFn": "DebugPanelHitTest → -2",
+          "action": "closeDebugPanel"
+        },
+        {
+          "trigger": "scroll",
+          "triggerType": "mouseWheel",
+          "action": "scrollContent",
+          "multiplier": 3,
+          "description": "滚轮滚动面板内容",
+          "note": "调试面板打开时拦截滚轮事件，不传递给相机"
+        }
+      ]
+    },
+    {
+      "id": "debugOverlay",
+      "name": "调试信息覆盖层",
+      "description": "F2 切换的性能监控覆盖层。顶部两行文字条，不可交互。",
+      "sourceFile": "internal/render/hud/debug_overlay.go",
+      "position": "topBar",
+      "interactive": false,
+      "toggle": "F2",
+      "displayRows": [
+        { "row": 1, "content": "实体统计：塔/敌人/光束/弹丸数量" },
+        { "row": 2, "content": "性能统计：FPS / Update ms / Draw ms / P99 / GC / Heap" }
+      ]
+    },
+    {
+      "id": "tutorialOverlay",
+      "name": "教程覆盖层",
+      "description": "新手引导步骤。底部居中显示指导文字 + 步骤指示器。部分步骤支持点击推进。",
+      "sourceFile": "internal/render/hud/tutorial_overlay.go",
+      "position": "bottomCenterAboveActionBar",
+      "interactions": [
+        {
+          "trigger": "tap",
+          "target": "anywhere",
+          "action": "advanceStep",
+          "condition": "currentStep.ClickToAdvance == true",
+          "handler": "s.tutorial.ClickAdvance()",
+          "priority": "高于所有其他 tap 处理（在 stage_input.go 中最先检查）",
+          "description": "点击任意位置推进教程到下一步（仅限 ClickToAdvance 步骤）"
+        }
+      ]
+    },
+    {
+      "id": "toast",
+      "name": "提示消息",
+      "description": "居中短暂提示，TopBar 下方。自动 1.5 秒淡出。不可交互。",
+      "sourceFile": "internal/render/hud/toast.go",
+      "position": "centerBelowTopBar",
+      "interactive": false,
+      "duration": 1.5,
+      "fadeOut": true
+    },
+    {
+      "id": "minimap",
+      "name": "小地图",
+      "description": "右下角缩略地图。显示路径/炮塔/敌人/战灵位置。不可交互。",
+      "sourceFile": "internal/render/hud/minimap.go",
+      "position": "bottomRight",
+      "size": { "width": 120, "height": 55 },
+      "interactive": false,
+      "displayElements": [
+        { "element": "pathLines", "color": "gray" },
+        { "element": "towers", "color": "blue", "shape": "dot" },
+        { "element": "enemies", "color": "red", "shape": "dot (boss larger)" },
+        { "element": "warden", "color": "purple", "shape": "dot" }
+      ]
+    }
+  ]
+}

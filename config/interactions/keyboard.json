@@ -1,0 +1,283 @@
+{
+  "_doc": "所有键盘快捷键绑定，按场景和上下文分组",
+  "bindings": {
+    "stage": {
+      "_doc": "Stage 场景（战斗中）的键盘快捷键",
+      "global": [
+        {
+          "key": "F2",
+          "action": "toggleDebugOverlay",
+          "description": "切换调试信息覆盖层（FPS/实体数量/性能指标）",
+          "modeConstraint": "any"
+        },
+        {
+          "key": "1",
+          "action": "setSpeed1x",
+          "description": "设置游戏速度为 1 倍",
+          "modeConstraint": "any"
+        },
+        {
+          "key": "2",
+          "action": "setSpeed2x",
+          "description": "设置游戏速度为 2 倍",
+          "modeConstraint": "any"
+        },
+        {
+          "key": "3",
+          "action": "setSpeed3x",
+          "description": "设置游戏速度为 3 倍",
+          "modeConstraint": "any"
+        }
+      ],
+      "modeSpecific": [
+        {
+          "key": "Escape",
+          "bindings": [
+            {
+              "mode": "modeBuildMenu",
+              "action": "exitBuildMenu",
+              "description": "关闭造塔菜单 → modeIdle"
+            },
+            {
+              "mode": "modeBuildPlace",
+              "action": "cancelBuildPlace",
+              "description": "取消放置 → modeIdle"
+            },
+            {
+              "mode": "modeTowerSel",
+              "action": "deselectTower",
+              "description": "取消选中炮塔 → modeIdle"
+            },
+            {
+              "mode": "modeUpgrade",
+              "action": "closeChoicePanel",
+              "description": "关闭能力选择面板 → modeTowerSel"
+            },
+            {
+              "mode": "modeSpawnMenu",
+              "action": "closeSpawnMenu",
+              "description": "关闭造怪菜单 → modeIdle"
+            },
+            {
+              "mode": "modeSpawnPlace",
+              "action": "cancelSpawnPlace",
+              "description": "退出造怪放置 → modeIdle"
+            },
+            {
+              "mode": "modeItemPanel",
+              "action": "closeItemPanel",
+              "description": "关闭道具面板 → modeIdle"
+            },
+            {
+              "mode": "modeItemDrag",
+              "action": "cancelItemDrag",
+              "description": "取消道具拖拽 → modeItemPanel"
+            },
+            {
+              "mode": "modeWardenSelect",
+              "action": "skipWardenSelect",
+              "description": "跳过战灵选择 → modeIdle"
+            },
+            {
+              "mode": "modePaused",
+              "action": "resumeGame",
+              "description": "恢复游戏 → prePauseMode"
+            },
+            {
+              "mode": "default",
+              "action": "openPauseMenu",
+              "description": "打开暂停菜单 → modePaused"
+            }
+          ]
+        },
+        {
+          "key": "B",
+          "bindings": [
+            {
+              "mode": "modeIdle",
+              "action": "toggleBuildMenu",
+              "description": "打开造塔菜单 → modeBuildMenu"
+            },
+            {
+              "mode": "modeBuildMenu",
+              "action": "toggleBuildMenu",
+              "description": "关闭造塔菜单 → modeIdle"
+            }
+          ]
+        },
+        {
+          "key": "I",
+          "bindings": [
+            {
+              "mode": "modeIdle",
+              "action": "toggleItemPanel",
+              "description": "打开道具面板 → modeItemPanel",
+              "condition": "inventoryCount > 0"
+            },
+            {
+              "mode": "modeItemPanel",
+              "action": "toggleItemPanel",
+              "description": "关闭道具面板 → modeIdle"
+            }
+          ]
+        },
+        {
+          "key": "U",
+          "bindings": [
+            {
+              "mode": "modeTowerSel",
+              "action": "buyStrengthUpgrade",
+              "description": "购买选中炮塔 +10 强度升级",
+              "condition": "gold >= upgradeCost"
+            }
+          ]
+        },
+        {
+          "key": "S",
+          "bindings": [
+            {
+              "mode": "modeIdle",
+              "action": "startNextWave",
+              "description": "手动开始下一波（跳过倒计时）",
+              "condition": "waveNotActive && notAllWavesDone"
+            },
+            {
+              "mode": "modeTowerSel",
+              "action": "startNextWave",
+              "description": "同上，选中炮塔时也可触发"
+            }
+          ]
+        },
+        {
+          "key": "P",
+          "bindings": [
+            {
+              "mode": "notPaused",
+              "action": "openPauseMenu",
+              "description": "打开暂停菜单 → modePaused"
+            },
+            {
+              "mode": "modePaused",
+              "action": "resumeGame",
+              "description": "恢复游戏 → prePauseMode"
+            }
+          ]
+        },
+        {
+          "key": "Space",
+          "bindings": [
+            {
+              "mode": "modePaused",
+              "action": "resumeGame",
+              "description": "恢复游戏 → prePauseMode"
+            }
+          ]
+        },
+        {
+          "key": "Delete",
+          "aliases": ["Backspace"],
+          "bindings": [
+            {
+              "mode": "modeTowerSel",
+              "action": "sellTower",
+              "description": "出售选中的炮塔，回收金币"
+            }
+          ]
+        }
+      ],
+      "testModeOnly": [
+        {
+          "key": "Delete",
+          "aliases": ["Backspace"],
+          "action": "killHoveredEnemy",
+          "description": "击杀光标附近最近的敌人",
+          "condition": "hoveredEnemy != nil && mode != modeTowerSel",
+          "note": "与 modeTowerSel 的 sellTower 共用键位，测试模式下非选塔状态时击杀敌人"
+        },
+        {
+          "key": "D",
+          "action": "toggleDebugPanel",
+          "description": "切换调试操作面板（右侧，含各种调试按钮）"
+        },
+        {
+          "key": "G",
+          "action": "grantGold",
+          "description": "赠送 +500 金币",
+          "amount": 500
+        },
+        {
+          "key": "K",
+          "action": "killAllEnemies",
+          "description": "击杀场上所有敌人"
+        },
+        {
+          "key": "N",
+          "action": "skipToNextWave",
+          "description": "击杀当前所有敌人并立即开始下一波"
+        }
+      ]
+    },
+    "vfxPreview": {
+      "_doc": "VFX 预览场景的键盘快捷键",
+      "bindings": [
+        {
+          "key": "Escape",
+          "action": "returnToTestSelect",
+          "description": "返回测试场景选择界面"
+        },
+        {
+          "key": "Space",
+          "action": "replayEffect",
+          "description": "重播当前选中的特效"
+        },
+        {
+          "key": "1",
+          "action": "setSpeed05x",
+          "description": "设置播放速度为 0.5 倍（慢动作）"
+        },
+        {
+          "key": "2",
+          "action": "setSpeed1x",
+          "description": "设置播放速度为 1.0 倍（正常）"
+        },
+        {
+          "key": "3",
+          "action": "setSpeed2x",
+          "description": "设置播放速度为 2.0 倍（加速）"
+        },
+        {
+          "key": "ArrowUp",
+          "action": "previousEffect",
+          "description": "切换到上一个特效"
+        },
+        {
+          "key": "ArrowDown",
+          "action": "nextEffect",
+          "description": "切换到下一个特效"
+        }
+      ]
+    },
+    "settings": {
+      "_doc": "设置场景的键盘快捷键",
+      "bindings": [
+        {
+          "key": "Escape",
+          "action": "returnToPrevious",
+          "description": "返回上一个场景（选关界面或暂停菜单）"
+        }
+      ]
+    },
+    "title": {
+      "_doc": "标题场景无键盘快捷键，任意点击/触摸进入下一场景",
+      "bindings": []
+    },
+    "select": {
+      "_doc": "选关场景无键盘快捷键",
+      "bindings": []
+    },
+    "result": {
+      "_doc": "结算场景无键盘快捷键",
+      "bindings": []
+    }
+  }
+}

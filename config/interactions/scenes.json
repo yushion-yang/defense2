@@ -1,0 +1,402 @@
+{
+  "_doc": "各非 Stage 场景的完整交互定义（Stage 场景交互在 modes.json + stage-hud.json 中描述）",
+  "scenes": [
+    {
+      "id": "title",
+      "name": "标题场景",
+      "description": "游戏启动首屏。显示游戏标题和动画背景。任意交互进入选关界面。",
+      "sourceFile": "internal/scene/title.go",
+      "interactions": [
+        {
+          "id": "title_tap_anywhere",
+          "trigger": "tap",
+          "triggerType": "mouseLeft|touch",
+          "area": "fullScreen",
+          "description": "点击/触摸屏幕任意位置",
+          "action": "navigateToSelectScene",
+          "actionDetail": "切换到模式选择场景"
+        }
+      ],
+      "hoverEffects": [],
+      "keyboardShortcuts": []
+    },
+    {
+      "id": "select",
+      "name": "模式选择场景",
+      "description": "选择游戏模式（6种）和难度（4级）。居中布局，上方模式卡片网格，下方难度按钮行和开始按钮。",
+      "sourceFile": "internal/scene/select.go",
+      "interactions": [
+        {
+          "id": "select_mode_card",
+          "trigger": "tap",
+          "triggerType": "mouseLeft|touch",
+          "area": "modeCards",
+          "description": "点击游戏模式卡片",
+          "action": "selectMode",
+          "actionDetail": "选中对应模式（campaign/endless/timed/bossRush/challenge/test），卡片高亮",
+          "targets": [
+            { "index": 0, "mode": "campaign", "label": "战役模式" },
+            { "index": 1, "mode": "endless", "label": "无尽模式" },
+            { "index": 2, "mode": "timed", "label": "限时模式" },
+            { "index": 3, "mode": "bossRush", "label": "Boss 突袭" },
+            { "index": 4, "mode": "challenge", "label": "挑战模式" },
+            { "index": 5, "mode": "test", "label": "测试模式" }
+          ]
+        },
+        {
+          "id": "select_difficulty",
+          "trigger": "tap",
+          "triggerType": "mouseLeft|touch",
+          "area": "difficultyButtons",
+          "description": "点击难度按钮",
+          "action": "selectDifficulty",
+          "targets": [
+            { "index": 0, "difficulty": "easy", "label": "简单", "color": "green" },
+            { "index": 1, "difficulty": "normal", "label": "普通", "color": "blue" },
+            { "index": 2, "difficulty": "hard", "label": "困难", "color": "orange" },
+            { "index": 3, "difficulty": "extreme", "label": "极限", "color": "red" }
+          ]
+        },
+        {
+          "id": "select_start",
+          "trigger": "tap",
+          "triggerType": "mouseLeft|touch",
+          "area": "startButton",
+          "description": "点击「开始游戏」按钮",
+          "action": "startGame",
+          "actionDetail": "根据所选模式跳转：campaign→CampaignSelect, test→TestSelect, 其他→Stage"
+        },
+        {
+          "id": "select_settings",
+          "trigger": "tap",
+          "triggerType": "mouseLeft|touch",
+          "area": "settingsButton",
+          "position": "bottomRight",
+          "description": "点击「设置」按钮（右下角）",
+          "action": "navigateToSettings"
+        }
+      ],
+      "hoverEffects": [
+        { "target": "modeCards", "effect": "cardHoverBg 背景色变化", "tracked": "hoverMode" },
+        { "target": "difficultyButtons", "effect": "按钮背景高亮", "tracked": "hoverDiff" },
+        { "target": "startButton", "effect": "greenBtnHover 颜色变化", "tracked": "hoverStart" }
+      ]
+    },
+    {
+      "id": "campaignSelect",
+      "name": "战役选关场景",
+      "description": "选择关卡地图（8张，2×4网格）和难度。未解锁地图显示锁定状态，点击弹出解锁条件提示。",
+      "sourceFile": "internal/scene/campaign_select.go",
+      "interactions": [
+        {
+          "id": "campaign_map_card",
+          "trigger": "tap",
+          "triggerType": "mouseLeft|touch",
+          "area": "mapCards",
+          "layout": "2x4 grid",
+          "description": "点击关卡地图卡片",
+          "action": "selectMap",
+          "actionDetail": "选中地图（高亮）。若未解锁则显示 Toast 提示解锁条件",
+          "condition": {
+            "unlocked": "正常选中",
+            "locked": "显示 Toast 解锁提示，不可选"
+          },
+          "mapCount": 8
+        },
+        {
+          "id": "campaign_difficulty",
+          "trigger": "tap",
+          "triggerType": "mouseLeft|touch",
+          "area": "difficultyButtons",
+          "description": "点击难度按钮",
+          "action": "selectDifficulty",
+          "actionDetail": "同 select 场景的 4 级难度"
+        },
+        {
+          "id": "campaign_start",
+          "trigger": "tap",
+          "triggerType": "mouseLeft|touch",
+          "area": "startButton",
+          "description": "点击「开始游戏」按钮",
+          "action": "startStage",
+          "actionDetail": "用选定的地图+难度创建 Stage 场景"
+        },
+        {
+          "id": "campaign_back",
+          "trigger": "tap",
+          "triggerType": "mouseLeft|touch",
+          "area": "backButton",
+          "position": "topLeft",
+          "description": "点击「← 返回」按钮（左上角）",
+          "action": "navigateToSelect",
+          "actionDetail": "返回模式选择场景"
+        }
+      ],
+      "hoverEffects": [
+        { "target": "mapCards", "effect": "卡片背景高亮", "tracked": "hoverMap" },
+        { "target": "difficultyButtons", "effect": "按钮高亮", "tracked": "hoverDiff" },
+        { "target": "startButton", "effect": "按钮颜色变化", "tracked": "hoverStart" },
+        { "target": "backButton", "effect": "按钮颜色变化", "tracked": "hoverBack" }
+      ]
+    },
+    {
+      "id": "testSelect",
+      "name": "测试场景选择",
+      "description": "选择测试场景。顶部类别标签栏（8个），中部场景卡片网格（5列），底部开始按钮。",
+      "sourceFile": "internal/scene/test_select.go",
+      "interactions": [
+        {
+          "id": "test_category_tab",
+          "trigger": "tap",
+          "triggerType": "mouseLeft|touch",
+          "area": "categoryTabs",
+          "layout": "horizontalRow",
+          "description": "点击类别标签（8个分类）",
+          "action": "filterScenarios",
+          "actionDetail": "按类别筛选场景卡片列表",
+          "tabCount": 8
+        },
+        {
+          "id": "test_scenario_card",
+          "trigger": "tap",
+          "triggerType": "mouseLeft|touch",
+          "area": "scenarioCards",
+          "layout": "5-column grid",
+          "description": "点击测试场景卡片",
+          "action": "selectScenario",
+          "actionDetail": "选中场景（高亮），更新底部开始按钮状态"
+        },
+        {
+          "id": "test_start",
+          "trigger": "tap",
+          "triggerType": "mouseLeft|touch",
+          "area": "startButton",
+          "description": "点击「开始场景」按钮",
+          "action": "startScenario",
+          "actionDetail": "vfx-preview 类型 → VFXPreviewScene，其余 → StageScene(TestMode=true)"
+        },
+        {
+          "id": "test_back",
+          "trigger": "tap",
+          "triggerType": "mouseLeft|touch",
+          "area": "backButton",
+          "position": "topLeft",
+          "description": "点击「← 返回」按钮（左上角）",
+          "action": "navigateToSelect"
+        }
+      ],
+      "hoverEffects": [
+        { "target": "categoryTabs", "effect": "标签次要背景色", "tracked": "hoverTab" },
+        { "target": "scenarioCards", "effect": "卡片浅色背景", "tracked": "hoverIdx" },
+        { "target": "startButton", "effect": "按钮颜色变化", "tracked": "hoverStart" }
+      ]
+    },
+    {
+      "id": "settings",
+      "name": "设置场景",
+      "description": "调整游戏设置。两个音量滑条 + 画质三档按钮 + 返回按钮。设置自动持久化。",
+      "sourceFile": "internal/scene/settings.go",
+      "interactions": [
+        {
+          "id": "settings_sfx_slider",
+          "trigger": "drag",
+          "triggerType": "mouseHold|touchHold",
+          "area": "sfxVolumeSlider",
+          "description": "拖动音效音量滑条",
+          "action": "adjustSFXVolume",
+          "actionDetail": "调整音效音量 0~100%，实时生效，松开后持久化到 settings.json",
+          "inputMethod": "continuous",
+          "note": "使用 IsMouseButtonPressed (持续按住) 而非 JustPressed"
+        },
+        {
+          "id": "settings_bgm_slider",
+          "trigger": "drag",
+          "triggerType": "mouseHold|touchHold",
+          "area": "bgmVolumeSlider",
+          "description": "拖动音乐音量滑条",
+          "action": "adjustBGMVolume",
+          "actionDetail": "调整背景音乐音量 0~100%，实时生效并持久化"
+        },
+        {
+          "id": "settings_quality",
+          "trigger": "tap",
+          "triggerType": "mouseLeft|touch",
+          "area": "qualityButtons",
+          "description": "点击画质按钮（三档）",
+          "action": "setQuality",
+          "targets": [
+            { "level": "high", "label": "高" },
+            { "level": "medium", "label": "中" },
+            { "level": "low", "label": "低" }
+          ],
+          "actionDetail": "切换画质等级，影响粒子数/后处理/渲染细节，持久化"
+        },
+        {
+          "id": "settings_back",
+          "trigger": "tap",
+          "triggerType": "mouseLeft|touch",
+          "area": "backButton",
+          "description": "点击「返回」按钮",
+          "action": "returnToPrevious",
+          "actionDetail": "返回上一个场景（可能是 SelectScene 或 StageScene via 暂停菜单）"
+        }
+      ],
+      "hoverEffects": [],
+      "keyboardShortcuts": [
+        { "key": "Escape", "action": "returnToPrevious" }
+      ]
+    },
+    {
+      "id": "result",
+      "name": "结算场景",
+      "description": "关卡结束后的结算界面。含动画序列：标题弹跳→星级弹出→数据计数→按钮滑入。动画完成后按钮可点。",
+      "sourceFile": "internal/scene/result.go",
+      "animationPhases": [
+        { "phase": 1, "name": "titleBounce", "description": "胜利/失败标题弹跳动画" },
+        { "phase": 2, "name": "starsPopIn", "description": "星级评价弹出（1~3星）" },
+        { "phase": 3, "name": "statsCountUp", "description": "统计数据逐项计数动画" },
+        { "phase": 4, "name": "buttonsSlideUp", "description": "操作按钮从下方滑入" }
+      ],
+      "interactions": [
+        {
+          "id": "result_replay",
+          "trigger": "tap",
+          "triggerType": "mouseLeft|touch",
+          "area": "replayButton",
+          "description": "点击「重玩」按钮",
+          "action": "restartStage",
+          "actionDetail": "用相同配置重新开始关卡",
+          "condition": "animationComplete (interactive == true)"
+        },
+        {
+          "id": "result_select",
+          "trigger": "tap",
+          "triggerType": "mouseLeft|touch",
+          "area": "selectButton",
+          "description": "点击「选关」按钮",
+          "action": "navigateToSelect",
+          "actionDetail": "返回选关界面",
+          "condition": "animationComplete (interactive == true)"
+        }
+      ],
+      "hoverEffects": []
+    },
+    {
+      "id": "wardenSelect",
+      "name": "战灵选择场景（独立场景）",
+      "description": "独立的战灵选择场景（区别于 Stage 内的覆盖层）。左侧可滚动列表，右侧详情面板，底部确认/跳过按钮。",
+      "sourceFile": "internal/scene/warden_select.go",
+      "note": "此场景与 Stage 内的 modeWardenSelect 覆盖层共享相同交互逻辑，但作为独立场景存在",
+      "interactions": [
+        {
+          "id": "warden_list_item",
+          "trigger": "tap",
+          "triggerType": "mouseLeft|touch",
+          "area": "wardenList",
+          "description": "点击左侧列表中的战灵条目",
+          "action": "selectWarden",
+          "actionDetail": "选中该战灵，右侧展示精灵预览/属性/技能/成长详情"
+        },
+        {
+          "id": "warden_confirm",
+          "trigger": "tap",
+          "triggerType": "mouseLeft|touch",
+          "area": "confirmButton",
+          "description": "点击「选择 [Name]」确认按钮",
+          "action": "confirmAndStart",
+          "actionDetail": "确认选择战灵，创建 Stage 场景开始战斗"
+        },
+        {
+          "id": "warden_skip",
+          "trigger": "tap",
+          "triggerType": "mouseLeft|touch",
+          "area": "skipButton",
+          "description": "点击「不选(纯塔挑战)」跳过按钮",
+          "action": "skipAndStart",
+          "actionDetail": "不选战灵，纯塔防模式开始"
+        },
+        {
+          "id": "warden_back",
+          "trigger": "tap",
+          "triggerType": "mouseLeft|touch",
+          "area": "backButton",
+          "position": "topLeft",
+          "description": "点击「← 返回」按钮",
+          "action": "navigateToSelect"
+        }
+      ],
+      "hoverEffects": [
+        { "target": "wardenList", "effect": "深色高亮背景", "tracked": "hoverIdx" },
+        { "target": "confirmButton", "effect": "按钮颜色变化", "tracked": "hoverConfirm" },
+        { "target": "skipButton", "effect": "按钮颜色变化", "tracked": "hoverSkip" }
+      ]
+    },
+    {
+      "id": "vfxPreview",
+      "name": "VFX 预览场景",
+      "description": "特效预览工具。左侧分类目录面板（可滚动），右侧预览画布，底部控制按钮。",
+      "sourceFile": "internal/scene/vfx_preview.go",
+      "interactions": [
+        {
+          "id": "vfx_catalog_item",
+          "trigger": "tap",
+          "triggerType": "mouseLeft|touch",
+          "area": "leftCatalogPanel",
+          "description": "点击左侧目录中的特效条目",
+          "action": "selectAndPlayEffect",
+          "actionDetail": "选中该特效并在右侧画布触发播放"
+        },
+        {
+          "id": "vfx_back",
+          "trigger": "tap",
+          "triggerType": "mouseLeft|touch",
+          "area": "backButton",
+          "description": "点击 Back 控制按钮",
+          "action": "returnToTestSelect"
+        },
+        {
+          "id": "vfx_replay",
+          "trigger": "tap",
+          "triggerType": "mouseLeft|touch",
+          "area": "replayButton",
+          "description": "点击 Replay 控制按钮",
+          "action": "replayCurrentEffect"
+        },
+        {
+          "id": "vfx_speed",
+          "trigger": "tap",
+          "triggerType": "mouseLeft|touch",
+          "area": "speedButtons",
+          "description": "点击速度切换按钮",
+          "targets": [
+            { "speed": 0.5, "label": "0.5x" },
+            { "speed": 1.0, "label": "1x" },
+            { "speed": 2.0, "label": "2x" }
+          ]
+        },
+        {
+          "id": "vfx_auto",
+          "trigger": "tap",
+          "triggerType": "mouseLeft|touch",
+          "area": "autoButton",
+          "description": "点击 Auto 按钮",
+          "action": "toggleAutoReplay",
+          "actionDetail": "切换自动重播开/关"
+        },
+        {
+          "id": "vfx_catalog_scroll",
+          "trigger": "scroll",
+          "triggerType": "mouseWheel",
+          "area": "leftCatalogPanel",
+          "description": "滚轮滚动左侧目录列表",
+          "action": "scrollCatalog"
+        }
+      ],
+      "hoverEffects": [
+        { "target": "catalogCategoryHeaders", "effect": "类别标题高亮", "tracked": "hoverCat" },
+        { "target": "catalogEffectItems", "effect": "条目背景高亮", "tracked": "hoverEffect" }
+      ],
+      "keyboardShortcuts": "见 keyboard.json → vfxPreview"
+    }
+  ]
+}
