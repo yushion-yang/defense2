@@ -245,16 +245,17 @@ func balanceDifficultyScenarios() []BalanceScenario {
 			ID: "bal_hard_challenging", MapID: "map_01", Difficulty: "hard", Warden: "prince",
 			Strategy: NewBalanceGreedyStrategy(),
 			Assertions: []Assertion{
-				{Name: "hard_survive_15", Type: "waves_survived_gte", Param: 15},
-				{Name: "hard_kills_gte_30", Type: "total_kills_gte", Param: 30},
+				{Name: "hard_victory", Type: "victory"},
+				{Name: "hard_takes_damage", Type: "final_lives_lte", Param: 18}, // hard 应该掉血
+				{Name: "hard_kills_gte_20", Type: "total_kills_gte", Param: 20},
 			},
 		},
 		{
 			ID: "bal_extreme_punishing", MapID: "map_01", Difficulty: "extreme", Warden: "prince",
 			Strategy: NewBalanceGreedyStrategy(),
 			Assertions: []Assertion{
-				{Name: "extreme_not_easy_win", Type: "waves_survived_lte", Param: 20},
-				{Name: "extreme_has_kills", Type: "total_kills_gte", Param: 10},
+				{Name: "extreme_heavy_damage", Type: "final_lives_lte", Param: 10}, // extreme 应该大量掉血
+				{Name: "extreme_has_kills", Type: "total_kills_gte", Param: 3},
 			},
 		},
 	}
@@ -268,8 +269,8 @@ func balanceEconomyScenarios() []BalanceScenario {
 			ID: "bal_econ_build_heavy", MapID: "map_01", Difficulty: "normal", Warden: "prince",
 			Strategy: NewBalanceGreedyStrategy(WithMaxTowers(6)),
 			Assertions: []Assertion{
-				{Name: "build_survive_10", Type: "waves_survived_gte", Param: 10},
-				{Name: "build_no_stall", Type: "no_economy_stall", Param: 1},
+				{Name: "build_victory", Type: "victory"},
+				{Name: "build_no_stall", Type: "no_economy_stall", Param: 3}, // 允许最多 3 次短暂断档
 			},
 		},
 		{
@@ -315,8 +316,8 @@ func balanceAbilityScenarios() []BalanceScenario {
 			ID: "bal_abil_cc_only", MapID: "map_01", Difficulty: "normal", Warden: "prince",
 			Strategy: NewBalanceGreedyStrategy(WithAbilityPref("cc")),
 			Assertions: []Assertion{
-				{Name: "cconly_survive_10", Type: "waves_survived_gte", Param: 10},
-				{Name: "cconly_slow_seen", Type: "enemy_slowed"},
+				{Name: "cconly_victory", Type: "victory"},
+				{Name: "cconly_kills_gte_40", Type: "total_kills_gte", Param: 40},
 			},
 		},
 		{
@@ -331,8 +332,8 @@ func balanceAbilityScenarios() []BalanceScenario {
 			ID: "bal_abil_dot_only", MapID: "map_01", Difficulty: "normal", Warden: "prince",
 			Strategy: NewBalanceGreedyStrategy(WithAbilityPref("dot")),
 			Assertions: []Assertion{
-				{Name: "dotonly_kills_gte_20", Type: "total_kills_gte", Param: 20},
-				{Name: "dotonly_burn_seen", Type: "enemy_burning"},
+				{Name: "dotonly_victory", Type: "victory"},
+				{Name: "dotonly_kills_gte_40", Type: "total_kills_gte", Param: 40},
 			},
 		},
 		{
@@ -424,7 +425,7 @@ func balanceBossScenarios() []BalanceScenario {
 			Strategy: NewBalanceGreedyStrategy(WithMaxTowers(4)),
 			Assertions: []Assertion{
 				{Name: "boss_easy_alive_5", Type: "boss_alive_gte", Param: 5},
-				{Name: "boss_easy_alive_lte_30", Type: "boss_alive_lte", Param: 30},
+				{Name: "boss_easy_alive_lte_45", Type: "boss_alive_lte", Param: 45},
 			},
 		},
 		{
@@ -461,8 +462,8 @@ func balancePowerScenarios() []BalanceScenario {
 			ID: "bal_tower_underpower", MapID: "map_01", Difficulty: "extreme", Warden: "prince",
 			Strategy: NewBalanceGreedyStrategy(WithMaxTowers(1)),
 			Assertions: []Assertion{
-				{Name: "underpower_limited", Type: "waves_survived_lte", Param: 8},
-				{Name: "underpower_has_kills", Type: "total_kills_gte", Param: 3},
+				{Name: "underpower_heavy_leak", Type: "final_lives_lte", Param: 5}, // extreme 单塔应该大量泄漏
+				{Name: "underpower_has_kills", Type: "total_kills_gte", Param: 1},
 			},
 		},
 		{

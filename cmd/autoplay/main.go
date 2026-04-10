@@ -41,6 +41,7 @@ func main() {
 	scenarioName := flag.String("scenario", "", "run single scenario by name")
 	seed := flag.Int64("seed", 0, "master random seed (0=use timestamp, same seed = reproducible results)")
 	abilitySweep := flag.Bool("ability-sweep", false, "run all ability-level test scenarios")
+	balanceSweep := flag.Bool("balance-sweep", false, "run all balance test scenarios (26 cases)")
 	marathon := flag.Bool("marathon", false, "run N random games with random map/difficulty/warden/strategy")
 	games := flag.Int("games", 100, "number of games in marathon mode")
 	heapStats := flag.Bool("heap-stats", false, "print heap statistics every 10 games in marathon mode")
@@ -53,7 +54,7 @@ func main() {
 		return
 	}
 
-	orchestrate(*runs, *strategies, *mapID, *difficulty, *warden, *output, *jsonDir, *sweep, *abilitySweep, *scenarioName, *seed, *marathon, *games, *heapStats, *modelPath, *vocabPath)
+	orchestrate(*runs, *strategies, *mapID, *difficulty, *warden, *output, *jsonDir, *sweep, *abilitySweep, *balanceSweep, *scenarioName, *seed, *marathon, *games, *heapStats, *modelPath, *vocabPath)
 }
 
 // ─── 编排模式 ───
@@ -75,7 +76,7 @@ type sessionConfig struct {
 	Seed        int64  `json:"seed"`
 }
 
-func orchestrate(runs int, strategies, mapID, difficulty, warden, output, jsonDir string, sweep, abilitySweep bool, scenarioName string, masterSeed int64, marathon bool, games int, heapStats bool, modelPath, vocabPath string) {
+func orchestrate(runs int, strategies, mapID, difficulty, warden, output, jsonDir string, sweep, abilitySweep, balanceSweep bool, scenarioName string, masterSeed int64, marathon bool, games int, heapStats bool, modelPath, vocabPath string) {
 	// 分离模式: --json-dir 由调用方管理目录结构
 	// 初始化 dataFS（父进程需要读取 ability_tests.json 生成测试计划）
 	config.SetDataFS(&defense2.DataFS)
@@ -104,6 +105,19 @@ func orchestrate(runs int, strategies, mapID, difficulty, warden, output, jsonDi
 	case sweep:
 		cases = autoplay.GenerateTestPlan()
 		log.Printf("Sweep mode: %d test cases", len(cases))
+	case balanceSweep:
+		for _, bs := range autoplay.AllBalanceScenarios() {
+			cases = append(cases, autoplay.TestCase{
+				ID:          bs.ID,
+				MapID:       bs.MapID,
+				Difficulty:  bs.Difficulty,
+				Warden:      bs.Warden,
+				EnemyFilter: bs.EnemyFilter,
+				Strategy:    bs.Strategy,
+				Assertions:  bs.Assertions,
+			})
+		}
+		log.Printf("Balance sweep mode: %d test cases", len(cases))
 	case abilitySweep:
 		for _, name := range autoplay.AbilityScenarioNames() {
 			tc := autoplay.ScenarioCase(name, mapID)
@@ -168,7 +182,7 @@ func orchestrate(runs int, strategies, mapID, difficulty, warden, output, jsonDi
 			cfg.TowerKey = f.TowerKey()
 		}
 
-		runSessionInProcess(cfg)
+		runSessionInProcess(cfg, tc.Assertions)
 		passed++
 
 		// Heap stats every 10 games in marathon mode
@@ -306,7 +320,7 @@ func runSingleSession(cfgJSON string) {
 var gameInitDone bool
 
 // runSessionInProcess 在当前进程内运行单个测试场景（无子进程开销）。
-func runSessionInProcess(cfg sessionConfig) {
+func runSessionInProcess(cfg sessionConfig, extraAssertions []autoplay.Assertion) {
 	autoplay.SeedAll(cfg.Seed)
 	scene.HeadlessMode = true
 
@@ -338,11 +352,16 @@ func runSessionInProcess(cfg sessionConfig) {
 		Warden:     cfg.Warden,
 		Seed:       cfg.Seed,
 	})
-	stratName := strategy.Name()
-	if len(stratName) > 9 && stratName[:9] == "scenario_" {
-		scenName := stratName[9:]
-		if assertions, ok := autoplay.AbilityAssertionsMap()[scenName]; ok {
-			ctrl.SetAssertions(assertions)
+	// 加载断言：优先使用直接传入的断言，其次按场景名查找
+	if len(extraAssertions) > 0 {
+		ctrl.SetAssertions(extraAssertions)
+	} else {
+		stratName := strategy.Name()
+		if len(stratName) > 9 && stratName[:9] == "scenario_" {
+			scenName := stratName[9:]
+			if assertions, ok := autoplay.AbilityAssertionsMap()[scenName]; ok {
+				ctrl.SetAssertions(assertions)
+			}
 		}
 	}
 
@@ -368,6 +387,8 @@ func restoreStrategy(cfg sessionConfig) autoplay.Strategy {
 		return autoplay.NewRandomStrategy(cfg.Seed)
 	case name == "greedy":
 		return autoplay.NewGreedyStrategy()
+	case name == "balance_greedy":
+		return autoplay.NewBalanceGreedyStrategy()
 	case name == "visual_catalog":
 		return autoplay.NewVisualCatalogStrategy()
 	case name == "llm":
