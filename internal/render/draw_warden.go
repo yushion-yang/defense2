@@ -112,11 +112,11 @@ func (wr *WardenRenderer) DrawWarden(screen *ebiten.Image, w *warden.Warden, ani
 	case *wardenTypes.CoreState:
 		drawCoreEffects(screen, &s.WardenState)
 	case *wardenTypes.ChainState:
-		drawChainEffects(screen, s)
+		drawChainEffects(screen, s, animTime)
 	case *wardenTypes.SkystrikeState:
 		drawSkystrikeEffects(screen, s)
 	case *wardenTypes.EnvoyState:
-		drawEnvoyEffects(screen, s)
+		drawEnvoyEffects(screen, s, animTime)
 	}
 
 	// Body sprite（根据精灵原始朝向校正旋转角度）
@@ -200,12 +200,12 @@ func drawCoreEffects(screen *ebiten.Image, s *warden.WardenState) {
 
 // ── 聚能特效：串联电弧 ──
 
-func drawChainEffects(screen *ebiten.Image, s *wardenTypes.ChainState) {
+func drawChainEffects(screen *ebiten.Image, s *wardenTypes.ChainState, animTime float64) {
 	links := make([][4]float64, len(s.ChainLinks))
 	for i, l := range s.ChainLinks {
 		links[i] = [4]float64{l.X1, l.Y1, l.X2, l.Y2}
 	}
-	vfx.DrawChainLinks(screen, links)
+	vfx.DrawChainLinks(screen, links, animTime)
 
 	vfx.DrawShootFlash(screen, float32(s.X), float32(s.Y), s.ShootTimer,
 		color.RGBA{R: 160, G: 80, B: 255, A: 200})
@@ -221,7 +221,7 @@ func drawSkystrikeEffects(screen *ebiten.Image, s *wardenTypes.SkystrikeState) {
 
 // ── 金灵特效：射击闪光 + 施 buff 时短暂金色光束 ──
 
-func drawEnvoyEffects(screen *ebiten.Image, s *wardenTypes.EnvoyState) {
+func drawEnvoyEffects(screen *ebiten.Image, s *wardenTypes.EnvoyState, animTime float64) {
 	vfx.DrawShootFlash(screen, float32(s.X), float32(s.Y), s.ShootTimer,
 		color.RGBA{R: 255, G: 210, B: 80, A: 200})
 
@@ -233,5 +233,5 @@ func drawEnvoyEffects(screen *ebiten.Image, s *wardenTypes.EnvoyState) {
 		return
 	}
 	vfx.DrawGoldBeam(screen, float32(s.X), float32(s.Y),
-		float32(s.BuffedTower.X), float32(s.BuffedTower.Y), 1.0-elapsed/0.6)
+		float32(s.BuffedTower.X), float32(s.BuffedTower.Y), 1.0-elapsed/0.6, animTime)
 }

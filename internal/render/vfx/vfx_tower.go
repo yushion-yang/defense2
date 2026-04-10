@@ -64,13 +64,29 @@ func FirePulseScale(fireAnim float64) float64 {
 
 // ── 建造波纹 ────────────────────────────────────────
 
-// DrawBuildRipple 绘制建造时的白色扩散环。
+// DrawBuildRipple 绘制建造时的多层白色扩散环。
 // progress: 0（刚开始）到 1（结束）。
 func DrawBuildRipple(screen *ebiten.Image, cx, cy float32, progress float64) {
+	// Main ring
 	ringR := float32(10 + 20*progress)
 	ringA := uint8(float64(150) * (1 - progress))
-	draw.CircleOutline(screen, cx, cy, ringR, 2,
-		color.RGBA{255, 255, 255, ringA})
+	draw.CircleOutline(screen, cx, cy, ringR, 2, color.RGBA{255, 255, 255, ringA})
+
+	// Second ring (delayed by 0.15 progress)
+	if progress > 0.15 {
+		p2 := (progress - 0.15) / 0.85
+		r2 := float32(10 + 20*p2)
+		a2 := uint8(float64(100) * (1 - p2))
+		draw.CircleOutline(screen, cx, cy, r2, 1.5, color.RGBA{200, 220, 255, a2})
+	}
+
+	// Third ring (delayed by 0.3)
+	if progress > 0.3 {
+		p3 := (progress - 0.3) / 0.7
+		r3 := float32(10 + 20*p3)
+		a3 := uint8(float64(60) * (1 - p3))
+		draw.CircleOutline(screen, cx, cy, r3, 1, color.RGBA{180, 200, 255, a3})
+	}
 }
 
 // ── 旋转弧刃（spin_aoe） ────────────────────────────
@@ -98,19 +114,24 @@ const towerSpriteSize = 64
 // overflow: 超过基线 100 的力量值。
 func DrawStrengthGlow(screen *ebiten.Image, cx, cy float32, overflow float64, animTime float64) {
 	if overflow >= 50 {
-		ringAlpha := uint8(30 + min(30, int((overflow-50)*0.6)))
-		draw.CircleOutline(screen, cx, cy, float32(towerSpriteSize*0.4), 1,
-			color.RGBA{255, 230, 150, ringAlpha})
+		// Tier 1: warm yellow ring + subtle glow
+		pulse1 := 0.5 + 0.5*math.Sin(animTime*2)
+		ringAlpha := uint8(50 + 20*pulse1)
+		draw.Glow(screen, cx, cy, float32(towerSpriteSize*0.35), float32(towerSpriteSize*0.5), color.RGBA{255, 230, 150, uint8(20 + 10*pulse1)})
+		draw.CircleOutline(screen, cx, cy, float32(towerSpriteSize*0.4), 1.5, color.RGBA{255, 230, 150, ringAlpha})
 	}
 	if overflow >= 100 {
-		draw.CircleOutline(screen, cx, cy, float32(towerSpriteSize*0.48), 1,
-			color.RGBA{255, 220, 100, 50})
+		// Tier 2: orange second ring
+		pulse2 := 0.5 + 0.5*math.Sin(animTime*2.5)
+		ringAlpha2 := uint8(45 + 20*pulse2)
+		draw.CircleOutline(screen, cx, cy, float32(towerSpriteSize*0.5), 1.5, color.RGBA{255, 200, 80, ringAlpha2})
 	}
 	if overflow >= 150 {
-		pulse := 0.5 + 0.5*math.Sin(animTime*3)
-		ringAlpha := uint8(30 + 25*pulse)
-		draw.CircleOutline(screen, cx, cy, float32(towerSpriteSize*0.55), 1,
-			color.RGBA{255, 200, 50, ringAlpha})
+		// Tier 3: bright gold pulsing + strong glow
+		pulse3 := 0.5 + 0.5*math.Sin(animTime*3)
+		ringAlpha3 := uint8(50 + 30*pulse3)
+		draw.Glow(screen, cx, cy, float32(towerSpriteSize*0.45), float32(towerSpriteSize*0.65), color.RGBA{255, 200, 50, uint8(25 + 15*pulse3)})
+		draw.CircleOutline(screen, cx, cy, float32(towerSpriteSize*0.6), 1.5, color.RGBA{255, 200, 50, ringAlpha3})
 	}
 }
 
@@ -118,10 +139,23 @@ func DrawStrengthGlow(screen *ebiten.Image, cx, cy float32, overflow float64, an
 
 // DrawAuraPulse 绘制光环能力的脉冲虚线圈。
 func DrawAuraPulse(screen *ebiten.Image, cx, cy float32, radius float64, clr color.RGBA, animTime float64) {
+	// Main aura ring — much more visible
 	pulse := float32(0.7 + 0.3*math.Sin(animTime*2))
-	a := uint8(float64(25) * float64(pulse))
+	a := uint8(float64(55) * float64(pulse))
 	c := color.RGBA{clr.R, clr.G, clr.B, a}
 	draw.DashedCircle(screen, cx, cy, float32(radius), 1, 6, 4, c)
+
+	// Inner solid ring at 60% radius
+	innerA := uint8(float64(30) * float64(pulse))
+	draw.CircleOutline(screen, cx, cy, float32(radius*0.6), 1, color.RGBA{clr.R, clr.G, clr.B, innerA})
+
+	// 2 orbiting dots at edge
+	for i := 0; i < 2; i++ {
+		angle := animTime*1.5 + float64(i)*math.Pi
+		dotX := cx + float32(radius)*float32(math.Cos(angle))
+		dotY := cy + float32(radius)*float32(math.Sin(angle))
+		draw.FilledCircle(screen, dotX, dotY, 2, color.RGBA{clr.R, clr.G, clr.B, uint8(70 * pulse)})
+	}
 }
 
 // ── Buff 指示圆点 ───────────────────────────────────

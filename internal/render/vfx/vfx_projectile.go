@@ -23,12 +23,12 @@ type TrailPt struct {
 // style: SourceTowerKey，用于视觉类型判定。
 // angle: 飞行方向弧度。
 func DrawProjectileBody(screen *ebiten.Image, cx, cy float32, angle float64, style string, penetrate, scatter bool) {
-	// 速度线（所有弹道通用）
-	const tailLen = 4.0
+	// Velocity tail (all projectiles) — thicker, brighter
+	const tailLen = 8.0
 	tailX := float64(cx) - math.Cos(angle)*tailLen
 	tailY := float64(cy) - math.Sin(angle)*tailLen
-	draw.Line(screen, cx, cy, float32(tailX), float32(tailY), 1,
-		color.RGBA{R: 255, G: 255, B: 255, A: 80}, true)
+	draw.ThickLine(screen, cx, cy, float32(tailX), float32(tailY), 1.5,
+		color.RGBA{R: 255, G: 255, B: 255, A: 120})
 
 	switch {
 	case penetrate:
@@ -36,22 +36,43 @@ func DrawProjectileBody(screen *ebiten.Image, cx, cy float32, angle float64, sty
 		draw.FilledCircle(screen, cx, cy, 3, color.RGBA{R: 220, G: 180, B: 255, A: 230})
 
 	case scatter:
+		// Core circle + short trailing line
 		draw.FilledCircle(screen, cx, cy, 3, color.RGBA{R: 100, G: 180, B: 255, A: 200})
+		scTailX := float64(cx) - math.Cos(angle)*5
+		scTailY := float64(cy) - math.Sin(angle)*5
+		draw.ThickLine(screen, cx, cy, float32(scTailX), float32(scTailY), 1,
+			color.RGBA{R: 100, G: 180, B: 255, A: 140})
 
 	case strings.Contains(style, "sniper"):
 		draw.Glow(screen, cx, cy, theme.ProjSniperR, theme.ProjSniperGlow, theme.ProjSniper)
 
 	case strings.Contains(style, "rapid"):
+		// Front circle + trailing circle + halo
 		draw.FilledCircle(screen, cx, cy, theme.ProjDefaultR, theme.ProjRapid)
+		trailCx := cx - float32(math.Cos(angle)*3)
+		trailCy := cy - float32(math.Sin(angle)*3)
+		draw.FilledCircle(screen, trailCx, trailCy, theme.ProjDefaultR*0.6,
+			color.RGBA{R: theme.ProjRapid.R, G: theme.ProjRapid.G, B: theme.ProjRapid.B, A: 160})
+		draw.Glow(screen, cx, cy, theme.ProjDefaultR, theme.ProjDefaultR+4,
+			color.RGBA{R: theme.ProjRapid.R, G: theme.ProjRapid.G, B: theme.ProjRapid.B, A: 60})
 
 	case strings.Contains(style, "freeze"):
 		draw.DiamondRotated(screen, cx, cy, theme.ProjDefaultR+1, 1.5, angle, theme.ProjFreeze)
 
 	case strings.Contains(style, "wind"):
+		// Center circle + 2 static arc swirls
 		draw.FilledCircle(screen, cx, cy, theme.ProjDefaultR, theme.ProjWind)
+		arcR := float32(theme.ProjDefaultR + 2)
+		sweepHalf := float32(0.2) // half of 0.4 rad sweep
+		a1 := float32(angle) + math.Pi/3
+		draw.Arc(screen, cx, cy, arcR, a1-sweepHalf, a1+sweepHalf, 1,
+			color.RGBA{R: theme.ProjWind.R, G: theme.ProjWind.G, B: theme.ProjWind.B, A: 140})
+		a2 := float32(angle) + math.Pi + math.Pi/3
+		draw.Arc(screen, cx, cy, arcR, a2-sweepHalf, a2+sweepHalf, 1,
+			color.RGBA{R: theme.ProjWind.R, G: theme.ProjWind.G, B: theme.ProjWind.B, A: 140})
 
 	default:
-		draw.Glow(screen, cx, cy, theme.ProjDefaultR, theme.ProjDefaultGlow, theme.ProjDefault)
+		draw.Glow(screen, cx, cy, 3, 10, theme.ProjDefault)
 	}
 }
 
@@ -62,17 +83,53 @@ func DrawProjectileTrail(screen *ebiten.Image, trail []TrailPt, cursor int, base
 	if n == 0 {
 		return
 	}
+
+	// Track previous active point for connecting lines
+	var prevX, prevY float32
+	var prevActive bool
+	var prevAlpha uint8
+	var prevR float32
+
 	for i := 0; i < n; i++ {
 		idx := (cursor + i) % n
 		pt := trail[idx]
 		if !pt.Active {
+			prevActive = false
 			continue
 		}
 		frac := float64(i+1) / float64(n)
-		alpha := uint8(80 * frac)
+		alpha := uint8(140 * frac)
 		r := float32(theme.ProjDefaultR) * float32(0.3+0.7*frac)
 		clr := color.RGBA{R: baseClr.R, G: baseClr.G, B: baseClr.B, A: alpha}
-		draw.FilledCircle(screen, float32(pt.X), float32(pt.Y), r, clr)
+
+		curX := float32(pt.X)
+		curY := float32(pt.Y)
+
+		// Connect adjacent active points with a thick line
+		if prevActive {
+			lineAlpha := prevAlpha
+			if alpha < lineAlpha {
+				lineAlpha = alpha
+			}
+			lineClr := color.RGBA{R: baseClr.R, G: baseClr.G, B: baseClr.B, A: lineAlpha}
+			lineW := prevR * 0.8
+			if lineW < 0.5 {
+				lineW = 0.5
+			}
+			draw.ThickLine(screen, prevX, prevY, curX, curY, lineW, lineClr)
+		}
+
+		draw.FilledCircle(screen, curX, curY, r, clr)
+
+		// Newest point highlight glow
+		if i == n-1 {
+			draw.Glow(screen, curX, curY, r*0.5, r*1.5, clr)
+		}
+
+		prevX, prevY = curX, curY
+		prevAlpha = alpha
+		prevR = r
+		prevActive = true
 	}
 }
 

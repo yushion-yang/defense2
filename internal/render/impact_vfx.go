@@ -4,6 +4,7 @@ package render
 
 import (
 	"image/color"
+	"math"
 
 	"defense2/internal/render/draw"
 
@@ -29,13 +30,13 @@ var impactCursor int
 func SpawnTypedImpact(x, y float64, attackStyle string) {
 	switch attackStyle {
 	case "scatter": // ice — blue
-		spawnImpact(x, y, color.RGBA{R: 100, G: 180, B: 255, A: 200}, 8, 0.18)
+		spawnImpact(x, y, color.RGBA{R: 100, G: 180, B: 255, A: 200}, 8, 0.30)
 	case "spin_aoe", "projectile": // fire/physical — orange
-		spawnImpact(x, y, color.RGBA{R: 255, G: 140, B: 40, A: 200}, 8, 0.15)
+		spawnImpact(x, y, color.RGBA{R: 255, G: 140, B: 40, A: 200}, 8, 0.25)
 	case "wideBeam": // energy — purple
-		spawnImpact(x, y, color.RGBA{R: 200, G: 100, B: 255, A: 200}, 6, 0.12)
+		spawnImpact(x, y, color.RGBA{R: 200, G: 100, B: 255, A: 200}, 6, 0.20)
 	default: // warm yellow default
-		spawnImpact(x, y, color.RGBA{R: 255, G: 220, B: 100, A: 200}, 7, 0.15)
+		spawnImpact(x, y, color.RGBA{R: 255, G: 220, B: 100, A: 200}, 7, 0.25)
 	}
 }
 
@@ -86,18 +87,37 @@ func DrawImpactVFX(screen *ebiten.Image) {
 		cx := float32(v.X)
 		cy := float32(v.Y)
 
-		// 通用命中：白色小闪光 + 扩散环
-		if alpha > 0.4 {
-			flashR := float32(3 * alpha)
+		// White center flash — larger, lingers longer
+		if alpha > 0.5 {
+			flashR := float32(5 * alpha)
 			draw.FilledCircle(screen, cx, cy, flashR,
 				color.RGBA{R: 255, G: 255, B: 240, A: uint8(200 * alpha)})
 		}
-		ringR := v.Radius * float32(progress)
+
+		// Expanding ring — wider radius, thicker stroke
+		ringR := v.Radius * 1.8 * float32(progress)
 		ringW := float32(1.5 * alpha)
 		if ringW < 0.3 {
 			ringW = 0.3
 		}
+		ringAlpha := uint8(float64(v.Color.A) * alpha)
 		draw.CircleOutline(screen, cx, cy, ringR, ringW,
-			color.RGBA{R: v.Color.R, G: v.Color.G, B: v.Color.B, A: uint8(float64(v.Color.A) * alpha)})
+			color.RGBA{R: v.Color.R, G: v.Color.G, B: v.Color.B, A: ringAlpha})
+
+		// 4 spark lines radiating outward
+		sparkAlpha := uint8(float64(ringAlpha) * 0.7)
+		if sparkAlpha > 0 {
+			sparkLen := float32(float64(v.Radius) * progress * 1.5)
+			// Use position as deterministic seed for slight angle offset
+			seed := float64(v.X*7.3 + v.Y*13.7)
+			offset := math.Sin(seed) * 0.3
+			for j := 0; j < 4; j++ {
+				a := float64(j)*math.Pi/2 + offset
+				ex := cx + float32(math.Cos(a))*sparkLen
+				ey := cy + float32(math.Sin(a))*sparkLen
+				draw.Line(screen, cx, cy, ex, ey, 1,
+					color.RGBA{R: v.Color.R, G: v.Color.G, B: v.Color.B, A: sparkAlpha}, true)
+			}
+		}
 	}
 }

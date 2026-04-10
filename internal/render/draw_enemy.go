@@ -183,13 +183,13 @@ func (er *EnemyRenderer) DrawEnemies(screen *ebiten.Image, pool *enemy.Pool, ani
 		// --- Status effect body overlays (subtle, sprite-sized) ---
 		spriteR := float32(enemySpriteSize) / 2
 		if e.IsSlowed() {
-			vfx.DrawSlowOverlay(screen, cx, cy, spriteR)
+			vfx.DrawSlowOverlay(screen, cx, cy, spriteR, animTime)
 		}
 		if e.IsBurning() {
-			vfx.DrawBurnOverlay(screen, cx, cy, spriteR)
+			vfx.DrawBurnOverlay(screen, cx, cy, spriteR, animTime)
 		}
 		if e.Buffs != nil && e.Buffs.Has("poison") {
-			vfx.DrawPoisonOverlay(screen, cx, cy, spriteR)
+			vfx.DrawPoisonOverlay(screen, cx, cy, spriteR, animTime)
 		}
 
 		// --- Stun rotating stars ---
@@ -290,7 +290,7 @@ func (er *EnemyRenderer) DrawEnemies(screen *ebiten.Image, pool *enemy.Pool, ani
 			dots = append(dots, vfx.StatusDot{Color: color.RGBA{R: 255, G: 140, B: 40, A: 255}})
 		}
 		if len(dots) > 0 {
-			vfx.DrawStatusDots(screen, cx, dotY, dots)
+			vfx.DrawStatusDots(screen, cx, dotY, dots, animTime)
 		}
 
 		// --- 能力常驻视觉（被沉默时全部隐藏）---
@@ -298,9 +298,9 @@ func (er *EnemyRenderer) DrawEnemies(screen *ebiten.Image, pool *enemy.Pool, ani
 			// 免疫脚环（只显示天生能力，净化临时免疫用白色微光）
 			footR := float32(e.Radius) + 2
 			if hasAbility(e, "ccImmune") {
-				vfx.DrawImmunityRing(screen, cx, cy, footR, color.RGBA{R: 220, G: 60, B: 60, A: 80})
+				vfx.DrawImmunityRing(screen, cx, cy, footR, color.RGBA{R: 220, G: 60, B: 60, A: 80}, animTime)
 			} else if hasAbility(e, "slowImmune") {
-				vfx.DrawImmunityRing(screen, cx, cy, footR, color.RGBA{R: 60, G: 180, B: 200, A: 80})
+				vfx.DrawImmunityRing(screen, cx, cy, footR, color.RGBA{R: 60, G: 180, B: 200, A: 80}, animTime)
 			}
 
 			// 盾牌叠加（能力对应颜色盾牌）

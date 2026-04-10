@@ -12,6 +12,7 @@ import (
 	"defense2/internal/core/game"
 	"defense2/internal/render"
 	"defense2/internal/render/draw"
+	"defense2/internal/render/easing"
 	"defense2/internal/render/theme"
 
 	"github.com/hajimehoshi/ebiten/v2"
@@ -302,10 +303,10 @@ func victoryTitleScale(t float64) float64 {
 	// Two-phase: 0→0.7 = scale 0.5→1.1, 0.7→1.0 = scale 1.1→1.0
 	if t < 0.7 {
 		p := t / 0.7
-		return 0.5 + 0.6*easeOutQuad(p) // 0.5 → 1.1
+		return 0.5 + 0.6*easing.EaseOutQuad(p) // 0.5 → 1.1
 	}
 	p := (t - 0.7) / 0.3
-	return 1.1 - 0.1*easeOutQuad(p) // 1.1 → 1.0
+	return 1.1 - 0.1*easing.EaseOutQuad(p) // 1.1 → 1.0
 }
 
 // ---------------------------------------------------------------------------
@@ -355,10 +356,10 @@ func starPopScale(t float64) float64 {
 	}
 	if t < 0.6 {
 		p := t / 0.6
-		return 1.2 * easeOutQuad(p) // 0 → 1.2
+		return 1.2 * easing.EaseOutQuad(p) // 0 → 1.2
 	}
 	p := (t - 0.6) / 0.4
-	return 1.2 - 0.2*easeOutQuad(p) // 1.2 → 1.0
+	return 1.2 - 0.2*easing.EaseOutQuad(p) // 1.2 → 1.0
 }
 
 // ---------------------------------------------------------------------------
@@ -574,7 +575,7 @@ func (s *ResultScene) drawButtons(screen *ebiten.Image, fm *render.FontManager, 
 	var slideOffset float64
 	if s.phase == resultButtonsPhase {
 		progress := clampF(s.phaseTimer/buttonSlideDur, 0, 1)
-		slideOffset = 50 * (1 - easeOutQuad(progress))
+		slideOffset = 50 * (1 - easing.EaseOutQuad(progress))
 	}
 
 	alpha := 1.0
@@ -605,11 +606,6 @@ func (s *ResultScene) drawButtons(screen *ebiten.Image, fm *render.FontManager, 
 // Animation helpers
 // ---------------------------------------------------------------------------
 
-// easeOutQuad: decelerating ease-out (fast start, slow end).
-func easeOutQuad(t float64) float64 {
-	return 1 - (1-t)*(1-t)
-}
-
 // countUp interpolates from 0 to target using ease-out.
 func countUp(target int, progress float64) int {
 	if progress >= 1 {
@@ -618,7 +614,7 @@ func countUp(target int, progress float64) int {
 	if progress <= 0 {
 		return 0
 	}
-	return int(float64(target) * easeOutQuad(progress))
+	return int(float64(target) * easing.EaseOutQuad(progress))
 }
 
 // clampF clamps a float64 to [lo, hi].

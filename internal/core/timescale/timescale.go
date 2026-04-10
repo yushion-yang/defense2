@@ -1,5 +1,7 @@
 package timescale
 
+import "defense2/internal/render/easing"
+
 // Phase of the slow-mo sequence
 type phase int
 
@@ -64,7 +66,7 @@ func (c *Controller) Update(dt float64) float64 {
 				continue
 			}
 			t := c.elapsed / c.easeInDur
-			c.scale = 1.0 + (c.target-1.0)*easeOutQuad(t)
+			c.scale = 1.0 + (c.target-1.0)*easing.EaseOutQuad(t)
 			return c.scale
 		case phaseHold:
 			c.scale = c.target
@@ -81,7 +83,7 @@ func (c *Controller) Update(dt float64) float64 {
 				return c.scale
 			}
 			t := c.elapsed / c.easeOutDur
-			c.scale = c.target + (1.0-c.target)*easeOutQuad(t)
+			c.scale = c.target + (1.0-c.target)*easing.EaseOutQuad(t)
 			return c.scale
 		}
 	}
@@ -100,8 +102,4 @@ func (c *Controller) Scale() float64 {
 // Active returns true if a slow-mo sequence is in progress.
 func (c *Controller) Active() bool {
 	return c.phase != phaseIdle
-}
-
-func easeOutQuad(t float64) float64 {
-	return t * (2 - t)
 }

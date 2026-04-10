@@ -27,9 +27,9 @@ func whitePixel() *ebiten.Image {
 	return whitePixelImage
 }
 
-// fillPath renders a vector.Path as a solid fill using DrawTriangles with a
+// FillPath renders a vector.Path as a solid fill using DrawTriangles with a
 // white pixel source. This gives us full control over vertex colors.
-func fillPath(screen *ebiten.Image, path *vector.Path, clr color.Color) {
+func FillPath(screen *ebiten.Image, path *vector.Path, clr color.Color) {
 	vs, is := path.AppendVerticesAndIndicesForFilling(nil, nil)
 	if len(vs) == 0 {
 		return
@@ -98,7 +98,7 @@ func roundRectPath(x, y, w, h, radius float32) vector.Path {
 // RoundRect draws a filled rounded rectangle.
 func RoundRect(screen *ebiten.Image, x, y, w, h, radius float32, clr color.Color) {
 	path := roundRectPath(S32(x), S32(y), S32(w), S32(h), S32(radius))
-	fillPath(screen, &path, clr)
+	FillPath(screen, &path, clr)
 }
 
 // StrokeRoundRect draws an outlined rounded rectangle.
@@ -126,7 +126,7 @@ func StrokeRect(screen *ebiten.Image, x, y, w, h, width float32, clr color.Color
 func Pill(screen *ebiten.Image, x, y, w, h float32, clr color.Color) {
 	// Don't double-scale: RoundRect already scales internally.
 	path := roundRectPath(S32(x), S32(y), S32(w), S32(h), S32(h)/2)
-	fillPath(screen, &path, clr)
+	FillPath(screen, &path, clr)
 }
 
 // colorScale converts a color.Color to ebiten.ColorScale for DrawPathOptions.

@@ -364,16 +364,16 @@
           "description": "橙色辉光狙击弹体"
         },
         {
-          "id": "projRapid",
-          "name": "Rapid",
-          "label": "快射弹",
-          "description": "黄绿色小圆快速射击弹体（rapid 塔型）"
-        },
-        {
           "id": "projFreeze",
           "name": "Freeze",
           "label": "冰冻弹",
           "description": "冰蓝色旋转菱形弹体"
+        },
+        {
+          "id": "projRapid",
+          "name": "Rapid",
+          "label": "快射弹",
+          "description": "黄绿色小圆快速射击弹体（rapid 塔型）"
         },
         {
           "id": "projWind",

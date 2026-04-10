@@ -47,6 +47,7 @@ type Pool struct {
 	cursor    int
 	active    int // tracked count of alive particles
 	MaxActive int // quality cap; 0 = unlimited (use MaxParticles)
+	Additive  bool // use additive (BlendLighter) blending instead of default BlendSourceOver
 	vertices  []ebiten.Vertex
 	indices   []uint16
 }
@@ -185,8 +186,12 @@ func (p *Pool) Draw(screen *ebiten.Image) {
 		return
 	}
 
+	blend := ebiten.BlendSourceOver
+	if p.Additive {
+		blend = ebiten.BlendLighter
+	}
 	screen.DrawTriangles(p.vertices, p.indices, getWhitePixel(), &ebiten.DrawTrianglesOptions{
-		Blend: ebiten.BlendSourceOver,
+		Blend: blend,
 	})
 }
 
