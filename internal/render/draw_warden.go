@@ -225,7 +225,7 @@ func drawEnvoyEffects(screen *ebiten.Image, s *wardenTypes.EnvoyState, animTime 
 	vfx.DrawShootFlash(screen, float32(s.X), float32(s.Y), s.ShootTimer,
 		color.RGBA{R: 255, G: 210, B: 80, A: 200})
 
-	if s.BuffedTower == nil || s.BuffExpiry <= 0 {
+	if s.BuffedTower == nil || !s.BuffedTower.Active || s.BuffExpiry <= 0 {
 		return
 	}
 	elapsed := s.BuffDuration - s.BuffExpiry

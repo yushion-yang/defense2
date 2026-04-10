@@ -158,8 +158,12 @@ func chainTowerBuff(w *warden.Warden, s *ChainState, ctx *warden.TickContext) {
 		newBonuses[t] = bonus
 	}
 
-	// 清除已不在场的塔的旧加成
+	// 清除已不在场的塔的旧加成（含已售出的塔）
 	for t := range s.lastBonuses {
+		if !t.Active {
+			delete(s.lastBonuses, t)
+			continue
+		}
 		if _, exists := newBonuses[t]; !exists {
 			t.Buffs.RemoveByID(key)
 			t.Strength.RemoveTemp(key)

@@ -11,6 +11,7 @@ import (
 	"strings"
 
 	"defense2/internal/config"
+	"defense2/internal/core/buff"
 	"defense2/internal/core/strength"
 	"defense2/internal/core/tower"
 	"defense2/internal/render/hud"
@@ -94,11 +95,14 @@ func BuildInfoPanelVM(t *tower.Tower, sellValue int, wavesCleared int, testMode 
 		vm.Abilities = append(vm.Abilities, buildAbilityVM(abType, abTable, effStr))
 	}
 
-	// Buffs
+	// Buffs — skip aura buffs (CatAura) which refresh each frame and would flicker
 	for _, b := range t.Buffs.Active() {
+		if b.Category == buff.CatAura {
+			continue
+		}
 		vm.Buffs = append(vm.Buffs, hud.BuffVM{
 			Source:    b.Source,
-			Desc:      b.ID, // Buff has no Desc field; use ID for now
+			Desc:      buffLabel(b.ID),
 			Remaining: b.Remaining,
 		})
 	}
@@ -229,6 +233,29 @@ func attackStyleLabel(style string) string {
 		return l
 	}
 	return style
+}
+
+// buffLabels maps raw buff IDs to player-friendly Chinese labels.
+var buffLabels = map[string]string{
+	"aura:damageAmp": "增伤光环",
+	"aura:pctDamage": "百分比伤害光环",
+	"aura:pctSpeed":  "攻速光环",
+	"aura:flatRange": "射程光环",
+	"aura:crit":      "暴击光环",
+	"towerStrength":  "强度增益",
+	"stealth":        "隐身",
+	"berserk":        "狂暴",
+	"regen":          "再生",
+	"healAura":       "治疗光环",
+	"speedAura":      "加速光环",
+}
+
+// buffLabel returns a player-friendly label for a buff ID.
+func buffLabel(id string) string {
+	if label, ok := buffLabels[id]; ok {
+		return label
+	}
+	return id // fallback to raw ID
 }
 
 // scaledColor returns the color based on comparison of scaled value vs potential.
