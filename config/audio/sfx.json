@@ -511,7 +511,7 @@
           "note": "常量已定义但未调用"
         },
         {
-          "file": "bounce-hit.wav",
+          "file": "hit-bounce.wav",
           "constant": null,
           "name": "弹跳命中",
           "description": "弹丸弹跳命中额外目标",
