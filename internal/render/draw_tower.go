@@ -78,6 +78,16 @@ func (tr *TowerRenderer) DrawTowers(screen *ebiten.Image, pool *tower.Pool, sele
 		draw.FilledCircle(screen, cx, cy+float32(towerSpriteSize*0.35),
 			float32(float64(towerSpriteSize*0.35)*animScale), color.RGBA{0, 0, 0, shadowAlpha})
 
+		// --- Under-body VFX (drawn BEFORE sprite so they don't obscure it) ---
+		if !t.Selling && t.BuildAnim <= 0 && t.Strength != nil {
+			vfx.DrawStrengthGlow(screen, cx, cy, t.Strength.Overflow(), animTime)
+		}
+		if !t.Selling && t.BuildAnim <= 0 {
+			if auraR, auraClr := towerAuraVisual(t, animTime); auraR > 0 {
+				vfx.DrawAuraPulse(screen, cx, cy, auraR, auraClr, animTime)
+			}
+		}
+
 		// --- Tower body (animated or static, rotated toward target) ---
 		// spin_aoe 不旋转朝向目标
 		rotation := t.Angle + math.Pi/2
@@ -126,18 +136,6 @@ func (tr *TowerRenderer) DrawTowers(screen *ebiten.Image, pool *tower.Pool, sele
 		// --- Spin AoE visual: rotating blade arcs ---
 		if !t.Selling && t.BuildAnim <= 0 && t.AttackStyleID == tower.StyleSpinAoE && t.SpinActive > 0 {
 			vfx.DrawSpinBlades(screen, cx, cy, float32(t.Range), t.SpinAngle, t.SpinActive/0.3)
-		}
-
-		// --- Strength-based visual tiers ---
-		if !t.Selling && t.BuildAnim <= 0 && t.Strength != nil {
-			vfx.DrawStrengthGlow(screen, cx, cy, t.Strength.Overflow(), animTime)
-		}
-
-		// --- Aura radius circle ---
-		if !t.Selling && t.BuildAnim <= 0 {
-			if auraR, auraClr := towerAuraVisual(t, animTime); auraR > 0 {
-				vfx.DrawAuraPulse(screen, cx, cy, auraR, auraClr, animTime)
-			}
 		}
 
 		// --- Buff indicator dots ---
@@ -219,8 +217,9 @@ func (tr *TowerRenderer) getTowerFrame(t *tower.Tower, dt float64) *ebiten.Image
 	if sprKey == "" {
 		sprKey = t.Key
 	}
-	animKey := t.InstanceKey
-	if animKey == "" {
+	// animKey 包含 sprKey 以确保 SpriteKey 变更（如选择能力后）重新加载动画
+	animKey := t.InstanceKey + ":" + sprKey
+	if t.InstanceKey == "" {
 		animKey = sprKey
 	}
 	a, ok := tr.animators[animKey]
