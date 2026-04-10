@@ -4,6 +4,7 @@ package tower
 
 import (
 	"defense2/internal/config"
+	"defense2/internal/core/buff"
 	"defense2/internal/core/enemy"
 	"defense2/internal/core/strength"
 )
@@ -77,7 +78,7 @@ type Tower struct {
 
 	// 战力系统
 	Strength *strength.StrengthData // 战力运行时数据
-	Buffs    []TowerBuff            // 当前生效的 buff 列表（含来源/描述/时长）
+	Buffs    *buff.BuffList          // 当前生效的 buff 列表（统一 BuffList 容器）
 
 	// 属性修饰层（每帧 Phase 1 清零，Phase 2 光环/buff 累加，RecalcStats 统一计算）
 	Mods AttrMods

@@ -347,25 +347,15 @@ func RegisterConfigAbilities(table config.AbilityTable) {
 // applyBuffDisplay 仅在 Tower.Buffs 中添加/更新一条显示记录（不走 Strength）。
 // 用于 critAura 等不通过 Strength 系统的光环。
 func applyBuffDisplay(t *tower.Tower, key, source, desc string) {
-	for i := range t.Buffs {
-		if t.Buffs[i].Key == key {
-			t.Buffs[i].Source = source
-			t.Buffs[i].Desc = desc
-			return
-		}
-	}
-	t.Buffs = append(t.Buffs, tower.TowerBuff{
-		Key: key, Source: source, Desc: desc,
-		Duration: -1, Remaining: -1,
+	// Remove old entry first (refresh), then add new
+	t.Buffs.RemoveByID(key)
+	t.Buffs.Add(buff.Buff{
+		ID: key, Category: buff.CatAura, Source: source,
+		Duration: -1, Remaining: -1, // permanent display marker
 	})
 }
 
 // removeBuffDisplay 移除 Tower.Buffs 中的显示记录（不动 Strength）。
 func removeBuffDisplay(t *tower.Tower, key string) {
-	for i := range t.Buffs {
-		if t.Buffs[i].Key == key {
-			t.Buffs = append(t.Buffs[:i], t.Buffs[i+1:]...)
-			return
-		}
-	}
+	t.Buffs.RemoveByID(key)
 }

@@ -89,10 +89,10 @@ func BuildInfoPanelVM(t *tower.Tower, sellValue int, wavesCleared int, testMode 
 	}
 
 	// Buffs
-	for _, b := range t.Buffs {
+	for _, b := range t.Buffs.Active() {
 		vm.Buffs = append(vm.Buffs, hud.BuffVM{
 			Source:    b.Source,
-			Desc:      b.Desc,
+			Desc:      b.ID, // Buff has no Desc field; use ID for now
 			Remaining: b.Remaining,
 		})
 	}

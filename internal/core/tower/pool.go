@@ -6,6 +6,7 @@ import (
 	"fmt"
 
 	"defense2/internal/config"
+	"defense2/internal/core/buff"
 	"defense2/internal/core/game"
 	"defense2/internal/core/strength"
 )
@@ -66,6 +67,7 @@ func initTower(t *Tower, row, col int, cx, cy float64, def TowerDef) {
 
 	// 战力系统
 	t.Strength = strength.NewStrengthData()
+	t.Buffs = buff.NewDefaultBuffList()
 }
 
 // allocSlot 从池中分配一个空闲槽位，注册到空间索引。池满时返回 nil。

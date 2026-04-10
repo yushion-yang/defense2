@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"math"
 
+	"defense2/internal/core/buff"
 	"defense2/internal/core/enemy"
 	"defense2/internal/core/tower"
 	"defense2/internal/core/warden"
@@ -144,7 +145,8 @@ func applyEnvoyBuff(w *warden.Warden, s *EnvoyState, ctx *warden.TickContext) {
 
 	// 切换目标时，主动移除旧塔的临时 buff
 	if s.BuffedTower != nil && s.BuffedTower != best {
-		s.BuffedTower.RemoveBuff(key)
+		s.BuffedTower.Buffs.RemoveByID(key)
+		s.BuffedTower.Strength.RemoveTemp(key)
 	}
 
 	ensureStrength(best)
@@ -157,14 +159,15 @@ func applyEnvoyBuff(w *warden.Warden, s *EnvoyState, ctx *warden.TickContext) {
 	// 临时 buff = max(0, 强度 - 阈值)
 	tempBonus := w.PerceivedStrength - s.BuffThreshold
 	if tempBonus > 0 {
-		best.ApplyBuff(tower.TowerBuff{
-			Key:       key,
+		best.Buffs.Add(buff.Buff{
+			ID:        key,
+			Category:  buff.CatAura,
 			Source:    "金灵战灵",
-			Desc:      fmt.Sprintf("+%.0f 强度 (%.0fs)", tempBonus, s.BuffDuration),
 			Value:     tempBonus,
 			Duration:  s.BuffDuration,
 			Remaining: s.BuffDuration,
 		})
+		best.Strength.SetTemp(key, tempBonus)
 	}
 
 	// 记录用于渲染

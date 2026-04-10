@@ -2304,7 +2304,7 @@ func (s *StageScene) drawScene(screen *ebiten.Image) {
 
 	// 被 buff 的塔显示强化特效（五角星芒）
 	s.towers.Each(func(t *tower.Tower) {
-		if len(t.Buffs) > 0 {
+		if t.Buffs.Count() > 0 {
 			render.DrawTowerBuffEffect(worldTarget, t, animTime)
 		}
 	})
