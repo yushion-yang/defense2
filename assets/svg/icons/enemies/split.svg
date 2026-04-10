@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <circle cx="32" cy="32" r="30" fill="#1e293b"/>
+  <!-- original circle at top center -->
+  <circle cx="32" cy="20" r="8" fill="none" stroke="#f472b6" stroke-width="3"/>
+  <!-- splitting lines going down-left and down-right -->
+  <line x1="27" y1="26" x2="20" y2="36" stroke="#f472b6" stroke-width="2.5" stroke-linecap="round"/>
+  <line x1="37" y1="26" x2="44" y2="36" stroke="#f472b6" stroke-width="2.5" stroke-linecap="round"/>
+  <!-- two smaller circles at bottom -->
+  <circle cx="20" cy="44" r="6" fill="none" stroke="#f472b6" stroke-width="2.5"/>
+  <circle cx="44" cy="44" r="6" fill="none" stroke="#f472b6" stroke-width="2.5"/>
+</svg>

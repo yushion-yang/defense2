@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <circle cx="32" cy="32" r="30" fill="#1e293b"/>
+  <!-- solid half of figure -->
+  <circle cx="30" cy="22" r="6" fill="none" stroke="#a855f7" stroke-width="2.5"/>
+  <path d="M30 28 L30 42 M30 42 L24 52 M30 42 L36 52 M30 32 L22 38"
+        fill="none" stroke="#a855f7" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+  <!-- ghost/fading half (right side, lower opacity) -->
+  <circle cx="38" cy="22" r="6" fill="none" stroke="#a855f7" stroke-width="2" opacity="0.3"/>
+  <path d="M38 28 L38 42 M38 42 L32 52 M38 42 L44 52 M38 32 L46 38"
+        fill="none" stroke="#a855f7" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" opacity="0.3"/>
+  <!-- dashed midline to show phase split -->
+  <line x1="34" y1="16" x2="34" y2="52" stroke="#a855f7" stroke-width="1.5" stroke-dasharray="3,3" opacity="0.5"/>
+</svg>

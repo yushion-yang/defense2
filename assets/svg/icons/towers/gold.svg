@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <circle cx="32" cy="32" r="30" fill="#1e293b"/>
+  <!-- Coin -->
+  <circle cx="32" cy="32" r="17" fill="#eab308"/>
+  <circle cx="32" cy="32" r="13" fill="none" stroke="#ca8a04" stroke-width="2"/>
+  <!-- G symbol -->
+  <text x="32" y="39" text-anchor="middle" font-family="Arial,sans-serif" font-weight="bold" font-size="22" fill="#1e293b">G</text>
+</svg>

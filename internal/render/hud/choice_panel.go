@@ -4,7 +4,10 @@
 package hud
 
 import (
+	"bytes"
+	"fmt"
 	"image/color"
+	"image/png"
 
 	"defense2/internal/render"
 	"defense2/internal/render/draw"
@@ -18,7 +21,13 @@ type ChoiceOption struct {
 	Label       string      // 选项标签
 	Description string      // 选项描述
 	Tier        string      // 品质（normal/rare/epic）
+	Icon        string      // 图标 key（对应 assets/icons/abilities/{icon}.png）
 	Data        interface{} // 携带数据（调用方自行断言）
+}
+
+// IconReader 图标资源读取接口。
+type IconReader interface {
+	ReadFile(name string) ([]byte, error)
 }
 
 // ChoicePanel 通用选择面板（N 选 1）。
@@ -29,6 +38,8 @@ type ChoicePanel struct {
 	Active      bool                            // 是否激活
 	Dismissible bool                            // 点击外部是否可关闭（默认 false）
 	hovered     int                             // 当前悬停索引(-1=无)
+	assetFS     IconReader                      // 资源文件系统（用于加载图标）
+	iconCache   map[string]*ebiten.Image        // 图标缓存
 }
 
 // 品质颜色映射。
@@ -65,7 +76,7 @@ const cpMaxSingleRow = 5
 func calcLayout(n int) cardLayout {
 	if n <= cpMaxSingleRow {
 		return cardLayout{
-			cardW: 220, cardH: 160, gap: 16, radius: 10, pad: 10,
+			cardW: 220, cardH: 200, gap: 16, radius: 10, pad: 10,
 			cols: n, rows: 1,
 			labelSize: theme.FontLG, descSize: theme.FontXS, tierSize: theme.FontXS,
 		}
@@ -73,7 +84,7 @@ func calcLayout(n int) cardLayout {
 	// 双行网格布局
 	cols := (n + 1) / 2 // 上取整
 	return cardLayout{
-		cardW: 155, cardH: 120, gap: 10, radius: 8, pad: 8,
+		cardW: 155, cardH: 150, gap: 10, radius: 8, pad: 8,
 		cols: cols, rows: 2,
 		labelSize: theme.FontSM, descSize: 9, tierSize: 9,
 	}
@@ -103,8 +114,41 @@ func (l *cardLayout) cardPos(n, i int) (x, y float32) {
 // NewChoicePanel 创建通用选择面板。
 func NewChoicePanel() *ChoicePanel {
 	return &ChoicePanel{
-		hovered: -1,
+		hovered:   -1,
+		iconCache: make(map[string]*ebiten.Image),
 	}
+}
+
+// SetAssetFS 设置资源文件系统（用于加载能力图标）。
+func (p *ChoicePanel) SetAssetFS(fs IconReader) {
+	p.assetFS = fs
+}
+
+// loadIcon 加载并缓存图标。
+func (p *ChoicePanel) loadIcon(key string) *ebiten.Image {
+	if key == "" {
+		return nil
+	}
+	if img, ok := p.iconCache[key]; ok {
+		return img
+	}
+	if p.assetFS == nil {
+		return nil
+	}
+	path := fmt.Sprintf("assets/icons/abilities/%s.png", key)
+	data, err := p.assetFS.ReadFile(path)
+	if err != nil {
+		p.iconCache[key] = nil
+		return nil
+	}
+	decoded, err := png.Decode(bytes.NewReader(data))
+	if err != nil {
+		p.iconCache[key] = nil
+		return nil
+	}
+	img := ebiten.NewImageFromImage(decoded)
+	p.iconCache[key] = img
+	return img
 }
 
 // Show 显示选择面板。
@@ -207,20 +251,30 @@ func (p *ChoicePanel) Draw(screen *ebiten.Image) {
 
 		centerX := float64(cx) + float64(lay.cardW)/2
 
-		// 品质标签（顶部）
-		tierLabelY := float64(cy) + 10
+		// 图标（卡片顶部居中）
+		iconSize := float32(28)
+		if lay.rows > 1 {
+			iconSize = 22
+		}
+		iconY := float64(cy) + 8
+		if icon := p.loadIcon(opt.Icon); icon != nil {
+			draw.Sprite(screen, icon, centerX, iconY+float64(iconSize)/2, float64(iconSize))
+		}
+
+		// 品质标签（图标下方）
+		tierLabelY := iconY + float64(iconSize) + 4
 		tierText := opt.Tier
 		if cn, ok := tierLabels[opt.Tier]; ok {
 			tierText = cn
 		}
 		fm.DrawCenteredText(screen, tierText, centerX, tierLabelY, lay.tierSize, tierClr)
 
-		// 标签（卡片中部偏上）
-		labelY := float64(cy) + 30
+		// 标签
+		labelY := tierLabelY + 14
 		fm.DrawCenteredBoldText(screen, opt.Label, centerX, labelY, lay.labelSize, theme.TextTitle)
 
 		// 描述（卡片下部，自动换行）
-		descY := float64(cy) + 52
+		descY := labelY + 18
 		maxW := float64(lay.cardW - lay.pad*2)
 		drawWrappedText(screen, fm, opt.Description,
 			float64(cx)+float64(lay.pad), descY, maxW, lay.descSize, theme.TextBody)

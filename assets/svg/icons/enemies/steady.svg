@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <circle cx="32" cy="32" r="30" fill="#1e293b"/>
+  <!-- ground line -->
+  <line x1="16" y1="48" x2="48" y2="48" stroke="#67e8f9" stroke-width="3" stroke-linecap="round"/>
+  <!-- boot shape -->
+  <path d="M26 22 L26 42 L22 42 L22 46 L42 46 L42 42 L36 42 L36 22 Z"
+        fill="none" stroke="#67e8f9" stroke-width="3" stroke-linejoin="round"/>
+  <!-- anchor lines on sides -->
+  <line x1="20" y1="44" x2="20" y2="48" stroke="#67e8f9" stroke-width="2" stroke-linecap="round"/>
+  <line x1="44" y1="44" x2="44" y2="48" stroke="#67e8f9" stroke-width="2" stroke-linecap="round"/>
+</svg>

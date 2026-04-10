@@ -728,6 +728,7 @@ func (s *StageScene) openAbilityChoicePanel() {
 			Label:       c.Label,
 			Description: desc,
 			Tier:        "normal",
+			Icon:        c.Icon,
 			Data:        c.Type,
 		}
 	}
@@ -802,6 +803,7 @@ func (s *StageScene) openTestCategoryAbilities(t *tower.Tower, cat int) {
 			Label:       c.Label,
 			Description: desc,
 			Tier:        "normal",
+			Icon:        c.Icon,
 			Data:        c.Type,
 		}
 	}

@@ -61,40 +61,40 @@ import (
 
 // StageScene 游戏主场景，包含所有运行时游戏状态。
 type StageScene struct {
-	switcher       Switcher                     // 场景切换器引用
-	bus            *event.Bus                   // 事件总线（从 Switcher 获取）
-	busSubscribed  bool                         // Bus 订阅是否已完成（延迟到首次 Update）
-	session        *gamemode.Session            // 游戏模式会话
-	modeID         string                       // 模式 ID（用于重玩）
-	diffID         string                       // 难度 ID（用于重玩）
-	frame          int                          // 当前帧计数
-	state          stageState                   // 当前游戏状态（进行中/胜利/失败）
-	gameMap        *gamemap.GameMap             // 运行时地图
-	enemies        *enemy.Pool                  // 敌人对象池
-	spawner        *enemy.Spawner               // 波次出怪管理器
-	towers         *tower.Pool                  // 塔对象池
-	projectiles    *projectile.Pool             // 弹射物对象池
-	beams          *combat.BeamPool             // 光束视觉对象池
-	econ           economy.Config               // 经济配置
-	lives          int                          // 剩余生命值
-	gold           int                          // 当前金币
-	kills          int                          // 累计击杀数
-	towerDefs      []tower.TowerDef             // 可建造的塔类型列表
-	selectedDef    int                          // 当前选中的塔类型索引
-	selectedTower  *tower.Tower                 // 点击选中的塔（显示信息面板+射程）
-	towerRenderer  *render.TowerRenderer        // 塔 SVG 渲染器
-	enemyRenderer  *render.EnemyRenderer        // 敌人 SVG 渲染器
-	wardenRenderer *render.WardenRenderer       // 战灵精灵渲染器
+	switcher         Switcher                     // 场景切换器引用
+	bus              *event.Bus                   // 事件总线（从 Switcher 获取）
+	busSubscribed    bool                         // Bus 订阅是否已完成（延迟到首次 Update）
+	session          *gamemode.Session            // 游戏模式会话
+	modeID           string                       // 模式 ID（用于重玩）
+	diffID           string                       // 难度 ID（用于重玩）
+	frame            int                          // 当前帧计数
+	state            stageState                   // 当前游戏状态（进行中/胜利/失败）
+	gameMap          *gamemap.GameMap             // 运行时地图
+	enemies          *enemy.Pool                  // 敌人对象池
+	spawner          *enemy.Spawner               // 波次出怪管理器
+	towers           *tower.Pool                  // 塔对象池
+	projectiles      *projectile.Pool             // 弹射物对象池
+	beams            *combat.BeamPool             // 光束视觉对象池
+	econ             economy.Config               // 经济配置
+	lives            int                          // 剩余生命值
+	gold             int                          // 当前金币
+	kills            int                          // 累计击杀数
+	towerDefs        []tower.TowerDef             // 可建造的塔类型列表
+	selectedDef      int                          // 当前选中的塔类型索引
+	selectedTower    *tower.Tower                 // 点击选中的塔（显示信息面板+射程）
+	towerRenderer    *render.TowerRenderer        // 塔 SVG 渲染器
+	enemyRenderer    *render.EnemyRenderer        // 敌人 SVG 渲染器
+	wardenRenderer   *render.WardenRenderer       // 战灵精灵渲染器
 	audioMgr         *gameAudio.Manager           // 音效管理器
 	lastCountdownSec int                          // 上一帧的倒计时整秒数（用于去重播放 countdownTick）
-	wardenUnit     *warden.Warden               // 战灵实体（选择前为 nil）
-	wardenOverlay  *hud.WardenSelectOverlay     // 战灵选择覆盖层
-	wardenReady    bool                         // 战灵已选择并激活
-	tutorial       *tutorial.Tutorial           // 新手教程
-	progressMgr    *persistence.ProgressManager // 持久化进度管理器
-	lastWave       int                          // 上一帧的波次号
-	wardenType     string                       // 战灵类型标识（用于重玩传递）
-	wardenCfg      *config.WardenConfig         // 战灵配置（用于面板显示）
+	wardenUnit       *warden.Warden               // 战灵实体（选择前为 nil）
+	wardenOverlay    *hud.WardenSelectOverlay     // 战灵选择覆盖层
+	wardenReady      bool                         // 战灵已选择并激活
+	tutorial         *tutorial.Tutorial           // 新手教程
+	progressMgr      *persistence.ProgressManager // 持久化进度管理器
+	lastWave         int                          // 上一帧的波次号
+	wardenType       string                       // 战灵类型标识（用于重玩传递）
+	wardenCfg        *config.WardenConfig         // 战灵配置（用于面板显示）
 	// 道具系统
 	inventory      *item.Inventory // 道具背包
 	dragItemKind   item.Kind       // 当前拖拽的道具类型
@@ -316,6 +316,7 @@ func NewStageSceneWithOpts(sw Switcher, opts StageOptions) *StageScene {
 	s.qualityAdaptive = game.NewQualityAdaptive()
 	s.waveAnnounce = hud.NewWaveAnnounce()
 	s.choicePanel = hud.NewChoicePanel()
+	s.choicePanel.SetAssetFS(config.GetAssetFS())
 	s.particlePool.MaxActive = game.Settings().MaxParticles
 	s.inventory = item.NewInventory(5)
 
