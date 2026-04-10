@@ -370,16 +370,52 @@
           "description": "冰蓝色旋转菱形弹体"
         },
         {
+          "id": "projRapid",
+          "name": "Rapid",
+          "label": "快射弹",
+          "description": "黄绿色小圆快速射击弹体（rapid 塔型）"
+        },
+        {
+          "id": "projWind",
+          "name": "Wind",
+          "label": "风系弹",
+          "description": "淡绿色小圆风系弹体"
+        },
+        {
           "id": "projDefault",
           "name": "Default",
           "label": "标准弹",
           "description": "暖黄色标准辉光弹体"
         },
         {
-          "id": "projTrail",
-          "name": "Trail",
-          "label": "弹道拖尾",
-          "description": "弹道后方渐隐缩小的历史位置圆点"
+          "id": "projTrailSniper",
+          "name": "Trail Sniper",
+          "label": "狙击拖尾",
+          "description": "橙色渐隐拖尾圆点（狙击弹专用）"
+        },
+        {
+          "id": "projTrailRapid",
+          "name": "Trail Rapid",
+          "label": "快射拖尾",
+          "description": "黄绿色渐隐拖尾圆点（快射弹专用）"
+        },
+        {
+          "id": "projTrailFreeze",
+          "name": "Trail Freeze",
+          "label": "冰冻拖尾",
+          "description": "冰蓝色渐隐拖尾圆点（冰冻弹专用）"
+        },
+        {
+          "id": "projTrailWind",
+          "name": "Trail Wind",
+          "label": "风系拖尾",
+          "description": "浅绿色渐隐拖尾圆点（风系弹专用）"
+        },
+        {
+          "id": "projTrailDefault",
+          "name": "Trail Default",
+          "label": "标准拖尾",
+          "description": "暖黄色渐隐拖尾圆点（默认弹道）"
         }
       ]
     },
@@ -598,6 +634,12 @@
           "name": "BurnOverlay",
           "label": "燃烧橙晕",
           "description": "燃烧时身体中心的橙色辉光"
+        },
+        {
+          "id": "poisonOverlay",
+          "name": "PoisonOverlay",
+          "label": "中毒绿晕",
+          "description": "中毒时身体中心的绿色辉光"
         }
       ]
     },

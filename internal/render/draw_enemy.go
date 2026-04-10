@@ -183,6 +183,9 @@ func (er *EnemyRenderer) DrawEnemies(screen *ebiten.Image, pool *enemy.Pool, ani
 		if e.BurnTimer > 0 {
 			vfx.DrawBurnOverlay(screen, cx, cy, spriteR)
 		}
+		if e.PoisonTimer > 0 {
+			vfx.DrawPoisonOverlay(screen, cx, cy, spriteR)
+		}
 
 		// --- Stun rotating stars ---
 		if e.StunTimer > 0 {

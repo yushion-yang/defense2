@@ -172,3 +172,8 @@ func DrawSlowOverlay(screen *ebiten.Image, cx, cy, spriteR float32) {
 func DrawBurnOverlay(screen *ebiten.Image, cx, cy, spriteR float32) {
 	draw.FilledCircle(screen, cx, cy, spriteR*0.5, color.RGBA{255, 120, 30, 35})
 }
+
+// DrawPoisonOverlay draws green inner glow on poisoned enemy body.
+func DrawPoisonOverlay(screen *ebiten.Image, cx, cy, spriteR float32) {
+	draw.FilledCircle(screen, cx, cy, spriteR*0.5, color.RGBA{80, 200, 40, 30})
+}

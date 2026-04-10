@@ -211,9 +211,15 @@ func (s *VFXPreviewScene) vfxTriggerRegistry() map[string]func(s *VFXPreviewScen
 		"projPenetrate":   func(s *VFXPreviewScene) { s.activateVFX("projPenetrate", 0) },
 		"projScatter":     func(s *VFXPreviewScene) { s.activateVFX("projScatter", 0) },
 		"projSniper":      func(s *VFXPreviewScene) { s.activateVFX("projSniper", 0) },
-		"projFreeze":      func(s *VFXPreviewScene) { s.activateVFX("projFreeze", 0) },
-		"projDefault":     func(s *VFXPreviewScene) { s.activateVFX("projDefault", 0) },
-		"projTrail":       func(s *VFXPreviewScene) { s.activateVFX("projTrail", 0) },
+		"projFreeze":        func(s *VFXPreviewScene) { s.activateVFX("projFreeze", 0) },
+		"projRapid":        func(s *VFXPreviewScene) { s.activateVFX("projRapid", 0) },
+		"projWind":         func(s *VFXPreviewScene) { s.activateVFX("projWind", 0) },
+		"projDefault":      func(s *VFXPreviewScene) { s.activateVFX("projDefault", 0) },
+		"projTrailSniper":  func(s *VFXPreviewScene) { s.activateVFX("projTrailSniper", 0) },
+		"projTrailRapid":   func(s *VFXPreviewScene) { s.activateVFX("projTrailRapid", 0) },
+		"projTrailFreeze":  func(s *VFXPreviewScene) { s.activateVFX("projTrailFreeze", 0) },
+		"projTrailWind":    func(s *VFXPreviewScene) { s.activateVFX("projTrailWind", 0) },
+		"projTrailDefault": func(s *VFXPreviewScene) { s.activateVFX("projTrailDefault", 0) },
 		"fireTrails":      func(s *VFXPreviewScene) { s.activateVFX("fireTrails", 0) },
 		"fireballs":       func(s *VFXPreviewScene) { s.activateVFX("fireballs", 0) },
 		"shootFlash":      func(s *VFXPreviewScene) { s.activateVFX("shootFlash", 0) },
@@ -245,6 +251,7 @@ func (s *VFXPreviewScene) vfxTriggerRegistry() map[string]func(s *VFXPreviewScen
 		"strengthDrain":  func(s *VFXPreviewScene) { s.activateVFX("strengthDrain", 0) },
 		"slowOverlay":    func(s *VFXPreviewScene) { s.activateVFX("slowOverlay", 0) },
 		"burnOverlay":    func(s *VFXPreviewScene) { s.activateVFX("burnOverlay", 0) },
+		"poisonOverlay":  func(s *VFXPreviewScene) { s.activateVFX("poisonOverlay", 0) },
 
 		// Tower UI VFX
 		"upgradeDiamond": func(s *VFXPreviewScene) { s.activateVFX("upgradeDiamond", 0) },
@@ -867,10 +874,28 @@ func (s *VFXPreviewScene) drawActiveVFX(screen *ebiten.Image) {
 	case "projFreeze":
 		s.drawProjFlight(screen, cx, cy, t, "freeze", false, false,
 			color.RGBA{R: 140, G: 220, B: 255, A: 255}, color.RGBA{R: 100, G: 200, B: 255, A: 200})
+	case "projRapid":
+		s.drawProjFlight(screen, cx, cy, t, "default", false, false,
+			color.RGBA{R: 180, G: 230, B: 60, A: 255}, color.RGBA{R: 160, G: 220, B: 40, A: 200})
+	case "projWind":
+		s.drawProjFlight(screen, cx, cy, t, "default", false, false,
+			color.RGBA{R: 140, G: 230, B: 160, A: 255}, color.RGBA{R: 120, G: 220, B: 140, A: 200})
 	case "projDefault":
 		s.drawProjFlight(screen, cx, cy, t, "default", false, false,
 			color.RGBA{R: 253, G: 230, B: 138, A: 255}, color.RGBA{R: 255, G: 220, B: 100, A: 200})
-	case "projTrail":
+	case "projTrailSniper":
+		s.drawProjFlight(screen, cx, cy, t, "sniper", false, false,
+			color.RGBA{R: 255, G: 180, B: 80, A: 255}, color.RGBA{R: 255, G: 160, B: 60, A: 200})
+	case "projTrailRapid":
+		s.drawProjFlight(screen, cx, cy, t, "default", false, false,
+			color.RGBA{R: 180, G: 230, B: 60, A: 255}, color.RGBA{R: 160, G: 220, B: 40, A: 200})
+	case "projTrailFreeze":
+		s.drawProjFlight(screen, cx, cy, t, "freeze", false, false,
+			color.RGBA{R: 140, G: 220, B: 255, A: 255}, color.RGBA{R: 100, G: 200, B: 255, A: 200})
+	case "projTrailWind":
+		s.drawProjFlight(screen, cx, cy, t, "default", false, false,
+			color.RGBA{R: 140, G: 230, B: 160, A: 255}, color.RGBA{R: 120, G: 220, B: 140, A: 200})
+	case "projTrailDefault":
 		s.drawProjFlight(screen, cx, cy, t, "default", false, false,
 			color.RGBA{R: 253, G: 230, B: 138, A: 255}, color.RGBA{R: 255, G: 220, B: 100, A: 200})
 
@@ -994,6 +1019,8 @@ func (s *VFXPreviewScene) drawActiveVFX(screen *ebiten.Image) {
 		vfx.DrawSlowOverlay(screen, fcx, fcy, 12)
 	case "burnOverlay":
 		vfx.DrawBurnOverlay(screen, fcx, fcy, 12)
+	case "poisonOverlay":
+		vfx.DrawPoisonOverlay(screen, fcx, fcy, 12)
 	case "immunityRing":
 		// Show both CC immune (red) and slow immune (cyan) side by side
 		vfx.DrawImmunityRing(screen, fcx-25, fcy, 12, color.RGBA{R: 220, G: 60, B: 60, A: 80})
