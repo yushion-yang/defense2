@@ -83,10 +83,22 @@
       "label": "屏幕特效",
       "effects": [
         {
-          "id": "screenShake",
-          "name": "ScreenShake",
-          "label": "屏幕震动",
-          "description": "全屏随机偏移抖动，用于爆炸、Boss出场等冲击场景"
+          "id": "screenShakeLight",
+          "name": "ScreenShake Light",
+          "label": "轻微震动",
+          "description": "x5连杀时的轻微震动（强度1.5, 0.1秒）"
+        },
+        {
+          "id": "screenShakeMedium",
+          "name": "ScreenShake Medium",
+          "label": "中等震动",
+          "description": "x10连杀/过杀时的中等震动（强度2.0-3.0, 0.15-0.2秒）"
+        },
+        {
+          "id": "screenShakeHeavy",
+          "name": "ScreenShake Heavy",
+          "label": "强烈震动",
+          "description": "Boss入场/击杀时的强烈震动（强度4.0-5.0, 0.4-0.5秒）"
         },
         {
           "id": "hitFlash",
@@ -126,22 +138,34 @@
       "label": "战斗特效",
       "effects": [
         {
-          "id": "impactRing",
-          "name": "ImpactRing",
-          "label": "冲击波环",
-          "description": "命中目标时的黄色扩散光环，短暂闪现后消失"
+          "id": "typedImpactScatter",
+          "name": "TypedImpact Scatter",
+          "label": "冰系冲击",
+          "description": "散射/冰冻攻击的蓝色冲击环"
         },
         {
-          "id": "typedImpact",
-          "name": "TypedImpact",
-          "label": "元素冲击",
-          "description": "根据攻击方式着色的冲击环：散射=蓝、旋转/投射=橙、光束=紫"
+          "id": "typedImpactPhysical",
+          "name": "TypedImpact Physical",
+          "label": "物理冲击",
+          "description": "投射/旋转攻击的橙色冲击环"
         },
         {
-          "id": "thunderBolt",
-          "name": "ThunderBolt",
-          "label": "雷电链",
-          "description": "两点间的锯齿形闪电弧线，带分支和辉光"
+          "id": "typedImpactBeam",
+          "name": "TypedImpact Beam",
+          "label": "能量冲击",
+          "description": "光束攻击的紫色冲击环"
+        },
+        {
+          "id": "typedImpactBounce",
+          "name": "TypedImpact Bounce",
+          "label": "弹射冲击",
+          "description": "弹射攻击的青色冲击环"
+        },
+        {
+          "id": "typedImpactRadial",
+          "name": "TypedImpact Radial",
+          "label": "径射冲击",
+          "description": "环射攻击的红橙冲击环"
         },
         {
           "id": "beam",
@@ -166,12 +190,6 @@
           "name": "GoldText",
           "label": "金币数字",
           "description": "金色+号数字，获取金币时在击杀位置弹出"
-        },
-        {
-          "id": "killText",
-          "name": "KillText",
-          "label": "击杀文字",
-          "description": "红色「击杀」文字，击杀敌人时短暂浮现"
         },
         {
           "id": "customText",
@@ -199,16 +217,40 @@
           "description": "关闭暗角效果，恢复画面全亮"
         },
         {
-          "id": "dynamicLight",
-          "name": "DynamicLight",
-          "label": "动态光源",
-          "description": "在指定位置放置暖橙色点光源，照亮周围区域"
+          "id": "dynamicLightWarden",
+          "name": "DynamicLight Warden",
+          "label": "战灵光源",
+          "description": "战灵位置的暖橙色点光源"
+        },
+        {
+          "id": "dynamicLightFireball",
+          "name": "DynamicLight Fireball",
+          "label": "火球光源",
+          "description": "火灵火球的红色移动光源"
+        },
+        {
+          "id": "dynamicLightSkystrike",
+          "name": "DynamicLight Skystrike",
+          "label": "天击光源",
+          "description": "天击落点的白色闪烁光源"
+        },
+        {
+          "id": "dynamicLightBuff",
+          "name": "DynamicLight Buff",
+          "label": "增益光源",
+          "description": "金灵施buff时的金色光源"
+        },
+        {
+          "id": "dynamicLightSelected",
+          "name": "DynamicLight Selected",
+          "label": "选中光源",
+          "description": "选中塔时的淡蓝柔和光源"
         },
         {
           "id": "glowLayer",
           "name": "Glow Layer",
           "label": "辉光层",
-          "description": "粒子和光束的泛光叠加层，增强明亮物体的光晕"
+          "description": "Additive glow pass (BeginGlowPass/EndGlowPass)，包裹弹道渲染实现辉光叠加。Bloom 管线因 Ebitengine v2.9.9 bug 禁用"
         },
         {
           "id": "dayNightTint",
@@ -426,10 +468,40 @@
           "description": "命中时红色半透明圆叠加层"
         },
         {
-          "id": "statusDots",
-          "name": "StatusDots",
-          "label": "状态圆点",
-          "description": "HP 条上方的彩色状态效果指示圆点"
+          "id": "statusDotSlow",
+          "name": "StatusDot Slow",
+          "label": "减速标记",
+          "description": "蓝色圆点，表示减速状态"
+        },
+        {
+          "id": "statusDotStun",
+          "name": "StatusDot Stun",
+          "label": "眩晕标记",
+          "description": "黄色圆点，表示眩晕状态"
+        },
+        {
+          "id": "statusDotBleed",
+          "name": "StatusDot Bleed",
+          "label": "流血标记",
+          "description": "红色圆点，表示流血DoT状态"
+        },
+        {
+          "id": "statusDotBurn",
+          "name": "StatusDot Burn",
+          "label": "燃烧标记",
+          "description": "橙色圆点，表示燃烧DoT状态"
+        },
+        {
+          "id": "statusDotPoison",
+          "name": "StatusDot Poison",
+          "label": "中毒标记",
+          "description": "绿色圆点，表示中毒DoT状态"
+        },
+        {
+          "id": "statusDotRoot",
+          "name": "StatusDot Root",
+          "label": "定身标记",
+          "description": "棕色圆点，表示定身状态"
         },
         {
           "id": "bufferAura",
@@ -442,6 +514,12 @@
           "name": "PurgeGlow",
           "label": "净化微光",
           "description": "净化免疫期白色脉冲微光环"
+        },
+        {
+          "id": "immunityRing",
+          "name": "ImmunityRing",
+          "label": "免疫脚环",
+          "description": "天生能力免疫敌人脚部的淡色光环圈"
         },
         {
           "id": "blockFlash",

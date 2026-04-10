@@ -1932,6 +1932,8 @@ func (s *StageScene) updatePlaying() {
 				s.postPipeline.Effects.TriggerRipple(e.X, e.Y, 1.5)
 			case "spin_aoe":
 				particle.EmitFireParticles(s.particlePool, e.X, e.Y, 2)
+			case "bounce":
+				particle.EmitElectricSparks(s.particlePool, e.X, e.Y, 8)
 			}
 		}
 		if killed {
