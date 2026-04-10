@@ -662,7 +662,7 @@ func (s *VFXPreviewScene) Draw(screen *ebiten.Image) {
 	s.particlePool.Draw(buf)
 
 	// Draw beams.
-	render.DrawBeams(buf, s.beamPool)
+	render.DrawBeams(buf, s.beamPool, 1.0/60.0)
 
 	draw.EndGlowPass(buf)
 

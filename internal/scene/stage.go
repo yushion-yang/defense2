@@ -2287,7 +2287,7 @@ func (s *StageScene) drawScene(screen *ebiten.Image) {
 	// 弹射物 — glow pass wraps projectile/beam rendering for additive bloom
 	draw.BeginGlowPass(worldTarget)
 	render.DrawProjectiles(worldTarget, s.projectiles)
-	render.DrawBeams(worldTarget, s.beams)
+	render.DrawBeams(worldTarget, s.beams, 1.0/60.0)
 	draw.EndGlowPass(worldTarget)
 
 	// 冲击特效（蓄力弹命中）
