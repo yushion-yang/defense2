@@ -124,6 +124,14 @@ func (p *Pool) Spawn(x, y, baseHP, baseSpeed float64, pathIndex int, archetype s
 				e.BuffAmount = cfg.AuraSpeedUp
 			}
 
+			// Behavioral marker buffs (display only, permanent)
+			if cfg.HealScale > 0 {
+				e.Buffs.Add(buff.Buff{ID: "healAura", Category: buff.CatBehavior, Source: "archetype", Duration: -1, Remaining: -1})
+			}
+			if cfg.AuraRange > 0 {
+				e.Buffs.Add(buff.Buff{ID: "speedAura", Category: buff.CatBehavior, Source: "archetype", Duration: -1, Remaining: -1})
+			}
+
 			// 能力系统字段
 			e.DamageCap = cfg.DamageCap
 			e.DamageCapPercent = cfg.DamageCapPercent

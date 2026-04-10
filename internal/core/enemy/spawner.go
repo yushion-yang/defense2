@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"defense2/internal/config"
+	"defense2/internal/core/buff"
 	"defense2/internal/core/gamemap"
 	tel "defense2/internal/core/telemetry"
 )
@@ -495,18 +496,22 @@ func applyWaveBuff(e *Enemy, buffID string) {
 	case "berserk":
 		e.BerserkThreshold = bc.Berserk.Threshold
 		e.BerserkSpeedScale = bc.Berserk.SpeedScale
+		// Note: berserk marker buff is added when triggered (behaviors.go UpdateBerserk)
 	case "regen":
 		e.RegenPerSec = e.MaxHP * bc.Regen.HpRatio
+		e.Buffs.Add(buff.Buff{ID: "regen", Category: buff.CatBehavior, Source: "waveBuff", Duration: -1, Remaining: -1})
 	case "healAura":
 		e.HealPower = bc.HealAura.Power
 		e.HealRadius = bc.HealAura.Radius
 		e.HealInterval = bc.HealAura.Interval
 		e.HealCooldown = 0
+		e.Buffs.Add(buff.Buff{ID: "healAura", Category: buff.CatBehavior, Source: "waveBuff", Duration: -1, Remaining: -1})
 	case "speedAura":
 		e.BuffRadius = bc.SpeedAura.Radius
 		e.BuffAmount = bc.SpeedAura.SpeedUp
 		e.AuraRange = bc.SpeedAura.Radius
 		e.AuraSpeedUp = bc.SpeedAura.SpeedUp
+		e.Buffs.Add(buff.Buff{ID: "speedAura", Category: buff.CatBehavior, Source: "waveBuff", Duration: -1, Remaining: -1})
 	case "damageReduce":
 		e.DamageReduceRatio = bc.DamageReduce.Ratio
 	case "deathSplit":

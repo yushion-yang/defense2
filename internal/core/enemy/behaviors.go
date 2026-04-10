@@ -293,6 +293,7 @@ func UpdateBerserk(e *Enemy) bool {
 
 	// 触发狂暴：永久提升基础速度
 	e.BerserkTriggered = true
+	e.Buffs.Add(buff.Buff{ID: "berserk", Category: buff.CatBehavior, Source: "archetype", Duration: -1, Remaining: -1})
 	e.BaseSpeed *= e.BerserkSpeedScale
 
 	// 如果当前未被减速，同步更新当前速度
