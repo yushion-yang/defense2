@@ -66,6 +66,7 @@ var testScenarios = []testScenario{
 	{"dps-dummy", "木桩靶场", "hunterInstinct", "超高HP木桩怪，DPS输出测试", "dps", "map_test_large", 99999, 999, 99, color.RGBA{R: 220, G: 160, B: 60, A: 255}, "dummy", false},
 	{"bench-lineup", "阵容编辑器", "armorPen", "手动放塔升级，保存阵容仿真", "bench", "map_test_large", 99999, 20, 12, color.RGBA{R: 140, G: 160, B: 180, A: 255}, "mixed", false},
 	{"vfx-preview", "特效预览", "stat-splash", "VFX 特效预览与调试工具", "bench", "", 0, 0, 0, color.RGBA{R: 200, G: 100, B: 255, A: 255}, "", false},
+	{"audio-preview", "音效预览", "stat-splash", "音效(SFX+BGM)预览与试听工具", "bench", "", 0, 0, 0, color.RGBA{R: 100, G: 200, B: 255, A: 255}, "", false},
 }
 
 // ── 布局常量 ────────────────────────────────────
@@ -213,6 +214,11 @@ func (s *TestSelectScene) startScenario() {
 	// VFX preview is a standalone scene — no StageScene needed.
 	if sc.ID == "vfx-preview" {
 		s.switcher.SwitchScene(NewVFXPreviewScene(s.switcher))
+		return
+	}
+	// Audio preview is a standalone scene — no StageScene needed.
+	if sc.ID == "audio-preview" {
+		s.switcher.SwitchScene(NewAudioPreviewScene(s.switcher))
 		return
 	}
 	s.switcher.SwitchScene(NewStageSceneWithOpts(s.switcher, StageOptions{
