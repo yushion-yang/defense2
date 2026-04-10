@@ -1,42 +1,26 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128">
   <defs>
-    <!-- Body gradient: dark slate -->
+    <!-- Body gradient: dark slate, fully opaque -->
     <linearGradient id="chBody" x1="0" y1="0" x2="0" y2="1">
       <stop offset="0%" stop-color="#334155"/>
       <stop offset="50%" stop-color="#1e293b"/>
       <stop offset="100%" stop-color="#0f172a"/>
     </linearGradient>
-    <!-- Energy core gradient: teal center -->
-    <radialGradient id="chCore" cx="50%" cy="50%" r="50%">
-      <stop offset="0%" stop-color="#ffffff" stop-opacity="0.95"/>
-      <stop offset="25%" stop-color="#a7f3d0" stop-opacity="0.85"/>
-      <stop offset="50%" stop-color="#14b8a6" stop-opacity="0.6"/>
-      <stop offset="75%" stop-color="#22c55e" stop-opacity="0.3"/>
-      <stop offset="100%" stop-color="#10b981" stop-opacity="0"/>
-    </radialGradient>
-    <!-- Ambient halo -->
+    <!-- Pylon metal gradient -->
+    <linearGradient id="chPylon" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#475569"/>
+      <stop offset="100%" stop-color="#334155"/>
+    </linearGradient>
+    <!-- Thruster exhaust gradient -->
+    <linearGradient id="chExhaust" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#4ade80"/>
+      <stop offset="100%" stop-color="#10b981"/>
+    </linearGradient>
+    <!-- Subtle ambient halo -->
     <radialGradient id="chHalo" cx="50%" cy="50%" r="50%">
-      <stop offset="0%" stop-color="#22c55e" stop-opacity="0.1"/>
-      <stop offset="50%" stop-color="#14b8a6" stop-opacity="0.05"/>
+      <stop offset="0%" stop-color="#22c55e" stop-opacity="0.08"/>
+      <stop offset="60%" stop-color="#22c55e" stop-opacity="0.03"/>
       <stop offset="100%" stop-color="transparent"/>
-    </radialGradient>
-    <!-- Relay node glow -->
-    <radialGradient id="chNode" cx="50%" cy="50%" r="50%">
-      <stop offset="0%" stop-color="#ffffff" stop-opacity="0.85"/>
-      <stop offset="40%" stop-color="#4ade80" stop-opacity="0.6"/>
-      <stop offset="100%" stop-color="#22c55e" stop-opacity="0"/>
-    </radialGradient>
-    <!-- Dome gradient for core viewport -->
-    <radialGradient id="chDome" cx="50%" cy="40%" r="60%">
-      <stop offset="0%" stop-color="#14b8a6" stop-opacity="0.4"/>
-      <stop offset="50%" stop-color="#0f172a" stop-opacity="0.6"/>
-      <stop offset="100%" stop-color="#0f172a" stop-opacity="0.85"/>
-    </radialGradient>
-    <!-- Thruster glow -->
-    <radialGradient id="chThruster" cx="50%" cy="50%" r="50%">
-      <stop offset="0%" stop-color="#4ade80" stop-opacity="0.7"/>
-      <stop offset="60%" stop-color="#22c55e" stop-opacity="0.35"/>
-      <stop offset="100%" stop-color="#10b981" stop-opacity="0"/>
     </radialGradient>
     <!-- Filters -->
     <filter id="chGl"><feGaussianBlur stdDeviation="2.5" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
@@ -44,120 +28,105 @@
     <filter id="chGlt"><feGaussianBlur stdDeviation="0.8" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
   </defs>
 
-  <!-- === Layer 0: Ambient energy halo === -->
+  <!-- === Layer 0: Subtle ambient halo (decoration only) === -->
   <circle cx="64" cy="64" r="60" fill="url(#chHalo)"/>
-  <circle cx="64" cy="64" r="54" fill="none" stroke="#22c55e" stroke-width="0.4" opacity="0.12" stroke-dasharray="2 5"/>
 
-  <!-- === Layer 1: Signal wave arcs from relay nodes === -->
-  <!-- Top-right node arcs -->
-  <path d="M94,28 A8,8 0 0,1 100,36" fill="none" stroke="#86efac" stroke-width="0.8" opacity="0.3"/>
-  <path d="M96,24 A12,12 0 0,1 104,36" fill="none" stroke="#86efac" stroke-width="0.5" opacity="0.2"/>
-  <!-- Bottom-right node arcs -->
-  <path d="M100,92 A8,8 0 0,1 94,100" fill="none" stroke="#86efac" stroke-width="0.8" opacity="0.3"/>
-  <path d="M104,92 A12,12 0 0,1 96,104" fill="none" stroke="#86efac" stroke-width="0.5" opacity="0.2"/>
-  <!-- Bottom-left node arcs -->
-  <path d="M34,100 A8,8 0 0,1 28,92" fill="none" stroke="#86efac" stroke-width="0.8" opacity="0.3"/>
-  <path d="M32,104 A12,12 0 0,1 24,92" fill="none" stroke="#86efac" stroke-width="0.5" opacity="0.2"/>
-  <!-- Top-left node arcs -->
-  <path d="M28,36 A8,8 0 0,1 34,28" fill="none" stroke="#86efac" stroke-width="0.8" opacity="0.3"/>
-  <path d="M24,36 A12,12 0 0,1 32,24" fill="none" stroke="#86efac" stroke-width="0.5" opacity="0.2"/>
+  <!-- === Layer 1: Thruster exhaust flares (behind body) === -->
+  <ellipse cx="50" cy="106" rx="7" ry="14" fill="#10b981" opacity="0.3" filter="url(#chGl)"/>
+  <ellipse cx="78" cy="106" rx="7" ry="14" fill="#10b981" opacity="0.3" filter="url(#chGl)"/>
 
-  <!-- === Layer 2: Relay arms (4 diagonal beams) === -->
-  <!-- Top-right arm -->
-  <line x1="76" y1="52" x2="92" y2="36" stroke="#334155" stroke-width="3" stroke-linecap="round"/>
-  <line x1="76" y1="52" x2="92" y2="36" stroke="#22c55e" stroke-width="1" opacity="0.4"/>
-  <!-- Bottom-right arm -->
-  <line x1="76" y1="76" x2="92" y2="92" stroke="#334155" stroke-width="3" stroke-linecap="round"/>
-  <line x1="76" y1="76" x2="92" y2="92" stroke="#22c55e" stroke-width="1" opacity="0.4"/>
-  <!-- Bottom-left arm -->
-  <line x1="52" y1="76" x2="36" y2="92" stroke="#334155" stroke-width="3" stroke-linecap="round"/>
-  <line x1="52" y1="76" x2="36" y2="92" stroke="#22c55e" stroke-width="1" opacity="0.4"/>
-  <!-- Top-left arm -->
-  <line x1="52" y1="52" x2="36" y2="36" stroke="#334155" stroke-width="3" stroke-linecap="round"/>
-  <line x1="52" y1="52" x2="36" y2="36" stroke="#22c55e" stroke-width="1" opacity="0.4"/>
+  <!-- === Layer 2: Four thick pylon arms extending from body === -->
+  <!-- Top-right pylon -->
+  <rect x="78" y="26" width="6" height="28" rx="3" fill="url(#chPylon)" stroke="#22c55e" stroke-width="1.5" transform="rotate(35,81,40)"/>
+  <!-- Bottom-right pylon -->
+  <rect x="78" y="64" width="6" height="28" rx="3" fill="url(#chPylon)" stroke="#22c55e" stroke-width="1.5" transform="rotate(-35,81,78)"/>
+  <!-- Bottom-left pylon -->
+  <rect x="44" y="64" width="6" height="28" rx="3" fill="url(#chPylon)" stroke="#22c55e" stroke-width="1.5" transform="rotate(35,47,78)"/>
+  <!-- Top-left pylon -->
+  <rect x="44" y="26" width="6" height="28" rx="3" fill="url(#chPylon)" stroke="#22c55e" stroke-width="1.5" transform="rotate(-35,47,40)"/>
 
-  <!-- === Layer 3: Energy conduit lines along arms (pulsing effect) === -->
-  <line x1="74" y1="54" x2="90" y2="38" stroke="#4ade80" stroke-width="0.6" opacity="0.35" stroke-dasharray="3 2"/>
-  <line x1="74" y1="74" x2="90" y2="90" stroke="#4ade80" stroke-width="0.6" opacity="0.35" stroke-dasharray="3 2"/>
-  <line x1="54" y1="74" x2="38" y2="90" stroke="#4ade80" stroke-width="0.6" opacity="0.35" stroke-dasharray="3 2"/>
-  <line x1="54" y1="54" x2="38" y2="38" stroke="#4ade80" stroke-width="0.6" opacity="0.35" stroke-dasharray="3 2"/>
+  <!-- Pylon energy conduit lines (green accents along each arm) -->
+  <line x1="76" y1="50" x2="96" y2="30" stroke="#4ade80" stroke-width="0.8" opacity="0.5"/>
+  <line x1="76" y1="78" x2="96" y2="98" stroke="#4ade80" stroke-width="0.8" opacity="0.5"/>
+  <line x1="52" y1="78" x2="32" y2="98" stroke="#4ade80" stroke-width="0.8" opacity="0.5"/>
+  <line x1="52" y1="50" x2="32" y2="30" stroke="#4ade80" stroke-width="0.8" opacity="0.5"/>
 
-  <!-- === Layer 4: Relay receptor nodes at arm tips === -->
+  <!-- === Layer 3: Energy nodes at pylon tips (SOLID circles, not fade-to-nothing) === -->
   <!-- Top-right node -->
-  <circle cx="94" cy="34" r="6" fill="url(#chNode)" filter="url(#chGls)"/>
-  <circle cx="94" cy="34" r="3.5" fill="#4ade80" opacity="0.6"/>
-  <circle cx="94" cy="34" r="1.8" fill="#ffffff" opacity="0.7"/>
+  <circle cx="98" cy="28" r="6" fill="#0f172a" stroke="#22c55e" stroke-width="1.5"/>
+  <circle cx="98" cy="28" r="3.5" fill="#22c55e"/>
+  <circle cx="98" cy="28" r="1.8" fill="#ffffff" opacity="0.9"/>
   <!-- Bottom-right node -->
-  <circle cx="94" cy="94" r="6" fill="url(#chNode)" filter="url(#chGls)"/>
-  <circle cx="94" cy="94" r="3.5" fill="#4ade80" opacity="0.6"/>
-  <circle cx="94" cy="94" r="1.8" fill="#ffffff" opacity="0.7"/>
+  <circle cx="98" cy="100" r="6" fill="#0f172a" stroke="#22c55e" stroke-width="1.5"/>
+  <circle cx="98" cy="100" r="3.5" fill="#22c55e"/>
+  <circle cx="98" cy="100" r="1.8" fill="#ffffff" opacity="0.9"/>
   <!-- Bottom-left node -->
-  <circle cx="34" cy="94" r="6" fill="url(#chNode)" filter="url(#chGls)"/>
-  <circle cx="34" cy="94" r="3.5" fill="#4ade80" opacity="0.6"/>
-  <circle cx="34" cy="94" r="1.8" fill="#ffffff" opacity="0.7"/>
+  <circle cx="30" cy="100" r="6" fill="#0f172a" stroke="#22c55e" stroke-width="1.5"/>
+  <circle cx="30" cy="100" r="3.5" fill="#22c55e"/>
+  <circle cx="30" cy="100" r="1.8" fill="#ffffff" opacity="0.9"/>
   <!-- Top-left node -->
-  <circle cx="34" cy="34" r="6" fill="url(#chNode)" filter="url(#chGls)"/>
-  <circle cx="34" cy="34" r="3.5" fill="#4ade80" opacity="0.6"/>
-  <circle cx="34" cy="34" r="1.8" fill="#ffffff" opacity="0.7"/>
+  <circle cx="30" cy="28" r="6" fill="#0f172a" stroke="#22c55e" stroke-width="1.5"/>
+  <circle cx="30" cy="28" r="3.5" fill="#22c55e"/>
+  <circle cx="30" cy="28" r="1.8" fill="#ffffff" opacity="0.9"/>
 
-  <!-- === Layer 5: Central octagonal body === -->
-  <polygon points="64,42 80,48 86,64 80,80 64,86 48,80 42,64 48,48"
-           fill="url(#chBody)" stroke="#22c55e" stroke-width="1.2"/>
-  <!-- Inner structural panels -->
-  <polygon points="64,46 76,51 81,64 76,77 64,82 52,77 47,64 52,51"
-           fill="none" stroke="#10b981" stroke-width="0.5" opacity="0.25"/>
-  <!-- Panel seam lines -->
-  <line x1="64" y1="42" x2="64" y2="86" stroke="#22c55e" stroke-width="0.4" opacity="0.15"/>
-  <line x1="42" y1="64" x2="86" y2="64" stroke="#22c55e" stroke-width="0.4" opacity="0.15"/>
+  <!-- Small signal arcs at node tips (subtle decoration) -->
+  <path d="M104,22 A8,8 0 0,1 104,34" fill="none" stroke="#86efac" stroke-width="0.7" opacity="0.35"/>
+  <path d="M104,94 A8,8 0 0,1 104,106" fill="none" stroke="#86efac" stroke-width="0.7" opacity="0.35"/>
+  <path d="M24,94 A8,8 0 0,0 24,106" fill="none" stroke="#86efac" stroke-width="0.7" opacity="0.35"/>
+  <path d="M24,22 A8,8 0 0,0 24,34" fill="none" stroke="#86efac" stroke-width="0.7" opacity="0.35"/>
 
-  <!-- === Layer 6: Stabilizer fins / thrusters at 4 cardinal points === -->
-  <!-- Top stabilizer fin -->
-  <polygon points="58,44 64,34 70,44" fill="#1e293b" stroke="#10b981" stroke-width="0.6"/>
-  <circle cx="64" cy="38" r="1.5" fill="url(#chThruster)" filter="url(#chGlt)"/>
-  <!-- Right stabilizer fin -->
-  <polygon points="84,58 94,64 84,70" fill="#1e293b" stroke="#10b981" stroke-width="0.6"/>
-  <circle cx="90" cy="64" r="1.5" fill="url(#chThruster)" filter="url(#chGlt)"/>
-  <!-- Bottom stabilizer fin -->
-  <polygon points="58,84 64,94 70,84" fill="#1e293b" stroke="#10b981" stroke-width="0.6"/>
-  <circle cx="64" cy="90" r="1.5" fill="url(#chThruster)" filter="url(#chGlt)"/>
-  <!-- Left stabilizer fin -->
-  <polygon points="44,58 34,64 44,70" fill="#1e293b" stroke="#10b981" stroke-width="0.6"/>
-  <circle cx="38" cy="64" r="1.5" fill="url(#chThruster)" filter="url(#chGlt)"/>
+  <!-- === Layer 4: Main hexagonal fuselage (SOLID opaque fill) === -->
+  <polygon points="64,30 84,44 84,84 64,98 44,84 44,44"
+           fill="url(#chBody)" stroke="#22c55e" stroke-width="1.5"/>
+  <!-- Inner hex structural line -->
+  <polygon points="64,38 78,48 78,80 64,90 50,80 50,48"
+           fill="none" stroke="#10b981" stroke-width="0.6" opacity="0.3"/>
 
-  <!-- === Layer 7: Core dome (transparent viewport) === -->
-  <circle cx="64" cy="64" r="14" fill="url(#chDome)" stroke="#14b8a6" stroke-width="0.8" opacity="0.7"/>
-  <!-- Dome reflection -->
-  <ellipse cx="60" cy="58" rx="4" ry="3" fill="#14b8a6" opacity="0.12"/>
+  <!-- === Layer 5: Panel seam lines on body === -->
+  <line x1="64" y1="30" x2="64" y2="98" stroke="#22c55e" stroke-width="0.5" opacity="0.2"/>
+  <line x1="44" y1="64" x2="84" y2="64" stroke="#22c55e" stroke-width="0.5" opacity="0.2"/>
+  <line x1="44" y1="44" x2="84" y2="84" stroke="#22c55e" stroke-width="0.3" opacity="0.12"/>
+  <line x1="84" y1="44" x2="44" y2="84" stroke="#22c55e" stroke-width="0.3" opacity="0.12"/>
 
-  <!-- === Layer 8: Energy core (teal-green glow) === -->
-  <circle cx="64" cy="64" r="10" fill="url(#chCore)" filter="url(#chGl)"/>
-  <circle cx="64" cy="64" r="6.5" fill="#a7f3d0" opacity="0.6"/>
-  <circle cx="64" cy="64" r="3.5" fill="#ffffff" opacity="0.85"/>
-  <!-- Containment rings -->
-  <circle cx="64" cy="64" r="12" fill="none" stroke="#22c55e" stroke-width="0.8" opacity="0.4"/>
-  <circle cx="64" cy="64" r="16" fill="none" stroke="#14b8a6" stroke-width="0.4" opacity="0.18" stroke-dasharray="2 3"/>
+  <!-- === Layer 6: Armor plates on fuselage === -->
+  <!-- Upper left plate -->
+  <polygon points="50,40 64,34 64,50 50,50" fill="#1e293b" stroke="#22c55e" stroke-width="0.6" opacity="0.5"/>
+  <!-- Upper right plate -->
+  <polygon points="78,40 64,34 64,50 78,50" fill="#1e293b" stroke="#22c55e" stroke-width="0.6" opacity="0.5"/>
+  <!-- Lower left plate -->
+  <polygon points="50,78 64,94 64,78 50,78" fill="#0f172a" stroke="#10b981" stroke-width="0.5" opacity="0.4"/>
+  <!-- Lower right plate -->
+  <polygon points="78,78 64,94 64,78 78,78" fill="#0f172a" stroke="#10b981" stroke-width="0.5" opacity="0.4"/>
 
-  <!-- === Layer 9: Energy conduit lines from core to arm bases === -->
-  <line x1="72" y1="56" x2="76" y2="52" stroke="#4ade80" stroke-width="0.8" opacity="0.35"/>
-  <line x1="72" y1="72" x2="76" y2="76" stroke="#4ade80" stroke-width="0.8" opacity="0.35"/>
-  <line x1="56" y1="72" x2="52" y2="76" stroke="#4ade80" stroke-width="0.8" opacity="0.35"/>
-  <line x1="56" y1="56" x2="52" y2="52" stroke="#4ade80" stroke-width="0.8" opacity="0.35"/>
+  <!-- === Layer 7: Central viewport (dark circle with bright core inside) === -->
+  <circle cx="64" cy="64" r="14" fill="#020617" stroke="#14b8a6" stroke-width="1"/>
+  <!-- Inner containment ring -->
+  <circle cx="64" cy="64" r="11" fill="none" stroke="#22c55e" stroke-width="0.8" opacity="0.5"/>
+  <!-- Energy core (SOLID fills, not radial-fade) -->
+  <circle cx="64" cy="64" r="8" fill="#0f172a" stroke="#4ade80" stroke-width="0.6"/>
+  <circle cx="64" cy="64" r="5.5" fill="#22c55e" opacity="0.8" filter="url(#chGls)"/>
+  <circle cx="64" cy="64" r="3" fill="#4ade80"/>
+  <circle cx="64" cy="64" r="1.5" fill="#ffffff" opacity="0.9"/>
+  <!-- Viewport reflection highlight -->
+  <ellipse cx="60" cy="59" rx="2.5" ry="1.5" fill="#ffffff" opacity="0.12"/>
 
-  <!-- === Layer 10: Status indicator lights on body === -->
-  <!-- Top-right body edge -->
-  <circle cx="78" cy="50" r="1.2" fill="#22c55e" opacity="0.6" filter="url(#chGlt)"/>
-  <!-- Bottom-right body edge -->
-  <circle cx="84" cy="76" r="1.2" fill="#22c55e" opacity="0.6" filter="url(#chGlt)"/>
-  <!-- Bottom-left body edge -->
-  <circle cx="50" cy="78" r="1.2" fill="#22c55e" opacity="0.6" filter="url(#chGlt)"/>
-  <!-- Top-left body edge -->
-  <circle cx="44" cy="50" r="1.2" fill="#22c55e" opacity="0.6" filter="url(#chGlt)"/>
+  <!-- === Layer 8: Twin rear thruster units === -->
+  <rect x="44" y="88" width="12" height="16" rx="4" fill="#020617" stroke="#22c55e" stroke-width="1"/>
+  <rect x="72" y="88" width="12" height="16" rx="4" fill="#020617" stroke="#22c55e" stroke-width="1"/>
+  <!-- Thruster nozzle glow -->
+  <ellipse cx="50" cy="104" rx="4.5" ry="3" fill="#4ade80" filter="url(#chGls)"/>
+  <ellipse cx="50" cy="104" rx="2" ry="1.5" fill="#ffffff" opacity="0.7"/>
+  <ellipse cx="78" cy="104" rx="4.5" ry="3" fill="#4ade80" filter="url(#chGls)"/>
+  <ellipse cx="78" cy="104" rx="2" ry="1.5" fill="#ffffff" opacity="0.7"/>
 
-  <!-- === Layer 11: Ambient energy particles === -->
-  <circle cx="104" cy="50" r="0.8" fill="#86efac" opacity="0.3" filter="url(#chGlt)"/>
-  <circle cx="24" cy="50" r="0.8" fill="#86efac" opacity="0.3" filter="url(#chGlt)"/>
-  <circle cx="104" cy="78" r="0.8" fill="#86efac" opacity="0.3" filter="url(#chGlt)"/>
-  <circle cx="24" cy="78" r="0.8" fill="#86efac" opacity="0.3" filter="url(#chGlt)"/>
-  <circle cx="64" cy="20" r="0.6" fill="#4ade80" opacity="0.25" filter="url(#chGlt)"/>
-  <circle cx="64" cy="108" r="0.6" fill="#4ade80" opacity="0.25" filter="url(#chGlt)"/>
+  <!-- === Layer 9: Front nose sensor === -->
+  <polygon points="58,34 64,24 70,34" fill="#1e293b" stroke="#22c55e" stroke-width="0.8"/>
+  <!-- Front nav light -->
+  <circle cx="64" cy="28" r="2" fill="#22c55e" filter="url(#chGls)"/>
+
+  <!-- === Layer 10: Status indicator lights on body edges === -->
+  <circle cx="44" cy="44" r="1.5" fill="#22c55e" opacity="0.8" filter="url(#chGlt)"/>
+  <circle cx="84" cy="44" r="1.5" fill="#22c55e" opacity="0.8" filter="url(#chGlt)"/>
+  <circle cx="84" cy="84" r="1.5" fill="#ef4444" opacity="0.7" filter="url(#chGlt)"/>
+  <circle cx="44" cy="84" r="1.5" fill="#ef4444" opacity="0.7" filter="url(#chGlt)"/>
 </svg>
