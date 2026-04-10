@@ -335,3 +335,62 @@ func TestBuffList_GetAll_Empty(t *testing.T) {
 		t.Errorf("want 0, got %d", len(all))
 	}
 }
+
+// ────────────────────────────────────────────
+// Tick — timer countdown + expiry
+// ────────────────────────────────────────────
+
+func TestBuffList_Tick(t *testing.T) {
+	bl := NewBuffList(testRules())
+	bl.Add(Buff{ID: "stun", Category: CatCC, Source: "t1", Duration: 1.0, Remaining: 1.0})
+	bl.Add(Buff{ID: "bleed", Category: CatDoT, Source: "t1", Value: 10, Duration: 3.0, Remaining: 3.0})
+
+	bl.Tick(0.5)
+	b, _ := bl.Get("stun")
+	if b.Remaining < 0.49 || b.Remaining > 0.51 {
+		t.Errorf("stun remaining: want ~0.5, got %f", b.Remaining)
+	}
+
+	bl.Tick(0.6) // stun expires (0.5 - 0.6 < 0)
+	if bl.Has("stun") {
+		t.Error("stun should have expired")
+	}
+	if !bl.Has("bleed") {
+		t.Error("bleed should still be active")
+	}
+	b2, _ := bl.Get("bleed")
+	// 3.0 - 0.5 - 0.6 = 1.9
+	if b2.Remaining < 1.89 || b2.Remaining > 1.91 {
+		t.Errorf("bleed remaining: want ~1.9, got %f", b2.Remaining)
+	}
+}
+
+func TestBuffList_Tick_Permanent(t *testing.T) {
+	bl := NewBuffList(testRules())
+	bl.Add(Buff{ID: "controlImmune", Category: CatDefense, Source: "boss", Duration: -1, Remaining: -1})
+	bl.Tick(100)
+	if !bl.Has("controlImmune") {
+		t.Error("permanent buff should not expire")
+	}
+}
+
+func TestBuffList_Tick_AllExpire(t *testing.T) {
+	bl := NewBuffList(testRules())
+	bl.Add(Buff{ID: "stun", Category: CatCC, Source: "t1", Duration: 1, Remaining: 1})
+	bl.Add(Buff{ID: "root", Category: CatCC, Source: "t2", Duration: 0.5, Remaining: 0.5})
+
+	bl.Tick(2)
+	if bl.Count() != 0 {
+		t.Errorf("all should expire, got %d", bl.Count())
+	}
+}
+
+func TestBuffList_Tick_ExactExpiry(t *testing.T) {
+	bl := NewBuffList(testRules())
+	bl.Add(Buff{ID: "stun", Category: CatCC, Source: "t1", Duration: 1, Remaining: 1})
+
+	bl.Tick(1.0) // remaining = 0 → should expire
+	if bl.Has("stun") {
+		t.Error("buff with remaining=0 should be expired")
+	}
+}

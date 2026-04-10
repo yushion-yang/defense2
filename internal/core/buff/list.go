@@ -196,6 +196,24 @@ func (bl *BuffList) Count() int {
 	return len(bl.active)
 }
 
+// Tick decrements Remaining on all timed buffs and removes expired ones.
+// Permanent buffs (Duration < 0) are not decremented.
+func (bl *BuffList) Tick(dt float64) {
+	n := 0
+	for i := range bl.active {
+		b := &bl.active[i]
+		if b.Duration >= 0 { // timed buff
+			b.Remaining -= dt
+			if b.Remaining <= 0 {
+				continue // expired — skip (remove)
+			}
+		}
+		bl.active[n] = bl.active[i]
+		n++
+	}
+	bl.active = bl.active[:n]
+}
+
 // getRule returns the stacking rule for a buff ID, defaulting to Override.
 func (bl *BuffList) getRule(id string) StackRule {
 	if r, ok := bl.rules[id]; ok {
