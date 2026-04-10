@@ -1,18 +1,19 @@
 {
+  "_status": "documentation-only — not loaded by code",
   "_description": "弹射物默认参数规格 — 各攻击方式的默认速度和半径",
 
   "defaults": {
-    "speed": "balance.combat.defaultProjectileSpeed",
-    "radius": "balance.combat.defaultProjectileRadius",
-    "description": "塔未配置 projectileSpeed 时的默认值"
+    "speed": "balance.combat.defaultProjectileSpeed (300)",
+    "radius": "balance.combat.defaultProjectileRadius (4)",
+    "description": "标准弹读取 balance.json，scatter/radial/warden 不读取 balance.json，使用各自硬编码值"
   },
 
   "perStyle": {
-    "projectile": {"speed": 300, "radius": 4, "description": "标准追踪弹"},
-    "scatter":    {"speed": 400, "radius": 3, "description": "散弹（更快）"},
-    "radial":     {"speed": 350, "radius": 4, "description": "环射弹"},
-    "warden":     {"speed": 350, "radius": 4, "description": "战灵弹射物"}
+    "projectile": {"speed": 300, "radius": 4, "homing": true,  "description": "标准追踪弹，从 balance.json 读取速度"},
+    "scatter":    {"speed": 400, "radius": 4, "homing": false, "description": "散弹（穿透模式，不追踪），硬编码值"},
+    "radial":     {"speed": 350, "radius": 4, "homing": false, "description": "环射弹（穿透模式，不追踪），硬编码值"},
+    "warden":     {"speed": 350, "radius": 4, "homing": true,  "description": "战灵弹射物（追踪），硬编码值；core_mech 为 400"}
   },
 
-  "knownInconsistency": "balance.json 定义了 defaultProjectileSpeed=300 和 defaultProjectileRadius=4，但 scatter/radial/warden 各用不同硬编码值。此规格记录实际使用值。"
+  "notes": "standard projectile 从 balance.json 读取 defaultProjectileSpeed/defaultProjectileRadius，scatter/radial/warden 使用各自硬编码值不读取 balance.json。core_mech 战灵使用 speed=400 区别于通用战灵 speed=350。所有类型 radius=4。"
 }
