@@ -1,0 +1,51 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128">
+  <defs>
+    <radialGradient id="bodyGrad" cx="50%" cy="40%" r="50%">
+      <stop offset="0%" stop-color="#a3e635"/>
+      <stop offset="100%" stop-color="#65a30d"/>
+    </radialGradient>
+    <linearGradient id="wingGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#a3e635" stop-opacity="0.5"/>
+      <stop offset="100%" stop-color="#84cc16" stop-opacity="0.15"/>
+    </linearGradient>
+    <radialGradient id="shadow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#000" stop-opacity="0.2"/>
+      <stop offset="100%" stop-color="#000" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <!-- shadow -->
+  <ellipse cx="64" cy="112" rx="18" ry="6" fill="url(#shadow)"/>
+  <!-- legs: alternated positions from walk-0 -->
+  <line x1="52" y1="84" x2="44" y2="98" stroke="#65a30d" stroke-width="2" stroke-linecap="round"/>
+  <line x1="58" y1="82" x2="46" y2="94" stroke="#65a30d" stroke-width="2" stroke-linecap="round"/>
+  <line x1="70" y1="82" x2="82" y2="94" stroke="#65a30d" stroke-width="2" stroke-linecap="round"/>
+  <line x1="76" y1="84" x2="84" y2="98" stroke="#65a30d" stroke-width="2" stroke-linecap="round"/>
+  <!-- wings left: raised position (upstroke) -->
+  <ellipse cx="34" cy="50" rx="22" ry="10" fill="url(#wingGrad)" transform="rotate(-30 34 50)"/>
+  <ellipse cx="30" cy="60" rx="18" ry="8" fill="url(#wingGrad)" transform="rotate(-20 30 60)"/>
+  <!-- wings right: raised position (upstroke) -->
+  <ellipse cx="94" cy="50" rx="22" ry="10" fill="url(#wingGrad)" transform="rotate(30 94 50)"/>
+  <ellipse cx="98" cy="60" rx="18" ry="8" fill="url(#wingGrad)" transform="rotate(20 98 60)"/>
+  <!-- abdomen: bob down 2px -->
+  <ellipse cx="64" cy="82" rx="14" ry="10" fill="#65a30d"/>
+  <!-- thorax: bob down 2px -->
+  <ellipse cx="64" cy="68" rx="16" ry="14" fill="url(#bodyGrad)"/>
+  <!-- segment lines: bob down 2px -->
+  <path d="M50 68 Q64 64 78 68" stroke="#65a30d" stroke-width="1" fill="none" opacity="0.5"/>
+  <path d="M52 74 Q64 70 76 74" stroke="#65a30d" stroke-width="1" fill="none" opacity="0.5"/>
+  <!-- head: bob down 2px -->
+  <ellipse cx="64" cy="50" rx="12" ry="10" fill="#84cc16"/>
+  <!-- eyes: bob down 2px -->
+  <circle cx="57" cy="48" r="4" fill="#1a2e05"/>
+  <circle cx="71" cy="48" r="4" fill="#1a2e05"/>
+  <circle cx="58" cy="47" r="1.5" fill="#a3e635" opacity="0.7"/>
+  <circle cx="72" cy="47" r="1.5" fill="#a3e635" opacity="0.7"/>
+  <!-- antennae: bob down 2px, tips shifted -->
+  <path d="M58 42 Q48 30 42 26" stroke="#84cc16" stroke-width="2" fill="none" stroke-linecap="round"/>
+  <circle cx="42" cy="26" r="3" fill="#a3e635"/>
+  <path d="M70 42 Q80 30 86 26" stroke="#84cc16" stroke-width="2" fill="none" stroke-linecap="round"/>
+  <circle cx="86" cy="26" r="3" fill="#a3e635"/>
+  <!-- mandibles: bob down 2px, slightly wider -->
+  <path d="M58 56 Q55 60 50 60" stroke="#65a30d" stroke-width="2" fill="none" stroke-linecap="round"/>
+  <path d="M70 56 Q73 60 78 60" stroke="#65a30d" stroke-width="2" fill="none" stroke-linecap="round"/>
+</svg>

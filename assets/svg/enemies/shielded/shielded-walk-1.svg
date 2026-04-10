@@ -1,0 +1,71 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128">
+  <defs>
+    <radialGradient id="shBody" cx="50%" cy="40%" r="55%">
+      <stop offset="0%" stop-color="#3b82f6"/>
+      <stop offset="60%" stop-color="#2563eb"/>
+      <stop offset="100%" stop-color="#1d4ed8"/>
+    </radialGradient>
+    <linearGradient id="shShield" x1="0" y1="0" x2="0.2" y2="1">
+      <stop offset="0%" stop-color="#93c5fd"/>
+      <stop offset="30%" stop-color="#60a5fa"/>
+      <stop offset="60%" stop-color="#2563eb"/>
+      <stop offset="100%" stop-color="#1e40af"/>
+    </linearGradient>
+    <linearGradient id="shShieldEdge" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#93c5fd"/>
+      <stop offset="100%" stop-color="#60a5fa"/>
+    </linearGradient>
+    <radialGradient id="shEmblem" cx="50%" cy="40%" r="50%">
+      <stop offset="0%" stop-color="#dbeafe"/>
+      <stop offset="100%" stop-color="#93c5fd"/>
+    </radialGradient>
+    <linearGradient id="shHelm" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#60a5fa"/>
+      <stop offset="100%" stop-color="#1e40af"/>
+    </linearGradient>
+  </defs>
+  <!-- shadow -->
+  <ellipse cx="64" cy="114" rx="30" ry="8" fill="#000" opacity="0.25"/>
+  <!-- legs (stride position) -->
+  <rect x="44" y="90" width="10" height="18" rx="3" fill="#1e40af"/>
+  <rect x="74" y="92" width="10" height="16" rx="3" fill="#1e40af"/>
+  <!-- feet (left forward, right back) -->
+  <ellipse cx="49" cy="110" rx="8" ry="4" fill="#1d4ed8"/>
+  <ellipse cx="79" cy="110" rx="8" ry="4" fill="#1d4ed8"/>
+  <!-- body (2px bob down) -->
+  <path d="M40 48 L38 92 Q64 96 90 92 L88 48 Q76 40 64 38 Q52 40 40 48" fill="url(#shBody)"/>
+  <!-- chest detail -->
+  <path d="M46 52 Q64 46 82 52 L80 74 Q64 70 48 74 Z" fill="#1d4ed8" opacity="0.5"/>
+  <!-- right arm (behind shield) -->
+  <path d="M88 50 Q96 60 94 74 L90 74 Q92 62 86 54" fill="#1d4ed8"/>
+  <!-- shield (prominent, slightly bobbed down 3px) -->
+  <path d="M10 33 Q10 27 18 23 L46 23 Q54 27 54 33 L54 83 Q54 97 32 103 Q10 97 10 83 Z" fill="url(#shShield)" stroke="url(#shShieldEdge)" stroke-width="2"/>
+  <!-- shield emboss -->
+  <path d="M16 31 Q16 29 22 27 L42 27 Q48 29 48 31 L48 79 Q48 91 32 95 Q16 91 16 79 Z" fill="none" stroke="#93c5fd" stroke-width="1" opacity="0.5"/>
+  <!-- shield emblem -->
+  <circle cx="32" cy="57" r="12" fill="url(#shEmblem)" opacity="0.6"/>
+  <path d="M32 45 L26 57 L32 53 L38 57 Z" fill="#dbeafe"/>
+  <path d="M32 69 L26 57 L32 61 L38 57 Z" fill="#93c5fd"/>
+  <!-- shield rivets -->
+  <circle cx="18" cy="33" r="2" fill="#93c5fd" opacity="0.7"/>
+  <circle cx="46" cy="33" r="2" fill="#93c5fd" opacity="0.7"/>
+  <circle cx="18" cy="77" r="2" fill="#93c5fd" opacity="0.7"/>
+  <circle cx="46" cy="77" r="2" fill="#93c5fd" opacity="0.7"/>
+  <!-- left arm (holding shield, adjusted) -->
+  <path d="M40 50 Q34 54 34 63" stroke="#1d4ed8" stroke-width="6" fill="none" stroke-linecap="round"/>
+  <!-- right arm with mace (swung back) -->
+  <path d="M90 74 L100 80" stroke="#1e40af" stroke-width="4" stroke-linecap="round"/>
+  <circle cx="102" cy="82" r="5" fill="#60a5fa"/>
+  <!-- head (2px bob down) -->
+  <path d="M50 38 Q50 22 64 18 Q78 22 78 38 Q72 42 64 44 Q56 42 50 38" fill="url(#shHelm)"/>
+  <!-- helmet visor -->
+  <path d="M54 28 Q64 26 74 28 L72 34 Q64 32 56 34 Z" fill="#1e40af"/>
+  <!-- eyes -->
+  <ellipse cx="58" cy="31" rx="3" ry="2" fill="#93c5fd"/>
+  <ellipse cx="70" cy="31" rx="3" ry="2" fill="#93c5fd"/>
+  <!-- helmet crest -->
+  <path d="M64 18 Q62 10 64 6 Q66 10 64 18" fill="#60a5fa"/>
+  <!-- helmet cheek guards -->
+  <path d="M50 32 L46 38 L50 40" fill="url(#shHelm)"/>
+  <path d="M78 32 L82 38 L78 40" fill="url(#shHelm)"/>
+</svg>

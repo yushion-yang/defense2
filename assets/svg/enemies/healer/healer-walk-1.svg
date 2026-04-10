@@ -1,0 +1,65 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128">
+  <defs>
+    <radialGradient id="bodyGrad" cx="50%" cy="40%" r="50%">
+      <stop offset="0%" stop-color="#4ade80"/>
+      <stop offset="100%" stop-color="#16a34a"/>
+    </radialGradient>
+    <radialGradient id="auraGrad" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#4ade80" stop-opacity="0.2"/>
+      <stop offset="50%" stop-color="#22c55e" stop-opacity="0.08"/>
+      <stop offset="100%" stop-color="#22c55e" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="shadow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#000" stop-opacity="0.25"/>
+      <stop offset="100%" stop-color="#000" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="crossGlow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#fff" stop-opacity="0.9"/>
+      <stop offset="100%" stop-color="#4ade80" stop-opacity="0.3"/>
+    </radialGradient>
+    <linearGradient id="robeGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#22c55e"/>
+      <stop offset="100%" stop-color="#15803d"/>
+    </linearGradient>
+  </defs>
+  <!-- healing aura (shifted) -->
+  <circle cx="64" cy="64" r="50" fill="url(#auraGrad)"/>
+  <!-- aura ring (shifted) -->
+  <circle cx="64" cy="64" r="44" stroke="#4ade80" stroke-width="1" fill="none" opacity="0.15"/>
+  <!-- shadow -->
+  <ellipse cx="64" cy="110" rx="26" ry="8" fill="url(#shadow)"/>
+  <!-- robe bottom (swayed) -->
+  <path d="M42 70 L34 102 Q64 110 94 102 L86 70Z" fill="url(#robeGrad)"/>
+  <!-- robe folds (shifted for sway) -->
+  <path d="M50 76 L48 100" stroke="#16a34a" stroke-width="1" opacity="0.4"/>
+  <path d="M63 74 L62 104" stroke="#16a34a" stroke-width="1" opacity="0.4"/>
+  <path d="M77 76 L80 100" stroke="#16a34a" stroke-width="1" opacity="0.4"/>
+  <!-- body (bobbed up 2px) -->
+  <ellipse cx="64" cy="62" rx="24" ry="22" fill="url(#bodyGrad)"/>
+  <!-- arms (swayed position) -->
+  <path d="M38 58 Q28 60 26 70 Q26 76 30 76" stroke="#22c55e" stroke-width="6" fill="none" stroke-linecap="round"/>
+  <path d="M90 58 Q100 62 102 72 Q102 76 98 76" stroke="#22c55e" stroke-width="6" fill="none" stroke-linecap="round"/>
+  <!-- cross on chest (bobbed up 2px, glow pulse slightly larger) -->
+  <rect x="57" y="50" width="14" height="24" rx="2" fill="url(#crossGlow)"/>
+  <rect x="51" y="56" width="26" height="12" rx="2" fill="url(#crossGlow)"/>
+  <!-- cross inner -->
+  <rect x="59" y="52" width="10" height="20" rx="1" fill="#fff" opacity="0.7"/>
+  <rect x="53" y="58" width="22" height="8" rx="1" fill="#fff" opacity="0.7"/>
+  <!-- head (bobbed up 2px) -->
+  <circle cx="64" cy="36" r="16" fill="#22c55e"/>
+  <!-- hood -->
+  <path d="M46 40 Q46 22 64 18 Q82 22 82 40" fill="#16a34a"/>
+  <!-- face -->
+  <ellipse cx="64" cy="38" rx="11" ry="9" fill="#4ade80" opacity="0.6"/>
+  <!-- eyes -->
+  <ellipse cx="58" cy="36" rx="3" ry="3.5" fill="#052e16"/>
+  <ellipse cx="70" cy="36" rx="3" ry="3.5" fill="#052e16"/>
+  <circle cx="59" cy="35" r="1" fill="#4ade80" opacity="0.5"/>
+  <circle cx="71" cy="35" r="1" fill="#4ade80" opacity="0.5"/>
+  <!-- gentle smile -->
+  <path d="M58 42 Q64 46 70 42" stroke="#15803d" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+  <!-- sparkles (shifted positions) -->
+  <path d="M30 48 L32 44 L34 48 L32 52Z" fill="#4ade80" opacity="0.35"/>
+  <path d="M94 44 L96 40 L98 44 L96 48Z" fill="#4ade80" opacity="0.4"/>
+  <path d="M42 26 L43 24 L44 26 L43 28Z" fill="#4ade80" opacity="0.35"/>
+</svg>

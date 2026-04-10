@@ -1,25 +1,76 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128">
   <defs>
-    <radialGradient id="tg0" cx="50%" cy="50%" r="50%"><stop offset="0%" stop-color="#f97316" stop-opacity="0.3"/><stop offset="100%" stop-color="#f97316" stop-opacity="0"/></radialGradient>
-    <radialGradient id="tg1" cx="50%" cy="50%" r="50%"><stop offset="0%" stop-color="#ea580c"/><stop offset="70%" stop-color="#c2410c"/><stop offset="100%" stop-color="#9a3412"/></radialGradient>
-    <linearGradient id="tg2" x1="0%" y1="0%" x2="0%" y2="100%"><stop offset="0%" stop-color="#f97316"/><stop offset="50%" stop-color="#ea580c"/><stop offset="100%" stop-color="#9a3412"/></linearGradient>
-    <radialGradient id="tg3" cx="50%" cy="50%" r="50%"><stop offset="0%" stop-color="#f97316" stop-opacity="0.2"/><stop offset="100%" stop-color="#f97316" stop-opacity="0"/></radialGradient>
-    <radialGradient id="tg4" cx="50%" cy="50%" r="50%"><stop offset="0%" stop-color="#f97316" stop-opacity="0.3"/><stop offset="100%" stop-color="#f97316" stop-opacity="0"/></radialGradient>
+    <linearGradient id="base-g" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#94a3b8"/>
+      <stop offset="50%" stop-color="#64748b"/>
+      <stop offset="100%" stop-color="#475569"/>
+    </linearGradient>
+    <linearGradient id="steel-g" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#e2e8f0"/>
+      <stop offset="40%" stop-color="#cbd5e1"/>
+      <stop offset="100%" stop-color="#94a3b8"/>
+    </linearGradient>
+    <radialGradient id="crystal-charge" cx="50%" cy="40%" r="50%">
+      <stop offset="0%" stop-color="#ffffff"/>
+      <stop offset="20%" stop-color="#f5f3ff"/>
+      <stop offset="60%" stop-color="#c4b5fd"/>
+      <stop offset="100%" stop-color="#8b5cf6"/>
+    </radialGradient>
+    <radialGradient id="charge-glow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#a78bfa" stop-opacity="0.8"/>
+      <stop offset="60%" stop-color="#8b5cf6" stop-opacity="0.3"/>
+      <stop offset="100%" stop-color="#7c3aed" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="prism-face-l" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#ddd6fe"/>
+      <stop offset="100%" stop-color="#8b5cf6"/>
+    </linearGradient>
+    <linearGradient id="prism-face-r" x1="100%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#ede9fe"/>
+      <stop offset="100%" stop-color="#a78bfa"/>
+    </linearGradient>
   </defs>
-  <!-- Prism: attack-0 -->
-  <circle cx="64" cy="50" r="44" fill="url(#tg0)"/>
-  <ellipse cx="64" cy="84" rx="42" ry="24" fill="url(#tg1)" stroke="#fed7aa" stroke-width="1.5"/>
-  <ellipse cx="64" cy="84" rx="30" ry="14" fill="none" stroke="#c2410c" stroke-width="1" opacity="0.4"/>
-  <polygon points="42,64 86,64 76,30 52,30" fill="url(#tg2)"/>
-  <rect x="50" y="28" width="28" height="5" rx="2" fill="#fed7aa" opacity="0.85"/>
-  <rect x="54" y="29" width="20" height="3" rx="1" fill="#fff7ed" opacity="0.6"/>
-  <ellipse cx="64" cy="50" rx="12" ry="3" fill="#fed7aa" opacity="0.85"/>
-  <g opacity="0.50">
-    <line x1="52" y1="28" x2="36" y2="10" stroke="#f97316" stroke-width="1.5" stroke-linecap="round" opacity="0.5"/>
-  <line x1="64" y1="28" x2="64" y2="8" stroke="#f97316" stroke-width="2" stroke-linecap="round" opacity="0.6"/>
-  <line x1="76" y1="28" x2="92" y2="10" stroke="#f97316" stroke-width="1.5" stroke-linecap="round" opacity="0.5"/>
-  <circle cx="64" cy="28" r="18" fill="url(#tg3)"/>
-  </g>
-  
-  <circle cx="64" cy="26" r="8" fill="url(#tg4)"/>
+  <!-- Prism: attack-0 — Pre-fire charge, crystal glows intensely -->
+
+  <!-- Hex base platform -->
+  <polygon points="64,100 89,92 89,72 64,64 39,72 39,92" fill="url(#base-g)" stroke="#334155" stroke-width="1.5"/>
+  <polygon points="64,64 89,72 89,68 64,60 39,68 39,72" fill="#64748b" stroke="#334155" stroke-width="0.8"/>
+  <line x1="50" y1="68" x2="50" y2="88" stroke="#475569" stroke-width="0.6" opacity="0.5"/>
+  <line x1="78" y1="68" x2="78" y2="88" stroke="#475569" stroke-width="0.6" opacity="0.5"/>
+
+  <!-- Mounting ring (lit) -->
+  <ellipse cx="64" cy="68" rx="20" ry="6" fill="none" stroke="#c4b5fd" stroke-width="1.5"/>
+  <ellipse cx="64" cy="68" rx="14" ry="4" fill="#475569" stroke="#a78bfa" stroke-width="1"/>
+
+  <!-- Central pillar -->
+  <rect x="60" y="40" width="8" height="28" rx="1" fill="url(#steel-g)"/>
+  <rect x="62" y="42" width="4" height="24" rx="0.5" fill="#c4b5fd" opacity="0.4"/>
+
+  <!-- Triangular emitter arms (brighter) -->
+  <polygon points="64,26 48,50 54,50" fill="url(#prism-face-l)" stroke="#a78bfa" stroke-width="1"/>
+  <polygon points="64,26 80,50 74,50" fill="url(#prism-face-r)" stroke="#a78bfa" stroke-width="1"/>
+  <polygon points="48,50 80,50 64,56" fill="#a78bfa" opacity="0.5" stroke="#8b5cf6" stroke-width="0.8"/>
+
+  <!-- Energy gathering lines toward crystal -->
+  <line x1="48" y1="50" x2="60" y2="30" stroke="#c4b5fd" stroke-width="0.8" opacity="0.5" stroke-linecap="round"/>
+  <line x1="80" y1="50" x2="68" y2="30" stroke="#c4b5fd" stroke-width="0.8" opacity="0.5" stroke-linecap="round"/>
+  <line x1="64" y1="56" x2="64" y2="36" stroke="#c4b5fd" stroke-width="0.8" opacity="0.5" stroke-linecap="round"/>
+
+  <!-- Prismatic crystal (charging) -->
+  <polygon points="64,18 57,30 64,36 71,30" fill="url(#crystal-charge)" stroke="#ddd6fe" stroke-width="1.5"/>
+  <line x1="64" y1="18" x2="64" y2="36" stroke="#ffffff" stroke-width="0.8" opacity="0.9"/>
+
+  <!-- Intense charge glow -->
+  <circle cx="64" cy="28" r="20" fill="url(#charge-glow)" opacity="0.7"/>
+  <circle cx="64" cy="28" r="10" fill="#f5f3ff" opacity="0.2"/>
+
+  <!-- LED indicators (all bright) -->
+  <circle cx="48" cy="80" r="2.5" fill="#c4b5fd" opacity="0.9"/>
+  <circle cx="80" cy="80" r="2.5" fill="#c4b5fd" opacity="0.9"/>
+  <circle cx="64" cy="94" r="2.5" fill="#c4b5fd" opacity="0.9"/>
+
+  <!-- Refraction lines (stronger) -->
+  <line x1="57" y1="30" x2="40" y2="22" stroke="#a78bfa" stroke-width="1" opacity="0.5" stroke-linecap="round"/>
+  <line x1="71" y1="30" x2="88" y2="22" stroke="#a78bfa" stroke-width="1" opacity="0.5" stroke-linecap="round"/>
+  <line x1="64" y1="18" x2="64" y2="8" stroke="#c4b5fd" stroke-width="0.8" opacity="0.4" stroke-linecap="round"/>
 </svg>

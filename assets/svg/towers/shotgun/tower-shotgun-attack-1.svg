@@ -1,31 +1,99 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128">
   <defs>
-    <radialGradient id="tg0" cx="50%" cy="50%" r="50%"><stop offset="0%" stop-color="#5eead4" stop-opacity="0.3"/><stop offset="100%" stop-color="#5eead4" stop-opacity="0"/></radialGradient>
-    <linearGradient id="tg1" x1="0%" y1="0%" x2="0%" y2="100%"><stop offset="0%" stop-color="#2dd4bf"/><stop offset="100%" stop-color="#134e4a"/></linearGradient>
-    <linearGradient id="tg2" x1="0%" y1="0%" x2="0%" y2="100%"><stop offset="0%" stop-color="#5eead4"/><stop offset="100%" stop-color="#134e4a"/></linearGradient>
-    <radialGradient id="tg3" cx="50%" cy="50%" r="50%"><stop offset="0%" stop-color="#99f6e4" stop-opacity="0.8"/><stop offset="100%" stop-color="#99f6e4" stop-opacity="0"/></radialGradient>
-    <radialGradient id="tg4" cx="50%" cy="50%" r="50%"><stop offset="0%" stop-color="#99f6e4" stop-opacity="0.8"/><stop offset="100%" stop-color="#99f6e4" stop-opacity="0"/></radialGradient>
-    <radialGradient id="tg5" cx="50%" cy="50%" r="50%"><stop offset="0%" stop-color="#99f6e4" stop-opacity="0.8"/><stop offset="100%" stop-color="#99f6e4" stop-opacity="0"/></radialGradient>
+    <radialGradient id="baseFill" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#71717a"/>
+      <stop offset="60%" stop-color="#52525b"/>
+      <stop offset="100%" stop-color="#27272a"/>
+    </radialGradient>
+    <linearGradient id="barrelGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#a1a1aa"/>
+      <stop offset="40%" stop-color="#71717a"/>
+      <stop offset="100%" stop-color="#3f3f46"/>
+    </linearGradient>
+    <radialGradient id="coreFire" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#fecaca"/>
+      <stop offset="30%" stop-color="#fb923c" stop-opacity="0.9"/>
+      <stop offset="100%" stop-color="#ef4444" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="drumGrad" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#52525b"/>
+      <stop offset="100%" stop-color="#27272a"/>
+    </radialGradient>
+    <radialGradient id="muzzleFlash" cx="50%" cy="80%" r="60%">
+      <stop offset="0%" stop-color="#ffffff"/>
+      <stop offset="25%" stop-color="#fb923c"/>
+      <stop offset="60%" stop-color="#ef4444" stop-opacity="0.5"/>
+      <stop offset="100%" stop-color="#ef4444" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="flashBurst" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#fecaca" stop-opacity="0.7"/>
+      <stop offset="40%" stop-color="#fb923c" stop-opacity="0.35"/>
+      <stop offset="100%" stop-color="#fb923c" stop-opacity="0"/>
+    </radialGradient>
   </defs>
-  <!-- Shotgun: attack-1 -->
-  <circle cx="64" cy="72" r="44" fill="url(#tg0)"/>
-  <polygon points="64,104 22,78 106,78" fill="url(#tg1)" stroke="#99f6e4" stroke-width="1.5"/>
-  <polygon points="64,96 34,80 94,80" fill="none" stroke="#0d9488" stroke-width="1" opacity="0.35"/>
-  <circle cx="64" cy="68" r="8" fill="#2dd4bf"/>
-  <line x1="64" y1="68" x2="40" y2="20" stroke="url(#tg2)" stroke-width="5" stroke-linecap="round"/>
-  <line x1="64" y1="68" x2="64" y2="12" stroke="url(#tg2)" stroke-width="6" stroke-linecap="round"/>
-  <line x1="64" y1="68" x2="88" y2="20" stroke="url(#tg2)" stroke-width="5" stroke-linecap="round"/>
-  <circle cx="64" cy="68" r="5" fill="#99f6e4" opacity="0.9"/>
-  <circle cx="64" cy="68" r="3" fill="#ccfbf1" opacity="0.8"/>
-  <circle cx="40" cy="24" r="4" fill="#99f6e4" opacity="0.75"/>
-  <circle cx="64" cy="16" r="4" fill="#99f6e4" opacity="0.85"/>
-  <circle cx="88" cy="24" r="4" fill="#99f6e4" opacity="0.75"/>
-  <circle cx="40" cy="24" r="2" fill="#ccfbf1" opacity="0.5"/>
-  <circle cx="64" cy="16" r="2" fill="#ccfbf1" opacity="0.6"/>
-  <circle cx="88" cy="24" r="2" fill="#ccfbf1" opacity="0.5"/>
-  
-  <circle cx="40" cy="20" r="10" fill="url(#tg3)"/>
-  <circle cx="40" cy="20" r="3" fill="#ccfbf1" opacity="0.9"/><circle cx="64" cy="12" r="10" fill="url(#tg4)"/>
-  <circle cx="64" cy="12" r="3" fill="#ccfbf1" opacity="0.9"/><circle cx="88" cy="20" r="10" fill="url(#tg5)"/>
-  <circle cx="88" cy="20" r="3" fill="#ccfbf1" opacity="0.9"/>
+  <!-- Shotgun: attack-1 — FIRING, multi-barrel muzzle flash scatter -->
+  <!-- Shadow -->
+  <ellipse cx="64" cy="98" rx="38" ry="10" fill="#0f172a" opacity="0.35"/>
+  <!-- Hex base (lit) -->
+  <polygon points="64,32 100,48 100,84 64,100 28,84 28,48" fill="url(#baseFill)" stroke="#fb923c" stroke-width="1.8" opacity="0.9"/>
+  <!-- Circuit traces (max) -->
+  <line x1="28" y1="48" x2="46" y2="57" stroke="#fb923c" stroke-width="1" opacity="0.75"/>
+  <line x1="100" y1="48" x2="82" y2="57" stroke="#fb923c" stroke-width="1" opacity="0.75"/>
+  <line x1="64" y1="100" x2="64" y2="82" stroke="#ef4444" stroke-width="0.8" opacity="0.5"/>
+  <line x1="28" y1="84" x2="46" y2="78" stroke="#fb923c" stroke-width="0.8" opacity="0.5"/>
+  <line x1="100" y1="84" x2="82" y2="78" stroke="#fb923c" stroke-width="0.8" opacity="0.5"/>
+  <!-- Inner hex (fire glow) -->
+  <polygon points="64,44 82,54 82,78 64,88 46,78 46,54" fill="none" stroke="#fb923c" stroke-width="1.2" opacity="0.55"/>
+  <!-- Ammo drum (firing) -->
+  <ellipse cx="42" cy="68" rx="8" ry="10" fill="url(#drumGrad)" stroke="#fb923c" stroke-width="1"/>
+  <ellipse cx="42" cy="62" rx="6" ry="2" fill="none" stroke="#fb923c" stroke-width="0.6" opacity="0.6"/>
+  <ellipse cx="42" cy="68" rx="6" ry="2" fill="none" stroke="#fb923c" stroke-width="0.6" opacity="0.6"/>
+  <ellipse cx="42" cy="74" rx="6" ry="2" fill="none" stroke="#fb923c" stroke-width="0.6" opacity="0.6"/>
+  <!-- Feed belt -->
+  <rect x="48" y="64" width="8" height="6" rx="1" fill="#3f3f46" stroke="#fb923c" stroke-width="0.8"/>
+  <!-- Turret hub -->
+  <circle cx="64" cy="66" r="14" fill="#27272a" stroke="#fb923c" stroke-width="1.2" opacity="0.7"/>
+  <circle cx="64" cy="66" r="10" fill="#18181b" stroke="#ef4444" stroke-width="0.8"/>
+  <!-- 5 barrel cluster (recoil: each +2px down) -->
+  <rect x="61" y="22" width="6" height="36" rx="2" fill="url(#barrelGrad)" stroke="#71717a" stroke-width="0.5"/>
+  <rect x="49" y="26" width="5" height="32" rx="1.5" fill="url(#barrelGrad)" stroke="#71717a" stroke-width="0.4" transform="rotate(-8 52 58)"/>
+  <rect x="74" y="26" width="5" height="32" rx="1.5" fill="url(#barrelGrad)" stroke="#71717a" stroke-width="0.4" transform="rotate(8 76 58)"/>
+  <rect x="41" y="30" width="4.5" height="28" rx="1.5" fill="url(#barrelGrad)" stroke="#71717a" stroke-width="0.4" transform="rotate(-16 43 58)"/>
+  <rect x="82" y="30" width="4.5" height="28" rx="1.5" fill="url(#barrelGrad)" stroke="#71717a" stroke-width="0.4" transform="rotate(16 84 58)"/>
+  <!-- MULTI-BARREL MUZZLE FLASHES -->
+  <!-- Center flash (biggest) -->
+  <ellipse cx="64" cy="14" rx="7" ry="10" fill="url(#muzzleFlash)" opacity="0.95"/>
+  <circle cx="64" cy="12" r="4" fill="#ffffff" opacity="0.85"/>
+  <circle cx="64" cy="12" r="2" fill="#fecaca"/>
+  <!-- Inner left flash -->
+  <ellipse cx="48" cy="18" rx="6" ry="8" fill="url(#muzzleFlash)" opacity="0.85"/>
+  <circle cx="48" cy="16" r="3" fill="#ffffff" opacity="0.7"/>
+  <circle cx="48" cy="16" r="1.5" fill="#fecaca"/>
+  <!-- Inner right flash -->
+  <ellipse cx="80" cy="18" rx="6" ry="8" fill="url(#muzzleFlash)" opacity="0.85"/>
+  <circle cx="80" cy="16" r="3" fill="#ffffff" opacity="0.7"/>
+  <circle cx="80" cy="16" r="1.5" fill="#fecaca"/>
+  <!-- Outer left flash -->
+  <ellipse cx="34" cy="22" rx="5" ry="7" fill="url(#muzzleFlash)" opacity="0.7"/>
+  <circle cx="34" cy="20" r="2.5" fill="#ffffff" opacity="0.6"/>
+  <!-- Outer right flash -->
+  <ellipse cx="94" cy="22" rx="5" ry="7" fill="url(#muzzleFlash)" opacity="0.7"/>
+  <circle cx="94" cy="20" r="2.5" fill="#ffffff" opacity="0.6"/>
+  <!-- Scatter flash rays -->
+  <line x1="64" y1="12" x2="64" y2="2" stroke="#fb923c" stroke-width="1.8" opacity="0.5" stroke-linecap="round"/>
+  <line x1="48" y1="16" x2="40" y2="6" stroke="#fb923c" stroke-width="1.2" opacity="0.4" stroke-linecap="round"/>
+  <line x1="80" y1="16" x2="88" y2="6" stroke="#fb923c" stroke-width="1.2" opacity="0.4" stroke-linecap="round"/>
+  <line x1="34" y1="20" x2="24" y2="12" stroke="#fb923c" stroke-width="1" opacity="0.3" stroke-linecap="round"/>
+  <line x1="94" y1="20" x2="104" y2="12" stroke="#fb923c" stroke-width="1" opacity="0.3" stroke-linecap="round"/>
+  <!-- Energy core (max fire) -->
+  <circle cx="64" cy="66" r="10" fill="url(#coreFire)" opacity="0.95"/>
+  <circle cx="64" cy="66" r="5" fill="#fb923c"/>
+  <circle cx="64" cy="66" r="2.5" fill="#ffffff"/>
+  <!-- All LEDs max -->
+  <circle cx="46" cy="54" r="2" fill="#fb923c"/>
+  <circle cx="82" cy="54" r="2" fill="#fb923c"/>
+  <circle cx="46" cy="78" r="2" fill="#fb923c"/>
+  <circle cx="82" cy="78" r="2" fill="#fb923c"/>
+  <!-- Overall flash halo -->
+  <circle cx="64" cy="36" r="36" fill="url(#flashBurst)" opacity="0.25"/>
 </svg>

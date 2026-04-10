@@ -33,7 +33,7 @@ func NewEnemyRenderer(assetFS AssetReader) *EnemyRenderer {
 	}
 }
 
-const enemySpriteSize = 24
+const enemySpriteSize = 32
 
 // spritePathCache caches fmt.Sprintf results to avoid per-frame allocations.
 var spritePathCache = map[string]string{}

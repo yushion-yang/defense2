@@ -1,28 +1,66 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128">
   <defs>
-    <radialGradient id="tg0" cx="50%" cy="50%" r="50%"><stop offset="0%" stop-color="#ef4444" stop-opacity="0.3"/><stop offset="100%" stop-color="#ef4444" stop-opacity="0"/></radialGradient>
-    <radialGradient id="tg1" cx="50%" cy="50%" r="50%"><stop offset="0%" stop-color="#dc2626"/><stop offset="70%" stop-color="#b91c1c"/><stop offset="100%" stop-color="#7f1d1d"/></radialGradient>
-    <linearGradient id="tg2" x1="0%" y1="0%" x2="0%" y2="100%"><stop offset="0%" stop-color="#ef4444"/><stop offset="50%" stop-color="#dc2626"/><stop offset="100%" stop-color="#7f1d1d"/></linearGradient>
-    <radialGradient id="tg3" cx="50%" cy="50%" r="50%"><stop offset="0%" stop-color="#ef4444" stop-opacity="0.35"/><stop offset="100%" stop-color="#ef4444" stop-opacity="0"/></radialGradient>
-    <radialGradient id="tg4" cx="50%" cy="50%" r="50%"><stop offset="0%" stop-color="#ef4444" stop-opacity="0.15"/><stop offset="100%" stop-color="#ef4444" stop-opacity="0"/></radialGradient>
+    <linearGradient id="basePlate" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#365314"/>
+      <stop offset="50%" stop-color="#2d4a10"/>
+      <stop offset="100%" stop-color="#1a2e09"/>
+    </linearGradient>
+    <linearGradient id="metalBody" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#4d7c0f"/>
+      <stop offset="40%" stop-color="#3f6212"/>
+      <stop offset="100%" stop-color="#365314"/>
+    </linearGradient>
+    <linearGradient id="barrel" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#6b7280"/>
+      <stop offset="30%" stop-color="#4b5563"/>
+      <stop offset="100%" stop-color="#374151"/>
+    </linearGradient>
+    <radialGradient id="coreGlow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#f97316" stop-opacity="0.8"/>
+      <stop offset="60%" stop-color="#eab308" stop-opacity="0.35"/>
+      <stop offset="100%" stop-color="#eab308" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="ambientGlow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#4d7c0f" stop-opacity="0.2"/>
+      <stop offset="100%" stop-color="#4d7c0f" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="ammoPanel" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#374151"/>
+      <stop offset="50%" stop-color="#4b5563"/>
+      <stop offset="100%" stop-color="#374151"/>
+    </linearGradient>
   </defs>
-  <!-- Mortar: idle-1 -->
-  <circle cx="64" cy="68" r="44" fill="url(#tg0)"/>
-  <circle cx="64" cy="80" r="38" fill="url(#tg1)" stroke="#fca5a5" stroke-width="2"/>
-  <circle cx="64" cy="80" r="28" fill="none" stroke="#b91c1c" stroke-width="1.5" opacity="0.5"/>
-  <rect x="50" y="32" width="28" height="6" rx="3" fill="#dc2626" opacity="0.6"/>
-  <rect x="52" y="36" width="24" height="32" rx="5" fill="url(#tg2)"/>
-  <rect x="54" y="36" width="20" height="32" rx="4" fill="#fca5a5" opacity="0.12"/>
-  <circle cx="64" cy="34" r="9" fill="#fca5a5" opacity="0.95"/>
-  <circle cx="64" cy="34" r="5" fill="#fecaca" opacity="0.8"/>
-  <g opacity="0.50">
-    <circle cx="64" cy="68" r="6" fill="#fca5a5" opacity="0.85"/>
-  <circle cx="64" cy="68" r="3" fill="#fecaca" opacity="0.8"/>
-  </g>
-  <g opacity="0.15">
-    <circle cx="64" cy="34" r="18" fill="url(#tg3)"/>
-  <circle cx="64" cy="68" r="10" fill="url(#tg4)"/>
-  </g>
-  
-  
+  <!-- Mortar: idle-1 — energy pulse variant, LEDs blink -->
+  <circle cx="64" cy="72" r="50" fill="url(#ambientGlow)"/>
+  <polygon points="64,38 95,53 95,83 64,98 33,83 33,53" fill="url(#basePlate)" stroke="#4d7c0f" stroke-width="1.5"/>
+  <polygon points="64,42 91,55 91,81 64,94 37,81 37,55" fill="none" stroke="#365314" stroke-width="0.8" opacity="0.5"/>
+  <line x1="37" y1="55" x2="50" y2="62" stroke="#4d7c0f" stroke-width="0.6" opacity="0.5"/>
+  <line x1="91" y1="55" x2="78" y2="62" stroke="#4d7c0f" stroke-width="0.6" opacity="0.5"/>
+  <line x1="64" y1="94" x2="64" y2="82" stroke="#4d7c0f" stroke-width="0.6" opacity="0.5"/>
+  <rect x="40" y="56" width="48" height="30" rx="4" fill="url(#metalBody)" stroke="#4d7c0f" stroke-width="1"/>
+  <rect x="42" y="58" width="44" height="26" rx="3" fill="none" stroke="#365314" stroke-width="0.5" opacity="0.6"/>
+  <line x1="64" y1="56" x2="64" y2="86" stroke="#2d4a10" stroke-width="0.7" opacity="0.5"/>
+  <line x1="40" y1="71" x2="88" y2="71" stroke="#2d4a10" stroke-width="0.7" opacity="0.5"/>
+  <rect x="42" y="72" width="18" height="12" rx="2" fill="url(#ammoPanel)" stroke="#4b5563" stroke-width="0.5"/>
+  <rect x="44" y="74" width="4" height="3" rx="1" fill="#f97316" opacity="0.6"/>
+  <rect x="49" y="74" width="4" height="3" rx="1" fill="#f97316" opacity="0.6"/>
+  <rect x="54" y="74" width="4" height="3" rx="1" fill="#f97316" opacity="0.5"/>
+  <rect x="68" y="72" width="18" height="12" rx="2" fill="url(#ammoPanel)" stroke="#4b5563" stroke-width="0.5"/>
+  <rect x="70" y="74" width="14" height="4" rx="1" fill="#1a2e09"/>
+  <rect x="71" y="75" width="8" height="2" rx="0.5" fill="#4d7c0f" opacity="0.9"/>
+  <circle cx="80" cy="76" r="1" fill="#eab308" opacity="0.9"/>
+  <circle cx="70" cy="80" r="1" fill="#eab308" opacity="0.9"/>
+  <circle cx="74" cy="80" r="1" fill="#4d7c0f" opacity="0.5"/>
+  <circle cx="78" cy="80" r="1" fill="#eab308" opacity="0.9"/>
+  <rect x="57" y="34" width="14" height="30" rx="3" fill="url(#barrel)" stroke="#6b7280" stroke-width="1"/>
+  <rect x="59" y="34" width="10" height="30" rx="2" fill="none" stroke="#9ca3af" stroke-width="0.4" opacity="0.3"/>
+  <ellipse cx="64" cy="34" rx="7" ry="4" fill="#1f2937" stroke="#6b7280" stroke-width="1"/>
+  <ellipse cx="64" cy="34" rx="4" ry="2.5" fill="#111827"/>
+  <circle cx="58" cy="42" r="1" fill="#9ca3af" opacity="0.5"/>
+  <circle cx="70" cy="42" r="1" fill="#9ca3af" opacity="0.5"/>
+  <circle cx="58" cy="52" r="1" fill="#9ca3af" opacity="0.5"/>
+  <circle cx="70" cy="52" r="1" fill="#9ca3af" opacity="0.5"/>
+  <circle cx="64" cy="66" r="12" fill="url(#coreGlow)"/>
+  <circle cx="64" cy="66" r="6" fill="#f97316" opacity="0.8"/>
+  <circle cx="64" cy="66" r="3" fill="#fef3c7" opacity="1"/>
 </svg>

@@ -1,0 +1,54 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128">
+  <defs>
+    <radialGradient id="shellGrad" cx="45%" cy="35%" r="55%">
+      <stop offset="0%" stop-color="#a8a29e"/>
+      <stop offset="50%" stop-color="#78716c"/>
+      <stop offset="100%" stop-color="#44403c"/>
+    </radialGradient>
+    <radialGradient id="underGrad" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#57534e"/>
+      <stop offset="100%" stop-color="#292524"/>
+    </radialGradient>
+    <radialGradient id="shadow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#000" stop-opacity="0.35"/>
+      <stop offset="100%" stop-color="#000" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="plateGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#a8a29e" stop-opacity="0.4"/>
+      <stop offset="100%" stop-color="#44403c" stop-opacity="0.2"/>
+    </linearGradient>
+  </defs>
+  <!-- shadow -->
+  <ellipse cx="64" cy="112" rx="36" ry="12" fill="url(#shadow)"/>
+  <!-- feet: left stomping (lower), right lifting -->
+  <ellipse cx="44" cy="104" rx="12" ry="7" fill="#44403c"/>
+  <ellipse cx="84" cy="100" rx="12" ry="7" fill="#44403c"/>
+  <!-- under body: slight sway right 2px, bob down 2px -->
+  <ellipse cx="66" cy="84" rx="34" ry="24" fill="url(#underGrad)"/>
+  <!-- arms: swapped positions, sway right 2px, bob 2px -->
+  <ellipse cx="30" cy="76" rx="12" ry="16" fill="#57534e" transform="rotate(6 30 76)"/>
+  <ellipse cx="98" cy="76" rx="12" ry="16" fill="#57534e" transform="rotate(-12 98 76)"/>
+  <!-- fists: swapped swing + sway + bob -->
+  <circle cx="30" cy="88" r="8" fill="#44403c"/>
+  <circle cx="96" cy="84" r="8" fill="#44403c"/>
+  <!-- shell: sway right 2px, bob down 2px -->
+  <path d="M30 64 Q30 30 66 26 Q102 30 102 64 Q102 80 66 84 Q30 80 30 64Z" fill="url(#shellGrad)"/>
+  <!-- shell plates: shifted with body -->
+  <path d="M38 44 L94 44" stroke="#a8a29e" stroke-width="1.5" opacity="0.4"/>
+  <path d="M34 56 L98 56" stroke="#a8a29e" stroke-width="1.5" opacity="0.4"/>
+  <path d="M36 68 L96 68" stroke="#a8a29e" stroke-width="1.5" opacity="0.4"/>
+  <path d="M66 28 L66 82" stroke="#a8a29e" stroke-width="1" opacity="0.3"/>
+  <!-- shell highlight: shifted with body -->
+  <path d="M44 38 Q66 30 88 38 Q92 50 88 60 Q66 54 44 60 Q40 50 44 38Z" fill="url(#plateGrad)"/>
+  <!-- head: sway right 2px, bob down 2px -->
+  <ellipse cx="66" cy="36" rx="16" ry="12" fill="#78716c"/>
+  <!-- brow: shifted -->
+  <path d="M50 34 Q66 26 82 34" stroke="#57534e" stroke-width="3" fill="none"/>
+  <!-- eyes: shifted -->
+  <ellipse cx="58" cy="38" rx="5" ry="4" fill="#292524"/>
+  <ellipse cx="74" cy="38" rx="5" ry="4" fill="#292524"/>
+  <circle cx="59" cy="37" r="1.5" fill="#a8a29e" opacity="0.5"/>
+  <circle cx="75" cy="37" r="1.5" fill="#a8a29e" opacity="0.5"/>
+  <!-- jaw: shifted -->
+  <path d="M54 44 Q66 50 78 44" stroke="#57534e" stroke-width="2" fill="none"/>
+</svg>

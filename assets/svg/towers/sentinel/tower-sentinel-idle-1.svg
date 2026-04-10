@@ -1,25 +1,58 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128">
   <defs>
-    <radialGradient id="tg0" cx="50%" cy="50%" r="50%"><stop offset="0%" stop-color="#94a3b8" stop-opacity="0.3"/><stop offset="100%" stop-color="#94a3b8" stop-opacity="0"/></radialGradient>
-    <radialGradient id="tg1" cx="50%" cy="50%" r="50%"><stop offset="0%" stop-color="#64748b"/><stop offset="70%" stop-color="#475569"/><stop offset="100%" stop-color="#334155"/></radialGradient>
-    <linearGradient id="tg2" x1="0%" y1="0%" x2="0%" y2="100%"><stop offset="0%" stop-color="#94a3b8"/><stop offset="100%" stop-color="#334155"/></linearGradient>
-    <radialGradient id="tg3" cx="50%" cy="50%" r="50%"><stop offset="0%" stop-color="#94a3b8" stop-opacity="0.2"/><stop offset="100%" stop-color="#94a3b8" stop-opacity="0"/></radialGradient>
+    <radialGradient id="baseFill" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#64748b"/>
+      <stop offset="60%" stop-color="#475569"/>
+      <stop offset="100%" stop-color="#1e293b"/>
+    </radialGradient>
+    <linearGradient id="barrelGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#94a3b8"/>
+      <stop offset="40%" stop-color="#64748b"/>
+      <stop offset="100%" stop-color="#334155"/>
+    </linearGradient>
+    <radialGradient id="coreGlow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#22d3ee"/>
+      <stop offset="40%" stop-color="#0ea5e9" stop-opacity="0.8"/>
+      <stop offset="100%" stop-color="#0ea5e9" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="pulseGlow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#22d3ee" stop-opacity="0.5"/>
+      <stop offset="100%" stop-color="#22d3ee" stop-opacity="0"/>
+    </radialGradient>
   </defs>
-  <!-- Sentinel: idle-1 -->
-  <circle cx="64" cy="68" r="44" fill="url(#tg0)"/>
-  <circle cx="64" cy="80" r="34" fill="url(#tg1)" stroke="#94a3b8" stroke-width="1.5"/>
-  <circle cx="64" cy="80" r="24" fill="none" stroke="#475569" stroke-width="1" opacity="0.4"/>
-  <rect x="58" y="32" width="12" height="38" rx="3" fill="url(#tg2)"/>
-  <rect x="60" y="32" width="8" height="38" rx="2" fill="#cbd5e1" opacity="0.12"/>
-  <circle cx="64" cy="30" r="6" fill="#cbd5e1" opacity="0.85"/>
-  <circle cx="64" cy="30" r="3" fill="#e2e8f0" opacity="0.8"/>
-  <g opacity="0.50">
-    <circle cx="64" cy="68" r="4" fill="#cbd5e1" opacity="0.8"/>
-  <circle cx="64" cy="68" r="2" fill="#e2e8f0" opacity="0.8"/>
-  </g>
-  <g opacity="0.10">
-    <circle cx="64" cy="30" r="12" fill="url(#tg3)"/>
-  </g>
-  
-  
+  <!-- Sentinel: idle-1 — energy pulse brightened, LED blink alternate -->
+  <!-- Shadow -->
+  <ellipse cx="64" cy="96" rx="36" ry="10" fill="#0f172a" opacity="0.35"/>
+  <!-- Hex base platform -->
+  <polygon points="64,34 96,51 96,85 64,102 32,85 32,51" fill="url(#baseFill)" stroke="#94a3b8" stroke-width="1.2"/>
+  <!-- Base circuit traces (brighter pulse) -->
+  <line x1="64" y1="34" x2="64" y2="50" stroke="#22d3ee" stroke-width="0.8" opacity="0.55"/>
+  <line x1="32" y1="51" x2="48" y2="59" stroke="#22d3ee" stroke-width="0.8" opacity="0.55"/>
+  <line x1="96" y1="51" x2="80" y2="59" stroke="#22d3ee" stroke-width="0.8" opacity="0.55"/>
+  <line x1="32" y1="85" x2="48" y2="73" stroke="#22d3ee" stroke-width="0.6" opacity="0.4"/>
+  <line x1="96" y1="85" x2="80" y2="73" stroke="#22d3ee" stroke-width="0.6" opacity="0.4"/>
+  <!-- Inner hex ring (brighter) -->
+  <polygon points="64,46 80,55 80,73 64,82 48,73 48,55" fill="none" stroke="#22d3ee" stroke-width="0.8" opacity="0.35"/>
+  <!-- Turret housing -->
+  <circle cx="64" cy="64" r="16" fill="#334155" stroke="#64748b" stroke-width="1.5"/>
+  <circle cx="64" cy="64" r="12" fill="#1e293b" stroke="#475569" stroke-width="0.8"/>
+  <!-- Barrel -->
+  <rect x="60" y="22" width="8" height="34" rx="2" fill="url(#barrelGrad)" stroke="#64748b" stroke-width="0.5"/>
+  <rect x="62" y="24" width="3" height="30" rx="1" fill="#94a3b8" opacity="0.15"/>
+  <!-- Muzzle tip -->
+  <rect x="59" y="20" width="10" height="5" rx="1.5" fill="#64748b" stroke="#94a3b8" stroke-width="0.5"/>
+  <!-- Energy core (expanded bright pulse) -->
+  <circle cx="64" cy="64" r="10" fill="url(#coreGlow)" opacity="0.9"/>
+  <circle cx="64" cy="64" r="5" fill="#0ea5e9" opacity="0.95"/>
+  <circle cx="64" cy="64" r="2.5" fill="#e0f2fe"/>
+  <!-- LED indicators (alternate blink: bottom bright, top dim) -->
+  <circle cx="48" cy="55" r="1.8" fill="#22d3ee" opacity="0.4"/>
+  <circle cx="80" cy="55" r="1.8" fill="#22d3ee" opacity="0.4"/>
+  <circle cx="48" cy="73" r="1.8" fill="#22d3ee" opacity="0.95"/>
+  <circle cx="80" cy="73" r="1.8" fill="#22d3ee" opacity="0.95"/>
+  <!-- Targeting sensor (brighter) -->
+  <circle cx="64" cy="22" r="3" fill="#1e293b" stroke="#22d3ee" stroke-width="1"/>
+  <circle cx="64" cy="22" r="1.5" fill="#22d3ee"/>
+  <!-- Expanded ambient pulse -->
+  <circle cx="64" cy="64" r="26" fill="url(#pulseGlow)" opacity="0.3"/>
 </svg>

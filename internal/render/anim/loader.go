@@ -32,7 +32,6 @@ var EnemyAnimConfig = map[string]struct {
 	Loop bool
 }{
 	"walk": {FPS: 6, Loop: true},
-	"hit":  {FPS: 10, Loop: false},
 }
 
 // LoadTowerAnimator 加载塔的动画帧。

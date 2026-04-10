@@ -1,0 +1,79 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128">
+  <defs>
+    <radialGradient id="tpBody" cx="50%" cy="45%" r="50%">
+      <stop offset="0%" stop-color="#a855f7"/>
+      <stop offset="60%" stop-color="#9333ea"/>
+      <stop offset="100%" stop-color="#7e22ce"/>
+    </radialGradient>
+    <radialGradient id="tpPortal" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#c084fc" stop-opacity="0.8"/>
+      <stop offset="40%" stop-color="#a855f7" stop-opacity="0.4"/>
+      <stop offset="100%" stop-color="#7e22ce" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="tpGlitch" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#e9d5ff" stop-opacity="0.9"/>
+      <stop offset="100%" stop-color="#c084fc" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="tpWarp" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#c084fc"/>
+      <stop offset="50%" stop-color="#a855f7"/>
+      <stop offset="100%" stop-color="#7e22ce"/>
+    </linearGradient>
+    <linearGradient id="tpCloak" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#9333ea"/>
+      <stop offset="100%" stop-color="#581c87" stop-opacity="0.6"/>
+    </linearGradient>
+  </defs>
+  <!-- portal ring behind (rotated offset) -->
+  <ellipse cx="64" cy="70" rx="42" ry="38" fill="none" stroke="#c084fc" stroke-width="1.5" opacity="0.3" stroke-dasharray="6 4"/>
+  <!-- shadow -->
+  <ellipse cx="64" cy="112" rx="24" ry="6" fill="#7e22ce" opacity="0.3"/>
+  <!-- portal glow (shifted) -->
+  <ellipse cx="62" cy="70" rx="32" ry="28" fill="url(#tpPortal)"/>
+  <!-- glitch fragments (displaced copies, shifted from walk-0) -->
+  <ellipse cx="56" cy="58" rx="12" ry="16" fill="#a855f7" opacity="0.15"/>
+  <ellipse cx="72" cy="70" rx="10" ry="14" fill="#c084fc" opacity="0.12"/>
+  <!-- glitch lines (repositioned) -->
+  <rect x="68" y="42" width="22" height="2" fill="#c084fc" opacity="0.4"/>
+  <rect x="38" y="56" width="16" height="1.5" fill="#c084fc" opacity="0.3"/>
+  <rect x="72" y="80" width="16" height="1.5" fill="#c084fc" opacity="0.35"/>
+  <rect x="34" y="76" width="14" height="2" fill="#c084fc" opacity="0.25"/>
+  <!-- legs (glitchy, offset - swapped displacement) -->
+  <rect x="52" y="94" width="8" height="14" rx="2" fill="#7e22ce" opacity="0.7"/>
+  <rect x="48" y="92" width="8" height="14" rx="2" fill="#9333ea" opacity="0.5"/>
+  <rect x="68" y="94" width="8" height="14" rx="2" fill="#7e22ce" opacity="0.7"/>
+  <rect x="72" y="92" width="8" height="14" rx="2" fill="#9333ea" opacity="0.5"/>
+  <!-- cloak/body (3px body bob down) -->
+  <path d="M40 47 Q36 59 38 83 Q40 99 48 101 Q56 97 64 97 Q72 97 80 101 Q88 99 90 83 Q92 59 88 47 Q78 39 64 37 Q50 39 40 47" fill="url(#tpBody)" opacity="0.85"/>
+  <!-- cloak fade -->
+  <path d="M42 73 Q44 91 52 97 Q58 93 64 93 Q70 93 76 97 Q84 91 86 73" fill="url(#tpCloak)" opacity="0.4"/>
+  <!-- body warp distortion (shifted) -->
+  <path d="M48 53 Q56 49 64 51 Q72 49 80 53 L78 71 Q72 67 64 69 Q56 67 50 71 Z" fill="url(#tpWarp)" opacity="0.3"/>
+  <!-- arms (phasing, different position) -->
+  <path d="M40 51 Q28 58 24 72 Q22 78 26 82" stroke="#9333ea" stroke-width="5" fill="none" stroke-linecap="round" opacity="0.7"/>
+  <path d="M28 74 Q24 80 28 84" stroke="#c084fc" stroke-width="4" fill="none" stroke-linecap="round" opacity="0.4"/>
+  <path d="M88 51 Q100 58 104 68 Q106 74 102 74" stroke="#9333ea" stroke-width="5" fill="none" stroke-linecap="round" opacity="0.7"/>
+  <path d="M100 66 Q104 72 100 76" stroke="#c084fc" stroke-width="4" fill="none" stroke-linecap="round" opacity="0.4"/>
+  <!-- head (slight displacement) -->
+  <ellipse cx="66" cy="34" rx="16" ry="18" fill="url(#tpBody)"/>
+  <!-- glitch head copy (shifted opposite) -->
+  <ellipse cx="60" cy="32" rx="16" ry="18" fill="#a855f7" opacity="0.15"/>
+  <!-- face void -->
+  <ellipse cx="66" cy="36" rx="10" ry="8" fill="#3b0764" opacity="0.6"/>
+  <!-- eyes -->
+  <ellipse cx="60" cy="34" rx="4" ry="3" fill="url(#tpGlitch)"/>
+  <circle cx="60" cy="34" r="1.5" fill="#e9d5ff"/>
+  <ellipse cx="72" cy="34" rx="4" ry="3" fill="url(#tpGlitch)"/>
+  <circle cx="72" cy="34" r="1.5" fill="#e9d5ff"/>
+  <!-- phase particles (shifted positions) -->
+  <circle cx="92" cy="38" r="2" fill="#c084fc" opacity="0.6"/>
+  <circle cx="36" cy="46" r="1.5" fill="#c084fc" opacity="0.5"/>
+  <circle cx="82" cy="18" r="1.8" fill="#e9d5ff" opacity="0.4"/>
+  <circle cx="46" cy="22" r="2.2" fill="#c084fc" opacity="0.5"/>
+  <circle cx="100" cy="64" r="1.5" fill="#e9d5ff" opacity="0.3"/>
+  <circle cx="26" cy="56" r="1.8" fill="#c084fc" opacity="0.4"/>
+  <circle cx="74" cy="8" r="1.2" fill="#c084fc" opacity="0.35"/>
+  <circle cx="54" cy="14" r="1" fill="#e9d5ff" opacity="0.3"/>
+  <!-- portal ring front (rotated offset) -->
+  <ellipse cx="64" cy="70" rx="42" ry="38" fill="none" stroke="#c084fc" stroke-width="1" opacity="0.2" stroke-dasharray="8 2"/>
+</svg>

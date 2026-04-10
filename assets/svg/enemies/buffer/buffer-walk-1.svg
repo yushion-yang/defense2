@@ -1,0 +1,70 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128">
+  <defs>
+    <radialGradient id="bodyGrad" cx="50%" cy="40%" r="50%">
+      <stop offset="0%" stop-color="#fb923c"/>
+      <stop offset="100%" stop-color="#ea580c"/>
+    </radialGradient>
+    <linearGradient id="flagGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#fb923c"/>
+      <stop offset="50%" stop-color="#f97316"/>
+      <stop offset="100%" stop-color="#ea580c"/>
+    </linearGradient>
+    <linearGradient id="flagShine" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#fed7aa" stop-opacity="0.5"/>
+      <stop offset="100%" stop-color="#f97316" stop-opacity="0"/>
+    </linearGradient>
+    <radialGradient id="shadow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#000" stop-opacity="0.3"/>
+      <stop offset="100%" stop-color="#000" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="emblemGrad" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#fef3c7"/>
+      <stop offset="100%" stop-color="#f59e0b"/>
+    </radialGradient>
+  </defs>
+  <!-- shadow -->
+  <ellipse cx="64" cy="112" rx="28" ry="9" fill="url(#shadow)"/>
+  <!-- flag pole (slight tilt from march) -->
+  <line x1="83" y1="18" x2="81" y2="88" stroke="#78350f" stroke-width="3" stroke-linecap="round"/>
+  <!-- flag (wave shifted - different curve) -->
+  <path d="M83 18 Q98 24 84 34 Q102 40 84 50" fill="url(#flagGrad)"/>
+  <path d="M83 18 Q98 24 84 34 Q102 40 84 50" fill="url(#flagShine)"/>
+  <!-- flag border -->
+  <path d="M83 18 Q98 24 84 34 Q102 40 84 50" stroke="#ea580c" stroke-width="1" fill="none"/>
+  <!-- flag emblem (shifted with wave) -->
+  <path d="M90 32 L92 28 L94 32 L92 36Z" fill="#fef3c7" opacity="0.7"/>
+  <!-- feet (stride shifted: left back, right forward) -->
+  <ellipse cx="46" cy="102" rx="10" ry="6" fill="#7c2d12"/>
+  <ellipse cx="74" cy="98" rx="10" ry="6" fill="#7c2d12"/>
+  <!-- legs (shifted stride) -->
+  <rect x="40" y="86" width="12" height="18" rx="4" fill="#ea580c"/>
+  <rect x="68" y="84" width="12" height="16" rx="4" fill="#ea580c"/>
+  <!-- body (bobbed up 2px) -->
+  <path d="M38 50 Q38 38 58 36 Q78 38 78 50 L78 86 Q58 92 38 86Z" fill="url(#bodyGrad)"/>
+  <!-- chest plate -->
+  <path d="M42 52 L58 46 L74 52 L74 70 L58 74 L42 70Z" fill="#f97316" stroke="#ea580c" stroke-width="1"/>
+  <!-- chest emblem -->
+  <circle cx="58" cy="60" r="8" fill="url(#emblemGrad)" opacity="0.7"/>
+  <path d="M58 54 L60 58 L64 58 L61 61 L62 65 L58 63 L54 65 L55 61 L52 58 L56 58Z" fill="#f97316" opacity="0.8"/>
+  <!-- left arm (swung back) -->
+  <path d="M38 50 Q32 54 30 64 Q30 68 34 70" stroke="#ea580c" stroke-width="6" fill="none" stroke-linecap="round"/>
+  <!-- right arm (holding pole, bobbed) -->
+  <path d="M76 52 Q82 56 82 66 L82 74" stroke="#ea580c" stroke-width="6" fill="none" stroke-linecap="round"/>
+  <!-- hand on pole -->
+  <circle cx="82" cy="74" r="5" fill="#fb923c"/>
+  <!-- head (bobbed up 2px) -->
+  <circle cx="58" cy="32" r="14" fill="#f97316"/>
+  <!-- helmet -->
+  <path d="M44 32 Q44 18 58 16 Q72 18 72 32" fill="#ea580c"/>
+  <!-- helmet crest -->
+  <path d="M58 16 L58 8 Q62 10 60 16" fill="#fb923c"/>
+  <!-- visor -->
+  <path d="M48 30 Q58 26 68 30 L66 36 Q58 34 50 36Z" fill="#431407" opacity="0.8"/>
+  <!-- visor glow -->
+  <ellipse cx="54" cy="31" rx="5" ry="2" fill="#fb923c" opacity="0.4"/>
+  <!-- shoulder pad -->
+  <ellipse cx="38" cy="48" rx="8" ry="6" fill="#ea580c" stroke="#c2410c" stroke-width="1"/>
+  <!-- pole top ornament -->
+  <circle cx="83" cy="16" r="4" fill="url(#emblemGrad)"/>
+  <circle cx="83" cy="16" r="2" fill="#f59e0b"/>
+</svg>

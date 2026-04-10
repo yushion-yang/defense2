@@ -245,6 +245,7 @@ func (s *VFXPreviewScene) vfxTriggerRegistry() map[string]func(s *VFXPreviewScen
 		"strengthDrain":  func(s *VFXPreviewScene) { s.activateVFX("strengthDrain", 0) },
 		"slowOverlay":    func(s *VFXPreviewScene) { s.activateVFX("slowOverlay", 0) },
 		"burnOverlay":    func(s *VFXPreviewScene) { s.activateVFX("burnOverlay", 0) },
+		"poisonOverlay":  func(s *VFXPreviewScene) { s.activateVFX("poisonOverlay", 0) },
 
 		// Tower UI VFX
 		"upgradeDiamond": func(s *VFXPreviewScene) { s.activateVFX("upgradeDiamond", 0) },
@@ -994,6 +995,8 @@ func (s *VFXPreviewScene) drawActiveVFX(screen *ebiten.Image) {
 		vfx.DrawSlowOverlay(screen, fcx, fcy, 12)
 	case "burnOverlay":
 		vfx.DrawBurnOverlay(screen, fcx, fcy, 12)
+	case "poisonOverlay":
+		vfx.DrawPoisonOverlay(screen, fcx, fcy, 12)
 	case "immunityRing":
 		// Show both CC immune (red) and slow immune (cyan) side by side
 		vfx.DrawImmunityRing(screen, fcx-25, fcy, 12, color.RGBA{R: 220, G: 60, B: 60, A: 80})

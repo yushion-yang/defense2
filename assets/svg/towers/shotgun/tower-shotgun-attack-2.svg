@@ -1,27 +1,74 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128">
   <defs>
-    <radialGradient id="tg0" cx="50%" cy="50%" r="50%"><stop offset="0%" stop-color="#5eead4" stop-opacity="0.3"/><stop offset="100%" stop-color="#5eead4" stop-opacity="0"/></radialGradient>
-    <linearGradient id="tg1" x1="0%" y1="0%" x2="0%" y2="100%"><stop offset="0%" stop-color="#2dd4bf"/><stop offset="100%" stop-color="#134e4a"/></linearGradient>
-    <linearGradient id="tg2" x1="0%" y1="0%" x2="0%" y2="100%"><stop offset="0%" stop-color="#5eead4"/><stop offset="100%" stop-color="#134e4a"/></linearGradient>
+    <radialGradient id="baseFill" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#71717a"/>
+      <stop offset="60%" stop-color="#52525b"/>
+      <stop offset="100%" stop-color="#27272a"/>
+    </radialGradient>
+    <linearGradient id="barrelGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#a1a1aa"/>
+      <stop offset="40%" stop-color="#71717a"/>
+      <stop offset="100%" stop-color="#3f3f46"/>
+    </linearGradient>
+    <radialGradient id="coreFade" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#ef4444" stop-opacity="0.4"/>
+      <stop offset="60%" stop-color="#ef4444" stop-opacity="0.15"/>
+      <stop offset="100%" stop-color="#ef4444" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="drumGrad" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#52525b"/>
+      <stop offset="100%" stop-color="#27272a"/>
+    </radialGradient>
+    <radialGradient id="residualGlow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#fb923c" stop-opacity="0.2"/>
+      <stop offset="100%" stop-color="#fb923c" stop-opacity="0"/>
+    </radialGradient>
   </defs>
-  <!-- Shotgun: attack-2 -->
-  <circle cx="64" cy="72" r="44" fill="url(#tg0)"/>
-  <polygon points="64,104 22,78 106,78" fill="url(#tg1)" stroke="#99f6e4" stroke-width="1.5"/>
-  <polygon points="64,96 34,80 94,80" fill="none" stroke="#0d9488" stroke-width="1" opacity="0.35"/>
-  <circle cx="64" cy="74" r="8" fill="#2dd4bf"/>
-  <line x1="64" y1="74" x2="40" y2="26" stroke="url(#tg2)" stroke-width="5" stroke-linecap="round"/>
-  <line x1="64" y1="74" x2="64" y2="18" stroke="url(#tg2)" stroke-width="6" stroke-linecap="round"/>
-  <line x1="64" y1="74" x2="88" y2="26" stroke="url(#tg2)" stroke-width="5" stroke-linecap="round"/>
-  <circle cx="64" cy="74" r="5" fill="#99f6e4" opacity="0.9"/>
-  <circle cx="64" cy="74" r="3" fill="#ccfbf1" opacity="0.8"/>
-  <g opacity="0.15">
-    <circle cx="40" cy="24" r="4" fill="#99f6e4" opacity="0.75"/>
-  <circle cx="64" cy="16" r="4" fill="#99f6e4" opacity="0.85"/>
-  <circle cx="88" cy="24" r="4" fill="#99f6e4" opacity="0.75"/>
-  <circle cx="40" cy="24" r="2" fill="#ccfbf1" opacity="0.5"/>
-  <circle cx="64" cy="16" r="2" fill="#ccfbf1" opacity="0.6"/>
-  <circle cx="88" cy="24" r="2" fill="#ccfbf1" opacity="0.5"/>
-  </g>
-  
-  
+  <!-- Shotgun: attack-2 — cooldown, barrels cooling, smoke residual -->
+  <!-- Shadow -->
+  <ellipse cx="64" cy="98" rx="38" ry="10" fill="#0f172a" opacity="0.35"/>
+  <!-- Hex base -->
+  <polygon points="64,32 100,48 100,84 64,100 28,84 28,48" fill="url(#baseFill)" stroke="#a1a1aa" stroke-width="1.2"/>
+  <!-- Circuit traces (fading) -->
+  <line x1="28" y1="48" x2="46" y2="57" stroke="#ef4444" stroke-width="0.5" opacity="0.2"/>
+  <line x1="100" y1="48" x2="82" y2="57" stroke="#ef4444" stroke-width="0.5" opacity="0.2"/>
+  <!-- Inner hex (dim) -->
+  <polygon points="64,44 82,54 82,78 64,88 46,78 46,54" fill="none" stroke="#52525b" stroke-width="0.7" opacity="0.3"/>
+  <!-- Ammo drum (cooling) -->
+  <ellipse cx="42" cy="68" rx="8" ry="10" fill="url(#drumGrad)" stroke="#71717a" stroke-width="1"/>
+  <ellipse cx="42" cy="62" rx="6" ry="2" fill="none" stroke="#a1a1aa" stroke-width="0.4" opacity="0.25"/>
+  <ellipse cx="42" cy="68" rx="6" ry="2" fill="none" stroke="#a1a1aa" stroke-width="0.4" opacity="0.25"/>
+  <ellipse cx="42" cy="74" rx="6" ry="2" fill="none" stroke="#a1a1aa" stroke-width="0.4" opacity="0.25"/>
+  <!-- Feed belt -->
+  <rect x="48" y="64" width="8" height="6" rx="1" fill="#3f3f46" stroke="#52525b" stroke-width="0.5"/>
+  <!-- Turret hub -->
+  <circle cx="64" cy="66" r="14" fill="#27272a" stroke="#52525b" stroke-width="1.5"/>
+  <circle cx="64" cy="66" r="10" fill="#18181b" stroke="#3f3f46" stroke-width="0.8"/>
+  <!-- 5 barrel cluster (still slightly retracted from recoil) -->
+  <rect x="61" y="22" width="6" height="36" rx="2" fill="url(#barrelGrad)" stroke="#71717a" stroke-width="0.5"/>
+  <rect x="49" y="26" width="5" height="32" rx="1.5" fill="url(#barrelGrad)" stroke="#71717a" stroke-width="0.4" transform="rotate(-8 52 58)"/>
+  <rect x="74" y="26" width="5" height="32" rx="1.5" fill="url(#barrelGrad)" stroke="#71717a" stroke-width="0.4" transform="rotate(8 76 58)"/>
+  <rect x="41" y="30" width="4.5" height="28" rx="1.5" fill="url(#barrelGrad)" stroke="#71717a" stroke-width="0.4" transform="rotate(-16 43 58)"/>
+  <rect x="82" y="30" width="4.5" height="28" rx="1.5" fill="url(#barrelGrad)" stroke="#71717a" stroke-width="0.4" transform="rotate(16 84 58)"/>
+  <!-- Muzzle rings (dim) -->
+  <circle cx="64" cy="22" r="3.5" fill="none" stroke="#a1a1aa" stroke-width="0.5" opacity="0.5"/>
+  <circle cx="49" cy="24" r="3" fill="none" stroke="#a1a1aa" stroke-width="0.4" opacity="0.4"/>
+  <circle cx="79" cy="24" r="3" fill="none" stroke="#a1a1aa" stroke-width="0.4" opacity="0.4"/>
+  <circle cx="38" cy="28" r="2.5" fill="none" stroke="#a1a1aa" stroke-width="0.4" opacity="0.3"/>
+  <circle cx="90" cy="28" r="2.5" fill="none" stroke="#a1a1aa" stroke-width="0.4" opacity="0.3"/>
+  <!-- Residual barrel heat -->
+  <circle cx="64" cy="20" r="3" fill="url(#residualGlow)" opacity="0.35"/>
+  <circle cx="49" cy="22" r="2.5" fill="url(#residualGlow)" opacity="0.25"/>
+  <circle cx="79" cy="22" r="2.5" fill="url(#residualGlow)" opacity="0.25"/>
+  <circle cx="38" cy="26" r="2" fill="url(#residualGlow)" opacity="0.15"/>
+  <circle cx="90" cy="26" r="2" fill="url(#residualGlow)" opacity="0.15"/>
+  <!-- Energy core (depleted) -->
+  <circle cx="64" cy="66" r="6" fill="url(#coreFade)" opacity="0.5"/>
+  <circle cx="64" cy="66" r="3" fill="#ef4444" opacity="0.4"/>
+  <circle cx="64" cy="66" r="1.2" fill="#fecaca" opacity="0.5"/>
+  <!-- LEDs dim -->
+  <circle cx="46" cy="54" r="1.5" fill="#ef4444" opacity="0.25"/>
+  <circle cx="82" cy="54" r="1.5" fill="#ef4444" opacity="0.25"/>
+  <circle cx="46" cy="78" r="1.5" fill="#ef4444" opacity="0.25"/>
+  <circle cx="82" cy="78" r="1.5" fill="#ef4444" opacity="0.25"/>
 </svg>

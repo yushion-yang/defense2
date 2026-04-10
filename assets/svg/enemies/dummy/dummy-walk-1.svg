@@ -1,0 +1,96 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128">
+  <defs>
+    <linearGradient id="dmWood" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#d4a574"/>
+      <stop offset="50%" stop-color="#a0845c"/>
+      <stop offset="100%" stop-color="#785c3a"/>
+    </linearGradient>
+    <linearGradient id="dmPost" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#a0845c"/>
+      <stop offset="30%" stop-color="#d4a574"/>
+      <stop offset="70%" stop-color="#a0845c"/>
+      <stop offset="100%" stop-color="#785c3a"/>
+    </linearGradient>
+    <linearGradient id="dmStraw" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#fde68a"/>
+      <stop offset="50%" stop-color="#fbbf24"/>
+      <stop offset="100%" stop-color="#d97706"/>
+    </linearGradient>
+    <radialGradient id="dmTarget" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#fecaca"/>
+      <stop offset="100%" stop-color="#dc2626"/>
+    </radialGradient>
+    <linearGradient id="dmCross" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#785c3a"/>
+      <stop offset="50%" stop-color="#a0845c"/>
+      <stop offset="100%" stop-color="#785c3a"/>
+    </linearGradient>
+  </defs>
+  <!-- shadow -->
+  <ellipse cx="64" cy="118" rx="22" ry="6" fill="#000" opacity="0.2"/>
+  <!-- base platform -->
+  <path d="M44 112 L40 120 L88 120 L84 112 Z" fill="#785c3a"/>
+  <path d="M44 112 L84 112 L88 116 L40 116 Z" fill="#a0845c"/>
+  <!-- center post (slight lean right, 2px wobble) -->
+  <rect x="59" y="40" width="12" height="74" rx="2" fill="url(#dmPost)" transform="rotate(2, 64, 112)"/>
+  <!-- wood grain -->
+  <line x1="61" y1="44" x2="61" y2="112" stroke="#785c3a" stroke-width="0.5" opacity="0.4" transform="rotate(2, 64, 112)"/>
+  <line x1="65" y1="42" x2="65" y2="114" stroke="#785c3a" stroke-width="0.4" opacity="0.3" transform="rotate(2, 64, 112)"/>
+  <line x1="69" y1="44" x2="69" y2="112" stroke="#785c3a" stroke-width="0.5" opacity="0.4" transform="rotate(2, 64, 112)"/>
+  <!-- cross beam (tilted with wobble) -->
+  <rect x="26" y="54" width="76" height="10" rx="2" fill="url(#dmCross)" transform="rotate(2, 64, 59)"/>
+  <!-- cross beam grain -->
+  <line x1="28" y1="57" x2="100" y2="57" stroke="#785c3a" stroke-width="0.4" opacity="0.3" transform="rotate(2, 64, 59)"/>
+  <line x1="28" y1="61" x2="100" y2="61" stroke="#785c3a" stroke-width="0.4" opacity="0.3" transform="rotate(2, 64, 59)"/>
+  <!-- straw body (shifted with wobble) -->
+  <ellipse cx="65" cy="76" rx="18" ry="22" fill="url(#dmStraw)"/>
+  <!-- straw tufts poking out (different positions) -->
+  <line x1="49" y1="66" x2="44" y2="58" stroke="#fbbf24" stroke-width="2" stroke-linecap="round"/>
+  <line x1="48" y1="72" x2="40" y2="68" stroke="#d97706" stroke-width="1.5" stroke-linecap="round"/>
+  <line x1="81" y1="70" x2="88" y2="66" stroke="#fbbf24" stroke-width="2" stroke-linecap="round"/>
+  <line x1="83" y1="76" x2="92" y2="76" stroke="#d97706" stroke-width="1.5" stroke-linecap="round"/>
+  <line x1="52" y1="94" x2="48" y2="100" stroke="#fbbf24" stroke-width="1.5" stroke-linecap="round"/>
+  <line x1="78" y1="90" x2="86" y2="94" stroke="#fbbf24" stroke-width="1.5" stroke-linecap="round"/>
+  <line x1="56" y1="96" x2="52" y2="104" stroke="#d97706" stroke-width="1.5" stroke-linecap="round"/>
+  <line x1="72" y1="96" x2="76" y2="104" stroke="#d97706" stroke-width="1.5" stroke-linecap="round"/>
+  <!-- straw binding -->
+  <ellipse cx="65" cy="76" rx="18" ry="22" fill="none" stroke="#785c3a" stroke-width="1" stroke-dasharray="4 3" opacity="0.5"/>
+  <path d="M51 68 Q65 62 79 68" stroke="#a0845c" stroke-width="1.5" fill="none"/>
+  <path d="M49 82 Q65 88 81 82" stroke="#a0845c" stroke-width="1.5" fill="none"/>
+  <!-- target circle on chest -->
+  <circle cx="65" cy="76" r="12" fill="url(#dmTarget)" opacity="0.8"/>
+  <circle cx="65" cy="76" r="9" fill="#fecaca"/>
+  <circle cx="65" cy="76" r="6" fill="#dc2626" opacity="0.7"/>
+  <circle cx="65" cy="76" r="3" fill="#fecaca"/>
+  <circle cx="65" cy="76" r="1.5" fill="#dc2626"/>
+  <!-- arms (straw on cross beam, different droop) -->
+  <path d="M26 54 Q20 52 16 58 Q18 64 24 64" fill="url(#dmStraw)" opacity="0.8" transform="rotate(2, 64, 59)"/>
+  <path d="M102 54 Q108 52 112 56 Q110 62 104 64" fill="url(#dmStraw)" opacity="0.8" transform="rotate(2, 64, 59)"/>
+  <!-- straw arm tufts (shifted) -->
+  <line x1="18" y1="54" x2="12" y2="52" stroke="#fbbf24" stroke-width="1.5" stroke-linecap="round"/>
+  <line x1="16" y1="60" x2="10" y2="62" stroke="#d97706" stroke-width="1" stroke-linecap="round"/>
+  <line x1="110" y1="54" x2="116" y2="52" stroke="#fbbf24" stroke-width="1.5" stroke-linecap="round"/>
+  <line x1="112" y1="58" x2="118" y2="62" stroke="#d97706" stroke-width="1" stroke-linecap="round"/>
+  <!-- head (burlap sack, tilted with wobble) -->
+  <circle cx="65" cy="36" r="18" fill="url(#dmWood)" transform="rotate(3, 65, 36)"/>
+  <!-- burlap texture -->
+  <circle cx="65" cy="36" r="18" fill="none" stroke="#785c3a" stroke-width="0.5" stroke-dasharray="2 2" opacity="0.4" transform="rotate(3, 65, 36)"/>
+  <!-- tie at top -->
+  <path d="M61 18 Q65 14 69 18" stroke="#785c3a" stroke-width="2" fill="none"/>
+  <line x1="63" y1="16" x2="60" y2="10" stroke="#a0845c" stroke-width="1.5" stroke-linecap="round"/>
+  <line x1="67" y1="16" x2="72" y2="12" stroke="#a0845c" stroke-width="1.5" stroke-linecap="round"/>
+  <!-- face (stitched, tilted) -->
+  <line x1="55" y1="32" x2="59" y2="33" stroke="#785c3a" stroke-width="2" stroke-linecap="round"/>
+  <line x1="71" y1="33" x2="75" y2="32" stroke="#785c3a" stroke-width="2" stroke-linecap="round"/>
+  <!-- stitched smile (slightly different curve) -->
+  <path d="M57 41 Q61 44 65 43 Q69 42 73 40" stroke="#785c3a" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+  <!-- stitch marks on smile -->
+  <line x1="59" y1="42" x2="59" y2="44" stroke="#785c3a" stroke-width="1"/>
+  <line x1="63" y1="42" x2="63" y2="44" stroke="#785c3a" stroke-width="1"/>
+  <line x1="67" y1="41" x2="67" y2="43" stroke="#785c3a" stroke-width="1"/>
+  <line x1="71" y1="40" x2="71" y2="42" stroke="#785c3a" stroke-width="1"/>
+  <!-- patch on head (shifted with tilt) -->
+  <rect x="72" y="24" width="8" height="8" rx="1" fill="#a0845c" opacity="0.6" stroke="#785c3a" stroke-width="0.5"/>
+  <line x1="73" y1="25" x2="79" y2="31" stroke="#785c3a" stroke-width="0.5" opacity="0.5"/>
+  <line x1="79" y1="25" x2="73" y2="31" stroke="#785c3a" stroke-width="0.5" opacity="0.5"/>
+</svg>

@@ -1,25 +1,73 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128">
   <defs>
-    <radialGradient id="tg0" cx="50%" cy="50%" r="50%"><stop offset="0%" stop-color="#94a3b8" stop-opacity="0.3"/><stop offset="100%" stop-color="#94a3b8" stop-opacity="0"/></radialGradient>
-    <radialGradient id="tg1" cx="50%" cy="50%" r="50%"><stop offset="0%" stop-color="#64748b"/><stop offset="70%" stop-color="#475569"/><stop offset="100%" stop-color="#334155"/></radialGradient>
-    <linearGradient id="tg2" x1="0%" y1="0%" x2="0%" y2="100%"><stop offset="0%" stop-color="#94a3b8"/><stop offset="100%" stop-color="#334155"/></linearGradient>
-    <radialGradient id="tg3" cx="50%" cy="50%" r="50%"><stop offset="0%" stop-color="#94a3b8" stop-opacity="0.2"/><stop offset="100%" stop-color="#94a3b8" stop-opacity="0"/></radialGradient>
-    <radialGradient id="tg4" cx="50%" cy="50%" r="50%"><stop offset="0%" stop-color="#cbd5e1" stop-opacity="0.85"/><stop offset="100%" stop-color="#cbd5e1" stop-opacity="0"/></radialGradient>
+    <radialGradient id="baseFill" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#64748b"/>
+      <stop offset="60%" stop-color="#475569"/>
+      <stop offset="100%" stop-color="#1e293b"/>
+    </radialGradient>
+    <linearGradient id="barrelGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#94a3b8"/>
+      <stop offset="40%" stop-color="#64748b"/>
+      <stop offset="100%" stop-color="#334155"/>
+    </linearGradient>
+    <radialGradient id="coreFire" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#e0f2fe"/>
+      <stop offset="30%" stop-color="#22d3ee" stop-opacity="0.9"/>
+      <stop offset="100%" stop-color="#0ea5e9" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="muzzleFlash" cx="50%" cy="80%" r="60%">
+      <stop offset="0%" stop-color="#ffffff"/>
+      <stop offset="30%" stop-color="#22d3ee"/>
+      <stop offset="70%" stop-color="#0ea5e9" stop-opacity="0.5"/>
+      <stop offset="100%" stop-color="#0ea5e9" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="flashBurst" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#e0f2fe" stop-opacity="0.9"/>
+      <stop offset="40%" stop-color="#22d3ee" stop-opacity="0.5"/>
+      <stop offset="100%" stop-color="#22d3ee" stop-opacity="0"/>
+    </radialGradient>
   </defs>
-  <!-- Sentinel: attack-1 -->
-  <circle cx="64" cy="68" r="44" fill="url(#tg0)"/>
-  <circle cx="64" cy="80" r="34" fill="url(#tg1)" stroke="#94a3b8" stroke-width="1.5"/>
-  <circle cx="64" cy="80" r="24" fill="none" stroke="#475569" stroke-width="1" opacity="0.4"/>
-  <rect x="58" y="29" width="12" height="38" rx="3" fill="url(#tg2)"/>
-  <rect x="60" y="29" width="8" height="38" rx="2" fill="#cbd5e1" opacity="0.12"/>
-  <circle cx="64" cy="27" r="6" fill="#cbd5e1" opacity="0.85"/>
-  <circle cx="64" cy="27" r="3" fill="#e2e8f0" opacity="0.8"/>
-  <circle cx="64" cy="65" r="4" fill="#cbd5e1" opacity="0.8"/>
-  <circle cx="64" cy="65" r="2" fill="#e2e8f0" opacity="0.8"/>
-  <g opacity="0.80">
-    <circle cx="64" cy="30" r="12" fill="url(#tg3)"/>
-  </g>
-  
-  <circle cx="64" cy="25" r="14" fill="url(#tg4)"/>
-  <circle cx="64" cy="25" r="5" fill="#cbd5e1" opacity="0.95"/>
+  <!-- Sentinel: attack-1 — FIRING, max energy, muzzle flash -->
+  <!-- Shadow -->
+  <ellipse cx="64" cy="96" rx="36" ry="10" fill="#0f172a" opacity="0.35"/>
+  <!-- Hex base platform -->
+  <polygon points="64,34 96,51 96,85 64,102 32,85 32,51" fill="url(#baseFill)" stroke="#22d3ee" stroke-width="1.5" opacity="0.9"/>
+  <!-- Circuit traces (max bright) -->
+  <line x1="64" y1="34" x2="64" y2="50" stroke="#22d3ee" stroke-width="1.2" opacity="0.85"/>
+  <line x1="32" y1="51" x2="48" y2="59" stroke="#22d3ee" stroke-width="1.2" opacity="0.85"/>
+  <line x1="96" y1="51" x2="80" y2="59" stroke="#22d3ee" stroke-width="1.2" opacity="0.85"/>
+  <line x1="32" y1="85" x2="48" y2="73" stroke="#22d3ee" stroke-width="1" opacity="0.65"/>
+  <line x1="96" y1="85" x2="80" y2="73" stroke="#22d3ee" stroke-width="1" opacity="0.65"/>
+  <!-- Inner hex ring (firing glow) -->
+  <polygon points="64,46 80,55 80,73 64,82 48,73 48,55" fill="none" stroke="#22d3ee" stroke-width="1.2" opacity="0.6"/>
+  <!-- Turret housing -->
+  <circle cx="64" cy="64" r="16" fill="#334155" stroke="#22d3ee" stroke-width="1.5" opacity="0.8"/>
+  <circle cx="64" cy="64" r="12" fill="#1e293b" stroke="#0ea5e9" stroke-width="1"/>
+  <!-- Barrel (recoil: shifted down 2px) -->
+  <rect x="60" y="24" width="8" height="34" rx="2" fill="url(#barrelGrad)" stroke="#64748b" stroke-width="0.5"/>
+  <rect x="62" y="26" width="3" height="30" rx="1" fill="#94a3b8" opacity="0.15"/>
+  <!-- Muzzle tip -->
+  <rect x="59" y="22" width="10" height="5" rx="1.5" fill="#94a3b8" stroke="#22d3ee" stroke-width="1"/>
+  <!-- MUZZLE FLASH -->
+  <ellipse cx="64" cy="16" rx="10" ry="14" fill="url(#muzzleFlash)" opacity="0.9"/>
+  <circle cx="64" cy="14" r="5" fill="#ffffff" opacity="0.8"/>
+  <circle cx="64" cy="14" r="3" fill="#e0f2fe"/>
+  <!-- Flash burst rays -->
+  <line x1="64" y1="14" x2="64" y2="2" stroke="#22d3ee" stroke-width="2" opacity="0.6" stroke-linecap="round"/>
+  <line x1="64" y1="14" x2="54" y2="6" stroke="#22d3ee" stroke-width="1.5" opacity="0.4" stroke-linecap="round"/>
+  <line x1="64" y1="14" x2="74" y2="6" stroke="#22d3ee" stroke-width="1.5" opacity="0.4" stroke-linecap="round"/>
+  <!-- Energy core (max fire) -->
+  <circle cx="64" cy="64" r="10" fill="url(#coreFire)" opacity="0.95"/>
+  <circle cx="64" cy="64" r="5" fill="#22d3ee"/>
+  <circle cx="64" cy="64" r="2.5" fill="#ffffff"/>
+  <!-- All LEDs max bright -->
+  <circle cx="48" cy="55" r="2" fill="#22d3ee"/>
+  <circle cx="80" cy="55" r="2" fill="#22d3ee"/>
+  <circle cx="48" cy="73" r="2" fill="#22d3ee"/>
+  <circle cx="80" cy="73" r="2" fill="#22d3ee"/>
+  <!-- Targeting sensor (flash) -->
+  <circle cx="64" cy="24" r="3.5" fill="#22d3ee"/>
+  <circle cx="64" cy="24" r="2" fill="#ffffff"/>
+  <!-- Overall flash halo -->
+  <circle cx="64" cy="40" r="30" fill="url(#flashBurst)" opacity="0.25"/>
 </svg>

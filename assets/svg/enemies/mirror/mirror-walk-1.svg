@@ -1,0 +1,92 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128">
+  <defs>
+    <radialGradient id="mirBody" cx="45%" cy="40%" r="55%">
+      <stop offset="0%" stop-color="#f1f5f9"/>
+      <stop offset="40%" stop-color="#e2e8f0"/>
+      <stop offset="80%" stop-color="#cbd5e1"/>
+      <stop offset="100%" stop-color="#94a3b8"/>
+    </radialGradient>
+    <linearGradient id="mirFacet1" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#f8fafc"/>
+      <stop offset="100%" stop-color="#cbd5e1"/>
+    </linearGradient>
+    <linearGradient id="mirFacet2" x1="1" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#e2e8f0"/>
+      <stop offset="100%" stop-color="#94a3b8"/>
+    </linearGradient>
+    <linearGradient id="mirPrism" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#f87171"/>
+      <stop offset="20%" stop-color="#fb923c"/>
+      <stop offset="40%" stop-color="#facc15"/>
+      <stop offset="60%" stop-color="#4ade80"/>
+      <stop offset="80%" stop-color="#60a5fa"/>
+      <stop offset="100%" stop-color="#a78bfa"/>
+    </linearGradient>
+    <radialGradient id="mirGlow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#fff" stop-opacity="0.6"/>
+      <stop offset="100%" stop-color="#e2e8f0" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="mirReflect" x1="0" y1="0" x2="0.5" y2="1">
+      <stop offset="0%" stop-color="#fff" stop-opacity="0.8"/>
+      <stop offset="50%" stop-color="#fff" stop-opacity="0.1"/>
+      <stop offset="100%" stop-color="#fff" stop-opacity="0"/>
+    </linearGradient>
+  </defs>
+  <!-- shadow -->
+  <ellipse cx="64" cy="114" rx="26" ry="7" fill="#94a3b8" opacity="0.3"/>
+  <!-- rainbow light scatter (rotated ~15 degrees around origin 64,50) -->
+  <line x1="64" y1="50" x2="16" y2="28" stroke="#f87171" stroke-width="1" opacity="0.3"/>
+  <line x1="64" y1="50" x2="110" y2="16" stroke="#60a5fa" stroke-width="1" opacity="0.3"/>
+  <line x1="64" y1="50" x2="10" y2="50" stroke="#facc15" stroke-width="1" opacity="0.25"/>
+  <line x1="64" y1="50" x2="118" y2="48" stroke="#4ade80" stroke-width="1" opacity="0.25"/>
+  <line x1="64" y1="50" x2="18" y2="86" stroke="#a78bfa" stroke-width="1" opacity="0.2"/>
+  <line x1="64" y1="50" x2="110" y2="84" stroke="#fb923c" stroke-width="1" opacity="0.2"/>
+  <!-- scattered light dots (shifted) -->
+  <circle cx="16" cy="28" r="3" fill="#f87171" opacity="0.4"/>
+  <circle cx="110" cy="16" r="2.5" fill="#60a5fa" opacity="0.4"/>
+  <circle cx="10" cy="50" r="2" fill="#facc15" opacity="0.35"/>
+  <circle cx="118" cy="48" r="2" fill="#4ade80" opacity="0.35"/>
+  <circle cx="18" cy="86" r="2.5" fill="#a78bfa" opacity="0.3"/>
+  <circle cx="110" cy="84" r="2" fill="#fb923c" opacity="0.3"/>
+  <!-- legs (crystalline, stride position) -->
+  <polygon points="48,92 40,112 54,112" fill="url(#mirFacet2)"/>
+  <polygon points="80,88 76,110 88,110" fill="url(#mirFacet2)"/>
+  <!-- leg facet lines -->
+  <line x1="48" y1="92" x2="47" y2="112" stroke="#94a3b8" stroke-width="0.5" opacity="0.5"/>
+  <line x1="80" y1="88" x2="82" y2="110" stroke="#94a3b8" stroke-width="0.5" opacity="0.5"/>
+  <!-- crystalline body (3px bob down) -->
+  <polygon points="64,33 40,53 36,81 48,99 80,99 92,81 88,53" fill="url(#mirBody)" stroke="#94a3b8" stroke-width="0.8"/>
+  <!-- body facets (shifted with body) -->
+  <polygon points="64,33 40,53 52,63 64,41 76,63 88,53" fill="url(#mirFacet1)" opacity="0.4"/>
+  <polygon points="40,53 36,81 52,75 52,63" fill="url(#mirFacet2)" opacity="0.3"/>
+  <polygon points="88,53 92,81 76,75 76,63" fill="url(#mirFacet1)" opacity="0.25"/>
+  <polygon points="36,81 48,99 60,89 52,75" fill="url(#mirFacet2)" opacity="0.2"/>
+  <polygon points="92,81 80,99 68,89 76,75" fill="url(#mirFacet1)" opacity="0.15"/>
+  <!-- facet edge lines -->
+  <line x1="52" y1="63" x2="52" y2="75" stroke="#94a3b8" stroke-width="0.6" opacity="0.4"/>
+  <line x1="76" y1="63" x2="76" y2="75" stroke="#94a3b8" stroke-width="0.6" opacity="0.4"/>
+  <line x1="52" y1="63" x2="76" y2="63" stroke="#94a3b8" stroke-width="0.5" opacity="0.3"/>
+  <line x1="52" y1="75" x2="76" y2="75" stroke="#94a3b8" stroke-width="0.5" opacity="0.3"/>
+  <line x1="64" y1="41" x2="64" y2="89" stroke="#cbd5e1" stroke-width="0.4" opacity="0.3"/>
+  <!-- surface reflection -->
+  <path d="M52 45 Q60 41 68 45 L66 59 Q60 55 54 59 Z" fill="url(#mirReflect)"/>
+  <!-- prism core (rotated slightly via shifted vertices) -->
+  <polygon points="64,49 55,58 56,71 72,71 73,58" fill="url(#mirPrism)" opacity="0.6"/>
+  <!-- core glow -->
+  <ellipse cx="64" cy="59" rx="8" ry="10" fill="url(#mirGlow)"/>
+  <!-- arms (crystal shards, different angle) -->
+  <polygon points="36,57 20,52 24,46 40,53" fill="url(#mirFacet1)" stroke="#cbd5e1" stroke-width="0.5"/>
+  <polygon points="20,52 12,58 20,62 22,54" fill="url(#mirFacet2)" opacity="0.8"/>
+  <polygon points="92,57 108,52 104,46 88,53" fill="url(#mirFacet1)" stroke="#cbd5e1" stroke-width="0.5"/>
+  <polygon points="108,52 114,58 106,62 104,54" fill="url(#mirFacet2)" opacity="0.8"/>
+  <!-- head (diamond shape, 3px bob) -->
+  <polygon points="64,17 50,33 64,41 78,33" fill="url(#mirBody)" stroke="#94a3b8" stroke-width="0.8"/>
+  <!-- head facets -->
+  <polygon points="64,17 50,33 64,31" fill="url(#mirFacet1)" opacity="0.4"/>
+  <polygon points="64,17 78,33 64,31" fill="url(#mirFacet2)" opacity="0.3"/>
+  <!-- head reflection -->
+  <path d="M58 23 Q62 21 66 23 L64 29 Z" fill="#fff" opacity="0.5"/>
+  <!-- eyes -->
+  <polygon points="56,29 54,33 58,33" fill="url(#mirPrism)" opacity="0.8"/>
+  <polygon points="72,29 70,33 74,33" fill="url(#mirPrism)" opacity="0.8"/>
+</svg>
