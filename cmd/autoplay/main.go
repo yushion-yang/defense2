@@ -11,6 +11,7 @@ import (
 	"flag"
 	"fmt"
 	"log"
+	"math/rand"
 	"os"
 	"path/filepath"
 	"time"
@@ -39,6 +40,8 @@ func main() {
 	scenarioName := flag.String("scenario", "", "run single scenario by name")
 	seed := flag.Int64("seed", 0, "master random seed (0=use timestamp, same seed = reproducible results)")
 	abilitySweep := flag.Bool("ability-sweep", false, "run all ability-level test scenarios")
+	marathon := flag.Bool("marathon", false, "run N random games with random map/difficulty/warden/strategy")
+	games := flag.Int("games", 100, "number of games in marathon mode")
 	modelPath := flag.String("model-path", "", "path to LLM .bin weight file (for llm strategy)")
 	vocabPath := flag.String("vocab-path", "config/llm/vocab.json", "path to LLM vocab.json (for llm strategy)")
 	flag.Parse()
@@ -48,7 +51,7 @@ func main() {
 		return
 	}
 
-	orchestrate(*runs, *strategies, *mapID, *difficulty, *warden, *output, *jsonDir, *sweep, *abilitySweep, *scenarioName, *seed, *modelPath, *vocabPath)
+	orchestrate(*runs, *strategies, *mapID, *difficulty, *warden, *output, *jsonDir, *sweep, *abilitySweep, *scenarioName, *seed, *marathon, *games, *modelPath, *vocabPath)
 }
 
 // ─── 编排模式 ───
@@ -70,7 +73,7 @@ type sessionConfig struct {
 	Seed        int64  `json:"seed"`
 }
 
-func orchestrate(runs int, strategies, mapID, difficulty, warden, output, jsonDir string, sweep, abilitySweep bool, scenarioName string, masterSeed int64, modelPath, vocabPath string) {
+func orchestrate(runs int, strategies, mapID, difficulty, warden, output, jsonDir string, sweep, abilitySweep bool, scenarioName string, masterSeed int64, marathon bool, games int, modelPath, vocabPath string) {
 	// 分离模式: --json-dir 由调用方管理目录结构
 	// 初始化 dataFS（父进程需要读取 ability_tests.json 生成测试计划）
 	config.SetDataFS(&defense2.DataFS)
@@ -93,6 +96,9 @@ func orchestrate(runs int, strategies, mapID, difficulty, warden, output, jsonDi
 	// 生成测试用例
 	var cases []autoplay.TestCase
 	switch {
+	case marathon:
+		cases = generateMarathonCases(games, masterSeed)
+		log.Printf("Marathon mode: %d random games", len(cases))
 	case sweep:
 		cases = autoplay.GenerateTestPlan()
 		log.Printf("Sweep mode: %d test cases", len(cases))
@@ -162,6 +168,40 @@ func orchestrate(runs int, strategies, mapID, difficulty, warden, output, jsonDi
 		reportDir = jsonDir
 	}
 	autoplay.GenerateSummaryReport(reportDir)
+}
+
+// generateMarathonCases 生成 N 个随机测试用例（随机地图/难度/战灵/策略）。
+func generateMarathonCases(n int, seed int64) []autoplay.TestCase {
+	rng := rand.New(rand.NewSource(seed))
+	maps := autoplay.Maps
+	diffs := autoplay.Difficulties
+	wardens := autoplay.Wardens
+	strats := []string{"random", "greedy"}
+
+	cases := make([]autoplay.TestCase, 0, n)
+	for i := 0; i < n; i++ {
+		m := maps[rng.Intn(len(maps))]
+		d := diffs[rng.Intn(len(diffs))]
+		w := wardens[rng.Intn(len(wardens))]
+		s := strats[rng.Intn(len(strats))]
+
+		var strategy autoplay.Strategy
+		switch s {
+		case "greedy":
+			strategy = autoplay.NewGreedyStrategy()
+		default:
+			strategy = autoplay.NewRandomStrategy(seed + int64(i))
+		}
+
+		cases = append(cases, autoplay.TestCase{
+			ID:         fmt.Sprintf("marathon_%04d_%s_%s_%s", i+1, m, d, s),
+			MapID:      m,
+			Difficulty: d,
+			Warden:     w,
+			Strategy:   strategy,
+		})
+	}
+	return cases
 }
 
 // ─── 单局模式 ───
