@@ -5,6 +5,8 @@ package autoplay
 import (
 	"fmt"
 	"math"
+
+	"defense2/internal/config"
 )
 
 // AnomalySeverity 异常严重程度。
@@ -214,6 +216,7 @@ type upgradeAudit struct {
 	tick     int
 	row, col int
 	prevStr  int
+	prevGold int // gold at time of upgrade request (for race detection)
 }
 
 // stuckThreshold 判定敌人卡住的帧数阈值。
@@ -492,8 +495,8 @@ func (d *AnomalyDetector) RecordBuildAction(tick, row, col int, towerKey string)
 }
 
 // RecordUpgradeAction 记录升级操作，下帧验证结果。
-func (d *AnomalyDetector) RecordUpgradeAction(tick, row, col, prevStrength int) {
-	d.pendingUpgrCheck = &upgradeAudit{tick: tick, row: row, col: col, prevStr: prevStrength}
+func (d *AnomalyDetector) RecordUpgradeAction(tick, row, col, prevStrength, gold int) {
+	d.pendingUpgrCheck = &upgradeAudit{tick: tick, row: row, col: col, prevStr: prevStrength, prevGold: gold}
 }
 
 // checkBuildResult 验证建塔操作是否生效。
@@ -530,11 +533,16 @@ func (d *AnomalyDetector) checkUpgradeResult(state *GameState) []Anomaly {
 	for _, t := range state.Towers {
 		if t.Row == audit.row && t.Col == audit.col {
 			if t.Strength <= audit.prevStr {
+				sev := SeverityHigh
+				// Gold insufficient at request time = expected failure (same-frame race), not a bug
+				if audit.prevGold < config.GlobalBalance().Tower.StrengthBuyCost {
+					sev = SeverityLow
+				}
 				return []Anomaly{{
 					Tick:     state.Tick,
 					Type:     "upgrade_no_effect",
-					Detail:   fmt.Sprintf("tower at (%d,%d) strength unchanged after upgrade: %d", audit.row, audit.col, t.Strength),
-					Severity: SeverityHigh,
+					Detail:   fmt.Sprintf("tower at (%d,%d) strength unchanged after upgrade: %d (gold at request: %d)", audit.row, audit.col, t.Strength, audit.prevGold),
+					Severity: sev,
 				}}
 			}
 			return nil // 升级生效
@@ -899,8 +907,8 @@ func (d *AnomalyDetector) checkEnemyHPUniform(state *GameState) []Anomaly {
 // 对应 Bug: fire-and-forget 弹道，敌人拐弯后子弹全飞偏。
 func (d *AnomalyDetector) checkProjectileOrphan(state *GameState) []Anomaly {
 	const (
-		projThreshold  = 30  // 弹射物数量阈值（提高避免高攻速塔误报）
-		frameThreshold = 300 // 连续帧阈值（5 秒，给高 HP 敌人更多时间）
+		projThreshold  = 50  // 弹射物数量阈值（scatter 产生大量非追踪弹，需更高阈值）
+		frameThreshold = 600 // 连续帧阈值（10 秒，scatter 弹丸合理空窗期更长）
 	)
 
 	if state.ProjectileCount > projThreshold {

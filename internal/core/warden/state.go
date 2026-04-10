@@ -203,6 +203,12 @@ func (s *WardenState) MoveOrbit(cx, cy, idealDist, dt float64) {
 
 // Wander 无敌人时缓慢游荡。每 3-5 秒换一个随机目标点，缓慢漂移过去。
 func (s *WardenState) Wander(dt float64) {
+	// 首次定位：teleport 到地图中心（与 MoveOrbit 一致，防止卡在原点）
+	if s.X == 0 && s.Y == 0 {
+		s.X = s.mapW() / 2
+		s.Y = s.mapH() / 2
+	}
+
 	prevX, prevY := s.X, s.Y
 
 	// 首次或到期：选新游荡点

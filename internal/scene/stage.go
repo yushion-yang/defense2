@@ -3108,9 +3108,9 @@ func (s *StageScene) buildAutoPlaySnapshot() AutoPlaySnapshot {
 
 	// 已建塔快照
 	s.towers.Each(func(t *tower.Tower) {
-		str := 0
+		str := 100 // default base strength
 		if t.Strength != nil {
-			str = int(t.Strength.Permanent)
+			str = int(t.Strength.Effective())
 		}
 		snap.Towers = append(snap.Towers, AutoPlayTower{
 			Key: t.Key, Row: t.Row, Col: t.Col,

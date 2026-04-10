@@ -159,7 +159,7 @@ func (c *Controller) OnUpdate(snap scene.AutoPlaySnapshot) []scene.AutoPlayActio
 			// 找当前强度
 			for _, t := range state.Towers {
 				if t.Row == a.Row && t.Col == a.Col {
-					c.anomaly.RecordUpgradeAction(state.Tick, a.Row, a.Col, t.Strength)
+					c.anomaly.RecordUpgradeAction(state.Tick, a.Row, a.Col, t.Strength, state.Gold)
 					break
 				}
 			}
