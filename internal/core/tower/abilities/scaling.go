@@ -12,6 +12,7 @@ import (
 	"math"
 	"math/rand"
 
+	"defense2/internal/core/buff"
 	"defense2/internal/core/combat"
 	"defense2/internal/core/enemy"
 	"defense2/internal/core/projectile"
@@ -266,9 +267,11 @@ func (a *ElementSwitch) OnTick(t *tower.Tower, ctx *tower.TickContext) *tower.Ti
 		// 冰元素：对范围内敌人施加减速
 		ctx.Enemies.Each(func(e *enemy.Enemy) {
 			if distToEnemy(t, e) <= t.Range {
-				if e.SlowTimer < 0.5 {
-					e.SlowTimer = 0.5
-					e.SlowFactor = 0.7
+				if !e.IsSlowed() {
+					e.Buffs.Add(buff.Buff{
+						ID: "slow", Category: buff.CatCC, Source: "element_ice",
+						Value: 0.7, Duration: 0.5, Remaining: 0.5,
+					})
 					e.Speed = e.BaseSpeed * 0.7
 				}
 			}

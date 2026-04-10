@@ -232,8 +232,8 @@ func TestCC_StunRespectsImmunity(t *testing.T) {
 	if ok {
 		t.Error("IsStunImmune=true 时 ApplyStun 应返回 false")
 	}
-	if e.StunTimer > 0 {
-		t.Error("免疫后 StunTimer 应为 0")
+	if e.IsStunned() {
+		t.Error("免疫后应无眩晕状态")
 	}
 }
 

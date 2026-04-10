@@ -287,11 +287,11 @@ func UpdateBerserk(e *Enemy) bool {
 	e.BaseSpeed *= e.BerserkSpeedScale
 
 	// 如果当前未被减速，同步更新当前速度
-	if e.SlowTimer <= 0 {
+	if !e.IsSlowed() {
 		e.Speed = e.BaseSpeed
 	} else {
 		// 被减速中：按当前减速倍率重新计算
-		e.Speed = e.BaseSpeed * e.SlowFactor
+		e.Speed = e.BaseSpeed * e.GetSlowFactor()
 	}
 	return true
 }

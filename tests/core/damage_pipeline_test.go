@@ -4,6 +4,7 @@ import (
 	"math"
 	"testing"
 
+	"defense2/internal/core/buff"
 	"defense2/internal/core/combat"
 	"defense2/internal/core/enemy"
 	"defense2/internal/core/gamemap"
@@ -12,12 +13,14 @@ import (
 
 // makePipelineEnemy 创建测试用敌人
 func makePipelineEnemy(hp, maxHP float64) *enemy.Enemy {
-	return &enemy.Enemy{
+	e := &enemy.Enemy{
 		HP:     hp,
 		MaxHP:  maxHP,
 		Active: true,
 		Path:   []gamemap.Point{{X: 0, Y: 0}},
 	}
+	e.Buffs = buff.NewDefaultBuffList()
+	return e
 }
 
 // ============================================================
@@ -207,7 +210,7 @@ func TestPipeline_TrueDamageIgnoresModifiers(t *testing.T) {
 
 func TestPipeline_DamageAmplify(t *testing.T) {
 	e := makePipelineEnemy(100, 100)
-	e.DamageAmplify = 0.2 // +20% 受伤
+	e.Buffs.Add(buff.Buff{ID: "weaken", Category: buff.CatDebuff, Source: "test", Value: 0.2, Duration: 5, Remaining: 5}) // +20% 受伤
 
 	r := combat.ProcessDamage(combat.DamageInput{
 		Target:    e,
@@ -221,7 +224,7 @@ func TestPipeline_DamageAmplify(t *testing.T) {
 
 func TestPipeline_DamageAmplifyCapped(t *testing.T) {
 	e := makePipelineEnemy(100, 100)
-	e.DamageAmplify = 0.8 // 超过上限 0.5
+	e.Buffs.Add(buff.Buff{ID: "weaken", Category: buff.CatDebuff, Source: "test", Value: 0.8, Duration: 5, Remaining: 5}) // 超过上限 0.5
 
 	r := combat.ProcessDamage(combat.DamageInput{
 		Target:    e,

@@ -36,7 +36,7 @@ func ApplyEnemyEvent(e *Enemy, kind string, value float64) {
 			e.BaseSpeed = maxSpeed
 		}
 		// 同步当前速度（如果未被减速）
-		if e.SlowTimer <= 0 {
+		if !e.IsSlowed() {
 			e.Speed = e.BaseSpeed
 		}
 

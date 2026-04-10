@@ -117,7 +117,7 @@ func (er *EnemyRenderer) DrawEnemies(screen *ebiten.Image, pool *enemy.Pool, ani
 		}
 
 		// --- Root ground effect (drawn UNDER enemy body) ---
-		if e.RootTimer > 0 {
+		if e.IsRooted() {
 			vfx.DrawRootGround(screen, cx, cy, r)
 		}
 
@@ -141,7 +141,7 @@ func (er *EnemyRenderer) DrawEnemies(screen *ebiten.Image, pool *enemy.Pool, ani
 			wobblePhase := e.X*0.05 + animTime*4
 			wobbleY := math.Sin(wobblePhase) * 1.5
 			wobbleRot := math.Sin(wobblePhase) * 0.05 // ~3 degrees
-			if e.StunTimer > 0 || e.RootTimer > 0 {
+			if e.IsStunned() || e.IsRooted() {
 				wobbleY = 0
 				wobbleRot = 0
 			}
@@ -187,15 +187,15 @@ func (er *EnemyRenderer) DrawEnemies(screen *ebiten.Image, pool *enemy.Pool, ani
 
 		// --- Status effect body overlays (subtle, sprite-sized) ---
 		spriteR := float32(enemySpriteSize) / 2
-		if e.SlowTimer > 0 {
+		if e.IsSlowed() {
 			vfx.DrawSlowOverlay(screen, cx, cy, spriteR)
 		}
-		if e.BurnTimer > 0 {
+		if e.IsBurning() {
 			vfx.DrawBurnOverlay(screen, cx, cy, spriteR)
 		}
 
 		// --- Stun rotating stars ---
-		if e.StunTimer > 0 {
+		if e.IsStunned() {
 			vfx.DrawStunStars(screen, cx, cy, r, animTime)
 		}
 
@@ -276,19 +276,19 @@ func (er *EnemyRenderer) DrawEnemies(screen *ebiten.Image, pool *enemy.Pool, ani
 		// --- Status effect dots ---
 		dotY := cy - barOffY - 4
 		var dots []vfx.StatusDot
-		if e.SlowTimer > 0 {
+		if e.IsSlowed() {
 			dots = append(dots, vfx.StatusDot{Color: color.RGBA{R: 125, G: 211, B: 252, A: 235}})
 		}
-		if e.StunTimer > 0 {
+		if e.IsStunned() {
 			dots = append(dots, vfx.StatusDot{Color: color.RGBA{R: 255, G: 255, B: 100, A: 235}})
 		}
-		if e.RootTimer > 0 {
+		if e.IsRooted() {
 			dots = append(dots, vfx.StatusDot{Color: color.RGBA{R: 139, G: 90, B: 43, A: 235}})
 		}
-		if e.BleedTimer > 0 {
+		if e.IsBleeding() {
 			dots = append(dots, vfx.StatusDot{Color: color.RGBA{R: 239, G: 68, B: 68, A: 255}})
 		}
-		if e.BurnTimer > 0 {
+		if e.IsBurning() {
 			dots = append(dots, vfx.StatusDot{Color: color.RGBA{R: 255, G: 140, B: 40, A: 255}})
 		}
 		if len(dots) > 0 {
@@ -324,7 +324,7 @@ func (er *EnemyRenderer) DrawEnemies(screen *ebiten.Image, pool *enemy.Pool, ani
 			}
 
 			// 净化免疫期白色微光
-			if e.PurgeInterval > 0 && e.ControlImmuneTimer > 0 {
+			if e.PurgeInterval > 0 && e.HasControlImmunity() {
 				vfx.DrawPurgeGlow(screen, cx, cy, float32(e.Radius), animTime)
 			}
 		}

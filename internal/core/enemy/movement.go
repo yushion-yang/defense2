@@ -30,12 +30,12 @@ func MoveAlongPath(e *Enemy, fallbackWaypoints []gamemap.Point, dt float64) bool
 	}
 
 	// 眩晕中：不移动（BuffList.Tick handles countdown）
-	if e.IsStunned() || e.StunTimer > 0 {
+	if e.IsStunned() {
 		return false
 	}
 
 	// 定身中：不移动（BuffList.Tick handles countdown）
-	if e.IsRooted() || e.RootTimer > 0 {
+	if e.IsRooted() {
 		return false
 	}
 

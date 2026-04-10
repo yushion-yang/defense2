@@ -1103,14 +1103,14 @@ func (s *StageScene) drawEnemyInfoPanel(screen *ebiten.Image, e *enemy.Enemy) {
 	if e.DashActiveT > 0 {
 		actualSpeed *= (1 + e.DashSpeedBoost)
 	}
-	if e.StunTimer > 0 || e.RootTimer > 0 || e.IsDummy {
+	if e.IsStunned() || e.IsRooted() || e.IsDummy {
 		actualSpeed = 0
 	}
 	speedInfo := fmt.Sprintf("速度: %.1f", actualSpeed)
 	if actualSpeed != e.BaseSpeed {
 		speedInfo += fmt.Sprintf(" (基础:%.1f", e.BaseSpeed)
-		if e.SlowTimer > 0 {
-			speedInfo += fmt.Sprintf(" 减速:×%.0f%%", e.SlowFactor*100)
+		if e.IsSlowed() {
+			speedInfo += fmt.Sprintf(" 减速:×%.0f%%", e.GetSlowFactor()*100)
 		}
 		if e.SpeedBuff > 0 {
 			speedInfo += fmt.Sprintf(" 光环:+%.0f%%", e.SpeedBuff*100)
@@ -1118,10 +1118,10 @@ func (s *StageScene) drawEnemyInfoPanel(screen *ebiten.Image, e *enemy.Enemy) {
 		if e.DashActiveT > 0 {
 			speedInfo += fmt.Sprintf(" 冲刺:+%.0f%%", e.DashSpeedBoost*100)
 		}
-		if e.StunTimer > 0 {
+		if e.IsStunned() {
 			speedInfo += " 眩晕"
 		}
-		if e.RootTimer > 0 {
+		if e.IsRooted() {
 			speedInfo += " 定身"
 		}
 		speedInfo += ")"
@@ -1148,36 +1148,36 @@ func (s *StageScene) drawEnemyInfoPanel(screen *ebiten.Image, e *enemy.Enemy) {
 	}
 
 	// ── 实时状态（debuff/控制）──
-	hasStatus := e.SlowTimer > 0 || e.StunTimer > 0 || e.RootTimer > 0 ||
-		e.DamageAmplify > 0 || e.Silenced || e.AbilitySilenced || e.Stealthed ||
-		e.BleedTimer > 0 || e.PoisonTimer > 0 || e.BurnTimer > 0 || e.ZoneDmgAccum > 0 ||
-		e.DashActiveT > 0 || e.PhaseActive || e.StrDrainActiveT > 0 || e.ControlImmuneTimer > 0
+	hasStatus := e.IsSlowed() || e.IsStunned() || e.IsRooted() ||
+		e.IsWeakened() || e.Silenced || e.AbilitySilenced || e.Stealthed ||
+		e.IsBleeding() || e.Buffs.Has("poison") || e.IsBurning() || e.ZoneDmgAccum > 0 ||
+		e.DashActiveT > 0 || e.PhaseActive || e.StrDrainActiveT > 0 || e.HasControlImmunity()
 	if hasStatus {
 		lines = append(lines, L(ttHeader, "--- 实时状态 ---"))
 	}
-	if e.SlowTimer > 0 {
-		lines = append(lines, L(ttIce, "  减速: ×%.0f%%  %.1f秒", e.SlowFactor*100, e.SlowTimer))
+	if b, ok := e.Buffs.Get("slow"); ok {
+		lines = append(lines, L(ttIce, "  减速: ×%.0f%%  %.1f秒", b.Value*100, b.Remaining))
 	}
-	if e.StunTimer > 0 {
-		lines = append(lines, L(ttYellow, "  眩晕: %.1f秒", e.StunTimer))
+	if b, ok := e.Buffs.Get("stun"); ok {
+		lines = append(lines, L(ttYellow, "  眩晕: %.1f秒", b.Remaining))
 	}
-	if e.RootTimer > 0 {
-		lines = append(lines, L(ttIce, "  定身: %.1f秒", e.RootTimer))
+	if b, ok := e.Buffs.Get("root"); ok {
+		lines = append(lines, L(ttIce, "  定身: %.1f秒", b.Remaining))
 	}
-	if e.BleedTimer > 0 {
-		lines = append(lines, L(ttRed, "  流血: %.1f/秒 %.1f秒", e.BleedDPS, e.BleedTimer))
+	if b, ok := e.Buffs.Get("bleed"); ok {
+		lines = append(lines, L(ttRed, "  流血: %.1f/秒 %.1f秒", b.Value, b.Remaining))
 	}
-	if e.PoisonTimer > 0 {
-		lines = append(lines, L(ttGreen, "  中毒: %.1f/秒 %.1f秒", e.PoisonDPS, e.PoisonTimer))
+	if b, ok := e.Buffs.Get("poison"); ok {
+		lines = append(lines, L(ttGreen, "  中毒: %.1f/秒 %.1f秒", b.Value, b.Remaining))
 	}
-	if e.BurnTimer > 0 {
-		lines = append(lines, L(ttRed, "  灼烧: %.1f/秒 %.1f秒", e.BurnDPS, e.BurnTimer))
+	if b, ok := e.Buffs.Get("burn"); ok {
+		lines = append(lines, L(ttRed, "  灼烧: %.1f/秒 %.1f秒", b.Value, b.Remaining))
 	}
 	if e.ZoneDmgAccum > 0 {
 		lines = append(lines, L(ttPurple, "  区域伤害: %.1f待结算", e.ZoneDmgAccum))
 	}
-	if e.DamageAmplify > 0 {
-		lines = append(lines, L(ttPurple, "  虚弱: +%.0f%% %.1f秒", e.DamageAmplify*100, e.DamageAmplifyTimer))
+	if b, ok := e.Buffs.Get("weaken"); ok {
+		lines = append(lines, L(ttPurple, "  虚弱: +%.0f%% %.1f秒", b.Value*100, b.Remaining))
 	}
 	if e.Silenced {
 		lines = append(lines, L(ttGray, "  沉默(伤害上限失效)"))
@@ -1197,8 +1197,8 @@ func (s *StageScene) drawEnemyInfoPanel(screen *ebiten.Image, e *enemy.Enemy) {
 	if e.StrDrainActiveT > 0 {
 		lines = append(lines, L(ttPurple, "  削强连接中: %.1f秒", e.StrDrainActiveT))
 	}
-	if e.ControlImmuneTimer > 0 {
-		lines = append(lines, L(ttGray, "  控制免疫: %.1f秒", e.ControlImmuneTimer))
+	if b, ok := e.Buffs.Get("controlImmune"); ok {
+		lines = append(lines, L(ttGray, "  控制免疫: %.1f秒", b.Remaining))
 	}
 
 	// ── 绘制（左下角固定位置）──
@@ -2016,7 +2016,7 @@ func (s *StageScene) updatePlaying() {
 		if e.IsDying() {
 			return
 		}
-		if e.BleedTimer > 0 && rand.Float64() < 0.15 { // ~9 particles/sec at 60fps
+		if e.IsBleeding() && rand.Float64() < 0.15 { // ~9 particles/sec at 60fps
 			particle.EmitBleedDrip(s.particlePool, e.X, e.Y, e.Radius)
 		}
 	})
@@ -3071,11 +3071,11 @@ func (s *StageScene) buildAutoPlaySnapshot() AutoPlaySnapshot {
 			HP: e.HP, MaxHP: e.MaxHP, Speed: e.Speed,
 			Archetype: e.Archetype, Boss: e.Boss,
 			Active: e.Active, Dying: e.IsDying(),
-			IsSlowed: e.SlowTimer > 0, IsStunned: e.StunTimer > 0,
-			IsBurning: e.BurnTimer > 0, IsBleeding: e.BleedTimer > 0,
-			IsRooted:  e.RootTimer > 0,
+			IsSlowed: e.IsSlowed(), IsStunned: e.IsStunned(),
+			IsBurning: e.IsBurning(), IsBleeding: e.IsBleeding(),
+			IsRooted:  e.IsRooted(),
 			IsHit:     e.HitFlash > 0,
-			BaseSpeed: e.BaseSpeed, DamageAmplify: e.DamageAmplify,
+			BaseSpeed: e.BaseSpeed, DamageAmplify: e.GetWeakenAmplify(),
 			AbilitySilenced: e.AbilitySilenced, PhaseActive: e.PhaseActive,
 			ArmorFlat: e.ArmorFlat, EvasionChance: e.EvasionChance,
 			DamageCap: e.DamageCap, DamageCapPct: e.DamageCapPercent,

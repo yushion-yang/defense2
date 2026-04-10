@@ -88,8 +88,8 @@ func TestRegression_CC_FullTenacityImmune(t *testing.T) {
 	if ok {
 		t.Fatal("stun should fail with tenacity=1.0")
 	}
-	if e.StunTimer != 0 {
-		t.Fatalf("stun timer should be 0, got %.2f", e.StunTimer)
+	if e.IsStunned() {
+		t.Fatal("enemy should not be stunned after tenacity=1.0 rejection")
 	}
 }
 
