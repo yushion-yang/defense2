@@ -51,6 +51,7 @@ import (
 	"defense2/internal/render/postprocess"
 	"defense2/internal/render/theme"
 	"defense2/internal/render/ui"
+	"defense2/internal/render/vfx"
 
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/hajimehoshi/ebiten/v2/inpututil"

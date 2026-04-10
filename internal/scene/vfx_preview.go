@@ -236,6 +236,51 @@ func (s *VFXPreviewScene) vfxTriggerRegistry() map[string]func(s *VFXPreviewScen
 		"statusDots":      func(s *VFXPreviewScene) { s.activateVFX("statusDots", 0) },
 		"bufferAura":      func(s *VFXPreviewScene) { s.activateVFX("bufferAura", 0) },
 		"purgeGlow":       func(s *VFXPreviewScene) { s.activateVFX("purgeGlow", 0) },
+
+		// Enemy ability trigger VFX
+		"blockFlash":     func(s *VFXPreviewScene) { s.activateVFX("blockFlash", 0) },
+		"dodgeFlash":     func(s *VFXPreviewScene) { s.activateVFX("dodgeFlash", 0) },
+		"armorSpark":     func(s *VFXPreviewScene) { s.activateVFX("armorSpark", 0) },
+		"damageCapPulse": func(s *VFXPreviewScene) { s.activateVFX("damageCapPulse", 0) },
+		"purgeWave":      func(s *VFXPreviewScene) { s.activateVFX("purgeWave", 0) },
+		"phaseAura":      func(s *VFXPreviewScene) { s.activateVFX("phaseAura", 0) },
+		"dashTrails":     func(s *VFXPreviewScene) { s.activateVFX("dashTrails", 0) },
+		"healerAura":     func(s *VFXPreviewScene) { s.activateVFX("healerAura", 0) },
+		"speedAura":      func(s *VFXPreviewScene) { s.activateVFX("speedAura", 0) },
+		"strengthDrain":  func(s *VFXPreviewScene) { s.activateVFX("strengthDrain", 0) },
+		"rootGround":     func(s *VFXPreviewScene) { s.activateVFX("rootGround", 0) },
+		"slowOverlay":    func(s *VFXPreviewScene) { s.activateVFX("slowOverlay", 0) },
+		"burnOverlay":    func(s *VFXPreviewScene) { s.activateVFX("burnOverlay", 0) },
+
+		// Tower UI VFX
+		"upgradeDiamond":   func(s *VFXPreviewScene) { s.activateVFX("upgradeDiamond", 0) },
+		"placementPreview": func(s *VFXPreviewScene) { s.activateVFX("placementPreview", 0) },
+
+		// Combo text
+		"comboX3": func(s *VFXPreviewScene) {
+			render.SpawnText(cx, cy, "×3 连杀!", color.RGBA{R: 255, G: 255, B: 255, A: 220}, 14, 1.2)
+		},
+		"comboX5": func(s *VFXPreviewScene) {
+			render.SpawnText(cx, cy, "×5 连杀!", color.RGBA{R: 255, G: 220, B: 60, A: 255}, 16, 1.5)
+			render.TriggerShake(1.5, 0.1)
+		},
+		"comboX10": func(s *VFXPreviewScene) {
+			render.SpawnText(cx, cy, "×10 超级连杀!", color.RGBA{R: 255, G: 140, B: 40, A: 255}, 18, 2.0)
+			render.TriggerShake(2.0, 0.15)
+		},
+		"comboX20": func(s *VFXPreviewScene) {
+			render.SpawnText(cx, cy, "×20 无双!", color.RGBA{R: 255, G: 60, B: 40, A: 255}, 22, 2.0)
+			render.TriggerShake(3.0, 0.2)
+		},
+		"comboX50": func(s *VFXPreviewScene) {
+			render.SpawnText(cx, cy, "×50 传说!", color.RGBA{R: 255, G: 215, B: 0, A: 255}, 24, 2.5)
+		},
+		"overkill": func(s *VFXPreviewScene) {
+			render.SpawnText(cx, cy, "OVERKILL", color.RGBA{R: 255, G: 215, B: 0, A: 255}, 16, 1.5)
+		},
+		"perfectWave": func(s *VFXPreviewScene) {
+			render.SpawnText(cx, cy, "完美!", color.RGBA{R: 255, G: 215, B: 0, A: 255}, 20, 2.0)
+		},
 	}
 }
 
@@ -880,5 +925,58 @@ func (s *VFXPreviewScene) drawActiveVFX(screen *ebiten.Image) {
 		vfx.DrawBufferAura(screen, fcx, fcy, 60, t)
 	case "purgeGlow":
 		vfx.DrawPurgeGlow(screen, fcx, fcy, 12, t)
+
+	// Enemy ability trigger VFX (repeating animations)
+	case "blockFlash":
+		cycleT := math.Mod(t, 0.5)
+		if cycleT < 0.25 {
+			vfx.DrawBlockFlash(screen, fcx, fcy, 10, 0.25-cycleT)
+		}
+	case "dodgeFlash":
+		cycleT := math.Mod(t, 0.6)
+		if cycleT < 0.3 {
+			vfx.DrawDodgeFlash(screen, fcx, fcy, 10, 0.3-cycleT)
+		}
+	case "armorSpark":
+		cycleT := math.Mod(t, 0.4)
+		if cycleT < 0.15 {
+			vfx.DrawArmorSpark(screen, fcx, fcy, 10, 0.15-cycleT)
+		}
+	case "damageCapPulse":
+		cycleT := math.Mod(t, 0.6)
+		if cycleT < 0.3 {
+			vfx.DrawDamageCapPulse(screen, fcx, fcy, 10, 0.3-cycleT)
+		}
+	case "purgeWave":
+		cycleT := math.Mod(t, 0.8)
+		if cycleT < 0.4 {
+			vfx.DrawPurgeWave(screen, fcx, fcy, 10, 0.4-cycleT)
+		}
+	case "phaseAura":
+		vfx.DrawPhaseAura(screen, fcx, fcy, 10, t)
+	case "dashTrails":
+		angle := t * 2
+		vfx.DrawDashTrails(screen, fcx, fcy, math.Cos(angle), math.Sin(angle))
+	case "healerAura":
+		vfx.DrawHealerAura(screen, fcx, fcy, 60, t)
+		cycleT := math.Mod(t, 1.5)
+		if cycleT < 0.4 {
+			vfx.DrawHealPulse(screen, fcx, fcy, 10, 60, cycleT/0.4)
+		}
+	case "speedAura":
+		vfx.DrawSpeedAura(screen, fcx, fcy, 60, t)
+	case "strengthDrain":
+		vfx.DrawStrengthDrainLink(screen, fcx-50, fcy, fcx+50, fcy, t)
+	case "rootGround":
+		vfx.DrawRootGround(screen, fcx, fcy, 10)
+	case "slowOverlay":
+		vfx.DrawSlowOverlay(screen, fcx, fcy, 12)
+	case "burnOverlay":
+		vfx.DrawBurnOverlay(screen, fcx, fcy, 12)
+	case "upgradeDiamond":
+		vfx.DrawUpgradeDiamond(screen, fcx, fcy, t)
+	case "placementPreview":
+		valid := math.Mod(t, 2.0) < 1.0
+		vfx.DrawPlacementPreview(screen, fcx, fcy, 80, valid)
 	}
 }

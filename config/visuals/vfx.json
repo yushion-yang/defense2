@@ -442,6 +442,152 @@
           "name": "PurgeGlow",
           "label": "净化微光",
           "description": "净化免疫期白色脉冲微光环"
+        },
+        {
+          "id": "blockFlash",
+          "name": "BlockFlash",
+          "label": "格挡闪光",
+          "description": "弹幕盾格挡时的蓝色双环脉冲"
+        },
+        {
+          "id": "dodgeFlash",
+          "name": "DodgeFlash",
+          "label": "闪避残影",
+          "description": "闪避时的白色偏移残影"
+        },
+        {
+          "id": "armorSpark",
+          "name": "ArmorSpark",
+          "label": "护甲火花",
+          "description": "护甲吸收伤害时的灰色扩散环"
+        },
+        {
+          "id": "damageCapPulse",
+          "name": "DamageCapPulse",
+          "label": "坚韧脉冲",
+          "description": "伤害上限触发时的橙色扩散圈"
+        },
+        {
+          "id": "purgeWave",
+          "name": "PurgeWave",
+          "label": "净化波",
+          "description": "净化触发时的白色扩散波（区别于持续微光）"
+        },
+        {
+          "id": "phaseAura",
+          "name": "PhaseAura",
+          "label": "相位护盾",
+          "description": "相位偏移免伤中的紫色脉冲双环"
+        },
+        {
+          "id": "dashTrails",
+          "name": "DashTrails",
+          "label": "冲刺拖尾",
+          "description": "受击冲刺时的橙色速度线"
+        },
+        {
+          "id": "healerAura",
+          "name": "HealerAura",
+          "label": "治疗光环",
+          "description": "治疗者绿色范围圈+旋转光点+脉冲"
+        },
+        {
+          "id": "speedAura",
+          "name": "SpeedAura",
+          "label": "加速光环",
+          "description": "加速者橙色脉冲范围圈"
+        },
+        {
+          "id": "strengthDrain",
+          "name": "StrengthDrain",
+          "label": "力量汲取",
+          "description": "紫色连接线+流动粒子从塔到怪物"
+        },
+        {
+          "id": "rootGround",
+          "name": "RootGround",
+          "label": "定身地面",
+          "description": "定身时脚下的棕色地面标记"
+        },
+        {
+          "id": "slowOverlay",
+          "name": "SlowOverlay",
+          "label": "减速蓝框",
+          "description": "减速时身体外蓝色轮廓圈"
+        },
+        {
+          "id": "burnOverlay",
+          "name": "BurnOverlay",
+          "label": "燃烧橙晕",
+          "description": "燃烧时身体中心的橙色辉光"
+        }
+      ]
+    },
+    {
+      "id": "towerUIVFX",
+      "name": "Tower UI VFX",
+      "label": "塔界面特效",
+      "effects": [
+        {
+          "id": "upgradeDiamond",
+          "name": "UpgradeDiamond",
+          "label": "升级菱形",
+          "description": "有待选能力时塔上方的脉冲金色菱形"
+        },
+        {
+          "id": "placementPreview",
+          "name": "PlacementPreview",
+          "label": "放置预览",
+          "description": "放置塔时的绿色/红色范围圈"
+        }
+      ]
+    },
+    {
+      "id": "comboText",
+      "name": "Combo Text",
+      "label": "连杀文字",
+      "effects": [
+        {
+          "id": "comboX3",
+          "name": "Combo x3",
+          "label": "三连杀",
+          "description": "×3 连杀! 白色浮字"
+        },
+        {
+          "id": "comboX5",
+          "name": "Combo x5",
+          "label": "五连杀",
+          "description": "×5 连杀! 黄色浮字+震动"
+        },
+        {
+          "id": "comboX10",
+          "name": "Combo x10",
+          "label": "超级连杀",
+          "description": "×10 超级连杀! 橙色浮字+震动"
+        },
+        {
+          "id": "comboX20",
+          "name": "Combo x20",
+          "label": "无双",
+          "description": "×20 无双! 红色浮字+震动"
+        },
+        {
+          "id": "comboX50",
+          "name": "Combo x50",
+          "label": "传说",
+          "description": "×50 传说! 金色浮字+时间减速"
+        },
+        {
+          "id": "overkill",
+          "name": "Overkill",
+          "label": "过杀",
+          "description": "伤害超过2倍血量时的金色OVERKILL浮字"
+        },
+        {
+          "id": "perfectWave",
+          "name": "PerfectWave",
+          "label": "完美通关",
+          "description": "无损通过波次时的金色完美!浮字"
         }
       ]
     }

@@ -169,6 +169,21 @@ func DrawPentagram(screen *ebiten.Image, cx, cy float32, remainRatio float64, an
 		color.RGBA{R: 255, G: 230, B: 120, A: alpha / 3})
 }
 
+// ── 升级菱形指示器 ──────────────────────────────────
+
+// DrawUpgradeDiamond 在塔上方绘制脉冲金色菱形指示器。
+// towerY: 塔的 Y 坐标（菱形绘制在 Y-24 处）。
+func DrawUpgradeDiamond(screen *ebiten.Image, towerX, towerY float32, animTime float64) {
+	pulse := float32(0.6 + 0.4*math.Sin(animTime*5))
+	scale := float32(1.0 + 0.15*math.Sin(animTime*5))
+	a := uint8(230 * pulse)
+	r := float32(7) * scale
+	draw.Diamond(screen, towerX, towerY-24, r+2, 1.0,
+		color.RGBA{R: 250, G: 200, B: 50, A: a / 3})
+	draw.Diamond(screen, towerX, towerY-24, r, 1.8,
+		color.RGBA{R: 250, G: 200, B: 50, A: a})
+}
+
 func drawPentagramStar(screen *ebiten.Image, cx, cy, r float32, rotation float32, alpha uint8) {
 	clr := color.RGBA{R: 255, G: 210, B: 80, A: alpha}
 
