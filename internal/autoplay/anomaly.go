@@ -779,14 +779,14 @@ func (d *AnomalyDetector) checkWardenOrigin(state *GameState) []Anomaly {
 		return nil
 	}
 
-	const graceFrames = 120 // 2 秒容忍期（等待 teleport 到轨道位置）
+	const graceFrames = 600 // 10 秒容忍期（小地图上 orbit 可能经过原点附近）
 
 	if state.Tick-d.wardenReadyTick < graceFrames {
 		return nil
 	}
 
-	// 在 (0,0) 附近 5px 范围内 → 卡在原点
-	if state.WardenX*state.WardenX+state.WardenY*state.WardenY < 25 {
+	// 在 (0,0) 附近 2px 范围内 → 卡在原点（缩小半径避免 orbit 经过时误报）
+	if state.WardenX*state.WardenX+state.WardenY*state.WardenY < 4 {
 		d.wardenOriginReported = true
 		return []Anomaly{{
 			Tick:     state.Tick,
