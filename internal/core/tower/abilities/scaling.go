@@ -67,9 +67,8 @@ func (a *KillUpgrade) OnTick(t *tower.Tower, _ *tower.TickContext) *tower.TickRe
 	}
 	// 每层 +1% 伤害
 	bonusPerStack := 0.01
-	return &tower.TickResult{
-		DamageBoost: bonusPerStack * float64(stacks),
-	}
+	_ = bonusPerStack // TODO: integrate kill-based scaling via BuffList
+	return &tower.TickResult{}
 }
 
 // ---------- waveScale ----------
@@ -96,11 +95,9 @@ func (a *WaveScale) OnTick(t *tower.Tower, _ *tower.TickContext) *tower.TickResu
 	maxBonus := 1.0
 	bonus := math.Min(perWave*float64(waves), maxBonus)
 
-	return &tower.TickResult{
-		DamageBoost: bonus,
-		SpeedBoost:  bonus,
-		RangeBoost:  t.BaseRange * bonus,
-	}
+	// TODO: integrate wave-scale boosts via BuffList
+	_ = bonus
+	return &tower.TickResult{}
 }
 
 // IncrementWaveScale 波次结束时调用，递增所有拥有 waveScale 的塔的波次计数。
@@ -169,10 +166,8 @@ func (a *PeriodicCast) OnTick(t *tower.Tower, ctx *tower.TickContext) *tower.Tic
 		})
 	case 2:
 		// buffAoe：自身增益
-		return &tower.TickResult{
-			DamageBoost: 0.25,
-			SpeedBoost:  0.15,
-		}
+		// TODO: integrate periodic buff via BuffList
+		return &tower.TickResult{}
 	}
 
 	return nil
@@ -222,9 +217,9 @@ func (a *NeighborBoost) OnTick(t *tower.Tower, ctx *tower.TickContext) *tower.Ti
 
 	// 获得最强邻居 20% 的加成
 	boostRatio := 0.20
-	return &tower.TickResult{
-		DamageBoost: boostRatio,
-	}
+	// TODO: integrate neighbor boost via BuffList
+	_ = boostRatio
+	return &tower.TickResult{}
 }
 
 // ---------- elementSwitch ----------
@@ -262,7 +257,8 @@ func (a *ElementSwitch) OnTick(t *tower.Tower, ctx *tower.TickContext) *tower.Ti
 	switch elementTypes[idx] {
 	case "fire":
 		// 火元素：+20% 伤害
-		return &tower.TickResult{DamageBoost: 0.20}
+		// TODO: integrate element fire boost via BuffList
+		return &tower.TickResult{}
 	case "ice":
 		// 冰元素：对范围内敌人施加减速
 		ctx.Enemies.Each(func(e *enemy.Enemy) {
@@ -279,7 +275,8 @@ func (a *ElementSwitch) OnTick(t *tower.Tower, ctx *tower.TickContext) *tower.Ti
 		return nil
 	case "lightning":
 		// 雷元素：+15% 攻速
-		return &tower.TickResult{SpeedBoost: 0.15}
+		// TODO: integrate element lightning boost via BuffList
+		return &tower.TickResult{}
 	case "poison":
 		// 毒元素：范围内敌人每秒 2 点伤害（走伤害管线）
 		ctx.Enemies.Each(func(e *enemy.Enemy) {

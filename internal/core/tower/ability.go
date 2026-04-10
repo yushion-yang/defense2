@@ -75,10 +75,7 @@ type TickContext struct {
 // TickResult tick 返回的临时效果。
 // 字段为零值表示无对应效果。
 type TickResult struct {
-	DamageBoost float64 // 临时伤害加成比例（0.15 = +15%）
-	SpeedBoost  float64 // 临时攻速加成比例（0.10 = +10%）
-	RangeBoost  float64 // 临时射程加成（像素）
-	GoldEarned  int     // 本 tick 获得的金币
+	GoldEarned int // 本 tick 获得的金币
 }
 
 // Registry 全局能力注册表（能力名 → 能力实例）。
