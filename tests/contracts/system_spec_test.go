@@ -233,7 +233,7 @@ func TestWaveSpec_HpPerWavePositive(t *testing.T) {
 func TestBuffStackSpec_DamageUpAdditive(t *testing.T) {
 	// 已在 full_coverage_contracts_test.go TestBuffDamageUpUsesAdditive 中覆盖
 	// 此处验证 cap > 0
-	rules := buff.DefaultStackRules
+	rules := buff.GlobalRules()
 	r, ok := rules["damageUp"]
 	if !ok {
 		t.Fatal("缺少 damageUp 规则")
@@ -244,7 +244,7 @@ func TestBuffStackSpec_DamageUpAdditive(t *testing.T) {
 }
 
 func TestBuffStackSpec_SlowCap(t *testing.T) {
-	rules := buff.DefaultStackRules
+	rules := buff.GlobalRules()
 	r, ok := rules["slow"]
 	if !ok {
 		t.Fatal("缺少 slow 规则")

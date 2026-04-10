@@ -4,6 +4,7 @@ package combat
 
 import (
 	"defense2/internal/config"
+	"defense2/internal/core/buff"
 	"defense2/internal/core/enemy"
 	tel "defense2/internal/core/telemetry"
 )
@@ -15,8 +16,8 @@ func MinSpeedRatio() float64 { return config.GlobalBalance().Combat.MinSpeedRati
 // 检查免疫状态，应用韧性减免后设置眩晕计时器。
 // 返回 true 表示成功施加。
 func ApplyStun(e *enemy.Enemy, duration float64, source string) bool {
-	// 控制免疫检查
-	if e.IsControlImmune || e.IsStunImmune {
+	// 控制免疫检查（archetype flags + BuffList）
+	if e.IsControlImmune || e.IsStunImmune || e.HasControlImmunity() {
 		e.SetFloatText("免疫", 220, 60, 60)
 		return false
 	}
@@ -27,10 +28,14 @@ func ApplyStun(e *enemy.Enemy, duration float64, source string) bool {
 		return false
 	}
 
-	// 取较长的眩晕时间（不叠加，只刷新）
-	if actualDuration > e.StunTimer {
-		e.StunTimer = actualDuration
-	}
+	// 通过 BuffList 施加眩晕（Override 模式，后来居上）
+	e.Buffs.Add(buff.Buff{
+		ID:        "stun",
+		Category:  buff.CatCC,
+		Source:    source,
+		Duration:  actualDuration,
+		Remaining: actualDuration,
+	})
 	tel.T.Record("cc", "stun")
 	return true
 }
@@ -39,9 +44,9 @@ func ApplyStun(e *enemy.Enemy, duration float64, source string) bool {
 // 检查免疫状态，应用韧性减免，速度不低于 BaseSpeed * MinSpeedRatio。
 // 返回 true 表示成功施加。
 func ApplySlow(e *enemy.Enemy, factor, duration float64, source string) bool {
-	// 控制免疫检查
-	if e.IsControlImmune || e.IsSlowImmune {
-		if e.IsControlImmune {
+	// 控制免疫检查（archetype flags + BuffList）
+	if e.IsControlImmune || e.IsSlowImmune || e.HasControlImmunity() {
+		if e.IsControlImmune || e.HasControlImmunity() {
 			e.SetFloatText("免疫", 220, 60, 60)
 		} else {
 			e.SetFloatText("免疫", 60, 180, 200)
@@ -61,12 +66,22 @@ func ApplySlow(e *enemy.Enemy, factor, duration float64, source string) bool {
 		factor = bal.Combat.MinSpeedRatio
 	}
 
-	// 取更强的减速效果（更低的 factor = 更慢）
-	if actualDuration > e.SlowTimer || factor < e.SlowFactor {
-		e.SlowTimer = actualDuration
-		e.SlowFactor = factor
-		e.Speed = e.BaseSpeed * factor
+	// 手动比较减速强度（lower factor = stronger slow，Strongest 模式比较 Value 不适用）
+	existing, hasExisting := e.Buffs.Get("slow")
+	if hasExisting && factor >= existing.Value && actualDuration <= existing.Remaining {
+		// 已有减速更强或相同，保持不变
+		return true
 	}
+	e.Buffs.RemoveByID("slow") // 清除旧减速，施加新的
+	e.Buffs.Add(buff.Buff{
+		ID:        "slow",
+		Category:  buff.CatCC,
+		Source:    source,
+		Value:     factor,
+		Duration:  actualDuration,
+		Remaining: actualDuration,
+	})
+	e.Speed = e.BaseSpeed * factor
 	tel.T.Record("cc", "slow")
 	return true
 }
@@ -75,14 +90,24 @@ func ApplySlow(e *enemy.Enemy, factor, duration float64, source string) bool {
 // duration > 0 时为限时免疫（由 TickStatusEffects 倒计时清除），
 // duration <= 0 时为永久免疫。
 func ApplyControlImmunity(e *enemy.Enemy, duration float64) {
-	e.ControlImmuneTimer = duration
+	// 清除 BuffList 中所有 CC
+	e.Buffs.ClearByCategory(buff.CatCC)
+
+	// 施加控制免疫 buff
+	e.Buffs.Add(buff.Buff{
+		ID:        "controlImmune",
+		Category:  buff.CatDefense,
+		Source:    "purge",
+		Duration:  duration,
+		Remaining: duration,
+	})
+
+	// Set archetype immunity flags (temporary, cleared when buff expires in TickStatusEffects)
 	e.IsControlImmune = true
 	e.IsStunImmune = true
 	e.IsSlowImmune = true
+	e.IsRootImmune = true
 
-	// 清除当前正在生效的控制效果
-	e.StunTimer = 0
-	e.SlowTimer = 0
-	e.SlowFactor = 1
+	// Restore speed (CC cleared by ClearByCategory above)
 	e.Speed = e.BaseSpeed
 }

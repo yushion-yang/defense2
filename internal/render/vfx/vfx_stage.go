@@ -161,7 +161,29 @@ func DrawSelectionRing(screen *ebiten.Image, cx, cy, selectionR, selectionW floa
 	draw.CircleOutline(screen, cx, cy, rangeR, rangeW, rangeClr)
 }
 
+// DrawPlacementPreview draws a green/red range circle for tower placement.
+func DrawPlacementPreview(screen *ebiten.Image, cx, cy float32, rangeR float64, valid bool) {
+	fr := float32(rangeR)
+	var strokeClr color.RGBA
+	if valid {
+		strokeClr = color.RGBA{R: 34, G: 197, B: 94, A: 153}
+	} else {
+		strokeClr = color.RGBA{R: 239, G: 68, B: 68, A: 153}
+	}
+	draw.CircleOutline(screen, cx, cy, fr, 1.5, strokeClr)
+}
+
 // ── Enemy Body Overlays ─────────────────────────────
+
+// DrawRootGround draws brown ground circle under rooted enemy.
+func DrawRootGround(screen *ebiten.Image, cx, cy, radius float32) {
+	draw.FilledCircle(screen, cx, cy+radius, radius*0.8, color.RGBA{100, 70, 40, 60})
+}
+
+// DrawFlyingShadow draws gray ground shadow for flying enemy.
+func DrawFlyingShadow(screen *ebiten.Image, cx, cy, radius float32, shadowClr color.RGBA) {
+	draw.FilledCircle(screen, cx+2, cy+8, radius*1.3, shadowClr)
+}
 
 // DrawSlowOverlay draws blue circle outline on slowed enemy body.
 func DrawSlowOverlay(screen *ebiten.Image, cx, cy, spriteR float32) {

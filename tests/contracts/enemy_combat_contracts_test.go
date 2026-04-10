@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"defense2/internal/config"
+	"defense2/internal/core/buff"
 	"defense2/internal/core/combat"
 	"defense2/internal/core/enemy"
 	"defense2/internal/core/tower"
@@ -145,7 +146,9 @@ func TestEnemyArchetype_BufferHasAbility(t *testing.T) {
 // ═══════════════════════════════════════
 
 func TestDamagePipeline_WeakenAmplifyHasCap(t *testing.T) {
-	e := &enemy.Enemy{HP: 100, MaxHP: 100, Active: true, StatusEffects: enemy.StatusEffects{DamageAmplify: 0.8}} // 超过 cap
+	e := &enemy.Enemy{HP: 100, MaxHP: 100, Active: true}
+	e.Buffs = buff.NewDefaultBuffList()
+	e.Buffs.Add(buff.Buff{ID: "weaken", Category: buff.CatDebuff, Source: "test", Value: 0.8, Duration: 5, Remaining: 5}) // 超过 cap
 	r := combat.ProcessDamage(combat.DamageInput{
 		Target:    e,
 		RawDamage: 10,
@@ -215,6 +218,7 @@ func TestAllTowerAttackStylesHaveHandlers(t *testing.T) {
 
 func TestCC_SlowRespectsMinSpeedRatio(t *testing.T) {
 	e := &enemy.Enemy{HP: 100, MaxHP: 100, Speed: 60, BaseSpeed: 60, Active: true}
+	e.Buffs = buff.NewDefaultBuffList()
 	combat.ApplySlow(e, 0.01, 5.0, "test") // 极端减速
 	minSpeed := e.BaseSpeed * combat.MinSpeedRatio()
 	if e.Speed < minSpeed {
@@ -224,26 +228,33 @@ func TestCC_SlowRespectsMinSpeedRatio(t *testing.T) {
 
 func TestCC_StunRespectsImmunity(t *testing.T) {
 	e := &enemy.Enemy{HP: 100, MaxHP: 100, Active: true, StatusEffects: enemy.StatusEffects{IsStunImmune: true}}
+	e.Buffs = buff.NewDefaultBuffList()
 	ok := combat.ApplyStun(e, 5.0, "test")
 	if ok {
 		t.Error("IsStunImmune=true 时 ApplyStun 应返回 false")
 	}
-	if e.StunTimer > 0 {
-		t.Error("免疫后 StunTimer 应为 0")
+	if e.IsStunned() {
+		t.Error("免疫后应无眩晕状态")
 	}
 }
 
 func TestCC_TenacityReducesDuration(t *testing.T) {
 	e := &enemy.Enemy{HP: 100, MaxHP: 100, Active: true, StatusEffects: enemy.StatusEffects{Tenacity: 0.5}}
+	e.Buffs = buff.NewDefaultBuffList()
 	combat.ApplyStun(e, 2.0, "test")
 	// 韧性 0.5 → 持续 = 2.0 * (1-0.5) = 1.0
-	if e.StunTimer > 1.1 {
-		t.Errorf("Tenacity=0.5 时 StunTimer=%.2f 应 ≈ 1.0", e.StunTimer)
+	b, ok := e.Buffs.Get("stun")
+	if !ok {
+		t.Fatal("stun buff should be present")
+	}
+	if b.Remaining > 1.1 {
+		t.Errorf("Tenacity=0.5 时 stun Remaining=%.2f 应 ≈ 1.0", b.Remaining)
 	}
 }
 
 func TestCC_FullTenacityImmune(t *testing.T) {
 	e := &enemy.Enemy{HP: 100, MaxHP: 100, Active: true, StatusEffects: enemy.StatusEffects{Tenacity: 1.0}}
+	e.Buffs = buff.NewDefaultBuffList()
 	ok := combat.ApplyStun(e, 5.0, "test")
 	if ok {
 		t.Error("Tenacity=1.0 时应完全免疫")

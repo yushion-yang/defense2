@@ -4,6 +4,7 @@ package enemy
 
 import (
 	"defense2/internal/config"
+	"defense2/internal/core/buff"
 	"defense2/internal/core/gamemap"
 )
 
@@ -43,37 +44,27 @@ func CheckThresholds(e *Enemy) []Threshold {
 	return triggered
 }
 
-// StatusEffects 敌人身上的状态效果（CC/DoT/减免/免疫等）。
-// 嵌入 Enemy 中，外部代码通过 e.SlowFactor 等直接访问。
+// StatusEffects 敌人身上的状态效果。
+// CC/DoT/debuff 由 BuffList 管理，此结构体保留 pipeline 输出、zone 计时和原型属性。
 type StatusEffects struct {
-	StunTimer       float64 // 眩晕剩余时间（秒），>0 时无法移动
-	SlowTimer       float64 // 减速剩余时间（秒）
-	SlowFactor      float64 // 减速倍率（0.5 表示半速）
-	BleedTimer      float64 // 流血剩余时间（秒）
-	BleedDPS        float64 // 流血每秒伤害
-	PoisonTimer     float64 // 中毒剩余时间（秒）
-	PoisonDPS       float64 // 中毒每秒伤害
-	BurnTimer       float64 // 灼烧剩余时间（秒）
-	BurnDPS         float64 // 灼烧每秒伤害
-	DotTickTimer    float64 // burn/bleed DoT 触发计时器
-	PoisonTickTimer float64 // poison 独立触发计时器（间隔不同于 burn/bleed）
-	LastDotDmg      float64 // 上次 DoT tick 的伤害量（>0 时由 pipeline 弹浮字后清零）
-	ZoneDmgAccum    float64 // 区域能力（curseZone/poisonZone）每帧累积伤害，DotTick 时结算
-	// 增伤/减伤
-	DamageAmplify      float64 // 受伤增加倍率（weaken/weakenZone 施加）
-	DamageAmplifyTimer float64 // weaken OnHit 的持续时间（秒），zone 型每帧由区域重设
-	Silenced           bool    // 是否被沉默（沉默时 DamageCap 失效）
-	AbilitySilenced    bool    // 当前帧是否被沉默（每帧重置）
-	IsInvincible       bool    // 无敌状态（pure 伤害可穿透）
-	IsDamageImmune     bool    // 伤害免疫（pure 伤害可穿透）
-	IsUntargetable     bool    // 不可选中
+	// DoT pipeline 输出
+	LastDotDmg   float64 // 上次 DoT tick 的伤害量（>0 时由 pipeline 弹浮字后清零）
+	ZoneDmgAccum float64 // 区域能力（curseZone/poisonZone）每帧累积伤害，DotTick 时结算
+	ZoneDotTimer float64 // 区域伤害 DoT tick 计时器（与 BuffList.dotTimer 独立）
 
-	// 控制减免
-	Tenacity           float64 // 韧性（0~1，减少控制效果持续时间）
-	ControlImmuneTimer float64 // 控制免疫剩余时间（秒，>0 时免疫所有控制效果）
-	IsControlImmune    bool    // 控制免疫
-	IsStunImmune       bool    // 眩晕免疫
-	IsSlowImmune       bool    // 减速免疫
+	// 状态标记
+	Silenced        bool // 是否被沉默（沉默时 DamageCap 失效）
+	AbilitySilenced bool // 当前帧是否被沉默（每帧重置）
+	IsInvincible    bool // 无敌状态（pure 伤害可穿透）
+	IsDamageImmune  bool // 伤害免疫（pure 伤害可穿透）
+	IsUntargetable  bool // 不可选中
+
+	// 控制减免（原型属性，Spawn 时设置，不由 BuffList 管理）
+	Tenacity        float64 // 韧性（0~1，减少控制效果持续时间）
+	IsControlImmune bool    // 控制免疫
+	IsStunImmune    bool    // 眩晕免疫
+	IsSlowImmune    bool    // 减速免疫
+	IsRootImmune    bool    // 定身免疫
 }
 
 // VisualState 敌人的视觉/渲染状态（闪光、飘字、血条拖尾）。
@@ -184,6 +175,9 @@ type Enemy struct {
 	// ── 生命周期 ──
 	Lifecycle *LifecycleHandlers // 生命周期回调
 
+	// ── Buff 系统 ──
+	Buffs *buff.BuffList // 统一状态效果管理（CC/DoT/debuff）
+
 	// ── 行为 ──
 	Behavior          string  // 行为类型标识（"healer"/"stealth"/"splitter"/"buffer"/"regenerator"/""）
 	BerserkThreshold  float64 // 狂暴触发血量比例（如0.5=50%HP）
@@ -217,7 +211,7 @@ type Enemy struct {
 	AuraRange   float64 // 光环范围（像素，0=无光环）
 	AuraSpeedUp float64 // 光环加速比例（如 0.2 = +20%）
 
-	// ── 嵌入子结构体（向后兼容，e.SlowFactor 等字段访问不变）──
+	// ── 嵌入子结构体 ──
 	StatusEffects
 	VisualState
 	AbilityFields
@@ -242,105 +236,115 @@ func (e *Enemy) SetFloatText(text string, r, g, b uint8) {
 	e.FloatTextB = b
 }
 
+// ── BuffList 查询方法 ──
+
+// IsStunned returns true if the enemy has an active stun buff.
+func (e *Enemy) IsStunned() bool { return e.Buffs != nil && e.Buffs.Has("stun") }
+
+// IsSlowed returns true if the enemy has an active slow buff.
+func (e *Enemy) IsSlowed() bool { return e.Buffs != nil && e.Buffs.Has("slow") }
+
+// IsRooted returns true if the enemy has an active root buff.
+func (e *Enemy) IsRooted() bool { return e.Buffs != nil && e.Buffs.Has("root") }
+
+// IsBleeding returns true if the enemy has an active bleed buff.
+func (e *Enemy) IsBleeding() bool { return e.Buffs != nil && e.Buffs.Has("bleed") }
+
+// IsBurning returns true if the enemy has an active burn buff.
+func (e *Enemy) IsBurning() bool { return e.Buffs != nil && e.Buffs.Has("burn") }
+
+// IsWeakened returns true if the enemy has an active weaken buff.
+func (e *Enemy) IsWeakened() bool { return e.Buffs != nil && e.Buffs.Has("weaken") }
+
+// HasControlImmunity returns true if the enemy has a temporary controlImmune buff.
+func (e *Enemy) HasControlImmunity() bool { return e.Buffs != nil && e.Buffs.Has("controlImmune") }
+
+// GetSlowFactor returns the slow factor from BuffList (1.0 = no slow).
+func (e *Enemy) GetSlowFactor() float64 {
+	if e.Buffs == nil {
+		return 1.0
+	}
+	b, ok := e.Buffs.Get("slow")
+	if !ok {
+		return 1.0
+	}
+	return b.Value
+}
+
+// GetWeakenAmplify returns the weaken damage amplify value from BuffList (0 = no weaken).
+func (e *Enemy) GetWeakenAmplify() float64 {
+	if e.Buffs == nil {
+		return 0
+	}
+	b, ok := e.Buffs.Get("weaken")
+	if !ok {
+		return 0
+	}
+	return b.Value
+}
+
 // MinSpeedRatio 返回全局减速下限（从 balance.json 实时读取，不再冻结于 init 时刻）。
 func MinSpeedRatio() float64 { return config.GlobalBalance().Combat.MinSpeedRatio }
 
 // DotTickInterval 返回 DoT 伤害触发周期（从 balance.json 实时读取，不再冻结于 init 时刻）。
 func DotTickInterval() float64 { return config.GlobalBalance().Combat.DotTickInterval }
 
-// TickStatusEffects 处理敌人身上的状态效果（减速、流血）。
-// 眩晕在 movement.go 中处理。
+// TickStatusEffects 处理敌人身上的状态效果。
+// BuffList.Tick 统一处理 CC/DoT/debuff 的倒计时和过期清理。
+// Legacy 字段从 BuffList 同步，保证下游 render/stage/autoplay 代码向后兼容。
 func TickStatusEffects(e *Enemy, dt float64) {
 	bal := config.GlobalBalance()
 	e.Age += dt
 
-	// 减速：倒计时归零后恢复基础速度（受全局减速下限约束）
-	if e.SlowTimer > 0 {
-		e.SlowTimer -= dt
-		factor := e.SlowFactor
-		if factor < bal.Combat.MinSpeedRatio {
-			factor = bal.Combat.MinSpeedRatio
-		}
-		e.Speed = e.BaseSpeed * factor
-		if e.SlowTimer <= 0 {
-			e.Speed = e.BaseSpeed
-		}
-	}
+	// ── BuffList tick: 统一处理所有 buff 倒计时和过期 ──
+	if e.Buffs != nil {
+		// Track pre-tick state to detect buff expiry
+		wasSlowed := e.Buffs.Has("slow")
+		hadControlImmune := e.Buffs.Has("controlImmune")
 
-	// DoT 按类型区分 tick 间隔：burn/bleed 共享计时器，poison 独立计时器。
-	// 持续时间以 tick 计数实现（如 3.0s = 6 ticks），确保触发次数精确匹配。
-	intervals := bal.Combat.DotTickIntervalsMap
-	burnBleedInterval := intervals.Burn
-	if burnBleedInterval <= 0 {
-		burnBleedInterval = bal.Combat.DotTickInterval // fallback
-	}
-	poisonInterval := intervals.Poison
-	if poisonInterval <= 0 {
-		poisonInterval = bal.Combat.DotTickInterval // fallback
-	}
+		// DoT damage via BuffList (must call BEFORE Tick so expiring DoTs still deal damage)
+		dotInterval := bal.Combat.DotTickInterval
+		buffDotDmg := e.Buffs.TickDoT(dt, dotInterval)
 
-	dotDmg := 0.0
-
-	// burn/bleed/zone 共享计时器
-	hasBurnBleed := e.BleedTimer > 0 || e.BurnTimer > 0 || e.ZoneDmgAccum > 0
-	if hasBurnBleed {
-		if e.DotTickTimer <= 0 {
-			e.DotTickTimer = burnBleedInterval
-		}
-		e.DotTickTimer -= dt
-		if e.DotTickTimer <= 0 {
-			e.DotTickTimer += burnBleedInterval
-			if e.BleedTimer > 0 {
-				dotDmg += e.BleedDPS * burnBleedInterval
-				e.BleedTimer -= burnBleedInterval
+		// Zone damage uses its own timer (not a buff)
+		if e.ZoneDmgAccum > 0 {
+			if e.ZoneDotTimer <= 0 {
+				e.ZoneDotTimer = dotInterval
 			}
-			if e.BurnTimer > 0 {
-				dotDmg += e.BurnDPS * burnBleedInterval
-				e.BurnTimer -= burnBleedInterval
-			}
-			if e.ZoneDmgAccum > 0 {
-				dotDmg += e.ZoneDmgAccum
+			e.ZoneDotTimer -= dt
+			if e.ZoneDotTimer <= 0 {
+				e.ZoneDotTimer += dotInterval
+				buffDotDmg += e.ZoneDmgAccum
 				e.ZoneDmgAccum = 0
 			}
+		} else if !e.Buffs.Has("bleed") && !e.Buffs.Has("burn") && !e.Buffs.Has("poison") {
+			e.ZoneDotTimer = 0
 		}
-	} else {
-		e.DotTickTimer = 0
-	}
 
-	// poison 独立计时器
-	if e.PoisonTimer > 0 {
-		if e.PoisonTickTimer <= 0 {
-			e.PoisonTickTimer = poisonInterval
+		if buffDotDmg > 0 {
+			e.LastDotDmg = buffDotDmg
 		}
-		e.PoisonTickTimer -= dt
-		if e.PoisonTickTimer <= 0 {
-			e.PoisonTickTimer += poisonInterval
-			dotDmg += e.PoisonDPS * poisonInterval
-			e.PoisonTimer -= poisonInterval
+
+		// Tick all buff timers (decrements Remaining, removes expired)
+		e.Buffs.Tick(dt)
+
+		// ── Post-tick: handle buff-driven side effects ──
+
+		// Slow: keep Speed in sync with slow buff
+		if b, ok := e.Buffs.Get("slow"); ok {
+			factor := b.Value
+			if factor < bal.Combat.MinSpeedRatio {
+				factor = bal.Combat.MinSpeedRatio
+			}
+			e.Speed = e.BaseSpeed * factor
+		} else if wasSlowed {
+			// Slow just expired — restore speed
+			e.Speed = e.BaseSpeed
 		}
-	} else {
-		e.PoisonTickTimer = 0
-	}
 
-	// 伤害存入 LastDotDmg，由 pipeline 层通过 ProcessDamage 管线结算
-	if dotDmg > 0 {
-		e.LastDotDmg = dotDmg
-	}
-
-	// 虚弱(weaken OnHit)：倒计时归零后清除增伤
-	if e.DamageAmplifyTimer > 0 {
-		e.DamageAmplifyTimer -= dt
-		if e.DamageAmplifyTimer <= 0 {
-			e.DamageAmplifyTimer = 0
-			e.DamageAmplify = 0
-		}
-	}
-
-	// 控制免疫：倒计时归零后清除免疫标志
-	if e.ControlImmuneTimer > 0 {
-		e.ControlImmuneTimer -= dt
-		if e.ControlImmuneTimer <= 0 {
-			e.ControlImmuneTimer = 0
+		// ControlImmune: when buff expires, clear temporary immunity flags
+		// (archetype immunity set in Spawn is never cleared here)
+		if hadControlImmune && !e.Buffs.Has("controlImmune") {
 			e.IsControlImmune = false
 			e.IsStunImmune = false
 			e.IsSlowImmune = false

@@ -7,6 +7,7 @@ import (
 	"math/rand"
 
 	"defense2/internal/config"
+	"defense2/internal/core/buff"
 	"defense2/internal/core/enemy"
 	"defense2/internal/core/projectile"
 	tel "defense2/internal/core/telemetry"
@@ -182,14 +183,26 @@ func applyHitEffectsUnified(r *tower.HitResult, target *enemy.Enemy, p *projecti
 		tel.T.Record("ability", "stun")
 	}
 	if r.Bleed != nil {
-		target.BleedTimer = r.Bleed.Duration
-		target.BleedDPS = r.Bleed.DPS
+		target.Buffs.Add(buff.Buff{
+			ID:        "bleed",
+			Category:  buff.CatDoT,
+			Source:    p.SourceTowerKey,
+			Value:     r.Bleed.DPS,
+			Duration:  r.Bleed.Duration,
+			Remaining: r.Bleed.Duration,
+		})
 		tel.T.Record("ability", "bleed")
 	}
 	if r.Burn != nil {
-		wasBurning := target.BurnTimer > 0
-		target.BurnTimer = r.Burn.Duration
-		target.BurnDPS = r.Burn.DPS
+		wasBurning := target.Buffs.Has("burn")
+		target.Buffs.Add(buff.Buff{
+			ID:        "burn",
+			Category:  buff.CatDoT,
+			Source:    p.SourceTowerKey,
+			Value:     r.Burn.DPS,
+			Duration:  r.Burn.Duration,
+			Remaining: r.Burn.Duration,
+		})
 		tel.T.Record("ability", "burn")
 		if !wasBurning && onCC != nil {
 			onCC(target.X, target.Y, "burn")

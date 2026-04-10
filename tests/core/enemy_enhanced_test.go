@@ -4,6 +4,7 @@ import (
 	"math"
 	"testing"
 
+	"defense2/internal/core/buff"
 	"defense2/internal/core/combat"
 	"defense2/internal/core/enemy"
 	"defense2/internal/core/gamemap"
@@ -15,17 +16,23 @@ import (
 
 func TestCC_ApplyStun(t *testing.T) {
 	e := &enemy.Enemy{HP: 100, MaxHP: 100, Active: true, Path: []gamemap.Point{{X: 0, Y: 0}}}
+	e.Buffs = buff.NewDefaultBuffList()
 	ok := combat.ApplyStun(e, 2.0, "tower1")
 	if !ok {
 		t.Error("普通敌人应能被眩晕")
 	}
-	if math.Abs(e.StunTimer-2.0) > 1e-9 {
-		t.Errorf("眩晕时间=%.2f, 期望2.0", e.StunTimer)
+	b, has := e.Buffs.Get("stun")
+	if !has {
+		t.Fatal("stun buff should be present")
+	}
+	if math.Abs(b.Remaining-2.0) > 1e-9 {
+		t.Errorf("眩晕时间=%.2f, 期望2.0", b.Remaining)
 	}
 }
 
 func TestCC_StunImmune(t *testing.T) {
 	e := &enemy.Enemy{HP: 100, MaxHP: 100, Active: true, StatusEffects: enemy.StatusEffects{IsStunImmune: true}}
+	e.Buffs = buff.NewDefaultBuffList()
 	ok := combat.ApplyStun(e, 2.0, "tower1")
 	if ok {
 		t.Error("眩晕免疫敌人不应被眩晕")
@@ -34,30 +41,40 @@ func TestCC_StunImmune(t *testing.T) {
 
 func TestCC_ControlImmune(t *testing.T) {
 	e := &enemy.Enemy{HP: 100, MaxHP: 100, Active: true, StatusEffects: enemy.StatusEffects{IsControlImmune: true}}
+	e.Buffs = buff.NewDefaultBuffList()
 	if combat.ApplyStun(e, 2.0, "") {
 		t.Error("控制免疫应阻止眩晕")
 	}
 	if combat.ApplySlow(e, 0.5, 3.0, "") {
 		t.Error("控制免疫应阻止减速")
 	}
-	// ApplyRoot 已移除（定身 CC 不再使用）
 }
 
 func TestCC_Tenacity(t *testing.T) {
 	e := &enemy.Enemy{HP: 100, MaxHP: 100, Active: true, StatusEffects: enemy.StatusEffects{Tenacity: 0.5}}
+	e.Buffs = buff.NewDefaultBuffList()
 	combat.ApplyStun(e, 4.0, "test")
 	// 韧性0.5: 实际持续 = 4.0 * (1-0.5) = 2.0
-	if math.Abs(e.StunTimer-2.0) > 1e-9 {
-		t.Errorf("韧性0.5时眩晕=%.2f, 期望2.0", e.StunTimer)
+	b, ok := e.Buffs.Get("stun")
+	if !ok {
+		t.Fatal("stun buff should be present")
+	}
+	if math.Abs(b.Remaining-2.0) > 1e-9 {
+		t.Errorf("韧性0.5时眩晕=%.2f, 期望2.0", b.Remaining)
 	}
 }
 
 func TestCC_SlowCap(t *testing.T) {
 	e := &enemy.Enemy{HP: 100, MaxHP: 100, Active: true, BaseSpeed: 100, Speed: 100}
+	e.Buffs = buff.NewDefaultBuffList()
 	// factor=0.1 低于 MinSpeedRatio=0.2，应被 clamp 到 0.2
 	combat.ApplySlow(e, 0.1, 3.0, "test")
-	if math.Abs(e.SlowFactor-0.2) > 1e-9 {
-		t.Errorf("减速倍率=%.2f, 期望0.2(MinSpeedRatio)", e.SlowFactor)
+	b, ok := e.Buffs.Get("slow")
+	if !ok {
+		t.Fatal("slow buff should be present")
+	}
+	if math.Abs(b.Value-0.2) > 1e-9 {
+		t.Errorf("减速倍率=%.2f, 期望0.2(MinSpeedRatio)", b.Value)
 	}
 	if math.Abs(e.Speed-20) > 1e-9 {
 		t.Errorf("速度=%.2f, 期望20(BaseSpeed*MinSpeedRatio)", e.Speed)

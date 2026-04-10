@@ -5,6 +5,7 @@ import (
 
 	defense2 "defense2"
 	"defense2/internal/config"
+	"defense2/internal/core/buff"
 	"defense2/internal/core/tower/abilities"
 
 	"defense2/internal/core/enemy"
@@ -118,8 +119,11 @@ func TestSlowEffect(t *testing.T) {
 	e := &enemy.Enemy{
 		HP: 100, MaxHP: 100, Speed: 100, BaseSpeed: 100, Active: true,
 	}
-	e.SlowTimer = 1.0
-	e.SlowFactor = 0.5
+	e.Buffs = buff.NewDefaultBuffList()
+	e.Buffs.Add(buff.Buff{
+		ID: "slow", Category: buff.CatCC, Source: "test",
+		Value: 0.5, Duration: 1.0, Remaining: 1.0,
+	})
 
 	enemy.TickStatusEffects(e, 0.5)
 	if e.Speed != 50 {
@@ -135,13 +139,17 @@ func TestSlowEffect(t *testing.T) {
 func TestBleedEffect(t *testing.T) {
 	e := &enemy.Enemy{
 		HP: 100, MaxHP: 100, Speed: 100, BaseSpeed: 100, Active: true,
-		StatusEffects: enemy.StatusEffects{BleedTimer: 2.0, BleedDPS: 10},
 	}
+	e.Buffs = buff.NewDefaultBuffList()
+	e.Buffs.Add(buff.Buff{
+		ID: "bleed", Category: buff.CatDoT, Source: "test",
+		Value: 10, Duration: 2.0, Remaining: 2.0,
+	})
 
 	// DoT damage is now deferred to LastDotDmg (applied by pipeline via ProcessDamage).
-	// DotTickInterval=0.5: after 1s, one tick fires with damage = 10 DPS * 0.5s = 5.
-	enemy.TickStatusEffects(e, 1.0)
+	// DotTickInterval=0.5: after 0.5s, one tick fires with damage = 10 DPS * 0.5s = 5.
+	enemy.TickStatusEffects(e, 0.5)
 	if e.LastDotDmg != 5 {
-		t.Fatalf("expected LastDotDmg 5 after 1s bleed, got %.0f", e.LastDotDmg)
+		t.Fatalf("expected LastDotDmg 5 after 0.5s bleed tick, got %.0f", e.LastDotDmg)
 	}
 }

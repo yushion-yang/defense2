@@ -28,7 +28,7 @@ func TestRegression_CC_SlowMinSpeedClamp(t *testing.T) {
 }
 
 // BUG: Stun did not prevent movement.
-// Fix: MoveAlongPath checks StunTimer > 0 and skips movement.
+// Fix: MoveAlongPath checks IsStunned() and skips movement.
 func TestRegression_CC_StunPreventsMovement(t *testing.T) {
 	s := sim.New().
 		WithStraightPath(500).
@@ -56,13 +56,21 @@ func TestRegression_CC_TenacityReducesDuration(t *testing.T) {
 	e.Tenacity = 0.5
 
 	combat.ApplyStun(e, 2.0, "test")
-	if e.StunTimer != 1.0 {
-		t.Fatalf("stun with 50%% tenacity should be 1.0s, got %.2f", e.StunTimer)
+	stunBuff, ok := e.Buffs.Get("stun")
+	if !ok {
+		t.Fatal("stun buff should be present after ApplyStun")
+	}
+	if stunBuff.Remaining != 1.0 {
+		t.Fatalf("stun with 50%% tenacity should be 1.0s, got %.2f", stunBuff.Remaining)
 	}
 
 	combat.ApplySlow(e, 0.5, 4.0, "test")
-	if e.SlowTimer != 2.0 {
-		t.Fatalf("slow with 50%% tenacity should be 2.0s, got %.2f", e.SlowTimer)
+	slowBuff, ok := e.Buffs.Get("slow")
+	if !ok {
+		t.Fatal("slow buff should be present after ApplySlow")
+	}
+	if slowBuff.Remaining != 2.0 {
+		t.Fatalf("slow with 50%% tenacity should be 2.0s, got %.2f", slowBuff.Remaining)
 	}
 }
 
@@ -80,8 +88,8 @@ func TestRegression_CC_FullTenacityImmune(t *testing.T) {
 	if ok {
 		t.Fatal("stun should fail with tenacity=1.0")
 	}
-	if e.StunTimer != 0 {
-		t.Fatalf("stun timer should be 0, got %.2f", e.StunTimer)
+	if e.IsStunned() {
+		t.Fatal("enemy should not be stunned after tenacity=1.0 rejection")
 	}
 }
 
@@ -118,7 +126,7 @@ func TestRegression_Projectile_TrackingTarget(t *testing.T) {
 // ============================================================
 
 // BUG: Burn was treated as bleed (shared timer).
-// Fix: Burn has independent BurnTimer/BurnDPS fields.
+// Fix: Burn has independent buff in BuffList (bleed and burn don't conflict).
 func TestRegression_DoT_BurnIndependentOfBleed(t *testing.T) {
 	s := sim.New().
 		WithStraightPath(500).
@@ -128,15 +136,17 @@ func TestRegression_DoT_BurnIndependentOfBleed(t *testing.T) {
 		Build()
 
 	e := s.SpawnedEnemies[0]
-	if e.BurnTimer <= 0 || e.BleedTimer <= 0 {
+	if !e.IsBurning() || !e.IsBleeding() {
 		t.Fatal("both burn and bleed should be active")
 	}
-	if e.BurnDPS != 100 || e.BleedDPS != 50 {
-		t.Fatalf("DPS values wrong: burn=%.0f bleed=%.0f", e.BurnDPS, e.BleedDPS)
+	burnBuff, _ := e.Buffs.Get("burn")
+	bleedBuff, _ := e.Buffs.Get("bleed")
+	if burnBuff.Value != 100 || bleedBuff.Value != 50 {
+		t.Fatalf("DPS values wrong: burn=%.0f bleed=%.0f", burnBuff.Value, bleedBuff.Value)
 	}
 
 	// Run 1 DoT tick cycle (0.5s = 30 ticks + 1 init tick)
-	// First tick initializes DotTickTimer to 0.5, so damage fires at tick 31.
+	// First tick initializes dotTimer to 0.5, so damage fires at tick 31.
 	s.RunTicks(31)
 
 	// Combined DoT per tick: (100+50) * 0.5 = 75

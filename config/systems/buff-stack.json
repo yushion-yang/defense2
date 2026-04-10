@@ -28,6 +28,11 @@
     "untargetable": {"mode": "override",  "priority": 100, "description": "不可选中（最高优先级）"},
     "shield":       {"mode": "independent",              "description": "护盾各独立计算"},
     "dot":          {"mode": "independentPerSource",     "description": "DoT 按来源独立"},
-    "tenacity":     {"mode": "multiplicative",           "description": "韧性乘法叠加（无上限）"}
+    "tenacity":     {"mode": "multiplicative",           "description": "韧性乘法叠加（无上限）"},
+    "root":         {"mode": "override",                 "description": "定身覆盖（后来居上）"},
+    "bleed":        {"mode": "override",                 "description": "流血覆盖（最新覆盖旧值）"},
+    "burn":         {"mode": "override",                 "description": "灼烧覆盖（最新覆盖旧值）"},
+    "poison":       {"mode": "override",                 "description": "中毒覆盖（最新覆盖旧值）"},
+    "weaken":       {"mode": "strongest", "cap": 0.5,    "description": "虚弱取最强，上限 50%"}
   }
 }
