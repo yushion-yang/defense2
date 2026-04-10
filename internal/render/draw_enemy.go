@@ -290,9 +290,9 @@ func (er *EnemyRenderer) DrawEnemies(screen *ebiten.Image, pool *enemy.Pool, ani
 			// 免疫脚环（只显示天生能力，净化临时免疫用白色微光）
 			footR := float32(e.Radius) + 2
 			if hasAbility(e, "ccImmune") {
-				vfx.DrawImmunityRing(screen, cx, cy, footR, color.RGBA{R: 220, G: 60, B: 60, A: 80})
+				vfx.DrawImmunityRing(screen, cx, cy, footR, color.RGBA{R: 220, G: 60, B: 60, A: 80}, animTime)
 			} else if hasAbility(e, "slowImmune") {
-				vfx.DrawImmunityRing(screen, cx, cy, footR, color.RGBA{R: 60, G: 180, B: 200, A: 80})
+				vfx.DrawImmunityRing(screen, cx, cy, footR, color.RGBA{R: 60, G: 180, B: 200, A: 80}, animTime)
 			}
 
 			// 盾牌叠加（能力对应颜色盾牌）

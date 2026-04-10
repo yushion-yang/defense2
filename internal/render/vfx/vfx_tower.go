@@ -98,19 +98,24 @@ const towerSpriteSize = 64
 // overflow: 超过基线 100 的力量值。
 func DrawStrengthGlow(screen *ebiten.Image, cx, cy float32, overflow float64, animTime float64) {
 	if overflow >= 50 {
-		ringAlpha := uint8(30 + min(30, int((overflow-50)*0.6)))
-		draw.CircleOutline(screen, cx, cy, float32(towerSpriteSize*0.4), 1,
-			color.RGBA{255, 230, 150, ringAlpha})
+		// Tier 1: warm yellow ring + subtle glow
+		pulse1 := 0.5 + 0.5*math.Sin(animTime*2)
+		ringAlpha := uint8(50 + 20*pulse1)
+		draw.Glow(screen, cx, cy, float32(towerSpriteSize*0.35), float32(towerSpriteSize*0.5), color.RGBA{255, 230, 150, uint8(20 + 10*pulse1)})
+		draw.CircleOutline(screen, cx, cy, float32(towerSpriteSize*0.4), 1.5, color.RGBA{255, 230, 150, ringAlpha})
 	}
 	if overflow >= 100 {
-		draw.CircleOutline(screen, cx, cy, float32(towerSpriteSize*0.48), 1,
-			color.RGBA{255, 220, 100, 50})
+		// Tier 2: orange second ring
+		pulse2 := 0.5 + 0.5*math.Sin(animTime*2.5)
+		ringAlpha2 := uint8(45 + 20*pulse2)
+		draw.CircleOutline(screen, cx, cy, float32(towerSpriteSize*0.5), 1.5, color.RGBA{255, 200, 80, ringAlpha2})
 	}
 	if overflow >= 150 {
-		pulse := 0.5 + 0.5*math.Sin(animTime*3)
-		ringAlpha := uint8(30 + 25*pulse)
-		draw.CircleOutline(screen, cx, cy, float32(towerSpriteSize*0.55), 1,
-			color.RGBA{255, 200, 50, ringAlpha})
+		// Tier 3: bright gold pulsing + strong glow
+		pulse3 := 0.5 + 0.5*math.Sin(animTime*3)
+		ringAlpha3 := uint8(50 + 30*pulse3)
+		draw.Glow(screen, cx, cy, float32(towerSpriteSize*0.45), float32(towerSpriteSize*0.65), color.RGBA{255, 200, 50, uint8(25 + 15*pulse3)})
+		draw.CircleOutline(screen, cx, cy, float32(towerSpriteSize*0.6), 1.5, color.RGBA{255, 200, 50, ringAlpha3})
 	}
 }
 
@@ -118,10 +123,23 @@ func DrawStrengthGlow(screen *ebiten.Image, cx, cy float32, overflow float64, an
 
 // DrawAuraPulse 绘制光环能力的脉冲虚线圈。
 func DrawAuraPulse(screen *ebiten.Image, cx, cy float32, radius float64, clr color.RGBA, animTime float64) {
+	// Main aura ring — much more visible
 	pulse := float32(0.7 + 0.3*math.Sin(animTime*2))
-	a := uint8(float64(25) * float64(pulse))
+	a := uint8(float64(55) * float64(pulse))
 	c := color.RGBA{clr.R, clr.G, clr.B, a}
 	draw.DashedCircle(screen, cx, cy, float32(radius), 1, 6, 4, c)
+
+	// Inner solid ring at 60% radius
+	innerA := uint8(float64(30) * float64(pulse))
+	draw.CircleOutline(screen, cx, cy, float32(radius*0.6), 1, color.RGBA{clr.R, clr.G, clr.B, innerA})
+
+	// 2 orbiting dots at edge
+	for i := 0; i < 2; i++ {
+		angle := animTime*1.5 + float64(i)*math.Pi
+		dotX := cx + float32(radius)*float32(math.Cos(angle))
+		dotY := cy + float32(radius)*float32(math.Sin(angle))
+		draw.FilledCircle(screen, dotX, dotY, 2, color.RGBA{clr.R, clr.G, clr.B, uint8(70 * pulse)})
+	}
 }
 
 // ── Buff 指示圆点 ───────────────────────────────────

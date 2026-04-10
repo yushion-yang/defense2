@@ -1023,8 +1023,8 @@ func (s *VFXPreviewScene) drawActiveVFX(screen *ebiten.Image) {
 		vfx.DrawPoisonOverlay(screen, fcx, fcy, 12, t)
 	case "immunityRing":
 		// Show both CC immune (red) and slow immune (cyan) side by side
-		vfx.DrawImmunityRing(screen, fcx-25, fcy, 12, color.RGBA{R: 220, G: 60, B: 60, A: 80})
-		vfx.DrawImmunityRing(screen, fcx+25, fcy, 12, color.RGBA{R: 60, G: 180, B: 200, A: 80})
+		vfx.DrawImmunityRing(screen, fcx-25, fcy, 12, color.RGBA{R: 220, G: 60, B: 60, A: 80}, t)
+		vfx.DrawImmunityRing(screen, fcx+25, fcy, 12, color.RGBA{R: 60, G: 180, B: 200, A: 80}, t)
 	case "upgradeDiamond":
 		vfx.DrawUpgradeDiamond(screen, fcx, fcy, t)
 	case "selectionRing":
