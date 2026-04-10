@@ -85,7 +85,8 @@ type StageScene struct {
 	towerRenderer  *render.TowerRenderer        // 塔 SVG 渲染器
 	enemyRenderer  *render.EnemyRenderer        // 敌人 SVG 渲染器
 	wardenRenderer *render.WardenRenderer       // 战灵精灵渲染器
-	audioMgr       *gameAudio.Manager           // 音效管理器
+	audioMgr         *gameAudio.Manager           // 音效管理器
+	lastCountdownSec int                          // 上一帧的倒计时整秒数（用于去重播放 countdownTick）
 	wardenUnit     *warden.Warden               // 战灵实体（选择前为 nil）
 	wardenOverlay  *hud.WardenSelectOverlay     // 战灵选择覆盖层
 	wardenReady    bool                         // 战灵已选择并激活
@@ -300,6 +301,11 @@ func NewStageSceneWithOpts(sw Switcher, opts StageOptions) *StageScene {
 	// 塔移除时清理缩放能力的运行时状态（防止 map 泄漏）
 	s.towers.RemoveHook = abilities.ClearTowerScalingState
 
+	// 死亡召唤音效回调
+	s.enemies.OnDeathSpawn = func(_ *enemy.Enemy, _ int) {
+		s.audioMgr.PlayThrottledAt("bossSummonMinions", 500, gameAudio.VolWave)
+	}
+
 	// 后处理管线（bloom）+ 粒子系统
 	s.postPipeline = postprocess.NewPipeline()
 	s.particlePool = particle.NewPool()
@@ -469,6 +475,7 @@ func (s *StageScene) subscribeBus() {
 		s.kills++
 		s.gold += p.GoldValue
 		s.gameStats.GoldEarned += p.GoldValue
+		s.audioMgr.PlayThrottledAt(gameAudio.SFXGoldEarn, 100, gameAudio.VolUI*0.5)
 		s.session.OnEnemyKilled(p.IsBoss, s.buildModeCtx())
 		s.tutorial.OnEvent("enemyKilled")
 		if s.wardenReady && s.wardenUnit != nil {
@@ -1652,6 +1659,18 @@ func (s *StageScene) updatePlaying() {
 		return
 	}
 
+	// 0.5. 波间倒计时音效（每整秒 tick，仅最后 5 秒）
+	if s.spawner.IsIntermission() {
+		t := s.spawner.TimeToNextWave()
+		sec := int(math.Ceil(t))
+		if sec != s.lastCountdownSec && sec > 0 && sec <= 5 {
+			s.audioMgr.PlayAt("countdownTick", gameAudio.VolUI)
+			s.lastCountdownSec = sec
+		}
+	} else {
+		s.lastCountdownSec = 0
+	}
+
 	// 1. 生成敌人
 	s.spawner.Update(s.enemies, gameDT)
 	// Emit spawn burst particles for newly spawned enemies
@@ -1671,6 +1690,16 @@ func (s *StageScene) updatePlaying() {
 	// 2. 敌人状态效果（减速、流血等）
 	pipeline.TickEnemyStatusEffects(s.enemies, gameDT, func(e *enemy.Enemy, dmg float64) {
 		render.SpawnDamageText(e.X, e.Y-10, dmg, false, e.Boss)
+		// DoT-type-specific tick sounds
+		if e.IsBurning() {
+			s.audioMgr.PlayThrottledAt(gameAudio.SFXBurnTick, 1000, gameAudio.VolHit*0.3)
+		}
+		if e.IsBleeding() {
+			s.audioMgr.PlayThrottledAt(gameAudio.SFXBleedTick, 1000, gameAudio.VolHit*0.3)
+		}
+		if e.IsPoisoned() {
+			s.audioMgr.PlayThrottledAt(gameAudio.SFXPoisonTick, 1000, gameAudio.VolHit*0.3)
+		}
 	})
 
 	// 2.5. 敌人行为 tick（传送；狂暴/回血由 TickBehaviors 统一处理）
@@ -1678,7 +1707,9 @@ func (s *StageScene) updatePlaying() {
 		if e.IsDying() || e.IsSpawning() {
 			return
 		}
-		enemy.UpdateTeleport(e, gameDT)
+		if enemy.UpdateTeleport(e, gameDT) {
+			s.audioMgr.PlayThrottledAt("teleportBlink", 200, gameAudio.VolHit)
+		}
 	})
 
 	// 3. 敌人移动（到达终点扣生命）
@@ -1735,6 +1766,12 @@ func (s *StageScene) updatePlaying() {
 	}
 	if behaviorEvents.Regens > 0 {
 		s.audioMgr.PlayThrottledAt(gameAudio.SFXRegenTick, 2000, gameAudio.VolHit*0.5)
+	}
+	if behaviorEvents.Berserks > 0 {
+		s.audioMgr.PlayThrottledAt(gameAudio.SFXBerserkActivate, 500, gameAudio.VolWave)
+	}
+	if behaviorEvents.HasBuffer {
+		s.audioMgr.PlayThrottledAt(gameAudio.SFXBannerAura, 3000, gameAudio.VolHit*0.3)
 	}
 	// 削强能力：每帧管理敌人→塔连接
 	// 削强在 TickTowerAbilities 之后执行（避免被 ClearTransient 清掉）
@@ -1890,6 +1927,10 @@ func (s *StageScene) updatePlaying() {
 			s.audioMgr.PlayThrottledAt(gameAudio.SFXStunImpact, 150, gameAudio.VolHit)
 		case "burn":
 			s.audioMgr.PlayThrottledAt(gameAudio.SFXBurnIgnite, 200, gameAudio.VolHit)
+		case "dodge":
+			s.audioMgr.PlayThrottledAt("dodge", 200, gameAudio.VolHit)
+		case "splash":
+			s.audioMgr.PlayThrottledAt("explodeSplash", 150, gameAudio.VolExplo)
 		}
 	}
 

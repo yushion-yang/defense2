@@ -31,6 +31,7 @@ type HitOutput struct {
 	TotalDamage       float64
 	IsCrit            bool
 	Killed            bool
+	Dodged            bool // 目标闪避了攻击
 	ExtraKills        int  // deathMark 等额外击杀
 	ProjectileBlocked bool // 弹幕盾：阻止弹射物继续传播（弹射/穿透停止）
 }
@@ -44,7 +45,10 @@ func ApplyHit(input HitInput, onHit HitCallback) HitOutput {
 		if rand.Float64() < e.EvasionChance {
 			e.DodgeFlash = 0.3
 			e.SetFloatText("MISS", 255, 255, 255)
-			return HitOutput{}
+			if input.OnCC != nil {
+				input.OnCC(e.X, e.Y, "dodge")
+			}
+			return HitOutput{Dodged: true}
 		}
 	}
 
@@ -210,6 +214,9 @@ func applyHitEffectsUnified(r *tower.HitResult, target *enemy.Enemy, p *projecti
 	}
 	if r.Splash != nil && enemies != nil {
 		tel.T.Record("ability", "splash")
+		if onCC != nil {
+			onCC(target.X, target.Y, "splash")
+		}
 		splashDamage := p.Damage * r.Splash.Ratio
 		splashTower := srcTower
 		enemies.Each(func(e *enemy.Enemy) {

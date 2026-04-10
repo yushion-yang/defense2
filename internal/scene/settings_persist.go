@@ -20,7 +20,7 @@ type SettingsData struct {
 // DefaultSettings 返回默认设置。
 func DefaultSettings() SettingsData {
 	return SettingsData{
-		SFXEnabled: false,
+		SFXEnabled: true,
 		SFXVolume:  0.8,
 		BGMVolume:  0.5,
 		Quality:    0, // High

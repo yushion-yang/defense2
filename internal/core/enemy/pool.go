@@ -17,6 +17,8 @@ type Pool struct {
 	nextID  int     // 递增 ID 计数器
 	// OnSplit 击杀时分裂回调（可选，由 stage 层注册）。
 	OnSplit func(children []*Enemy)
+	// OnDeathSpawn 死亡召唤回调（可选，由 stage 层注册）。
+	OnDeathSpawn func(e *Enemy, count int)
 }
 
 // NewPool 创建指定容量的敌人对象池。
@@ -192,6 +194,9 @@ func (p *Pool) Kill(e *Enemy) {
 				if child != nil {
 					child.Path = e.Path
 				}
+			}
+			if p.OnDeathSpawn != nil {
+				p.OnDeathSpawn(e, e.DeathSpawnCount)
 			}
 		}
 

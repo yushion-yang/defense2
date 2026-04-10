@@ -129,9 +129,11 @@ func (s *StageScene) handleInput() {
 		case modeBuildMenu, modeBuildPlace:
 			s.selectedTower = nil
 			s.imode = modeIdle
+			s.audioMgr.PlayAt(gameAudio.SFXUIClose, gameAudio.VolUI)
 		case modeTowerSel:
 			s.selectedTower = nil
 			s.imode = modeIdle
+			s.audioMgr.PlayAt(gameAudio.SFXUIClose, gameAudio.VolUI)
 		case modeUpgrade:
 			s.choicePanel.Close()
 			s.imode = modeTowerSel
@@ -139,10 +141,12 @@ func (s *StageScene) handleInput() {
 			s.spawnMode = false
 			s.spawnType = ""
 			s.imode = modeIdle
+			s.audioMgr.PlayAt(gameAudio.SFXUIClose, gameAudio.VolUI)
 		case modeItemPanel:
 			s.imode = modeIdle
 			s.itemPanelOpen = false
 			s.dragItemActive = false
+			s.audioMgr.PlayAt(gameAudio.SFXUIClose, gameAudio.VolUI)
 		case modeItemDrag:
 			s.dragItemActive = false
 			s.imode = modeItemPanel
@@ -156,6 +160,7 @@ func (s *StageScene) handleInput() {
 	if inpututil.IsKeyJustPressed(ebiten.KeyB) {
 		if s.imode == modeBuildMenu || s.imode == modeBuildPlace {
 			s.imode = modeIdle
+			s.audioMgr.PlayAt(gameAudio.SFXUIClose, gameAudio.VolUI)
 		} else {
 			// 清除造怪/道具状态
 			s.spawnMode = false
@@ -164,6 +169,7 @@ func (s *StageScene) handleInput() {
 			s.dragItemActive = false
 			s.selectedTower = nil
 			s.enterBuildMode()
+			s.audioMgr.PlayAt(gameAudio.SFXUIOpen, gameAudio.VolUI)
 		}
 		return
 	}
@@ -171,6 +177,7 @@ func (s *StageScene) handleInput() {
 		if s.imode == modeItemPanel {
 			s.imode = modeIdle
 			s.itemPanelOpen = false
+			s.audioMgr.PlayAt(gameAudio.SFXUIClose, gameAudio.VolUI)
 		} else if s.inventory.TotalCount() > 0 {
 			// 清除造怪/建造状态
 			s.spawnMode = false
@@ -178,6 +185,7 @@ func (s *StageScene) handleInput() {
 			s.imode = modeItemPanel
 			s.itemPanelOpen = true
 			s.selectedTower = nil
+			s.audioMgr.PlayAt(gameAudio.SFXUIOpen, gameAudio.VolUI)
 		}
 		return
 	}
@@ -384,12 +392,14 @@ func (s *StageScene) handleInput() {
 	case "build":
 		if s.imode == modeBuildMenu || s.imode == modeBuildPlace {
 			s.imode = modeIdle
+			s.audioMgr.PlayAt(gameAudio.SFXUIClose, gameAudio.VolUI)
 		} else {
 			s.selectedTower = nil
 			s.wardenPanelOpen = false
 			s.itemPanelOpen = false
 			s.tutorial.Trigger("build")
 			s.enterBuildMode()
+			s.audioMgr.PlayAt(gameAudio.SFXUIOpen, gameAudio.VolUI)
 		}
 		return
 	case "items":
@@ -400,11 +410,13 @@ func (s *StageScene) handleInput() {
 		if s.imode == modeItemPanel {
 			s.imode = modeIdle
 			s.itemPanelOpen = false
+			s.audioMgr.PlayAt(gameAudio.SFXUIClose, gameAudio.VolUI)
 		} else {
 			s.imode = modeItemPanel
 			s.itemPanelOpen = true
 			s.selectedTower = nil
 			s.wardenPanelOpen = false
+			s.audioMgr.PlayAt(gameAudio.SFXUIOpen, gameAudio.VolUI)
 		}
 		return
 	}
@@ -416,6 +428,7 @@ func (s *StageScene) handleInput() {
 		if clicked != nil {
 			s.selectedTower = clicked
 			s.imode = modeTowerSel
+			s.audioMgr.PlayAt(gameAudio.SFXUIOpen, gameAudio.VolUI)
 			s.tutorial.Trigger("tower_select")
 		} else if s.wardenPanelOpen {
 			s.wardenPanelOpen = false
@@ -425,6 +438,7 @@ func (s *StageScene) handleInput() {
 		idx := hud.BuildMenuHitTest(ftx, fty, s.buildMenuTotalCards(), len(s.towerDefs))
 		if idx == -2 || idx == -1 {
 			s.imode = modeIdle
+			s.audioMgr.PlayAt(gameAudio.SFXUIClose, gameAudio.VolUI)
 		} else if idx >= 0 {
 			s.selectedDef = idx
 			s.selectedTower = nil
@@ -507,6 +521,7 @@ func (s *StageScene) handleInput() {
 		} else if hud.InfoPanelSellHitTest(ftx, fty, s.selectedTower != nil) {
 			s.trySellTower(s.selectedTower.X, s.selectedTower.Y)
 			s.imode = modeIdle
+			s.audioMgr.PlayAt(gameAudio.SFXUIClose, gameAudio.VolUI)
 		} else {
 			clicked := s.towerAtPixel(wtx, wty)
 			if clicked != nil && clicked != s.selectedTower {
@@ -514,6 +529,7 @@ func (s *StageScene) handleInput() {
 			} else {
 				s.selectedTower = nil
 				s.imode = modeIdle
+				s.audioMgr.PlayAt(gameAudio.SFXUIClose, gameAudio.VolUI)
 			}
 		}
 
@@ -524,6 +540,7 @@ func (s *StageScene) handleInput() {
 			if abtn == "" {
 				s.imode = modeIdle
 				s.itemPanelOpen = false
+				s.audioMgr.PlayAt(gameAudio.SFXUIClose, gameAudio.VolUI)
 			}
 		}
 	}
@@ -725,6 +742,7 @@ func (s *StageScene) openAbilityChoicePanel() {
 		}
 	})
 	s.imode = modeUpgrade
+	s.audioMgr.PlayAt(gameAudio.SFXUIOpen, gameAudio.VolUI)
 }
 
 // openTestAbilityChoicePanel 测试模式：先选类别，再展示该类别全部能力。
