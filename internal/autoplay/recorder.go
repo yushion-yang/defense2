@@ -391,6 +391,26 @@ func (r *Recorder) OnKill() {
 	r.totalKills++
 }
 
+// buildPaceStats 构建节奏指标（可复用）。
+func (r *Recorder) buildPaceStats() *PaceStat {
+	if r.combatTicks == 0 {
+		return nil
+	}
+	ratio := float64(r.idleTicks) / float64(r.combatTicks)
+	verdict := "ok"
+	if ratio > 3.0 {
+		verdict = "too_boring"
+	} else if ratio < 0.3 {
+		verdict = "too_intense"
+	}
+	return &PaceStat{
+		TotalIdleTicks:   r.idleTicks,
+		TotalCombatTicks: r.combatTicks,
+		IdleCombatRatio:  ratio,
+		Verdict:          verdict,
+	}
+}
+
 // Finalize 生成最终对局报告。
 func (r *Recorder) Finalize(state *GameState, anomalies []Anomaly) *SessionRecord {
 	result := "timeout"
@@ -456,21 +476,7 @@ func (r *Recorder) Finalize(state *GameState, anomalies []Anomaly) *SessionRecor
 	}
 
 	// 节奏指标
-	if r.combatTicks > 0 {
-		ratio := float64(r.idleTicks) / float64(r.combatTicks)
-		verdict := "ok"
-		if ratio > 3.0 {
-			verdict = "too_boring"
-		} else if ratio < 0.3 {
-			verdict = "too_intense"
-		}
-		rec.PaceStats = &PaceStat{
-			TotalIdleTicks:   r.idleTicks,
-			TotalCombatTicks: r.combatTicks,
-			IdleCombatRatio:  ratio,
-			Verdict:          verdict,
-		}
-	}
+	rec.PaceStats = r.buildPaceStats()
 
 	// 经济断档事件
 	if len(r.econAlerts) > 0 {

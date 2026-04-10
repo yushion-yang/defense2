@@ -508,6 +508,11 @@ func AllScenariosMap() map[string]func() Strategy {
 		m[name] = func() Strategy { return strat }
 	}
 
+	// 平衡测试场景
+	for k, v := range AllBalanceScenariosMap() {
+		m[k] = v
+	}
+
 	return m
 }
 
@@ -520,6 +525,10 @@ func AbilityAssertionsMap() map[string][]Assertion {
 		abilityAssertionMap = make(map[string][]Assertion)
 		for _, as := range GenerateAbilityScenarios() {
 			abilityAssertionMap[as.Name] = as.Assertions
+		}
+		// 合并平衡断言
+		for k, v := range BalanceAssertionsMap() {
+			abilityAssertionMap[k] = v
 		}
 	}
 	return abilityAssertionMap

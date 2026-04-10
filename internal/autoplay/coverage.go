@@ -13,6 +13,7 @@ type TestCase struct {
 	ModeID      string // 游戏模式（空=autoplay）
 	EnemyFilter string // 敌人过滤器（空=默认）
 	Strategy    Strategy
+	Assertions  []Assertion // 平衡断言（可选）
 }
 
 // EffectiveModeID 返回实际使用的游戏模式 ID。
@@ -147,15 +148,21 @@ func generateManualTestScenarios() []TestCase {
 	return cases
 }
 
-// generateBalanceTests 极限平衡验证。
+// generateBalanceTests 数值平衡验证（26 个场景覆盖 6 个维度）。
 func generateBalanceTests() []TestCase {
-	noSell := NewGreedyNoSellStrategy()
-	return []TestCase{
-		{ID: "balance_min_config", MapID: "map_07", Difficulty: "extreme", Warden: "prince", Strategy: NewGreedyStrategy()},
-		{ID: "balance_max_config", MapID: "map_01", Difficulty: "easy", Warden: "prince", Strategy: NewGreedyStrategy()},
-		{ID: "balance_no_sell", MapID: "map_03", Difficulty: "normal", Warden: "prince", Strategy: noSell},
-		{ID: "balance_endless", MapID: "map_06", Difficulty: "normal", Warden: "prince", ModeID: "endless", Strategy: NewGreedyStrategy()},
+	var cases []TestCase
+	for _, bs := range AllBalanceScenarios() {
+		cases = append(cases, TestCase{
+			ID:          bs.ID,
+			MapID:       bs.MapID,
+			Difficulty:  bs.Difficulty,
+			Warden:      bs.Warden,
+			EnemyFilter: bs.EnemyFilter,
+			Strategy:    bs.Strategy,
+			Assertions:  bs.Assertions,
+		})
 	}
+	return cases
 }
 
 // generateCombinationTests 特殊敌人组合。
@@ -283,14 +290,14 @@ func ParseCLICases(runs int, strategies, mapID, difficulty, warden string) []Tes
 			if sName == "focus" {
 				for _, key := range TowerKeys {
 					cases = append(cases, TestCase{
-						ID: FormatSessionID("focus_"+key, mapID, difficulty, run),
+						ID:    FormatSessionID("focus_"+key, mapID, difficulty, run),
 						MapID: mapID, Difficulty: difficulty, Warden: warden,
 						Strategy: NewFocusStrategy(key),
 					})
 				}
 			} else {
 				cases = append(cases, TestCase{
-					ID: FormatSessionID(sName, mapID, difficulty, run),
+					ID:    FormatSessionID(sName, mapID, difficulty, run),
 					MapID: mapID, Difficulty: difficulty, Warden: warden,
 					Strategy: makeStrategy(sName, ""),
 				})

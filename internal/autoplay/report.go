@@ -11,6 +11,21 @@ import (
 	"sort"
 )
 
+// BalanceTestResult 单个平衡测试结果。
+type BalanceTestResult struct {
+	ID         string            `json:"id"`
+	Passed     bool              `json:"passed"`
+	Assertions []AssertionResult `json:"assertions"`
+}
+
+// BalanceSummary 平衡测试汇总。
+type BalanceSummary struct {
+	Total   int                 `json:"total"`
+	Passed  int                 `json:"passed"`
+	Failed  int                 `json:"failed"`
+	Details []BalanceTestResult `json:"details"`
+}
+
 // CoverageReport 覆盖率汇总报告。
 type CoverageReport struct {
 	TotalSessions  int                 `json:"total_sessions"`
@@ -21,6 +36,7 @@ type CoverageReport struct {
 	AnomalySummary map[string]int      `json:"anomaly_summary"`
 	TowerUsage     map[string]int      `json:"tower_usage"`
 	ArchetypesSeen map[string]int      `json:"archetypes_seen"`
+	Balance        *BalanceSummary     `json:"balance_summary,omitempty"`
 }
 
 // GenerateReport 从多个对局记录生成汇总报告。
@@ -97,6 +113,9 @@ func GenerateReport(records []*SessionRecord) *CoverageReport {
 		}
 	}
 
+	// 平衡测试汇总
+	r.Balance = buildBalanceSummary(records)
+
 	// 检查覆盖缺口
 	r.CoverageGaps["towers"] = findGaps(TowerKeys, towersSeen)
 	r.CoverageGaps["archetypes"] = findGaps(EnemyArchetypes, archetypesSeen)
@@ -146,6 +165,41 @@ func GenerateReport(records []*SessionRecord) *CoverageReport {
 	r.CoverageGaps["cc_types"] = findGaps(allCC, ccSeen)
 
 	return r
+}
+
+// buildBalanceSummary 从对局记录中提取 bal_* 场景的断言结果。
+func buildBalanceSummary(records []*SessionRecord) *BalanceSummary {
+	var bs BalanceSummary
+	for _, rec := range records {
+		if len(rec.SessionID) < 4 || rec.SessionID[:4] != "bal_" {
+			continue
+		}
+		if len(rec.Assertions) == 0 {
+			continue
+		}
+		bs.Total++
+		allPassed := true
+		for _, a := range rec.Assertions {
+			if !a.Passed {
+				allPassed = false
+				break
+			}
+		}
+		if allPassed {
+			bs.Passed++
+		} else {
+			bs.Failed++
+		}
+		bs.Details = append(bs.Details, BalanceTestResult{
+			ID:         rec.SessionID,
+			Passed:     allPassed,
+			Assertions: rec.Assertions,
+		})
+	}
+	if bs.Total == 0 {
+		return nil
+	}
+	return &bs
 }
 
 // findGaps 找出未覆盖的项。
@@ -210,6 +264,26 @@ func (r *CoverageReport) WriteText(w io.Writer) {
 			fmt.Fprintf(w, "  -- MISSING: %v", gaps)
 		}
 		fmt.Fprintln(w)
+	}
+
+	// 平衡测试结果
+	if r.Balance != nil {
+		fmt.Fprintf(w, "\nBalance Tests: %d/%d passed\n", r.Balance.Passed, r.Balance.Total)
+		for _, d := range r.Balance.Details {
+			status := "PASS"
+			if !d.Passed {
+				status = "FAIL"
+			}
+			fmt.Fprintf(w, "  [%s] %s", status, d.ID)
+			if !d.Passed {
+				for _, a := range d.Assertions {
+					if !a.Passed {
+						fmt.Fprintf(w, "  (%s)", a.Name)
+					}
+				}
+			}
+			fmt.Fprintln(w)
+		}
 	}
 
 	if len(r.AnomalySummary) > 0 {

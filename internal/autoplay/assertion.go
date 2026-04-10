@@ -26,6 +26,21 @@ type Assertion struct {
 	checkFn   func(state *GameState) bool
 }
 
+// FinalStats 终局统计数据，由 Recorder 在 Finalize 前注入。
+type FinalStats struct {
+	WavesSurvived int
+	TotalKills    int
+	TotalLeaked   int
+	FinalLives    int
+	FinalGold     int
+	Victory       bool
+	Defeat        bool
+	DPSSnapshots  []float64
+	BossStats     []BossStat
+	PaceStats     *PaceStat
+	EconStalls    int // 经济断档次数
+}
+
 // AssertionChecker manages per-scenario assertions.
 type AssertionChecker struct {
 	assertions []Assertion
@@ -36,6 +51,7 @@ type AssertionChecker struct {
 	initialEnemyCount int
 	maxEnemyCount     int
 	initialized       bool
+	finalStats        *FinalStats
 }
 
 // NewAssertionChecker creates a new assertion checker.
@@ -74,11 +90,24 @@ func (ac *AssertionChecker) Check(state *GameState) {
 	}
 }
 
-// Finalize marks unchecked assertions as failed.
+// SetFinalStats 注入终局统计数据（在 Finalize 前调用）。
+func (ac *AssertionChecker) SetFinalStats(fs *FinalStats) {
+	ac.finalStats = fs
+}
+
+// Finalize runs final-phase checks and marks unchecked assertions as failed.
 func (ac *AssertionChecker) Finalize(lastTick int) []AssertionResult {
+	// 对未通过的断言做最终检查（终局断言在此阶段判定）
 	for i := range ac.assertions {
 		a := &ac.assertions[i]
 		if ac.checked[a.Name] {
+			continue
+		}
+		if ac.finalStats != nil && checkFinalAssertion(a, ac.finalStats) {
+			ac.results = append(ac.results, AssertionResult{
+				Name: a.Name, Passed: true, Tick: lastTick,
+			})
+			ac.checked[a.Name] = true
 			continue
 		}
 		ac.results = append(ac.results, AssertionResult{
@@ -393,6 +422,104 @@ func checkAssertion(a *Assertion, s *GameState, ac *AssertionChecker) bool {
 			}
 		}
 		return hit >= 2 // 至少 2 个（多体验证，不要求达到弹丸数）
+
+	// ── 平衡测试实时断言（可在对局中判定）──
+
+	case "victory":
+		return s.Victory
+	case "defeat":
+		return s.GameOver && !s.Victory
+	case "waves_survived_gte":
+		return s.Wave >= a.Param
+	case "waves_survived_lte":
+		return s.GameOver && s.Wave <= a.Param
+	case "final_lives_gte":
+		return s.GameOver && s.Lives >= a.Param
+	case "final_lives_lte":
+		return s.GameOver && s.Lives <= a.Param
+	case "total_kills_gte":
+		return s.TotalKills >= a.Param
+	case "gold_never_negative":
+		// 此断言在 Check 中始终返回 false（通过 finalCheck 判定）
+		return false
+	}
+	return false
+}
+
+// checkFinalAssertion 终局断言检查（需要完整对局数据）。
+func checkFinalAssertion(a *Assertion, fs *FinalStats) bool {
+	switch a.Type {
+	case "victory":
+		return fs.Victory
+	case "defeat":
+		return fs.Defeat
+	case "waves_survived_gte":
+		return fs.WavesSurvived >= a.Param
+	case "waves_survived_lte":
+		return fs.WavesSurvived <= a.Param
+	case "final_lives_gte":
+		return fs.FinalLives >= a.Param
+	case "final_lives_lte":
+		return fs.FinalLives <= a.Param
+	case "total_kills_gte":
+		return fs.TotalKills >= a.Param
+	case "leak_rate_lte":
+		if fs.TotalKills == 0 {
+			return fs.TotalLeaked == 0
+		}
+		rate := float64(fs.TotalLeaked) / float64(fs.TotalKills)
+		return rate <= a.Expected
+	case "dps_growth":
+		snaps := fs.DPSSnapshots
+		if len(snaps) < 4 {
+			return false
+		}
+		mid := len(snaps) / 2
+		var firstHalf, secondHalf float64
+		for _, v := range snaps[:mid] {
+			firstHalf += v
+		}
+		for _, v := range snaps[mid:] {
+			secondHalf += v
+		}
+		firstHalf /= float64(mid)
+		secondHalf /= float64(len(snaps) - mid)
+		return secondHalf > firstHalf
+	case "no_economy_stall":
+		maxStalls := a.Param
+		if maxStalls <= 0 {
+			maxStalls = 0
+		}
+		return fs.EconStalls <= maxStalls
+	case "boss_alive_gte":
+		for _, bs := range fs.BossStats {
+			if bs.AliveSeconds >= float64(a.Param) {
+				return true
+			}
+		}
+		return len(fs.BossStats) == 0 // 没有 Boss 则不检查
+	case "boss_alive_lte":
+		if len(fs.BossStats) == 0 {
+			return true
+		}
+		for _, bs := range fs.BossStats {
+			if bs.AliveSeconds > float64(a.Param) {
+				return false
+			}
+		}
+		return true
+	case "pace_not_boring":
+		if fs.PaceStats == nil {
+			return true
+		}
+		return fs.PaceStats.IdleCombatRatio <= 3.0
+	case "pace_not_intense":
+		if fs.PaceStats == nil {
+			return true
+		}
+		return fs.PaceStats.IdleCombatRatio >= 0.3
+	case "gold_never_negative":
+		return fs.FinalGold >= 0
 	}
 	return false
 }

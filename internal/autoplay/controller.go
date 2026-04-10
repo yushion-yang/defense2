@@ -186,6 +186,20 @@ func (c *Controller) OnGameEnd(snap scene.AutoPlaySnapshot, won bool) {
 
 	// 断言结果收集
 	if c.assertChecker != nil {
+		// 注入终局统计数据
+		c.assertChecker.SetFinalStats(&FinalStats{
+			WavesSurvived: state.Wave,
+			TotalKills:    state.TotalKills,
+			TotalLeaked:   state.TotalLeaked,
+			FinalLives:    state.Lives,
+			FinalGold:     state.Gold,
+			Victory:       won || state.Victory,
+			Defeat:        !won && state.GameOver,
+			DPSSnapshots:  c.recorder.dpsSnapshots,
+			BossStats:     c.recorder.bossStats,
+			PaceStats:     c.recorder.buildPaceStats(),
+			EconStalls:    len(c.recorder.econAlerts),
+		})
 		c.recorder.Assertions = c.assertChecker.Finalize(state.Tick)
 	}
 

@@ -39,6 +39,7 @@ func main() {
 	scenarioName := flag.String("scenario", "", "run single scenario by name")
 	seed := flag.Int64("seed", 0, "master random seed (0=use timestamp, same seed = reproducible results)")
 	abilitySweep := flag.Bool("ability-sweep", false, "run all ability-level test scenarios")
+	balanceSweep := flag.Bool("balance-sweep", false, "run all balance test scenarios (26 cases)")
 	modelPath := flag.String("model-path", "", "path to LLM .bin weight file (for llm strategy)")
 	vocabPath := flag.String("vocab-path", "config/llm/vocab.json", "path to LLM vocab.json (for llm strategy)")
 	flag.Parse()
@@ -48,7 +49,7 @@ func main() {
 		return
 	}
 
-	orchestrate(*runs, *strategies, *mapID, *difficulty, *warden, *output, *jsonDir, *sweep, *abilitySweep, *scenarioName, *seed, *modelPath, *vocabPath)
+	orchestrate(*runs, *strategies, *mapID, *difficulty, *warden, *output, *jsonDir, *sweep, *abilitySweep, *balanceSweep, *scenarioName, *seed, *modelPath, *vocabPath)
 }
 
 // ─── 编排模式 ───
@@ -70,7 +71,7 @@ type sessionConfig struct {
 	Seed        int64  `json:"seed"`
 }
 
-func orchestrate(runs int, strategies, mapID, difficulty, warden, output, jsonDir string, sweep, abilitySweep bool, scenarioName string, masterSeed int64, modelPath, vocabPath string) {
+func orchestrate(runs int, strategies, mapID, difficulty, warden, output, jsonDir string, sweep, abilitySweep, balanceSweep bool, scenarioName string, masterSeed int64, modelPath, vocabPath string) {
 	// 分离模式: --json-dir 由调用方管理目录结构
 	// 初始化 dataFS（父进程需要读取 ability_tests.json 生成测试计划）
 	config.SetDataFS(&defense2.DataFS)
@@ -96,6 +97,19 @@ func orchestrate(runs int, strategies, mapID, difficulty, warden, output, jsonDi
 	case sweep:
 		cases = autoplay.GenerateTestPlan()
 		log.Printf("Sweep mode: %d test cases", len(cases))
+	case balanceSweep:
+		for _, bs := range autoplay.AllBalanceScenarios() {
+			cases = append(cases, autoplay.TestCase{
+				ID:          bs.ID,
+				MapID:       bs.MapID,
+				Difficulty:  bs.Difficulty,
+				Warden:      bs.Warden,
+				EnemyFilter: bs.EnemyFilter,
+				Strategy:    bs.Strategy,
+				Assertions:  bs.Assertions,
+			})
+		}
+		log.Printf("Balance sweep mode: %d test cases", len(cases))
 	case abilitySweep:
 		for _, name := range autoplay.AbilityScenarioNames() {
 			tc := autoplay.ScenarioCase(name, mapID)
@@ -150,7 +164,7 @@ func orchestrate(runs int, strategies, mapID, difficulty, warden, output, jsonDi
 			cfg.TowerKey = f.TowerKey()
 		}
 
-		runSessionInProcess(cfg)
+		runSessionInProcess(cfg, tc.Assertions)
 		passed++
 	}
 
@@ -230,7 +244,7 @@ func runSingleSession(cfgJSON string) {
 var gameInitDone bool
 
 // runSessionInProcess 在当前进程内运行单个测试场景（无子进程开销）。
-func runSessionInProcess(cfg sessionConfig) {
+func runSessionInProcess(cfg sessionConfig, extraAssertions []autoplay.Assertion) {
 	autoplay.SeedAll(cfg.Seed)
 	scene.HeadlessMode = true
 
@@ -262,11 +276,16 @@ func runSessionInProcess(cfg sessionConfig) {
 		Warden:     cfg.Warden,
 		Seed:       cfg.Seed,
 	})
-	stratName := strategy.Name()
-	if len(stratName) > 9 && stratName[:9] == "scenario_" {
-		scenName := stratName[9:]
-		if assertions, ok := autoplay.AbilityAssertionsMap()[scenName]; ok {
-			ctrl.SetAssertions(assertions)
+	// 加载断言：优先使用直接传入的断言，其次按场景名查找
+	if len(extraAssertions) > 0 {
+		ctrl.SetAssertions(extraAssertions)
+	} else {
+		stratName := strategy.Name()
+		if len(stratName) > 9 && stratName[:9] == "scenario_" {
+			scenName := stratName[9:]
+			if assertions, ok := autoplay.AbilityAssertionsMap()[scenName]; ok {
+				ctrl.SetAssertions(assertions)
+			}
 		}
 	}
 
@@ -292,6 +311,8 @@ func restoreStrategy(cfg sessionConfig) autoplay.Strategy {
 		return autoplay.NewRandomStrategy(cfg.Seed)
 	case name == "greedy":
 		return autoplay.NewGreedyStrategy()
+	case name == "balance_greedy":
+		return autoplay.NewBalanceGreedyStrategy()
 	case name == "visual_catalog":
 		return autoplay.NewVisualCatalogStrategy()
 	case name == "llm":
