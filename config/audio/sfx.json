@@ -1,0 +1,1119 @@
+{
+  "_doc": "所有音效(SFX)定义。每条记录描述一个 WAV 文件的用途、触发场景、播放参数。",
+  "_naming": "file: WAV 文件名(kebab-case); constant: Go 常量名(camelCase); 转换规则: kebabToCamel()",
+  "categories": [
+    {
+      "id": "ui",
+      "name": "界面音效",
+      "description": "菜单点击、面板开关等 UI 操作音效",
+      "sfx": [
+        {
+          "file": "ui-click.wav",
+          "constant": "SFXUIClick",
+          "name": "UI 点击",
+          "description": "通用按钮/卡片点击音效。所有场景共享的 playUIClick() 辅助函数使用此音效。",
+          "volumeCategory": "VolUI",
+          "volumeScale": 0.6,
+          "pitchVariation": false,
+          "triggers": [
+            { "scene": "title", "event": "点击屏幕任意位置" },
+            { "scene": "select", "event": "点击模式卡片/难度按钮/开始/设置" },
+            { "scene": "campaignSelect", "event": "点击地图卡片/难度/开始/返回" },
+            { "scene": "testSelect", "event": "点击标签/场景卡片/开始/返回" },
+            { "scene": "settings", "event": "点击画质按钮/返回" },
+            { "scene": "wardenSelect", "event": "点击战灵/确认/跳过/返回" },
+            { "scene": "vfxPreview", "event": "点击特效条目/控制按钮" },
+            { "scene": "result", "event": "点击重玩/选关" },
+            { "scene": "stage", "event": "手动开始波次" },
+            { "scene": "stage", "event": "战灵选择后开始" },
+            { "scene": "stage", "event": "道具使用成功" },
+            { "scene": "stage", "event": "暂停菜单按钮点击" }
+          ]
+        },
+        {
+          "file": "ui-open.wav",
+          "constant": "SFXUIOpen",
+          "name": "面板打开",
+          "description": "面板/菜单展开音效",
+          "volumeCategory": "VolUI",
+          "volumeScale": 0.6,
+          "pitchVariation": false,
+          "status": "unused",
+          "note": "常量已定义，WAV 已加载，但代码中未直接调用"
+        },
+        {
+          "file": "ui-close.wav",
+          "constant": "SFXUIClose",
+          "name": "面板关闭",
+          "description": "面板/菜单收起音效",
+          "volumeCategory": "VolUI",
+          "volumeScale": 0.6,
+          "pitchVariation": false,
+          "status": "unused",
+          "note": "常量已定义，WAV 已加载，但代码中未直接调用"
+        },
+        {
+          "file": "speed-toggle.wav",
+          "constant": "SFXSpeedToggle",
+          "name": "速度切换",
+          "description": "游戏速度切换（1x/2x/3x）音效",
+          "pitchVariation": false,
+          "status": "unused",
+          "note": "常量已定义但未调用"
+        },
+        {
+          "file": "pause-on.wav",
+          "constant": null,
+          "name": "暂停开启",
+          "description": "进入暂停状态音效",
+          "status": "unused"
+        },
+        {
+          "file": "pause-off.wav",
+          "constant": null,
+          "name": "暂停关闭",
+          "description": "退出暂停状态音效",
+          "status": "unused"
+        },
+        {
+          "file": "countdown-tick.wav",
+          "constant": null,
+          "name": "倒计时滴答",
+          "description": "波次间倒计时每秒滴答声",
+          "status": "unused"
+        },
+        {
+          "file": "achievement.wav",
+          "constant": null,
+          "name": "成就解锁",
+          "description": "成就达成时的提示音效",
+          "status": "unused"
+        }
+      ]
+    },
+    {
+      "id": "tower",
+      "name": "炮塔操作音效",
+      "description": "建造、升级、出售、模式切换等炮塔管理操作",
+      "sfx": [
+        {
+          "file": "build.wav",
+          "constant": "SFXBuild",
+          "name": "建造炮塔",
+          "description": "炮塔建造完成音效",
+          "volumeCategory": "VolBuild",
+          "volumeScale": 0.7,
+          "trigger": { "event": "EvtTowerBuilt", "source": "stage.go event bus" }
+        },
+        {
+          "file": "upgrade.wav",
+          "constant": "SFXUpgrade",
+          "name": "炮塔升级",
+          "description": "购买强度升级音效",
+          "volumeCategory": "VolBuild",
+          "volumeScale": 0.7,
+          "pitchVariation": false,
+          "trigger": { "event": "EvtTowerUpgraded", "source": "stage.go event bus" }
+        },
+        {
+          "file": "tower-sell.wav",
+          "constant": "SFXTowerSell",
+          "name": "出售炮塔",
+          "description": "炮塔出售音效",
+          "volumeCategory": "VolBuild",
+          "volumeScale": 0.7,
+          "trigger": { "event": "EvtTowerSold", "source": "stage.go event bus" }
+        },
+        {
+          "file": "tower-mode-switch.wav",
+          "constant": null,
+          "name": "模式切换",
+          "description": "炮塔攻击模式切换音效（如 shotgun 的 balanced/rapid/sniper）",
+          "status": "unused"
+        },
+        {
+          "file": "tower-debuff.wav",
+          "constant": null,
+          "name": "炮塔被减益",
+          "description": "炮塔受到敌人减益效果时的音效",
+          "status": "unused"
+        }
+      ]
+    },
+    {
+      "id": "towerFire",
+      "name": "炮塔开火音效",
+      "description": "按攻击方式(attackStyle)动态匹配的开火音效。通过 FireSFXForStyle(style) 函数生成键名。",
+      "dynamicLookup": {
+        "function": "FireSFXForStyle(style string)",
+        "pattern": "fire + SnakeToCamel(style)",
+        "fallback": "shot",
+        "sourceFile": "internal/audio/manager.go"
+      },
+      "volumeCategory": "VolFire",
+      "volumeScale": 0.35,
+      "throttleMs": 100,
+      "trigger": { "event": "onFire callback", "source": "pipeline.TickTowerCombat" },
+      "sfx": [
+        {
+          "file": "fire-projectile.wav",
+          "generatedKey": "fireProjectile",
+          "attackStyle": "projectile",
+          "name": "弹丸发射",
+          "description": "标准弹丸类塔开火（sentinel 等）"
+        },
+        {
+          "file": "fire-wide-beam.wav",
+          "generatedKey": "fireWideBeam",
+          "attackStyle": "wide_beam",
+          "name": "宽幅光束",
+          "description": "prism 塔宽幅光束开火"
+        },
+        {
+          "file": "fire-scatter.wav",
+          "generatedKey": "fireScatter",
+          "attackStyle": "scatter",
+          "name": "散射",
+          "description": "shotgun 塔散射弹幕"
+        },
+        {
+          "file": "fire-spin-aoe.wav",
+          "generatedKey": "fireSpinAoe",
+          "attackStyle": "spin_aoe",
+          "name": "旋转 AOE",
+          "description": "cyclone 塔旋转范围攻击"
+        },
+        {
+          "file": "fire-radial.wav",
+          "generatedKey": "fireRadial",
+          "attackStyle": "radial",
+          "name": "径向爆发",
+          "description": "径向全方位攻击"
+        },
+        {
+          "file": "fire-pierce.wav",
+          "generatedKey": "firePierce",
+          "attackStyle": "pierce",
+          "name": "穿透射击",
+          "description": "railgun 塔穿透弹发射"
+        },
+        {
+          "file": "fire-laser.wav",
+          "generatedKey": "fireLaser",
+          "attackStyle": "laser",
+          "name": "激光射线",
+          "description": "激光类攻击（已废弃→projectile，保留音效文件）"
+        },
+        {
+          "file": "fire-charge.wav",
+          "generatedKey": "fireCharge",
+          "attackStyle": "charge",
+          "name": "蓄力射击",
+          "description": "蓄力类攻击（已废弃→projectile，保留音效文件）"
+        },
+        {
+          "file": "fire-aura-dot.wav",
+          "generatedKey": "fireAuraDot",
+          "attackStyle": "aura_dot",
+          "name": "光环持续伤害",
+          "description": "光环类持续伤害（已废弃→spin_aoe，保留音效文件）"
+        },
+        {
+          "file": "shot.wav",
+          "generatedKey": "shot",
+          "attackStyle": "",
+          "name": "通用射击（兜底）",
+          "description": "attackStyle 为空时的兜底开火音效"
+        },
+        {
+          "file": "shot-balanced.wav",
+          "constant": null,
+          "name": "均衡射击",
+          "description": "shotgun balanced 模式专用开火音",
+          "status": "unused"
+        },
+        {
+          "file": "shot-rapid.wav",
+          "constant": null,
+          "name": "速射",
+          "description": "shotgun rapid 模式专用开火音",
+          "status": "unused"
+        },
+        {
+          "file": "shot-sniper.wav",
+          "constant": null,
+          "name": "狙击射击",
+          "description": "shotgun sniper 模式专用开火音",
+          "status": "unused"
+        },
+        {
+          "file": "laser-beam.wav",
+          "constant": null,
+          "name": "激光光束（持续）",
+          "description": "持续激光光束音效",
+          "status": "unused"
+        },
+        {
+          "file": "biu.wav",
+          "constant": null,
+          "name": "轻射击",
+          "description": "轻量级射击音效",
+          "status": "unused"
+        }
+      ]
+    },
+    {
+      "id": "hit",
+      "name": "命中音效",
+      "description": "按攻击方式(attackStyle)动态匹配的命中音效。通过 HitSFXForStyle(style) 函数生成键名。",
+      "dynamicLookup": {
+        "function": "HitSFXForStyle(style string)",
+        "pattern": "hit + SnakeToCamel(style)",
+        "fallback": "hitFlesh",
+        "sourceFile": "internal/audio/manager.go"
+      },
+      "volumeCategory": "VolHit",
+      "volumeScale": 0.4,
+      "throttleMs": 60,
+      "trigger": { "event": "onHit callback", "source": "pipeline.TickProjectileHits" },
+      "bossOverride": {
+        "sfx": "SFXHitHeavy",
+        "description": "弹丸命中 Boss 时使用重击音效替代风格音效"
+      },
+      "sfx": [
+        {
+          "file": "hit-projectile.wav",
+          "generatedKey": "hitProjectile",
+          "attackStyle": "projectile",
+          "name": "弹丸命中"
+        },
+        {
+          "file": "hit-wide-beam.wav",
+          "generatedKey": "hitWideBeam",
+          "attackStyle": "wide_beam",
+          "name": "光束命中"
+        },
+        {
+          "file": "hit-scatter.wav",
+          "generatedKey": "hitScatter",
+          "attackStyle": "scatter",
+          "name": "散弹命中"
+        },
+        {
+          "file": "hit-spin-aoe.wav",
+          "generatedKey": "hitSpinAoe",
+          "attackStyle": "spin_aoe",
+          "name": "旋转命中"
+        },
+        {
+          "file": "hit-radial.wav",
+          "generatedKey": "hitRadial",
+          "attackStyle": "radial",
+          "name": "径向命中"
+        },
+        {
+          "file": "hit-pierce.wav",
+          "generatedKey": "hitPierce",
+          "attackStyle": "pierce",
+          "name": "穿透命中"
+        },
+        {
+          "file": "hit-laser.wav",
+          "generatedKey": "hitLaser",
+          "attackStyle": "laser",
+          "name": "激光命中"
+        },
+        {
+          "file": "hit-charge.wav",
+          "generatedKey": "hitCharge",
+          "attackStyle": "charge",
+          "name": "蓄力命中"
+        },
+        {
+          "file": "hit-aura.wav",
+          "generatedKey": "hitAura",
+          "attackStyle": "aura",
+          "name": "光环命中"
+        },
+        {
+          "file": "hit-flesh.wav",
+          "generatedKey": "hitFlesh",
+          "attackStyle": "",
+          "name": "肉体命中（兜底）",
+          "description": "attackStyle 为空时的兜底命中音效"
+        },
+        {
+          "file": "hit-heavy.wav",
+          "constant": "SFXHitHeavy",
+          "name": "重击",
+          "description": "弹丸命中 Boss 敌人时的专用重击音效",
+          "throttleMs": 60,
+          "trigger": { "event": "弹丸命中 Boss", "condition": "enemy.IsBoss()" }
+        },
+        {
+          "file": "hit-armor.wav",
+          "constant": null,
+          "name": "护甲命中",
+          "description": "命中有护甲敌人的音效",
+          "status": "unused"
+        },
+        {
+          "file": "hit-shield.wav",
+          "constant": null,
+          "name": "护盾命中",
+          "description": "命中有护盾敌人的音效",
+          "status": "unused"
+        },
+        {
+          "file": "hit-soft.wav",
+          "constant": null,
+          "name": "软体命中",
+          "description": "命中软体/史莱姆类敌人的音效",
+          "status": "unused"
+        },
+        {
+          "file": "hit-spin.wav",
+          "constant": null,
+          "name": "旋转命中（变种）",
+          "description": "旋转攻击命中的变种音效",
+          "status": "unused"
+        },
+        {
+          "file": "hit.wav",
+          "constant": null,
+          "name": "通用命中",
+          "description": "通用命中音效",
+          "status": "unused"
+        }
+      ]
+    },
+    {
+      "id": "cc",
+      "name": "控制效果音效",
+      "description": "减速/冰冻/眩晕/灼烧/定身等控制效果触发时的音效。通过 CCCallback 管线触发。",
+      "callbackSystem": {
+        "type": "CCCallback func(x, y float64, ccType string)",
+        "source": "combat/attack.go → AttackContext.OnCC",
+        "handler": "stage.go onCC closure"
+      },
+      "sfx": [
+        {
+          "file": "slow-apply.wav",
+          "constant": "SFXSlowApply",
+          "name": "减速施加",
+          "description": "对敌人施加减速效果",
+          "volumeCategory": "VolHit",
+          "throttleMs": 120,
+          "trigger": { "ccType": "slow", "condition": "slowFactor >= 0.4" }
+        },
+        {
+          "file": "freeze-hit.wav",
+          "constant": "SFXFreezeHit",
+          "name": "冰冻命中",
+          "description": "对敌人施加强减速/冰冻效果",
+          "volumeCategory": "VolHit",
+          "throttleMs": 120,
+          "trigger": { "ccType": "freeze", "condition": "slowFactor < 0.4" }
+        },
+        {
+          "file": "stun-impact.wav",
+          "constant": "SFXStunImpact",
+          "name": "眩晕冲击",
+          "description": "对敌人施加眩晕效果",
+          "volumeCategory": "VolHit",
+          "throttleMs": 150,
+          "trigger": { "ccType": "stun" }
+        },
+        {
+          "file": "burn-ignite.wav",
+          "constant": "SFXBurnIgnite",
+          "name": "灼烧点燃",
+          "description": "敌人首次被点燃（未燃烧→燃烧）时的音效",
+          "volumeCategory": "VolHit",
+          "throttleMs": 200,
+          "trigger": { "ccType": "burn", "condition": "enemy was not already burning" }
+        },
+        {
+          "file": "root-apply.wav",
+          "constant": "SFXRootApply",
+          "name": "定身施加",
+          "description": "对敌人施加定身效果",
+          "volumeCategory": "VolHit",
+          "throttleMs": 150,
+          "trigger": { "ccType": "root" }
+        },
+        {
+          "file": "freeze-chain.wav",
+          "constant": null,
+          "name": "冰冻连锁",
+          "description": "冰冻效果扩散到相邻敌人",
+          "status": "unused"
+        },
+        {
+          "file": "knockback.wav",
+          "constant": "SFXKnockback",
+          "name": "击退",
+          "description": "击退效果音效",
+          "status": "unused",
+          "note": "常量已定义但未在代码中调用"
+        }
+      ]
+    },
+    {
+      "id": "combat",
+      "name": "战斗通用音效",
+      "description": "暴击、爆炸、护盾破碎等通用战斗音效",
+      "sfx": [
+        {
+          "file": "crit-hit.wav",
+          "constant": "SFXCritHit",
+          "name": "暴击",
+          "description": "攻击产生暴击时的音效",
+          "volumeCategory": "VolHit",
+          "throttleMs": 150,
+          "triggers": [
+            { "event": "直接攻击暴击（光束/旋转）", "source": "stage.go:1966" },
+            { "event": "弹丸命中暴击", "source": "stage.go:2064" }
+          ]
+        },
+        {
+          "file": "explode.wav",
+          "constant": null,
+          "name": "爆炸",
+          "description": "通用爆炸音效",
+          "status": "unused"
+        },
+        {
+          "file": "explode-splash.wav",
+          "constant": null,
+          "name": "溅射爆炸",
+          "description": "弹丸溅射爆炸",
+          "status": "unused"
+        },
+        {
+          "file": "explode-chain.wav",
+          "constant": null,
+          "name": "连锁爆炸",
+          "description": "连锁反应爆炸",
+          "status": "unused"
+        },
+        {
+          "file": "explode-tide.wav",
+          "constant": null,
+          "name": "潮汐爆炸",
+          "description": "潮汐类范围爆炸",
+          "status": "unused"
+        },
+        {
+          "file": "explode-verdict.wav",
+          "constant": null,
+          "name": "审判爆炸",
+          "description": "审判终结类爆炸",
+          "status": "unused"
+        },
+        {
+          "file": "shield-break.wav",
+          "constant": "SFXShieldBreak",
+          "name": "护盾破碎",
+          "description": "敌人护盾被击破",
+          "status": "unused",
+          "note": "常量已定义但未调用"
+        },
+        {
+          "file": "bounce-hit.wav",
+          "constant": null,
+          "name": "弹跳命中",
+          "description": "弹丸弹跳命中额外目标",
+          "status": "unused"
+        },
+        {
+          "file": "dodge.wav",
+          "constant": null,
+          "name": "闪避",
+          "description": "敌人闪避攻击",
+          "status": "unused"
+        },
+        {
+          "file": "armor-shred.wav",
+          "constant": null,
+          "name": "护甲撕裂",
+          "description": "削减敌人护甲效果",
+          "status": "unused"
+        },
+        {
+          "file": "laser-armor-break.wav",
+          "constant": null,
+          "name": "激光破甲",
+          "description": "激光攻击破除护甲",
+          "status": "unused"
+        },
+        {
+          "file": "reflect-hit.wav",
+          "constant": null,
+          "name": "反射命中",
+          "description": "伤害被反射回炮塔",
+          "status": "unused"
+        }
+      ]
+    },
+    {
+      "id": "dot",
+      "name": "持续伤害音效",
+      "description": "灼烧/流血/中毒等持续伤害(DoT)的周期性跳字音效",
+      "sfx": [
+        {
+          "file": "burn-tick.wav",
+          "constant": null,
+          "name": "灼烧跳字",
+          "description": "灼烧 DoT 每次伤害跳动",
+          "status": "unused"
+        },
+        {
+          "file": "bleed-tick.wav",
+          "constant": null,
+          "name": "流血跳字",
+          "description": "流血 DoT 每次伤害跳动",
+          "status": "unused"
+        },
+        {
+          "file": "poison-tick.wav",
+          "constant": null,
+          "name": "中毒跳字",
+          "description": "中毒 DoT 每次伤害跳动",
+          "status": "unused"
+        },
+        {
+          "file": "poison-pulse.wav",
+          "constant": null,
+          "name": "毒素脉冲",
+          "description": "中毒 DoT 范围扩散脉冲",
+          "status": "unused"
+        }
+      ]
+    },
+    {
+      "id": "ability",
+      "name": "能力/特效音效",
+      "description": "炮塔能力触发、元素反应、领域效果等特殊能力音效",
+      "sfx": [
+        {
+          "file": "aura-activate.wav",
+          "constant": null,
+          "name": "光环激活",
+          "description": "光环类能力激活",
+          "status": "unused"
+        },
+        {
+          "file": "domain-react.wav",
+          "constant": null,
+          "name": "领域反应",
+          "description": "领域效果触发反应",
+          "status": "unused"
+        },
+        {
+          "file": "domain-tick.wav",
+          "constant": null,
+          "name": "领域跳字",
+          "description": "领域效果周期性伤害",
+          "status": "unused"
+        },
+        {
+          "file": "electric-chain.wav",
+          "constant": null,
+          "name": "闪电连锁",
+          "description": "闪电在敌人间连锁跳跃",
+          "status": "unused"
+        },
+        {
+          "file": "electric-mark.wav",
+          "constant": null,
+          "name": "电气标记",
+          "description": "给敌人施加电气标记",
+          "status": "unused"
+        },
+        {
+          "file": "element-react.wav",
+          "constant": null,
+          "name": "元素反应",
+          "description": "不同元素交叉触发反应",
+          "status": "unused"
+        },
+        {
+          "file": "hunter-mark.wav",
+          "constant": null,
+          "name": "猎人标记",
+          "description": "标记高价值目标",
+          "status": "unused"
+        },
+        {
+          "file": "hunter-strike.wav",
+          "constant": null,
+          "name": "猎人打击",
+          "description": "对标记目标的强化攻击",
+          "status": "unused"
+        },
+        {
+          "file": "targeter-aura.wav",
+          "constant": null,
+          "name": "瞄准光环",
+          "description": "瞄准辅助光环效果",
+          "status": "unused"
+        },
+        {
+          "file": "thunder-charge.wav",
+          "constant": null,
+          "name": "雷电蓄力",
+          "description": "雷电攻击蓄力阶段",
+          "status": "unused"
+        },
+        {
+          "file": "thunder-strike.wav",
+          "constant": null,
+          "name": "雷电打击",
+          "description": "雷电攻击释放",
+          "status": "unused"
+        }
+      ]
+    },
+    {
+      "id": "kill",
+      "name": "击杀/死亡音效",
+      "description": "敌人死亡、分裂等击杀相关音效",
+      "sfx": [
+        {
+          "file": "enemy-death.wav",
+          "constant": "SFXEnemyDeath",
+          "name": "敌人死亡",
+          "description": "普通敌人被击杀",
+          "volumeCategory": "VolKill",
+          "volumeScale": 0.55,
+          "throttleMs": 50,
+          "triggers": [
+            { "event": "弹丸击杀普通敌人", "source": "stage.go:2051" },
+            { "event": "战灵击杀敌人", "source": "stage.go:1802", "note": "PlaySafeAt, 无节流" }
+          ]
+        },
+        {
+          "file": "enemy-death-boss.wav",
+          "constant": "SFXEnemyDeathBoss",
+          "name": "Boss 死亡",
+          "description": "Boss 敌人被击杀",
+          "volumeCategory": "VolKill",
+          "volumeScale": 0.55,
+          "throttleMs": 50,
+          "trigger": { "event": "弹丸击杀 Boss", "condition": "enemy.IsBoss()" }
+        },
+        {
+          "file": "enemy-death-elite.wav",
+          "constant": "SFXEnemyDeathElite",
+          "name": "精英死亡",
+          "description": "精英敌人被击杀",
+          "status": "unused",
+          "note": "常量已定义，但精英击杀目前使用 SFXEnemyDeath"
+        },
+        {
+          "file": "split-pop.wav",
+          "constant": "SFXSplitPop",
+          "name": "分裂弹出",
+          "description": "分裂者敌人死亡后分裂出子体",
+          "volumeCategory": "VolKill",
+          "volumeScale": 0.55,
+          "trigger": { "event": "HandleSplitterDeath 触发", "source": "stage.go:2002" }
+        }
+      ]
+    },
+    {
+      "id": "enemyBehavior",
+      "name": "敌人行为音效",
+      "description": "治疗、隐身、再生、速度增益等敌人特殊行为音效",
+      "sfx": [
+        {
+          "file": "medic-heal.wav",
+          "constant": "SFXMedicHeal",
+          "name": "医疗兵治疗",
+          "description": "healer 类敌人治疗友方",
+          "volumeCategory": "VolHit",
+          "throttleMs": 500,
+          "trigger": { "event": "healer 行为治疗", "source": "stage.go:1783" }
+        },
+        {
+          "file": "stealth-reveal.wav",
+          "constant": "SFXStealthReveal",
+          "name": "隐身暴露",
+          "description": "隐身敌人被揭示",
+          "volumeCategory": "VolKill",
+          "volumeScale": 0.55,
+          "trigger": { "event": "stealth 行为揭示", "source": "stage.go:1786" }
+        },
+        {
+          "file": "regen-tick.wav",
+          "constant": "SFXRegenTick",
+          "name": "再生跳字",
+          "description": "再生者敌人周期性回血",
+          "volumeCategory": "VolHit",
+          "volumeScale": 0.2,
+          "throttleMs": 2000,
+          "trigger": { "event": "regenerator 行为回血", "source": "stage.go:1789" },
+          "note": "极低音量(0.4*0.5=0.2)和极长节流(2秒)，避免打扰"
+        },
+        {
+          "file": "banner-aura.wav",
+          "constant": null,
+          "name": "旗帜光环",
+          "description": "buffer 敌人释放速度增益光环",
+          "status": "unused"
+        },
+        {
+          "file": "berserk-activate.wav",
+          "constant": null,
+          "name": "狂暴激活",
+          "description": "敌人进入狂暴状态",
+          "status": "unused"
+        }
+      ]
+    },
+    {
+      "id": "enemyAbility",
+      "name": "敌人能力音效",
+      "description": "Boss 特技、腐化、瞬移、灵魂分裂等敌人高级能力音效",
+      "sfx": [
+        {
+          "file": "boss-enter.wav",
+          "constant": "SFXBossEnter",
+          "name": "Boss 登场",
+          "description": "Boss 波次开始时的登场音效",
+          "volumeCategory": "VolWave",
+          "volumeScale": 0.7,
+          "trigger": { "event": "Boss 波次开始", "source": "stage.go:415", "note": "与 waveStart 同时播放" }
+        },
+        {
+          "file": "boss-invincible.wav",
+          "constant": null,
+          "name": "Boss 无敌",
+          "description": "Boss 进入无敌状态",
+          "status": "unused"
+        },
+        {
+          "file": "boss-phase.wav",
+          "constant": null,
+          "name": "Boss 变身",
+          "description": "Boss 切换战斗阶段",
+          "status": "unused"
+        },
+        {
+          "file": "boss-summon-minions.wav",
+          "constant": null,
+          "name": "Boss 召唤",
+          "description": "Boss 召唤小怪",
+          "status": "unused"
+        },
+        {
+          "file": "corruption-apply.wav",
+          "constant": null,
+          "name": "腐化施加",
+          "description": "对炮塔施加腐化效果",
+          "status": "unused"
+        },
+        {
+          "file": "corruption-convert.wav",
+          "constant": null,
+          "name": "腐化转化",
+          "description": "腐化效果转化炮塔",
+          "status": "unused"
+        },
+        {
+          "file": "corruption-explode.wav",
+          "constant": null,
+          "name": "腐化爆裂",
+          "description": "腐化积累到阈值后爆裂",
+          "status": "unused"
+        },
+        {
+          "file": "corruption-spread.wav",
+          "constant": null,
+          "name": "腐化扩散",
+          "description": "腐化效果扩散到相邻炮塔",
+          "status": "unused"
+        },
+        {
+          "file": "corruption-threshold.wav",
+          "constant": null,
+          "name": "腐化临界",
+          "description": "腐化积累接近阈值的警告",
+          "status": "unused"
+        },
+        {
+          "file": "death-heal.wav",
+          "constant": null,
+          "name": "死亡治愈",
+          "description": "敌人死亡时治疗周围友方",
+          "status": "unused"
+        },
+        {
+          "file": "event-enrage.wav",
+          "constant": null,
+          "name": "激怒",
+          "description": "Boss/精英进入激怒状态",
+          "status": "unused"
+        },
+        {
+          "file": "event-last-stand.wav",
+          "constant": null,
+          "name": "最后一搏",
+          "description": "敌人低血量触发最后一搏",
+          "status": "unused"
+        },
+        {
+          "file": "event-phase-shield.wav",
+          "constant": null,
+          "name": "阶段护盾",
+          "description": "Boss 生成阶段性护盾",
+          "status": "unused"
+        },
+        {
+          "file": "event-soul-split.wav",
+          "constant": null,
+          "name": "灵魂分裂",
+          "description": "Boss 灵魂分裂为多个分身",
+          "status": "unused"
+        },
+        {
+          "file": "event-threshold.wav",
+          "constant": null,
+          "name": "阈值事件",
+          "description": "敌人血量降至阈值触发特殊行为",
+          "status": "unused"
+        },
+        {
+          "file": "mirror-copy.wav",
+          "constant": null,
+          "name": "镜像复制",
+          "description": "Boss 复制自身产生镜像",
+          "status": "unused"
+        },
+        {
+          "file": "order-charge.wav",
+          "constant": null,
+          "name": "秩序冲锋",
+          "description": "敌人群体发起冲锋",
+          "status": "unused"
+        },
+        {
+          "file": "shadow-ebb.wav",
+          "constant": null,
+          "name": "暗影消退",
+          "description": "暗影系敌人消退/减弱效果",
+          "status": "unused"
+        },
+        {
+          "file": "shadow-flow.wav",
+          "constant": null,
+          "name": "暗影涌动",
+          "description": "暗影系敌人增强/涌动效果",
+          "status": "unused"
+        },
+        {
+          "file": "teleport-blink.wav",
+          "constant": null,
+          "name": "瞬移闪现",
+          "description": "敌人瞬移至新位置",
+          "status": "unused"
+        },
+        {
+          "file": "timewarp-purge.wav",
+          "constant": null,
+          "name": "时间扭曲净化",
+          "description": "敌人清除自身所有控制效果",
+          "status": "unused"
+        }
+      ]
+    },
+    {
+      "id": "economy",
+      "name": "经济音效",
+      "description": "金币获取、偷取等经济系统音效",
+      "sfx": [
+        {
+          "file": "gold-earn.wav",
+          "constant": "SFXGoldEarn",
+          "name": "获得金币",
+          "description": "击杀敌人获得金币奖励",
+          "status": "unused",
+          "note": "常量已定义但未调用"
+        },
+        {
+          "file": "gold-steal.wav",
+          "constant": null,
+          "name": "金币偷取",
+          "description": "敌人偷取玩家金币",
+          "status": "unused"
+        }
+      ]
+    },
+    {
+      "id": "wave",
+      "name": "波次音效",
+      "description": "波次开始、清除、完美通关等波次进程音效",
+      "sfx": [
+        {
+          "file": "wave-start.wav",
+          "constant": "SFXWaveStart",
+          "name": "波次开始",
+          "description": "新一波敌人开始出现",
+          "volumeCategory": "VolWave",
+          "volumeScale": 0.7,
+          "trigger": { "event": "EvtWaveStarted", "source": "stage.go event bus" }
+        },
+        {
+          "file": "wave-clear.wav",
+          "constant": "SFXWaveClear",
+          "name": "波次清除",
+          "description": "当前波次所有敌人被消灭（有泄漏）",
+          "volumeCategory": "VolWave",
+          "volumeScale": 0.7,
+          "trigger": { "event": "波次清除", "condition": "leaks > 0" }
+        },
+        {
+          "file": "wave-clear-perfect.wav",
+          "constant": "SFXWaveClearPerfect",
+          "name": "完美清除",
+          "description": "当前波次零泄漏通关",
+          "volumeCategory": "VolWave",
+          "volumeScale": 0.7,
+          "trigger": { "event": "波次清除", "condition": "leaks == 0" }
+        },
+        {
+          "file": "enemy-leak.wav",
+          "constant": "SFXEnemyLeak",
+          "name": "敌人泄漏",
+          "description": "敌人到达终点，扣除生命值",
+          "volumeCategory": "VolWave",
+          "volumeScale": 0.7,
+          "trigger": { "event": "EvtEnemyLeak", "source": "stage.go event bus" }
+        },
+        {
+          "file": "battle-banner.wav",
+          "constant": null,
+          "name": "战斗旗帜",
+          "description": "战斗开始或特殊波次的旗帜号角",
+          "status": "unused"
+        }
+      ]
+    },
+    {
+      "id": "gameState",
+      "name": "游戏状态音效",
+      "description": "胜利/失败等终局音效",
+      "sfx": [
+        {
+          "file": "victory.wav",
+          "constant": "SFXVictory",
+          "name": "胜利",
+          "description": "所有波次通关",
+          "volumeCategory": "VolWave",
+          "volumeScale": 0.7,
+          "pitchVariation": false,
+          "trigger": { "event": "endgame Victory", "source": "stage.go:2115", "note": "同时 StopBGM" }
+        },
+        {
+          "file": "defeat.wav",
+          "constant": "SFXDefeat",
+          "name": "失败",
+          "description": "生命值归零",
+          "volumeCategory": "VolWave",
+          "volumeScale": 0.7,
+          "pitchVariation": false,
+          "trigger": { "event": "endgame Defeat", "source": "stage.go:2128", "note": "同时 StopBGM" }
+        }
+      ]
+    },
+    {
+      "id": "warden",
+      "name": "战灵音效",
+      "description": "战灵攻击和特殊技能音效",
+      "sfx": [
+        {
+          "file": "warden-fire.wav",
+          "constant": "SFXWardenFire",
+          "name": "战灵攻击",
+          "description": "战灵发射普通攻击",
+          "volumeCategory": "VolWarden",
+          "volumeScale": 0.5,
+          "throttleMs": 100,
+          "trigger": { "event": "战灵开火", "source": "stage.go:1806" }
+        },
+        {
+          "file": "warden-special-fire.wav",
+          "constant": "SFXWardenSpecialFire",
+          "name": "火焰战灵特技",
+          "description": "Prince 战灵的特殊技能",
+          "volumeCategory": "VolWarden",
+          "volumeScale": 0.5,
+          "throttleMs": 200,
+          "trigger": { "wardenType": "prince" }
+        },
+        {
+          "file": "warden-special-mech.wav",
+          "constant": "SFXWardenSpecialMech",
+          "name": "机械战灵特技",
+          "description": "Core 战灵的特殊技能",
+          "volumeCategory": "VolWarden",
+          "volumeScale": 0.5,
+          "throttleMs": 200,
+          "trigger": { "wardenType": "core" }
+        },
+        {
+          "file": "warden-special-chain.wav",
+          "constant": "SFXWardenSpecialChain",
+          "name": "连锁战灵特技",
+          "description": "Chain 战灵的特殊技能",
+          "volumeCategory": "VolWarden",
+          "volumeScale": 0.5,
+          "throttleMs": 200,
+          "trigger": { "wardenType": "chain" }
+        },
+        {
+          "file": "warden-special-water.wav",
+          "constant": "SFXWardenSpecialWater",
+          "name": "水系战灵特技",
+          "description": "Skystrike 战灵的特殊技能",
+          "volumeCategory": "VolWarden",
+          "volumeScale": 0.5,
+          "throttleMs": 200,
+          "trigger": { "wardenType": "skystrike" }
+        },
+        {
+          "file": "warden-special-gold.wav",
+          "constant": "SFXWardenSpecialGold",
+          "name": "金系战灵特技",
+          "description": "Envoy 战灵的特殊技能",
+          "volumeCategory": "VolWarden",
+          "volumeScale": 0.5,
+          "throttleMs": 200,
+          "trigger": { "wardenType": "envoy" }
+        },
+        {
+          "file": "mech-shot.wav",
+          "constant": null,
+          "name": "机械射击",
+          "description": "Core 战灵机械武器射击",
+          "status": "unused"
+        },
+        {
+          "file": "mech-missile.wav",
+          "constant": null,
+          "name": "机械导弹",
+          "description": "Core 战灵导弹发射",
+          "status": "unused"
+        },
+        {
+          "file": "mech-evolve.wav",
+          "constant": null,
+          "name": "机械进化",
+          "description": "Core 战灵形态进化",
+          "status": "unused"
+        }
+      ]
+    }
+  ]
+}

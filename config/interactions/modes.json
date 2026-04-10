@@ -1,0 +1,506 @@
+{
+  "_doc": "Stage 场景的 11 种交互模式定义与状态转换图",
+  "modes": [
+    {
+      "id": "modeIdle",
+      "index": 0,
+      "name": "空闲模式",
+      "description": "默认观察模式。玩家可查看战场、开始波次、打开各种面板。所有主要 HUD 均可见。",
+      "activeHUD": ["topBar", "actionBar", "toggleButtons", "wavePanel", "minimap", "debugOverlay"],
+      "allowCameraDrag": true,
+      "transitions": [
+        {
+          "trigger": "clickBuildBtn",
+          "triggerType": "tap",
+          "description": "点击 ActionBar 的「造塔」按钮",
+          "target": "modeBuildMenu",
+          "condition": "towerTypesCount > 1",
+          "note": "若只有 1 种塔则直接进 modeBuildPlace"
+        },
+        {
+          "trigger": "keyB",
+          "triggerType": "keyboard",
+          "description": "按 B 键切换造塔菜单",
+          "target": "modeBuildMenu"
+        },
+        {
+          "trigger": "clickTower",
+          "triggerType": "tap",
+          "description": "点击地图上已有的炮塔",
+          "target": "modeTowerSel"
+        },
+        {
+          "trigger": "clickItemBtn",
+          "triggerType": "tap",
+          "description": "点击 ActionBar 的「道具」按钮",
+          "target": "modeItemPanel",
+          "condition": "inventoryCount > 0",
+          "failAction": "disabledShake"
+        },
+        {
+          "trigger": "keyI",
+          "triggerType": "keyboard",
+          "description": "按 I 键切换道具面板",
+          "target": "modeItemPanel",
+          "condition": "inventoryCount > 0"
+        },
+        {
+          "trigger": "clickMenuBtn",
+          "triggerType": "tap",
+          "description": "点击 TopBar 的「菜单」按钮",
+          "target": "modePaused"
+        },
+        {
+          "trigger": "keyEsc",
+          "triggerType": "keyboard",
+          "description": "按 Esc 键打开暂停菜单",
+          "target": "modePaused"
+        },
+        {
+          "trigger": "keyP",
+          "triggerType": "keyboard",
+          "description": "按 P 键打开暂停菜单",
+          "target": "modePaused"
+        },
+        {
+          "trigger": "clickSpawnBtn",
+          "triggerType": "tap",
+          "description": "点击 TopBar 的「造怪」按钮（仅测试模式）",
+          "target": "modeSpawnMenu",
+          "condition": "testMode == true"
+        },
+        {
+          "trigger": "preBattleAuto",
+          "triggerType": "system",
+          "description": "战前自动弹出战灵选择",
+          "target": "modeWardenSelect"
+        }
+      ]
+    },
+    {
+      "id": "modeBuildMenu",
+      "index": 1,
+      "name": "造塔菜单",
+      "description": "弹出造塔面板，显示可建造的塔类型卡片（5列网格）。支持悬停查看属性提示。",
+      "activeHUD": ["buildMenu", "topBar"],
+      "allowCameraDrag": false,
+      "hoverBehavior": {
+        "target": "towerCard",
+        "effect": "tooltip",
+        "tooltipPosition": "abovePanel",
+        "tooltipContent": {
+          "buildable": "塔名 + 角色标签 + 费用 + 伤害/攻速/射程数值",
+          "variant": "塔名 + 能力描述文字"
+        }
+      },
+      "transitions": [
+        {
+          "trigger": "clickTowerCard",
+          "triggerType": "tap",
+          "description": "点击一张可建造的塔卡片",
+          "target": "modeBuildPlace",
+          "action": "记录选择的塔类型索引"
+        },
+        {
+          "trigger": "clickClose",
+          "triggerType": "tap",
+          "description": "点击面板右上角「关闭」",
+          "target": "modeIdle"
+        },
+        {
+          "trigger": "clickOutside",
+          "triggerType": "tap",
+          "description": "点击面板外空白区域",
+          "target": "modeIdle"
+        },
+        {
+          "trigger": "keyEsc",
+          "triggerType": "keyboard",
+          "description": "按 Esc 关闭菜单",
+          "target": "modeIdle"
+        },
+        {
+          "trigger": "keyB",
+          "triggerType": "keyboard",
+          "description": "按 B 键切换关闭",
+          "target": "modeIdle"
+        }
+      ]
+    },
+    {
+      "id": "modeBuildPlace",
+      "index": 2,
+      "name": "放置炮塔",
+      "description": "已选定塔类型，光标变为半透明放置预览。点击地图合法位置放置炮塔。",
+      "activeHUD": ["topBar", "actionBar"],
+      "allowCameraDrag": true,
+      "visualFeedback": {
+        "cursor": "ghostTower",
+        "validPosition": "绿色半透明预览 + 射程圈",
+        "invalidPosition": "红色半透明预览"
+      },
+      "transitions": [
+        {
+          "trigger": "clickValidPosition",
+          "triggerType": "tap",
+          "description": "点击地图上合法的空格位置",
+          "target": "modeIdle",
+          "action": "放置炮塔、扣除金币",
+          "condition": "gold >= towerCost && positionValid"
+        },
+        {
+          "trigger": "keyEsc",
+          "triggerType": "keyboard",
+          "description": "按 Esc 取消放置",
+          "target": "modeIdle"
+        }
+      ]
+    },
+    {
+      "id": "modeTowerSel",
+      "index": 3,
+      "name": "炮塔选中",
+      "description": "选中一座已建造的炮塔，底部弹出信息面板，显示属性、能力、升级和出售按钮。",
+      "activeHUD": ["infoPanel", "topBar", "actionBar"],
+      "allowCameraDrag": false,
+      "visualFeedback": {
+        "selectedTower": "射程圈高亮",
+        "infoPanel": "底部弹出面板，含塔名/强度/伤害/攻速/射程/攻击方式/能力/buff"
+      },
+      "transitions": [
+        {
+          "trigger": "clickAbilityBtn",
+          "triggerType": "tap",
+          "description": "点击信息面板的「选择能力(N)」金色按钮",
+          "target": "modeUpgrade",
+          "condition": "pendingAbilities > 0"
+        },
+        {
+          "trigger": "clickUpgradeBtn",
+          "triggerType": "tap",
+          "description": "点击信息面板的「强度+10」按钮",
+          "target": "modeTowerSel",
+          "action": "购买 +10 强度，刷新面板",
+          "condition": "gold >= upgradeCost"
+        },
+        {
+          "trigger": "keyU",
+          "triggerType": "keyboard",
+          "description": "按 U 键购买强度升级",
+          "target": "modeTowerSel",
+          "action": "同 clickUpgradeBtn"
+        },
+        {
+          "trigger": "clickSellBtn",
+          "triggerType": "tap",
+          "description": "点击信息面板的红色「卖N」按钮",
+          "target": "modeIdle",
+          "action": "出售炮塔、回收金币"
+        },
+        {
+          "trigger": "keyDel",
+          "triggerType": "keyboard",
+          "description": "按 Delete/Backspace 出售炮塔",
+          "target": "modeIdle",
+          "action": "同 clickSellBtn"
+        },
+        {
+          "trigger": "clickAnotherTower",
+          "triggerType": "tap",
+          "description": "点击另一座炮塔",
+          "target": "modeTowerSel",
+          "action": "切换选中目标"
+        },
+        {
+          "trigger": "clickEmpty",
+          "triggerType": "tap",
+          "description": "点击地图空白区域",
+          "target": "modeIdle"
+        },
+        {
+          "trigger": "keyEsc",
+          "triggerType": "keyboard",
+          "description": "按 Esc 取消选中",
+          "target": "modeIdle"
+        }
+      ]
+    },
+    {
+      "id": "modeSpawnMenu",
+      "index": 4,
+      "name": "造怪菜单",
+      "description": "仅测试模式。弹出敌人原型卡片菜单（5列网格），支持悬停查看属性。",
+      "activeHUD": ["spawnMenu", "topBar"],
+      "allowCameraDrag": false,
+      "condition": "testMode == true",
+      "hoverBehavior": {
+        "target": "enemyCard",
+        "effect": "tooltip",
+        "tooltipPosition": "belowPanel",
+        "tooltipContent": "敌人名称 + boss/elite 标签 + HP/速度/半径/击杀奖励"
+      },
+      "transitions": [
+        {
+          "trigger": "clickEnemyCard",
+          "triggerType": "tap",
+          "description": "点击一张敌人卡片",
+          "target": "modeSpawnPlace",
+          "action": "记录选择的敌人原型索引"
+        },
+        {
+          "trigger": "clickOutside",
+          "triggerType": "tap",
+          "description": "点击面板外区域",
+          "target": "modeIdle"
+        },
+        {
+          "trigger": "keyEsc",
+          "triggerType": "keyboard",
+          "description": "按 Esc 关闭造怪菜单",
+          "target": "modeIdle"
+        }
+      ]
+    },
+    {
+      "id": "modeSpawnPlace",
+      "index": 5,
+      "name": "放置敌人",
+      "description": "仅测试模式。已选定敌人类型，点击地图路径位置生成敌人，可重复点击。",
+      "activeHUD": ["topBar", "toast"],
+      "allowCameraDrag": true,
+      "condition": "testMode == true",
+      "visualFeedback": {
+        "toast": "提示当前选中的敌人名称"
+      },
+      "transitions": [
+        {
+          "trigger": "clickOnMap",
+          "triggerType": "tap",
+          "description": "点击地图上的位置",
+          "target": "modeSpawnPlace",
+          "action": "在点击位置生成选定类型的敌人（可重复）"
+        },
+        {
+          "trigger": "keyEsc",
+          "triggerType": "keyboard",
+          "description": "按 Esc 退出放置模式",
+          "target": "modeIdle"
+        }
+      ]
+    },
+    {
+      "id": "modePaused",
+      "index": 6,
+      "name": "暂停菜单",
+      "description": "全屏半透明遮罩上显示暂停菜单，4 个操作按钮纵向排列。游戏逻辑暂停。",
+      "activeHUD": ["pauseMenu"],
+      "allowCameraDrag": false,
+      "savesPrePauseMode": true,
+      "transitions": [
+        {
+          "trigger": "clickResume",
+          "triggerType": "tap",
+          "description": "点击「继续游戏」按钮（绿色）",
+          "target": "prePauseMode",
+          "action": "恢复到暂停前的模式"
+        },
+        {
+          "trigger": "keyEsc",
+          "triggerType": "keyboard",
+          "description": "按 Esc 恢复游戏",
+          "target": "prePauseMode"
+        },
+        {
+          "trigger": "keyP",
+          "triggerType": "keyboard",
+          "description": "按 P 恢复游戏",
+          "target": "prePauseMode"
+        },
+        {
+          "trigger": "keySpace",
+          "triggerType": "keyboard",
+          "description": "按 Space 恢复游戏",
+          "target": "prePauseMode"
+        },
+        {
+          "trigger": "clickSettings",
+          "triggerType": "tap",
+          "description": "点击「设置」按钮（灰色）",
+          "target": "settingsScene",
+          "action": "切换到设置场景"
+        },
+        {
+          "trigger": "clickRestart",
+          "triggerType": "tap",
+          "description": "点击「重新开始」按钮（金色）",
+          "target": "newStageScene",
+          "action": "重新开始当前关卡"
+        },
+        {
+          "trigger": "clickQuit",
+          "triggerType": "tap",
+          "description": "点击「返回主菜单」按钮（红色）",
+          "target": "selectScene",
+          "action": "返回选关界面"
+        }
+      ]
+    },
+    {
+      "id": "modeWardenSelect",
+      "index": 7,
+      "name": "战灵选择",
+      "description": "战前全屏覆盖层。左侧战灵列表可点选，右侧显示详情（精灵预览/属性/技能/成长）。底部有确认和跳过按钮。",
+      "activeHUD": ["wardenSelectOverlay"],
+      "allowCameraDrag": false,
+      "hoverBehavior": {
+        "target": "wardenListItem",
+        "effect": "highlight",
+        "description": "列表项深色高亮背景；按钮变色"
+      },
+      "transitions": [
+        {
+          "trigger": "clickWardenItem",
+          "triggerType": "tap",
+          "description": "点击左侧列表中的战灵",
+          "target": "modeWardenSelect",
+          "action": "选中该战灵，右侧展示详情"
+        },
+        {
+          "trigger": "clickConfirm",
+          "triggerType": "tap",
+          "description": "点击「选择 [Name]」确认按钮",
+          "target": "modeIdle",
+          "action": "确认选择战灵，开始战斗"
+        },
+        {
+          "trigger": "clickSkip",
+          "triggerType": "tap",
+          "description": "点击「不选(纯塔挑战)」跳过按钮",
+          "target": "modeIdle",
+          "action": "不选战灵，纯塔防模式"
+        },
+        {
+          "trigger": "keyEsc",
+          "triggerType": "keyboard",
+          "description": "按 Esc 跳过战灵选择",
+          "target": "modeIdle"
+        },
+        {
+          "trigger": "clickLockedWarden",
+          "triggerType": "tap",
+          "description": "点击未解锁的战灵",
+          "target": "modeWardenSelect",
+          "action": "显示 Toast 提示解锁条件"
+        }
+      ]
+    },
+    {
+      "id": "modeUpgrade",
+      "index": 8,
+      "name": "能力选择",
+      "description": "居中弹出能力选择面板。N 选 1 卡片排列（≤5 单行，>5 双行小卡）。卡片带品质边框色（普通/稀有/史诗）。",
+      "activeHUD": ["choicePanel"],
+      "allowCameraDrag": false,
+      "hoverBehavior": {
+        "target": "choiceCard",
+        "effect": "highlight",
+        "description": "悬停卡片填充主色，边框加粗 1.5→2.5"
+      },
+      "transitions": [
+        {
+          "trigger": "clickChoiceCard",
+          "triggerType": "tap",
+          "description": "点击一张能力卡片",
+          "target": "modeTowerSel",
+          "action": "应用选择的能力到炮塔",
+          "note": "测试模式下支持两步选择：先选类别再选具体能力（OnSelect 回调可重新 Show 面板）"
+        },
+        {
+          "trigger": "clickOutside",
+          "triggerType": "tap",
+          "description": "点击面板外区域",
+          "target": "modeTowerSel",
+          "condition": "dismissible == true"
+        },
+        {
+          "trigger": "keyEsc",
+          "triggerType": "keyboard",
+          "description": "按 Esc 关闭选择面板",
+          "target": "modeTowerSel"
+        }
+      ]
+    },
+    {
+      "id": "modeItemPanel",
+      "index": 9,
+      "name": "道具面板",
+      "description": "居中弹出道具面板（2×3 网格）。每张卡片显示属性图标、名称、数量。按下（非点击）启动拖拽。",
+      "activeHUD": ["itemPanel"],
+      "allowCameraDrag": false,
+      "transitions": [
+        {
+          "trigger": "pressDownOnItem",
+          "triggerType": "press",
+          "description": "在有数量的道具卡片上按下（IsMouseButtonJustPressed / JustPressedTouchIDs）",
+          "target": "modeItemDrag",
+          "action": "开始拖拽选中的道具",
+          "condition": "itemCount > 0",
+          "note": "使用 press-down 而非 tap，因为拖拽需要在按下时立刻启动"
+        },
+        {
+          "trigger": "clickOutside",
+          "triggerType": "tap",
+          "description": "点击面板外区域",
+          "target": "modeIdle"
+        },
+        {
+          "trigger": "keyI",
+          "triggerType": "keyboard",
+          "description": "按 I 键切换关闭",
+          "target": "modeIdle"
+        },
+        {
+          "trigger": "keyEsc",
+          "triggerType": "keyboard",
+          "description": "按 Esc 关闭面板",
+          "target": "modeIdle"
+        }
+      ]
+    },
+    {
+      "id": "modeItemDrag",
+      "index": 10,
+      "name": "道具拖拽",
+      "description": "拖拽道具到炮塔上使用。光标处显示浮动道具图标，炮塔在悬停时高亮。",
+      "activeHUD": ["dragItemIcon"],
+      "allowCameraDrag": false,
+      "visualFeedback": {
+        "cursor": "浮动道具图标跟随鼠标/手指",
+        "hoverTower": "悬停的炮塔高亮显示",
+        "tracking": "dragHoverTower 追踪当前悬停的炮塔"
+      },
+      "transitions": [
+        {
+          "trigger": "releaseOnTower",
+          "triggerType": "release",
+          "description": "在非出售中的炮塔上释放鼠标/手指",
+          "target": "modeItemPanel",
+          "action": "将道具效果应用到炮塔（修改 Base/Potential + RecalcStats），数量 -1"
+        },
+        {
+          "trigger": "releaseOnEmpty",
+          "triggerType": "release",
+          "description": "在空白区域释放",
+          "target": "modeItemPanel",
+          "action": "取消拖拽，显示 Toast「请拖拽到炮塔上使用」"
+        },
+        {
+          "trigger": "keyEsc",
+          "triggerType": "keyboard",
+          "description": "按 Esc 取消拖拽",
+          "target": "modeItemPanel"
+        }
+      ]
+    }
+  ]
+}

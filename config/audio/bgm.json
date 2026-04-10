@@ -1,0 +1,152 @@
+{
+  "_doc": "背景音乐(BGM)定义。描述每首 BGM 的用途、触发场景、切换逻辑。",
+  "playback": {
+    "format": "WAV",
+    "sampleRate": 44100,
+    "loop": "InfiniteLoop（无限循环）",
+    "loadStrategy": "on-demand（首次 PlayBGM 时从 assetFS 加载解码）",
+    "note": "BGM 文件名不经过 kebabToCamel 转换，直接用原始文件名（去 .wav 后缀）作为查找键"
+  },
+  "tracks": [
+    {
+      "file": "bgm-menu.wav",
+      "key": "bgm-menu",
+      "constant": "BGMMenu",
+      "name": "主菜单音乐",
+      "description": "在模式选择、选关等非战斗场景播放的背景音乐",
+      "triggers": [
+        {
+          "event": "enterSelectScene",
+          "scene": "select",
+          "source": "select.go:135",
+          "description": "进入模式选择场景时开始播放"
+        }
+      ],
+      "stopsAt": [
+        {
+          "event": "enterStageScene",
+          "description": "进入战斗场景时被 bgm-battle 替换"
+        }
+      ],
+      "mood": "轻松、期待",
+      "status": "placeholder",
+      "note": "WAV 文件存在但可能尚无实际音乐内容"
+    },
+    {
+      "file": "bgm-battle.wav",
+      "key": "bgm-battle",
+      "constant": "BGMBattle",
+      "name": "战斗音乐",
+      "description": "普通波次战斗时的背景音乐",
+      "triggers": [
+        {
+          "event": "stageEntry",
+          "scene": "stage",
+          "source": "stage.go:635",
+          "description": "进入战斗场景时开始播放"
+        },
+        {
+          "event": "bossWaveClear",
+          "scene": "stage",
+          "source": "stage.go:450",
+          "description": "Boss 波次结束后，从 bgm-boss 切回 bgm-battle"
+        }
+      ],
+      "stopsAt": [
+        {
+          "event": "bossWaveStart",
+          "description": "Boss 波次开始时被 bgm-boss 替换"
+        },
+        {
+          "event": "victory",
+          "source": "stage.go:2114",
+          "description": "胜利时停止"
+        },
+        {
+          "event": "defeat",
+          "source": "stage.go:2127",
+          "description": "失败时停止"
+        }
+      ],
+      "mood": "紧张、节奏感",
+      "status": "placeholder"
+    },
+    {
+      "file": "bgm-boss.wav",
+      "key": "bgm-boss",
+      "constant": "BGMBoss",
+      "name": "Boss 战斗音乐",
+      "description": "Boss 波次期间的专用背景音乐，比普通战斗更紧张激烈",
+      "triggers": [
+        {
+          "event": "bossWaveStart",
+          "scene": "stage",
+          "source": "stage.go:417",
+          "description": "Boss 波次开始时切入",
+          "condition": "wave.hasBoss == true"
+        }
+      ],
+      "stopsAt": [
+        {
+          "event": "bossWaveClear",
+          "description": "Boss 波次结束后切回 bgm-battle"
+        },
+        {
+          "event": "victory",
+          "description": "胜利时停止"
+        },
+        {
+          "event": "defeat",
+          "description": "失败时停止"
+        }
+      ],
+      "mood": "紧迫、史诗",
+      "status": "placeholder"
+    }
+  ],
+  "transitionRules": {
+    "_doc": "BGM 切换规则，描述各场景/事件间的 BGM 流转",
+    "flow": [
+      {
+        "from": "silence",
+        "to": "bgm-menu",
+        "trigger": "游戏启动 → 进入 SelectScene",
+        "transition": "直接播放（无淡入淡出）"
+      },
+      {
+        "from": "bgm-menu",
+        "to": "bgm-battle",
+        "trigger": "SelectScene → StageScene（开始战斗）",
+        "transition": "直接切换（新 PlayBGM 替换旧 BGM）"
+      },
+      {
+        "from": "bgm-battle",
+        "to": "bgm-boss",
+        "trigger": "Boss 波次开始（EvtWaveStarted + hasBoss）",
+        "transition": "直接切换"
+      },
+      {
+        "from": "bgm-boss",
+        "to": "bgm-battle",
+        "trigger": "Boss 波次清除（waveClear + 还有后续波次）",
+        "transition": "直接切换"
+      },
+      {
+        "from": "bgm-battle|bgm-boss",
+        "to": "silence",
+        "trigger": "胜利或失败（endgame）",
+        "transition": "StopBGM() 直接停止"
+      },
+      {
+        "from": "silence",
+        "to": "bgm-menu",
+        "trigger": "结算 → 返回 SelectScene",
+        "transition": "直接播放"
+      }
+    ],
+    "pauseBehavior": {
+      "description": "暂停菜单期间 BGM 继续播放，不中断",
+      "note": "当前实现无淡入淡出和暂停处理"
+    }
+  }
+}

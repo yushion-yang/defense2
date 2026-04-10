@@ -1,0 +1,249 @@
+{
+  "_doc": "音频系统配置。描述音频管理器的参数、音量分级、节流规则、Pitch 变化等系统级设置。",
+  "manager": {
+    "sourceFile": "internal/audio/manager.go",
+    "constructor": "NewManager()",
+    "defaults": {
+      "masterVolume": 0.8,
+      "bgmVolume": 0.3,
+      "pitchVariation": 0.08,
+      "sfxEnabled": true
+    },
+    "persistedSettings": {
+      "sourceFile": "internal/scene/settings_persist.go",
+      "storagePath": "os.UserConfigDir()/defense2/settings.json",
+      "fields": {
+        "sfxEnabled": { "type": "bool", "default": false, "description": "音效全局开关" },
+        "sfxVolume": { "type": "float64", "range": [0, 1], "default": 0.8, "description": "音效主音量" },
+        "bgmVolume": { "type": "float64", "range": [0, 1], "default": 0.5, "description": "背景音乐音量" },
+        "quality": { "type": "int", "default": 0, "description": "画质等级（不影响音频，但同文件存储）" }
+      },
+      "loadTiming": "game.go 启动时加载，通过 SetSFXEnabled/SetVolume/SetBGMVolume 应用",
+      "saveTiming": "settings.go 中任何设置变更后立即 persist()"
+    }
+  },
+  "volumeCategories": {
+    "_doc": "音量分级常量。每个类别定义一个 scale 系数，最终音量 = masterVolume × scale。高频音效用较低 scale 避免轰炸。",
+    "categories": [
+      {
+        "constant": "VolUI",
+        "value": 0.6,
+        "description": "界面音效（点击、开关面板）",
+        "rationale": "UI 音效需清晰但不突出"
+      },
+      {
+        "constant": "VolBuild",
+        "value": 0.7,
+        "description": "建造/升级/出售炮塔",
+        "rationale": "低频操作，给予较高反馈感"
+      },
+      {
+        "constant": "VolFire",
+        "value": 0.35,
+        "description": "炮塔开火",
+        "rationale": "最高频音效，刻意压低防止持续轰鸣"
+      },
+      {
+        "constant": "VolHit",
+        "value": 0.4,
+        "description": "命中/CC 效果",
+        "rationale": "高频但需要战斗反馈，略高于开火"
+      },
+      {
+        "constant": "VolKill",
+        "value": 0.55,
+        "description": "击杀/死亡",
+        "rationale": "中频，需要明确的击杀确认感"
+      },
+      {
+        "constant": "VolWave",
+        "value": 0.7,
+        "description": "波次事件（开始/清除/Boss 登场/胜利/失败）",
+        "rationale": "低频关键事件，需要高辨识度"
+      },
+      {
+        "constant": "VolExplo",
+        "value": 0.45,
+        "description": "爆炸/雷电",
+        "rationale": "中频大面积效果，适度控制"
+      },
+      {
+        "constant": "VolWarden",
+        "value": 0.5,
+        "description": "战灵攻击/特技",
+        "rationale": "中频，需要与炮塔区分但不喧宾夺主"
+      },
+      {
+        "constant": "VolSkill",
+        "value": 0.5,
+        "description": "技能激活",
+        "rationale": "中频特殊效果"
+      }
+    ]
+  },
+  "throttling": {
+    "_doc": "音效节流机制。同一音效在指定间隔内只播放一次，防止高频触发产生的叠加噪音。",
+    "method": "PlayThrottledAt(name, intervalMs, scale)",
+    "perSoundTracking": "每个音效名有独立的上次播放时间戳",
+    "intervals": {
+      "towerFire": { "ms": 100, "description": "开火音效，每 100ms 最多一次" },
+      "hitNormal": { "ms": 60, "description": "普通命中，每 60ms 最多一次" },
+      "hitBoss": { "ms": 60, "description": "Boss 命中，同普通命中" },
+      "killNormal": { "ms": 50, "description": "击杀音效，每 50ms 最多一次" },
+      "ccSlow": { "ms": 120, "description": "减速/冰冻" },
+      "ccStun": { "ms": 150, "description": "眩晕" },
+      "ccBurn": { "ms": 200, "description": "灼烧点燃" },
+      "ccRoot": { "ms": 150, "description": "定身" },
+      "crit": { "ms": 150, "description": "暴击" },
+      "medicHeal": { "ms": 500, "description": "医疗兵治疗（低频行为）" },
+      "regenTick": { "ms": 2000, "description": "再生跳字（极低频，2 秒间隔）" },
+      "wardenFire": { "ms": 100, "description": "战灵普攻" },
+      "wardenSpecial": { "ms": 200, "description": "战灵特技" }
+    }
+  },
+  "pitchVariation": {
+    "_doc": "音高随机化。为重复播放的音效添加微小音高变化，增加自然感。",
+    "defaultVariation": 0.08,
+    "description": "每次播放时在 [1-variation, 1+variation] 范围内随机偏移音高。variation=0.08 即 ±8%。",
+    "implementation": {
+      "method": "ResamplePCM(pcm, factor)",
+      "sourceFile": "internal/audio/resample.go",
+      "algorithm": "16-bit stereo 线性插值重采样",
+      "factorAbove1": "音高升高（波形缩短）",
+      "factorBelow1": "音高降低（波形拉长）"
+    },
+    "excludedSFX": {
+      "_doc": "以下音效不应用音高随机化（始终原始音高播放）",
+      "list": [
+        { "constant": "SFXUIClick", "reason": "UI 点击需要一致的反馈感" },
+        { "constant": "SFXUIOpen", "reason": "UI 交互一致性" },
+        { "constant": "SFXUIClose", "reason": "UI 交互一致性" },
+        { "constant": "SFXVictory", "reason": "重要结果音效需要固定辨识度" },
+        { "constant": "SFXDefeat", "reason": "重要结果音效需要固定辨识度" },
+        { "constant": "SFXSpeedToggle", "reason": "功能操作反馈" },
+        { "constant": "SFXUpgrade", "reason": "重要操作确认" }
+      ]
+    }
+  },
+  "loading": {
+    "_doc": "音频加载流程",
+    "sourceFile": "internal/audio/loader.go",
+    "pipeline": [
+      "1. game.go:initAudio() → NewManager()",
+      "2. LoadAllFromFS(assetFS) 扫描 assets/audio/ 目录",
+      "3. 每个 .wav 文件：去后缀 → kebabToCamel() → LoadWAV(camelName, data)",
+      "4. LoadWAV 解码 WAV 到 PCM (44100Hz) 并缓存到 map",
+      "5. BGM 文件同样预解码，但 PlayBGM 另走 assetFS 按需读取路径"
+    ],
+    "headlessMode": {
+      "description": "autoplay (headless) 模式下跳过全部音频加载",
+      "check": "game.go 中 HeadlessMode 判断"
+    },
+    "namingConversion": {
+      "function": "kebabToCamel(s string) string",
+      "rule": "按 '-' 分割，首段小写，后续段首字母大写",
+      "examples": [
+        { "input": "fire-spin-aoe", "output": "fireSpinAoe" },
+        { "input": "enemy-death-boss", "output": "enemyDeathBoss" },
+        { "input": "ui-click", "output": "uiClick" },
+        { "input": "bgm-battle", "output": "bgmBattle" }
+      ]
+    }
+  },
+  "dynamicSFXLookup": {
+    "_doc": "按攻击方式动态查找音效的两个函数",
+    "functions": [
+      {
+        "name": "FireSFXForStyle",
+        "sourceFile": "internal/audio/manager.go:259",
+        "pattern": "'fire' + SnakeToCamel(style)",
+        "fallback": "'shot'",
+        "description": "将 attackStyle (snake_case) 转为开火音效键名",
+        "examples": [
+          { "style": "projectile", "key": "fireProjectile" },
+          { "style": "wide_beam", "key": "fireWideBeam" },
+          { "style": "spin_aoe", "key": "fireSpinAoe" },
+          { "style": "", "key": "shot" }
+        ]
+      },
+      {
+        "name": "HitSFXForStyle",
+        "sourceFile": "internal/audio/manager.go:268",
+        "pattern": "'hit' + SnakeToCamel(style)",
+        "fallback": "'hitFlesh'",
+        "description": "将 attackStyle (snake_case) 转为命中音效键名",
+        "examples": [
+          { "style": "projectile", "key": "hitProjectile" },
+          { "style": "wide_beam", "key": "hitWideBeam" },
+          { "style": "", "key": "hitFlesh" }
+        ]
+      },
+      {
+        "name": "wardenSpecialSFX",
+        "sourceFile": "internal/scene/stage.go:2792",
+        "description": "按战灵类型返回对应特技音效常量",
+        "mapping": {
+          "prince": "SFXWardenSpecialFire",
+          "core": "SFXWardenSpecialMech",
+          "chain": "SFXWardenSpecialChain",
+          "skystrike": "SFXWardenSpecialWater",
+          "envoy": "SFXWardenSpecialGold"
+        }
+      }
+    ]
+  },
+  "playbackMethods": {
+    "_doc": "音频管理器的播放方法对比",
+    "methods": [
+      {
+        "name": "Play(name)",
+        "description": "以主音量播放，等价于 PlayAt(name, 1.0)",
+        "useCase": "通用播放"
+      },
+      {
+        "name": "PlayAt(name, scale)",
+        "description": "以 masterVol×scale 播放。非排除列表的音效自动应用 Pitch 随机化",
+        "useCase": "需要精确音量控制的播放"
+      },
+      {
+        "name": "PlayThrottled(name, intervalMs)",
+        "description": "带节流的播放，同名音效在间隔内只播一次",
+        "useCase": "高频战斗音效（开火、命中等）"
+      },
+      {
+        "name": "PlayThrottledAt(name, intervalMs, scale)",
+        "description": "节流 + 音量缩放，核心战斗音效播放方法",
+        "useCase": "大多数战斗音效"
+      },
+      {
+        "name": "PlaySafe(name)",
+        "description": "带 panic recovery 的播放",
+        "useCase": "不确定音效是否存在时的安全播放"
+      },
+      {
+        "name": "PlaySafeAt(name, scale)",
+        "description": "带 panic recovery + 音量缩放",
+        "useCase": "战灵击杀、隐身揭示等低频但重要的音效"
+      },
+      {
+        "name": "PlayBGM(name)",
+        "description": "开始循环播放 BGM，替换当前 BGM",
+        "useCase": "场景切换/Boss 出现"
+      },
+      {
+        "name": "StopBGM()",
+        "description": "停止当前 BGM",
+        "useCase": "胜利/失败"
+      }
+    ]
+  },
+  "statistics": {
+    "totalWavFiles": 129,
+    "activeSFX": 30,
+    "unusedSFX": 96,
+    "bgmTracks": 3,
+    "totalSizeApprox": "~6.3 MB",
+    "sampleRate": 44100,
+    "format": "WAV (PCM)"
+  }
+}
