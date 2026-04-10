@@ -926,7 +926,7 @@ func (s *VFXPreviewScene) drawActiveVFX(screen *ebiten.Image) {
 		vfx.DrawChainLinks(screen, [][4]float64{
 			{cx - 60, cy - 30, cx + 60, cy + 30},
 			{cx - 40, cy + 20, cx + 40, cy - 20},
-		})
+		}, t)
 	case "skystrikeIce", "skystrikeWater", "skystrikeGeyser":
 		// Repeat strike every 1.2s
 		cycleT := math.Mod(t, 1.2)
@@ -937,7 +937,7 @@ func (s *VFXPreviewScene) drawActiveVFX(screen *ebiten.Image) {
 		// Decaying beam
 		p := 1.0 - math.Mod(t, 1.0)/0.6
 		if p > 0 {
-			vfx.DrawGoldBeam(screen, fcx-40, fcy, fcx+40, fcy, p)
+			vfx.DrawGoldBeam(screen, fcx-40, fcy, fcx+40, fcy, p, t)
 		}
 	case "movementTrail":
 		// Simulate circular flight path trail
@@ -969,7 +969,7 @@ func (s *VFXPreviewScene) drawActiveVFX(screen *ebiten.Image) {
 			{Color: color.RGBA{R: 139, G: 90, B: 43, A: 235}},
 			{Color: color.RGBA{R: 239, G: 68, B: 68, A: 255}},
 			{Color: color.RGBA{R: 255, G: 140, B: 40, A: 255}},
-		})
+		}, t)
 	case "bufferAura":
 		vfx.DrawBufferAura(screen, fcx, fcy, 60, t)
 	case "purgeGlow":

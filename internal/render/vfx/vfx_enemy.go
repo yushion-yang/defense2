@@ -88,15 +88,16 @@ func DrawRunnerRing(screen *ebiten.Image, cx, cy, radius float32, animTime float
 
 // ── 眩晕星星 ────────────────────────────────────────
 
-// DrawStunStars 绘制眩晕旋转星星（3 颗黄色圆点绕头顶椭圆轨道）。
+// DrawStunStars 绘制眩晕旋转星星（3 颗黄色钻石绕头顶椭圆轨道，带闪烁）。
 func DrawStunStars(screen *ebiten.Image, cx, cy, radius float32, animTime float64) {
-	starR := float32(2)
-	orbitR := radius + 4
+	orbitR := radius + 6
 	for i := 0; i < 3; i++ {
 		angle := animTime*5 + float64(i)*2.094
 		sx := cx + orbitR*float32(math.Cos(angle))
 		sy := cy - radius - 4 + orbitR*0.4*float32(math.Sin(angle))
-		draw.FilledCircle(screen, sx, sy, starR, color.RGBA{255, 255, 100, 200})
+		// Per-star twinkle
+		twinkle := uint8(clampF(150+50*math.Sin(animTime*8+float64(i)*2), 100, 255))
+		draw.Diamond(screen, sx, sy, 2.5, 1.2, color.RGBA{255, 255, 100, twinkle})
 	}
 }
 
@@ -123,13 +124,26 @@ type StatusDot struct {
 	Color color.RGBA
 }
 
-// DrawStatusDots 绘制状态效果指示圆点。
-func DrawStatusDots(screen *ebiten.Image, cx, dotY float32, dots []StatusDot) {
-	dotX := cx - 8.0
-	dotR := float32(2.5)
-	for _, d := range dots {
-		draw.FilledCircle(screen, dotX, dotY, dotR, d.Color)
-		dotX += 6
+// DrawStatusDots 绘制状态效果指示圆点（带轮廓和脉冲动画）。
+func DrawStatusDots(screen *ebiten.Image, cx, dotY float32, dots []StatusDot, animTime float64) {
+	dotSpacing := float32(7)
+	n := len(dots)
+	startX := cx - float32(n-1)*dotSpacing/2
+	for i, d := range dots {
+		dx := startX + float32(i)*dotSpacing
+		// Dark outline for contrast
+		draw.CircleOutline(screen, dx, dotY, 4, 0.8, color.RGBA{0, 0, 0, 100})
+		// Pulsing fill — different speeds per color
+		pulse := 20 * math.Sin(animTime*float64(3+i*2))
+		r, g, b := d.Color.R, d.Color.G, d.Color.B
+		a := int(d.Color.A) + int(pulse)
+		if a > 255 {
+			a = 255
+		}
+		if a < 0 {
+			a = 0
+		}
+		draw.FilledCircle(screen, dx, dotY, 3.5, color.RGBA{r, g, b, uint8(a)})
 	}
 }
 

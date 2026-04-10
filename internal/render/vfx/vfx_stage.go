@@ -20,10 +20,21 @@ func DrawBlockFlash(screen *ebiten.Image, cx, cy, radius float32, timer float64)
 	if timer <= 0 {
 		return
 	}
-	r := radius + 6
-	alpha := uint8(200 * (timer / 0.25))
-	draw.CircleOutline(screen, cx, cy, r, 2, color.RGBA{R: 80, G: 160, B: 255, A: alpha})
-	draw.CircleOutline(screen, cx, cy, r+3, 1, color.RGBA{R: 120, G: 200, B: 255, A: alpha / 2})
+	alpha := uint8(clampF(timer/0.25*200, 0, 200))
+	// Two expanding rings
+	draw.CircleOutline(screen, cx, cy, radius+6, 2, color.RGBA{100, 180, 255, alpha})
+	draw.CircleOutline(screen, cx, cy, radius+9, 1.5, color.RGBA{100, 180, 255, alpha / 2})
+	// Spark lines radiating outward
+	sparkA := uint8(clampF(timer/0.25*180, 0, 180))
+	for i := 0; i < 3; i++ {
+		angle := float64(i)*2.094 + float64(cx+cy)*0.1 // pseudo-random via position
+		sparkLen := float32(6 + 4*timer/0.25)
+		sx := cx + (radius+6)*float32(math.Cos(angle))
+		sy := cy + (radius+6)*float32(math.Sin(angle))
+		ex := cx + (radius+6+sparkLen)*float32(math.Cos(angle))
+		ey := cy + (radius+6+sparkLen)*float32(math.Sin(angle))
+		draw.Line(screen, sx, sy, ex, ey, 1, color.RGBA{180, 220, 255, sparkA}, true)
+	}
 }
 
 // DrawDodgeFlash draws a white offset afterimage when enemy dodges.
@@ -37,45 +48,76 @@ func DrawDodgeFlash(screen *ebiten.Image, cx, cy, radius float32, timer float64)
 	draw.FilledCircle(screen, cx-offset, cy, radius*0.8, color.RGBA{R: 255, G: 255, B: 255, A: alpha})
 }
 
-// DrawArmorSpark draws a gray expanding ring when armor absorbs damage.
+// DrawArmorSpark draws a silver-white expanding ring when armor absorbs damage.
 // timer: remaining time (starts 0.15, decrements to 0).
 func DrawArmorSpark(screen *ebiten.Image, cx, cy, radius float32, timer float64) {
 	if timer <= 0 {
 		return
 	}
-	alpha := uint8(200 * (timer / 0.15))
-	sparkR := radius + float32(4*(1-timer/0.15))
-	draw.CircleOutline(screen, cx, cy, sparkR, 1.5, color.RGBA{R: 180, G: 180, B: 180, A: alpha})
+	progress := 1 - timer/0.15
+	alpha := uint8(clampF((1-progress)*200, 0, 200))
+	expandR := radius + 4 + float32(progress)*8
+	// Main ring — silver-white instead of gray
+	draw.CircleOutline(screen, cx, cy, expandR, 1.5, color.RGBA{220, 225, 235, alpha})
+	// Center flash
+	draw.FilledCircle(screen, cx, cy, 3, color.RGBA{255, 255, 255, alpha})
+	// 3 scattered spark dots
+	for i := 0; i < 3; i++ {
+		angle := float64(i)*2.094 + float64(cx)*0.1
+		dist := expandR * float32(0.5+0.5*progress)
+		dx := cx + dist*float32(math.Cos(angle))
+		dy := cy + dist*float32(math.Sin(angle))
+		draw.FilledCircle(screen, dx, dy, 1.5, color.RGBA{240, 240, 250, alpha})
+	}
 }
 
-// DrawDamageCapPulse draws an orange expanding ring when damage cap triggers.
+// DrawDamageCapPulse draws dual orange expanding rings when damage cap triggers.
 // timer: remaining time (starts 0.3, decrements to 0).
 func DrawDamageCapPulse(screen *ebiten.Image, cx, cy, radius float32, timer float64) {
 	if timer <= 0 {
 		return
 	}
-	alpha := uint8(180 * (timer / 0.3))
-	r := radius + float32(6*(1-timer/0.3))
-	draw.CircleOutline(screen, cx, cy, r, 1.5, color.RGBA{R: 255, G: 180, B: 40, A: alpha})
+	progress := 1 - timer/0.3
+	alpha := uint8(clampF((1-progress)*180, 0, 180))
+	// Fast inner ring
+	innerR := radius + 3 + float32(progress)*12
+	draw.CircleOutline(screen, cx, cy, innerR, 1.5, color.RGBA{255, 180, 60, alpha})
+	// Slower outer ring (50% speed)
+	outerR := radius + 3 + float32(progress)*6
+	draw.CircleOutline(screen, cx, cy, outerR, 1, color.RGBA{255, 200, 100, alpha / 2})
 }
 
-// DrawPurgeWave draws a white expanding ring when purge triggers.
+// DrawPurgeWave draws a dual-ring white ripple when purge triggers.
 // timer: remaining time (starts 0.4, decrements to 0).
 func DrawPurgeWave(screen *ebiten.Image, cx, cy, radius float32, timer float64) {
 	if timer <= 0 {
 		return
 	}
 	progress := 1 - timer/0.4
-	r := radius + float32(40*progress)
-	alpha := uint8(200 * (1 - progress))
-	draw.CircleOutline(screen, cx, cy, r, 2, color.RGBA{R: 255, G: 255, B: 255, A: alpha})
+	alpha := uint8(clampF((1-progress)*200, 0, 200))
+	// Leading ring
+	mainR := radius + float32(progress)*40
+	draw.CircleOutline(screen, cx, cy, mainR, 2, color.RGBA{255, 255, 255, alpha})
+	// Trailing ring (5px behind)
+	if progress > 0.1 {
+		trailProgress := progress - 0.1
+		trailR := radius + float32(trailProgress)*40
+		trailA := uint8(clampF(float64(alpha)*0.5, 0, 120))
+		draw.CircleOutline(screen, cx, cy, trailR, 1, color.RGBA{230, 240, 255, trailA})
+	}
 }
 
-// DrawPhaseAura draws purple pulsating double ring for phase-shifted enemy.
+// DrawPhaseAura draws purple pulsating ring + dashed outer ring for phase-shifted enemy.
 func DrawPhaseAura(screen *ebiten.Image, cx, cy, radius float32, animTime float64) {
-	pulseR := radius + 4 + float32(3*math.Sin(animTime*6))
-	draw.CircleOutline(screen, cx, cy, pulseR, 2, color.RGBA{R: 160, G: 80, B: 255, A: 160})
-	draw.CircleOutline(screen, cx, cy, pulseR+4, 1, color.RGBA{R: 160, G: 80, B: 255, A: 60})
+	innerPulse := 0.5 + 0.5*math.Sin(animTime*4)
+	innerAlpha := uint8(50 + 30*innerPulse)
+	draw.CircleOutline(screen, cx, cy, radius+3, 1.5, color.RGBA{180, 100, 255, innerAlpha})
+
+	// Outer dashed ring with jitter (instability feel)
+	jitterX := float32(math.Sin(animTime*17) * 1)
+	jitterY := float32(math.Cos(animTime*23) * 1)
+	outerAlpha := uint8(35 + 20*math.Sin(animTime*4+math.Pi))
+	draw.DashedCircle(screen, cx+jitterX, cy+jitterY, radius+7, 1, 3, 3, color.RGBA{160, 80, 240, outerAlpha})
 }
 
 // DrawDashTrails draws orange speed lines trailing behind a dashing enemy.

@@ -282,7 +282,7 @@ func (er *EnemyRenderer) DrawEnemies(screen *ebiten.Image, pool *enemy.Pool, ani
 			dots = append(dots, vfx.StatusDot{Color: color.RGBA{R: 255, G: 140, B: 40, A: 255}})
 		}
 		if len(dots) > 0 {
-			vfx.DrawStatusDots(screen, cx, dotY, dots)
+			vfx.DrawStatusDots(screen, cx, dotY, dots, animTime)
 		}
 
 		// --- 能力常驻视觉（被沉默时全部隐藏）---

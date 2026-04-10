@@ -64,13 +64,29 @@ func FirePulseScale(fireAnim float64) float64 {
 
 // ── 建造波纹 ────────────────────────────────────────
 
-// DrawBuildRipple 绘制建造时的白色扩散环。
+// DrawBuildRipple 绘制建造时的多层白色扩散环。
 // progress: 0（刚开始）到 1（结束）。
 func DrawBuildRipple(screen *ebiten.Image, cx, cy float32, progress float64) {
+	// Main ring
 	ringR := float32(10 + 20*progress)
 	ringA := uint8(float64(150) * (1 - progress))
-	draw.CircleOutline(screen, cx, cy, ringR, 2,
-		color.RGBA{255, 255, 255, ringA})
+	draw.CircleOutline(screen, cx, cy, ringR, 2, color.RGBA{255, 255, 255, ringA})
+
+	// Second ring (delayed by 0.15 progress)
+	if progress > 0.15 {
+		p2 := (progress - 0.15) / 0.85
+		r2 := float32(10 + 20*p2)
+		a2 := uint8(float64(100) * (1 - p2))
+		draw.CircleOutline(screen, cx, cy, r2, 1.5, color.RGBA{200, 220, 255, a2})
+	}
+
+	// Third ring (delayed by 0.3)
+	if progress > 0.3 {
+		p3 := (progress - 0.3) / 0.7
+		r3 := float32(10 + 20*p3)
+		a3 := uint8(float64(60) * (1 - p3))
+		draw.CircleOutline(screen, cx, cy, r3, 1, color.RGBA{180, 200, 255, a3})
+	}
 }
 
 // ── 旋转弧刃（spin_aoe） ────────────────────────────

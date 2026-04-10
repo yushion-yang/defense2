@@ -115,13 +115,24 @@ func DrawShootFlash(screen *ebiten.Image, cx, cy float32, shootTimer float64, cl
 
 // ── 聚能连线 ────────────────────────────────────────
 
-// DrawChainLinks 绘制聚能战灵的串联线段。
+// DrawChainLinks 绘制聚能战灵的串联线段 + 流动粒子 + 端点光晕。
 // links: 每条线 [x1, y1, x2, y2]。
-func DrawChainLinks(screen *ebiten.Image, links [][4]float64) {
+func DrawChainLinks(screen *ebiten.Image, links [][4]float64, animTime float64) {
 	for _, l := range links {
-		draw.Line(screen, float32(l[0]), float32(l[1]),
-			float32(l[2]), float32(l[3]), 1.5,
-			color.RGBA{R: 160, G: 80, B: 255, A: 50}, true)
+		x1, y1, x2, y2 := float32(l[0]), float32(l[1]), float32(l[2]), float32(l[3])
+		// ThickLine at alpha 100
+		draw.ThickLine(screen, x1, y1, x2, y2, 2, color.RGBA{160, 80, 255, 100})
+		// 3 flowing particles per link
+		for i := 0; i < 3; i++ {
+			phase := math.Mod(animTime*1.2+float64(i)/3.0, 1.0)
+			px := float32(float64(x1) + float64(x2-x1)*phase)
+			py := float32(float64(y1) + float64(y2-y1)*phase)
+			pAlpha := uint8(120 + phase*100)
+			draw.FilledCircle(screen, px, py, 2, color.RGBA{200, 140, 255, pAlpha})
+		}
+		// Glow at endpoints
+		draw.Glow(screen, x1, y1, 3, 8, color.RGBA{160, 80, 255, 30})
+		draw.Glow(screen, x2, y2, 3, 8, color.RGBA{160, 80, 255, 30})
 	}
 }
 
@@ -213,16 +224,28 @@ func drawGeyser(screen *ebiten.Image, sx, sy, p float32) {
 
 // ── 金灵光束 ────────────────────────────────────────
 
-// DrawGoldBeam 绘制金灵施 buff 的金色光束 + 目标闪光。
-// progress: 1（刚施放）→0（衰减完毕）。
-func DrawGoldBeam(screen *ebiten.Image, wx, wy, tx, ty float32, progress float64) {
+// DrawGoldBeam 绘制金灵施 buff 的金色光束 + 流动粒子 + 端点光晕。
+// progress: 1（刚施放）→0（衰减完毕）。animTime: 全局动画时间。
+func DrawGoldBeam(screen *ebiten.Image, wx, wy, tx, ty float32, progress float64, animTime float64) {
 	if progress <= 0 {
 		return
 	}
 	p := progress
 	alpha := uint8(200 * p)
 	draw.Line(screen, wx, wy, tx, ty, float32(2*p),
-		color.RGBA{R: 255, G: 220, B: 80, A: alpha}, true)
+		color.RGBA{255, 220, 80, alpha}, true)
+	// 2 flowing particles along beam
+	for i := 0; i < 2; i++ {
+		phase := math.Mod(animTime*1.5+float64(i)*0.5, 1.0)
+		px := float32(float64(wx) + float64(tx-wx)*phase)
+		py := float32(float64(wy) + float64(ty-wy)*phase)
+		pAlpha := uint8(float64(alpha) * (0.5 + 0.5*phase))
+		draw.FilledCircle(screen, px, py, float32(2.5*p), color.RGBA{255, 240, 140, pAlpha})
+	}
+	// Glow at endpoints
+	draw.Glow(screen, wx, wy, 3, 8, color.RGBA{255, 220, 80, uint8(float64(30) * p)})
+	draw.Glow(screen, tx, ty, 4, 12, color.RGBA{255, 240, 130, uint8(float64(40) * p)})
+	// Target flash
 	draw.FilledCircle(screen, tx, ty, float32(10*p),
-		color.RGBA{R: 255, G: 240, B: 130, A: alpha / 2})
+		color.RGBA{255, 240, 130, alpha / 2})
 }
