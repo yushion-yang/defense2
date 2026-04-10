@@ -138,7 +138,6 @@ func (s *VFXPreviewScene) vfxTriggerRegistry() map[string]func(s *VFXPreviewScen
 		},
 
 		// Combat VFX
-		"impactRing": func(s *VFXPreviewScene) { render.SpawnHitImpact(cx, cy) },
 		"typedImpact": func(s *VFXPreviewScene) {
 			// Cycle through attack styles for demonstration.
 			styles := []string{"scatter", "spin_aoe", "wideBeam", "projectile"}
@@ -146,9 +145,6 @@ func (s *VFXPreviewScene) vfxTriggerRegistry() map[string]func(s *VFXPreviewScen
 			render.SpawnTypedImpact(cx-20, cy, styles[1])
 			render.SpawnTypedImpact(cx+20, cy, styles[2])
 			render.SpawnTypedImpact(cx+60, cy, styles[3])
-		},
-		"thunderBolt": func(s *VFXPreviewScene) {
-			render.SpawnThunderBolt(cx-50, cy-60, cx+50, cy+60, true)
 		},
 		"beam": func(s *VFXPreviewScene) {
 			s.beamPool.Add(combat.Beam{
@@ -160,7 +156,6 @@ func (s *VFXPreviewScene) vfxTriggerRegistry() map[string]func(s *VFXPreviewScen
 		"damageText": func(s *VFXPreviewScene) { render.SpawnDamageText(cx, cy, 1234, false, false) },
 		"critText":   func(s *VFXPreviewScene) { render.SpawnDamageText(cx, cy, 5678, true, false) },
 		"goldText":   func(s *VFXPreviewScene) { render.SpawnGoldText(cx, cy, 100) },
-		"killText":   func(s *VFXPreviewScene) { render.SpawnKillText(cx, cy) },
 		"customText": func(s *VFXPreviewScene) {
 			render.SpawnText(cx, cy, "Hello VFX!", color.RGBA{R: 100, G: 255, B: 200, A: 255}, 14, 1.5)
 		},
@@ -196,12 +191,10 @@ func (s *VFXPreviewScene) vfxTriggerRegistry() map[string]func(s *VFXPreviewScen
 			s.effects.TriggerHitStop(8)
 			s.effects.TriggerHitFlash(0.1)
 			particle.EmitBossDeathBurst(s.particlePool, cx, cy)
-			render.SpawnHitImpact(cx, cy)
 		},
 		"multiKill": func(s *VFXPreviewScene) {
 			render.TriggerShake(3.0, 0.3)
 			particle.EmitDeathBurstLarge(s.particlePool, cx, cy)
-			render.SpawnKillText(cx, cy)
 			render.SpawnDamageText(cx, cy-20, 9999, true, false)
 		},
 		"waveAnnounceNormal": func(s *VFXPreviewScene) { s.waveAnnounce.Trigger(3, 20, false) },
@@ -389,7 +382,6 @@ func (s *VFXPreviewScene) Update() error {
 		s.beamPool.Update(effectiveDT)
 		render.UpdateShake(effectiveDT)
 		render.UpdateImpactVFX(effectiveDT)
-		render.UpdateThunderBolts(effectiveDT)
 		render.UpdateFloatTexts(effectiveDT)
 		s.waveAnnounce.Update(effectiveDT)
 		hud.UpdateToast(effectiveDT)
@@ -461,7 +453,6 @@ func (s *VFXPreviewScene) clearActiveEffects() {
 	s.particlePool.Clear()
 	s.beamPool.Clear()
 	render.ClearImpactVFX()
-	render.ClearThunderBolts()
 	render.ClearFloatTexts()
 
 	// Reset post-processing state.
@@ -652,9 +643,6 @@ func (s *VFXPreviewScene) Draw(screen *ebiten.Image) {
 	render.DrawBeams(buf, s.beamPool)
 
 	draw.EndGlowPass(buf)
-
-	// Draw thunder bolts.
-	render.DrawThunderBolts(buf)
 
 	// Draw impact VFX.
 	render.DrawImpactVFX(buf)
@@ -961,7 +949,6 @@ func (s *VFXPreviewScene) drawActiveVFX(screen *ebiten.Image) {
 		vfx.DrawBufferAura(screen, fcx, fcy, 60, t)
 	case "purgeGlow":
 		vfx.DrawPurgeGlow(screen, fcx, fcy, 12, t)
-
 	// Enemy ability trigger VFX (repeating animations)
 	case "blockFlash":
 		cycleT := math.Mod(t, 0.5)

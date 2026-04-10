@@ -25,11 +25,6 @@ const maxImpactVFX = 16
 var impactPool [maxImpactVFX]ImpactVFX
 var impactCursor int
 
-// SpawnHitImpact 在指定位置生成通用命中特效（小型扩散环）。
-func SpawnHitImpact(x, y float64) {
-	spawnImpact(x, y, color.RGBA{R: 255, G: 220, B: 100, A: 200}, 12, 0.15)
-}
-
 // SpawnTypedImpact 根据攻击方式生成对应元素颜色的命中特效。
 func SpawnTypedImpact(x, y float64, attackStyle string) {
 	switch attackStyle {
