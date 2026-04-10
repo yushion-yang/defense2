@@ -9,6 +9,7 @@ import (
 	"math/rand"
 
 	"defense2/internal/config"
+	"defense2/internal/core/buff"
 	"defense2/internal/core/enemy"
 	"defense2/internal/core/projectile"
 	"defense2/internal/core/tower"
@@ -155,8 +156,14 @@ func (a *ConfigAbility) OnHit(t *tower.Tower, p *projectile.Projectile, e *enemy
 
 	case "poison":
 		// scaleDim=dps, param=duration — 固定 DPS 中毒（独立于 bleed）
-		e.PoisonTimer = pm
-		e.PoisonDPS = sv
+		e.Buffs.Add(buff.Buff{
+			ID:        "poison",
+			Category:  buff.CatDoT,
+			Source:    t.InstanceKey,
+			Value:     sv,
+			Duration:  pm,
+			Remaining: pm,
+		})
 		return nil
 
 	case "weaken":
