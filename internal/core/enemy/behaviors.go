@@ -199,16 +199,21 @@ func tickHealer(e *Enemy, pool *Pool, dt float64, events *BehaviorEvents) {
 	})
 }
 
-// tickStealth 隐身兵行为：计时到期或被击中时破隐。
+// tickStealth 隐身兵行为：被击中或自然到期时破隐。
+// BuffList.Tick() in the pipeline handles timer decrement and expiry.
 func tickStealth(e *Enemy, dt float64, events *BehaviorEvents) {
-	if !e.Stealthed {
+	if !e.IsStealthed() {
+		// Stealth expired (naturally via BuffList.Tick or hit-break on previous frame).
+		// Emit reveal once, then clear Behavior to stop dispatching here.
+		events.Reveals = append(events.Reveals, RevealEvent{X: e.X, Y: e.Y})
+		e.Behavior = ""
 		return
 	}
-	e.StealthTimer -= dt
-	if e.StealthTimer <= 0 || e.HitFlash > 0 {
-		e.Stealthed = false
-		e.StealthTimer = 0
+	// Break stealth on hit (HitFlash is set by apply_hit when enemy takes damage)
+	if e.HitFlash > 0 {
+		e.Buffs.RemoveByID("stealth")
 		events.Reveals = append(events.Reveals, RevealEvent{X: e.X, Y: e.Y})
+		e.Behavior = ""
 	}
 }
 
@@ -288,6 +293,7 @@ func UpdateBerserk(e *Enemy) bool {
 
 	// 触发狂暴：永久提升基础速度
 	e.BerserkTriggered = true
+	e.Buffs.Add(buff.Buff{ID: "berserk", Category: buff.CatBehavior, Source: "archetype", Duration: -1, Remaining: -1})
 	e.BaseSpeed *= e.BerserkSpeedScale
 
 	// 如果当前未被减速，同步更新当前速度

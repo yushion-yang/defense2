@@ -4,6 +4,7 @@ package tower
 
 import (
 	"defense2/internal/config"
+	"defense2/internal/core/buff"
 	"defense2/internal/core/enemy"
 	"defense2/internal/core/strength"
 )
@@ -77,14 +78,11 @@ type Tower struct {
 
 	// 战力系统
 	Strength *strength.StrengthData // 战力运行时数据
-	Buffs    []TowerBuff            // 当前生效的 buff 列表（含来源/描述/时长）
+	Buffs    *buff.BuffList          // 当前生效的 buff 列表（统一 BuffList 容器）
 
-	// 属性修饰层（每帧 Phase 1 清零，Phase 2 光环/buff 累加，RecalcStats 统一计算）
-	Mods AttrMods
-
-	// 光环加成（每帧由 Ticker 能力重置+重算）
-	CritBonus float64 // 暴击光环加成的暴击率（由 critAura 设置）
-	DamageAmp float64 // 伤害增幅（由 damageUpAura 设置，所有伤害输出 ×(1+DamageAmp)）
+	// 光环加成（由 RecalcStats 从 BuffList 读取）
+	CritBonus float64 // 暴击光环加成的暴击率（aura:crit）
+	DamageAmp float64 // 伤害增幅（aura:damageAmp，所有伤害输出 ×(1+DamageAmp)）
 
 	// 索敌锁定
 	Target              *enemy.Enemy // 当前锁定目标
@@ -107,17 +105,6 @@ type Tower struct {
 	Selling   bool    // true when tower is in sell animation (skip gameplay logic)
 }
 
-// AttrMods 属性临时修饰（每帧清零重算）。
-// 光环、独行等 buff 写入此处，RecalcStats 统一应用。
-type AttrMods struct {
-	PctDamage  float64 // +X% 伤害（乘法累加，如 0.15 = +15%）
-	PctSpeed   float64 // +X% 攻速
-	PctRange   float64 // +X% 射程
-	FlatDamage float64 // +X 伤害（加法）
-	FlatSpeed  float64 // +X 攻速
-	FlatRange  float64 // +X 射程
-}
-
 // BuyStrength 花费金币购买永久强度。返回实际花费。
 func (t *Tower) BuyStrength() int {
 	bal := config.GlobalBalance()
@@ -130,34 +117,46 @@ func (t *Tower) BuyStrength() int {
 	return cost
 }
 
-// RecalcStats 根据当前强度和临时修饰重算 Damage/AttackSpeed/Range。
+// RecalcStats 根据当前强度和 BuffList 光环加成重算 Damage/AttackSpeed/Range。
 // 公式: final = (Base + Potential × str/100) × (1 + PctMod) + FlatMod
+// 光环修饰从 Buffs.SumByID() 读取；CritBonus/DamageAmp 同步更新供战斗代码读取。
 // 无 Strength 时使用强度100的默认值。
 func (t *Tower) RecalcStats() {
 	ratio := 1.0 // 默认强度100
 	if t.Strength != nil {
 		ratio = t.Strength.Ratio()
 	}
+
+	// Aura modifiers from BuffList
+	var pctDamage, pctSpeed, flatRange float64
+	if t.Buffs != nil {
+		pctDamage = t.Buffs.SumByID("aura:damageAmp") // soloBoost + damageUpAura → pctDamage
+		pctSpeed = t.Buffs.SumByID("aura:pctSpeed")
+		flatRange = t.Buffs.SumByID("aura:flatRange")
+		t.CritBonus = t.Buffs.SumByID("aura:crit")
+		t.DamageAmp = pctDamage // also exposed for combat code (apply_hit.go)
+	} else {
+		t.CritBonus = 0
+		t.DamageAmp = 0
+	}
+
 	baseDmg := t.BaseDamage + t.PotentialDamage*ratio
-	t.Damage = baseDmg*(1+t.Mods.PctDamage) + t.Mods.FlatDamage
+	t.Damage = baseDmg
 	if t.Damage < t.BaseDamage {
 		t.Damage = t.BaseDamage // 伤害不低于基础值
 	}
 
 	baseSpd := t.BaseSpeed + t.PotentialSpeed*ratio
-	t.AttackSpeed = baseSpd*(1+t.Mods.PctSpeed) + t.Mods.FlatSpeed
+	t.AttackSpeed = baseSpd * (1 + pctSpeed)
 	if floor := config.GlobalBalance().Tower.AttackSpeedFloor; t.AttackSpeed < floor {
 		t.AttackSpeed = floor // 攻速保底
 	}
 
 	baseRng := t.BaseRange + t.PotentialRange*ratio
-	t.Range = baseRng*(1+t.Mods.PctRange) + t.Mods.FlatRange
+	t.Range = baseRng + flatRange
 	if t.Range < t.BaseRange {
-		t.Range = t.BaseRange // 射程不低于基础值（含 Mods 后保底）
+		t.Range = t.BaseRange // 射程不低于基础值
 	}
-
-	// CritBonus/DamageAmp 由 resetTowerStats 重置，不在此处清零
-	// （RecalcStats 可能被 tickStrengthDrain 额外调用，不应清掉光环值）
 }
 
 // AllAbilities 返回所有生效能力（合并 AbilitySlots 和旧 Abilities）。

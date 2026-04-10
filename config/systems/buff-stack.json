@@ -33,6 +33,18 @@
     "bleed":        {"mode": "override",                 "description": "流血覆盖（最新覆盖旧值）"},
     "burn":         {"mode": "override",                 "description": "灼烧覆盖（最新覆盖旧值）"},
     "poison":       {"mode": "override",                 "description": "中毒覆盖（最新覆盖旧值）"},
-    "weaken":       {"mode": "strongest", "cap": 0.5,    "description": "虚弱取最强，上限 50%"}
+    "weaken":       {"mode": "strongest", "cap": 0.5,    "description": "虚弱取最强，上限 50%"},
+    "stealth":      {"mode": "override",                 "description": "隐身覆盖（后来居上）"},
+    "berserk":      {"mode": "override",                 "description": "狂暴标记（一次性触发）"},
+    "regen":        {"mode": "override",                 "description": "再生标记"},
+    "healAura":     {"mode": "override",                 "description": "治疗光环标记"},
+    "speedAura":    {"mode": "override",                 "description": "加速光环标记"},
+    "aura:damage":      {"mode": "additive",                 "description": "伤害光环（叠加）"},
+    "aura:pctDamage":   {"mode": "additive",  "cap": 3.0,    "description": "百分比伤害光环"},
+    "aura:pctSpeed":    {"mode": "additive",  "cap": 2.0,    "description": "百分比攻速光环"},
+    "aura:flatRange":   {"mode": "additive",                 "description": "射程光环（叠加）"},
+    "aura:crit":        {"mode": "additive",  "cap": 0.8,    "description": "暴击光环"},
+    "aura:damageAmp":   {"mode": "additive",  "cap": 3.0,    "description": "增伤光环"},
+    "towerStrength":    {"mode": "override",                 "description": "战灵强度buff"}
   }
 }

@@ -209,7 +209,7 @@ func TestRegression_CritMultiplier(t *testing.T) {
 	e := makeEnemy(1000, 100)
 
 	tw := makeTower(100)
-	tw.CritBonus = 1.0 // 100% crit rate
+	tw.CritBonus = 1.0 // 100% crit rate (normally computed from BuffList by RecalcStats)
 
 	out := combat.ApplyHit(hitInput(tw, e, 100, "projectile"), nil)
 

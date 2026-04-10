@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"math"
 
+	"defense2/internal/core/buff"
 	"defense2/internal/core/strength"
 	"defense2/internal/core/tower"
 	"defense2/internal/core/warden"
@@ -145,21 +146,23 @@ func chainTowerBuff(w *warden.Warden, s *ChainState, ctx *warden.TickContext) {
 		groupSize := groups[strength.UFFind(parent, i)]
 		bonus := float64(groupSize) * s.BonusPerTower
 		ensureStrength(t)
-		t.ApplyBuff(tower.TowerBuff{
-			Key:       key,
+		t.Buffs.Add(buff.Buff{
+			ID:        key,
+			Category:  buff.CatAura,
 			Source:    "聚能战灵",
-			Desc:      fmt.Sprintf("+%.0f 强度 (%d塔串联)", bonus, groupSize),
 			Value:     bonus,
 			Duration:  -1,
 			Remaining: -1, // 永久，每帧刷新
 		})
+		t.Strength.SetTemp(key, bonus)
 		newBonuses[t] = bonus
 	}
 
 	// 清除已不在场的塔的旧加成
 	for t := range s.lastBonuses {
 		if _, exists := newBonuses[t]; !exists {
-			t.RemoveBuff(key)
+			t.Buffs.RemoveByID(key)
+			t.Strength.RemoveTemp(key)
 		}
 	}
 	s.lastBonuses = newBonuses

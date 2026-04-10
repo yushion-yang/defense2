@@ -153,6 +153,7 @@ func TestBehavior_Berserk(t *testing.T) {
 		HP: 60, MaxHP: 100,
 		BaseSpeed: 100, Speed: 100,
 		BerserkThreshold: 0.5, BerserkSpeedScale: 1.5,
+		Buffs: buff.NewDefaultBuffList(),
 	}
 	// 60% HP, 不触发
 	triggered := enemy.UpdateBerserk(e)

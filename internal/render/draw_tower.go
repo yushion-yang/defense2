@@ -139,8 +139,8 @@ func (tr *TowerRenderer) DrawTowers(screen *ebiten.Image, pool *tower.Pool, sele
 		}
 
 		// --- Buff indicator dots ---
-		if !t.Selling && len(t.Buffs) > 0 {
-			vfx.DrawBuffDots(screen, cx, cy, len(t.Buffs))
+		if !t.Selling && t.Buffs.Count() > 0 {
+			vfx.DrawBuffDots(screen, cx, cy, t.Buffs.Count())
 		}
 
 		// --- Name label (skip during sell animation) ---

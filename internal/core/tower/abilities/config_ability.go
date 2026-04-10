@@ -203,74 +203,72 @@ func (a *ConfigAbility) OnTick(t *tower.Tower, ctx *tower.TickContext) *tower.Ti
 
 	switch a.Def.Type {
 	case "damageUpAura":
-		// scaleDim=bonus(比例), param=radius — 写入 DamageAmp（伤害管线统一乘算）
+		// scaleDim=bonus(比例), param=radius — via BuffList aura:damageAmp
 		srcKey := fmt.Sprintf("dmgAura_%s_%d_%d", t.Key, t.Row, t.Col)
-		desc := fmt.Sprintf("+%.0f%%全伤害", sv*100)
 		ctx.Towers.Each(func(other *tower.Tower) {
 			if math.Hypot(t.X-other.X, t.Y-other.Y) <= pm {
-				other.DamageAmp += sv
-				applyBuffDisplay(other, srcKey, "伤害光环", desc)
-			} else {
-				removeBuffDisplay(other, srcKey)
+				other.Buffs.Add(buff.Buff{
+					ID: "aura:damageAmp", Category: buff.CatAura,
+					Source: srcKey, Value: sv,
+					Duration: 0.15, Remaining: 0.15,
+				})
 			}
 		})
 
 	case "attackSpeedAura":
-		// scaleDim=bonus(比例), param=radius — 写入 Mods.PctSpeed
+		// scaleDim=bonus(比例), param=radius — via BuffList aura:pctSpeed
 		srcKey := fmt.Sprintf("spdAura_%s_%d_%d", t.Key, t.Row, t.Col)
-		desc := fmt.Sprintf("+%.0f%%攻速", sv*100)
 		ctx.Towers.Each(func(other *tower.Tower) {
 			if math.Hypot(t.X-other.X, t.Y-other.Y) <= pm {
-				other.Mods.PctSpeed += sv
-				other.RecalcStats()
-				applyBuffDisplay(other, srcKey, "攻速光环", desc)
-			} else {
-				removeBuffDisplay(other, srcKey)
+				other.Buffs.Add(buff.Buff{
+					ID: "aura:pctSpeed", Category: buff.CatAura,
+					Source: srcKey, Value: sv,
+					Duration: 0.15, Remaining: 0.15,
+				})
 			}
 		})
 
 	case "rangeAura":
-		// scaleDim=bonus(像素), param=radius — 写入 Mods.FlatRange
+		// scaleDim=bonus(像素), param=radius — via BuffList aura:flatRange
 		srcKey := fmt.Sprintf("rngAura_%s_%d_%d", t.Key, t.Row, t.Col)
-		desc := fmt.Sprintf("+%.0f射程", sv)
 		ctx.Towers.Each(func(other *tower.Tower) {
 			if math.Hypot(t.X-other.X, t.Y-other.Y) <= pm {
-				other.Mods.FlatRange += sv
-				other.RecalcStats()
-				applyBuffDisplay(other, srcKey, "射程光环", desc)
-			} else {
-				removeBuffDisplay(other, srcKey)
+				other.Buffs.Add(buff.Buff{
+					ID: "aura:flatRange", Category: buff.CatAura,
+					Source: srcKey, Value: sv,
+					Duration: 0.15, Remaining: 0.15,
+				})
 			}
 		})
 
 	case "critAura":
-		// scaleDim=bonus(暴击率加成), param=radius — CritBonus 每帧重置
+		// scaleDim=bonus(暴击率加成), param=radius — via BuffList aura:crit
 		srcKey := fmt.Sprintf("critAura_%s_%d_%d", t.Key, t.Row, t.Col)
-		desc := fmt.Sprintf("+%.0f%%暴击", sv*100)
 		ctx.Towers.Each(func(other *tower.Tower) {
 			if math.Hypot(t.X-other.X, t.Y-other.Y) <= pm {
-				other.CritBonus += sv
-				applyBuffDisplay(other, srcKey, "暴击光环", desc)
-			} else {
-				removeBuffDisplay(other, srcKey)
+				other.Buffs.Add(buff.Buff{
+					ID: "aura:crit", Category: buff.CatAura,
+					Source: srcKey, Value: sv,
+					Duration: 0.15, Remaining: 0.15,
+				})
 			}
 		})
 
 	case "soloBoost":
-		// scaleDim=bonus, param=checkRadius — 写入 Mods.PctDamage
+		// scaleDim=bonus, param=checkRadius — via BuffList aura:damageAmp (self)
 		alone := true
 		ctx.Towers.Each(func(other *tower.Tower) {
 			if other != t && math.Hypot(t.X-other.X, t.Y-other.Y) <= pm {
 				alone = false
 			}
 		})
-		srcKey := fmt.Sprintf("solo_%s_%d_%d", t.Key, t.Row, t.Col)
 		if alone {
-			t.Mods.PctDamage += sv
-			t.RecalcStats()
-			applyBuffDisplay(t, srcKey, "独行加成", fmt.Sprintf("+%.0f%%伤害", sv*100))
-		} else {
-			removeBuffDisplay(t, srcKey)
+			srcKey := fmt.Sprintf("solo_%s_%d_%d", t.Key, t.Row, t.Col)
+			t.Buffs.Add(buff.Buff{
+				ID: "aura:damageAmp", Category: buff.CatAura,
+				Source: srcKey, Value: sv,
+				Duration: 0.15, Remaining: 0.15,
+			})
 		}
 
 	case "poisonZone":
@@ -344,28 +342,3 @@ func RegisterConfigAbilities(table config.AbilityTable) {
 	}
 }
 
-// applyBuffDisplay 仅在 Tower.Buffs 中添加/更新一条显示记录（不走 Strength）。
-// 用于 critAura 等不通过 Strength 系统的光环。
-func applyBuffDisplay(t *tower.Tower, key, source, desc string) {
-	for i := range t.Buffs {
-		if t.Buffs[i].Key == key {
-			t.Buffs[i].Source = source
-			t.Buffs[i].Desc = desc
-			return
-		}
-	}
-	t.Buffs = append(t.Buffs, tower.TowerBuff{
-		Key: key, Source: source, Desc: desc,
-		Duration: -1, Remaining: -1,
-	})
-}
-
-// removeBuffDisplay 移除 Tower.Buffs 中的显示记录（不动 Strength）。
-func removeBuffDisplay(t *tower.Tower, key string) {
-	for i := range t.Buffs {
-		if t.Buffs[i].Key == key {
-			t.Buffs = append(t.Buffs[:i], t.Buffs[i+1:]...)
-			return
-		}
-	}
-}

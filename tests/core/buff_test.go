@@ -280,6 +280,45 @@ func TestBuff_Permanent(t *testing.T) {
 }
 
 // ============================================================
+// SumByID 测试
+// ============================================================
+
+func TestBuffList_SumByID(t *testing.T) {
+	rules := map[string]buff.StackRule{
+		"aura:damage": {Mode: buff.Additive, Cap: 100},
+	}
+	bl := buff.NewBuffList(rules)
+
+	// Empty → 0
+	if got := bl.SumByID("aura:damage"); got != 0 {
+		t.Errorf("empty SumByID = %f, want 0", got)
+	}
+
+	// Single buff
+	bl.Add(buff.Buff{ID: "aura:damage", Value: 10, Duration: 1, Remaining: 1})
+	if got := bl.SumByID("aura:damage"); got != 10 {
+		t.Errorf("single SumByID = %f, want 10", got)
+	}
+
+	// Multiple additive
+	bl.Add(buff.Buff{ID: "aura:damage", Value: 20, Duration: 1, Remaining: 1, Source: "b"})
+	if got := bl.SumByID("aura:damage"); got != 30 {
+		t.Errorf("multi SumByID = %f, want 30", got)
+	}
+
+	// Respects cap
+	bl.Add(buff.Buff{ID: "aura:damage", Value: 80, Duration: 1, Remaining: 1, Source: "c"})
+	if got := bl.SumByID("aura:damage"); got != 100 {
+		t.Errorf("capped SumByID = %f, want 100 (cap)", got)
+	}
+
+	// Unmatched ID
+	if got := bl.SumByID("nonexistent"); got != 0 {
+		t.Errorf("unmatched SumByID = %f, want 0", got)
+	}
+}
+
+// ============================================================
 // DoT Tick 测试
 // ============================================================
 

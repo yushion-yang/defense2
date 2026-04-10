@@ -43,7 +43,7 @@ func TickTowerAbilities(towers *tower.Pool, enemies *enemy.Pool, dt float64, cha
 
 	// --- Phase 1.1: tick 塔 buff（递减时间，移除过期 buff）---
 	towers.Each(func(t *tower.Tower) {
-		t.TickBuffs(dt)
+		t.Buffs.Tick(dt)
 	})
 
 	// --- Phase 1.5: 重置敌人每帧临时状态（沉默/区域虚弱等，由区域能力重新设置） ---
@@ -85,10 +85,8 @@ func TickTowerAbilities(towers *tower.Pool, enemies *enemy.Pool, dt float64, cha
 }
 
 // resetTowerStats 根据战力系统重算塔的 Damage/Range/AttackSpeed。
-// 公式: attr = base + potential * (strength / 100)
+// 光环 buff 通过 BuffList.Tick() 自然过期（0.15s），RecalcStats 从 BuffList 读取。
+// CritBonus/DamageAmp 由 RecalcStats 从 BuffList 重新计算。
 func resetTowerStats(t *tower.Tower) {
-	t.Mods = tower.AttrMods{} // 清零临时修饰
-	t.CritBonus = 0           // 每帧重置，由 critAura OnTick 重新设置
-	t.DamageAmp = 0           // 每帧重置，由 damageUpAura OnTick 重新设置
 	t.RecalcStats()
 }
