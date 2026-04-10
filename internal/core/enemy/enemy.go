@@ -253,6 +253,9 @@ func (e *Enemy) IsBleeding() bool { return e.Buffs != nil && e.Buffs.Has("bleed"
 // IsBurning returns true if the enemy has an active burn buff.
 func (e *Enemy) IsBurning() bool { return e.Buffs != nil && e.Buffs.Has("burn") }
 
+// IsPoisoned returns true if the enemy has an active poison buff.
+func (e *Enemy) IsPoisoned() bool { return e.Buffs != nil && e.Buffs.Has("poison") }
+
 // IsWeakened returns true if the enemy has an active weaken buff.
 func (e *Enemy) IsWeakened() bool { return e.Buffs != nil && e.Buffs.Has("weaken") }
 

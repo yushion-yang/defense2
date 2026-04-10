@@ -21,9 +21,11 @@ type HealEvent struct {
 
 // BehaviorEvents 一帧内行为系统产生的事件（供外部播放音效/VFX）。
 type BehaviorEvents struct {
-	Heals   []HealEvent   // 治疗事件
-	Reveals []RevealEvent // 隐身破解事件
-	Regens  int           // 本帧有回血的敌人数
+	Heals     []HealEvent   // 治疗事件
+	Reveals   []RevealEvent // 隐身破解事件
+	Regens    int           // 本帧有回血的敌人数
+	Berserks  int           // 本帧刚触发狂暴的敌人数
+	HasBuffer bool          // 本帧是否有活跃的旗手 buffer
 }
 
 // RevealEvent 隐身破解事件。
@@ -49,7 +51,9 @@ func TickBehaviors(pool *Pool, dt float64) BehaviorEvents {
 		}
 
 		// 狂暴检查（所有敌人，不限于特定 Behavior）
-		UpdateBerserk(e)
+		if UpdateBerserk(e) {
+			events.Berserks++
+		}
 
 		// 自然回血（所有配置了 RegenPerSec 的敌人，包括 regenerator 行为）
 		if e.RegenPerSec > 0 {
@@ -65,6 +69,9 @@ func TickBehaviors(pool *Pool, dt float64) BehaviorEvents {
 			tickStealth(e, dt, &events)
 		case "buffer":
 			tickBuffer(e, pool)
+			if e.BuffRadius > 0 && !e.AbilitySilenced {
+				events.HasBuffer = true
+			}
 		}
 		// splitter/deathSpawn 在死亡时触发，不在此处 tick
 

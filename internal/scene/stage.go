@@ -1685,6 +1685,16 @@ func (s *StageScene) updatePlaying() {
 	// 2. 敌人状态效果（减速、流血等）
 	pipeline.TickEnemyStatusEffects(s.enemies, gameDT, func(e *enemy.Enemy, dmg float64) {
 		render.SpawnDamageText(e.X, e.Y-10, dmg, false, e.Boss)
+		// DoT-type-specific tick sounds
+		if e.IsBurning() {
+			s.audioMgr.PlayThrottledAt(gameAudio.SFXBurnTick, 1000, gameAudio.VolHit*0.3)
+		}
+		if e.IsBleeding() {
+			s.audioMgr.PlayThrottledAt(gameAudio.SFXBleedTick, 1000, gameAudio.VolHit*0.3)
+		}
+		if e.IsPoisoned() {
+			s.audioMgr.PlayThrottledAt(gameAudio.SFXPoisonTick, 1000, gameAudio.VolHit*0.3)
+		}
 	})
 
 	// 2.5. 敌人行为 tick（传送；狂暴/回血由 TickBehaviors 统一处理）
@@ -1751,6 +1761,12 @@ func (s *StageScene) updatePlaying() {
 	}
 	if behaviorEvents.Regens > 0 {
 		s.audioMgr.PlayThrottledAt(gameAudio.SFXRegenTick, 2000, gameAudio.VolHit*0.5)
+	}
+	if behaviorEvents.Berserks > 0 {
+		s.audioMgr.PlayThrottledAt(gameAudio.SFXBerserkActivate, 500, gameAudio.VolWave)
+	}
+	if behaviorEvents.HasBuffer {
+		s.audioMgr.PlayThrottledAt(gameAudio.SFXBannerAura, 3000, gameAudio.VolHit*0.3)
 	}
 	// 削强能力：每帧管理敌人→塔连接
 	// 削强在 TickTowerAbilities 之后执行（避免被 ClearTransient 清掉）
