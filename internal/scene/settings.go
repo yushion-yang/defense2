@@ -164,10 +164,8 @@ func (s *SettingsScene) Update() error {
 		v := sliderValue(mx, bx, bw)
 		if v != s.sfxVol {
 			s.sfxVol = v
-			s.sfxEnabled = v > 0 // 音量>0即启用
 			if am := s.switcher.AudioManager(); am != nil {
 				am.SetVolume(v)
-				am.SetSFXEnabled(v > 0)
 			}
 			s.persist()
 		}

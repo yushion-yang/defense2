@@ -52,8 +52,6 @@ func LoadSettings() SettingsData {
 	if s.Quality < 0 || s.Quality > 2 {
 		s.Quality = 0
 	}
-	// 音量 > 0 即为启用（UI 中无独立开关，音量控制等价于开关）
-	s.SFXEnabled = s.SFXVolume > 0
 	return s
 }
 
