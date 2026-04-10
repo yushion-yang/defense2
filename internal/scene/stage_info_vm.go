@@ -46,10 +46,16 @@ func BuildInfoPanelVM(t *tower.Tower, sellValue int, wavesCleared int, testMode 
 		vm.StrengthText = strTxt
 	}
 
-	// Attribute segments (colored base + scaled + total + mods bonus)
-	vm.DamageSegs = buildAttrSegsWithMods("%.0f", t.BaseDamage, t.PotentialDamage, effStr, t.Mods.PctDamage, t.Mods.FlatDamage)
-	vm.SpeedSegs = buildAttrSegsWithMods("%.2f", t.BaseSpeed, t.PotentialSpeed, effStr, t.Mods.PctSpeed, t.Mods.FlatSpeed)
-	vm.RangeSegs = buildAttrSegsWithMods("%.0f", t.BaseRange, t.PotentialRange, effStr, t.Mods.PctRange, t.Mods.FlatRange)
+	// Attribute segments (colored base + scaled + total + aura bonus from BuffList)
+	var pctDamage, pctSpeed, flatRange float64
+	if t.Buffs != nil {
+		pctDamage = t.Buffs.SumByID("aura:damageAmp")
+		pctSpeed = t.Buffs.SumByID("aura:pctSpeed")
+		flatRange = t.Buffs.SumByID("aura:flatRange")
+	}
+	vm.DamageSegs = buildAttrSegsWithMods("%.0f", t.BaseDamage, t.PotentialDamage, effStr, pctDamage, 0)
+	vm.SpeedSegs = buildAttrSegsWithMods("%.2f", t.BaseSpeed, t.PotentialSpeed, effStr, pctSpeed, 0)
+	vm.RangeSegs = buildAttrSegsWithMods("%.0f", t.BaseRange, t.PotentialRange, effStr, 0, flatRange)
 
 	// Attack style
 	style := t.AttackStyleID
