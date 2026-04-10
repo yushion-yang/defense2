@@ -50,7 +50,7 @@ func TickTowerAbilities(towers *tower.Pool, enemies *enemy.Pool, dt float64, cha
 	enemies.Each(func(e *enemy.Enemy) {
 		e.Silenced = false
 		e.AbilitySilenced = false
-		// DamageAmplify/DamageAmplifyTimer now managed by BuffList — no manual reset needed.
+		// Weaken (damage amplify) is managed by BuffList — no manual reset needed.
 		// BuffList weaken buffs expire via Tick(); zone weaken uses short-duration (0.2s) buffs.
 	})
 

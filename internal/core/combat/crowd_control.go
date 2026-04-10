@@ -102,16 +102,12 @@ func ApplyControlImmunity(e *enemy.Enemy, duration float64) {
 		Remaining: duration,
 	})
 
-	// 设置 legacy 免疫标志（向后兼容，直到 Task 10 移除）
-	e.ControlImmuneTimer = duration
+	// Set archetype immunity flags (temporary, cleared when buff expires in TickStatusEffects)
 	e.IsControlImmune = true
 	e.IsStunImmune = true
 	e.IsSlowImmune = true
+	e.IsRootImmune = true
 
-	// 清除 legacy CC 字段
-	e.StunTimer = 0
-	e.SlowTimer = 0
-	e.SlowFactor = 1
+	// Restore speed (CC cleared by ClearByCategory above)
 	e.Speed = e.BaseSpeed
-	e.RootTimer = 0
 }

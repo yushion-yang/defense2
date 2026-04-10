@@ -64,7 +64,6 @@ func (p *Pool) Spawn(x, y, baseHP, baseSpeed float64, pathIndex int, archetype s
 			e.PathIndex = pathIndex
 			e.Active = true
 			e.Archetype = archetype
-			e.SlowFactor = 1           // 非零默认值
 			e.Buffs = buff.NewDefaultBuffList() // 初始化 BuffList
 
 			// 外观

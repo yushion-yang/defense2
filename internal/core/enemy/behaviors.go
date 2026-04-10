@@ -141,8 +141,6 @@ func TickBehaviors(pool *Pool, dt float64) BehaviorEvents {
 						Duration:  e.PurgeImmuneDur,
 						Remaining: e.PurgeImmuneDur,
 					})
-					// Legacy flags (backward compat)
-					e.ControlImmuneTimer = e.PurgeImmuneDur
 					e.IsControlImmune = true
 					e.IsStunImmune = true
 					e.IsSlowImmune = true

@@ -28,7 +28,7 @@ func TestRegression_CC_SlowMinSpeedClamp(t *testing.T) {
 }
 
 // BUG: Stun did not prevent movement.
-// Fix: MoveAlongPath checks StunTimer > 0 and skips movement.
+// Fix: MoveAlongPath checks IsStunned() and skips movement.
 func TestRegression_CC_StunPreventsMovement(t *testing.T) {
 	s := sim.New().
 		WithStraightPath(500).
@@ -126,7 +126,7 @@ func TestRegression_Projectile_TrackingTarget(t *testing.T) {
 // ============================================================
 
 // BUG: Burn was treated as bleed (shared timer).
-// Fix: Burn has independent BurnTimer/BurnDPS fields.
+// Fix: Burn has independent buff in BuffList (bleed and burn don't conflict).
 func TestRegression_DoT_BurnIndependentOfBleed(t *testing.T) {
 	s := sim.New().
 		WithStraightPath(500).
@@ -146,7 +146,7 @@ func TestRegression_DoT_BurnIndependentOfBleed(t *testing.T) {
 	}
 
 	// Run 1 DoT tick cycle (0.5s = 30 ticks + 1 init tick)
-	// First tick initializes DotTickTimer to 0.5, so damage fires at tick 31.
+	// First tick initializes dotTimer to 0.5, so damage fires at tick 31.
 	s.RunTicks(31)
 
 	// Combined DoT per tick: (100+50) * 0.5 = 75

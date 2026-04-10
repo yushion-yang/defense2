@@ -146,8 +146,9 @@ func TestEnemyArchetype_BufferHasAbility(t *testing.T) {
 // ═══════════════════════════════════════
 
 func TestDamagePipeline_WeakenAmplifyHasCap(t *testing.T) {
-	e := &enemy.Enemy{HP: 100, MaxHP: 100, Active: true, StatusEffects: enemy.StatusEffects{DamageAmplify: 0.8}} // 超过 cap
+	e := &enemy.Enemy{HP: 100, MaxHP: 100, Active: true}
 	e.Buffs = buff.NewDefaultBuffList()
+	e.Buffs.Add(buff.Buff{ID: "weaken", Category: buff.CatDebuff, Source: "test", Value: 0.8, Duration: 5, Remaining: 5}) // 超过 cap
 	r := combat.ProcessDamage(combat.DamageInput{
 		Target:    e,
 		RawDamage: 10,
