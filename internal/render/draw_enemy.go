@@ -103,7 +103,7 @@ func (er *EnemyRenderer) DrawEnemies(screen *ebiten.Image, pool *enemy.Pool, ani
 
 		// --- Flying enemy ground shadow ---
 		if e.Archetype == "flying" {
-			draw.FilledCircle(screen, cx+2, cy+8, r*1.3, theme.EnemyFlyShadow)
+			vfx.DrawFlyingShadow(screen, cx, cy, r, theme.EnemyFlyShadow)
 		}
 
 		// --- Boss pulsing rings ---
@@ -118,7 +118,7 @@ func (er *EnemyRenderer) DrawEnemies(screen *ebiten.Image, pool *enemy.Pool, ani
 
 		// --- Root ground effect (drawn UNDER enemy body) ---
 		if e.RootTimer > 0 {
-			draw.FilledCircle(screen, cx, cy+r, r*0.8, color.RGBA{100, 70, 40, 60})
+			vfx.DrawRootGround(screen, cx, cy, r)
 		}
 
 		// --- Buffer aura ring (drawn UNDER body, hidden when silenced) ---
@@ -188,10 +188,10 @@ func (er *EnemyRenderer) DrawEnemies(screen *ebiten.Image, pool *enemy.Pool, ani
 		// --- Status effect body overlays (subtle, sprite-sized) ---
 		spriteR := float32(enemySpriteSize) / 2
 		if e.SlowTimer > 0 {
-			draw.CircleOutline(screen, cx, cy, spriteR+1, 1.5, color.RGBA{80, 160, 255, 80})
+			vfx.DrawSlowOverlay(screen, cx, cy, spriteR)
 		}
 		if e.BurnTimer > 0 {
-			draw.FilledCircle(screen, cx, cy, spriteR*0.5, color.RGBA{255, 120, 30, 35})
+			vfx.DrawBurnOverlay(screen, cx, cy, spriteR)
 		}
 
 		// --- Stun rotating stars ---

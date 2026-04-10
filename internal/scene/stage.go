@@ -1419,23 +1419,7 @@ func (s *StageScene) drawStrengthDrainLinks(screen *ebiten.Image) {
 		tx, ty := float32(t.X), float32(t.Y)
 		ex, ey := float32(e.X), float32(e.Y)
 
-		// 底层连接线（半透明）
-		draw.ThickLine(screen, ex, ey, tx, ty, 1.5, color.RGBA{R: 140, G: 40, B: 180, A: 60})
-
-		// 流动粒子：从塔→怪物方向，3 个粒子均匀分布沿线移动
-		const particleCount = 3
-		speed := 1.2 // 粒子移动速度
-		for i := 0; i < particleCount; i++ {
-			// 每个粒子偏移不同相位
-			phase := math.Mod(animTime*speed+float64(i)/particleCount, 1.0)
-			// phase 0=塔位置, 1=怪物位置
-			px := float32(float64(tx) + float64(ex-tx)*phase)
-			py := float32(float64(ty) + float64(ey-ty)*phase)
-			// 粒子大小和亮度随位置变化（靠近怪物时更亮更大）
-			size := float32(2 + phase*2)
-			alpha := uint8(100 + phase*155)
-			draw.FilledCircle(screen, px, py, size, color.RGBA{R: 200, G: 80, B: 255, A: alpha})
-		}
+		vfx.DrawStrengthDrainLink(screen, tx, ty, ex, ey, animTime)
 	})
 }
 
@@ -1452,53 +1436,38 @@ func (s *StageScene) drawEnemyAbilityVFX(screen *ebiten.Image) {
 
 		// 格挡闪光（蓝色盾形脉冲）
 		if e.BlockFlash > 0 {
-			r := float32(e.Radius) + 6
-			alpha := uint8(200 * (e.BlockFlash / 0.25))
-			draw.CircleOutline(screen, ex, ey, r, 2, color.RGBA{R: 80, G: 160, B: 255, A: alpha})
-			draw.CircleOutline(screen, ex, ey, r+3, 1, color.RGBA{R: 120, G: 200, B: 255, A: alpha / 2})
+			vfx.DrawBlockFlash(screen, ex, ey, float32(e.Radius), e.BlockFlash)
 		}
 
 		// 闪避残影（白色偏移残影）
 		if e.DodgeFlash > 0 {
-			alpha := uint8(150 * (e.DodgeFlash / 0.3))
-			offset := float32(6 * (e.DodgeFlash / 0.3))
-			draw.FilledCircle(screen, ex-offset, ey, float32(e.Radius)*0.8, color.RGBA{R: 255, G: 255, B: 255, A: alpha})
+			vfx.DrawDodgeFlash(screen, ex, ey, float32(e.Radius), e.DodgeFlash)
 		}
 
 		// 装甲火花（灰色小火花）
 		if e.ArmorSpark > 0 {
-			alpha := uint8(200 * (e.ArmorSpark / 0.15))
-			sparkR := float32(e.Radius) + float32(4*(1-e.ArmorSpark/0.15))
-			draw.CircleOutline(screen, ex, ey, sparkR, 1.5, color.RGBA{R: 180, G: 180, B: 180, A: alpha})
+			vfx.DrawArmorSpark(screen, ex, ey, float32(e.Radius), e.ArmorSpark)
 		}
 
 		// 坚韧触发脉冲（橙色扩散圈）
 		if e.DamageCapHit > 0 {
-			alpha := uint8(180 * (e.DamageCapHit / 0.3))
-			r := float32(e.Radius) + float32(6*(1-e.DamageCapHit/0.3))
-			draw.CircleOutline(screen, ex, ey, r, 1.5, color.RGBA{R: 255, G: 180, B: 40, A: alpha})
+			vfx.DrawDamageCapPulse(screen, ex, ey, float32(e.Radius), e.DamageCapHit)
 		}
 
 		// 净化脉冲（白色扩散圈）
 		if e.PurgeFlash > 0 {
-			progress := 1 - e.PurgeFlash/0.4
-			r := float32(e.Radius) + float32(40*progress)
-			alpha := uint8(200 * (1 - progress))
-			draw.CircleOutline(screen, ex, ey, r, 2, color.RGBA{R: 255, G: 255, B: 255, A: alpha})
+			vfx.DrawPurgeWave(screen, ex, ey, float32(e.Radius), e.PurgeFlash)
 		}
 
 		// ── 持续状态 ──
 
 		// 相位偏移：紫色脉冲光环（免伤中）
 		if e.PhaseActive {
-			pulseR := float32(e.Radius) + 4 + float32(3*math.Sin(animTime*6))
-			draw.CircleOutline(screen, ex, ey, pulseR, 2, color.RGBA{R: 160, G: 80, B: 255, A: 160})
-			draw.CircleOutline(screen, ex, ey, pulseR+4, 1, color.RGBA{R: 160, G: 80, B: 255, A: 60})
+			vfx.DrawPhaseAura(screen, ex, ey, float32(e.Radius), animTime)
 		}
 
 		// 受击冲刺：速度拖尾线
 		if e.DashActiveT > 0 {
-			// 计算行进方向（从当前位置到目标路径点）
 			dirX, dirY := -1.0, 0.0
 			if e.PathIndex < len(e.Path) {
 				target := e.Path[e.PathIndex]
@@ -1510,20 +1479,7 @@ func (s *StageScene) drawEnemyAbilityVFX(screen *ebiten.Image) {
 					dirY = dy / dist
 				}
 			}
-			// 速度线朝行进反方向拖尾
-			for i := 0; i < 3; i++ {
-				alpha := uint8(160 - i*50)
-				length := float32(12 + i*4)
-				// 尾端 = 敌人位置 - 行进方向 × 长度，加垂直偏移分散
-				perpX := -dirY * float64(i*3-3) // 垂直于行进方向的偏移
-				perpY := dirX * float64(i*3-3)
-				tailX := ex + float32(perpX) - float32(dirX)*length
-				tailY := ey + float32(perpY) - float32(dirY)*length
-				headX := ex + float32(perpX)
-				headY := ey + float32(perpY)
-				draw.ThickLine(screen, headX, headY, tailX, tailY, 1.5,
-					color.RGBA{R: 255, G: 200, B: 80, A: alpha})
-			}
+			vfx.DrawDashTrails(screen, ex, ey, dirX, dirY)
 		}
 
 		// ── 范围/光环 （不被沉默时显示）──
@@ -1535,28 +1491,16 @@ func (s *StageScene) drawEnemyAbilityVFX(screen *ebiten.Image) {
 		// 治疗光环范围圈（绿色虚线圈）
 		if e.HealPower > 0 && e.HealRadius > 0 && !e.IsDying() {
 			hr := float32(e.HealRadius)
-			// 常驻范围圈 + 旋转光点（始终显示）
-			alpha := uint8(25 + 10*math.Sin(animTime*2))
-			draw.CircleOutline(screen, ex, ey, hr, 1, color.RGBA{R: 60, G: 220, B: 100, A: alpha})
-			for i := 0; i < 3; i++ {
-				angle := animTime*1.5 + float64(i)*2.094
-				px := ex + float32(math.Cos(angle))*hr*0.7
-				py := ey + float32(math.Sin(angle))*hr*0.7
-				draw.FilledCircle(screen, px, py, 2, color.RGBA{R: 80, G: 255, B: 120, A: 100})
-			}
-			// 治疗触发时叠加扩散脉冲
+			vfx.DrawHealerAura(screen, ex, ey, hr, animTime)
 			if e.HealCooldown > e.HealInterval-0.4 {
 				progress := (e.HealInterval - e.HealCooldown) / 0.4
-				pulseR := float32(e.Radius) + float32(progress)*hr
-				pulseAlpha := uint8(200 * (1 - progress))
-				draw.CircleOutline(screen, ex, ey, pulseR, 2, color.RGBA{R: 60, G: 255, B: 100, A: pulseAlpha})
+				vfx.DrawHealPulse(screen, ex, ey, float32(e.Radius), hr, progress)
 			}
 		}
 
 		// 加速光环范围圈（橙色虚线圈）
 		if e.AuraRange > 0 && e.AuraSpeedUp > 0 && !e.IsDying() {
-			alpha := uint8(35 + 15*math.Sin(animTime*1.5))
-			draw.CircleOutline(screen, ex, ey, float32(e.AuraRange), 1, color.RGBA{R: 255, G: 180, B: 60, A: alpha})
+			vfx.DrawSpeedAura(screen, ex, ey, e.AuraRange, animTime)
 		}
 	})
 }
@@ -2674,18 +2618,9 @@ func towerTypeIcon(key string) string {
 
 // drawUpgradeIndicators 在有待选能力的塔上方绘制脉冲金色菱形指示器。
 func (s *StageScene) drawUpgradeIndicators(target *ebiten.Image, animTime float64) {
-	pulse := float32(0.6 + 0.4*math.Sin(animTime*5))  // alpha 脉冲
-	scale := float32(1.0 + 0.15*math.Sin(animTime*5)) // 尺寸脉冲
 	s.towers.Each(func(t *tower.Tower) {
 		if t.HasPendingUpgrade(s.wavesCleared) {
-			a := uint8(230 * pulse)
-			r := float32(7) * scale
-			// 外层辉光
-			draw.Diamond(target, float32(t.X), float32(t.Y-24), r+2, 1.0,
-				color.RGBA{R: 250, G: 200, B: 50, A: a / 3})
-			// 内层实体
-			draw.Diamond(target, float32(t.X), float32(t.Y-24), r, 1.8,
-				color.RGBA{R: 250, G: 200, B: 50, A: a})
+			vfx.DrawUpgradeDiamond(target, float32(t.X), float32(t.Y), animTime)
 		}
 	})
 }
