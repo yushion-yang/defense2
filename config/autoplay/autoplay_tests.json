@@ -1,0 +1,57 @@
+{
+  "_meta": {
+    "description": "AutoPlay 自动化测试完整清单。所有检测内容、阈值、验证方法均在此文件定义。",
+    "structure": "两大板块：anomaly_rules(运行时异常检测) + ability_scenarios(能力行为验证)",
+    "usage": "go run cmd/autoplay/main.go --ability-sweep / --sweep"
+  },
+  "anomaly_rule_files": [
+    "anomaly_ability.json",
+    "anomaly_balance.json",
+    "anomaly_combat.json",
+    "anomaly_economy.json",
+    "anomaly_enemy.json",
+    "anomaly_system.json",
+    "anomaly_warden.json"
+  ],
+  "ability_scenarios": {
+    "_meta": {
+      "principle": "核心原则：不装该能力时断言不会通过 → 才是有效测试",
+      "layers": [
+        "第1层(tower_*): 每个塔能力单独测试，验证能力效果存在",
+        "第2层(combo_*): 塔能力组合测试，验证两种能力共存不冲突",
+        "第3层(enemy_*): 每个怪物能力单独测试，验证能力字段正确传递",
+        "第4层(enemyCombo_*): 怪物能力组合测试，验证双能力共存",
+        "第5层(cross_*): 炮塔×怪物交叉测试，验证能力对抗逻辑"
+      ],
+      "flow": "每个场景统一流程: 选战灵 → 建塔 → 添加能力 → 开波 → 等待 → 检查断言",
+      "assertTypes": {
+        "multi_enemy_damaged_gte": "N+个敌人 HP<MaxHP（验证 AoE 命中多体）",
+        "enemy_speed_below_base": "任何敌人 Speed < BaseSpeed*0.95（验证减速生效）",
+        "enemy_stunned": "任何敌人处于眩晕状态（基础塔不会眩晕）",
+        "enemy_burning": "任何敌人处于灼烧状态（基础塔不会灼烧）",
+        "enemy_bleeding": "任何敌人处于流血状态（基础塔不会流血）",
+        "enemy_weakened": "任何敌人 DamageAmplify > 0（基础塔不会虚弱）",
+        "enemy_silenced": "任何敌人 AbilitySilenced=true（基础塔无沉默效果）",
+        "enemy_killed": "有击杀发生（验证伤害能力确实造成了伤害）",
+        "enemy_killed_before": "在指定帧数内有击杀（验证伤害增强加速了击杀）",
+        "enemy_damaged": "任何敌人受伤（HP < MaxHP）",
+        "enemy_phase_active": "任何敌人 PhaseActive=true（相位免伤激活）",
+        "enemy_count_increased": "敌人池最大计数超过初始值+2（分裂/召唤产生新敌人）",
+        "gold_increased": "金币增长（经济能力生效）",
+        "tower_damage_above_base": "塔 Damage > BaseDamage*1.1（强化提升了属性）",
+        "tower_has_buff": "塔 Abilities 列表非空（光环使塔获得 buff）",
+        "tower_strength_decreased": "塔 Strength < 100（削强降低了强度）",
+        "no_enemy_slowed": "所有活敌人都未被减速（验证免疫生效）",
+        "no_enemy_stunned": "所有活敌人都未被眩晕（验证免疫生效）",
+        "enemy_has_armor": "任何敌人 ArmorFlat > 0",
+        "enemy_has_evasion": "任何敌人 EvasionChance > 0",
+        "enemy_has_cap": "任何敌人 DamageCap > 0 或 DamageCapPct > 0",
+        "enemy_has_block": "任何敌人 AbilityIDs 含 projectileBlock",
+        "enemy_has_heal_aura": "任何敌人 HealRadius > 0",
+        "enemy_has_speed_aura": "任何敌人 BuffRadius > 0",
+        "telemetry_has": "遥测 AbilityTriggered 中存在指定键"
+      }
+    },
+    "scenarios_file": "config/ability_tests.json"
+  }
+}

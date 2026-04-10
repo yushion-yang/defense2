@@ -21,8 +21,8 @@ func (h *ScatterHandler) Fire(t *tower.Tower, target *enemy.Enemy, ctx *AttackCo
 		speed = 400
 	}
 
-	// 从能力配置读取 extraPellets 和 spreadAngle
-	pellets := bal.Combat.ScatterBasePellets
+	// 从能力配置读取总弹丸数和散布角度（与 bounce 同模式：CalcScale = 总数）
+	pellets := bal.Combat.ScatterBasePellets // fallback
 	spreadDeg := bal.Combat.ScatterSpreadAngle
 	if abTable := config.GlobalAbilityTable(); abTable != nil {
 		if def := abTable["scatter"]; def != nil {
@@ -30,8 +30,10 @@ func (h *ScatterHandler) Fire(t *tower.Tower, target *enemy.Enemy, ctx *AttackCo
 			if t.Strength != nil {
 				str = t.Strength.Effective()
 			}
-			extra := int(def.CalcScale(str))
-			pellets += extra
+			pellets = int(math.Floor(def.CalcScale(str)))
+			if pellets < 2 {
+				pellets = 2
+			}
 			if def.Param > 0 {
 				spreadDeg = def.Param
 			}

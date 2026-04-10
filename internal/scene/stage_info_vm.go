@@ -353,7 +353,7 @@ func FormatAbilityDisplay(def *config.AbilityDef, effStr float64) string {
 }
 
 // buildAbilitySegments parses a Display template and produces rendering segments.
-// Template placeholders: {s}, {s%}, {si}, {p}, {p%}
+// Template placeholders: {s}, {s%}, {si}, {sh%}, {p}, {p%}
 func buildAbilitySegments(def *config.AbilityDef, effStr float64) []hud.AbilitySegment {
 	tpl := def.Display
 	if tpl == "" {
@@ -420,6 +420,10 @@ func buildAbilitySegments(def *config.AbilityDef, effStr float64) []hud.AbilityS
 					hud.AbilitySegment{Text: fmt.Sprintf("→%.0f", math.Floor(total)), Kind: "total"},
 				)
 			}
+		case "sh%":
+			// {sh%} = 缩放值减半的百分比（用于 enhance 射程减半提升）
+			half := total / 2
+			segs = append(segs, hud.AbilitySegment{Text: fmt.Sprintf("%.0f%%", half*100), Kind: "base"})
 		case "p":
 			segs = append(segs, hud.AbilitySegment{Text: fmtNum(def.Param), Kind: "text"})
 		case "p%":

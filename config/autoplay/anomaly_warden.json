@@ -1,0 +1,63 @@
+{
+  "_meta": {
+    "description": "AutoPlay 异常检测规则 — warden",
+    "count": 5
+  },
+  "rules": [
+    {
+      "id": "warden_out_of_bounds",
+      "severity": "HIGH",
+      "category": "战灵系统",
+      "test": "战灵是否飞出地图边界",
+      "verify": "WardenX/Y 超出 MapPixelW/H + 50px 容差",
+      "how": "每帧检查战灵坐标与地图尺寸",
+      "threshold": "超出边界 50px",
+      "dedupe": "只报一次",
+      "rootCause": "移动逻辑未 clamp / 地图尺寸未正确设置"
+    },
+    {
+      "id": "warden_range_limited_x",
+      "severity": "HIGH",
+      "category": "战灵系统",
+      "test": "战灵水平活动范围是否被限制在一屏内",
+      "verify": "地图宽 > 1200+50 但战灵 X 范围 < 1200*0.8",
+      "how": "持续记录战灵 X min/max 包围盒，600 帧后检查",
+      "threshold": "600 帧采样，X 跨度 < 960px",
+      "dedupe": "只报一次",
+      "rootCause": "轨道中心未跟随敌群 / MapWidth 未设置"
+    },
+    {
+      "id": "warden_range_limited_y",
+      "severity": "HIGH",
+      "category": "战灵系统",
+      "test": "战灵垂直活动范围是否被限制在一屏内",
+      "verify": "地图高 > 540+50 但战灵 Y 范围 < 540*0.8",
+      "how": "同 warden_range_limited_x 的 Y 方向",
+      "threshold": "600 帧采样，Y 跨度 < 432px",
+      "dedupe": "只报一次",
+      "rootCause": "同 X 方向"
+    },
+    {
+      "id": "warden_origin_stuck",
+      "severity": "CRITICAL",
+      "category": "战灵系统",
+      "test": "战灵是否卡在原点(0,0)不动",
+      "verify": "WardenReady=true 后 120 帧，位置仍在 (0,0) 附近 5px",
+      "how": "记录 wardenReady 时刻，120 帧后检查位置",
+      "threshold": "距原点 < 5px",
+      "dedupe": "只报一次",
+      "rootCause": "初始化未 teleport 到轨道位置 / MoveOrbit 首帧逻辑错误"
+    },
+    {
+      "id": "warden_teleport",
+      "severity": "MEDIUM",
+      "category": "战灵系统",
+      "test": "战灵是否帧间瞬移",
+      "verify": "帧间位置变化 > 50px（正常最大 ~3px/帧）",
+      "how": "每帧记录位置，计算帧间距离",
+      "threshold": "距离 > 50px，容忍首次（初始 teleport）",
+      "dedupe": "每次触发都报告",
+      "rootCause": "移动逻辑跳跃 / smooth 追踪 snap 阈值过低"
+    }
+  ]
+}

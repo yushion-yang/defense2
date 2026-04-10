@@ -144,24 +144,7 @@ func TestSellRefundPositive(t *testing.T) {
 
 // TestSpawnerEnemyCountPositive 验证每波至少出 1 个敌人。
 
-// TestWaveBuffPoolTemplatesExist 验证波次 buff 池中的模板都存在。
-func TestWaveBuffPoolTemplatesExist(t *testing.T) {
-	// 波次 buff 池定义（与 spawner.go waveBuffPools 保持一致）
-	buffPools := [][]string{
-		{"berserk", "regen", "healAura", "speedAura"},
-		{"berserk", "regen", "healAura", "speedAura", "damageReduce"},
-		{"berserk", "regen", "healAura", "speedAura", "damageReduce", "deathSplit"},
-	}
-
-	templates := enemy.GetBuffTemplates()
-	for _, pool := range buffPools {
-		for _, name := range pool {
-			if _, ok := templates[name]; !ok {
-				t.Errorf("波次 buff 池引用 %q 但 buff_templates 中不存在", name)
-			}
-		}
-	}
-}
+// TestWaveBuffPoolTemplatesExist 已移除 — 旧 BuffTemplate 系统已被直接字段设置替代。
 
 // ═══════════════════════════════════════
 // 游戏模式契约

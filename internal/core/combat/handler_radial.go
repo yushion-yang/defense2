@@ -15,9 +15,8 @@ type RadialHandler struct{}
 
 func (h *RadialHandler) Fire(t *tower.Tower, target *enemy.Enemy, ctx *AttackContext) {
 	bal := config.GlobalBalance()
-	// 从能力配置读取参数
-	baseShots := bal.Combat.RadialBaseShots
-	extraShots := 0
+	// 从能力配置读取总发射数和射程倍率（与 bounce 同模式：CalcScale = 总数）
+	totalShots := bal.Combat.RadialBaseShots // fallback
 	rangeMult := bal.Combat.RadialRangeMult
 	if abTable := config.GlobalAbilityTable(); abTable != nil {
 		if def, ok := abTable["radial"]; ok {
@@ -25,14 +24,15 @@ func (h *RadialHandler) Fire(t *tower.Tower, target *enemy.Enemy, ctx *AttackCon
 			if t.Strength != nil {
 				str = t.Strength.Effective()
 			}
-			extraShots = int(math.Floor(def.CalcScale(str)))
+			totalShots = int(math.Floor(def.CalcScale(str)))
+			if totalShots < 3 {
+				totalShots = 3
+			}
 			if def.Param > 0 {
 				rangeMult = def.Param
 			}
 		}
 	}
-
-	totalShots := baseShots + extraShots
 	shotRange := t.Range * rangeMult
 	speed := t.ProjectileSpeed
 	if speed <= 0 {

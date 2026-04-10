@@ -1,0 +1,19 @@
+{
+  "_meta": {
+    "description": "AutoPlay 异常检测规则 — balance",
+    "count": 1
+  },
+  "rules": [
+    {
+      "id": "boss_too_weak",
+      "severity": "MEDIUM",
+      "category": "平衡性",
+      "test": "Boss 是否存活过短",
+      "verify": "Boss 从出现到消失 < 300 帧（5 秒）",
+      "how": "追踪 Boss 敌人出现/消失时刻",
+      "threshold": "存活 < 5 秒",
+      "dedupe": "每个 Boss 独立检查",
+      "rootCause": "Boss HP 缩放不足 / 伤害过高"
+    }
+  ]
+}

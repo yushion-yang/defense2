@@ -14,6 +14,7 @@ import (
 	"defense2/internal/render/draw"
 	"defense2/internal/render/sprite"
 	"defense2/internal/render/theme"
+	"defense2/internal/render/vfx"
 
 	"github.com/hajimehoshi/ebiten/v2"
 )
@@ -41,40 +42,13 @@ func NewTowerRenderer(assetFS AssetReader) *TowerRenderer {
 
 const towerSpriteSize = 64 // display size in pixels, matching theme.TowerBaseSize
 
-// overshootEase returns an easing that overshoots to ~1.1 then settles at 1.0.
-func overshootEase(t float64) float64 {
-	if t < 0.7 {
-		return (t / 0.7) * 1.1
-	}
-	return 1.1 - 0.1*((t-0.7)/0.3)
-}
-
 // towerAnimScaleAlpha computes the scale multiplier and alpha for build/sell animations.
 // Returns (scaleMul, alpha) where scaleMul=1 and alpha=1 mean no animation active.
 func towerAnimScaleAlpha(t *tower.Tower) (float64, float64) {
-	// Sell animation: expand slightly then shrink to 0
 	if t.Selling && t.SellAnim > 0 {
-		progress := 1.0 - t.SellAnim/0.25 // 0→1
-		if progress > 1 {
-			progress = 1
-		}
-		var scale float64
-		if progress < 0.2 {
-			scale = 1.0 + progress*1.0 // 1.0 → 1.2
-		} else {
-			scale = 1.2 * (1.0 - (progress-0.2)/0.8) // 1.2 → 0
-		}
-		alpha := 1.0 - progress
-		return scale, alpha
+		return vfx.SellAnimParams(t.SellAnim)
 	}
-	// Build animation: overshoot bounce in
-	if t.BuildAnim > 0 {
-		progress := 1.0 - t.BuildAnim/0.3 // 0→1
-		scale := overshootEase(progress)
-		alpha := progress // fade in
-		return scale, alpha
-	}
-	return 1.0, 1.0
+	return vfx.BuildAnimParams(t.BuildAnim)
 }
 
 // DrawTowers renders all placed towers.
@@ -87,13 +61,9 @@ func (tr *TowerRenderer) DrawTowers(screen *ebiten.Image, pool *tower.Pool, sele
 		// Compute animation scale and alpha
 		animScale, animAlpha := towerAnimScaleAlpha(t)
 
-		// --- Build ripple effect (expanding white ring) ---
+		// --- Build ripple effect ---
 		if t.BuildAnim > 0 {
-			progress := 1.0 - t.BuildAnim/0.3
-			ringR := float32(10 + 20*progress) // 10 → 30
-			ringA := uint8(float64(150) * (1 - progress))
-			draw.CircleOutline(screen, cx, cy, ringR, 2,
-				color.RGBA{255, 255, 255, ringA})
+			vfx.DrawBuildRipple(screen, cx, cy, 1.0-t.BuildAnim/0.3)
 		}
 
 		// --- Selection ring & range indicator (selected tower only, skip during sell) ---
@@ -119,10 +89,9 @@ func (tr *TowerRenderer) DrawTowers(screen *ebiten.Image, pool *tower.Pool, sele
 		img := tr.getTowerFrame(t, 1.0/60.0)
 		if img != nil {
 			logicalScale := float64(towerSpriteSize) / float64(img.Bounds().Dx())
-			// 射击缩放脉冲：射击瞬间放大 8%，快速恢复（skip during build/sell anim）
+			// 射击缩放脉冲（skip during build/sell anim）
 			if t.FireAnim > 0 && t.BuildAnim <= 0 && !t.Selling {
-				pulse := 1.0 + 0.08*(t.FireAnim/0.15)
-				logicalScale *= pulse
+				logicalScale *= vfx.FirePulseScale(t.FireAnim)
 			}
 			// Apply build/sell animation scale
 			logicalScale *= animScale
@@ -155,71 +124,26 @@ func (tr *TowerRenderer) DrawTowers(screen *ebiten.Image, pool *tower.Pool, sele
 		// 射击反馈已由 shoot pulse（精灵放大 15%）+ muzzle flash 粒子提供，
 		// 不再叠加白色圆——高攻速塔会导致持续白圈。
 
-		// --- Spin AoE visual: rotating blade arcs (no fill) ---
+		// --- Spin AoE visual: rotating blade arcs ---
 		if !t.Selling && t.BuildAnim <= 0 && t.AttackStyleID == tower.StyleSpinAoE && t.SpinActive > 0 {
-			a := t.SpinActive / 0.3
-			if a > 1 {
-				a = 1
-			}
-			outerR := float32(t.Range)
-
-			// 4 条旋转弧线
-			for i := 0; i < 4; i++ {
-				ang := t.SpinAngle + float64(i)*math.Pi/2
-				clr := color.RGBA{R: 163, G: 230, B: 53, A: uint8(80 * a)}
-				draw.Arc(screen, cx, cy, outerR, float32(ang-0.3), float32(ang+0.3), 2, clr)
-			}
+			vfx.DrawSpinBlades(screen, cx, cy, float32(t.Range), t.SpinAngle, t.SpinActive/0.3)
 		}
 
-		// --- Strength-based visual tiers (glow / rings) ---
+		// --- Strength-based visual tiers ---
 		if !t.Selling && t.BuildAnim <= 0 && t.Strength != nil {
-			str := t.Strength.Overflow() // strength above baseline (100)
-
-			if str >= 50 {
-				// Tier 2 (50+): warm ring outline
-				ringAlpha := uint8(30 + min(30, int((str-50)*0.6)))
-				draw.CircleOutline(screen, cx, cy, float32(towerSpriteSize*0.4), 1,
-					color.RGBA{255, 230, 150, ringAlpha})
-			}
-			if str >= 100 {
-				// Tier 3 (100+): brighter outer ring
-				draw.CircleOutline(screen, cx, cy, float32(towerSpriteSize*0.48), 1,
-					color.RGBA{255, 220, 100, 50})
-			}
-			if str >= 150 {
-				// Tier 4 (150+): pulsing outer ring
-				pulse := 0.5 + 0.5*math.Sin(animTime*3)
-				ringAlpha := uint8(30 + 25*pulse)
-				draw.CircleOutline(screen, cx, cy, float32(towerSpriteSize*0.55), 1,
-					color.RGBA{255, 200, 50, ringAlpha})
-			}
+			vfx.DrawStrengthGlow(screen, cx, cy, t.Strength.Overflow(), animTime)
 		}
 
-		// --- Aura radius circle (for towers with aura abilities) ---
+		// --- Aura radius circle ---
 		if !t.Selling && t.BuildAnim <= 0 {
 			if auraR, auraClr := towerAuraVisual(t, animTime); auraR > 0 {
-				pulse := float32(0.7 + 0.3*math.Sin(animTime*2))
-				a := uint8(float64(25) * float64(pulse))
-				clr := color.RGBA{auraClr.R, auraClr.G, auraClr.B, a}
-				draw.DashedCircle(screen, cx, cy, float32(auraR), 1, 6, 4, clr)
+				vfx.DrawAuraPulse(screen, cx, cy, auraR, auraClr, animTime)
 			}
 		}
 
-		// --- Buff indicator dots (above tower name) ---
+		// --- Buff indicator dots ---
 		if !t.Selling && len(t.Buffs) > 0 {
-			dotY := cy - float32(towerSpriteSize*0.5) - 6
-			dotSpacing := float32(6)
-			dotR := float32(2.5)
-			n := len(t.Buffs)
-			if n > 5 {
-				n = 5
-			}
-			startX := cx - float32(n-1)*dotSpacing/2
-			for i := 0; i < n; i++ {
-				dx := startX + float32(i)*dotSpacing
-				draw.FilledCircle(screen, dx, dotY, dotR,
-					color.RGBA{R: 180, G: 140, B: 255, A: 180})
-			}
+			vfx.DrawBuffDots(screen, cx, cy, len(t.Buffs))
 		}
 
 		// --- Name label (skip during sell animation) ---
@@ -339,10 +263,10 @@ func DrawTowerRangePreview(screen *ebiten.Image, cx, cy float32, r float64, vali
 
 // aura 类型 → 视觉颜色
 var auraColors = map[string]color.RGBA{
-	"damageUpAura":   {R: 255, G: 160, B: 60, A: 255},  // 橙
+	"damageUpAura":    {R: 255, G: 160, B: 60, A: 255},  // 橙
 	"attackSpeedAura": {R: 100, G: 220, B: 100, A: 255}, // 绿
-	"rangeAura":      {R: 100, G: 160, B: 255, A: 255},  // 蓝
-	"critAura":       {R: 255, G: 220, B: 60, A: 255},   // 黄
+	"rangeAura":       {R: 100, G: 160, B: 255, A: 255}, // 蓝
+	"critAura":        {R: 255, G: 220, B: 60, A: 255},  // 黄
 }
 
 // towerAuraVisual 检查塔是否有光环能力，返回半径和颜色。

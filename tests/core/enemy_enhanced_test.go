@@ -198,22 +198,8 @@ func TestEvent_HPPercent(t *testing.T) {
 }
 
 // ============================================================
-// Buff模板测试
+// Flags & Legacy 映射测试
 // ============================================================
-
-func TestBuffTemplate_ApplyBerserk(t *testing.T) {
-	e := &enemy.Enemy{HP: 100, MaxHP: 100}
-	ok := enemy.ApplyBuffTemplate(e, "berserk")
-	if !ok {
-		t.Error("berserk模板应用应成功")
-	}
-	if e.BerserkThreshold <= 0 {
-		t.Error("应设置BerserkThreshold")
-	}
-	if e.BerserkSpeedScale <= 1 {
-		t.Error("应设置BerserkSpeedScale > 1")
-	}
-}
 
 func TestBuffTemplate_ApplyFlags_Elite(t *testing.T) {
 	// "elite" flag was removed from ApplyFlags — it is now a no-op.

@@ -1,0 +1,63 @@
+{
+  "_meta": {
+    "description": "AutoPlay 异常检测规则 — economy",
+    "count": 5
+  },
+  "rules": [
+    {
+      "id": "gold_negative",
+      "severity": "CRITICAL",
+      "category": "经济系统",
+      "test": "金币是否变为负数",
+      "verify": "state.Gold < 0",
+      "how": "每帧检查金币值",
+      "threshold": "任何负值",
+      "dedupe": "首次报告后不再重复，金币回正时重置",
+      "rootCause": "扣金顺序错误 / 并发扣金 / 退款计算溢出"
+    },
+    {
+      "id": "gold_spike",
+      "severity": "HIGH",
+      "category": "经济系统",
+      "test": "金币是否在单帧内突增",
+      "verify": "goldDelta > 500（帧间差值）",
+      "how": "每帧记录金币，与上一帧比较差值",
+      "threshold": "单帧增长 > 500",
+      "dedupe": "每次触发都报告",
+      "rootCause": "奖金计算溢出 / 击杀奖励翻倍 / 作弊"
+    },
+    {
+      "id": "build_silent_fail",
+      "severity": "LOW",
+      "category": "操作验证",
+      "test": "建塔指令是否生效",
+      "verify": "发出 Build 操作后下一帧，目标位置是否出现了塔",
+      "how": "RecordBuildAction 记录操作，下帧检查 towers 列表",
+      "threshold": "建塔操作发出但目标位置无塔",
+      "dedupe": "每次操作独立检查",
+      "rootCause": "金币不足（正常失败）/ 位置被占 / Place 函数 bug"
+    },
+    {
+      "id": "upgrade_no_effect",
+      "severity": "HIGH",
+      "category": "操作验证",
+      "test": "升级指令是否生效",
+      "verify": "发出 Upgrade 操作后下一帧，塔强度是否增加",
+      "how": "RecordUpgradeAction 记录操作前强度，下帧比较",
+      "threshold": "强度未变",
+      "dedupe": "每次操作独立检查",
+      "rootCause": "金币不足 / BuyStrength 逻辑错误"
+    },
+    {
+      "id": "economy_stall",
+      "severity": "MEDIUM",
+      "category": "经济系统",
+      "test": "是否长时间买不起塔",
+      "verify": "有空地 + 金币 < 最便宜塔价格 + 持续 1200 帧（20 秒）",
+      "how": "连续帧计数买不起的状态",
+      "threshold": "20 秒连续买不起",
+      "dedupe": "只报一次",
+      "rootCause": "经济过紧 / 击杀奖金不足 / 卖塔退款异常"
+    }
+  ]
+}

@@ -6,8 +6,10 @@ package scene
 
 import (
 	"image/color"
+	"log"
 	"math"
 
+	"defense2/internal/config"
 	"defense2/internal/core/combat"
 	"defense2/internal/core/game"
 	"defense2/internal/render"
@@ -16,6 +18,7 @@ import (
 	"defense2/internal/render/particle"
 	"defense2/internal/render/postprocess"
 	"defense2/internal/render/theme"
+	"defense2/internal/render/vfx"
 
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/hajimehoshi/ebiten/v2/inpututil"
@@ -73,6 +76,11 @@ type VFXPreviewScene struct {
 
 	// Desaturation auto-reset timer
 	desatResetTimer float64
+
+	// Active VFX state — all effects use continuous per-frame drawing
+	activeVFX string  // active vfx id (set by trigger, drawn each frame)
+	vfxTime   float64 // accumulated time since trigger (for animation)
+	vfxParam  int     // optional mode parameter (e.g. skystrike mode)
 }
 
 // NewVFXPreviewScene creates the VFX preview scene.
@@ -97,91 +105,180 @@ func NewVFXPreviewScene(sw Switcher) *VFXPreviewScene {
 
 // ── Catalog construction ────────────────────────────
 
-func (s *VFXPreviewScene) buildCatalog() {
+// vfxTriggerRegistry maps effect ID → trigger function.
+func (s *VFXPreviewScene) vfxTriggerRegistry() map[string]func(s *VFXPreviewScene) {
 	cx, cy := s.previewCenter()
+	sw, sh := float64(game.ScreenWidth), float64(game.ScreenHeight)
+	_ = sw
+	_ = sh
 
+	return map[string]func(s *VFXPreviewScene){
+		// Particles
+		"deathBurst":      func(s *VFXPreviewScene) { particle.EmitDeathBurst(s.particlePool, cx, cy) },
+		"deathBurstLarge": func(s *VFXPreviewScene) { particle.EmitDeathBurstLarge(s.particlePool, cx, cy) },
+		"bossDeathBurst":  func(s *VFXPreviewScene) { particle.EmitBossDeathBurst(s.particlePool, cx, cy) },
+		"muzzleFlash":     func(s *VFXPreviewScene) { particle.EmitMuzzleFlash(s.particlePool, cx, cy, 0) },
+		"spawnBurst":      func(s *VFXPreviewScene) { particle.EmitSpawnBurst(s.particlePool, cx, cy) },
+		"fireParticles":   func(s *VFXPreviewScene) { particle.EmitFireParticles(s.particlePool, cx, cy, 12) },
+		"iceParticles":    func(s *VFXPreviewScene) { particle.EmitIceParticles(s.particlePool, cx, cy, 12) },
+		"goldCollect":     func(s *VFXPreviewScene) { particle.EmitGoldCollect(s.particlePool, cx, cy) },
+		"electricSparks":  func(s *VFXPreviewScene) { particle.EmitElectricSparks(s.particlePool, cx, cy, 8) },
+		"bleedDrip":       func(s *VFXPreviewScene) { particle.EmitBleedDrip(s.particlePool, cx, cy, 10) },
+		"ambient":         func(s *VFXPreviewScene) { particle.EmitAmbient(s.particlePool, sw, sh) },
+
+		// Screen Effects
+		"screenShake": func(s *VFXPreviewScene) { render.TriggerShake(4.0, 0.4) },
+		"hitFlash":    func(s *VFXPreviewScene) { s.effects.TriggerHitFlash(0.15) },
+		"radialBlur":  func(s *VFXPreviewScene) { s.effects.TriggerRadialBlur(cx, cy, 0.04, 0.5) },
+		"ripple":      func(s *VFXPreviewScene) { s.effects.TriggerRipple(cx, cy, 15) },
+		"hitStop":     func(s *VFXPreviewScene) { s.effects.TriggerHitStop(5) },
+		"desaturation": func(s *VFXPreviewScene) {
+			s.effects.SetDesaturation(0.7, 3.0, 0.5, 0.5, 0.6)
+			s.desatResetTimer = 2.0
+		},
+
+		// Combat VFX
+		"impactRing": func(s *VFXPreviewScene) { render.SpawnHitImpact(cx, cy) },
+		"typedImpact": func(s *VFXPreviewScene) {
+			// Cycle through attack styles for demonstration.
+			styles := []string{"scatter", "spin_aoe", "wideBeam", "projectile"}
+			render.SpawnTypedImpact(cx-60, cy, styles[0])
+			render.SpawnTypedImpact(cx-20, cy, styles[1])
+			render.SpawnTypedImpact(cx+20, cy, styles[2])
+			render.SpawnTypedImpact(cx+60, cy, styles[3])
+		},
+		"thunderBolt": func(s *VFXPreviewScene) {
+			render.SpawnThunderBolt(cx-50, cy-60, cx+50, cy+60, true)
+		},
+		"beam": func(s *VFXPreviewScene) {
+			s.beamPool.Add(combat.Beam{
+				X1: cx - 80, Y1: cy, X2: cx + 80, Y2: cy,
+				Width: 4, Color: [3]uint8{180, 100, 255},
+				Life: 0.5, MaxLife: 0.5, Wide: true,
+			})
+		},
+		"damageText": func(s *VFXPreviewScene) { render.SpawnDamageText(cx, cy, 1234, false, false) },
+		"critText":   func(s *VFXPreviewScene) { render.SpawnDamageText(cx, cy, 5678, true, false) },
+		"goldText":   func(s *VFXPreviewScene) { render.SpawnGoldText(cx, cy, 100) },
+		"killText":   func(s *VFXPreviewScene) { render.SpawnKillText(cx, cy) },
+		"customText": func(s *VFXPreviewScene) {
+			render.SpawnText(cx, cy, "Hello VFX!", color.RGBA{R: 100, G: 255, B: 200, A: 255}, 14, 1.5)
+		},
+
+		// Post-Processing
+		"vignetteStrong": func(s *VFXPreviewScene) { s.effects.VignetteStrength = 0.8 },
+		"vignetteOff":    func(s *VFXPreviewScene) { s.effects.VignetteStrength = 0 },
+		"dynamicLight": func(s *VFXPreviewScene) {
+			s.postPipeline.Lighting.Clear()
+			s.postPipeline.Lighting.AddLight(postprocess.PointLight{
+				X: cx, Y: cy,
+				Color:     color.RGBA{R: 255, G: 180, B: 80, A: 255},
+				Radius:    200,
+				Intensity: 1.5,
+			})
+		},
+		"glowLayer": func(s *VFXPreviewScene) {
+			particle.EmitBossDeathBurst(s.particlePool, cx, cy)
+		},
+		"dayNightTint": func(s *VFXPreviewScene) {
+			s.effects.DayNightR = 0.2
+			s.effects.DayNightG = 0.1
+			s.effects.DayNightB = 0.4
+			s.effects.DayNightA = 0.5
+			s.desatResetTimer = 2.0 // reuse timer to auto-reset
+		},
+
+		// Composite
+		"bossKill": func(s *VFXPreviewScene) {
+			render.TriggerShake(6.0, 0.5)
+			s.effects.TriggerRadialBlur(cx, cy, 0.05, 0.6)
+			s.effects.TriggerRipple(cx, cy, 18)
+			s.effects.TriggerHitStop(8)
+			s.effects.TriggerHitFlash(0.1)
+			particle.EmitBossDeathBurst(s.particlePool, cx, cy)
+			render.SpawnHitImpact(cx, cy)
+		},
+		"multiKill": func(s *VFXPreviewScene) {
+			render.TriggerShake(3.0, 0.3)
+			particle.EmitDeathBurstLarge(s.particlePool, cx, cy)
+			render.SpawnKillText(cx, cy)
+			render.SpawnDamageText(cx, cy-20, 9999, true, false)
+		},
+		"waveAnnounceNormal": func(s *VFXPreviewScene) { s.waveAnnounce.Trigger(3, 20, false) },
+		"waveAnnounceBoss":   func(s *VFXPreviewScene) { s.waveAnnounce.Trigger(5, 20, true) },
+		"toast":              func(s *VFXPreviewScene) { hud.ShowToast("VFX Preview Toast!") },
+
+		// Tower / Projectile / Warden / Enemy VFX — all use continuous drawing
+		"buildRipple":     func(s *VFXPreviewScene) { s.activateVFX("buildRipple", 0) },
+		"spinBlades":      func(s *VFXPreviewScene) { s.activateVFX("spinBlades", 0) },
+		"strengthGlow":    func(s *VFXPreviewScene) { s.activateVFX("strengthGlow", 0) },
+		"auraPulse":       func(s *VFXPreviewScene) { s.activateVFX("auraPulse", 0) },
+		"buffDots":        func(s *VFXPreviewScene) { s.activateVFX("buffDots", 0) },
+		"pentagram":       func(s *VFXPreviewScene) { s.activateVFX("pentagram", 0) },
+		"projPenetrate":   func(s *VFXPreviewScene) { s.activateVFX("projPenetrate", 0) },
+		"projScatter":     func(s *VFXPreviewScene) { s.activateVFX("projScatter", 0) },
+		"projSniper":      func(s *VFXPreviewScene) { s.activateVFX("projSniper", 0) },
+		"projFreeze":      func(s *VFXPreviewScene) { s.activateVFX("projFreeze", 0) },
+		"projDefault":     func(s *VFXPreviewScene) { s.activateVFX("projDefault", 0) },
+		"projTrail":       func(s *VFXPreviewScene) { s.activateVFX("projTrail", 0) },
+		"fireTrails":      func(s *VFXPreviewScene) { s.activateVFX("fireTrails", 0) },
+		"fireballs":       func(s *VFXPreviewScene) { s.activateVFX("fireballs", 0) },
+		"shootFlash":      func(s *VFXPreviewScene) { s.activateVFX("shootFlash", 0) },
+		"chainLinks":      func(s *VFXPreviewScene) { s.activateVFX("chainLinks", 0) },
+		"skystrikeIce":    func(s *VFXPreviewScene) { s.activateVFX("skystrikeIce", 1) },
+		"skystrikeWater":  func(s *VFXPreviewScene) { s.activateVFX("skystrikeWater", 2) },
+		"skystrikeGeyser": func(s *VFXPreviewScene) { s.activateVFX("skystrikeGeyser", 3) },
+		"goldBeam":        func(s *VFXPreviewScene) { s.activateVFX("goldBeam", 0) },
+		"bossPulse":       func(s *VFXPreviewScene) { s.activateVFX("bossPulse", 0) },
+		"runnerRing":      func(s *VFXPreviewScene) { s.activateVFX("runnerRing", 0) },
+		"stunStars":       func(s *VFXPreviewScene) { s.activateVFX("stunStars", 0) },
+		"enemyHitFlash":   func(s *VFXPreviewScene) { s.activateVFX("enemyHitFlash", 0) },
+		"statusDots":      func(s *VFXPreviewScene) { s.activateVFX("statusDots", 0) },
+		"bufferAura":      func(s *VFXPreviewScene) { s.activateVFX("bufferAura", 0) },
+		"purgeGlow":       func(s *VFXPreviewScene) { s.activateVFX("purgeGlow", 0) },
+	}
+}
+
+func (s *VFXPreviewScene) buildCatalog() {
+	catalog, err := config.LoadVFXCatalog()
+	if err != nil {
+		log.Printf("vfx_preview: failed to load catalog, using fallback: %v", err)
+		s.buildFallbackCatalog()
+		return
+	}
+
+	registry := s.vfxTriggerRegistry()
+	s.categories = make([]vfxCategory, 0, len(catalog.Categories))
+
+	for _, cfgCat := range catalog.Categories {
+		cat := vfxCategory{Name: cfgCat.Label}
+		for _, cfgEff := range cfgCat.Effects {
+			trigger, ok := registry[cfgEff.ID]
+			if !ok {
+				log.Printf("vfx_preview: no trigger for effect %q, skipping", cfgEff.ID)
+				continue
+			}
+			cat.Effects = append(cat.Effects, vfxEntry{
+				Name:    cfgEff.Label + "  " + cfgEff.Name,
+				Trigger: trigger,
+			})
+		}
+		if len(cat.Effects) > 0 {
+			s.categories = append(s.categories, cat)
+		}
+	}
+}
+
+// buildFallbackCatalog provides a hardcoded fallback when JSON config is unavailable.
+func (s *VFXPreviewScene) buildFallbackCatalog() {
+	cx, cy := s.previewCenter()
 	s.categories = []vfxCategory{
-		{Name: "Particles", Effects: []vfxEntry{
-			{"DeathBurst", func(s *VFXPreviewScene) { particle.EmitDeathBurst(s.particlePool, cx, cy) }},
-			{"DeathBurstLarge", func(s *VFXPreviewScene) { particle.EmitDeathBurstLarge(s.particlePool, cx, cy) }},
-			{"BossDeathBurst", func(s *VFXPreviewScene) { particle.EmitBossDeathBurst(s.particlePool, cx, cy) }},
-			{"MuzzleFlash", func(s *VFXPreviewScene) { particle.EmitMuzzleFlash(s.particlePool, cx, cy, 0) }},
-			{"SpawnBurst", func(s *VFXPreviewScene) { particle.EmitSpawnBurst(s.particlePool, cx, cy) }},
-			{"FireParticles", func(s *VFXPreviewScene) { particle.EmitFireParticles(s.particlePool, cx, cy, 12) }},
-			{"IceParticles", func(s *VFXPreviewScene) { particle.EmitIceParticles(s.particlePool, cx, cy, 12) }},
-			{"GoldCollect", func(s *VFXPreviewScene) { particle.EmitGoldCollect(s.particlePool, cx, cy) }},
-			{"ElectricSparks", func(s *VFXPreviewScene) { particle.EmitElectricSparks(s.particlePool, cx, cy, 8) }},
-			{"BleedDrip", func(s *VFXPreviewScene) { particle.EmitBleedDrip(s.particlePool, cx, cy, 10) }},
+		{Name: "粒子效果", Effects: []vfxEntry{
+			{"死亡爆裂  DeathBurst", func(s *VFXPreviewScene) { particle.EmitDeathBurst(s.particlePool, cx, cy) }},
+			{"枪口闪光  MuzzleFlash", func(s *VFXPreviewScene) { particle.EmitMuzzleFlash(s.particlePool, cx, cy, 0) }},
 		}},
-		{Name: "Screen Effects", Effects: []vfxEntry{
-			{"ScreenShake", func(s *VFXPreviewScene) { render.TriggerShake(4.0, 0.4) }},
-			{"HitFlash", func(s *VFXPreviewScene) { s.effects.TriggerHitFlash(0.15) }},
-			{"RadialBlur", func(s *VFXPreviewScene) {
-				s.effects.TriggerRadialBlur(cx, cy, 0.04, 0.5)
-			}},
-			{"Ripple", func(s *VFXPreviewScene) { s.effects.TriggerRipple(cx, cy, 15) }},
-			{"HitStop (5f)", func(s *VFXPreviewScene) { s.effects.TriggerHitStop(5) }},
-			{"Desaturation", func(s *VFXPreviewScene) {
-				s.effects.SetDesaturation(0.7, 3.0, 0.5, 0.5, 0.6)
-				s.desatResetTimer = 2.0 // auto-reset after 2s
-			}},
-		}},
-		{Name: "Combat VFX", Effects: []vfxEntry{
-			{"ImpactRing", func(s *VFXPreviewScene) { render.SpawnHitImpact(cx, cy) }},
-			{"ThunderBolt", func(s *VFXPreviewScene) {
-				render.SpawnThunderBolt(cx-50, cy-60, cx+50, cy+60, true)
-			}},
-			{"Beam (purple)", func(s *VFXPreviewScene) {
-				s.beamPool.Add(combat.Beam{
-					X1: cx - 80, Y1: cy, X2: cx + 80, Y2: cy,
-					Width: 4, Color: [3]uint8{180, 100, 255},
-					Life: 0.5, MaxLife: 0.5, Wide: true,
-				})
-			}},
-			{"DamageText", func(s *VFXPreviewScene) { render.SpawnDamageText(cx, cy, 1234, false, false) }},
-			{"CritText", func(s *VFXPreviewScene) { render.SpawnDamageText(cx, cy, 5678, true, false) }},
-			{"GoldText", func(s *VFXPreviewScene) { render.SpawnGoldText(cx, cy, 100) }},
-			{"KillText", func(s *VFXPreviewScene) { render.SpawnKillText(cx, cy) }},
-		}},
-		{Name: "Post-Processing", Effects: []vfxEntry{
-			{"Vignette Strong", func(s *VFXPreviewScene) { s.effects.VignetteStrength = 0.8 }},
-			{"Vignette Off", func(s *VFXPreviewScene) { s.effects.VignetteStrength = 0 }},
-			{"DynamicLight", func(s *VFXPreviewScene) {
-				s.postPipeline.Lighting.Clear()
-				s.postPipeline.Lighting.AddLight(postprocess.PointLight{
-					X: cx, Y: cy,
-					Color:     color.RGBA{R: 255, G: 180, B: 80, A: 255},
-					Radius:    200,
-					Intensity: 1.5,
-				})
-			}},
-			{"Glow Layer", func(s *VFXPreviewScene) {
-				// Glow is drawn in Draw(), trigger via particle burst so there's something to glow.
-				particle.EmitBossDeathBurst(s.particlePool, cx, cy)
-			}},
-		}},
-		{Name: "Composite", Effects: []vfxEntry{
-			{"BossKill", func(s *VFXPreviewScene) {
-				render.TriggerShake(6.0, 0.5)
-				s.effects.TriggerRadialBlur(cx, cy, 0.05, 0.6)
-				s.effects.TriggerRipple(cx, cy, 18)
-				s.effects.TriggerHitStop(8)
-				s.effects.TriggerHitFlash(0.1)
-				particle.EmitBossDeathBurst(s.particlePool, cx, cy)
-				render.SpawnHitImpact(cx, cy)
-			}},
-			{"MultiKill x10", func(s *VFXPreviewScene) {
-				render.TriggerShake(3.0, 0.3)
-				particle.EmitDeathBurstLarge(s.particlePool, cx, cy)
-				render.SpawnKillText(cx, cy)
-				render.SpawnDamageText(cx, cy-20, 9999, true, false)
-			}},
-			{"WaveAnnounce Normal", func(s *VFXPreviewScene) {
-				s.waveAnnounce.Trigger(3, 20, false)
-			}},
-			{"WaveAnnounce Boss", func(s *VFXPreviewScene) {
-				s.waveAnnounce.Trigger(5, 20, true)
-			}},
+		{Name: "屏幕特效", Effects: []vfxEntry{
+			{"屏幕震动  ScreenShake", func(s *VFXPreviewScene) { render.TriggerShake(4.0, 0.4) }},
 		}},
 	}
 }
@@ -252,13 +349,17 @@ func (s *VFXPreviewScene) Update() error {
 		hud.UpdateToast(effectiveDT)
 	}
 
-	// Desaturation auto-reset.
+	// Desaturation / daynight auto-reset.
 	if s.desatResetTimer > 0 {
 		s.desatResetTimer -= effectiveDT
 		if s.desatResetTimer <= 0 {
 			s.effects.SetDesaturation(0, 3.0, 0, 0, 0)
+			s.effects.DayNightA = 0
 		}
 	}
+
+	// Active VFX animation time.
+	s.vfxTime += effectiveDT
 
 	// Auto-replay logic.
 	if s.autoReplay && s.isEffectIdle() {
@@ -488,6 +589,9 @@ func (s *VFXPreviewScene) Draw(screen *ebiten.Image) {
 	// Draw float text.
 	render.DrawFloatTexts(buf)
 
+	// Draw active vfx effect.
+	s.drawActiveVFX(buf)
+
 	// Apply post-processing pipeline (vignette, color grade, radial blur, etc.).
 	s.postPipeline.Apply(screen)
 
@@ -648,5 +752,133 @@ func vfxSpeedLabel(spd float64) string {
 		return "Speed: 2.0x"
 	default:
 		return "Speed: 1.0x"
+	}
+}
+
+// activateVFX sets the active VFX and resets its timer.
+func (s *VFXPreviewScene) activateVFX(id string, param int) {
+	s.activeVFX = id
+	s.vfxTime = 0
+	s.vfxParam = param
+}
+
+// drawActiveVFX renders the currently active VFX effect every frame.
+// All effects are animated via s.vfxTime for realistic preview.
+func (s *VFXPreviewScene) drawActiveVFX(screen *ebiten.Image) {
+	if s.activeVFX == "" {
+		return
+	}
+
+	cx, cy := s.previewCenter()
+	fcx, fcy := float32(cx), float32(cy)
+	t := s.vfxTime
+
+	switch s.activeVFX {
+	// ── Tower VFX ──
+	case "buildRipple":
+		// Animate progress 0→1 over 0.3s, loop
+		p := math.Mod(t, 0.6) / 0.3
+		if p <= 1 {
+			vfx.DrawBuildRipple(screen, fcx, fcy, p)
+		}
+	case "spinBlades":
+		vfx.DrawSpinBlades(screen, fcx, fcy, 60, t*3, 1.0)
+	case "strengthGlow":
+		vfx.DrawStrengthGlow(screen, fcx, fcy, 120, t)
+	case "auraPulse":
+		vfx.DrawAuraPulse(screen, fcx, fcy, 80, color.RGBA{R: 255, G: 160, B: 60, A: 255}, t)
+	case "buffDots":
+		vfx.DrawBuffDots(screen, fcx, fcy, 4)
+	case "pentagram":
+		vfx.DrawPentagram(screen, fcx, fcy, 1.0, t)
+
+	// ── Projectile VFX ──
+	case "projPenetrate":
+		angle := t * 2
+		vfx.DrawProjectileBody(screen, fcx, fcy, angle, "sniper", true, false)
+	case "projScatter":
+		vfx.DrawProjectileBody(screen, fcx, fcy, t*2, "freeze", false, true)
+	case "projSniper":
+		vfx.DrawProjectileBody(screen, fcx, fcy, t*2, "sniper", false, false)
+	case "projFreeze":
+		vfx.DrawProjectileBody(screen, fcx, fcy, t*2, "freeze", false, false)
+	case "projDefault":
+		vfx.DrawProjectileBody(screen, fcx, fcy, t*2, "default", false, false)
+	case "projTrail":
+		trail := make([]vfx.TrailPt, 8)
+		for i := range trail {
+			// Simulate moving trail curving with time
+			offset := float64(i) * 8
+			trail[i] = vfx.TrailPt{X: cx - offset*math.Cos(t), Y: cy - offset*math.Sin(t*0.7), Active: true}
+		}
+		vfx.DrawProjectileTrail(screen, trail, 0, color.RGBA{R: 253, G: 230, B: 138, A: 255})
+		vfx.DrawProjectileBody(screen, fcx, fcy, t*2, "default", false, false)
+
+	// ── Warden VFX ──
+	case "fireTrails":
+		// Simulate decaying fire trails
+		life := 1.0 - math.Mod(t, 1.5)/1.5
+		vfx.DrawFireTrails(screen, []vfx.FireTrailVFX{
+			{X: cx - 30, Y: cy, Life: life, MaxLife: 1.0, Radius: 12},
+			{X: cx, Y: cy + 15, Life: life * 0.7, MaxLife: 1.0, Radius: 10},
+			{X: cx + 30, Y: cy, Life: life * 0.5, MaxLife: 1.0, Radius: 8},
+		})
+	case "fireballs":
+		// Simulate fireball flying across
+		p := math.Mod(t, 1.2) / 1.2
+		fbX := cx - 60 + 120*p
+		vfx.DrawFireballs(screen, []vfx.FireballVFX{
+			{X: fbX, Y: cy, Radius: 6, Progress: p, StartX: cx - 60, StartY: cy, EndX: cx + 60, EndY: cy},
+		})
+	case "shootFlash":
+		// Repeating flash every 0.5s
+		flashT := math.Mod(t, 0.5)
+		if flashT < 0.15 {
+			vfx.DrawShootFlash(screen, fcx, fcy, 0.15-flashT, color.RGBA{R: 100, G: 200, B: 255, A: 200})
+		}
+	case "chainLinks":
+		// Pulsing chain links
+		vfx.DrawChainLinks(screen, [][4]float64{
+			{cx - 60, cy - 30, cx + 60, cy + 30},
+			{cx - 40, cy + 20, cx + 40, cy - 20},
+		})
+	case "skystrikeIce", "skystrikeWater", "skystrikeGeyser":
+		// Repeat strike every 1.2s
+		cycleT := math.Mod(t, 1.2)
+		if cycleT < 0.8 {
+			vfx.DrawSkyStrike(screen, fcx, fcy, 0.8-cycleT, s.vfxParam)
+		}
+	case "goldBeam":
+		// Decaying beam
+		p := 1.0 - math.Mod(t, 1.0)/0.6
+		if p > 0 {
+			vfx.DrawGoldBeam(screen, fcx-40, fcy, fcx+40, fcy, p)
+		}
+
+	// ── Enemy VFX ──
+	case "bossPulse":
+		vfx.DrawBossPulse(screen, fcx, fcy, 10, t)
+	case "runnerRing":
+		vfx.DrawRunnerRing(screen, fcx, fcy, 10, t)
+	case "stunStars":
+		vfx.DrawStunStars(screen, fcx, fcy, 10, t)
+	case "enemyHitFlash":
+		// Repeating flash
+		flashT := math.Mod(t, 0.4)
+		if flashT < 0.1 {
+			vfx.DrawHitFlash(screen, fcx, fcy, 12, 0.1-flashT)
+		}
+	case "statusDots":
+		vfx.DrawStatusDots(screen, fcx, fcy-20, []vfx.StatusDot{
+			{Color: color.RGBA{R: 125, G: 211, B: 252, A: 235}},
+			{Color: color.RGBA{R: 255, G: 255, B: 100, A: 235}},
+			{Color: color.RGBA{R: 139, G: 90, B: 43, A: 235}},
+			{Color: color.RGBA{R: 239, G: 68, B: 68, A: 255}},
+			{Color: color.RGBA{R: 255, G: 140, B: 40, A: 255}},
+		})
+	case "bufferAura":
+		vfx.DrawBufferAura(screen, fcx, fcy, 60, t)
+	case "purgeGlow":
+		vfx.DrawPurgeGlow(screen, fcx, fcy, 12, t)
 	}
 }

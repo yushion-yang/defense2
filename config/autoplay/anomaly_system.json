@@ -1,0 +1,63 @@
+{
+  "_meta": {
+    "description": "AutoPlay 异常检测规则 — system",
+    "count": 5
+  },
+  "rules": [
+    {
+      "id": "fps_drop",
+      "severity": "MEDIUM",
+      "category": "性能",
+      "test": "是否出现连续慢帧",
+      "verify": "连续 10 帧 updateMs > 50ms",
+      "how": "每帧记录 Update 耗时，连续慢帧计数",
+      "threshold": "10 帧连续 > 50ms",
+      "dedupe": "报告后重置计数器",
+      "rootCause": "GC 压力 / 敌人池满 / 渲染过载"
+    },
+    {
+      "id": "pool_high_usage",
+      "severity": "MEDIUM",
+      "category": "资源管理",
+      "test": "敌人池是否接近满容量",
+      "verify": "EnemyPoolCount > 192（256 的 75%）",
+      "how": "每帧检查池占用，记录历史最高水位",
+      "threshold": "占用 > 75%",
+      "dedupe": "首次报告后不再重复，降到 75% 以下时重置",
+      "rootCause": "分裂/召唤过多 / 击杀速度跟不上出怪速度"
+    },
+    {
+      "id": "projectile_overflow",
+      "severity": "MEDIUM",
+      "category": "资源管理",
+      "test": "弹射物数量是否异常堆积",
+      "verify": "ProjectileCount > 100",
+      "how": "每帧检查弹射物计数",
+      "threshold": "超过 100 个",
+      "dedupe": "首次报告后不再重复，降下来后重置",
+      "rootCause": "弹射物未正确销毁 / 散射/环射过度发射"
+    },
+    {
+      "id": "wave_cleared_stall",
+      "severity": "HIGH",
+      "category": "事件系统",
+      "test": "波次清除计数是否停滞",
+      "verify": "wave >= 3 但 wavesCleared == 0",
+      "how": "检查 wave 和 wavesCleared 的一致性",
+      "threshold": "wave >= 3 且 wavesCleared = 0",
+      "dedupe": "只报一次",
+      "rootCause": "onWaveTransition 事件链断裂 / EvtWaveCleared 未触发"
+    },
+    {
+      "id": "interact_mode_stuck",
+      "severity": "HIGH",
+      "category": "交互系统",
+      "test": "交互模式是否长时间停滞",
+      "verify": "非 idle/paused 模式连续 600 帧（10 秒）不变",
+      "how": "记录当前模式和进入时刻，持续帧判定",
+      "threshold": "600 帧不变",
+      "dedupe": "每个模式只报一次",
+      "rootCause": "HUD 面板无法关闭 / ESC 路径被阻断"
+    }
+  ]
+}

@@ -12,7 +12,6 @@ import (
 	"fmt"
 	"log"
 	"os"
-	"os/exec"
 	"path/filepath"
 	"time"
 
@@ -21,7 +20,6 @@ import (
 	defense2 "defense2"
 	"defense2/internal/autoplay"
 	"defense2/internal/config"
-	"defense2/internal/core/game"
 	"defense2/internal/scene"
 )
 
@@ -100,11 +98,15 @@ func orchestrate(runs int, strategies, mapID, difficulty, warden, output, jsonDi
 		log.Printf("Sweep mode: %d test cases", len(cases))
 	case abilitySweep:
 		for _, name := range autoplay.AbilityScenarioNames() {
-			cases = append(cases, autoplay.ScenarioCase(name, mapID))
+			tc := autoplay.ScenarioCase(name, mapID)
+			tc.EnemyFilter = autoplay.AbilityTestEnemyFilter(name)
+			cases = append(cases, tc)
 		}
 		log.Printf("Ability sweep mode: %d test cases", len(cases))
 	case scenarioName != "":
-		cases = []autoplay.TestCase{autoplay.ScenarioCase(scenarioName, mapID)}
+		tc := autoplay.ScenarioCase(scenarioName, mapID)
+		tc.EnemyFilter = autoplay.AbilityTestEnemyFilter(scenarioName)
+		cases = []autoplay.TestCase{tc}
 	default:
 		cases = autoplay.ParseCLICases(runs, strategies, mapID, difficulty, warden)
 	}
@@ -116,12 +118,6 @@ func orchestrate(runs int, strategies, mapID, difficulty, warden, output, jsonDi
 
 	log.Printf("AutoPlay: %d sessions → %s", len(cases), runDir)
 
-	// 找到自身可执行文件路径
-	self, err := os.Executable()
-	if err != nil {
-		log.Fatalf("find executable: %v", err)
-	}
-
 	// 主种子：0 表示用时间戳（不可复现），非 0 表示确定性
 	if masterSeed == 0 {
 		masterSeed = time.Now().UnixNano()
@@ -132,11 +128,9 @@ func orchestrate(runs int, strategies, mapID, difficulty, warden, output, jsonDi
 
 	passed, failed := 0, 0
 	for i, tc := range cases {
-		// 每局派生一个确定性子种子：masterSeed + 序号
 		sessionSeed := masterSeed + int64(i)
 
-		log.Printf("[%d/%d] %s (strategy=%s map=%s diff=%s seed=%d)",
-			i+1, len(cases), tc.ID, tc.Strategy.Name(), tc.MapID, tc.Difficulty, sessionSeed)
+		log.Printf("[%d/%d] %s", i+1, len(cases), tc.ID)
 
 		cfg := sessionConfig{
 			ID:          tc.ID,
@@ -152,22 +146,12 @@ func orchestrate(runs int, strategies, mapID, difficulty, warden, output, jsonDi
 			JSONDir:     jsonDir,
 			Seed:        sessionSeed,
 		}
-		// 特殊策略参数
 		if f, ok := tc.Strategy.(*autoplay.FocusStrategy); ok {
 			cfg.TowerKey = f.TowerKey()
 		}
 
-		cfgJSON, _ := json.Marshal(cfg)
-		cmd := exec.Command(self, "--session-json", string(cfgJSON))
-		cmd.Stdout = os.Stdout
-		cmd.Stderr = os.Stderr
-
-		if err := cmd.Run(); err != nil {
-			log.Printf("  FAIL: %v", err)
-			failed++
-		} else {
-			passed++
-		}
+		runSessionInProcess(cfg)
+		passed++
 	}
 
 	log.Printf("Completed: %d passed, %d failed", passed, failed)
@@ -195,14 +179,8 @@ func runSingleSession(cfgJSON string) {
 	// 确定性随机种子（同 seed = 同结果）
 	autoplay.SeedAll(cfg.Seed)
 
-	// Turbo 模式: 跳过音效 + 每帧跑数千 tick（纯无头，无渲染）
+	// 纯无头模式：不启动 Ebitengine 窗口/GPU，直接循环 Update()
 	scene.HeadlessMode = true
-	ebiten.SetWindowSize(game.ScreenWidth, game.ScreenHeight)
-	ebiten.SetWindowTitle("AutoPlay: " + cfg.ID)
-	ebiten.SetVsyncEnabled(false)
-	ebiten.SetTPS(ebiten.SyncWithFPS) // Update:Draw = 1:1，turbo 循环在 Update 内加速
-	ebiten.SetScreenClearedEveryFrame(false)
-	ebiten.SetRunnableOnUnfocused(true)
 
 	g := scene.NewGame()
 	stage := scene.NewStageSceneWithOpts(g, scene.StageOptions{
@@ -236,8 +214,73 @@ func runSingleSession(cfgJSON string) {
 	stage.SetAutoPlayer(ctrl)
 	g.SwitchScene(stage)
 
-	if err := ebiten.RunGame(g); err != nil {
-		log.Printf("session %s error: %v", cfg.ID, err)
+	// 纯 CPU 循环：直接驱动 Game.Update()，无 GPU/窗口依赖
+	for {
+		if err := g.Update(); err != nil {
+			if err == ebiten.Termination {
+				break // 正常结束
+			}
+			log.Printf("session %s error: %v", cfg.ID, err)
+			break
+		}
+	}
+}
+
+// initOnce 只初始化一次 Game 全局资源。
+var gameInitDone bool
+
+// runSessionInProcess 在当前进程内运行单个测试场景（无子进程开销）。
+func runSessionInProcess(cfg sessionConfig) {
+	autoplay.SeedAll(cfg.Seed)
+	scene.HeadlessMode = true
+
+	var g *scene.Game
+	if !gameInitDone {
+		g = scene.NewGame()
+		gameInitDone = true
+	} else {
+		g = scene.NewGameLite()
+	}
+	waves := 0 // 0 = 地图默认（12 波）
+	stage := scene.NewStageSceneWithOpts(g, scene.StageOptions{
+		MapID:        cfg.MapID,
+		WardenType:   cfg.Warden,
+		ModeID:       cfg.ModeID,
+		DifficultyID: cfg.Difficulty,
+		EnemyFilter:  cfg.EnemyFilter,
+		Waves:        waves,
+	})
+
+	strategy := restoreStrategy(cfg)
+	ctrl := autoplay.NewController(autoplay.ControllerConfig{
+		Strategy:   strategy,
+		OutputDir:  cfg.OutputDir,
+		JSONDir:    cfg.JSONDir,
+		SessionID:  cfg.ID,
+		MapID:      cfg.MapID,
+		Difficulty: cfg.Difficulty,
+		Warden:     cfg.Warden,
+		Seed:       cfg.Seed,
+	})
+	stratName := strategy.Name()
+	if len(stratName) > 9 && stratName[:9] == "scenario_" {
+		scenName := stratName[9:]
+		if assertions, ok := autoplay.AbilityAssertionsMap()[scenName]; ok {
+			ctrl.SetAssertions(assertions)
+		}
+	}
+
+	stage.SetAutoPlayer(ctrl)
+	g.SwitchScene(stage)
+
+	for {
+		if err := g.Update(); err != nil {
+			if err == ebiten.Termination {
+				break
+			}
+			log.Printf("session %s error: %v", cfg.ID, err)
+			break
+		}
 	}
 }
 

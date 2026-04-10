@@ -1,0 +1,85 @@
+{
+  "_meta": {
+    "description": "AutoPlay 异常检测规则 — enemy",
+    "count": 7
+  },
+  "rules": [
+    {
+      "id": "enemy_stuck",
+      "severity": "HIGH",
+      "category": "敌人系统",
+      "test": "敌人是否卡在原地不动",
+      "verify": "连续 60 帧位置变化 < 0.1px 且速度 > 0（非眩晕/定身）",
+      "how": "每帧记录每个活敌人的位置，与上一帧比较；连续静止计数达阈值时报告",
+      "threshold": "stuckThreshold = 60 帧（1 秒）",
+      "dedupe": "同一敌人只报一次",
+      "rootCause": "路径系统 bug / 定身未解除 / 移动函数未调用"
+    },
+    {
+      "id": "lives_drop",
+      "severity": "MEDIUM",
+      "category": "敌人系统",
+      "test": "生命值是否在单帧内骤降",
+      "verify": "prevLives - state.Lives > 5",
+      "how": "每帧记录生命值，与上一帧比较",
+      "threshold": "单帧下降 > 5",
+      "dedupe": "每次触发都报告",
+      "rootCause": "多个敌人同帧到达终点 / 泄漏判定重复"
+    },
+    {
+      "id": "dead_enemy_walking",
+      "severity": "CRITICAL",
+      "category": "敌人系统",
+      "test": "HP≤0 的敌人是否仍处于活跃状态",
+      "verify": "e.Active && !e.Dying && e.HP <= 0",
+      "how": "每帧遍历所有敌人检查状态一致性",
+      "threshold": "任何一个",
+      "dedupe": "每个敌人只报一次",
+      "rootCause": "Kill 函数未调用 / 死亡检查遗漏 / HP 扣减绕过管线"
+    },
+    {
+      "id": "wave_hp_regression",
+      "severity": "HIGH",
+      "category": "出怪系统",
+      "test": "新一波敌人 HP 是否反而比上一波低",
+      "verify": "本波平均 MaxHP < 上波平均 MaxHP * 0.15",
+      "how": "每波记录存活敌人平均 MaxHP，与前一波比较",
+      "threshold": "低于前波 85% 以上（考虑原型方差）",
+      "dedupe": "每波只报一次",
+      "rootCause": "HP 缩放公式异常 / 难度配置错误"
+    },
+    {
+      "id": "archetype_monoculture",
+      "severity": "HIGH",
+      "category": "出怪系统",
+      "test": "敌人原型多样性是否过低",
+      "verify": "wave >= 5 后只出现 1 种原型",
+      "how": "持续收集所有见到的原型名，wave 5 后检查数量",
+      "threshold": "只有 1 种原型",
+      "dedupe": "只报一次",
+      "rootCause": "Spawn 签名不传原型 / 波次组合表异常 / EnemyFilter 限制"
+    },
+    {
+      "id": "enemy_hp_uniform",
+      "severity": "MEDIUM",
+      "category": "出怪系统",
+      "test": "同波不同原型敌人 HP 是否完全一致",
+      "verify": "≥5 个敌人 + ≥2 种原型，但所有 MaxHP 相同",
+      "how": "收集本波 (archetype, MaxHP) 对，检查差异",
+      "threshold": "HP 差异 < 0.01",
+      "dedupe": "每波只报一次",
+      "rootCause": "hpScale 未应用 / pool.go 硬编码 archetype"
+    },
+    {
+      "id": "enemy_born_with_hit",
+      "severity": "HIGH",
+      "category": "敌人系统",
+      "test": "新生敌人是否自带命中闪烁",
+      "verify": "首次见到某敌人时 IsHit=true",
+      "how": "记录每个敌人的首次出现，检查 HitFlash 状态",
+      "threshold": "任何新生敌人 IsHit=true",
+      "dedupe": "池复用时重置追踪",
+      "rootCause": "池复用未重置 HitFlash / Spawn 函数遗漏字段清零"
+    }
+  ]
+}

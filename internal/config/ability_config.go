@@ -23,7 +23,7 @@ type AbilityDef struct {
 	Potential float64 `json:"potential"` // 缩放维度的潜力值
 	Param     float64 `json:"param"`     // 固定常量参数值（0=无）
 	ParamDim  string  `json:"paramDim"`  // 固定参数的含义标识（空=无，运行时按 type 解读）
-	Display   string  `json:"display"`   // HUD 展示模板（{s}=缩放值 {s%}=缩放百分比 {p}=参数 {p%}=参数百分比）
+	Display   string  `json:"display"`   // HUD 展示模板（{s}=缩放值 {s%}=缩放百分比 {si}=缩放取整 {sh%}=缩放减半百分比 {p}=参数 {p%}=参数百分比）
 }
 
 // AbilityTable 能力定义表（abilityType → AbilityDef）。
@@ -67,23 +67,23 @@ func (d *AbilityDef) CalcScale(strength float64) float64 {
 
 // 六大能力类别常量。
 const (
-	AbilityCatAttack  = 0 // 攻击模式
-	AbilityCatCC      = 1 // 控制效果
-	AbilityCatDamage  = 2 // 命中加伤
-	AbilityCatBuff    = 3 // 增益光环
-	AbilityCatDoT     = 4 // 持续伤害
-	AbilityCatZone    = 5 // 范围效果
-	AbilityCatCount   = 6 // 类别总数
+	AbilityCatAttack = 0 // 攻击模式
+	AbilityCatCC     = 1 // 控制效果
+	AbilityCatDamage = 2 // 命中加伤
+	AbilityCatBuff   = 3 // 增益光环
+	AbilityCatDoT    = 4 // 持续伤害
+	AbilityCatZone   = 5 // 范围效果
+	AbilityCatCount  = 6 // 类别总数
 )
 
 // 类别名 → 索引映射。
 var categoryIndex = map[string]int{
-	"attack":  AbilityCatAttack,
-	"cc":      AbilityCatCC,
-	"damage":  AbilityCatDamage,
-	"buff":    AbilityCatBuff,
-	"dot":     AbilityCatDoT,
-	"zone":    AbilityCatZone,
+	"attack": AbilityCatAttack,
+	"cc":     AbilityCatCC,
+	"damage": AbilityCatDamage,
+	"buff":   AbilityCatBuff,
+	"dot":    AbilityCatDoT,
+	"zone":   AbilityCatZone,
 	// 旧分类名兼容
 	"combat":  AbilityCatDamage,
 	"control": AbilityCatCC,

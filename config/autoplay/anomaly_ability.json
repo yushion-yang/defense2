@@ -1,0 +1,19 @@
+{
+  "_meta": {
+    "description": "AutoPlay 异常检测规则 — ability",
+    "count": 1
+  },
+  "rules": [
+    {
+      "id": "ability_silent",
+      "severity": "HIGH",
+      "category": "能力系统",
+      "test": "塔能力是否长时间未触发",
+      "verify": "有能力的塔战斗 300 帧后，遥测中无对应能力记录",
+      "how": "追踪每塔战斗帧数，wave 5 后汇总检查遥测",
+      "threshold": "300 帧战斗 + 遥测无记录",
+      "dedupe": "只检查一次",
+      "rootCause": "能力注册失败 / JSON tag 错误 / OnHit 未调用"
+    }
+  ]
+}

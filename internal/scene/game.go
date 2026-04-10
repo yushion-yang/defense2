@@ -94,6 +94,21 @@ func NewGame() *Game {
 	return g
 }
 
+// NewGameLite 创建轻量游戏实例，跳过全局资源重复初始化。
+// 适用于 autoplay 批量运行：字体/图标/能力表/着色器已由首次 NewGame 初始化。
+func NewGameLite() *Game {
+	var am *gameAudio.Manager
+	if !HeadlessMode {
+		am = initAudio()
+	} else {
+		am = gameAudio.NewManager()
+	}
+	return &Game{
+		audioMgr: am,
+		bus:      event.NewBus(),
+	}
+}
+
 // AudioManager 返回全局音效管理器（实现 Switcher 接口）。
 func (g *Game) AudioManager() *gameAudio.Manager {
 	return g.audioMgr

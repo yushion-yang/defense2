@@ -1,0 +1,968 @@
+{
+  "_meta": {
+    "description": "能力级自动化测试场景。分5层，每个场景精确验证能力行为。",
+    "principle": "核心原则：不装该能力时断言不会通过 → 才是有效测试"
+  },
+  "scenarios": [
+    {
+      "_comment": "========== 第1层：塔能力单测 (31) =========="
+    },
+    {
+      "_comment": "--- 攻击类: 验证攻击方式变化后能命中多体(基础弹射物只打1个) ---"
+    },
+    {
+      "name": "tower_enhance",
+      "towerAbility": "enhance",
+      "waitTicks": 300,
+      "assert": "cfg_tower_damage_boosted",
+      "desc": "强化提升塔属性(Damage>BaseDamage)",
+      "test": "强化能力是否提升了塔的基础属性",
+      "verify": "Damage ≈ BaseDamage × (1 + config.base)，容差5%",
+      "how": "从abilities.json读取enhance.base，计算期望值，对比塔实际Damage/BaseDamage比值"
+    },
+    {
+      "name": "tower_scatter",
+      "towerAbility": "scatter",
+      "waitTicks": 300,
+      "assert": "cfg_pellet_multi_hit",
+      "assertParam": 2,
+      "desc": "散射同时命中2+敌人",
+      "test": "散射是否同时命中多个敌人",
+      "verify": "2+个敌人同时受伤（验证多弹丸命中）",
+      "how": "从config读取scatter.base=总弹丸数，验证多体命中"
+    },
+    {
+      "name": "tower_wideBeam",
+      "towerAbility": "wideBeam",
+      "waitTicks": 300,
+      "assert": "multi_enemy_damaged_gte",
+      "assertParam": 2,
+      "desc": "光束穿透命中2+敌人",
+      "test": "光束是否穿透命中多个敌人",
+      "verify": "2+ 个敌人 HP < MaxHP",
+      "how": "光束沿直线穿透所有敌人，一次攻击应伤害多体"
+    },
+    {
+      "name": "tower_spinAoe",
+      "towerAbility": "spinAoe",
+      "waitTicks": 300,
+      "assert": "multi_enemy_damaged_gte",
+      "assertParam": 2,
+      "desc": "旋风命中范围内2+敌人",
+      "test": "旋风是否命中范围内多个敌人",
+      "verify": "2+ 个敌人 HP < MaxHP",
+      "how": "旋风对周围所有敌人造伤，不限于面前"
+    },
+    {
+      "name": "tower_bounce",
+      "towerAbility": "bounce",
+      "waitTicks": 600,
+      "assert": "cfg_bounce_count",
+      "assertParam": 2,
+      "desc": "弹射链击2+不同敌人",
+      "test": "弹射是否链击多个不同敌人",
+      "verify": "2+个不同敌人受伤（验证链弹传播）",
+      "how": "从config读取bounce CalcScale=最大弹射数，验证多体受伤"
+    },
+    {
+      "name": "tower_splash",
+      "towerAbility": "splash",
+      "waitTicks": 300,
+      "assert": "multi_enemy_damaged_gte",
+      "assertParam": 2,
+      "desc": "溅射波及2+敌人",
+      "test": "溅射是否波及周围敌人",
+      "verify": "2+ 个敌人 HP < MaxHP",
+      "how": "主目标周围的敌人也应受到溅射伤害"
+    },
+    {
+      "name": "tower_multiTarget",
+      "towerAbility": "multiTarget",
+      "waitTicks": 300,
+      "assert": "multi_enemy_damaged_gte",
+      "assertParam": 2,
+      "desc": "多目标同时攻击2+敌人",
+      "test": "多目标是否同时攻击多个敌人",
+      "verify": "2+ 个敌人 HP < MaxHP",
+      "how": "塔每次开火瞄准 N 个目标而非 1 个"
+    },
+    {
+      "name": "tower_radial",
+      "towerAbility": "radial",
+      "waitTicks": 300,
+      "assert": "cfg_pellet_multi_hit",
+      "assertParam": 2,
+      "desc": "环射360°命中2+敌人",
+      "test": "环射是否 360° 命中多个敌人",
+      "verify": "2+个敌人同时受伤（验证多弹丸命中）",
+      "how": "从config读取radial.base=总弹丸数，验证多体命中"
+    },
+    {
+      "_comment": "--- CC类: 验证控制效果(基础塔不会减速/眩晕) ---"
+    },
+    {
+      "name": "tower_slowPower",
+      "towerAbility": "slowPower",
+      "waitTicks": 180,
+      "assert": "cfg_enemy_speed_ratio",
+      "desc": "凝滞使敌人Speed<BaseSpeed",
+      "test": "凝滞是否降低了敌人移动速度",
+      "verify": "Speed ≈ BaseSpeed × (1 - CalcScale(100))，容差10%",
+      "how": "从config读取slowPower的base+potential，计算预期减速比例，对比敌人Speed/BaseSpeed"
+    },
+    {
+      "name": "tower_slowDuration",
+      "towerAbility": "slowDuration",
+      "waitTicks": 180,
+      "assert": "cfg_enemy_speed_ratio",
+      "desc": "冰封使敌人Speed<BaseSpeed",
+      "test": "冰封是否降低了敌人移动速度",
+      "verify": "Speed ≈ BaseSpeed × (1 - config.param)，容差10%",
+      "how": "slowDuration的减速值是固定param，持续时间是scaleDim"
+    },
+    {
+      "name": "tower_stunChance",
+      "towerAbility": "stunChance",
+      "waitTicks": 600,
+      "assert": "enemy_stunned",
+      "desc": "震慑使敌人眩晕",
+      "test": "震慑是否使敌人眩晕",
+      "verify": "任何敌人 IsStunned=true",
+      "how": "基础塔不眩晕；装备震慑后有概率使敌人停止移动"
+    },
+    {
+      "name": "tower_stunDuration",
+      "towerAbility": "stunDuration",
+      "waitTicks": 600,
+      "assert": "enemy_stunned",
+      "desc": "麻痹使敌人眩晕",
+      "test": "麻痹是否使敌人眩晕",
+      "verify": "任何敌人 IsStunned=true",
+      "how": "同震慑，但眩晕持续时间更长"
+    },
+    {
+      "_comment": "--- 伤害类: 通过遥测验证能力触发 + 击杀速度 ---"
+    },
+    {
+      "name": "tower_crit",
+      "towerAbility": "crit",
+      "waitTicks": 600,
+      "assert": "enemy_killed",
+      "desc": "暴击助力击杀",
+      "test": "暴击能力是否助力击杀",
+      "verify": "有击杀发生",
+      "how": "暴击提供概率性高伤害，加速击杀"
+    },
+    {
+      "name": "tower_distanceDamage",
+      "towerAbility": "distanceDamage",
+      "waitTicks": 600,
+      "assert": "enemy_killed",
+      "desc": "距离伤害助力击杀",
+      "test": "距离伤害是否助力击杀",
+      "verify": "有击杀发生",
+      "how": "目标越远伤害越高，远程塔收益明显"
+    },
+    {
+      "name": "tower_executionBonus",
+      "towerAbility": "executionBonus",
+      "waitTicks": 600,
+      "assert": "enemy_killed",
+      "desc": "斩杀助力击杀",
+      "test": "斩杀是否助力击杀",
+      "verify": "有击杀发生",
+      "how": "低 HP 目标受到额外伤害，加速收割"
+    },
+    {
+      "name": "tower_flatDamage",
+      "towerAbility": "flatDamage",
+      "waitTicks": 400,
+      "assert": "enemy_killed",
+      "desc": "固伤助力击杀",
+      "test": "固伤是否助力击杀",
+      "verify": "有击杀发生",
+      "how": "每次攻击附加固定伤害，提升 DPS"
+    },
+    {
+      "name": "tower_momentum",
+      "towerAbility": "momentum",
+      "waitTicks": 400,
+      "assert": "enemy_killed",
+      "assertParam": 400,
+      "desc": "蓄势加速击杀",
+      "test": "蓄势是否助力击杀",
+      "verify": "有击杀发生",
+      "how": "攻击伤害按比例提升"
+    },
+    {
+      "_comment": "--- Buff类: 验证光环/被动效果(基础塔无buff) ---"
+    },
+    {
+      "name": "tower_damageUpAura",
+      "towerAbility": "damageUpAura",
+      "waitTicks": 120,
+      "assert": "tower_has_buff",
+      "desc": "伤害光环使塔获得buff",
+      "test": "伤害光环是否使塔获得 buff",
+      "verify": "塔 Abilities 列表非空",
+      "how": "光环能力会在塔的 buff 列表中显示"
+    },
+    {
+      "name": "tower_attackSpeedAura",
+      "towerAbility": "attackSpeedAura",
+      "waitTicks": 120,
+      "assert": "tower_has_buff",
+      "desc": "攻速光环使塔获得buff",
+      "test": "攻速光环是否使塔获得 buff",
+      "verify": "塔 Abilities 列表非空",
+      "how": "同伤害光环"
+    },
+    {
+      "name": "tower_rangeAura",
+      "towerAbility": "rangeAura",
+      "waitTicks": 120,
+      "assert": "tower_has_buff",
+      "desc": "射程光环使塔获得buff",
+      "test": "射程光环是否使塔获得 buff",
+      "verify": "塔 Abilities 列表非空",
+      "how": "同伤害光环"
+    },
+    {
+      "name": "tower_critAura",
+      "towerAbility": "critAura",
+      "waitTicks": 120,
+      "assert": "tower_has_buff",
+      "desc": "暴击光环使塔获得buff",
+      "test": "暴击光环是否使塔获得 buff",
+      "verify": "塔 Abilities 列表非空",
+      "how": "同伤害光环"
+    },
+    {
+      "name": "tower_soloBoost",
+      "towerAbility": "soloBoost",
+      "waitTicks": 120,
+      "assert": "tower_has_buff",
+      "desc": "独行加成使塔获得buff",
+      "test": "独行加成是否使塔获得 buff",
+      "verify": "塔 Abilities 列表非空",
+      "how": "周围无其他塔时自身增伤"
+    },
+    {
+      "name": "tower_goldPassive",
+      "towerAbility": "goldPassive",
+      "waitTicks": 240,
+      "assert": "gold_increased",
+      "desc": "被动产金(金币增长)",
+      "test": "被动产金是否产生金币",
+      "verify": "金币增长",
+      "how": "不依赖击杀，定时产生金币"
+    },
+    {
+      "_comment": "--- DoT类: 验证持续伤害状态(基础塔不会施加DOT) ---"
+    },
+    {
+      "name": "tower_burn",
+      "towerAbility": "burn",
+      "waitTicks": 180,
+      "assert": "enemy_burning",
+      "desc": "灼烧使敌人持续燃烧",
+      "test": "灼烧是否使敌人持续燃烧",
+      "verify": "任何敌人 IsBurning=true",
+      "how": "基础塔不造成灼烧；装备后命中敌人施加火焰 DoT"
+    },
+    {
+      "name": "tower_bleedDot",
+      "towerAbility": "bleedDot",
+      "waitTicks": 180,
+      "assert": "enemy_bleeding",
+      "desc": "流血使敌人持续流血",
+      "test": "流血是否使敌人持续流血",
+      "verify": "任何敌人 IsBleeding=true",
+      "how": "基础塔不造成流血；装备后命中敌人施加流血 DoT"
+    },
+    {
+      "name": "tower_poison",
+      "towerAbility": "poison",
+      "waitTicks": 180,
+      "assert": "enemy_damaged",
+      "desc": "中毒造成持续伤害(独立PoisonTimer)",
+      "test": "中毒是否对敌人造伤",
+      "verify": "任何敌人 HP < MaxHP",
+      "how": "中毒走独立 PoisonTimer（非 BleedTimer），造成持续伤害"
+    },
+    {
+      "name": "tower_weaken",
+      "towerAbility": "weaken",
+      "waitTicks": 180,
+      "assert": "enemy_weakened",
+      "desc": "虚弱使敌人DamageAmplify>0",
+      "test": "虚弱是否增加敌人受伤",
+      "verify": "任何敌人 DamageAmplify > 0",
+      "how": "命中后设置 DamageAmplify，后续所有伤害被放大"
+    },
+    {
+      "_comment": "--- Zone类: 验证区域效果(基础塔无区域效果) ---"
+    },
+    {
+      "name": "tower_poisonZone",
+      "towerAbility": "poisonZone",
+      "waitTicks": 300,
+      "assert": "enemy_damaged",
+      "desc": "毒区对范围内敌人造伤",
+      "test": "毒区是否对范围内敌人造伤",
+      "verify": "任何敌人 HP < MaxHP",
+      "how": "射程内敌人持续受到毒伤（不需要弹射物命中）"
+    },
+    {
+      "name": "tower_silenceZone",
+      "towerAbility": "silenceZone",
+      "waitTicks": 180,
+      "assert": "enemy_silenced",
+      "desc": "沉默区使敌人AbilitySilenced",
+      "test": "沉默区是否沉默敌人",
+      "verify": "任何敌人 AbilitySilenced=true",
+      "how": "射程内敌人被沉默（禁用 damageCap + 怪物能力）"
+    },
+    {
+      "name": "tower_curseZone",
+      "towerAbility": "curseZone",
+      "waitTicks": 300,
+      "assert": "enemy_damaged",
+      "desc": "诅咒区对范围内敌人造伤",
+      "test": "诅咒区是否对范围内敌人造伤",
+      "verify": "任何敌人 HP < MaxHP",
+      "how": "射程内敌人按 %HP 持续扣血"
+    },
+    {
+      "name": "tower_weakenZone",
+      "towerAbility": "weakenZone",
+      "waitTicks": 180,
+      "assert": "enemy_weakened",
+      "desc": "脆弱区使敌人DamageAmplify>0",
+      "test": "脆弱区是否增加敌人受伤",
+      "verify": "任何敌人 DamageAmplify > 0",
+      "how": "射程内敌人受到所有伤害增加"
+    },
+    {
+      "_comment": "========== 第2层：塔能力组合 (12) =========="
+    },
+    {
+      "name": "combo_slow+burn",
+      "towerAbilities": [
+        "slowPower",
+        "burn"
+      ],
+      "waitTicks": 300,
+      "assert": "enemy_burning",
+      "desc": "减速+灼烧: 敌人同时被减速和灼烧",
+      "test": "减速+灼烧能否同时生效",
+      "verify": "敌人被灼烧",
+      "how": "两种不同类别能力应不冲突"
+    },
+    {
+      "name": "combo_stun+splash",
+      "towerAbilities": [
+        "stunChance",
+        "splash"
+      ],
+      "waitTicks": 600,
+      "assert": "enemy_stunned",
+      "desc": "眩晕+溅射: 范围眩晕",
+      "test": "眩晕+溅射能否范围控制",
+      "verify": "敌人被眩晕",
+      "how": "溅射的 OnHit 触发眩晕，波及范围内多体"
+    },
+    {
+      "name": "combo_crit+flatDmg",
+      "towerAbilities": [
+        "crit",
+        "flatDamage"
+      ],
+      "waitTicks": 300,
+      "assert": "enemy_killed_before",
+      "assertParam": 600,
+      "desc": "暴击+固伤: 快速击杀(600帧内)",
+      "test": "暴击+固伤能否极速击杀",
+      "verify": "600 帧内有击杀",
+      "how": "暴击的高倍率 + 固伤的固定值叠加"
+    },
+    {
+      "name": "combo_scatter+slow",
+      "towerAbilities": [
+        "scatter",
+        "slowPower"
+      ],
+      "waitTicks": 300,
+      "assert": "enemy_speed_below_base",
+      "desc": "散射+减速: 多体减速",
+      "test": "散射+减速能否多体减速",
+      "verify": "敌人被减速",
+      "how": "散射每颗弹丸独立触发减速 OnHit"
+    },
+    {
+      "name": "combo_bounce+burn",
+      "towerAbilities": [
+        "bounce",
+        "burn"
+      ],
+      "waitTicks": 300,
+      "assert": "enemy_burning",
+      "desc": "弹射+灼烧: 链式灼烧",
+      "test": "弹射+灼烧能否链式灼烧",
+      "verify": "敌人被灼烧",
+      "how": "弹射到新目标时触发灼烧 OnHit"
+    },
+    {
+      "name": "combo_wideBeam+weaken",
+      "towerAbilities": [
+        "wideBeam",
+        "weaken"
+      ],
+      "waitTicks": 300,
+      "assert": "enemy_weakened",
+      "desc": "光束+虚弱: 穿透削弱",
+      "test": "光束+虚弱能否穿透削弱",
+      "verify": "敌人被虚弱",
+      "how": "光束穿透多体，每体触发虚弱"
+    },
+    {
+      "name": "combo_spinAoe+bleed",
+      "towerAbilities": [
+        "spinAoe",
+        "bleedDot"
+      ],
+      "waitTicks": 300,
+      "assert": "enemy_bleeding",
+      "desc": "旋风+流血: 范围DOT",
+      "test": "旋风+流血能否范围 DOT",
+      "verify": "敌人在流血",
+      "how": "旋风每 cycle 触发流血 OnHit"
+    },
+    {
+      "name": "combo_radial+poison",
+      "towerAbilities": [
+        "radial",
+        "poison"
+      ],
+      "waitTicks": 300,
+      "assert": "enemy_damaged",
+      "desc": "环射+中毒: 全向DOT",
+      "test": "环射+中毒能否全向 DOT",
+      "verify": "敌人受伤",
+      "how": "环射向四周发射，每弹触发中毒"
+    },
+    {
+      "name": "combo_dmgAura+soloBoost",
+      "towerAbilities": [
+        "damageUpAura",
+        "soloBoost"
+      ],
+      "waitTicks": 120,
+      "assert": "tower_has_buff",
+      "desc": "双buff: 光环+独行叠加",
+      "test": "双 buff 能否叠加",
+      "verify": "塔有 buff",
+      "how": "两种 buff 类能力不冲突"
+    },
+    {
+      "name": "combo_gold+rangeAura",
+      "towerAbilities": [
+        "goldPassive",
+        "rangeAura"
+      ],
+      "waitTicks": 240,
+      "assert": "gold_increased",
+      "desc": "经济+射程: 金币增长",
+      "test": "经济+射程能否共存",
+      "verify": "金币增长",
+      "how": "被动产金不受射程光环影响"
+    },
+    {
+      "name": "combo_slow+execution",
+      "towerAbilities": [
+        "slowPower",
+        "executionBonus"
+      ],
+      "waitTicks": 600,
+      "assert": "enemy_killed",
+      "desc": "减速+斩杀: 慢速收割",
+      "test": "减速+斩杀能否慢速收割",
+      "verify": "有击杀",
+      "how": "减速延长敌人在射程内时间，斩杀加速低血击杀"
+    },
+    {
+      "name": "combo_silence+curse",
+      "towerAbilities": [
+        "silenceZone",
+        "curseZone"
+      ],
+      "waitTicks": 300,
+      "assert": "enemy_silenced",
+      "desc": "沉默+诅咒: 双区域压制",
+      "test": "沉默+诅咒能否双区域压制",
+      "verify": "敌人被沉默",
+      "how": "两种 zone 类能力不冲突"
+    },
+    {
+      "_comment": "========== 第3层：怪物能力单测 (15) =========="
+    },
+    {
+      "_comment": "每个测试需要配合特定炮塔来验证怪物能力是否生效"
+    },
+    {
+      "name": "enemy_projectileBlock",
+      "enemyAbility": "projectileBlock",
+      "towerAbility": "bounce",
+      "waitTicks": 300,
+      "assert": "enemy_has_block",
+      "desc": "弹幕盾存在(用弹射塔触发阻挡)",
+      "test": "弹幕盾字段是否正确传递",
+      "verify": "敌人有 projectileBlock 能力",
+      "how": "通过 enemyFilter 筛选 shielder 原型，检查 AbilityIDs"
+    },
+    {
+      "name": "enemy_armorPlating",
+      "enemyAbility": "armorPlating",
+      "waitTicks": 300,
+      "assert": "cfg_enemy_field_eq",
+      "desc": "装甲敌人ArmorFlat>0",
+      "test": "装甲字段是否正确传递",
+      "verify": "敌人ArmorFlat == config.base(5)",
+      "how": "从enemies/abilities.json读取armorPlating.base，对比敌人实际ArmorFlat值",
+      "assertField": "ArmorFlat"
+    },
+    {
+      "name": "enemy_damageCap",
+      "enemyAbility": "damageCap",
+      "waitTicks": 900,
+      "assert": "cfg_enemy_field_eq",
+      "desc": "坚韧(固定): enhance(×1.2)+crit(×2)+weaken(+35%)堆叠可超cap=60",
+      "test": "坚韧(固定)字段是否正确传递",
+      "verify": "敌人DamageCap == config.base(60)",
+      "how": "三种不同类别能力叠加: attack×1.2 + damage×2暴击 + dot虚弱+35% ≈ 22×1.2×2×1.35=71>60",
+      "assertField": "DamageCap",
+      "towerAbilities": [
+        "enhance",
+        "crit",
+        "weaken"
+      ],
+      "towerAbility": ""
+    },
+    {
+      "name": "enemy_damageCapPercent",
+      "enemyAbility": "damageCapPercent",
+      "waitTicks": 300,
+      "assert": "cfg_enemy_field_eq",
+      "desc": "坚韧(百分比)敌人DamageCapPct>0",
+      "test": "坚韧(百分比)字段是否正确传递",
+      "verify": "敌人DamageCapPct == config.base(0.05)",
+      "how": "从config读取damageCapPercent.base，对比敌人实际DamageCapPct值",
+      "assertField": "DamageCapPct"
+    },
+    {
+      "name": "enemy_evasion",
+      "enemyAbility": "evasion",
+      "waitTicks": 300,
+      "assert": "cfg_enemy_field_eq",
+      "desc": "闪避敌人EvasionChance>0",
+      "test": "闪避字段是否正确传递",
+      "verify": "敌人EvasionChance == config.base(0.3)",
+      "how": "从config读取evasion.base，对比敌人实际EvasionChance值",
+      "assertField": "EvasionChance"
+    },
+    {
+      "name": "enemy_ccImmune",
+      "enemyAbility": "ccImmune",
+      "towerAbility": "slowPower",
+      "waitTicks": 300,
+      "assert": "no_enemy_slowed",
+      "desc": "CC免疫: 有slowPower塔但敌人不减速",
+      "test": "CC 免疫是否抵挡减速",
+      "verify": "有 slowPower 塔但所有敌人都未减速",
+      "how": "ironwill 原型免疫控制效果"
+    },
+    {
+      "name": "enemy_slowImmune",
+      "enemyAbility": "slowImmune",
+      "towerAbility": "slowPower",
+      "waitTicks": 300,
+      "assert": "no_enemy_slowed",
+      "desc": "减速免疫: 有slowPower塔但敌人不减速",
+      "test": "减速免疫是否抵挡减速",
+      "verify": "有 slowPower 塔但所有敌人都未减速",
+      "how": "steadfast 原型免疫减速"
+    },
+    {
+      "name": "enemy_dashOnHit",
+      "enemyAbility": "dashOnHit",
+      "waitTicks": 300,
+      "assert": "enemy_damaged",
+      "desc": "受击冲刺: 敌人被打但会加速",
+      "test": "受击冲刺是否正常触发",
+      "verify": "敌人受到伤害（冲刺不影响受伤）",
+      "how": "runner 原型被击后加速但仍受伤"
+    },
+    {
+      "name": "enemy_phaseShift",
+      "enemyAbility": "phaseShift",
+      "waitTicks": 600,
+      "assert": "enemy_phase_active",
+      "desc": "相位偏移: PhaseActive=true",
+      "test": "相位偏移是否周期性激活",
+      "verify": "任何敌人 PhaseActive=true",
+      "how": "phaser 原型每 N 秒进入免伤相位"
+    },
+    {
+      "name": "enemy_strengthDrain",
+      "enemyAbility": "strengthDrain",
+      "waitTicks": 900,
+      "assert": "tower_strength_decreased",
+      "desc": "削强: 塔强度<100",
+      "test": "削强是否降低塔强度",
+      "verify": "任何塔 Strength < 100",
+      "how": "drainer 原型连接最近塔，施加强度减益"
+    },
+    {
+      "name": "enemy_healAura",
+      "enemyAbility": "healAura",
+      "waitTicks": 300,
+      "assert": "cfg_enemy_field_eq",
+      "desc": "治疗光环: HealRadius>0",
+      "test": "治疗光环是否存在",
+      "verify": "敌人HealRadius == config.param(80)",
+      "how": "从config读取healAura.param(radius)，对比敌人实际HealRadius值",
+      "assertField": "HealRadius"
+    },
+    {
+      "name": "enemy_speedAura",
+      "enemyAbility": "speedAura",
+      "waitTicks": 300,
+      "assert": "cfg_enemy_field_eq",
+      "desc": "加速光环: BuffRadius>0",
+      "test": "加速光环是否存在",
+      "verify": "敌人BuffRadius == config.param(80)",
+      "how": "从config读取speedAura.param(radius)，对比敌人实际BuffRadius值",
+      "assertField": "BuffRadius"
+    },
+    {
+      "name": "enemy_deathSplit",
+      "enemyAbility": "deathSplit",
+      "waitTicks": 900,
+      "assert": "enemy_count_increased",
+      "desc": "死亡分裂: 击杀后敌人数增加",
+      "test": "死亡分裂是否产生子体",
+      "verify": "击杀后敌人池计数增加",
+      "how": "splitter 原型死亡时分裂为子体"
+    },
+    {
+      "name": "enemy_deathSpawn",
+      "enemyAbility": "deathSpawn",
+      "waitTicks": 900,
+      "assert": "enemy_count_increased",
+      "desc": "死亡召唤: 击杀后敌人数增加",
+      "test": "死亡召唤是否产生子体",
+      "verify": "击杀后敌人池计数增加",
+      "how": "summoner 原型死亡时召唤新敌人"
+    },
+    {
+      "name": "enemy_purge",
+      "enemyAbility": "purge",
+      "towerAbility": "slowPower",
+      "waitTicks": 600,
+      "assert": "no_enemy_slowed",
+      "desc": "净化: 有slowPower塔但净化清除减速",
+      "test": "净化是否清除减速",
+      "verify": "有 slowPower 塔但敌人未持续减速",
+      "how": "purifier 原型周期性清除所有负面效果"
+    },
+    {
+      "_comment": "========== 第4层：怪物能力组合 (8) =========="
+    },
+    {
+      "name": "enemyCombo_armor+cap",
+      "enemyAbilities": [
+        "armorPlating",
+        "damageCap"
+      ],
+      "waitTicks": 900,
+      "assert": "enemy_has_armor",
+      "desc": "装甲+坚韧: 多类别增伤突破双减伤",
+      "test": "装甲+坚韧双减伤是否共存",
+      "verify": "敌人有装甲",
+      "how": "同enemy_damageCap方案，验证装甲+坚韧双层防御",
+      "towerAbilities": [
+        "enhance",
+        "crit",
+        "weaken"
+      ],
+      "towerAbility": ""
+    },
+    {
+      "name": "enemyCombo_evasion+block",
+      "enemyAbilities": [
+        "evasion",
+        "projectileBlock"
+      ],
+      "towerAbility": "bounce",
+      "waitTicks": 600,
+      "assert": "enemy_has_evasion",
+      "desc": "闪避+弹幕盾: 双防御",
+      "test": "闪避+弹幕盾双防是否共存",
+      "verify": "敌人有闪避",
+      "how": "闪避在 ApplyHit 最前面，弹幕盾在其后"
+    },
+    {
+      "name": "enemyCombo_ccImmune+armor",
+      "enemyAbilities": [
+        "ccImmune",
+        "armorPlating"
+      ],
+      "towerAbility": "stunChance",
+      "waitTicks": 600,
+      "assert": "no_enemy_stunned",
+      "desc": "CC免疫+装甲: 控制无效+减伤",
+      "test": "CC 免疫+装甲是否共存",
+      "verify": "有 stunChance 塔但敌人未被眩晕",
+      "how": "免疫阻止 CC，装甲减伤"
+    },
+    {
+      "name": "enemyCombo_phase+dash",
+      "enemyAbilities": [
+        "phaseShift",
+        "dashOnHit"
+      ],
+      "waitTicks": 600,
+      "assert": "enemy_phase_active",
+      "desc": "相位+冲刺: 免伤期激活",
+      "test": "相位+冲刺是否共存",
+      "verify": "相位免伤激活",
+      "how": "两种 movement 类能力交替触发"
+    },
+    {
+      "name": "enemyCombo_heal+speed",
+      "enemyAbilities": [
+        "healAura",
+        "speedAura"
+      ],
+      "waitTicks": 300,
+      "assert": "enemy_has_heal_aura",
+      "desc": "治疗+加速: 双光环",
+      "test": "治疗+加速双光环是否共存",
+      "verify": "敌人有治疗光环",
+      "how": "两种 support 类光环不冲突"
+    },
+    {
+      "name": "enemyCombo_drain+capPct",
+      "enemyAbilities": [
+        "strengthDrain",
+        "damageCapPercent"
+      ],
+      "waitTicks": 900,
+      "assert": "tower_strength_decreased",
+      "desc": "削强+百分比坚韧",
+      "test": "削强+百分比坚韧是否共存",
+      "verify": "塔强度被降低",
+      "how": "offense+defense 跨 category 共存"
+    },
+    {
+      "name": "enemyCombo_purge+slow",
+      "enemyAbilities": [
+        "purge",
+        "slowImmune"
+      ],
+      "towerAbility": "slowPower",
+      "waitTicks": 600,
+      "assert": "no_enemy_slowed",
+      "desc": "净化+减速免疫: 双重抗减速",
+      "test": "净化+减速免疫双重抗减速",
+      "verify": "有 slowPower 塔但敌人未减速",
+      "how": "两层保护：免疫阻止 + 净化清除"
+    },
+    {
+      "name": "enemyCombo_split+armor",
+      "enemyAbilities": [
+        "deathSplit",
+        "armorPlating"
+      ],
+      "waitTicks": 900,
+      "assert": "enemy_count_increased",
+      "desc": "分裂+装甲: 子体有装甲",
+      "test": "分裂+装甲是否共存",
+      "verify": "击杀后敌人数增加",
+      "how": "death+defense 跨 category 共存"
+    },
+    {
+      "_comment": "========== 第5层：炮塔×怪物交叉 (15) =========="
+    },
+    {
+      "name": "cross_silence_vs_cap",
+      "towerAbility": "silenceZone",
+      "enemyAbility": "damageCap",
+      "waitTicks": 300,
+      "assert": "enemy_silenced",
+      "desc": "沉默禁用坚韧: 沉默塔+输出塔，验证cap在沉默区内失效",
+      "test": "沉默是否禁用坚韧",
+      "verify": "坚韧敌人在沉默区内被沉默",
+      "how": "第一塔silenceZone沉默敌人，第二塔flatDamage输出",
+      "towerAbility2": "flatDamage"
+    },
+    {
+      "name": "cross_silence_vs_heal",
+      "towerAbility": "silenceZone",
+      "enemyAbility": "healAura",
+      "waitTicks": 300,
+      "assert": "enemy_silenced",
+      "desc": "沉默禁用治疗: 沉默塔+输出塔",
+      "test": "沉默是否禁用治疗",
+      "verify": "治疗敌人在沉默区内被沉默",
+      "how": "第一塔silenceZone沉默敌人，第二塔输出验证治疗停止",
+      "towerAbility2": "flatDamage"
+    },
+    {
+      "name": "cross_silence_vs_evasion",
+      "towerAbility": "silenceZone",
+      "enemyAbility": "evasion",
+      "waitTicks": 300,
+      "assert": "enemy_silenced",
+      "desc": "沉默禁用闪避: 沉默塔+输出塔",
+      "test": "沉默是否禁用闪避",
+      "verify": "闪避敌人在沉默区内被沉默",
+      "how": "第一塔silenceZone沉默，第二塔输出验证闪避失效",
+      "towerAbility2": "flatDamage"
+    },
+    {
+      "name": "cross_silence_vs_phase",
+      "towerAbility": "silenceZone",
+      "enemyAbility": "phaseShift",
+      "waitTicks": 300,
+      "assert": "enemy_silenced",
+      "desc": "沉默暂停相位: 沉默塔+输出塔",
+      "test": "沉默是否暂停相位",
+      "verify": "相位敌人在沉默区内被沉默",
+      "how": "第一塔silenceZone沉默，第二塔输出验证相位暂停",
+      "towerAbility2": "flatDamage"
+    },
+    {
+      "name": "cross_silence_vs_purge",
+      "towerAbility": "silenceZone",
+      "enemyAbility": "purge",
+      "waitTicks": 600,
+      "assert": "enemy_damaged",
+      "desc": "净化不可被沉默: 沉默塔+输出塔",
+      "test": "净化是否不可被沉默",
+      "verify": "净化敌人在沉默区内仍受伤",
+      "how": "第一塔silenceZone，第二塔输出，净化仍能清除效果",
+      "towerAbility2": "flatDamage"
+    },
+    {
+      "name": "cross_slow_vs_ccImmune",
+      "towerAbility": "slowPower",
+      "enemyAbility": "ccImmune",
+      "waitTicks": 300,
+      "assert": "no_enemy_slowed",
+      "desc": "减速vs控制免疫: 敌人不被减速",
+      "test": "减速是否被 CC 免疫阻挡",
+      "verify": "ironwill 敌人在有 slowPower 塔时不被减速",
+      "how": "ApplySlow 检查 IsControlImmune"
+    },
+    {
+      "name": "cross_stun_vs_ccImmune",
+      "towerAbility": "stunChance",
+      "enemyAbility": "ccImmune",
+      "waitTicks": 600,
+      "assert": "no_enemy_stunned",
+      "desc": "眩晕vs控制免疫: 敌人不被眩晕",
+      "test": "眩晕是否被 CC 免疫阻挡",
+      "verify": "ironwill 敌人在有 stunChance 塔时不被眩晕",
+      "how": "ApplyStun 检查 IsControlImmune/IsStunImmune"
+    },
+    {
+      "name": "cross_slow_vs_slowImmune",
+      "towerAbility": "slowPower",
+      "enemyAbility": "slowImmune",
+      "waitTicks": 300,
+      "assert": "no_enemy_slowed",
+      "desc": "减速vs减速免疫: 敌人不被减速",
+      "test": "减速是否被减速免疫阻挡",
+      "verify": "steadfast 敌人在有 slowPower 塔时不被减速",
+      "how": "ApplySlow 检查 IsSlowImmune"
+    },
+    {
+      "name": "cross_bounce_vs_block",
+      "towerAbility": "bounce",
+      "enemyAbility": "projectileBlock",
+      "waitTicks": 600,
+      "assert": "enemy_damaged",
+      "desc": "弹射vs弹幕盾: 受伤但停止链弹",
+      "test": "弹射碰到弹幕盾是否受伤但停止链弹",
+      "verify": "shielder 敌人受到伤害",
+      "how": "弹幕盾正常受伤但 ProjectileBlocked=true 阻止后续链弹"
+    },
+    {
+      "name": "cross_scatter_vs_block",
+      "towerAbility": "scatter",
+      "enemyAbility": "projectileBlock",
+      "waitTicks": 300,
+      "assert": "enemy_damaged",
+      "desc": "散射vs弹幕盾: 受伤但停止穿透",
+      "test": "散射碰到弹幕盾是否受伤但停止穿透",
+      "verify": "shielder 敌人受到伤害",
+      "how": "弹幕盾正常受伤但穿透弹在盾卫处终止"
+    },
+    {
+      "name": "cross_burn_vs_purge",
+      "towerAbility": "burn",
+      "enemyAbility": "purge",
+      "waitTicks": 600,
+      "assert": "enemy_damaged",
+      "desc": "灼烧vs净化: 周期清除DOT但仍受伤",
+      "test": "灼烧碰到净化是否被周期清除",
+      "verify": "purifier 敌人仍受到伤害",
+      "how": "灼烧被净化清除但下次命中重新施加"
+    },
+    {
+      "name": "cross_weaken_vs_armor",
+      "towerAbility": "weaken",
+      "enemyAbility": "armorPlating",
+      "waitTicks": 300,
+      "assert": "enemy_weakened",
+      "desc": "虚弱vs装甲: 增伤与减免并存",
+      "test": "虚弱与装甲是否并存",
+      "verify": "armored 敌人被虚弱",
+      "how": "装甲在 ApplyHit 减免，虚弱在管线 step 4.25 增伤"
+    },
+    {
+      "name": "cross_flatDmg_vs_capPct",
+      "towerAbility": "flatDamage",
+      "enemyAbility": "damageCapPercent",
+      "waitTicks": 600,
+      "assert": "enemy_damaged",
+      "desc": "固伤vs百分比坚韧: 伤害被限制但仍受伤",
+      "test": "固伤碰到百分比坚韧是否仍造伤",
+      "verify": "colossus 敌人受到伤害",
+      "how": "固伤附加到总伤害，管线 step 4.5 限制单次总伤害"
+    },
+    {
+      "name": "cross_splash_vs_evasion",
+      "towerAbility": "splash",
+      "enemyAbility": "evasion",
+      "waitTicks": 600,
+      "assert": "enemy_damaged",
+      "desc": "溅射vs闪避: 溅射部分不触发闪避",
+      "test": "溅射碰到闪避是否仍造伤",
+      "verify": "phantom 敌人受到伤害",
+      "how": "溅射伤害对周围敌人走独立 ApplyHit，各自独立判闪避"
+    },
+    {
+      "name": "cross_curseZone_vs_phase",
+      "towerAbility": "curseZone",
+      "enemyAbility": "phaseShift",
+      "waitTicks": 600,
+      "assert": "enemy_damaged",
+      "desc": "诅咒vs相位: 免伤期不扣血但其余时间扣",
+      "test": "诅咒碰到相位免伤是否仍造伤",
+      "verify": "phaser 敌人受到伤害",
+      "how": "免伤期间 DoT 不扣血但 DoT 计时正常递减，非免伤期间扣血"
+    }
+  ]
+}

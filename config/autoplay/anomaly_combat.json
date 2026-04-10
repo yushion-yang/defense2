@@ -1,0 +1,52 @@
+{
+  "_meta": {
+    "description": "AutoPlay 异常检测规则 — combat",
+    "count": 4
+  },
+  "rules": [
+    {
+      "id": "kill_count_decrease",
+      "severity": "CRITICAL",
+      "category": "战斗系统",
+      "test": "击杀计数是否倒退",
+      "verify": "state.TotalKills < prevKills",
+      "how": "每帧记录击杀数，与上一帧比较",
+      "threshold": "任何倒退",
+      "dedupe": "每次触发都报告",
+      "rootCause": "计数器溢出 / 并发修改 / 重置错误"
+    },
+    {
+      "id": "nan_in_enemy",
+      "severity": "CRITICAL",
+      "category": "数值系统",
+      "test": "敌人属性是否出现 NaN/Inf",
+      "verify": "HP/MaxHP/Speed/X/Y 任一为 NaN 或 Inf",
+      "how": "每帧遍历活敌人，math.IsNaN/IsInf 检查",
+      "threshold": "任何一个字段",
+      "dedupe": "每个敌人只报一次",
+      "rootCause": "伤害管线除零 / 减速公式除零 / 速度计算溢出"
+    },
+    {
+      "id": "speed_floor_violation",
+      "severity": "CRITICAL",
+      "category": "CC 系统",
+      "test": "非眩晕/定身敌人速度是否降至 0 或负数",
+      "verify": "!IsStunned && !IsRooted && Speed <= 0",
+      "how": "每帧遍历活敌人检查速度值",
+      "threshold": "Speed <= 0",
+      "dedupe": "每个敌人只报一次",
+      "rootCause": "减速系统 MinSpeedRatio 未生效 / 多重减速叠加突破下限"
+    },
+    {
+      "id": "projectile_orphan_burst",
+      "severity": "HIGH",
+      "category": "战斗系统",
+      "test": "弹射物是否大量堆积但无命中",
+      "verify": "弹射物数 > 20 持续 120 帧（2 秒）且期间 0 击杀",
+      "how": "监控弹射物计数和击杀数，连续帧判定",
+      "threshold": "20 个弹射物 × 120 帧 × 0 击杀",
+      "dedupe": "重置后可再次触发",
+      "rootCause": "追踪失效 / 碰撞检测失效 / 弹射物速度异常"
+    }
+  ]
+}

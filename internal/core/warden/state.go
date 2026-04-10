@@ -118,7 +118,7 @@ func (s *WardenState) mapH() float64 {
 }
 
 // MoveOrbit 围绕 (cx, cy) 以 idealDist 为理想距离进行轨道运动。
-// 简化模型：始终推进角度 + 向目标轨道位置平滑移动，消除模式切换跳变。
+// 当距离目标中心过远时，先直线追赶到轨道半径附近再开始绕转。
 func (s *WardenState) MoveOrbit(cx, cy, idealDist, dt float64) {
 	// dt-aware 平滑轨道中心
 	if !s.smoothInit {
@@ -130,7 +130,6 @@ func (s *WardenState) MoveOrbit(cx, cy, idealDist, dt float64) {
 		dy := cy - s.smoothCY
 		dist := math.Hypot(dx, dy)
 		if dist > smoothSnapDist {
-			// 距离过大直接跳到目标（跨屏切换场景）
 			s.smoothCX = cx
 			s.smoothCY = cy
 		} else {
@@ -149,34 +148,51 @@ func (s *WardenState) MoveOrbit(cx, cy, idealDist, dt float64) {
 	if idealDist <= 0 {
 		return
 	}
-	// 始终推进轨道角度
-	angularSpeed := s.MoveSpeed / idealDist
-	s.OrbitAngle += angularSpeed * dt
-
-	// 目标位置 = 平滑中心 + 轨道半径
-	targetX := scx + idealDist*math.Cos(s.OrbitAngle)
-	targetY := scy + idealDist*math.Sin(s.OrbitAngle)
 
 	prevX, prevY := s.X, s.Y
 
 	// 首次定位：直接 teleport
 	if s.X == 0 && s.Y == 0 {
-		s.X = clampF(targetX, 0, s.mapW())
-		s.Y = clampF(targetY, 0, s.mapH())
+		s.X = clampF(scx+idealDist, 0, s.mapW())
+		s.Y = clampF(scy, 0, s.mapH())
 		return
 	}
 
-	// 向目标位置平滑移动
-	dx := targetX - s.X
-	dy := targetY - s.Y
-	dist := math.Hypot(dx, dy)
-	maxMove := s.MoveSpeed * dt
-	if dist > maxMove {
-		s.X += (dx / dist) * maxMove
-		s.Y += (dy / dist) * maxMove
+	// 计算当前距离中心的距离
+	distToCenter := math.Hypot(s.X-scx, s.Y-scy)
+	engageThresh := idealDist * 2.5 // 超过此距离 → 追赶模式
+
+	if distToCenter > engageThresh {
+		// ── 追赶模式：直线高速向中心移动 ──
+		dx := scx - s.X
+		dy := scy - s.Y
+		speed := s.MoveSpeed * 1.8 // 追赶时 1.8 倍速
+		maxMove := speed * dt
+		if distToCenter > maxMove {
+			s.X += (dx / distToCenter) * maxMove
+			s.Y += (dy / distToCenter) * maxMove
+		} else {
+			s.X = scx
+			s.Y = scy
+		}
 	} else {
-		s.X = targetX
-		s.Y = targetY
+		// ── 轨道模式：正常绕转 ──
+		angularSpeed := s.MoveSpeed / idealDist
+		s.OrbitAngle += angularSpeed * dt
+		targetX := scx + idealDist*math.Cos(s.OrbitAngle)
+		targetY := scy + idealDist*math.Sin(s.OrbitAngle)
+
+		dx := targetX - s.X
+		dy := targetY - s.Y
+		dist := math.Hypot(dx, dy)
+		maxMove := s.MoveSpeed * dt
+		if dist > maxMove {
+			s.X += (dx / dist) * maxMove
+			s.Y += (dy / dist) * maxMove
+		} else {
+			s.X = targetX
+			s.Y = targetY
+		}
 	}
 
 	s.X = clampF(s.X, 0, s.mapW())
@@ -256,8 +272,14 @@ func (s *WardenState) RecordTrail(dt float64) {
 
 // ── 战斗 ────────────────────────────────────────
 
-// FindNearest 查找 Range 范围内最近的敌人。
+// FindNearest 查找攻击范围内最近的敌人。
+// 搜索半径 = max(Range, 250)，确保轨道运动时仍能找到目标。
 func (s *WardenState) FindNearest(enemies *enemy.Pool) *enemy.Enemy {
+	searchRange := s.Range
+	if searchRange < 250 {
+		searchRange = 250
+	}
+
 	var nearest *enemy.Enemy
 	nearestDist := math.MaxFloat64
 
@@ -266,7 +288,7 @@ func (s *WardenState) FindNearest(enemies *enemy.Pool) *enemy.Enemy {
 			return
 		}
 		d := math.Hypot(e.X-s.X, e.Y-s.Y)
-		if d <= s.Range && d < nearestDist {
+		if d <= searchRange && d < nearestDist {
 			nearestDist = d
 			nearest = e
 		}
@@ -336,18 +358,49 @@ func ApplyDamage(ctx *TickContext, e *enemy.Enemy, dmg float64, crit bool) {
 
 // ── 敌群分析 ────────────────────────────────────
 
-// ComputeClusterCenter 计算所有存活敌人的质心。
+// ComputeClusterCenter 计算敌群作战中心。
+// 策略：找到邻居最多的敌人（密集点），以它为中心。
+// 当敌人分散时，质心可能在空旷处导致战灵绕空气转。
+// 用密集点代替质心，确保战灵总是朝最多敌人的地方移动。
 func ComputeClusterCenter(enemies *enemy.Pool) (cx, cy float64, count int) {
-	var sumX, sumY float64
+	const clusterRadius = 200.0 // 密集判定半径
+
+	var alive []*enemy.Enemy
 	enemies.Each(func(e *enemy.Enemy) {
-		sumX += e.X
-		sumY += e.Y
-		count++
+		if !e.IsDying() {
+			alive = append(alive, e)
+		}
 	})
+	count = len(alive)
 	if count == 0 {
 		return 0, 0, 0
 	}
-	return sumX / float64(count), sumY / float64(count), count
+	if count <= 3 {
+		// 少量敌人直接用质心（密集算法开销不值得）
+		var sx, sy float64
+		for _, e := range alive {
+			sx += e.X
+			sy += e.Y
+		}
+		return sx / float64(count), sy / float64(count), count
+	}
+
+	// 找邻居最多的敌人
+	best := alive[0]
+	bestNeighbors := 0
+	for _, e := range alive {
+		n := 0
+		for _, o := range alive {
+			if math.Hypot(o.X-e.X, o.Y-e.Y) <= clusterRadius {
+				n++
+			}
+		}
+		if n > bestNeighbors {
+			bestNeighbors = n
+			best = e
+		}
+	}
+	return best.X, best.Y, count
 }
 
 // FindClusterCenter 寻找周围敌人最多的敌人（敌群中心）。

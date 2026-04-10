@@ -1,0 +1,449 @@
+{
+  "_meta": {
+    "description": "VFX effect catalog — metadata for vfx_preview scene",
+    "version": 1
+  },
+  "categories": [
+    {
+      "id": "particles",
+      "name": "Particles",
+      "label": "粒子效果",
+      "effects": [
+        {
+          "id": "deathBurst",
+          "name": "DeathBurst",
+          "label": "死亡爆裂",
+          "description": "敌人死亡时向外辐射的白橙色小型火花粒子"
+        },
+        {
+          "id": "deathBurstLarge",
+          "name": "DeathBurstLarge",
+          "label": "大型死亡爆裂",
+          "description": "大型敌人死亡时的增强粒子爆裂，数量更多、范围更大"
+        },
+        {
+          "id": "bossDeathBurst",
+          "name": "BossDeathBurst",
+          "label": "Boss死亡爆裂",
+          "description": "Boss击杀时的超大粒子爆发，三层同心扩散，红橙金渐变"
+        },
+        {
+          "id": "muzzleFlash",
+          "name": "MuzzleFlash",
+          "label": "枪口闪光",
+          "description": "塔开火时在枪口生成的短暂高速亮黄粒子"
+        },
+        {
+          "id": "spawnBurst",
+          "name": "SpawnBurst",
+          "label": "出生爆裂",
+          "description": "敌人从入口出生时的环形扩散粒子"
+        },
+        {
+          "id": "fireParticles",
+          "name": "FireParticles",
+          "label": "火焰粒子",
+          "description": "橙红色上浮火焰粒子，用于燃烧DoT和火属性攻击"
+        },
+        {
+          "id": "iceParticles",
+          "name": "IceParticles",
+          "label": "冰霜粒子",
+          "description": "淡蓝白色缓慢飘落的冰晶粒子，用于冰冻减速效果"
+        },
+        {
+          "id": "goldCollect",
+          "name": "GoldCollect",
+          "label": "金币收集",
+          "description": "金色上浮粒子，击杀敌人获取金币时播放"
+        },
+        {
+          "id": "electricSparks",
+          "name": "ElectricSparks",
+          "label": "电击火花",
+          "description": "高速随机方向的蓝白电弧粒子，用于闪电类攻击"
+        },
+        {
+          "id": "bleedDrip",
+          "name": "BleedDrip",
+          "label": "流血滴落",
+          "description": "暗红色向下坠落的血滴粒子，用于流血DoT效果"
+        },
+        {
+          "id": "ambient",
+          "name": "Ambient",
+          "label": "环境微粒",
+          "description": "全屏漂浮的微弱尘埃光点，营造氛围感"
+        }
+      ]
+    },
+    {
+      "id": "screenEffects",
+      "name": "Screen Effects",
+      "label": "屏幕特效",
+      "effects": [
+        {
+          "id": "screenShake",
+          "name": "ScreenShake",
+          "label": "屏幕震动",
+          "description": "全屏随机偏移抖动，用于爆炸、Boss出场等冲击场景"
+        },
+        {
+          "id": "hitFlash",
+          "name": "HitFlash",
+          "label": "命中闪白",
+          "description": "全屏短暂白色闪烁覆盖，增强命中的打击感"
+        },
+        {
+          "id": "radialBlur",
+          "name": "RadialBlur",
+          "label": "径向模糊",
+          "description": "以指定点为中心的放射状运动模糊，用于强力技能和Boss击杀"
+        },
+        {
+          "id": "ripple",
+          "name": "Ripple",
+          "label": "水波纹",
+          "description": "从指定点扩散的同心水波纹波动效果"
+        },
+        {
+          "id": "hitStop",
+          "name": "HitStop",
+          "label": "顿帧",
+          "description": "冻结画面指定帧数，制造关键打击的时间停滞感"
+        },
+        {
+          "id": "desaturation",
+          "name": "Desaturation",
+          "label": "去色",
+          "description": "画面去饱和度+色调偏移，用于危险警告或特殊状态"
+        }
+      ]
+    },
+    {
+      "id": "combatVFX",
+      "name": "Combat VFX",
+      "label": "战斗特效",
+      "effects": [
+        {
+          "id": "impactRing",
+          "name": "ImpactRing",
+          "label": "冲击波环",
+          "description": "命中目标时的黄色扩散光环，短暂闪现后消失"
+        },
+        {
+          "id": "typedImpact",
+          "name": "TypedImpact",
+          "label": "元素冲击",
+          "description": "根据攻击方式着色的冲击环：散射=蓝、旋转/投射=橙、光束=紫"
+        },
+        {
+          "id": "thunderBolt",
+          "name": "ThunderBolt",
+          "label": "雷电链",
+          "description": "两点间的锯齿形闪电弧线，带分支和辉光"
+        },
+        {
+          "id": "beam",
+          "name": "Beam",
+          "label": "光束",
+          "description": "两点间的直线能量光束，支持宽度、颜色、宽光束模式"
+        },
+        {
+          "id": "damageText",
+          "name": "DamageText",
+          "label": "伤害数字",
+          "description": "白色上浮伤害数字，从命中点弹出后渐隐"
+        },
+        {
+          "id": "critText",
+          "name": "CritText",
+          "label": "暴击数字",
+          "description": "放大的红色上浮暴击伤害数字，带额外弹跳动画"
+        },
+        {
+          "id": "goldText",
+          "name": "GoldText",
+          "label": "金币数字",
+          "description": "金色+号数字，获取金币时在击杀位置弹出"
+        },
+        {
+          "id": "killText",
+          "name": "KillText",
+          "label": "击杀文字",
+          "description": "红色「击杀」文字，击杀敌人时短暂浮现"
+        },
+        {
+          "id": "customText",
+          "name": "CustomText",
+          "label": "自定义浮字",
+          "description": "可自定义颜色、大小、持续时间的通用浮动文字"
+        }
+      ]
+    },
+    {
+      "id": "postProcessing",
+      "name": "Post-Processing",
+      "label": "后处理",
+      "effects": [
+        {
+          "id": "vignetteStrong",
+          "name": "Vignette Strong",
+          "label": "强暗角",
+          "description": "增强画面四角暗角效果，聚焦中心视觉"
+        },
+        {
+          "id": "vignetteOff",
+          "name": "Vignette Off",
+          "label": "关闭暗角",
+          "description": "关闭暗角效果，恢复画面全亮"
+        },
+        {
+          "id": "dynamicLight",
+          "name": "DynamicLight",
+          "label": "动态光源",
+          "description": "在指定位置放置暖橙色点光源，照亮周围区域"
+        },
+        {
+          "id": "glowLayer",
+          "name": "Glow Layer",
+          "label": "辉光层",
+          "description": "粒子和光束的泛光叠加层，增强明亮物体的光晕"
+        },
+        {
+          "id": "dayNightTint",
+          "name": "DayNightTint",
+          "label": "昼夜色调",
+          "description": "全屏RGBA色调覆盖，模拟昼夜和环境光变化"
+        }
+      ]
+    },
+    {
+      "id": "composite",
+      "name": "Composite",
+      "label": "组合特效",
+      "effects": [
+        {
+          "id": "bossKill",
+          "name": "BossKill",
+          "label": "Boss击杀",
+          "description": "Boss死亡组合：震动+径向模糊+水波纹+顿帧+闪白+粒子爆发+冲击环"
+        },
+        {
+          "id": "multiKill",
+          "name": "MultiKill",
+          "label": "多重击杀",
+          "description": "多杀组合：震动+大型粒子爆发+击杀文字+暴击数字"
+        },
+        {
+          "id": "waveAnnounceNormal",
+          "name": "WaveAnnounce Normal",
+          "label": "波次预告",
+          "description": "普通波次开始时的全屏横幅动画"
+        },
+        {
+          "id": "waveAnnounceBoss",
+          "name": "WaveAnnounce Boss",
+          "label": "Boss波预告",
+          "description": "Boss波次开始时的特殊红色全屏横幅动画"
+        },
+        {
+          "id": "toast",
+          "name": "Toast",
+          "label": "通知弹窗",
+          "description": "屏幕顶部短暂通知消息，自动渐隐"
+        }
+      ]
+    },
+    {
+      "id": "towerVFX",
+      "name": "Tower VFX",
+      "label": "炮塔特效",
+      "effects": [
+        {
+          "id": "buildRipple",
+          "name": "BuildRipple",
+          "label": "建造波纹",
+          "description": "建造炮塔时的白色扩散环"
+        },
+        {
+          "id": "spinBlades",
+          "name": "SpinBlades",
+          "label": "旋转弧刃",
+          "description": "spin_aoe 攻击方式的 4 条旋转绿色弧线刃"
+        },
+        {
+          "id": "strengthGlow",
+          "name": "StrengthGlow",
+          "label": "力量光环",
+          "description": "力量溢出时的层级光环：50/100/150 三个层级递增"
+        },
+        {
+          "id": "auraPulse",
+          "name": "AuraPulse",
+          "label": "光环脉冲",
+          "description": "光环能力的脉冲虚线圈，按能力类型着色"
+        },
+        {
+          "id": "buffDots",
+          "name": "BuffDots",
+          "label": "增益圆点",
+          "description": "塔上方的紫色 buff 指示圆点"
+        },
+        {
+          "id": "pentagram",
+          "name": "Pentagram",
+          "label": "五角星阵",
+          "description": "金灵战灵 buff 的旋转五角星芒阵 + 金色光环"
+        }
+      ]
+    },
+    {
+      "id": "projectileVFX",
+      "name": "Projectile VFX",
+      "label": "弹道特效",
+      "effects": [
+        {
+          "id": "projPenetrate",
+          "name": "Penetrate",
+          "label": "穿透弹",
+          "description": "紫色拉长椭圆穿透弹体 + 辉光"
+        },
+        {
+          "id": "projScatter",
+          "name": "Scatter",
+          "label": "散射弹",
+          "description": "小蓝色散射弹丸"
+        },
+        {
+          "id": "projSniper",
+          "name": "Sniper",
+          "label": "狙击弹",
+          "description": "橙色辉光狙击弹体"
+        },
+        {
+          "id": "projFreeze",
+          "name": "Freeze",
+          "label": "冰冻弹",
+          "description": "冰蓝色旋转菱形弹体"
+        },
+        {
+          "id": "projDefault",
+          "name": "Default",
+          "label": "标准弹",
+          "description": "暖黄色标准辉光弹体"
+        },
+        {
+          "id": "projTrail",
+          "name": "Trail",
+          "label": "弹道拖尾",
+          "description": "弹道后方渐隐缩小的历史位置圆点"
+        }
+      ]
+    },
+    {
+      "id": "wardenVFX",
+      "name": "Warden VFX",
+      "label": "战灵特效",
+      "effects": [
+        {
+          "id": "fireTrails",
+          "name": "FireTrails",
+          "label": "火灵火迹",
+          "description": "地面多层渐变燃烧区：暗红光晕+橙色火焰+亮黄内核"
+        },
+        {
+          "id": "fireballs",
+          "name": "Fireballs",
+          "label": "火灵火球",
+          "description": "飞行火球带方向拖尾 + 外层光晕 + 亮黄核心"
+        },
+        {
+          "id": "shootFlash",
+          "name": "ShootFlash",
+          "label": "射击闪光",
+          "description": "战灵射击时的双层同心圆闪光"
+        },
+        {
+          "id": "chainLinks",
+          "name": "ChainLinks",
+          "label": "聚能连线",
+          "description": "聚能战灵串联塔之间的紫色能量线段"
+        },
+        {
+          "id": "skystrikeIce",
+          "name": "Skystrike Ice",
+          "label": "天击冰锥",
+          "description": "冰锥从高处加速坠落 + 落地碎冰"
+        },
+        {
+          "id": "skystrikeWater",
+          "name": "Skystrike Water",
+          "label": "天击水滴",
+          "description": "水滴加速坠落 + 落地溅射水花"
+        },
+        {
+          "id": "skystrikeGeyser",
+          "name": "Skystrike Geyser",
+          "label": "天击水柱",
+          "description": "水柱从地面冲击涌起 + 侧面水珠飞溅"
+        },
+        {
+          "id": "goldBeam",
+          "name": "GoldBeam",
+          "label": "金灵光束",
+          "description": "金灵施 buff 时的金色光束 + 目标闪光"
+        }
+      ]
+    },
+    {
+      "id": "enemyVFX",
+      "name": "Enemy VFX",
+      "label": "敌人特效",
+      "effects": [
+        {
+          "id": "bossPulse",
+          "name": "BossPulse",
+          "label": "Boss脉冲",
+          "description": "Boss 双层同心脉冲光环，红粉色交替"
+        },
+        {
+          "id": "runnerRing",
+          "name": "RunnerRing",
+          "label": "跑者光环",
+          "description": "跑者敌人的橙色脉冲光环"
+        },
+        {
+          "id": "stunStars",
+          "name": "StunStars",
+          "label": "眩晕星星",
+          "description": "3 颗黄色圆点绕头顶椭圆轨道旋转"
+        },
+        {
+          "id": "enemyHitFlash",
+          "name": "HitFlash",
+          "label": "命中闪红",
+          "description": "命中时红色半透明圆叠加层"
+        },
+        {
+          "id": "statusDots",
+          "name": "StatusDots",
+          "label": "状态圆点",
+          "description": "HP 条上方的彩色状态效果指示圆点"
+        },
+        {
+          "id": "bufferAura",
+          "name": "BufferAura",
+          "label": "增益光环",
+          "description": "buffer 行为敌人的金色半透明光环圈"
+        },
+        {
+          "id": "purgeGlow",
+          "name": "PurgeGlow",
+          "label": "净化微光",
+          "description": "净化免疫期白色脉冲微光环"
+        }
+      ]
+    }
+  ]
+}

@@ -45,7 +45,7 @@ func loadAbilityTestDefs() []abilityTestDef {
 	if fs == nil {
 		return nil
 	}
-	data, err := fs.ReadFile("config/ability_tests.json")
+	data, err := fs.ReadFile("config/autoplay/ability_tests.json")
 	if err != nil {
 		log.Printf("[ability_tests] load failed: %v", err)
 		return nil
@@ -116,13 +116,14 @@ func buildScenarioFromDef(d abilityTestDef) *AbilityScenario {
 
 	strat := NewScenarioStrategy(d.Name, steps)
 
-	// 构建断言
+	// 构建断言（从能力配置计算期望值）
 	assertion := Assertion{
 		Name:      d.Name + ":" + d.Assert,
 		AfterTick: d.WaitTicks,
 		Type:      d.Assert,
 		Param:     d.AssertParam,
 		Field:     d.AssertField,
+		Expected:  computeExpected(d),
 	}
 
 	return &AbilityScenario{
@@ -264,6 +265,58 @@ func buildSteps(towerAbils []string, towerAbility2 string, enemyFilter string) [
 	_ = enemyFilter
 
 	return steps
+}
+
+// computeExpected 从能力配置计算断言期望值。
+// 默认假设强度 100（autoplay 初始强度）。
+func computeExpected(d abilityTestDef) float64 {
+	const defaultStr = 100.0
+
+	// 塔能力：从 abilities.json 读取
+	if d.TowerAbility != "" {
+		if tbl := config.GlobalAbilityTable(); tbl != nil {
+			if def, ok := tbl[d.TowerAbility]; ok {
+				sv := def.CalcScale(defaultStr)
+				switch d.Assert {
+				case "cfg_tower_damage_boosted":
+					return def.Base // enhance 固定用 base（不受强度影响）
+				case "cfg_enemy_speed_ratio":
+					// slowPower: factor = 1 - sv, slowDuration: factor = 1 - param
+					if d.TowerAbility == "slowPower" {
+						return 1 - sv
+					}
+					if d.TowerAbility == "slowDuration" {
+						return 1 - def.Param
+					}
+					return 1 - sv
+				case "cfg_bounce_count":
+					return sv // maxBounces = CalcScale(str)
+				case "cfg_pellet_multi_hit":
+					return sv // total pellets
+				}
+			}
+		}
+	}
+
+	// 怪物能力：从 enemies/abilities.json 读取
+	if d.EnemyAbility != "" {
+		if tbl := config.GlobalEnemyAbilityTable(); tbl != nil {
+			if def, ok := tbl[d.EnemyAbility]; ok {
+				switch d.Assert {
+				case "cfg_enemy_field_eq":
+					// 根据字段选择读 base 还是 param
+					switch d.AssertField {
+					case "HealRadius", "BuffRadius":
+						return def.Param // 半径在 param 字段
+					default:
+						return def.Base // ArmorFlat/EvasionChance/DamageCap 等在 base 字段
+					}
+				}
+			}
+		}
+	}
+
+	return 0
 }
 
 // AbilityTestEnemyFilter 返回指定场景的 enemyFilter。

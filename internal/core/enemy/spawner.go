@@ -405,7 +405,8 @@ func (s *Spawner) matchesFilter(name string, cfg *SpawnConfig) bool {
 	case "mixed", "":
 		return !isBoss // default: exclude boss (added separately)
 	default:
-		return true
+		// 精确原型匹配（如 EnemyFilter="armored" 只出 armored 怪）
+		return name == s.EnemyFilter
 	}
 }
 
@@ -447,8 +448,9 @@ var buffPoolsByTier = [][]string{
 	{"berserk", "regen", "healAura", "speedAura", "damageReduce", "deathSplit"},
 }
 
-// applyWaveBuffs 根据当前波次为刚生成的敌人随机注入 buff 模板。
+// applyWaveBuffs 根据当前波次为刚生成的敌人随机注入 buff。
 // Boss 不注入波次 buff。minWaves/maxBuffs 从 balance.json 读取。
+// 值来自 config/enemies/abilities.json（与原型能力系统保持一致）。
 func (s *Spawner) applyWaveBuffs(e *Enemy) {
 	if e.Boss {
 		return
@@ -479,7 +481,40 @@ func (s *Spawner) applyWaveBuffs(e *Enemy) {
 	}
 	perm := rand.Perm(len(buffPool))
 	for i := 0; i < count; i++ {
-		ApplyBuffTemplate(e, buffPool[perm[i]])
+		applyWaveBuff(e, buffPool[perm[i]])
+	}
+}
+
+// applyWaveBuff 直接设置敌人字段，替代旧的 ApplyBuffTemplate 间接层。
+// 数值与 config/enemies/abilities.json 对齐。
+func applyWaveBuff(e *Enemy, buffID string) {
+	tel.T.Record("enemy_template", buffID)
+	switch buffID {
+	case "berserk":
+		e.BerserkThreshold = 0.5
+		e.BerserkSpeedScale = 1.5
+	case "regen":
+		e.RegenPerSec = e.MaxHP * 0.02
+	case "healAura":
+		e.HealPower = 0.05 // 5% MaxHP per heal
+		e.HealRadius = 80
+		e.HealInterval = 3
+		e.HealCooldown = 0
+	case "speedAura":
+		e.BuffRadius = 80
+		e.BuffAmount = 0.2
+		e.AuraRange = 80
+		e.AuraSpeedUp = 0.2
+	case "damageReduce":
+		e.DamageReduceRatio = 0.3
+	case "deathSplit":
+		e.SplitCount = 2
+		if e.SplitHPRatio <= 0 {
+			e.SplitHPRatio = 0.3
+		}
+		if e.SplitSpeedScale <= 0 {
+			e.SplitSpeedScale = 1.4
+		}
 	}
 }
 

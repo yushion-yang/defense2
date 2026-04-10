@@ -76,6 +76,19 @@ tx, ty := draw.TouchPos(touchID)     // 返回逻辑坐标，不要用 ebiten.To
 
 2. **会话结束前 commit 所有变更。** 新建或修改了文件就 `git add` + `git commit`，commit message 根据实际内容写。worktree 是隔离分支，commit 零风险；未 commit 的文件在后续操作中可能丢失。
 
+## VFX 解耦规范（强制）
+
+所有视觉效果必须实现在 `internal/render/vfx/` 包中：
+
+1. **零 core 依赖**：vfx 包只 import `render/draw`、`render/theme`、标准库，禁止 import `core/*`
+2. **纯值参数**：函数只接受基本类型（float, int, color, bool, 小值 struct），不接受 Tower/Enemy 等游戏对象
+3. **可独立预览**：每个效果必须能在 VFX Preview 场景中单独触发
+4. **调用方解析**：`draw_*.go` 负责从游戏对象提取参数，然后调用 `vfx.DrawXxx()`
+5. **新效果必须同步更新**：
+   - `internal/render/vfx/` 中添加函数
+   - `config/visuals/vfx.json` 中添加元数据（id/name/label/description）
+   - `vfx_preview.go` 的 trigger registry 中注册
+
 ## Conventions
 
 - Go idioms: accept interfaces, return structs

@@ -12,14 +12,15 @@ import (
 	"defense2/internal/render/draw"
 	"defense2/internal/render/sprite"
 	"defense2/internal/render/theme"
+	"defense2/internal/render/vfx"
 
 	"github.com/hajimehoshi/ebiten/v2"
 )
 
 // EnemyRenderer manages enemy PNG sprite rendering with optional frame animation.
 type EnemyRenderer struct {
-	cache     *sprite.Cache
-	assetFS   AssetReader
+	cache    *sprite.Cache
+	assetFS  AssetReader
 	animLibs map[string]*anim.AnimLib // per archetype shared frame data
 }
 
@@ -69,10 +70,8 @@ func (er *EnemyRenderer) DrawEnemies(screen *ebiten.Image, pool *enemy.Pool, ani
 		}
 		cx := float32(e.X)
 		cy := float32(e.Y)
-		progress := 1.0 - e.DyingTimer/e.DyingDuration // 0→1 (0=just died, 1=gone)
-		scale := 1.0 - progress                         // shrink from 1 to 0
-		alpha := float32(1.0 - progress)                // fade from 1 to 0
-		offsetY := -progress * 8                         // float up 8px
+		scale, alphaF, offsetY := vfx.DyingAnimParams(e.DyingTimer, e.DyingDuration)
+		alpha := float32(alphaF)
 
 		img := er.getEnemyFrame(e, 1.0/60.0)
 		if img != nil {
@@ -109,26 +108,12 @@ func (er *EnemyRenderer) DrawEnemies(screen *ebiten.Image, pool *enemy.Pool, ani
 
 		// --- Boss pulsing rings ---
 		if e.Boss {
-			innerAlpha := uint8(clampF(float64(theme.EnemyBossInner.A)*
-				(0.5+0.5*math.Sin(animTime*2.5)), 0, 255))
-			innerClr := color.RGBA{R: theme.EnemyBossInner.R, G: theme.EnemyBossInner.G,
-				B: theme.EnemyBossInner.B, A: innerAlpha}
-			draw.CircleOutline(screen, cx, cy, r+6, 2, innerClr)
-
-			outerAlpha := uint8(clampF(float64(theme.EnemyBossOuter.A)*
-				(0.5+0.5*math.Sin(animTime*2.5+1.5)), 0, 255))
-			outerClr := color.RGBA{R: theme.EnemyBossOuter.R, G: theme.EnemyBossOuter.G,
-				B: theme.EnemyBossOuter.B, A: outerAlpha}
-			draw.CircleOutline(screen, cx, cy, r+10, 1.5, outerClr)
+			vfx.DrawBossPulse(screen, cx, cy, r, animTime)
 		}
 
 		// --- Runner pulsing ring ---
 		if e.Archetype == "runner" {
-			pulseAlpha := uint8(clampF(float64(theme.EnemyRunnerPulse.A)*
-				(0.5+0.5*math.Sin(animTime*3)), 0, 255))
-			pulseClr := color.RGBA{R: theme.EnemyRunnerPulse.R, G: theme.EnemyRunnerPulse.G,
-				B: theme.EnemyRunnerPulse.B, A: pulseAlpha}
-			draw.CircleOutline(screen, cx, cy, r+4, 1.5, pulseClr)
+			vfx.DrawRunnerRing(screen, cx, cy, r, animTime)
 		}
 
 		// --- Root ground effect (drawn UNDER enemy body) ---
@@ -138,27 +123,15 @@ func (er *EnemyRenderer) DrawEnemies(screen *ebiten.Image, pool *enemy.Pool, ani
 
 		// --- Buffer aura ring (drawn UNDER body, hidden when silenced) ---
 		if e.Behavior == "buffer" && e.BuffRadius > 0 && !e.AbilitySilenced {
-			auraAlpha := uint8(clampF(40+20*math.Sin(animTime*3), 20, 70))
-			draw.CircleOutline(screen, cx, cy, float32(e.BuffRadius), 1.5,
-				color.RGBA{R: 245, G: 158, B: 11, A: auraAlpha}) // amber/gold
+			vfx.DrawBufferAura(screen, cx, cy, e.BuffRadius, animTime)
 		}
 
 		// (旧 healer aura ring 已移到能力 VFX 系统)
 
 		// --- Spawn animation modifiers ---
-		var spawnScale float64 = 1.0
-		var spawnAlpha float64 = 1.0
+		spawnScale, spawnAlpha := 1.0, 1.0
 		if e.IsSpawning() && e.SpawnDuration > 0 {
-			progress := 1.0 - e.SpawnTimer/e.SpawnDuration // 0 at start -> 1 at end
-			// Scale: overshoot from 0 to 1.15 then settle to 1.0
-			if progress < 0.7 {
-				spawnScale = progress / 0.7 * 1.15
-			} else {
-				t := (progress - 0.7) / 0.3
-				spawnScale = 1.15 - 0.15*t
-			}
-			// Alpha: ease in (easeInQuad)
-			spawnAlpha = progress * progress
+			spawnScale, spawnAlpha = vfx.SpawnAnimParams(e.SpawnTimer, e.SpawnDuration)
 		}
 
 		// --- Enemy body (animated or static) ---
@@ -221,22 +194,14 @@ func (er *EnemyRenderer) DrawEnemies(screen *ebiten.Image, pool *enemy.Pool, ani
 			draw.FilledCircle(screen, cx, cy, spriteR*0.5, color.RGBA{255, 120, 30, 35})
 		}
 
-		// --- Stun rotating stars (3 yellow circles orbiting above head) ---
+		// --- Stun rotating stars ---
 		if e.StunTimer > 0 {
-			starR := float32(2)
-			orbitR := r + 4
-			for i := 0; i < 3; i++ {
-				angle := animTime*5 + float64(i)*2.094 // 120° apart, rotating
-				sx := cx + orbitR*float32(math.Cos(angle))
-				sy := cy - r - 4 + orbitR*0.4*float32(math.Sin(angle)) // above head, elliptical
-				draw.FilledCircle(screen, sx, sy, starR, color.RGBA{255, 255, 100, 200})
-			}
+			vfx.DrawStunStars(screen, cx, cy, r, animTime)
 		}
 
-		// --- Hit flash overlay (red tint, sprite-sized, NOT collision-radius) ---
+		// --- Hit flash overlay ---
 		if e.HitFlash > 0 && !e.IsDying() {
-			flashAlpha := uint8(clampF(float64(e.HitFlash)*300, 0, 90))
-			draw.FilledCircle(screen, cx, cy, spriteR, color.RGBA{R: 255, G: 80, B: 60, A: flashAlpha})
+			vfx.DrawHitFlash(screen, cx, cy, spriteR, e.HitFlash)
 		}
 
 		// (tank overlay removed — was debug placeholder)
@@ -258,7 +223,7 @@ func (er *EnemyRenderer) DrawEnemies(screen *ebiten.Image, pool *enemy.Pool, ani
 			barOffY = theme.EnemyHPBarOffsetY
 		}
 
-			// --- HP bar (always visible) ---
+		// --- HP bar (always visible) ---
 		{
 			barX := cx - barW/2
 			barY := cy - barOffY
@@ -289,11 +254,11 @@ func (er *EnemyRenderer) DrawEnemies(screen *ebiten.Image, pool *enemy.Pool, ani
 			var fillClr color.RGBA
 			switch {
 			case ratio > 0.6:
-				fillClr = color.RGBA{R: 239, G: 68, B: 68, A: 255}  // #ef4444 bright red
+				fillClr = color.RGBA{R: 239, G: 68, B: 68, A: 255} // #ef4444 bright red
 			case ratio > 0.3:
-				fillClr = color.RGBA{R: 220, G: 38, B: 38, A: 255}  // #dc2626 darker red
+				fillClr = color.RGBA{R: 220, G: 38, B: 38, A: 255} // #dc2626 darker red
 			default:
-				fillClr = color.RGBA{R: 153, G: 27, B: 27, A: 255}  // #991b1b deep red
+				fillClr = color.RGBA{R: 153, G: 27, B: 27, A: 255} // #991b1b deep red
 			}
 			draw.FilledRect(screen, barX, barY, fillW, barH, fillClr, true)
 
@@ -310,33 +275,24 @@ func (er *EnemyRenderer) DrawEnemies(screen *ebiten.Image, pool *enemy.Pool, ani
 
 		// --- Status effect dots ---
 		dotY := cy - barOffY - 4
-		dotX := cx - 8.0
-		dotR := float32(2.5)
-
+		var dots []vfx.StatusDot
 		if e.SlowTimer > 0 {
-			draw.FilledCircle(screen, dotX, dotY, dotR,
-				color.RGBA{R: 125, G: 211, B: 252, A: 235})
-			dotX += 6
+			dots = append(dots, vfx.StatusDot{Color: color.RGBA{R: 125, G: 211, B: 252, A: 235}})
 		}
 		if e.StunTimer > 0 {
-			draw.FilledCircle(screen, dotX, dotY, dotR,
-				color.RGBA{R: 255, G: 255, B: 100, A: 235}) // yellow (matches rotating stars)
-			dotX += 6
+			dots = append(dots, vfx.StatusDot{Color: color.RGBA{R: 255, G: 255, B: 100, A: 235}})
 		}
 		if e.RootTimer > 0 {
-			draw.FilledCircle(screen, dotX, dotY, dotR,
-				color.RGBA{R: 139, G: 90, B: 43, A: 235}) // brown
-			dotX += 6
+			dots = append(dots, vfx.StatusDot{Color: color.RGBA{R: 139, G: 90, B: 43, A: 235}})
 		}
 		if e.BleedTimer > 0 {
-			draw.FilledCircle(screen, dotX, dotY, dotR,
-				color.RGBA{R: 239, G: 68, B: 68, A: 255})
-			dotX += 6
+			dots = append(dots, vfx.StatusDot{Color: color.RGBA{R: 239, G: 68, B: 68, A: 255}})
 		}
 		if e.BurnTimer > 0 {
-			draw.FilledCircle(screen, dotX, dotY, dotR,
-				color.RGBA{R: 255, G: 140, B: 40, A: 255})
-			dotX += 6
+			dots = append(dots, vfx.StatusDot{Color: color.RGBA{R: 255, G: 140, B: 40, A: 255}})
+		}
+		if len(dots) > 0 {
+			vfx.DrawStatusDots(screen, cx, dotY, dots)
 		}
 
 		// --- 能力常驻视觉（被沉默时全部隐藏）---
@@ -344,9 +300,9 @@ func (er *EnemyRenderer) DrawEnemies(screen *ebiten.Image, pool *enemy.Pool, ani
 			// 免疫脚环（只显示天生能力，净化临时免疫用白色微光）
 			footR := float32(e.Radius) + 2
 			if hasAbility(e, "ccImmune") {
-				draw.CircleOutline(screen, cx, cy+footR*0.3, footR, 1, color.RGBA{R: 220, G: 60, B: 60, A: 80})
+				vfx.DrawImmunityRing(screen, cx, cy, footR, color.RGBA{R: 220, G: 60, B: 60, A: 80})
 			} else if hasAbility(e, "slowImmune") {
-				draw.CircleOutline(screen, cx, cy+footR*0.3, footR, 1, color.RGBA{R: 60, G: 180, B: 200, A: 80})
+				vfx.DrawImmunityRing(screen, cx, cy, footR, color.RGBA{R: 60, G: 180, B: 200, A: 80})
 			}
 
 			// 盾牌叠加（能力对应颜色盾牌）
@@ -369,8 +325,7 @@ func (er *EnemyRenderer) DrawEnemies(screen *ebiten.Image, pool *enemy.Pool, ani
 
 			// 净化免疫期白色微光
 			if e.PurgeInterval > 0 && e.ControlImmuneTimer > 0 {
-				glowAlpha := uint8(60 + 30*math.Sin(animTime*6))
-				draw.CircleOutline(screen, cx, cy, float32(e.Radius)+3, 1.5, color.RGBA{R: 255, G: 255, B: 255, A: glowAlpha})
+				vfx.DrawPurgeGlow(screen, cx, cy, float32(e.Radius), animTime)
 			}
 		}
 
@@ -513,15 +468,4 @@ func (er *EnemyRenderer) getEnemyFrame(e *enemy.Enemy, dt float64) *ebiten.Image
 		return img
 	}
 	return er.loadEnemyImage(e)
-}
-
-// clampF clamps a float64 value between min and max.
-func clampF(v, lo, hi float64) float64 {
-	if v < lo {
-		return lo
-	}
-	if v > hi {
-		return hi
-	}
-	return v
 }
