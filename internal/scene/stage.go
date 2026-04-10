@@ -85,7 +85,8 @@ type StageScene struct {
 	towerRenderer  *render.TowerRenderer        // 塔 SVG 渲染器
 	enemyRenderer  *render.EnemyRenderer        // 敌人 SVG 渲染器
 	wardenRenderer *render.WardenRenderer       // 战灵精灵渲染器
-	audioMgr       *gameAudio.Manager           // 音效管理器
+	audioMgr         *gameAudio.Manager           // 音效管理器
+	lastCountdownSec int                          // 上一帧的倒计时整秒数（用于去重播放 countdownTick）
 	wardenUnit     *warden.Warden               // 战灵实体（选择前为 nil）
 	wardenOverlay  *hud.WardenSelectOverlay     // 战灵选择覆盖层
 	wardenReady    bool                         // 战灵已选择并激活
@@ -469,6 +470,7 @@ func (s *StageScene) subscribeBus() {
 		s.kills++
 		s.gold += p.GoldValue
 		s.gameStats.GoldEarned += p.GoldValue
+		s.audioMgr.PlayThrottledAt(gameAudio.SFXGoldEarn, 100, gameAudio.VolUI*0.5)
 		s.session.OnEnemyKilled(p.IsBoss, s.buildModeCtx())
 		s.tutorial.OnEvent("enemyKilled")
 		if s.wardenReady && s.wardenUnit != nil {
@@ -1652,6 +1654,18 @@ func (s *StageScene) updatePlaying() {
 		return
 	}
 
+	// 0.5. 波间倒计时音效（每整秒 tick，仅最后 5 秒）
+	if s.spawner.IsIntermission() {
+		t := s.spawner.TimeToNextWave()
+		sec := int(math.Ceil(t))
+		if sec != s.lastCountdownSec && sec > 0 && sec <= 5 {
+			s.audioMgr.PlayAt("countdownTick", gameAudio.VolUI)
+			s.lastCountdownSec = sec
+		}
+	} else {
+		s.lastCountdownSec = 0
+	}
+
 	// 1. 生成敌人
 	s.spawner.Update(s.enemies, gameDT)
 	// Emit spawn burst particles for newly spawned enemies
@@ -1678,7 +1692,9 @@ func (s *StageScene) updatePlaying() {
 		if e.IsDying() || e.IsSpawning() {
 			return
 		}
-		enemy.UpdateTeleport(e, gameDT)
+		if enemy.UpdateTeleport(e, gameDT) {
+			s.audioMgr.PlayThrottledAt("teleportBlink", 200, gameAudio.VolHit)
+		}
 	})
 
 	// 3. 敌人移动（到达终点扣生命）
