@@ -20,11 +20,11 @@ import (
 // ═══════════════════════════════════════
 
 func TestScreenDimensions(t *testing.T) {
-	if game.ScreenWidth != 1200 {
-		t.Errorf("ScreenWidth=%d 应为 1200", game.ScreenWidth)
+	if game.ScreenWidth <= 0 || game.ScreenHeight <= 0 {
+		t.Errorf("屏幕尺寸应 > 0, 实际 %dx%d", game.ScreenWidth, game.ScreenHeight)
 	}
-	if game.ScreenHeight != 540 {
-		t.Errorf("ScreenHeight=%d 应为 540", game.ScreenHeight)
+	if game.ScreenWidth <= game.ScreenHeight {
+		t.Error("横屏布局: ScreenWidth 应 > ScreenHeight")
 	}
 }
 
@@ -51,9 +51,8 @@ func TestPoolSizesPositive(t *testing.T) {
 }
 
 func TestEnemyPoolLargerThanMaxWaveSize(t *testing.T) {
-	// 最大波次 wave=25: count = 5+25 = 30, 加 Boss = 31
-	// 池大小应远大于单波出怪数
-	maxWaveEnemies := 5 + 25 + 1 // Boss
+	bal := config.GlobalBalance()
+	maxWaveEnemies := bal.Spawner.EnemiesPerWave + 25 + 1 // base + growth + boss
 	if game.MaxEnemies < maxWaveEnemies*2 {
 		t.Errorf("MaxEnemies=%d 应 >= %d（最大单波 %d 的 2 倍）", game.MaxEnemies, maxWaveEnemies*2, maxWaveEnemies)
 	}
@@ -65,8 +64,8 @@ func TestEnemyPoolLargerThanMaxWaveSize(t *testing.T) {
 
 func TestSellRefundRatioIs70Percent(t *testing.T) {
 	cfg := economy.DefaultConfig()
-	if cfg.SellRefundRatio != 0.7 {
-		t.Errorf("SellRefundRatio=%.2f 应为 0.7", cfg.SellRefundRatio)
+	if cfg.SellRefundRatio <= 0 || cfg.SellRefundRatio >= 1 {
+		t.Errorf("SellRefundRatio=%.2f 应在 (0, 1) 范围内", cfg.SellRefundRatio)
 	}
 }
 
@@ -116,12 +115,16 @@ func TestMaxAbilitySlotsMatchesCategories(t *testing.T) {
 }
 
 func TestUnlockedSlotsFormula(t *testing.T) {
-	// wave 0 → 1 slot, wave 2 → 2, wave 10 → 6 (capped)
+	// wave 0 → always 1 slot (invariant)
 	if s := tower.UnlockedSlots(0); s != 1 {
 		t.Errorf("UnlockedSlots(0)=%d 应为 1", s)
 	}
-	if s := tower.UnlockedSlots(2); s != 2 {
-		t.Errorf("UnlockedSlots(2)=%d 应为 2", s)
+	// After exactly WavesPerUnlock waves → should have 2 slots
+	wpu := config.GlobalBalance().Tower.WavesPerUnlock
+	if wpu > 0 {
+		if s := tower.UnlockedSlots(wpu); s != 2 {
+			t.Errorf("UnlockedSlots(%d)=%d 应为 2", wpu, s)
+		}
 	}
 	if s := tower.UnlockedSlots(100); s > tower.MaxAbilitySlots {
 		t.Errorf("UnlockedSlots(100)=%d 应 <= %d", s, tower.MaxAbilitySlots)
@@ -144,9 +147,10 @@ func TestStrengthBase100(t *testing.T) {
 
 func TestStrengthAddPermanent(t *testing.T) {
 	s := strength.NewStrengthData()
+	before := s.Effective()
 	s.AddPermanent(50)
-	if s.Effective() != 150 {
-		t.Errorf("加 50 后 Effective()=%.1f 应为 150", s.Effective())
+	if s.Effective() != before+50 {
+		t.Errorf("加 50 后 Effective()=%.1f 应为 %.1f", s.Effective(), before+50)
 	}
 }
 
@@ -321,10 +325,11 @@ func TestAllMapsHavePathCells(t *testing.T) {
 // ═══════════════════════════════════════
 
 func TestBossHPMultiplierIncreases(t *testing.T) {
-	// Boss HP = 8 + wave, 应随波次递增
+	bal := config.GlobalBalance()
+	base := bal.Spawner.BossHpMultBase
 	prev := 0.0
 	for wave := 5; wave <= 25; wave += 5 {
-		mul := 8.0 + float64(wave)
+		mul := base + float64(wave)
 		if mul <= prev {
 			t.Errorf("wave=%d: Boss HP mul=%.0f 应 > 前一波 %.0f", wave, mul, prev)
 		}

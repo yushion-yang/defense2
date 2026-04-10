@@ -1,5 +1,5 @@
 // balance_config_test.go — BalanceConfig 契约测试。
-// 验证默认值、JSON 加载、道具完整性、公式合理性及数值范围。
+// 验证结构完整性、数值范围、自洽性。不硬编码配置值，配置文件是唯一真相源。
 package contracts_test
 
 import (
@@ -8,8 +8,8 @@ import (
 	"defense2/internal/config"
 )
 
-// TestBalanceDefaultValues 验证未加载 JSON 时 GlobalBalance() 返回非空且含合理默认值。
-func TestBalanceDefaultValues(t *testing.T) {
+// TestBalanceFieldsNonZero 验证未加载 JSON 时 GlobalBalance() 返回非空且含合理默认值。
+func TestBalanceFieldsNonZero(t *testing.T) {
 	// GlobalBalance() 在 globalBalance == nil 时返回 defaultBalance()。
 	// 因为本包的 init（config_rules_test.go）只设置了 dataFS，
 	// 没有调用 LoadBalance，所以此时拿到的就是默认值。
@@ -18,28 +18,27 @@ func TestBalanceDefaultValues(t *testing.T) {
 		t.Fatal("GlobalBalance() 返回 nil")
 	}
 
-	tests := []struct {
-		name string
-		got  float64
-		want float64
+	checks := []struct {
+		name  string
+		check func() bool
+		msg   string
 	}{
-		{"Spawner.HpBase", bal.Spawner.HpBase, 52},
-		{"Combat.MinSpeedRatio", bal.Combat.MinSpeedRatio, 0.2},
-		{"Economy.KillReward", bal.Economy.KillReward, 15},
-		{"Chain.Distance", bal.Chain.Distance, 150},
+		{"Spawner.HpBase", func() bool { return bal.Spawner.HpBase > 0 }, "should be > 0"},
+		{"Spawner.SpeedBase", func() bool { return bal.Spawner.SpeedBase > 0 }, "should be > 0"},
+		{"Combat.MinSpeedRatio", func() bool { return bal.Combat.MinSpeedRatio > 0 && bal.Combat.MinSpeedRatio < 1 }, "should be in (0, 1)"},
+		{"Economy.KillReward", func() bool { return bal.Economy.KillReward > 0 }, "should be > 0"},
+		{"Chain.Distance", func() bool { return bal.Chain.Distance > 0 }, "should be > 0"},
+		{"Tower.WavesPerUnlock", func() bool { return bal.Tower.WavesPerUnlock > 0 }, "should be > 0"},
 	}
-	for _, tc := range tests {
-		if tc.got != tc.want {
-			t.Errorf("%s = %v, want %v", tc.name, tc.got, tc.want)
+	for _, tc := range checks {
+		if !tc.check() {
+			t.Errorf("%s: %s", tc.name, tc.msg)
 		}
-	}
-	if bal.Tower.WavesPerUnlock != 2 {
-		t.Errorf("Tower.WavesPerUnlock = %d, want 2", bal.Tower.WavesPerUnlock)
 	}
 }
 
-// TestBalanceLoadFromJSON 加载 balance.json 并验证值与 JSON 文件一致。
-func TestBalanceLoadFromJSON(t *testing.T) {
+// TestBalanceLoadedFieldsValid 加载 balance.json 并验证所有字段在合理范围内（不硬编码具体值）。
+func TestBalanceLoadedFieldsValid(t *testing.T) {
 	bal, err := config.LoadBalance()
 	if err != nil {
 		t.Fatalf("LoadBalance() 失败: %v", err)
@@ -48,76 +47,77 @@ func TestBalanceLoadFromJSON(t *testing.T) {
 		t.Fatal("LoadBalance() 返回 nil")
 	}
 
-	// 抽查 JSON 中的关键字段（与 config/balance.json 对照）
 	checks := []struct {
-		name string
-		got  float64
-		want float64
+		name  string
+		check func() bool
+		msg   string
 	}{
-		{"Spawner.HpBase", bal.Spawner.HpBase, 52},
-		{"Spawner.HpPerWave", bal.Spawner.HpPerWave, 21},
-		{"Spawner.SpeedBase", bal.Spawner.SpeedBase, 58},
-		{"Spawner.SpawnInterval", bal.Spawner.SpawnInterval, 0.6},
-		{"Spawner.BossHpMultBase", bal.Spawner.BossHpMultBase, 8},
-		{"Economy.KillReward", bal.Economy.KillReward, 15},
-		{"Economy.SellRefundRatio", bal.Economy.SellRefundRatio, 0.7},
-		{"Combat.MaxDamageAmplify", bal.Combat.MaxDamageAmplify, 0.5},
-		{"Combat.MinSpeedRatio", bal.Combat.MinSpeedRatio, 0.2},
-		{"Combat.CritMultiplier", bal.Combat.CritMultiplier, 2},
-		{"Combat.DefaultProjectileSpeed", bal.Combat.DefaultProjectileSpeed, 300},
-		{"Tower.AttackSpeedFloor", bal.Tower.AttackSpeedFloor, 0.1},
-		{"Chain.Distance", bal.Chain.Distance, 150},
-		{"Chain.StrengthPerTower", bal.Chain.StrengthPerTower, 10},
-		{"Split.HpRatio", bal.Split.HpRatio, 0.3},
-		{"DeathSpawn.HpRatio", bal.DeathSpawn.HpRatio, 0.2},
-		{"Dying.NormalDuration", bal.Dying.NormalDuration, 0.3},
-		{"Warden.InitialStrength", bal.Warden.InitialStrength, 100},
-		{"Gameplay.StarRatingThreshold", bal.Gameplay.StarRatingThreshold, 0.8},
-		{"Gameplay.MultiKillWindow", bal.Gameplay.MultiKillWindow, 1.5},
+		// Spawner
+		{"Spawner.HpBase", func() bool { return bal.Spawner.HpBase > 0 }, "should be > 0"},
+		{"Spawner.HpPerWave", func() bool { return bal.Spawner.HpPerWave > 0 }, "should be > 0"},
+		{"Spawner.SpeedBase", func() bool { return bal.Spawner.SpeedBase > 0 }, "should be > 0"},
+		{"Spawner.SpawnInterval", func() bool { return bal.Spawner.SpawnInterval > 0 }, "should be > 0"},
+		{"Spawner.WaveInterval", func() bool { return bal.Spawner.WaveInterval > 0 }, "should be > 0"},
+		{"Spawner.EnemiesPerWave", func() bool { return bal.Spawner.EnemiesPerWave > 0 }, "should be > 0"},
+		{"Spawner.BossEveryNWaves", func() bool { return bal.Spawner.BossEveryNWaves > 0 }, "should be > 0"},
+		{"Spawner.BossHpMultBase", func() bool { return bal.Spawner.BossHpMultBase > 0 }, "should be > 0"},
+
+		// Economy
+		{"Economy.KillReward", func() bool { return bal.Economy.KillReward > 0 }, "should be > 0"},
+		{"Economy.SellRefundRatio", func() bool { return bal.Economy.SellRefundRatio > 0 && bal.Economy.SellRefundRatio < 1 }, "should be in (0, 1)"},
+
+		// Combat
+		{"Combat.CritMultiplier", func() bool { return bal.Combat.CritMultiplier > 1 }, "should be > 1"},
+		{"Combat.MinSpeedRatio", func() bool { return bal.Combat.MinSpeedRatio > 0 && bal.Combat.MinSpeedRatio < 1 }, "should be in (0, 1)"},
+		{"Combat.MaxDamageAmplify", func() bool { return bal.Combat.MaxDamageAmplify > 0 }, "should be > 0"},
+		{"Combat.DefaultProjectileSpeed", func() bool { return bal.Combat.DefaultProjectileSpeed > 0 }, "should be > 0"},
+		{"Combat.DotTickInterval", func() bool { return bal.Combat.DotTickInterval > 0 }, "should be > 0"},
+
+		// Tower
+		{"Tower.WavesPerUnlock", func() bool { return bal.Tower.WavesPerUnlock > 0 }, "should be > 0"},
+		{"Tower.StrengthBuyCost", func() bool { return bal.Tower.StrengthBuyCost > 0 }, "should be > 0"},
+		{"Tower.ChoicesPerUnlock", func() bool { return bal.Tower.ChoicesPerUnlock > 0 }, "should be > 0"},
+		{"Tower.AttackSpeedFloor", func() bool { return bal.Tower.AttackSpeedFloor > 0 }, "should be > 0"},
+
+		// Chain
+		{"Chain.Distance", func() bool { return bal.Chain.Distance > 0 }, "should be > 0"},
+		{"Chain.StrengthPerTower", func() bool { return bal.Chain.StrengthPerTower > 0 }, "should be > 0"},
+
+		// Split
+		{"Split.HpRatio", func() bool { return bal.Split.HpRatio > 0 && bal.Split.HpRatio < 1 }, "should be in (0, 1)"},
+
+		// DeathSpawn
+		{"DeathSpawn.HpRatio", func() bool { return bal.DeathSpawn.HpRatio > 0 && bal.DeathSpawn.HpRatio < 1 }, "should be in (0, 1)"},
+		{"DeathSpawn.DefaultArch", func() bool { return bal.DeathSpawn.DefaultArch != "" }, "should not be empty"},
+
+		// Dying
+		{"Dying.NormalDuration", func() bool { return bal.Dying.NormalDuration > 0 }, "should be > 0"},
+
+		// Warden
+		{"Warden.InitialStrength", func() bool { return bal.Warden.InitialStrength > 0 }, "should be > 0"},
+
+		// Gameplay
+		{"Gameplay.StarRatingThreshold", func() bool {
+			return bal.Gameplay.StarRatingThreshold > 0 && bal.Gameplay.StarRatingThreshold < 1
+		}, "should be in (0, 1)"},
+		{"Gameplay.MultiKillWindow", func() bool { return bal.Gameplay.MultiKillWindow > 0 }, "should be > 0"},
 	}
 	for _, tc := range checks {
-		if tc.got != tc.want {
-			t.Errorf("%s = %v, want %v", tc.name, tc.got, tc.want)
+		if !tc.check() {
+			t.Errorf("%s: %s", tc.name, tc.msg)
 		}
-	}
-
-	// int 字段单独检查
-	intChecks := []struct {
-		name string
-		got  int
-		want int
-	}{
-		{"Spawner.EnemiesPerWave", bal.Spawner.EnemiesPerWave, 5},
-		{"Spawner.BossEveryNWaves", bal.Spawner.BossEveryNWaves, 5},
-		{"Tower.StrengthBuyCost", bal.Tower.StrengthBuyCost, 10},
-		{"Tower.WavesPerUnlock", bal.Tower.WavesPerUnlock, 2},
-		{"Tower.ChoicesPerUnlock", bal.Tower.ChoicesPerUnlock, 3},
-		{"Combat.ScatterBasePellets", bal.Combat.ScatterBasePellets, 3},
-		{"Combat.RadialBaseShots", bal.Combat.RadialBaseShots, 3},
-		{"Gameplay.MultiKillAnnounce1", bal.Gameplay.MultiKillAnnounce1, 5},
-		{"Gameplay.MultiKillAnnounce2", bal.Gameplay.MultiKillAnnounce2, 10},
-	}
-	for _, tc := range intChecks {
-		if tc.got != tc.want {
-			t.Errorf("%s = %d, want %d", tc.name, tc.got, tc.want)
-		}
-	}
-
-	// 字符串字段
-	if bal.DeathSpawn.DefaultArch != "normal" {
-		t.Errorf("DeathSpawn.DefaultArch = %q, want %q", bal.DeathSpawn.DefaultArch, "normal")
 	}
 }
 
-// TestBalanceItemsComplete 验证 Items 有 6 个条目且每个字段有效。
+// TestBalanceItemsComplete 验证 Items 至少有 3 个条目且每个字段有效。
 func TestBalanceItemsComplete(t *testing.T) {
 	bal, err := config.LoadBalance()
 	if err != nil {
 		t.Fatalf("LoadBalance() 失败: %v", err)
 	}
 
-	if len(bal.Items) != 6 {
-		t.Fatalf("Items 数量 = %d, want 6", len(bal.Items))
+	if len(bal.Items) < 3 {
+		t.Fatalf("Items 数量 = %d, want >= 3", len(bal.Items))
 	}
 
 	for i, item := range bal.Items {

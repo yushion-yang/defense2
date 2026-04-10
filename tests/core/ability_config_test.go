@@ -34,36 +34,34 @@ func TestAbilityDef_CalcScale(t *testing.T) {
 	table, _ := config.LoadAbilityTable()
 	slow := table["slowPower"]
 
-	// slowPower: base=0.15, potential=0.25
-	// 强度100: 0.15 + 0.25 * 1.0 = 0.40
-	v := slow.CalcScale(100)
-	if math.Abs(v-0.40) > 1e-9 {
-		t.Errorf("强度100: factor=%.3f, 期望0.40", v)
+	// 自洽性验证：CalcScale 结果必须符合公式 base + potential * (strength / 100)
+	expected100 := slow.Base + slow.Potential*(100.0/100.0)
+	if math.Abs(slow.CalcScale(100)-expected100) > 1e-9 {
+		t.Errorf("强度100: factor=%.6f, 期望%.6f (base+potential*1.0)", slow.CalcScale(100), expected100)
 	}
 
-	// 强度200: 0.15 + 0.25 * 2.0 = 0.65
-	v2 := slow.CalcScale(200)
-	if math.Abs(v2-0.65) > 1e-9 {
-		t.Errorf("强度200: factor=%.3f, 期望0.65", v2)
+	expected200 := slow.Base + slow.Potential*(200.0/100.0)
+	if math.Abs(slow.CalcScale(200)-expected200) > 1e-9 {
+		t.Errorf("强度200: factor=%.6f, 期望%.6f (base+potential*2.0)", slow.CalcScale(200), expected200)
 	}
 }
 
 func TestAbilityDef_Param(t *testing.T) {
 	table, _ := config.LoadAbilityTable()
 
-	// slowPower: param=1.0, paramDim=duration
+	// slowPower: 有参数，paramDim=duration（语义不变式）
 	slow := table["slowPower"]
 	if !slow.HasParam() {
 		t.Error("slowPower应有参数")
 	}
-	if slow.Param != 1.0 {
-		t.Errorf("slowPower param=%.1f, 期望1.0", slow.Param)
+	if slow.Param <= 0 {
+		t.Errorf("slowPower param=%.3f, 期望 > 0", slow.Param)
 	}
 	if slow.ParamDim != "duration" {
 		t.Errorf("slowPower paramDim=%s, 期望duration", slow.ParamDim)
 	}
 
-	// stackDamage: 无参数
+	// stackDamage: 无参数（结构性断言）
 	sd := table["stackDamage"]
 	if sd.HasParam() {
 		t.Error("stackDamage不应有参数")
@@ -74,17 +72,20 @@ func TestAbilityDef_MultiTargetScale(t *testing.T) {
 	table, _ := config.LoadAbilityTable()
 	mt := table["multiTarget"]
 
-	// multiTarget 现在有缩放维度（targets），base=1 potential=1
+	// multiTarget 有缩放维度（targets）
 	if !mt.HasScale() {
 		t.Error("multiTarget应有缩放维度")
 	}
-	// 强度100: 1 + 1*1 = 2 目标
-	if mt.CalcScale(100) != 2 {
-		t.Errorf("强度100目标数=%.0f, 期望2", mt.CalcScale(100))
+
+	// 自洽性验证：CalcScale 结果符合公式
+	expected100 := mt.Base + mt.Potential*(100.0/100.0)
+	if mt.CalcScale(100) != expected100 {
+		t.Errorf("强度100目标数=%.1f, 期望%.1f (base+potential*1.0)", mt.CalcScale(100), expected100)
 	}
-	// 强度200: 1 + 1*2 = 3 目标
-	if mt.CalcScale(200) != 3 {
-		t.Errorf("强度200目标数=%.0f, 期望3", mt.CalcScale(200))
+
+	expected200 := mt.Base + mt.Potential*(200.0/100.0)
+	if mt.CalcScale(200) != expected200 {
+		t.Errorf("强度200目标数=%.1f, 期望%.1f (base+potential*2.0)", mt.CalcScale(200), expected200)
 	}
 }
 
@@ -94,10 +95,11 @@ func TestAbilityDef_BounceScalesMaxBounces(t *testing.T) {
 	if bounce.ScaleDim != "maxBounces" {
 		t.Errorf("bounce scaleDim=%s, 期望maxBounces", bounce.ScaleDim)
 	}
-	// 强度100: 1 + 1*1.0 = 2
-	v := bounce.CalcScale(100)
-	if math.Abs(v-2) > 1e-9 {
-		t.Errorf("强度100: maxBounces=%.1f, 期望2", v)
+
+	// 自洽性验证：CalcScale 结果符合公式
+	expected := bounce.Base + bounce.Potential*(100.0/100.0)
+	if math.Abs(bounce.CalcScale(100)-expected) > 1e-9 {
+		t.Errorf("强度100: maxBounces=%.3f, 期望%.3f (base+potential*1.0)", bounce.CalcScale(100), expected)
 	}
 }
 

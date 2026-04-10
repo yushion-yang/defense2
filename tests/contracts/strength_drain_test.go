@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"testing"
 
+	"defense2/internal/config"
 	"defense2/internal/core/strength"
 	"defense2/internal/core/tower"
 )
@@ -67,8 +68,9 @@ func TestStrengthDrain_TwoDrainers_AttackInterval(t *testing.T) {
 	}
 
 	// 验证攻速仍可用
-	if drainedSpeed < 0.1 {
-		t.Errorf("攻速 %.2f 低于最低可用值 0.1", drainedSpeed)
+	floor := config.GlobalBalance().Tower.AttackSpeedFloor
+	if drainedSpeed < floor {
+		t.Errorf("攻速 %.2f 低于配置下限 %.2f", drainedSpeed, floor)
 	}
 	if drainedInterval > 10 {
 		t.Errorf("攻击间隔 %.2fs 超过 10s，塔几乎无法攻击", drainedInterval)
