@@ -50,11 +50,8 @@ func TickTowerAbilities(towers *tower.Pool, enemies *enemy.Pool, dt float64, cha
 	enemies.Each(func(e *enemy.Enemy) {
 		e.Silenced = false
 		e.AbilitySilenced = false
-		// zone 型虚弱每帧由 weakenZone 重新设置；
-		// OnHit 型虚弱(DamageAmplifyTimer>0)不在此清零，由 TickStatusEffects 倒计时管理。
-		if e.DamageAmplifyTimer <= 0 {
-			e.DamageAmplify = 0
-		}
+		// DamageAmplify/DamageAmplifyTimer now managed by BuffList — no manual reset needed.
+		// BuffList weaken buffs expire via Tick(); zone weaken uses short-duration (0.2s) buffs.
 	})
 
 	// --- Phase 2: 执行所有 Ticker 能力 ---

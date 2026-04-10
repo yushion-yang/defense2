@@ -167,11 +167,15 @@ func (a *ConfigAbility) OnHit(t *tower.Tower, p *projectile.Projectile, e *enemy
 		return nil
 
 	case "weaken":
-		// scaleDim=amplify, param=duration — 命中后受伤增加（取较强效果）
-		if sv > e.DamageAmplify {
-			e.DamageAmplify = sv
-		}
-		e.DamageAmplifyTimer = pm
+		// scaleDim=amplify, param=duration — 命中后受伤增加
+		e.Buffs.Add(buff.Buff{
+			ID:        "weaken",
+			Category:  buff.CatDebuff,
+			Source:    t.InstanceKey,
+			Value:     sv,
+			Duration:  pm,
+			Remaining: pm,
+		})
 		return nil
 
 	case "deathMark":
@@ -298,13 +302,17 @@ func (a *ConfigAbility) OnTick(t *tower.Tower, ctx *tower.TickContext) *tower.Ti
 		})
 
 	case "weakenZone":
-		// scaleDim=amplify — 射程内敌人受伤增加
+		// scaleDim=amplify — 射程内敌人受伤增加 (per-frame, short duration)
 		ctx.Enemies.Each(func(e *enemy.Enemy) {
 			if math.Hypot(e.X-t.X, e.Y-t.Y) <= t.Range {
-				if sv > e.DamageAmplify {
-					e.DamageAmplify = sv // 取最强的一个 zone 效果，不叠加
-				}
-				e.DamageAmplifyTimer = 0.2 // 短 timer，每帧在 zone 内刷新；离开后自然过期
+				e.Buffs.Add(buff.Buff{
+					ID:        "weaken",
+					Category:  buff.CatDebuff,
+					Source:    "zone_" + t.InstanceKey,
+					Value:     sv,
+					Duration:  0.2,
+					Remaining: 0.2,
+				})
 			}
 		})
 

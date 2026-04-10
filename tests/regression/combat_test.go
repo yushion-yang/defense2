@@ -56,13 +56,21 @@ func TestRegression_CC_TenacityReducesDuration(t *testing.T) {
 	e.Tenacity = 0.5
 
 	combat.ApplyStun(e, 2.0, "test")
-	if e.StunTimer != 1.0 {
-		t.Fatalf("stun with 50%% tenacity should be 1.0s, got %.2f", e.StunTimer)
+	stunBuff, ok := e.Buffs.Get("stun")
+	if !ok {
+		t.Fatal("stun buff should be present after ApplyStun")
+	}
+	if stunBuff.Remaining != 1.0 {
+		t.Fatalf("stun with 50%% tenacity should be 1.0s, got %.2f", stunBuff.Remaining)
 	}
 
 	combat.ApplySlow(e, 0.5, 4.0, "test")
-	if e.SlowTimer != 2.0 {
-		t.Fatalf("slow with 50%% tenacity should be 2.0s, got %.2f", e.SlowTimer)
+	slowBuff, ok := e.Buffs.Get("slow")
+	if !ok {
+		t.Fatal("slow buff should be present after ApplySlow")
+	}
+	if slowBuff.Remaining != 2.0 {
+		t.Fatalf("slow with 50%% tenacity should be 2.0s, got %.2f", slowBuff.Remaining)
 	}
 }
 
@@ -128,11 +136,13 @@ func TestRegression_DoT_BurnIndependentOfBleed(t *testing.T) {
 		Build()
 
 	e := s.SpawnedEnemies[0]
-	if e.BurnTimer <= 0 || e.BleedTimer <= 0 {
+	if !e.IsBurning() || !e.IsBleeding() {
 		t.Fatal("both burn and bleed should be active")
 	}
-	if e.BurnDPS != 100 || e.BleedDPS != 50 {
-		t.Fatalf("DPS values wrong: burn=%.0f bleed=%.0f", e.BurnDPS, e.BleedDPS)
+	burnBuff, _ := e.Buffs.Get("burn")
+	bleedBuff, _ := e.Buffs.Get("bleed")
+	if burnBuff.Value != 100 || bleedBuff.Value != 50 {
+		t.Fatalf("DPS values wrong: burn=%.0f bleed=%.0f", burnBuff.Value, bleedBuff.Value)
 	}
 
 	// Run 1 DoT tick cycle (0.5s = 30 ticks + 1 init tick)

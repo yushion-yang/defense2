@@ -3,6 +3,7 @@ package core_test
 import (
 	"testing"
 
+	"defense2/internal/core/buff"
 	"defense2/internal/core/enemy"
 	"defense2/internal/core/gamemap"
 )
@@ -120,13 +121,20 @@ func TestMoveAlongPath(t *testing.T) {
 
 func TestMoveStunned(t *testing.T) {
 	waypoints := []gamemap.Point{{X: 0, Y: 0}, {X: 100, Y: 0}}
-	e := &enemy.Enemy{X: 0, Y: 0, Speed: 200, Active: true, PathIndex: 1, StatusEffects: enemy.StatusEffects{StunTimer: 1.0}}
+	e := &enemy.Enemy{X: 0, Y: 0, Speed: 200, Active: true, PathIndex: 1}
+	e.Buffs = buff.NewDefaultBuffList()
+	e.Buffs.Add(buff.Buff{
+		ID: "stun", Category: buff.CatCC, Source: "test",
+		Duration: 1.0, Remaining: 1.0,
+	})
 
 	enemy.MoveAlongPath(e, waypoints, 0.5)
 	if e.X != 0 {
 		t.Fatalf("stunned enemy should not move, X=%.1f", e.X)
 	}
-	if e.StunTimer != 0.5 {
-		t.Fatalf("stun timer should decrease to 0.5, got %.1f", e.StunTimer)
+	// Stun timer is decremented by BuffList.Tick (called in TickStatusEffects), not by MoveAlongPath.
+	// Verify the enemy is still stunned.
+	if !e.IsStunned() {
+		t.Fatal("enemy should still be stunned after 0.5s of 1.0s stun")
 	}
 }

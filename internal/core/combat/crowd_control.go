@@ -16,8 +16,8 @@ func MinSpeedRatio() float64 { return config.GlobalBalance().Combat.MinSpeedRati
 // 检查免疫状态，应用韧性减免后设置眩晕计时器。
 // 返回 true 表示成功施加。
 func ApplyStun(e *enemy.Enemy, duration float64, source string) bool {
-	// 控制免疫检查
-	if e.IsControlImmune || e.IsStunImmune {
+	// 控制免疫检查（archetype flags + BuffList）
+	if e.IsControlImmune || e.IsStunImmune || e.HasControlImmunity() {
 		e.SetFloatText("免疫", 220, 60, 60)
 		return false
 	}
@@ -44,9 +44,9 @@ func ApplyStun(e *enemy.Enemy, duration float64, source string) bool {
 // 检查免疫状态，应用韧性减免，速度不低于 BaseSpeed * MinSpeedRatio。
 // 返回 true 表示成功施加。
 func ApplySlow(e *enemy.Enemy, factor, duration float64, source string) bool {
-	// 控制免疫检查
-	if e.IsControlImmune || e.IsSlowImmune {
-		if e.IsControlImmune {
+	// 控制免疫检查（archetype flags + BuffList）
+	if e.IsControlImmune || e.IsSlowImmune || e.HasControlImmunity() {
+		if e.IsControlImmune || e.HasControlImmunity() {
 			e.SetFloatText("免疫", 220, 60, 60)
 		} else {
 			e.SetFloatText("免疫", 60, 180, 200)

@@ -4,6 +4,7 @@ package sim
 import (
 	"fmt"
 
+	"defense2/internal/core/buff"
 	"defense2/internal/core/combat"
 	"defense2/internal/core/enemy"
 	"defense2/internal/core/event"
@@ -229,13 +230,20 @@ func (b *Builder) Build() *Sim {
 		case "stun":
 			combat.ApplyStun(e, eff.duration, "test")
 		case "burn":
-			e.BurnTimer = eff.duration
-			e.BurnDPS = eff.dps
+			e.Buffs.Add(buff.Buff{
+				ID: "burn", Category: buff.CatDoT, Source: "test",
+				Value: eff.dps, Duration: eff.duration, Remaining: eff.duration,
+			})
 		case "bleed":
-			e.BleedTimer = eff.duration
-			e.BleedDPS = eff.dps
+			e.Buffs.Add(buff.Buff{
+				ID: "bleed", Category: buff.CatDoT, Source: "test",
+				Value: eff.dps, Duration: eff.duration, Remaining: eff.duration,
+			})
 		case "root":
-			e.RootTimer = eff.duration // root 已移除，仅设 timer 兼容旧测试
+			e.Buffs.Add(buff.Buff{
+				ID: "root", Category: buff.CatCC, Source: "test",
+				Duration: eff.duration, Remaining: eff.duration,
+			})
 		}
 	}
 

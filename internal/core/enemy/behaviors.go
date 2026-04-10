@@ -6,6 +6,7 @@ import (
 	"math"
 
 	"defense2/internal/config"
+	"defense2/internal/core/buff"
 )
 
 // HealEvent 治疗事件记录（用于渲染治疗特效）。
@@ -126,24 +127,21 @@ func TickBehaviors(pool *Pool, dt float64) BehaviorEvents {
 			e.PurgeTimer -= dt
 			if e.PurgeTimer <= 0 {
 				e.PurgeTimer = e.PurgeInterval
-				// 清除所有负面效果
-				e.SlowTimer = 0
-				e.SlowFactor = 1
-				e.Speed = e.BaseSpeed
-				e.StunTimer = 0
-				e.RootTimer = 0
-				e.BleedTimer = 0
-				e.BleedDPS = 0
-				e.PoisonTimer = 0
-				e.PoisonDPS = 0
-				e.BurnTimer = 0
-				e.BurnDPS = 0
-				e.DamageAmplify = 0
-				e.DamageAmplifyTimer = 0
-				e.ZoneDmgAccum = 0
-				e.PurgeFlash = 0.4 // 触发净化脉冲视觉
+				// 清除所有负面效果（CC/DoT/Debuff）via BuffList
+				e.Buffs.ClearByCategory(buff.CatCC, buff.CatDoT, buff.CatDebuff)
+				e.Speed = e.BaseSpeed // 清除减速后恢复速度
+				e.ZoneDmgAccum = 0    // 区域伤害不在 BuffList 中
+				e.PurgeFlash = 0.4    // 触发净化脉冲视觉
 				// 净化后短暂免疫
 				if e.PurgeImmuneDur > 0 {
+					e.Buffs.Add(buff.Buff{
+						ID:        "controlImmune",
+						Category:  buff.CatDefense,
+						Source:    "purge",
+						Duration:  e.PurgeImmuneDur,
+						Remaining: e.PurgeImmuneDur,
+					})
+					// Legacy flags (backward compat)
 					e.ControlImmuneTimer = e.PurgeImmuneDur
 					e.IsControlImmune = true
 					e.IsStunImmune = true

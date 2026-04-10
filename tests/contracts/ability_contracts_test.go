@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"defense2/internal/config"
+	"defense2/internal/core/buff"
 	"defense2/internal/core/enemy"
 	"defense2/internal/core/projectile"
 	"defense2/internal/core/tower"
@@ -28,7 +29,9 @@ func testProjectile() *projectile.Projectile {
 }
 
 func testEnemy() *enemy.Enemy {
-	return &enemy.Enemy{HP: 100, MaxHP: 100, Speed: 60, BaseSpeed: 60, Active: true}
+	e := &enemy.Enemy{HP: 100, MaxHP: 100, Speed: 60, BaseSpeed: 60, Active: true}
+	e.Buffs = buff.NewDefaultBuffList()
+	return e
 }
 
 // ── 攻击模式能力 ──

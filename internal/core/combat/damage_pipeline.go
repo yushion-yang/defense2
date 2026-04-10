@@ -135,8 +135,12 @@ func ProcessDamage(input DamageInput) DamageResult {
 
 	// ── 步骤4.25: 虚弱增伤（weaken/weakenZone） ──
 	tel.T.Record("pipeline", "damage_amplify")
-	if e.DamageAmplify > 0 {
-		amp := e.DamageAmplify
+	amp := e.GetWeakenAmplify()
+	// Fallback to legacy field if BuffList has no weaken (backward compat during migration)
+	if amp <= 0 {
+		amp = e.DamageAmplify
+	}
+	if amp > 0 {
 		maxAmp := config.GlobalBalance().Combat.MaxDamageAmplify
 		if amp > maxAmp {
 			amp = maxAmp

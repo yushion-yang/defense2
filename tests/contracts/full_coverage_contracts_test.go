@@ -187,7 +187,10 @@ func TestBuffStackRulesExist(t *testing.T) {
 		"slowImmune", "stunImmune",
 		"untargetable", "shield", "dot", "tenacity",
 	}
-	rules := buff.DefaultStackRules
+	rules := buff.GlobalRules()
+	if rules == nil {
+		t.Fatal("GlobalRules() returned nil — InitGlobalRules not called")
+	}
 	for _, name := range required {
 		if _, ok := rules[name]; !ok {
 			t.Errorf("buff 叠加规则缺少 %q", name)
@@ -196,36 +199,45 @@ func TestBuffStackRulesExist(t *testing.T) {
 }
 
 func TestBuffSlowUsesStrongestMode(t *testing.T) {
-	rules := buff.DefaultStackRules
+	rules := buff.GlobalRules()
+	if rules == nil {
+		t.Fatal("GlobalRules() returned nil")
+	}
 	r, ok := rules["slow"]
 	if !ok {
 		t.Fatal("缺少 slow 规则")
 	}
-	if r.Mode != buff.ModeStrongest {
-		t.Errorf("slow 应为 ModeStrongest，实际=%d", r.Mode)
+	if r.Mode != buff.Strongest {
+		t.Errorf("slow 应为 Strongest，实际=%d", r.Mode)
 	}
 }
 
 func TestBuffDamageUpUsesAdditive(t *testing.T) {
-	rules := buff.DefaultStackRules
+	rules := buff.GlobalRules()
+	if rules == nil {
+		t.Fatal("GlobalRules() returned nil")
+	}
 	r, ok := rules["damageUp"]
 	if !ok {
 		t.Fatal("缺少 damageUp 规则")
 	}
-	if r.Mode != buff.ModeAdditive {
-		t.Errorf("damageUp 应为 ModeAdditive，实际=%d", r.Mode)
+	if r.Mode != buff.Additive {
+		t.Errorf("damageUp 应为 Additive，实际=%d", r.Mode)
 	}
 }
 
 func TestBuffInvincibleHighestPriority(t *testing.T) {
-	rules := buff.DefaultStackRules
+	rules := buff.GlobalRules()
+	if rules == nil {
+		t.Fatal("GlobalRules() returned nil")
+	}
 	inv := rules["invincible"]
 	unt := rules["untargetable"]
 	if inv.Priority < 90 {
-		t.Errorf("invincible priority=%.0f 应 >= 90", inv.Priority)
+		t.Errorf("invincible priority=%d 应 >= 90", inv.Priority)
 	}
 	if unt.Priority < inv.Priority {
-		t.Errorf("untargetable priority=%.0f 应 >= invincible priority=%.0f", unt.Priority, inv.Priority)
+		t.Errorf("untargetable priority=%d 应 >= invincible priority=%d", unt.Priority, inv.Priority)
 	}
 }
 
