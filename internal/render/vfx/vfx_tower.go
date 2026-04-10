@@ -104,33 +104,58 @@ func DrawSpinBlades(screen *ebiten.Image, cx, cy, outerR float32, spinAngle, act
 	trailA := uint8(20 * a)
 	draw.CircleOutline(screen, cx, cy, outerR, 1, color.RGBA{R: 163, G: 230, B: 53, A: trailA})
 
+	innerR := float32(towerSpriteSize) * 0.25 // 内核半径（刀刃起始）
+
 	for i := 0; i < 4; i++ {
 		ang := spinAngle + float64(i)*math.Pi/2
+		cosA, sinA := float32(math.Cos(ang)), float32(math.Sin(ang))
 
-		// ── Layer 2: 外层宽弧（模糊拖影，比主刃稍前） ──
-		trailAng := ang - 0.15 // 拖影偏移
-		trailArc := uint8(35 * a)
-		draw.Arc(screen, cx, cy, outerR+1, float32(trailAng-0.4), float32(trailAng+0.4), 4, color.RGBA{R: 140, G: 210, B: 40, A: trailArc})
+		// ── Blade edge lines: 内核→外刃的连线（刀刃放大虚影） ──
+		// 前缘连线（刃的旋转前端）
+		leadAng := ang + 0.3
+		leadCos, leadSin := float32(math.Cos(leadAng)), float32(math.Sin(leadAng))
+		leadIA := uint8(55 * a)
+		draw.ThickLine(screen,
+			cx+innerR*leadCos, cy+innerR*leadSin,
+			cx+outerR*leadCos, cy+outerR*leadSin,
+			1.5, color.RGBA{R: 180, G: 240, B: 80, A: leadIA})
+		// 后缘连线（刃的旋转尾端，更暗）
+		trailAng := ang - 0.3
+		trailCos, trailSin := float32(math.Cos(trailAng)), float32(math.Sin(trailAng))
+		trailIA := uint8(30 * a)
+		draw.ThickLine(screen,
+			cx+innerR*trailCos, cy+innerR*trailSin,
+			cx+outerR*trailCos, cy+outerR*trailSin,
+			1, color.RGBA{R: 140, G: 210, B: 40, A: trailIA})
+		// 中轴连线（刃的中心脊线，最亮）
+		spineA := uint8(45 * a)
+		draw.ThickLine(screen,
+			cx+innerR*cosA, cy+innerR*sinA,
+			cx+outerR*cosA, cy+outerR*sinA,
+			1, color.RGBA{R: 200, G: 255, B: 130, A: spineA})
+
+		// ── Layer 2: 外层宽弧（模糊拖影） ──
+		trailOffAng := ang - 0.15
+		trailArcA := uint8(35 * a)
+		draw.Arc(screen, cx, cy, outerR+1, float32(trailOffAng-0.4), float32(trailOffAng+0.4), 4, color.RGBA{R: 140, G: 210, B: 40, A: trailArcA})
 
 		// ── Layer 3: 主弧刃（明亮锐利） ──
 		mainA := uint8(140 * a)
 		draw.Arc(screen, cx, cy, outerR, float32(ang-0.32), float32(ang+0.32), 2.5, color.RGBA{R: 163, G: 230, B: 53, A: mainA})
 
-		// ── Layer 4: 内层亮芯弧（白绿色高亮，更窄） ──
+		// ── Layer 4: 内层亮芯弧（白绿色高亮） ──
 		coreA := uint8(100 * a)
 		draw.Arc(screen, cx, cy, outerR-1, float32(ang-0.2), float32(ang+0.2), 1.5, color.RGBA{R: 210, G: 255, B: 140, A: coreA})
 
-		// ── Layer 5: 刃尖高亮点（前端亮点，强调旋转方向） ──
-		tipAng := ang + 0.3
-		tipX := cx + outerR*float32(math.Cos(tipAng))
-		tipY := cy + outerR*float32(math.Sin(tipAng))
+		// ── Layer 5: 刃尖高亮点 ──
+		tipX := cx + outerR*leadCos
+		tipY := cy + outerR*leadSin
 		tipA := uint8(120 * a)
 		draw.FilledCircle(screen, tipX, tipY, 2.5, color.RGBA{R: 220, G: 255, B: 160, A: tipA})
 
-		// ── Layer 6: 刃尾衰减点（后端暗点，形成方向梯度） ──
-		tailAng := ang - 0.3
-		tailX := cx + outerR*float32(math.Cos(tailAng))
-		tailY := cy + outerR*float32(math.Sin(tailAng))
+		// ── Layer 6: 刃尾衰减点 ──
+		tailX := cx + outerR*trailCos
+		tailY := cy + outerR*trailSin
 		tailA := uint8(40 * a)
 		draw.FilledCircle(screen, tailX, tailY, 1.5, color.RGBA{R: 130, G: 200, B: 40, A: tailA})
 	}
