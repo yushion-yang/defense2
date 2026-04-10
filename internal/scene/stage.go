@@ -301,6 +301,11 @@ func NewStageSceneWithOpts(sw Switcher, opts StageOptions) *StageScene {
 	// 塔移除时清理缩放能力的运行时状态（防止 map 泄漏）
 	s.towers.RemoveHook = abilities.ClearTowerScalingState
 
+	// 死亡召唤音效回调
+	s.enemies.OnDeathSpawn = func(_ *enemy.Enemy, _ int) {
+		s.audioMgr.PlayThrottledAt("bossSummonMinions", 500, gameAudio.VolWave)
+	}
+
 	// 后处理管线（bloom）+ 粒子系统
 	s.postPipeline = postprocess.NewPipeline()
 	s.particlePool = particle.NewPool()
@@ -1922,6 +1927,10 @@ func (s *StageScene) updatePlaying() {
 			s.audioMgr.PlayThrottledAt(gameAudio.SFXStunImpact, 150, gameAudio.VolHit)
 		case "burn":
 			s.audioMgr.PlayThrottledAt(gameAudio.SFXBurnIgnite, 200, gameAudio.VolHit)
+		case "dodge":
+			s.audioMgr.PlayThrottledAt("dodge", 200, gameAudio.VolHit)
+		case "splash":
+			s.audioMgr.PlayThrottledAt("explodeSplash", 150, gameAudio.VolExplo)
 		}
 	}
 
