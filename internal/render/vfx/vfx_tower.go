@@ -91,18 +91,61 @@ func DrawBuildRipple(screen *ebiten.Image, cx, cy float32, progress float64) {
 
 // ── 旋转弧刃（spin_aoe） ────────────────────────────
 
-// DrawSpinBlades 绘制旋转攻击的 4 条弧线刃。
-// activeRatio: SpinActive/0.3，0~1 控制透明度。
+// DrawSpinBlades 绘制旋转攻击的多层弧线刃。
+// activeRatio: SpinActive/0.3，0~1 控制透明度和视觉强度。
 // spinAngle: 当前旋转弧度。
 func DrawSpinBlades(screen *ebiten.Image, cx, cy, outerR float32, spinAngle, activeRatio float64) {
 	a := activeRatio
 	if a > 1 {
 		a = 1
 	}
+
+	// ── Layer 1: 外层柔光轨道（低 alpha，营造旋转扫掠区域感） ──
+	trailA := uint8(20 * a)
+	draw.CircleOutline(screen, cx, cy, outerR, 1, color.RGBA{R: 163, G: 230, B: 53, A: trailA})
+
 	for i := 0; i < 4; i++ {
 		ang := spinAngle + float64(i)*math.Pi/2
-		clr := color.RGBA{R: 163, G: 230, B: 53, A: uint8(80 * a)}
-		draw.Arc(screen, cx, cy, outerR, float32(ang-0.3), float32(ang+0.3), 2, clr)
+
+		// ── Layer 2: 外层宽弧（模糊拖影，比主刃稍前） ──
+		trailAng := ang - 0.15 // 拖影偏移
+		trailArc := uint8(35 * a)
+		draw.Arc(screen, cx, cy, outerR+1, float32(trailAng-0.4), float32(trailAng+0.4), 4, color.RGBA{R: 140, G: 210, B: 40, A: trailArc})
+
+		// ── Layer 3: 主弧刃（明亮锐利） ──
+		mainA := uint8(140 * a)
+		draw.Arc(screen, cx, cy, outerR, float32(ang-0.32), float32(ang+0.32), 2.5, color.RGBA{R: 163, G: 230, B: 53, A: mainA})
+
+		// ── Layer 4: 内层亮芯弧（白绿色高亮，更窄） ──
+		coreA := uint8(100 * a)
+		draw.Arc(screen, cx, cy, outerR-1, float32(ang-0.2), float32(ang+0.2), 1.5, color.RGBA{R: 210, G: 255, B: 140, A: coreA})
+
+		// ── Layer 5: 刃尖高亮点（前端亮点，强调旋转方向） ──
+		tipAng := ang + 0.3
+		tipX := cx + outerR*float32(math.Cos(tipAng))
+		tipY := cy + outerR*float32(math.Sin(tipAng))
+		tipA := uint8(120 * a)
+		draw.FilledCircle(screen, tipX, tipY, 2.5, color.RGBA{R: 220, G: 255, B: 160, A: tipA})
+
+		// ── Layer 6: 刃尾衰减点（后端暗点，形成方向梯度） ──
+		tailAng := ang - 0.3
+		tailX := cx + outerR*float32(math.Cos(tailAng))
+		tailY := cy + outerR*float32(math.Sin(tailAng))
+		tailA := uint8(40 * a)
+		draw.FilledCircle(screen, tailX, tailY, 1.5, color.RGBA{R: 130, G: 200, B: 40, A: tailA})
+	}
+
+	// ── Layer 7: 中心旋转光核（与精灵呼应的内部旋涡） ──
+	coreR := float32(towerSpriteSize) * 0.22
+	corePulse := 0.7 + 0.3*math.Sin(spinAngle*2)
+	coreAlpha := uint8(float64(50) * a * corePulse)
+	draw.CircleOutline(screen, cx, cy, coreR, 1.5, color.RGBA{R: 180, G: 240, B: 80, A: coreAlpha})
+	// 两条交叉内弧（随旋转角旋转，比外刃快 1.5x）
+	innerAng := spinAngle * 1.5
+	innerA := uint8(60 * a * corePulse)
+	for j := 0; j < 2; j++ {
+		ja := innerAng + float64(j)*math.Pi
+		draw.Arc(screen, cx, cy, coreR+2, float32(ja-0.5), float32(ja+0.5), 1.5, color.RGBA{R: 200, G: 255, B: 120, A: innerA})
 	}
 }
 
