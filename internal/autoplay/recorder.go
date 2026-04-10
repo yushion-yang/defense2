@@ -102,6 +102,9 @@ type SessionRecord struct {
 	// 断言结果（能力测试场景）
 	Assertions []AssertionResult `json:"assertions,omitempty"`
 
+	// 模式转换日志
+	ModeTransitions []ModeTransition `json:"mode_transitions,omitempty"`
+
 	// 遥测覆盖
 	PipelineSteps      []string `json:"pipeline_steps,omitempty"`
 	DamageTypes        []string `json:"damage_types,omitempty"`

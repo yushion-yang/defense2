@@ -122,6 +122,86 @@ type AnomalyDetector struct {
 
 	// enemy_born_with_hit: 新生敌人带 hit 状态
 	enemyFirstSeen map[int]bool // enemyID -> 已首次见过
+
+	// mode_transition: 交互模式转换追踪
+	modeTransLastMode int              // 上一帧的 InteractMode
+	modeTransInit     bool             // 是否已初始化
+	ModeTransitions   []ModeTransition // 所有模式转换记录（导出供报告使用）
+}
+
+// ModeTransition 记录一次交互模式转换。
+type ModeTransition struct {
+	Tick int    `json:"tick"`
+	From int    `json:"from"`
+	To   int    `json:"to"`
+	Name string `json:"name"` // "from_name -> to_name"
+}
+
+// modeNames 模式 ID → 可读名称。
+var modeNames = map[int]string{
+	0: "idle", 1: "buildMenu", 2: "buildPlace", 3: "towerSel",
+	4: "spawnMenu", 5: "spawnPlace", 6: "paused", 7: "wardenSelect",
+	8: "upgrade", 9: "itemPanel", 10: "itemDrag",
+}
+
+// validModeTransitions 合法的模式转换白名单。
+// Key: [from, to]，value: true。
+// 不在白名单中的转换将被记录为异常。
+var validModeTransitions = map[[2]int]bool{
+	// idle → any non-idle entry
+	{0, 1}:  true, // idle → buildMenu
+	{0, 3}:  true, // idle → towerSel (click existing tower)
+	{0, 4}:  true, // idle → spawnMenu
+	{0, 6}:  true, // idle → paused
+	{0, 7}:  true, // idle → wardenSelect
+	{0, 9}:  true, // idle → itemPanel
+	{0, 8}:  true, // idle → upgrade (wave transition auto-opens)
+	// buildMenu transitions
+	{1, 0}:  true, // buildMenu → idle (cancel)
+	{1, 2}:  true, // buildMenu → buildPlace (select tower type)
+	{1, 6}:  true, // buildMenu → paused
+	// buildPlace transitions
+	{2, 0}:  true, // buildPlace → idle (cancel/place done)
+	{2, 1}:  true, // buildPlace → buildMenu (back to menu)
+	{2, 6}:  true, // buildPlace → paused
+	// towerSel transitions
+	{3, 0}:  true, // towerSel → idle (deselect)
+	{3, 8}:  true, // towerSel → upgrade (ability choice prompt)
+	{3, 6}:  true, // towerSel → paused
+	// spawnMenu transitions
+	{4, 0}:  true, // spawnMenu → idle
+	{4, 5}:  true, // spawnMenu → spawnPlace
+	{4, 6}:  true, // spawnMenu → paused
+	// spawnPlace transitions
+	{5, 0}:  true, // spawnPlace → idle
+	{5, 4}:  true, // spawnPlace → spawnMenu
+	{5, 6}:  true, // spawnPlace → paused
+	// paused transitions
+	{6, 0}:  true, // paused → idle (resume)
+	{6, 1}:  true, // paused → buildMenu (resume to pre-pause mode)
+	{6, 2}:  true, // paused → buildPlace
+	{6, 3}:  true, // paused → towerSel
+	{6, 4}:  true, // paused → spawnMenu
+	{6, 5}:  true, // paused → spawnPlace
+	{6, 7}:  true, // paused → wardenSelect
+	{6, 8}:  true, // paused → upgrade
+	{6, 9}:  true, // paused → itemPanel
+	{6, 10}: true, // paused → itemDrag
+	// wardenSelect transitions
+	{7, 0}:  true, // wardenSelect → idle
+	{7, 6}:  true, // wardenSelect → paused
+	// upgrade transitions
+	{8, 0}:  true, // upgrade → idle (ability chosen/dismissed)
+	{8, 3}:  true, // upgrade → towerSel
+	{8, 6}:  true, // upgrade → paused
+	// itemPanel transitions
+	{9, 0}:  true, // itemPanel → idle (cancel)
+	{9, 10}: true, // itemPanel → itemDrag (start dragging)
+	{9, 6}:  true, // itemPanel → paused
+	// itemDrag transitions
+	{10, 0}: true, // itemDrag → idle (drop/cancel)
+	{10, 9}: true, // itemDrag → itemPanel (cancel back)
+	{10, 6}: true, // itemDrag → paused
 }
 
 type buildAudit struct {
@@ -352,6 +432,9 @@ func (d *AnomalyDetector) Check(state *GameState, updateMs float64) []Anomaly {
 
 	// ── 26. Boss 存活过短检测 ──
 	found = append(found, d.checkBossTooWeak(state)...)
+
+	// ── 27. 交互模式转换合法性检测 ──
+	found = append(found, d.checkModeTransition(state)...)
 
 	// 更新前帧状态
 	d.prevGold = state.Gold
@@ -1144,6 +1227,53 @@ func (d *AnomalyDetector) checkEconomyStall(state *GameState) []Anomaly {
 		}
 	} else {
 		d.econStallTicks = 0
+	}
+	return nil
+}
+
+// checkModeTransition 检测非法交互模式转换。
+// 记录所有转换供报告使用，并对白名单外的转换生成异常。
+func (d *AnomalyDetector) checkModeTransition(state *GameState) []Anomaly {
+	mode := state.InteractMode
+
+	if !d.modeTransInit {
+		d.modeTransLastMode = mode
+		d.modeTransInit = true
+		return nil
+	}
+
+	if mode == d.modeTransLastMode {
+		return nil // 模式没变，跳过
+	}
+
+	fromName := modeNames[d.modeTransLastMode]
+	if fromName == "" {
+		fromName = fmt.Sprintf("mode_%d", d.modeTransLastMode)
+	}
+	toName := modeNames[mode]
+	if toName == "" {
+		toName = fmt.Sprintf("mode_%d", mode)
+	}
+
+	// 记录转换
+	d.ModeTransitions = append(d.ModeTransitions, ModeTransition{
+		Tick: state.Tick,
+		From: d.modeTransLastMode,
+		To:   mode,
+		Name: fmt.Sprintf("%s → %s", fromName, toName),
+	})
+
+	prev := d.modeTransLastMode
+	d.modeTransLastMode = mode
+
+	// 检查白名单
+	if !validModeTransitions[[2]int{prev, mode}] {
+		return []Anomaly{{
+			Tick:     state.Tick,
+			Type:     "invalid_mode_transition",
+			Detail:   fmt.Sprintf("%s(%d) → %s(%d)", fromName, prev, toName, mode),
+			Severity: SeverityMedium,
+		}}
 	}
 	return nil
 }

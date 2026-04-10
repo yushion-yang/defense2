@@ -191,6 +191,7 @@ func (c *Controller) OnGameEnd(snap scene.AutoPlaySnapshot, won bool) {
 
 	record := c.recorder.Finalize(state, c.anomaly.Anomalies())
 	record.Seed = c.seed
+	record.ModeTransitions = c.anomaly.ModeTransitions
 	if err := WriteJSON(record, c.jsonDir); err != nil {
 		log.Printf("report write error: %v", err)
 	} else {
