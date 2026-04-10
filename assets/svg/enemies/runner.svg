@@ -1,0 +1,46 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128">
+  <defs>
+    <radialGradient id="bodyGrad" cx="50%" cy="40%" r="50%">
+      <stop offset="0%" stop-color="#22d3ee"/>
+      <stop offset="100%" stop-color="#0891b2"/>
+    </radialGradient>
+    <linearGradient id="streakGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#22d3ee" stop-opacity="0"/>
+      <stop offset="100%" stop-color="#22d3ee" stop-opacity="0.6"/>
+    </linearGradient>
+    <radialGradient id="shadow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#000" stop-opacity="0.25"/>
+      <stop offset="100%" stop-color="#000" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="coreGlow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#ecfeff"/>
+      <stop offset="100%" stop-color="#06b6d4" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <!-- shadow -->
+  <ellipse cx="64" cy="110" rx="24" ry="8" fill="url(#shadow)"/>
+  <!-- speed lines -->
+  <rect x="8" y="52" width="30" height="2" rx="1" fill="url(#streakGrad)"/>
+  <rect x="12" y="62" width="26" height="2" rx="1" fill="url(#streakGrad)"/>
+  <rect x="6" y="72" width="32" height="2" rx="1" fill="url(#streakGrad)"/>
+  <!-- legs -->
+  <path d="M52 92 L46 106" stroke="#0891b2" stroke-width="4" stroke-linecap="round"/>
+  <path d="M72 90 L78 106" stroke="#0891b2" stroke-width="4" stroke-linecap="round"/>
+  <!-- body -->
+  <path d="M44 68 Q44 42 64 38 Q84 42 84 68 Q84 92 64 96 Q44 92 44 68Z" fill="url(#bodyGrad)"/>
+  <!-- chest plate -->
+  <path d="M50 56 Q64 50 78 56 L76 74 Q64 78 52 74Z" fill="#06b6d4" opacity="0.6"/>
+  <!-- head -->
+  <ellipse cx="64" cy="36" rx="16" ry="14" fill="url(#bodyGrad)"/>
+  <!-- visor -->
+  <path d="M50 34 Q64 28 78 34 Q78 40 64 42 Q50 40 50 34Z" fill="#083344" opacity="0.85"/>
+  <!-- visor glow -->
+  <ellipse cx="60" cy="35" rx="6" ry="2.5" fill="#22d3ee" opacity="0.4"/>
+  <!-- fins -->
+  <path d="M82 50 L96 38 L90 54Z" fill="#06b6d4" opacity="0.7"/>
+  <path d="M46 50 L32 38 L38 54Z" fill="#06b6d4" opacity="0.7"/>
+  <!-- head fin -->
+  <path d="M64 22 L70 16 L64 30Z" fill="#0891b2" opacity="0.8"/>
+  <!-- core glow -->
+  <ellipse cx="64" cy="66" rx="6" ry="6" fill="url(#coreGlow)" opacity="0.5"/>
+</svg>

@@ -1,0 +1,96 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128">
+  <defs>
+    <linearGradient id="sfBody" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#854d0e"/>
+      <stop offset="100%" stop-color="#422006"/>
+    </linearGradient>
+    <linearGradient id="sfArmor" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#a16207"/>
+      <stop offset="50%" stop-color="#854d0e"/>
+      <stop offset="100%" stop-color="#713f12"/>
+    </linearGradient>
+    <linearGradient id="sfBoot" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#713f12"/>
+      <stop offset="100%" stop-color="#422006"/>
+    </linearGradient>
+    <radialGradient id="sfTread" cx="50%" cy="30%" r="60%">
+      <stop offset="0%" stop-color="#a16207"/>
+      <stop offset="100%" stop-color="#422006"/>
+    </radialGradient>
+    <linearGradient id="sfBelt" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#422006"/>
+      <stop offset="50%" stop-color="#a16207"/>
+      <stop offset="100%" stop-color="#422006"/>
+    </linearGradient>
+  </defs>
+  <!-- shadow -->
+  <ellipse cx="64" cy="116" rx="32" ry="8" fill="#000" opacity="0.25"/>
+  <!-- left boot -->
+  <path d="M36 96 L32 114 L56 114 L54 96" fill="url(#sfBoot)"/>
+  <!-- left boot treads -->
+  <rect x="32" y="108" width="24" height="3" rx="1" fill="url(#sfTread)"/>
+  <line x1="36" y1="109" x2="36" y2="111" stroke="#422006" stroke-width="1.5"/>
+  <line x1="40" y1="109" x2="40" y2="111" stroke="#422006" stroke-width="1.5"/>
+  <line x1="44" y1="109" x2="44" y2="111" stroke="#422006" stroke-width="1.5"/>
+  <line x1="48" y1="109" x2="48" y2="111" stroke="#422006" stroke-width="1.5"/>
+  <line x1="52" y1="109" x2="52" y2="111" stroke="#422006" stroke-width="1.5"/>
+  <!-- left boot straps -->
+  <rect x="34" y="98" width="20" height="3" rx="1" fill="#a16207"/>
+  <rect x="34" y="104" width="20" height="3" rx="1" fill="#a16207"/>
+  <!-- left boot buckle -->
+  <rect x="42" y="97" width="4" height="5" rx="0.5" fill="#d97706" stroke="#422006" stroke-width="0.5"/>
+  <!-- right boot -->
+  <path d="M74 96 L72 114 L96 114 L94 96" fill="url(#sfBoot)"/>
+  <!-- right boot treads -->
+  <rect x="72" y="108" width="24" height="3" rx="1" fill="url(#sfTread)"/>
+  <line x1="76" y1="109" x2="76" y2="111" stroke="#422006" stroke-width="1.5"/>
+  <line x1="80" y1="109" x2="80" y2="111" stroke="#422006" stroke-width="1.5"/>
+  <line x1="84" y1="109" x2="84" y2="111" stroke="#422006" stroke-width="1.5"/>
+  <line x1="88" y1="109" x2="88" y2="111" stroke="#422006" stroke-width="1.5"/>
+  <line x1="92" y1="109" x2="92" y2="111" stroke="#422006" stroke-width="1.5"/>
+  <!-- right boot straps -->
+  <rect x="74" y="98" width="20" height="3" rx="1" fill="#a16207"/>
+  <rect x="74" y="104" width="20" height="3" rx="1" fill="#a16207"/>
+  <!-- right boot buckle -->
+  <rect x="82" y="97" width="4" height="5" rx="0.5" fill="#d97706" stroke="#422006" stroke-width="0.5"/>
+  <!-- legs -->
+  <rect x="40" y="82" width="16" height="16" rx="2" fill="url(#sfBody)"/>
+  <rect x="72" y="82" width="16" height="16" rx="2" fill="url(#sfBody)"/>
+  <!-- torso -->
+  <path d="M38 42 L34 84 Q64 88 94 84 L90 42 Q78 36 64 34 Q50 36 38 42" fill="url(#sfBody)"/>
+  <!-- chest armor -->
+  <path d="M42 44 L40 74 Q64 78 88 74 L86 44 Q76 40 64 38 Q52 40 42 44" fill="url(#sfArmor)"/>
+  <!-- armor details -->
+  <line x1="64" y1="40" x2="64" y2="76" stroke="#713f12" stroke-width="1.2"/>
+  <path d="M46 54 Q64 50 82 54" stroke="#713f12" stroke-width="0.8" fill="none"/>
+  <!-- belt -->
+  <rect x="36" y="76" width="56" height="6" rx="2" fill="url(#sfBelt)"/>
+  <!-- belt buckle -->
+  <rect x="58" y="75" width="12" height="8" rx="1.5" fill="#d97706" stroke="#422006" stroke-width="0.8"/>
+  <!-- steady symbol on buckle -->
+  <line x1="61" y1="79" x2="67" y2="79" stroke="#422006" stroke-width="1.2"/>
+  <polygon points="64,76 62,78 66,78" fill="#422006"/>
+  <polygon points="64,82 62,80 66,80" fill="#422006"/>
+  <!-- shoulder pads -->
+  <ellipse cx="36" cy="42" rx="10" ry="6" fill="url(#sfArmor)"/>
+  <ellipse cx="92" cy="42" rx="10" ry="6" fill="url(#sfArmor)"/>
+  <!-- arms -->
+  <path d="M28 44 Q22 56 24 70 L28 70 Q28 58 32 48" fill="url(#sfBody)"/>
+  <path d="M100 44 Q106 56 104 70 L100 70 Q100 58 96 48" fill="url(#sfBody)"/>
+  <!-- fists -->
+  <circle cx="26" cy="74" r="6" fill="#713f12"/>
+  <circle cx="102" cy="74" r="6" fill="#713f12"/>
+  <!-- head -->
+  <path d="M48 34 Q48 18 64 14 Q80 18 80 34 Q74 38 64 40 Q54 38 48 34" fill="url(#sfBody)"/>
+  <!-- helmet -->
+  <path d="M48 30 Q48 18 64 14 Q80 18 80 30 Q72 28 64 28 Q56 28 48 30" fill="url(#sfArmor)"/>
+  <!-- helmet brim -->
+  <path d="M44 30 Q54 32 64 32 Q74 32 84 30 Q76 28 64 28 Q52 28 44 30" fill="#a16207"/>
+  <!-- eyes -->
+  <ellipse cx="56" cy="30" rx="3" ry="2.5" fill="#1c1917"/>
+  <circle cx="56" cy="30" r="1" fill="#a16207"/>
+  <ellipse cx="72" cy="30" rx="3" ry="2.5" fill="#1c1917"/>
+  <circle cx="72" cy="30" r="1" fill="#a16207"/>
+  <!-- determined mouth -->
+  <line x1="58" y1="36" x2="70" y2="36" stroke="#422006" stroke-width="1.5" stroke-linecap="round"/>
+</svg>

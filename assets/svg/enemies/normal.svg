@@ -1,0 +1,36 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128">
+  <defs>
+    <radialGradient id="bodyGrad" cx="50%" cy="40%" r="50%">
+      <stop offset="0%" stop-color="#94a3b8"/>
+      <stop offset="100%" stop-color="#475569"/>
+    </radialGradient>
+    <radialGradient id="helmetGrad" cx="50%" cy="35%" r="50%">
+      <stop offset="0%" stop-color="#64748b"/>
+      <stop offset="100%" stop-color="#334155"/>
+    </radialGradient>
+    <radialGradient id="shadow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#000" stop-opacity="0.3"/>
+      <stop offset="100%" stop-color="#000" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <!-- shadow -->
+  <ellipse cx="64" cy="108" rx="28" ry="10" fill="url(#shadow)"/>
+  <!-- feet -->
+  <ellipse cx="50" cy="98" rx="10" ry="6" fill="#475569"/>
+  <ellipse cx="78" cy="98" rx="10" ry="6" fill="#475569"/>
+  <!-- body -->
+  <ellipse cx="64" cy="72" rx="26" ry="30" fill="url(#bodyGrad)"/>
+  <!-- belt -->
+  <rect x="40" y="76" width="48" height="6" rx="3" fill="#475569"/>
+  <!-- helmet -->
+  <ellipse cx="64" cy="42" rx="22" ry="20" fill="url(#helmetGrad)"/>
+  <!-- helmet ridge -->
+  <path d="M48 42 Q64 22 80 42" stroke="#94a3b8" stroke-width="3" fill="none"/>
+  <!-- visor -->
+  <ellipse cx="64" cy="46" rx="14" ry="6" fill="#1e293b" opacity="0.8"/>
+  <!-- visor shine -->
+  <ellipse cx="60" cy="44" rx="5" ry="2" fill="#94a3b8" opacity="0.5"/>
+  <!-- arms -->
+  <ellipse cx="36" cy="70" rx="8" ry="14" fill="#64748b" transform="rotate(-10 36 70)"/>
+  <ellipse cx="92" cy="70" rx="8" ry="14" fill="#64748b" transform="rotate(10 92 70)"/>
+</svg>

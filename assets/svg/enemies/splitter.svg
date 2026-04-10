@@ -1,0 +1,52 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128">
+  <defs>
+    <radialGradient id="blobGrad" cx="45%" cy="40%" r="55%">
+      <stop offset="0%" stop-color="#f472b6"/>
+      <stop offset="60%" stop-color="#ec4899"/>
+      <stop offset="100%" stop-color="#db2777"/>
+    </radialGradient>
+    <radialGradient id="segGrad" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#fce7f3" stop-opacity="0.4"/>
+      <stop offset="100%" stop-color="#ec4899" stop-opacity="0.1"/>
+    </radialGradient>
+    <radialGradient id="nucleusGrad" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#fce7f3"/>
+      <stop offset="100%" stop-color="#f472b6"/>
+    </radialGradient>
+    <radialGradient id="shadow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#000" stop-opacity="0.25"/>
+      <stop offset="100%" stop-color="#000" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <!-- shadow -->
+  <ellipse cx="64" cy="110" rx="32" ry="10" fill="url(#shadow)"/>
+  <!-- pseudopods -->
+  <ellipse cx="38" cy="90" rx="10" ry="8" fill="#db2777" opacity="0.6"/>
+  <ellipse cx="90" cy="88" rx="10" ry="8" fill="#db2777" opacity="0.6"/>
+  <ellipse cx="52" cy="100" rx="8" ry="6" fill="#db2777" opacity="0.5"/>
+  <ellipse cx="78" cy="98" rx="8" ry="6" fill="#db2777" opacity="0.5"/>
+  <!-- main blob -->
+  <path d="M32 60 Q28 36 54 30 Q64 28 74 30 Q100 36 96 60 Q98 82 80 92 Q64 98 48 92 Q30 82 32 60Z" fill="url(#blobGrad)"/>
+  <!-- division line -->
+  <path d="M64 32 Q60 50 64 64 Q68 78 64 96" stroke="#db2777" stroke-width="2.5" fill="none" opacity="0.5" stroke-dasharray="4 3"/>
+  <!-- horizontal split hint -->
+  <path d="M36 64 Q50 60 64 64 Q78 68 92 64" stroke="#db2777" stroke-width="1.5" fill="none" opacity="0.3" stroke-dasharray="3 3"/>
+  <!-- left segment -->
+  <ellipse cx="48" cy="56" rx="16" ry="18" fill="url(#segGrad)"/>
+  <!-- right segment -->
+  <ellipse cx="80" cy="56" rx="16" ry="18" fill="url(#segGrad)"/>
+  <!-- left nucleus -->
+  <circle cx="48" cy="52" r="5" fill="url(#nucleusGrad)" opacity="0.8"/>
+  <circle cx="48" cy="52" r="2" fill="#fff" opacity="0.5"/>
+  <!-- right nucleus -->
+  <circle cx="80" cy="52" r="5" fill="url(#nucleusGrad)" opacity="0.8"/>
+  <circle cx="80" cy="52" r="2" fill="#fff" opacity="0.5"/>
+  <!-- surface bubbles -->
+  <circle cx="56" cy="40" r="3" fill="#fce7f3" opacity="0.3"/>
+  <circle cx="72" cy="44" r="2.5" fill="#fce7f3" opacity="0.25"/>
+  <circle cx="44" cy="72" r="3.5" fill="#fce7f3" opacity="0.2"/>
+  <circle cx="82" cy="70" r="3" fill="#fce7f3" opacity="0.2"/>
+  <!-- jelly shine -->
+  <path d="M44 38 Q54 32 62 36" stroke="#fce7f3" stroke-width="2" fill="none" opacity="0.35" stroke-linecap="round"/>
+  <path d="M70 38 Q78 34 86 40" stroke="#fce7f3" stroke-width="1.5" fill="none" opacity="0.25" stroke-linecap="round"/>
+</svg>

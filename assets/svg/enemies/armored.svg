@@ -1,0 +1,55 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128">
+  <defs>
+    <radialGradient id="bodyGrad" cx="50%" cy="40%" r="50%">
+      <stop offset="0%" stop-color="#fbbf24"/>
+      <stop offset="40%" stop-color="#d97706"/>
+      <stop offset="100%" stop-color="#92400e"/>
+    </radialGradient>
+    <linearGradient id="plateGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#fbbf24"/>
+      <stop offset="50%" stop-color="#d97706"/>
+      <stop offset="100%" stop-color="#b45309"/>
+    </linearGradient>
+    <linearGradient id="shineGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#fef3c7" stop-opacity="0.6"/>
+      <stop offset="100%" stop-color="#fbbf24" stop-opacity="0"/>
+    </linearGradient>
+    <radialGradient id="shadow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#000" stop-opacity="0.3"/>
+      <stop offset="100%" stop-color="#000" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <!-- shadow -->
+  <ellipse cx="64" cy="110" rx="30" ry="10" fill="url(#shadow)"/>
+  <!-- feet -->
+  <rect x="44" y="94" width="14" height="10" rx="3" fill="#92400e"/>
+  <rect x="70" y="94" width="14" height="10" rx="3" fill="#92400e"/>
+  <!-- legs -->
+  <rect x="46" y="84" width="12" height="14" rx="2" fill="#b45309"/>
+  <rect x="70" y="84" width="12" height="14" rx="2" fill="#b45309"/>
+  <!-- body -->
+  <path d="M38 50 L64 44 L90 50 L90 84 L64 90 L38 84Z" fill="url(#bodyGrad)"/>
+  <!-- hex plates -->
+  <polygon points="64,48 76,54 76,66 64,72 52,66 52,54" fill="url(#plateGrad)" stroke="#92400e" stroke-width="1.5"/>
+  <polygon points="64,48 76,54 76,66 64,72 52,66 52,54" fill="url(#shineGrad)"/>
+  <!-- upper hex plate -->
+  <polygon points="48,46 56,42 64,46 64,54 56,58 48,54" fill="url(#plateGrad)" stroke="#92400e" stroke-width="1" opacity="0.8"/>
+  <polygon points="80,46 72,42 64,46 64,54 72,58 80,54" fill="url(#plateGrad)" stroke="#92400e" stroke-width="1" opacity="0.8"/>
+  <!-- lower hex plate -->
+  <polygon points="48,70 56,66 64,70 64,78 56,82 48,78" fill="url(#plateGrad)" stroke="#92400e" stroke-width="1" opacity="0.8"/>
+  <polygon points="80,70 72,66 64,70 64,78 72,82 80,78" fill="url(#plateGrad)" stroke="#92400e" stroke-width="1" opacity="0.8"/>
+  <!-- shoulder guards -->
+  <path d="M32 48 Q32 40 44 38 L44 56 Q32 54 32 48Z" fill="#d97706" stroke="#92400e" stroke-width="1"/>
+  <path d="M96 48 Q96 40 84 38 L84 56 Q96 54 96 48Z" fill="#d97706" stroke="#92400e" stroke-width="1"/>
+  <!-- head -->
+  <path d="M48 36 L64 26 L80 36 L76 44 L52 44Z" fill="#d97706" stroke="#92400e" stroke-width="1.5"/>
+  <!-- visor -->
+  <path d="M52 38 L64 32 L76 38 L72 42 L56 42Z" fill="#451a03" opacity="0.85"/>
+  <!-- visor glow -->
+  <path d="M56 37 L64 34 L68 37" stroke="#fbbf24" stroke-width="1.5" fill="none" opacity="0.6"/>
+  <!-- metallic rivet dots -->
+  <circle cx="44" cy="50" r="2" fill="#fbbf24" opacity="0.6"/>
+  <circle cx="84" cy="50" r="2" fill="#fbbf24" opacity="0.6"/>
+  <circle cx="44" cy="76" r="2" fill="#fbbf24" opacity="0.6"/>
+  <circle cx="84" cy="76" r="2" fill="#fbbf24" opacity="0.6"/>
+</svg>

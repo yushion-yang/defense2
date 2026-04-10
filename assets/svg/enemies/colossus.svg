@@ -1,0 +1,79 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128">
+  <defs>
+    <radialGradient id="colBody" cx="50%" cy="40%" r="55%">
+      <stop offset="0%" stop-color="#6b7280"/>
+      <stop offset="60%" stop-color="#4b5563"/>
+      <stop offset="100%" stop-color="#374151"/>
+    </radialGradient>
+    <radialGradient id="colCrystal" cx="35%" cy="35%" r="55%">
+      <stop offset="0%" stop-color="#c4b5fd"/>
+      <stop offset="50%" stop-color="#a78bfa"/>
+      <stop offset="100%" stop-color="#7c3aed"/>
+    </radialGradient>
+    <radialGradient id="colGlow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#a78bfa" stop-opacity="0.7"/>
+      <stop offset="100%" stop-color="#a78bfa" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="colRock" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#6b7280"/>
+      <stop offset="100%" stop-color="#374151"/>
+    </linearGradient>
+    <linearGradient id="colArm" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#4b5563"/>
+      <stop offset="100%" stop-color="#374151"/>
+    </linearGradient>
+  </defs>
+  <!-- shadow -->
+  <ellipse cx="64" cy="114" rx="40" ry="10" fill="#000" opacity="0.25"/>
+  <!-- left leg -->
+  <path d="M42 88 L36 108 L48 108 L50 88" fill="url(#colArm)"/>
+  <rect x="34" y="106" width="16" height="8" rx="3" fill="#374151"/>
+  <!-- right leg -->
+  <path d="M78 88 L80 108 L92 108 L86 88" fill="url(#colArm)"/>
+  <rect x="78" y="106" width="16" height="8" rx="3" fill="#374151"/>
+  <!-- rock cracks on legs -->
+  <line x1="42" y1="92" x2="40" y2="102" stroke="#1f2937" stroke-width="1"/>
+  <line x1="84" y1="92" x2="86" y2="102" stroke="#1f2937" stroke-width="1"/>
+  <!-- body -->
+  <path d="M36 50 Q34 44 40 36 Q52 28 64 26 Q76 28 88 36 Q94 44 92 50 L96 90 Q64 96 32 90 Z" fill="url(#colBody)"/>
+  <!-- rock texture -->
+  <line x1="44" y1="40" x2="48" y2="56" stroke="#374151" stroke-width="1.5" opacity="0.6"/>
+  <line x1="80" y1="42" x2="78" y2="58" stroke="#374151" stroke-width="1.5" opacity="0.6"/>
+  <line x1="56" y1="70" x2="72" y2="68" stroke="#374151" stroke-width="1" opacity="0.4"/>
+  <line x1="40" y1="76" x2="50" y2="80" stroke="#374151" stroke-width="1" opacity="0.4"/>
+  <!-- crystal core glow -->
+  <ellipse cx="64" cy="58" rx="14" ry="12" fill="url(#colGlow)"/>
+  <!-- crystal core -->
+  <polygon points="64,44 54,56 58,70 70,70 74,56" fill="url(#colCrystal)"/>
+  <!-- crystal highlights -->
+  <polygon points="64,46 58,54 64,52 70,54" fill="#c4b5fd" opacity="0.5"/>
+  <line x1="60" y1="50" x2="56" y2="62" stroke="#ddd6fe" stroke-width="0.8" opacity="0.6"/>
+  <!-- shoulder boulder left -->
+  <path d="M30 44 Q24 36 28 30 Q34 28 40 34 Q38 42 32 46" fill="url(#colRock)"/>
+  <!-- shoulder boulder right -->
+  <path d="M98 44 Q104 36 100 30 Q94 28 88 34 Q90 42 96 46" fill="url(#colRock)"/>
+  <!-- left arm -->
+  <path d="M32 46 Q20 58 18 74 Q16 82 22 86 L28 82 Q24 76 26 66 Q28 56 36 50" fill="url(#colArm)"/>
+  <!-- left fist -->
+  <circle cx="24" cy="84" r="8" fill="#4b5563"/>
+  <line x1="20" y1="80" x2="28" y2="88" stroke="#374151" stroke-width="1"/>
+  <!-- right arm -->
+  <path d="M96 46 Q108 58 110 74 Q112 82 106 86 L100 82 Q104 76 102 66 Q100 56 92 50" fill="url(#colArm)"/>
+  <!-- right fist -->
+  <circle cx="104" cy="84" r="8" fill="#4b5563"/>
+  <line x1="100" y1="80" x2="108" y2="88" stroke="#374151" stroke-width="1"/>
+  <!-- head -->
+  <path d="M48 32 Q50 20 64 16 Q78 20 80 32 Q76 38 64 40 Q52 38 48 32" fill="url(#colRock)"/>
+  <!-- eyes -->
+  <ellipse cx="56" cy="28" rx="4" ry="3" fill="#a78bfa"/>
+  <circle cx="56" cy="28" r="1.5" fill="#c4b5fd"/>
+  <ellipse cx="72" cy="28" rx="4" ry="3" fill="#a78bfa"/>
+  <circle cx="72" cy="28" r="1.5" fill="#c4b5fd"/>
+  <!-- brow ridge -->
+  <path d="M50 24 Q56 22 60 24" stroke="#374151" stroke-width="2" fill="none"/>
+  <path d="M68 24 Q72 22 78 24" stroke="#374151" stroke-width="2" fill="none"/>
+  <!-- small crystals -->
+  <polygon points="46,34 42,28 48,30" fill="#a78bfa" opacity="0.7"/>
+  <polygon points="82,34 86,28 80,30" fill="#a78bfa" opacity="0.7"/>
+  <polygon points="64,18 62,12 66,12" fill="#a78bfa" opacity="0.5"/>
+</svg>

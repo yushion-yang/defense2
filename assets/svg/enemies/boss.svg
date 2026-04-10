@@ -1,0 +1,77 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128">
+  <defs>
+    <radialGradient id="bossBody" cx="50%" cy="45%" r="50%">
+      <stop offset="0%" stop-color="#dc2626"/>
+      <stop offset="70%" stop-color="#991b1b"/>
+      <stop offset="100%" stop-color="#7f1d1d"/>
+    </radialGradient>
+    <radialGradient id="bossAura" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#7f1d1d" stop-opacity="0.6"/>
+      <stop offset="60%" stop-color="#450a0a" stop-opacity="0.3"/>
+      <stop offset="100%" stop-color="#000" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="bossHorn" x1="0" y1="1" x2="0.3" y2="0">
+      <stop offset="0%" stop-color="#991b1b"/>
+      <stop offset="100%" stop-color="#fbbf24"/>
+    </linearGradient>
+    <radialGradient id="bossCrown" cx="50%" cy="80%" r="60%">
+      <stop offset="0%" stop-color="#fbbf24"/>
+      <stop offset="100%" stop-color="#b45309"/>
+    </radialGradient>
+    <radialGradient id="bossEye" cx="40%" cy="40%" r="50%">
+      <stop offset="0%" stop-color="#fbbf24"/>
+      <stop offset="100%" stop-color="#dc2626"/>
+    </radialGradient>
+  </defs>
+  <!-- dark aura -->
+  <ellipse cx="64" cy="72" rx="56" ry="48" fill="url(#bossAura)"/>
+  <!-- shadow -->
+  <ellipse cx="64" cy="108" rx="36" ry="10" fill="#000" opacity="0.3"/>
+  <!-- body -->
+  <ellipse cx="64" cy="68" rx="32" ry="36" fill="url(#bossBody)"/>
+  <!-- armor plates -->
+  <path d="M38 58 Q44 48 64 46 Q84 48 90 58 L86 72 Q64 64 42 72 Z" fill="#7f1d1d" opacity="0.7"/>
+  <!-- shoulder spikes -->
+  <polygon points="34,60 24,44 40,54" fill="#991b1b"/>
+  <polygon points="94,60 104,44 88,54" fill="#991b1b"/>
+  <!-- left horn -->
+  <path d="M44 42 Q36 18 28 8 Q34 16 46 36" fill="url(#bossHorn)" stroke="#b45309" stroke-width="0.5"/>
+  <!-- right horn -->
+  <path d="M84 42 Q92 18 100 8 Q94 16 82 36" fill="url(#bossHorn)" stroke="#b45309" stroke-width="0.5"/>
+  <!-- crown base -->
+  <path d="M44 42 Q54 36 64 34 Q74 36 84 42 Q74 40 64 38 Q54 40 44 42" fill="url(#bossCrown)"/>
+  <!-- crown points -->
+  <polygon points="50,40 48,30 54,38" fill="#fbbf24"/>
+  <polygon points="64,38 62,26 66,26" fill="#fbbf24"/>
+  <polygon points="78,40 80,30 74,38" fill="#fbbf24"/>
+  <!-- crown gems -->
+  <circle cx="64" cy="32" r="2.5" fill="#dc2626" stroke="#fbbf24" stroke-width="0.8"/>
+  <!-- left eye -->
+  <ellipse cx="52" cy="58" rx="6" ry="5" fill="url(#bossEye)"/>
+  <ellipse cx="52" cy="58" rx="2.5" ry="3" fill="#7f1d1d"/>
+  <!-- right eye -->
+  <ellipse cx="76" cy="58" rx="6" ry="5" fill="url(#bossEye)"/>
+  <ellipse cx="76" cy="58" rx="2.5" ry="3" fill="#7f1d1d"/>
+  <!-- mouth -->
+  <path d="M54 72 Q58 68 64 68 Q70 68 74 72" stroke="#fbbf24" stroke-width="1.5" fill="none"/>
+  <!-- fangs -->
+  <polygon points="56,72 58,72 57,78" fill="#fbbf24"/>
+  <polygon points="70,72 72,72 71,78" fill="#fbbf24"/>
+  <!-- chest gem -->
+  <polygon points="64,76 58,82 64,88 70,82" fill="#fbbf24" opacity="0.9"/>
+  <polygon points="64,78 60,82 64,86 68,82" fill="#dc2626"/>
+  <!-- arms -->
+  <path d="M34 62 Q22 72 26 88 L30 86 Q28 74 38 66" fill="#991b1b"/>
+  <path d="M94 62 Q106 72 102 88 L98 86 Q100 74 90 66" fill="#991b1b"/>
+  <!-- claws -->
+  <polygon points="24,88 20,94 26,90" fill="#fbbf24"/>
+  <polygon points="28,90 24,96 30,92" fill="#fbbf24"/>
+  <polygon points="104,88 108,94 102,90" fill="#fbbf24"/>
+  <polygon points="100,90 104,96 98,92" fill="#fbbf24"/>
+  <!-- legs -->
+  <rect x="48" y="96" width="10" height="14" rx="3" fill="#7f1d1d"/>
+  <rect x="70" y="96" width="10" height="14" rx="3" fill="#7f1d1d"/>
+  <!-- feet -->
+  <ellipse cx="53" cy="112" rx="8" ry="4" fill="#991b1b"/>
+  <ellipse cx="75" cy="112" rx="8" ry="4" fill="#991b1b"/>
+</svg>

@@ -1,0 +1,96 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128">
+  <defs>
+    <linearGradient id="dmWood" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#d4a574"/>
+      <stop offset="50%" stop-color="#a0845c"/>
+      <stop offset="100%" stop-color="#785c3a"/>
+    </linearGradient>
+    <linearGradient id="dmPost" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#a0845c"/>
+      <stop offset="30%" stop-color="#d4a574"/>
+      <stop offset="70%" stop-color="#a0845c"/>
+      <stop offset="100%" stop-color="#785c3a"/>
+    </linearGradient>
+    <linearGradient id="dmStraw" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#fde68a"/>
+      <stop offset="50%" stop-color="#fbbf24"/>
+      <stop offset="100%" stop-color="#d97706"/>
+    </linearGradient>
+    <radialGradient id="dmTarget" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#fecaca"/>
+      <stop offset="100%" stop-color="#dc2626"/>
+    </radialGradient>
+    <linearGradient id="dmCross" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#785c3a"/>
+      <stop offset="50%" stop-color="#a0845c"/>
+      <stop offset="100%" stop-color="#785c3a"/>
+    </linearGradient>
+  </defs>
+  <!-- shadow -->
+  <ellipse cx="64" cy="118" rx="22" ry="6" fill="#000" opacity="0.2"/>
+  <!-- base platform -->
+  <path d="M44 112 L40 120 L88 120 L84 112 Z" fill="#785c3a"/>
+  <path d="M44 112 L84 112 L88 116 L40 116 Z" fill="#a0845c"/>
+  <!-- center post -->
+  <rect x="58" y="40" width="12" height="74" rx="2" fill="url(#dmPost)"/>
+  <!-- wood grain -->
+  <line x1="60" y1="44" x2="60" y2="112" stroke="#785c3a" stroke-width="0.5" opacity="0.4"/>
+  <line x1="64" y1="42" x2="64" y2="114" stroke="#785c3a" stroke-width="0.4" opacity="0.3"/>
+  <line x1="68" y1="44" x2="68" y2="112" stroke="#785c3a" stroke-width="0.5" opacity="0.4"/>
+  <!-- cross beam -->
+  <rect x="26" y="54" width="76" height="10" rx="2" fill="url(#dmCross)"/>
+  <!-- cross beam grain -->
+  <line x1="28" y1="57" x2="100" y2="57" stroke="#785c3a" stroke-width="0.4" opacity="0.3"/>
+  <line x1="28" y1="61" x2="100" y2="61" stroke="#785c3a" stroke-width="0.4" opacity="0.3"/>
+  <!-- straw body -->
+  <ellipse cx="64" cy="76" rx="18" ry="22" fill="url(#dmStraw)"/>
+  <!-- straw tufts poking out -->
+  <line x1="48" y1="68" x2="42" y2="62" stroke="#fbbf24" stroke-width="2" stroke-linecap="round"/>
+  <line x1="46" y1="74" x2="38" y2="72" stroke="#d97706" stroke-width="1.5" stroke-linecap="round"/>
+  <line x1="80" y1="68" x2="86" y2="62" stroke="#fbbf24" stroke-width="2" stroke-linecap="round"/>
+  <line x1="82" y1="74" x2="90" y2="72" stroke="#d97706" stroke-width="1.5" stroke-linecap="round"/>
+  <line x1="50" y1="92" x2="44" y2="98" stroke="#fbbf24" stroke-width="1.5" stroke-linecap="round"/>
+  <line x1="78" y1="92" x2="84" y2="98" stroke="#fbbf24" stroke-width="1.5" stroke-linecap="round"/>
+  <line x1="58" y1="96" x2="56" y2="102" stroke="#d97706" stroke-width="1.5" stroke-linecap="round"/>
+  <line x1="70" y1="96" x2="72" y2="102" stroke="#d97706" stroke-width="1.5" stroke-linecap="round"/>
+  <!-- straw binding -->
+  <ellipse cx="64" cy="76" rx="18" ry="22" fill="none" stroke="#785c3a" stroke-width="1" stroke-dasharray="4 3" opacity="0.5"/>
+  <path d="M50 68 Q64 64 78 68" stroke="#a0845c" stroke-width="1.5" fill="none"/>
+  <path d="M48 82 Q64 86 80 82" stroke="#a0845c" stroke-width="1.5" fill="none"/>
+  <!-- target circle on chest -->
+  <circle cx="64" cy="76" r="12" fill="url(#dmTarget)" opacity="0.8"/>
+  <circle cx="64" cy="76" r="9" fill="#fecaca"/>
+  <circle cx="64" cy="76" r="6" fill="#dc2626" opacity="0.7"/>
+  <circle cx="64" cy="76" r="3" fill="#fecaca"/>
+  <circle cx="64" cy="76" r="1.5" fill="#dc2626"/>
+  <!-- arms (straw on cross beam) -->
+  <path d="M26 54 Q22 50 18 54 Q20 60 26 62" fill="url(#dmStraw)" opacity="0.8"/>
+  <path d="M102 54 Q106 50 110 54 Q108 60 102 62" fill="url(#dmStraw)" opacity="0.8"/>
+  <!-- straw arm tufts -->
+  <line x1="20" y1="52" x2="14" y2="48" stroke="#fbbf24" stroke-width="1.5" stroke-linecap="round"/>
+  <line x1="18" y1="56" x2="12" y2="58" stroke="#d97706" stroke-width="1" stroke-linecap="round"/>
+  <line x1="108" y1="52" x2="114" y2="48" stroke="#fbbf24" stroke-width="1.5" stroke-linecap="round"/>
+  <line x1="110" y1="56" x2="116" y2="58" stroke="#d97706" stroke-width="1" stroke-linecap="round"/>
+  <!-- head (burlap sack) -->
+  <circle cx="64" cy="36" r="18" fill="url(#dmWood)"/>
+  <!-- burlap texture -->
+  <circle cx="64" cy="36" r="18" fill="none" stroke="#785c3a" stroke-width="0.5" stroke-dasharray="2 2" opacity="0.4"/>
+  <!-- tie at top -->
+  <path d="M60 18 Q64 14 68 18" stroke="#785c3a" stroke-width="2" fill="none"/>
+  <line x1="62" y1="16" x2="58" y2="10" stroke="#a0845c" stroke-width="1.5" stroke-linecap="round"/>
+  <line x1="66" y1="16" x2="70" y2="10" stroke="#a0845c" stroke-width="1.5" stroke-linecap="round"/>
+  <!-- face (stitched) -->
+  <line x1="54" y1="32" x2="58" y2="32" stroke="#785c3a" stroke-width="2" stroke-linecap="round"/>
+  <line x1="70" y1="32" x2="74" y2="32" stroke="#785c3a" stroke-width="2" stroke-linecap="round"/>
+  <!-- stitched smile -->
+  <path d="M56 40 Q60 44 64 44 Q68 44 72 40" stroke="#785c3a" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+  <!-- stitch marks on smile -->
+  <line x1="58" y1="41" x2="58" y2="43" stroke="#785c3a" stroke-width="1"/>
+  <line x1="62" y1="42" x2="62" y2="44" stroke="#785c3a" stroke-width="1"/>
+  <line x1="66" y1="42" x2="66" y2="44" stroke="#785c3a" stroke-width="1"/>
+  <line x1="70" y1="41" x2="70" y2="43" stroke="#785c3a" stroke-width="1"/>
+  <!-- patch on head -->
+  <rect x="70" y="24" width="8" height="8" rx="1" fill="#a0845c" opacity="0.6" stroke="#785c3a" stroke-width="0.5"/>
+  <line x1="71" y1="25" x2="77" y2="31" stroke="#785c3a" stroke-width="0.5" opacity="0.5"/>
+  <line x1="77" y1="25" x2="71" y2="31" stroke="#785c3a" stroke-width="0.5" opacity="0.5"/>
+</svg>

@@ -1,0 +1,52 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128">
+  <defs>
+    <linearGradient id="body4" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#1e293b"/>
+      <stop offset="100%" stop-color="#0f172a"/>
+    </linearGradient>
+    <radialGradient id="eng4" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#fbbf24" stop-opacity="0.6"/>
+      <stop offset="40%" stop-color="#2563eb" stop-opacity="0.8"/>
+      <stop offset="100%" stop-color="#1d4ed8" stop-opacity="0"/>
+    </radialGradient>
+    <filter id="gl4"><feGaussianBlur stdDeviation="2" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+  </defs>
+  <!-- engine flares -->
+  <ellipse cx="44" cy="98" rx="8" ry="16" fill="url(#eng4)"/>
+  <ellipse cx="64" cy="100" rx="6" ry="14" fill="url(#eng4)"/>
+  <ellipse cx="84" cy="98" rx="8" ry="16" fill="url(#eng4)"/>
+  <!-- fuselage (armored) -->
+  <polygon points="64,10 46,58 48,84 64,80 80,84 82,58" fill="url(#body4)" stroke="#3b82f6" stroke-width="2"/>
+  <!-- armor plates -->
+  <polygon points="50,40 46,58 54,56" fill="#334155" stroke="#475569" stroke-width="0.5" opacity="0.7"/>
+  <polygon points="78,40 82,58 74,56" fill="#334155" stroke="#475569" stroke-width="0.5" opacity="0.7"/>
+  <!-- main wings (delta) -->
+  <polygon points="46,54 6,74 16,66 38,48" fill="#0f172a" stroke="#3b82f6" stroke-width="1.2"/>
+  <polygon points="82,54 122,74 112,66 90,48" fill="#0f172a" stroke="#3b82f6" stroke-width="1.2"/>
+  <!-- forward canards (larger) -->
+  <polygon points="54,28 32,38 38,30 52,24" fill="#1e293b" stroke="#60a5fa" stroke-width="1"/>
+  <polygon points="74,28 96,38 90,30 76,24" fill="#1e293b" stroke="#60a5fa" stroke-width="1"/>
+  <!-- missile racks -->
+  <rect x="18" y="66" width="14" height="4" rx="1.5" fill="#475569"/>
+  <rect x="96" y="66" width="14" height="4" rx="1.5" fill="#475569"/>
+  <circle cx="22" cy="68" r="1.5" fill="#ef4444"/><circle cx="28" cy="68" r="1.5" fill="#ef4444"/>
+  <circle cx="100" cy="68" r="1.5" fill="#ef4444"/><circle cx="106" cy="68" r="1.5" fill="#ef4444"/>
+  <!-- triple engines -->
+  <rect x="40" y="80" width="10" height="16" rx="4" fill="#0f172a" stroke="#3b82f6" stroke-width="1"/>
+  <rect x="58" y="82" width="12" height="14" rx="5" fill="#0f172a" stroke="#3b82f6" stroke-width="1"/>
+  <rect x="78" y="80" width="10" height="16" rx="4" fill="#0f172a" stroke="#3b82f6" stroke-width="1"/>
+  <ellipse cx="45" cy="96" rx="4" ry="3" fill="#fbbf24" filter="url(#gl4)"/>
+  <ellipse cx="64" cy="96" rx="5" ry="3" fill="#60a5fa" filter="url(#gl4)"/>
+  <ellipse cx="83" cy="96" rx="4" ry="3" fill="#fbbf24" filter="url(#gl4)"/>
+  <!-- cockpit -->
+  <ellipse cx="64" cy="30" rx="9" ry="16" fill="#0c4a6e" stroke="#0ea5e9" stroke-width="1"/>
+  <ellipse cx="64" cy="27" rx="5" ry="9" fill="#0ea5e9" opacity="0.5"/>
+  <ellipse cx="64" cy="24" rx="2" ry="5" fill="#38bdf8" opacity="0.4"/>
+  <!-- nav lights -->
+  <circle cx="8" cy="73" r="3" fill="#ef4444" filter="url(#gl4)"/>
+  <circle cx="120" cy="73" r="3" fill="#22c55e" filter="url(#gl4)"/>
+  <!-- energy lines -->
+  <line x1="54" y1="48" x2="54" y2="74" stroke="#60a5fa" stroke-width="1.2" opacity="0.4"/>
+  <line x1="74" y1="48" x2="74" y2="74" stroke="#60a5fa" stroke-width="1.2" opacity="0.4"/>
+  <line x1="64" y1="52" x2="64" y2="74" stroke="#fbbf24" stroke-width="0.8" opacity="0.3"/>
+</svg>

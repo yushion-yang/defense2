@@ -1,0 +1,89 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128">
+  <defs>
+    <linearGradient id="ironBody" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#374151"/>
+      <stop offset="100%" stop-color="#111827"/>
+    </linearGradient>
+    <linearGradient id="ironPlate" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#9ca3af"/>
+      <stop offset="40%" stop-color="#6b7280"/>
+      <stop offset="100%" stop-color="#374151"/>
+    </linearGradient>
+    <linearGradient id="ironHelm" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#9ca3af"/>
+      <stop offset="50%" stop-color="#4b5563"/>
+      <stop offset="100%" stop-color="#1f2937"/>
+    </linearGradient>
+    <radialGradient id="ironEye" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#f87171"/>
+      <stop offset="100%" stop-color="#991b1b"/>
+    </radialGradient>
+    <linearGradient id="ironRivet" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#d1d5db"/>
+      <stop offset="100%" stop-color="#6b7280"/>
+    </linearGradient>
+  </defs>
+  <!-- shadow -->
+  <ellipse cx="64" cy="114" rx="28" ry="8" fill="#000" opacity="0.3"/>
+  <!-- legs -->
+  <rect x="44" y="90" width="14" height="20" rx="2" fill="url(#ironBody)"/>
+  <rect x="70" y="90" width="14" height="20" rx="2" fill="url(#ironBody)"/>
+  <!-- leg plates -->
+  <rect x="43" y="92" width="16" height="6" rx="1" fill="url(#ironPlate)" opacity="0.7"/>
+  <rect x="69" y="92" width="16" height="6" rx="1" fill="url(#ironPlate)" opacity="0.7"/>
+  <!-- boots -->
+  <path d="M42 108 L42 114 L60 114 L60 108 Q54 106 42 108" fill="#1f2937"/>
+  <path d="M68 108 L68 114 L86 114 L86 108 Q80 106 68 108" fill="#1f2937"/>
+  <!-- boot rivets -->
+  <circle cx="48" cy="112" r="1.2" fill="url(#ironRivet)"/>
+  <circle cx="54" cy="112" r="1.2" fill="url(#ironRivet)"/>
+  <circle cx="74" cy="112" r="1.2" fill="url(#ironRivet)"/>
+  <circle cx="80" cy="112" r="1.2" fill="url(#ironRivet)"/>
+  <!-- torso -->
+  <path d="M38 46 L36 90 Q64 94 92 90 L90 46 Q76 38 64 36 Q52 38 38 46" fill="url(#ironBody)"/>
+  <!-- chest plate -->
+  <path d="M42 48 L40 80 Q64 84 88 80 L86 48 Q76 42 64 40 Q52 42 42 48" fill="url(#ironPlate)"/>
+  <!-- plate seams -->
+  <line x1="64" y1="42" x2="64" y2="82" stroke="#374151" stroke-width="1"/>
+  <line x1="42" y1="60" x2="86" y2="60" stroke="#374151" stroke-width="0.8"/>
+  <!-- chest rivets -->
+  <circle cx="50" cy="50" r="1.5" fill="url(#ironRivet)"/>
+  <circle cx="78" cy="50" r="1.5" fill="url(#ironRivet)"/>
+  <circle cx="50" cy="70" r="1.5" fill="url(#ironRivet)"/>
+  <circle cx="78" cy="70" r="1.5" fill="url(#ironRivet)"/>
+  <circle cx="64" cy="60" r="2" fill="url(#ironRivet)"/>
+  <!-- shoulder plates -->
+  <path d="M32 44 Q28 38 32 32 Q40 30 46 36 L42 46 Z" fill="url(#ironPlate)"/>
+  <path d="M96 44 Q100 38 96 32 Q88 30 82 36 L86 46 Z" fill="url(#ironPlate)"/>
+  <!-- shoulder rivets -->
+  <circle cx="38" cy="38" r="1.5" fill="url(#ironRivet)"/>
+  <circle cx="90" cy="38" r="1.5" fill="url(#ironRivet)"/>
+  <!-- arms -->
+  <path d="M34 46 Q24 56 22 72 L26 74 Q28 60 36 50" fill="url(#ironBody)"/>
+  <path d="M94 46 Q104 56 106 72 L102 74 Q100 60 92 50" fill="url(#ironBody)"/>
+  <!-- forearm plates -->
+  <rect x="20" y="66" width="8" height="14" rx="2" fill="url(#ironPlate)"/>
+  <rect x="100" y="66" width="8" height="14" rx="2" fill="url(#ironPlate)"/>
+  <!-- gauntlets -->
+  <rect x="18" y="78" width="12" height="10" rx="3" fill="#1f2937"/>
+  <rect x="98" y="78" width="12" height="10" rx="3" fill="#1f2937"/>
+  <!-- helmet -->
+  <path d="M42 36 Q42 14 64 10 Q86 14 86 36 Q80 42 64 44 Q48 42 42 36" fill="url(#ironHelm)"/>
+  <!-- visor slit -->
+  <path d="M48 28 Q56 26 64 26 Q72 26 80 28 L78 32 Q70 30 64 30 Q58 30 50 32 Z" fill="#111827"/>
+  <!-- eyes behind visor -->
+  <ellipse cx="54" cy="30" rx="3" ry="1.5" fill="url(#ironEye)"/>
+  <ellipse cx="74" cy="30" rx="3" ry="1.5" fill="url(#ironEye)"/>
+  <!-- helmet crest -->
+  <path d="M64 10 L62 4 L66 4 Z" fill="#9ca3af"/>
+  <rect x="62" y="4" width="4" height="10" rx="1" fill="#6b7280"/>
+  <!-- face guard -->
+  <line x1="54" y1="32" x2="54" y2="38" stroke="#4b5563" stroke-width="1.5"/>
+  <line x1="60" y1="32" x2="60" y2="40" stroke="#4b5563" stroke-width="1.5"/>
+  <line x1="64" y1="32" x2="64" y2="40" stroke="#4b5563" stroke-width="1.5"/>
+  <line x1="68" y1="32" x2="68" y2="40" stroke="#4b5563" stroke-width="1.5"/>
+  <line x1="74" y1="32" x2="74" y2="38" stroke="#4b5563" stroke-width="1.5"/>
+  <!-- CC-immune symbol on chest -->
+  <circle cx="64" cy="52" r="5" fill="none" stroke="#9ca3af" stroke-width="1.5"/>
+  <line x1="60" y1="48" x2="68" y2="56" stroke="#9ca3af" stroke-width="1.5"/>
+</svg>

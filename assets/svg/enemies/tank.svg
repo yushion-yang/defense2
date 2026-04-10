@@ -1,0 +1,54 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128">
+  <defs>
+    <radialGradient id="shellGrad" cx="45%" cy="35%" r="55%">
+      <stop offset="0%" stop-color="#a8a29e"/>
+      <stop offset="50%" stop-color="#78716c"/>
+      <stop offset="100%" stop-color="#44403c"/>
+    </radialGradient>
+    <radialGradient id="underGrad" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#57534e"/>
+      <stop offset="100%" stop-color="#292524"/>
+    </radialGradient>
+    <radialGradient id="shadow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#000" stop-opacity="0.35"/>
+      <stop offset="100%" stop-color="#000" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="plateGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#a8a29e" stop-opacity="0.4"/>
+      <stop offset="100%" stop-color="#44403c" stop-opacity="0.2"/>
+    </linearGradient>
+  </defs>
+  <!-- shadow -->
+  <ellipse cx="64" cy="112" rx="36" ry="12" fill="url(#shadow)"/>
+  <!-- feet -->
+  <ellipse cx="42" cy="102" rx="12" ry="7" fill="#44403c"/>
+  <ellipse cx="86" cy="102" rx="12" ry="7" fill="#44403c"/>
+  <!-- under body -->
+  <ellipse cx="64" cy="82" rx="34" ry="24" fill="url(#underGrad)"/>
+  <!-- arms -->
+  <ellipse cx="28" cy="74" rx="12" ry="16" fill="#57534e" transform="rotate(-8 28 74)"/>
+  <ellipse cx="100" cy="74" rx="12" ry="16" fill="#57534e" transform="rotate(8 100 74)"/>
+  <!-- fists -->
+  <circle cx="26" cy="86" r="8" fill="#44403c"/>
+  <circle cx="102" cy="86" r="8" fill="#44403c"/>
+  <!-- shell -->
+  <path d="M28 62 Q28 28 64 24 Q100 28 100 62 Q100 78 64 82 Q28 78 28 62Z" fill="url(#shellGrad)"/>
+  <!-- shell plates -->
+  <path d="M36 42 L92 42" stroke="#a8a29e" stroke-width="1.5" opacity="0.4"/>
+  <path d="M32 54 L96 54" stroke="#a8a29e" stroke-width="1.5" opacity="0.4"/>
+  <path d="M34 66 L94 66" stroke="#a8a29e" stroke-width="1.5" opacity="0.4"/>
+  <path d="M64 26 L64 80" stroke="#a8a29e" stroke-width="1" opacity="0.3"/>
+  <!-- shell highlight -->
+  <path d="M42 36 Q64 28 86 36 Q90 48 86 58 Q64 52 42 58 Q38 48 42 36Z" fill="url(#plateGrad)"/>
+  <!-- head -->
+  <ellipse cx="64" cy="34" rx="16" ry="12" fill="#78716c"/>
+  <!-- brow -->
+  <path d="M48 32 Q64 24 80 32" stroke="#57534e" stroke-width="3" fill="none"/>
+  <!-- eyes -->
+  <ellipse cx="56" cy="36" rx="5" ry="4" fill="#292524"/>
+  <ellipse cx="72" cy="36" rx="5" ry="4" fill="#292524"/>
+  <circle cx="57" cy="35" r="1.5" fill="#a8a29e" opacity="0.5"/>
+  <circle cx="73" cy="35" r="1.5" fill="#a8a29e" opacity="0.5"/>
+  <!-- jaw -->
+  <path d="M52 42 Q64 48 76 42" stroke="#57534e" stroke-width="2" fill="none"/>
+</svg>

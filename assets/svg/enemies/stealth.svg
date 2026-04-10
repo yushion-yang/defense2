@@ -1,0 +1,56 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128">
+  <defs>
+    <radialGradient id="bodyGrad" cx="50%" cy="40%" r="55%">
+      <stop offset="0%" stop-color="#7c3aed" stop-opacity="0.7"/>
+      <stop offset="100%" stop-color="#5b21b6" stop-opacity="0.3"/>
+    </radialGradient>
+    <radialGradient id="coreGrad" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#c4b5fd" stop-opacity="0.6"/>
+      <stop offset="100%" stop-color="#7c3aed" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="shadow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#5b21b6" stop-opacity="0.2"/>
+      <stop offset="100%" stop-color="#5b21b6" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="bladeGrad" x1="50%" y1="0%" x2="50%" y2="100%">
+      <stop offset="0%" stop-color="#c4b5fd" stop-opacity="0.7"/>
+      <stop offset="100%" stop-color="#6d28d9" stop-opacity="0.3"/>
+    </linearGradient>
+    <radialGradient id="auraGrad" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#7c3aed" stop-opacity="0.15"/>
+      <stop offset="60%" stop-color="#5b21b6" stop-opacity="0.08"/>
+      <stop offset="100%" stop-color="#5b21b6" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <!-- aura -->
+  <ellipse cx="64" cy="68" rx="44" ry="44" fill="url(#auraGrad)"/>
+  <!-- shadow -->
+  <ellipse cx="64" cy="108" rx="20" ry="6" fill="url(#shadow)"/>
+  <!-- wisp trails -->
+  <path d="M44 90 Q38 80 42 70" stroke="#7c3aed" stroke-width="2" fill="none" opacity="0.2" stroke-linecap="round"/>
+  <path d="M84 88 Q90 78 86 68" stroke="#7c3aed" stroke-width="2" fill="none" opacity="0.2" stroke-linecap="round"/>
+  <path d="M54 96 Q48 86 52 78" stroke="#6d28d9" stroke-width="1.5" fill="none" opacity="0.15" stroke-linecap="round"/>
+  <!-- legs -->
+  <path d="M54 88 L50 102" stroke="#6d28d9" stroke-width="3" opacity="0.4" stroke-linecap="round"/>
+  <path d="M74 88 L78 102" stroke="#6d28d9" stroke-width="3" opacity="0.4" stroke-linecap="round"/>
+  <!-- body -->
+  <path d="M44 60 Q44 38 64 34 Q84 38 84 60 Q84 88 64 94 Q44 88 44 60Z" fill="url(#bodyGrad)"/>
+  <!-- inner edge -->
+  <path d="M48 58 Q48 42 64 38 Q80 42 80 58 Q80 82 64 88 Q48 82 48 58Z" stroke="#c4b5fd" stroke-width="0.5" fill="none" opacity="0.25"/>
+  <!-- dagger left -->
+  <path d="M36 62 L28 48 L32 46 L40 58Z" fill="url(#bladeGrad)"/>
+  <!-- dagger right -->
+  <path d="M92 62 L100 48 L96 46 L88 58Z" fill="url(#bladeGrad)"/>
+  <!-- head -->
+  <path d="M50 38 Q64 24 78 38 Q74 46 64 48 Q54 46 50 38Z" fill="#6d28d9" opacity="0.55"/>
+  <!-- eyes -->
+  <ellipse cx="56" cy="38" rx="4" ry="2.5" fill="#c4b5fd" opacity="0.8"/>
+  <ellipse cx="72" cy="38" rx="4" ry="2.5" fill="#c4b5fd" opacity="0.8"/>
+  <!-- eye glow -->
+  <ellipse cx="56" cy="38" rx="6" ry="3.5" fill="#c4b5fd" opacity="0.15"/>
+  <ellipse cx="72" cy="38" rx="6" ry="3.5" fill="#c4b5fd" opacity="0.15"/>
+  <!-- core glow -->
+  <ellipse cx="64" cy="62" rx="8" ry="8" fill="url(#coreGrad)"/>
+  <!-- hood point -->
+  <path d="M64 24 L60 34 L68 34Z" fill="#5b21b6" opacity="0.5"/>
+</svg>
