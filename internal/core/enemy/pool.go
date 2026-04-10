@@ -98,8 +98,11 @@ func (p *Pool) Spawn(x, y, baseHP, baseSpeed float64, pathIndex int, archetype s
 			// 应用行为配置
 			e.Behavior = cfg.Behavior
 			if cfg.StealthDuration > 0 {
-				e.Stealthed = true
-				e.StealthTimer = cfg.StealthDuration
+				e.Buffs.Add(buff.Buff{
+					ID: "stealth", Category: buff.CatBehavior,
+					Source: "archetype", Value: 1,
+					Duration: cfg.StealthDuration, Remaining: cfg.StealthDuration,
+				})
 			}
 			if cfg.SplitCount > 0 {
 				e.SplitCount = cfg.SplitCount

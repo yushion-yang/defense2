@@ -189,10 +189,6 @@ type Enemy struct {
 	HealInterval      float64 // 治疗光环间隔（秒）
 	HealCooldown      float64 // 治疗光环当前冷却
 
-	// ── 隐身 ──
-	Stealthed    bool    // 当前是否隐身
-	StealthTimer float64 // 隐身剩余持续时间（秒）
-
 	// ── 分裂 ──
 	SplitCount      int     // 死亡分裂子体数量（0=不分裂）
 	SplitScale      float64 // 子体血量倍率（相对父体 MaxHP）
@@ -261,6 +257,20 @@ func (e *Enemy) IsWeakened() bool { return e.Buffs != nil && e.Buffs.Has("weaken
 
 // HasControlImmunity returns true if the enemy has a temporary controlImmune buff.
 func (e *Enemy) HasControlImmunity() bool { return e.Buffs != nil && e.Buffs.Has("controlImmune") }
+
+// IsStealthed returns true if the enemy has an active stealth buff.
+func (e *Enemy) IsStealthed() bool { return e.Buffs != nil && e.Buffs.Has("stealth") }
+
+// StealthRemaining returns the remaining stealth duration (0 if not stealthed).
+func (e *Enemy) StealthRemaining() float64 {
+	if e.Buffs == nil {
+		return 0
+	}
+	if b, ok := e.Buffs.Get("stealth"); ok {
+		return b.Remaining
+	}
+	return 0
+}
 
 // GetSlowFactor returns the slow factor from BuffList (1.0 = no slow).
 func (e *Enemy) GetSlowFactor() float64 {

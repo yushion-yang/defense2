@@ -1160,7 +1160,7 @@ func (s *StageScene) drawEnemyInfoPanel(screen *ebiten.Image, e *enemy.Enemy) {
 
 	// ── 实时状态（debuff/控制）──
 	hasStatus := e.IsSlowed() || e.IsStunned() || e.IsRooted() ||
-		e.IsWeakened() || e.Silenced || e.AbilitySilenced || e.Stealthed ||
+		e.IsWeakened() || e.Silenced || e.AbilitySilenced || e.IsStealthed() ||
 		e.IsBleeding() || e.Buffs.Has("poison") || e.IsBurning() || e.ZoneDmgAccum > 0 ||
 		e.DashActiveT > 0 || e.PhaseActive || e.StrDrainActiveT > 0 || e.HasControlImmunity()
 	if hasStatus {
@@ -1196,8 +1196,8 @@ func (s *StageScene) drawEnemyInfoPanel(screen *ebiten.Image, e *enemy.Enemy) {
 	if e.AbilitySilenced {
 		lines = append(lines, L(ttGray, "  能力沉默(主动能力禁用)"))
 	}
-	if e.Stealthed {
-		lines = append(lines, L(ttDim, "  隐身: %.1f秒", e.StealthTimer))
+	if e.IsStealthed() {
+		lines = append(lines, L(ttDim, "  隐身: %.1f秒", e.StealthRemaining()))
 	}
 	if e.DashActiveT > 0 {
 		lines = append(lines, L(ttOrange, "  冲刺中: +%.0f%% %.1f秒", e.DashSpeedBoost*100, e.DashActiveT))

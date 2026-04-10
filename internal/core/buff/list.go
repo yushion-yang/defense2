@@ -136,6 +136,25 @@ func (bl *BuffList) GetAll(id string) []Buff {
 	return result
 }
 
+// SumByID returns the sum of Value for all active buffs with the given ID.
+// Respects cap/floor from stacking rules.
+func (bl *BuffList) SumByID(id string) float64 {
+	var sum float64
+	for i := range bl.active {
+		if bl.active[i].ID == id {
+			sum += bl.active[i].Value
+		}
+	}
+	rule := bl.getRule(id)
+	if rule.Cap > 0 && sum > rule.Cap {
+		sum = rule.Cap
+	}
+	if rule.Floor != 0 && sum < rule.Floor {
+		sum = rule.Floor
+	}
+	return sum
+}
+
 // Remove removes a buff by ID and Source.
 func (bl *BuffList) Remove(id, source string) {
 	n := 0

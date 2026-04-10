@@ -150,7 +150,7 @@ func (er *EnemyRenderer) DrawEnemies(screen *ebiten.Image, pool *enemy.Pool, ani
 
 			// 计算 alpha（隐身/相位）
 			bodyAlpha := 1.0
-			if e.Stealthed {
+			if e.IsStealthed() {
 				bodyAlpha = 0.15
 			} else if e.PhaseActive {
 				bodyAlpha = 0.35
@@ -170,7 +170,7 @@ func (er *EnemyRenderer) DrawEnemies(screen *ebiten.Image, pool *enemy.Pool, ani
 			if e.Boss {
 				bodyColor = color.RGBA{R: 220, G: 160, B: 40, A: 255}
 			}
-			if e.Stealthed {
+			if e.IsStealthed() {
 				bodyColor.A = 38
 			} else if e.PhaseActive {
 				bodyColor.A = 90
@@ -205,7 +205,7 @@ func (er *EnemyRenderer) DrawEnemies(screen *ebiten.Image, pool *enemy.Pool, ani
 		// (tank overlay removed — was debug placeholder)
 
 		// Stealthed enemies: skip HP bar and status dots (nearly invisible)
-		if e.Stealthed {
+		if e.IsStealthed() {
 			return
 		}
 
