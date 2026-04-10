@@ -222,6 +222,8 @@ func (s *Spawner) startWave() {
 	s.SpawnIndex = 0
 	s.SpawnTimer = 0
 	s.WaveActive = true
+	// 逐波衰减出怪间隔
+	s.SpawnInterval = config.GlobalBalance().Spawner.EffectiveSpawnInterval(s.Wave)
 	s.bossQueued = s.BossEveryWave || (s.Wave%config.GlobalBalance().Spawner.BossEveryNWaves == 0)
 	// Boss 波入场延迟：给玩家 3 秒准备时间
 	if s.bossQueued {
@@ -485,35 +487,35 @@ func (s *Spawner) applyWaveBuffs(e *Enemy) {
 	}
 }
 
-// applyWaveBuff 直接设置敌人字段，替代旧的 ApplyBuffTemplate 间接层。
-// 数值与 config/enemies/abilities.json 对齐。
+// applyWaveBuff 直接设置敌人字段，数值从 balance.json buffs 区段读取。
 func applyWaveBuff(e *Enemy, buffID string) {
 	tel.T.Record("enemy_template", buffID)
+	bc := config.GlobalBalance().Buffs
 	switch buffID {
 	case "berserk":
-		e.BerserkThreshold = 0.5
-		e.BerserkSpeedScale = 1.5
+		e.BerserkThreshold = bc.Berserk.Threshold
+		e.BerserkSpeedScale = bc.Berserk.SpeedScale
 	case "regen":
-		e.RegenPerSec = e.MaxHP * 0.02
+		e.RegenPerSec = e.MaxHP * bc.Regen.HpRatio
 	case "healAura":
-		e.HealPower = 0.05 // 5% MaxHP per heal
-		e.HealRadius = 80
-		e.HealInterval = 3
+		e.HealPower = bc.HealAura.Power
+		e.HealRadius = bc.HealAura.Radius
+		e.HealInterval = bc.HealAura.Interval
 		e.HealCooldown = 0
 	case "speedAura":
-		e.BuffRadius = 80
-		e.BuffAmount = 0.2
-		e.AuraRange = 80
-		e.AuraSpeedUp = 0.2
+		e.BuffRadius = bc.SpeedAura.Radius
+		e.BuffAmount = bc.SpeedAura.SpeedUp
+		e.AuraRange = bc.SpeedAura.Radius
+		e.AuraSpeedUp = bc.SpeedAura.SpeedUp
 	case "damageReduce":
-		e.DamageReduceRatio = 0.3
+		e.DamageReduceRatio = bc.DamageReduce.Ratio
 	case "deathSplit":
-		e.SplitCount = 2
+		e.SplitCount = bc.DeathSplit.Count
 		if e.SplitHPRatio <= 0 {
-			e.SplitHPRatio = 0.3
+			e.SplitHPRatio = bc.DeathSplit.HpRatio
 		}
 		if e.SplitSpeedScale <= 0 {
-			e.SplitSpeedScale = 1.4
+			e.SplitSpeedScale = bc.DeathSplit.SpeedScale
 		}
 	}
 }

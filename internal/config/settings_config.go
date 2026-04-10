@@ -9,11 +9,12 @@ import (
 
 // DifficultyMode 单个难度模式的配置。
 type DifficultyMode struct {
-	Label       string  `json:"label"`
-	HPScale     float64 `json:"hpScale"`
-	SpeedScale  float64 `json:"speedScale"`
-	RewardScale float64 `json:"rewardScale"`
-	StartGold   int     `json:"startGold"`
+	Label         string  `json:"label"`
+	HPScale       float64 `json:"hpScale"`
+	SpeedScale    float64 `json:"speedScale"`
+	RewardScale   float64 `json:"rewardScale"`
+	StartGold     int     `json:"startGold"`
+	StartingLives int     `json:"startingLives"`
 }
 
 // settingsJSON settings.json 的顶层结构（只解析需要的字段）。

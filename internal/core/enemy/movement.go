@@ -1,5 +1,5 @@
 // movement.go — 敌人沿路径移动。
-// 纯函数，无渲染/DOM 依赖。支持眩晕和定身冻结。
+// 纯函数，无渲染/DOM 依赖。支持眩晕冻结。
 // 优先使用敌人自身绑定的路径（多路径地图），回退到传入的默认路径。
 package enemy
 
@@ -16,9 +16,6 @@ func MoveAlongPath(e *Enemy, fallbackWaypoints []gamemap.Point, dt float64) bool
 	if e.IsDummy || (e.BaseSpeed == 0 && e.Speed == 0) {
 		if e.StunTimer > 0 {
 			e.StunTimer -= dt
-		}
-		if e.RootTimer > 0 {
-			e.RootTimer -= dt
 		}
 		return false
 	}
@@ -37,11 +34,6 @@ func MoveAlongPath(e *Enemy, fallbackWaypoints []gamemap.Point, dt float64) bool
 	// 眩晕中：只消耗计时器，不移动
 	if e.StunTimer > 0 {
 		e.StunTimer -= dt
-		return false
-	}
-
-	// 定身中：不移动（计时在 TickStatusEffects 中处理）
-	if e.RootTimer > 0 {
 		return false
 	}
 

@@ -43,12 +43,12 @@ func NewThunderStrikeState(cfg ThunderStrikeConfig) *ThunderStrikeState {
 
 // TickThunderStrike 每帧驱动雷击系统。
 // 冷却到期时选择目标并施加伤害，返回是否发射和命中列表。
-func TickThunderStrike(state *ThunderStrikeState, cfg ThunderStrikeConfig, enemies []*enemy.Enemy, ownerX, ownerY float64) (fired bool, hits []ThunderHit) {
+func TickThunderStrike(state *ThunderStrikeState, cfg ThunderStrikeConfig, enemies []*enemy.Enemy, ownerX, ownerY, dt float64) (fired bool, hits []ThunderHit) {
 	if state == nil {
 		return false, nil
 	}
 
-	state.Timer -= 1.0 / 60.0 // 固定步长
+	state.Timer -= dt
 	if state.Timer > 0 {
 		return false, nil
 	}
@@ -75,8 +75,8 @@ func TickThunderStrike(state *ThunderStrikeState, cfg ThunderStrikeConfig, enemi
 		}
 		// 走伤害管线（免疫/上限/阈值/死亡检查）
 		r := ProcessDamage(DamageInput{
-			Target:    t,
-			RawDamage: rawDmg,
+			Target:     t,
+			RawDamage:  rawDmg,
 			DamageType: DmgMagic,
 		})
 
@@ -100,8 +100,8 @@ func TickThunderStrike(state *ThunderStrikeState, cfg ThunderStrikeConfig, enemi
 				dist := math.Sqrt(dx*dx + dy*dy)
 				if dist <= cfg.Radius {
 					sr := ProcessDamage(DamageInput{
-						Target:    e,
-						RawDamage: splashRaw,
+						Target:     e,
+						RawDamage:  splashRaw,
 						DamageType: DmgMagic,
 					})
 					hits = append(hits, ThunderHit{

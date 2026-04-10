@@ -68,9 +68,8 @@ func (tr *TowerRenderer) DrawTowers(screen *ebiten.Image, pool *tower.Pool, sele
 
 		// --- Selection ring & range indicator (selected tower only, skip during sell) ---
 		if selected && !t.Selling {
-			draw.CircleOutline(screen, cx, cy,
-				theme.TowerSelectionRingR, theme.TowerSelectionWidth, theme.TowerSelectionRing)
-			draw.CircleOutline(screen, cx, cy,
+			vfx.DrawSelectionRing(screen, cx, cy,
+				theme.TowerSelectionRingR, theme.TowerSelectionWidth, theme.TowerSelectionRing,
 				float32(t.Range), theme.TowerRangeStrokeWidth, theme.TowerRangeStroke)
 		}
 

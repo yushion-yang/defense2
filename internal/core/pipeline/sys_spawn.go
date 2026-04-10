@@ -2,6 +2,7 @@
 package pipeline
 
 import (
+	"defense2/internal/config"
 	"defense2/internal/core/enemy"
 )
 
@@ -38,7 +39,8 @@ func (s *SysSpawn) Tick(ctx *TickCtx) bool {
 	if ctx.Spawner.Wave > s.prevWave {
 		*ctx.WaveLivesSnap = *ctx.Lives
 		if ctx.CB.OnWaveStart != nil {
-			ctx.CB.OnWaveStart(ctx.Spawner.Wave, ctx.Spawner.Wave%5 == 0)
+			bossN := config.GlobalBalance().Spawner.BossEveryNWaves
+			ctx.CB.OnWaveStart(ctx.Spawner.Wave, bossN > 0 && ctx.Spawner.Wave%bossN == 0)
 		}
 	}
 	return false

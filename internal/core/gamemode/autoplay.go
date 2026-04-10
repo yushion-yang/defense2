@@ -34,7 +34,8 @@ func (m *AutoPlayMode) CheckVictory(ctx *Context) bool {
 
 // OnWaveCleared 波次奖金（与 campaign 相同）。
 func (m *AutoPlayMode) OnWaveCleared(wave int, _ *Context) WaveClearResult {
-	bonus := 12 + wave*4
+	econ := modeEcon("autoplay")
+	bonus := econ.WaveBonus.Calc(wave)
 	return WaveClearResult{BonusGold: bonus}
 }
 

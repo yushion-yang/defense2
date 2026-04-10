@@ -46,20 +46,19 @@ func CheckThresholds(e *Enemy) []Threshold {
 // StatusEffects 敌人身上的状态效果（CC/DoT/减免/免疫等）。
 // 嵌入 Enemy 中，外部代码通过 e.SlowFactor 等直接访问。
 type StatusEffects struct {
-	StunTimer    float64 // 眩晕剩余时间（秒），>0 时无法移动
-	SlowTimer    float64 // 减速剩余时间（秒）
-	SlowFactor   float64 // 减速倍率（0.5 表示半速）
-	BleedTimer   float64 // 流血剩余时间（秒）
-	BleedDPS     float64 // 流血每秒伤害
-	PoisonTimer  float64 // 中毒剩余时间（秒）
-	PoisonDPS    float64 // 中毒每秒伤害
-	BurnTimer    float64 // 灼烧剩余时间（秒）
-	BurnDPS      float64 // 灼烧每秒伤害
-	DotTickTimer float64 // DoT 触发计时器（每 DotTickInterval 触发一次伤害）
-	LastDotDmg   float64 // 上次 DoT tick 的伤害量（>0 时由 pipeline 弹浮字后清零）
-	ZoneDmgAccum float64 // 区域能力（curseZone/poisonZone）每帧累积伤害，DotTick 时结算
-	RootTimer    float64 // 定身剩余时间（秒）
-
+	StunTimer       float64 // 眩晕剩余时间（秒），>0 时无法移动
+	SlowTimer       float64 // 减速剩余时间（秒）
+	SlowFactor      float64 // 减速倍率（0.5 表示半速）
+	BleedTimer      float64 // 流血剩余时间（秒）
+	BleedDPS        float64 // 流血每秒伤害
+	PoisonTimer     float64 // 中毒剩余时间（秒）
+	PoisonDPS       float64 // 中毒每秒伤害
+	BurnTimer       float64 // 灼烧剩余时间（秒）
+	BurnDPS         float64 // 灼烧每秒伤害
+	DotTickTimer    float64 // burn/bleed DoT 触发计时器
+	PoisonTickTimer float64 // poison 独立触发计时器（间隔不同于 burn/bleed）
+	LastDotDmg      float64 // 上次 DoT tick 的伤害量（>0 时由 pipeline 弹浮字后清零）
+	ZoneDmgAccum    float64 // 区域能力（curseZone/poisonZone）每帧累积伤害，DotTick 时结算
 	// 增伤/减伤
 	DamageAmplify      float64 // 受伤增加倍率（weaken/weakenZone 施加）
 	DamageAmplifyTimer float64 // weaken OnHit 的持续时间（秒），zone 型每帧由区域重设
@@ -75,7 +74,6 @@ type StatusEffects struct {
 	IsControlImmune    bool    // 控制免疫
 	IsStunImmune       bool    // 眩晕免疫
 	IsSlowImmune       bool    // 减速免疫
-	IsRootImmune       bool    // 定身免疫
 }
 
 // VisualState 敌人的视觉/渲染状态（闪光、飘字、血条拖尾）。
@@ -269,43 +267,64 @@ func TickStatusEffects(e *Enemy, dt float64) {
 		}
 	}
 
-	// DoT（流血/灼烧/中毒/区域伤害）按固定 0.5s 周期触发，走 ProcessDamage 管线。
+	// DoT 按类型区分 tick 间隔：burn/bleed 共享计时器，poison 独立计时器。
 	// 持续时间以 tick 计数实现（如 3.0s = 6 ticks），确保触发次数精确匹配。
-	dotInterval := bal.Combat.DotTickInterval
-	hasDot := e.BleedTimer > 0 || e.BurnTimer > 0 || e.PoisonTimer > 0 || e.ZoneDmgAccum > 0
-	if hasDot {
-		// 首次施加 DOT 时初始化计时器
+	intervals := bal.Combat.DotTickIntervalsMap
+	burnBleedInterval := intervals.Burn
+	if burnBleedInterval <= 0 {
+		burnBleedInterval = bal.Combat.DotTickInterval // fallback
+	}
+	poisonInterval := intervals.Poison
+	if poisonInterval <= 0 {
+		poisonInterval = bal.Combat.DotTickInterval // fallback
+	}
+
+	dotDmg := 0.0
+
+	// burn/bleed/zone 共享计时器
+	hasBurnBleed := e.BleedTimer > 0 || e.BurnTimer > 0 || e.ZoneDmgAccum > 0
+	if hasBurnBleed {
 		if e.DotTickTimer <= 0 {
-			e.DotTickTimer = dotInterval
+			e.DotTickTimer = burnBleedInterval
 		}
 		e.DotTickTimer -= dt
 		if e.DotTickTimer <= 0 {
-			e.DotTickTimer += dotInterval
-			dotDmg := 0.0
+			e.DotTickTimer += burnBleedInterval
 			if e.BleedTimer > 0 {
-				dotDmg += e.BleedDPS * dotInterval
-				e.BleedTimer -= dotInterval // tick 计数递减
+				dotDmg += e.BleedDPS * burnBleedInterval
+				e.BleedTimer -= burnBleedInterval
 			}
 			if e.BurnTimer > 0 {
-				dotDmg += e.BurnDPS * dotInterval
-				e.BurnTimer -= dotInterval
+				dotDmg += e.BurnDPS * burnBleedInterval
+				e.BurnTimer -= burnBleedInterval
 			}
-			if e.PoisonTimer > 0 {
-				dotDmg += e.PoisonDPS * dotInterval
-				e.PoisonTimer -= dotInterval
-			}
-			// 区域伤害（curseZone/poisonZone 每帧累积，tick 时一次性结算）
 			if e.ZoneDmgAccum > 0 {
 				dotDmg += e.ZoneDmgAccum
 				e.ZoneDmgAccum = 0
 			}
-			// 伤害存入 LastDotDmg，由 pipeline 层通过 ProcessDamage 管线结算
-			if dotDmg > 0 {
-				e.LastDotDmg = dotDmg
-			}
 		}
 	} else {
 		e.DotTickTimer = 0
+	}
+
+	// poison 独立计时器
+	if e.PoisonTimer > 0 {
+		if e.PoisonTickTimer <= 0 {
+			e.PoisonTickTimer = poisonInterval
+		}
+		e.PoisonTickTimer -= dt
+		if e.PoisonTickTimer <= 0 {
+			e.PoisonTickTimer += poisonInterval
+			dotDmg += e.PoisonDPS * poisonInterval
+			e.PoisonTimer -= poisonInterval
+		}
+	} else {
+		e.PoisonTickTimer = 0
+	}
+
+	// 伤害存入 LastDotDmg，由 pipeline 层通过 ProcessDamage 管线结算
+	if dotDmg > 0 {
+		e.LastDotDmg = dotDmg
 	}
 
 	// 虚弱(weaken OnHit)：倒计时归零后清除增伤
@@ -317,11 +336,6 @@ func TickStatusEffects(e *Enemy, dt float64) {
 		}
 	}
 
-	// 定身：倒计时
-	if e.RootTimer > 0 {
-		e.RootTimer -= dt
-	}
-
 	// 控制免疫：倒计时归零后清除免疫标志
 	if e.ControlImmuneTimer > 0 {
 		e.ControlImmuneTimer -= dt
@@ -330,7 +344,6 @@ func TickStatusEffects(e *Enemy, dt float64) {
 			e.IsControlImmune = false
 			e.IsStunImmune = false
 			e.IsSlowImmune = false
-			e.IsRootImmune = false
 		}
 	}
 

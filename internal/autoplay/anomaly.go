@@ -78,19 +78,19 @@ type AnomalyDetector struct {
 	waveClearedStallReported bool
 
 	// archetype_monoculture: 原型多样性
-	seenArchetypes           map[string]bool
-	archetypeMonoReported    bool
+	seenArchetypes        map[string]bool
+	archetypeMonoReported bool
 
 	// enemy_hp_uniform: HP 一致性
 	hpUniformReported map[int]bool // wave -> reported
 
 	// ability_silent: 能力沉默
-	towerAbilityTicks    map[string]int  // towerKey -> 战斗帧数（HasTarget=true 的帧）
-	abilitySilentChecked bool            // 已做过检查
+	towerAbilityTicks    map[string]int // towerKey -> 战斗帧数（HasTarget=true 的帧）
+	abilitySilentChecked bool           // 已做过检查
 
 	// warden_origin_stuck: 战灵原点停留
-	wardenReadyTick       int  // wardenReady 变 true 的 tick
-	wardenOriginReported  bool
+	wardenReadyTick      int // wardenReady 变 true 的 tick
+	wardenOriginReported bool
 
 	// projectile_orphan_burst: 弹射物堆积无命中
 	projBurstFrames  int // 连续"弹射物多但无击杀"帧数
@@ -103,16 +103,16 @@ type AnomalyDetector struct {
 	nanReported map[int]bool // enemyID -> reported
 
 	// economy_stall: 经济断档
-	econStallTicks    int  // 连续买不起帧数
-	econStallMinCost  int  // 最便宜塔缓存
+	econStallTicks    int // 连续买不起帧数
+	econStallMinCost  int // 最便宜塔缓存
 	econStallReported bool
 
 	// boss_too_weak: Boss 存活时间过短
 	activeBosses map[int]int // bossEnemyID -> spawnTick
 
 	// interact_mode_stuck: 交互模式停滞
-	imodeStuckMode  int // 当前追踪的模式
-	imodeStuckTick  int // 进入该模式的 tick
+	imodeStuckMode     int          // 当前追踪的模式
+	imodeStuckTick     int          // 进入该模式的 tick
 	imodeStuckReported map[int]bool // mode -> reported
 
 	// warden_teleport: 战灵帧间跳跃
@@ -148,14 +148,14 @@ func NewAnomalyDetector() *AnomalyDetector {
 		towerDamageAccum:    make(map[string]int),
 		waveHPReportedWaves: make(map[int]bool),
 		// 新增
-		seenArchetypes:    make(map[string]bool),
-		hpUniformReported: make(map[int]bool),
-		towerAbilityTicks: make(map[string]int),
-		speedFloorReported:  make(map[int]bool),
-		nanReported:         make(map[int]bool),
-		imodeStuckReported:  make(map[int]bool),
-		enemyFirstSeen:      make(map[int]bool),
-		activeBosses:        make(map[int]int),
+		seenArchetypes:     make(map[string]bool),
+		hpUniformReported:  make(map[int]bool),
+		towerAbilityTicks:  make(map[string]int),
+		speedFloorReported: make(map[int]bool),
+		nanReported:        make(map[int]bool),
+		imodeStuckReported: make(map[int]bool),
+		enemyFirstSeen:     make(map[int]bool),
+		activeBosses:       make(map[int]int),
 	}
 }
 
@@ -643,7 +643,7 @@ func (d *AnomalyDetector) checkNaN(state *GameState) []Anomaly {
 func (d *AnomalyDetector) checkSpeedFloor(state *GameState) []Anomaly {
 	var found []Anomaly
 	for _, e := range state.Enemies {
-		if !e.Active || e.Dying || e.IsStunned || e.IsRooted {
+		if !e.Active || e.Dying || e.IsStunned {
 			continue
 		}
 		if d.speedFloorReported[e.ID] {
@@ -653,7 +653,7 @@ func (d *AnomalyDetector) checkSpeedFloor(state *GameState) []Anomaly {
 			found = append(found, Anomaly{
 				Tick:     state.Tick,
 				Type:     "speed_floor_violation",
-				Detail:   fmt.Sprintf("enemy#%d archetype=%s speed=%.4f (should be >0 when not stunned/rooted)", e.ID, e.Archetype, e.Speed),
+				Detail:   fmt.Sprintf("enemy#%d archetype=%s speed=%.4f (should be >0 when not stunned)", e.ID, e.Archetype, e.Speed),
 				Severity: SeverityCritical,
 			})
 			d.speedFloorReported[e.ID] = true

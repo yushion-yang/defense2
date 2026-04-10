@@ -211,9 +211,12 @@ func NewStageSceneWithOpts(sw Switcher, opts StageOptions) *StageScene {
 		log.Printf("敌人原型加载失败，使用默认配置: %v", err)
 	}
 
-	// 加载战灵配置（用于面板显示）
+	// 加载战灵配置（用于面板显示），优先从全局缓存读取
 	var wardenCfg *config.WardenConfig
-	if cfgs, err := config.LoadWardenConfigs(); err == nil {
+	if wc := config.GlobalWardenConfig(opts.WardenType); wc != nil {
+		cfg := *wc
+		wardenCfg = &cfg
+	} else if cfgs, err := config.LoadWardenConfigs(); err == nil {
 		if wc, ok := cfgs[opts.WardenType]; ok {
 			wardenCfg = &wc
 		}
@@ -280,7 +283,7 @@ func NewStageSceneWithOpts(sw Switcher, opts StageOptions) *StageScene {
 		wardenReady:     wardenReady,
 		tutorial:        tut,
 		progressMgr:     pm,
-		lives:           20,
+		lives:           diff.StartingLives,
 		gold:            startGold,
 		towerDefs:       filterUnlockedTowers(loadTowerDefsOrFallback(), pm),
 		selectedDef:     0,
@@ -1103,7 +1106,7 @@ func (s *StageScene) drawEnemyInfoPanel(screen *ebiten.Image, e *enemy.Enemy) {
 	if e.DashActiveT > 0 {
 		actualSpeed *= (1 + e.DashSpeedBoost)
 	}
-	if e.StunTimer > 0 || e.RootTimer > 0 || e.IsDummy {
+	if e.StunTimer > 0 || e.IsDummy {
 		actualSpeed = 0
 	}
 	speedInfo := fmt.Sprintf("速度: %.1f", actualSpeed)
@@ -1120,9 +1123,6 @@ func (s *StageScene) drawEnemyInfoPanel(screen *ebiten.Image, e *enemy.Enemy) {
 		}
 		if e.StunTimer > 0 {
 			speedInfo += " 眩晕"
-		}
-		if e.RootTimer > 0 {
-			speedInfo += " 定身"
 		}
 		speedInfo += ")"
 	}
@@ -1148,7 +1148,7 @@ func (s *StageScene) drawEnemyInfoPanel(screen *ebiten.Image, e *enemy.Enemy) {
 	}
 
 	// ── 实时状态（debuff/控制）──
-	hasStatus := e.SlowTimer > 0 || e.StunTimer > 0 || e.RootTimer > 0 ||
+	hasStatus := e.SlowTimer > 0 || e.StunTimer > 0 ||
 		e.DamageAmplify > 0 || e.Silenced || e.AbilitySilenced || e.Stealthed ||
 		e.BleedTimer > 0 || e.PoisonTimer > 0 || e.BurnTimer > 0 || e.ZoneDmgAccum > 0 ||
 		e.DashActiveT > 0 || e.PhaseActive || e.StrDrainActiveT > 0 || e.ControlImmuneTimer > 0
@@ -1160,9 +1160,6 @@ func (s *StageScene) drawEnemyInfoPanel(screen *ebiten.Image, e *enemy.Enemy) {
 	}
 	if e.StunTimer > 0 {
 		lines = append(lines, L(ttYellow, "  眩晕: %.1f秒", e.StunTimer))
-	}
-	if e.RootTimer > 0 {
-		lines = append(lines, L(ttIce, "  定身: %.1f秒", e.RootTimer))
 	}
 	if e.BleedTimer > 0 {
 		lines = append(lines, L(ttRed, "  流血: %.1f/秒 %.1f秒", e.BleedDPS, e.BleedTimer))
@@ -1887,8 +1884,6 @@ func (s *StageScene) updatePlaying() {
 			s.audioMgr.PlayThrottledAt(gameAudio.SFXStunImpact, 150, gameAudio.VolHit)
 		case "burn":
 			s.audioMgr.PlayThrottledAt(gameAudio.SFXBurnIgnite, 200, gameAudio.VolHit)
-		case "root":
-			s.audioMgr.PlayThrottledAt(gameAudio.SFXRootApply, 150, gameAudio.VolHit)
 		}
 	}
 
@@ -2941,33 +2936,11 @@ func (s *StageScene) activateWarden(key string) {
 		base.MapHeight = s.gameMap.PixelHeight()
 	}
 
-	// 加载战灵配置：驱动 Init 参数 + 面板显示
-	if cfgs, err := config.LoadWardenConfigs(); err == nil {
-		if wc, ok := cfgs[key]; ok {
-			s.wardenCfg = &wc
-			// JSON 驱动覆盖 Init 硬编码的基础属性
-			if base := s.wardenUnit.BaseState(); base != nil {
-				if wc.Damage > 0 {
-					base.Damage = wc.Damage
-				}
-				if wc.AttackInterval > 0 {
-					base.AttackInterval = wc.AttackInterval
-				}
-				if wc.Range > 0 {
-					base.Range = wc.Range
-				}
-				if wc.MoveSpeed > 0 {
-					base.MoveSpeed = wc.MoveSpeed
-				}
-			}
-			// 覆盖成长参数
-			if wc.GrowthOnKill > 0 {
-				s.wardenUnit.GrowthOnKill = wc.GrowthOnKill
-			}
-			if wc.GrowthOnWaveClear > 0 {
-				s.wardenUnit.GrowthOnWaveClear = wc.GrowthOnWaveClear
-			}
-		}
+	// 加载战灵配置（用于 HUD 面板显示）
+	// 注：基础属性和成长参数已在 NewWarden() 中从全局缓存加载，此处仅保留 wardenCfg 引用。
+	if wc := config.GlobalWardenConfig(key); wc != nil {
+		cfg := *wc
+		s.wardenCfg = &cfg
 	}
 
 	// 非手动模式下，恢复自动开波
@@ -3073,7 +3046,6 @@ func (s *StageScene) buildAutoPlaySnapshot() AutoPlaySnapshot {
 			Active: e.Active, Dying: e.IsDying(),
 			IsSlowed: e.SlowTimer > 0, IsStunned: e.StunTimer > 0,
 			IsBurning: e.BurnTimer > 0, IsBleeding: e.BleedTimer > 0,
-			IsRooted:  e.RootTimer > 0,
 			IsHit:     e.HitFlash > 0,
 			BaseSpeed: e.BaseSpeed, DamageAmplify: e.DamageAmplify,
 			AbilitySilenced: e.AbilitySilenced, PhaseActive: e.PhaseActive,

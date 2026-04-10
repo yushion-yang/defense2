@@ -25,7 +25,6 @@
     "controlImmune":{"mode": "override",  "priority": 80,  "description": "控制免疫"},
     "slowImmune":   {"mode": "override",  "priority": 70,  "description": "减速免疫"},
     "stunImmune":   {"mode": "override",  "priority": 70,  "description": "眩晕免疫"},
-    "rootImmune":   {"mode": "override",  "priority": 70,  "description": "定身免疫"},
     "untargetable": {"mode": "override",  "priority": 100, "description": "不可选中（最高优先级）"},
     "shield":       {"mode": "independent",              "description": "护盾各独立计算"},
     "dot":          {"mode": "independentPerSource",     "description": "DoT 按来源独立"},

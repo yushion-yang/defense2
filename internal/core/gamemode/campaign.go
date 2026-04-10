@@ -14,8 +14,8 @@ func NewCampaignMode() *CampaignMode {
 	return &CampaignMode{baseMode: baseMode{id: "campaign"}}
 }
 
-func (m *CampaignMode) IntermissionSecs() float64 { return 10 }
-func (m *CampaignMode) ShouldAutoStart() bool     { return true }
+// IntermissionSecs 继承 baseMode 的配置读取，无需覆写。
+func (m *CampaignMode) ShouldAutoStart() bool { return true }
 
 func (m *CampaignMode) VictoryWaveTarget() int { return -1 } // 由地图 Waves 决定
 

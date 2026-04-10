@@ -276,9 +276,6 @@ func TestBuff_ImmunityChecks(t *testing.T) {
 	if !bl2.IsSlowImmune() {
 		t.Error("controlImmune应包含减速免疫")
 	}
-	if !bl2.IsRootImmune() {
-		t.Error("controlImmune应包含定身免疫")
-	}
 }
 
 func TestBuff_Duration(t *testing.T) {

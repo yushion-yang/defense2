@@ -51,7 +51,6 @@ var DefaultStackRules = map[string]StackRule{
 	"controlImmune": {Mode: ModeOverride, Priority: 80},
 	"slowImmune":    {Mode: ModeOverride, Priority: 70},
 	"stunImmune":    {Mode: ModeOverride, Priority: 70},
-	"rootImmune":    {Mode: ModeOverride, Priority: 70},
 	"untargetable":  {Mode: ModeOverride, Priority: 100},
 
 	// 独立类

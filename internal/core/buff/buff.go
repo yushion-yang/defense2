@@ -311,9 +311,6 @@ func (bl *BuffList) IsStunImmune() bool { return bl.HasType("stunImmune") || bl.
 // IsSlowImmune 是否减速免疫。
 func (bl *BuffList) IsSlowImmune() bool { return bl.HasType("slowImmune") || bl.IsControlImmune() }
 
-// IsRootImmune 是否定身免疫。
-func (bl *BuffList) IsRootImmune() bool { return bl.HasType("rootImmune") || bl.IsControlImmune() }
-
 // ---- 内部方法 ----
 
 // insert 插入 buff 到列表（复用失效槽位），触发 OnApply。

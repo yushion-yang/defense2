@@ -26,6 +26,7 @@ type ChainState struct {
 	warden.WardenState                          // 嵌入公共基座
 	ChainRange         float64                  // 串联范围（px）
 	BonusPerTower      float64                  // 每座串联塔贡献的强度
+	OrbitDist          float64                  // 围绕敌群的轨道距离
 	lastBonuses        map[*tower.Tower]float64 // 上一帧各塔设置的加成值
 	ChainLinks         []ChainLink              // 当前帧的串联连线（渲染用）
 }
@@ -42,6 +43,7 @@ func (b *ChainBehavior) Type() string { return "chain" }
 // NOTE: Stats are currently hardcoded. See config/wardens/wardens.json for planned externalization.
 // Hardcoded: damage=12, attackInterval=1.2, range=150, moveSpeed=300, chainRange=150, bonusPerTower=10
 func (b *ChainBehavior) Init(w *warden.Warden) interface{} {
+	p := w.Params
 	return &ChainState{
 		WardenState: warden.WardenState{
 			Damage:         12,
@@ -49,8 +51,9 @@ func (b *ChainBehavior) Init(w *warden.Warden) interface{} {
 			Range:          150,
 			MoveSpeed:      300,
 		},
-		ChainRange:    150,
-		BonusPerTower: 10,
+		ChainRange:    warden.ParamOr(p, "chainRange", 150),
+		BonusPerTower: warden.ParamOr(p, "bonusPerTower", 10),
+		OrbitDist:     warden.ParamOr(p, "orbitDist", 100.0),
 		lastBonuses:   make(map[*tower.Tower]float64),
 	}
 }
@@ -81,7 +84,7 @@ func (b *ChainBehavior) Tick(w *warden.Warden, ctx *warden.TickContext) {
 	// 2. 移动
 	cx, cy, count := warden.ComputeClusterCenter(ctx.Enemies)
 	if count > 0 {
-		s.MoveOrbit(cx, cy, chainOrbitDist, dt)
+		s.MoveOrbit(cx, cy, s.OrbitDist, dt)
 	} else {
 		s.Wander(dt)
 	}

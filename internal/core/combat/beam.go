@@ -61,6 +61,11 @@ func (p *BeamPool) Each(fn func(b *Beam)) {
 	}
 }
 
+// Clear 清除所有存活光束。
+func (p *BeamPool) Clear() {
+	p.beams = p.beams[:0]
+}
+
 // Count 返回存活光束数。
 func (p *BeamPool) Count() int {
 	return len(p.beams)

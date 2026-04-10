@@ -101,11 +101,6 @@ func (er *EnemyRenderer) DrawEnemies(screen *ebiten.Image, pool *enemy.Pool, ani
 
 		r := float32(e.Radius)
 
-		// --- Flying enemy ground shadow ---
-		if e.Archetype == "flying" {
-			vfx.DrawFlyingShadow(screen, cx, cy, r, theme.EnemyFlyShadow)
-		}
-
 		// --- Boss pulsing rings ---
 		if e.Boss {
 			vfx.DrawBossPulse(screen, cx, cy, r, animTime)
@@ -114,11 +109,6 @@ func (er *EnemyRenderer) DrawEnemies(screen *ebiten.Image, pool *enemy.Pool, ani
 		// --- Runner pulsing ring ---
 		if e.Archetype == "runner" {
 			vfx.DrawRunnerRing(screen, cx, cy, r, animTime)
-		}
-
-		// --- Root ground effect (drawn UNDER enemy body) ---
-		if e.RootTimer > 0 {
-			vfx.DrawRootGround(screen, cx, cy, r)
 		}
 
 		// --- Buffer aura ring (drawn UNDER body, hidden when silenced) ---
@@ -141,7 +131,7 @@ func (er *EnemyRenderer) DrawEnemies(screen *ebiten.Image, pool *enemy.Pool, ani
 			wobblePhase := e.X*0.05 + animTime*4
 			wobbleY := math.Sin(wobblePhase) * 1.5
 			wobbleRot := math.Sin(wobblePhase) * 0.05 // ~3 degrees
-			if e.StunTimer > 0 || e.RootTimer > 0 {
+			if e.StunTimer > 0 {
 				wobbleY = 0
 				wobbleRot = 0
 			}
@@ -281,9 +271,6 @@ func (er *EnemyRenderer) DrawEnemies(screen *ebiten.Image, pool *enemy.Pool, ani
 		}
 		if e.StunTimer > 0 {
 			dots = append(dots, vfx.StatusDot{Color: color.RGBA{R: 255, G: 255, B: 100, A: 235}})
-		}
-		if e.RootTimer > 0 {
-			dots = append(dots, vfx.StatusDot{Color: color.RGBA{R: 139, G: 90, B: 43, A: 235}})
 		}
 		if e.BleedTimer > 0 {
 			dots = append(dots, vfx.StatusDot{Color: color.RGBA{R: 239, G: 68, B: 68, A: 255}})

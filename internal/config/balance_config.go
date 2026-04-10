@@ -24,6 +24,22 @@ type SpawnerBalance struct {
 	BuffChance        float64 `json:"buffChance"`
 	BuffMinWaves      []int   `json:"buffMinWaves"`
 	BuffMaxBuffs      []int   `json:"buffMaxBuffs"`
+	SpawnBaseInterval float64 `json:"spawnBaseInterval"`
+	SpawnMinInterval  float64 `json:"spawnMinInterval"`
+	SpawnDecayPerWave float64 `json:"spawnDecayPerWave"`
+}
+
+// EffectiveSpawnInterval 返回指定波次的出怪间隔（含衰减）。
+// SpawnBaseInterval > 0 时启用衰减系统，否则 fallback 到固定 SpawnInterval。
+func (b SpawnerBalance) EffectiveSpawnInterval(wave int) float64 {
+	if b.SpawnBaseInterval > 0 {
+		interval := b.SpawnBaseInterval - float64(wave)*b.SpawnDecayPerWave
+		if interval < b.SpawnMinInterval {
+			interval = b.SpawnMinInterval
+		}
+		return interval
+	}
+	return b.SpawnInterval
 }
 
 // EconomyBalance 经济相关平衡参数。
@@ -32,21 +48,29 @@ type EconomyBalance struct {
 	SellRefundRatio float64 `json:"sellRefundRatio"`
 }
 
+// DotTickIntervals 按 DoT 类型区分的 tick 间隔。
+type DotTickIntervals struct {
+	Burn   float64 `json:"burn"`
+	Bleed  float64 `json:"bleed"`
+	Poison float64 `json:"poison"`
+}
+
 // CombatBalance 战斗相关平衡参数。
 type CombatBalance struct {
-	MaxDamageAmplify        float64 `json:"maxDamageAmplify"`
-	MinSpeedRatio           float64 `json:"minSpeedRatio"`
-	DotTickInterval         float64 `json:"dotTickInterval"`
-	BossPercentHpCap        float64 `json:"bossPercentHpCap"`
-	DamageDownFloor         float64 `json:"damageDownFloor"`
-	CritMultiplier          float64 `json:"critMultiplier"`
-	DefaultProjectileSpeed  float64 `json:"defaultProjectileSpeed"`
-	DefaultProjectileRadius float64 `json:"defaultProjectileRadius"`
-	ScatterBasePellets      int     `json:"scatterBasePellets"`
-	ScatterSpreadAngle      float64 `json:"scatterSpreadAngle"`
-	RadialBaseShots         int     `json:"radialBaseShots"`
-	RadialRangeMult         float64 `json:"radialRangeMult"`
-	WideBeamRangeMult       float64 `json:"wideBeamRangeMult"`
+	MaxDamageAmplify        float64          `json:"maxDamageAmplify"`
+	MinSpeedRatio           float64          `json:"minSpeedRatio"`
+	DotTickInterval         float64          `json:"dotTickInterval"`
+	BossPercentHpCap        float64          `json:"bossPercentHpCap"`
+	DamageDownFloor         float64          `json:"damageDownFloor"`
+	CritMultiplier          float64          `json:"critMultiplier"`
+	DefaultProjectileSpeed  float64          `json:"defaultProjectileSpeed"`
+	DefaultProjectileRadius float64          `json:"defaultProjectileRadius"`
+	ScatterBasePellets      int              `json:"scatterBasePellets"`
+	ScatterSpreadAngle      float64          `json:"scatterSpreadAngle"`
+	RadialBaseShots         int              `json:"radialBaseShots"`
+	RadialRangeMult         float64          `json:"radialRangeMult"`
+	WideBeamRangeMult       float64          `json:"wideBeamRangeMult"`
+	DotTickIntervalsMap     DotTickIntervals `json:"dotTickIntervals"`
 }
 
 // TowerBalance 塔相关平衡参数。
@@ -56,6 +80,7 @@ type TowerBalance struct {
 	WavesPerUnlock    int     `json:"wavesPerUnlock"`
 	ChoicesPerUnlock  int     `json:"choicesPerUnlock"`
 	AttackSpeedFloor  float64 `json:"attackSpeedFloor"`
+	FireRateFloor     float64 `json:"fireRateFloor"`
 }
 
 // ChainBalance 连锁网络相关平衡参数。
@@ -107,6 +132,52 @@ type GameplayBalance struct {
 	MultiKillAnnounce2  int     `json:"multiKillAnnounce2"`
 }
 
+// BerserkBuff 狂暴 buff 配置。
+type BerserkBuff struct {
+	Threshold  float64 `json:"threshold"`  // 激活血量比例
+	SpeedScale float64 `json:"speedScale"` // 激活后速度倍率
+}
+
+// RegenBuff 回复 buff 配置。
+type RegenBuff struct {
+	HpRatio float64 `json:"hpRatio"` // 每秒回复占 MaxHP 比例
+}
+
+// HealAuraBuff 治疗光环配置。
+type HealAuraBuff struct {
+	Power    float64 `json:"power"`    // 每次治疗占 MaxHP 比例
+	Radius   float64 `json:"radius"`   // 治疗范围
+	Interval float64 `json:"interval"` // 治疗间隔（秒）
+}
+
+// SpeedAuraBuff 加速光环配置。
+type SpeedAuraBuff struct {
+	Radius  float64 `json:"radius"`  // 光环范围
+	SpeedUp float64 `json:"speedUp"` // 加速比例
+}
+
+// DamageReduceBuff 减伤配置。
+type DamageReduceBuff struct {
+	Ratio float64 `json:"ratio"` // 减伤比例
+}
+
+// DeathSplitBuff 死亡分裂配置。
+type DeathSplitBuff struct {
+	Count      int     `json:"count"`      // 分裂数量
+	HpRatio    float64 `json:"hpRatio"`    // 子体 HP 比例
+	SpeedScale float64 `json:"speedScale"` // 子体速度倍率
+}
+
+// BuffsBalance 波次 buff 配置。
+type BuffsBalance struct {
+	Berserk      BerserkBuff      `json:"berserk"`
+	Regen        RegenBuff        `json:"regen"`
+	HealAura     HealAuraBuff     `json:"healAura"`
+	SpeedAura    SpeedAuraBuff    `json:"speedAura"`
+	DamageReduce DamageReduceBuff `json:"damageReduce"`
+	DeathSplit   DeathSplitBuff   `json:"deathSplit"`
+}
+
 // BalanceConfig 游戏平衡参数总配置。
 type BalanceConfig struct {
 	Spawner    SpawnerBalance    `json:"spawner"`
@@ -120,6 +191,7 @@ type BalanceConfig struct {
 	Dying      DyingBalance      `json:"dying"`
 	Warden     WardenBalance     `json:"warden"`
 	Gameplay   GameplayBalance   `json:"gameplay"`
+	Buffs      BuffsBalance      `json:"buffs"`
 }
 
 // globalBalance 全局缓存。
@@ -166,10 +238,12 @@ func defaultBalance() *BalanceConfig {
 			CritMultiplier: 2, DefaultProjectileSpeed: 300, DefaultProjectileRadius: 4,
 			ScatterBasePellets: 3, ScatterSpreadAngle: 60,
 			RadialBaseShots: 3, RadialRangeMult: 1.2, WideBeamRangeMult: 3,
+			DotTickIntervalsMap: DotTickIntervals{Burn: 0.5, Bleed: 0.5, Poison: 1.0},
 		},
 		Tower: TowerBalance{
 			StrengthBuyCost: 10, StrengthBuyAmount: 10,
 			WavesPerUnlock: 2, ChoicesPerUnlock: 3, AttackSpeedFloor: 0.1,
+			FireRateFloor: 0.18,
 		},
 		Items: []ItemBalance{
 			{Kind: "baseDamage", Label: "攻击磨石", Boost: 2},
@@ -185,5 +259,13 @@ func defaultBalance() *BalanceConfig {
 		Dying:      DyingBalance{NormalDuration: 0.3, BossDuration: 0.5},
 		Warden:     WardenBalance{InitialStrength: 100, DefaultGrowthOnKill: 2, DefaultGrowthOnWaveClear: 5},
 		Gameplay:   GameplayBalance{StarRatingThreshold: 0.8, MultiKillWindow: 1.5, MultiKillAnnounce1: 5, MultiKillAnnounce2: 10},
+		Buffs: BuffsBalance{
+			Berserk:      BerserkBuff{Threshold: 0.5, SpeedScale: 1.5},
+			Regen:        RegenBuff{HpRatio: 0.02},
+			HealAura:     HealAuraBuff{Power: 0.05, Radius: 80, Interval: 3},
+			SpeedAura:    SpeedAuraBuff{Radius: 80, SpeedUp: 0.2},
+			DamageReduce: DamageReduceBuff{Ratio: 0.3},
+			DeathSplit:   DeathSplitBuff{Count: 2, HpRatio: 0.3, SpeedScale: 1.4},
+		},
 	}
 }

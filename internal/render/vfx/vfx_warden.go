@@ -141,18 +141,18 @@ func DrawSkyStrike(screen *ebiten.Image, x, y float32, timer float64, mode int) 
 
 	switch mode {
 	case 1:
-		DrawIceCone(screen, x, y, p)
+		drawIceCone(screen, x, y, p)
 	case 2:
-		DrawWaterDrop(screen, x, y, p)
+		drawWaterDrop(screen, x, y, p)
 	case 3:
-		DrawGeyser(screen, x, y, p)
+		drawGeyser(screen, x, y, p)
 	default:
-		DrawIceCone(screen, x, y, p)
+		drawIceCone(screen, x, y, p)
 	}
 }
 
-// DrawIceCone 绘制冰锥坠落效果。p: 1→0 进度。
-func DrawIceCone(screen *ebiten.Image, sx, sy, p float32) {
+// drawIceCone 绘制冰锥坠落效果。p: 1→0 进度。
+func drawIceCone(screen *ebiten.Image, sx, sy, p float32) {
 	a := uint8(200 * p)
 	drop := 80 * p * p
 	tipY := sy - drop
@@ -173,8 +173,8 @@ func DrawIceCone(screen *ebiten.Image, sx, sy, p float32) {
 	}
 }
 
-// DrawWaterDrop 绘制水滴坠落溅射效果。p: 1→0 进度。
-func DrawWaterDrop(screen *ebiten.Image, sx, sy, p float32) {
+// drawWaterDrop 绘制水滴坠落溅射效果。p: 1→0 进度。
+func drawWaterDrop(screen *ebiten.Image, sx, sy, p float32) {
 	a := uint8(220 * p)
 	drop := 60 * p * p
 	dropY := sy - drop
@@ -191,8 +191,8 @@ func DrawWaterDrop(screen *ebiten.Image, sx, sy, p float32) {
 	}
 }
 
-// DrawGeyser 绘制水柱喷涌效果。p: 1→0 进度。
-func DrawGeyser(screen *ebiten.Image, sx, sy, p float32) {
+// drawGeyser 绘制水柱喷涌效果。p: 1→0 进度。
+func drawGeyser(screen *ebiten.Image, sx, sy, p float32) {
 	a := uint8(180 * p)
 	height := float32(35 * p)
 	draw.FilledCircle(screen, sx, sy, float32(8*p), color.RGBA{R: 140, G: 210, B: 255, A: a / 3})

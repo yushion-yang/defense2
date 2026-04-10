@@ -93,7 +93,6 @@
       "ccSlow": { "ms": 120, "description": "减速/冰冻" },
       "ccStun": { "ms": 150, "description": "眩晕" },
       "ccBurn": { "ms": 200, "description": "灼烧点燃" },
-      "ccRoot": { "ms": 150, "description": "定身" },
       "crit": { "ms": 150, "description": "暴击" },
       "medicHeal": { "ms": 500, "description": "医疗兵治疗（低频行为）" },
       "regenTick": { "ms": 2000, "description": "再生跳字（极低频，2 秒间隔）" },

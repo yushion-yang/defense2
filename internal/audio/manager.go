@@ -97,13 +97,13 @@ func (m *Manager) LoadWAV(name string, data []byte) error {
 
 // 分类音量倍率（相对于主音量的比例，0.0 ~ 1.0）。
 const (
-	VolUI     = 0.6 // UI 点击、面板开关
-	VolBuild  = 0.7 // 建塔、卖塔、升级
+	VolUI     = 0.6  // UI 点击、面板开关
+	VolBuild  = 0.7  // 建塔、卖塔、升级
 	VolFire   = 0.35 // 射击（高频，必须最低）
 	VolHit    = 0.4  // 命中（高频）
-	VolKill  = 0.55 // 击杀、死亡
-	VolWave  = 0.7  // 开波、清波、Boss 出场
-	VolExplo = 0.45 // 爆炸、雷击等大特效
+	VolKill   = 0.55 // 击杀、死亡
+	VolWave   = 0.7  // 开波、清波、Boss 出场
+	VolExplo  = 0.45 // 爆炸、雷击等大特效
 	VolWarden = 0.5  // 战灵
 	VolSkill  = 0.5  // 技能施放
 )
@@ -236,7 +236,6 @@ const (
 	SFXSlowApply  = "slowApply"  // slow-apply.wav — 减速命中
 	SFXStunImpact = "stunImpact" // stun-impact.wav — 眩晕命中
 	SFXFreezeHit  = "freezeHit"  // freeze-hit.wav — 冰冻命中（低 factor 减速）
-	SFXRootApply  = "rootApply"  // root-apply.wav — 定身命中
 	SFXKnockback  = "knockback"  // knockback.wav — 击退（预留）
 	// 护盾
 	SFXShieldBreak = "shieldBreak" // shield-break.wav — 护盾击碎（预留）
@@ -247,11 +246,11 @@ const (
 	SFXBurnIgnite = "burnIgnite" // burn-ignite.wav — 灼烧点燃
 
 	// 敌人行为音效
-	SFXMedicHeal    = "medicHeal"    // medic-heal.wav — 治疗兵治疗
+	SFXMedicHeal     = "medicHeal"     // medic-heal.wav — 治疗兵治疗
 	SFXStealthReveal = "stealthReveal" // stealth-reveal.wav — 隐身破解
-	SFXSplitPop     = "splitPop"     // split-pop.wav — 分裂体死亡分裂
-	SFXBannerAura   = "bannerAura"   // banner-aura.wav — 旗手光环（预留）
-	SFXRegenTick    = "regenTick"    // regen-tick.wav — 回血 tick
+	SFXSplitPop      = "splitPop"      // split-pop.wav — 分裂体死亡分裂
+	SFXBannerAura    = "bannerAura"    // banner-aura.wav — 旗手光环（预留）
+	SFXRegenTick     = "regenTick"     // regen-tick.wav — 回血 tick
 )
 
 // FireSFXForStyle 根据攻击方式返回射击音效名称。

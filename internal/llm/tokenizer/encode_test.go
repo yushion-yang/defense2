@@ -185,7 +185,7 @@ func TestEncode_OneEnemy(t *testing.T) {
 		t.Errorf("expected p5 for x=600/1200, tokens=%v", tokens)
 	}
 	// No status effects
-	for _, tok := range []string{"s_slow", "s_stun", "s_burn", "s_bleed", "s_root", "s_shield"} {
+	for _, tok := range []string{"s_slow", "s_stun", "s_burn", "s_bleed", "s_shield"} {
 		if containsToken(tokens, tok) {
 			t.Errorf("unexpected status token %q", tok)
 		}

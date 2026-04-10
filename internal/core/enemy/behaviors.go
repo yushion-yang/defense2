@@ -131,7 +131,6 @@ func TickBehaviors(pool *Pool, dt float64) BehaviorEvents {
 				e.SlowFactor = 1
 				e.Speed = e.BaseSpeed
 				e.StunTimer = 0
-				e.RootTimer = 0
 				e.BleedTimer = 0
 				e.BleedDPS = 0
 				e.PoisonTimer = 0
@@ -148,7 +147,6 @@ func TickBehaviors(pool *Pool, dt float64) BehaviorEvents {
 					e.IsControlImmune = true
 					e.IsStunImmune = true
 					e.IsSlowImmune = true
-					e.IsRootImmune = true
 				}
 			}
 		}
@@ -298,8 +296,6 @@ func UpdateBerserk(e *Enemy) bool {
 	return true
 }
 
-
-
 // UpdateRegeneration 处理敌人自然回血。
 // 返回本帧实际回复的血量。
 func UpdateRegeneration(e *Enemy, dt float64) float64 {
@@ -339,4 +335,3 @@ func UpdateTeleport(e *Enemy, dt float64) bool {
 	e.Y = e.Path[newIdx].Y
 	return true
 }
-

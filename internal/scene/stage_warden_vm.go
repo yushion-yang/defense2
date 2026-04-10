@@ -112,6 +112,8 @@ func BuildWardenOptions(pm ...*persistence.ProgressManager) []hud.WardenOption {
 }
 
 // buildStaticParams 从配置构建占位符参数（选择阶段用基础值，不含强度缩放）。
+// 基础属性从 WardenConfig 顶层字段读取，类型特有参数从 Params map 读取。
+// 派生值（如 fireballDmg = damage * fireballDmgRatio）在此计算。
 func buildStaticParams(c config.WardenConfig) map[string]string {
 	p := map[string]string{
 		"attackInterval": fmt.Sprintf("%.1f", c.AttackInterval),
@@ -119,33 +121,46 @@ func buildStaticParams(c config.WardenConfig) map[string]string {
 		"moveSpeed":      fmt.Sprintf("%.0f", c.MoveSpeed),
 		"range":          fmt.Sprintf("%.0f", c.Range),
 	}
-	// 按 key 补充类型特有参数的默认值（与 Go Init 中的硬编码一致）
+
+	// 从 Params map 读取所有类型特有参数
+	if c.Params != nil {
+		for k, v := range c.Params {
+			// 整数参数（无小数部分）用 %g 格式，否则 %.1f
+			if v == float64(int(v)) {
+				p[k] = fmt.Sprintf("%g", v)
+			} else {
+				p[k] = fmt.Sprintf("%.2f", v)
+			}
+		}
+	}
+
+	// 计算派生值（描述文本中需要的计算字段）
+	paramOr := func(key string, fallback float64) float64 {
+		if c.Params != nil {
+			if v, ok := c.Params[key]; ok {
+				return v
+			}
+		}
+		return fallback
+	}
+
 	switch c.Key {
 	case "prince":
-		p["fireballInterval"] = "4"
-		p["fireballDmg"] = fmt.Sprintf("%.0f", c.Damage*2) // 200%
-		p["trailDuration"] = "2"
-		p["trailDps"] = fmt.Sprintf("%.0f", c.Damage*0.5) // 50%
+		ratio := paramOr("fireballDmgRatio", 2.0)
+		p["fireballDmg"] = fmt.Sprintf("%.0f", c.Damage*ratio)
+		trailRatio := paramOr("trailDpsRatio", 0.5)
+		p["trailDps"] = fmt.Sprintf("%.0f", c.Damage*trailRatio)
+		p["fireballHpPct"] = fmt.Sprintf("%.0f", paramOr("fireballHpPct", 0.05)*100)
 	case "core":
-		p["aoeThreshold"] = "4"
-		p["execHpPct"] = "20"
-	case "chain":
-		p["chainRange"] = "150"
-		p["bonusPerTower"] = "10"
+		p["execHpPct"] = fmt.Sprintf("%.0f", paramOr("execHpPct", 0.20)*100)
 	case "skystrike":
-		p["specialInterval"] = "1"
-		p["multiTargets"] = "3"
-		p["multiDmg"] = fmt.Sprintf("%.0f", c.Damage*2) // 200%
-		p["burstHits"] = "5"
-		p["burstDmg"] = fmt.Sprintf("%.0f", c.Damage*1) // 100%
-		p["hpTargets"] = "3"
-		p["hpPct"] = "10"
+		multiRatio := paramOr("multiDmgRatio", 2.0)
+		p["multiDmg"] = fmt.Sprintf("%.0f", c.Damage*multiRatio)
+		burstRatio := paramOr("burstDmgRatio", 1.0)
+		p["burstDmg"] = fmt.Sprintf("%.0f", c.Damage*burstRatio)
+		p["hpPct"] = fmt.Sprintf("%.0f", paramOr("hpPercent", 0.10)*100)
 	case "envoy":
-		p["buffInterval"] = "10"
-		p["buffDuration"] = "6"
-		p["buffThreshold"] = "100"
-		p["buffBonus"] = "0"
-		p["permGrant"] = "5"
+		p["buffBonus"] = "0" // 选择阶段无强度，默认为 0
 	}
 	return p
 }

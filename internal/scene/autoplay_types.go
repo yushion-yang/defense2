@@ -64,7 +64,6 @@ type AutoPlayEnemy struct {
 	IsStunned  bool
 	IsBurning  bool
 	IsBleeding bool
-	IsRooted   bool
 	IsHit      bool // HitFlash > 0（受击闪白）
 
 	BaseSpeed       float64

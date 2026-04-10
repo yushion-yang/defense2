@@ -27,6 +27,9 @@ type EnvoyState struct {
 	PermGrant     float64 // 每次触发永久赋予塔的强度
 	BuffTimer     float64 // buff 施加倒计时
 
+	// 轨道距离
+	OrbitDist float64 // 围绕敌群的轨道距离
+
 	// 当前 buff 追踪（用于视觉反馈）
 	BuffedTower *tower.Tower // 当前被 buff 的塔（仅渲染用）
 	BuffExpiry  float64      // 当前 buff 剩余时间
@@ -43,8 +46,10 @@ func (b *EnvoyBehavior) Type() string { return "envoy" }
 // Init initializes envoy warden behavior.
 // NOTE: Stats are currently hardcoded. See config/wardens/wardens.json for planned externalization.
 // Hardcoded: damage=12, attackInterval=1.2, range=140, moveSpeed=320,
-//            buffInterval=10, buffDuration=6, buffThreshold=100, permGrant=5
+//
+//	buffInterval=10, buffDuration=6, buffThreshold=100, permGrant=5
 func (b *EnvoyBehavior) Init(w *warden.Warden) interface{} {
+	p := w.Params
 	return &EnvoyState{
 		WardenState: warden.WardenState{
 			Damage:         12,
@@ -52,10 +57,11 @@ func (b *EnvoyBehavior) Init(w *warden.Warden) interface{} {
 			Range:          140,
 			MoveSpeed:      320,
 		},
-		BuffInterval:  10.0,
-		BuffDuration:  6.0, // 比 interval 短 1s，确保 buff 会到期
-		BuffThreshold: 100, // 临时 buff = 强度 - 100
-		PermGrant:     5,   // 每次永久 +5 强度
+		BuffInterval:  warden.ParamOr(p, "buffInterval", 10.0),
+		BuffDuration:  warden.ParamOr(p, "buffDuration", 6.0),  // 比 interval 短 1s，确保 buff 会到期
+		BuffThreshold: warden.ParamOr(p, "buffThreshold", 100), // 临时 buff = 强度 - 100
+		PermGrant:     warden.ParamOr(p, "permGrant", 5),       // 每次永久 +5 强度
+		OrbitDist:     warden.ParamOr(p, "orbitDist", 100.0),
 	}
 }
 
@@ -89,7 +95,7 @@ func (b *EnvoyBehavior) Tick(w *warden.Warden, ctx *warden.TickContext) {
 	// 1. 移动
 	cx, cy, count := warden.ComputeClusterCenter(ctx.Enemies)
 	if count > 0 {
-		s.MoveOrbit(cx, cy, envoyOrbitDist, dt)
+		s.MoveOrbit(cx, cy, s.OrbitDist, dt)
 	} else {
 		s.Wander(dt)
 	}

@@ -1,7 +1,7 @@
 {
   "id": "范围效果_低强度",
   "name": "范围效果 低强度",
-  "description": "4 towers, 4 enemies on map_test_large",
+  "description": "8 towers, 24 enemies on map_test_large",
   "mapID": "map_test_large",
   "gold": 99999,
   "lives": 999,
@@ -96,6 +96,94 @@
       "potentialSpeed": 0.40696257670149544,
       "baseRange": 46.725904314333285,
       "potentialRange": 72.93080489455176
+    },
+    {
+      "row": 10,
+      "col": 20,
+      "key": "basic",
+      "abilitySlots": [
+        "",
+        "",
+        "",
+        "",
+        "",
+        "weakenZone"
+      ],
+      "damageTier": "B",
+      "speedTier": "B",
+      "rangeTier": "B",
+      "baseDamage": 4.413385998420209,
+      "potentialDamage": 8.38661400157979,
+      "baseSpeed": 0.4043792761405715,
+      "potentialSpeed": 0.44562072385942847,
+      "baseRange": 67.27643023889928,
+      "potentialRange": 86.88846530213517
+    },
+    {
+      "row": 4,
+      "col": 16,
+      "key": "basic",
+      "abilitySlots": [
+        "",
+        "",
+        "",
+        "",
+        "",
+        "poisonZone"
+      ],
+      "damageTier": "B",
+      "speedTier": "B",
+      "rangeTier": "B",
+      "baseDamage": 5.984310656042609,
+      "potentialDamage": 6.932889495868148,
+      "baseSpeed": 0.470701910918474,
+      "potentialSpeed": 0.5644694136855715,
+      "baseRange": 40.90396028854805,
+      "potentialRange": 72.40202667252461
+    },
+    {
+      "row": 6,
+      "col": 16,
+      "key": "basic",
+      "abilitySlots": [
+        "",
+        "",
+        "",
+        "",
+        "",
+        "poisonZone"
+      ],
+      "damageTier": "B",
+      "speedTier": "B",
+      "rangeTier": "B",
+      "baseDamage": 10.697364320763576,
+      "potentialDamage": 8.93885367260984,
+      "baseSpeed": 0.21417980959612004,
+      "potentialSpeed": 0.3829336463087438,
+      "baseRange": 54.18640189064063,
+      "potentialRange": 85.81359810935936
+    },
+    {
+      "row": 10,
+      "col": 10,
+      "key": "basic",
+      "abilitySlots": [
+        "",
+        "",
+        "",
+        "",
+        "",
+        "silenceZone"
+      ],
+      "damageTier": "B",
+      "speedTier": "B",
+      "rangeTier": "B",
+      "baseDamage": 5.792437911410998,
+      "potentialDamage": 7.007562088589002,
+      "baseSpeed": 0.36467798693931297,
+      "potentialSpeed": 0.485322013060687,
+      "baseRange": 75.30077591729476,
+      "potentialRange": 79.67960294659036
     }
   ],
   "enemies": [
@@ -104,7 +192,7 @@
       "x": 788.5,
       "y": 164,
       "pathIndex": 0,
-      "hp": 997801.4407569746,
+      "hp": 994914.5805840774,
       "maxHP": 1000000
     },
     {
@@ -112,7 +200,7 @@
       "x": 786,
       "y": 398,
       "pathIndex": 0,
-      "hp": 997969.0953576146,
+      "hp": 937209.535357617,
       "maxHP": 1000000
     },
     {
@@ -120,7 +208,7 @@
       "x": 386.5,
       "y": 387.5,
       "pathIndex": 0,
-      "hp": 998445.6907854655,
+      "hp": 995959.3719923936,
       "maxHP": 1000000
     },
     {
@@ -128,8 +216,188 @@
       "x": 738.5,
       "y": 419.5,
       "pathIndex": 0,
-      "hp": 1000000,
+      "hp": 938079.4356564702,
       "maxHP": 1000000
+    },
+    {
+      "archetype": "shielder",
+      "x": 355,
+      "y": 373.5,
+      "pathIndex": 0,
+      "hp": 150,
+      "maxHP": 150,
+      "isDummy": true
+    },
+    {
+      "archetype": "shielder",
+      "x": 423.5,
+      "y": 324,
+      "pathIndex": 0,
+      "hp": 150,
+      "maxHP": 150,
+      "isDummy": true
+    },
+    {
+      "archetype": "dummy",
+      "x": 786,
+      "y": 219.5,
+      "pathIndex": 0,
+      "hp": 999407.3500000001,
+      "maxHP": 1000000,
+      "isDummy": true
+    },
+    {
+      "archetype": "dummy",
+      "x": 760,
+      "y": 239.5,
+      "pathIndex": 0,
+      "hp": 999408.25,
+      "maxHP": 1000000,
+      "isDummy": true
+    },
+    {
+      "archetype": "dummy",
+      "x": 686,
+      "y": 233,
+      "pathIndex": 0,
+      "hp": 998465.14615224,
+      "maxHP": 1000000,
+      "isDummy": true
+    },
+    {
+      "archetype": "dummy",
+      "x": 681.5,
+      "y": 149.5,
+      "pathIndex": 0,
+      "hp": 997997.5847861728,
+      "maxHP": 1000000,
+      "isDummy": true
+    },
+    {
+      "archetype": "dummy",
+      "x": 732,
+      "y": 122,
+      "pathIndex": 0,
+      "hp": 999338.75,
+      "maxHP": 1000000,
+      "isDummy": true
+    },
+    {
+      "archetype": "dummy",
+      "x": 415.5,
+      "y": 174.5,
+      "pathIndex": 0,
+      "hp": 837596.1688938783,
+      "maxHP": 1000000,
+      "isDummy": true
+    },
+    {
+      "archetype": "shielder",
+      "x": 463,
+      "y": 299.5,
+      "pathIndex": 0,
+      "hp": 150,
+      "maxHP": 150,
+      "isDummy": true
+    },
+    {
+      "archetype": "shielder",
+      "x": 496.5,
+      "y": 323.5,
+      "pathIndex": 0,
+      "hp": 150,
+      "maxHP": 150,
+      "isDummy": true
+    },
+    {
+      "archetype": "shielder",
+      "x": 513.5,
+      "y": 403,
+      "pathIndex": 0,
+      "hp": 150,
+      "maxHP": 150,
+      "isDummy": true
+    },
+    {
+      "archetype": "shielder",
+      "x": 559,
+      "y": 368,
+      "pathIndex": 0,
+      "hp": 150,
+      "maxHP": 150,
+      "isDummy": true
+    },
+    {
+      "archetype": "shielder",
+      "x": 576.5,
+      "y": 319.5,
+      "pathIndex": 0,
+      "hp": 95.05000000000001,
+      "maxHP": 150,
+      "isDummy": true
+    },
+    {
+      "archetype": "dummy",
+      "x": 411.5,
+      "y": 223.5,
+      "pathIndex": 0,
+      "hp": 845250,
+      "maxHP": 1000000,
+      "isDummy": true
+    },
+    {
+      "archetype": "dummy",
+      "x": 357,
+      "y": 236.5,
+      "pathIndex": 0,
+      "hp": 852750,
+      "maxHP": 1000000,
+      "isDummy": true
+    },
+    {
+      "archetype": "dummy",
+      "x": 295.5,
+      "y": 259,
+      "pathIndex": 0,
+      "hp": 860250,
+      "maxHP": 1000000,
+      "isDummy": true
+    },
+    {
+      "archetype": "dummy",
+      "x": 279,
+      "y": 188.5,
+      "pathIndex": 0,
+      "hp": 867750,
+      "maxHP": 1000000,
+      "isDummy": true
+    },
+    {
+      "archetype": "dummy",
+      "x": 297,
+      "y": 122,
+      "pathIndex": 0,
+      "hp": 882750,
+      "maxHP": 1000000,
+      "isDummy": true
+    },
+    {
+      "archetype": "dummy",
+      "x": 372.5,
+      "y": 109.5,
+      "pathIndex": 0,
+      "hp": 890250,
+      "maxHP": 1000000,
+      "isDummy": true
+    },
+    {
+      "archetype": "dummy",
+      "x": 342,
+      "y": 135,
+      "pathIndex": 0,
+      "hp": 912750,
+      "maxHP": 1000000,
+      "isDummy": true
     }
   ]
 }

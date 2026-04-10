@@ -229,6 +229,7 @@ func (s *VFXPreviewScene) vfxTriggerRegistry() map[string]func(s *VFXPreviewScen
 		"skystrikeWater":  func(s *VFXPreviewScene) { s.activateVFX("skystrikeWater", 2) },
 		"skystrikeGeyser": func(s *VFXPreviewScene) { s.activateVFX("skystrikeGeyser", 3) },
 		"goldBeam":        func(s *VFXPreviewScene) { s.activateVFX("goldBeam", 0) },
+		"movementTrail":   func(s *VFXPreviewScene) { s.activateVFX("movementTrail", 0) },
 		"bossPulse":       func(s *VFXPreviewScene) { s.activateVFX("bossPulse", 0) },
 		"runnerRing":      func(s *VFXPreviewScene) { s.activateVFX("runnerRing", 0) },
 		"stunStars":       func(s *VFXPreviewScene) { s.activateVFX("stunStars", 0) },
@@ -236,6 +237,7 @@ func (s *VFXPreviewScene) vfxTriggerRegistry() map[string]func(s *VFXPreviewScen
 		"statusDots":      func(s *VFXPreviewScene) { s.activateVFX("statusDots", 0) },
 		"bufferAura":      func(s *VFXPreviewScene) { s.activateVFX("bufferAura", 0) },
 		"purgeGlow":       func(s *VFXPreviewScene) { s.activateVFX("purgeGlow", 0) },
+		"immunityRing":    func(s *VFXPreviewScene) { s.activateVFX("immunityRing", 0) },
 
 		// Enemy ability trigger VFX
 		"blockFlash":     func(s *VFXPreviewScene) { s.activateVFX("blockFlash", 0) },
@@ -248,13 +250,12 @@ func (s *VFXPreviewScene) vfxTriggerRegistry() map[string]func(s *VFXPreviewScen
 		"healerAura":     func(s *VFXPreviewScene) { s.activateVFX("healerAura", 0) },
 		"speedAura":      func(s *VFXPreviewScene) { s.activateVFX("speedAura", 0) },
 		"strengthDrain":  func(s *VFXPreviewScene) { s.activateVFX("strengthDrain", 0) },
-		"rootGround":     func(s *VFXPreviewScene) { s.activateVFX("rootGround", 0) },
 		"slowOverlay":    func(s *VFXPreviewScene) { s.activateVFX("slowOverlay", 0) },
 		"burnOverlay":    func(s *VFXPreviewScene) { s.activateVFX("burnOverlay", 0) },
 
 		// Tower UI VFX
-		"upgradeDiamond":   func(s *VFXPreviewScene) { s.activateVFX("upgradeDiamond", 0) },
-		"placementPreview": func(s *VFXPreviewScene) { s.activateVFX("placementPreview", 0) },
+		"upgradeDiamond": func(s *VFXPreviewScene) { s.activateVFX("upgradeDiamond", 0) },
+		"selectionRing":  func(s *VFXPreviewScene) { s.activateVFX("selectionRing", 0) },
 
 		// Combo text
 		"comboX3": func(s *VFXPreviewScene) {
@@ -440,8 +441,35 @@ func (s *VFXPreviewScene) triggerCurrent() {
 	if s.effectIdx < 0 || s.effectIdx >= len(cat.Effects) {
 		return
 	}
+
+	// Clear previous effect state before triggering new one.
+	s.clearActiveEffects()
+
 	cat.Effects[s.effectIdx].Trigger(s)
 	s.replayDelay = 0.8
+}
+
+// clearActiveEffects resets all active visual effect state so that
+// switching to a new effect doesn't leave the old one rendering.
+func (s *VFXPreviewScene) clearActiveEffects() {
+	// Clear continuous VFX.
+	s.activeVFX = ""
+	s.vfxTime = 0
+	s.vfxParam = 0
+
+	// Clear one-shot subsystems.
+	s.particlePool.Clear()
+	s.beamPool.Clear()
+	render.ClearImpactVFX()
+	render.ClearThunderBolts()
+	render.ClearFloatTexts()
+
+	// Reset post-processing state.
+	s.effects.VignetteStrength = 0
+	s.effects.DayNightA = 0
+	s.effects.SetDesaturation(0, 3.0, 0, 0, 0)
+	s.desatResetTimer = 0
+	s.postPipeline.Lighting.Clear()
 }
 
 // navigateEffect moves the effect selection up or down.
@@ -838,26 +866,25 @@ func (s *VFXPreviewScene) drawActiveVFX(screen *ebiten.Image) {
 		vfx.DrawPentagram(screen, fcx, fcy, 1.0, t)
 
 	// ── Projectile VFX ──
+	// All projectile previews: fly from origin to right with trail + muzzle flash.
 	case "projPenetrate":
-		angle := t * 2
-		vfx.DrawProjectileBody(screen, fcx, fcy, angle, "sniper", true, false)
+		s.drawProjFlight(screen, cx, cy, t, "sniper", true, false,
+			color.RGBA{R: 200, G: 140, B: 255, A: 255}, color.RGBA{R: 180, G: 100, B: 255, A: 200})
 	case "projScatter":
-		vfx.DrawProjectileBody(screen, fcx, fcy, t*2, "freeze", false, true)
+		s.drawProjFlight(screen, cx, cy, t, "freeze", false, true,
+			color.RGBA{R: 140, G: 200, B: 255, A: 255}, color.RGBA{R: 100, G: 180, B: 255, A: 200})
 	case "projSniper":
-		vfx.DrawProjectileBody(screen, fcx, fcy, t*2, "sniper", false, false)
+		s.drawProjFlight(screen, cx, cy, t, "sniper", false, false,
+			color.RGBA{R: 255, G: 180, B: 80, A: 255}, color.RGBA{R: 255, G: 160, B: 60, A: 200})
 	case "projFreeze":
-		vfx.DrawProjectileBody(screen, fcx, fcy, t*2, "freeze", false, false)
+		s.drawProjFlight(screen, cx, cy, t, "freeze", false, false,
+			color.RGBA{R: 140, G: 220, B: 255, A: 255}, color.RGBA{R: 100, G: 200, B: 255, A: 200})
 	case "projDefault":
-		vfx.DrawProjectileBody(screen, fcx, fcy, t*2, "default", false, false)
+		s.drawProjFlight(screen, cx, cy, t, "default", false, false,
+			color.RGBA{R: 253, G: 230, B: 138, A: 255}, color.RGBA{R: 255, G: 220, B: 100, A: 200})
 	case "projTrail":
-		trail := make([]vfx.TrailPt, 8)
-		for i := range trail {
-			// Simulate moving trail curving with time
-			offset := float64(i) * 8
-			trail[i] = vfx.TrailPt{X: cx - offset*math.Cos(t), Y: cy - offset*math.Sin(t*0.7), Active: true}
-		}
-		vfx.DrawProjectileTrail(screen, trail, 0, color.RGBA{R: 253, G: 230, B: 138, A: 255})
-		vfx.DrawProjectileBody(screen, fcx, fcy, t*2, "default", false, false)
+		s.drawProjFlight(screen, cx, cy, t, "default", false, false,
+			color.RGBA{R: 253, G: 230, B: 138, A: 255}, color.RGBA{R: 255, G: 220, B: 100, A: 200})
 
 	// ── Warden VFX ──
 	case "fireTrails":
@@ -899,6 +926,15 @@ func (s *VFXPreviewScene) drawActiveVFX(screen *ebiten.Image) {
 		if p > 0 {
 			vfx.DrawGoldBeam(screen, fcx-40, fcy, fcx+40, fcy, p)
 		}
+	case "movementTrail":
+		// Simulate circular flight path trail
+		trail := make([][2]float64, 16)
+		for i := range trail {
+			age := float64(i) * 0.06
+			a := t - age
+			trail[i] = [2]float64{cx + 50*math.Cos(a*2), cy + 30*math.Sin(a*2)}
+		}
+		vfx.DrawMovementTrail(screen, trail, len(trail)-1, color.RGBA{R: 255, G: 180, B: 80, A: 200})
 
 	// ── Enemy VFX ──
 	case "bossPulse":
@@ -967,16 +1003,66 @@ func (s *VFXPreviewScene) drawActiveVFX(screen *ebiten.Image) {
 		vfx.DrawSpeedAura(screen, fcx, fcy, 60, t)
 	case "strengthDrain":
 		vfx.DrawStrengthDrainLink(screen, fcx-50, fcy, fcx+50, fcy, t)
-	case "rootGround":
-		vfx.DrawRootGround(screen, fcx, fcy, 10)
 	case "slowOverlay":
 		vfx.DrawSlowOverlay(screen, fcx, fcy, 12)
 	case "burnOverlay":
 		vfx.DrawBurnOverlay(screen, fcx, fcy, 12)
+	case "immunityRing":
+		// Show both CC immune (red) and slow immune (cyan) side by side
+		vfx.DrawImmunityRing(screen, fcx-25, fcy, 12, color.RGBA{R: 220, G: 60, B: 60, A: 80})
+		vfx.DrawImmunityRing(screen, fcx+25, fcy, 12, color.RGBA{R: 60, G: 180, B: 200, A: 80})
 	case "upgradeDiamond":
 		vfx.DrawUpgradeDiamond(screen, fcx, fcy, t)
-	case "placementPreview":
-		valid := math.Mod(t, 2.0) < 1.0
-		vfx.DrawPlacementPreview(screen, fcx, fcy, 80, valid)
+	case "selectionRing":
+		// Animate range ring pulsing
+		pulseR := float32(80 + 3*math.Sin(t*3))
+		vfx.DrawSelectionRing(screen, fcx, fcy,
+			16, 2, color.RGBA{R: 100, G: 160, B: 255, A: 180},
+			pulseR, 1, color.RGBA{R: 100, G: 160, B: 255, A: 60})
 	}
+}
+
+// drawProjFlight draws a projectile flying from left to right with trail and muzzle flash.
+// Loops every 1.0s: muzzle flash at origin → projectile flies across → reset.
+func (s *VFXPreviewScene) drawProjFlight(
+	screen *ebiten.Image, cx, cy, t float64,
+	style string, penetrate, scatter bool,
+	trailClr, flashClr color.RGBA,
+) {
+	const (
+		flightDur = 0.8  // seconds for one flight
+		cycleDur  = 1.0  // total cycle including pause
+		halfSpan  = 90.0 // half of the flight distance
+	)
+
+	cycle := math.Mod(t, cycleDur)
+	progress := cycle / flightDur // 0→1 during flight, >1 = pause
+	if progress > 1 {
+		progress = 1
+	}
+
+	// Origin (tower position) and current projectile position.
+	originX := cx - halfSpan
+	originY := cy
+	curX := originX + 2*halfSpan*progress
+	curY := cy
+	angle := 0.0 // flying rightward
+
+	// Muzzle flash at origin (visible briefly at start).
+	if cycle < 0.15 {
+		vfx.DrawShootFlash(screen, float32(originX), float32(originY), 0.15-cycle, flashClr)
+	}
+
+	// Trail behind the projectile.
+	const trailLen = 8
+	trail := make([]vfx.TrailPt, trailLen)
+	for i := range trail {
+		frac := float64(i) / float64(trailLen)
+		tx := curX - frac*40*progress // trail stretches back as projectile moves
+		trail[i] = vfx.TrailPt{X: tx, Y: curY, Active: true}
+	}
+	vfx.DrawProjectileTrail(screen, trail, 0, trailClr)
+
+	// Projectile body at current position.
+	vfx.DrawProjectileBody(screen, float32(curX), float32(curY), angle, style, penetrate, scatter)
 }

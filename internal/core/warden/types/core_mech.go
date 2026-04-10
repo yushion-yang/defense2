@@ -18,6 +18,11 @@ func init() {
 // CoreState 机甲战灵的内部状态。
 type CoreState struct {
 	warden.WardenState // 嵌入公共基座
+
+	// 类型特定参数（从配置读取）
+	OrbitDist    float64 // 围绕敌群的轨道距离
+	AoeThreshold int     // 射程内敌人数 ≥ 此值时切换范围攻击
+	ExecHpPct    float64 // 目标血量 < 此百分比时触发秒杀
 }
 
 // Base 实现 Stateful 接口。
@@ -32,14 +37,18 @@ func (b *coreBehavior) Type() string { return "core" }
 // NOTE: Stats are currently hardcoded. See config/wardens/wardens.json for planned externalization.
 // Hardcoded: damage=20, attackInterval=1.2, range=160, moveSpeed=360, aoeRadius=60
 func (b *coreBehavior) Init(w *warden.Warden) interface{} {
+	p := w.Params
 	return &CoreState{
 		WardenState: warden.WardenState{
 			Damage:         20,
 			AttackInterval: 1.2,
 			Range:          160,
 			MoveSpeed:      360,
-			AoERadius:      60, // 范围攻击半径（4+敌人时触发）
+			AoERadius:      warden.ParamOr(p, "aoeRadius", 60), // 范围攻击半径（4+敌人时触发）
 		},
+		OrbitDist:    warden.ParamOr(p, "orbitDist", 110.0),
+		AoeThreshold: warden.ParamOrInt(p, "aoeThreshold", 4),
+		ExecHpPct:    warden.ParamOr(p, "execHpPct", 0.20),
 	}
 }
 
@@ -48,8 +57,8 @@ func (s *CoreState) DescParams(w *warden.Warden) map[string]string {
 	return map[string]string{
 		"attackInterval": fmt.Sprintf("%.1f", s.AttackInterval),
 		"damage":         fmt.Sprintf("%.0f", s.Damage),
-		"aoeThreshold":   fmt.Sprintf("%d", coreAoeThreshold),
-		"execHpPct":      fmt.Sprintf("%.0f", coreExecHpPct*100),
+		"aoeThreshold":   fmt.Sprintf("%d", s.AoeThreshold),
+		"execHpPct":      fmt.Sprintf("%.0f", s.ExecHpPct*100),
 	}
 }
 
@@ -70,7 +79,7 @@ func (b *coreBehavior) Tick(w *warden.Warden, ctx *warden.TickContext) {
 	// 1. 移动
 	cx, cy, count := warden.ComputeClusterCenter(ctx.Enemies)
 	if count > 0 {
-		s.MoveOrbit(cx, cy, coreOrbitDist, dt)
+		s.MoveOrbit(cx, cy, s.OrbitDist, dt)
 	} else {
 		s.Wander(dt)
 	}
@@ -81,7 +90,7 @@ func (b *coreBehavior) Tick(w *warden.Warden, ctx *warden.TickContext) {
 		if s.AttackTimer <= 0 {
 			interval := s.AttackInterval
 			inRange := countInRange(s, ctx)
-			if inRange < coreAoeThreshold {
+			if inRange < s.AoeThreshold {
 				interval *= 0.5 // 单体模式攻速翻倍
 			}
 			s.AttackTimer += interval
@@ -104,9 +113,9 @@ func countInRange(s *CoreState, ctx *warden.TickContext) int {
 	return n
 }
 
-// coreExecDmg 计算秒杀伤害：非 Boss 且血量 < 20% 时直接秒杀，否则正常伤害。
-func coreExecDmg(e *enemy.Enemy, baseDmg float64) float64 {
-	if !e.Boss && e.HP < e.MaxHP*coreExecHpPct {
+// coreExecDmg 计算秒杀伤害：非 Boss 且血量低于阈值时直接秒杀，否则正常伤害。
+func coreExecDmg(e *enemy.Enemy, baseDmg, execHpPct float64) float64 {
+	if !e.Boss && e.HP < e.MaxHP*execHpPct {
 		return e.HP // 秒杀：伤害 = 剩余血量
 	}
 	return baseDmg
@@ -127,11 +136,11 @@ func coreAttack(s *CoreState, ctx *warden.TickContext) {
 
 	inRange := countInRange(s, ctx)
 
-	if inRange >= coreAoeThreshold {
+	if inRange >= s.AoeThreshold {
 		// AoE 模式：对射程内每个敌人发射弹射物
 		ctx.Enemies.Each(func(e *enemy.Enemy) {
 			if math.Hypot(e.X-s.X, e.Y-s.Y) <= s.Range {
-				dmg := coreExecDmg(e, s.Damage)
+				dmg := coreExecDmg(e, s.Damage, s.ExecHpPct)
 				if ctx.Projectiles != nil {
 					ctx.Projectiles.Fire(s.X, s.Y, e.X, e.Y, dmg, speed, 4, e, "warden")
 				}
@@ -142,7 +151,7 @@ func coreAttack(s *CoreState, ctx *warden.TickContext) {
 		}
 	} else {
 		// 单体模式
-		dmg := coreExecDmg(nearest, s.Damage)
+		dmg := coreExecDmg(nearest, s.Damage, s.ExecHpPct)
 		if ctx.Projectiles != nil {
 			ctx.Projectiles.Fire(s.X, s.Y, nearest.X, nearest.Y, dmg, speed, 4, nearest, "warden")
 		}

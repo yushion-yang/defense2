@@ -5,13 +5,13 @@ import "fmt"
 // EncodeInput is a mirror of autoplay.GameState fields needed for encoding.
 // Avoids importing autoplay (which imports Ebitengine).
 type EncodeInput struct {
-	Gold      int
-	Lives     int
-	MaxLives  int // for bucket calculation
-	Wave      int
+	Gold       int
+	Lives      int
+	MaxLives   int // for bucket calculation
+	Wave       int
 	WaveActive bool
-	GameSpeed int     // 1, 2, or 3
-	MapPixelW float64 // map width in pixels, for path progress
+	GameSpeed  int     // 1, 2, or 3
+	MapPixelW  float64 // map width in pixels, for path progress
 
 	Enemies []EncodeEnemy
 	Towers  []EncodeTower
@@ -23,10 +23,10 @@ type EncodeInput struct {
 
 // EncodeEnemy holds the subset of enemy state needed for tokenization.
 type EncodeEnemy struct {
-	X, Y      float64
-	HP, MaxHP float64
-	Archetype string
-	IsSlowed, IsStunned, IsBurning, IsBleeding, IsRooted bool
+	X, Y                                       float64
+	HP, MaxHP                                  float64
+	Archetype                                  string
+	IsSlowed, IsStunned, IsBurning, IsBleeding bool
 }
 
 // EncodeTower holds the subset of tower state needed for tokenization.
@@ -99,9 +99,6 @@ func Encode(v *Vocab, input *EncodeInput) []int {
 		}
 		if e.IsBleeding {
 			emit("s_bleed")
-		}
-		if e.IsRooted {
-			emit("s_root")
 		}
 		emit("SEP")
 	}

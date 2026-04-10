@@ -92,6 +92,13 @@ func spawnFloatText(x, y float64, text string, clr color.RGBA, size, life float6
 	ftCursor = (ftCursor + 1) % maxFloatTexts
 }
 
+// ClearFloatTexts 清除所有存活浮动文本。
+func ClearFloatTexts() {
+	for i := range floatTexts {
+		floatTexts[i].Active = false
+	}
+}
+
 // UpdateFloatTexts 每帧更新所有浮动文本（上移 + 衰减）。
 func UpdateFloatTexts(dt float64) {
 	for i := range floatTexts {

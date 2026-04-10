@@ -144,7 +144,6 @@ func (p *Pool) Spawn(x, y, baseHP, baseSpeed float64, pathIndex int, archetype s
 				e.IsControlImmune = true
 				e.IsStunImmune = true
 				e.IsSlowImmune = true
-				e.IsRootImmune = true
 			}
 			if cfg.SlowImmune {
 				e.IsSlowImmune = true

@@ -35,6 +35,9 @@ type SkystrikeState struct {
 	HpTargets int     // 目标数
 	HpPercent float64 // 每目标伤害 = MaxHP × 此百分比
 
+	// 轨道距离
+	OrbitDist float64 // 围绕敌群的轨道距离
+
 	// 渲染用字段
 	Strikes  []StrikeVFX // 活跃的天降打击特效列表
 	LastMode int         // 上次使用的模式（1/2/3，渲染用）
@@ -65,9 +68,11 @@ func (b *SkystrikeBehavior) Type() string { return "skystrike" }
 // Init initializes skystrike warden behavior.
 // NOTE: Stats are currently hardcoded. See config/wardens/wardens.json for planned externalization.
 // Hardcoded: damage=10, attackInterval=1.5, range=140, moveSpeed=320,
-//            specialInterval=1, multiTargets=3, multiDmgRatio=2.0,
-//            burstHits=5, burstDmgRatio=1.0, hpTargets=3, hpPercent=0.10
+//
+//	specialInterval=1, multiTargets=3, multiDmgRatio=2.0,
+//	burstHits=5, burstDmgRatio=1.0, hpTargets=3, hpPercent=0.10
 func (b *SkystrikeBehavior) Init(w *warden.Warden) interface{} {
+	p := w.Params
 	return &SkystrikeState{
 		WardenState: warden.WardenState{
 			Damage:         10,
@@ -75,13 +80,14 @@ func (b *SkystrikeBehavior) Init(w *warden.Warden) interface{} {
 			Range:          140,
 			MoveSpeed:      320,
 		},
-		SpecialInterval: 1.0,
-		MultiTargets:    3,
-		MultiDmgRatio:   2.0, // 200% 攻击力
-		BurstHits:       5,
-		BurstDmgRatio:   1.0, // 100% 攻击力 x 5 段
-		HpTargets:       3,
-		HpPercent:       0.10, // 10% 最大生命值
+		SpecialInterval: warden.ParamOr(p, "specialInterval", 1.0),
+		MultiTargets:    warden.ParamOrInt(p, "multiTargets", 3),
+		MultiDmgRatio:   warden.ParamOr(p, "multiDmgRatio", 2.0), // 200% 攻击力
+		BurstHits:       warden.ParamOrInt(p, "burstHits", 5),
+		BurstDmgRatio:   warden.ParamOr(p, "burstDmgRatio", 1.0), // 100% 攻击力 x 5 段
+		HpTargets:       warden.ParamOrInt(p, "hpTargets", 3),
+		HpPercent:       warden.ParamOr(p, "hpPercent", 0.10), // 10% 最大生命值
+		OrbitDist:       warden.ParamOr(p, "orbitDist", 120.0),
 	}
 }
 
@@ -113,7 +119,7 @@ func (b *SkystrikeBehavior) Tick(w *warden.Warden, ctx *warden.TickContext) {
 	// 1. 移动
 	cx, cy, count := warden.ComputeClusterCenter(ctx.Enemies)
 	if count > 0 {
-		s.MoveOrbit(cx, cy, skystrikeOrbitDist, dt)
+		s.MoveOrbit(cx, cy, s.OrbitDist, dt)
 	} else {
 		s.Wander(dt)
 	}

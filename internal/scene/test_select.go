@@ -58,7 +58,7 @@ var testScenarios = []testScenario{
 	{"combo-stress", "压力测试", "stat-splash", "大量怪物高速刷出，性能极限", "combo", "map_test_large", 99999, 99999, 5, color.RGBA{R: 220, G: 100, B: 60, A: 255}, "stress", false},
 	{"combo-sandbox", "沙盒模式", "multishot", "无限金币，手动开波，自由测试", "combo", "map_test_large", 99999, 99999, 0, color.RGBA{R: 200, G: 180, B: 80, A: 255}, "none", true},
 
-	{"ability-zone", "区域控制塔", "slow", "减速/定身/范围DOT效果测试", "ability", "map_test_large", 9999, 999, 8, color.RGBA{R: 120, G: 160, B: 200, A: 255}, "mixed", false},
+	{"ability-zone", "区域控制塔", "slow", "减速/范围DOT效果测试", "ability", "map_test_large", 9999, 999, 8, color.RGBA{R: 120, G: 160, B: 200, A: 255}, "mixed", false},
 	{"ability-periodic", "周期释放塔", "thunder", "周期AoE/增益/变异效果测试", "ability", "map_test_large", 9999, 999, 8, color.RGBA{R: 180, G: 120, B: 180, A: 255}, "mixed", false},
 	{"ability-aura", "光环体系", "tower-aura", "多种光环叠加效果测试", "ability", "map_test_large", 9999, 999, 10, color.RGBA{R: 220, G: 180, B: 80, A: 255}, "mixed", false},
 	{"ability-silence", "沉默 vs Boss", "stun", "沉默塔对Boss伤害上限影响", "ability", "map_test_large", 99999, 999, 5, color.RGBA{R: 180, G: 100, B: 100, A: 255}, "boss-only", false},

@@ -56,7 +56,6 @@ type EnemyInfo struct {
 	IsStunned  bool
 	IsBurning  bool
 	IsBleeding bool
-	IsRooted   bool
 	IsHit      bool
 
 	BaseSpeed       float64

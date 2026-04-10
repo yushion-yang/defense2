@@ -39,6 +39,11 @@ func SpawnThunderBolt(x1, y1, x2, y2 float64, primary bool) {
 	})
 }
 
+// ClearThunderBolts 清除所有存活闪电效果。
+func ClearThunderBolts() {
+	ThunderBolts = ThunderBolts[:0]
+}
+
 // UpdateThunderBolts 每帧更新闪电效果，移除过期的。
 func UpdateThunderBolts(dt float64) {
 	n := 0

@@ -27,9 +27,17 @@ type PrinceState struct {
 	FireballRadius   float64 // 火球碰撞/痕迹半径
 
 	// 火焰痕迹
-	Trails        []FireTrail // 活跃的火焰痕迹列表
-	TrailDpsRatio float64     // 火焰痕迹 DPS = 攻击力 × 此比例
-	TrailDuration float64     // 火焰痕迹持续时间（秒）
+	Trails            []FireTrail // 活跃的火焰痕迹列表
+	TrailDpsRatio     float64     // 火焰痕迹 DPS = 攻击力 × 此比例
+	TrailDuration     float64     // 火焰痕迹持续时间（秒）
+	TrailTickInterval float64     // 火焰痕迹伤害判定周期（秒）
+
+	// 火球额外参数
+	FireballHpPct   float64 // 最大生命值百分比额外伤害（0.05 = 5%）
+	FireballLineLen float64 // 火球穿透飞行距离
+
+	// 轨道距离
+	OrbitDist float64 // 围绕敌群的轨道距离
 
 	// 活跃火球
 	Fireballs []Fireball
@@ -77,9 +85,11 @@ func (b *princeBehavior) Type() string { return "prince" }
 // Init initializes prince warden behavior.
 // NOTE: Stats are currently hardcoded. See config/wardens/wardens.json for planned externalization.
 // Hardcoded: damage=12, attackInterval=1.2, range=140, moveSpeed=350,
-//            fireballInterval=4, fireballDmgRatio=2.0, fireballSpeed=500,
-//            fireballRadius=20, trailDpsRatio=0.5, trailDuration=2.0
+//
+//	fireballInterval=4, fireballDmgRatio=2.0, fireballSpeed=500,
+//	fireballRadius=20, trailDpsRatio=0.5, trailDuration=2.0
 func (b *princeBehavior) Init(w *warden.Warden) interface{} {
+	p := w.Params
 	return &PrinceState{
 		WardenState: warden.WardenState{
 			Damage:         12,
@@ -87,12 +97,16 @@ func (b *princeBehavior) Init(w *warden.Warden) interface{} {
 			Range:          140,
 			MoveSpeed:      350,
 		},
-		FireballInterval: 4.0,
-		FireballDmgRatio: 2.0, // 火球伤害 = 200% 攻击力
-		FireballSpeed:    500,
-		FireballRadius:   20,
-		TrailDpsRatio:    0.5, // 痕迹 DPS = 50% 攻击力
-		TrailDuration:    2.0,
+		FireballInterval:  warden.ParamOr(p, "fireballInterval", 4.0),
+		FireballDmgRatio:  warden.ParamOr(p, "fireballDmgRatio", 2.0), // 火球伤害 = 200% 攻击力
+		FireballSpeed:     warden.ParamOr(p, "fireballSpeed", 500),
+		FireballRadius:    warden.ParamOr(p, "fireballRadius", 20),
+		TrailDpsRatio:     warden.ParamOr(p, "trailDpsRatio", 0.5), // 痕迹 DPS = 50% 攻击力
+		TrailDuration:     warden.ParamOr(p, "trailDuration", 2.0),
+		TrailTickInterval: warden.ParamOr(p, "trailTickInterval", 0.5),
+		FireballHpPct:     warden.ParamOr(p, "fireballHpPct", 0.05),
+		FireballLineLen:   warden.ParamOr(p, "fireballLineLen", 400.0),
+		OrbitDist:         warden.ParamOr(p, "orbitDist", 100.0),
 	}
 }
 
@@ -103,7 +117,7 @@ func (s *PrinceState) DescParams(w *warden.Warden) map[string]string {
 		"damage":           fmt.Sprintf("%.0f", s.Damage),
 		"fireballInterval": fmt.Sprintf("%.0f", s.FireballInterval),
 		"fireballDmg":      fmt.Sprintf("%.0f", s.Damage*s.FireballDmgRatio),
-		"fireballHpPct":    fmt.Sprintf("%.0f", fireballHpPct*100),
+		"fireballHpPct":    fmt.Sprintf("%.0f", s.FireballHpPct*100),
 		"trailDuration":    fmt.Sprintf("%.0f", s.TrailDuration),
 		"trailDps":         fmt.Sprintf("%.0f", s.Damage*s.TrailDpsRatio),
 	}
@@ -122,7 +136,7 @@ func (b *princeBehavior) Tick(w *warden.Warden, ctx *warden.TickContext) {
 	// 1. 移动（有敌人轨道运动，无敌人游荡）
 	cx, cy, count := warden.ComputeClusterCenter(ctx.Enemies)
 	if count > 0 {
-		s.MoveOrbit(cx, cy, princeOrbitDist, dt)
+		s.MoveOrbit(cx, cy, s.OrbitDist, dt)
 	} else {
 		s.Wander(dt)
 	}
@@ -175,7 +189,7 @@ func spawnFireball(s *PrinceState, ctx *warden.TickContext) {
 	})
 	for i := 0; i < 36; i++ {
 		a := float64(i) * math.Pi / 18
-		count := countOnLine(enemies, center.X, center.Y, a, fireballLineLen, s.FireballRadius)
+		count := countOnLine(enemies, center.X, center.Y, a, s.FireballLineLen, s.FireballRadius)
 		if count > bestCount {
 			bestCount = count
 			bestAngle = a
@@ -186,8 +200,8 @@ func spawnFireball(s *PrinceState, ctx *warden.TickContext) {
 	cosA, sinA := math.Cos(bestAngle), math.Sin(bestAngle)
 	startX := center.X - cosA*50 // 从中心后方 50px 出现
 	startY := center.Y - sinA*50
-	endX := center.X + cosA*fireballLineLen
-	endY := center.Y + sinA*fireballLineLen
+	endX := center.X + cosA*s.FireballLineLen
+	endY := center.Y + sinA*s.FireballLineLen
 
 	s.Fireballs = append(s.Fireballs, Fireball{
 		X: startX, Y: startY,
@@ -195,7 +209,7 @@ func spawnFireball(s *PrinceState, ctx *warden.TickContext) {
 		EndX: endX, EndY: endY,
 		Speed:    s.FireballSpeed,
 		Damage:   s.Damage * s.FireballDmgRatio,
-		HpPctDmg: fireballHpPct,
+		HpPctDmg: s.FireballHpPct,
 		Radius:   s.FireballRadius,
 		HitSet:   make(map[*enemy.Enemy]bool),
 	})
@@ -284,8 +298,8 @@ func tickTrails(s *PrinceState, ctx *warden.TickContext) {
 		}
 		t.TickTimer -= ctx.DT
 		if t.TickTimer <= 0 {
-			t.TickTimer += trailTickInterval
-			dmg := t.DPS * trailTickInterval
+			t.TickTimer += s.TrailTickInterval
+			dmg := t.DPS * s.TrailTickInterval
 			ctx.Enemies.Each(func(e *enemy.Enemy) {
 				if math.Hypot(e.X-t.X, e.Y-t.Y) < t.Radius {
 					warden.ApplyDamage(ctx, e, dmg, false)

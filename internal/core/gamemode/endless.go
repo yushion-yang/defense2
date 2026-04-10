@@ -2,7 +2,11 @@
 // 波次永不停止，玩家坚持越久越好。基于战役模式扩展。
 package gamemode
 
-import "fmt"
+import (
+	"fmt"
+
+	"defense2/internal/config"
+)
 
 // EndlessMode 无尽模式。
 type EndlessMode struct {
@@ -37,7 +41,8 @@ func (m *EndlessMode) OnWaveCleared(wave int, ctx *Context) WaveClearResult {
 	bonus := econ.WaveBonus.Calc(wave)
 	perfect := econ.PerfectBonus.Calc(wave)
 	msg := fmt.Sprintf("Wave %d clear! +$%d", wave, bonus)
-	if wave%5 == 0 {
+	bossN := config.GlobalBalance().Spawner.BossEveryNWaves
+	if bossN > 0 && wave%bossN == 0 {
 		msg = fmt.Sprintf("Wave %d clear! Boss 波! +$%d", wave, bonus)
 	}
 	return WaveClearResult{

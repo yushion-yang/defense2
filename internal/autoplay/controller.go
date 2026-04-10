@@ -242,7 +242,6 @@ func snapshotToGameState(snap scene.AutoPlaySnapshot) *GameState {
 			Active: e.Active, Dying: e.Dying,
 			IsSlowed: e.IsSlowed, IsStunned: e.IsStunned,
 			IsBurning: e.IsBurning, IsBleeding: e.IsBleeding,
-			IsRooted:  e.IsRooted,
 			IsHit:     e.IsHit,
 			BaseSpeed: e.BaseSpeed, DamageAmplify: e.DamageAmplify,
 			AbilitySilenced: e.AbilitySilenced, PhaseActive: e.PhaseActive,

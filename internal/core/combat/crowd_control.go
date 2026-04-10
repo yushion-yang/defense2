@@ -1,5 +1,5 @@
 // crowd_control.go — 控制效果（CC）韧性系统。
-// 统一处理眩晕、减速、定身等控制效果的施加，支持韧性减免和免疫检查。
+// 统一处理眩晕、减速等控制效果的施加，支持韧性减免和免疫检查。
 package combat
 
 import (
@@ -85,5 +85,4 @@ func ApplyControlImmunity(e *enemy.Enemy, duration float64) {
 	e.SlowTimer = 0
 	e.SlowFactor = 1
 	e.Speed = e.BaseSpeed
-	e.RootTimer = 0
 }

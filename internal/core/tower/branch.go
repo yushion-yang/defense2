@@ -2,6 +2,8 @@
 // 每座塔可一次性选择一个分支，应用对应的属性加成。
 package tower
 
+import "defense2/internal/config"
+
 // BranchConfig 分支特化配置。
 type BranchConfig struct {
 	RangeBonus        float64 // 射程加成倍率
@@ -16,9 +18,6 @@ type BranchConfig struct {
 	RangeMultiplier   float64 // 攻击方式切换时的射程乘数
 	DamageMultiplier  float64 // 攻击方式切换时的伤害乘数
 }
-
-// defaultFireRateFloor 攻速下限默认值。
-const defaultFireRateFloor = 0.18
 
 // ApplyBranch 对塔应用分支特化，每座塔只能特化一次。
 // 已特化的塔返回 false，成功返回 true。
@@ -43,7 +42,10 @@ func ApplyBranch(t *Tower, branchKey string, cfg BranchConfig) bool {
 		interval -= cfg.FireRateBonus
 		floor := cfg.FireRateFloor
 		if floor <= 0 {
-			floor = defaultFireRateFloor
+			floor = config.GlobalBalance().Tower.FireRateFloor
+		}
+		if floor <= 0 {
+			floor = 0.18 // ultimate fallback
 		}
 		if interval < floor {
 			interval = floor

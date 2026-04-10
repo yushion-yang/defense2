@@ -16,8 +16,8 @@ type ImpactVFX struct {
 	Life    float64
 	MaxLife float64
 	Active  bool
-	Color   color.RGBA     // 扩散环颜色
-	Radius  float32        // 最大扩散半径
+	Color   color.RGBA // 扩散环颜色
+	Radius  float32    // 最大扩散半径
 }
 
 const maxImpactVFX = 16
@@ -57,6 +57,13 @@ func spawnImpact(x, y float64, clr color.RGBA, radius float32, life float64) {
 	v.Radius = radius
 }
 
+// ClearImpactVFX 清除所有存活命中特效。
+func ClearImpactVFX() {
+	for i := range impactPool {
+		impactPool[i].Active = false
+	}
+}
+
 // UpdateImpactVFX 每帧更新所有命中特效。
 func UpdateImpactVFX(dt float64) {
 	for i := range impactPool {
@@ -79,7 +86,7 @@ func DrawImpactVFX(screen *ebiten.Image) {
 			continue
 		}
 		alpha := v.Life / v.MaxLife // 1→0 渐隐
-		progress := 1.0 - alpha    // 0→1 扩展
+		progress := 1.0 - alpha     // 0→1 扩展
 
 		cx := float32(v.X)
 		cy := float32(v.Y)

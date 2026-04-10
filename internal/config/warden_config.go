@@ -34,6 +34,33 @@ type WardenConfig struct {
 	// 成长
 	GrowthOnKill      float64 `json:"growthOnKill"`
 	GrowthOnWaveClear float64 `json:"growthOnWaveClear"`
+
+	// 战灵专属参数（fireballInterval/aoeThreshold/chainRange 等）
+	Params map[string]float64 `json:"params"`
+}
+
+// globalWardenConfigs 缓存的战灵配置（由 LoadAndCacheWardenConfigs 填充）。
+var globalWardenConfigs map[string]WardenConfig
+
+// GlobalWardenConfig 返回指定类型的战灵配置，未找到时返回 nil。
+func GlobalWardenConfig(key string) *WardenConfig {
+	if globalWardenConfigs == nil {
+		return nil
+	}
+	if wc, ok := globalWardenConfigs[key]; ok {
+		return &wc
+	}
+	return nil
+}
+
+// LoadAndCacheWardenConfigs 加载战灵配置并缓存到全局变量。
+func LoadAndCacheWardenConfigs() error {
+	cfgs, err := LoadWardenConfigs()
+	if err != nil {
+		return err
+	}
+	globalWardenConfigs = cfgs
+	return nil
 }
 
 // LoadWardenConfigs 加载所有战灵配置。

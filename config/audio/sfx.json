@@ -390,7 +390,7 @@
     {
       "id": "cc",
       "name": "控制效果音效",
-      "description": "减速/冰冻/眩晕/灼烧/定身等控制效果触发时的音效。通过 CCCallback 管线触发。",
+      "description": "减速/冰冻/眩晕/灼烧等控制效果触发时的音效。通过 CCCallback 管线触发。",
       "callbackSystem": {
         "type": "CCCallback func(x, y float64, ccType string)",
         "source": "combat/attack.go → AttackContext.OnCC",
@@ -432,15 +432,6 @@
           "volumeCategory": "VolHit",
           "throttleMs": 200,
           "trigger": { "ccType": "burn", "condition": "enemy was not already burning" }
-        },
-        {
-          "file": "root-apply.wav",
-          "constant": "SFXRootApply",
-          "name": "定身施加",
-          "description": "对敌人施加定身效果",
-          "volumeCategory": "VolHit",
-          "throttleMs": 150,
-          "trigger": { "ccType": "root" }
         },
         {
           "file": "freeze-chain.wav",

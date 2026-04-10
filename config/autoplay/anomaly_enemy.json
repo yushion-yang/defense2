@@ -9,11 +9,11 @@
       "severity": "HIGH",
       "category": "敌人系统",
       "test": "敌人是否卡在原地不动",
-      "verify": "连续 60 帧位置变化 < 0.1px 且速度 > 0（非眩晕/定身）",
+      "verify": "连续 60 帧位置变化 < 0.1px 且速度 > 0（非眩晕）",
       "how": "每帧记录每个活敌人的位置，与上一帧比较；连续静止计数达阈值时报告",
       "threshold": "stuckThreshold = 60 帧（1 秒）",
       "dedupe": "同一敌人只报一次",
-      "rootCause": "路径系统 bug / 定身未解除 / 移动函数未调用"
+      "rootCause": "路径系统 bug / 移动函数未调用"
     },
     {
       "id": "lives_drop",

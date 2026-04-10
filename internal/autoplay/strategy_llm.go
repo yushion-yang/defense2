@@ -234,7 +234,6 @@ func (s *LLMStrategy) buildEncodeInput(state *GameState) *tokenizer.EncodeInput 
 			IsStunned:  e.IsStunned,
 			IsBurning:  e.IsBurning,
 			IsBleeding: e.IsBleeding,
-			IsRooted:   e.IsRooted,
 		})
 	}
 

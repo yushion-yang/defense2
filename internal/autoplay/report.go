@@ -13,14 +13,14 @@ import (
 
 // CoverageReport 覆盖率汇总报告。
 type CoverageReport struct {
-	TotalSessions int                `json:"total_sessions"`
-	Victories     int                `json:"victories"`
-	Defeats       int                `json:"defeats"`
-	Timeouts      int                `json:"timeouts"`
-	CoverageGaps  map[string][]string `json:"coverage_gaps"`
-	AnomalySummary map[string]int     `json:"anomaly_summary"`
-	TowerUsage    map[string]int     `json:"tower_usage"`
-	ArchetypesSeen map[string]int    `json:"archetypes_seen"`
+	TotalSessions  int                 `json:"total_sessions"`
+	Victories      int                 `json:"victories"`
+	Defeats        int                 `json:"defeats"`
+	Timeouts       int                 `json:"timeouts"`
+	CoverageGaps   map[string][]string `json:"coverage_gaps"`
+	AnomalySummary map[string]int      `json:"anomaly_summary"`
+	TowerUsage     map[string]int      `json:"tower_usage"`
+	ArchetypesSeen map[string]int      `json:"archetypes_seen"`
 }
 
 // GenerateReport 从多个对局记录生成汇总报告。
@@ -122,9 +122,9 @@ func GenerateReport(records []*SessionRecord) *CoverageReport {
 	r.CoverageGaps["damage_types"] = findGaps(allDmgTypes, damageTypesSeen)
 
 	allBuffTypes := []string{
-		"slow", "stun", "knockup", "root", "silence", "disarm",
+		"slow", "stun", "knockup", "silence", "disarm",
 		"speedUp", "damageUp", "damageDown", "fireRateUp",
-		"invincible", "damageImmune", "controlImmune", "slowImmune", "stunImmune", "rootImmune", "untargetable",
+		"invincible", "damageImmune", "controlImmune", "slowImmune", "stunImmune", "untargetable",
 		"dot", "tenacity",
 	}
 	r.CoverageGaps["buff_types"] = findGaps(allBuffTypes, buffTypesSeen)
@@ -142,7 +142,7 @@ func GenerateReport(records []*SessionRecord) *CoverageReport {
 	allIModes := []string{"idle", "buildMenu", "buildPlace", "towerSel", "spawnMenu", "spawnPlace", "paused", "wardenSelect"}
 	r.CoverageGaps["interaction_modes"] = findGaps(allIModes, interactionModesSeen)
 
-	allCC := []string{"slow", "stun", "root"}
+	allCC := []string{"slow", "stun"}
 	r.CoverageGaps["cc_types"] = findGaps(allCC, ccSeen)
 
 	return r

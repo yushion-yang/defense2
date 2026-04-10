@@ -12,16 +12,17 @@ import (
 
 // Warden 战灵实体。
 type Warden struct {
-	ID                int     // 唯一标识
-	Name              string  // 显示名称
-	Type              string  // 类型标识（如 "envoy"、"chain"、"skystrike"）
-	SelfStrength      float64 // 自身积累强度（来自击杀/通波）
-	PerceivedStrength float64 // 感知强度 = 自身 + 塔贡献
-	PeakStrength      float64 // 历史最高强度（棘轮，只升不降）
-	Active            bool    // 是否已激活
-	Level             int     // 当前等级（1-5，由强度阈值决定）
-	GrowthOnKill      float64 // 每次击杀增加的强度（从配置读取）
-	GrowthOnWaveClear float64 // 每次通波增加的强度（从配置读取）
+	ID                int                // 唯一标识
+	Name              string             // 显示名称
+	Type              string             // 类型标识（如 "envoy"、"chain"、"skystrike"）
+	SelfStrength      float64            // 自身积累强度（来自击杀/通波）
+	PerceivedStrength float64            // 感知强度 = 自身 + 塔贡献
+	PeakStrength      float64            // 历史最高强度（棘轮，只升不降）
+	Active            bool               // 是否已激活
+	Level             int                // 当前等级（1-5，由强度阈值决定）
+	GrowthOnKill      float64            // 每次击杀增加的强度（从配置读取）
+	GrowthOnWaveClear float64            // 每次通波增加的强度（从配置读取）
+	Params            map[string]float64 // 类型专属参数（从 JSON config 加载）
 	// 类型特定状态由 Behavior.Tick 内部管理
 	State interface{} // 类型特定内部状态（由行为实现持有）
 }
@@ -69,8 +70,35 @@ func NewWarden(id int, name, typ string) *Warden {
 		GrowthOnKill:      bal.Warden.DefaultGrowthOnKill,
 		GrowthOnWaveClear: bal.Warden.DefaultGrowthOnWaveClear,
 	}
+	// 从全局缓存加载战灵配置（Params + 基础属性 + 成长参数）
+	if wc := config.GlobalWardenConfig(typ); wc != nil {
+		w.Params = wc.Params
+	}
 	if b, ok := behaviors[typ]; ok {
 		w.State = b.Init(w)
+	}
+	// 用 JSON 配置覆盖 Init 硬编码的基础属性（有值时才覆盖）
+	if wc := config.GlobalWardenConfig(typ); wc != nil {
+		if base := w.BaseState(); base != nil {
+			if wc.Damage > 0 {
+				base.Damage = wc.Damage
+			}
+			if wc.AttackInterval > 0 {
+				base.AttackInterval = wc.AttackInterval
+			}
+			if wc.Range > 0 {
+				base.Range = wc.Range
+			}
+			if wc.MoveSpeed > 0 {
+				base.MoveSpeed = wc.MoveSpeed
+			}
+		}
+		if wc.GrowthOnKill > 0 {
+			w.GrowthOnKill = wc.GrowthOnKill
+		}
+		if wc.GrowthOnWaveClear > 0 {
+			w.GrowthOnWaveClear = wc.GrowthOnWaveClear
+		}
 	}
 	return w
 }
@@ -90,6 +118,27 @@ func (w *Warden) DescParams() map[string]string {
 		return dp.DescParams(w)
 	}
 	return nil
+}
+
+// ParamOr 从参数 map 中读取指定 key 的值，不存在时返回 fallback。
+// 供各战灵类型的 Init() 方法将硬编码常量替换为可配置值。
+func ParamOr(params map[string]float64, key string, fallback float64) float64 {
+	if params != nil {
+		if v, ok := params[key]; ok {
+			return v
+		}
+	}
+	return fallback
+}
+
+// ParamOrInt 从参数 map 中读取指定 key 并转为 int，不存在时返回 fallback。
+func ParamOrInt(params map[string]float64, key string, fallback int) int {
+	if params != nil {
+		if v, ok := params[key]; ok {
+			return int(v)
+		}
+	}
+	return fallback
 }
 
 // CalcStrength 根据塔池计算战灵感知强度。

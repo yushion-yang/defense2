@@ -31,14 +31,14 @@ type Particle struct {
 // ParticleConfig describes how to spawn a single particle.
 type ParticleConfig struct {
 	X, Y             float64
-	SpreadX, SpreadY float64  // random position spread
-	Speed, SpeedVar  float64  // speed + random variance
-	Angle, AngleVar  float64  // direction + random variance (radians)
-	Life, LifeVar    float64  // lifetime + random variance
-	Size, SizeEnd    float64  // start/end size (lerp over life)
+	SpreadX, SpreadY float64    // random position spread
+	Speed, SpeedVar  float64    // speed + random variance
+	Angle, AngleVar  float64    // direction + random variance (radians)
+	Life, LifeVar    float64    // lifetime + random variance
+	Size, SizeEnd    float64    // start/end size (lerp over life)
 	Color            color.RGBA // start colour
-	EndAlpha         float64  // alpha at death (0-1)
-	Gravity          float64  // Y acceleration
+	EndAlpha         float64    // alpha at death (0-1)
+	Gravity          float64    // Y acceleration
 }
 
 // Pool manages a fixed-size ring buffer of particles.
@@ -188,6 +188,14 @@ func (p *Pool) Draw(screen *ebiten.Image) {
 	screen.DrawTriangles(p.vertices, p.indices, getWhitePixel(), &ebiten.DrawTrianglesOptions{
 		Blend: ebiten.BlendSourceOver,
 	})
+}
+
+// Clear deactivates all particles immediately.
+func (p *Pool) Clear() {
+	for i := range p.particles {
+		p.particles[i].Active = false
+	}
+	p.active = 0
 }
 
 // ActiveCount returns the number of currently active (alive) particles.

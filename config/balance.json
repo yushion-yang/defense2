@@ -14,7 +14,10 @@
     "bossEntranceDelay": 3.0,
     "buffChance": 0.3,
     "buffMinWaves": [6, 16, 26],
-    "buffMaxBuffs": [1, 1, 2]
+    "buffMaxBuffs": [1, 1, 2],
+    "spawnBaseInterval": 0.92,
+    "spawnMinInterval": 0.18,
+    "spawnDecayPerWave": 0.03
   },
   "economy": {
     "killReward": 15,
@@ -33,14 +36,16 @@
     "scatterSpreadAngle": 60,
     "radialBaseShots": 3,
     "radialRangeMult": 1.2,
-    "wideBeamRangeMult": 3
+    "wideBeamRangeMult": 3,
+    "dotTickIntervals": { "burn": 0.5, "bleed": 0.5, "poison": 1.0 }
   },
   "tower": {
     "strengthBuyCost": 10,
     "strengthBuyAmount": 10,
     "wavesPerUnlock": 2,
     "choicesPerUnlock": 3,
-    "attackSpeedFloor": 0.1
+    "attackSpeedFloor": 0.1,
+    "fireRateFloor": 0.18
   },
   "chain": {
     "distance": 150,
@@ -73,6 +78,14 @@
     "initialStrength": 100,
     "defaultGrowthOnKill": 2,
     "defaultGrowthOnWaveClear": 5
+  },
+  "buffs": {
+    "berserk": { "threshold": 0.5, "speedScale": 1.5 },
+    "regen": { "hpRatio": 0.02 },
+    "healAura": { "power": 0.05, "radius": 80, "interval": 3.0 },
+    "speedAura": { "radius": 80, "speedUp": 0.2 },
+    "damageReduce": { "ratio": 0.3 },
+    "deathSplit": { "count": 2, "hpRatio": 0.3, "speedScale": 1.4 }
   },
   "gameplay": {
     "starRatingThreshold": 0.8,

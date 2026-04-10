@@ -234,8 +234,6 @@ func (b *Builder) Build() *Sim {
 		case "bleed":
 			e.BleedTimer = eff.duration
 			e.BleedDPS = eff.dps
-		case "root":
-			e.RootTimer = eff.duration // root 已移除，仅设 timer 兼容旧测试
 		}
 	}
 

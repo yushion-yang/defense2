@@ -23,7 +23,7 @@ type Telemetry struct {
 	DamageTypes map[string]int // "physical", "magic", "true", "pure"
 
 	// Buff 类型（已应用的）
-	BuffTypesApplied map[string]int // "slow", "stun", "root", "shield", "dot", etc.
+	BuffTypesApplied map[string]int // "slow", "stun", "shield", "dot", etc.
 
 	// Buff 堆叠模式（已使用的）
 	BuffStackModes map[string]int // "strongest", "additive", "multiplicative", "override", "independent", "independentPerSource"
@@ -38,7 +38,7 @@ type Telemetry struct {
 	InteractionModes map[string]int // "idle", "buildMenu", "buildPlace", etc.
 
 	// CC 类型（已施加的）
-	CCApplied map[string]int // "slow", "stun", "root", "silence", "knockup"
+	CCApplied map[string]int // "slow", "stun", "silence", "knockup"
 
 	// 能力触发
 	AbilityTriggered map[string]int // "bounce", "splash", "burn", etc.

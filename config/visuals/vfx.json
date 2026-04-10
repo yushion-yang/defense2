@@ -393,6 +393,12 @@
           "name": "GoldBeam",
           "label": "金灵光束",
           "description": "金灵施 buff 时的金色光束 + 目标闪光"
+        },
+        {
+          "id": "movementTrail",
+          "name": "MovementTrail",
+          "label": "移动拖尾",
+          "description": "战灵飞行时的半透明渐隐拖尾轨迹"
         }
       ]
     },
@@ -442,6 +448,12 @@
           "name": "PurgeGlow",
           "label": "净化微光",
           "description": "净化免疫期白色脉冲微光环"
+        },
+        {
+          "id": "immunityRing",
+          "name": "ImmunityRing",
+          "label": "免疫标识环",
+          "description": "免疫控制/减速的敌人脚下常驻圆环标识"
         },
         {
           "id": "blockFlash",
@@ -504,12 +516,6 @@
           "description": "紫色连接线+流动粒子从塔到怪物"
         },
         {
-          "id": "rootGround",
-          "name": "RootGround",
-          "label": "定身地面",
-          "description": "定身时脚下的棕色地面标记"
-        },
-        {
           "id": "slowOverlay",
           "name": "SlowOverlay",
           "label": "减速蓝框",
@@ -535,10 +541,10 @@
           "description": "有待选能力时塔上方的脉冲金色菱形"
         },
         {
-          "id": "placementPreview",
-          "name": "PlacementPreview",
-          "label": "放置预览",
-          "description": "放置塔时的绿色/红色范围圈"
+          "id": "selectionRing",
+          "name": "SelectionRing",
+          "label": "选中环",
+          "description": "选中塔时的内圈选中环 + 外圈射程环"
         }
       ]
     },
