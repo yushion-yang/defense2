@@ -5,59 +5,94 @@
       <stop offset="50%" stop-color="#4a1572"/>
       <stop offset="100%" stop-color="#3b0e5e"/>
     </linearGradient>
-    <radialGradient id="domeMetal" cx="50%" cy="40%" r="50%">
+    <linearGradient id="barrelMetal" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#9333ea"/>
+      <stop offset="50%" stop-color="#7c3aed"/>
+      <stop offset="100%" stop-color="#6b21a8"/>
+    </linearGradient>
+    <radialGradient id="drumGrad" cx="50%" cy="45%" r="50%">
       <stop offset="0%" stop-color="#7c3aed"/>
-      <stop offset="50%" stop-color="#581c87"/>
-      <stop offset="100%" stop-color="#3b0e5e"/>
-    </radialGradient>
-    <radialGradient id="coreGlow" cx="50%" cy="50%" r="50%">
-      <stop offset="0%" stop-color="#c084fc" stop-opacity="0.6"/>
-      <stop offset="60%" stop-color="#7c3aed" stop-opacity="0.25"/>
-      <stop offset="100%" stop-color="#581c87" stop-opacity="0"/>
-    </radialGradient>
-    <radialGradient id="singularity" cx="50%" cy="50%" r="50%">
-      <stop offset="0%" stop-color="#faf5ff" stop-opacity="0.9"/>
-      <stop offset="40%" stop-color="#c084fc" stop-opacity="0.6"/>
-      <stop offset="100%" stop-color="#7c3aed" stop-opacity="0"/>
+      <stop offset="60%" stop-color="#6b21a8"/>
+      <stop offset="100%" stop-color="#4a1572"/>
     </radialGradient>
     <radialGradient id="ambientGlow" cx="50%" cy="50%" r="50%">
-      <stop offset="0%" stop-color="#7c3aed" stop-opacity="0.12"/>
+      <stop offset="0%" stop-color="#7c3aed" stop-opacity="0.1"/>
       <stop offset="100%" stop-color="#581c87" stop-opacity="0"/>
     </radialGradient>
   </defs>
-  <!-- Nova: idle-0 — singularity core steady, channels dim -->
-  <circle cx="64" cy="68" r="52" fill="url(#ambientGlow)"/>
-  <!-- Octagonal base platform -->
-  <polygon points="64,38 86,44 96,62 96,82 86,96 64,100 42,96 32,82 32,62 42,44" fill="url(#basePlate)" stroke="#7c3aed" stroke-width="1"/>
-  <polygon points="64,42 83,47 92,63 92,80 83,93 64,97 45,93 36,80 36,63 45,47" fill="none" stroke="#581c87" stroke-width="0.6" opacity="0.5"/>
-  <!-- 8 radial energy channels (from center outward) -->
-  <line x1="64" y1="68" x2="64" y2="40" stroke="#c084fc" stroke-width="1.5" opacity="0.3"/>
-  <line x1="64" y1="68" x2="84" y2="48" stroke="#c084fc" stroke-width="1.5" opacity="0.3"/>
-  <line x1="64" y1="68" x2="94" y2="68" stroke="#c084fc" stroke-width="1.5" opacity="0.3"/>
-  <line x1="64" y1="68" x2="84" y2="88" stroke="#c084fc" stroke-width="1.5" opacity="0.3"/>
-  <line x1="64" y1="68" x2="64" y2="98" stroke="#c084fc" stroke-width="1.5" opacity="0.3"/>
-  <line x1="64" y1="68" x2="44" y2="88" stroke="#c084fc" stroke-width="1.5" opacity="0.3"/>
-  <line x1="64" y1="68" x2="34" y2="68" stroke="#c084fc" stroke-width="1.5" opacity="0.3"/>
-  <line x1="64" y1="68" x2="44" y2="48" stroke="#c084fc" stroke-width="1.5" opacity="0.3"/>
-  <!-- Channel end nodes -->
-  <circle cx="64" cy="40" r="2" fill="#c084fc" opacity="0.4"/>
-  <circle cx="84" cy="48" r="2" fill="#c084fc" opacity="0.4"/>
-  <circle cx="94" cy="68" r="2" fill="#c084fc" opacity="0.4"/>
-  <circle cx="84" cy="88" r="2" fill="#c084fc" opacity="0.4"/>
-  <circle cx="64" cy="98" r="2" fill="#c084fc" opacity="0.4"/>
-  <circle cx="44" cy="88" r="2" fill="#c084fc" opacity="0.4"/>
-  <circle cx="34" cy="68" r="2" fill="#c084fc" opacity="0.4"/>
-  <circle cx="44" cy="48" r="2" fill="#c084fc" opacity="0.4"/>
-  <!-- Dome/sphere emitter -->
-  <circle cx="64" cy="64" r="18" fill="url(#domeMetal)" stroke="#7c3aed" stroke-width="1"/>
-  <circle cx="64" cy="64" r="14" fill="none" stroke="#581c87" stroke-width="0.6" opacity="0.6"/>
-  <!-- Dome highlight -->
-  <ellipse cx="60" cy="58" rx="6" ry="4" fill="#c084fc" opacity="0.1"/>
-  <!-- Inner ring -->
-  <circle cx="64" cy="64" r="10" fill="#3b0e5e" stroke="#7c3aed" stroke-width="0.5"/>
-  <!-- Singularity core -->
-  <circle cx="64" cy="64" r="8" fill="url(#coreGlow)"/>
-  <circle cx="64" cy="64" r="5" fill="url(#singularity)"/>
-  <circle cx="64" cy="64" r="3" fill="#c084fc" opacity="0.7"/>
-  <circle cx="64" cy="64" r="1.5" fill="#faf5ff" opacity="0.85"/>
+  <!-- Nova: idle-0 — 6-barrel rotary launcher at rest, LEDs dim -->
+  <!-- Ambient ground glow -->
+  <circle cx="64" cy="72" r="48" fill="url(#ambientGlow)"/>
+  <!-- Hexagonal base platform -->
+  <polygon points="64,38 95,53 95,83 64,98 33,83 33,53" fill="url(#basePlate)" stroke="#7c3aed" stroke-width="1.2"/>
+  <polygon points="64,42 91,55 91,81 64,94 37,81 37,55" fill="none" stroke="#581c87" stroke-width="0.6" opacity="0.5"/>
+  <!-- Base circuit lines -->
+  <line x1="37" y1="55" x2="50" y2="63" stroke="#7c3aed" stroke-width="0.5" opacity="0.3"/>
+  <line x1="91" y1="55" x2="78" y2="63" stroke="#7c3aed" stroke-width="0.5" opacity="0.3"/>
+  <line x1="64" y1="94" x2="64" y2="82" stroke="#7c3aed" stroke-width="0.5" opacity="0.3"/>
+  <!-- Turret ring (rotating platform) -->
+  <circle cx="64" cy="66" r="26" fill="none" stroke="#6b21a8" stroke-width="2.5"/>
+  <circle cx="64" cy="66" r="24" fill="none" stroke="#4a1572" stroke-width="1" opacity="0.6"/>
+  <circle cx="64" cy="66" r="28" fill="none" stroke="#7c3aed" stroke-width="0.5" opacity="0.3"/>
+  <!-- Barrel 1 — top (0 deg, pointing up) -->
+  <rect x="61" y="37" width="6" height="16" rx="1.5" fill="url(#barrelMetal)" stroke="#9333ea" stroke-width="0.5"/>
+  <rect x="62.5" y="37" width="3" height="4" rx="1" fill="#4a1572" opacity="0.7"/>
+  <ellipse cx="64" cy="37" rx="3" ry="1.5" fill="#3b0e5e" stroke="#7c3aed" stroke-width="0.4"/>
+  <!-- Coil ring on barrel 1 -->
+  <rect x="60" y="46" width="8" height="2" rx="0.5" fill="#9333ea" opacity="0.5"/>
+  <!-- Barrel 2 — top-right (60 deg) -->
+  <g transform="rotate(60, 64, 66)">
+    <rect x="61" y="37" width="6" height="16" rx="1.5" fill="url(#barrelMetal)" stroke="#9333ea" stroke-width="0.5"/>
+    <rect x="62.5" y="37" width="3" height="4" rx="1" fill="#4a1572" opacity="0.7"/>
+    <ellipse cx="64" cy="37" rx="3" ry="1.5" fill="#3b0e5e" stroke="#7c3aed" stroke-width="0.4"/>
+    <rect x="60" y="46" width="8" height="2" rx="0.5" fill="#9333ea" opacity="0.5"/>
+  </g>
+  <!-- Barrel 3 — bottom-right (120 deg) -->
+  <g transform="rotate(120, 64, 66)">
+    <rect x="61" y="37" width="6" height="16" rx="1.5" fill="url(#barrelMetal)" stroke="#9333ea" stroke-width="0.5"/>
+    <rect x="62.5" y="37" width="3" height="4" rx="1" fill="#4a1572" opacity="0.7"/>
+    <ellipse cx="64" cy="37" rx="3" ry="1.5" fill="#3b0e5e" stroke="#7c3aed" stroke-width="0.4"/>
+    <rect x="60" y="46" width="8" height="2" rx="0.5" fill="#9333ea" opacity="0.5"/>
+  </g>
+  <!-- Barrel 4 — bottom (180 deg) -->
+  <g transform="rotate(180, 64, 66)">
+    <rect x="61" y="37" width="6" height="16" rx="1.5" fill="url(#barrelMetal)" stroke="#9333ea" stroke-width="0.5"/>
+    <rect x="62.5" y="37" width="3" height="4" rx="1" fill="#4a1572" opacity="0.7"/>
+    <ellipse cx="64" cy="37" rx="3" ry="1.5" fill="#3b0e5e" stroke="#7c3aed" stroke-width="0.4"/>
+    <rect x="60" y="46" width="8" height="2" rx="0.5" fill="#9333ea" opacity="0.5"/>
+  </g>
+  <!-- Barrel 5 — bottom-left (240 deg) -->
+  <g transform="rotate(240, 64, 66)">
+    <rect x="61" y="37" width="6" height="16" rx="1.5" fill="url(#barrelMetal)" stroke="#9333ea" stroke-width="0.5"/>
+    <rect x="62.5" y="37" width="3" height="4" rx="1" fill="#4a1572" opacity="0.7"/>
+    <ellipse cx="64" cy="37" rx="3" ry="1.5" fill="#3b0e5e" stroke="#7c3aed" stroke-width="0.4"/>
+    <rect x="60" y="46" width="8" height="2" rx="0.5" fill="#9333ea" opacity="0.5"/>
+  </g>
+  <!-- Barrel 6 — top-left (300 deg) -->
+  <g transform="rotate(300, 64, 66)">
+    <rect x="61" y="37" width="6" height="16" rx="1.5" fill="url(#barrelMetal)" stroke="#9333ea" stroke-width="0.5"/>
+    <rect x="62.5" y="37" width="3" height="4" rx="1" fill="#4a1572" opacity="0.7"/>
+    <ellipse cx="64" cy="37" rx="3" ry="1.5" fill="#3b0e5e" stroke="#7c3aed" stroke-width="0.4"/>
+    <rect x="60" y="46" width="8" height="2" rx="0.5" fill="#9333ea" opacity="0.5"/>
+  </g>
+  <!-- Targeting sensor LEDs between barrels (dim) -->
+  <circle cx="64" cy="41" r="1" fill="#a855f7" opacity="0.25"/>
+  <circle cx="85" cy="54" r="1" fill="#a855f7" opacity="0.25"/>
+  <circle cx="85" cy="78" r="1" fill="#a855f7" opacity="0.25"/>
+  <circle cx="64" cy="91" r="1" fill="#a855f7" opacity="0.25"/>
+  <circle cx="43" cy="78" r="1" fill="#a855f7" opacity="0.25"/>
+  <circle cx="43" cy="54" r="1" fill="#a855f7" opacity="0.25"/>
+  <!-- Central ammo drum -->
+  <circle cx="64" cy="66" r="12" fill="url(#drumGrad)" stroke="#7c3aed" stroke-width="1"/>
+  <circle cx="64" cy="66" r="9" fill="none" stroke="#581c87" stroke-width="0.6" opacity="0.6"/>
+  <!-- Drum panel lines (hexagonal pattern) -->
+  <line x1="64" y1="54" x2="64" y2="57" stroke="#4a1572" stroke-width="0.5" opacity="0.5"/>
+  <line x1="74" y1="60" x2="71" y2="61.5" stroke="#4a1572" stroke-width="0.5" opacity="0.5"/>
+  <line x1="74" y1="72" x2="71" y2="70.5" stroke="#4a1572" stroke-width="0.5" opacity="0.5"/>
+  <line x1="64" y1="78" x2="64" y2="75" stroke="#4a1572" stroke-width="0.5" opacity="0.5"/>
+  <line x1="54" y1="72" x2="57" y2="70.5" stroke="#4a1572" stroke-width="0.5" opacity="0.5"/>
+  <line x1="54" y1="60" x2="57" y2="61.5" stroke="#4a1572" stroke-width="0.5" opacity="0.5"/>
+  <!-- Drum center indicator (ammo status) -->
+  <circle cx="64" cy="66" r="4" fill="#3b0e5e" stroke="#6b21a8" stroke-width="0.5"/>
+  <circle cx="64" cy="66" r="2" fill="#a855f7" opacity="0.4"/>
 </svg>

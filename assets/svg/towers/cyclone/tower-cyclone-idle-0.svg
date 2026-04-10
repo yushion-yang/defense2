@@ -1,73 +1,95 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128">
   <defs>
-    <linearGradient id="base-g" x1="0%" y1="0%" x2="100%" y2="100%">
+    <!-- Core glow gradient -->
+    <radialGradient id="coreGlow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#ffffff" stop-opacity="0.6"/>
+      <stop offset="40%" stop-color="#14b8a6" stop-opacity="0.4"/>
+      <stop offset="100%" stop-color="#14b8a6" stop-opacity="0"/>
+    </radialGradient>
+    <!-- Blade body gradient -->
+    <linearGradient id="bladeFill" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#0d9488"/>
+      <stop offset="50%" stop-color="#14b8a6"/>
+      <stop offset="100%" stop-color="#0d9488"/>
+    </linearGradient>
+    <!-- Blade edge glow -->
+    <linearGradient id="edgeGlow" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#2dd4bf" stop-opacity="0.9"/>
+      <stop offset="100%" stop-color="#2dd4bf" stop-opacity="0.2"/>
+    </linearGradient>
+    <!-- Base gradient -->
+    <linearGradient id="baseFill" x1="0%" y1="0%" x2="100%" y2="100%">
       <stop offset="0%" stop-color="#475569"/>
       <stop offset="50%" stop-color="#334155"/>
-      <stop offset="100%" stop-color="#1e293b"/>
-    </linearGradient>
-    <radialGradient id="hub-g" cx="50%" cy="50%" r="50%">
-      <stop offset="0%" stop-color="#64748b"/>
-      <stop offset="70%" stop-color="#475569"/>
-      <stop offset="100%" stop-color="#334155"/>
-    </radialGradient>
-    <radialGradient id="core-g" cx="50%" cy="50%" r="50%">
-      <stop offset="0%" stop-color="#2dd4bf"/>
-      <stop offset="60%" stop-color="#14b8a6"/>
-      <stop offset="100%" stop-color="#0d9488"/>
-    </radialGradient>
-    <radialGradient id="core-glow" cx="50%" cy="50%" r="50%">
-      <stop offset="0%" stop-color="#14b8a6" stop-opacity="0.4"/>
-      <stop offset="100%" stop-color="#0d9488" stop-opacity="0"/>
-    </radialGradient>
-    <linearGradient id="blade-g" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#94a3b8"/>
-      <stop offset="50%" stop-color="#64748b"/>
       <stop offset="100%" stop-color="#475569"/>
     </linearGradient>
+    <!-- Hex highlight -->
+    <linearGradient id="hexHighlight" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#64748b" stop-opacity="0.5"/>
+      <stop offset="100%" stop-color="#1e293b" stop-opacity="0.5"/>
+    </linearGradient>
   </defs>
-  <!-- Cyclone: idle-0 — Blades at rest, soft teal core glow -->
 
-  <!-- Hex base platform -->
-  <polygon points="64,100 89,92 89,72 64,64 39,72 39,92" fill="url(#base-g)" stroke="#1e293b" stroke-width="1.5"/>
-  <polygon points="64,64 89,72 89,68 64,60 39,68 39,72" fill="#475569" stroke="#1e293b" stroke-width="0.8"/>
-  <!-- Base circuit lines -->
-  <line x1="50" y1="70" x2="50" y2="90" stroke="#0d9488" stroke-width="0.5" opacity="0.3"/>
-  <line x1="78" y1="70" x2="78" y2="90" stroke="#0d9488" stroke-width="0.5" opacity="0.3"/>
-  <line x1="64" y1="66" x2="64" y2="96" stroke="#0d9488" stroke-width="0.5" opacity="0.2"/>
+  <!-- Hexagonal base platform -->
+  <polygon points="64,30 93,47 93,81 64,98 35,81 35,47"
+    fill="url(#baseFill)" stroke="#1e293b" stroke-width="1.5"/>
+  <!-- Hex inner bevel -->
+  <polygon points="64,34 89,49 89,79 64,94 39,79 39,49"
+    fill="none" stroke="url(#hexHighlight)" stroke-width="0.8"/>
+  <!-- Surface panel lines -->
+  <line x1="64" y1="34" x2="64" y2="94" stroke="#1e293b" stroke-width="0.4" opacity="0.3"/>
+  <line x1="39" y1="64" x2="89" y2="64" stroke="#1e293b" stroke-width="0.4" opacity="0.3"/>
 
-  <!-- Magnetic levitation ring (outer) -->
-  <ellipse cx="64" cy="62" rx="30" ry="8" fill="none" stroke="#14b8a6" stroke-width="1" opacity="0.3"/>
-  <!-- Magnetic levitation ring (inner) -->
-  <ellipse cx="64" cy="62" rx="22" ry="6" fill="none" stroke="#2dd4bf" stroke-width="0.8" opacity="0.25"/>
+  <!-- LED indicators (dim) — between blade positions on the base -->
+  <circle cx="78" cy="42" r="2" fill="#2dd4bf" opacity="0.25"/>
+  <circle cx="78" cy="86" r="2" fill="#2dd4bf" opacity="0.25"/>
+  <circle cx="42" cy="86" r="2" fill="#2dd4bf" opacity="0.25"/>
+  <circle cx="42" cy="42" r="2" fill="#2dd4bf" opacity="0.25"/>
+  <circle cx="52" cy="36" r="1.5" fill="#2dd4bf" opacity="0.2"/>
+  <circle cx="76" cy="36" r="1.5" fill="#2dd4bf" opacity="0.2"/>
+
+  <!-- Levitation ring (faint) -->
+  <circle cx="64" cy="64" r="18" fill="none" stroke="#2dd4bf" stroke-width="0.8" opacity="0.2"/>
+  <circle cx="64" cy="64" r="17" fill="none" stroke="#14b8a6" stroke-width="0.3" opacity="0.15"/>
+
+  <!-- Blade group — 3 blades at 0, 120, 240 degrees (12, 4, 8 o'clock) -->
+  <!-- Blade 1: pointing up (0 degrees / 12 o'clock) -->
+  <g transform="rotate(0, 64, 64)">
+    <!-- Blade body: curved scimitar shape -->
+    <path d="M61,58 Q58,46 55,34 Q53,28 57,23 Q61,19 64,20 Q67,19 71,23 Q75,28 73,34 Q70,46 67,58 Z"
+      fill="url(#bladeFill)" stroke="#0f766e" stroke-width="0.5"/>
+    <!-- Bright edge highlight (leading edge curve) -->
+    <path d="M57,23 Q53,28 55,34 Q58,46 61,58"
+      fill="none" stroke="#2dd4bf" stroke-width="1" opacity="0.8"/>
+    <!-- Tip accent -->
+    <circle cx="64" cy="21" r="1.5" fill="#2dd4bf" opacity="0.7"/>
+  </g>
+
+  <!-- Blade 2: lower-right (120 degrees / 4 o'clock) -->
+  <g transform="rotate(120, 64, 64)">
+    <path d="M61,58 Q58,46 55,34 Q53,28 57,23 Q61,19 64,20 Q67,19 71,23 Q75,28 73,34 Q70,46 67,58 Z"
+      fill="url(#bladeFill)" stroke="#0f766e" stroke-width="0.5"/>
+    <path d="M57,23 Q53,28 55,34 Q58,46 61,58"
+      fill="none" stroke="#2dd4bf" stroke-width="1" opacity="0.8"/>
+    <circle cx="64" cy="21" r="1.5" fill="#2dd4bf" opacity="0.7"/>
+  </g>
+
+  <!-- Blade 3: lower-left (240 degrees / 8 o'clock) -->
+  <g transform="rotate(240, 64, 64)">
+    <path d="M61,58 Q58,46 55,34 Q53,28 57,23 Q61,19 64,20 Q67,19 71,23 Q75,28 73,34 Q70,46 67,58 Z"
+      fill="url(#bladeFill)" stroke="#0f766e" stroke-width="0.5"/>
+    <path d="M57,23 Q53,28 55,34 Q58,46 61,58"
+      fill="none" stroke="#2dd4bf" stroke-width="1" opacity="0.8"/>
+    <circle cx="64" cy="21" r="1.5" fill="#2dd4bf" opacity="0.7"/>
+  </g>
 
   <!-- Central hub -->
-  <circle cx="64" cy="50" r="18" fill="url(#hub-g)" stroke="#64748b" stroke-width="1.5"/>
-  <!-- Hub detail ring -->
-  <circle cx="64" cy="50" r="14" fill="none" stroke="#475569" stroke-width="0.8"/>
-
-  <!-- Blade arm 1 (top-right, at rest) -->
-  <polygon points="78,50 100,36 96,40 78,48" fill="url(#blade-g)" stroke="#94a3b8" stroke-width="0.5"/>
-  <line x1="78" y1="49" x2="98" y2="38" stroke="#2dd4bf" stroke-width="0.6" opacity="0.4"/>
-
-  <!-- Blade arm 2 (bottom-right) -->
-  <polygon points="78,50 100,64 96,60 78,52" fill="url(#blade-g)" stroke="#94a3b8" stroke-width="0.5"/>
-  <line x1="78" y1="51" x2="98" y2="62" stroke="#2dd4bf" stroke-width="0.6" opacity="0.4"/>
-
-  <!-- Blade arm 3 (bottom-left) -->
-  <polygon points="50,50 28,64 32,60 50,52" fill="url(#blade-g)" stroke="#94a3b8" stroke-width="0.5"/>
-  <line x1="50" y1="51" x2="30" y2="62" stroke="#2dd4bf" stroke-width="0.6" opacity="0.4"/>
-
-  <!-- Blade arm 4 (top-left) -->
-  <polygon points="50,50 28,36 32,40 50,48" fill="url(#blade-g)" stroke="#94a3b8" stroke-width="0.5"/>
-  <line x1="50" y1="49" x2="30" y2="38" stroke="#2dd4bf" stroke-width="0.6" opacity="0.4"/>
-
-  <!-- Core energy -->
-  <circle cx="64" cy="50" r="10" fill="url(#core-glow)" opacity="0.5"/>
-  <circle cx="64" cy="50" r="6" fill="url(#core-g)"/>
-  <circle cx="64" cy="50" r="3" fill="#2dd4bf" opacity="0.8"/>
-
-  <!-- LED indicators -->
-  <circle cx="48" cy="82" r="1.5" fill="#14b8a6" opacity="0.6"/>
-  <circle cx="80" cy="82" r="1.5" fill="#14b8a6" opacity="0.6"/>
-  <circle cx="64" cy="94" r="1.5" fill="#14b8a6" opacity="0.6"/>
+  <circle cx="64" cy="64" r="10" fill="#334155" stroke="#475569" stroke-width="1"/>
+  <circle cx="64" cy="64" r="8" fill="#1e293b" stroke="#0f766e" stroke-width="0.8"/>
+  <!-- Core energy (dim steady glow) -->
+  <circle cx="64" cy="64" r="12" fill="url(#coreGlow)" opacity="0.5"/>
+  <circle cx="64" cy="64" r="5" fill="#14b8a6" opacity="0.4"/>
+  <circle cx="64" cy="64" r="2.5" fill="#ffffff" opacity="0.3"/>
+  <!-- Hub ring detail -->
+  <circle cx="64" cy="64" r="9" fill="none" stroke="#2dd4bf" stroke-width="0.4" opacity="0.3"/>
 </svg>

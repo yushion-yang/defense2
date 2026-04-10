@@ -72,7 +72,7 @@ func TickTowerCombat(towers *tower.Pool, enemies *enemy.Pool, projectiles *proje
 			}
 		}
 		t.FireTimer = 1.0 / t.AttackSpeed
-		t.FireAnim = 0.15
+		t.FireAnim = 0.4
 		if onFire != nil {
 			onFire(t, string(style))
 		}
@@ -161,7 +161,6 @@ func TickProjectileHits(projectiles *projectile.Pool, enemies *enemy.Pool, tower
 
 	return kills
 }
-
 
 // multiTargetCount 返回塔的多目标额外目标数（不含主目标）。
 // 公式: targets = floor(base + potential * (strength/100)) - 1（减去主目标）。

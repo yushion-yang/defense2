@@ -1,71 +1,106 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128">
   <defs>
-    <linearGradient id="base-g" x1="0%" y1="0%" x2="100%" y2="100%">
+    <!-- Core glow (dimming back) -->
+    <radialGradient id="coreGlow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#ffffff" stop-opacity="0.65"/>
+      <stop offset="40%" stop-color="#14b8a6" stop-opacity="0.4"/>
+      <stop offset="100%" stop-color="#14b8a6" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="bladeFill" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#0d9488"/>
+      <stop offset="50%" stop-color="#14b8a6"/>
+      <stop offset="100%" stop-color="#0d9488"/>
+    </linearGradient>
+    <linearGradient id="baseFill" x1="0%" y1="0%" x2="100%" y2="100%">
       <stop offset="0%" stop-color="#475569"/>
       <stop offset="50%" stop-color="#334155"/>
-      <stop offset="100%" stop-color="#1e293b"/>
-    </linearGradient>
-    <radialGradient id="hub-g" cx="50%" cy="50%" r="50%">
-      <stop offset="0%" stop-color="#64748b"/>
-      <stop offset="70%" stop-color="#475569"/>
-      <stop offset="100%" stop-color="#334155"/>
-    </radialGradient>
-    <radialGradient id="core-cool" cx="50%" cy="50%" r="50%">
-      <stop offset="0%" stop-color="#2dd4bf"/>
-      <stop offset="60%" stop-color="#14b8a6"/>
-      <stop offset="100%" stop-color="#0d9488"/>
-    </radialGradient>
-    <radialGradient id="fade-glow" cx="50%" cy="50%" r="50%">
-      <stop offset="0%" stop-color="#14b8a6" stop-opacity="0.35"/>
-      <stop offset="100%" stop-color="#0d9488" stop-opacity="0"/>
-    </radialGradient>
-    <linearGradient id="blade-g" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#94a3b8"/>
-      <stop offset="50%" stop-color="#64748b"/>
       <stop offset="100%" stop-color="#475569"/>
     </linearGradient>
+    <linearGradient id="hexHighlight" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#64748b" stop-opacity="0.5"/>
+      <stop offset="100%" stop-color="#1e293b" stop-opacity="0.5"/>
+    </linearGradient>
   </defs>
-  <!-- Cyclone: attack-2 — Post-spin cooldown, blades decelerating, fading energy -->
 
-  <!-- Hex base platform -->
-  <polygon points="64,100 89,92 89,72 64,64 39,72 39,92" fill="url(#base-g)" stroke="#1e293b" stroke-width="1.5"/>
-  <polygon points="64,64 89,72 89,68 64,60 39,68 39,72" fill="#475569" stroke="#1e293b" stroke-width="0.8"/>
-  <line x1="50" y1="70" x2="50" y2="90" stroke="#0d9488" stroke-width="0.5" opacity="0.3"/>
-  <line x1="78" y1="70" x2="78" y2="90" stroke="#0d9488" stroke-width="0.5" opacity="0.3"/>
-  <line x1="64" y1="66" x2="64" y2="96" stroke="#0d9488" stroke-width="0.5" opacity="0.2"/>
-
-  <!-- Magnetic levitation ring (fading) -->
-  <ellipse cx="64" cy="62" rx="30" ry="8" fill="none" stroke="#14b8a6" stroke-width="1" opacity="0.25"/>
-  <ellipse cx="64" cy="62" rx="22" ry="6" fill="none" stroke="#2dd4bf" stroke-width="0.8" opacity="0.2"/>
-
-  <!-- Central hub -->
-  <circle cx="64" cy="50" r="18" fill="url(#hub-g)" stroke="#64748b" stroke-width="1.5"/>
-  <circle cx="64" cy="50" r="14" fill="none" stroke="#475569" stroke-width="0.8"/>
-
-  <!-- Blade arms (decelerating, intermediate position) -->
-  <polygon points="80,48 104,38 100,42 80,50" fill="url(#blade-g)" stroke="#94a3b8" stroke-width="0.5"/>
-  <line x1="80" y1="49" x2="102" y2="40" stroke="#14b8a6" stroke-width="0.5" opacity="0.3"/>
-
-  <polygon points="76,56 96,72 92,68 76,54" fill="url(#blade-g)" stroke="#94a3b8" stroke-width="0.5"/>
-  <line x1="76" y1="55" x2="94" y2="70" stroke="#14b8a6" stroke-width="0.5" opacity="0.3"/>
-
-  <polygon points="48,52 26,66 30,62 48,54" fill="url(#blade-g)" stroke="#94a3b8" stroke-width="0.5"/>
-  <line x1="48" y1="53" x2="28" y2="64" stroke="#14b8a6" stroke-width="0.5" opacity="0.3"/>
-
-  <polygon points="52,44 32,28 36,32 52,46" fill="url(#blade-g)" stroke="#94a3b8" stroke-width="0.5"/>
-  <line x1="52" y1="45" x2="34" y2="30" stroke="#14b8a6" stroke-width="0.5" opacity="0.3"/>
-
-  <!-- Fading motion trails -->
-  <path d="M90,42 A28,28 0 0,1 88,52" fill="none" stroke="#14b8a6" stroke-width="0.8" opacity="0.2" stroke-linecap="round"/>
-  <path d="M40,58 A28,28 0 0,1 38,48" fill="none" stroke="#14b8a6" stroke-width="0.8" opacity="0.2" stroke-linecap="round"/>
-
-  <!-- Core energy (cooling) -->
-  <circle cx="64" cy="50" r="12" fill="url(#fade-glow)" opacity="0.5"/>
-  <circle cx="64" cy="50" r="6" fill="url(#core-cool)"/>
-  <circle cx="64" cy="50" r="3" fill="#2dd4bf" opacity="0.7"/>
+  <!-- Hexagonal base platform -->
+  <polygon points="64,30 93,47 93,81 64,98 35,81 35,47"
+    fill="url(#baseFill)" stroke="#1e293b" stroke-width="1.5"/>
+  <polygon points="64,34 89,49 89,79 64,94 39,79 39,49"
+    fill="none" stroke="url(#hexHighlight)" stroke-width="0.8"/>
+  <line x1="64" y1="34" x2="64" y2="94" stroke="#1e293b" stroke-width="0.4" opacity="0.3"/>
+  <line x1="39" y1="64" x2="89" y2="64" stroke="#1e293b" stroke-width="0.4" opacity="0.3"/>
 
   <!-- LED indicators (dimming) -->
-  <circle cx="48" cy="82" r="1.5" fill="#14b8a6" opacity="0.4"/>
-  <circle cx="80" cy="82" r="1.5" fill="#14b8a6" opacity="0.4"/>
-  <circle cx="64" cy="94" r="1.5" fill="#14b8a6" opacity="0.4"/>
+  <circle cx="78" cy="42" r="2" fill="#2dd4bf" opacity="0.4"/>
+  <circle cx="78" cy="86" r="2" fill="#2dd4bf" opacity="0.3"/>
+  <circle cx="42" cy="86" r="2" fill="#2dd4bf" opacity="0.4"/>
+  <circle cx="42" cy="42" r="2" fill="#2dd4bf" opacity="0.3"/>
+  <circle cx="52" cy="36" r="1.5" fill="#2dd4bf" opacity="0.3"/>
+  <circle cx="76" cy="36" r="1.5" fill="#2dd4bf" opacity="0.25"/>
+
+  <!-- Levitation ring (fading) -->
+  <circle cx="64" cy="64" r="18" fill="none" stroke="#2dd4bf" stroke-width="0.9" opacity="0.3"/>
+  <circle cx="64" cy="64" r="17" fill="none" stroke="#14b8a6" stroke-width="0.4" opacity="0.2"/>
+
+  <!-- Short fading motion trails (~20 degrees, very transparent) -->
+  <!-- Trail for blade 1 at 180deg: faint ghosts from ~162deg to 178deg -->
+  <g transform="rotate(162, 64, 64)" opacity="0.04">
+    <path d="M61,58 Q58,46 55,34 Q53,28 57,23 Q61,19 64,20 Q67,19 71,23 Q75,28 73,34 Q70,46 67,58 Z" fill="#2dd4bf"/>
+  </g>
+  <g transform="rotate(170, 64, 64)" opacity="0.07">
+    <path d="M61,58 Q58,46 55,34 Q53,28 57,23 Q61,19 64,20 Q67,19 71,23 Q75,28 73,34 Q70,46 67,58 Z" fill="#14b8a6"/>
+  </g>
+
+  <!-- Trail for blade 2 at 300deg: faint ghosts from ~282deg to 298deg -->
+  <g transform="rotate(282, 64, 64)" opacity="0.04">
+    <path d="M61,58 Q58,46 55,34 Q53,28 57,23 Q61,19 64,20 Q67,19 71,23 Q75,28 73,34 Q70,46 67,58 Z" fill="#2dd4bf"/>
+  </g>
+  <g transform="rotate(290, 64, 64)" opacity="0.07">
+    <path d="M61,58 Q58,46 55,34 Q53,28 57,23 Q61,19 64,20 Q67,19 71,23 Q75,28 73,34 Q70,46 67,58 Z" fill="#14b8a6"/>
+  </g>
+
+  <!-- Trail for blade 3 at 60deg: faint ghosts from ~42deg to 58deg -->
+  <g transform="rotate(42, 64, 64)" opacity="0.04">
+    <path d="M61,58 Q58,46 55,34 Q53,28 57,23 Q61,19 64,20 Q67,19 71,23 Q75,28 73,34 Q70,46 67,58 Z" fill="#2dd4bf"/>
+  </g>
+  <g transform="rotate(50, 64, 64)" opacity="0.07">
+    <path d="M61,58 Q58,46 55,34 Q53,28 57,23 Q61,19 64,20 Q67,19 71,23 Q75,28 73,34 Q70,46 67,58 Z" fill="#14b8a6"/>
+  </g>
+
+  <!-- Solid blades — rotated 180 degrees from idle-0 -->
+  <!-- Blade 1: 180 degrees -->
+  <g transform="rotate(180, 64, 64)">
+    <path d="M61,58 Q58,46 55,34 Q53,28 57,23 Q61,19 64,20 Q67,19 71,23 Q75,28 73,34 Q70,46 67,58 Z"
+      fill="url(#bladeFill)" stroke="#0f766e" stroke-width="0.5"/>
+    <path d="M57,23 Q53,28 55,34 Q58,46 61,58"
+      fill="none" stroke="#2dd4bf" stroke-width="1" opacity="0.75"/>
+    <circle cx="64" cy="21" r="1.5" fill="#2dd4bf" opacity="0.65"/>
+  </g>
+
+  <!-- Blade 2: 300 degrees -->
+  <g transform="rotate(300, 64, 64)">
+    <path d="M61,58 Q58,46 55,34 Q53,28 57,23 Q61,19 64,20 Q67,19 71,23 Q75,28 73,34 Q70,46 67,58 Z"
+      fill="url(#bladeFill)" stroke="#0f766e" stroke-width="0.5"/>
+    <path d="M57,23 Q53,28 55,34 Q58,46 61,58"
+      fill="none" stroke="#2dd4bf" stroke-width="1" opacity="0.75"/>
+    <circle cx="64" cy="21" r="1.5" fill="#2dd4bf" opacity="0.65"/>
+  </g>
+
+  <!-- Blade 3: 60 degrees -->
+  <g transform="rotate(60, 64, 64)">
+    <path d="M61,58 Q58,46 55,34 Q53,28 57,23 Q61,19 64,20 Q67,19 71,23 Q75,28 73,34 Q70,46 67,58 Z"
+      fill="url(#bladeFill)" stroke="#0f766e" stroke-width="0.5"/>
+    <path d="M57,23 Q53,28 55,34 Q58,46 61,58"
+      fill="none" stroke="#2dd4bf" stroke-width="1" opacity="0.75"/>
+    <circle cx="64" cy="21" r="1.5" fill="#2dd4bf" opacity="0.65"/>
+  </g>
+
+  <!-- Central hub -->
+  <circle cx="64" cy="64" r="10" fill="#334155" stroke="#475569" stroke-width="1"/>
+  <circle cx="64" cy="64" r="8" fill="#1e293b" stroke="#0f766e" stroke-width="0.8"/>
+  <!-- Core energy (dimming back toward idle) -->
+  <circle cx="64" cy="64" r="13" fill="url(#coreGlow)" opacity="0.55"/>
+  <circle cx="64" cy="64" r="5.5" fill="#14b8a6" opacity="0.45"/>
+  <circle cx="64" cy="64" r="2.8" fill="#ffffff" opacity="0.35"/>
+  <circle cx="64" cy="64" r="9" fill="none" stroke="#2dd4bf" stroke-width="0.4" opacity="0.35"/>
 </svg>

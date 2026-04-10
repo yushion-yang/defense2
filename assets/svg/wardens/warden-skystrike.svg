@@ -1,120 +1,193 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128">
   <defs>
-    <linearGradient id="skyBody" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0%" stop-color="#38bdf8"/>
-      <stop offset="40%" stop-color="#0ea5e9"/>
-      <stop offset="100%" stop-color="#0369a1"/>
+    <!-- Body gradient: dark navy top to darker bottom -->
+    <linearGradient id="ssBody" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#164e63"/>
+      <stop offset="50%" stop-color="#0c4a6e"/>
+      <stop offset="100%" stop-color="#082f49"/>
     </linearGradient>
-    <linearGradient id="skyInner" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0%" stop-color="#bae6fd"/>
-      <stop offset="100%" stop-color="#0ea5e9"/>
+    <!-- Panel gradient for wings -->
+    <linearGradient id="ssWing" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#164e63"/>
+      <stop offset="100%" stop-color="#0c4a6e"/>
     </linearGradient>
-    <radialGradient id="skyGlow" cx="50%" cy="35%" r="55%">
-      <stop offset="0%" stop-color="#38bdf8" stop-opacity="0.2"/>
-      <stop offset="50%" stop-color="#0ea5e9" stop-opacity="0.1"/>
-      <stop offset="100%" stop-color="#0369a1" stop-opacity="0"/>
-    </radialGradient>
-    <radialGradient id="skyCore" cx="50%" cy="50%" r="50%">
+    <!-- Energy core: cyan center to transparent -->
+    <radialGradient id="ssCore" cx="50%" cy="50%" r="50%">
       <stop offset="0%" stop-color="#ffffff" stop-opacity="0.95"/>
-      <stop offset="30%" stop-color="#bae6fd" stop-opacity="0.85"/>
-      <stop offset="70%" stop-color="#38bdf8" stop-opacity="0.4"/>
+      <stop offset="25%" stop-color="#22d3ee" stop-opacity="0.85"/>
+      <stop offset="60%" stop-color="#06b6d4" stop-opacity="0.5"/>
       <stop offset="100%" stop-color="#0ea5e9" stop-opacity="0"/>
     </radialGradient>
-    <radialGradient id="skyBeam" cx="50%" cy="0%" r="100%">
-      <stop offset="0%" stop-color="#38bdf8" stop-opacity="0.6"/>
-      <stop offset="50%" stop-color="#0ea5e9" stop-opacity="0.3"/>
-      <stop offset="100%" stop-color="#0369a1" stop-opacity="0"/>
+    <!-- Cockpit canopy gradient -->
+    <radialGradient id="ssCockpit" cx="50%" cy="40%" r="60%">
+      <stop offset="0%" stop-color="#67e8f9" stop-opacity="0.9"/>
+      <stop offset="50%" stop-color="#22d3ee" stop-opacity="0.7"/>
+      <stop offset="100%" stop-color="#06b6d4" stop-opacity="0.5"/>
     </radialGradient>
-    <linearGradient id="skyBeamLine" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0%" stop-color="#38bdf8" stop-opacity="0.6"/>
-      <stop offset="100%" stop-color="#38bdf8" stop-opacity="0.1"/>
-    </linearGradient>
-    <filter id="skyGl"><feGaussianBlur stdDeviation="2.5" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
-    <filter id="skyGls"><feGaussianBlur stdDeviation="1.5" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
-    <filter id="skyGlt"><feGaussianBlur stdDeviation="0.8" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+    <!-- Engine exhaust glow -->
+    <radialGradient id="ssExhaust" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#67e8f9" stop-opacity="0.9"/>
+      <stop offset="40%" stop-color="#0ea5e9" stop-opacity="0.6"/>
+      <stop offset="100%" stop-color="#0284c7" stop-opacity="0"/>
+    </radialGradient>
+    <!-- Ambient halo -->
+    <radialGradient id="ssHalo" cx="50%" cy="45%" r="55%">
+      <stop offset="0%" stop-color="#06b6d4" stop-opacity="0.12"/>
+      <stop offset="60%" stop-color="#0ea5e9" stop-opacity="0.05"/>
+      <stop offset="100%" stop-color="#0c4a6e" stop-opacity="0"/>
+    </radialGradient>
+    <!-- Sensor lens gradient -->
+    <radialGradient id="ssSensor" cx="50%" cy="40%" r="50%">
+      <stop offset="0%" stop-color="#ffffff" stop-opacity="0.9"/>
+      <stop offset="40%" stop-color="#22d3ee" stop-opacity="0.8"/>
+      <stop offset="100%" stop-color="#06b6d4" stop-opacity="0.4"/>
+    </radialGradient>
+    <!-- Filters -->
+    <filter id="ssGl"><feGaussianBlur stdDeviation="2.5" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+    <filter id="ssGls"><feGaussianBlur stdDeviation="1.5" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+    <filter id="ssGlt"><feGaussianBlur stdDeviation="0.8" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
   </defs>
 
   <!-- === Layer 0: Ambient halo === -->
-  <circle cx="64" cy="46" r="56" fill="url(#skyGlow)"/>
-  <circle cx="64" cy="46" r="48" fill="none" stroke="#38bdf8" stroke-width="0.5" opacity="0.15" stroke-dasharray="2 5"/>
+  <ellipse cx="64" cy="58" rx="58" ry="50" fill="url(#ssHalo)"/>
 
-  <!-- === Layer 1: Light beams (descending strike) === -->
-  <!-- Outer beams -->
-  <line x1="44" y1="76" x2="34" y2="122" stroke="url(#skyBeamLine)" stroke-width="5" stroke-linecap="round" opacity="0.35"/>
-  <line x1="64" y1="86" x2="64" y2="126" stroke="url(#skyBeamLine)" stroke-width="6" stroke-linecap="round" opacity="0.4"/>
-  <line x1="84" y1="76" x2="94" y2="122" stroke="url(#skyBeamLine)" stroke-width="5" stroke-linecap="round" opacity="0.35"/>
-  <!-- Inner beam cores (brighter) -->
-  <line x1="44" y1="78" x2="36" y2="118" stroke="#bae6fd" stroke-width="2" stroke-linecap="round" opacity="0.25"/>
-  <line x1="64" y1="88" x2="64" y2="124" stroke="#bae6fd" stroke-width="2.5" stroke-linecap="round" opacity="0.3"/>
-  <line x1="84" y1="78" x2="92" y2="118" stroke="#bae6fd" stroke-width="2" stroke-linecap="round" opacity="0.25"/>
-  <!-- Impact rings -->
-  <ellipse cx="35" cy="122" rx="9" ry="3" fill="none" stroke="#bae6fd" stroke-width="1.2" opacity="0.3"/>
-  <ellipse cx="35" cy="122" rx="5" ry="1.5" fill="#38bdf8" opacity="0.1"/>
-  <ellipse cx="64" cy="126" rx="11" ry="3.5" fill="none" stroke="#bae6fd" stroke-width="1.5" opacity="0.35"/>
-  <ellipse cx="64" cy="126" rx="6" ry="2" fill="#38bdf8" opacity="0.12"/>
-  <ellipse cx="93" cy="122" rx="9" ry="3" fill="none" stroke="#bae6fd" stroke-width="1.2" opacity="0.3"/>
-  <ellipse cx="93" cy="122" rx="5" ry="1.5" fill="#38bdf8" opacity="0.1"/>
+  <!-- === Layer 1: Tail fins === -->
+  <!-- Left tail fin -->
+  <polygon points="46,80 38,96 42,96 50,82" fill="#082f49" stroke="#0ea5e9" stroke-width="0.5" opacity="0.8"/>
+  <!-- Right tail fin -->
+  <polygon points="82,80 90,96 86,96 78,82" fill="#082f49" stroke="#0ea5e9" stroke-width="0.5" opacity="0.8"/>
+  <!-- Center vertical stabilizer -->
+  <polygon points="62,72 64,90 66,72" fill="#082f49" stroke="#0ea5e9" stroke-width="0.5" opacity="0.7"/>
 
-  <!-- === Layer 2: Main body (inverted triangle, crystalline) === -->
-  <polygon points="24,24 104,24 64,104" fill="url(#skyBody)" stroke="#bae6fd" stroke-width="1.8"/>
-  <!-- Body center line -->
-  <line x1="64" y1="28" x2="64" y2="96" stroke="#bae6fd" stroke-width="0.6" opacity="0.2"/>
+  <!-- === Layer 2: VTOL engine pods (top/rear) === -->
+  <!-- Left engine pod -->
+  <ellipse cx="44" cy="52" rx="7" ry="5" fill="#0c4a6e" stroke="#164e63" stroke-width="1"/>
+  <ellipse cx="44" cy="52" rx="4.5" ry="3" fill="url(#ssExhaust)" filter="url(#ssGls)"/>
+  <ellipse cx="44" cy="52" rx="2" ry="1.2" fill="#67e8f9" opacity="0.8"/>
+  <!-- Engine intake ring -->
+  <ellipse cx="44" cy="52" rx="6" ry="4" fill="none" stroke="#22d3ee" stroke-width="0.6" opacity="0.5"/>
+  <!-- Right engine pod -->
+  <ellipse cx="84" cy="52" rx="7" ry="5" fill="#0c4a6e" stroke="#164e63" stroke-width="1"/>
+  <ellipse cx="84" cy="52" rx="4.5" ry="3" fill="url(#ssExhaust)" filter="url(#ssGls)"/>
+  <ellipse cx="84" cy="52" rx="2" ry="1.2" fill="#67e8f9" opacity="0.8"/>
+  <ellipse cx="84" cy="52" rx="6" ry="4" fill="none" stroke="#22d3ee" stroke-width="0.6" opacity="0.5"/>
 
-  <!-- === Layer 3: Crystal facets (armor panels) === -->
-  <!-- Upper left facet -->
-  <polygon points="32,28 24,24 44,58" fill="#0284c7" stroke="#38bdf8" stroke-width="0.6" opacity="0.5"/>
-  <!-- Upper right facet -->
-  <polygon points="96,28 104,24 84,58" fill="#0284c7" stroke="#38bdf8" stroke-width="0.6" opacity="0.5"/>
-  <!-- Lower left -->
-  <polygon points="38,44 24,24 54,72" fill="#0369a1" stroke="#0ea5e9" stroke-width="0.4" opacity="0.3"/>
-  <!-- Lower right -->
-  <polygon points="90,44 104,24 74,72" fill="#0369a1" stroke="#0ea5e9" stroke-width="0.4" opacity="0.3"/>
-  <!-- Center chevron -->
-  <polygon points="64,30 52,50 64,46 76,50" fill="#0ea5e9" opacity="0.3" stroke="#bae6fd" stroke-width="0.4"/>
+  <!-- === Layer 3: Main fuselage (compact angular gunship body) === -->
+  <!-- Fuselage body — wide angular shape, wider than tall -->
+  <polygon points="64,30 80,44 84,62 76,78 52,78 44,62 48,44"
+           fill="url(#ssBody)" stroke="#0ea5e9" stroke-width="0.8"/>
+  <!-- Top armor plate -->
+  <polygon points="64,32 76,44 52,44" fill="#164e63" stroke="#22d3ee" stroke-width="0.4" opacity="0.6"/>
+  <!-- Side armor panels -->
+  <polygon points="52,44 44,62 52,68 56,50" fill="#0c4a6e" stroke="#0ea5e9" stroke-width="0.3" opacity="0.5"/>
+  <polygon points="76,44 84,62 76,68 72,50" fill="#0c4a6e" stroke="#0ea5e9" stroke-width="0.3" opacity="0.5"/>
+  <!-- Cyan accent stripe down the spine -->
+  <line x1="64" y1="34" x2="64" y2="76" stroke="#67e8f9" stroke-width="1.5" opacity="0.5"/>
+  <line x1="64" y1="34" x2="64" y2="76" stroke="#22d3ee" stroke-width="0.6" opacity="0.8"/>
 
-  <!-- === Layer 4: Side fins (wing-like stabilizers) === -->
-  <polygon points="28,26 8,38 18,30 26,24" fill="#075985" stroke="#38bdf8" stroke-width="0.8"/>
-  <polygon points="100,26 120,38 110,30 102,24" fill="#075985" stroke="#38bdf8" stroke-width="0.8"/>
-  <!-- Lower stabilizer fins -->
-  <polygon points="42,62 20,74 28,68 40,58" fill="#075985" stroke="#0ea5e9" stroke-width="0.6" opacity="0.7"/>
-  <polygon points="86,62 108,74 100,68 88,58" fill="#075985" stroke="#0ea5e9" stroke-width="0.6" opacity="0.7"/>
+  <!-- === Layer 4: Angular nose / cockpit === -->
+  <!-- Nose cone -->
+  <polygon points="64,28 70,38 58,38" fill="#164e63" stroke="#22d3ee" stroke-width="0.6"/>
+  <!-- Bubble cockpit canopy -->
+  <ellipse cx="64" cy="38" rx="6" ry="4" fill="url(#ssCockpit)" stroke="#67e8f9" stroke-width="0.8" filter="url(#ssGlt)"/>
+  <!-- HUD reflection line -->
+  <line x1="60" y1="37" x2="68" y2="37" stroke="#ffffff" stroke-width="0.5" opacity="0.4"/>
+  <!-- Cockpit frame -->
+  <line x1="64" y1="34" x2="64" y2="42" stroke="#22d3ee" stroke-width="0.4" opacity="0.3"/>
 
-  <!-- === Layer 5: Targeting optics === -->
-  <!-- Outer crosshair circle -->
-  <circle cx="64" cy="44" r="22" fill="none" stroke="#bae6fd" stroke-width="1" opacity="0.35"/>
-  <!-- Crosshair lines -->
-  <line x1="64" y1="18" x2="64" y2="30" stroke="#bae6fd" stroke-width="1.2" opacity="0.4"/>
-  <line x1="64" y1="58" x2="64" y2="70" stroke="#bae6fd" stroke-width="1.2" opacity="0.4"/>
-  <line x1="38" y1="44" x2="50" y2="44" stroke="#bae6fd" stroke-width="1.2" opacity="0.4"/>
-  <line x1="78" y1="44" x2="90" y2="44" stroke="#bae6fd" stroke-width="1.2" opacity="0.4"/>
-  <!-- Inner targeting ring -->
-  <circle cx="64" cy="44" r="16" fill="none" stroke="#bae6fd" stroke-width="0.6" opacity="0.25" stroke-dasharray="2 3"/>
-  <!-- Tick marks on crosshair -->
-  <line x1="64" y1="22" x2="64" y2="24" stroke="#ffffff" stroke-width="0.8" opacity="0.3"/>
-  <line x1="64" y1="64" x2="64" y2="66" stroke="#ffffff" stroke-width="0.8" opacity="0.3"/>
-  <line x1="42" y1="44" x2="44" y2="44" stroke="#ffffff" stroke-width="0.8" opacity="0.3"/>
-  <line x1="84" y1="44" x2="86" y2="44" stroke="#ffffff" stroke-width="0.8" opacity="0.3"/>
+  <!-- === Layer 5: Stubby swept wings with weapon pods === -->
+  <!-- Left wing -->
+  <polygon points="44,54 18,48 14,54 22,60 44,64"
+           fill="url(#ssWing)" stroke="#0ea5e9" stroke-width="0.7"/>
+  <!-- Left wing panel line -->
+  <line x1="42" y1="56" x2="20" y2="52" stroke="#22d3ee" stroke-width="0.3" opacity="0.4"/>
+  <!-- Left wing: scatter cannon pod (multiple barrel holes) -->
+  <rect x="12" y="48" width="14" height="6" rx="2" fill="#334155" stroke="#0ea5e9" stroke-width="0.6"/>
+  <!-- Scatter cannon barrel holes (3 small circles) -->
+  <circle cx="15" cy="51" r="1.3" fill="#0c4a6e" stroke="#22d3ee" stroke-width="0.4"/>
+  <circle cx="19" cy="51" r="1.3" fill="#0c4a6e" stroke="#22d3ee" stroke-width="0.4"/>
+  <circle cx="23" cy="51" r="1.3" fill="#0c4a6e" stroke="#22d3ee" stroke-width="0.4"/>
+  <!-- Barrel glow dots -->
+  <circle cx="15" cy="51" r="0.6" fill="#22d3ee" opacity="0.6"/>
+  <circle cx="19" cy="51" r="0.6" fill="#22d3ee" opacity="0.6"/>
+  <circle cx="23" cy="51" r="0.6" fill="#22d3ee" opacity="0.6"/>
 
-  <!-- === Layer 6: Core lens (targeting eye) === -->
-  <circle cx="64" cy="44" r="12" fill="url(#skyCore)" filter="url(#skyGl)"/>
-  <circle cx="64" cy="44" r="8" fill="#bae6fd" opacity="0.75"/>
-  <circle cx="64" cy="44" r="4.5" fill="#e0f2fe" opacity="0.85"/>
-  <circle cx="64" cy="44" r="2" fill="#ffffff" opacity="0.95"/>
-  <!-- Lens ring -->
-  <circle cx="64" cy="44" r="14" fill="none" stroke="#38bdf8" stroke-width="1.2" opacity="0.5"/>
-  <!-- Lens reflection -->
-  <ellipse cx="61" cy="40" rx="2" ry="3" fill="#ffffff" opacity="0.2"/>
+  <!-- Right wing -->
+  <polygon points="84,54 110,48 114,54 106,60 84,64"
+           fill="url(#ssWing)" stroke="#0ea5e9" stroke-width="0.7"/>
+  <!-- Right wing panel line -->
+  <line x1="86" y1="56" x2="108" y2="52" stroke="#22d3ee" stroke-width="0.3" opacity="0.4"/>
+  <!-- Right wing: burst missile rack (row of small rectangles) -->
+  <rect x="102" y="48" width="14" height="6" rx="2" fill="#334155" stroke="#0ea5e9" stroke-width="0.6"/>
+  <!-- Missile tubes (4 small rectangles) -->
+  <rect x="104" y="49.5" width="2.5" height="3" rx="0.5" fill="#0c4a6e" stroke="#22d3ee" stroke-width="0.3"/>
+  <rect x="107" y="49.5" width="2.5" height="3" rx="0.5" fill="#0c4a6e" stroke="#22d3ee" stroke-width="0.3"/>
+  <rect x="110" y="49.5" width="2.5" height="3" rx="0.5" fill="#0c4a6e" stroke="#22d3ee" stroke-width="0.3"/>
+  <rect x="113" y="49.5" width="2.5" height="3" rx="0.5" fill="#0c4a6e" stroke="#22d3ee" stroke-width="0.3"/>
+  <!-- Missile ready lights -->
+  <circle cx="105.2" cy="48.5" r="0.5" fill="#22d3ee" opacity="0.7"/>
+  <circle cx="108.2" cy="48.5" r="0.5" fill="#22d3ee" opacity="0.7"/>
+  <circle cx="111.2" cy="48.5" r="0.5" fill="#22d3ee" opacity="0.7"/>
+  <circle cx="114.2" cy="48.5" r="0.5" fill="#22d3ee" opacity="0.5"/>
 
-  <!-- === Layer 7: Weapon pods (on sides) === -->
-  <rect x="14" y="32" width="10" height="4" rx="1.5" fill="#164e63" stroke="#38bdf8" stroke-width="0.5"/>
-  <rect x="104" y="32" width="10" height="4" rx="1.5" fill="#164e63" stroke="#38bdf8" stroke-width="0.5"/>
-  <circle cx="18" cy="34" r="1.2" fill="#22d3ee" filter="url(#skyGlt)"/>
-  <circle cx="110" cy="34" r="1.2" fill="#22d3ee" filter="url(#skyGlt)"/>
+  <!-- === Layer 6: Center energy core (cryo/water core) === -->
+  <!-- Core housing ring -->
+  <circle cx="64" cy="58" r="10" fill="none" stroke="#06b6d4" stroke-width="0.8" opacity="0.5"/>
+  <!-- Energy core glow -->
+  <circle cx="64" cy="58" r="8" fill="url(#ssCore)" filter="url(#ssGl)"/>
+  <circle cx="64" cy="58" r="5" fill="#22d3ee" opacity="0.7"/>
+  <circle cx="64" cy="58" r="2.5" fill="#ffffff" opacity="0.9"/>
+  <!-- Core containment arcs -->
+  <path d="M56,58 A8,8 0 0,1 64,50" fill="none" stroke="#67e8f9" stroke-width="0.5" opacity="0.4"/>
+  <path d="M72,58 A8,8 0 0,1 64,66" fill="none" stroke="#67e8f9" stroke-width="0.5" opacity="0.4"/>
+  <!-- Core reflection highlight -->
+  <ellipse cx="62" cy="56" rx="1.5" ry="2" fill="#ffffff" opacity="0.25"/>
 
-  <!-- === Layer 8: Energy particles === -->
-  <circle cx="36" cy="96" r="1.5" fill="#bae6fd" opacity="0.4" filter="url(#skyGlt)"/>
-  <circle cx="92" cy="96" r="1.5" fill="#bae6fd" opacity="0.4" filter="url(#skyGlt)"/>
-  <circle cx="64" cy="108" r="2" fill="#38bdf8" opacity="0.3" filter="url(#skyGlt)"/>
-  <circle cx="50" cy="86" r="1" fill="#e0f2fe" opacity="0.35" filter="url(#skyGlt)"/>
-  <circle cx="78" cy="86" r="1" fill="#e0f2fe" opacity="0.35" filter="url(#skyGlt)"/>
+  <!-- === Layer 7: Underbelly sensor/targeting array === -->
+  <!-- Sensor housing -->
+  <ellipse cx="64" cy="72" rx="5" ry="3" fill="#164e63" stroke="#0ea5e9" stroke-width="0.5"/>
+  <!-- Targeting lens -->
+  <ellipse cx="64" cy="72" rx="3" ry="1.8" fill="url(#ssSensor)" filter="url(#ssGlt)"/>
+  <ellipse cx="64" cy="72" rx="1.2" ry="0.7" fill="#ffffff" opacity="0.7"/>
+  <!-- Sensor scan lines -->
+  <line x1="59" y1="74" x2="54" y2="80" stroke="#22d3ee" stroke-width="0.4" opacity="0.3"/>
+  <line x1="64" y1="75" x2="64" y2="82" stroke="#22d3ee" stroke-width="0.5" opacity="0.35"/>
+  <line x1="69" y1="74" x2="74" y2="80" stroke="#22d3ee" stroke-width="0.4" opacity="0.3"/>
+
+  <!-- === Layer 8: Wing-mounted pylons and hardpoints === -->
+  <!-- Left pylon -->
+  <line x1="34" y1="56" x2="34" y2="62" stroke="#334155" stroke-width="1.5"/>
+  <rect x="31" y="62" width="6" height="3" rx="1" fill="#334155" stroke="#0ea5e9" stroke-width="0.3"/>
+  <!-- Right pylon -->
+  <line x1="94" y1="56" x2="94" y2="62" stroke="#334155" stroke-width="1.5"/>
+  <rect x="91" y="62" width="6" height="3" rx="1" fill="#334155" stroke="#0ea5e9" stroke-width="0.3"/>
+
+  <!-- === Layer 9: Surface detail and panel lines === -->
+  <!-- Fuselage panel lines -->
+  <line x1="56" y1="46" x2="52" y2="68" stroke="#22d3ee" stroke-width="0.3" opacity="0.2"/>
+  <line x1="72" y1="46" x2="76" y2="68" stroke="#22d3ee" stroke-width="0.3" opacity="0.2"/>
+  <!-- Rivets / detail dots along fuselage -->
+  <circle cx="58" cy="48" r="0.5" fill="#22d3ee" opacity="0.3"/>
+  <circle cx="70" cy="48" r="0.5" fill="#22d3ee" opacity="0.3"/>
+  <circle cx="56" cy="56" r="0.5" fill="#22d3ee" opacity="0.3"/>
+  <circle cx="72" cy="56" r="0.5" fill="#22d3ee" opacity="0.3"/>
+  <circle cx="54" cy="64" r="0.5" fill="#22d3ee" opacity="0.3"/>
+  <circle cx="74" cy="64" r="0.5" fill="#22d3ee" opacity="0.3"/>
+
+  <!-- === Layer 10: Status lights and engine glow accents === -->
+  <!-- Navigation lights -->
+  <circle cx="18" cy="48" r="1" fill="#22d3ee" opacity="0.8" filter="url(#ssGlt)"/>
+  <circle cx="110" cy="48" r="1" fill="#22d3ee" opacity="0.8" filter="url(#ssGlt)"/>
+  <!-- Tail warning lights -->
+  <circle cx="40" cy="94" r="0.8" fill="#06b6d4" opacity="0.6" filter="url(#ssGlt)"/>
+  <circle cx="88" cy="94" r="0.8" fill="#06b6d4" opacity="0.6" filter="url(#ssGlt)"/>
+  <!-- Engine exhaust trails (subtle) -->
+  <line x1="44" y1="57" x2="44" y2="66" stroke="#0ea5e9" stroke-width="1.5" opacity="0.15" stroke-linecap="round"/>
+  <line x1="84" y1="57" x2="84" y2="66" stroke="#0ea5e9" stroke-width="1.5" opacity="0.15" stroke-linecap="round"/>
+
+  <!-- === Layer 11: Ambient particles === -->
+  <circle cx="30" cy="40" r="1" fill="#67e8f9" opacity="0.3" filter="url(#ssGlt)"/>
+  <circle cx="98" cy="42" r="0.8" fill="#67e8f9" opacity="0.25" filter="url(#ssGlt)"/>
+  <circle cx="50" cy="86" r="1.2" fill="#22d3ee" opacity="0.2" filter="url(#ssGlt)"/>
+  <circle cx="78" cy="88" r="1" fill="#22d3ee" opacity="0.2" filter="url(#ssGlt)"/>
 </svg>

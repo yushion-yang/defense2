@@ -23,7 +23,7 @@ var TowerAnimConfig = map[string]struct {
 	Loop bool
 }{
 	"idle":   {FPS: 2, Loop: true},
-	"attack": {FPS: 8, Loop: false},
+	"attack": {FPS: 10, Loop: false},
 }
 
 // EnemyAnimConfig 敌人动画配置。
