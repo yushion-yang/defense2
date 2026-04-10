@@ -10,6 +10,7 @@ import (
 	"defense2/internal/core/game"
 	"defense2/internal/render"
 	"defense2/internal/render/draw"
+	"defense2/internal/render/easing"
 
 	"github.com/hajimehoshi/ebiten/v2"
 )
@@ -193,12 +194,12 @@ func (wa *WaveAnnounce) currentY() float64 {
 	switch wa.phase {
 	case announceSlideIn:
 		progress := 1.0 - wa.timer/slideInDuration // 0 → 1
-		return offscreenY + (targetY-offscreenY)*easeOutQuad(progress)
+		return offscreenY + (targetY-offscreenY)*easing.EaseOutQuad(progress)
 	case announceHold:
 		return targetY
 	case announceSlideOut:
 		progress := 1.0 - wa.timer/slideOutDuration // 0 → 1
-		return targetY + (offscreenY-targetY)*easeInQuad(progress)
+		return targetY + (offscreenY-targetY)*easing.EaseInQuad(progress)
 	default:
 		return offscreenY
 	}
@@ -258,14 +259,4 @@ func (wa *WaveAnnounce) drawWarningFlash(screen *ebiten.Image) {
 	draw.FilledRect(screen, 0, h-thickness, w, thickness, borderClr, false) // bottom
 	draw.FilledRect(screen, 0, 0, thickness, h, borderClr, false)          // left
 	draw.FilledRect(screen, w-thickness, 0, thickness, h, borderClr, false) // right
-}
-
-// easeOutQuad decelerating ease-out: fast start, slow end.
-func easeOutQuad(t float64) float64 {
-	return 1 - (1-t)*(1-t)
-}
-
-// easeInQuad accelerating ease-in: slow start, fast end.
-func easeInQuad(t float64) float64 {
-	return t * t
 }

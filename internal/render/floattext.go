@@ -4,11 +4,11 @@ package render
 
 import (
 	"image/color"
-	"math"
 	"math/rand"
 	"strconv"
 
 	"defense2/internal/core/game"
+	"defense2/internal/render/easing"
 
 	"github.com/hajimehoshi/ebiten/v2"
 )
@@ -107,7 +107,7 @@ func UpdateFloatTexts(dt float64) {
 		}
 		// 向上漂浮（先快后慢，使用 ease-out）
 		progress := 1 - ft.Life/ft.MaxLife // 0→1
-		ft.Y = ft.StartY - 30*easeOutQuad(progress)
+		ft.Y = ft.StartY - 30*easing.EaseOutQuad(progress)
 	}
 }
 
@@ -136,8 +136,4 @@ func DrawFloatTexts(screen *ebiten.Image) {
 
 		fm.DrawCenteredText(screen, ft.Text, ft.X, ft.Y, size, clr)
 	}
-}
-
-func easeOutQuad(t float64) float64 {
-	return 1 - math.Pow(1-t, 2)
 }
