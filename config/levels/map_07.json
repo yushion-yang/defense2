@@ -1,7 +1,7 @@
 {
   "id": "map_07",
   "name": "极限窄道",
-  "description": "极少塔位的一字长蛇阵，极限挑战。",
+  "description": "极少塔位的一字长蛇阵，极限挑战。大地图(2400×1080), 需要摄像机视口支持。",
   "cols": 40, "rows": 18, "cellSize": 60,
   "theme": "lava", "waves": 22, "difficulty": "extreme",
   "grid": [

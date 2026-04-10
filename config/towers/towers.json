@@ -1,15 +1,10 @@
 {
   "basic": {
+    "_comment": "Base attributes (damage/attackSpeed/range) come from tier-presets.json via RollTowerStats()",
     "label": "哨兵",
     "shortLabel": "哨兵",
     "description": "基础追踪弹射击。选择攻击模式后变身为对应炮塔。",
     "buildCost": 50,
-    "baseDamage": 8,
-    "potentialDamage": 14,
-    "baseAttackSpeed": 0.4,
-    "potentialAttackSpeed": 0.6,
-    "baseRange": 150,
-    "potentialRange": 30,
     "attackStyle": "projectile",
     "projectileSpeed": 400,
     "abilities": [],

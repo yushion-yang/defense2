@@ -19,6 +19,7 @@
     "maxDamageAmplify":  0.5,
     "minDamageFloor":    1,
     "damageDownFloor":   0.2,
+    "_source": "balance.json combat.damageDownFloor is the authoritative value",
     "description": "管线各步骤使用的阈值常量"
   },
 

@@ -1,9 +1,0 @@
-{
-  "bossPhase": { "thresholds": [0.75, 0.5, 0.25], "effects": ["speedUp", "armorUp", "enrage"] },
-  "bossTeleport": { "interval": 15, "range": "random" },
-  "bossSpawnMinions": { "interval": 20, "count": 5, "childArchetype": "normal" },
-  "bossReflect": { "ratio": 0.25 },
-  "bossRotateWeakness": { "interval": 10, "elements": ["fire", "ice", "poison", "physical"] },
-  "bossGoldSteal": { "goldPerHit": 1 },
-  "bossAura": { "radius": 120, "speedBonus": 0.3, "armorBonus": 10 }
-}

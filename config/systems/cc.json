@@ -3,8 +3,7 @@
 
   "types": {
     "stun":  {"description": "眩晕：完全停止移动和攻击，持续 duration 秒。刷新制（取较长者）不叠加"},
-    "slow":  {"description": "减速：降低移动速度至 BaseSpeed × factor，持续 duration 秒。取更强效果"},
-    "root":  {"description": "定身：完全停止移动但不停止攻击，持续 duration 秒"}
+    "slow":  {"description": "减速：降低移动速度至 BaseSpeed × factor，持续 duration 秒。取更强效果"}
   },
 
   "tenacity": {
@@ -22,17 +21,16 @@
   },
 
   "immunityHierarchy": {
-    "IsControlImmune": {"blocks": ["stun", "slow", "root"], "description": "完全控制免疫（Boss ccImmune 能力/净化后临时免疫）"},
-    "IsStunImmune":    {"blocks": ["stun"],                  "description": "仅免疫眩晕"},
-    "IsSlowImmune":    {"blocks": ["slow"],                  "description": "仅免疫减速"},
-    "IsRootImmune":    {"blocks": ["root"],                  "description": "仅免疫定身"},
+    "IsControlImmune": {"blocks": ["stun", "slow"], "description": "完全控制免疫（Boss ccImmune 能力/净化后临时免疫）"},
+    "IsStunImmune":    {"blocks": ["stun"],          "description": "仅免疫眩晕"},
+    "IsSlowImmune":    {"blocks": ["slow"],          "description": "仅免疫减速"},
     "description": "IsControlImmune 是所有免疫的超集"
   },
 
   "purgeInteraction": {
-    "clearsAll": ["StunTimer", "SlowTimer", "RootTimer", "BleedTimer", "BurnTimer", "PoisonTimer", "DamageAmplify"],
+    "clearsAll": ["StunTimer", "SlowTimer", "BleedTimer", "BurnTimer", "PoisonTimer", "DamageAmplify"],
     "grantsImmunity": "ControlImmuneTimer = PurgeImmuneDur",
-    "immuneFlags": ["IsControlImmune", "IsStunImmune", "IsSlowImmune", "IsRootImmune"],
+    "immuneFlags": ["IsControlImmune", "IsStunImmune", "IsSlowImmune"],
     "notSilenceable": true,
     "description": "净化清除所有负面效果 + 短暂全控制免疫（不可被沉默）"
   }

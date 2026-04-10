@@ -18,7 +18,7 @@
     "disarm":       {"mode": "override",               "description": "缴械覆盖"},
     "speedUp":      {"mode": "additive",  "cap": 1.4,  "description": "加速累加，上限 +140%"},
     "damageUp":     {"mode": "additive",  "cap": 3.0,  "description": "增伤累加，上限 +300%"},
-    "damageDown":   {"mode": "multiplicative", "floor": 0.2, "description": "减伤相乘，下限 20%"},
+    "damageDown":   {"mode": "multiplicative", "floor": 0.2, "description": "减伤相乘，下限 20%。balance.json combat.damageDownFloor is the authoritative value"},
     "fireRateUp":   {"mode": "additive",  "cap": 0.5,  "description": "攻速累加，上限 +50%"},
     "invincible":   {"mode": "override",  "priority": 99,  "description": "无敌最高优先覆盖"},
     "damageImmune": {"mode": "override",  "priority": 90,  "description": "伤害免疫"},

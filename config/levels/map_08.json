@@ -1,7 +1,7 @@
 {
   "id": "map_08",
   "name": "竞技场",
-  "description": "四面出怪向中心汇聚，Boss Rush专用。",
+  "description": "双向交叉H型走廊，左右两侧各有出怪点和终点，四条路径在中央立交交汇。大地图(2400×1080), 需要摄像机视口支持。",
   "cols": 40, "rows": 18, "cellSize": 60,
   "theme": "void", "waves": 25, "difficulty": "extreme",
   "grid": [

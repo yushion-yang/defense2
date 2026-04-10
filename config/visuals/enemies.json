@@ -132,12 +132,12 @@
 
   "tank": {
     "name": "重甲",
-    "description": "巨大的灰钢色方形重装体，装甲板与铆钉遍布全身，体型最大",
+    "description": "巨大的紫色方形重装体，装甲板与铆钉遍布全身，体型最大",
     "palette": {
-      "primary": "#6b7280",
-      "secondary": "#4b5563",
-      "accent": "#d1d5db",
-      "dark": "#1f2937"
+      "primary": "#a855f7",
+      "secondary": "#7c3aed",
+      "accent": "#d8b4fe",
+      "dark": "#4c1d95"
     },
     "body": {
       "type": "rect",
@@ -295,12 +295,12 @@
 
   "shielded": {
     "name": "盾兵",
-    "description": "蓝色躯体前方携带大型盾牌，盾面带十字纹章",
+    "description": "青色躯体前方携带大型盾牌，盾面带十字纹章",
     "palette": {
-      "primary": "#3b82f6",
-      "secondary": "#2563eb",
-      "accent": "#93c5fd",
-      "dark": "#1e3a5f"
+      "primary": "#06b6d4",
+      "secondary": "#0891b2",
+      "accent": "#67e8f9",
+      "dark": "#164e63"
     },
     "body": {
       "type": "circle",
@@ -510,12 +510,12 @@
 
   "splitter": {
     "name": "分裂体",
-    "description": "橙色球体表面布满裂纹，内部可见两个子体轮廓，随时准备分裂",
+    "description": "紫色球体表面布满裂纹，内部可见两个子体轮廓，随时准备分裂",
     "palette": {
-      "primary": "#f97316",
-      "secondary": "#ea580c",
-      "accent": "#fdba74",
-      "dark": "#9a3412"
+      "primary": "#a78bfa",
+      "secondary": "#7c3aed",
+      "accent": "#c4b5fd",
+      "dark": "#4c1d95"
     },
     "body": {
       "type": "circle",
@@ -654,12 +654,12 @@
 
   "healer": {
     "name": "治疗者",
-    "description": "粉色球体正面带医疗十字标记，周围漂浮治愈光点",
+    "description": "翠绿色球体正面带医疗十字标记，周围漂浮治愈光点",
     "palette": {
-      "primary": "#ec4899",
-      "secondary": "#db2777",
-      "accent": "#f9a8d4",
-      "dark": "#831843"
+      "primary": "#34d399",
+      "secondary": "#059669",
+      "accent": "#6ee7b7",
+      "dark": "#064e3b"
     },
     "body": {
       "type": "circle",
