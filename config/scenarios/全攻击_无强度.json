@@ -1,6 +1,6 @@
 {
-  "id": "调试3",
-  "name": "全攻击能力_无强度",
+  "id": "全攻击_无强度",
+  "name": "全攻击 无强度",
   "description": "9 towers, 25 enemies on map_test_large",
   "mapID": "map_test_large",
   "gold": 99999,

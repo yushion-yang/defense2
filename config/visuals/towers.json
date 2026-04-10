@@ -524,7 +524,7 @@
   "hydra": {
     "name": "Hydra",
     "label": "多管",
-    "description": "Deep gold multi-barrel weapons platform. Hexagonal base supports a central hub with four barrels radiating outward at slight angles, each independently targeting.",
+    "description": "Deep gold multi-barrel weapons platform. Hexagonal base supports a central hub with three barrels radiating outward at slight angles, each independently targeting.",
     "palette": {
       "primary": "#eab308",
       "secondary": "#ca8a04",

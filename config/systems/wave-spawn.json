@@ -1,32 +1,34 @@
 {
   "_description": "波次/出怪系统规格 — HP/速度公式、波次组合、buff 注入规则",
+  "_status": "STALE — waveComposition 部分与 spawner.go 代码不同步，以代码为准。此文件仅作设计参考。",
 
   "baseFormulas": {
-    "hp":    {"base": "balance.spawner.hpBase",    "perWave": "balance.spawner.hpPerWave",    "formula": "(hpBase + wave × hpPerWave) × hpScale"},
-    "speed": {"base": "balance.spawner.speedBase", "perWave": "balance.spawner.speedPerWave", "formula": "(speedBase + wave × speedPerWave) × speedScale"},
-    "count": {"base": "balance.spawner.countBase", "perWave": "balance.spawner.countPerWave", "formula": "countBase + wave × countPerWave"},
-    "description": "基础值从 balance.json 读取，乘以难度倍率"
+    "hp":    {"base": "settings.waves.difficulty.hpBase (52)", "perWave": "settings.waves.difficulty.hpPerWave (21)", "formula": "(hpBase + wave × hpPerWave) × hpScale"},
+    "speed": {"base": "settings.waves.difficulty.speedBase (58)", "perWave": "settings.waves.difficulty.speedPerWave (5)", "formula": "(speedBase + wave × speedPerWave) × speedScale"},
+    "count": {"fixed": "settings.waves.baseTotalFormula.base (6) + wave × perWave (2)", "formula": "base + wave × perWave"},
+    "description": "基础值从 settings.json → waves.difficulty 读取，乘以难度倍率"
   },
 
   "waveComposition": {
-    "description": "波次组合表：按波次区间决定敌人原型权重。当前硬编码在 spawner.go，应迁移至此。",
+    "description": "波次组合表：当前硬编码在 spawner.go waveCompositions。以下为 spawner.go 的实际状态摘要。",
+    "_warning": "修改此表不会影响运行时行为，需同步修改 spawner.go",
     "phases": [
-      {"maxWave": 3,  "archetypes": [{"type": "normal", "weight": 100}],                                                    "description": "wave 1-3: 纯 normal"},
-      {"maxWave": 6,  "archetypes": [{"type": "normal", "weight": 80}, {"type": "runner", "weight": 20}],                   "description": "wave 4-6: normal + runner"},
-      {"maxWave": 9,  "archetypes": [{"type": "normal", "weight": 50}, {"type": "runner", "weight": 25}, {"type": "tank", "weight": 25}], "description": "wave 7-9: 三种混合"},
-      {"maxWave": 14, "archetypes": [{"type": "normal", "weight": 30}, {"type": "runner", "weight": 25}, {"type": "tank", "weight": 25}, {"type": "swarm", "weight": 20}], "description": "wave 10-14: 四种混合"},
-      {"maxWave": 0,  "archetypes": [{"type": "normal", "weight": 20}, {"type": "runner", "weight": 20}, {"type": "tank", "weight": 20}, {"type": "swarm", "weight": 20}, {"type": "stealth", "weight": 10}, {"type": "healer", "weight": 10}], "description": "wave 15+: 全原型"}
+      {"maxWave": 3,  "archetypeCount": 1,  "description": "wave 1-3: normal only"},
+      {"maxWave": 6,  "archetypeCount": 3,  "description": "wave 4-6: normal + runner + swarm"},
+      {"maxWave": 9,  "archetypeCount": 8,  "description": "wave 7-9: + tank, armored, shielder, phantom, steadfast"},
+      {"maxWave": 14, "archetypeCount": 14, "description": "wave 10-14: + healer, buffer, ironwill, colossus, splitter, phaser"},
+      {"maxWave": 0,  "archetypeCount": 17, "description": "wave 15+: + drainer, summoner, purifier (all archetypes except dummy)"}
     ]
   },
 
   "buffInjection": {
-    "probability": "balance.spawner.buffChance",
+    "probability": "settings.waves — derived from tier thresholds and maxBuffsPerTier",
     "tiers": [
-      {"minWave": 6,  "maxBuffs": 1, "description": "wave 6+: 30% 概率 1 个 buff"},
-      {"minWave": 16, "maxBuffs": 2, "description": "wave 16+: 30% 概率最多 2 个 buff"},
-      {"minWave": 26, "maxBuffs": 2, "description": "wave 26+: 30% 概率最多 2 个 buff"}
+      {"minWave": 6,  "maxBuffs": 1, "description": "wave 6-15: 最多 1 个 buff (settings.waves.maxBuffsPerTier[1])"},
+      {"minWave": 16, "maxBuffs": 1, "description": "wave 16-25: 最多 1 个 buff (settings.waves.maxBuffsPerTier[2] — 注意 JSON 值为 2 但代码读取 settings 值为 [0,1,2,2] 的 index 对应)"},
+      {"minWave": 26, "maxBuffs": 2, "description": "wave 26+: 最多 2 个 buff"}
     ],
     "exemptions": ["Boss"],
-    "description": "Boss 豁免 buff 注入。注意：balance.json 有 buffMaxBuffs 字段但代码未使用（已知不一致）"
+    "description": "Boss 豁免 buff 注入。buff 池: berserk, regen, healAura, speedAura, damageReduce, deathSplit"
   }
 }

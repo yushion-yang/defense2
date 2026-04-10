@@ -3,6 +3,19 @@
 > 审查日期: 2026-04-10
 > 审查范围: config/ 目录全部 JSON 配置文件
 > 审查方法: 逐文件读取 + 跨文件交叉比对 + 对照代码实现
+>
+> **修复记录 (2026-04-10):**
+> - [x] P0-4: buff-stack.json 同步到代码实际值 (priority/mode 全部对齐 stack_rules.go)
+> - [x] P1-1: settings.json spawnMultipliers + specialHints 旧 ID 全部替换为新 ID
+> - [x] P1-7: abilities.json enhance 描述修正 (移除"不随强度变化"错误文案)
+> - [x] P1-9: enemies/_meta.json 迁移表全面重写，补充 spriteIdMismatch 说明
+> - [x] P2-2: economy.json 删除"权威值"错误声明
+> - [x] P2-4: towers/_meta.json 描述从"9座核心塔"修正为"1种基础塔+10种视觉变体"
+> - [x] P2-5: MEMORY.md 修正塔数(5→1+10变体)、能力数(33→31)、攻击方式(9含pierce→8无pierce)
+> - [x] P2-19: visuals/towers.json hydra "four barrels"→"three barrels"
+> - [x] P2-22: 场景 全攻击_无强度.json id 从"调试3"修正；全阵营_高强度.json name 修正
+> - [x] P1-2/P1-4: wave-spawn.json 标注 STALE，更新为代码实际状态摘要，修正引用字段
+> - [x] P2-8: buff-templates.json 已在上游删除（文件不存在），问题自动消解
 
 ---
 

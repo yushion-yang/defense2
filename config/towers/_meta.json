@@ -1,5 +1,5 @@
 {
-  "coreMechanic": "无专属机制——基础泛用塔",
-  "description": "9 座核心塔。每局可用。",
-  "designNotes": "资源按塔分目录：assets/towers/{key}/。"
+  "coreMechanic": "1 种基础塔(basic)，选择攻击能力后变形为不同视觉形态",
+  "description": "1 种基础塔 + 10 种视觉变体(sentinel/fortress/shotgun/prism/cyclone/railgun/ricochet/mortar/hydra/nova)。变体由能力选择决定，见 visuals/towers.json。",
+  "designNotes": "资源按视觉变体分目录：assets/towers/{spriteKey}/。spriteKey 由 pool.go spriteKeyForStyle() 根据 attackStyle 动态设置。"
 }

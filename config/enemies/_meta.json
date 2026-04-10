@@ -1,17 +1,30 @@
 {
-  "description": "Core enemy archetypes (Phase 1 simplification). Deleted types migrated to archetype + buff template combos.",
+  "description": "Core enemy archetypes (Phase 1 simplification). 18 archetypes defined in enemies-core.json. Deleted legacy types migrated to archetype + ability combos.",
   "migration": {
-    "berserker": "normal + berserk buff template",
-    "regenerator": "tank + regen buff template",
-    "elite": "tank + armorBuff + shielded stats via wave scaling",
-    "boss": "tank + bossPhase + bossReflect boss templates (use boss-templates.json)",
-    "mirror": "stealth + revive buff template",
-    "devoter": "tank + healAura buff template (onDeath variant)",
-    "reflector": "normal + reflect buff template",
-    "timewarp": "buffer + timewarp buff template",
-    "ironhide": "armored + damageReduce buff template",
-    "colossus": "tank + regen + damageReduce buff templates",
-    "steadfast": "runner + corruptImmune buff template (slowImmune variant)",
-    "ironwill": "armored + corruptImmune buff template (stunImmune variant)"
+    "berserker": "removed — normal + berserk buff (wave buff injection)",
+    "regenerator": "removed — tank + regen buff (wave buff injection)",
+    "elite": "removed — tank + armorBuff via wave scaling",
+    "boss": "removed — use boss-templates.json (not yet implemented)",
+    "mirror": "renamed to summoner (id=summoner, sprite=mirror) — deathSpawn ability",
+    "devoter": "renamed to drainer (id=drainer, sprite=devoter) — strengthDrain ability",
+    "reflector": "renamed to shielder (id=shielder, sprite=shielded) — projectileBlock ability",
+    "timewarp": "removed — purifier (id=purifier) with purge ability covers this role",
+    "ironhide": "renamed to ironwill (id=ironwill, sprite=ironwill) — ccImmune ability",
+    "stealth": "renamed to phantom (id=phantom, sprite=stealth) — evasion ability (not stealth behavior)",
+    "teleporter": "renamed to phaser (id=phaser, sprite=teleporter) — phaseShift ability"
+  },
+  "currentArchetypes": [
+    "normal", "runner", "tank", "armored", "swarm",
+    "phantom", "shielder", "colossus", "ironwill", "steadfast",
+    "phaser", "drainer", "healer", "buffer", "splitter",
+    "summoner", "purifier", "dummy"
+  ],
+  "spriteIdMismatch": {
+    "_note": "Some archetypes reuse legacy sprite names. These are NOT bugs but historical naming.",
+    "phantom": "sprite=stealth",
+    "phaser": "sprite=teleporter",
+    "drainer": "sprite=devoter",
+    "summoner": "sprite=mirror",
+    "purifier": "sprite=boss"
   }
 }
