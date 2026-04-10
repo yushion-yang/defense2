@@ -306,7 +306,7 @@ func TestDamagePipelineZeroDamage(t *testing.T) {
 
 // TestDamagePipelineInvincibleBlocks 验证无敌状态阻挡伤害。
 func TestDamagePipelineInvincibleBlocks(t *testing.T) {
-	e := &enemy.Enemy{HP: 100, MaxHP: 100, Active: true, IsInvincible: true}
+	e := &enemy.Enemy{HP: 100, MaxHP: 100, Active: true, StatusEffects: enemy.StatusEffects{IsInvincible: true}}
 	r := combat.ProcessDamage(combat.DamageInput{
 		Target:    e,
 		RawDamage: 50,

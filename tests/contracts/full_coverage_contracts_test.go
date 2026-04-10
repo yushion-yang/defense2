@@ -236,7 +236,7 @@ func TestBuffInvincibleHighestPriority(t *testing.T) {
 // ═══════════════════════════════════════
 
 func TestDamagePipeline_DamageReduceRatio(t *testing.T) {
-	e := &enemy.Enemy{HP: 100, MaxHP: 100, Active: true, DamageReduceRatio: 0.3}
+	e := &enemy.Enemy{HP: 100, MaxHP: 100, Active: true, AbilityFields: enemy.AbilityFields{DamageReduceRatio: 0.3}}
 	r := combat.ProcessDamage(combat.DamageInput{
 		Target:    e,
 		RawDamage: 100,

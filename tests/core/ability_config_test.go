@@ -94,10 +94,10 @@ func TestAbilityDef_BounceScalesMaxBounces(t *testing.T) {
 	if bounce.ScaleDim != "maxBounces" {
 		t.Errorf("bounce scaleDim=%s, 期望maxBounces", bounce.ScaleDim)
 	}
-	// 强度100: 2 + 1*1.0 = 3
+	// 强度100: 1 + 1*1.0 = 2
 	v := bounce.CalcScale(100)
-	if math.Abs(v-3) > 1e-9 {
-		t.Errorf("强度100: maxBounces=%.1f, 期望3", v)
+	if math.Abs(v-2) > 1e-9 {
+		t.Errorf("强度100: maxBounces=%.1f, 期望2", v)
 	}
 }
 

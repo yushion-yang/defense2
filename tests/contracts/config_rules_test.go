@@ -66,7 +66,8 @@ func TestTowerConfigFields(t *testing.T) {
 		{
 			name: "baseRange 合理范围",
 			check: func(key string, t2 *config.TowerJSON) error {
-				if t2.BaseRange < 50 || t2.BaseRange > 10000 {
+				// baseRange=0 表示由 tier-presets 动态分配（如 basic 塔）
+				if t2.BaseRange != 0 && (t2.BaseRange < 50 || t2.BaseRange > 10000) {
 					return fmt.Errorf("塔 %s 的 baseRange=%.0f 超出 [50,10000]", key, t2.BaseRange)
 				}
 				return nil

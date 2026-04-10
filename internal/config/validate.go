@@ -38,11 +38,12 @@ func ValidateTowerDef(t *TowerJSON) []ValidationError {
 		})
 	}
 
-	if t.BaseRange < 50 || t.BaseRange > 10000 {
+	// baseRange=0 表示由 tier-presets 动态分配（如 basic 塔）
+	if t.BaseRange != 0 && (t.BaseRange < 50 || t.BaseRange > 10000) {
 		errs = append(errs, ValidationError{
 			Field:   "baseRange",
 			Value:   t.BaseRange,
-			Message: "基础射程必须在 50-10000 范围内",
+			Message: "基础射程必须在 50-10000 范围内（0=动态分配）",
 		})
 	}
 

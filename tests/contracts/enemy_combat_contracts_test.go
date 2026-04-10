@@ -145,7 +145,7 @@ func TestEnemyArchetype_BufferHasAbility(t *testing.T) {
 // ═══════════════════════════════════════
 
 func TestDamagePipeline_WeakenAmplifyHasCap(t *testing.T) {
-	e := &enemy.Enemy{HP: 100, MaxHP: 100, Active: true, DamageAmplify: 0.8} // 超过 cap
+	e := &enemy.Enemy{HP: 100, MaxHP: 100, Active: true, StatusEffects: enemy.StatusEffects{DamageAmplify: 0.8}} // 超过 cap
 	r := combat.ProcessDamage(combat.DamageInput{
 		Target:    e,
 		RawDamage: 10,
@@ -170,7 +170,7 @@ func TestDamagePipeline_BossPercentHPCap(t *testing.T) {
 }
 
 func TestDamagePipeline_SilenceDisablesDamageCap(t *testing.T) {
-	e := &enemy.Enemy{HP: 100, MaxHP: 100, Active: true, DamageCap: 5, Silenced: true}
+	e := &enemy.Enemy{HP: 100, MaxHP: 100, Active: true, StatusEffects: enemy.StatusEffects{Silenced: true}, AbilityFields: enemy.AbilityFields{DamageCap: 5}}
 	r := combat.ProcessDamage(combat.DamageInput{
 		Target:    e,
 		RawDamage: 50,
@@ -182,7 +182,7 @@ func TestDamagePipeline_SilenceDisablesDamageCap(t *testing.T) {
 }
 
 func TestDamagePipeline_DamageCapWhenNotSilenced(t *testing.T) {
-	e := &enemy.Enemy{HP: 100, MaxHP: 100, Active: true, DamageCap: 5}
+	e := &enemy.Enemy{HP: 100, MaxHP: 100, Active: true, AbilityFields: enemy.AbilityFields{DamageCap: 5}}
 	r := combat.ProcessDamage(combat.DamageInput{
 		Target:    e,
 		RawDamage: 50,
@@ -223,7 +223,7 @@ func TestCC_SlowRespectsMinSpeedRatio(t *testing.T) {
 }
 
 func TestCC_StunRespectsImmunity(t *testing.T) {
-	e := &enemy.Enemy{HP: 100, MaxHP: 100, Active: true, IsStunImmune: true}
+	e := &enemy.Enemy{HP: 100, MaxHP: 100, Active: true, StatusEffects: enemy.StatusEffects{IsStunImmune: true}}
 	ok := combat.ApplyStun(e, 5.0, "test")
 	if ok {
 		t.Error("IsStunImmune=true 时 ApplyStun 应返回 false")
@@ -234,7 +234,7 @@ func TestCC_StunRespectsImmunity(t *testing.T) {
 }
 
 func TestCC_TenacityReducesDuration(t *testing.T) {
-	e := &enemy.Enemy{HP: 100, MaxHP: 100, Active: true, Tenacity: 0.5}
+	e := &enemy.Enemy{HP: 100, MaxHP: 100, Active: true, StatusEffects: enemy.StatusEffects{Tenacity: 0.5}}
 	combat.ApplyStun(e, 2.0, "test")
 	// 韧性 0.5 → 持续 = 2.0 * (1-0.5) = 1.0
 	if e.StunTimer > 1.1 {
@@ -243,7 +243,7 @@ func TestCC_TenacityReducesDuration(t *testing.T) {
 }
 
 func TestCC_FullTenacityImmune(t *testing.T) {
-	e := &enemy.Enemy{HP: 100, MaxHP: 100, Active: true, Tenacity: 1.0}
+	e := &enemy.Enemy{HP: 100, MaxHP: 100, Active: true, StatusEffects: enemy.StatusEffects{Tenacity: 1.0}}
 	ok := combat.ApplyStun(e, 5.0, "test")
 	if ok {
 		t.Error("Tenacity=1.0 时应完全免疫")
