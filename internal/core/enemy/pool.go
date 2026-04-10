@@ -218,6 +218,8 @@ func (p *Pool) Kill(e *Enemy) {
 			e.DyingTimer = dying.BossDuration
 			e.DyingDuration = dying.BossDuration
 		}
+		// Clear stealth so death animation renders at full alpha
+		e.Buffs.RemoveByID("stealth")
 		p.Count--
 	}
 }

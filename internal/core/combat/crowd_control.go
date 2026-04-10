@@ -86,6 +86,34 @@ func ApplySlow(e *enemy.Enemy, factor, duration float64, source string) bool {
 	return true
 }
 
+// ApplyRoot 对敌人施加定身效果（禁止移动）。
+// 检查免疫状态，应用韧性减免后设置定身计时器。
+// 返回 true 表示成功施加。
+func ApplyRoot(e *enemy.Enemy, duration float64, source string) bool {
+	// 控制免疫检查（archetype flags + BuffList）
+	if e.IsControlImmune || e.IsRootImmune || e.HasControlImmunity() {
+		e.SetFloatText("免疫", 220, 60, 60)
+		return false
+	}
+
+	// 韧性减免：实际持续时间 = 原始时间 * (1 - 韧性)
+	actualDuration := duration * (1 - e.Tenacity)
+	if actualDuration <= 0 {
+		return false
+	}
+
+	// 通过 BuffList 施加定身（Override 模式，后来居上）
+	e.Buffs.Add(buff.Buff{
+		ID:        "root",
+		Category:  buff.CatCC,
+		Source:    source,
+		Duration:  actualDuration,
+		Remaining: actualDuration,
+	})
+	tel.T.Record("cc", "root")
+	return true
+}
+
 // ApplyControlImmunity 给予敌人一段时间的控制免疫。
 // duration > 0 时为限时免疫（由 TickStatusEffects 倒计时清除），
 // duration <= 0 时为永久免疫。

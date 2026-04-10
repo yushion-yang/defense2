@@ -515,7 +515,9 @@ func applyWaveBuff(e *Enemy, buffID string) {
 	case "damageReduce":
 		e.DamageReduceRatio = bc.DamageReduce.Ratio
 	case "deathSplit":
-		e.SplitCount = bc.DeathSplit.Count
+		if e.SplitCount <= 0 {
+			e.SplitCount = bc.DeathSplit.Count
+		}
 		if e.SplitHPRatio <= 0 {
 			e.SplitHPRatio = bc.DeathSplit.HpRatio
 		}
