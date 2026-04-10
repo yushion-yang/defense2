@@ -53,6 +53,64 @@ func TestEconomySpec_EndlessHigherThanCampaign(t *testing.T) {
 	}
 }
 
+// TestEconomySpec_AllModesBonusPositive 验证所有模式的波次奖金和完美奖金为正。
+func TestEconomySpec_AllModesBonusPositive(t *testing.T) {
+	spec := config.GlobalEconomySpec()
+	for name, m := range spec.Modes {
+		t.Run(name, func(t *testing.T) {
+			if got := m.WaveBonus.Calc(1); got <= 0 {
+				t.Errorf("WaveBonus.Calc(1) = %d, want > 0", got)
+			}
+			if got := m.PerfectBonus.Calc(1); got <= 0 {
+				t.Errorf("PerfectBonus.Calc(1) = %d, want > 0", got)
+			}
+		})
+	}
+}
+
+// TestEconomySpec_AllModesSelfConsistentFormula 验证 Calc(w) == Base + PerWave * w。
+func TestEconomySpec_AllModesSelfConsistentFormula(t *testing.T) {
+	spec := config.GlobalEconomySpec()
+	waves := []int{0, 1, 5, 10, 20}
+	for name, m := range spec.Modes {
+		t.Run(name, func(t *testing.T) {
+			for _, w := range waves {
+				expected := m.WaveBonus.Base + m.WaveBonus.PerWave*w
+				if got := m.WaveBonus.Calc(w); got != expected {
+					t.Errorf("wave %d: WaveBonus.Calc=%d, want %d", w, got, expected)
+				}
+			}
+		})
+	}
+}
+
+// TestEconomySpec_BossRushHasFields 验证 bossRush 模式有特有字段。
+func TestEconomySpec_BossRushHasFields(t *testing.T) {
+	spec := config.GlobalEconomySpec()
+	br, ok := spec.Modes["bossRush"]
+	if !ok {
+		t.Fatal("缺少 bossRush 模式")
+	}
+	if br.TotalBosses <= 0 {
+		t.Errorf("bossRush.TotalBosses = %d, want > 0", br.TotalBosses)
+	}
+	if br.IntermissionSecs <= 0 {
+		t.Errorf("bossRush.IntermissionSecs = %.1f, want > 0", br.IntermissionSecs)
+	}
+}
+
+// TestEconomySpec_TimedHasTargetSeconds 验证 timed 模式有目标时长。
+func TestEconomySpec_TimedHasTargetSeconds(t *testing.T) {
+	spec := config.GlobalEconomySpec()
+	tm, ok := spec.Modes["timed"]
+	if !ok {
+		t.Fatal("缺少 timed 模式")
+	}
+	if tm.TargetSeconds <= 0 {
+		t.Errorf("timed.TargetSeconds = %.1f, want > 0", tm.TargetSeconds)
+	}
+}
+
 // ═══════════════════════════════════════
 // 伤害管线规格
 // ═══════════════════════════════════════
