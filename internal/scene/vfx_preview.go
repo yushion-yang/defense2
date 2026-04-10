@@ -1016,11 +1016,11 @@ func (s *VFXPreviewScene) drawActiveVFX(screen *ebiten.Image) {
 	case "strengthDrain":
 		vfx.DrawStrengthDrainLink(screen, fcx-50, fcy, fcx+50, fcy, t)
 	case "slowOverlay":
-		vfx.DrawSlowOverlay(screen, fcx, fcy, 12)
+		vfx.DrawSlowOverlay(screen, fcx, fcy, 12, t)
 	case "burnOverlay":
-		vfx.DrawBurnOverlay(screen, fcx, fcy, 12)
+		vfx.DrawBurnOverlay(screen, fcx, fcy, 12, t)
 	case "poisonOverlay":
-		vfx.DrawPoisonOverlay(screen, fcx, fcy, 12)
+		vfx.DrawPoisonOverlay(screen, fcx, fcy, 12, t)
 	case "immunityRing":
 		// Show both CC immune (red) and slow immune (cyan) side by side
 		vfx.DrawImmunityRing(screen, fcx-25, fcy, 12, color.RGBA{R: 220, G: 60, B: 60, A: 80})

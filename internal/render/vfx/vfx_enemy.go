@@ -91,8 +91,12 @@ func DrawHitFlash(screen *ebiten.Image, cx, cy, spriteR float32, hitFlash float6
 	if hitFlash <= 0 {
 		return
 	}
-	flashAlpha := uint8(clampF(hitFlash*300, 0, 90))
+	// Outer red overlay — stronger than before
+	flashAlpha := uint8(clampF(hitFlash*500, 0, 160))
 	draw.FilledCircle(screen, cx, cy, spriteR, color.RGBA{R: 255, G: 80, B: 60, A: flashAlpha})
+	// Inner white core — bright, fades faster
+	coreAlpha := uint8(clampF(hitFlash*800, 0, 200))
+	draw.FilledCircle(screen, cx, cy, spriteR*0.3, color.RGBA{R: 255, G: 255, B: 255, A: coreAlpha})
 }
 
 // ── 状态效果圆点 ────────────────────────────────────

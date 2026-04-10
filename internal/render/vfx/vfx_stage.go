@@ -7,6 +7,7 @@ import (
 	"math"
 
 	"defense2/internal/render/draw"
+	"defense2/internal/render/easing"
 
 	"github.com/hajimehoshi/ebiten/v2"
 )
@@ -163,17 +164,31 @@ func DrawSelectionRing(screen *ebiten.Image, cx, cy, selectionR, selectionW floa
 
 // ── Enemy Body Overlays ─────────────────────────────
 
-// DrawSlowOverlay draws blue circle outline on slowed enemy body.
-func DrawSlowOverlay(screen *ebiten.Image, cx, cy, spriteR float32) {
-	draw.CircleOutline(screen, cx, cy, spriteR+1, 1.5, color.RGBA{80, 160, 255, 80})
+// DrawSlowOverlay draws blue ice overlay on slowed enemy body.
+func DrawSlowOverlay(screen *ebiten.Image, cx, cy, spriteR float32, animTime float64) {
+	// Faint ice floor
+	draw.FilledCircle(screen, cx, cy, spriteR*0.6, color.RGBA{100, 180, 255, 20})
+	// Pulsing blue ring
+	alpha := uint8(60 + 30*math.Sin(animTime*4))
+	draw.CircleOutline(screen, cx, cy, spriteR+1, 1.5, color.RGBA{80, 160, 255, alpha})
 }
 
-// DrawBurnOverlay draws orange inner glow on burning enemy body.
-func DrawBurnOverlay(screen *ebiten.Image, cx, cy, spriteR float32) {
-	draw.FilledCircle(screen, cx, cy, spriteR*0.5, color.RGBA{255, 120, 30, 35})
+// DrawBurnOverlay draws flickering fire glow on burning enemy body.
+func DrawBurnOverlay(screen *ebiten.Image, cx, cy, spriteR float32, animTime float64) {
+	// Flickering dual-layer fire glow
+	flicker := math.Sin(animTime*8) * 15
+	outerA := uint8(easing.Clamp01(float64(40+flicker)/255) * 255)
+	innerA := uint8(easing.Clamp01(float64(55+flicker)/255) * 255)
+	draw.FilledCircle(screen, cx, cy, spriteR*0.55, color.RGBA{255, 120, 30, outerA})
+	draw.FilledCircle(screen, cx, cy, spriteR*0.3, color.RGBA{255, 220, 100, innerA})
 }
 
-// DrawPoisonOverlay draws green inner glow on poisoned enemy body.
-func DrawPoisonOverlay(screen *ebiten.Image, cx, cy, spriteR float32) {
-	draw.FilledCircle(screen, cx, cy, spriteR*0.5, color.RGBA{80, 200, 40, 30})
+// DrawPoisonOverlay draws pulsing poison glow on poisoned enemy body.
+func DrawPoisonOverlay(screen *ebiten.Image, cx, cy, spriteR float32, animTime float64) {
+	// Pulsing dual-layer poison glow
+	pulse := math.Sin(animTime*3) * 10
+	outerA := uint8(easing.Clamp01(float64(30+pulse)/255) * 255)
+	innerA := uint8(easing.Clamp01(float64(45+pulse)/255) * 255)
+	draw.FilledCircle(screen, cx, cy, spriteR*0.55, color.RGBA{40, 160, 30, outerA})
+	draw.FilledCircle(screen, cx, cy, spriteR*0.3, color.RGBA{100, 220, 60, innerA})
 }

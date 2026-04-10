@@ -178,13 +178,13 @@ func (er *EnemyRenderer) DrawEnemies(screen *ebiten.Image, pool *enemy.Pool, ani
 		// --- Status effect body overlays (subtle, sprite-sized) ---
 		spriteR := float32(enemySpriteSize) / 2
 		if e.SlowTimer > 0 {
-			vfx.DrawSlowOverlay(screen, cx, cy, spriteR)
+			vfx.DrawSlowOverlay(screen, cx, cy, spriteR, animTime)
 		}
 		if e.BurnTimer > 0 {
-			vfx.DrawBurnOverlay(screen, cx, cy, spriteR)
+			vfx.DrawBurnOverlay(screen, cx, cy, spriteR, animTime)
 		}
 		if e.PoisonTimer > 0 {
-			vfx.DrawPoisonOverlay(screen, cx, cy, spriteR)
+			vfx.DrawPoisonOverlay(screen, cx, cy, spriteR, animTime)
 		}
 
 		// --- Stun rotating stars ---
