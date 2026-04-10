@@ -127,7 +127,9 @@ func (s *VFXPreviewScene) vfxTriggerRegistry() map[string]func(s *VFXPreviewScen
 		"ambient":         func(s *VFXPreviewScene) { particle.EmitAmbient(s.particlePool, sw, sh) },
 
 		// Screen Effects
-		"screenShake": func(s *VFXPreviewScene) { render.TriggerShake(4.0, 0.4) },
+		"screenShakeLight":  func(s *VFXPreviewScene) { render.TriggerShake(1.5, 0.1) },
+		"screenShakeMedium": func(s *VFXPreviewScene) { render.TriggerShake(2.5, 0.15) },
+		"screenShakeHeavy":  func(s *VFXPreviewScene) { render.TriggerShake(5.0, 0.4) },
 		"hitFlash":    func(s *VFXPreviewScene) { s.effects.TriggerHitFlash(0.15) },
 		"radialBlur":  func(s *VFXPreviewScene) { s.effects.TriggerRadialBlur(cx, cy, 0.04, 0.5) },
 		"ripple":      func(s *VFXPreviewScene) { s.effects.TriggerRipple(cx, cy, 15) },
@@ -138,14 +140,11 @@ func (s *VFXPreviewScene) vfxTriggerRegistry() map[string]func(s *VFXPreviewScen
 		},
 
 		// Combat VFX
-		"typedImpact": func(s *VFXPreviewScene) {
-			// Cycle through attack styles for demonstration.
-			styles := []string{"scatter", "spin_aoe", "wideBeam", "projectile"}
-			render.SpawnTypedImpact(cx-60, cy, styles[0])
-			render.SpawnTypedImpact(cx-20, cy, styles[1])
-			render.SpawnTypedImpact(cx+20, cy, styles[2])
-			render.SpawnTypedImpact(cx+60, cy, styles[3])
-		},
+		"typedImpactScatter":  func(s *VFXPreviewScene) { render.SpawnTypedImpact(cx, cy, "scatter") },
+		"typedImpactPhysical": func(s *VFXPreviewScene) { render.SpawnTypedImpact(cx, cy, "projectile") },
+		"typedImpactBeam":     func(s *VFXPreviewScene) { render.SpawnTypedImpact(cx, cy, "wideBeam") },
+		"typedImpactBounce":   func(s *VFXPreviewScene) { render.SpawnTypedImpact(cx, cy, "bounce") },
+		"typedImpactRadial":   func(s *VFXPreviewScene) { render.SpawnTypedImpact(cx, cy, "radial") },
 		"beam": func(s *VFXPreviewScene) {
 			s.beamPool.Add(combat.Beam{
 				X1: cx - 80, Y1: cy, X2: cx + 80, Y2: cy,
@@ -163,14 +162,25 @@ func (s *VFXPreviewScene) vfxTriggerRegistry() map[string]func(s *VFXPreviewScen
 		// Post-Processing
 		"vignetteStrong": func(s *VFXPreviewScene) { s.effects.VignetteStrength = 0.8 },
 		"vignetteOff":    func(s *VFXPreviewScene) { s.effects.VignetteStrength = 0 },
-		"dynamicLight": func(s *VFXPreviewScene) {
+		"dynamicLightWarden": func(s *VFXPreviewScene) {
 			s.postPipeline.Lighting.Clear()
-			s.postPipeline.Lighting.AddLight(postprocess.PointLight{
-				X: cx, Y: cy,
-				Color:     color.RGBA{R: 255, G: 180, B: 80, A: 255},
-				Radius:    200,
-				Intensity: 1.5,
-			})
+			s.postPipeline.Lighting.AddLight(postprocess.PointLight{X: cx, Y: cy, Color: color.RGBA{R: 255, G: 180, B: 80, A: 255}, Radius: 120, Intensity: 0.6})
+		},
+		"dynamicLightFireball": func(s *VFXPreviewScene) {
+			s.postPipeline.Lighting.Clear()
+			s.postPipeline.Lighting.AddLight(postprocess.PointLight{X: cx, Y: cy, Color: color.RGBA{R: 255, G: 77, B: 26, A: 255}, Radius: 80, Intensity: 0.8})
+		},
+		"dynamicLightSkystrike": func(s *VFXPreviewScene) {
+			s.postPipeline.Lighting.Clear()
+			s.postPipeline.Lighting.AddLight(postprocess.PointLight{X: cx, Y: cy, Color: color.RGBA{R: 230, G: 242, B: 255, A: 255}, Radius: 100, Intensity: 0.9})
+		},
+		"dynamicLightBuff": func(s *VFXPreviewScene) {
+			s.postPipeline.Lighting.Clear()
+			s.postPipeline.Lighting.AddLight(postprocess.PointLight{X: cx, Y: cy, Color: color.RGBA{R: 255, G: 217, B: 77, A: 255}, Radius: 100, Intensity: 0.5})
+		},
+		"dynamicLightSelected": func(s *VFXPreviewScene) {
+			s.postPipeline.Lighting.Clear()
+			s.postPipeline.Lighting.AddLight(postprocess.PointLight{X: cx, Y: cy, Color: color.RGBA{R: 153, G: 191, B: 255, A: 255}, Radius: 90, Intensity: 0.4})
 		},
 		"glowLayer": func(s *VFXPreviewScene) {
 			particle.EmitBossDeathBurst(s.particlePool, cx, cy)
@@ -233,7 +243,12 @@ func (s *VFXPreviewScene) vfxTriggerRegistry() map[string]func(s *VFXPreviewScen
 		"runnerRing":      func(s *VFXPreviewScene) { s.activateVFX("runnerRing", 0) },
 		"stunStars":       func(s *VFXPreviewScene) { s.activateVFX("stunStars", 0) },
 		"enemyHitFlash":   func(s *VFXPreviewScene) { s.activateVFX("enemyHitFlash", 0) },
-		"statusDots":      func(s *VFXPreviewScene) { s.activateVFX("statusDots", 0) },
+		"statusDotSlow":   func(s *VFXPreviewScene) { s.activateVFX("statusDotSlow", 0) },
+		"statusDotStun":   func(s *VFXPreviewScene) { s.activateVFX("statusDotStun", 0) },
+		"statusDotBleed":  func(s *VFXPreviewScene) { s.activateVFX("statusDotBleed", 0) },
+		"statusDotBurn":   func(s *VFXPreviewScene) { s.activateVFX("statusDotBurn", 0) },
+		"statusDotPoison": func(s *VFXPreviewScene) { s.activateVFX("statusDotPoison", 0) },
+		"statusDotRoot":   func(s *VFXPreviewScene) { s.activateVFX("statusDotRoot", 0) },
 		"bufferAura":      func(s *VFXPreviewScene) { s.activateVFX("bufferAura", 0) },
 		"purgeGlow":       func(s *VFXPreviewScene) { s.activateVFX("purgeGlow", 0) },
 		"immunityRing":    func(s *VFXPreviewScene) { s.activateVFX("immunityRing", 0) },
@@ -962,14 +977,18 @@ func (s *VFXPreviewScene) drawActiveVFX(screen *ebiten.Image) {
 		if flashT < 0.1 {
 			vfx.DrawHitFlash(screen, fcx, fcy, 12, 0.1-flashT)
 		}
-	case "statusDots":
-		vfx.DrawStatusDots(screen, fcx, fcy-20, []vfx.StatusDot{
-			{Color: color.RGBA{R: 125, G: 211, B: 252, A: 235}},
-			{Color: color.RGBA{R: 255, G: 255, B: 100, A: 235}},
-			{Color: color.RGBA{R: 139, G: 90, B: 43, A: 235}},
-			{Color: color.RGBA{R: 239, G: 68, B: 68, A: 255}},
-			{Color: color.RGBA{R: 255, G: 140, B: 40, A: 255}},
-		}, t)
+	case "statusDotSlow":
+		vfx.DrawStatusDots(screen, fcx, fcy, []vfx.StatusDot{{Color: color.RGBA{R: 125, G: 211, B: 252, A: 235}}}, t)
+	case "statusDotStun":
+		vfx.DrawStatusDots(screen, fcx, fcy, []vfx.StatusDot{{Color: color.RGBA{R: 255, G: 255, B: 100, A: 235}}}, t)
+	case "statusDotBleed":
+		vfx.DrawStatusDots(screen, fcx, fcy, []vfx.StatusDot{{Color: color.RGBA{R: 239, G: 68, B: 68, A: 255}}}, t)
+	case "statusDotBurn":
+		vfx.DrawStatusDots(screen, fcx, fcy, []vfx.StatusDot{{Color: color.RGBA{R: 255, G: 140, B: 40, A: 255}}}, t)
+	case "statusDotPoison":
+		vfx.DrawStatusDots(screen, fcx, fcy, []vfx.StatusDot{{Color: color.RGBA{R: 80, G: 200, B: 40, A: 235}}}, t)
+	case "statusDotRoot":
+		vfx.DrawStatusDots(screen, fcx, fcy, []vfx.StatusDot{{Color: color.RGBA{R: 139, G: 90, B: 43, A: 235}}}, t)
 	case "bufferAura":
 		vfx.DrawBufferAura(screen, fcx, fcy, 60, t)
 	case "purgeGlow":
