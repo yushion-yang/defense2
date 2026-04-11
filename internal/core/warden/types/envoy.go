@@ -83,8 +83,6 @@ func (s *EnvoyState) DescParams(w *warden.Warden) map[string]string {
 	}
 }
 
-const envoyOrbitDist = 100.0
-
 func (b *EnvoyBehavior) Tick(w *warden.Warden, ctx *warden.TickContext) {
 	s, ok := w.State.(*EnvoyState)
 	if !ok {

@@ -123,8 +123,6 @@ func (s *PrinceState) DescParams(w *warden.Warden) map[string]string {
 	}
 }
 
-const princeOrbitDist = 100.0
-
 func (b *princeBehavior) Tick(w *warden.Warden, ctx *warden.TickContext) {
 	s, ok := w.State.(*PrinceState)
 	if !ok {

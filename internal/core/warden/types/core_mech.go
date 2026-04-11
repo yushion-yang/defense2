@@ -62,12 +62,6 @@ func (s *CoreState) DescParams(w *warden.Warden) map[string]string {
 	}
 }
 
-const (
-	coreOrbitDist    = 110.0
-	coreAoeThreshold = 4    // 射程内敌人数 ≥ 此值时切换范围攻击
-	coreExecHpPct    = 0.20 // 目标血量 < 20% 触发秒杀
-)
-
 func (b *coreBehavior) Tick(w *warden.Warden, ctx *warden.TickContext) {
 	s, ok := w.State.(*CoreState)
 	if !ok {

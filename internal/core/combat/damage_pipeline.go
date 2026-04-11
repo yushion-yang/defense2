@@ -17,8 +17,6 @@
 package combat
 
 import (
-	"math"
-
 	"defense2/internal/config"
 	"defense2/internal/core/enemy"
 	tel "defense2/internal/core/telemetry"
@@ -210,20 +208,3 @@ func QuickDamage(target *enemy.Enemy, rawDamage float64, damageType string) (fin
 	return r.FinalDamage, r.Killed
 }
 
-// ApplyDamageUp 计算攻击者增伤系数的辅助函数。
-// buffValue: 从 BuffList.GetEffective("damageUp") 获得的乘法堆叠值。
-// 返回值直接赋给 DamageInput.AttackerDamageUp。
-func ApplyDamageUp(buffValue float64) float64 {
-	if buffValue <= 0 {
-		return 0 // 无 buff
-	}
-	return buffValue
-}
-
-// ApplyDamageDown 计算目标减伤系数的辅助函数。
-func ApplyDamageDown(buffValue float64) float64 {
-	if buffValue <= 0 {
-		return 0 // 无 buff
-	}
-	return math.Max(buffValue, config.GlobalBalance().Combat.DamageDownFloor)
-}

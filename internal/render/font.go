@@ -23,7 +23,7 @@ type FontManager struct {
 	faces    map[float64]text.Face
 }
 
-// NewFontManager 从 TTF 字节数据创建字体管理器（单字体，兼容旧调用）。
+// NewFontManager 从 TTF 字节数据创建字体管理器（单字体）。
 func NewFontManager(ttfData []byte) (*FontManager, error) {
 	src, err := text.NewGoTextFaceSource(bytes.NewReader(ttfData))
 	if err != nil {

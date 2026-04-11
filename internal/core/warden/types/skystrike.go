@@ -106,8 +106,6 @@ func (s *SkystrikeState) DescParams(w *warden.Warden) map[string]string {
 	}
 }
 
-const skystrikeOrbitDist = 120.0
-
 func (b *SkystrikeBehavior) Tick(w *warden.Warden, ctx *warden.TickContext) {
 	s, ok := w.State.(*SkystrikeState)
 	if !ok {

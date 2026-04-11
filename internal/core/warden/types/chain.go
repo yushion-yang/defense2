@@ -71,8 +71,6 @@ func (s *ChainState) DescParams(w *warden.Warden) map[string]string {
 	}
 }
 
-const chainOrbitDist = 100.0
-
 func (b *ChainBehavior) Tick(w *warden.Warden, ctx *warden.TickContext) {
 	s, ok := w.State.(*ChainState)
 	if !ok {
