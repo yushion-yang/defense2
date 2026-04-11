@@ -57,7 +57,6 @@ func TestBalanceLoadedFieldsValid(t *testing.T) {
 		// Combat
 		{"Combat.CritMultiplier", func() bool { return bal.Combat.CritMultiplier > 1 }, "should be > 1"},
 		{"Combat.MinSpeedRatio", func() bool { return bal.Combat.MinSpeedRatio > 0 && bal.Combat.MinSpeedRatio < 1 }, "should be in (0, 1)"},
-		{"Combat.MaxDamageAmplify", func() bool { return bal.Combat.MaxDamageAmplify > 0 }, "should be > 0"},
 		{"Combat.DefaultProjectileSpeed", func() bool { return bal.Combat.DefaultProjectileSpeed > 0 }, "should be > 0"},
 		{"Combat.DotTickInterval", func() bool { return bal.Combat.DotTickInterval > 0 }, "should be > 0"},
 
@@ -155,9 +154,6 @@ func TestBalanceCombatRanges(t *testing.T) {
 
 	if c.MinSpeedRatio <= 0 || c.MinSpeedRatio >= 1 {
 		t.Errorf("MinSpeedRatio = %v, want in (0, 1)", c.MinSpeedRatio)
-	}
-	if c.MaxDamageAmplify <= 0 || c.MaxDamageAmplify >= 5 {
-		t.Errorf("MaxDamageAmplify = %v, want in (0, 5)", c.MaxDamageAmplify)
 	}
 	if c.CritMultiplier < 1 {
 		t.Errorf("CritMultiplier = %v, want >= 1", c.CritMultiplier)

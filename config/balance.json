@@ -4,7 +4,6 @@
     "sellRefundRatio": 0.7                 ,"_sellRefundRatio": "卖塔退款比例（70%）"
   },
   "combat": {
-    "maxDamageAmplify": 0.5,               "_maxDamageAmplify": "虚弱效果最大伤害增幅上限（50%）",
     "minSpeedRatio": 0.2,                  "_minSpeedRatio": "减速最低速度比例（不低于基础速度的20%）",
     "dotTickInterval": 0.5,                "_dotTickInterval": "持续伤害默认触发间隔（秒）",
     "bossPercentHpCap": 0.05,              "_bossPercentHpCap": "Boss百分比生命伤害上限（每次最多5%最大生命）",

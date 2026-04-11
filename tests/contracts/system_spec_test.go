@@ -121,13 +121,6 @@ func TestDamagePipelineSpec_BossPercentCap(t *testing.T) {
 	}
 }
 
-func TestDamagePipelineSpec_MaxDamageAmplify(t *testing.T) {
-	bal := config.GlobalBalance()
-	if bal.Combat.MaxDamageAmplify <= 0 {
-		t.Error("maxDamageAmplify should > 0")
-	}
-}
-
 // ═══════════════════════════════════════
 // Boss 机制规格
 // ═══════════════════════════════════════

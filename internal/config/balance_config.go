@@ -15,7 +15,6 @@ type EconomyBalance struct {
 
 // CombatBalance 战斗相关平衡参数。
 type CombatBalance struct {
-	MaxDamageAmplify        float64          `json:"maxDamageAmplify"`
 	MinSpeedRatio           float64          `json:"minSpeedRatio"`
 	DotTickInterval         float64          `json:"dotTickInterval"`
 	BossPercentHpCap        float64          `json:"bossPercentHpCap"`
@@ -148,7 +147,7 @@ func defaultBalance() *BalanceConfig {
 	return &BalanceConfig{
 		Economy: EconomyBalance{KillReward: 15, SellRefundRatio: 0.7},
 		Combat: CombatBalance{
-			MaxDamageAmplify: 0.5, MinSpeedRatio: 0.2, DotTickInterval: 0.5, BossPercentHpCap: 0.05,
+			MinSpeedRatio: 0.2, DotTickInterval: 0.5, BossPercentHpCap: 0.05,
 			CritMultiplier: 2, DefaultProjectileSpeed: 300, DefaultProjectileRadius: 4,
 			ScatterBasePellets: 3, ScatterSpreadAngle: 60,
 			RadialBaseShots: 3, RadialRangeMult: 1.2, WideBeamRangeMult: 3,

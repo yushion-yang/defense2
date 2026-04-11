@@ -33,7 +33,7 @@
     "bleed":        {"mode": "override",                 "description": "流血覆盖（最新覆盖旧值）"},
     "burn":         {"mode": "override",                 "description": "灼烧覆盖（最新覆盖旧值）"},
     "poison":       {"mode": "override",                 "description": "中毒覆盖（最新覆盖旧值）"},
-    "weaken":       {"mode": "strongest", "cap": 0.5,    "description": "虚弱取最强，上限 50%"},
+    "weaken":       {"mode": "strongest",                 "description": "虚弱取最强（无上限）"},
     "stealth":      {"mode": "override",                 "description": "隐身覆盖"},
     "phaseShift":   {"mode": "override",                 "description": "相位偏移覆盖"},
     "berserk":      {"mode": "override",                 "description": "狂暴覆盖"},

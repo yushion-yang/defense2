@@ -135,10 +135,6 @@ func ApplyDamage(input DamageInput) DamageResult {
 	tel.T.Record("pipeline", "damage_amplify")
 	amp := e.GetWeakenAmplify()
 	if amp > 0 {
-		maxAmp := config.GlobalBalance().Combat.MaxDamageAmplify
-		if amp > maxAmp {
-			amp = maxAmp
-		}
 		damage *= 1 + amp
 	}
 

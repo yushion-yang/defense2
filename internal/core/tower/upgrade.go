@@ -88,9 +88,9 @@ func UnlockNextSlot(t *Tower) int {
 	return cat
 }
 
-// CanUnlockMore 返回塔是否还有空能力槽位可以解锁。
+// CanUnlockMore 返回塔是否还有空能力槽位可以解锁（不要求先选完待选能力）。
 func CanUnlockMore(t *Tower) bool {
-	return t.NextUnlockCategory() >= 0 && PendingCount(t) == 0
+	return t.NextUnlockCategory() >= 0
 }
 
 // RollAndCachePendingChoices 为塔 roll 所有已解锁但未选择能力位的 3 选项并缓存。

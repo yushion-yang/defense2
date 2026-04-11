@@ -11,7 +11,7 @@ func TestLoadRules(t *testing.T) {
 			"slow": {"mode": "strongest", "cap": 0.8},
 			"stun": {"mode": "override"},
 			"bleed": {"mode": "independentPerSource"},
-			"weaken": {"mode": "strongest", "cap": 0.5},
+			"weaken": {"mode": "strongest"},
 			"damageDown": {"mode": "multiplicative", "floor": 0.2},
 			"controlImmune": {"mode": "override", "priority": 80}
 		}
