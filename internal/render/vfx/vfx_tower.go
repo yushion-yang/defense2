@@ -226,6 +226,121 @@ func DrawAuraPulse(screen *ebiten.Image, cx, cy float32, radius float64, clr col
 	}
 }
 
+// ── 各 buff/zone 独立渲染 ─────────────────────────────
+// 每个函数签名统一: (screen, cx, cy, radius, animTime)
+// 当前为基础实现，后续可独立替换为更炫酷的动效。
+
+// DrawDamageAura 增伤光环 — 橙色脉冲虚线圈 + 轨道火花。
+func DrawDamageAura(screen *ebiten.Image, cx, cy float32, radius float64, animTime float64) {
+	clr := color.RGBA{R: 255, G: 160, B: 60, A: 255}
+	DrawAuraPulse(screen, cx, cy, radius, clr, animTime)
+}
+
+// DrawSpeedAuraRing 攻速光环 — 绿色快速旋转圈。
+func DrawSpeedAuraRing(screen *ebiten.Image, cx, cy float32, radius float64, animTime float64) {
+	clr := color.RGBA{R: 100, G: 220, B: 100, A: 255}
+	pulse := float32(0.7 + 0.3*math.Sin(animTime*3)) // 比标准快 1.5 倍
+	a := uint8(float64(50) * float64(pulse))
+	draw.DashedCircle(screen, cx, cy, float32(radius), 1, 4, 3, color.RGBA{clr.R, clr.G, clr.B, a})
+	// 3 个快速轨道点
+	for i := 0; i < 3; i++ {
+		angle := animTime*2.5 + float64(i)*math.Pi*2/3
+		dx := cx + float32(radius)*float32(math.Cos(angle))
+		dy := cy + float32(radius)*float32(math.Sin(angle))
+		draw.FilledCircle(screen, dx, dy, 2, color.RGBA{clr.R, clr.G, clr.B, uint8(80 * pulse)})
+	}
+}
+
+// DrawRangeAura 射程光环 — 蓝色双圈。
+func DrawRangeAura(screen *ebiten.Image, cx, cy float32, radius float64, animTime float64) {
+	clr := color.RGBA{R: 100, G: 160, B: 255, A: 255}
+	pulse := float32(0.6 + 0.4*math.Sin(animTime*1.5))
+	a := uint8(float64(45) * float64(pulse))
+	draw.CircleOutline(screen, cx, cy, float32(radius), 1, color.RGBA{clr.R, clr.G, clr.B, a})
+	draw.CircleOutline(screen, cx, cy, float32(radius*0.85), 1, color.RGBA{clr.R, clr.G, clr.B, a / 2})
+}
+
+// DrawCritAura 暴击光环 — 金色闪烁 + 星形轨道。
+func DrawCritAura(screen *ebiten.Image, cx, cy float32, radius float64, animTime float64) {
+	clr := color.RGBA{R: 255, G: 220, B: 60, A: 255}
+	pulse := float32(0.5 + 0.5*math.Sin(animTime*4)) // 快速闪烁
+	a := uint8(float64(50) * float64(pulse))
+	draw.DashedCircle(screen, cx, cy, float32(radius), 1, 3, 5, color.RGBA{clr.R, clr.G, clr.B, a})
+	// 4 个菱形标记
+	for i := 0; i < 4; i++ {
+		angle := animTime*1.2 + float64(i)*math.Pi/2
+		dx := cx + float32(radius*0.9)*float32(math.Cos(angle))
+		dy := cy + float32(radius*0.9)*float32(math.Sin(angle))
+		draw.Diamond(screen, dx, dy, 3, 1, color.RGBA{clr.R, clr.G, clr.B, uint8(90 * pulse)})
+	}
+}
+
+// DrawSoloAura 独行加成 — 紫色内敛圈（检测范围）。
+func DrawSoloAura(screen *ebiten.Image, cx, cy float32, radius float64, animTime float64) {
+	clr := color.RGBA{R: 200, G: 120, B: 255, A: 255}
+	pulse := float32(0.4 + 0.3*math.Sin(animTime*1.8))
+	a := uint8(float64(35) * float64(pulse))
+	// 纯虚线圈，低调表示"检查范围"
+	draw.DashedCircle(screen, cx, cy, float32(radius), 1, 8, 6, color.RGBA{clr.R, clr.G, clr.B, a})
+}
+
+// DrawPoisonZone 毒区 — 绿色气泡感。
+func DrawPoisonZone(screen *ebiten.Image, cx, cy float32, radius float64, animTime float64) {
+	clr := color.RGBA{R: 120, G: 200, B: 60, A: 255}
+	pulse := float32(0.5 + 0.3*math.Sin(animTime*2.2))
+	a := uint8(float64(40) * float64(pulse))
+	draw.CircleOutline(screen, cx, cy, float32(radius), 1, color.RGBA{clr.R, clr.G, clr.B, a})
+	// 内部浮动气泡（3 个）
+	for i := 0; i < 3; i++ {
+		t := animTime + float64(i)*2.1
+		bx := cx + float32(radius*0.5)*float32(math.Cos(t*0.8))
+		by := cy + float32(radius*0.5)*float32(math.Sin(t*0.6))
+		br := float32(2 + math.Sin(t*1.5))
+		draw.FilledCircle(screen, bx, by, br, color.RGBA{clr.R, clr.G, clr.B, uint8(30 * pulse)})
+	}
+}
+
+// DrawSilenceZone 沉默区 — 紫色静谧波纹。
+func DrawSilenceZone(screen *ebiten.Image, cx, cy float32, radius float64, animTime float64) {
+	clr := color.RGBA{R: 180, G: 80, B: 220, A: 255}
+	// 两层向内收缩的圈
+	for layer := 0; layer < 2; layer++ {
+		phase := math.Mod(animTime*0.5+float64(layer)*0.5, 1.0)
+		r := float32(radius * (0.6 + 0.4*phase))
+		a := uint8(40 * (1 - phase))
+		draw.CircleOutline(screen, cx, cy, r, 1, color.RGBA{clr.R, clr.G, clr.B, a})
+	}
+}
+
+// DrawCurseZone 诅咒区 — 暗红色缓慢脉动。
+func DrawCurseZone(screen *ebiten.Image, cx, cy float32, radius float64, animTime float64) {
+	clr := color.RGBA{R: 160, G: 50, B: 50, A: 255}
+	pulse := float32(0.4 + 0.4*math.Sin(animTime*1.2))
+	a := uint8(float64(45) * float64(pulse))
+	draw.DashedCircle(screen, cx, cy, float32(radius), 1, 10, 5, color.RGBA{clr.R, clr.G, clr.B, a})
+	// 中心微弱辉光
+	draw.Glow(screen, cx, cy, 0, float32(radius*0.3), color.RGBA{clr.R, clr.G, clr.B, uint8(15 * pulse)})
+}
+
+// DrawWeakenZone 脆弱区 — 橙色裂纹感。
+func DrawWeakenZone(screen *ebiten.Image, cx, cy float32, radius float64, animTime float64) {
+	clr := color.RGBA{R: 220, G: 140, B: 60, A: 255}
+	pulse := float32(0.5 + 0.3*math.Sin(animTime*2.5))
+	a := uint8(float64(40) * float64(pulse))
+	draw.DashedCircle(screen, cx, cy, float32(radius), 1, 5, 4, color.RGBA{clr.R, clr.G, clr.B, a})
+	// 放射线（4 条从中心向外的短线）
+	for i := 0; i < 4; i++ {
+		angle := float64(i)*math.Pi/2 + animTime*0.3
+		innerR := radius * 0.7
+		outerR := radius * 0.95
+		x1 := cx + float32(innerR)*float32(math.Cos(angle))
+		y1 := cy + float32(innerR)*float32(math.Sin(angle))
+		x2 := cx + float32(outerR)*float32(math.Cos(angle))
+		y2 := cy + float32(outerR)*float32(math.Sin(angle))
+		draw.Line(screen, x1, y1, x2, y2, 1, color.RGBA{clr.R, clr.G, clr.B, uint8(50 * pulse)}, false)
+	}
+}
+
 // ── Buff 指示圆点 ───────────────────────────────────
 
 // DrawBuffDots 绘制塔上方的 buff 指示圆点。
