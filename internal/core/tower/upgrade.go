@@ -258,9 +258,6 @@ func AllChoicesForCategory(cat int) []config.AbilityDef {
 // 这些能力的实现尚未完成（TODO: 待 BuffList 集成后启用），
 // 玩家选择后无任何效果，因此从候选池中排除。
 var disabledAbilities = map[string]bool{
-	AbilityKillUpgrade:   true, // TODO: integrate kill-based scaling via BuffList
-	AbilityWaveScale:     true, // TODO: integrate wave-scale boosts via BuffList
-	AbilityNeighborBoost: true, // TODO: integrate neighbor boost via BuffList
 	AbilityElementSwitch: true, // TODO: integrate element boosts via BuffList
 	AbilityPeriodicCast:  true, // case 2 (buffAoe) is a no-op; disable until all modes work
 }

@@ -65,9 +65,6 @@ const (
 
 // 已禁用能力（实现未完成）
 const (
-	AbilityKillUpgrade   = "killUpgrade"
-	AbilityWaveScale     = "waveScale"
-	AbilityNeighborBoost = "neighborBoost"
 	AbilityElementSwitch = "elementSwitch"
 	AbilityPeriodicCast  = "periodicCast"
 )

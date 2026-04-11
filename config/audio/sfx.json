@@ -193,16 +193,16 @@
         {
           "file": "fire-pierce.wav",
           "generatedKey": "firePierce",
-          "attackStyle": "pierce",
+          "attackStyle": "_deprecated_pierce",
           "name": "穿透射击",
-          "description": "穿透弹发射"
+          "description": "已废弃：pierce 攻击方式不存在，保留音效文件"
         },
         {
           "file": "fire-laser.wav",
           "generatedKey": "fireLaser",
-          "attackStyle": "laser",
-          "name": "激光射线",
-          "description": "激光类攻击（已废弃→projectile，保留音效文件）"
+          "attackStyle": "_deprecated_laser",
+          "name": "激光射线（已废弃）",
+          "description": "已废弃：laser 攻击方式不存在（→projectile），保留音效文件"
         },
         {
           "file": "fire-charge.wav",
@@ -314,14 +314,14 @@
         {
           "file": "hit-pierce.wav",
           "generatedKey": "hitPierce",
-          "attackStyle": "pierce",
-          "name": "穿透命中"
+          "attackStyle": "_deprecated_pierce",
+          "name": "穿透命中（已废弃）"
         },
         {
           "file": "hit-laser.wav",
           "generatedKey": "hitLaser",
-          "attackStyle": "laser",
-          "name": "激光命中"
+          "attackStyle": "_deprecated_laser",
+          "name": "激光命中（已废弃）"
         },
         {
           "file": "hit-charge.wav",

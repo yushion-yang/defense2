@@ -202,9 +202,7 @@ const (
 	SFXBuild            = "build"            // build.wav — 建塔
 	SFXTowerSell        = "towerSell"        // tower-sell.wav — 卖塔
 	SFXShot             = "shot"             // shot.wav — 射击
-	SFXHit              = "hit"              // hit.wav — 命中
 	SFXEnemyDeath       = "enemyDeath"       // enemy-death.wav — 击杀
-	SFXEnemyDeathElite  = "enemyDeathElite"  // enemy-death-elite.wav — 精英击杀
 	SFXEnemyDeathBoss   = "enemyDeathBoss"   // enemy-death-boss.wav — Boss击杀
 	SFXEnemyLeak        = "enemyLeak"        // enemy-leak.wav — 敌人泄漏
 	SFXWaveStart        = "waveStart"        // wave-start.wav — 波次开始
@@ -214,7 +212,6 @@ const (
 	SFXDefeat           = "defeat"           // defeat.wav — 失败
 	SFXGoldEarn         = "goldEarn"         // gold-earn.wav — 获得金币
 	SFXUIClick          = "uiClick"          // ui-click.wav — UI点击
-	SFXExplode          = "explode"          // explode.wav — 爆炸
 	SFXUpgrade          = "upgrade"          // upgrade.wav — 升级塔
 	SFXSpeedToggle      = "speedToggle"      // speed-toggle.wav — 变速
 	SFXUIOpen           = "uiOpen"           // ui-open.wav — 打开面板
@@ -229,17 +226,10 @@ const (
 	SFXWardenSpecialGold  = "wardenSpecialGold"  // warden-special-gold.wav — 金灵增强光环
 	SFXWardenSpecialChain = "wardenSpecialChain" // warden-special-chain.wav — 聚能串联
 	SFXWardenSpecialMech  = "wardenSpecialMech"  // warden-special-mech.wav — 机甲模式切换
-	SFXChoiceAppear       = "uiOpen"             // 事件选择弹窗出现（复用 uiOpen）
-	SFXChoiceSelect       = "uiClick"            // 事件选择确认（复用 uiClick）
-
 	// CC/状态效果音
 	SFXSlowApply  = "slowApply"  // slow-apply.wav — 减速命中
 	SFXStunImpact = "stunImpact" // stun-impact.wav — 眩晕命中
 	SFXFreezeHit  = "freezeHit"  // freeze-hit.wav — 冰冻命中（低 factor 减速）
-	SFXKnockback  = "knockback"  // knockback.wav — 击退（预留）
-	// 护盾
-	SFXShieldBreak = "shieldBreak" // shield-break.wav — 护盾击碎（预留）
-	SFXHitShield   = "hitShield"   // hit-shield.wav — 命中护盾（预留）
 	// 暴击
 	SFXCritHit = "critHit" // crit-hit.wav — 暴击命中
 	// 灼烧

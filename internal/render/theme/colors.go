@@ -69,22 +69,11 @@ var (
 
 var (
 	TonePrimary   = rgba(34, 197, 94, 245)  // 0.96 * 255 ≈ 245
-	ToneDanger    = rgba(239, 68, 68, 230)  // 0.9  * 255 ≈ 230
 	ToneAccent    = rgba(59, 130, 246, 235) // 0.92 * 255 ≈ 235
 	ToneSecondary = rgba(15, 23, 42, 217)   // 0.85 * 255 ≈ 217
 	ToneDisabled  = rgba(30, 41, 59, 97)    // 0.38 * 255 ≈ 97
 )
 
-// ---------------------------------------------------------------------------
-// Faction
-// ---------------------------------------------------------------------------
-
-var (
-	FactionBase    = hex(0x38bdf8)
-	FactionOutput  = hex(0xfca5a5)
-	FactionControl = hex(0x60a5fa)
-	FactionSupport = hex(0x4ade80)
-)
 
 // ---------------------------------------------------------------------------
 // Resources
@@ -105,7 +94,6 @@ var (
 	MapGradientBot = hex(0x1b4332)
 	MapDotGrid     = rgba(255, 255, 255, 8) // 0.03 * 255 ≈ 8
 	MapPathStroke  = hex(0xd6d3d1)
-	MapPathDash    = hex(0x9ca3af)
 	MapPathLabel   = rgba(255, 255, 255, 46) // 0.18 * 255 ≈ 46
 )
 
@@ -151,7 +139,6 @@ var (
 	SlotOccupied   = rgba(34, 197, 94, 36)   // 已占用绿色底
 	SlotBuildRing  = rgba(220, 180, 60, 180) // 建造态金黄轮廓
 	SlotBuildPulse = rgba(251, 191, 36, 255) // 建造态脉冲外圈
-	SlotHintPulse  = rgba(96, 165, 250, 255)
 	SlotPlusSign   = rgba(250, 220, 120, 220) // "+" 号颜色
 	SlotHintLabel  = hex(0xbfdbfe)
 )
@@ -178,8 +165,6 @@ var (
 	BuffDamage = hex(0xffd700)
 	BuffAtkSpd = hex(0x60a5fa)
 	BuffRange  = hex(0x4ade80)
-	BuffCrit   = hex(0xc084fc)
-	BuffStr    = hex(0x22d3ee)
 )
 
 // ---------------------------------------------------------------------------
@@ -197,7 +182,6 @@ var (
 	EnemyBossInner   = rgba(244, 63, 94, 255)
 	EnemyBossOuter   = rgba(251, 113, 133, 255)
 	EnemyRunnerPulse = rgba(251, 146, 60, 115)  // 0.45 * 255 ≈ 115
-	EnemySwarmTri    = rgba(254, 240, 138, 184) // 0.72 * 255 ≈ 184
 )
 
 // ---------------------------------------------------------------------------
