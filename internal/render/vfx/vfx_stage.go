@@ -232,6 +232,25 @@ func DrawBurnOverlay(screen *ebiten.Image, cx, cy, spriteR float32, animTime flo
 	draw.FilledCircle(screen, cx, cy, spriteR*0.3, color.RGBA{255, 220, 100, innerA})
 }
 
+// DrawItemDropGlow draws a pulsing colored glow at item drop position.
+// timer: remaining ground time, maxTime: total ground duration.
+func DrawItemDropGlow(screen *ebiten.Image, cx, cy float32, timer, maxTime float64, clr color.RGBA) {
+	if timer <= 0 || maxTime <= 0 {
+		return
+	}
+	t := timer / maxTime // 1→0
+	pulse := 0.6 + 0.4*math.Sin(timer*8)
+	alpha := uint8(float64(clr.A) * pulse * t)
+	// Inner glow
+	draw.Glow(screen, cx, cy, 4, 14, color.RGBA{clr.R, clr.G, clr.B, alpha})
+	// Core dot
+	draw.FilledCircle(screen, cx, cy, 3, color.RGBA{255, 255, 255, alpha})
+	// Outer breathing ring
+	ringA := uint8(float64(alpha) * 0.5)
+	ringR := float32(10 + 4*math.Sin(timer*4))
+	draw.CircleOutline(screen, cx, cy, ringR, 1.5, color.RGBA{clr.R, clr.G, clr.B, ringA})
+}
+
 // DrawPoisonOverlay draws pulsing poison glow on poisoned enemy body.
 func DrawPoisonOverlay(screen *ebiten.Image, cx, cy, spriteR float32, animTime float64) {
 	// Pulsing dual-layer poison glow

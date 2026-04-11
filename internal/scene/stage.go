@@ -46,6 +46,7 @@ import (
 	"defense2/internal/loader"
 	"defense2/internal/render"
 	"defense2/internal/render/draw"
+	"defense2/internal/render/easing"
 	"defense2/internal/render/hud"
 	"defense2/internal/render/particle"
 	"defense2/internal/render/postprocess"
@@ -58,6 +59,18 @@ import (
 )
 
 // 类型定义 (stageState/interactMode/StageOptions) 已移至 stage_types.go。
+
+// itemDrop 单个掉落物的状态。
+type itemDrop struct {
+	active                     bool
+	kind                       item.Kind
+	worldX, worldY             float64 // 地面位置（世界坐标）
+	groundTimer                float64 // 地面倒计时
+	flying                     bool
+	screenStartX, screenStartY float64 // 飞行起点（屏幕坐标快照）
+	targetX, targetY           float64 // 飞行终点（道具按钮中心）
+	flyTimer, flyDur           float64
+}
 
 // StageScene 游戏主场景，包含所有运行时游戏状态。
 type StageScene struct {
@@ -101,6 +114,10 @@ type StageScene struct {
 	dragItemActive bool            // 是否正在拖拽道具
 	dragHoverTower *tower.Tower    // 拖拽道具时悬停的目标塔
 	itemPanelOpen  bool            // 道具面板是否打开
+	// 道具掉落系统
+	itemDrops      [8]itemDrop // 掉落物环形缓冲
+	itemDropCur    int         // 环形缓冲写游标
+	dropCycleCount int         // 当前周期已掉落数
 	// 按钮微交互动画状态
 	buildBtnState     ui.ButtonState        // 造塔按钮动画
 	itemBtnState      ui.ButtonState        // 道具按钮动画
@@ -437,6 +454,10 @@ func (s *StageScene) subscribeBus() {
 		if s.wardenReady && s.wardenUnit != nil {
 			s.wardenUnit.OnWaveClear()
 		}
+		// 道具掉落周期重置
+		if dc := config.GlobalBalance().ItemDrop; dc.CycleWaves > 0 && s.wavesCleared%dc.CycleWaves == 0 {
+			s.dropCycleCount = 0
+		}
 		if p.Perfect {
 			s.audioMgr.PlaySafeAt(gameAudio.SFXWaveClearPerfect, gameAudio.VolWave)
 		} else {
@@ -503,6 +524,108 @@ func (s *StageScene) emitKill(isBoss bool, killerID string, rewardScale float64)
 		KillerID:  killerID,
 		GoldValue: gold,
 	})
+}
+
+// ── 道具掉落系统 ──
+
+// tryItemDrop 在敌人被击杀时判定是否掉落道具。
+func (s *StageScene) tryItemDrop(worldX, worldY float64) {
+	cfg := config.GlobalBalance().ItemDrop
+	if cfg.CycleWaves <= 0 {
+		return
+	}
+	if s.dropCycleCount >= cfg.MaxPerCycle {
+		return
+	}
+	shouldDrop := rand.Float64() < cfg.DropChance
+	// 保底：周期末波且本周期无掉落 → 强制
+	if !shouldDrop && s.dropCycleCount == 0 && (s.wavesCleared+1)%cfg.CycleWaves == 0 {
+		shouldDrop = true
+	}
+	if !shouldDrop {
+		return
+	}
+	s.spawnItemDrop(worldX, worldY)
+}
+
+// spawnItemDrop 在指定世界坐标生成一个掉落物。
+func (s *StageScene) spawnItemDrop(worldX, worldY float64) {
+	cfg := config.GlobalBalance().ItemDrop
+	kind := item.Kind(rand.Intn(int(item.KindCount)))
+
+	d := &s.itemDrops[s.itemDropCur]
+	s.itemDropCur = (s.itemDropCur + 1) % len(s.itemDrops)
+
+	*d = itemDrop{
+		active:      true,
+		kind:        kind,
+		worldX:      worldX,
+		worldY:      worldY,
+		groundTimer: cfg.GroundSec,
+		flyDur:      cfg.FlySec,
+	}
+	s.dropCycleCount++
+}
+
+// tickItemDrops 更新所有活跃掉落物（地面→飞行→入库）。
+func (s *StageScene) tickItemDrops(gameDT float64) {
+	for i := range s.itemDrops {
+		d := &s.itemDrops[i]
+		if !d.active {
+			continue
+		}
+		if !d.flying {
+			d.groundTimer -= gameDT
+			if d.groundTimer <= 0 {
+				d.flying = true
+				d.screenStartX = d.worldX - s.camX
+				d.screenStartY = d.worldY - s.camY
+				tx, ty := hud.ActionBarItemBtnCenter()
+				d.targetX = float64(tx)
+				d.targetY = float64(ty)
+			}
+		} else {
+			d.flyTimer += gameDT
+			if d.flyTimer >= d.flyDur {
+				s.inventory.Add(d.kind)
+				d.active = false
+				s.itemBtnState.Trigger()
+			}
+		}
+	}
+}
+
+// drawItemDropsGround 在世界空间绘制地面发光效果。
+func (s *StageScene) drawItemDropsGround(worldTarget *ebiten.Image) {
+	cfg := config.GlobalBalance().ItemDrop
+	for i := range s.itemDrops {
+		d := &s.itemDrops[i]
+		if !d.active || d.flying {
+			continue
+		}
+		clr := item.Defs[d.kind].Color
+		vfx.DrawItemDropGlow(worldTarget, float32(d.worldX), float32(d.worldY),
+			d.groundTimer, cfg.GroundSec, clr)
+	}
+}
+
+// drawItemDropsFly 在屏幕空间绘制飞行动画。
+func (s *StageScene) drawItemDropsFly(screen *ebiten.Image) {
+	for i := range s.itemDrops {
+		d := &s.itemDrops[i]
+		if !d.active || !d.flying {
+			continue
+		}
+		clr := item.Defs[d.kind].Color
+		t := easing.Clamp01(d.flyTimer / d.flyDur)
+		eased := easing.EaseInQuad(t)
+		sx := easing.Lerp(d.screenStartX, d.targetX, eased)
+		sy := easing.Lerp(d.screenStartY, d.targetY, eased)
+		size := float32(6 * (1 - t*0.5))
+		alpha := uint8(255 * (1 - t*0.3))
+		draw.FilledCircle(screen, float32(sx), float32(sy), size, color.RGBA{clr.R, clr.G, clr.B, alpha})
+		draw.Glow(screen, float32(sx), float32(sy), size, size+6, color.RGBA{clr.R, clr.G, clr.B, alpha / 2})
+	}
 }
 
 // checkVictoryAchievements checks and unlocks all victory-related achievements.
@@ -1831,6 +1954,7 @@ func (s *StageScene) updatePlaying() {
 			OnKill: func(e *enemy.Enemy) {
 				s.audioMgr.PlaySafeAt(gameAudio.SFXEnemyDeath, gameAudio.VolKill)
 				s.emitKill(e.Boss, "warden", e.RewardScale)
+				s.tryItemDrop(e.X, e.Y)
 			},
 			OnFire: func() {
 				s.audioMgr.PlayThrottledAt(gameAudio.SFXWardenFire, 100, gameAudio.VolWarden)
@@ -2052,6 +2176,7 @@ func (s *StageScene) updatePlaying() {
 				s.audioMgr.PlayThrottledAt(gameAudio.SFXEnemyDeath, 50, gameAudio.VolKill)
 			}
 			s.emitKill(e.Boss, "projectile", e.RewardScale) // 统一击杀事件：kills/gold/session/tutorial/warden
+			s.tryItemDrop(e.X, e.Y)
 		} else {
 			// 命中音效：per-sound 节流，优先按敌人状态区分
 			switch {
@@ -2102,6 +2227,9 @@ func (s *StageScene) updatePlaying() {
 			particle.EmitAmbient(s.particlePool, float64(game.ScreenWidth), float64(game.ScreenHeight))
 		}
 	}
+
+	// Step 20b: 道具掉落物更新（地面→飞行→入库）
+	s.tickItemDrops(gameDT)
 
 	// Step 21: 波次完成奖励 + 事件触发（由 onWaveTransition 统一处理，
 	// 此处仅处理 spawner.Tick 触发的波次变化；手动开波的变化在 tryStartWave 中处理）
@@ -2348,6 +2476,9 @@ func (s *StageScene) drawScene(screen *ebiten.Image) {
 	// 粒子系统
 	s.particlePool.Draw(worldTarget)
 
+	// 道具掉落物（地面发光）
+	s.drawItemDropsGround(worldTarget)
+
 	// 浮动文本（伤害数字等）
 	render.DrawFloatTexts(worldTarget)
 
@@ -2422,6 +2553,9 @@ func (s *StageScene) drawScene(screen *ebiten.Image) {
 		BuildBtnState: &s.buildBtnState,
 		ItemBtnState:  &s.itemBtnState,
 	})
+
+	// 道具掉落物飞行动画（屏幕空间）
+	s.drawItemDropsFly(screen)
 
 	// HUD：底部建塔菜单
 	hud.DrawBuildMenu(screen, s.buildBuildMenuData())

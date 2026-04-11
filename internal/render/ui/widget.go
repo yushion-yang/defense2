@@ -156,6 +156,11 @@ func (bs *ButtonState) Update(dt float64, hovered, pressed bool) {
 	}
 }
 
+// Trigger starts the press scale animation programmatically (e.g., item drop completed).
+func (bs *ButtonState) Trigger() {
+	bs.ScaleT = 1.0
+}
+
 // TriggerDisabledShake starts the shake animation for a disabled button tap.
 func (bs *ButtonState) TriggerDisabledShake() {
 	bs.ShakeT = 1.0

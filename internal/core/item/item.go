@@ -102,6 +102,9 @@ func NewInventoryFromConfig() *Inventory {
 	return inv
 }
 
+// Add grants one item of kind k.
+func (inv *Inventory) Add(k Kind) { inv.counts[k]++ }
+
 // Count returns the remaining count for item kind k.
 func (inv *Inventory) Count(k Kind) int { return inv.counts[k] }
 

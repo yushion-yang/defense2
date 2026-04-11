@@ -138,6 +138,17 @@ func ActionBarHitTest(px, py float32) string {
 	return ""
 }
 
+// ActionBarItemBtnCenter returns the screen-space center of the "items" button.
+func ActionBarItemBtnCenter() (float32, float32) {
+	for i, name := range lastActionBarBtnNames {
+		if name == "items" && i < len(lastActionBarBtnRects) {
+			r := lastActionBarBtnRects[i]
+			return r.X + r.W/2, r.Y + r.H/2
+		}
+	}
+	return float32(theme.CanvasW) / 2, float32(theme.CanvasH) - 20
+}
+
 // ActionBarRect returns the bounding rectangle of the action bar pill.
 func ActionBarRect() (x, y, w, h float32) {
 	r := lastActionBarPillRect
