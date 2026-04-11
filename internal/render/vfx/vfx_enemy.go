@@ -197,6 +197,122 @@ func DrawPurgeGlow(screen *ebiten.Image, cx, cy, radius float32, animTime float6
 	draw.Glow(screen, cx, cy, radius, radius+5, color.RGBA{R: 200, G: 220, B: 255, A: uint8(15 + 10*math.Sin(animTime*4))})
 }
 
+// ── 减伤护盾 ────────────────────────────────────────
+
+// DrawDamageReduceShield 绘制减伤能力的灰色半透明护盾弧。
+// 缓慢旋转的弧线 + 呼吸脉冲 alpha + 弧线边缘装甲菱形标记。
+func DrawDamageReduceShield(screen *ebiten.Image, cx, cy, radius float32, animTime float64) {
+	// Shield arc rotates slowly around the enemy
+	baseAngle := float32(animTime * 0.8)
+
+	// Breathing alpha for the shield
+	breathAlpha := clampF(50+25*math.Sin(animTime*2.5), 25, 80)
+
+	// Inner fill — very low alpha for "shield body" feel
+	fillAlpha := uint8(clampF(breathAlpha*0.4, 8, 35))
+	arcR := radius + 5
+	// Draw a filled semi-circle as shield body (approximate with glow)
+	draw.Glow(screen, cx+arcR*0.3*float32(math.Cos(float64(baseAngle))),
+		cy+arcR*0.3*float32(math.Sin(float64(baseAngle))),
+		radius*0.5, radius+4,
+		color.RGBA{R: 180, G: 185, B: 195, A: fillAlpha})
+
+	// Main shield arc — semi-circle facing forward, rotating
+	arcAlpha := uint8(breathAlpha)
+	arcClr := color.RGBA{R: 190, G: 195, B: 205, A: arcAlpha}
+	startAng := baseAngle - math.Pi/2
+	endAng := baseAngle + math.Pi/2
+	draw.Arc(screen, cx, cy, arcR, startAng, endAng, 2, arcClr)
+
+	// Inner thinner arc for depth
+	innerArcAlpha := uint8(clampF(breathAlpha*0.6, 15, 50))
+	draw.Arc(screen, cx, cy, radius+2, startAng+0.2, endAng-0.2, 1,
+		color.RGBA{R: 200, G: 205, B: 215, A: innerArcAlpha})
+
+	// 3 armor plate diamond markers along the arc edge
+	for i := 0; i < 3; i++ {
+		angle := float64(baseAngle) + (float64(i)-1)*0.7
+		dx := cx + arcR*float32(math.Cos(angle))
+		dy := cy + arcR*float32(math.Sin(angle))
+		// Per-marker twinkle
+		twinkle := uint8(clampF(60+30*math.Sin(animTime*3+float64(i)*2.1), 30, 100))
+		draw.Diamond(screen, dx, dy, 2.5, 1, color.RGBA{R: 210, G: 215, B: 225, A: twinkle})
+	}
+}
+
+// ── 狂暴光焰 ────────────────────────────────────────
+
+// DrawBerserkFlare 绘制狂暴状态的红色脉冲光环 + 速度拖线。
+func DrawBerserkFlare(screen *ebiten.Image, cx, cy, radius float32, animTime float64) {
+	// Red-orange inner glow — high frequency pulse
+	glowAlpha := uint8(clampF(35+30*math.Sin(animTime*6), 10, 70))
+	draw.Glow(screen, cx, cy, radius*0.5, radius+6,
+		color.RGBA{R: 240, G: 60, B: 30, A: glowAlpha})
+
+	// Contracting/expanding thin red ring
+	ringPulse := float32(1.0 + 0.15*math.Sin(animTime*8))
+	ringR := (radius + 4) * ringPulse
+	ringAlpha := uint8(clampF(70+40*math.Sin(animTime*5), 30, 120))
+	draw.CircleOutline(screen, cx, cy, ringR, 1.2,
+		color.RGBA{R: 255, G: 50, B: 30, A: ringAlpha})
+
+	// 4 rotating speed lines (short radial lines trailing outward)
+	for i := 0; i < 4; i++ {
+		angle := animTime*4 + float64(i)*math.Pi/2
+		// Line starts at ring edge and extends outward
+		innerR := radius + 3
+		outerR := radius + 10 + float32(3*math.Sin(animTime*6+float64(i)*1.5))
+		x1 := cx + float32(innerR)*float32(math.Cos(angle))
+		y1 := cy + float32(innerR)*float32(math.Sin(angle))
+		x2 := cx + outerR*float32(math.Cos(angle))
+		y2 := cy + outerR*float32(math.Sin(angle))
+		lineAlpha := uint8(clampF(80+40*math.Sin(animTime*7+float64(i)*1.8), 40, 130))
+		draw.ThickLine(screen, x1, y1, x2, y2, 1.5,
+			color.RGBA{R: 255, G: 100, B: 40, A: lineAlpha})
+	}
+
+	// Faint outer orange halo
+	haloAlpha := uint8(clampF(15+10*math.Sin(animTime*4+1), 5, 30))
+	draw.CircleOutline(screen, cx, cy, radius+10, 0.8,
+		color.RGBA{R: 255, G: 140, B: 50, A: haloAlpha})
+}
+
+// ── 再生光环 ────────────────────────────────────────
+
+// DrawRegenAura 绘制再生能力的绿色上浮光点 + 基底辉光。
+func DrawRegenAura(screen *ebiten.Image, cx, cy, radius float32, animTime float64) {
+	// Subtle green glow at the base
+	baseGlowAlpha := uint8(clampF(20+10*math.Sin(animTime*2), 10, 35))
+	draw.Glow(screen, cx, cy, radius*0.3, radius+3,
+		color.RGBA{R: 40, G: 200, B: 80, A: baseGlowAlpha})
+
+	// 5 floating green particles rising around the enemy
+	for i := 0; i < 5; i++ {
+		// Each particle at a different phase, orbiting and rising
+		phase := float64(i) * 1.257 // 2*pi/5 ≈ 1.257
+		// Particle position: orbital X + rising Y
+		orbAngle := animTime*1.2 + phase
+		orbR := float64(radius) * 0.8
+		px := float64(cx) + orbR*math.Cos(orbAngle)
+		// Rising motion: particles float up and loop back
+		risePhase := math.Mod(animTime*0.8+phase*0.5, 1.0) // 0→1 cycle
+		riseY := float64(cy) - float64(radius)*0.5 - risePhase*float64(radius)*1.5
+		// Wobble the X gently
+		px += 2 * math.Sin(animTime*2+phase)
+		// Fade as particle rises (full alpha at bottom, zero at top)
+		particleAlpha := uint8(clampF(180*(1-risePhase), 0, 180))
+		// Size shrinks as it rises
+		dotR := float32(clampF(2.5*(1-risePhase*0.5), 0.5, 2.5))
+		draw.FilledCircle(screen, float32(px), float32(riseY), dotR,
+			color.RGBA{R: 80, G: 220, B: 100, A: particleAlpha})
+	}
+
+	// Faint green ring at base
+	ringAlpha := uint8(clampF(25+12*math.Sin(animTime*3), 12, 40))
+	draw.CircleOutline(screen, cx, cy, radius+2, 0.8,
+		color.RGBA{R: 60, G: 200, B: 90, A: ringAlpha})
+}
+
 // ── 辅助 ────────────────────────────────────────────
 
 func clampF(v, lo, hi float64) float64 {

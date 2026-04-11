@@ -670,6 +670,24 @@
           "name": "PoisonOverlay",
           "label": "中毒绿晕",
           "description": "中毒时身体中心的绿色辉光"
+        },
+        {
+          "id": "damageReduceShield",
+          "name": "DamageReduceShield",
+          "label": "减伤护盾",
+          "description": "减伤能力敌人的灰色半透明护盾弧+脉冲"
+        },
+        {
+          "id": "berserkFlare",
+          "name": "BerserkFlare",
+          "label": "狂暴光焰",
+          "description": "狂暴状态的红色脉冲光环+速度拖线"
+        },
+        {
+          "id": "regenAura",
+          "name": "RegenAura",
+          "label": "再生光环",
+          "description": "再生能力的绿色上浮光点+基底辉光"
         }
       ]
     },

@@ -271,7 +271,10 @@ func (s *VFXPreviewScene) vfxTriggerRegistry() map[string]func(s *VFXPreviewScen
 		"strengthDrain":  func(s *VFXPreviewScene) { s.activateVFX("strengthDrain", 0) },
 		"slowOverlay":    func(s *VFXPreviewScene) { s.activateVFX("slowOverlay", 0) },
 		"burnOverlay":    func(s *VFXPreviewScene) { s.activateVFX("burnOverlay", 0) },
-		"poisonOverlay":  func(s *VFXPreviewScene) { s.activateVFX("poisonOverlay", 0) },
+		"poisonOverlay":       func(s *VFXPreviewScene) { s.activateVFX("poisonOverlay", 0) },
+		"damageReduceShield": func(s *VFXPreviewScene) { s.activateVFX("damageReduceShield", 0) },
+		"berserkFlare":       func(s *VFXPreviewScene) { s.activateVFX("berserkFlare", 0) },
+		"regenAura":          func(s *VFXPreviewScene) { s.activateVFX("regenAura", 0) },
 
 		// Tower UI VFX
 		"upgradeDiamond": func(s *VFXPreviewScene) { s.activateVFX("upgradeDiamond", 0) },
@@ -1056,6 +1059,12 @@ func (s *VFXPreviewScene) drawActiveVFX(screen *ebiten.Image) {
 		vfx.DrawBurnOverlay(screen, fcx, fcy, 12, t)
 	case "poisonOverlay":
 		vfx.DrawPoisonOverlay(screen, fcx, fcy, 12, t)
+	case "damageReduceShield":
+		vfx.DrawDamageReduceShield(screen, fcx, fcy, 16, t)
+	case "berserkFlare":
+		vfx.DrawBerserkFlare(screen, fcx, fcy, 16, t)
+	case "regenAura":
+		vfx.DrawRegenAura(screen, fcx, fcy, 16, t)
 	case "immunityRing":
 		// Show both CC immune (red) and slow immune (cyan) side by side
 		vfx.DrawImmunityRing(screen, fcx-25, fcy, 12, color.RGBA{R: 220, G: 60, B: 60, A: 80}, t)

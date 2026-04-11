@@ -182,6 +182,17 @@ func (er *EnemyRenderer) DrawEnemies(screen *ebiten.Image, pool *enemy.Pool, ani
 			draw.FilledCircle(screen, cx, cy, r*float32(spawnScale), bodyColor)
 		}
 
+		// --- Buff behavior VFX (drawn over body) ---
+		if e.GetDamageReduce() > 0 {
+			vfx.DrawDamageReduceShield(screen, cx, cy, float32(e.Radius), animTime)
+		}
+		if e.HasBerserk() && e.BerserkTriggered {
+			vfx.DrawBerserkFlare(screen, cx, cy, float32(e.Radius), animTime)
+		}
+		if e.HasRegen() {
+			vfx.DrawRegenAura(screen, cx, cy, float32(e.Radius), animTime)
+		}
+
 		// --- Status effect body overlays (subtle, sprite-sized) ---
 		spriteR := float32(enemySpriteSize) / 2
 		if e.IsSlowed() {
