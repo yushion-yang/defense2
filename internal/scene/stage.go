@@ -19,7 +19,7 @@ import (
 	"sync"
 	"time"
 
-	"defense2/internal/core/tower/abilities" // 通过 init() 注册塔能力；Remove hook
+	_ "defense2/internal/core/tower/abilities" // 通过 init() 注册塔能力
 	_ "defense2/internal/core/warden/types"  // 通过 init() 注册战灵类型
 
 	gameAudio "defense2/internal/audio"
@@ -297,9 +297,6 @@ func NewStageSceneWithOpts(sw Switcher, opts StageOptions) *StageScene {
 		wardenPanelOpen: false,
 		achieveTracker:  achTracker,
 	}
-
-	// 塔移除时清理缩放能力的运行时状态（防止 map 泄漏）
-	s.towers.RemoveHook = abilities.ClearTowerScalingState
 
 	// 死亡召唤音效回调
 	s.enemies.OnDeathSpawn = func(_ *enemy.Enemy, _ int) {
@@ -2125,8 +2122,6 @@ func (s *StageScene) updatePlaying() {
 		if s.choicePanel != nil {
 			s.choicePanel.Close()
 		}
-		// 清除缩放类能力运行时状态，防止跨局数据泄漏
-		abilities.ResetScalingState()
 	}
 
 	// AutoPlay 决策钩子
