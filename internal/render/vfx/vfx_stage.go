@@ -188,14 +188,74 @@ func DrawStrengthDrainLink(screen *ebiten.Image, tx, ty, ex, ey float32, animTim
 
 // ── Tower UI VFX ────────────────────────────────────
 
-// DrawUpgradeDiamond draws a pulsing gold diamond above a tower with pending upgrade.
+// DrawUpgradeDiamond draws a multi-layered upgrade-ready indicator above a tower.
+// Inspired by Kingdom Rush / Bloons TD style: bobbing diamond + light pillar +
+// rising sparkle particles + periodic pulse ring.
 func DrawUpgradeDiamond(screen *ebiten.Image, cx, cy float32, animTime float64) {
-	pulse := float32(0.6 + 0.4*math.Sin(animTime*5))
-	scale := float32(1.0 + 0.15*math.Sin(animTime*5))
-	a := uint8(230 * pulse)
-	r := float32(7) * scale
-	draw.Diamond(screen, cx, cy-24, r+2, 1.0, color.RGBA{R: 250, G: 200, B: 50, A: a / 3})
-	draw.Diamond(screen, cx, cy-24, r, 1.8, color.RGBA{R: 250, G: 200, B: 50, A: a})
+	const (
+		baseY      = float32(26) // 菱形基准偏移（塔上方）
+		bobAmp     = float32(3)  // 上下浮动幅度
+		bobFreq    = 2.5         // 浮动频率
+		diamondR   = float32(6)  // 菱形基础半径
+		pillarH    = float32(18) // 光柱高度
+		pillarW    = float32(6)  // 光柱宽度
+		pulseFreq  = 1.2         // 扩散环频率（秒/次）
+		sparkCount = 4           // 上升粒子数
+	)
+
+	// ── 1. 底部光柱（半透明金色矩形，从塔顶向上延伸） ──
+	pillarAlpha := float32(0.25 + 0.15*math.Sin(animTime*3))
+	pa := uint8(255 * pillarAlpha)
+	pillarTop := cy - baseY - bobAmp - 4
+	pillarBot := cy - 6
+	draw.FilledRect(screen, cx-pillarW/2, pillarTop, pillarW, pillarBot-pillarTop,
+		color.RGBA{R: 255, G: 210, B: 60, A: pa}, true)
+	// 光柱中心更亮的窄条
+	draw.FilledRect(screen, cx-1.5, pillarTop, 3, pillarBot-pillarTop,
+		color.RGBA{R: 255, G: 240, B: 150, A: pa * 2 / 3}, true)
+
+	// ── 2. 浮动菱形（上下 bob + 缓慢旋转） ──
+	bob := bobAmp * float32(math.Sin(animTime*bobFreq*2*math.Pi))
+	dy := cy - baseY + bob
+	breathe := float32(1.0 + 0.12*math.Sin(animTime*4))
+	r := diamondR * breathe
+	rot := animTime * 0.8 // 缓慢旋转
+
+	// 外层辉光菱形（大 + 低透明度）
+	glowA := uint8(50 + 30*math.Sin(animTime*3))
+	draw.DiamondRotated(screen, cx, dy, r+3, 1.0, rot, color.RGBA{R: 255, G: 220, B: 80, A: glowA})
+	// 主菱形
+	mainA := uint8(200 + 40*math.Sin(animTime*5))
+	draw.DiamondRotated(screen, cx, dy, r, 2.0, rot, color.RGBA{R: 255, G: 210, B: 50, A: mainA})
+	// 内部填充点（白色核心高光）
+	coreA := uint8(120 + 60*math.Sin(animTime*6))
+	draw.FilledCircle(screen, cx, dy, 2.0*breathe, color.RGBA{R: 255, G: 255, B: 230, A: coreA})
+
+	// ── 3. 上升粒子（不同相位的金色小圆点沿光柱两侧上升） ──
+	for i := 0; i < sparkCount; i++ {
+		phase := float64(i) * (2 * math.Pi / sparkCount)
+		// 每个粒子 2 秒循环，从底到顶
+		t := math.Mod(animTime+phase*0.3, 2.0) / 2.0 // 0→1
+		if t > 1 {
+			continue
+		}
+		sparkY := pillarBot - (pillarBot-pillarTop)*float32(t)
+		// 水平微摆
+		sparkX := cx + float32(math.Sin(animTime*4+phase)*3)
+		sparkA := uint8(180 * (1 - t) * (0.3 + 0.7*t)) // 中段最亮，顶部淡出
+		sparkR := float32(1.0 + 0.5*math.Sin(animTime*8+phase))
+		draw.FilledCircle(screen, sparkX, sparkY, sparkR,
+			color.RGBA{R: 255, G: 230, B: 100, A: sparkA})
+	}
+
+	// ── 4. 周期扩散环（每 pulseFreq 秒从菱形位置向外扩散一次） ──
+	pulseT := math.Mod(animTime, pulseFreq) / pulseFreq // 0→1
+	ringR := float32(4 + 14*pulseT)
+	ringA := uint8(140 * (1 - pulseT) * (1 - pulseT)) // quadratic fade out
+	if ringA > 3 {
+		draw.CircleOutline(screen, cx, dy, ringR, float32(1.2*(1-pulseT)+0.3),
+			color.RGBA{R: 255, G: 220, B: 80, A: ringA})
+	}
 }
 
 // DrawSelectionRing draws the tower selection ring + range indicator.

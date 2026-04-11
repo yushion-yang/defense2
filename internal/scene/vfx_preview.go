@@ -140,11 +140,11 @@ func (s *VFXPreviewScene) vfxTriggerRegistry() map[string]func(s *VFXPreviewScen
 		},
 
 		// Combat VFX
-		"typedImpactScatter":  func(s *VFXPreviewScene) { render.SpawnTypedImpact(cx, cy, "scatter") },
-		"typedImpactPhysical": func(s *VFXPreviewScene) { render.SpawnTypedImpact(cx, cy, "projectile") },
-		"typedImpactBeam":     func(s *VFXPreviewScene) { render.SpawnTypedImpact(cx, cy, "wideBeam") },
-		"typedImpactBounce":   func(s *VFXPreviewScene) { render.SpawnTypedImpact(cx, cy, "bounce") },
-		"typedImpactRadial":   func(s *VFXPreviewScene) { render.SpawnTypedImpact(cx, cy, "radial") },
+		"typedImpactScatter":  func(s *VFXPreviewScene) { render.SpawnTypedImpact(&cx, &cy, "scatter") },
+		"typedImpactPhysical": func(s *VFXPreviewScene) { render.SpawnTypedImpact(&cx, &cy, "projectile") },
+		"typedImpactBeam":     func(s *VFXPreviewScene) { render.SpawnTypedImpact(&cx, &cy, "wideBeam") },
+		"typedImpactBounce":   func(s *VFXPreviewScene) { render.SpawnTypedImpact(&cx, &cy, "bounce") },
+		"typedImpactRadial":   func(s *VFXPreviewScene) { render.SpawnTypedImpact(&cx, &cy, "radial") },
 		"splashRing":          func(s *VFXPreviewScene) { render.SpawnSplashRing(cx, cy, 50) },
 		"beam": func(s *VFXPreviewScene) {
 			s.beamPool.Add(combat.Beam{
@@ -941,14 +941,14 @@ func (s *VFXPreviewScene) drawActiveVFX(screen *ebiten.Image) {
 			{X: cx - 30, Y: cy, Life: life, MaxLife: 1.0, Radius: 12},
 			{X: cx, Y: cy + 15, Life: life * 0.7, MaxLife: 1.0, Radius: 10},
 			{X: cx + 30, Y: cy, Life: life * 0.5, MaxLife: 1.0, Radius: 8},
-		})
+		}, t)
 	case "fireballs":
 		// Simulate fireball flying across
 		p := math.Mod(t, 1.2) / 1.2
 		fbX := cx - 60 + 120*p
 		vfx.DrawFireballs(screen, []vfx.FireballVFX{
 			{X: fbX, Y: cy, Radius: 6, Progress: p, StartX: cx - 60, StartY: cy, EndX: cx + 60, EndY: cy},
-		})
+		}, t)
 	case "shootFlash":
 		// Repeating flash every 0.5s
 		flashT := math.Mod(t, 0.5)

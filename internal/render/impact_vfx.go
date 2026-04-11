@@ -13,12 +13,14 @@ import (
 
 // ImpactVFX 单个命中特效实例。
 type ImpactVFX struct {
-	X, Y    float64
+	X, Y    float64    // 快照坐标（fallback）
 	Life    float64
 	MaxLife float64
 	Active  bool
 	Color   color.RGBA // 扩散环颜色
 	Radius  float32    // 最大扩散半径
+	TrackX  *float64   // 跟踪目标 X（非 nil 时每帧读取最新位置）
+	TrackY  *float64   // 跟踪目标 Y
 }
 
 const maxImpactVFX = 16
@@ -27,25 +29,29 @@ var impactPool [maxImpactVFX]ImpactVFX
 var impactCursor int
 
 // SpawnTypedImpact 根据攻击方式生成对应元素颜色的命中特效。
-func SpawnTypedImpact(x, y float64, attackStyle string) {
+// trackX/trackY 为目标坐标指针，非 nil 时特效跟随目标移动。
+func SpawnTypedImpact(trackX, trackY *float64, attackStyle string) {
+	x, y := *trackX, *trackY
 	switch attackStyle {
 	case "scatter": // ice — blue
-		spawnImpact(x, y, color.RGBA{R: 100, G: 180, B: 255, A: 200}, 8, 0.30)
+		spawnImpact(x, y, trackX, trackY, color.RGBA{R: 100, G: 180, B: 255, A: 200}, 8, 0.30)
 	case "spin_aoe", "projectile": // fire/physical — orange
-		spawnImpact(x, y, color.RGBA{R: 255, G: 140, B: 40, A: 200}, 8, 0.25)
+		spawnImpact(x, y, trackX, trackY, color.RGBA{R: 255, G: 140, B: 40, A: 200}, 8, 0.25)
 	case "wideBeam": // energy — purple
-		spawnImpact(x, y, color.RGBA{R: 200, G: 100, B: 255, A: 200}, 6, 0.20)
+		spawnImpact(x, y, trackX, trackY, color.RGBA{R: 200, G: 100, B: 255, A: 200}, 6, 0.20)
 	default: // warm yellow default
-		spawnImpact(x, y, color.RGBA{R: 255, G: 220, B: 100, A: 200}, 7, 0.25)
+		spawnImpact(x, y, trackX, trackY, color.RGBA{R: 255, G: 220, B: 100, A: 200}, 7, 0.25)
 	}
 }
 
 // spawnImpact 生成一个自定义颜色和半径的小型命中特效。
-func spawnImpact(x, y float64, clr color.RGBA, radius float32, life float64) {
+func spawnImpact(x, y float64, trackX, trackY *float64, clr color.RGBA, radius float32, life float64) {
 	v := &impactPool[impactCursor]
 	impactCursor = (impactCursor + 1) % maxImpactVFX
 	v.X = x
 	v.Y = y
+	v.TrackX = trackX
+	v.TrackY = trackY
 	v.Life = life
 	v.MaxLife = life
 	v.Active = true
@@ -57,6 +63,8 @@ func spawnImpact(x, y float64, clr color.RGBA, radius float32, life float64) {
 func ClearImpactVFX() {
 	for i := range impactPool {
 		impactPool[i].Active = false
+		impactPool[i].TrackX = nil
+		impactPool[i].TrackY = nil
 	}
 }
 
@@ -70,6 +78,8 @@ func UpdateImpactVFX(dt float64) {
 		v.Life -= dt
 		if v.Life <= 0 {
 			v.Active = false
+			v.TrackX = nil
+			v.TrackY = nil
 		}
 	}
 }
@@ -84,8 +94,13 @@ func DrawImpactVFX(screen *ebiten.Image) {
 		alpha := v.Life / v.MaxLife // 1→0 渐隐
 		progress := 1.0 - alpha     // 0→1 扩展
 
-		cx := float32(v.X)
-		cy := float32(v.Y)
+		// 跟踪目标最新位置，fallback 到快照坐标
+		posX, posY := v.X, v.Y
+		if v.TrackX != nil && v.TrackY != nil {
+			posX, posY = *v.TrackX, *v.TrackY
+		}
+		cx := float32(posX)
+		cy := float32(posY)
 
 		// White center flash — larger, lingers longer
 		if alpha > 0.5 {

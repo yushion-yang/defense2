@@ -108,7 +108,7 @@ func (wr *WardenRenderer) DrawWarden(screen *ebiten.Image, w *warden.Warden, ani
 	// Type-specific effects (drawn BEFORE body so body renders on top)
 	switch s := w.State.(type) {
 	case *wardenTypes.PrinceState:
-		drawPrinceEffects(screen, s)
+		drawPrinceEffects(screen, s, animTime)
 	case *wardenTypes.CoreState:
 		drawCoreEffects(screen, &s.WardenState)
 	case *wardenTypes.ChainState:
@@ -174,12 +174,12 @@ func wardenShootColor(typ string) color.RGBA {
 
 // ── 火灵特效：火球飞行 + 地面燃烧区 ──
 
-func drawPrinceEffects(screen *ebiten.Image, s *wardenTypes.PrinceState) {
+func drawPrinceEffects(screen *ebiten.Image, s *wardenTypes.PrinceState, animTime float64) {
 	trails := make([]vfx.FireTrailVFX, len(s.Trails))
 	for i, t := range s.Trails {
 		trails[i] = vfx.FireTrailVFX{X: t.X, Y: t.Y, Life: t.Life, MaxLife: t.MaxLife, Radius: t.Radius}
 	}
-	vfx.DrawFireTrails(screen, trails)
+	vfx.DrawFireTrails(screen, trails, animTime)
 
 	fireballs := make([]vfx.FireballVFX, len(s.Fireballs))
 	for i, fb := range s.Fireballs {
@@ -188,7 +188,7 @@ func drawPrinceEffects(screen *ebiten.Image, s *wardenTypes.PrinceState) {
 			StartX: fb.StartX, StartY: fb.StartY, EndX: fb.EndX, EndY: fb.EndY,
 		}
 	}
-	vfx.DrawFireballs(screen, fireballs)
+	vfx.DrawFireballs(screen, fireballs, animTime)
 }
 
 // ── 机甲特效：射击闪光 ──

@@ -2107,7 +2107,7 @@ func (s *StageScene) updatePlaying() {
 				e.HitFlash = 0.12
 			}
 			// 元素类型化命中特效
-			render.SpawnTypedImpact(e.X, e.Y, attackStyle)
+			render.SpawnTypedImpact(&e.X, &e.Y, attackStyle)
 			// 元素粒子
 			switch attackStyle {
 			case "scatter":
