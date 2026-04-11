@@ -34,7 +34,7 @@ func GetAssetFS() *embed.FS {
 	return assetFS
 }
 
-// LevelEntry 关卡列表条目（来自 level-list.json）。
+// LevelEntry 关卡列表条目（从 levels/map_*.json 动态构建）。
 type LevelEntry struct {
 	ID          string `json:"id"`
 	Name        string `json:"name"`
@@ -43,22 +43,54 @@ type LevelEntry struct {
 	Difficulty  string `json:"difficulty"`
 }
 
-// LoadLevelList 加载关卡列表。
+// LoadLevelList 从 config/levels/ 目录扫描所有正式地图构建关卡列表。
+// 只包含 map_01~map_99 格式的文件，跳过 map_test/map_dummy 等测试地图。
+// 按 ID 字母序排列。
 func LoadLevelList() ([]LevelEntry, error) {
 	if dataFS == nil {
 		return nil, fmt.Errorf("load level list: dataFS not initialized")
 	}
-	data, err := dataFS.ReadFile("config/level-list.json")
+	entries, err := dataFS.ReadDir("config/levels")
 	if err != nil {
 		return nil, fmt.Errorf("load level list: %w", err)
 	}
-	var wrap struct {
-		Levels []LevelEntry `json:"levels"`
+
+	var levels []LevelEntry
+	for _, entry := range entries {
+		name := entry.Name()
+		// 只加载 map_XX.json（两位数字编号的正式地图）
+		if len(name) < 11 || name[:4] != "map_" || name[len(name)-5:] != ".json" {
+			continue
+		}
+		// 跳过非数字编号的文件（map_test, map_dummy 等）
+		numPart := name[4 : len(name)-5]
+		isNumeric := true
+		for _, c := range numPart {
+			if c < '0' || c > '9' {
+				isNumeric = false
+				break
+			}
+		}
+		if !isNumeric {
+			continue
+		}
+
+		id := name[:len(name)-5] // "map_01"
+		m, err := LoadMap(id)
+		if err != nil {
+			continue // 跳过无法加载的文件
+		}
+		levels = append(levels, LevelEntry{
+			ID:          m.ID,
+			Name:        m.Name,
+			Description: m.Description,
+			Waves:       m.Waves,
+			Difficulty:  m.Difficulty,
+		})
 	}
-	if err := json.Unmarshal(data, &wrap); err != nil {
-		return nil, fmt.Errorf("parse level list: %w", err)
-	}
-	return wrap.Levels, nil
+
+	// entries 已按字母序（embed.FS.ReadDir 保证排序），无需额外排序
+	return levels, nil
 }
 
 // ── 地图配置 ──────────────────────────────────────
