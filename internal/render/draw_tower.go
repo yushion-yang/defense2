@@ -83,8 +83,8 @@ func (tr *TowerRenderer) DrawTowers(screen *ebiten.Image, pool *tower.Pool, sele
 			vfx.DrawStrengthGlow(screen, cx, cy, t.Strength.Overflow(), animTime)
 		}
 		if !t.Selling && t.BuildAnim <= 0 {
-			if auraR, auraClr := towerAuraVisual(t, animTime); auraR > 0 {
-				vfx.DrawAuraPulse(screen, cx, cy, auraR, auraClr, animTime)
+			for _, av := range towerAuraVisuals(t) {
+				vfx.DrawAuraPulse(screen, cx, cy, av.Radius, av.Color, animTime)
 			}
 		}
 
@@ -259,26 +259,57 @@ func DrawTowerRangePreview(screen *ebiten.Image, cx, cy float32, r float64, vali
 	draw.CircleOutline(screen, cx, cy, fr, 1.5, strokeClr)
 }
 
-// aura 类型 → 视觉颜色
-var auraColors = map[string]color.RGBA{
-	"damageUpAura":    {R: 255, G: 160, B: 60, A: 255},  // 橙
-	"attackSpeedAura": {R: 100, G: 220, B: 100, A: 255}, // 绿
-	"rangeAura":       {R: 100, G: 160, B: 255, A: 255}, // 蓝
-	"critAura":        {R: 255, G: 220, B: 60, A: 255},  // 黄
+// auraVisualDef 定义一个有半径的 buff/zone 能力的视觉效果。
+// 新增 buff 类型只需在此注册表添加一条即可自动显示光圈。
+type auraVisualDef struct {
+	Color       color.RGBA
+	UseTowerRange bool // true: 用塔射程作为半径（zone 类），false: 用 ability param
 }
 
-// towerAuraVisual 检查塔是否有光环能力，返回半径和颜色。
-func towerAuraVisual(t *tower.Tower, _ float64) (radius float64, clr color.RGBA) {
+// auraRegistry buff/zone 能力 → 视觉定义。
+var auraRegistry = map[string]auraVisualDef{
+	// 增益光环（buff 类，param=半径）
+	"damageUpAura":    {Color: color.RGBA{R: 255, G: 160, B: 60, A: 255}},  // 橙 — 增伤
+	"attackSpeedAura": {Color: color.RGBA{R: 100, G: 220, B: 100, A: 255}}, // 绿 — 攻速
+	"rangeAura":       {Color: color.RGBA{R: 100, G: 160, B: 255, A: 255}}, // 蓝 — 射程
+	"critAura":        {Color: color.RGBA{R: 255, G: 220, B: 60, A: 255}},  // 金 — 暴击
+	"soloBoost":       {Color: color.RGBA{R: 200, G: 120, B: 255, A: 255}}, // 紫 — 独行
+	// 区域效果（zone 类，用塔射程）
+	"poisonZone":  {Color: color.RGBA{R: 120, G: 200, B: 60, A: 255}, UseTowerRange: true},  // 毒绿
+	"silenceZone": {Color: color.RGBA{R: 180, G: 80, B: 220, A: 255}, UseTowerRange: true},  // 沉默紫
+	"curseZone":   {Color: color.RGBA{R: 160, G: 50, B: 50, A: 255}, UseTowerRange: true},   // 诅咒红
+	"weakenZone":  {Color: color.RGBA{R: 220, G: 140, B: 60, A: 255}, UseTowerRange: true},  // 脆弱橙
+}
+
+// auraVisual 一个光环的渲染参数。
+type auraVisual struct {
+	Radius float64
+	Color  color.RGBA
+}
+
+// towerAuraVisuals 返回塔上所有 buff/zone 能力的视觉参数列表。
+// 支持多光环叠加渲染。新增能力只需在 auraRegistry 中注册。
+func towerAuraVisuals(t *tower.Tower) []auraVisual {
 	table := config.GlobalAbilityTable()
 	if table == nil {
-		return 0, color.RGBA{}
+		return nil
 	}
+	var result []auraVisual
 	for _, abName := range t.Abilities {
-		if c, ok := auraColors[abName]; ok {
-			if def, exists := table[abName]; exists && def.Param > 0 {
-				return def.Param, c
-			}
+		reg, ok := auraRegistry[abName]
+		if !ok {
+			continue
 		}
+		var radius float64
+		if reg.UseTowerRange {
+			radius = t.Range // zone 类用塔射程
+		} else if def, exists := table[abName]; exists && def.Param > 0 {
+			radius = def.Param // buff 类用 ability param
+		}
+		if radius <= 0 {
+			continue
+		}
+		result = append(result, auraVisual{Radius: radius, Color: reg.Color})
 	}
-	return 0, color.RGBA{}
+	return result
 }
