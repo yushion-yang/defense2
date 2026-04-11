@@ -35,7 +35,7 @@
     }
   },
 
-  "enhance"        : {"type":"enhance"        , "label":"强化"     , "icon":"stat-damage"  , "category":"attack"  , "scaleDim":""                , "base":0     , "potential":0     , "param":0.2  , "paramDim":"statBoost"   , "param2":0   , "param2Dim":""            , "display":"一次性永久提升基础+潜力: 伤害/攻速+{p%}, 射程+{ph%}"           },
+  "enhance"        : {"type":"enhance"        , "label":"强化"     , "icon":"stat-damage"  , "category":"attack"  , "scaleDim":""                , "base":0     , "potential":0     , "param":0.4  , "paramDim":"statBoost"   , "param2":0   , "param2Dim":""            , "display":"一次性永久提升基础+潜力: 伤害/攻速+{p%}, 射程+{ph%}"           },
   "scatter"        : {"type":"scatter"        , "label":"散射"     , "icon":"multishot"    , "category":"attack"  , "scaleDim":"pellets"         , "base":3     , "potential":0.5   , "param":60   , "paramDim":"spreadAngle" , "param2":0   , "param2Dim":""            , "display":"攻击朝{p}度扇形区域发射{si}颗弹丸"                  },
   "wideBeam"       : {"type":"wideBeam"       , "label":"贯穿光束"  , "icon":"stat-range"   , "category":"attack"  , "scaleDim":"beamWidth"       , "base":6     , "potential":1     , "param":2    , "paramDim":"rangeMult"   , "param2":0   , "param2Dim":""            , "display":"攻击发射宽{s}的激光穿透所有敌人, 激光距离为射程×{p}"                    },
   "spinAoe"        : {"type":"spinAoe"        , "label":"旋风"     , "icon":"stat-splash"  , "category":"attack"  , "scaleDim":""                , "base":0     , "potential":0     , "param":0.5  , "paramDim":"damageRatio" , "param2":0   , "param2Dim":""            , "display":"攻击对射程范围内的敌人造成{p%}伤害"                              },

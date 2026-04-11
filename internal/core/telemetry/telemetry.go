@@ -2,19 +2,15 @@
 // 各游戏子系统在运行时写入，autoplay 系统读取以追踪代码路径覆盖率。
 // 零依赖设计：不导入任何游戏包，仅用基础类型，避免循环依赖。
 //
-// Thread safety: The global T instance is protected by a sync.Mutex for all
-// public methods (Record, Reset, Snapshot). Safe for concurrent goroutine access,
-// though primary usage is from Ebitengine's single-threaded game loop.
+// Thread safety: All callers run on Ebitengine's single-threaded game loop,
+// so no mutex is needed. If concurrent access is ever introduced, add sync.Mutex.
 package telemetry
-
-import "sync"
 
 // T 全局遥测实例。
 var T = New()
 
 // Telemetry 遥测数据收集器。
 type Telemetry struct {
-	mu sync.Mutex
 
 	// 伤害管线步骤（8 步）
 	PipelineSteps map[string]int // "immunity_check", "boss_hp_cap", "attacker_buff", "target_debuff", "damage_cap", "shield_absorb", "hp_deduct", "death"
@@ -61,8 +57,6 @@ func New() *Telemetry {
 
 // Reset 清除所有遥测数据（每局开始时调用）。
 func (t *Telemetry) Reset() {
-	t.mu.Lock()
-	defer t.mu.Unlock()
 	t.PipelineSteps = make(map[string]int)
 	t.DamageTypes = make(map[string]int)
 	t.BuffTypesApplied = make(map[string]int)
@@ -76,8 +70,6 @@ func (t *Telemetry) Reset() {
 
 // Record 记录一个维度的一次触发。
 func (t *Telemetry) Record(dimension string, key string) {
-	t.mu.Lock()
-	defer t.mu.Unlock()
 	switch dimension {
 	case "pipeline":
 		t.PipelineSteps[key]++
@@ -102,8 +94,6 @@ func (t *Telemetry) Record(dimension string, key string) {
 
 // Snapshot 返回当前遥测数据的只读副本。
 func (t *Telemetry) Snapshot() TelemetrySnapshot {
-	t.mu.Lock()
-	defer t.mu.Unlock()
 	return TelemetrySnapshot{
 		PipelineSteps:      copyMap(t.PipelineSteps),
 		DamageTypes:        copyMap(t.DamageTypes),

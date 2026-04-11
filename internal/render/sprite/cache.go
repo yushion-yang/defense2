@@ -3,7 +3,7 @@
 package sprite
 
 import (
-	"fmt"
+	"strconv"
 
 	"github.com/hajimehoshi/ebiten/v2"
 )
@@ -48,5 +48,5 @@ func (c *Cache) Count() int {
 }
 
 func cacheKey(path string, w, h int) string {
-	return fmt.Sprintf("%s:%dx%d", path, w, h)
+	return path + ":" + strconv.Itoa(w) + "x" + strconv.Itoa(h)
 }
