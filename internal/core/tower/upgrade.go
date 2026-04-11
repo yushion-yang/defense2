@@ -225,12 +225,19 @@ func applyEnhance(t *Tower, def *config.AbilityDef) {
 }
 
 // NextUnlockCategory 返回下一个应该解锁的类别（按 UnlockOrder 中首个空槽）。
-// 如果全部已满，返回 -1。
+// 跳过已有 PendingChoices 的槽（已解锁但尚未选择），确保连续购买解锁不同槽。
+// 如果全部已满或全有待选，返回 -1。
 func (t *Tower) NextUnlockCategory() int {
 	for _, cat := range t.UnlockOrder {
-		if t.AbilitySlots[cat] == "" {
-			return cat
+		if t.AbilitySlots[cat] != "" {
+			continue // 已选择
 		}
+		if t.PendingChoices != nil {
+			if _, exists := t.PendingChoices[cat]; exists {
+				continue // 已解锁待选
+			}
+		}
+		return cat
 	}
 	return -1
 }
