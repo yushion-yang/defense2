@@ -195,7 +195,7 @@
           "generatedKey": "firePierce",
           "attackStyle": "pierce",
           "name": "穿透射击",
-          "description": "railgun 塔穿透弹发射"
+          "description": "穿透弹发射"
         },
         {
           "file": "fire-laser.wav",

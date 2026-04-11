@@ -35,7 +35,7 @@ var unlockRules = []unlockRule{
 	{"map_01", []string{"map:map_02", "tower:shotgun"}},
 	{"map_02", []string{"map:map_03", "map:map_04", "warden:core", "tower:prism"}},
 	{"map_04", []string{"map:map_05", "map:map_06", "warden:chain", "tower:cyclone"}},
-	{"map_06", []string{"map:map_07", "map:map_08", "warden:skystrike", "warden:envoy", "tower:railgun"}},
+	{"map_06", []string{"map:map_07", "map:map_08", "warden:skystrike", "warden:envoy"}},
 }
 
 // unlockRequirementText 返回锁定项的解锁条件文本。
@@ -55,7 +55,7 @@ var unlockRequirementText = map[string]string{
 	"map:map_08":       "通关 迷宫回廊 解锁",
 	"warden:skystrike": "通关 迷宫回廊 解锁",
 	"warden:envoy":     "通关 迷宫回廊 解锁",
-	"tower:railgun":    "通关 迷宫回廊 解锁",
+
 }
 
 // UnlockRequirement 返回指定项的解锁条件描述。
@@ -260,7 +260,7 @@ func unlockDisplayName(item string) string {
 		"tower:shotgun":    "塔: 霰弹塔",
 		"tower:prism":      "塔: 棱镜塔",
 		"tower:cyclone":    "塔: 旋风塔",
-		"tower:railgun":    "塔: 磁轨炮",
+
 		"warden:core":      "战灵: 核心",
 		"warden:chain":     "战灵: 连锁",
 		"warden:skystrike": "战灵: 天击",
