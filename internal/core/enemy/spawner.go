@@ -5,7 +5,6 @@ package enemy
 
 import (
 	"math/rand"
-	"strings"
 
 	"defense2/internal/config"
 	"defense2/internal/core/buff"
@@ -387,20 +386,18 @@ func (s *Spawner) filteredArchetypes() []string {
 // matchesFilter 判断一个原型是否符合当前 EnemyFilter。
 func (s *Spawner) matchesFilter(name string, cfg *SpawnConfig) bool {
 	isBoss := cfg != nil && cfg.Boss
-	isFlying := strings.HasPrefix(name, "fly-") || strings.HasPrefix(name, "flying")
-	_, _ = name, isFlying // flying 已移除但保留过滤逻辑
 
 	switch s.EnemyFilter {
 	case "ground-only":
-		return !isBoss && !isFlying
+		return !isBoss
 	case "flying-only":
-		return isFlying
+		return false // flying enemies removed
 	case "boss-only":
 		return isBoss
 	case "dummy":
 		return name == "dummy"
 	case "stress":
-		return !isBoss && !isFlying
+		return !isBoss
 	case "none":
 		return false // no spawning
 	case "all-static":

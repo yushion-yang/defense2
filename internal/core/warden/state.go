@@ -409,26 +409,6 @@ func ComputeClusterCenter(enemies *enemy.Pool) (cx, cy float64, count int) {
 	return best.X, best.Y, count
 }
 
-// FindClusterCenter 寻找周围敌人最多的敌人（敌群中心）。
-func FindClusterCenter(enemies *enemy.Pool, clusterRange float64) *enemy.Enemy {
-	var best *enemy.Enemy
-	bestCount := 0
-
-	enemies.Each(func(e *enemy.Enemy) {
-		count := 0
-		enemies.Each(func(other *enemy.Enemy) {
-			if math.Hypot(other.X-e.X, other.Y-e.Y) <= clusterRange {
-				count++
-			}
-		})
-		if count > bestCount {
-			bestCount = count
-			best = e
-		}
-	})
-	return best
-}
-
 // FindDensestEnemy 找到在给定半径内邻居最多的敌人。
 func FindDensestEnemy(enemies *enemy.Pool, radius float64) *enemy.Enemy {
 	var alive []*enemy.Enemy

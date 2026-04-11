@@ -46,9 +46,8 @@ type Tower struct {
 	DamageTier string
 	SpeedTier  string
 	RangeTier  string
-	Color      [3]uint8 // 显示颜色 RGB
-	Faction    string   // 阵营标识（用于资源路径）
-	FireAnim   float64  // 射击动画计时器（射击时设为 0.15，逐帧衰减）
+	Color    [3]uint8 // 显示颜色 RGB
+	FireAnim float64  // 射击动画计时器（射击时设为 0.15，逐帧衰减）
 	Angle      float64  // 朝向角度（弧度，0=向上，顺时针）
 	// 战力缩放参数（来自 JSON 配置，放置后不变）
 	// 公式: attr = Base + Potential * (strength / 100)
@@ -67,14 +66,8 @@ type Tower struct {
 	SpinAngle  float64 // 旋转角度（弧度）
 	SpinActive float64 // 旋转激活计时器
 
-	// AuraDot 运行时状态
-	AuraPulse float64 // 脉冲动画计时
-
 	// GoldPassive 运行时状态
 	GoldCooldown float64 // 被动产金冷却计时器
-
-	// 分支特化
-	Branch string // 分支特化标识（空=未特化，一次性选择）
 
 	// 战力系统
 	Strength *strength.StrengthData // 战力运行时数据
@@ -241,7 +234,3 @@ func SpriteLabelFor(spriteKey string) string {
 	return "哨兵"
 }
 
-// DPS 返回当前每秒伤害。
-func (t *Tower) DPS() float64 {
-	return t.Damage * t.AttackSpeed
-}

@@ -196,59 +196,7 @@ func (t *Tower) NextUnlockCategory() int {
 	return -1
 }
 
-// RollAbilityChoices 为塔随机生成 N 个候选能力。
-// 按 UnlockOrder 顺序，从下一个待解锁类别中选择候选。
-func RollAbilityChoices(t *Tower, count int) []config.AbilityDef {
-	nextCat := t.NextUnlockCategory()
-	if nextCat < 0 {
-		return nil
-	}
-
-	// 从该类别收集候选能力
-	var pool []*config.AbilityDef
-	pool = append(pool, AbilitiesForCategory(nextCat)...)
-	if len(pool) == 0 {
-		return nil
-	}
-
-	// 随机打乱后取前 count 个
-	rand.Shuffle(len(pool), func(i, j int) {
-		pool[i], pool[j] = pool[j], pool[i]
-	})
-	if count > len(pool) {
-		count = len(pool)
-	}
-
-	result := make([]config.AbilityDef, count)
-	for i := 0; i < count; i++ {
-		result[i] = *pool[i]
-	}
-	return result
-}
-
 // ── 查询 ──
-
-// UsedCategories 返回已使用的类别索引集合。
-func (t *Tower) UsedCategories() map[int]bool {
-	used := map[int]bool{}
-	for i, a := range t.AbilitySlots {
-		if a != "" {
-			used[i] = true
-		}
-	}
-	return used
-}
-
-// AvailableCategories 返回尚未使用的类别索引列表。
-func (t *Tower) AvailableCategories() []int {
-	var result []int
-	for i, a := range t.AbilitySlots {
-		if a == "" {
-			result = append(result, i)
-		}
-	}
-	return result
-}
 
 // AllChoicesForCategory 返回指定类别的全部能力（不随机不截断），用于测试模式。
 func AllChoicesForCategory(cat int) []config.AbilityDef {
