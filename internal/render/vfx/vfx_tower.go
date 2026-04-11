@@ -230,48 +230,181 @@ func DrawAuraPulse(screen *ebiten.Image, cx, cy float32, radius float64, clr col
 // 每个函数签名统一: (screen, cx, cy, radius, animTime)
 // 当前为基础实现，后续可独立替换为更炫酷的动效。
 
-// DrawDamageAura 增伤光环 — 橙色脉冲虚线圈 + 轨道火花。
+// DrawDamageAura 增伤光环 — "Orange Inferno Ring"。
+// 外层脉冲虚线圈 + 内环呼吸 + 3 轨道火花 + 扩散脉冲波。
 func DrawDamageAura(screen *ebiten.Image, cx, cy float32, radius float64, animTime float64) {
-	clr := color.RGBA{R: 255, G: 160, B: 60, A: 255}
-	DrawAuraPulse(screen, cx, cy, radius, clr, animTime)
-}
+	r32 := float32(radius)
 
-// DrawSpeedAuraRing 攻速光环 — 绿色快速旋转圈。
-func DrawSpeedAuraRing(screen *ebiten.Image, cx, cy float32, radius float64, animTime float64) {
-	clr := color.RGBA{R: 100, G: 220, B: 100, A: 255}
-	pulse := float32(0.7 + 0.3*math.Sin(animTime*3)) // 比标准快 1.5 倍
-	a := uint8(float64(50) * float64(pulse))
-	draw.DashedCircle(screen, cx, cy, float32(radius), 1, 4, 3, color.RGBA{clr.R, clr.G, clr.B, a})
-	// 3 个快速轨道点
+	// ── Outer pulsing dashed circle with orange glow ──
+	pulse := 0.6 + 0.4*math.Sin(animTime*2.0)
+	outerA := uint8(50 * pulse)
+	draw.DashedCircle(screen, cx, cy, r32, 1.5, 7, 4, color.RGBA{R: 255, G: 160, B: 60, A: outerA})
+	// Subtle outer glow
+	draw.Glow(screen, cx, cy, r32-8, r32+8, color.RGBA{R: 255, G: 140, B: 40, A: uint8(12 * pulse)})
+
+	// ── Inner solid circle at 70% radius, breathing alpha ──
+	innerPulse := 0.5 + 0.5*math.Sin(animTime*1.6+0.5)
+	innerA := uint8(30 * innerPulse)
+	draw.CircleOutline(screen, cx, cy, r32*0.7, 1.0, color.RGBA{R: 255, G: 180, B: 80, A: innerA})
+
+	// ── 3 orbiting fire sparks at different speeds ──
+	sparkSpeeds := [3]float64{1.8, 2.4, 3.1}
+	sparkOffsets := [3]float64{0, 2.1, 4.2}
+	sparkRadii := [3]float32{r32 * 0.85, r32 * 0.92, r32 * 0.78}
 	for i := 0; i < 3; i++ {
-		angle := animTime*2.5 + float64(i)*math.Pi*2/3
-		dx := cx + float32(radius)*float32(math.Cos(angle))
-		dy := cy + float32(radius)*float32(math.Sin(angle))
-		draw.FilledCircle(screen, dx, dy, 2, color.RGBA{clr.R, clr.G, clr.B, uint8(80 * pulse)})
+		angle := animTime*sparkSpeeds[i] + sparkOffsets[i]
+		sx := cx + sparkRadii[i]*float32(math.Cos(angle))
+		sy := cy + sparkRadii[i]*float32(math.Sin(angle))
+		sparkA := uint8(100 + 55*math.Sin(animTime*4+float64(i)*1.5))
+		draw.FilledCircle(screen, sx, sy, 3, color.RGBA{R: 255, G: 200, B: 80, A: sparkA})
+		// Tiny glow around spark
+		draw.FilledCircle(screen, sx, sy, 5, color.RGBA{R: 255, G: 160, B: 40, A: sparkA / 4})
+	}
+
+	// ── Occasional outward pulse wave (expanding fading circle) ──
+	// Repeats every ~2.5 seconds, expanding over 0.8s
+	waveCycle := math.Mod(animTime, 2.5)
+	if waveCycle < 0.8 {
+		waveProg := waveCycle / 0.8
+		waveR := r32 * float32(0.5+0.6*waveProg)
+		waveA := uint8(40 * (1 - waveProg))
+		draw.CircleOutline(screen, cx, cy, waveR, 1.5, color.RGBA{R: 255, G: 160, B: 60, A: waveA})
 	}
 }
 
-// DrawRangeAura 射程光环 — 蓝色双圈。
-func DrawRangeAura(screen *ebiten.Image, cx, cy float32, radius float64, animTime float64) {
-	clr := color.RGBA{R: 100, G: 160, B: 255, A: 255}
-	pulse := float32(0.6 + 0.4*math.Sin(animTime*1.5))
-	a := uint8(float64(45) * float64(pulse))
-	draw.CircleOutline(screen, cx, cy, float32(radius), 1, color.RGBA{clr.R, clr.G, clr.B, a})
-	draw.CircleOutline(screen, cx, cy, float32(radius*0.85), 1, color.RGBA{clr.R, clr.G, clr.B, a / 2})
+// DrawSpeedAuraRing 攻速光环 — "Green Speed Vortex"。
+// 外层旋转虚线圈 + 4 高速轨道点(带拖影) + 内层反旋实线环 + 4 方位箭头。
+func DrawSpeedAuraRing(screen *ebiten.Image, cx, cy float32, radius float64, animTime float64) {
+	r32 := float32(radius)
+	clr := color.RGBA{R: 100, G: 220, B: 100, A: 255}
+
+	// ── Outer rotating dashed circle with short segments (fast rotation) ──
+	// Simulate rotation by phase-shifting the dash pattern
+	pulse := 0.7 + 0.3*math.Sin(animTime*3.5)
+	outerA := uint8(50 * pulse)
+	draw.DashedCircle(screen, cx, cy, r32, 1.0, 4, 3, color.RGBA{clr.R, clr.G, clr.B, outerA})
+
+	// ── 4 orbiting dots at high speed with trailing afterimages ──
+	const orbSpeed = 3.5
+	for i := 0; i < 4; i++ {
+		baseAngle := animTime*orbSpeed + float64(i)*math.Pi/2
+		// 3 afterimage copies at slightly earlier angles with decreasing alpha
+		for trail := 2; trail >= 0; trail-- {
+			trailAngle := baseAngle - float64(trail)*0.15
+			tx := cx + r32*float32(math.Cos(trailAngle))
+			ty := cy + r32*float32(math.Sin(trailAngle))
+			trailA := uint8(float64(30+trail*10) * pulse)
+			trailR := float32(1.5 + float64(2-trail)*0.3)
+			draw.FilledCircle(screen, tx, ty, trailR, color.RGBA{clr.R, clr.G, clr.B, trailA})
+		}
+		// Main dot (brightest)
+		dx := cx + r32*float32(math.Cos(baseAngle))
+		dy := cy + r32*float32(math.Sin(baseAngle))
+		draw.FilledCircle(screen, dx, dy, 2.5, color.RGBA{clr.R, clr.G, clr.B, uint8(100 * pulse)})
+	}
+
+	// ── Inner thin solid ring at 80% radius, counter-rotating ──
+	innerA := uint8(30 * pulse)
+	draw.CircleOutline(screen, cx, cy, r32*0.8, 0.8, color.RGBA{clr.R, clr.G, clr.B, innerA})
+
+	// ── Center directional arrows: 4 small lines at cardinal points, rotating ──
+	arrowRot := animTime * 2.0
+	arrowInner := r32 * 0.25
+	arrowOuter := r32 * 0.4
+	arrowA := uint8(55 * pulse)
+	for i := 0; i < 4; i++ {
+		angle := arrowRot + float64(i)*math.Pi/2
+		x1 := cx + arrowInner*float32(math.Cos(angle))
+		y1 := cy + arrowInner*float32(math.Sin(angle))
+		x2 := cx + arrowOuter*float32(math.Cos(angle))
+		y2 := cy + arrowOuter*float32(math.Sin(angle))
+		draw.Line(screen, x1, y1, x2, y2, 1.0, color.RGBA{clr.R, clr.G, clr.B, arrowA}, false)
+	}
 }
 
-// DrawCritAura 暴击光环 — 金色闪烁 + 星形轨道。
+// DrawRangeAura 射程光环 — "Blue Sonar Pulse"。
+// 双同心实线环 + 雷达扫描弧 + 4 方位十字标记 + 中心呼吸光晕。
+func DrawRangeAura(screen *ebiten.Image, cx, cy float32, radius float64, animTime float64) {
+	r32 := float32(radius)
+	clr := color.RGBA{R: 100, G: 160, B: 255, A: 255}
+
+	// ── Double concentric solid rings at radius and 85% radius ──
+	breathe := 0.6 + 0.4*math.Sin(animTime*1.5)
+	outerA := uint8(45 * breathe)
+	innerA := uint8(28 * breathe)
+	draw.CircleOutline(screen, cx, cy, r32, 1.2, color.RGBA{clr.R, clr.G, clr.B, outerA})
+	draw.CircleOutline(screen, cx, cy, r32*0.85, 0.8, color.RGBA{clr.R, clr.G, clr.B, innerA})
+
+	// ── Sonar sweep: bright arc segment rotating like a radar ──
+	sweepAngle := animTime * 1.8
+	sweepArc := float32(0.5) // arc width in radians
+	sweepA := uint8(70 * breathe)
+	draw.Arc(screen, cx, cy, r32*0.92, float32(sweepAngle)-sweepArc/2, float32(sweepAngle)+sweepArc/2,
+		2.5, color.RGBA{clr.R, clr.G, clr.B, sweepA})
+	// Fading trail behind the sweep
+	trailA := uint8(30 * breathe)
+	draw.Arc(screen, cx, cy, r32*0.92, float32(sweepAngle)-sweepArc*1.5, float32(sweepAngle)-sweepArc/2,
+		1.5, color.RGBA{clr.R, clr.G, clr.B, trailA})
+
+	// ── 4 small cross markers at N/S/E/W on the outer ring ──
+	crossSize := float32(5)
+	crossA := uint8(55 * breathe)
+	crossClr := color.RGBA{clr.R, clr.G, clr.B, crossA}
+	cardinals := [4][2]float32{{0, -1}, {1, 0}, {0, 1}, {-1, 0}} // N, E, S, W
+	for _, dir := range cardinals {
+		mx := cx + r32*dir[0]
+		my := cy + r32*dir[1]
+		// Horizontal line of cross
+		draw.Line(screen, mx-crossSize, my, mx+crossSize, my, 0.8, crossClr, false)
+		// Vertical line of cross
+		draw.Line(screen, mx, my-crossSize, mx, my+crossSize, 0.8, crossClr, false)
+	}
+
+	// ── Gentle breathing glow at center ──
+	glowPulse := 0.5 + 0.5*math.Sin(animTime*1.2)
+	draw.Glow(screen, cx, cy, 0, r32*0.2, color.RGBA{clr.R, clr.G, clr.B, uint8(12 * glowPulse)})
+}
+
+// DrawCritAura 暴击光环 — "Golden Starfield"。
+// 外层快闪虚线圈 + 6 旋转菱形标记 + 8 线星芒 + 周期性强闪。
 func DrawCritAura(screen *ebiten.Image, cx, cy float32, radius float64, animTime float64) {
+	r32 := float32(radius)
 	clr := color.RGBA{R: 255, G: 220, B: 60, A: 255}
-	pulse := float32(0.5 + 0.5*math.Sin(animTime*4)) // 快速闪烁
-	a := uint8(float64(50) * float64(pulse))
-	draw.DashedCircle(screen, cx, cy, float32(radius), 1, 3, 5, color.RGBA{clr.R, clr.G, clr.B, a})
-	// 4 个菱形标记
-	for i := 0; i < 4; i++ {
-		angle := animTime*1.2 + float64(i)*math.Pi/2
-		dx := cx + float32(radius*0.9)*float32(math.Cos(angle))
-		dy := cy + float32(radius*0.9)*float32(math.Sin(angle))
-		draw.Diamond(screen, dx, dy, 3, 1, color.RGBA{clr.R, clr.G, clr.B, uint8(90 * pulse)})
+
+	// ── Outer dashed circle with fast blink (high frequency sin) ──
+	blink := 0.4 + 0.6*math.Sin(animTime*5.0)
+	outerA := uint8(50 * blink)
+	draw.DashedCircle(screen, cx, cy, r32, 1.2, 3, 5, color.RGBA{clr.R, clr.G, clr.B, outerA})
+
+	// ── 6 rotating diamond markers at varying distances ──
+	for i := 0; i < 6; i++ {
+		angle := animTime*1.2 + float64(i)*math.Pi/3
+		// Varying distance: oscillate between 0.8 and 1.0 of radius
+		dist := 0.85 + 0.1*math.Sin(animTime*2+float64(i)*1.1)
+		dx := cx + r32*float32(dist)*float32(math.Cos(angle))
+		dy := cy + r32*float32(dist)*float32(math.Sin(angle))
+		diamondA := uint8(80 + 40*math.Sin(animTime*3+float64(i)*0.8))
+		draw.Diamond(screen, dx, dy, 3.5, 1.0, color.RGBA{clr.R, clr.G, clr.B, diamondA})
+	}
+
+	// ── Inner starburst: 8 thin lines radiating from center to 40% radius, slowly rotating ──
+	starRot := animTime * 0.5
+	starR := r32 * 0.4
+	starA := uint8(45 * blink)
+	for i := 0; i < 8; i++ {
+		angle := starRot + float64(i)*math.Pi/4
+		x2 := cx + starR*float32(math.Cos(angle))
+		y2 := cy + starR*float32(math.Sin(angle))
+		draw.Line(screen, cx, cy, x2, y2, 0.8, color.RGBA{clr.R, clr.G, clr.B, starA}, false)
+	}
+
+	// ── Occasional bright flash (~every 3 seconds, brief alpha spike) ──
+	flashCycle := math.Mod(animTime, 3.0)
+	if flashCycle < 0.15 {
+		flashIntensity := 1.0 - flashCycle/0.15
+		flashA := uint8(60 * flashIntensity)
+		draw.Glow(screen, cx, cy, 0, r32*0.5, color.RGBA{255, 240, 150, flashA})
+		draw.CircleOutline(screen, cx, cy, r32*0.6, 1.5, color.RGBA{255, 240, 150, uint8(80 * flashIntensity)})
 	}
 }
 

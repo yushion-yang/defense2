@@ -216,6 +216,10 @@ func (s *VFXPreviewScene) vfxTriggerRegistry() map[string]func(s *VFXPreviewScen
 		"spinBlades":      func(s *VFXPreviewScene) { s.activateVFX("spinBlades", 0) },
 		"strengthGlow":    func(s *VFXPreviewScene) { s.activateVFX("strengthGlow", 0) },
 		"auraPulse":       func(s *VFXPreviewScene) { s.activateVFX("auraPulse", 0) },
+		"damageUpAura":    func(s *VFXPreviewScene) { s.activateVFX("damageUpAura", 0) },
+		"attackSpeedAura": func(s *VFXPreviewScene) { s.activateVFX("attackSpeedAura", 0) },
+		"rangeAura":       func(s *VFXPreviewScene) { s.activateVFX("rangeAura", 0) },
+		"critAura":        func(s *VFXPreviewScene) { s.activateVFX("critAura", 0) },
 		"buffDots":        func(s *VFXPreviewScene) { s.activateVFX("buffDots", 0) },
 		"pentagram":       func(s *VFXPreviewScene) { s.activateVFX("pentagram", 0) },
 		"projPenetrate":   func(s *VFXPreviewScene) { s.activateVFX("projPenetrate", 0) },
@@ -870,6 +874,14 @@ func (s *VFXPreviewScene) drawActiveVFX(screen *ebiten.Image) {
 		vfx.DrawStrengthGlow(screen, fcx, fcy, 120, t)
 	case "auraPulse":
 		vfx.DrawAuraPulse(screen, fcx, fcy, 80, color.RGBA{R: 255, G: 160, B: 60, A: 255}, t)
+	case "damageUpAura":
+		vfx.DrawDamageAura(screen, fcx, fcy, 100, t)
+	case "attackSpeedAura":
+		vfx.DrawSpeedAuraRing(screen, fcx, fcy, 100, t)
+	case "rangeAura":
+		vfx.DrawRangeAura(screen, fcx, fcy, 100, t)
+	case "critAura":
+		vfx.DrawCritAura(screen, fcx, fcy, 100, t)
 	case "buffDots":
 		vfx.DrawBuffDots(screen, fcx, fcy, 4)
 	case "pentagram":

@@ -327,6 +327,30 @@
           "description": "光环能力的脉冲虚线圈，按能力类型着色"
         },
         {
+          "id": "damageUpAura",
+          "name": "DamageUpAura",
+          "label": "增伤光环",
+          "description": "橙色脉冲波纹+轨道火花+内外双环，增伤 buff 范围指示"
+        },
+        {
+          "id": "attackSpeedAura",
+          "name": "AttackSpeedAura",
+          "label": "攻速光环",
+          "description": "绿色高速旋转三点+闪烁虚线圈，攻速 buff 范围指示"
+        },
+        {
+          "id": "rangeAura",
+          "name": "RangeAura",
+          "label": "射程光环",
+          "description": "蓝色同心双环+呼吸脉动+方位标记，射程 buff 范围指示"
+        },
+        {
+          "id": "critAura",
+          "name": "CritAura",
+          "label": "暴击光环",
+          "description": "金色快速闪烁+菱形轨道标记+星芒，暴击 buff 范围指示"
+        },
+        {
           "id": "buffDots",
           "name": "BuffDots",
           "label": "增益圆点",
