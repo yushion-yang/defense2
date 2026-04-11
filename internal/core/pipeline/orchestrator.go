@@ -74,6 +74,9 @@ type TickCallbacks struct {
 	// CC 效果（减速/眩晕/灼烧等命中时回调）
 	OnCC func(x, y float64, ccType string)
 
+	// 溅射 VFX 回调
+	OnSplashVFX func(x, y, radius float64)
+
 	// 战灵
 	OnWardenFire    func()
 	OnWardenSpecial func()

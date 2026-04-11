@@ -145,6 +145,7 @@ func (s *VFXPreviewScene) vfxTriggerRegistry() map[string]func(s *VFXPreviewScen
 		"typedImpactBeam":     func(s *VFXPreviewScene) { render.SpawnTypedImpact(cx, cy, "wideBeam") },
 		"typedImpactBounce":   func(s *VFXPreviewScene) { render.SpawnTypedImpact(cx, cy, "bounce") },
 		"typedImpactRadial":   func(s *VFXPreviewScene) { render.SpawnTypedImpact(cx, cy, "radial") },
+		"splashRing":          func(s *VFXPreviewScene) { render.SpawnSplashRing(cx, cy, 50) },
 		"beam": func(s *VFXPreviewScene) {
 			s.beamPool.Add(combat.Beam{
 				X1: cx - 80, Y1: cy, X2: cx + 80, Y2: cy,
@@ -408,6 +409,7 @@ func (s *VFXPreviewScene) Update() error {
 		s.beamPool.Tick(effectiveDT)
 		render.UpdateShake(effectiveDT)
 		render.UpdateImpactVFX(effectiveDT)
+		render.UpdateSplashVFX(effectiveDT)
 		render.UpdateFloatTexts(effectiveDT)
 		s.waveAnnounce.Update(effectiveDT)
 		hud.UpdateToast(effectiveDT)
@@ -479,6 +481,7 @@ func (s *VFXPreviewScene) clearActiveEffects() {
 	s.particlePool.Clear()
 	s.beamPool.Clear()
 	render.ClearImpactVFX()
+	render.ClearSplashVFX()
 	render.ClearFloatTexts()
 
 	// Reset post-processing state.
@@ -672,6 +675,7 @@ func (s *VFXPreviewScene) Draw(screen *ebiten.Image) {
 
 	// Draw impact VFX.
 	render.DrawImpactVFX(buf)
+	render.DrawSplashVFX(buf)
 
 	// Draw float text.
 	render.DrawFloatTexts(buf)

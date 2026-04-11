@@ -46,6 +46,6 @@ type SysTowerCombat struct{}
 
 func (SysTowerCombat) Tick(ctx *TickCtx) bool {
 	TickTowerCombat(ctx.Towers, ctx.Enemies, ctx.Projectiles, ctx.Beams, ctx.DT,
-		ctx.CB.OnTowerFire, ctx.CB.OnTowerDirectHit, ctx.CB.OnCC)
+		ctx.CB.OnTowerFire, ctx.CB.OnTowerDirectHit, ctx.CB.OnCC, ctx.CB.OnSplashVFX)
 	return false
 }

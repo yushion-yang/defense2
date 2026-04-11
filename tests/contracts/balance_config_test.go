@@ -203,8 +203,4 @@ func TestBalanceGameplayRanges(t *testing.T) {
 	if g.MultiKillWindow <= 0 {
 		t.Errorf("MultiKillWindow = %v, want > 0", g.MultiKillWindow)
 	}
-	if g.MultiKillAnnounce1 >= g.MultiKillAnnounce2 {
-		t.Errorf("MultiKillAnnounce1 (%d) should < MultiKillAnnounce2 (%d)",
-			g.MultiKillAnnounce1, g.MultiKillAnnounce2)
-	}
 }

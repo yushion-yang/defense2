@@ -1,98 +1,99 @@
 {
   "spawner": {
-    "hpBase": 52,
-    "hpPerWave": 21,
-    "speedBase": 58,
-    "speedPerWave": 5,
-    "enemiesPerWave": 5,
-    "spawnInterval": 0.6,
-    "waveInterval": 10,
-    "firstWaveInterval": 20,
-    "bossEveryNWaves": 5,
-    "bossHpMultBase": 8,
-    "bossRadiusScale": 1.5,
-    "bossEntranceDelay": 3.0,
-    "buffChance": 0.3,
-    "buffMinWaves": [6, 16, 26],
-    "buffMaxBuffs": [1, 1, 2],
-    "spawnBaseInterval": 0.92,
-    "spawnMinInterval": 0.18,
-    "spawnDecayPerWave": 0.03
+    "hpBase": 52,                          "_hpBase": "敌人基础生命值（第1波）",
+    "hpPerWave": 21,                       "_hpPerWave": "每波生命值递增量",
+    "speedBase": 58,                       "_speedBase": "敌人基础移动速度（像素/秒）",
+    "speedPerWave": 5,                     "_speedPerWave": "每波移动速度递增量",
+    "enemiesPerWave": 5,                   "_enemiesPerWave": "每波敌人数量",
+    "spawnInterval": 0.6,                  "_spawnInterval": "同波敌人之间的出生间隔（秒）",
+    "waveInterval": 10,                    "_waveInterval": "波次间歇时间（秒）",
+    "firstWaveInterval": 20,               "_firstWaveInterval": "第1波开始前的准备时间（秒）",
+    "bossEveryNWaves": 5,                  "_bossEveryNWaves": "每隔N波出现一次Boss",
+    "bossHpMultBase": 8,                   "_bossHpMultBase": "Boss生命值倍率（基于普通敌人）",
+    "bossRadiusScale": 1.5,                "_bossRadiusScale": "Boss体型缩放倍率",
+    "bossEntranceDelay": 3.0,              "_bossEntranceDelay": "Boss出场前的延迟（秒）",
+    "buffChance": 0.3,                     "_buffChance": "敌人携带buff的概率（30%）",
+    "buffMinWaves": [6, 16, 26],           "_buffMinWaves": "各buff档位的最低解锁波次",
+    "buffMaxBuffs": [1, 1, 2],             "_buffMaxBuffs": "各档位敌人最多携带的buff数量",
+    "spawnBaseInterval": 0.92,             "_spawnBaseInterval": "出怪间隔基础值（秒，逐波衰减）",
+    "spawnMinInterval": 0.18,              "_spawnMinInterval": "出怪间隔最小值（秒，衰减下限）",
+    "spawnDecayPerWave": 0.03              ,"_spawnDecayPerWave": "每波出怪间隔衰减量（秒）"
   },
   "economy": {
-    "killReward": 15,
-    "sellRefundRatio": 0.7
+    "killReward": 15,                      "_killReward": "击杀敌人基础金币奖励",
+    "sellRefundRatio": 0.7                 ,"_sellRefundRatio": "卖塔退款比例（70%）"
   },
   "combat": {
-    "maxDamageAmplify": 0.5,
-    "minSpeedRatio": 0.2,
-    "dotTickInterval": 0.5,
-    "bossPercentHpCap": 0.05,
-    "damageDownFloor": 0.2,
-    "critMultiplier": 2,
-    "defaultProjectileSpeed": 300,
-    "defaultProjectileRadius": 4,
-    "scatterBasePellets": 3,
-    "scatterSpreadAngle": 60,
-    "radialBaseShots": 3,
-    "radialRangeMult": 1.2,
-    "wideBeamRangeMult": 3,
-    "dotTickIntervals": { "burn": 0.5, "bleed": 0.5, "poison": 1.0 }
+    "maxDamageAmplify": 0.5,               "_maxDamageAmplify": "虚弱效果最大伤害增幅上限（50%）",
+    "minSpeedRatio": 0.2,                  "_minSpeedRatio": "减速最低速度比例（不低于基础速度的20%）",
+    "dotTickInterval": 0.5,                "_dotTickInterval": "持续伤害默认触发间隔（秒）",
+    "bossPercentHpCap": 0.05,              "_bossPercentHpCap": "Boss百分比生命伤害上限（每次最多5%最大生命）",
+    "critMultiplier": 2,                   "_critMultiplier": "默认暴击伤害倍率",
+    "defaultProjectileSpeed": 300,         "_defaultProjectileSpeed": "弹射物默认飞行速度（像素/秒）",
+    "defaultProjectileRadius": 4,          "_defaultProjectileRadius": "弹射物默认碰撞半径（像素）",
+    "scatterBasePellets": 3,               "_scatterBasePellets": "散射攻击基础弹丸数",
+    "scatterSpreadAngle": 60,              "_scatterSpreadAngle": "散射攻击扇形角度（度）",
+    "radialBaseShots": 3,                  "_radialBaseShots": "环射攻击基础弹丸数",
+    "radialRangeMult": 1.2,                "_radialRangeMult": "环射弹丸射程倍率",
+    "wideBeamRangeMult": 3,                "_wideBeamRangeMult": "贯穿光束射程倍率"
   },
   "tower": {
-    "strengthBuyCost": 10,
-    "strengthBuyAmount": 10,
-    "wavesPerUnlock": 2,
-    "choicesPerUnlock": 3,
-    "attackSpeedFloor": 0.1,
-    "fireRateFloor": 0.18
+    "strengthBuyCost": 10,                 "_strengthBuyCost": "购买强度的金币费用（每次+10强度）",
+    "strengthBuyAmount": 10,               "_strengthBuyAmount": "每次购买增加的强度值",
+    "wavesPerUnlock": 2,                   "_wavesPerUnlock": "每隔N波解锁一个能力槽位（测试模式用）",
+    "choicesPerUnlock": 3,                 "_choicesPerUnlock": "每次解锁提供的候选能力数（3选1）",
+    "attackSpeedFloor": 0.1                ,"_attackSpeedFloor": "炮塔攻速下限（次/秒，防止攻速降到0）"
   },
   "chain": {
-    "distance": 150,
-    "strengthPerTower": 10
+    "distance": 150,                       "_distance": "链接检测距离（像素，塔间距小于此值可链接）",
+    "strengthPerTower": 10                 ,"_strengthPerTower": "每个链接邻居提供的临时强度加成"
   },
   "items": [
-    {"kind": "baseDamage",      "label": "攻击磨石", "boost": 2},
-    {"kind": "potentialDamage",  "label": "攻击秘卷", "boost": 3},
-    {"kind": "baseSpeed",        "label": "速射齿轮", "boost": 0.15},
-    {"kind": "potentialSpeed",   "label": "速射秘卷", "boost": 0.2},
-    {"kind": "baseRange",        "label": "瞄准镜片", "boost": 12},
-    {"kind": "potentialRange",   "label": "瞄准秘卷", "boost": 18}
+    {"kind": "baseDamage",      "label": "攻击磨石", "boost": 2,    "startCount": 0, "_desc": "提升基础伤害+2"},
+    {"kind": "potentialDamage",  "label": "攻击秘卷", "boost": 3,    "startCount": 0, "_desc": "提升潜力伤害+3"},
+    {"kind": "baseSpeed",        "label": "速射齿轮", "boost": 0.15, "startCount": 0, "_desc": "提升基础攻速+0.15"},
+    {"kind": "potentialSpeed",   "label": "速射秘卷", "boost": 0.2,  "startCount": 0, "_desc": "提升潜力攻速+0.2"},
+    {"kind": "baseRange",        "label": "瞄准镜片", "boost": 12,   "startCount": 0, "_desc": "提升基础射程+12"},
+    {"kind": "potentialRange",   "label": "瞄准秘卷", "boost": 18,   "startCount": 0, "_desc": "提升潜力射程+18"}
   ],
   "split": {
-    "hpRatio": 0.3,
-    "speedScale": 1.4,
-    "radiusRatio": 0.7,
-    "childOffset": 6,
-    "rewardScale": 0.2
+    "hpRatio": 0.3,                        "_hpRatio": "分裂子体生命值比例（父体的30%）",
+    "speedScale": 1.4,                     "_speedScale": "分裂子体速度倍率（比父体快40%）",
+    "radiusRatio": 0.7,                    "_radiusRatio": "分裂子体体型缩放（父体的70%）",
+    "childOffset": 6,                      "_childOffset": "分裂子体出生偏移距离（像素）",
+    "rewardScale": 0.2                     ,"_rewardScale": "分裂子体击杀奖励比例（父体的20%）"
   },
   "deathSpawn": {
-    "hpRatio": 0.2,
-    "defaultArch": "normal",
-    "childOffset": 8,
-    "rewardScale": 0.3
+    "hpRatio": 0.2,                        "_hpRatio": "死亡召唤子体生命值比例（父体的20%）",
+    "defaultArch": "normal",               "_defaultArch": "死亡召唤子体默认原型",
+    "childOffset": 8,                      "_childOffset": "死亡召唤子体出生偏移距离（像素）",
+    "rewardScale": 0.3                     ,"_rewardScale": "死亡召唤子体击杀奖励比例（父体的30%）"
   },
   "dying": {
-    "normalDuration": 0.3,
-    "bossDuration": 0.5
+    "normalDuration": 0.3,                 "_normalDuration": "普通敌人死亡动画时长（秒）",
+    "bossDuration": 0.5                    ,"_bossDuration": "Boss死亡动画时长（秒）"
   },
   "warden": {
-    "initialStrength": 100,
-    "defaultGrowthOnKill": 2,
-    "defaultGrowthOnWaveClear": 5
+    "initialStrength": 100,                "_initialStrength": "战灵初始强度值",
+    "defaultGrowthOnKill": 2,              "_defaultGrowthOnKill": "战灵每次击杀成长强度",
+    "defaultGrowthOnWaveClear": 5          ,"_defaultGrowthOnWaveClear": "战灵每波通关成长强度"
   },
   "buffs": {
     "berserk": { "threshold": 0.5, "speedScale": 1.5 },
+    "_berserk": "狂暴：生命低于50%时移速提升50%",
     "regen": { "hpRatio": 0.02 },
+    "_regen": "再生：每秒回复2%最大生命",
     "healAura": { "power": 0.05, "radius": 80, "interval": 3.0 },
+    "_healAura": "治疗光环：半径80内每3秒回复5%最大生命",
     "speedAura": { "radius": 80, "speedUp": 0.2 },
+    "_speedAura": "加速光环：半径80内移速提升20%",
     "damageReduce": { "ratio": 0.3 },
-    "deathSplit": { "count": 2, "hpRatio": 0.3, "speedScale": 1.4 }
+    "_damageReduce": "减伤：受到伤害降低30%",
+    "deathSplit": { "count": 2, "hpRatio": 0.3, "speedScale": 1.4 },
+    "_deathSplit": "死亡分裂：死后分裂为2个子体，各30%生命、140%速度"
   },
   "gameplay": {
-    "starRatingThreshold": 0.8,
-    "multiKillWindow": 1.5,
-    "multiKillAnnounce1": 5,
-    "multiKillAnnounce2": 10
+    "starRatingThreshold": 0.8,            "_starRatingThreshold": "星级评定阈值（保留80%以上生命得满星）",
+    "multiKillWindow": 1.5                 ,"_multiKillWindow": "连杀判定时间窗口（秒）"
   }
 }

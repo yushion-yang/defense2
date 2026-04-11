@@ -379,10 +379,11 @@ func TestTickerAbilitiesReturnNonNilResult(t *testing.T) {
 // §17 CC 常量一致性
 // ═══════════════════════════════════════
 
-func TestMinSpeedRatioConsistency(t *testing.T) {
-	// combat 包和 enemy 包各定义一份，必须一致
-	if combat.MinSpeedRatio() != enemy.MinSpeedRatio() {
-		t.Errorf("combat.MinSpeedRatio=%.2f != enemy.MinSpeedRatio=%.2f", combat.MinSpeedRatio(), enemy.MinSpeedRatio())
+func TestMinSpeedRatioFromConfig(t *testing.T) {
+	// MinSpeedRatio 唯一定义在 combat 包，从 balance.json 读取
+	r := combat.MinSpeedRatio()
+	if r <= 0 || r >= 1 {
+		t.Errorf("combat.MinSpeedRatio()=%.2f, want in (0, 1)", r)
 	}
 }
 

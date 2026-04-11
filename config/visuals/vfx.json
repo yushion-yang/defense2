@@ -168,6 +168,12 @@
           "description": "环射攻击的红橙冲击环"
         },
         {
+          "id": "splashRing",
+          "name": "SplashRing",
+          "label": "溅射冲击",
+          "description": "溅射能力触发时的橙黄色扩散环，半径等于溅射范围"
+        },
+        {
           "id": "beam",
           "name": "Beam",
           "label": "光束",

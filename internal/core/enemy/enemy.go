@@ -358,9 +358,6 @@ func (e *Enemy) GetSpeedUp() float64 {
 	return b.Value
 }
 
-// MinSpeedRatio 返回全局减速下限（从 balance.json 实时读取，不再冻结于 init 时刻）。
-func MinSpeedRatio() float64 { return config.GlobalBalance().Combat.MinSpeedRatio }
-
 // DotTickInterval 返回 DoT 伤害触发周期（从 balance.json 实时读取，不再冻结于 init 时刻）。
 func DotTickInterval() float64 { return config.GlobalBalance().Combat.DotTickInterval }
 

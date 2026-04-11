@@ -300,7 +300,7 @@ func NewStageSceneWithOpts(sw Switcher, opts StageOptions) *StageScene {
 	s.choicePanel = hud.NewChoicePanel()
 	s.choicePanel.SetAssetFS(config.GetAssetFS())
 	s.particlePool.MaxActive = game.Settings().MaxParticles
-	s.inventory = item.NewInventory(5)
+	s.inventory = item.NewInventoryFromConfig()
 
 	// 注入战灵精灵获取函数到覆盖层
 	s.wardenOverlay.SpriteFunc = s.wardenRenderer.GetSprite
@@ -418,18 +418,21 @@ func (s *StageScene) subscribeBus() {
 		prevUnlocked := tower.UnlockedSlots(s.wavesCleared)
 		s.wavesCleared++
 		newUnlocked := tower.UnlockedSlots(s.wavesCleared)
-		// 为所有塔 roll 新解锁能力位的选项
-		newPending := 0
-		s.towers.Each(func(t *tower.Tower) {
-			before := tower.PendingCount(t)
-			tower.RollAndCachePendingChoices(t, s.wavesCleared)
-			after := tower.PendingCount(t)
-			if after > before {
-				newPending++
+		// 战役模式：能力槽位需要花钱解锁，不自动按波次解锁
+		// 非战役模式（测试等）：保留波次自动解锁
+		if s.testMode {
+			newPending := 0
+			s.towers.Each(func(t *tower.Tower) {
+				before := tower.PendingCount(t)
+				tower.RollAndCachePendingChoices(t, s.wavesCleared)
+				after := tower.PendingCount(t)
+				if after > before {
+					newPending++
+				}
+			})
+			if newUnlocked > prevUnlocked && newPending > 0 {
+				hud.ShowToast(fmt.Sprintf("新能力位解锁! %d座塔可选择能力", newPending))
 			}
-		})
-		if newUnlocked > prevUnlocked && newPending > 0 {
-			hud.ShowToast(fmt.Sprintf("新能力位解锁! %d座塔可选择能力", newPending))
 		}
 		if s.wardenReady && s.wardenUnit != nil {
 			s.wardenUnit.OnWaveClear()
@@ -765,6 +768,24 @@ func (s *StageScene) tryPlaceTower(px, py float64) bool {
 	render.InvalidateMapCache() // slot occupancy changed
 	s.bus.Emit(event.EvtTowerBuilt, event.TowerBuiltPayload{TowerKey: def.Key, Cost: cost})
 	return true
+}
+
+// findTowerDef 根据塔的 Key 查找对应的 TowerDef。
+// 当前只有一种塔类型（basic），Key 在建塔前为 "basic"。
+func (s *StageScene) findTowerDef(t *tower.Tower) tower.TowerDef {
+	if t == nil {
+		return tower.TowerDef{}
+	}
+	for _, d := range s.towerDefs {
+		if d.Key == t.Key {
+			return d
+		}
+	}
+	// fallback: 返回第一个 def（通常只有一种）
+	if len(s.towerDefs) > 0 {
+		return s.towerDefs[0]
+	}
+	return tower.TowerDef{}
 }
 
 // trySellTower 尝试出售像素位置上的塔。
@@ -1616,6 +1637,7 @@ func (s *StageScene) updatePlaying() {
 		// Hit-stop: skip game logic but still update VFX for visual feedback.
 		render.UpdateFloatTexts(gameDT)
 		render.UpdateImpactVFX(gameDT)
+		render.UpdateSplashVFX(gameDT)
 		return
 	}
 
@@ -1940,7 +1962,9 @@ func (s *StageScene) updatePlaying() {
 		if crit {
 			s.audioMgr.PlayThrottledAt(gameAudio.SFXCritHit, 150, gameAudio.VolHit)
 		}
-	}, onCC)
+	}, onCC, func(x, y, radius float64) {
+		render.SpawnSplashRing(x, y, radius)
+	})
 
 	// Step 17: 弹射物移动 + 光束衰减
 	s.projectiles.Tick(gameDT)
@@ -2040,7 +2064,9 @@ func (s *StageScene) updatePlaying() {
 		if crit {
 			s.audioMgr.PlayThrottledAt(gameAudio.SFXCritHit, 150, gameAudio.VolHit)
 		}
-	}, onCC)
+	}, onCC, func(x, y, radius float64) {
+		render.SpawnSplashRing(x, y, radius)
+	})
 	// 击杀统计/金币/session/tutorial/warden 由 emitKill → Bus 订阅者统一处理
 
 	// Step 19: Bleed drip particles for bleeding enemies
@@ -2056,6 +2082,7 @@ func (s *StageScene) updatePlaying() {
 	// Step 20: VFX 更新（浮动文本 + 冲击 + 粒子 + 屏幕震动）
 	render.UpdateFloatTexts(gameDT)
 	render.UpdateImpactVFX(gameDT)
+	render.UpdateSplashVFX(gameDT)
 	s.particlePool.Update(gameDT)
 	render.UpdateShake(gameDT)
 
@@ -2316,6 +2343,7 @@ func (s *StageScene) drawScene(screen *ebiten.Image) {
 
 	// 冲击特效（蓄力弹命中）
 	render.DrawImpactVFX(worldTarget)
+	render.DrawSplashVFX(worldTarget)
 
 	// 粒子系统
 	s.particlePool.Draw(worldTarget)
@@ -2405,7 +2433,7 @@ func (s *StageScene) drawScene(screen *ebiten.Image) {
 	if s.selectedTower != nil {
 		// 塔选中时显示塔信息面板（底部中央）
 		sellValue := s.econ.SellRefund(s.selectedTower.Cost)
-		vm := BuildInfoPanelVM(s.selectedTower, sellValue, s.wavesCleared, s.testMode)
+		vm := BuildInfoPanelVM(s.selectedTower, sellValue, s.wavesCleared, s.testMode, s.gold, s.findTowerDef(s.selectedTower).UpgradeCosts)
 		hud.DrawInfoPanel(screen, vm)
 		// Hover 在面板上时显示升级详情浮窗
 		mx, my := draw.CursorPos()

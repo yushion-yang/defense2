@@ -8,6 +8,6 @@
     "attackStyle": "projectile",
     "projectileSpeed": 400,
     "abilities": [],
-    "upgradeCosts": [80, 120, 180, 260, 400, 600]
+    "upgradeCosts": [20, 40, 50, 60, 60]
   }
 }

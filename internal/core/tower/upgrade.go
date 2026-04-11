@@ -52,7 +52,46 @@ func (t *Tower) HasPendingUpgrade(wavesCleared int) bool {
 	return t.PendingSlots(wavesCleared) > 0
 }
 
+// NextUpgradeCost 返回塔下一次能力槽解锁的金币费用。
+// 按 PaidUnlocks（实际付费次数）索引 TowerDef.UpgradeCosts。
+// 索引超出数组时复用最后一档费用（支持新增能力类别无需改配置）。
+// 无费用配置时返回 0。
+func NextUpgradeCost(t *Tower, def TowerDef) int {
+	if len(def.UpgradeCosts) == 0 {
+		return 0
+	}
+	idx := t.PaidUnlocks
+	if idx >= len(def.UpgradeCosts) {
+		idx = len(def.UpgradeCosts) - 1
+	}
+	return def.UpgradeCosts[idx]
+}
+
 // ── 选项缓存 ──
+
+// UnlockNextSlot 解锁下一个空能力槽位并 roll 选项（不受波次限制）。
+// 用于战役模式花钱解锁。返回解锁的类别索引，全满返回 -1。
+func UnlockNextSlot(t *Tower) int {
+	cat := t.NextUnlockCategory()
+	if cat < 0 {
+		return -1
+	}
+	if t.PendingChoices == nil {
+		t.PendingChoices = make(map[int][]config.AbilityDef)
+	}
+	if _, exists := t.PendingChoices[cat]; !exists {
+		choices := rollChoicesForCategory(cat, ChoicesPerUnlock())
+		if len(choices) > 0 {
+			t.PendingChoices[cat] = choices
+		}
+	}
+	return cat
+}
+
+// CanUnlockMore 返回塔是否还有空能力槽位可以解锁。
+func CanUnlockMore(t *Tower) bool {
+	return t.NextUnlockCategory() >= 0 && PendingCount(t) == 0
+}
 
 // RollAndCachePendingChoices 为塔 roll 所有已解锁但未选择能力位的 3 选项并缓存。
 // 已有缓存的位不会重新 roll。建塔时和新波次解锁时调用。

@@ -121,13 +121,6 @@ func TestDamagePipelineSpec_BossPercentCap(t *testing.T) {
 	}
 }
 
-func TestDamagePipelineSpec_DamageDownFloor(t *testing.T) {
-	bal := config.GlobalBalance()
-	if bal.Combat.DamageDownFloor <= 0 || bal.Combat.DamageDownFloor > 0.5 {
-		t.Errorf("damageDownFloor = %f, want (0, 0.5]", bal.Combat.DamageDownFloor)
-	}
-}
-
 func TestDamagePipelineSpec_MaxDamageAmplify(t *testing.T) {
 	bal := config.GlobalBalance()
 	if bal.Combat.MaxDamageAmplify <= 0 {

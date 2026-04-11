@@ -20,7 +20,8 @@ import (
 
 // BuildInfoPanelVM constructs an InfoPanelVM from a tower and sell value.
 // If t is nil, returns a VM with Visible=false.
-func BuildInfoPanelVM(t *tower.Tower, sellValue int, wavesCleared int, testMode bool) hud.InfoPanelVM {
+// gold and upgradeCosts are used for campaign mode unlock button display.
+func BuildInfoPanelVM(t *tower.Tower, sellValue int, wavesCleared int, testMode bool, gold int, upgradeCosts []int) hud.InfoPanelVM {
 	if t == nil {
 		return hud.InfoPanelVM{Visible: false}
 	}
@@ -120,6 +121,14 @@ func BuildInfoPanelVM(t *tower.Tower, sellValue int, wavesCleared int, testMode 
 		}
 	} else {
 		vm.PendingCount = tower.PendingCount(t)
+	}
+
+	// 战役模式：解锁能力槽位按钮
+	if !testMode && tower.CanUnlockMore(t) {
+		tempDef := tower.TowerDef{UpgradeCosts: upgradeCosts}
+		vm.CanUnlockSlot = true
+		vm.UnlockCost = tower.NextUpgradeCost(t, tempDef)
+		vm.Gold = gold
 	}
 
 	// Buttons

@@ -48,20 +48,12 @@ type EconomyBalance struct {
 	SellRefundRatio float64 `json:"sellRefundRatio"`
 }
 
-// DotTickIntervals 按 DoT 类型区分的 tick 间隔。
-type DotTickIntervals struct {
-	Burn   float64 `json:"burn"`
-	Bleed  float64 `json:"bleed"`
-	Poison float64 `json:"poison"`
-}
-
 // CombatBalance 战斗相关平衡参数。
 type CombatBalance struct {
 	MaxDamageAmplify        float64          `json:"maxDamageAmplify"`
 	MinSpeedRatio           float64          `json:"minSpeedRatio"`
 	DotTickInterval         float64          `json:"dotTickInterval"`
 	BossPercentHpCap        float64          `json:"bossPercentHpCap"`
-	DamageDownFloor         float64          `json:"damageDownFloor"`
 	CritMultiplier          float64          `json:"critMultiplier"`
 	DefaultProjectileSpeed  float64          `json:"defaultProjectileSpeed"`
 	DefaultProjectileRadius float64          `json:"defaultProjectileRadius"`
@@ -70,7 +62,6 @@ type CombatBalance struct {
 	RadialBaseShots         int              `json:"radialBaseShots"`
 	RadialRangeMult         float64          `json:"radialRangeMult"`
 	WideBeamRangeMult       float64          `json:"wideBeamRangeMult"`
-	DotTickIntervalsMap     DotTickIntervals `json:"dotTickIntervals"`
 }
 
 // TowerBalance 塔相关平衡参数。
@@ -80,7 +71,6 @@ type TowerBalance struct {
 	WavesPerUnlock    int     `json:"wavesPerUnlock"`
 	ChoicesPerUnlock  int     `json:"choicesPerUnlock"`
 	AttackSpeedFloor  float64 `json:"attackSpeedFloor"`
-	FireRateFloor     float64 `json:"fireRateFloor"`
 }
 
 // ChainBalance 连锁网络相关平衡参数。
@@ -91,9 +81,10 @@ type ChainBalance struct {
 
 // ItemBalance 单个道具定义。
 type ItemBalance struct {
-	Kind  string  `json:"kind"`
-	Label string  `json:"label"`
-	Boost float64 `json:"boost"`
+	Kind       string  `json:"kind"`
+	Label      string  `json:"label"`
+	Boost      float64 `json:"boost"`
+	StartCount int     `json:"startCount"`
 }
 
 // SplitBalance 分裂子体参数。
@@ -130,8 +121,6 @@ type WardenBalance struct {
 type GameplayBalance struct {
 	StarRatingThreshold float64 `json:"starRatingThreshold"`
 	MultiKillWindow     float64 `json:"multiKillWindow"`
-	MultiKillAnnounce1  int     `json:"multiKillAnnounce1"`
-	MultiKillAnnounce2  int     `json:"multiKillAnnounce2"`
 }
 
 // BerserkBuff 狂暴 buff 配置。
@@ -236,16 +225,14 @@ func defaultBalance() *BalanceConfig {
 		},
 		Economy: EconomyBalance{KillReward: 15, SellRefundRatio: 0.7},
 		Combat: CombatBalance{
-			MaxDamageAmplify: 0.5, MinSpeedRatio: 0.2, DotTickInterval: 0.5, BossPercentHpCap: 0.05, DamageDownFloor: 0.2,
+			MaxDamageAmplify: 0.5, MinSpeedRatio: 0.2, DotTickInterval: 0.5, BossPercentHpCap: 0.05,
 			CritMultiplier: 2, DefaultProjectileSpeed: 300, DefaultProjectileRadius: 4,
 			ScatterBasePellets: 3, ScatterSpreadAngle: 60,
 			RadialBaseShots: 3, RadialRangeMult: 1.2, WideBeamRangeMult: 3,
-			DotTickIntervalsMap: DotTickIntervals{Burn: 0.5, Bleed: 0.5, Poison: 1.0},
 		},
 		Tower: TowerBalance{
 			StrengthBuyCost: 10, StrengthBuyAmount: 10,
 			WavesPerUnlock: 2, ChoicesPerUnlock: 3, AttackSpeedFloor: 0.1,
-			FireRateFloor: 0.18,
 		},
 		Items: []ItemBalance{
 			{Kind: "baseDamage", Label: "攻击磨石", Boost: 2},
@@ -260,7 +247,7 @@ func defaultBalance() *BalanceConfig {
 		DeathSpawn: DeathSpawnBalance{HpRatio: 0.2, DefaultArch: "normal", ChildOffset: 8, RewardScale: 0.3},
 		Dying:      DyingBalance{NormalDuration: 0.3, BossDuration: 0.5},
 		Warden:     WardenBalance{InitialStrength: 100, DefaultGrowthOnKill: 2, DefaultGrowthOnWaveClear: 5},
-		Gameplay:   GameplayBalance{StarRatingThreshold: 0.8, MultiKillWindow: 1.5, MultiKillAnnounce1: 5, MultiKillAnnounce2: 10},
+		Gameplay:   GameplayBalance{StarRatingThreshold: 0.8, MultiKillWindow: 1.5},
 		Buffs: BuffsBalance{
 			Berserk:      BerserkBuff{Threshold: 0.5, SpeedScale: 1.5},
 			Regen:        RegenBuff{HpRatio: 0.02},

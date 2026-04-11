@@ -24,6 +24,7 @@ type HitInput struct {
 	Projectiles *projectile.Pool       // 用于 bounce
 	Projectile  *projectile.Projectile // 原始弹射物（弹射物路径传入，即时伤害传 nil）
 	OnCC        CCCallback             // CC 效果命中回调（可为 nil）
+	OnSplashVFX func(x, y, radius float64) // 溅射 VFX 回调（可为 nil）
 }
 
 // HitOutput 命中结果。
@@ -108,7 +109,7 @@ func ApplyHit(input HitInput, onHit HitCallback) HitOutput {
 			if result.IsCrit {
 				isCrit = true
 			}
-			applyHitEffectsUnified(result, input.Target, synth, input.Tower, input.Enemies, input.Projectiles, onHit, input.OnCC)
+			applyHitEffectsUnified(result, input.Target, synth, input.Tower, input.Enemies, input.Projectiles, onHit, input.OnCC, input.OnSplashVFX)
 		}
 	}
 
@@ -169,7 +170,7 @@ func ApplyHit(input HitInput, onHit HitCallback) HitOutput {
 }
 
 // applyHitEffectsUnified 施加能力效果（减速、眩晕、流血、灼烧、溅射、弹射）。
-func applyHitEffectsUnified(r *tower.HitResult, target *enemy.Enemy, p *projectile.Projectile, srcTower *tower.Tower, enemies *enemy.Pool, projectiles *projectile.Pool, onHit HitCallback, onCC CCCallback) {
+func applyHitEffectsUnified(r *tower.HitResult, target *enemy.Enemy, p *projectile.Projectile, srcTower *tower.Tower, enemies *enemy.Pool, projectiles *projectile.Pool, onHit HitCallback, onCC CCCallback, onSplashVFX func(x, y, radius float64)) {
 	if r.Slow != nil {
 		if ApplySlow(target, r.Slow.Factor, r.Slow.Duration, p.SourceTowerKey) && onCC != nil {
 			if r.Slow.Factor < 0.4 {
@@ -216,6 +217,9 @@ func applyHitEffectsUnified(r *tower.HitResult, target *enemy.Enemy, p *projecti
 		tel.T.Record("ability", "splash")
 		if onCC != nil {
 			onCC(target.X, target.Y, CCSplash)
+		}
+		if onSplashVFX != nil {
+			onSplashVFX(target.X, target.Y, r.Splash.Radius)
 		}
 		splashDamage := p.Damage * r.Splash.Ratio
 		splashTower := srcTower

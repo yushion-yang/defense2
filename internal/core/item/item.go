@@ -29,10 +29,11 @@ var AllKinds = [...]Kind{
 
 // Def describes an item's static properties.
 type Def struct {
-	Kind     Kind
-	Name     string
-	BoostVal float64
-	Color    color.RGBA
+	Kind       Kind
+	Name       string
+	BoostVal   float64
+	Color      color.RGBA
+	StartCount int
 }
 
 // itemColors 每种道具的显示颜色（固定，不受 balance 影响）。
@@ -68,10 +69,11 @@ func initDefs() [KindCount]Def {
 			continue
 		}
 		defs[k] = Def{
-			Kind:     k,
-			Name:     it.Label,
-			BoostVal: it.Boost,
-			Color:    itemColors[k],
+			Kind:       k,
+			Name:       it.Label,
+			BoostVal:   it.Boost,
+			Color:      itemColors[k],
+			StartCount: it.StartCount,
 		}
 	}
 	return defs
@@ -87,6 +89,15 @@ func NewInventory(n int) *Inventory {
 	inv := &Inventory{}
 	for i := range inv.counts {
 		inv.counts[i] = n
+	}
+	return inv
+}
+
+// NewInventoryFromConfig creates an inventory using startCount from balance.json.
+func NewInventoryFromConfig() *Inventory {
+	inv := &Inventory{}
+	for _, k := range AllKinds {
+		inv.counts[k] = Defs[k].StartCount
 	}
 	return inv
 }

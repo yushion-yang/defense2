@@ -4,7 +4,6 @@ import (
 	"testing"
 
 	"defense2/internal/core/combat"
-	"defense2/internal/core/enemy"
 	"defense2/tests/regression/sim"
 )
 
@@ -23,7 +22,7 @@ func TestRegression_CC_SlowMinSpeedClamp(t *testing.T) {
 	combat.ApplySlow(s.SpawnedEnemies[0], 0.0, 5.0, "test")
 	s.RunTicks(1)
 
-	s.AssertEnemySpeed(t, 0, ">=", 100*enemy.MinSpeedRatio())
+	s.AssertEnemySpeed(t, 0, ">=", 100*combat.MinSpeedRatio())
 	s.AssertEnemySpeed(t, 0, ">", 0)
 }
 

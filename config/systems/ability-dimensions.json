@@ -6,7 +6,7 @@
     "chance":      {"scale": "addCapped",    "cap": 0.6,  "description": "概率类（暴击/眩晕）加法上限 60%"},
     "cooldown":    {"scale": "inverse",      "floor": 0.5, "description": "冷却类，越低越好，下限 0.5s"},
     "interval":    {"scale": "inverse",      "floor": 2.0, "description": "间隔类，越低越好，下限 2s"},
-    "factor":      {"scale": "inverseRatio", "floor": 0.30, "description": "减速因子类，越低越强，下限 30%"},
+    "factor":      {"scale": "inverseRatio", "floor": 0.20, "description": "减速因子类，越低越强，下限 20%"},
     "damageDecay": {"scale": "inverseRatio", "floor": 0.10, "description": "伤害衰减类，越低越强，下限 10%"},
     "statBoost":   {"scale": "multiply",     "description": "属性加成，直接乘算"},
     "maxBounces":  {"scale": "floor",        "description": "弹射次数，取整"},

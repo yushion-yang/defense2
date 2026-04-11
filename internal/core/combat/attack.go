@@ -32,6 +32,7 @@ type AttackContext struct {
 	OnFire      func(t *tower.Tower, style string)                                         // 射击回调（携带塔引用和攻击方式）
 	OnHit       func(e *enemy.Enemy, damage float64, killed bool, style string, crit bool) // 命中回调（携带攻击方式+暴击）
 	OnCC        CCCallback                                                                 // CC 效果命中回调（可为 nil）
+	OnSplashVFX func(x, y, radius float64)                                                  // 溅射 VFX 回调（可为 nil）
 	DT          float64
 	Style       string // 当前攻击方式（由 pipeline 设置，handler 内部可读取）
 }

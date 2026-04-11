@@ -74,6 +74,11 @@ type InfoPanelVM struct {
 	// Pending ability selection
 	PendingCount int // 待选能力位数量
 
+	// Unlock ability slot (campaign mode)
+	CanUnlockSlot bool // 是否可以解锁下一个能力槽位
+	UnlockCost    int  // 解锁下一个槽位的费用
+	Gold          int  // 当前金币（用于判断是否买得起）
+
 	// Buttons
 	UpgradeButtonText string // e.g. "强度+10 $10"
 	SellButtonText    string // e.g. "卖60"
@@ -97,6 +102,7 @@ var (
 	lastUpgradeRect      ui.Rect
 	lastSellRect         ui.Rect
 	lastAbilityBtnRect   ui.Rect   // "选择能力(N)" 按钮
+	lastUnlockBtnRect   ui.Rect   // "解锁能力 $XX" 按钮
 	lastPanelRect        ui.Rect   // entire info panel bounding box
 	lastPanelVisible     bool
 )
@@ -107,6 +113,14 @@ func HitTestAbilityBtn(mx, my float32) bool {
 		return false
 	}
 	return lastAbilityBtnRect.Contains(float64(mx), float64(my))
+}
+
+// HitTestUnlockBtn 检测点击是否在"解锁能力"按钮上。
+func HitTestUnlockBtn(mx, my float32) bool {
+	if !lastPanelVisible {
+		return false
+	}
+	return lastUnlockBtnRect.Contains(float64(mx), float64(my))
 }
 
 // DrawInfoPanel renders the tower information panel using pre-built view data.
@@ -288,6 +302,36 @@ func DrawInfoPanel(screen *ebiten.Image, vm InfoPanelVM) {
 			fm.DrawCenteredBoldText(screen, label,
 				float64(btnRect.X)+float64(btnRect.W)/2, y+7, theme.FontSM, theme.TextTitle)
 			lastAbilityBtnRect = btnRect
+		})
+	}
+
+	// "解锁能力 $XX" 按钮（战役模式）
+	lastUnlockBtnRect = ui.Rect{}
+	if vm.CanUnlockSlot {
+		panel.AddSpace(detailGap)
+		panel.AddRow(32, func(screen *ebiten.Image, x, y float64, w float64) {
+			btnRect := ui.Rect{X: float32(x), Y: float32(y), W: float32(w), H: 30}
+			affordable := vm.Gold >= vm.UnlockCost
+			var btnClr color.RGBA
+			if affordable {
+				btnClr = color.RGBA{R: 60, G: 160, B: 200, A: 255} // blue
+				mx, my := draw.CursorPos()
+				if float32(mx) >= btnRect.X && float32(mx) <= btnRect.X+btnRect.W &&
+					float32(my) >= btnRect.Y && float32(my) <= btnRect.Y+btnRect.H {
+					btnClr = color.RGBA{R: 80, G: 190, B: 230, A: 255}
+				}
+			} else {
+				btnClr = color.RGBA{R: 80, G: 80, B: 80, A: 200} // gray
+			}
+			draw.RoundRect(screen, btnRect.X, btnRect.Y, btnRect.W, btnRect.H, 6, btnClr)
+			label := fmt.Sprintf("解锁能力 $%d", vm.UnlockCost)
+			textClr := theme.TextTitle
+			if !affordable {
+				textClr = color.RGBA{R: 160, G: 160, B: 160, A: 255}
+			}
+			fm.DrawCenteredBoldText(screen, label,
+				float64(btnRect.X)+float64(btnRect.W)/2, y+7, theme.FontSM, textClr)
+			lastUnlockBtnRect = btnRect
 		})
 	}
 

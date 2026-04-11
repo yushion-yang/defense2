@@ -516,6 +516,8 @@ func (s *StageScene) handleInput() {
 		// "选择能力(N)" 按钮点击 → 打开 ChoicePanel
 		if hud.HitTestAbilityBtn(ftx, fty) && s.selectedTower != nil {
 			s.openAbilityChoicePanel()
+		} else if hud.HitTestUnlockBtn(ftx, fty) && s.selectedTower != nil {
+			s.tryUnlockAbilitySlot()
 		} else if hud.InfoPanelUpgradeHitTest(ftx, fty, s.selectedTower != nil) {
 			s.tryUpgradeTower()
 		} else if hud.InfoPanelSellHitTest(ftx, fty, s.selectedTower != nil) {
@@ -609,6 +611,33 @@ func (s *StageScene) tryUpgradeTower() {
 	s.gameStats.GoldSpent += spent
 	s.bus.Emit(event.EvtTowerUpgraded, event.TowerUpgradedPayload{TowerKey: t.Key, Spent: spent})
 	s.showNotify(fmt.Sprintf("强度+10 (-$%d)", spent))
+}
+
+// tryUnlockAbilitySlot 花钱解锁选中塔的下一个能力槽位并 roll 候选选项。
+func (s *StageScene) tryUnlockAbilitySlot() {
+	t := s.selectedTower
+	if t == nil {
+		return
+	}
+	if !tower.CanUnlockMore(t) {
+		return
+	}
+	def := s.findTowerDef(t)
+	cost := tower.NextUpgradeCost(t, def)
+	if s.gold < cost {
+		return
+	}
+	cat := tower.UnlockNextSlot(t)
+	if cat < 0 {
+		return
+	}
+	s.gold -= cost
+	s.gameStats.GoldSpent += cost
+	t.Cost += cost        // 累计到塔总投资（影响卖出退款）
+	t.PaidUnlocks++       // 记录付费解锁次数（影响下次费用）
+	catName := tower.CategoryName(cat)
+	hud.ShowToast(fmt.Sprintf("解锁: %s (-$%d)", catName, cost))
+	s.audioMgr.PlayAt(gameAudio.SFXUIOpen, gameAudio.VolUI)
 }
 
 // tryPlaceTower 和 trySellTower 保留在 stage.go 中（涉及经济/粒子等更多依赖）。

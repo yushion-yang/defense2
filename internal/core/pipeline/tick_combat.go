@@ -14,7 +14,7 @@ import (
 
 // TickTowerCombat 塔战斗子管线：按攻击方式分发射击逻辑。
 // beams 可为 nil（无 beam 渲染支持时），onFire/onHit 可为 nil。
-func TickTowerCombat(towers *tower.Pool, enemies *enemy.Pool, projectiles *projectile.Pool, beams *combat.BeamPool, dt float64, onFire func(*tower.Tower, string), onHit combat.HitCallback, onCC combat.CCCallback) {
+func TickTowerCombat(towers *tower.Pool, enemies *enemy.Pool, projectiles *projectile.Pool, beams *combat.BeamPool, dt float64, onFire func(*tower.Tower, string), onHit combat.HitCallback, onCC combat.CCCallback, onSplashVFX func(x, y, radius float64)) {
 	ctx := &combat.AttackContext{
 		Enemies:     enemies,
 		Projectiles: projectiles,
@@ -22,8 +22,8 @@ func TickTowerCombat(towers *tower.Pool, enemies *enemy.Pool, projectiles *proje
 		OnFire:      onFire,
 		OnHit:       onHit,
 		OnCC:        onCC,
+		OnSplashVFX: onSplashVFX,
 		DT:          dt,
-		// OnAbilityHit 已废弃：所有 handler 通过 ApplyHit 统一处理
 	}
 
 	towers.Each(func(t *tower.Tower) {
@@ -88,7 +88,7 @@ type HitCallback = combat.HitCallback
 // 碰撞规则（塔防模型）：
 //   - 追踪弹（Target != nil）：只和锁定目标碰撞，穿过其他敌人
 //   - 穿透弹（Penetrate=true, 含散射/环射）：对路径上所有敌人碰撞，命中后继续飞行
-func TickProjectileHits(projectiles *projectile.Pool, enemies *enemy.Pool, towers *tower.Pool, onHit HitCallback, onCC combat.CCCallback) int {
+func TickProjectileHits(projectiles *projectile.Pool, enemies *enemy.Pool, towers *tower.Pool, onHit HitCallback, onCC combat.CCCallback, onSplashVFX func(x, y, radius float64)) int {
 	kills := 0
 
 	// Build tower lookup map once per frame (avoids O(N) scan per projectile hit)
@@ -144,6 +144,7 @@ func TickProjectileHits(projectiles *projectile.Pool, enemies *enemy.Pool, tower
 			out := combat.ApplyHit(combat.HitInput{
 				Tower: srcTower, Target: e, BaseDamage: p.Damage, Style: hitStyle,
 				Enemies: enemies, Projectiles: projectiles, Projectile: p, OnCC: onCC,
+				OnSplashVFX: onSplashVFX,
 			}, onHit)
 
 			if out.Killed {

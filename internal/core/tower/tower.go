@@ -42,6 +42,7 @@ type Tower struct {
 	AbilitySlots [6]string
 	UnlockOrder  [6]int // 能力类别解锁顺序（运行时随机）
 	Level        int    // 塔等级 (1=基础, 2~7=升级)
+	PaidUnlocks  int    // 付费解锁能力槽位的次数（用于索引 UpgradeCosts）
 	// 属性档位标签（展示用）
 	DamageTier string
 	SpeedTier  string

@@ -23,7 +23,7 @@ func (SysProjectileHit) Tick(ctx *TickCtx) bool {
 			if ctx.CB.OnProjectileHit != nil {
 				ctx.CB.OnProjectileHit(e, damage, killed, attackStyle, crit)
 			}
-		}, ctx.CB.OnCC)
+		}, ctx.CB.OnCC, ctx.CB.OnSplashVFX)
 	return false
 }
 

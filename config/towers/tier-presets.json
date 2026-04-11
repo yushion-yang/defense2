@@ -6,7 +6,7 @@
   },
   "damage": {
     "_align": "400强度时三档对齐≈40",
-    "basePotential": 3,
+    "basePotential": 2,
     "tiers": {
       "S": { "base": 20,  "potential": 5  },
       "B": { "base": 10,  "potential": 8  },
@@ -24,7 +24,7 @@
   },
   "range": {
     "_align": "400强度时三档对齐≈200",
-    "basePotential": 5,
+    "basePotential": 2,
     "tiers": {
       "S": { "base": 150, "potential": 7 },
       "B": { "base": 130, "potential": 10 },
