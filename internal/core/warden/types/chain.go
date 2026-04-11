@@ -6,6 +6,7 @@ package types
 import (
 	"fmt"
 	"math"
+	"sort"
 
 	"defense2/internal/core/buff"
 	"defense2/internal/core/strength"
@@ -30,7 +31,7 @@ type ChainState struct {
 	OrbitDist          float64                  // 围绕敌群的轨道距离
 	lastBonuses        map[*tower.Tower]float64 // 上一帧各塔设置的加成值
 	ChainLinks         []ChainLink              // 当前帧的串联连线（渲染用）
-	buffKey            string                    // 缓存的 buff ID，避免逐帧 Sprintf
+	buffKey            string                   // 缓存的 buff ID，避免逐帧 Sprintf
 }
 
 // Base 实现 Stateful 接口。
@@ -103,7 +104,14 @@ func (b *ChainBehavior) Tick(w *warden.Warden, ctx *warden.TickContext) {
 	s.DecayShootTimer(dt)
 }
 
+// towerEdge 表示两塔之间的候选边（Kruskal MST 用）。
+type towerEdge struct {
+	i, j int
+	dist float64
+}
+
 // chainTowerBuff 按距离对塔分组（Union-Find），每座塔获得 groupSize × bonus 临时强度。
+// 渲染用的 ChainLinks 以 MST（最小生成树）形式生成，避免全连接导致的视觉杂乱。
 func chainTowerBuff(w *warden.Warden, s *ChainState, ctx *warden.TickContext) {
 	var towers []*tower.Tower
 	ctx.Towers.Each(func(t *tower.Tower) {
@@ -113,23 +121,49 @@ func chainTowerBuff(w *warden.Warden, s *ChainState, ctx *warden.TickContext) {
 		return
 	}
 
-	// Union-Find（复用 strength 包的实现，rank=nil 使用简单合并）
+	// 收集 ChainRange 内的所有候选边，按距离排序（Kruskal）
+	var edges []towerEdge
+	for i := 0; i < len(towers); i++ {
+		for j := i + 1; j < len(towers); j++ {
+			d := math.Hypot(towers[i].X-towers[j].X, towers[i].Y-towers[j].Y)
+			if d <= s.ChainRange {
+				edges = append(edges, towerEdge{i, j, d})
+			}
+		}
+	}
+	sort.Slice(edges, func(a, b int) bool {
+		return edges[a].dist < edges[b].dist
+	})
+
+	// Kruskal MST：按距离从小到大合并，只保留合并成功的边（即 MST 边）
 	parent := make([]int, len(towers))
 	for i := range parent {
 		parent[i] = i
 	}
 
-	// 串联 ChainRange 内的塔，同时记录连接对（供渲染用）
 	s.ChainLinks = s.ChainLinks[:0]
-	for i := 0; i < len(towers); i++ {
-		for j := i + 1; j < len(towers); j++ {
-			if math.Hypot(towers[i].X-towers[j].X, towers[i].Y-towers[j].Y) <= s.ChainRange {
-				strength.UFUnion(parent, nil, i, j)
-				s.ChainLinks = append(s.ChainLinks, ChainLink{
-					X1: towers[i].X, Y1: towers[i].Y,
-					X2: towers[j].X, Y2: towers[j].Y,
-				})
-			}
+	for _, e := range edges {
+		ri := strength.UFFind(parent, e.i)
+		rj := strength.UFFind(parent, e.j)
+		if ri == rj {
+			continue // 已在同组，跳过（避免环）
+		}
+		strength.UFUnion(parent, nil, e.i, e.j)
+
+		// 方向：从 UF root 所在端指向另一端（能量从根辐射到叶）
+		root := strength.UFFind(parent, e.i)
+		if root == strength.UFFind(parent, e.i) {
+			// e.i 侧是根 → 方向 i→j
+			s.ChainLinks = append(s.ChainLinks, ChainLink{
+				X1: towers[e.i].X, Y1: towers[e.i].Y,
+				X2: towers[e.j].X, Y2: towers[e.j].Y,
+			})
+		} else {
+			_ = root
+			s.ChainLinks = append(s.ChainLinks, ChainLink{
+				X1: towers[e.j].X, Y1: towers[e.j].Y,
+				X2: towers[e.i].X, Y2: towers[e.i].Y,
+			})
 		}
 	}
 

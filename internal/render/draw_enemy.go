@@ -6,6 +6,7 @@ package render
 import (
 	"image/color"
 	"math"
+	"sort"
 
 	"defense2/internal/core/enemy"
 	"defense2/internal/render/anim"
@@ -34,6 +35,20 @@ func NewEnemyRenderer(assetFS AssetReader) *EnemyRenderer {
 }
 
 const enemySpriteSize = 32
+
+// hpBarEntry holds data for deferred HP bar rendering (Pass 3).
+// Collected during Pass 2, then sorted and repulsed to avoid overlap.
+type hpBarEntry struct {
+	cx, cy     float32 // enemy center
+	barW, barH float32
+	barOffY    float32 // base Y offset above enemy center
+	adjustY    float32 // additional Y offset from repulsion (negative = higher)
+	hp, maxHP  float64
+	displayHP  float64
+	boss       bool
+	// status dots
+	slowed, stunned, rooted, bleeding, burning bool
+}
 
 // spritePathCache caches fmt.Sprintf results to avoid per-frame allocations.
 var spritePathCache = map[string]string{}
@@ -90,6 +105,10 @@ func (er *EnemyRenderer) DrawEnemies(screen *ebiten.Image, pool *enemy.Pool, ani
 			screen.DrawImage(img, &op)
 		}
 	})
+
+	// HP bar entries collected during Pass 2, drawn in Pass 3 with repulsion.
+	var hpBarsArr [256]hpBarEntry
+	hpBars := hpBarsArr[:0]
 
 	// Pass 2: active (non-dying) enemies
 	pool.Each(func(e *enemy.Enemy) {
@@ -222,89 +241,31 @@ func (er *EnemyRenderer) DrawEnemies(screen *ebiten.Image, pool *enemy.Pool, ani
 			return
 		}
 
-		// --- HP bar dimensions ---
-		var barW, barH, barOffY float32
-		if e.Boss {
-			barW = theme.EnemyBossHPBarW
-			barH = theme.EnemyBossHPBarH
-			barOffY = theme.EnemyBossHPOffsetY
-		} else {
-			barW = theme.EnemyHPBarW
-			barH = theme.EnemyHPBarH
-			barOffY = theme.EnemyHPBarOffsetY
-		}
-
-		// --- HP bar (always visible) ---
-		{
-			barX := cx - barW/2
-			barY := cy - barOffY
-
-			// Background (includes 1px border via darker color, saves 1 draw call)
-			draw.FilledRect(screen, barX-1, barY-1, barW+2, barH+2,
-				theme.EnemyHPBarBg, true)
-
-			// Damage trail (orange, behind HP fill)
-			if e.DisplayHP > e.HP && e.DisplayHP > 0 {
-				trailRatio := float32(e.DisplayHP / e.MaxHP)
-				if trailRatio > 1 {
-					trailRatio = 1
-				}
-				draw.FilledRect(screen, barX, barY, barW*trailRatio, barH,
-					color.RGBA{R: 251, G: 146, B: 60, A: 255}, true) // #fb923c
-			}
-
-			// HP fill (red-only color scheme)
-			ratio := float32(e.HP / e.MaxHP)
-			if ratio < 0 {
-				ratio = 0
-			} else if ratio > 1 {
-				ratio = 1
-			}
-			fillW := barW * ratio
-
-			var fillClr color.RGBA
-			switch {
-			case ratio > 0.6:
-				fillClr = color.RGBA{R: 239, G: 68, B: 68, A: 255} // #ef4444 bright red
-			case ratio > 0.3:
-				fillClr = color.RGBA{R: 220, G: 38, B: 38, A: 255} // #dc2626 darker red
-			default:
-				fillClr = color.RGBA{R: 153, G: 27, B: 27, A: 255} // #991b1b deep red
-			}
-			draw.FilledRect(screen, barX, barY, fillW, barH, fillClr, true)
-
-			// Boss HP segment dividers (5 segments, 20% each)
+		// Collect HP bar entries for Pass 3 (deferred drawing with repulsion).
+		// Skip full-HP enemies unless they have status effects (C: hide-when-full).
+		hasStatus := e.IsSlowed() || e.IsStunned() || e.IsRooted() || e.IsBleeding() || e.IsBurning()
+		if e.HP < e.MaxHP || e.Boss || hasStatus {
+			var barW, barH, barOffY float32
 			if e.Boss {
-				for i := 1; i < 5; i++ {
-					divX := barX + barW*float32(i)*0.2
-					draw.FilledRect(screen, divX, barY, 1, barH, theme.EnemyHPSegDiv, true)
-				}
+				barW = theme.EnemyBossHPBarW
+				barH = theme.EnemyBossHPBarH
+				barOffY = theme.EnemyBossHPOffsetY
+			} else {
+				barW = theme.EnemyHPBarW
+				barH = theme.EnemyHPBarH
+				barOffY = theme.EnemyHPBarOffsetY
 			}
-
-			// (Elite center tick removed)
-		}
-
-		// --- Status effect dots (栈分配，避免逐帧堆分配) ---
-		dotY := cy - barOffY - 4
-		var dotsArr [5]vfx.StatusDot
-		dots := dotsArr[:0]
-		if e.IsSlowed() {
-			dots = append(dots, vfx.StatusDot{Color: color.RGBA{R: 125, G: 211, B: 252, A: 235}})
-		}
-		if e.IsStunned() {
-			dots = append(dots, vfx.StatusDot{Color: color.RGBA{R: 255, G: 255, B: 100, A: 235}})
-		}
-		if e.IsRooted() {
-			dots = append(dots, vfx.StatusDot{Color: color.RGBA{R: 139, G: 90, B: 43, A: 235}})
-		}
-		if e.IsBleeding() {
-			dots = append(dots, vfx.StatusDot{Color: color.RGBA{R: 239, G: 68, B: 68, A: 255}})
-		}
-		if e.IsBurning() {
-			dots = append(dots, vfx.StatusDot{Color: color.RGBA{R: 255, G: 140, B: 40, A: 255}})
-		}
-		if len(dots) > 0 {
-			vfx.DrawStatusDots(screen, cx, dotY, dots, animTime)
+			hpBars = append(hpBars, hpBarEntry{
+				cx: cx, cy: cy,
+				barW: barW, barH: barH, barOffY: barOffY,
+				hp: e.HP, maxHP: e.MaxHP, displayHP: e.DisplayHP,
+				boss:     e.Boss,
+				slowed:   e.IsSlowed(),
+				stunned:  e.IsStunned(),
+				rooted:   e.IsRooted(),
+				bleeding: e.IsBleeding(),
+				burning:  e.IsBurning(),
+			})
 		}
 
 		// --- 能力常驻视觉（被沉默时全部隐藏）---
@@ -353,6 +314,132 @@ func (er *EnemyRenderer) DrawEnemies(screen *ebiten.Image, pool *enemy.Pool, ani
 			}
 		}
 	})
+
+	// Pass 3: draw HP bars with Y-axis repulsion to reduce overlap.
+	if len(hpBars) > 0 {
+		repulseHPBars(hpBars)
+		drawHPBars(screen, hpBars, animTime)
+	}
+}
+
+// repulseHPBars applies simple Y-axis repulsion so overlapping HP bars spread apart.
+// Sort by bar-center Y, then push overlapping bars upward.
+func repulseHPBars(bars []hpBarEntry) {
+	if len(bars) < 2 {
+		return
+	}
+	// Sort by the bar's screen Y position (enemy cy - barOffY).
+	sort.Slice(bars, func(i, j int) bool {
+		return (bars[i].cy - bars[i].barOffY) < (bars[j].cy - bars[j].barOffY)
+	})
+
+	const minGap float32 = 2 // minimum vertical gap between bars
+
+	for i := 1; i < len(bars); i++ {
+		prev := &bars[i-1]
+		cur := &bars[i]
+
+		// Check horizontal overlap first — bars far apart in X don't need repulsion.
+		maxW := prev.barW
+		if cur.barW > maxW {
+			maxW = cur.barW
+		}
+		dx := cur.cx - prev.cx
+		if dx < 0 {
+			dx = -dx
+		}
+		if dx > maxW {
+			continue // no horizontal overlap
+		}
+
+		prevBottom := prev.cy - prev.barOffY + prev.adjustY + prev.barH
+		curTop := cur.cy - cur.barOffY + cur.adjustY
+
+		overlap := prevBottom + minGap - curTop
+		if overlap > 0 {
+			// Push current bar down, previous bar up (split evenly).
+			half := overlap / 2
+			prev.adjustY -= half
+			cur.adjustY += half
+		}
+	}
+}
+
+// drawHPBars renders all collected HP bar entries.
+func drawHPBars(screen *ebiten.Image, bars []hpBarEntry, animTime float64) {
+	for i := range bars {
+		b := &bars[i]
+		barX := b.cx - b.barW/2
+		barY := b.cy - b.barOffY + b.adjustY
+
+		// Only draw HP bar if not full HP (status-only entries skip the bar).
+		if b.hp < b.maxHP {
+			// Background (1px pseudo-border)
+			draw.FilledRect(screen, barX-1, barY-1, b.barW+2, b.barH+2,
+				theme.EnemyHPBarBg, true)
+
+			// Damage trail (orange)
+			if b.displayHP > b.hp && b.displayHP > 0 {
+				trailRatio := float32(b.displayHP / b.maxHP)
+				if trailRatio > 1 {
+					trailRatio = 1
+				}
+				draw.FilledRect(screen, barX, barY, b.barW*trailRatio, b.barH,
+					color.RGBA{R: 251, G: 146, B: 60, A: 255}, true)
+			}
+
+			// HP fill
+			ratio := float32(b.hp / b.maxHP)
+			if ratio < 0 {
+				ratio = 0
+			} else if ratio > 1 {
+				ratio = 1
+			}
+			fillW := b.barW * ratio
+
+			var fillClr color.RGBA
+			switch {
+			case ratio > 0.6:
+				fillClr = color.RGBA{R: 239, G: 68, B: 68, A: 255}
+			case ratio > 0.3:
+				fillClr = color.RGBA{R: 220, G: 38, B: 38, A: 255}
+			default:
+				fillClr = color.RGBA{R: 153, G: 27, B: 27, A: 255}
+			}
+			draw.FilledRect(screen, barX, barY, fillW, b.barH, fillClr, true)
+
+			// Boss segment dividers
+			if b.boss {
+				for s := 1; s < 5; s++ {
+					divX := barX + b.barW*float32(s)*0.2
+					draw.FilledRect(screen, divX, barY, 1, b.barH, theme.EnemyHPSegDiv, true)
+				}
+			}
+		}
+
+		// Status effect dots (above the bar)
+		dotY := barY - 4
+		var dotsArr [5]vfx.StatusDot
+		dots := dotsArr[:0]
+		if b.slowed {
+			dots = append(dots, vfx.StatusDot{Color: color.RGBA{R: 125, G: 211, B: 252, A: 235}})
+		}
+		if b.stunned {
+			dots = append(dots, vfx.StatusDot{Color: color.RGBA{R: 255, G: 255, B: 100, A: 235}})
+		}
+		if b.rooted {
+			dots = append(dots, vfx.StatusDot{Color: color.RGBA{R: 139, G: 90, B: 43, A: 235}})
+		}
+		if b.bleeding {
+			dots = append(dots, vfx.StatusDot{Color: color.RGBA{R: 239, G: 68, B: 68, A: 255}})
+		}
+		if b.burning {
+			dots = append(dots, vfx.StatusDot{Color: color.RGBA{R: 255, G: 140, B: 40, A: 255}})
+		}
+		if len(dots) > 0 {
+			vfx.DrawStatusDots(screen, b.cx, dotY, dots, animTime)
+		}
+	}
 }
 
 // hasAbility 检查敌人是否装配了指定能力。

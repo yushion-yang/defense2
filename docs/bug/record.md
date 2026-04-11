@@ -21,7 +21,7 @@
 - [x] 现在造塔没有音效了之前是有的（已确认：event bus 触发 build.wav 正常）。音效声音太大需要调得柔和一点。
 - [x] 调试模式多次点-50强度之后，需要点多次+50才能大于0（非bug：AddPermanent clamp 在-Base，任何时候2次+50即可回到100。回归测试已覆盖）
 - [x] 让调试模式展示的加技能使用中文名字。
-- [ ] 金灵释放的第一次技能，没有给炮塔展示五星芒特效。
+- [x] 金灵释放的第一次技能，没有给炮塔展示五星芒特效。
 - [x] 能力的展示，描述有挺多的问题（可能跟配置有关）base+潜力*强度，不应该中间再加个0
 - [x] 炮塔的HUD只需要显示它获取的能力即可，不需要再在上方重复展示能力的槽位品种啥的。
 - [x] 基础炮塔升级那个强化炮塔，这个操作是一次性是提升炮塔的属性，然后这个强化就不再吃强度的加成，实现跟描述都需要改。
@@ -42,15 +42,15 @@
 ## 待修复
 
 - [ ] 浮字的免疫都需要声明免疫什么（减速/控制/伤害）。
-- [ ] 炮塔选择攻击方式之后没有切换模型展示。
-- [ ] 显示 0+1%=2%（截图：screenshot_20260408_200200.png）
-- [ ] 弹射打到盾卫，触发抵挡应该展示抵挡特效。
+- [x] 炮塔选择攻击方式之后没有切换模型展示。
+- [x] 显示 0+1%=2%（截图：screenshot_20260408_200200.png）
+- [x] 弹射打到盾卫，触发抵挡应该展示抵挡特效。
 - [x] 金灵并没有真正的给炮塔加强度。（根因：战灵 Tick 在 ClearTransient 前执行，SetTemp 每帧被清零。修复：移到 ClearTransient 之后）
 - [x] 串联没有加属性。（根因：chainActive 标志判断了 "envoy" 而非 "chain"，全局链网络从未激活。修复：改为 "chain"）
-- [ ] 集中怪播放的特效并没有跟随怪物移动的位置。
-- [ ] Warden 活动范围受限：84% 场景触发 `warden_range_limited`，排查是 AI 策略局限还是移动逻辑 bug。
-- [ ] silenceZone 无免疫检查：控制免疫敌人也被沉默，缺 ApplySilence 函数/免疫/tenacity/浮字/VFX/SFX（审查项 5.1/5.2）
-- [ ] scaling.go 全局 map（killUpgradeStacks 等 6 个）多局游戏不清理，ResetScalingState() 仅 test 调用，内存泄漏（审查项 5.3）
+- [ ] 攻击击中怪物播放的特效并没有跟随怪物移动的位置。
+- [x] Warden 活动范围受限：84% 场景触发 `warden_range_limited`，排查是 AI 策略局限还是移动逻辑 bug。
+- [x] silenceZone 无免疫检查：控制免疫敌人也被沉默，缺 ApplySilence 函数/免疫/tenacity/浮字/VFX/SFX（审查项 5.1/5.2）
+- [x] scaling.go 全局 map（killUpgradeStacks 等 6 个）多局游戏不清理，ResetScalingState() 仅 test 调用，内存泄漏（审查项 5.3）
 - [ ] envoy.go:127,158 调用 Strength.RemoveTemp() 无 nil 检查，apply 路径有 ensureStrength() 但 cleanup 路径没有，潜在 panic（审查项 5.4）
 - [ ] radial handler fallback 速度 350、scatter handler fallback 速度 400，与 balance.json defaultProjectileSpeed=300 不一致（审查项 6.2）
 - [ ] railgun 塔无 sprite 资源目录 `assets/towers/railgun/`，无 spriteKey 映射，渲染 fallback 为 sentinel 外观（审查项 7.1）

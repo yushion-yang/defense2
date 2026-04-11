@@ -2444,15 +2444,13 @@ func (s *StageScene) drawScene(screen *ebiten.Image) {
 	// 塔（优先 SVG 渲染，回退到彩色方块）
 	s.towerRenderer.DrawTowers(worldTarget, s.towers, s.selectedTower, animTime)
 
-	// 被 buff 的塔显示强化特效（五角星芒）
-	s.towers.Each(func(t *tower.Tower) {
-		if t.Buffs.Count() > 0 {
-			render.DrawTowerBuffEffect(worldTarget, t, animTime)
-		}
-	})
-
-	// 能力升级指示器（塔上方脉冲金色菱形）
-	s.drawUpgradeIndicators(worldTarget, animTime)
+	// DEBUG: 临时禁用塔 buff 特效和升级指示器
+	// s.towers.Each(func(t *tower.Tower) {
+	// 	if t.Buffs.Count() > 0 {
+	// 		render.DrawTowerBuffEffect(worldTarget, t, animTime)
+	// 	}
+	// })
+	// s.drawUpgradeIndicators(worldTarget, animTime)
 
 	// 调试射程圈（测试模式下显示所有塔的射程）
 	if s.debugShowRange {

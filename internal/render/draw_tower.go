@@ -79,12 +79,13 @@ func (tr *TowerRenderer) DrawTowers(screen *ebiten.Image, pool *tower.Pool, sele
 			float32(float64(towerSpriteSize*0.35)*animScale), color.RGBA{0, 0, 0, shadowAlpha})
 
 		// --- Under-body VFX (drawn BEFORE sprite so they don't obscure it) ---
-		if !t.Selling && t.BuildAnim <= 0 && t.Strength != nil {
-			vfx.DrawStrengthGlow(screen, cx, cy, t.Strength.Overflow(), animTime)
-		}
-		if !t.Selling && t.BuildAnim <= 0 {
-			drawTowerAuras(screen, t, cx, cy, animTime)
-		}
+		// DEBUG: 临时禁用，排查绿色圈来源
+		// if !t.Selling && t.BuildAnim <= 0 && t.Strength != nil {
+		// 	vfx.DrawStrengthGlow(screen, cx, cy, t.Strength.Overflow(), animTime)
+		// }
+		// if !t.Selling && t.BuildAnim <= 0 {
+		// 	drawTowerAuras(screen, t, cx, cy, animTime)
+		// }
 
 		// --- Tower body (animated or static, rotated toward target) ---
 		// spin_aoe 不旋转朝向目标
@@ -93,21 +94,12 @@ func (tr *TowerRenderer) DrawTowers(screen *ebiten.Image, pool *tower.Pool, sele
 			rotation = 0
 		}
 
+		// DEBUG: 临时用红色方块替代精灵，排查绿色圈来源
 		img := tr.getTowerFrame(t, 1.0/60.0)
-		if img != nil {
-			logicalScale := float64(towerSpriteSize) / float64(img.Bounds().Dx())
-			// 射击缩放脉冲（skip during build/sell anim）
-			if t.FireAnim > 0 && t.BuildAnim <= 0 && !t.Selling {
-				logicalScale *= vfx.FirePulseScale(t.FireAnim)
-			}
-			// Apply build/sell animation scale
-			logicalScale *= animScale
-			if animAlpha < 1.0 {
-				draw.SpriteScaledRotatedAlpha(screen, img, float64(cx), float64(cy), logicalScale, rotation, animAlpha)
-			} else {
-				draw.SpriteScaledRotated(screen, img, float64(cx), float64(cy), logicalScale, rotation)
-			}
-		} else {
+		_ = img
+		_ = rotation
+		draw.FilledRect(screen, cx-12, cy-12, 24, 24, color.RGBA{R: 255, G: 50, B: 50, A: 220}, false)
+		if false {
 			// Fallback: circle body + barrel rectangle
 			bodyClr := theme.TowerFallbackDef
 			if selected {
