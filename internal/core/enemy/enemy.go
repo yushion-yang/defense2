@@ -295,6 +295,52 @@ func (e *Enemy) GetWeakenAmplify() float64 {
 	return b.Value
 }
 
+// ── Phase 2 behavior buff helpers ──
+
+// HasBerserk returns true if the enemy has an active berserk buff.
+func (e *Enemy) HasBerserk() bool { return e.Buffs != nil && e.Buffs.Has("berserk") }
+
+// HasRegen returns true if the enemy has an active regen buff.
+func (e *Enemy) HasRegen() bool { return e.Buffs != nil && e.Buffs.Has("regen") }
+
+// HasHealAura returns true if the enemy has an active healAura buff.
+func (e *Enemy) HasHealAura() bool { return e.Buffs != nil && e.Buffs.Has("healAura") }
+
+// HasBufferAura returns true if the enemy has an active bufferAura buff.
+func (e *Enemy) HasBufferAura() bool { return e.Buffs != nil && e.Buffs.Has("bufferAura") }
+
+// HasPhaseShift returns true if the enemy has an active phaseShift buff.
+func (e *Enemy) HasPhaseShift() bool { return e.Buffs != nil && e.Buffs.Has("phaseShift") }
+
+// GetDamageReduce returns the damage reduction value from BuffList (0 = no reduction).
+func (e *Enemy) GetDamageReduce() float64 {
+	if e.Buffs == nil {
+		return 0
+	}
+	b, ok := e.Buffs.Get("damageReduce")
+	if !ok {
+		return 0
+	}
+	return b.Value
+}
+
+// HasSpeedUp returns true if the enemy has an active speedUp buff.
+func (e *Enemy) HasSpeedUp() bool {
+	return e.Buffs != nil && e.Buffs.Has("speedUp")
+}
+
+// GetSpeedUp returns the speed up value from BuffList (0 = no speed up).
+func (e *Enemy) GetSpeedUp() float64 {
+	if e.Buffs == nil {
+		return 0
+	}
+	b, ok := e.Buffs.Get("speedUp")
+	if !ok {
+		return 0
+	}
+	return b.Value
+}
+
 // MinSpeedRatio 返回全局减速下限（从 balance.json 实时读取，不再冻结于 init 时刻）。
 func MinSpeedRatio() float64 { return config.GlobalBalance().Combat.MinSpeedRatio }
 
