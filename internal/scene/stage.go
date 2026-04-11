@@ -2083,10 +2083,14 @@ func (s *StageScene) updatePlaying() {
 		} else if style == tower.StyleSpinAoE {
 			particle.EmitMuzzleFlash(s.particlePool, t.X, t.Y, t.SpinAngle)
 		}
-	}, func(e *enemy.Enemy, damage float64, killed bool, _ string, crit bool) {
-		// 直接攻击方式（laser/beam/spin_aoe等）的伤害飘字
+	}, func(e *enemy.Enemy, damage float64, killed bool, attackStyle string, crit bool) {
+		// 直接攻击方式（laser/beam/spin_aoe等）的伤害飘字+冲击特效
 		if damage > 0 {
 			render.SpawnDamageText(e.X, e.Y-15, damage, crit, e.Boss)
+			if e.HitFlash < 0.06 && e.Age > 0.1 {
+				e.HitFlash = 0.12
+			}
+			render.SpawnTypedImpact(&e.X, &e.Y, attackStyle)
 		}
 		if crit {
 			s.audioMgr.PlayThrottledAt(gameAudio.SFXCritHit, 150, gameAudio.VolHit)
