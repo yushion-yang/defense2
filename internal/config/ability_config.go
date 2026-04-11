@@ -51,6 +51,12 @@ func LoadAbilityTable() (AbilityTable, error) {
 	if err := json.Unmarshal(data, &table); err != nil {
 		return nil, fmt.Errorf("parse abilities: %w", err)
 	}
+	// 过滤 _meta 等以 _ 开头的元数据 key
+	for k := range table {
+		if len(k) > 0 && k[0] == '_' {
+			delete(table, k)
+		}
+	}
 	globalAbilityTable = table
 	return table, nil
 }

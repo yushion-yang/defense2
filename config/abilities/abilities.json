@@ -1,4 +1,35 @@
 {
+  "_meta": {
+    "_doc": "塔能力定义。每个能力包含缩放公式、显示模板和分类信息。",
+    "fields": {
+      "type":       "能力唯一标识，与 key 相同",
+      "label":      "中文显示名",
+      "icon":       "图标资源名（对应 assets/svg/icons/）",
+      "category":   "分类: attack(攻击方式) | cc(控制) | damage(伤害加成) | buff(光环/被动) | dot(持续伤害) | zone(区域效果)",
+      "scaleDim":   "缩放维度标识，说明 CalcScale 的返回值代表什么（如 pellets=弹丸数、factor=减速倍率）",
+      "base":       "基础值（强度100时的效果值）",
+      "potential":  "潜力值（强度每+100时的额外增长）",
+      "param":      "固定参数（不随强度变化，如持续时间、范围、角度等）",
+      "paramDim":   "固定参数的维度标识（duration=秒、radius=像素、spreadAngle=度 等）"
+    },
+    "formula": "CalcScale(strength) = base + potential × (strength / 100)",
+    "displayPlaceholders": {
+      "{s}":  "CalcScale 结果的原始数值（如 3.5）",
+      "{s%}": "CalcScale 结果×100 显示为百分比（如 0.15 → 15%）",
+      "{si}": "CalcScale 结果取整（如 3.7 → 3）",
+      "{p}":  "param 的原始数值",
+      "{p%}": "param×100 显示为百分比"
+    },
+    "categories": {
+      "attack":  "改变攻击方式（scatter/bounce/splash 等），同一塔只能有一个 attack 类能力",
+      "cc":      "控制效果（减速/眩晕），通过 OnHit 触发",
+      "damage":  "伤害加成（暴击/固伤/斩杀），通过 OnHit 触发",
+      "buff":    "光环或被动（增益自身或周围塔），通过 OnTick 每帧执行",
+      "dot":     "持续伤害（灼烧/流血/中毒/虚弱），通过 OnHit 施加 debuff",
+      "zone":    "区域效果（毒区/沉默区/诅咒区），通过 OnTick 对射程内敌人持续生效"
+    }
+  },
+
   "enhance"        : {"type":"enhance"        , "label":"强化"    , "icon":"stat-damage"    , "category":"attack"  , "scaleDim":"statBoost"        , "base":0.2   , "potential":0            , "param":0      , "paramDim":""            , "display":"永久提升基础+潜力: 伤害/攻速/射程提升{s%}" },
   "scatter"        : {"type":"scatter"        , "label":"散射"    , "icon":"multishot"      , "category":"attack"  , "scaleDim":"pellets"          , "base":3     , "potential":0.5        , "param":60     , "paramDim":"spreadAngle" , "display":"发射最多{si}颗弹丸, {p}度扇形散布"            },
   "wideBeam"       : {"type":"wideBeam"       , "label":"贯穿光束"  , "icon":"stat-range"     , "category":"attack"  , "scaleDim":"beamWidth"        , "base":6     , "potential":4          , "param":2      , "paramDim":"rangeMult"   , "display":"宽{s}光束穿透所有敌人, 射程×{p}"              },
