@@ -3074,7 +3074,7 @@ func (s *StageScene) buildAutoPlaySnapshot() AutoPlaySnapshot {
 		Telemetry:       tel.T.Snapshot(),
 	}
 	// 遥测：记录交互模式
-	modeNames := []string{"idle", "buildMenu", "buildPlace", "towerSel", "spawnMenu", "spawnPlace", "event", "paused", "wardenSelect"}
+	modeNames := []string{"idle", "buildMenu", "buildPlace", "towerSel", "spawnMenu", "spawnPlace", "paused", "wardenSelect", "upgrade", "itemPanel", "itemDrag"}
 	if int(s.imode) < len(modeNames) {
 		tel.T.Record("imode", modeNames[s.imode])
 	}
