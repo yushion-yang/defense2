@@ -276,6 +276,10 @@ func OnSplitterDeath(e *Enemy, pool *Pool) []*Enemy {
 			break // 池满
 		}
 		child.Path = e.Path
+		// 分裂子体奖励削减
+		if bal.Split.RewardScale > 0 {
+			child.RewardScale *= bal.Split.RewardScale
+		}
 		children = append(children, child)
 	}
 	return children

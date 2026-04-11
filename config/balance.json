@@ -63,12 +63,14 @@
     "hpRatio": 0.3,
     "speedScale": 1.4,
     "radiusRatio": 0.7,
-    "childOffset": 6
+    "childOffset": 6,
+    "rewardScale": 0.2
   },
   "deathSpawn": {
     "hpRatio": 0.2,
     "defaultArch": "normal",
-    "childOffset": 8
+    "childOffset": 8,
+    "rewardScale": 0.3
   },
   "dying": {
     "normalDuration": 0.3,

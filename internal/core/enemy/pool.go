@@ -203,6 +203,10 @@ func (p *Pool) Kill(e *Enemy) {
 				child := p.Spawn(e.X+float64(i)*bal.DeathSpawn.ChildOffset, e.Y, e.MaxHP*bal.DeathSpawn.HpRatio, e.BaseSpeed, e.PathIndex, arch, DefaultSpawnConfig())
 				if child != nil {
 					child.Path = e.Path
+					// 召唤小怪奖励削减
+					if bal.DeathSpawn.RewardScale > 0 {
+						child.RewardScale *= bal.DeathSpawn.RewardScale
+					}
 				}
 			}
 			if p.OnDeathSpawn != nil {

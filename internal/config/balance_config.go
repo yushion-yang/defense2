@@ -101,6 +101,7 @@ type SplitBalance struct {
 	HpRatio     float64 `json:"hpRatio"`
 	SpeedScale  float64 `json:"speedScale"`
 	RadiusRatio float64 `json:"radiusRatio"`
+	RewardScale float64 `json:"rewardScale"` // 分裂子体奖励倍率（0.2=20%奖励）
 	ChildOffset float64 `json:"childOffset"`
 }
 
@@ -109,6 +110,7 @@ type DeathSpawnBalance struct {
 	HpRatio     float64 `json:"hpRatio"`
 	DefaultArch string  `json:"defaultArch"`
 	ChildOffset float64 `json:"childOffset"`
+	RewardScale float64 `json:"rewardScale"` // 召唤小怪奖励倍率（0.3=30%奖励）
 }
 
 // DyingBalance 死亡动画参数。
@@ -254,8 +256,8 @@ func defaultBalance() *BalanceConfig {
 			{Kind: "potentialRange", Label: "瞄准秘卷", Boost: 18},
 		},
 		Chain:      ChainBalance{Distance: 150, StrengthPerTower: 10},
-		Split:      SplitBalance{HpRatio: 0.3, SpeedScale: 1.4, RadiusRatio: 0.7, ChildOffset: 6},
-		DeathSpawn: DeathSpawnBalance{HpRatio: 0.2, DefaultArch: "normal", ChildOffset: 8},
+		Split:      SplitBalance{HpRatio: 0.3, SpeedScale: 1.4, RadiusRatio: 0.7, ChildOffset: 6, RewardScale: 0.2},
+		DeathSpawn: DeathSpawnBalance{HpRatio: 0.2, DefaultArch: "normal", ChildOffset: 8, RewardScale: 0.3},
 		Dying:      DyingBalance{NormalDuration: 0.3, BossDuration: 0.5},
 		Warden:     WardenBalance{InitialStrength: 100, DefaultGrowthOnKill: 2, DefaultGrowthOnWaveClear: 5},
 		Gameplay:   GameplayBalance{StarRatingThreshold: 0.8, MultiKillWindow: 1.5, MultiKillAnnounce1: 5, MultiKillAnnounce2: 10},
