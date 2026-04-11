@@ -31,12 +31,12 @@
     "strengthPerTower": 10                 ,"_strengthPerTower": "每个链接邻居提供的临时强度加成"
   },
   "items": [
-    {"kind": "baseDamage",      "label": "攻击磨石", "boost": 2,    "startCount": 0, "_desc": "提升基础伤害+2"},
-    {"kind": "potentialDamage",  "label": "攻击秘卷", "boost": 3,    "startCount": 0, "_desc": "提升潜力伤害+3"},
-    {"kind": "baseSpeed",        "label": "速射齿轮", "boost": 0.15, "startCount": 0, "_desc": "提升基础攻速+0.15"},
-    {"kind": "potentialSpeed",   "label": "速射秘卷", "boost": 0.2,  "startCount": 0, "_desc": "提升潜力攻速+0.2"},
-    {"kind": "baseRange",        "label": "瞄准镜片", "boost": 12,   "startCount": 0, "_desc": "提升基础射程+12"},
-    {"kind": "potentialRange",   "label": "瞄准秘卷", "boost": 18,   "startCount": 0, "_desc": "提升潜力射程+18"}
+    {"kind": "baseDamage",      "label": "攻击磨石", "boost": 2,    "startCount": 0, "description": "基础伤害+{v}"},
+    {"kind": "potentialDamage",  "label": "攻击秘卷", "boost": 3,    "startCount": 0, "description": "潜力伤害+{v}"},
+    {"kind": "baseSpeed",        "label": "速射齿轮", "boost": 0.15, "startCount": 0, "description": "基础攻速+{v}"},
+    {"kind": "potentialSpeed",   "label": "速射秘卷", "boost": 0.2,  "startCount": 0, "description": "潜力攻速+{v}"},
+    {"kind": "baseRange",        "label": "瞄准镜片", "boost": 12,   "startCount": 0, "description": "基础射程+{v}"},
+    {"kind": "potentialRange",   "label": "瞄准秘卷", "boost": 18,   "startCount": 0, "description": "潜力射程+{v}"}
   ],
   "split": {
     "hpRatio": 0.3,                        "_hpRatio": "分裂子体生命值比例（父体的30%）",

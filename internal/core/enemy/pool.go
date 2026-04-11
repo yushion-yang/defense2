@@ -10,6 +10,12 @@ import (
 	"defense2/internal/core/game"
 )
 
+const (
+	defaultHealInterval     = 2.5 // 默认治疗间隔(秒)
+	bossSpawnAnimDuration   = 0.5 // Boss 出生动画时长(秒)
+	normalSpawnAnimDuration = 0.3 // 普通敌人出生动画时长(秒)
+)
+
 // Pool 固定大小的敌人对象池。
 type Pool struct {
 	enemies []Enemy // 预分配的敌人槽位数组
@@ -114,7 +120,7 @@ func (p *Pool) Spawn(x, y, baseHP, baseSpeed float64, pathIndex int, archetype s
 				})
 				e.HealInterval = cfg.HealInterval
 				if e.HealInterval <= 0 {
-					e.HealInterval = 2.5
+					e.HealInterval = defaultHealInterval
 				}
 				e.HealCooldown = 0
 			}
@@ -164,9 +170,9 @@ func (p *Pool) Spawn(x, y, baseHP, baseSpeed float64, pathIndex int, archetype s
 
 			// 出生动画
 			if cfg.Boss {
-				e.SpawnTimer = 0.5
+				e.SpawnTimer = bossSpawnAnimDuration
 			} else {
-				e.SpawnTimer = 0.3
+				e.SpawnTimer = normalSpawnAnimDuration
 			}
 			e.SpawnDuration = e.SpawnTimer
 

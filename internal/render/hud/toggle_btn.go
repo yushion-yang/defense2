@@ -35,6 +35,11 @@ func toggleBtnRect(left bool) (x, y float32) {
 // expanded: 当前是否展开
 // icon: 按钮显示文字（如 ">" 或 "⚡"）
 func DrawToggleButton(screen *ebiten.Image, left, expanded bool, icon string) {
+	DrawToggleButtonWithSprite(screen, left, expanded, icon, nil)
+}
+
+// DrawToggleButtonWithSprite 绘制带精灵图标的切换按钮。sprite 为 nil 时回退为文字。
+func DrawToggleButtonWithSprite(screen *ebiten.Image, left, expanded bool, icon string, sprite *ebiten.Image) {
 	x, y := toggleBtnRect(left)
 
 	bg := color.RGBA{R: 30, G: 38, B: 60, A: 200}
@@ -44,13 +49,16 @@ func DrawToggleButton(screen *ebiten.Image, left, expanded bool, icon string) {
 	draw.RoundRect(screen, x, y, toggleBtnSize, toggleBtnSize, toggleBtnRadius, bg)
 	draw.StrokeRoundRect(screen, x, y, toggleBtnSize, toggleBtnSize, toggleBtnRadius, 1, theme.PanelBorder)
 
-	if fm := render.GlobalFont(); fm != nil {
+	cx := float64(x) + float64(toggleBtnSize)/2
+	cy := float64(y) + float64(toggleBtnSize)/2
+
+	if sprite != nil {
+		draw.Sprite(screen, sprite, cx, cy, float64(toggleBtnSize-8))
+	} else if fm := render.GlobalFont(); fm != nil {
 		label := icon
 		if expanded && left {
-			label = "<" // 展开时显示收起箭头
+			label = "<"
 		}
-		cx := float64(x) + float64(toggleBtnSize)/2
-		cy := float64(y) + float64(toggleBtnSize)/2
 		fm.DrawCenteredVText(screen, label, cx, cy, 16, color.White)
 	}
 }

@@ -8,6 +8,11 @@ import (
 	"defense2/internal/core/gamemap"
 )
 
+const (
+	floatTextDuration  = 0.6 // 浮动文本显示时长(秒)
+	displayHpDecayRate = 1.2 // 显示HP衰减速率(倍MaxHP/秒)
+)
+
 // Threshold HP阈值触发器。
 // 当敌人 HP 比例降到 Ratio 以下时触发一次。
 type Threshold struct {
@@ -15,7 +20,6 @@ type Threshold struct {
 	Ratio     float64 // 触发比例（如 0.5 = 50% HP）
 	Triggered bool    // 是否已触发
 }
-
 
 // CheckThresholds 检查并返回本次伤害触发的阈值列表。
 func CheckThresholds(e *Enemy) []Threshold {
@@ -202,7 +206,7 @@ func (e *Enemy) IsDying() bool { return e.DyingTimer > 0 }
 // SetFloatText 设置飘字（会覆盖已有的飘字）。
 func (e *Enemy) SetFloatText(text string, r, g, b uint8) {
 	e.FloatText = text
-	e.FloatTextTimer = 0.6
+	e.FloatTextTimer = floatTextDuration
 	e.FloatTextR = r
 	e.FloatTextG = g
 	e.FloatTextB = b
@@ -459,7 +463,7 @@ func TickStatusEffects(e *Enemy, dt float64) {
 		e.DisplayHP = e.HP // 首次初始化
 	}
 	if e.DisplayHP > e.HP {
-		e.DisplayHP -= e.MaxHP * dt * 1.2
+		e.DisplayHP -= e.MaxHP * dt * displayHpDecayRate
 		if e.DisplayHP < e.HP {
 			e.DisplayHP = e.HP
 		}

@@ -2,15 +2,17 @@
 // SpawnConfig 携带原型数据，使 enemy 包独立于 config 包。
 package enemy
 
+const defaultEnemyRadius = 8 // 默认敌人碰撞半径(像素)
+
 // SpawnConfig 敌人生成时的原型配置参数。
 // 由调用者从 config.EnemyArchetype 转换而来，传入 Pool.Spawn。
 type SpawnConfig struct {
-	Label       string  // 中文显示名称
-	Sprite      string  // 精灵目录名（用于加载贴图）
-	HpScale     float64 // 血量倍率（应用于 baseHP）
-	SpeedScale  float64 // 速度倍率（应用于 baseSpeed）
-	Radius      float64 // 碰撞半径（像素绝对值）
-	Boss        bool    // 是否为 Boss
+	Label      string  // 中文显示名称
+	Sprite     string  // 精灵目录名（用于加载贴图）
+	HpScale    float64 // 血量倍率（应用于 baseHP）
+	SpeedScale float64 // 速度倍率（应用于 baseSpeed）
+	Radius     float64 // 碰撞半径（像素绝对值）
+	Boss       bool    // 是否为 Boss
 
 	// ── 行为配置 ──
 	Behavior        string  // 行为类型标识（"healer"/"stealth"/"splitter"/"buffer"/"regenerator"/""）
@@ -34,8 +36,8 @@ type SpawnConfig struct {
 	AbilityIDs  []string // 装配的能力 ID 列表
 
 	// ── 能力系统字段 ──
-	DamageCap         float64 // 坚韧(固定)
-	DamageCapPercent  float64 // 坚韧(百分比)
+	DamageCap             float64 // 坚韧(固定)
+	DamageCapPercent      float64 // 坚韧(百分比)
 	ProjectileBlockChance float64 // 弹幕盾
 	ArmorFlat             float64 // 装甲固定减免
 	EvasionChance         float64 // 闪避概率
@@ -61,6 +63,6 @@ func DefaultSpawnConfig() *SpawnConfig {
 	return &SpawnConfig{
 		HpScale:    1,
 		SpeedScale: 1,
-		Radius:     8,
+		Radius:     defaultEnemyRadius,
 	}
 }

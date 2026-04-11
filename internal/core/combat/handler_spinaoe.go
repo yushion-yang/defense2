@@ -10,6 +10,14 @@ import (
 	"defense2/internal/core/tower"
 )
 
+const (
+	spinBaseSpeed        = 3.0 // 旋转基准速度(rad/s)
+	spinRefAttackSpeed   = 0.3 // 旋转速度参考攻速
+	spinDefaultDmgRatio  = 0.5 // spin AoE 默认伤害比例
+	spinActiveDuration   = 0.3 // 旋转激活指示时长(秒)
+	spinFireAnimDuration = 0.4 // 开火动画时长(秒)
+)
+
 // SpinAoEHandler 旋转 AoE。
 type SpinAoEHandler struct{}
 
@@ -24,7 +32,7 @@ func (h *SpinAoEHandler) Tick(t *tower.Tower, ctx *AttackContext) {
 
 	// 旋转角度持续更新
 	// 旋转速度随攻速缩放：基准 3 rad/s 对应攻速 0.3，攻速越快旋转越快
-	spinSpeed := 3.0 * (t.AttackSpeed / 0.3)
+	spinSpeed := spinBaseSpeed * (t.AttackSpeed / spinRefAttackSpeed)
 	t.SpinAngle += dt * spinSpeed
 	if t.SpinAngle > 2*math.Pi {
 		t.SpinAngle -= 2 * math.Pi
@@ -42,7 +50,7 @@ func (h *SpinAoEHandler) Tick(t *tower.Tower, ctx *AttackContext) {
 	}
 
 	// 从能力配置读取 damageRatio (param 字段)
-	damageRatio := 0.5
+	damageRatio := spinDefaultDmgRatio
 	if abTable := config.GlobalAbilityTable(); abTable != nil {
 		if def := abTable[tower.AbilitySpinAoe]; def != nil {
 			if def.Param > 0 {
@@ -72,8 +80,8 @@ func (h *SpinAoEHandler) Tick(t *tower.Tower, ctx *AttackContext) {
 	})
 
 	if hasTarget {
-		t.SpinActive = 0.3
-		t.FireAnim = 0.4
+		t.SpinActive = spinActiveDuration
+		t.FireAnim = spinFireAnimDuration
 		t.FireTimer = 1.0 / t.AttackSpeed
 		if ctx.OnFire != nil {
 			ctx.OnFire(t, ctx.Style)

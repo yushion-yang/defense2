@@ -22,6 +22,8 @@ import (
 	tel "defense2/internal/core/telemetry"
 )
 
+const damageCapFlashDuration = 0.3 // 伤害上限触发视觉时长(秒)
+
 // DamageInput 伤害管线输入参数。
 type DamageInput struct {
 	Target      *enemy.Enemy // 受击目标
@@ -154,7 +156,7 @@ func ApplyDamage(input DamageInput) DamageResult {
 			}
 		}
 		if capped {
-			e.DamageCapHit = 0.3
+			e.DamageCapHit = damageCapFlashDuration
 			e.SetFloatText("上限", 255, 180, 40)
 		}
 	}
@@ -203,4 +205,3 @@ func QuickDamage(target *enemy.Enemy, rawDamage float64, damageType string) (fin
 	})
 	return r.FinalDamage, r.Killed
 }
-

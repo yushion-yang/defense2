@@ -2589,7 +2589,7 @@ func (s *StageScene) drawScene(screen *ebiten.Image) {
 
 	// 右下角收起按钮（战灵，选择后才显示）
 	if s.wardenReady && s.wardenUnit != nil && s.wardenUnit.Active {
-		hud.DrawToggleButton(screen, false, s.wardenPanelOpen, "⚡")
+		hud.DrawToggleButtonWithSprite(screen, false, s.wardenPanelOpen, "⚡", s.wardenRenderer.GetSprite(s.wardenType))
 	}
 
 	// 教程覆盖层
@@ -2871,6 +2871,7 @@ func (s *StageScene) buildWardenPanelData() hud.WardenPanelData {
 	w := s.wardenUnit
 	d := hud.WardenPanelData{
 		Type:         w.Type,
+		Icon:         s.wardenRenderer.GetSprite(w.Type),
 		Strength:     w.PerceivedStrength,
 		PeakStrength: w.PeakStrength,
 	}

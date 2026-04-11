@@ -22,13 +22,20 @@ import (
 	"defense2/internal/core/game"
 )
 
+const (
+	normalProjectileMaxLife   = 3.0  // 普通弹射物最大存活时间(秒)
+	bounceProjectileMaxLife   = 2.0  // 弹射弹射物最大存活时间(秒)
+	penetrateProjectileRadius = 4    // 穿透弹射物碰撞半径(像素)
+	penetrateLifeOvershoot    = 1.1  // 穿透弹射物寿命余量倍率
+	projectileBoundaryMargin  = 50.0 // 弹射物屏幕外回收边距(像素)
+)
+
 // Pool 环形缓冲区弹射物对象池。
 type Pool struct {
-	projectiles    []Projectile // 预分配的弹射物槽位数组
-	cursor int // 下一个写入位置（环形）
-	Count  int // 当前存活弹射物数量
+	projectiles []Projectile // 预分配的弹射物槽位数组
+	cursor      int          // 下一个写入位置（环形）
+	Count       int          // 当前存活弹射物数量
 }
-
 
 // NewPool 创建指定容量的弹射物对象池。
 func NewPool(cap int) *Pool {
@@ -67,7 +74,7 @@ func (p *Pool) Fire(sx, sy, tx, ty, damage, speed, radius float64, target *enemy
 	proj.Speed = speed
 	proj.Radius = radius
 	proj.Active = true
-	proj.MaxLife = 3.0
+	proj.MaxLife = normalProjectileMaxLife
 	proj.Life = proj.MaxLife
 	proj.Target = target
 	if target != nil {
@@ -102,7 +109,7 @@ func (p *Pool) FireBounce(sx, sy float64, target *enemy.Enemy, damage, speed, ra
 	proj.Speed = speed
 	proj.Radius = radius
 	proj.Active = true
-	proj.MaxLife = 2.0
+	proj.MaxLife = bounceProjectileMaxLife
 	proj.Life = proj.MaxLife
 	proj.Target = target
 	if target != nil {
@@ -165,8 +172,8 @@ func (p *Pool) Tick(dt float64) {
 		}
 
 		// 超时或飞出屏幕边界则回收
-		if proj.Life <= 0 || proj.X < -50 || proj.X > float64(game.ScreenWidth)+50 ||
-			proj.Y < -50 || proj.Y > float64(game.ScreenHeight)+50 {
+		if proj.Life <= 0 || proj.X < -projectileBoundaryMargin || proj.X > float64(game.ScreenWidth)+projectileBoundaryMargin ||
+			proj.Y < -projectileBoundaryMargin || proj.Y > float64(game.ScreenHeight)+projectileBoundaryMargin {
 			proj.Active = false
 			proj.Target = nil
 			p.Count--
@@ -212,9 +219,9 @@ func (p *Pool) FirePenetrate(sx, sy, tx, ty, damage, speed float64, towerKey str
 	proj.VY = (dy / dist) * speed
 	proj.Damage = damage
 	proj.Speed = speed
-	proj.Radius = 4
+	proj.Radius = penetrateProjectileRadius
 	proj.Active = true
-	proj.MaxLife = dist / speed * 1.1 // 飞到终点后稍微多一点余量
+	proj.MaxLife = dist / speed * penetrateLifeOvershoot // 飞到终点后稍微多一点余量
 	proj.Life = proj.MaxLife
 	proj.Target = nil // 直线飞行，不追踪
 	proj.SourceTowerKey = towerKey

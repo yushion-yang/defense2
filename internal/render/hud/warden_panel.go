@@ -9,6 +9,7 @@ import (
 	"image/color"
 
 	"defense2/internal/render"
+	"defense2/internal/render/draw"
 	"defense2/internal/render/theme"
 	"defense2/internal/render/ui"
 
@@ -17,10 +18,11 @@ import (
 
 // WardenPanelData holds pre-formatted display data for the warden info panel.
 type WardenPanelData struct {
-	Name         string  // e.g. "火灵"
-	Type         string  // e.g. "prince", "core", "envoy"
-	Strength     float64 // current perceived strength
-	PeakStrength float64 // peak (ratchet) strength
+	Name         string        // e.g. "火灵"
+	Type         string        // e.g. "prince", "core", "envoy"
+	Icon         *ebiten.Image // 战灵精灵图标（可为 nil）
+	Strength     float64       // current perceived strength
+	PeakStrength float64       // peak (ratchet) strength
 	// Display data (pre-formatted by caller).
 	Damage      string // e.g. "30"
 	Interval    string // e.g. "3s"
@@ -59,10 +61,16 @@ func DrawWardenPanel(screen *ebiten.Image, d WardenPanelData) {
 	p.BgColor = theme.PanelBg
 	p.Border = theme.InfoWardenBdr
 
-	// Row 1: Title — "战灵·<Name>" (left) + strength indicator (right).
+	// Row 1: Title — icon + "战灵·<Name>" (left) + strength indicator (right).
 	p.AddRow(float32(theme.DetailTitleH), func(screen *ebiten.Image, x, y float64, w float64) {
+		textX := x
+		if d.Icon != nil {
+			iconSize := float64(theme.DetailTitleH)
+			draw.Sprite(screen, d.Icon, x+iconSize/2, y+iconSize/2, iconSize)
+			textX += iconSize + 4
+		}
 		titleTxt := fmt.Sprintf("战灵·%s", d.Name)
-		fm.DrawBoldText(screen, titleTxt, x, y, theme.FontLG, theme.TextTitle)
+		fm.DrawBoldText(screen, titleTxt, textX, y, theme.FontLG, theme.TextTitle)
 
 		strIndicator := fmt.Sprintf("强度%.0f", d.Strength)
 		fm.DrawRightText(screen, strIndicator, x+w, y+2, theme.FontSM, theme.TextBody)

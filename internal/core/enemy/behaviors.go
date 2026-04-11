@@ -9,6 +9,11 @@ import (
 	"defense2/internal/core/buff"
 )
 
+const (
+	purgeFlashDuration     = 0.4 // 净化闪光时长(秒)
+	speedBuffShortDuration = 0.1 // buffer 光环速度buff持续(秒)
+)
+
 // HealEvent 治疗事件记录（用于渲染治疗特效）。
 type HealEvent struct {
 	HealerID int     // 治疗者 ID
@@ -131,9 +136,9 @@ func TickBehaviors(pool *Pool, dt float64) BehaviorEvents {
 				e.PurgeTimer = e.PurgeInterval
 				// 清除所有负面效果（CC/DoT/Debuff）via BuffList
 				e.Buffs.ClearByCategory(buff.CatCC, buff.CatDoT, buff.CatDebuff)
-				e.Speed = e.BaseSpeed // 清除减速后恢复速度
-				e.ZoneDmgAccum = 0    // 区域伤害不在 BuffList 中
-				e.PurgeFlash = 0.4    // 触发净化脉冲视觉
+				e.Speed = e.BaseSpeed             // 清除减速后恢复速度
+				e.ZoneDmgAccum = 0                // 区域伤害不在 BuffList 中
+				e.PurgeFlash = purgeFlashDuration // 触发净化脉冲视觉
 				// 净化后短暂免疫
 				if e.PurgeImmuneDur > 0 {
 					e.Buffs.Add(buff.Buff{
@@ -242,7 +247,7 @@ func tickBuffer(e *Enemy, pool *Pool) {
 			// Short-lived speedUp buff, refreshed each frame. Strongest mode keeps highest value.
 			other.Buffs.Add(buff.Buff{
 				ID: buff.IDSpeedUp, Category: buff.CatBehavior, Source: "bufferAura",
-				Value: amount, Duration: 0.1, Remaining: 0.1,
+				Value: amount, Duration: speedBuffShortDuration, Remaining: speedBuffShortDuration,
 			})
 		}
 	})

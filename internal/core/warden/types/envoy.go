@@ -169,15 +169,18 @@ func applyEnvoyBuff(w *warden.Warden, s *EnvoyState, ctx *warden.TickContext) {
 
 	// 临时 buff = max(0, 强度 - 阈值)
 	tempBonus := w.PerceivedStrength - s.BuffThreshold
+	if tempBonus < 0 {
+		tempBonus = 0
+	}
+	best.Buffs.Add(buff.Buff{
+		ID:        key,
+		Category:  buff.CatAura,
+		Source:    "金灵战灵",
+		Value:     tempBonus,
+		Duration:  s.BuffDuration,
+		Remaining: s.BuffDuration,
+	})
 	if tempBonus > 0 {
-		best.Buffs.Add(buff.Buff{
-			ID:        key,
-			Category:  buff.CatAura,
-			Source:    "金灵战灵",
-			Value:     tempBonus,
-			Duration:  s.BuffDuration,
-			Remaining: s.BuffDuration,
-		})
 		best.Strength.SetTemp(key, tempBonus)
 	}
 

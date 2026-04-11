@@ -15,20 +15,20 @@ type EconomyBalance struct {
 
 // CombatBalance 战斗相关平衡参数。
 type CombatBalance struct {
-	MinSpeedRatio           float64          `json:"minSpeedRatio"`
-	DotTickInterval         float64          `json:"dotTickInterval"`
-	BossPercentHpCap        float64          `json:"bossPercentHpCap"`
-	CritMultiplier          float64          `json:"critMultiplier"`
-	DefaultProjectileSpeed  float64          `json:"defaultProjectileSpeed"`
-	DefaultProjectileRadius float64          `json:"defaultProjectileRadius"`
-	ScatterBasePellets      int              `json:"scatterBasePellets"`
-	ScatterSpreadAngle      float64          `json:"scatterSpreadAngle"`
-	RadialBaseShots         int              `json:"radialBaseShots"`
-	RadialRangeMult         float64          `json:"radialRangeMult"`
-	WideBeamRangeMult          float64 `json:"wideBeamRangeMult"`
-	WardenProjectileSpeed      float64 `json:"wardenProjectileSpeed"`     // 战灵默认弹速
-	WardenMechProjectileSpeed  float64 `json:"wardenMechProjectileSpeed"` // 机甲战灵弹速
-	WardenFireballSpeed        float64 `json:"wardenFireballSpeed"`       // 火灵火球速度
+	MinSpeedRatio             float64 `json:"minSpeedRatio"`
+	DotTickInterval           float64 `json:"dotTickInterval"`
+	BossPercentHpCap          float64 `json:"bossPercentHpCap"`
+	CritMultiplier            float64 `json:"critMultiplier"`
+	DefaultProjectileSpeed    float64 `json:"defaultProjectileSpeed"`
+	DefaultProjectileRadius   float64 `json:"defaultProjectileRadius"`
+	ScatterBasePellets        int     `json:"scatterBasePellets"`
+	ScatterSpreadAngle        float64 `json:"scatterSpreadAngle"`
+	RadialBaseShots           int     `json:"radialBaseShots"`
+	RadialRangeMult           float64 `json:"radialRangeMult"`
+	WideBeamRangeMult         float64 `json:"wideBeamRangeMult"`
+	WardenProjectileSpeed     float64 `json:"wardenProjectileSpeed"`     // 战灵默认弹速
+	WardenMechProjectileSpeed float64 `json:"wardenMechProjectileSpeed"` // 机甲战灵弹速
+	WardenFireballSpeed       float64 `json:"wardenFireballSpeed"`       // 火灵火球速度
 }
 
 // TowerBalance 塔相关平衡参数。
@@ -48,10 +48,11 @@ type ChainBalance struct {
 
 // ItemBalance 单个道具定义。
 type ItemBalance struct {
-	Kind       string  `json:"kind"`
-	Label      string  `json:"label"`
-	Boost      float64 `json:"boost"`
-	StartCount int     `json:"startCount"`
+	Kind        string  `json:"kind"`
+	Label       string  `json:"label"`
+	Boost       float64 `json:"boost"`
+	StartCount  int     `json:"startCount"`
+	Description string  `json:"description"` // 描述模板，{v} 占位符替换为 Boost 值
 }
 
 // SplitBalance 分裂子体参数。

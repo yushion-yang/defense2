@@ -34,7 +34,7 @@ func TestLoadRules(t *testing.T) {
 		{"slow", Strongest, 0.8, 0, 0},
 		{"stun", Override, 0, 0, 0},
 		{"bleed", IndependentPerSource, 0, 0, 0},
-		{"weaken", Strongest, 0.5, 0, 0},
+		{"weaken", Strongest, 0, 0, 0},
 		{"damageDown", Multiplicative, 0, 0.2, 0},
 		{"controlImmune", Override, 0, 0, 80},
 	}

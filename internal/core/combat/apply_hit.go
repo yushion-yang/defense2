@@ -14,16 +14,27 @@ import (
 	"defense2/internal/core/tower"
 )
 
+const (
+	dodgeFlashDuration  = 0.3   // 闪避残影时长(秒)
+	armorSparkDuration  = 0.15  // 装甲火花时长(秒)
+	blockFlashDuration  = 0.25  // 弹幕盾脉冲时长(秒)
+	freezeSlowThreshold = 0.4   // 减速达此值时触发冻结CC回调
+	defaultDeathExpStr  = 100.0 // 死亡爆炸默认强度
+	defaultDeathExpDmg  = 10.0  // 死亡爆炸基础伤害
+	defaultDeathExpCoef = 15.0  // 死亡爆炸强度系数
+	defaultDeathExpR    = 50.0  // 死亡爆炸默认半径
+)
+
 // HitInput 描述一次命中事件。
 type HitInput struct {
-	Tower       *tower.Tower           // 来源塔（可为 nil，如战灵弹射物）
-	Target      *enemy.Enemy           // 命中目标
-	BaseDamage  float64                // 基础伤害
-	Style       string                 // 攻击方式标识
-	Enemies     *enemy.Pool            // 用于 splash/bounce
-	Projectiles *projectile.Pool       // 用于 bounce
-	Projectile  *projectile.Projectile // 原始弹射物（弹射物路径传入，即时伤害传 nil）
-	OnCC        CCCallback             // CC 效果命中回调（可为 nil）
+	Tower       *tower.Tower               // 来源塔（可为 nil，如战灵弹射物）
+	Target      *enemy.Enemy               // 命中目标
+	BaseDamage  float64                    // 基础伤害
+	Style       string                     // 攻击方式标识
+	Enemies     *enemy.Pool                // 用于 splash/bounce
+	Projectiles *projectile.Pool           // 用于 bounce
+	Projectile  *projectile.Projectile     // 原始弹射物（弹射物路径传入，即时伤害传 nil）
+	OnCC        CCCallback                 // CC 效果命中回调（可为 nil）
 	OnSplashVFX func(x, y, radius float64) // 溅射 VFX 回调（可为 nil）
 }
 
@@ -44,7 +55,7 @@ func ApplyHit(input HitInput, onHit HitCallback) HitOutput {
 	// ── 怪物闪避（完全回避，不触发任何 OnHit）──
 	if e.EvasionChance > 0 && !e.AbilitySilenced {
 		if rand.Float64() < e.EvasionChance {
-			e.DodgeFlash = 0.3
+			e.DodgeFlash = dodgeFlashDuration
 			e.SetFloatText("闪避", 255, 255, 255)
 			if input.OnCC != nil {
 				input.OnCC(e.X, e.Y, CCDodge)
@@ -70,7 +81,7 @@ func ApplyHit(input HitInput, onHit HitCallback) HitOutput {
 		if totalDmg < 1 {
 			totalDmg = 1
 		}
-		e.ArmorSpark = 0.15 // 触发装甲火花视觉
+		e.ArmorSpark = armorSparkDuration // 触发装甲火花视觉
 	}
 
 	// ── 受击冲刺触发 ──
@@ -157,7 +168,7 @@ func ApplyHit(input HitInput, onHit HitCallback) HitOutput {
 
 	// 弹幕盾：正常受伤后标记阻止传播 + 触发视觉
 	if shieldBlocked {
-		e.BlockFlash = 0.25
+		e.BlockFlash = blockFlashDuration
 	}
 
 	return HitOutput{
@@ -173,7 +184,7 @@ func ApplyHit(input HitInput, onHit HitCallback) HitOutput {
 func applyHitEffectsUnified(r *tower.HitResult, target *enemy.Enemy, p *projectile.Projectile, srcTower *tower.Tower, enemies *enemy.Pool, projectiles *projectile.Pool, onHit HitCallback, onCC CCCallback, onSplashVFX func(x, y, radius float64)) {
 	if r.Slow != nil {
 		if ApplySlow(target, r.Slow.Factor, r.Slow.Duration, p.SourceTowerKey) && onCC != nil {
-			if r.Slow.Factor < 0.4 {
+			if r.Slow.Factor < freezeSlowThreshold {
 				onCC(target.X, target.Y, CCFreeze)
 			} else {
 				onCC(target.X, target.Y, CCSlow)
@@ -304,12 +315,12 @@ func applyDeathExplosionUnified(t *tower.Tower, killed *enemy.Enemy, enemies *en
 // deathExplosion 执行死亡爆炸 AoE。
 func deathExplosion(t *tower.Tower, killed *enemy.Enemy, enemies *enemy.Pool, onHit HitCallback) int {
 	// 从全局能力表读取 deathMark 参数
-	str := 100.0
+	str := defaultDeathExpStr
 	if t.Strength != nil {
 		str = t.Strength.Effective()
 	}
-	explodeDmg := 10 + 15*(str/100.0) // 默认值
-	explodeR := 50.0
+	explodeDmg := defaultDeathExpDmg + defaultDeathExpCoef*(str/defaultDeathExpStr)
+	explodeR := defaultDeathExpR
 	if abTable := config.GlobalAbilityTable(); abTable != nil {
 		if def := abTable[tower.AbilityDeathMark]; def != nil {
 			explodeDmg = def.CalcScale(str)

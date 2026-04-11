@@ -1,4 +1,4 @@
-// minimap.go — 右下角小地图 HUD。
+// minimap.go — 右上角小地图 HUD。
 // 显示路径（灰线）、敌人（红点）、塔（蓝点）、战灵（紫点）。
 package hud
 
@@ -36,11 +36,11 @@ type MinimapDot struct {
 	IsBoss bool
 }
 
-// DrawMinimap renders a minimap at the bottom-right corner.
+// DrawMinimap renders a minimap at the top-right corner.
 func DrawMinimap(screen *ebiten.Image, vm MinimapVM) {
-	// Position: bottom-right corner
+	// Position: top-right corner (below TopBar)
 	ox := float32(theme.CanvasW - minimapW - minimapMargin)
-	oy := float32(theme.CanvasH - minimapH - minimapMargin)
+	oy := float32(theme.TopBarY+theme.TopBarH) + minimapMargin
 
 	// Background
 	draw.FilledRect(screen, ox, oy, minimapW, minimapH,

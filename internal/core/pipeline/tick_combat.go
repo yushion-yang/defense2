@@ -12,6 +12,11 @@ import (
 	"defense2/internal/core/tower"
 )
 
+const (
+	fireAnimDuration     = 0.4   // 开火动画时长(秒)
+	defaultStrengthValue = 100.0 // 默认强度基准值
+)
+
 // TickTowerCombat 塔战斗子管线：按攻击方式分发射击逻辑。
 // beams 可为 nil（无 beam 渲染支持时），onFire/onHit 可为 nil。
 func TickTowerCombat(towers *tower.Pool, enemies *enemy.Pool, projectiles *projectile.Pool, beams *combat.BeamPool, dt float64, onFire func(*tower.Tower, string), onHit combat.HitCallback, onCC combat.CCCallback, onSplashVFX func(x, y, radius float64)) {
@@ -72,7 +77,7 @@ func TickTowerCombat(towers *tower.Pool, enemies *enemy.Pool, projectiles *proje
 			}
 		}
 		t.FireTimer = 1.0 / t.AttackSpeed
-		t.FireAnim = 0.4
+		t.FireAnim = fireAnimDuration
 		if onFire != nil {
 			onFire(t, string(style))
 		}
@@ -180,7 +185,7 @@ func multiTargetCount(t *tower.Tower) int {
 			if !ok {
 				return 1
 			}
-			str := 100.0
+			str := defaultStrengthValue
 			if t.Strength != nil {
 				str = t.Strength.Effective()
 			}
