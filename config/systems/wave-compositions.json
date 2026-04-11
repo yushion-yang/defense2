@@ -1,0 +1,28 @@
+{
+  "_meta": {
+    "description": "波次出怪权重配置——按阶段定义原型分布",
+    "note": "maxWave: 该阶段适用的最大波次号（0=无上限）。enemies: 原型→权重映射，权重决定每波中各原型的比例。"
+  },
+  "compositions": [
+    {
+      "maxWave": 3,
+      "enemies": { "normal": 100 }
+    },
+    {
+      "maxWave": 6,
+      "enemies": { "normal": 60, "runner": 20, "swarm": 20 }
+    },
+    {
+      "maxWave": 9,
+      "enemies": { "normal": 40, "runner": 15, "tank": 10, "armored": 10, "swarm": 10, "shielder": 5, "phantom": 5, "steadfast": 5 }
+    },
+    {
+      "maxWave": 14,
+      "enemies": { "normal": 25, "runner": 10, "tank": 8, "armored": 8, "swarm": 8, "shielder": 5, "phantom": 5, "steadfast": 5, "healer": 5, "buffer": 5, "ironwill": 5, "colossus": 3, "splitter": 4, "phaser": 4 }
+    },
+    {
+      "maxWave": 0,
+      "enemies": { "normal": 15, "runner": 8, "tank": 7, "armored": 7, "swarm": 6, "shielder": 5, "phantom": 5, "steadfast": 4, "healer": 5, "buffer": 5, "ironwill": 5, "colossus": 4, "splitter": 4, "phaser": 4, "drainer": 4, "summoner": 4, "purifier": 2 }
+    }
+  ]
+}
