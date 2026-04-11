@@ -530,6 +530,11 @@ func (s *StageScene) emitKill(isBoss bool, killerID string, rewardScale float64)
 
 // tryItemDrop 在敌人被击杀时判定是否掉落道具。
 func (s *StageScene) tryItemDrop(worldX, worldY float64) {
+	// 测试模式：每次击杀必掉
+	if s.testMode {
+		s.spawnItemDrop(worldX, worldY)
+		return
+	}
 	cfg := config.GlobalBalance().ItemDrop
 	if cfg.CycleWaves <= 0 {
 		return
