@@ -65,10 +65,10 @@ func (a *ConfigAbility) OnHit(t *tower.Tower, p *projectile.Projectile, e *enemy
 		return nil
 
 	case tower.AbilityBounce:
-		// scaleDim=maxBounces, param=damageRatio（弹射伤害 = 塔伤害 * ratio）
+		// scaleDim=maxBounces, param=damageRatio, param2=bounceRange
 		bounceRange := t.Range
-		if bounceRange < 150 {
-			bounceRange = 150
+		if a.Def.Param2 > 0 {
+			bounceRange = a.Def.Param2
 		}
 		return &tower.HitResult{
 			Bounce: &tower.BounceEffect{

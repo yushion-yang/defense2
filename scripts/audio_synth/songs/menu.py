@@ -61,173 +61,133 @@ ALL_SECTIONS = [
 
 
 # ---------------------------------------------------------------------------
-# Arpeggio track — constant throughout
+# Arpeggio track — quarter notes instead of 8th notes (relaxed feel)
 # ---------------------------------------------------------------------------
 
 def build_arpeggio(song: Song) -> None:
-    """Ascending-descending arpeggio in 8th notes, all 32 bars."""
-    track = song.add_track(Track(ARP_SPARKLE, volume=0.35))
-    eighth = 0.5  # duration in beats
+    """Gentle quarter-note arpeggio, all 32 bars. Slower than before."""
+    track = song.add_track(Track(ARP_SPARKLE, volume=0.30))
+    Q = 1.0  # quarter note duration
 
     for section_beat, progression in ALL_SECTIONS:
         for bar_idx, chord_name in enumerate(progression):
             bar_beat = section_beat + bar_idx * BEATS_PER_BAR
             notes = CHORDS[chord_name]['arp']
-            # Pattern per bar: root 3rd 5th oct | 5th 3rd root 3rd
-            # = 8 eighth notes filling 4 beats
-            arp_seq = [
-                notes[0], notes[1], notes[2], notes[3],
-                notes[2], notes[1], notes[0], notes[1],
-            ]
-            track.pattern(bar_beat, arp_seq, note_duration=eighth)
+            # 4 quarter notes per bar: root 3rd 5th oct (simple ascending)
+            arp_seq = [notes[0], notes[1], notes[2], notes[3]]
+            track.pattern(bar_beat, arp_seq, note_duration=Q)
 
 
 # ---------------------------------------------------------------------------
-# Lead melody — enters bar 3 of A, rests during C section
+# Lead melody — slower phrasing with rests
 # ---------------------------------------------------------------------------
 
 def build_lead(song: Song) -> None:
-    """Simple, singable melody using chord tones."""
+    """Simple, singable melody with half/whole notes and breathing room."""
     track = song.add_track(Track(LEAD_SOFT, volume=0.45))
 
-    # Helper: quarter=1 beat, half=2 beats, whole=4 beats
     Q = 1.0
     H = 2.0
     W = 4.0
 
     # --- A section melody (bars 0-7, enters at bar 2 = beat 8) ---
-    # Bars 2-3: over F -> G
+    # Bars 2-3: over F -> G (relaxed phrases with rests)
     b = SEC_A + 2 * BEATS_PER_BAR  # beat 8
-    track.note(b, 'F4', Q)
-    track.note(b + 1, 'A4', Q)
+    track.note(b, 'F4', H)
     track.note(b + 2, 'G4', H)
     b += BEATS_PER_BAR  # bar 3 (G chord)
-    track.note(b, 'G4', Q)
-    track.note(b + 1, 'B4', Q)
+    track.note(b, 'G4', H)
     track.note(b + 2, 'A4', H)
 
-    # Bars 4-7: repeat of C Am F G with melody
+    # Bars 4-7: repeat of C Am F G with melody (more sustained)
     b = SEC_A + 4 * BEATS_PER_BAR  # beat 16
-    # Bar 4 (C): E4 E4 G4 -
-    track.note(b, 'E4', Q)
-    track.note(b + 1, 'E4', Q)
+    # Bar 4 (C): E4 held, then G4 held
+    track.note(b, 'E4', H)
     track.note(b + 2, 'G4', H)
-    # Bar 5 (Am): A4 G4 E4 -
+    # Bar 5 (Am): A4 whole note (let it breathe)
     b += BEATS_PER_BAR
-    track.note(b, 'A4', Q)
-    track.note(b + 1, 'G4', Q)
-    track.note(b + 2, 'E4', H)
-    # Bar 6 (F): F4 A4 G4 F4
+    track.note(b, 'A4', W)
+    # Bar 6 (F): F4 then A4 (half notes)
     b += BEATS_PER_BAR
-    track.note(b, 'F4', Q)
-    track.note(b + 1, 'A4', Q)
-    track.note(b + 2, 'G4', Q)
-    track.note(b + 3, 'F4', Q)
-    # Bar 7 (G): G4 whole
+    track.note(b, 'F4', H)
+    track.note(b + 2, 'A4', H)
+    # Bar 7 (G): G4 whole (resolve)
     b += BEATS_PER_BAR
     track.note(b, 'G4', W)
 
     # --- B section melody (bars 8-15) ---
     b = SEC_B
-    # Bar 0 (C): C5 - B4 -
-    track.note(b, 'C5', H)
+    # Bar 0 (C): C5 whole
+    track.note(b, 'C5', W)
+    # Bar 1 (Em): G4 whole (rest after)
+    b += BEATS_PER_BAR
+    track.note(b, 'G4', W)
+    # Bar 2 (Am): A4 half, rest, B4 half
+    b += BEATS_PER_BAR
+    track.note(b, 'A4', H)
     track.note(b + 2, 'B4', H)
-    # Bar 1 (Em): G4 - - -
+    # Bar 3 (G): G4 whole
     b += BEATS_PER_BAR
     track.note(b, 'G4', W)
-    # Bar 2 (Am): A4 C5 B4 A4
+    # Bars 4-7: variation (still relaxed)
     b += BEATS_PER_BAR
-    track.note(b, 'A4', Q)
-    track.note(b + 1, 'C5', Q)
-    track.note(b + 2, 'B4', Q)
-    track.note(b + 3, 'A4', Q)
-    # Bar 3 (G): G4 - - -
-    b += BEATS_PER_BAR
-    track.note(b, 'G4', W)
-    # Bars 4-7: variation
-    b += BEATS_PER_BAR
-    # Bar 4 (C): E4 G4 C5 -
-    track.note(b, 'E4', Q)
-    track.note(b + 1, 'G4', Q)
+    # Bar 4 (C): E4 half, C5 half
+    track.note(b, 'E4', H)
     track.note(b + 2, 'C5', H)
-    # Bar 5 (Em): B4 G4 E4 -
+    # Bar 5 (Em): B4 whole
     b += BEATS_PER_BAR
-    track.note(b, 'B4', Q)
-    track.note(b + 1, 'G4', Q)
-    track.note(b + 2, 'E4', H)
-    # Bar 6 (Am): A4 - G4 -
+    track.note(b, 'B4', W)
+    # Bar 6 (Am): A4 half, G4 half
     b += BEATS_PER_BAR
     track.note(b, 'A4', H)
     track.note(b + 2, 'G4', H)
-    # Bar 7 (G): G4 - - - (resolve)
+    # Bar 7 (G): G4 whole (resolve)
     b += BEATS_PER_BAR
     track.note(b, 'G4', W)
 
-    # --- A' section melody (bars 16-23): same as A with harmony ---
-    # Main melody (same as A section bars 2-7)
+    # --- A' section melody (bars 16-23): same shape as A, slightly varied ---
     b = SEC_A2 + 2 * BEATS_PER_BAR
-    track.note(b, 'F4', Q)
-    track.note(b + 1, 'A4', Q)
-    track.note(b + 2, 'G4', H)
-    b += BEATS_PER_BAR
-    track.note(b, 'G4', Q)
-    track.note(b + 1, 'B4', Q)
+    track.note(b, 'F4', H)
     track.note(b + 2, 'A4', H)
+    b += BEATS_PER_BAR
+    track.note(b, 'G4', H)
+    track.note(b + 2, 'B4', H)
 
     b = SEC_A2 + 4 * BEATS_PER_BAR
-    track.note(b, 'E4', Q)
-    track.note(b + 1, 'E4', Q)
+    track.note(b, 'E4', H)
     track.note(b + 2, 'G4', H)
     b += BEATS_PER_BAR
-    track.note(b, 'A4', Q)
-    track.note(b + 1, 'G4', Q)
-    track.note(b + 2, 'E4', H)
+    track.note(b, 'A4', W)
     b += BEATS_PER_BAR
-    track.note(b, 'F4', Q)
-    track.note(b + 1, 'A4', Q)
-    track.note(b + 2, 'G4', Q)
-    track.note(b + 3, 'F4', Q)
+    track.note(b, 'F4', H)
+    track.note(b + 2, 'G4', H)
     b += BEATS_PER_BAR
-    track.note(b, 'C4', W)  # end on C4 for resolution
+    track.note(b, 'C4', W)  # resolve on C4
 
 
 def build_lead_harmony(song: Song) -> None:
-    """Harmony track for A' section — a third above the melody."""
-    track = song.add_track(Track(LEAD_SOFT, volume=0.28))
+    """Harmony track for A' section — a third above the melody (half notes)."""
+    track = song.add_track(Track(LEAD_SOFT, volume=0.25))
 
-    Q = 1.0
     H = 2.0
     W = 4.0
 
-    # A' harmony: third above the main melody (bars 18-23)
+    # A' harmony: third above the main melody (bars 18-23, half/whole notes)
     b = SEC_A2 + 2 * BEATS_PER_BAR
-    # Bar 18 (F): A4 C5 B4 -  (third above F4 A4 G4)
-    track.note(b, 'A4', Q)
-    track.note(b + 1, 'C5', Q)
-    track.note(b + 2, 'B4', H)
-    # Bar 19 (G): B4 D5 C5 -  (third above G4 B4 A4)
-    b += BEATS_PER_BAR
-    track.note(b, 'B4', Q)
-    track.note(b + 1, 'D5', Q)
+    track.note(b, 'A4', H)
     track.note(b + 2, 'C5', H)
+    b += BEATS_PER_BAR
+    track.note(b, 'B4', H)
+    track.note(b + 2, 'D5', H)
 
     b = SEC_A2 + 4 * BEATS_PER_BAR
-    # Bar 20 (C): G4 G4 B4 -  (third above E4 E4 G4)
-    track.note(b, 'G4', Q)
-    track.note(b + 1, 'G4', Q)
+    track.note(b, 'G4', H)
     track.note(b + 2, 'B4', H)
-    # Bar 21 (Am): C5 B4 G4 -  (third above A4 G4 E4)
     b += BEATS_PER_BAR
-    track.note(b, 'C5', Q)
-    track.note(b + 1, 'B4', Q)
-    track.note(b + 2, 'G4', H)
-    # Bar 22 (F): A4 C5 B4 A4
+    track.note(b, 'C5', W)
     b += BEATS_PER_BAR
-    track.note(b, 'A4', Q)
-    track.note(b + 1, 'C5', Q)
-    track.note(b + 2, 'B4', Q)
-    track.note(b + 3, 'A4', Q)
-    # Bar 23 (G): E4 whole (third above C4)
+    track.note(b, 'A4', H)
+    track.note(b + 2, 'B4', H)
     b += BEATS_PER_BAR
     track.note(b, 'E4', W)
 

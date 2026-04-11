@@ -15,19 +15,19 @@ LEAD_BRIGHT = {
     'attack': 0.01,
     'decay': 0.1,
     'sustain': 0.7,
-    'release': 0.08,
+    'release': 0.15,
     'vibrato_rate': 5.0,
-    'vibrato_depth': 0.003,
-    'filter_cutoff': 0,  # 0 = no filter
+    'vibrato_depth': 0.002,
+    'filter_cutoff': 2000,
 }
 
 LEAD_SOFT = {
     'waveform': 'sine_square_blend',
-    'blend': 0.2,  # 80% sine + 20% square
+    'blend': 0.15,  # 85% sine + 15% square — warmer
     'attack': 0.02,
     'decay': 0.15,
     'sustain': 0.6,
-    'release': 0.12,
+    'release': 0.18,
     'vibrato_rate': 4.0,
     'vibrato_depth': 0.002,
 }
@@ -48,16 +48,19 @@ BASS_PULSE = {
     'decay': 0.2,
     'sustain': 0.3,
     'release': 0.05,
+    'filter_cutoff': 600,
 }
 
 PAD_WARM = {
     'waveform': 'sawtooth',
-    'attack': 0.3,
+    'attack': 0.5,
     'decay': 0.2,
     'sustain': 0.6,
     'release': 0.4,
-    'filter_cutoff': 800,
+    'filter_cutoff': 600,
     'chorus_mix': 0.2,
+    'vibrato_rate': 2.0,
+    'vibrato_depth': 0.001,
 }
 
 ARP_SPARKLE = {
@@ -66,7 +69,8 @@ ARP_SPARKLE = {
     'attack': 0.005,
     'decay': 0.15,
     'sustain': 0.2,
-    'release': 0.05,
+    'release': 0.08,
+    'filter_cutoff': 3000,
 }
 
 # ---------------------------------------------------------------------------

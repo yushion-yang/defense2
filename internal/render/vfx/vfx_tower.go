@@ -247,7 +247,7 @@ func DrawDamageAura(screen *ebiten.Image, cx, cy float32, radius float64, animTi
 	innerA := uint8(30 * innerPulse)
 	draw.CircleOutline(screen, cx, cy, r32*0.7, 1.0, color.RGBA{R: 255, G: 180, B: 80, A: innerA})
 
-	// ── 3 orbiting fire sparks at different speeds ──
+	// ── 3 orbiting fire sparks at different speeds (diamond + glow ring) ──
 	sparkSpeeds := [3]float64{1.8, 2.4, 3.1}
 	sparkOffsets := [3]float64{0, 2.1, 4.2}
 	sparkRadii := [3]float32{r32 * 0.85, r32 * 0.92, r32 * 0.78}
@@ -256,9 +256,9 @@ func DrawDamageAura(screen *ebiten.Image, cx, cy float32, radius float64, animTi
 		sx := cx + sparkRadii[i]*float32(math.Cos(angle))
 		sy := cy + sparkRadii[i]*float32(math.Sin(angle))
 		sparkA := uint8(100 + 55*math.Sin(animTime*4+float64(i)*1.5))
-		draw.FilledCircle(screen, sx, sy, 3, color.RGBA{R: 255, G: 200, B: 80, A: sparkA})
-		// Tiny glow around spark
-		draw.FilledCircle(screen, sx, sy, 5, color.RGBA{R: 255, G: 160, B: 40, A: sparkA / 4})
+		draw.Diamond(screen, sx, sy, 3.5, 1.0, color.RGBA{R: 255, G: 200, B: 80, A: sparkA})
+		// Outer glow ring around spark
+		draw.CircleOutline(screen, sx, sy, 5, 0.8, color.RGBA{R: 255, G: 160, B: 40, A: sparkA / 4})
 	}
 
 	// ── Occasional outward pulse wave (expanding fading circle) ──

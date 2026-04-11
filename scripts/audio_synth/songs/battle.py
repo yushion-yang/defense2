@@ -43,7 +43,6 @@ SEC_A2    = 18 * BEATS_PER_BAR        # bars 18-25 (8 bars) = beat 72
 SEC_C     = 26 * BEATS_PER_BAR        # bars 26-33 (8 bars) = beat 104
 
 # Chord definitions
-# Each chord has: arp notes (16th note arpeggios), pad notes, bass root
 CHORDS = {
     # A minor section chords
     'Am': {'arp': ['A3', 'C4', 'E4', 'A4'], 'pad': ['A2', 'C3', 'E3'], 'bass': 'A2'},
@@ -74,11 +73,11 @@ ALL_SECTIONS = [
 
 
 # ---------------------------------------------------------------------------
-# Lead melody (LEAD_BRIGHT) — enters at A section
+# Lead melody (LEAD_BRIGHT) — mixed quarter/8th notes with rests
 # ---------------------------------------------------------------------------
 
 def build_lead(song: Song) -> None:
-    """Driving 8th-note melody with a marching quality."""
+    """Driving melody mixing quarter and 8th notes, with 2-beat rests at phrase ends."""
     track = song.add_track(Track(LEAD_BRIGHT, volume=0.42))
 
     E = 0.5   # eighth note
@@ -90,156 +89,113 @@ def build_lead(song: Song) -> None:
     # First pass (bars 2-5)
     b = SEC_A
 
-    # Bar 1 (Am): A4 C5 B4 A4 | descending from C5
-    track.note(b,       'A4', E)
-    track.note(b + 0.5, 'C5', E)
-    track.note(b + 1.0, 'B4', E)
-    track.note(b + 1.5, 'A4', E)
-    track.note(b + 2.0, 'G4', E)
-    track.note(b + 2.5, 'A4', E)
-    track.note(b + 3.0, 'E4', Q)
-
-    # Bar 2 (F): F4 A4 C5 A4 | ascending then falling
-    b += BEATS_PER_BAR
-    track.note(b,       'F4', E)
-    track.note(b + 0.5, 'A4', E)
+    # Bar 1 (Am): A4 C5 | B4 A4 (quarter+eighth mix, rest on beat 4)
+    track.note(b,       'A4', Q)
     track.note(b + 1.0, 'C5', E)
-    track.note(b + 1.5, 'A4', E)
-    track.note(b + 2.0, 'G4', E)
-    track.note(b + 2.5, 'F4', E)
-    track.note(b + 3.0, 'E4', Q)
+    track.note(b + 1.5, 'B4', E)
+    track.note(b + 2.0, 'A4', Q)
+    # beat 3-4: rest (breathing room)
 
-    # Bar 3 (C): G4 E4 G4 C5 | rising phrase
+    # Bar 2 (F): F4 A4 | C5 - (quarter notes, half rest)
+    b += BEATS_PER_BAR
+    track.note(b,       'F4', Q)
+    track.note(b + 1.0, 'A4', Q)
+    track.note(b + 2.0, 'C5', H)
+
+    # Bar 3 (C): G4 E4 G4 C5 (mixed rhythm)
     b += BEATS_PER_BAR
     track.note(b,       'G4', E)
     track.note(b + 0.5, 'E4', E)
-    track.note(b + 1.0, 'G4', E)
-    track.note(b + 1.5, 'C5', E)
-    track.note(b + 2.0, 'E5', E)
-    track.note(b + 2.5, 'C5', E)
-    track.note(b + 3.0, 'G4', Q)
+    track.note(b + 1.0, 'G4', Q)
+    track.note(b + 2.0, 'C5', H)
 
-    # Bar 4 (G): B4 D5 B4 G4 | peak then descend
+    # Bar 4 (G): B4 D5 | - - (half phrase then rest)
     b += BEATS_PER_BAR
-    track.note(b,       'B4', E)
-    track.note(b + 0.5, 'D5', E)
-    track.note(b + 1.0, 'B4', E)
-    track.note(b + 1.5, 'G4', E)
+    track.note(b,       'B4', Q)
+    track.note(b + 1.0, 'D5', Q)
+    # 2-beat rest (phrase ending)
+
+    # Second pass (bars 6-9): variation
+    b += BEATS_PER_BAR
+
+    # Bar 5 (Am): E5 C5 A4 - (descending quarter notes, rest)
+    track.note(b,       'E5', Q)
+    track.note(b + 1.0, 'C5', Q)
     track.note(b + 2.0, 'A4', Q)
-    track.note(b + 3.0, 'G4', Q)
+    # beat 4: rest
 
-    # Second pass (bars 6-9): variation — start higher, work down
+    # Bar 6 (F): C5 A4 | F4 - (descending, half rest)
     b += BEATS_PER_BAR
-
-    # Bar 5 (Am): E5 C5 B4 A4 | high start
-    track.note(b,       'E5', E)
-    track.note(b + 0.5, 'C5', E)
-    track.note(b + 1.0, 'B4', E)
-    track.note(b + 1.5, 'A4', E)
-    track.note(b + 2.0, 'G4', E)
-    track.note(b + 2.5, 'E4', E)
-    track.note(b + 3.0, 'A4', Q)
-
-    # Bar 6 (F): C5 A4 F4 A4 | weaving down
-    b += BEATS_PER_BAR
-    track.note(b,       'C5', E)
-    track.note(b + 0.5, 'A4', E)
-    track.note(b + 1.0, 'F4', E)
-    track.note(b + 1.5, 'A4', E)
-    track.note(b + 2.0, 'C5', E)
-    track.note(b + 2.5, 'B4', E)
-    track.note(b + 3.0, 'A4', Q)
-
-    # Bar 7 (C): E4 G4 C5 E5 | big rising phrase
-    b += BEATS_PER_BAR
-    track.note(b,       'E4', E)
-    track.note(b + 0.5, 'G4', E)
-    track.note(b + 1.0, 'C5', E)
-    track.note(b + 1.5, 'E5', E)
-    track.note(b + 2.0, 'D5', Q)
-    track.note(b + 3.0, 'C5', Q)
-
-    # Bar 8 (G): D5 B4 G4 A4 | resolve toward A
-    b += BEATS_PER_BAR
-    track.note(b,       'D5', E)
-    track.note(b + 0.5, 'B4', E)
-    track.note(b + 1.0, 'G4', E)
-    track.note(b + 1.5, 'A4', E)
+    track.note(b,       'C5', Q)
+    track.note(b + 1.0, 'A4', E)
+    track.note(b + 1.5, 'F4', E)
     track.note(b + 2.0, 'A4', H)
 
-    # --- B section (Dm -> Bb -> F -> C) x2 — shifted to D minor ---
-
-    b = SEC_B
-
-    # Bar 1 (Dm): D5 F5 E5 D5 | marching in D minor
-    track.note(b,       'D5', E)
-    track.note(b + 0.5, 'F5', E)
-    track.note(b + 1.0, 'E5', E)
-    track.note(b + 1.5, 'D5', E)
-    track.note(b + 2.0, 'C5', E)
-    track.note(b + 2.5, 'D5', E)
-    track.note(b + 3.0, 'A4', Q)
-
-    # Bar 2 (Bb): Bb4 D5 F5 D5 | Bb major arpeggio feel
+    # Bar 7 (C): E4 G4 C5 E5 (building up, quarter notes)
     b += BEATS_PER_BAR
-    track.note(b,       'Bb4', E)
-    track.note(b + 0.5, 'D5', E)
-    track.note(b + 1.0, 'F5', E)
-    track.note(b + 1.5, 'D5', E)
-    track.note(b + 2.0, 'C5', E)
-    track.note(b + 2.5, 'Bb4', E)
-    track.note(b + 3.0, 'A4', Q)
-
-    # Bar 3 (F): A4 C5 F5 C5 | rising then falling
-    b += BEATS_PER_BAR
-    track.note(b,       'A4', E)
-    track.note(b + 0.5, 'C5', E)
-    track.note(b + 1.0, 'F5', E)
-    track.note(b + 1.5, 'C5', E)
-    track.note(b + 2.0, 'A4', E)
-    track.note(b + 2.5, 'G4', E)
-    track.note(b + 3.0, 'F4', Q)
-
-    # Bar 4 (C): G4 C5 E5 G4 | C major sweep
-    b += BEATS_PER_BAR
-    track.note(b,       'G4', E)
-    track.note(b + 0.5, 'C5', E)
-    track.note(b + 1.0, 'E5', E)
-    track.note(b + 1.5, 'G4', E)
-    track.note(b + 2.0, 'A4', Q)
-    track.note(b + 3.0, 'G4', Q)
-
-    # Second pass (bars 5-8): variation
-    b += BEATS_PER_BAR
-
-    # Bar 5 (Dm): F5 E5 D5 C5 | descending run
-    track.note(b,       'F5', E)
-    track.note(b + 0.5, 'E5', E)
-    track.note(b + 1.0, 'D5', E)
-    track.note(b + 1.5, 'C5', E)
-    track.note(b + 2.0, 'D5', Q)
-    track.note(b + 3.0, 'A4', Q)
-
-    # Bar 6 (Bb): D5 Bb4 D5 F5 | bouncing
-    b += BEATS_PER_BAR
-    track.note(b,       'D5', E)
-    track.note(b + 0.5, 'Bb4', E)
-    track.note(b + 1.0, 'D5', E)
-    track.note(b + 1.5, 'F5', E)
-    track.note(b + 2.0, 'E5', E)
-    track.note(b + 2.5, 'D5', E)
-    track.note(b + 3.0, 'C5', Q)
-
-    # Bar 7 (F): C5 A4 F4 C5 | wide leap
-    b += BEATS_PER_BAR
-    track.note(b,       'C5', E)
-    track.note(b + 0.5, 'A4', E)
-    track.note(b + 1.0, 'F4', E)
-    track.note(b + 1.5, 'C5', E)
-    track.note(b + 2.0, 'D5', Q)
+    track.note(b,       'E4', Q)
+    track.note(b + 1.0, 'G4', Q)
+    track.note(b + 2.0, 'C5', Q)
     track.note(b + 3.0, 'E5', Q)
 
-    # Bar 8 (C): E5 D5 C5 B4 | descend back toward A
+    # Bar 8 (G): D5 B4 | A4 - (resolve with rest)
+    b += BEATS_PER_BAR
+    track.note(b,       'D5', Q)
+    track.note(b + 1.0, 'B4', Q)
+    track.note(b + 2.0, 'A4', H)
+
+    # --- B section (Dm -> Bb -> F -> C) x2 ---
+    b = SEC_B
+
+    # Bar 1 (Dm): D5 F5 | E5 D5 (quarter+eighth, rest)
+    track.note(b,       'D5', Q)
+    track.note(b + 1.0, 'F5', E)
+    track.note(b + 1.5, 'E5', E)
+    track.note(b + 2.0, 'D5', Q)
+    # rest
+
+    # Bar 2 (Bb): Bb4 D5 | F5 - (ascending quarters, half rest)
+    b += BEATS_PER_BAR
+    track.note(b,       'Bb4', Q)
+    track.note(b + 1.0, 'D5', Q)
+    track.note(b + 2.0, 'F5', H)
+
+    # Bar 3 (F): A4 C5 | A4 - (mixed, rest)
+    b += BEATS_PER_BAR
+    track.note(b,       'A4', Q)
+    track.note(b + 1.0, 'C5', Q)
+    track.note(b + 2.0, 'A4', Q)
+    # rest
+
+    # Bar 4 (C): G4 C5 | - - (half phrase then 2-beat rest)
+    b += BEATS_PER_BAR
+    track.note(b,       'G4', Q)
+    track.note(b + 1.0, 'C5', Q)
+    # 2-beat rest (phrase ending)
+
+    # Second B pass (bars 5-8)
+    b += BEATS_PER_BAR
+
+    # Bar 5 (Dm): F5 E5 D5 - (descending quarters)
+    track.note(b,       'F5', Q)
+    track.note(b + 1.0, 'E5', Q)
+    track.note(b + 2.0, 'D5', Q)
+    # rest
+
+    # Bar 6 (Bb): D5 Bb4 | D5 - (bounce, half rest)
+    b += BEATS_PER_BAR
+    track.note(b,       'D5', Q)
+    track.note(b + 1.0, 'Bb4', Q)
+    track.note(b + 2.0, 'D5', H)
+
+    # Bar 7 (F): C5 A4 | C5 - (stepping, rest)
+    b += BEATS_PER_BAR
+    track.note(b,       'C5', Q)
+    track.note(b + 1.0, 'A4', Q)
+    track.note(b + 2.0, 'C5', Q)
+    # rest
+
+    # Bar 8 (C): E5 D5 C5 B4 | A4 - (run then resolve)
     b += BEATS_PER_BAR
     track.note(b,       'E5', E)
     track.note(b + 0.5, 'D5', E)
@@ -247,160 +203,105 @@ def build_lead(song: Song) -> None:
     track.note(b + 1.5, 'B4', E)
     track.note(b + 2.0, 'A4', H)
 
-    # --- A' section: same notes as A (reuse), melody handled by this track ---
-    # Identical to A section melodically
+    # --- A' section: same notes as A ---
     b = SEC_A2
 
     # Bars 1-4 (same as A first pass)
-    track.note(b,       'A4', E)
-    track.note(b + 0.5, 'C5', E)
-    track.note(b + 1.0, 'B4', E)
-    track.note(b + 1.5, 'A4', E)
-    track.note(b + 2.0, 'G4', E)
-    track.note(b + 2.5, 'A4', E)
-    track.note(b + 3.0, 'E4', Q)
+    track.note(b,       'A4', Q)
+    track.note(b + 1.0, 'C5', E)
+    track.note(b + 1.5, 'B4', E)
+    track.note(b + 2.0, 'A4', Q)
 
     b += BEATS_PER_BAR
-    track.note(b,       'F4', E)
-    track.note(b + 0.5, 'A4', E)
-    track.note(b + 1.0, 'C5', E)
-    track.note(b + 1.5, 'A4', E)
-    track.note(b + 2.0, 'G4', E)
-    track.note(b + 2.5, 'F4', E)
-    track.note(b + 3.0, 'E4', Q)
+    track.note(b,       'F4', Q)
+    track.note(b + 1.0, 'A4', Q)
+    track.note(b + 2.0, 'C5', H)
 
     b += BEATS_PER_BAR
     track.note(b,       'G4', E)
     track.note(b + 0.5, 'E4', E)
-    track.note(b + 1.0, 'G4', E)
-    track.note(b + 1.5, 'C5', E)
-    track.note(b + 2.0, 'E5', E)
-    track.note(b + 2.5, 'C5', E)
-    track.note(b + 3.0, 'G4', Q)
+    track.note(b + 1.0, 'G4', Q)
+    track.note(b + 2.0, 'C5', H)
 
     b += BEATS_PER_BAR
-    track.note(b,       'B4', E)
-    track.note(b + 0.5, 'D5', E)
-    track.note(b + 1.0, 'B4', E)
-    track.note(b + 1.5, 'G4', E)
+    track.note(b,       'B4', Q)
+    track.note(b + 1.0, 'D5', Q)
+
+    # Bars 5-8 (same as A second pass)
+    b += BEATS_PER_BAR
+    track.note(b,       'E5', Q)
+    track.note(b + 1.0, 'C5', Q)
     track.note(b + 2.0, 'A4', Q)
-    track.note(b + 3.0, 'G4', Q)
-
-    # Bars 5-8 (variation, same as A second pass)
-    b += BEATS_PER_BAR
-    track.note(b,       'E5', E)
-    track.note(b + 0.5, 'C5', E)
-    track.note(b + 1.0, 'B4', E)
-    track.note(b + 1.5, 'A4', E)
-    track.note(b + 2.0, 'G4', E)
-    track.note(b + 2.5, 'E4', E)
-    track.note(b + 3.0, 'A4', Q)
 
     b += BEATS_PER_BAR
-    track.note(b,       'C5', E)
-    track.note(b + 0.5, 'A4', E)
-    track.note(b + 1.0, 'F4', E)
-    track.note(b + 1.5, 'A4', E)
-    track.note(b + 2.0, 'C5', E)
-    track.note(b + 2.5, 'B4', E)
-    track.note(b + 3.0, 'A4', Q)
+    track.note(b,       'C5', Q)
+    track.note(b + 1.0, 'A4', E)
+    track.note(b + 1.5, 'F4', E)
+    track.note(b + 2.0, 'A4', H)
 
     b += BEATS_PER_BAR
-    track.note(b,       'E4', E)
-    track.note(b + 0.5, 'G4', E)
-    track.note(b + 1.0, 'C5', E)
-    track.note(b + 1.5, 'E5', E)
-    track.note(b + 2.0, 'D5', Q)
-    track.note(b + 3.0, 'C5', Q)
+    track.note(b,       'E4', Q)
+    track.note(b + 1.0, 'G4', Q)
+    track.note(b + 2.0, 'C5', Q)
+    track.note(b + 3.0, 'E5', Q)
 
     b += BEATS_PER_BAR
-    track.note(b,       'D5', E)
-    track.note(b + 0.5, 'B4', E)
-    track.note(b + 1.0, 'G4', E)
-    track.note(b + 1.5, 'A4', E)
+    track.note(b,       'D5', Q)
+    track.note(b + 1.0, 'B4', Q)
     track.note(b + 2.0, 'A4', H)
 
     # --- C section (Am -> G -> F -> E) x2 — building tension ---
-
     b = SEC_C
 
-    # Bar 1 (Am): A4 E5 C5 A4 | big reach up
-    track.note(b,       'A4', E)
-    track.note(b + 0.5, 'E5', E)
-    track.note(b + 1.0, 'C5', E)
-    track.note(b + 1.5, 'A4', E)
-    track.note(b + 2.0, 'C5', E)
-    track.note(b + 2.5, 'E5', E)
-    track.note(b + 3.0, 'A4', Q)
+    # Bar 1 (Am): A4 E5 | C5 - (wide leap, rest)
+    track.note(b,       'A4', Q)
+    track.note(b + 1.0, 'E5', Q)
+    track.note(b + 2.0, 'C5', Q)
+    # rest
 
-    # Bar 2 (G): G4 B4 D5 G4 | G arpeggiated
+    # Bar 2 (G): G4 B4 D5 - (ascending quarters)
     b += BEATS_PER_BAR
-    track.note(b,       'G4', E)
-    track.note(b + 0.5, 'B4', E)
-    track.note(b + 1.0, 'D5', E)
-    track.note(b + 1.5, 'G4', E)
-    track.note(b + 2.0, 'B4', E)
-    track.note(b + 2.5, 'D5', E)
-    track.note(b + 3.0, 'G4', Q)
+    track.note(b,       'G4', Q)
+    track.note(b + 1.0, 'B4', Q)
+    track.note(b + 2.0, 'D5', Q)
 
-    # Bar 3 (F): F4 A4 C5 F5 | sweeping up
+    # Bar 3 (F): F4 A4 C5 - (ascending)
     b += BEATS_PER_BAR
-    track.note(b,       'F4', E)
-    track.note(b + 0.5, 'A4', E)
-    track.note(b + 1.0, 'C5', E)
-    track.note(b + 1.5, 'F5', E)
-    track.note(b + 2.0, 'E5', E)
-    track.note(b + 2.5, 'C5', E)
-    track.note(b + 3.0, 'A4', Q)
+    track.note(b,       'F4', Q)
+    track.note(b + 1.0, 'A4', Q)
+    track.note(b + 2.0, 'C5', Q)
 
-    # Bar 4 (E): E4 G#4 B4 E5 | dramatic E major
+    # Bar 4 (E): E4 G#4 B4 E5 (dramatic, all quarters)
     b += BEATS_PER_BAR
-    track.note(b,       'E4', E)
-    track.note(b + 0.5, 'G#4', E)
-    track.note(b + 1.0, 'B4', E)
-    track.note(b + 1.5, 'E5', E)
-    track.note(b + 2.0, 'D5', E)
-    track.note(b + 2.5, 'B4', E)
-    track.note(b + 3.0, 'E4', Q)
+    track.note(b,       'E4', Q)
+    track.note(b + 1.0, 'G#4', Q)
+    track.note(b + 2.0, 'B4', Q)
+    track.note(b + 3.0, 'E5', Q)
 
-    # Second pass (bars 5-8): more intense, leading to loop
+    # Second C pass (bars 5-8)
     b += BEATS_PER_BAR
 
-    # Bar 5 (Am): E5 D5 C5 B4 A4 G4 A4 | fast descending run
-    track.note(b,       'E5', E)
-    track.note(b + 0.5, 'D5', E)
-    track.note(b + 1.0, 'C5', E)
-    track.note(b + 1.5, 'B4', E)
-    track.note(b + 2.0, 'A4', E)
-    track.note(b + 2.5, 'G4', E)
-    track.note(b + 3.0, 'A4', Q)
+    # Bar 5 (Am): E5 C5 A4 - (descending, rest)
+    track.note(b,       'E5', Q)
+    track.note(b + 1.0, 'C5', Q)
+    track.note(b + 2.0, 'A4', Q)
 
-    # Bar 6 (G): G4 D5 B4 G4 | bouncing octaves
+    # Bar 6 (G): G4 D5 B4 - (bounce)
     b += BEATS_PER_BAR
-    track.note(b,       'G4', E)
-    track.note(b + 0.5, 'D5', E)
-    track.note(b + 1.0, 'B4', E)
-    track.note(b + 1.5, 'G4', E)
-    track.note(b + 2.0, 'B4', E)
-    track.note(b + 2.5, 'D5', E)
-    track.note(b + 3.0, 'B4', Q)
+    track.note(b,       'G4', Q)
+    track.note(b + 1.0, 'D5', Q)
+    track.note(b + 2.0, 'B4', Q)
 
-    # Bar 7 (F): F4 C5 A4 F4 | F major sweep
+    # Bar 7 (F): F4 C5 A4 - (sweep)
     b += BEATS_PER_BAR
-    track.note(b,       'F4', E)
-    track.note(b + 0.5, 'C5', E)
-    track.note(b + 1.0, 'A4', E)
-    track.note(b + 1.5, 'F4', E)
-    track.note(b + 2.0, 'A4', E)
-    track.note(b + 2.5, 'C5', E)
-    track.note(b + 3.0, 'A4', Q)
+    track.note(b,       'F4', Q)
+    track.note(b + 1.0, 'C5', Q)
+    track.note(b + 2.0, 'A4', Q)
 
-    # Bar 8 (E): E5 B4 G#4 E4 | final E, resolves to loop
+    # Bar 8 (E): E5 B4 | A4 - (resolve to loop)
     b += BEATS_PER_BAR
-    track.note(b,       'E5', E)
-    track.note(b + 0.5, 'B4', E)
-    track.note(b + 1.0, 'G#4', E)
-    track.note(b + 1.5, 'E4', E)
+    track.note(b,       'E5', Q)
+    track.note(b + 1.0, 'B4', Q)
     track.note(b + 2.0, 'A4', H)  # land on A for seamless loop
 
 
@@ -409,122 +310,92 @@ def build_lead(song: Song) -> None:
 # ---------------------------------------------------------------------------
 
 def build_lead_harmony(song: Song) -> None:
-    """Harmony a third above the main melody, only during A' section."""
+    """Harmony a third above the main melody, only during A' section. Slower phrasing."""
     track = song.add_track(Track(LEAD_SOFT, volume=0.28))
 
-    E = 0.5
     Q = 1.0
     H = 2.0
 
-    # A' bars 1-4 harmony (third above)
+    # A' bars 1-4 harmony (third above, quarter/half notes)
     b = SEC_A2
 
-    # Bar 1 (Am): C5 E5 D5 C5 B4 C5 G4
-    track.note(b,       'C5', E)
-    track.note(b + 0.5, 'E5', E)
-    track.note(b + 1.0, 'D5', E)
-    track.note(b + 1.5, 'C5', E)
-    track.note(b + 2.0, 'B4', E)
-    track.note(b + 2.5, 'C5', E)
-    track.note(b + 3.0, 'G4', Q)
+    # Bar 1 (Am): C5 E5 | D5 -
+    track.note(b,       'C5', Q)
+    track.note(b + 1.0, 'E5', Q)
+    track.note(b + 2.0, 'D5', Q)
 
-    # Bar 2 (F): A4 C5 E5 C5 B4 A4 G4
+    # Bar 2 (F): A4 C5 | E5 -
     b += BEATS_PER_BAR
-    track.note(b,       'A4', E)
-    track.note(b + 0.5, 'C5', E)
-    track.note(b + 1.0, 'E5', E)
-    track.note(b + 1.5, 'C5', E)
-    track.note(b + 2.0, 'B4', E)
-    track.note(b + 2.5, 'A4', E)
-    track.note(b + 3.0, 'G4', Q)
+    track.note(b,       'A4', Q)
+    track.note(b + 1.0, 'C5', Q)
+    track.note(b + 2.0, 'E5', H)
 
-    # Bar 3 (C): B4 G4 B4 E5 G5 E5 B4
+    # Bar 3 (C): B4 G4 | B4 E5
     b += BEATS_PER_BAR
-    track.note(b,       'B4', E)
-    track.note(b + 0.5, 'G4', E)
-    track.note(b + 1.0, 'B4', E)
-    track.note(b + 1.5, 'E5', E)
-    track.note(b + 2.0, 'G5', E)
-    track.note(b + 2.5, 'E5', E)
-    track.note(b + 3.0, 'B4', Q)
+    track.note(b,       'B4', Q)
+    track.note(b + 1.0, 'G4', Q)
+    track.note(b + 2.0, 'E5', H)
 
-    # Bar 4 (G): D5 F5 D5 B4 C5 B4
+    # Bar 4 (G): D5 F5 | -
     b += BEATS_PER_BAR
-    track.note(b,       'D5', E)
-    track.note(b + 0.5, 'F5', E)
-    track.note(b + 1.0, 'D5', E)
-    track.note(b + 1.5, 'B4', E)
-    track.note(b + 2.0, 'C5', Q)
-    track.note(b + 3.0, 'B4', Q)
+    track.note(b,       'D5', Q)
+    track.note(b + 1.0, 'F5', Q)
 
     # A' bars 5-8 harmony
     b += BEATS_PER_BAR
 
-    # Bar 5 (Am): G5 E5 D5 C5 B4 G4 C5
-    track.note(b,       'G5', E)
-    track.note(b + 0.5, 'E5', E)
-    track.note(b + 1.0, 'D5', E)
-    track.note(b + 1.5, 'C5', E)
-    track.note(b + 2.0, 'B4', E)
-    track.note(b + 2.5, 'G4', E)
-    track.note(b + 3.0, 'C5', Q)
+    # Bar 5 (Am): G5 E5 C5 -
+    track.note(b,       'G5', Q)
+    track.note(b + 1.0, 'E5', Q)
+    track.note(b + 2.0, 'C5', Q)
 
-    # Bar 6 (F): E5 C5 A4 C5 E5 D5 C5
+    # Bar 6 (F): E5 C5 | A4 -
     b += BEATS_PER_BAR
-    track.note(b,       'E5', E)
-    track.note(b + 0.5, 'C5', E)
-    track.note(b + 1.0, 'A4', E)
-    track.note(b + 1.5, 'C5', E)
-    track.note(b + 2.0, 'E5', E)
-    track.note(b + 2.5, 'D5', E)
-    track.note(b + 3.0, 'C5', Q)
+    track.note(b,       'E5', Q)
+    track.note(b + 1.0, 'C5', Q)
+    track.note(b + 2.0, 'C5', H)
 
-    # Bar 7 (C): G4 B4 E5 G5 F5 E5
+    # Bar 7 (C): G4 B4 E5 G5
     b += BEATS_PER_BAR
-    track.note(b,       'G4', E)
-    track.note(b + 0.5, 'B4', E)
-    track.note(b + 1.0, 'E5', E)
-    track.note(b + 1.5, 'G5', E)
-    track.note(b + 2.0, 'F5', Q)
-    track.note(b + 3.0, 'E5', Q)
+    track.note(b,       'G4', Q)
+    track.note(b + 1.0, 'B4', Q)
+    track.note(b + 2.0, 'E5', Q)
+    track.note(b + 3.0, 'G5', Q)
 
-    # Bar 8 (G): F5 D5 B4 C5 C5 (resolve)
+    # Bar 8 (G): F5 D5 | C5 -
     b += BEATS_PER_BAR
-    track.note(b,       'F5', E)
-    track.note(b + 0.5, 'D5', E)
-    track.note(b + 1.0, 'B4', E)
-    track.note(b + 1.5, 'C5', E)
+    track.note(b,       'F5', Q)
+    track.note(b + 1.0, 'D5', Q)
     track.note(b + 2.0, 'C5', H)
 
 
 # ---------------------------------------------------------------------------
-# Bass (BASS_PULSE) — constant 8th-note pulse from Intro
+# Bass (BASS_PULSE) — quarter+eighth mixed pattern (not continuous 8th)
 # ---------------------------------------------------------------------------
 
 def build_bass(song: Song) -> None:
-    """Rhythmic 8th-note bass pulse on root, octave jump on beat 3."""
+    """Rhythmic bass: quarter note on beat 1, eighth notes on beat 2, quarter on 3, rest on 4."""
     track = song.add_track(Track(BASS_PULSE, volume=0.50))
 
     E = 0.5  # eighth note
+    Q = 1.0  # quarter note
 
     for section_beat, progression in ALL_SECTIONS:
         for bar_idx, chord_name in enumerate(progression):
             bar_beat = section_beat + bar_idx * BEATS_PER_BAR
             root = CHORDS[chord_name]['bass']
 
-            # Compute octave-up note name for beat 3 jump
-            # Parse note name to get letter+accidental and octave
-            root_letter = root[:-1]  # e.g. 'A', 'Bb', 'G#'
+            # Compute octave-up note name
+            root_letter = root[:-1]
             root_octave = int(root[-1])
             octave_up = f"{root_letter}{root_octave + 1}"
 
-            # 8th note pulse: root on every 8th, octave jump on beat 3
-            for i in range(8):  # 8 eighth notes per bar
-                beat_pos = bar_beat + i * E
-                if i == 4 or i == 5:  # beats 3.0 and 3.5 (octave up)
-                    track.note(beat_pos, octave_up, E * 0.8)
-                else:
-                    track.note(beat_pos, root, E * 0.8)
+            # Mixed pattern: Q on 1, 8th+8th on 2, Q(octave up) on 3, rest on 4
+            track.note(bar_beat,       root,      Q * 0.9)
+            track.note(bar_beat + 1.0, root,      E * 0.8)
+            track.note(bar_beat + 1.5, octave_up, E * 0.8)
+            track.note(bar_beat + 2.0, octave_up, Q * 0.9)
+            # beat 4: rest (breathing room)
 
 
 # ---------------------------------------------------------------------------
@@ -550,32 +421,30 @@ def build_pad(song: Song) -> None:
 
 
 # ---------------------------------------------------------------------------
-# Arpeggio (ARP_SPARKLE) — 16th note arpeggios, enters at B section
+# Arpeggio (ARP_SPARKLE) — 8th note arpeggios, B section ONLY
 # ---------------------------------------------------------------------------
 
 def build_arpeggio(song: Song) -> None:
-    """Fast 16th-note arpeggios for sparkle and urgency, B section onward."""
-    track = song.add_track(Track(ARP_SPARKLE, volume=0.30))
+    """8th-note arpeggios for sparkle, B section only (not continuous)."""
+    track = song.add_track(Track(ARP_SPARKLE, volume=0.28))
 
-    S = 0.25  # sixteenth note
+    E = 0.5  # eighth note
 
     for section_beat, progression in ALL_SECTIONS:
-        # Enter at B section
-        if section_beat < SEC_B:
+        # Only B section
+        if section_beat != SEC_B:
             continue
 
         for bar_idx, chord_name in enumerate(progression):
             bar_beat = section_beat + bar_idx * BEATS_PER_BAR
             notes = CHORDS[chord_name]['arp']
 
-            # 16 sixteenth notes per bar: ascending-descending pattern
+            # 8 eighth notes per bar: ascending-descending (not 16th!)
             arp_seq = [
                 notes[0], notes[1], notes[2], notes[3],
                 notes[2], notes[1], notes[0], notes[1],
-                notes[2], notes[3], notes[2], notes[1],
-                notes[0], notes[1], notes[2], notes[3],
             ]
-            track.pattern(bar_beat, arp_seq, note_duration=S)
+            track.pattern(bar_beat, arp_seq, note_duration=E)
 
 
 # ---------------------------------------------------------------------------

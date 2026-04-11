@@ -472,6 +472,12 @@ func buildAbilitySegments(def *config.AbilityDef, effStr float64) []hud.AbilityS
 			segs = append(segs, hud.AbilitySegment{Text: fmtNum(def.Param), Kind: "text"})
 		case "p%":
 			segs = append(segs, hud.AbilitySegment{Text: fmtNum(def.Param*100) + "%", Kind: "text"})
+		case "ph%":
+			segs = append(segs, hud.AbilitySegment{Text: fmtNum(def.Param*50) + "%", Kind: "text"})
+		case "p2":
+			segs = append(segs, hud.AbilitySegment{Text: fmtNum(def.Param2), Kind: "text"})
+		case "p2%":
+			segs = append(segs, hud.AbilitySegment{Text: fmtNum(def.Param2*100) + "%", Kind: "text"})
 		}
 	}
 	return segs

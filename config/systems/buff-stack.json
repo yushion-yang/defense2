@@ -41,12 +41,12 @@
     "healAura":     {"mode": "override",                 "description": "治疗光环覆盖"},
     "bufferAura":   {"mode": "override",                 "description": "旗手光环覆盖"},
     "damageReduce": {"mode": "strongest", "cap": 0.8,    "description": "减伤取最强，上限80%"},
-    "aura:damage":      {"mode": "additive",                 "description": "伤害光环（叠加）"},
-    "aura:pctDamage":   {"mode": "additive",  "cap": 3.0,    "description": "百分比伤害光环"},
-    "aura:pctSpeed":    {"mode": "additive",  "cap": 2.0,    "description": "百分比攻速光环"},
-    "aura:flatRange":   {"mode": "additive",                 "description": "射程光环（叠加）"},
-    "aura:crit":        {"mode": "additive",  "cap": 0.8,    "description": "暴击光环"},
-    "aura:damageAmp":   {"mode": "additive",  "cap": 3.0,    "description": "增伤光环"},
+    "aura:damage":      {"mode": "independentPerSource",                 "description": "伤害光环（同源覆盖，不同源叠加）"},
+    "aura:pctDamage":   {"mode": "independentPerSource",  "cap": 3.0,    "description": "百分比伤害光环"},
+    "aura:pctSpeed":    {"mode": "independentPerSource",  "cap": 2.0,    "description": "百分比攻速光环"},
+    "aura:flatRange":   {"mode": "independentPerSource",                 "description": "射程光环（同源覆盖，不同源叠加）"},
+    "aura:crit":        {"mode": "independentPerSource",  "cap": 0.8,    "description": "暴击光环"},
+    "aura:damageAmp":   {"mode": "independentPerSource",  "cap": 3.0,    "description": "增伤光环"},
     "towerStrength":    {"mode": "override",                 "description": "战灵强度buff"}
   }
 }

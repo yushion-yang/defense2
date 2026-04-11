@@ -1,5 +1,5 @@
 // handler_spinaoe.go — 旋转范围伤害攻击方式（自管理）。
-// 无弹射物，范围内全体受伤，内圈加伤。
+// 无弹射物，范围内全体受伤，伤害比例由 param (damageRatio) 配置。
 package combat
 
 import (
@@ -41,25 +41,18 @@ func (h *SpinAoEHandler) Tick(t *tower.Tower, ctx *AttackContext) {
 		return
 	}
 
-	// 从能力配置读取 innerBonus 和 innerRatio
-	innerRatio := 0.5
-	innerBonusMul := 1.5
+	// 从能力配置读取 damageRatio (param 字段)
+	damageRatio := 0.5
 	if abTable := config.GlobalAbilityTable(); abTable != nil {
 		if def := abTable[tower.AbilitySpinAoe]; def != nil {
-			str := 100.0
-			if t.Strength != nil {
-				str = t.Strength.Effective()
-			}
-			innerBonusMul = 1.0 + def.CalcScale(str) // base=0.5 + potential*str/100
 			if def.Param > 0 {
-				innerRatio = def.Param
+				damageRatio = def.Param
 			}
 		}
 	}
 
 	hasTarget := false
 	r := t.Range
-	innerR := r * innerRatio
 
 	ctx.Enemies.Each(func(e *enemy.Enemy) {
 		if e.IsDying() || e.IsSpawning() {
@@ -70,10 +63,7 @@ func (h *SpinAoEHandler) Tick(t *tower.Tower, ctx *AttackContext) {
 			return
 		}
 		hasTarget = true
-		dmg := t.Damage
-		if dist <= innerR {
-			dmg *= innerBonusMul
-		}
+		dmg := t.Damage * damageRatio
 		ApplyHit(HitInput{
 			Tower: t, Target: e, BaseDamage: dmg, Style: ctx.Style,
 			Enemies: ctx.Enemies, Projectiles: ctx.Projectiles, OnCC: ctx.OnCC,

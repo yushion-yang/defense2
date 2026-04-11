@@ -23,7 +23,9 @@ type AbilityDef struct {
 	Potential float64 `json:"potential"` // 缩放维度的潜力值
 	Param     float64 `json:"param"`     // 固定常量参数值（0=无）
 	ParamDim  string  `json:"paramDim"`  // 固定参数的含义标识（空=无，运行时按 type 解读）
-	Display   string  `json:"display"`   // HUD 展示模板（{s}=缩放值 {s%}=缩放百分比 {si}=缩放取整 {sh%}=缩放减半百分比 {p}=参数 {p%}=参数百分比）
+	Param2    float64 `json:"param2"`    // 第二固定参数（0=无，部分能力需要两个固定参数）
+	Param2Dim string  `json:"param2Dim"` // 第二固定参数的含义标识
+	Display   string  `json:"display"`   // HUD 展示模板（{s}=缩放值 {s%}=缩放百分比 {si}=缩放取整 {sh%}=缩放减半百分比 {p}=参数 {p%}=参数百分比 {p2}=参数2 {p2%}=参数2百分比）
 }
 
 // AbilityTable 能力定义表（abilityType → AbilityDef）。
@@ -116,6 +118,11 @@ func (d *AbilityDef) HasScale() bool {
 // HasParam 是否有固定参数。
 func (d *AbilityDef) HasParam() bool {
 	return d != nil && d.ParamDim != ""
+}
+
+// HasParam2 是否有第二固定参数。
+func (d *AbilityDef) HasParam2() bool {
+	return d != nil && d.Param2Dim != ""
 }
 
 // FormatScale 格式化缩放维度为 HUD 展示字符串。
