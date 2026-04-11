@@ -73,11 +73,6 @@ func (tr *TowerRenderer) DrawTowers(screen *ebiten.Image, pool *tower.Pool, sele
 				float32(t.Range), theme.TowerRangeStrokeWidth, theme.TowerRangeStroke)
 		}
 
-		// --- Ground shadow (dark ellipse below tower) ---
-		shadowAlpha := uint8(float64(30) * animAlpha)
-		draw.FilledCircle(screen, cx, cy+float32(towerSpriteSize*0.35),
-			float32(float64(towerSpriteSize*0.35)*animScale), color.RGBA{0, 0, 0, shadowAlpha})
-
 		// --- Under-body VFX (drawn BEFORE sprite so they don't obscure it) ---
 		if !t.Selling && t.BuildAnim <= 0 && t.Strength != nil {
 			vfx.DrawStrengthGlow(screen, cx, cy, t.Strength.Overflow(), animTime)
