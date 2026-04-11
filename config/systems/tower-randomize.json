@@ -1,38 +1,33 @@
 {
-  "_status": "documentation-only",
-  "_description": "塔随机属性系统规格 — tier 预算、base/potential 分配、属性划转参数",
+  "_description": "塔随机属性系统规格 — 3档独立选取 + 专精增强",
+  "_version": "2.0",
 
-  "tierBudget": 6,
-  "tierBudgetDescription": "三属性(S=4/A=3/B=2/C=1/D=0)总分上限，避免全 S",
+  "tiers": ["S", "B", "D"],
+  "tiersDescription": "三项属性(伤害/攻速/射程)各独立随机选取一档，无预算约束",
 
-  "baseRatio": {
-    "min": 0.30,
-    "max": 0.50,
-    "description": "基础值占总值的比例范围。基础值即时生效，潜力值随强度成长"
+  "specialty": {
+    "count": 1,
+    "description": "随机选择1项属性作为专精，专精属性的潜力 = tier.potential + basePotential",
+    "hudIndicator": "★ 金色星号标记"
   },
 
-  "redistribution": {
-    "minRounds": 1,
-    "maxRounds": 3,
-    "minUnits": 1.0,
-    "maxUnits": 2.0,
-    "maxTake": 0.20,
-    "baseWeight": 1.0,
-    "potWeight": 0.3,
-    "description": "属性划转：每轮从一个属性取走最多 20%，分配给另一个属性（base 权重 1.0，potential 权重 0.3）"
+  "formula": {
+    "base": "tier[档].base",
+    "potential": "tier[档].potential（普通）或 tier[档].potential + basePotential（专精）",
+    "attribute": "base + potential × (strength / 100)",
+    "description": "基础值即时生效，潜力值随强度线性成长。专精属性成长更快。"
   },
 
-  "unitSizes": {
-    "damage": 2.0,
-    "attackSpeed": 0.091,
-    "range": 14.0,
-    "description": "1 划转单位对应各属性的数值量（基于 B 档参考值的 ~10%）"
+  "presets": {
+    "source": "config/towers/tier-presets.json",
+    "description": "各档位的 base/potential 数值和 basePotential 共享潜力基数在此文件中配置"
   },
 
-  "minBase": {
-    "damage": 1,
-    "attackSpeed": 0.1,
-    "range": 40,
-    "description": "各属性基础值的绝对下限"
+  "removed": {
+    "tierBudget": "已移除 — 不再有总分约束",
+    "baseRatio": "已移除 — base/potential 直接从配置读取，不再随机拆分",
+    "redistribution": "已移除 — 不再有属性划转机制",
+    "unitSizes": "已移除 — 不再需要属性换算",
+    "minBase": "已移除 — 配置值即为最终值"
   }
 }
