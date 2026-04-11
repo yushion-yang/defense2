@@ -210,7 +210,7 @@ func (a *ConfigAbility) OnTick(t *tower.Tower, ctx *tower.TickContext) *tower.Ti
 				other.Buffs.Add(buff.Buff{
 					ID: "aura:damageAmp", Category: buff.CatAura,
 					Source: srcKey, Value: sv,
-					Duration: 0.15, Remaining: 0.15,
+					Duration: 0.3, Remaining: 0.3,
 				})
 			}
 		})
@@ -223,7 +223,7 @@ func (a *ConfigAbility) OnTick(t *tower.Tower, ctx *tower.TickContext) *tower.Ti
 				other.Buffs.Add(buff.Buff{
 					ID: "aura:pctSpeed", Category: buff.CatAura,
 					Source: srcKey, Value: sv,
-					Duration: 0.15, Remaining: 0.15,
+					Duration: 0.3, Remaining: 0.3,
 				})
 			}
 		})
@@ -236,7 +236,7 @@ func (a *ConfigAbility) OnTick(t *tower.Tower, ctx *tower.TickContext) *tower.Ti
 				other.Buffs.Add(buff.Buff{
 					ID: "aura:flatRange", Category: buff.CatAura,
 					Source: srcKey, Value: sv,
-					Duration: 0.15, Remaining: 0.15,
+					Duration: 0.3, Remaining: 0.3,
 				})
 			}
 		})
@@ -249,7 +249,7 @@ func (a *ConfigAbility) OnTick(t *tower.Tower, ctx *tower.TickContext) *tower.Ti
 				other.Buffs.Add(buff.Buff{
 					ID: "aura:crit", Category: buff.CatAura,
 					Source: srcKey, Value: sv,
-					Duration: 0.15, Remaining: 0.15,
+					Duration: 0.3, Remaining: 0.3,
 				})
 			}
 		})
@@ -267,7 +267,7 @@ func (a *ConfigAbility) OnTick(t *tower.Tower, ctx *tower.TickContext) *tower.Ti
 			t.Buffs.Add(buff.Buff{
 				ID: "aura:damageAmp", Category: buff.CatAura,
 				Source: srcKey, Value: sv,
-				Duration: 0.15, Remaining: 0.15,
+				Duration: 0.3, Remaining: 0.3,
 			})
 		}
 

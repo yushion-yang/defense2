@@ -120,7 +120,16 @@ func (b *EnvoyBehavior) Tick(w *warden.Warden, ctx *warden.TickContext) {
 		}
 	}
 
-	// 4. buff 过期追踪（用于渲染）
+	// 4. If buffed tower was sold/removed, clear the reference
+	if s.BuffedTower != nil && !s.BuffedTower.Active {
+		key := fmt.Sprintf("envoy_buff_%d", w.ID)
+		s.BuffedTower.Buffs.RemoveByID(key)
+		s.BuffedTower.Strength.RemoveTemp(key)
+		s.BuffedTower = nil
+		s.BuffExpiry = 0
+	}
+
+	// 5. buff 过期追踪（用于渲染）
 	if s.BuffExpiry > 0 {
 		s.BuffExpiry -= dt
 		if s.BuffExpiry <= 0 {
@@ -128,7 +137,7 @@ func (b *EnvoyBehavior) Tick(w *warden.Warden, ctx *warden.TickContext) {
 		}
 	}
 
-	// 5. 射击线衰减
+	// 6. 射击线衰减
 	s.DecayShootTimer(dt)
 }
 

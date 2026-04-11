@@ -361,6 +361,7 @@ func TickStatusEffects(e *Enemy, dt float64) {
 			e.IsControlImmune = false
 			e.IsStunImmune = false
 			e.IsSlowImmune = false
+			e.IsRootImmune = false
 		}
 	}
 
