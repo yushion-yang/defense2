@@ -9,8 +9,8 @@ import (
 type SysProjectileMove struct{}
 
 func (SysProjectileMove) Tick(ctx *TickCtx) bool {
-	ctx.Projectiles.Update(ctx.DT)
-	ctx.Beams.Update(ctx.DT)
+	ctx.Projectiles.Tick(ctx.DT)
+	ctx.Beams.Tick(ctx.DT)
 	return false
 }
 

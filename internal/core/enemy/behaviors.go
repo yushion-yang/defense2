@@ -46,23 +46,23 @@ func TickBehaviors(pool *Pool, dt float64) BehaviorEvents {
 		}
 
 		// 狂暴检查（所有敌人，不限于特定 Behavior）
-		if UpdateBerserk(e) {
+		if TickBerserk(e) {
 			events.Berserks++
 		}
 
 		// 自然回血（从 BuffList 读取 regen Value）
-		if b, ok := e.Buffs.Get("regen"); ok && b.Value > 0 {
-			if UpdateRegeneration(e, b.Value, dt) > 0 {
+		if b, ok := e.Buffs.Get(buff.IDRegen); ok && b.Value > 0 {
+			if TickRegeneration(e, b.Value, dt) > 0 {
 				events.Regens++
 			}
 		}
 
 		switch e.Behavior {
-		case "healer":
+		case BehaviorHealer:
 			tickHealer(e, pool, dt, &events)
-		case "stealth":
+		case BehaviorStealth:
 			tickStealth(e, dt, &events)
-		case "buffer":
+		case BehaviorBuffer:
 			tickBuffer(e, pool)
 			if e.HasBufferAura() && !e.AbilitySilenced {
 				events.HasBuffer = true
@@ -84,7 +84,7 @@ func TickBehaviors(pool *Pool, dt float64) BehaviorEvents {
 		}
 
 		// 相位偏移（duration=Value, cooldown=Value2 from BuffList）
-		if pb, ok := e.Buffs.Get("phaseShift"); ok && !e.AbilitySilenced {
+		if pb, ok := e.Buffs.Get(buff.IDPhaseShift); ok && !e.AbilitySilenced {
 			e.PhaseTimer -= dt
 			if e.PhaseTimer <= 0 && !e.PhaseActive {
 				// 进入免伤相位（可被选中/命中，但免疫伤害）
@@ -137,7 +137,7 @@ func TickBehaviors(pool *Pool, dt float64) BehaviorEvents {
 				// 净化后短暂免疫
 				if e.PurgeImmuneDur > 0 {
 					e.Buffs.Add(buff.Buff{
-						ID:        "controlImmune",
+						ID:        buff.IDControlImmune,
 						Category:  buff.CatDefense,
 						Source:    "purge",
 						Duration:  e.PurgeImmuneDur,
@@ -157,7 +157,7 @@ func TickBehaviors(pool *Pool, dt float64) BehaviorEvents {
 // tickHealer 治疗兵行为：周期性治疗范围内友军。
 // Reads power/radius from healAura buff; HealInterval/HealCooldown are runtime state on Enemy.
 func tickHealer(e *Enemy, pool *Pool, dt float64, events *BehaviorEvents) {
-	b, ok := e.Buffs.Get("healAura")
+	b, ok := e.Buffs.Get(buff.IDHealAura)
 	if !ok || e.AbilitySilenced {
 		return
 	}
@@ -213,7 +213,7 @@ func tickStealth(e *Enemy, dt float64, events *BehaviorEvents) {
 	}
 	// Break stealth on hit (HitFlash is set by apply_hit when enemy takes damage)
 	if e.HitFlash > 0 {
-		e.Buffs.RemoveByID("stealth")
+		e.Buffs.RemoveByID(buff.IDStealth)
 		events.Reveals = append(events.Reveals, RevealEvent{X: e.X, Y: e.Y})
 		e.Behavior = ""
 	}
@@ -222,7 +222,7 @@ func tickStealth(e *Enemy, dt float64, events *BehaviorEvents) {
 // tickBuffer 旗手行为：每帧对范围内友军施加移速加成。
 // Reads radius/amount from bufferAura buff; writes short-lived speedUp buff to targets.
 func tickBuffer(e *Enemy, pool *Pool) {
-	b, ok := e.Buffs.Get("bufferAura")
+	b, ok := e.Buffs.Get(buff.IDBufferAura)
 	if !ok || e.AbilitySilenced {
 		return
 	}
@@ -241,17 +241,17 @@ func tickBuffer(e *Enemy, pool *Pool) {
 		if dx*dx+dy*dy <= r2 {
 			// Short-lived speedUp buff, refreshed each frame. Strongest mode keeps highest value.
 			other.Buffs.Add(buff.Buff{
-				ID: "speedUp", Category: buff.CatBehavior, Source: "bufferAura",
+				ID: buff.IDSpeedUp, Category: buff.CatBehavior, Source: "bufferAura",
 				Value: amount, Duration: 0.1, Remaining: 0.1,
 			})
 		}
 	})
 }
 
-// HandleSplitterDeath 处理分裂体死亡：在死亡位置生成子体。
+// OnSplitterDeath 处理分裂体死亡：在死亡位置生成子体。
 // 返回成功生成的子体列表。子体继承父体的路径和 PathIndex，
 // 血量为 MaxHP * SplitScale，速度按 balance 配置缩放。
-func HandleSplitterDeath(e *Enemy, pool *Pool) []*Enemy {
+func OnSplitterDeath(e *Enemy, pool *Pool) []*Enemy {
 	if e.SplitCount <= 0 {
 		return nil
 	}
@@ -281,18 +281,18 @@ func HandleSplitterDeath(e *Enemy, pool *Pool) []*Enemy {
 	return children
 }
 
-// UpdateBerserk 检查并触发狂暴状态。
+// TickBerserk 检查并触发狂暴状态。
 // 当血量比例降到阈值以下时，永久提升移动速度。
 // Berserk params (speedScale=Value, threshold=Value2) are stored in BuffList.
 // 返回 true 表示本次刚触发狂暴。
-func UpdateBerserk(e *Enemy) bool {
+func TickBerserk(e *Enemy) bool {
 	// 已触发过
 	if e.BerserkTriggered {
 		return false
 	}
 
 	// 从 BuffList 读取狂暴参数
-	b, ok := e.Buffs.Get("berserk")
+	b, ok := e.Buffs.Get(buff.IDBerserk)
 	if !ok {
 		return false
 	}
@@ -324,10 +324,10 @@ func UpdateBerserk(e *Enemy) bool {
 	return true
 }
 
-// UpdateRegeneration 处理敌人自然回血。
+// TickRegeneration 处理敌人自然回血。
 // regenPerSec is the healing rate from the regen buff's Value.
 // 返回本帧实际回复的血量。
-func UpdateRegeneration(e *Enemy, regenPerSec, dt float64) float64 {
+func TickRegeneration(e *Enemy, regenPerSec, dt float64) float64 {
 	if regenPerSec <= 0 || e.HP >= e.MaxHP {
 		return 0
 	}
@@ -338,9 +338,9 @@ func UpdateRegeneration(e *Enemy, regenPerSec, dt float64) float64 {
 	return healed
 }
 
-// UpdateTeleport 处理传送兵定时跳跃。
+// TickTeleport 处理传送兵定时跳跃。
 // 返回 true 表示本帧发生了传送。
-func UpdateTeleport(e *Enemy, dt float64) bool {
+func TickTeleport(e *Enemy, dt float64) bool {
 	if e.TeleportInterval <= 0 || e.Path == nil {
 		return false
 	}

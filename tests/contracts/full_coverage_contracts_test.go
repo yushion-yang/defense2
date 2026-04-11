@@ -255,7 +255,7 @@ func TestDamagePipeline_DamageReduceRatio(t *testing.T) {
 	e := &enemy.Enemy{HP: 100, MaxHP: 100, Active: true}
 	e.Buffs = buff.NewDefaultBuffList()
 	e.Buffs.Add(buff.Buff{ID: "damageReduce", Category: buff.CatDefense, Source: "test", Value: 0.3, Duration: -1, Remaining: -1})
-	r := combat.ProcessDamage(combat.DamageInput{
+	r := combat.ApplyDamage(combat.DamageInput{
 		Target:    e,
 		RawDamage: 100,
 	})
@@ -267,7 +267,7 @@ func TestDamagePipeline_DamageReduceRatio(t *testing.T) {
 
 func TestDamagePipeline_HPNeverBelowZero(t *testing.T) {
 	e := &enemy.Enemy{HP: 5, MaxHP: 100, Active: true}
-	combat.ProcessDamage(combat.DamageInput{
+	combat.ApplyDamage(combat.DamageInput{
 		Target:    e,
 		RawDamage: 9999,
 	})

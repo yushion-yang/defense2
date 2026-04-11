@@ -122,8 +122,8 @@ func (p *Pool) FireBounce(sx, sy float64, target *enemy.Enemy, damage, speed, ra
 	p.cursor = (p.cursor + 1) % len(p.projectiles)
 }
 
-// Update 每帧调用，追踪目标 → 移动 → 回收超时/越界弹射物。
-func (p *Pool) Update(dt float64) {
+// Tick 每帧调用，追踪目标 → 移动 → 回收超时/越界弹射物。
+func (p *Pool) Tick(dt float64) {
 	for i := range p.projectiles {
 		proj := &p.projectiles[i]
 		if !proj.Active {
@@ -290,7 +290,6 @@ func (p *Pool) FirePenetrate(sx, sy, tx, ty, damage, speed float64, towerKey str
 	p.cursor = (p.cursor + 1) % len(p.projectiles)
 }
 
-
 // ClearAll 清空所有弹射物（重置对象池）。
 func (p *Pool) ClearAll() {
 	for i := range p.projectiles {
@@ -300,4 +299,3 @@ func (p *Pool) ClearAll() {
 	p.Count = 0
 	p.cursor = 0
 }
-

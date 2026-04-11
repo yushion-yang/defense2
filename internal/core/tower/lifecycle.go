@@ -26,18 +26,18 @@ func OnTowerUpgrade(hook func(t *Tower)) {
 	onUpgradeHooks = append(onUpgradeHooks, hook)
 }
 
-// ExecuteCreate 执行所有创建钩子（内部 recover 防止 panic 扩散）。
-func ExecuteCreate(t *Tower) {
+// EmitCreate 执行所有创建钩子（内部 recover 防止 panic 扩散）。
+func EmitCreate(t *Tower) {
 	executeHooks(onCreateHooks, t)
 }
 
-// ExecuteDestroy 执行所有销毁钩子。
-func ExecuteDestroy(t *Tower) {
+// EmitDestroy 执行所有销毁钩子。
+func EmitDestroy(t *Tower) {
 	executeHooks(onDestroyHooks, t)
 }
 
-// ExecuteUpgrade 执行所有升级钩子。
-func ExecuteUpgrade(t *Tower) {
+// EmitUpgrade 执行所有升级钩子。
+func EmitUpgrade(t *Tower) {
 	executeHooks(onUpgradeHooks, t)
 }
 

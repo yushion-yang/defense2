@@ -14,7 +14,7 @@
 | `config/enemies/abilities.json` | 15 种怪物能力配置（description/visual 字段是权威规格） |
 | `config/abilities/abilities.json` | 塔能力配置（33 种） |
 | `internal/core/combat/apply_hit.go` | ApplyHit 统一命中：闪避→弹幕盾→装甲→冲刺→OnHit→暴击→DamageAmp→管线→击杀 |
-| `internal/core/combat/damage_pipeline.go` | ProcessDamage 8 步管线 |
+| `internal/core/combat/damage_pipeline.go` | ApplyDamage 8 步管线 |
 | `internal/core/enemy/behaviors.go` | TickBehaviors：冲刺/相位/削强/净化 tick |
 | `internal/core/enemy/enemy.go` | TickStatusEffects：DoT/weaken/免疫计时 |
 | `internal/core/enemy/movement.go` | 移动公式（含 SpeedBuff/DashActiveT） |
@@ -45,7 +45,7 @@
 | A10 | `strengthDrain` | offense | 每 StrDrainInterval 秒对最近塔施加 -StrDrainRatio 强度，持续 StrDrainDuration 秒；被沉默时断开连接 | `behaviors.go:95-117`, `stage.go tickStrengthDrain` |
 | A11 | `healAura` | support | 每 HealInterval 秒治疗半径内友方 HealPower × MaxHP；被沉默时不治疗 | `behaviors.go tickHealer` |
 | A12 | `speedAura` | support | 半径内友方移速 +BuffAmount；每帧重写 SpeedBuff；被沉默时不加速 | `behaviors.go tickBuffer` |
-| A13 | `deathSplit` | death | 死亡分裂为 SplitCount 个子体，子体 HP = MaxHP × SplitScale，速度 ×1.4，不递归 | `pool.go Kill → HandleSplitterDeath` |
+| A13 | `deathSplit` | death | 死亡分裂为 SplitCount 个子体，子体 HP = MaxHP × SplitScale，速度 ×1.4，不递归 | `pool.go Kill → OnSplitterDeath` |
 | A14 | `deathSpawn` | death | 死亡召唤 DeathSpawnCount 个 DeathSpawnArch 原型 | `pool.go Kill` |
 | A15 | `purge` | resist | 每 PurgeInterval 秒清除所有负面效果 + 短暂免疫 PurgeImmuneDur 秒；**不可沉默**（silenceable=false） | `behaviors.go:120-149` |
 
@@ -133,7 +133,7 @@
 | E5 | OnHit 遍历 | 第5步 | 能力效果施加（CC/DoT/splash/bounce），weaken 在此设置 |
 | E6 | CritBonus 独立暴击 | 第6步 | 无 crit 能力时 critAura 仍可触发；固定 2x |
 | E7 | DamageAmp 乘算 | 第7步 | 全伤害增幅在暴击之后 |
-| E8 | ProcessDamage 管线 | 第8步 | 8 步管线最终扣血 |
+| E8 | ApplyDamage 管线 | 第8步 | 8 步管线最终扣血 |
 | E9 | 弹幕盾视觉 | 末尾 | 正常受伤后才触发 BlockFlash |
 
 ---
@@ -145,7 +145,7 @@
 | F1 | SpawnConfig 拷贝 | 读 pool.go Spawn | 所有能力字段（15 种）从 SpawnConfig 正确拷贝到 Enemy |
 | F2 | 池复用重置 | 读 pool.go Spawn | 旧 enemy 的 PhaseActive/DashActiveT/StrDrainActiveT/PurgeTimer/AbilitySilenced 等状态全部清零 |
 | F3 | AbilityIDs 拷贝 | 读 pool.go Spawn | 从 SpawnConfig 拷贝，渲染层依赖此字段显示常驻视觉 |
-| F4 | 分裂子体不继承能力 | 读 HandleSplitterDeath | 子体 SplitCount=0（不递归），不继承父体其他能力 |
+| F4 | 分裂子体不继承能力 | 读 OnSplitterDeath | 子体 SplitCount=0（不递归），不继承父体其他能力 |
 | F5 | 召唤子体 | 读 pool.go Kill deathSpawn 分支 | 使用 DeathSpawnArch 生成，有独立的原型配置 |
 
 ---
@@ -160,12 +160,12 @@
 | G4 | 净化中途死亡 | behaviors.go | IsDying() 守卫在 TickBehaviors 最外层 |
 | G5 | 多个 strengthDrain 怪同时存在 | stage.go tickStrengthDrain | occupied map 确保不同怪优先连接不同塔 |
 | G6 | strengthDrain 目标塔被卖 | stage.go tickStrengthDrain | 每帧重新寻找目标，塔不存在时连接自然断开 |
-| G7 | 分裂子体数 > 池剩余容量 | pool.go HandleSplitterDeath | Spawn 返回 nil 时 break |
+| G7 | 分裂子体数 > 池剩余容量 | pool.go OnSplitterDeath | Spawn 返回 nil 时 break |
 | G8 | 相位切换瞬间被杀 | 管线+behaviors | PhaseActive=true 但 HP 已从其他来源（如 DoT 恢复前一帧）降到 0 |
 | G9 | 沉默区进出边界 | tick_abilities.go + config_ability.go | 帧头清零 → 区域内重设，确保离开后立即恢复 |
 | G10 | 冲刺+减速叠加 | movement.go | DashActiveT > 0 的移速加成与 SlowFactor 如何叠加 |
 | G11 | 净化清除减速后速度恢复 | behaviors.go:127 | 净化设 `Speed = BaseSpeed`，SlowFactor 重置为 1 |
-| G12 | 怪物 HP=0 但未被 Kill | 管线 step 7 | ProcessDamage 只标记 Killed，由调用方（ApplyHit）执行 Kill |
+| G12 | 怪物 HP=0 但未被 Kill | 管线 step 7 | ApplyDamage 只标记 Killed，由调用方（ApplyHit）执行 Kill |
 
 ---
 

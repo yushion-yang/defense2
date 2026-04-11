@@ -709,7 +709,7 @@
           "description": "分裂者敌人死亡后分裂出子体",
           "volumeCategory": "VolKill",
           "volumeScale": 0.55,
-          "trigger": { "event": "HandleSplitterDeath 触发", "source": "stage.go:2002" }
+          "trigger": { "event": "OnSplitterDeath 触发", "source": "stage.go:2002" }
         }
       ]
     },

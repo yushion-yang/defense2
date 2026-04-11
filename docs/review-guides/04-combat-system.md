@@ -8,7 +8,7 @@
 
 | 文件 | 读取内容 |
 |------|---------|
-| `internal/core/combat/damage_pipeline.go` | ProcessDamage() 8 步管线 |
+| `internal/core/combat/damage_pipeline.go` | ApplyDamage() 8 步管线 |
 | `internal/core/combat/damage_type.go` | 4 种伤害类型 + 穿透矩阵 |
 | `internal/core/combat/apply_hit.go` | ApplyHit() 统一命中处理 + 能力效果施加 |
 | `internal/core/combat/crowd_control.go` | ApplySlow/ApplyStun + 韧性/免疫 |
@@ -28,7 +28,7 @@
 
 | # | 检查 | 方法 | 预期 |
 |---|------|------|------|
-| A1 | 步骤顺序 | 读 ProcessDamage | 1免疫→2Boss%cap→3攻击增伤→4减伤→4.25虚弱→4.5伤害上限→5HP扣减→6阈值→7死亡 |
+| A1 | 步骤顺序 | 读 ApplyDamage | 1免疫→2Boss%cap→3攻击增伤→4减伤→4.25虚弱→4.5伤害上限→5HP扣减→6阈值→7死亡 |
 | A2 | pure 穿透 | 读 IgnoresInvincible/IgnoresReduction | pure 跳过免疫+减免 |
 | A3 | true 半穿透 | 同上 | true 跳过减免但不跳过免疫 |
 | A4 | Boss %HP 上限 | 读 step 2 | 默认 5% maxHP，IsPercentHP=true 时才触发 |
@@ -41,9 +41,9 @@
 
 | # | 检查 | 方法 | 预期 |
 |---|------|------|------|
-| B1 | 直接 HP 扣减 | `grep '\.HP\s*-=' internal/core/` | 只允许在 ProcessDamage 内部和 DoT tick 中 |
-| B2 | ApplyHit 走管线 | 读 apply_hit.go | 主命中/splash/explosion 都调用 ProcessDamage |
-| B3 | 战灵走管线 | 读 warden/state.go ApplyDamage | 调用 combat.ProcessDamage |
+| B1 | 直接 HP 扣减 | `grep '\.HP\s*-=' internal/core/` | 只允许在 ApplyDamage 内部和 DoT tick 中 |
+| B2 | ApplyHit 走管线 | 读 apply_hit.go | 主命中/splash/explosion 都调用 ApplyDamage |
+| B3 | 战灵走管线 | 读 warden/state.go ApplyDamage | 调用 combat.ApplyDamage |
 | B4 | DoT 路径 | 读 enemy.go TickStatusEffects | DoT 直接扣 HP（独立路径，0.5s tick，不走完整管线） |
 
 ### C. 攻击方式 Handler
@@ -71,7 +71,7 @@ ApplyHit 现在包含怪物能力交互步骤。核对处理顺序：
 | D5 | OnHit 遍历 | 读能力循环 | weaken 在此设置（对本次命中立即生效） |
 | D6 | CritBonus 独立暴击 | 读 CritBonus 逻辑 | 无 crit 能力时 critAura 仍可触发 |
 | D7 | DamageAmp 全伤害增幅 | 读 DamageAmp 逻辑 | damageUpAura 提供，所有伤害统一乘算 |
-| D8 | ProcessDamage 管线 | 最终走 8 步管线 | 免疫/减免/坚韧/虚弱/扣血/阈值/死亡 |
+| D8 | ApplyDamage 管线 | 最终走 8 步管线 | 免疫/减免/坚韧/虚弱/扣血/阈值/死亡 |
 | D9 | 弹幕盾视觉 | 读末尾 shieldBlocked 处理 | 正常受伤后才触发 BlockFlash |
 
 ### E. 碰撞检测
@@ -98,6 +98,6 @@ ApplyHit 现在包含怪物能力交互步骤。核对处理顺序：
 ## 跨系统关联
 
 - TickTowerCombat ← pipeline/tick_combat.go ← orchestrator step
-- Fire() → Projectile.Spawn → pool.Update → 碰撞 → ApplyHit → ProcessDamage
+- Fire() → Projectile.Spawn → pool.Update → 碰撞 → ApplyHit → ApplyDamage
 - ApplyHit → 能力 OnHit → HitResult → applyHitEffectsUnified（CC/DoT/splash/bounce）
-- ProcessDamage → 遥测 pipeline/damage_type 维度
+- ApplyDamage → 遥测 pipeline/damage_type 维度

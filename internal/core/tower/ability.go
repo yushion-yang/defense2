@@ -79,11 +79,18 @@ type TickResult struct {
 }
 
 // Registry 全局能力注册表（能力名 → 能力实例）。
+// 生产代码应通过 Lookup() 读取；测试代码可直接访问。
 var Registry = map[string]Ability{}
 
 // Register 向全局注册表添加一个能力。
 func Register(a Ability) {
 	Registry[a.Name()] = a
+}
+
+// Lookup 从注册表查找能力（推荐的只读访问方式）。
+func Lookup(name string) (Ability, bool) {
+	a, ok := Registry[name]
+	return a, ok
 }
 
 // TowerAbility 塔与能力的绑定关系，支持自定义参数。

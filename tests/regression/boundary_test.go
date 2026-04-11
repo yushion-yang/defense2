@@ -119,7 +119,7 @@ func TestBoundary_KillDuringIteration(t *testing.T) {
 }
 
 // ═══════════════════════════════════════
-// 4. 极端伤害：ProcessDamage(MaxFloat64) 不 panic，HP 钳位到 0
+// 4. 极端伤害：ApplyDamage(MaxFloat64) 不 panic，HP 钳位到 0
 // ═══════════════════════════════════════
 
 func TestBoundary_ExtremeDamage_MaxFloat64(t *testing.T) {
@@ -130,7 +130,7 @@ func TestBoundary_ExtremeDamage_MaxFloat64(t *testing.T) {
 	}
 	e.SpawnTimer = 0
 
-	result := combat.ProcessDamage(combat.DamageInput{
+	result := combat.ApplyDamage(combat.DamageInput{
 		Target:    e,
 		RawDamage: math.MaxFloat64,
 	})
@@ -153,7 +153,7 @@ func TestBoundary_ExtremeDamage_VeryLargeHP(t *testing.T) {
 	}
 	e.SpawnTimer = 0
 
-	result := combat.ProcessDamage(combat.DamageInput{
+	result := combat.ApplyDamage(combat.DamageInput{
 		Target:    e,
 		RawDamage: 1e15 + 1,
 	})
@@ -206,7 +206,7 @@ func TestBoundary_ZeroDurationSlow(t *testing.T) {
 }
 
 // ═══════════════════════════════════════
-// 6. 负数伤害：ProcessDamage 应安全处理
+// 6. 负数伤害：ApplyDamage 应安全处理
 // ═══════════════════════════════════════
 
 func TestBoundary_NegativeDamage(t *testing.T) {
@@ -217,7 +217,7 @@ func TestBoundary_NegativeDamage(t *testing.T) {
 	}
 	e.SpawnTimer = 0
 
-	result := combat.ProcessDamage(combat.DamageInput{
+	result := combat.ApplyDamage(combat.DamageInput{
 		Target:    e,
 		RawDamage: -50,
 	})
@@ -243,7 +243,7 @@ func TestBoundary_ZeroDamage(t *testing.T) {
 	e.SpawnTimer = 0
 	hpBefore := e.HP
 
-	result := combat.ProcessDamage(combat.DamageInput{
+	result := combat.ApplyDamage(combat.DamageInput{
 		Target:    e,
 		RawDamage: 0,
 	})

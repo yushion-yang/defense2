@@ -149,7 +149,7 @@ func TestDamagePipeline_WeakenAmplifyHasCap(t *testing.T) {
 	e := &enemy.Enemy{HP: 100, MaxHP: 100, Active: true}
 	e.Buffs = buff.NewDefaultBuffList()
 	e.Buffs.Add(buff.Buff{ID: "weaken", Category: buff.CatDebuff, Source: "test", Value: 0.8, Duration: 5, Remaining: 5}) // 超过 cap
-	r := combat.ProcessDamage(combat.DamageInput{
+	r := combat.ApplyDamage(combat.DamageInput{
 		Target:    e,
 		RawDamage: 10,
 	})
@@ -161,7 +161,7 @@ func TestDamagePipeline_WeakenAmplifyHasCap(t *testing.T) {
 
 func TestDamagePipeline_BossPercentHPCap(t *testing.T) {
 	e := &enemy.Enemy{HP: 1000, MaxHP: 1000, Active: true, Boss: true}
-	r := combat.ProcessDamage(combat.DamageInput{
+	r := combat.ApplyDamage(combat.DamageInput{
 		Target:      e,
 		RawDamage:   500,
 		IsPercentHP: true,
@@ -174,7 +174,7 @@ func TestDamagePipeline_BossPercentHPCap(t *testing.T) {
 
 func TestDamagePipeline_SilenceDisablesDamageCap(t *testing.T) {
 	e := &enemy.Enemy{HP: 100, MaxHP: 100, Active: true, StatusEffects: enemy.StatusEffects{Silenced: true}, AbilityFields: enemy.AbilityFields{DamageCap: 5}}
-	r := combat.ProcessDamage(combat.DamageInput{
+	r := combat.ApplyDamage(combat.DamageInput{
 		Target:    e,
 		RawDamage: 50,
 	})
@@ -186,7 +186,7 @@ func TestDamagePipeline_SilenceDisablesDamageCap(t *testing.T) {
 
 func TestDamagePipeline_DamageCapWhenNotSilenced(t *testing.T) {
 	e := &enemy.Enemy{HP: 100, MaxHP: 100, Active: true, AbilityFields: enemy.AbilityFields{DamageCap: 5}}
-	r := combat.ProcessDamage(combat.DamageInput{
+	r := combat.ApplyDamage(combat.DamageInput{
 		Target:    e,
 		RawDamage: 50,
 	})

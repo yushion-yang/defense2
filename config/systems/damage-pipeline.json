@@ -35,6 +35,6 @@
     "tickInterval":  0.5,
     "damageType":    "magic",
     "usePipeline":   true,
-    "description":   "DoT（灼烧/流血/中毒/区域）每 0.5s 触发一次，走完整 ProcessDamage 管线（magic 类型）"
+    "description":   "DoT（灼烧/流血/中毒/区域）每 0.5s 触发一次，走完整 ApplyDamage 管线（magic 类型）"
   }
 }

@@ -66,7 +66,7 @@ func TestDamageTypeColor(t *testing.T) {
 
 func TestPipeline_BasicDamage(t *testing.T) {
 	e := makePipelineEnemy(100, 100)
-	r := combat.ProcessDamage(combat.DamageInput{
+	r := combat.ApplyDamage(combat.DamageInput{
 		Target:    e,
 		RawDamage: 30,
 	})
@@ -83,7 +83,7 @@ func TestPipeline_BasicDamage(t *testing.T) {
 
 func TestPipeline_Kill(t *testing.T) {
 	e := makePipelineEnemy(50, 100)
-	r := combat.ProcessDamage(combat.DamageInput{
+	r := combat.ApplyDamage(combat.DamageInput{
 		Target:    e,
 		RawDamage: 60,
 	})
@@ -101,7 +101,7 @@ func TestPipeline_Invincible(t *testing.T) {
 	e := makePipelineEnemy(100, 100)
 	e.IsInvincible = true
 
-	r := combat.ProcessDamage(combat.DamageInput{
+	r := combat.ApplyDamage(combat.DamageInput{
 		Target:    e,
 		RawDamage: 50,
 	})
@@ -117,7 +117,7 @@ func TestPipeline_PureBypassesInvincible(t *testing.T) {
 	e := makePipelineEnemy(100, 100)
 	e.IsInvincible = true
 
-	r := combat.ProcessDamage(combat.DamageInput{
+	r := combat.ApplyDamage(combat.DamageInput{
 		Target:     e,
 		RawDamage:  50,
 		DamageType: combat.DmgPure,
@@ -134,7 +134,7 @@ func TestPipeline_Untargetable(t *testing.T) {
 	e := makePipelineEnemy(100, 100)
 	e.IsUntargetable = true
 
-	r := combat.ProcessDamage(combat.DamageInput{
+	r := combat.ApplyDamage(combat.DamageInput{
 		Target:    e,
 		RawDamage: 50,
 	})
@@ -149,7 +149,7 @@ func TestPipeline_BossPercentCap(t *testing.T) {
 	e := makePipelineEnemy(10000, 10000)
 	e.Boss = true
 
-	r := combat.ProcessDamage(combat.DamageInput{
+	r := combat.ApplyDamage(combat.DamageInput{
 		Target:      e,
 		RawDamage:   9999,
 		IsPercentHP: true,
@@ -165,7 +165,7 @@ func TestPipeline_NonBossNoPercentCap(t *testing.T) {
 	e := makePipelineEnemy(10000, 10000)
 	// 非Boss
 
-	r := combat.ProcessDamage(combat.DamageInput{
+	r := combat.ApplyDamage(combat.DamageInput{
 		Target:      e,
 		RawDamage:   9999,
 		IsPercentHP: true,
@@ -181,7 +181,7 @@ func TestPipeline_NonBossNoPercentCap(t *testing.T) {
 
 func TestPipeline_AttackerDamageUp(t *testing.T) {
 	e := makePipelineEnemy(100, 100)
-	r := combat.ProcessDamage(combat.DamageInput{
+	r := combat.ApplyDamage(combat.DamageInput{
 		Target:           e,
 		RawDamage:        10,
 		AttackerDamageUp: 1.5, // +50%
@@ -193,7 +193,7 @@ func TestPipeline_AttackerDamageUp(t *testing.T) {
 
 func TestPipeline_TrueDamageIgnoresModifiers(t *testing.T) {
 	e := makePipelineEnemy(100, 100)
-	r := combat.ProcessDamage(combat.DamageInput{
+	r := combat.ApplyDamage(combat.DamageInput{
 		Target:           e,
 		RawDamage:        10,
 		DamageType:       combat.DmgTrue,
@@ -212,7 +212,7 @@ func TestPipeline_DamageAmplify(t *testing.T) {
 	e := makePipelineEnemy(100, 100)
 	e.Buffs.Add(buff.Buff{ID: "weaken", Category: buff.CatDebuff, Source: "test", Value: 0.2, Duration: 5, Remaining: 5}) // +20% 受伤
 
-	r := combat.ProcessDamage(combat.DamageInput{
+	r := combat.ApplyDamage(combat.DamageInput{
 		Target:    e,
 		RawDamage: 10,
 	})
@@ -226,7 +226,7 @@ func TestPipeline_DamageAmplifyCapped(t *testing.T) {
 	e := makePipelineEnemy(100, 100)
 	e.Buffs.Add(buff.Buff{ID: "weaken", Category: buff.CatDebuff, Source: "test", Value: 0.8, Duration: 5, Remaining: 5}) // 超过上限 0.5
 
-	r := combat.ProcessDamage(combat.DamageInput{
+	r := combat.ApplyDamage(combat.DamageInput{
 		Target:    e,
 		RawDamage: 10,
 	})
@@ -240,7 +240,7 @@ func TestPipeline_DamageAmplifyZeroNoEffect(t *testing.T) {
 	e := makePipelineEnemy(100, 100)
 	// DamageAmplify = 0 (默认)
 
-	r := combat.ProcessDamage(combat.DamageInput{
+	r := combat.ApplyDamage(combat.DamageInput{
 		Target:    e,
 		RawDamage: 10,
 	})
@@ -255,7 +255,7 @@ func TestPipeline_DamageCap(t *testing.T) {
 	e := makePipelineEnemy(1000, 1000)
 	e.DamageCap = 60 // 铁甲怪
 
-	r := combat.ProcessDamage(combat.DamageInput{
+	r := combat.ApplyDamage(combat.DamageInput{
 		Target:    e,
 		RawDamage: 200,
 	})
@@ -268,7 +268,7 @@ func TestPipeline_DamageCapPercent(t *testing.T) {
 	e := makePipelineEnemy(1000, 1000)
 	e.DamageCapPercent = 0.08 // 巨人 8%maxHP = 80
 
-	r := combat.ProcessDamage(combat.DamageInput{
+	r := combat.ApplyDamage(combat.DamageInput{
 		Target:    e,
 		RawDamage: 200,
 	})
@@ -282,7 +282,7 @@ func TestPipeline_DamageCapDisabledBySilence(t *testing.T) {
 	e.DamageCap = 60
 	e.Silenced = true
 
-	r := combat.ProcessDamage(combat.DamageInput{
+	r := combat.ApplyDamage(combat.DamageInput{
 		Target:    e,
 		RawDamage: 200,
 	})
@@ -299,7 +299,7 @@ func TestPipeline_Thresholds(t *testing.T) {
 	enemy.AddThreshold(e, "phase2", 0.3)
 
 	// 打到60HP (60%)，不触发
-	r1 := combat.ProcessDamage(combat.DamageInput{
+	r1 := combat.ApplyDamage(combat.DamageInput{
 		Target:    e,
 		RawDamage: 40,
 	})
@@ -308,7 +308,7 @@ func TestPipeline_Thresholds(t *testing.T) {
 	}
 
 	// 打到30HP (30%)，同时触发 berserk(50%) 和 phase2(30%)
-	r2 := combat.ProcessDamage(combat.DamageInput{
+	r2 := combat.ApplyDamage(combat.DamageInput{
 		Target:    e,
 		RawDamage: 30,
 	})
@@ -317,7 +317,7 @@ func TestPipeline_Thresholds(t *testing.T) {
 	}
 
 	// 再打一次，不再重复触发
-	r3 := combat.ProcessDamage(combat.DamageInput{
+	r3 := combat.ApplyDamage(combat.DamageInput{
 		Target:    e,
 		RawDamage: 10,
 	})
@@ -332,7 +332,7 @@ func TestPipeline_MinimumDamage(t *testing.T) {
 	e := makePipelineEnemy(100, 100)
 	e.DamageCap = 0.5 // 上限0.5
 
-	r := combat.ProcessDamage(combat.DamageInput{
+	r := combat.ApplyDamage(combat.DamageInput{
 		Target:    e,
 		RawDamage: 100,
 	})
@@ -354,4 +354,3 @@ func TestQuickDamage(t *testing.T) {
 		t.Error("30伤害不应击杀100HP敌人")
 	}
 }
-

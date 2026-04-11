@@ -23,7 +23,7 @@ func TestTimescaleTriggerForBossKill(t *testing.T) {
 	if !c.Active() {
 		t.Error("timescale should be active after boss kill trigger")
 	}
-	s := c.Update(0.15) // after ease-in
+	s := c.Tick(0.15) // after ease-in
 	if s > 0.3 {
 		t.Errorf("boss kill slowmo scale = %v, want near 0.2", s)
 	}

@@ -53,7 +53,7 @@ func TestProjectileFireAndMove(t *testing.T) {
 		t.Fatalf("expected 1 projectile, got %d", pp.Count)
 	}
 
-	pp.Update(0.25)
+	pp.Tick(0.25)
 	var px float64
 	pp.Each(func(p *projectile.Projectile) { px = p.X })
 	if px < 49 || px > 51 {
@@ -70,7 +70,7 @@ func TestTickProjectileHits(t *testing.T) {
 
 	pp := projectile.NewPool(16)
 	pp.Fire(95, 0, 100, 0, 15, 200, 4, nil, "")
-	pp.Update(0.01)
+	pp.Tick(0.01)
 
 	kills := pipeline.TickProjectileHits(pp, ep, tp, nil, nil)
 	if kills != 1 {
@@ -146,7 +146,7 @@ func TestBleedEffect(t *testing.T) {
 		Value: 10, Duration: 2.0, Remaining: 2.0,
 	})
 
-	// DoT damage is now deferred to LastDotDmg (applied by pipeline via ProcessDamage).
+	// DoT damage is now deferred to LastDotDmg (applied by pipeline via ApplyDamage).
 	// DotTickInterval=0.5: after 0.5s, one tick fires with damage = 10 DPS * 0.5s = 5.
 	enemy.TickStatusEffects(e, 0.5)
 	if e.LastDotDmg != 5 {

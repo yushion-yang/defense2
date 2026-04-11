@@ -164,7 +164,7 @@ func (t *Tower) AddAbility(abilityType string) bool {
 	}
 
 	// 强化 → 提升基础属性
-	if abilityType == "enhance" {
+	if abilityType == AbilityEnhance {
 		applyEnhance(t, def)
 	}
 
@@ -212,11 +212,11 @@ func AllChoicesForCategory(cat int) []config.AbilityDef {
 // 这些能力的实现尚未完成（TODO: 待 BuffList 集成后启用），
 // 玩家选择后无任何效果，因此从候选池中排除。
 var disabledAbilities = map[string]bool{
-	"killUpgrade":   true, // TODO: integrate kill-based scaling via BuffList
-	"waveScale":     true, // TODO: integrate wave-scale boosts via BuffList
-	"neighborBoost": true, // TODO: integrate neighbor boost via BuffList
-	"elementSwitch": true, // TODO: integrate element boosts via BuffList
-	"periodicCast":  true, // case 2 (buffAoe) is a no-op; disable until all modes work
+	AbilityKillUpgrade:   true, // TODO: integrate kill-based scaling via BuffList
+	AbilityWaveScale:     true, // TODO: integrate wave-scale boosts via BuffList
+	AbilityNeighborBoost: true, // TODO: integrate neighbor boost via BuffList
+	AbilityElementSwitch: true, // TODO: integrate element boosts via BuffList
+	AbilityPeriodicCast:  true, // case 2 (buffAoe) is a no-op; disable until all modes work
 }
 
 // AbilitiesForCategory 返回指定类别中可选择的能力列表，按 Type 字母序排列。

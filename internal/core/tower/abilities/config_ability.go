@@ -48,13 +48,13 @@ func (a *ConfigAbility) OnHit(t *tower.Tower, p *projectile.Projectile, e *enemy
 	pm := a.Def.Param          // 固定常量参数
 
 	switch a.Def.Type {
-	case "splash":
+	case tower.AbilitySplash:
 		// scaleDim=ratio, param=radius
 		return &tower.HitResult{
 			Splash: &tower.SplashEffect{Radius: pm, Ratio: sv},
 		}
 
-	case "crit":
+	case tower.AbilityCrit:
 		// scaleDim=chance — 概率 = sv + CritBonus(critAura), param=multiplier(1.8)
 		if rand.Float64() < sv+t.CritBonus {
 			return &tower.HitResult{
@@ -64,7 +64,7 @@ func (a *ConfigAbility) OnHit(t *tower.Tower, p *projectile.Projectile, e *enemy
 		}
 		return nil
 
-	case "bounce":
+	case tower.AbilityBounce:
 		// scaleDim=maxBounces, param=damageRatio（弹射伤害 = 塔伤害 * ratio）
 		bounceRange := t.Range
 		if bounceRange < 150 {
@@ -79,22 +79,22 @@ func (a *ConfigAbility) OnHit(t *tower.Tower, p *projectile.Projectile, e *enemy
 			},
 		}
 
-	case "momentum":
+	case tower.AbilityMomentum:
 		// scaleDim=bonusRatio — 每次攻击附加 sv% 额外伤害
 		return &tower.HitResult{BonusDamage: p.Damage * sv}
 
-	case "executionBonus":
+	case tower.AbilityExecutionBonus:
 		// scaleDim=damageBonus, param=hpThreshold
 		if e.MaxHP > 0 && e.HP/e.MaxHP <= pm {
 			return &tower.HitResult{BonusDamage: p.Damage * sv}
 		}
 		return nil
 
-	case "flatDamage":
+	case tower.AbilityFlatDamage:
 		// scaleDim=damage, 无固定参数
 		return &tower.HitResult{BonusDamage: sv}
 
-	case "distanceDamage":
+	case tower.AbilityDistanceDamage:
 		// scaleDim=maxBonus, 无固定参数
 		dist := math.Hypot(e.X-t.X, e.Y-t.Y)
 		if t.Range <= 0 {
@@ -107,19 +107,19 @@ func (a *ConfigAbility) OnHit(t *tower.Tower, p *projectile.Projectile, e *enemy
 		bonus := p.Damage * ratio * sv
 		return &tower.HitResult{BonusDamage: bonus}
 
-	case "slowPower":
+	case tower.AbilitySlowPower:
 		// scaleDim=factor(强度提升减速值), param=duration(固定时长)
 		return &tower.HitResult{
 			Slow: &tower.SlowEffect{Factor: 1 - sv, Duration: pm},
 		}
 
-	case "slowDuration":
+	case tower.AbilitySlowDuration:
 		// scaleDim=duration(强度提升持续时间), param=factor(固定减速值)
 		return &tower.HitResult{
 			Slow: &tower.SlowEffect{Factor: 1 - pm, Duration: sv},
 		}
 
-	case "stun", "stunChance":
+	case tower.AbilityStun, tower.AbilityStunChance:
 		// scaleDim=chance(强度提升概率), param=duration(固定时长)
 		if rand.Float64() < sv {
 			return &tower.HitResult{
@@ -128,7 +128,7 @@ func (a *ConfigAbility) OnHit(t *tower.Tower, p *projectile.Projectile, e *enemy
 		}
 		return nil
 
-	case "stunDuration":
+	case tower.AbilityStunDuration:
 		// scaleDim=duration(强度提升时长), param=chance(固定概率)
 		if rand.Float64() < pm {
 			return &tower.HitResult{
@@ -137,7 +137,7 @@ func (a *ConfigAbility) OnHit(t *tower.Tower, p *projectile.Projectile, e *enemy
 		}
 		return nil
 
-	case "bleedDot":
+	case tower.AbilityBleedDot:
 		// scaleDim=hpPercent — 每秒失去 sv% 最大生命值，对 Boss 无效
 		if e.Boss {
 			return nil
@@ -147,16 +147,16 @@ func (a *ConfigAbility) OnHit(t *tower.Tower, p *projectile.Projectile, e *enemy
 			Bleed: &tower.BleedEffect{DPS: dps, Duration: pm},
 		}
 
-	case "burn":
+	case tower.AbilityBurn:
 		// scaleDim=ratio, param=duration
 		return &tower.HitResult{
 			Burn: &tower.BleedEffect{DPS: p.Damage * sv, Duration: pm},
 		}
 
-	case "poison":
+	case tower.AbilityPoison:
 		// scaleDim=dps, param=duration — 固定 DPS 中毒（独立于 bleed）
 		e.Buffs.Add(buff.Buff{
-			ID:        "poison",
+			ID:        buff.IDPoison,
 			Category:  buff.CatDoT,
 			Source:    t.InstanceKey,
 			Value:     sv,
@@ -165,10 +165,10 @@ func (a *ConfigAbility) OnHit(t *tower.Tower, p *projectile.Projectile, e *enemy
 		})
 		return nil
 
-	case "weaken":
+	case tower.AbilityWeaken:
 		// scaleDim=amplify, param=duration — 命中后受伤增加
 		e.Buffs.Add(buff.Buff{
-			ID:        "weaken",
+			ID:        buff.IDWeaken,
 			Category:  buff.CatDebuff,
 			Source:    t.InstanceKey,
 			Value:     sv,
@@ -177,15 +177,15 @@ func (a *ConfigAbility) OnHit(t *tower.Tower, p *projectile.Projectile, e *enemy
 		})
 		return nil
 
-	case "deathMark":
+	case tower.AbilityDeathMark:
 		// 不在 OnHit 中处理 — 击杀时由 pipeline 检查 srcTower 是否有此能力
 		return nil
 
-	case "enhance":
+	case tower.AbilityEnhance:
 		// 强化能力 — 选择时一次性提升基础属性，OnHit 无额外效果
 		return nil
 
-	case "multiTarget":
+	case tower.AbilityMultiTarget:
 		// 无缩放，param=targets — 逻辑在 pipeline 层处理
 		return nil
 
@@ -201,59 +201,59 @@ func (a *ConfigAbility) OnTick(t *tower.Tower, ctx *tower.TickContext) *tower.Ti
 	pm := a.Def.Param
 
 	switch a.Def.Type {
-	case "damageUpAura":
+	case tower.AbilityDamageUpAura:
 		// scaleDim=bonus(比例), param=radius — via BuffList aura:damageAmp
 		srcKey := "dmgAura_" + t.InstanceKey
 		ctx.Towers.Each(func(other *tower.Tower) {
 			if math.Hypot(t.X-other.X, t.Y-other.Y) <= pm {
 				other.Buffs.Add(buff.Buff{
-					ID: "aura:damageAmp", Category: buff.CatAura,
+					ID: buff.IDAuraDamageAmp, Category: buff.CatAura,
 					Source: srcKey, Value: sv,
 					Duration: 0.3, Remaining: 0.3,
 				})
 			}
 		})
 
-	case "attackSpeedAura":
+	case tower.AbilityAttackSpeedAura:
 		// scaleDim=bonus(比例), param=radius — via BuffList aura:pctSpeed
 		srcKey := "spdAura_" + t.InstanceKey
 		ctx.Towers.Each(func(other *tower.Tower) {
 			if math.Hypot(t.X-other.X, t.Y-other.Y) <= pm {
 				other.Buffs.Add(buff.Buff{
-					ID: "aura:pctSpeed", Category: buff.CatAura,
+					ID: buff.IDAuraPctSpeed, Category: buff.CatAura,
 					Source: srcKey, Value: sv,
 					Duration: 0.3, Remaining: 0.3,
 				})
 			}
 		})
 
-	case "rangeAura":
+	case tower.AbilityRangeAura:
 		// scaleDim=bonus(像素), param=radius — via BuffList aura:flatRange
 		srcKey := "rngAura_" + t.InstanceKey
 		ctx.Towers.Each(func(other *tower.Tower) {
 			if math.Hypot(t.X-other.X, t.Y-other.Y) <= pm {
 				other.Buffs.Add(buff.Buff{
-					ID: "aura:flatRange", Category: buff.CatAura,
+					ID: buff.IDAuraFlatRange, Category: buff.CatAura,
 					Source: srcKey, Value: sv,
 					Duration: 0.3, Remaining: 0.3,
 				})
 			}
 		})
 
-	case "critAura":
+	case tower.AbilityCritAura:
 		// scaleDim=bonus(暴击率加成), param=radius — via BuffList aura:crit
 		srcKey := "critAura_" + t.InstanceKey
 		ctx.Towers.Each(func(other *tower.Tower) {
 			if math.Hypot(t.X-other.X, t.Y-other.Y) <= pm {
 				other.Buffs.Add(buff.Buff{
-					ID: "aura:crit", Category: buff.CatAura,
+					ID: buff.IDAuraCrit, Category: buff.CatAura,
 					Source: srcKey, Value: sv,
 					Duration: 0.3, Remaining: 0.3,
 				})
 			}
 		})
 
-	case "soloBoost":
+	case tower.AbilitySoloBoost:
 		// scaleDim=bonus, param=checkRadius — via BuffList aura:damageAmp (self)
 		alone := true
 		ctx.Towers.Each(func(other *tower.Tower) {
@@ -264,13 +264,13 @@ func (a *ConfigAbility) OnTick(t *tower.Tower, ctx *tower.TickContext) *tower.Ti
 		if alone {
 			srcKey := "solo_" + t.InstanceKey
 			t.Buffs.Add(buff.Buff{
-				ID: "aura:damageAmp", Category: buff.CatAura,
+				ID: buff.IDAuraDamageAmp, Category: buff.CatAura,
 				Source: srcKey, Value: sv,
 				Duration: 0.3, Remaining: 0.3,
 			})
 		}
 
-	case "poisonZone":
+	case tower.AbilityPoisonZone:
 		// scaleDim=dps — 对射程内敌人造成毒伤（累积到 ZoneDmgAccum，按 DotTick 结算）
 		ctx.Enemies.Each(func(e *enemy.Enemy) {
 			if math.Hypot(e.X-t.X, e.Y-t.Y) <= t.Range {
@@ -278,7 +278,7 @@ func (a *ConfigAbility) OnTick(t *tower.Tower, ctx *tower.TickContext) *tower.Ti
 			}
 		})
 
-	case "silenceZone":
+	case tower.AbilitySilenceZone:
 		// 射程内敌人沉默（禁用 DamageCap + 禁用怪物可沉默能力）
 		ctx.Enemies.Each(func(e *enemy.Enemy) {
 			if e.IsDying() || e.IsSpawning() {
@@ -290,7 +290,7 @@ func (a *ConfigAbility) OnTick(t *tower.Tower, ctx *tower.TickContext) *tower.Ti
 			}
 		})
 
-	case "curseZone":
+	case tower.AbilityCurseZone:
 		// scaleDim=hpPercentPerSec — 对射程内敌人百分比扣血（累积到 ZoneDmgAccum）
 		ctx.Enemies.Each(func(e *enemy.Enemy) {
 			if math.Hypot(e.X-t.X, e.Y-t.Y) <= t.Range {
@@ -298,12 +298,12 @@ func (a *ConfigAbility) OnTick(t *tower.Tower, ctx *tower.TickContext) *tower.Ti
 			}
 		})
 
-	case "weakenZone":
+	case tower.AbilityWeakenZone:
 		// scaleDim=amplify — 射程内敌人受伤增加 (per-frame, short duration)
 		ctx.Enemies.Each(func(e *enemy.Enemy) {
 			if math.Hypot(e.X-t.X, e.Y-t.Y) <= t.Range {
 				e.Buffs.Add(buff.Buff{
-					ID:        "weaken",
+					ID:        buff.IDWeaken,
 					Category:  buff.CatDebuff,
 					Source:    "zone_" + t.InstanceKey,
 					Value:     sv,
@@ -313,7 +313,7 @@ func (a *ConfigAbility) OnTick(t *tower.Tower, ctx *tower.TickContext) *tower.Ti
 			}
 		})
 
-	case "goldPassive":
+	case tower.AbilityGoldPassive:
 		// scaleDim=amount, param=interval — 每 interval 秒产生 floor(amount) 金币
 		t.GoldCooldown -= ctx.DT
 		if t.GoldCooldown <= 0 {
@@ -340,4 +340,3 @@ func RegisterConfigAbilities(table config.AbilityTable) {
 		tower.Register(&ConfigAbility{Def: def})
 	}
 }
-

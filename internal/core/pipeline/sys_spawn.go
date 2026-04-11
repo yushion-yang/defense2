@@ -35,7 +35,7 @@ type SysSpawn struct {
 
 func (s *SysSpawn) Tick(ctx *TickCtx) bool {
 	s.prevWave = ctx.Spawner.Wave
-	ctx.Spawner.Update(ctx.Enemies, ctx.DT)
+	ctx.Spawner.Tick(ctx.Enemies, ctx.DT)
 	if ctx.Spawner.Wave > s.prevWave {
 		*ctx.WaveLivesSnap = *ctx.Lives
 		if ctx.CB.OnWaveStart != nil {

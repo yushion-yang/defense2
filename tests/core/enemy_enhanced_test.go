@@ -98,7 +98,7 @@ func TestLifecycle_RegisterAndResolve(t *testing.T) {
 		},
 	})
 
-	results := enemy.ResolveEvent(e, "death", nil)
+	results := enemy.EmitEvent(e, "death", nil)
 	if !called {
 		t.Error("onDeath handler 应被调用")
 	}
@@ -122,7 +122,7 @@ func TestLifecycle_DeduplicateByID(t *testing.T) {
 	enemy.RegisterHandler(e, "death", handler)
 	enemy.RegisterHandler(e, "death", handler) // 重复注册
 
-	enemy.ResolveEvent(e, "death", nil)
+	enemy.EmitEvent(e, "death", nil)
 	if count != 1 {
 		t.Errorf("去重后应只调用1次, 实际%d", count)
 	}
@@ -138,7 +138,7 @@ func TestLifecycle_RemoveHandler(t *testing.T) {
 	})
 	enemy.RemoveHandler(e, "death", "removable")
 
-	results := enemy.ResolveEvent(e, "death", nil)
+	results := enemy.EmitEvent(e, "death", nil)
 	if len(results) != 0 {
 		t.Errorf("移除后应无结果, 实际%d", len(results))
 	}
@@ -160,14 +160,14 @@ func TestBehavior_Berserk(t *testing.T) {
 		Value: 1.5, Value2: 0.5, Duration: -1, Remaining: -1,
 	})
 	// 60% HP, 不触发
-	triggered := enemy.UpdateBerserk(e)
+	triggered := enemy.TickBerserk(e)
 	if triggered {
 		t.Error("60%HP不应触发狂暴")
 	}
 
 	// 降到40%
 	e.HP = 40
-	triggered = enemy.UpdateBerserk(e)
+	triggered = enemy.TickBerserk(e)
 	if !triggered {
 		t.Error("40%HP应触发狂暴(阈值50%)")
 	}
@@ -180,7 +180,7 @@ func TestBehavior_Berserk(t *testing.T) {
 
 	// 再次调用不重复触发
 	e.HP = 10
-	triggered = enemy.UpdateBerserk(e)
+	triggered = enemy.TickBerserk(e)
 	if triggered {
 		t.Error("已触发后不应重复")
 	}
@@ -188,7 +188,7 @@ func TestBehavior_Berserk(t *testing.T) {
 
 func TestBehavior_Regeneration(t *testing.T) {
 	e := &enemy.Enemy{HP: 50, MaxHP: 100}
-	healed := enemy.UpdateRegeneration(e, 10, 1.0) // regenPerSec=10, dt=1.0
+	healed := enemy.TickRegeneration(e, 10, 1.0) // regenPerSec=10, dt=1.0
 	if math.Abs(healed-10) > 1e-9 {
 		t.Errorf("回血量=%.1f, 期望10", healed)
 	}
@@ -198,7 +198,7 @@ func TestBehavior_Regeneration(t *testing.T) {
 
 	// 不超过 MaxHP
 	e.HP = 95
-	healed = enemy.UpdateRegeneration(e, 10, 1.0)
+	healed = enemy.TickRegeneration(e, 10, 1.0)
 	if e.HP > e.MaxHP {
 		t.Errorf("HP=%.1f 超过MaxHP=%.1f", e.HP, e.MaxHP)
 	}
@@ -218,4 +218,3 @@ func TestEvent_HPPercent(t *testing.T) {
 		t.Errorf("hpPercent后HP=%.1f, 期望130", e.HP)
 	}
 }
-

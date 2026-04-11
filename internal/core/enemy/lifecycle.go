@@ -6,7 +6,7 @@ import "fmt"
 
 // LifecycleHandler 单个生命周期回调处理器。
 type LifecycleHandler struct {
-	ID    string                                    // 处理器唯一标识（用于去重和移除）
+	ID    string                                      // 处理器唯一标识（用于去重和移除）
 	Apply func(e *Enemy, ctx interface{}) interface{} // 回调函数
 }
 
@@ -69,9 +69,9 @@ func RemoveHandler(e *Enemy, event string, handlerID string) {
 	}
 }
 
-// ResolveEvent 触发指定事件的所有回调，返回各回调的结果。
+// EmitEvent 触发指定事件的所有回调，返回各回调的结果。
 // 单个回调 panic 不会影响后续回调执行。
-func ResolveEvent(e *Enemy, event string, ctx interface{}) []interface{} {
+func EmitEvent(e *Enemy, event string, ctx interface{}) []interface{} {
 	if e.Lifecycle == nil {
 		return nil
 	}
@@ -92,11 +92,11 @@ func ResolveEvent(e *Enemy, event string, ctx interface{}) []interface{} {
 // getHandlers 根据事件名获取对应的处理器切片指针。
 func getHandlers(e *Enemy, event string) *[]LifecycleHandler {
 	switch event {
-	case "death":
+	case LifecycleDeath:
 		return &e.Lifecycle.OnDeath
-	case "spawn":
+	case LifecycleSpawn:
 		return &e.Lifecycle.OnSpawn
-	case "damaged":
+	case LifecycleDamaged:
 		return &e.Lifecycle.OnDamaged
 	default:
 		return nil

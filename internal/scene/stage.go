@@ -20,7 +20,7 @@ import (
 	"time"
 
 	_ "defense2/internal/core/tower/abilities" // 通过 init() 注册塔能力
-	_ "defense2/internal/core/warden/types"  // 通过 init() 注册战灵类型
+	_ "defense2/internal/core/warden/types"    // 通过 init() 注册战灵类型
 
 	gameAudio "defense2/internal/audio"
 	"defense2/internal/config"
@@ -732,7 +732,7 @@ func (s *StageScene) Update() error {
 	hud.UpdateToast(dt)
 
 	// 教程自动推进计时器
-	s.tutorial.Update(dt)
+	s.tutorial.Tick(dt)
 	if s.tutorial.Done {
 		s.progressMgr.SetTutorialDone()
 	}
@@ -1623,7 +1623,7 @@ func (s *StageScene) updatePlaying() {
 		return
 	}
 	// 游戏速度倍率
-	gameDT := dt * float64(s.gameSpeed) * s.timeScale.Update(dt)
+	gameDT := dt * float64(s.gameSpeed) * s.timeScale.Tick(dt)
 
 	// Screen effects update (hit-stop freezes game logic for this frame).
 	if s.postPipeline.Effects.Update(gameDT) {
@@ -1652,13 +1652,15 @@ func (s *StageScene) updatePlaying() {
 	// 模式每帧 tick（限时模式倒计时等）
 	s.session.Tick(gameDT, s.buildModeCtx())
 
-	// 0. 非手动模式：第一波倒计时结束时自动弹出战灵选择（仅 idle 时触发，避免打断其他操作）
+	// === Tick Pipeline（顺序关键，不可重排）===
+
+	// Step 1: 非手动模式：第一波倒计时结束时自动弹出战灵选择（仅 idle 时触发，避免打断其他操作）
 	if !s.wardenReady && s.spawner.Wave == 0 && s.spawner.TimeToNextWave() <= 0 && !s.testMode && s.imode == modeIdle {
 		s.showWardenSelect()
 		return
 	}
 
-	// 0.5. 波间倒计时音效（每整秒 tick，仅最后 5 秒）
+	// Step 2: 波间倒计时音效（每整秒 tick，仅最后 5 秒）
 	if s.spawner.IsIntermission() {
 		t := s.spawner.TimeToNextWave()
 		sec := int(math.Ceil(t))
@@ -1670,8 +1672,8 @@ func (s *StageScene) updatePlaying() {
 		s.lastCountdownSec = 0
 	}
 
-	// 1. 生成敌人
-	s.spawner.Update(s.enemies, gameDT)
+	// Step 3: 生成敌人
+	s.spawner.Tick(s.enemies, gameDT)
 	// Emit spawn burst particles for newly spawned enemies
 	s.enemies.Each(func(e *enemy.Enemy) {
 		if e.IsSpawning() && e.SpawnTimer >= e.SpawnDuration-gameDT*1.5 {
@@ -1686,7 +1688,7 @@ func (s *StageScene) updatePlaying() {
 	s.waveAnnounce.Update(gameDT)
 	s.wavePanelState.Update(gameDT, s.wavePanelOpen)
 
-	// 2. 敌人状态效果（减速、流血等）
+	// Step 4: 敌人状态效果（减速、流血等）
 	pipeline.TickEnemyStatusEffects(s.enemies, gameDT, func(e *enemy.Enemy, dmg float64) {
 		render.SpawnDamageText(e.X, e.Y-10, dmg, false, e.Boss)
 		// DoT-type-specific tick sounds
@@ -1701,17 +1703,17 @@ func (s *StageScene) updatePlaying() {
 		}
 	})
 
-	// 2.5. 敌人行为 tick（传送；狂暴/回血由 TickBehaviors 统一处理）
+	// Step 5: 敌人行为 tick（传送；狂暴/回血由 TickBehaviors 统一处理）
 	s.enemies.Each(func(e *enemy.Enemy) {
 		if e.IsDying() || e.IsSpawning() {
 			return
 		}
-		if enemy.UpdateTeleport(e, gameDT) {
+		if enemy.TickTeleport(e, gameDT) {
 			s.audioMgr.PlayThrottledAt("teleportBlink", 200, gameAudio.VolHit)
 		}
 	})
 
-	// 3. 敌人移动（到达终点扣生命）
+	// Step 6: 敌人移动（到达终点扣生命）
 	s.enemies.Each(func(e *enemy.Enemy) {
 		if e.IsDying() || e.IsSpawning() {
 			return // dying/spawning enemies don't move
@@ -1729,7 +1731,7 @@ func (s *StageScene) updatePlaying() {
 		}
 	})
 
-	// 3.5. Tick spawn animation countdown
+	// Step 7: Tick spawn animation countdown
 	s.enemies.Each(func(e *enemy.Enemy) {
 		if e.SpawnTimer > 0 {
 			e.SpawnTimer -= gameDT
@@ -1739,7 +1741,7 @@ func (s *StageScene) updatePlaying() {
 		}
 	})
 
-	// 3.6. Tick dying enemies (shrink+fade animation countdown)
+	// Step 8: Tick dying enemies (shrink+fade animation countdown)
 	s.enemies.Each(func(e *enemy.Enemy) {
 		if e.IsDying() {
 			e.DyingTimer -= gameDT
@@ -1749,7 +1751,7 @@ func (s *StageScene) updatePlaying() {
 		}
 	})
 
-	// 3.6. 敌人行为 tick（治疗/隐身/旗手光环/回血）
+	// Step 9: 敌人行为 tick（治疗/隐身/旗手光环/回血）
 	behaviorEvents := enemy.TickBehaviors(s.enemies, gameDT)
 	for _, heal := range behaviorEvents.Heals {
 		// 被治疗的怪物飘绿色回血数字（使用事件中的 Target 指针，避免遍历敌人池）
@@ -1772,7 +1774,7 @@ func (s *StageScene) updatePlaying() {
 	if behaviorEvents.HasBuffer {
 		s.audioMgr.PlayThrottledAt(gameAudio.SFXBannerAura, 3000, gameAudio.VolHit*0.3)
 	}
-	// 5.5. 塔建造/出售动画 tick
+	// Step 10: 塔建造/出售动画 tick
 	s.towers.Each(func(t *tower.Tower) {
 		if t.BuildAnim > 0 {
 			t.BuildAnim -= gameDT
@@ -1789,7 +1791,7 @@ func (s *StageScene) updatePlaying() {
 		}
 	})
 
-	// 5.6. 持续粒子特效：火焰塔/冰冻塔在有目标时发射元素粒子
+	// Step 11: 持续粒子特效：火焰塔/冰冻塔在有目标时发射元素粒子
 	if s.frame%6 == 0 && game.Settings().MaxParticles > 100 {
 		s.towers.Each(func(t *tower.Tower) {
 			if t.Selling || t.Target == nil {
@@ -1804,14 +1806,14 @@ func (s *StageScene) updatePlaying() {
 		})
 	}
 
-	// 6. 能力 tick（重置属性 + 光环 buff + 区域效果 + 经济产出）
+	// Step 12: 能力 tick（重置属性 + 光环 buff + 区域效果 + 经济产出）
 	// 必须在索敌射击之前执行，确保 Range 等属性是本帧最新值
 	chainActive := s.wardenType == "chain" && s.wardenReady
 	abilityGold := pipeline.TickTowerAbilities(s.towers, s.enemies, gameDT, chainActive)
 	s.gold += abilityGold
 	s.gameStats.GoldEarned += abilityGold
 
-	// 6.05 战灵行为：必须在 ClearTransient 之后执行，否则 SetTemp 会被清掉
+	// Step 13: 战灵行为：必须在 ClearTransient 之后执行，否则 SetTemp 会被清掉
 	if s.wardenReady && s.wardenUnit != nil {
 		s.wardenUnit.Tick(&warden.TickContext{
 			Enemies:     s.enemies,
@@ -1839,10 +1841,10 @@ func (s *StageScene) updatePlaying() {
 		})
 	}
 
-	// 6.1 削强：必须在 TickTowerAbilities（ClearTransient）之后，确保 EnemySub 不被清掉
+	// Step 14: 削强：必须在 TickTowerAbilities（ClearTransient）之后，确保 EnemySub 不被清掉
 	s.tickStrengthDrain()
 
-	// 6.6. 收集光源（优先级：路径端点 > Boss > 战灵 > 塔）
+	// Step 15: 收集光源（优先级：路径端点 > Boss > 战灵 > 塔）
 	s.postPipeline.Lighting.Clear()
 	animTime := float64(s.frame) / 60.0
 	lightCap := game.Settings().MaxLights
@@ -1934,7 +1936,7 @@ func (s *StageScene) updatePlaying() {
 		}
 	}
 
-	// 7. 塔索敌射击（按攻击方式分发）
+	// Step 16: 塔索敌射击（按攻击方式分发）
 	pipeline.TickTowerCombat(s.towers, s.enemies, s.projectiles, s.beams, gameDT, func(t *tower.Tower, style string) {
 		s.audioMgr.PlayThrottledAt(gameAudio.FireSFXForStyle(style), 100, gameAudio.VolFire)
 		// Muzzle flash particles toward target (or spin angle for AoE)
@@ -1954,11 +1956,11 @@ func (s *StageScene) updatePlaying() {
 		}
 	}, onCC)
 
-	// 7. 弹射物移动 + 光束衰减
-	s.projectiles.Update(gameDT)
-	s.beams.Update(gameDT)
+	// Step 17: 弹射物移动 + 光束衰减
+	s.projectiles.Tick(gameDT)
+	s.beams.Tick(gameDT)
 
-	// 8. 弹射物命中检测（含能力触发）
+	// Step 18: 弹射物命中检测（含能力触发）
 	pipeline.TickProjectileHits(s.projectiles, s.enemies, s.towers, func(e *enemy.Enemy, damage float64, killed bool, attackStyle string, crit bool) {
 		if damage > 0 {
 			render.SpawnDamageText(e.X, e.Y-15, damage, crit, e.Boss)
@@ -2055,7 +2057,7 @@ func (s *StageScene) updatePlaying() {
 	}, onCC)
 	// 击杀统计/金币/session/tutorial/warden 由 emitKill → Bus 订阅者统一处理
 
-	// 8.5. Bleed drip particles for bleeding enemies
+	// Step 19: Bleed drip particles for bleeding enemies
 	s.enemies.Each(func(e *enemy.Enemy) {
 		if e.IsDying() {
 			return
@@ -2065,7 +2067,7 @@ func (s *StageScene) updatePlaying() {
 		}
 	})
 
-	// 9. VFX 更新（浮动文本 + 冲击 + 粒子 + 屏幕震动）
+	// Step 20: VFX 更新（浮动文本 + 冲击 + 粒子 + 屏幕震动）
 	render.UpdateFloatTexts(gameDT)
 	render.UpdateImpactVFX(gameDT)
 	s.particlePool.Update(gameDT)
@@ -2088,16 +2090,16 @@ func (s *StageScene) updatePlaying() {
 		}
 	}
 
-	// 10. 波次完成奖励 + 事件触发（由 onWaveTransition 统一处理，
-	// 此处仅处理 spawner.Update 触发的波次变化；手动开波的变化在 tryStartWave 中处理）
+	// Step 21: 波次完成奖励 + 事件触发（由 onWaveTransition 统一处理，
+	// 此处仅处理 spawner.Tick 触发的波次变化；手动开波的变化在 tryStartWave 中处理）
 
-	// 10.5. 后置安全网：清除本帧内被 abilities/skills/combat 击杀但尚未 Kill 的敌人
+	// Step 22: 后置安全网：清除本帧内被 abilities/skills/combat 击杀但尚未 Kill 的敌人
 	// 前置安全网(step 2)只能处理上一帧残留，本帧新产生的 HP<=0 敌人需要在胜负判定前处理
 	pipeline.TickEnemyStatusEffects(s.enemies, 0, nil) // dt=0 不触发 DoT，仅做 HP<=0 检查
 
-	// 11. 胜负判定（委托给游戏模式）
+	// Step 23: 胜负判定（委托给游戏模式）
 	ctx := s.buildModeCtx()
-	if s.session.CheckEndConditions(ctx) && s.state == statePlaying {
+	if s.session.TickEndConditions(ctx) && s.state == statePlaying {
 		if s.session.Status == gamemode.StatusVictory {
 			s.state = stateVictory
 			s.audioMgr.StopBGM()
@@ -2908,7 +2910,7 @@ func applyEnemyAbilityToSpawnConfig(sc *enemy.SpawnConfig, def *config.EnemyAbil
 // tryStartWave 尝试开波。若战灵未选择则先弹出战灵选择面板。
 // onWaveTransition 处理波次变化（prevWave → 当前 Wave）。
 // 包括：WaveStarted 事件 + WaveCleared 奖励/事件。
-// 由 spawner.Update 自动开波和 tryStartWave 手动开波两条路径统一调用。
+// 由 spawner.Tick 自动开波和 tryStartWave 手动开波两条路径统一调用。
 func (s *StageScene) onWaveTransition(prevWave int) {
 	// 前一波清完奖励（prevWave=0 时无前波）
 	// 注意：必须在更新 waveLivesSnapshot 之前检查完美波次

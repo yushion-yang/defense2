@@ -471,7 +471,7 @@ damage   := ParamOr(w.Params, "damage", 50.0)
 | Event Bus | 低频（每波/每击杀） | 最低 | `event.Bus`: TowerBuilt / EnemyKilled / WaveCleared |
 | TickCallbacks 结构体 | 每帧 | 中等 | `pipeline.TickCallbacks`: OnDamageText / OnKill / OnCC |
 | Pool Hooks | 生命周期 | 中等 | `EnemyPool.OnSplit` / `TowerPool.RemoveHook` |
-| 直接函数调用 | 热路径 | 最高 | `combat.ProcessDamage()` 直接操作 Enemy 字段 |
+| 直接函数调用 | 热路径 | 最高 | `combat.ApplyDamage()` 直接操作 Enemy 字段 |
 
 ```go
 // LOW-FREQ: Event Bus — 跨场景，有 payload 结构体

@@ -94,7 +94,7 @@ func (p *Pool) Spawn(x, y, baseHP, baseSpeed float64, pathIndex int, archetype s
 			e.Behavior = cfg.Behavior
 			if cfg.StealthDuration > 0 {
 				e.Buffs.Add(buff.Buff{
-					ID: "stealth", Category: buff.CatBehavior,
+					ID: buff.IDStealth, Category: buff.CatBehavior,
 					Source: "archetype", Value: 1,
 					Duration: cfg.StealthDuration, Remaining: cfg.StealthDuration,
 				})
@@ -108,7 +108,7 @@ func (p *Pool) Spawn(x, y, baseHP, baseSpeed float64, pathIndex int, archetype s
 			}
 			if cfg.HealScale > 0 {
 				e.Buffs.Add(buff.Buff{
-					ID: "healAura", Category: buff.CatBehavior, Source: "archetype",
+					ID: buff.IDHealAura, Category: buff.CatBehavior, Source: "archetype",
 					Value: cfg.HealScale, Value2: cfg.HealRadius,
 					Duration: -1, Remaining: -1,
 				})
@@ -120,7 +120,7 @@ func (p *Pool) Spawn(x, y, baseHP, baseSpeed float64, pathIndex int, archetype s
 			}
 			if cfg.AuraRange > 0 {
 				e.Buffs.Add(buff.Buff{
-					ID: "bufferAura", Category: buff.CatBehavior, Source: "archetype",
+					ID: buff.IDBufferAura, Category: buff.CatBehavior, Source: "archetype",
 					Value: cfg.AuraSpeedUp, Value2: cfg.AuraRange,
 					Duration: -1, Remaining: -1,
 				})
@@ -137,7 +137,7 @@ func (p *Pool) Spawn(x, y, baseHP, baseSpeed float64, pathIndex int, archetype s
 			e.DashCooldown = cfg.DashCooldown
 			if cfg.PhaseDuration > 0 {
 				e.Buffs.Add(buff.Buff{
-					ID: "phaseShift", Category: buff.CatBehavior, Source: "archetype",
+					ID: buff.IDPhaseShift, Category: buff.CatBehavior, Source: "archetype",
 					Value: cfg.PhaseDuration, Value2: cfg.PhaseCooldown,
 					Duration: -1, Remaining: -1,
 				})
@@ -186,7 +186,7 @@ func (p *Pool) Kill(e *Enemy) {
 		// TODO: 复活能力将通过能力系统实现
 		// 分裂体死亡时生成子体（必须在 dying 标记前执行，否则子体无法获取父体路径）
 		if e.SplitCount > 0 {
-			children := HandleSplitterDeath(e, p)
+			children := OnSplitterDeath(e, p)
 			if p.OnSplit != nil && len(children) > 0 {
 				p.OnSplit(children)
 			}
@@ -218,7 +218,7 @@ func (p *Pool) Kill(e *Enemy) {
 			e.DyingDuration = dying.BossDuration
 		}
 		// Clear stealth so death animation renders at full alpha
-		e.Buffs.RemoveByID("stealth")
+		e.Buffs.RemoveByID(buff.IDStealth)
 		p.Count--
 	}
 }

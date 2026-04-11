@@ -184,7 +184,7 @@ func TestRegression_DashOnHit_Trigger(t *testing.T) {
 
 // ── PhaseShift (IsDamageImmune) ──
 
-// BUG: IsDamageImmune was not blocking damage in ProcessDamage pipeline.
+// BUG: IsDamageImmune was not blocking damage in ApplyDamage pipeline.
 // Verify: IsDamageImmune=true => damage=0, blocked.
 func TestRegression_PhaseShift_BlocksDamage(t *testing.T) {
 	e := makeEnemy(100, 100)

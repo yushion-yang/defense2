@@ -28,7 +28,7 @@ func TestBossWaveHasEntranceDelay(t *testing.T) {
 		// Complete the wave by updating until WaveActive goes false
 		pool := enemy.NewPool(200)
 		for s.WaveActive {
-			s.Update(pool, 0.6)
+			s.Tick(pool, 0.6)
 		}
 	}
 
@@ -61,7 +61,7 @@ func TestEntranceDelayPreventsSpawning(t *testing.T) {
 	for i := 0; i < 4; i++ {
 		s.StartNextWave()
 		for s.WaveActive {
-			s.Update(pool, 0.6)
+			s.Tick(pool, 0.6)
 		}
 	}
 
@@ -72,7 +72,7 @@ func TestEntranceDelayPreventsSpawning(t *testing.T) {
 	}
 
 	// Update with small dt — should NOT spawn during entrance delay
-	s.Update(pool, 0.5)
+	s.Tick(pool, 0.5)
 	if pool.Count > initialCount {
 		t.Error("Enemies should not spawn during EntranceDelay")
 	}
@@ -81,13 +81,13 @@ func TestEntranceDelayPreventsSpawning(t *testing.T) {
 	}
 
 	// Update enough to exhaust the 3s delay (0.5 + 2.5 = 3.0)
-	s.Update(pool, 2.5)
+	s.Tick(pool, 2.5)
 	if s.EntranceDelay != 0 {
 		t.Errorf("EntranceDelay should be 0 after 3s total, got %v", s.EntranceDelay)
 	}
 
 	// Now spawning should proceed
-	s.Update(pool, 0.1)
+	s.Tick(pool, 0.1)
 	if pool.Count <= initialCount {
 		t.Error("Enemies should spawn after EntranceDelay expires")
 	}
@@ -102,14 +102,14 @@ func TestEntranceDelayDecrementsCorrectly(t *testing.T) {
 	for i := 0; i < 4; i++ {
 		s.StartNextWave()
 		for s.WaveActive {
-			s.Update(pool, 0.6)
+			s.Tick(pool, 0.6)
 		}
 	}
 
 	s.StartNextWave()
 	initial := s.EntranceDelay
 
-	s.Update(pool, 1.0)
+	s.Tick(pool, 1.0)
 	expected := initial - 1.0
 	if s.EntranceDelay != expected {
 		t.Errorf("EntranceDelay after 1s = %v, want %v", s.EntranceDelay, expected)

@@ -221,38 +221,38 @@ func (e *Enemy) SetFloatText(text string, r, g, b uint8) {
 // ── BuffList 查询方法 ──
 
 // IsStunned returns true if the enemy has an active stun buff.
-func (e *Enemy) IsStunned() bool { return e.Buffs != nil && e.Buffs.Has("stun") }
+func (e *Enemy) IsStunned() bool { return e.Buffs != nil && e.Buffs.Has(buff.IDStun) }
 
 // IsSlowed returns true if the enemy has an active slow buff.
-func (e *Enemy) IsSlowed() bool { return e.Buffs != nil && e.Buffs.Has("slow") }
+func (e *Enemy) IsSlowed() bool { return e.Buffs != nil && e.Buffs.Has(buff.IDSlow) }
 
 // IsRooted returns true if the enemy has an active root buff.
-func (e *Enemy) IsRooted() bool { return e.Buffs != nil && e.Buffs.Has("root") }
+func (e *Enemy) IsRooted() bool { return e.Buffs != nil && e.Buffs.Has(buff.IDRoot) }
 
 // IsBleeding returns true if the enemy has an active bleed buff.
-func (e *Enemy) IsBleeding() bool { return e.Buffs != nil && e.Buffs.Has("bleed") }
+func (e *Enemy) IsBleeding() bool { return e.Buffs != nil && e.Buffs.Has(buff.IDBleed) }
 
 // IsBurning returns true if the enemy has an active burn buff.
-func (e *Enemy) IsBurning() bool { return e.Buffs != nil && e.Buffs.Has("burn") }
+func (e *Enemy) IsBurning() bool { return e.Buffs != nil && e.Buffs.Has(buff.IDBurn) }
 
 // IsPoisoned returns true if the enemy has an active poison buff.
-func (e *Enemy) IsPoisoned() bool { return e.Buffs != nil && e.Buffs.Has("poison") }
+func (e *Enemy) IsPoisoned() bool { return e.Buffs != nil && e.Buffs.Has(buff.IDPoison) }
 
 // IsWeakened returns true if the enemy has an active weaken buff.
-func (e *Enemy) IsWeakened() bool { return e.Buffs != nil && e.Buffs.Has("weaken") }
+func (e *Enemy) IsWeakened() bool { return e.Buffs != nil && e.Buffs.Has(buff.IDWeaken) }
 
 // HasControlImmunity returns true if the enemy has a temporary controlImmune buff.
-func (e *Enemy) HasControlImmunity() bool { return e.Buffs != nil && e.Buffs.Has("controlImmune") }
+func (e *Enemy) HasControlImmunity() bool { return e.Buffs != nil && e.Buffs.Has(buff.IDControlImmune) }
 
 // IsStealthed returns true if the enemy has an active stealth buff.
-func (e *Enemy) IsStealthed() bool { return e.Buffs != nil && e.Buffs.Has("stealth") }
+func (e *Enemy) IsStealthed() bool { return e.Buffs != nil && e.Buffs.Has(buff.IDStealth) }
 
 // StealthRemaining returns the remaining stealth duration (0 if not stealthed).
 func (e *Enemy) StealthRemaining() float64 {
 	if e.Buffs == nil {
 		return 0
 	}
-	if b, ok := e.Buffs.Get("stealth"); ok {
+	if b, ok := e.Buffs.Get(buff.IDStealth); ok {
 		return b.Remaining
 	}
 	return 0
@@ -263,7 +263,7 @@ func (e *Enemy) GetSlowFactor() float64 {
 	if e.Buffs == nil {
 		return 1.0
 	}
-	b, ok := e.Buffs.Get("slow")
+	b, ok := e.Buffs.Get(buff.IDSlow)
 	if !ok {
 		return 1.0
 	}
@@ -275,7 +275,7 @@ func (e *Enemy) GetWeakenAmplify() float64 {
 	if e.Buffs == nil {
 		return 0
 	}
-	b, ok := e.Buffs.Get("weaken")
+	b, ok := e.Buffs.Get(buff.IDWeaken)
 	if !ok {
 		return 0
 	}
@@ -285,19 +285,19 @@ func (e *Enemy) GetWeakenAmplify() float64 {
 // ── Phase 2 behavior buff helpers ──
 
 // HasBerserk returns true if the enemy has an active berserk buff.
-func (e *Enemy) HasBerserk() bool { return e.Buffs != nil && e.Buffs.Has("berserk") }
+func (e *Enemy) HasBerserk() bool { return e.Buffs != nil && e.Buffs.Has(buff.IDBerserk) }
 
 // HasRegen returns true if the enemy has an active regen buff.
-func (e *Enemy) HasRegen() bool { return e.Buffs != nil && e.Buffs.Has("regen") }
+func (e *Enemy) HasRegen() bool { return e.Buffs != nil && e.Buffs.Has(buff.IDRegen) }
 
 // HasHealAura returns true if the enemy has an active healAura buff.
-func (e *Enemy) HasHealAura() bool { return e.Buffs != nil && e.Buffs.Has("healAura") }
+func (e *Enemy) HasHealAura() bool { return e.Buffs != nil && e.Buffs.Has(buff.IDHealAura) }
 
 // HasBufferAura returns true if the enemy has an active bufferAura buff.
-func (e *Enemy) HasBufferAura() bool { return e.Buffs != nil && e.Buffs.Has("bufferAura") }
+func (e *Enemy) HasBufferAura() bool { return e.Buffs != nil && e.Buffs.Has(buff.IDBufferAura) }
 
 // HasPhaseShift returns true if the enemy has an active phaseShift buff.
-func (e *Enemy) HasPhaseShift() bool { return e.Buffs != nil && e.Buffs.Has("phaseShift") }
+func (e *Enemy) HasPhaseShift() bool { return e.Buffs != nil && e.Buffs.Has(buff.IDPhaseShift) }
 
 // GetHealRadius returns the heal aura radius from BuffList (0 if none).
 func (e *Enemy) GetHealRadius() float64 {
@@ -320,7 +320,7 @@ func (e *Enemy) GetHealAuraParams() (power, radius float64, ok bool) {
 	if e.Buffs == nil {
 		return 0, 0, false
 	}
-	b, found := e.Buffs.Get("healAura")
+	b, found := e.Buffs.Get(buff.IDHealAura)
 	if !found {
 		return 0, 0, false
 	}
@@ -332,7 +332,7 @@ func (e *Enemy) GetBufferAuraParams() (speedUp, radius float64, ok bool) {
 	if e.Buffs == nil {
 		return 0, 0, false
 	}
-	b, found := e.Buffs.Get("bufferAura")
+	b, found := e.Buffs.Get(buff.IDBufferAura)
 	if !found {
 		return 0, 0, false
 	}
@@ -344,7 +344,7 @@ func (e *Enemy) GetDamageReduce() float64 {
 	if e.Buffs == nil {
 		return 0
 	}
-	b, ok := e.Buffs.Get("damageReduce")
+	b, ok := e.Buffs.Get(buff.IDDamageReduce)
 	if !ok {
 		return 0
 	}
@@ -353,7 +353,7 @@ func (e *Enemy) GetDamageReduce() float64 {
 
 // HasSpeedUp returns true if the enemy has an active speedUp buff.
 func (e *Enemy) HasSpeedUp() bool {
-	return e.Buffs != nil && e.Buffs.Has("speedUp")
+	return e.Buffs != nil && e.Buffs.Has(buff.IDSpeedUp)
 }
 
 // GetSpeedUp returns the speed up value from BuffList (0 = no speed up).
@@ -361,7 +361,7 @@ func (e *Enemy) GetSpeedUp() float64 {
 	if e.Buffs == nil {
 		return 0
 	}
-	b, ok := e.Buffs.Get("speedUp")
+	b, ok := e.Buffs.Get(buff.IDSpeedUp)
 	if !ok {
 		return 0
 	}
@@ -384,8 +384,8 @@ func TickStatusEffects(e *Enemy, dt float64) {
 	// ── BuffList tick: 统一处理所有 buff 倒计时和过期 ──
 	if e.Buffs != nil {
 		// Track pre-tick state to detect buff expiry
-		wasSlowed := e.Buffs.Has("slow")
-		hadControlImmune := e.Buffs.Has("controlImmune")
+		wasSlowed := e.Buffs.Has(buff.IDSlow)
+		hadControlImmune := e.Buffs.Has(buff.IDControlImmune)
 
 		// DoT damage via BuffList (must call BEFORE Tick so expiring DoTs still deal damage)
 		dotInterval := bal.Combat.DotTickInterval
@@ -402,7 +402,7 @@ func TickStatusEffects(e *Enemy, dt float64) {
 				buffDotDmg += e.ZoneDmgAccum
 				e.ZoneDmgAccum = 0
 			}
-		} else if !e.Buffs.Has("bleed") && !e.Buffs.Has("burn") && !e.Buffs.Has("poison") {
+		} else if !e.Buffs.Has(buff.IDBleed) && !e.Buffs.Has(buff.IDBurn) && !e.Buffs.Has(buff.IDPoison) {
 			e.ZoneDotTimer = 0
 		}
 
@@ -416,7 +416,7 @@ func TickStatusEffects(e *Enemy, dt float64) {
 		// ── Post-tick: handle buff-driven side effects ──
 
 		// Slow: keep Speed in sync with slow buff
-		if b, ok := e.Buffs.Get("slow"); ok {
+		if b, ok := e.Buffs.Get(buff.IDSlow); ok {
 			factor := b.Value
 			if factor < bal.Combat.MinSpeedRatio {
 				factor = bal.Combat.MinSpeedRatio
@@ -429,7 +429,7 @@ func TickStatusEffects(e *Enemy, dt float64) {
 
 		// ControlImmune: when buff expires, clear temporary immunity flags
 		// (archetype immunity set in Spawn is never cleared here)
-		if hadControlImmune && !e.Buffs.Has("controlImmune") {
+		if hadControlImmune && !e.Buffs.Has(buff.IDControlImmune) {
 			e.IsControlImmune = false
 			e.IsStunImmune = false
 			e.IsSlowImmune = false

@@ -1,5 +1,5 @@
 // damage_pipeline.go — 8步伤害管线。
-// 所有伤害（弹射物、光束、技能、DOT）最终都应通过 ProcessDamage 处理，
+// 所有伤害（弹射物、光束、技能、DOT）最终都应通过 ApplyDamage 处理，
 // 确保免疫/减免/阈值等机制统一生效。
 //
 // 8步管线:
@@ -55,9 +55,9 @@ type DamageResult struct {
 	Thresholds []enemy.Threshold // 步骤6: 本次触发的阈值列表
 }
 
-// ProcessDamage 执行8步伤害管线。
+// ApplyDamage 执行8步伤害管线。
 // 这是所有伤害的统一入口，确保免疫/减免/阈值等机制一致生效。
-func ProcessDamage(input DamageInput) DamageResult {
+func ApplyDamage(input DamageInput) DamageResult {
 	e := input.Target
 	dmgType := input.DamageType
 	if dmgType == "" {
@@ -202,7 +202,7 @@ func ProcessDamage(input DamageInput) DamageResult {
 // QuickDamage 快捷伤害函数（不需要完整管线时使用）。
 // 直接走管线但使用默认参数，返回最终伤害和击杀标记。
 func QuickDamage(target *enemy.Enemy, rawDamage float64, damageType string) (finalDamage float64, killed bool) {
-	r := ProcessDamage(DamageInput{
+	r := ApplyDamage(DamageInput{
 		Target:     target,
 		RawDamage:  rawDamage,
 		DamageType: damageType,

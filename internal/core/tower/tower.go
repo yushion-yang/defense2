@@ -46,8 +46,8 @@ type Tower struct {
 	DamageTier string
 	SpeedTier  string
 	RangeTier  string
-	Color    [3]uint8 // 显示颜色 RGB
-	FireAnim float64  // 射击动画计时器（射击时设为 0.15，逐帧衰减）
+	Color      [3]uint8 // 显示颜色 RGB
+	FireAnim   float64  // 射击动画计时器（射击时设为 0.15，逐帧衰减）
 	Angle      float64  // 朝向角度（弧度，0=向上，顺时针）
 	// 战力缩放参数（来自 JSON 配置，放置后不变）
 	// 公式: attr = Base + Potential * (strength / 100)
@@ -71,7 +71,7 @@ type Tower struct {
 
 	// 战力系统
 	Strength *strength.StrengthData // 战力运行时数据
-	Buffs    *buff.BuffList          // 当前生效的 buff 列表（统一 BuffList 容器）
+	Buffs    *buff.BuffList         // 当前生效的 buff 列表（统一 BuffList 容器）
 
 	// 光环加成（由 RecalcStats 从 BuffList 读取）
 	CritBonus float64 // 暴击光环加成的暴击率（aura:crit）
@@ -123,10 +123,10 @@ func (t *Tower) RecalcStats() {
 	// Aura modifiers from BuffList
 	var pctDamage, pctSpeed, flatRange float64
 	if t.Buffs != nil {
-		pctDamage = t.Buffs.SumByID("aura:damageAmp") // soloBoost + damageUpAura → pctDamage
-		pctSpeed = t.Buffs.SumByID("aura:pctSpeed")
-		flatRange = t.Buffs.SumByID("aura:flatRange")
-		t.CritBonus = t.Buffs.SumByID("aura:crit")
+		pctDamage = t.Buffs.SumByID(buff.IDAuraDamageAmp) // soloBoost + damageUpAura → pctDamage
+		pctSpeed = t.Buffs.SumByID(buff.IDAuraPctSpeed)
+		flatRange = t.Buffs.SumByID(buff.IDAuraFlatRange)
+		t.CritBonus = t.Buffs.SumByID(buff.IDAuraCrit)
 		t.DamageAmp = pctDamage // also exposed for combat code (apply_hit.go)
 	} else {
 		t.CritBonus = 0
@@ -176,13 +176,13 @@ func (t *Tower) AllAbilities() []string {
 func (t *Tower) ResolveAttackStyle() AttackStyle {
 	pattern := t.AbilitySlots[0]
 	switch pattern {
-	case "scatter":
+	case AbilityScatter:
 		return StyleScatter
-	case "wideBeam":
+	case AbilityWideBeam:
 		return StyleWideBeam
-	case "spinAoe":
+	case AbilitySpinAoe:
 		return StyleSpinAoE
-	case "radial":
+	case AbilityRadial:
 		return StyleRadial
 	default:
 		// bounce/splash/multiTarget/空 → 都用 projectile
@@ -195,14 +195,14 @@ func (t *Tower) ResolveAttackStyle() AttackStyle {
 
 // abilitySpriteMap 攻击能力 → 精灵资源标识映射。
 var abilitySpriteMap = map[string]string{
-	"enhance":     "fortress",
-	"scatter":     "shotgun",
-	"wideBeam":    "prism",
-	"spinAoe":     "cyclone",
-	"bounce":      "ricochet",
-	"splash":      "mortar",
-	"multiTarget": "hydra",
-	"radial":      "nova",
+	AbilityEnhance:     "fortress",
+	AbilityScatter:     "shotgun",
+	AbilityWideBeam:    "prism",
+	AbilitySpinAoe:     "cyclone",
+	AbilityBounce:      "ricochet",
+	AbilitySplash:      "mortar",
+	AbilityMultiTarget: "hydra",
+	AbilityRadial:      "nova",
 }
 
 // abilitySpriteLabels 精灵标识 → 中文名映射。
@@ -233,4 +233,3 @@ func SpriteLabelFor(spriteKey string) string {
 	}
 	return "哨兵"
 }
-

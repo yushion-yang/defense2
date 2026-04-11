@@ -283,7 +283,7 @@ func TestAllMapsLoadable(t *testing.T) {
 // TestDamagePipelineMinDamage 验证管线最低伤害保底。
 func TestDamagePipelineMinDamage(t *testing.T) {
 	e := &enemy.Enemy{HP: 100, MaxHP: 100, Active: true}
-	r := combat.ProcessDamage(combat.DamageInput{
+	r := combat.ApplyDamage(combat.DamageInput{
 		Target:    e,
 		RawDamage: 0.001, // 极小伤害
 	})
@@ -295,7 +295,7 @@ func TestDamagePipelineMinDamage(t *testing.T) {
 // TestDamagePipelineZeroDamage 验证 0 伤害不造成扣血。
 func TestDamagePipelineZeroDamage(t *testing.T) {
 	e := &enemy.Enemy{HP: 100, MaxHP: 100, Active: true}
-	r := combat.ProcessDamage(combat.DamageInput{
+	r := combat.ApplyDamage(combat.DamageInput{
 		Target:    e,
 		RawDamage: 0,
 	})
@@ -307,7 +307,7 @@ func TestDamagePipelineZeroDamage(t *testing.T) {
 // TestDamagePipelineInvincibleBlocks 验证无敌状态阻挡伤害。
 func TestDamagePipelineInvincibleBlocks(t *testing.T) {
 	e := &enemy.Enemy{HP: 100, MaxHP: 100, Active: true, StatusEffects: enemy.StatusEffects{IsInvincible: true}}
-	r := combat.ProcessDamage(combat.DamageInput{
+	r := combat.ApplyDamage(combat.DamageInput{
 		Target:    e,
 		RawDamage: 50,
 	})
@@ -322,7 +322,7 @@ func TestDamagePipelineInvincibleBlocks(t *testing.T) {
 // TestDamagePipelineKill 验证伤害超过 HP 时判杀。
 func TestDamagePipelineKill(t *testing.T) {
 	e := &enemy.Enemy{HP: 10, MaxHP: 100, Active: true}
-	r := combat.ProcessDamage(combat.DamageInput{
+	r := combat.ApplyDamage(combat.DamageInput{
 		Target:    e,
 		RawDamage: 50,
 	})

@@ -88,13 +88,13 @@ func NewSpawner(gm *gamemap.GameMap, maxWaves int) *Spawner {
 	}
 }
 
-// Update 每帧调用，驱动波次计时和敌人生成。
-func (s *Spawner) Update(pool *Pool, dt float64) {
+// Tick 每帧调用，驱动波次计时和敌人生成。
+func (s *Spawner) Tick(pool *Pool, dt float64) {
 	if s.AllDone {
 		return
 	}
 	// "none" 过滤器：不生成任何敌人
-	if s.EnemyFilter == "none" {
+	if s.EnemyFilter == FilterNone {
 		return
 	}
 
@@ -354,7 +354,7 @@ func (s *Spawner) pickArchetype() string {
 
 // filterEntries 根据 EnemyFilter 过滤权重条目。
 func (s *Spawner) filterEntries(entries []waveEntry) []waveEntry {
-	if s.EnemyFilter == "" || s.EnemyFilter == "mixed" {
+	if s.EnemyFilter == "" || s.EnemyFilter == FilterMixed {
 		// mixed/默认：排除 boss 原型（boss 由波末追加逻辑处理）
 		return entries
 	}
@@ -388,21 +388,21 @@ func (s *Spawner) matchesFilter(name string, cfg *SpawnConfig) bool {
 	isBoss := cfg != nil && cfg.Boss
 
 	switch s.EnemyFilter {
-	case "ground-only":
+	case FilterGroundOnly:
 		return !isBoss
-	case "flying-only":
+	case FilterFlyingOnly:
 		return false // flying enemies removed
-	case "boss-only":
+	case FilterBossOnly:
 		return isBoss
-	case "dummy":
+	case FilterDummy:
 		return name == "dummy"
-	case "stress":
+	case FilterStress:
 		return !isBoss
-	case "none":
+	case FilterNone:
 		return false // no spawning
-	case "all-static":
+	case FilterAllStatic:
 		return true // all types (used by spawnAllStatic, not by wave spawning)
-	case "mixed", "":
+	case FilterMixed, "":
 		return !isBoss // default: exclude boss (added separately)
 	default:
 		// 精确原型匹配（如 EnemyFilter="armored" 只出 armored 怪）
@@ -493,18 +493,18 @@ func applyWaveBuff(e *Enemy, buffID string) {
 	case "berserk":
 		// Value = speedScale, Value2 = threshold; actual berserk activation in behaviors.go
 		e.Buffs.Add(buff.Buff{
-			ID: "berserk", Category: buff.CatBehavior, Source: "wave_buff",
+			ID: buff.IDBerserk, Category: buff.CatBehavior, Source: "wave_buff",
 			Value: bc.Berserk.SpeedScale, Value2: bc.Berserk.Threshold,
 			Duration: -1, Remaining: -1,
 		})
 	case "regen":
 		e.Buffs.Add(buff.Buff{
-			ID: "regen", Category: buff.CatBehavior, Source: "wave_buff",
+			ID: buff.IDRegen, Category: buff.CatBehavior, Source: "wave_buff",
 			Value: e.MaxHP * bc.Regen.HpRatio, Duration: -1, Remaining: -1,
 		})
 	case "healAura":
 		e.Buffs.Add(buff.Buff{
-			ID: "healAura", Category: buff.CatBehavior, Source: "wave_buff",
+			ID: buff.IDHealAura, Category: buff.CatBehavior, Source: "wave_buff",
 			Value: bc.HealAura.Power, Value2: bc.HealAura.Radius,
 			Duration: -1, Remaining: -1,
 		})
@@ -512,13 +512,13 @@ func applyWaveBuff(e *Enemy, buffID string) {
 		e.HealCooldown = 0
 	case "speedAura":
 		e.Buffs.Add(buff.Buff{
-			ID: "bufferAura", Category: buff.CatBehavior, Source: "wave_buff",
+			ID: buff.IDBufferAura, Category: buff.CatBehavior, Source: "wave_buff",
 			Value: bc.SpeedAura.SpeedUp, Value2: bc.SpeedAura.Radius,
 			Duration: -1, Remaining: -1,
 		})
 	case "damageReduce":
 		e.Buffs.Add(buff.Buff{
-			ID: "damageReduce", Category: buff.CatDefense, Source: "wave_buff",
+			ID: buff.IDDamageReduce, Category: buff.CatDefense, Source: "wave_buff",
 			Value: bc.DamageReduce.Ratio, Duration: -1, Remaining: -1,
 		})
 	case "deathSplit":

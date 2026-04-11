@@ -19,7 +19,7 @@ func (h *RadialHandler) Fire(t *tower.Tower, target *enemy.Enemy, ctx *AttackCon
 	totalShots := bal.Combat.RadialBaseShots // fallback
 	rangeMult := bal.Combat.RadialRangeMult
 	if abTable := config.GlobalAbilityTable(); abTable != nil {
-		if def, ok := abTable["radial"]; ok {
+		if def, ok := abTable[tower.AbilityRadial]; ok {
 			str := 100.0
 			if t.Strength != nil {
 				str = t.Strength.Effective()

@@ -26,7 +26,7 @@ type SysEndCondition struct {
 }
 
 func (s SysEndCondition) Tick(ctx *TickCtx) bool {
-	if ctx.Session.CheckEndConditions(ctx.BuildModeCtx()) {
+	if ctx.Session.TickEndConditions(ctx.BuildModeCtx()) {
 		switch ctx.Session.Status {
 		case gamemode.StatusVictory:
 			if s.OnVictory != nil {

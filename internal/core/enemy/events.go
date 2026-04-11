@@ -26,7 +26,7 @@ func ApplyEnemyEvent(e *Enemy, kind string, value float64) {
 	case "periodicHealPercent":
 		// 设置每秒回血量（按最大血量百分比）via BuffList
 		e.Buffs.Add(buff.Buff{
-			ID: "regen", Category: buff.CatBehavior, Source: "wave_event",
+			ID: buff.IDRegen, Category: buff.CatBehavior, Source: "wave_event",
 			Value: e.MaxHP * value, Duration: -1, Remaining: -1,
 		})
 

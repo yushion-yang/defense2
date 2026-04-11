@@ -30,7 +30,7 @@ func ApplyStun(e *enemy.Enemy, duration float64, source string) bool {
 
 	// 通过 BuffList 施加眩晕（Override 模式，后来居上）
 	e.Buffs.Add(buff.Buff{
-		ID:        "stun",
+		ID:        buff.IDStun,
 		Category:  buff.CatCC,
 		Source:    source,
 		Duration:  actualDuration,
@@ -67,14 +67,14 @@ func ApplySlow(e *enemy.Enemy, factor, duration float64, source string) bool {
 	}
 
 	// 手动比较减速强度（lower factor = stronger slow，Strongest 模式比较 Value 不适用）
-	existing, hasExisting := e.Buffs.Get("slow")
+	existing, hasExisting := e.Buffs.Get(buff.IDSlow)
 	if hasExisting && factor >= existing.Value && actualDuration <= existing.Remaining {
 		// 已有减速更强或相同，保持不变
 		return true
 	}
-	e.Buffs.RemoveByID("slow") // 清除旧减速，施加新的
+	e.Buffs.RemoveByID(buff.IDSlow) // 清除旧减速，施加新的
 	e.Buffs.Add(buff.Buff{
-		ID:        "slow",
+		ID:        buff.IDSlow,
 		Category:  buff.CatCC,
 		Source:    source,
 		Value:     factor,
@@ -104,7 +104,7 @@ func ApplyRoot(e *enemy.Enemy, duration float64, source string) bool {
 
 	// 通过 BuffList 施加定身（Override 模式，后来居上）
 	e.Buffs.Add(buff.Buff{
-		ID:        "root",
+		ID:        buff.IDRoot,
 		Category:  buff.CatCC,
 		Source:    source,
 		Duration:  actualDuration,
@@ -123,7 +123,7 @@ func ApplyControlImmunity(e *enemy.Enemy, duration float64) {
 
 	// 施加控制免疫 buff
 	e.Buffs.Add(buff.Buff{
-		ID:        "controlImmune",
+		ID:        buff.IDControlImmune,
 		Category:  buff.CatDefense,
 		Source:    "purge",
 		Duration:  duration,

@@ -170,12 +170,12 @@ func TickProjectileHits(projectiles *projectile.Pool, enemies *enemy.Pool, tower
 // 无 multiTarget 能力时返回 0。
 func multiTargetCount(t *tower.Tower) int {
 	for _, aName := range t.Abilities {
-		if aName == "multiTarget" {
+		if aName == tower.AbilityMultiTarget {
 			abTable := config.GlobalAbilityTable()
 			if abTable == nil {
 				return 1
 			}
-			def, ok := abTable["multiTarget"]
+			def, ok := abTable[tower.AbilityMultiTarget]
 			if !ok {
 				return 1
 			}
@@ -194,7 +194,7 @@ func multiTargetCount(t *tower.Tower) int {
 }
 
 // TickEnemyStatusEffects 敌人状态效果子管线：处理所有敌人的减速/流血，击杀血量归零的敌人。
-// DoT 伤害通过 ProcessDamage 管线结算（走虚弱/坚韧/免疫/减伤等完整流程）。
+// DoT 伤害通过 ApplyDamage 管线结算（走虚弱/坚韧/免疫/减伤等完整流程）。
 func TickEnemyStatusEffects(enemies *enemy.Pool, dt float64, onDotDmg func(e *enemy.Enemy, dmg float64)) {
 	enemies.Each(func(e *enemy.Enemy) {
 		if e.IsDying() || e.IsSpawning() {
@@ -203,7 +203,7 @@ func TickEnemyStatusEffects(enemies *enemy.Pool, dt float64, onDotDmg func(e *en
 		enemy.TickStatusEffects(e, dt)
 		// DoT tick 触发时走伤害管线
 		if e.LastDotDmg > 0 {
-			result := combat.ProcessDamage(combat.DamageInput{
+			result := combat.ApplyDamage(combat.DamageInput{
 				Target:      e,
 				RawDamage:   e.LastDotDmg,
 				DamageType:  combat.DmgMagic, // DoT 为魔法伤害（受虚弱/坚韧影响，不穿无敌）

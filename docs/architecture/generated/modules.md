@@ -74,7 +74,7 @@ func DefaultPool() *Pool
 
 Methods:
 ```go
-func (s *Spawner) Update(pool *Pool, dt float64) 
+func (s *Spawner) Tick(pool *Pool, dt float64)
 func (s *Spawner) enemyCount() int 
 func (s *Spawner) IsClear(pool *Pool) bool 
 func (p *Pool) Spawn(x, y, hp, speed, radius float64, pathIndex int) *Enemy 

@@ -68,7 +68,7 @@ func TickTowerAbilities(towers *tower.Pool, enemies *enemy.Pool, dt float64, cha
 			return // selling towers skip abilities
 		}
 		for _, aName := range t.Abilities {
-			ab, ok := tower.Registry[aName]
+			ab, ok := tower.Lookup(aName)
 			if !ok {
 				continue
 			}

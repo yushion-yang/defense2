@@ -62,10 +62,10 @@
 | D1 | healer 治疗 | 读 behaviors.go tickHealer | 范围内友方按 MaxHP% 回复，被沉默时停止 |
 | D2 | stealth 揭隐 | 读 behaviors.go tickStealth | 计时到期或被击中时破隐 |
 | D3 | buffer 加速 | 读 behaviors.go tickBuffer | SpeedBuff 每帧清零→buffer 重写，被沉默时停止 |
-| D4 | splitter 分裂 | 读 pool.go Kill | SplitCount > 0 时 HandleSplitterDeath，子体不递归 |
+| D4 | splitter 分裂 | 读 pool.go Kill | SplitCount > 0 时 OnSplitterDeath，子体不递归 |
 | D5 | deathSpawn 召唤 | 读 pool.go Kill | DeathSpawnCount > 0 时生成 DeathSpawnArch 原型 |
-| D6 | berserk 狂暴 | 读 behaviors.go UpdateBerserk | 低 HP 时永久提升 BaseSpeed（一次性） |
-| D7 | teleporter 传送 | 读 behaviors.go UpdateTeleport | 周期性位置跳跃，跳过 N 个路径段 |
+| D6 | berserk 狂暴 | 读 behaviors.go TickBerserk | 低 HP 时永久提升 BaseSpeed（一次性） |
+| D7 | teleporter 传送 | 读 behaviors.go TickTeleport | 周期性位置跳跃，跳过 N 个路径段 |
 
 ### E. Boss 行为
 
@@ -89,14 +89,14 @@
 | # | 检查 | 方法 | 预期 |
 |---|------|------|------|
 | G1 | Kill → DyingTimer | 读 pool.go Kill | 普通 0.3s，Boss 0.5s |
-| G2 | Kill → 分裂/召唤 | 读 pool.go Kill | SplitCount > 0 触发 HandleSplitterDeath；DeathSpawnCount > 0 触发 deathSpawn |
+| G2 | Kill → 分裂/召唤 | 读 pool.go Kill | SplitCount > 0 触发 OnSplitterDeath；DeathSpawnCount > 0 触发 deathSpawn |
 | G3 | Count 递减时机 | 读 pool.go Kill | Kill 时 Count--（不是 FinishDying 时） |
 | G4 | KillImmediate | 读 pool.go KillImmediate | 泄漏用，无 dying 动画，立即 Active=false |
 | G5 | IsDying 跳过 | 全局搜索 IsDying() | targeting/collision/movement 应跳过 dying 敌人 |
 
 ## 跨系统关联
 
-- Spawn ← spawner.Update ← stage.updatePlaying step 1
+- Spawn ← spawner.Tick ← stage.updatePlaying step 1
 - Kill → emitKill → EventBus(EvtEnemyKilled) → session.OnEnemyKilled → gold 奖励
 - 泄漏 → lives-- → EventBus(EvtEnemyLeaked) → session.OnEnemyLeaked
-- buff_templates ← applyWaveBuffs ← spawner.Update（出怪时注入）
+- buff_templates ← applyWaveBuffs ← spawner.Tick（出怪时注入）

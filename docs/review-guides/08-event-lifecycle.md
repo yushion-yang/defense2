@@ -39,7 +39,7 @@
 
 | # | 检查 | 方法 | 预期 |
 |---|------|------|------|
-| C1 | 自动开波路径 | 读 spawner.Update → wave 变化 | stage.updatePlaying 检测 prevWave < spawner.Wave → onWaveTransition |
+| C1 | 自动开波路径 | 读 spawner.Tick → wave 变化 | stage.updatePlaying 检测 prevWave < spawner.Wave → onWaveTransition |
 | C2 | 手动开波路径 | 读 tryStartWave | prevWave 记录 → StartNextWave → onWaveTransition(prevWave) |
 | C3 | autoplay 开波路径 | 读 executeAutoPlayAction APActionStartWave | 同手动开波，包裹 prevWave 检测 |
 | C4 | onWaveTransition | 读完整函数 | WaveStarted 事件 + WaveCleared 奖金 + 能力解锁 |
@@ -56,7 +56,7 @@
 
 **伤害→击杀→奖金 完整链**：
 ```
-tower.Fire → projectile.Hit → ApplyHit → ProcessDamage → Killed=true
+tower.Fire → projectile.Hit → ApplyHit → ApplyDamage → Killed=true
 → enemies.Kill(e) → emitKill(boss, killerID)
 → bus.Emit(EvtEnemyKilled, {GoldValue, IsBoss})
 → stage handler: kills++, gold += GoldValue, session.OnEnemyKilled

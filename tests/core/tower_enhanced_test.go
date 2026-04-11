@@ -16,7 +16,7 @@ func TestLifecycle_CreateHook(t *testing.T) {
 	tower.OnTowerCreate(func(tw *tower.Tower) { called = true })
 
 	tw := &tower.Tower{Key: "test"}
-	tower.ExecuteCreate(tw)
+	tower.EmitCreate(tw)
 	if !called {
 		t.Error("Create钩子应被调用")
 	}
@@ -28,7 +28,7 @@ func TestLifecycle_DestroyHook(t *testing.T) {
 	tower.OnTowerDestroy(func(tw *tower.Tower) { called = true })
 
 	tw := &tower.Tower{Key: "test"}
-	tower.ExecuteDestroy(tw)
+	tower.EmitDestroy(tw)
 	if !called {
 		t.Error("Destroy钩子应被调用")
 	}
@@ -40,7 +40,7 @@ func TestLifecycle_UpgradeHook(t *testing.T) {
 	tower.OnTowerUpgrade(func(tw *tower.Tower) { called = true })
 
 	tw := &tower.Tower{Key: "test"}
-	tower.ExecuteUpgrade(tw)
+	tower.EmitUpgrade(tw)
 	if !called {
 		t.Error("Upgrade钩子应被调用")
 	}
@@ -55,9 +55,8 @@ func TestLifecycle_PanicRecovery(t *testing.T) {
 
 	tw := &tower.Tower{Key: "test"}
 	// 不应panic
-	tower.ExecuteCreate(tw)
+	tower.EmitCreate(tw)
 	if !secondCalled {
 		t.Error("panic不应阻止后续钩子执行")
 	}
 }
-

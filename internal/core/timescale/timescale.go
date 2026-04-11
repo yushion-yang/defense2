@@ -6,10 +6,10 @@ import "defense2/internal/render/easing"
 type phase int
 
 const (
-	phaseIdle   phase = iota
-	phaseEaseIn       // transitioning from 1.0 to target
-	phaseHold         // holding at target scale
-	phaseEaseOut      // transitioning from target back to 1.0
+	phaseIdle    phase = iota
+	phaseEaseIn        // transitioning from 1.0 to target
+	phaseHold          // holding at target scale
+	phaseEaseOut       // transitioning from target back to 1.0
 )
 
 // Controller manages a slow-motion time-scale effect.
@@ -46,16 +46,16 @@ func (c *Controller) Trigger(scale, easeIn, hold, easeOut float64) {
 	c.scale = 1.0
 }
 
-// Update advances the controller and returns the current time scale (1.0 = normal).
+// Tick advances the controller and returns the current time scale (1.0 = normal).
 // dt should be wall-clock delta time, NOT gameDT.
-func (c *Controller) Update(dt float64) float64 {
+func (c *Controller) Tick(dt float64) float64 {
 	if c.phase == phaseIdle {
 		return 1.0
 	}
 
 	c.elapsed += dt
 
-	// Loop allows zero-duration phases to cascade in a single Update call.
+	// Loop allows zero-duration phases to cascade in a single Tick call.
 	for c.phase != phaseIdle {
 		switch c.phase {
 		case phaseEaseIn:

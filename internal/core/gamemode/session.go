@@ -43,7 +43,7 @@ func NewSession(mode Mode) *Session {
 }
 
 // Tick 每帧调用，累计时间并委托给 Mode.OnTick。
-// 注意：胜负判定在 CheckEndConditions 中单独调用。
+// 注意：胜负判定在 TickEndConditions 中单独调用。
 func (s *Session) Tick(dt float64, ctx *Context) {
 	if s.Status != StatusPlaying {
 		return
@@ -52,9 +52,9 @@ func (s *Session) Tick(dt float64, ctx *Context) {
 	s.Mode.OnTick(dt, ctx)
 }
 
-// CheckEndConditions 检查胜负条件，更新会话状态。
+// TickEndConditions 检查胜负条件，更新会话状态。
 // 返回 true 表示游戏结束。
-func (s *Session) CheckEndConditions(ctx *Context) bool {
+func (s *Session) TickEndConditions(ctx *Context) bool {
 	if s.Status != StatusPlaying {
 		return true
 	}

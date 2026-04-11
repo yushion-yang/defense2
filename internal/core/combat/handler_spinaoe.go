@@ -45,7 +45,7 @@ func (h *SpinAoEHandler) Tick(t *tower.Tower, ctx *AttackContext) {
 	innerRatio := 0.5
 	innerBonusMul := 1.5
 	if abTable := config.GlobalAbilityTable(); abTable != nil {
-		if def := abTable["spinAoe"]; def != nil {
+		if def := abTable[tower.AbilitySpinAoe]; def != nil {
 			str := 100.0
 			if t.Strength != nil {
 				str = t.Strength.Effective()

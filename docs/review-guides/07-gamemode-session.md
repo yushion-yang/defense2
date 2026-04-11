@@ -9,7 +9,7 @@
 | 文件 | 读取内容 |
 |------|---------|
 | `internal/core/gamemode/mode.go` | Mode 接口定义 |
-| `internal/core/gamemode/session.go` | Session struct、CheckEndConditions()、Stats |
+| `internal/core/gamemode/session.go` | Session struct、TickEndConditions()、Stats |
 | `internal/core/gamemode/base.go` | 默认实现 |
 | `internal/core/gamemode/campaign.go` | 战役模式 |
 | `internal/core/gamemode/endless.go` | 无尽模式 |
@@ -45,7 +45,7 @@
 
 | # | 检查 | 方法 | 预期 |
 |---|------|------|------|
-| C1 | CheckEndConditions 顺序 | 读 session.go | 先检 Defeat 再检 Victory（lives=0 优先判败） |
+| C1 | TickEndConditions 顺序 | 读 session.go | 先检 Defeat 再检 Victory（lives=0 优先判败） |
 | C2 | Spawning 定义 | 读 stage.go buildModeCtx | `!spawner.IsClear(enemies)` = AllDone && pool.Count==0 |
 | C3 | bossRush OnInit | 读 bossrush.go | 设 maxWaves = totalBosses(5) |
 | C4 | bossRush OnEnemyKilled | 读 bossrush.go | boss=true 时 bossesKilled++ |
@@ -64,7 +64,7 @@
 
 ## 跨系统关联
 
-- CheckEndConditions ← stage.updatePlaying step 10+
+- TickEndConditions ← stage.updatePlaying step 10+
 - Context.Spawning ← spawner.IsClear(pool)
 - Session.Stats ← EventBus 订阅（kills/leaked/towersBuilt/wavesCleared）
 - stage.go 根据 modeID 设 bossRush 的 `spawner.BossEveryWave=true`

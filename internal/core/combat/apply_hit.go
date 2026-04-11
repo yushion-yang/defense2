@@ -46,7 +46,7 @@ func ApplyHit(input HitInput, onHit HitCallback) HitOutput {
 			e.DodgeFlash = 0.3
 			e.SetFloatText("闪避", 255, 255, 255)
 			if input.OnCC != nil {
-				input.OnCC(e.X, e.Y, "dodge")
+				input.OnCC(e.X, e.Y, CCDodge)
 			}
 			return HitOutput{Dodged: true}
 		}
@@ -55,7 +55,7 @@ func ApplyHit(input HitInput, onHit HitCallback) HitOutput {
 	// 弹幕盾标记（正常受伤，末尾标记阻止弹射物继续传播）
 	shieldBlocked := false
 	if e.ProjectileBlockChance > 0 && !e.AbilitySilenced {
-		if input.Style == "bounce" || input.Style == "radial" || input.Style == "scatter" {
+		if input.Style == tower.AbilityBounce || input.Style == tower.AbilityRadial || input.Style == tower.AbilityScatter {
 			shieldBlocked = true
 		}
 	}
@@ -96,7 +96,7 @@ func ApplyHit(input HitInput, onHit HitCallback) HitOutput {
 	// 遍历塔能力，触发 OnHit（weaken 等 debuff 在此设置，立即对本次命中生效）
 	if input.Tower != nil {
 		for _, aName := range input.Tower.Abilities {
-			ab, ok := tower.Registry[aName]
+			ab, ok := tower.Lookup(aName)
 			if !ok {
 				continue
 			}
@@ -126,7 +126,7 @@ func ApplyHit(input HitInput, onHit HitCallback) HitOutput {
 	}
 
 	// 扣血 — 走伤害管线（免疫/减免/阈值/遥测统一处理）
-	pipeResult := ProcessDamage(DamageInput{
+	pipeResult := ApplyDamage(DamageInput{
 		Target:     input.Target,
 		RawDamage:  totalDmg,
 		DamageType: DmgPhysical, // 塔弹射物默认物理伤害
@@ -173,22 +173,22 @@ func applyHitEffectsUnified(r *tower.HitResult, target *enemy.Enemy, p *projecti
 	if r.Slow != nil {
 		if ApplySlow(target, r.Slow.Factor, r.Slow.Duration, p.SourceTowerKey) && onCC != nil {
 			if r.Slow.Factor < 0.4 {
-				onCC(target.X, target.Y, "freeze")
+				onCC(target.X, target.Y, CCFreeze)
 			} else {
-				onCC(target.X, target.Y, "slow")
+				onCC(target.X, target.Y, CCSlow)
 			}
 		}
 		tel.T.Record("ability", "slow")
 	}
 	if r.Stun != nil {
 		if ApplyStun(target, r.Stun.Duration, p.SourceTowerKey) && onCC != nil {
-			onCC(target.X, target.Y, "stun")
+			onCC(target.X, target.Y, CCStun)
 		}
 		tel.T.Record("ability", "stun")
 	}
 	if r.Bleed != nil {
 		target.Buffs.Add(buff.Buff{
-			ID:        "bleed",
+			ID:        buff.IDBleed,
 			Category:  buff.CatDoT,
 			Source:    p.SourceTowerKey,
 			Value:     r.Bleed.DPS,
@@ -198,9 +198,9 @@ func applyHitEffectsUnified(r *tower.HitResult, target *enemy.Enemy, p *projecti
 		tel.T.Record("ability", "bleed")
 	}
 	if r.Burn != nil {
-		wasBurning := target.Buffs.Has("burn")
+		wasBurning := target.Buffs.Has(buff.IDBurn)
 		target.Buffs.Add(buff.Buff{
-			ID:        "burn",
+			ID:        buff.IDBurn,
 			Category:  buff.CatDoT,
 			Source:    p.SourceTowerKey,
 			Value:     r.Burn.DPS,
@@ -209,13 +209,13 @@ func applyHitEffectsUnified(r *tower.HitResult, target *enemy.Enemy, p *projecti
 		})
 		tel.T.Record("ability", "burn")
 		if !wasBurning && onCC != nil {
-			onCC(target.X, target.Y, "burn")
+			onCC(target.X, target.Y, CCBurn)
 		}
 	}
 	if r.Splash != nil && enemies != nil {
 		tel.T.Record("ability", "splash")
 		if onCC != nil {
-			onCC(target.X, target.Y, "splash")
+			onCC(target.X, target.Y, CCSplash)
 		}
 		splashDamage := p.Damage * r.Splash.Ratio
 		splashTower := srcTower
@@ -282,10 +282,10 @@ func applyDeathExplosionUnified(t *tower.Tower, killed *enemy.Enemy, enemies *en
 		return 0
 	}
 	for _, aName := range t.Abilities {
-		if aName != "deathMark" {
+		if aName != tower.AbilityDeathMark {
 			continue
 		}
-		ab, ok := tower.Registry[aName]
+		ab, ok := tower.Lookup(aName)
 		if !ok {
 			return 0
 		}
@@ -307,7 +307,7 @@ func deathExplosion(t *tower.Tower, killed *enemy.Enemy, enemies *enemy.Pool, on
 	explodeDmg := 10 + 15*(str/100.0) // 默认值
 	explodeR := 50.0
 	if abTable := config.GlobalAbilityTable(); abTable != nil {
-		if def := abTable["deathMark"]; def != nil {
+		if def := abTable[tower.AbilityDeathMark]; def != nil {
 			explodeDmg = def.CalcScale(str)
 			if def.Param > 0 {
 				explodeR = def.Param
@@ -321,7 +321,7 @@ func deathExplosion(t *tower.Tower, killed *enemy.Enemy, enemies *enemy.Pool, on
 			return
 		}
 		if math.Hypot(e2.X-killed.X, e2.Y-killed.Y) <= explodeR {
-			er := ProcessDamage(DamageInput{
+			er := ApplyDamage(DamageInput{
 				Target:     e2,
 				RawDamage:  explodeDmg,
 				DamageType: DmgPhysical,

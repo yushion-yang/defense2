@@ -99,10 +99,10 @@ func TestTutorialAutoAdvance(t *testing.T) {
 	tut := tutorial.DefaultTutorial()
 
 	// 跳到 step 4 (tower_select, autoAdvance=8)
-	tut.ClickAdvance()                // step 0 → 1
-	tut.Trigger("build")             // step 1 → 2
-	tut.Trigger("tower_placed")      // step 2 → 3
-	tut.Trigger("wave_start")        // step 3 → 4
+	tut.ClickAdvance()          // step 0 → 1
+	tut.Trigger("build")        // step 1 → 2
+	tut.Trigger("tower_placed") // step 2 → 3
+	tut.Trigger("wave_start")   // step 3 → 4
 
 	if tut.StepIndex() != 4 {
 		t.Fatalf("应在 step 4，实际 %d", tut.StepIndex())
@@ -110,7 +110,7 @@ func TestTutorialAutoAdvance(t *testing.T) {
 
 	// 模拟 7 秒（不够 8 秒自动推进）
 	for i := 0; i < 420; i++ { // 420 * 1/60 ≈ 7s
-		tut.Update(1.0 / 60.0)
+		tut.Tick(1.0 / 60.0)
 	}
 	if tut.StepIndex() != 4 {
 		t.Fatal("7 秒不应自动推进")
@@ -118,7 +118,7 @@ func TestTutorialAutoAdvance(t *testing.T) {
 
 	// 再过 2 秒（总 9 秒，超过 8 秒限制）
 	for i := 0; i < 120; i++ {
-		tut.Update(1.0 / 60.0)
+		tut.Tick(1.0 / 60.0)
 	}
 	if tut.StepIndex() != 5 {
 		t.Fatalf("9 秒后应自动推进到 step 5，实际 %d", tut.StepIndex())

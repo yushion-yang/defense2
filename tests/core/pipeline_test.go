@@ -208,7 +208,7 @@ func TestSysWardenTickSkipsWhenNotReady(t *testing.T) {
 // ─── SysEndCondition ────────────────────────────────────────────
 
 func TestSysEndConditionCallbacks(t *testing.T) {
-	// SysEndCondition delegates to Session.CheckEndConditions — testing callback wiring
+	// SysEndCondition delegates to Session.TickEndConditions — testing callback wiring
 	// with nil Session would panic, so we verify that the struct can be constructed
 	// with callbacks set
 	victoryFired := false

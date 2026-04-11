@@ -8,7 +8,7 @@ import (
 )
 
 // BUG: DamageCap not disabled when enemy is silenced.
-// Fix: ProcessDamage step 4.5 skips damageCap when Silenced=true.
+// Fix: ApplyDamage step 4.5 skips damageCap when Silenced=true.
 func TestRegression_Pipeline_SilenceDisablesDamageCap(t *testing.T) {
 	s := sim.New().
 		WithStraightPath(500).
@@ -19,7 +19,7 @@ func TestRegression_Pipeline_SilenceDisablesDamageCap(t *testing.T) {
 	e.DamageCap = 50
 
 	// Without silence: damage capped at 50
-	r1 := combat.ProcessDamage(combat.DamageInput{
+	r1 := combat.ApplyDamage(combat.DamageInput{
 		Target: e, RawDamage: 200,
 	})
 	if r1.FinalDamage > 50 {
@@ -29,7 +29,7 @@ func TestRegression_Pipeline_SilenceDisablesDamageCap(t *testing.T) {
 	// With silence: damage cap disabled
 	e.HP = 1000
 	e.Silenced = true
-	r2 := combat.ProcessDamage(combat.DamageInput{
+	r2 := combat.ApplyDamage(combat.DamageInput{
 		Target: e, RawDamage: 200,
 	})
 	if r2.FinalDamage != 200 {

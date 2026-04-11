@@ -41,8 +41,8 @@ func (p *BeamPool) Add(b Beam) {
 	p.beams = append(p.beams, b)
 }
 
-// Update 更新所有光束生命周期，移除过期的。
-func (p *BeamPool) Update(dt float64) {
+// Tick 更新所有光束生命周期，移除过期的。
+func (p *BeamPool) Tick(dt float64) {
 	n := 0
 	for i := range p.beams {
 		p.beams[i].Life -= dt

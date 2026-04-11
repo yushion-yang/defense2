@@ -39,7 +39,7 @@
 **Before** (直接读字段):
 ```go
 if e.RegenPerSec > 0 {
-    UpdateRegeneration(e, dt)
+    TickRegeneration(e, dt)
 }
 ```
 
@@ -52,7 +52,7 @@ if b, ok := e.Buffs.Get("regen"); ok {
 
 每个行为的改造：
 
-**berserk**: 触发时 Add `berserk` buff (永久)。UpdateBerserk 改为：检查 threshold buff 参数，触发后标记（仍用 BerserkTriggered 避免重复触发），执行 `BaseSpeed *= speedScale`。实际上 berserk 触发后就是永久速度变化，不需要每帧 tick。保留 BerserkTriggered 标志防止重复。
+**berserk**: 触发时 Add `berserk` buff (永久)。TickBerserk 改为：检查 threshold buff 参数，触发后标记（仍用 BerserkTriggered 避免重复触发），执行 `BaseSpeed *= speedScale`。实际上 berserk 触发后就是永久速度变化，不需要每帧 tick。保留 BerserkTriggered 标志防止重复。
 
 **regen**: 从 `e.Buffs.Get("regen").Value` 读 regenPerSec，执行回血逻辑。
 

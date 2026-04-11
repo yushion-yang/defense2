@@ -25,7 +25,7 @@ func (h *ScatterHandler) Fire(t *tower.Tower, target *enemy.Enemy, ctx *AttackCo
 	pellets := bal.Combat.ScatterBasePellets // fallback
 	spreadDeg := bal.Combat.ScatterSpreadAngle
 	if abTable := config.GlobalAbilityTable(); abTable != nil {
-		if def := abTable["scatter"]; def != nil {
+		if def := abTable[tower.AbilityScatter]; def != nil {
 			str := 100.0
 			if t.Strength != nil {
 				str = t.Strength.Effective()

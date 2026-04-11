@@ -174,7 +174,7 @@ func TestBeamPoolLifecycle(t *testing.T) {
 		t.Errorf("count=%d, want 2", bp.Count())
 	}
 
-	bp.Update(0.2) // first beam expires
+	bp.Tick(0.2) // first beam expires
 
 	if bp.Count() != 1 {
 		t.Errorf("count=%d after update, want 1", bp.Count())

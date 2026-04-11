@@ -340,7 +340,7 @@ func ApplyDamage(ctx *TickContext, e *enemy.Enemy, dmg float64, crit bool) {
 		return
 	}
 	// 走伤害管线（免疫/减免/阈值/遥测统一处理）
-	r := combat.ProcessDamage(combat.DamageInput{
+	r := combat.ApplyDamage(combat.DamageInput{
 		Target:      e,
 		RawDamage:   dmg,
 		DamageType:  combat.DmgPhysical,

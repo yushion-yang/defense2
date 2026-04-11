@@ -19,8 +19,8 @@ func init() {
 	_ = config.LoadBuffRules()
 }
 
-// FuzzProcessDamage exercises the 8-step damage pipeline with arbitrary inputs.
-func FuzzProcessDamage(f *testing.F) {
+// FuzzApplyDamage exercises the 8-step damage pipeline with arbitrary inputs.
+func FuzzApplyDamage(f *testing.F) {
 	// Seed corpus — representative edge cases.
 	f.Add(100.0, 1000.0, 1000.0, false, false, false)
 	f.Add(0.0, 100.0, 100.0, false, false, false)
@@ -66,7 +66,7 @@ func FuzzProcessDamage(f *testing.F) {
 		e.IsDamageImmune = isDamageImmune
 		e.Boss = isBoss
 
-		result := combat.ProcessDamage(combat.DamageInput{
+		result := combat.ApplyDamage(combat.DamageInput{
 			Target:     e,
 			RawDamage:  rawDmg,
 			DamageType: "physical",

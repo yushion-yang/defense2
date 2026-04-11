@@ -139,7 +139,7 @@ Date: 2026-04-11
 - **验证**：read `stage.go` 搜索 `chainActive`
 
 ### F-3. [trace] 战灵攻击→伤害→VFX 完整链路
-- 每个战灵：Tick → 目标选择 → ApplyDamage → ProcessDamage → VFX
+- 每个战灵：Tick → 目标选择 → ApplyDamage → ApplyDamage → VFX
 - **验证**：对 5 种战灵逐一 trace
 
 ### F-4. [read] 金灵 OnSpecial 五星芒触发
@@ -151,7 +151,7 @@ Date: 2026-04-11
 ## G. 经济 / 进度系统
 
 ### G-1. [read] 击杀金币流转
-- 从 ProcessDamage kill → stage.go emitKill → gold 增加
+- 从 ApplyDamage kill → stage.go emitKill → gold 增加
 - **验证**：trace 完整金币流转链路
 
 ### G-2. [grep] Enemy.Reward 字段是否为死数据

@@ -12,11 +12,11 @@ type Step struct {
 
 // Tutorial 教程状态。
 type Tutorial struct {
-	Steps       []Step  // 步骤列表
-	CurrentIdx  int     // 当前步骤索引（完成全部时 == len(Steps)）
-	Active      bool    // 是否正在运行
-	Done        bool    // 是否已全部完成
-	autoTimer   float64 // 当前步骤的自动推进计时器
+	Steps      []Step  // 步骤列表
+	CurrentIdx int     // 当前步骤索引（完成全部时 == len(Steps)）
+	Active     bool    // 是否正在运行
+	Done       bool    // 是否已全部完成
+	autoTimer  float64 // 当前步骤的自动推进计时器
 }
 
 // DefaultTutorial 创建默认 8 步教程。
@@ -64,8 +64,8 @@ func (t *Tutorial) StepCount() int {
 	return len(t.Steps)
 }
 
-// Update 每帧更新自动推进计时器。dt 为秒。
-func (t *Tutorial) Update(dt float64) {
+// Tick 每帧更新自动推进计时器。dt 为秒。
+func (t *Tutorial) Tick(dt float64) {
 	step := t.CurrentStep()
 	if step == nil {
 		return

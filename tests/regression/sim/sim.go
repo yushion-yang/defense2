@@ -98,19 +98,19 @@ func (s *Sim) Step() {
 				if dist > tw.Range {
 					return
 				}
-				result := combat.ProcessDamage(combat.DamageInput{
+				result := combat.ApplyDamage(combat.DamageInput{
 					Target:    e,
 					RawDamage: tw.Damage,
 				})
 				if result.Killed {
 					s.Kills++
-	
+
 					s.Enemies.Kill(e)
 				}
 			})
 		case tower.StyleWideBeam:
 			// Direct single-target damage
-			result := combat.ProcessDamage(combat.DamageInput{
+			result := combat.ApplyDamage(combat.DamageInput{
 				Target:    target,
 				RawDamage: tw.Damage,
 			})
@@ -131,7 +131,7 @@ func (s *Sim) Step() {
 	}
 
 	// 3. Projectile update (tracking + movement)
-	s.Projectiles.Update(dt)
+	s.Projectiles.Tick(dt)
 
 	// 4. Projectile hit detection
 	s.Projectiles.Each(func(p *projectile.Projectile) {
@@ -153,7 +153,7 @@ func (s *Sim) Step() {
 			if dist > hitDist {
 				return
 			}
-			result := combat.ProcessDamage(combat.DamageInput{
+			result := combat.ApplyDamage(combat.DamageInput{
 				Target:    e,
 				RawDamage: p.Damage,
 			})
@@ -171,14 +171,14 @@ func (s *Sim) Step() {
 		if !e.IsDying() && !e.IsSpawning() {
 			enemy.TickStatusEffects(e, dt)
 			if e.LastDotDmg > 0 {
-				r := combat.ProcessDamage(combat.DamageInput{
+				r := combat.ApplyDamage(combat.DamageInput{
 					Target:     e,
 					RawDamage:  e.LastDotDmg,
 					DamageType: combat.DmgMagic,
 				})
 				if r.Killed {
 					s.Kills++
-	
+
 					s.Enemies.Kill(e)
 				}
 				e.LastDotDmg = 0

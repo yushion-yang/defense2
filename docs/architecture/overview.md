@@ -71,7 +71,7 @@ flowchart TD
 
 ---
 
-## 3. 伤害管线（ProcessDamage 8 步）
+## 3. 伤害管线（ApplyDamage 8 步）
 
 ```mermaid
 flowchart TD
@@ -287,7 +287,7 @@ flowchart TD
     Amp["7 DamageAmp 全伤害增幅\n(damageUpAura)"]
     Amp --> Pipeline
 
-    Pipeline["8 ProcessDamage\n→ 8步伤害管线"]
+    Pipeline["8 ApplyDamage\n→ 8步伤害管线"]
     Pipeline --> Callback
 
     Callback["9 命中回调\n(飘字/音效)"]

@@ -43,7 +43,7 @@
 
 | # | 检查 | 方法 | 预期 |
 |---|------|------|------|
-| C1 | ApplyDamage 走管线 | 读 state.go ApplyDamage | 调用 combat.ProcessDamage |
+| C1 | ApplyDamage 走管线 | 读 state.go ApplyDamage | 调用 combat.ApplyDamage |
 | C2 | 击杀回调 | 读 ApplyDamage | r.Killed → ctx.OnKill(e) |
 | C3 | OnKill → emitKill | 读 stage.go 战灵 TickContext 构建 | OnKill 内调用 emitKill("warden") |
 
@@ -61,4 +61,4 @@
 - 战灵选择 → stage.activateWarden → wardenReady=true
 - Tick ← stage.updatePlaying step 4 → TickContext{Enemies,Towers,DT,OnKill,OnFire}
 - 成长 ← EventBus(EvtEnemyKilled/EvtWaveCleared) → GrowthOnKill/GrowthOnWaveClear
-- ApplyDamage → combat.ProcessDamage → 遥测 pipeline/damage_type
+- ApplyDamage → combat.ApplyDamage → 遥测 pipeline/damage_type
