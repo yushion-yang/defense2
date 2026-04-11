@@ -233,8 +233,7 @@ func drawSlots(screen *ebiten.Image, gm *gamemap.GameMap, fm *FontManager, tower
 			occupied := towerAt != nil && towerAt(row, col)
 
 			if occupied {
-				// Occupied slot: subtle green tint
-				draw.FilledCircle(screen, cx, cy, theme.MapSlotRadius, theme.SlotOccupied)
+				// 已占用格子不绘制底色，塔精灵会覆盖
 			} else if buildMode {
 				// Build mode empty slot: 凹陷效果 + 金黄色轮廓 + "+" 号
 				draw.FilledCircle(screen, cx, cy, theme.MapSlotRadius, color.RGBA{R: 10, G: 15, B: 30, A: 35})

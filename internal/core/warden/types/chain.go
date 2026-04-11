@@ -143,28 +143,14 @@ func chainTowerBuff(w *warden.Warden, s *ChainState, ctx *warden.TickContext) {
 
 	s.ChainLinks = s.ChainLinks[:0]
 	for _, e := range edges {
-		ri := strength.UFFind(parent, e.i)
-		rj := strength.UFFind(parent, e.j)
-		if ri == rj {
+		if strength.UFFind(parent, e.i) == strength.UFFind(parent, e.j) {
 			continue // 已在同组，跳过（避免环）
 		}
 		strength.UFUnion(parent, nil, e.i, e.j)
-
-		// 方向：从 UF root 所在端指向另一端（能量从根辐射到叶）
-		root := strength.UFFind(parent, e.i)
-		if root == strength.UFFind(parent, e.i) {
-			// e.i 侧是根 → 方向 i→j
-			s.ChainLinks = append(s.ChainLinks, ChainLink{
-				X1: towers[e.i].X, Y1: towers[e.i].Y,
-				X2: towers[e.j].X, Y2: towers[e.j].Y,
-			})
-		} else {
-			_ = root
-			s.ChainLinks = append(s.ChainLinks, ChainLink{
-				X1: towers[e.j].X, Y1: towers[e.j].Y,
-				X2: towers[e.i].X, Y2: towers[e.i].Y,
-			})
-		}
+		s.ChainLinks = append(s.ChainLinks, ChainLink{
+			X1: towers[e.i].X, Y1: towers[e.i].Y,
+			X2: towers[e.j].X, Y2: towers[e.j].Y,
+		})
 	}
 
 	// 统计各组大小
@@ -188,7 +174,9 @@ func chainTowerBuff(w *warden.Warden, s *ChainState, ctx *warden.TickContext) {
 			Duration:  -1,
 			Remaining: -1, // 永久，每帧刷新
 		})
-		t.Strength.SetTemp(key, bonus)
+		// 注意：不再调用 SetTemp()。链加成的强度由 pipeline.TickTowerAbilities
+		// 中的 RebuildChainNetwork → SetTemp("chain", bonus) 统一负责。
+		// 此处的 Buff 仅供 HUD 显示链加成信息。
 		newBonuses[t] = bonus
 	}
 
@@ -200,7 +188,6 @@ func chainTowerBuff(w *warden.Warden, s *ChainState, ctx *warden.TickContext) {
 		}
 		if _, exists := newBonuses[t]; !exists {
 			t.Buffs.RemoveByID(key)
-			t.Strength.RemoveTemp(key)
 		}
 	}
 	s.lastBonuses = newBonuses

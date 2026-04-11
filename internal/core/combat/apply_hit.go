@@ -199,6 +199,7 @@ func applyHitEffectsUnified(r *tower.HitResult, target *enemy.Enemy, p *projecti
 		tel.T.Record("ability", "stun")
 	}
 	if r.Bleed != nil {
+		wasBleeding := target.Buffs.Has(buff.IDBleed)
 		target.Buffs.Add(buff.Buff{
 			ID:        buff.IDBleed,
 			Category:  buff.CatDoT,
@@ -207,6 +208,9 @@ func applyHitEffectsUnified(r *tower.HitResult, target *enemy.Enemy, p *projecti
 			Duration:  r.Bleed.Duration,
 			Remaining: r.Bleed.Duration,
 		})
+		if !wasBleeding {
+			target.SetFloatText("流血", 220, 60, 60)
+		}
 		tel.T.Record("ability", "bleed")
 	}
 	if r.Burn != nil {
@@ -219,6 +223,9 @@ func applyHitEffectsUnified(r *tower.HitResult, target *enemy.Enemy, p *projecti
 			Duration:  r.Burn.Duration,
 			Remaining: r.Burn.Duration,
 		})
+		if !wasBurning {
+			target.SetFloatText("灼烧", 255, 140, 40)
+		}
 		tel.T.Record("ability", "burn")
 		if !wasBurning && onCC != nil {
 			onCC(target.X, target.Y, CCBurn)

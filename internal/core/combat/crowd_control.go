@@ -29,6 +29,7 @@ func ApplyStun(e *enemy.Enemy, duration float64, source string) bool {
 	}
 
 	// 通过 BuffList 施加眩晕（Override 模式，后来居上）
+	wasStunned := e.Buffs.Has(buff.IDStun)
 	e.Buffs.Add(buff.Buff{
 		ID:        buff.IDStun,
 		Category:  buff.CatCC,
@@ -36,6 +37,9 @@ func ApplyStun(e *enemy.Enemy, duration float64, source string) bool {
 		Duration:  actualDuration,
 		Remaining: actualDuration,
 	})
+	if !wasStunned {
+		e.SetFloatText("眩晕", 255, 220, 60)
+	}
 	tel.T.Record("cc", "stun")
 	return true
 }
@@ -82,6 +86,9 @@ func ApplySlow(e *enemy.Enemy, factor, duration float64, source string) bool {
 		Remaining: actualDuration,
 	})
 	e.Speed = e.BaseSpeed * factor
+	if !hasExisting {
+		e.SetFloatText("减速", 60, 180, 255)
+	}
 	tel.T.Record("cc", "slow")
 	return true
 }

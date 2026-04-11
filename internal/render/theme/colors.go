@@ -136,7 +136,6 @@ func MapThemeFor(name string) MapTheme {
 var (
 	SlotEmpty      = rgba(255, 255, 255, 12) // 空闲态内部微填充
 	SlotIdleRing   = rgba(180, 200, 220, 50) // 空闲态淡灰轮廓
-	SlotOccupied   = rgba(34, 197, 94, 36)   // 已占用绿色底
 	SlotBuildRing  = rgba(220, 180, 60, 180) // 建造态金黄轮廓
 	SlotBuildPulse = rgba(251, 191, 36, 255) // 建造态脉冲外圈
 	SlotPlusSign   = rgba(250, 220, 120, 220) // "+" 号颜色

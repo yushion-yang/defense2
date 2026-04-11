@@ -155,6 +155,7 @@ func (a *ConfigAbility) OnHit(t *tower.Tower, p *projectile.Projectile, e *enemy
 
 	case tower.AbilityPoison:
 		// scaleDim=dps, param=duration — 固定 DPS 中毒（独立于 bleed）
+		wasPoisoned := e.Buffs.Has(buff.IDPoison)
 		e.Buffs.Add(buff.Buff{
 			ID:        buff.IDPoison,
 			Category:  buff.CatDoT,
@@ -163,10 +164,14 @@ func (a *ConfigAbility) OnHit(t *tower.Tower, p *projectile.Projectile, e *enemy
 			Duration:  pm,
 			Remaining: pm,
 		})
+		if !wasPoisoned {
+			e.SetFloatText("中毒", 100, 200, 60)
+		}
 		return nil
 
 	case tower.AbilityWeaken:
 		// scaleDim=amplify, param=duration — 命中后受伤增加
+		wasWeakened := e.Buffs.Has(buff.IDWeaken)
 		e.Buffs.Add(buff.Buff{
 			ID:        buff.IDWeaken,
 			Category:  buff.CatDebuff,
@@ -175,6 +180,9 @@ func (a *ConfigAbility) OnHit(t *tower.Tower, p *projectile.Projectile, e *enemy
 			Duration:  pm,
 			Remaining: pm,
 		})
+		if !wasWeakened {
+			e.SetFloatText("虚弱", 180, 100, 220)
+		}
 		return nil
 
 	case tower.AbilityDeathMark:
