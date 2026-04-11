@@ -1,33 +1,27 @@
 {
   "_meta": {
-    "description": "塔属性档位预设表——基础值5档(S/A/B/C/D)",
-    "version": "2.0",
-    "note": "attackSpeed 为每秒攻击次数（非间隔），S=快/D=慢。每档只保留 ref 固定值。"
+    "description": "塔属性档位预设表——3档(S/B/D)",
+    "version": "3.0",
+    "note": "attackSpeed 为每秒攻击次数（非间隔），S=强/B=中/D=弱"
   },
   "damage": {
     "tiers": {
       "S": 40,
-      "A": 28,
       "B": 20,
-      "C": 12,
       "D": 4
     }
   },
   "attackSpeed": {
     "tiers": {
       "S": 1.61,
-      "A": 1.18,
       "B": 0.91,
-      "C": 0.67,
       "D": 0.40
     }
   },
   "range": {
     "tiers": {
       "S": 200,
-      "A": 170,
       "B": 140,
-      "C": 110,
       "D": 80
     }
   }
