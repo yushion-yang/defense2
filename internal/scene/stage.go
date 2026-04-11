@@ -1774,33 +1774,6 @@ func (s *StageScene) updatePlaying() {
 	if behaviorEvents.HasBuffer {
 		s.audioMgr.PlayThrottledAt(gameAudio.SFXBannerAura, 3000, gameAudio.VolHit*0.3)
 	}
-	// 削强能力：每帧管理敌人→塔连接
-	// 削强在 TickTowerAbilities 之后执行（避免被 ClearTransient 清掉）
-
-	// 4. 战灵行为（未选择前跳过）
-	if s.wardenReady && s.wardenUnit != nil {
-		s.wardenUnit.Tick(&warden.TickContext{
-			Enemies:     s.enemies,
-			Towers:      s.towers,
-			Projectiles: s.projectiles,
-			DT:          gameDT,
-			OnKill: func(e *enemy.Enemy) {
-				s.audioMgr.PlaySafeAt(gameAudio.SFXEnemyDeath, gameAudio.VolKill)
-				s.emitKill(e.Boss, "warden", e.RewardScale)
-			},
-			OnFire: func() {
-				s.audioMgr.PlayThrottledAt(gameAudio.SFXWardenFire, 100, gameAudio.VolWarden)
-			},
-			OnSpecial: func() {
-				sfx := wardenSpecialSFX(s.wardenType)
-				s.audioMgr.PlayThrottledAt(sfx, 200, gameAudio.VolWarden)
-			},
-			OnDamage: func(x, y, dmg float64, crit bool) {
-				render.SpawnDamageText(x, y, dmg, crit, false)
-			},
-		})
-	}
-
 	// 5.5. 塔建造/出售动画 tick
 	s.towers.Each(func(t *tower.Tower) {
 		if t.BuildAnim > 0 {
@@ -1835,10 +1808,38 @@ func (s *StageScene) updatePlaying() {
 
 	// 6. 能力 tick（重置属性 + 光环 buff + 区域效果 + 经济产出）
 	// 必须在索敌射击之前执行，确保 Range 等属性是本帧最新值
-	chainActive := s.wardenType == "envoy" && s.wardenReady
+	chainActive := s.wardenType == "chain" && s.wardenReady
 	abilityGold := pipeline.TickTowerAbilities(s.towers, s.enemies, gameDT, chainActive)
 	s.gold += abilityGold
 	s.gameStats.GoldEarned += abilityGold
+
+	// 6.05 战灵行为：必须在 ClearTransient 之后执行，否则 SetTemp 会被清掉
+	if s.wardenReady && s.wardenUnit != nil {
+		s.wardenUnit.Tick(&warden.TickContext{
+			Enemies:     s.enemies,
+			Towers:      s.towers,
+			Projectiles: s.projectiles,
+			DT:          gameDT,
+			OnKill: func(e *enemy.Enemy) {
+				s.audioMgr.PlaySafeAt(gameAudio.SFXEnemyDeath, gameAudio.VolKill)
+				s.emitKill(e.Boss, "warden", e.RewardScale)
+			},
+			OnFire: func() {
+				s.audioMgr.PlayThrottledAt(gameAudio.SFXWardenFire, 100, gameAudio.VolWarden)
+			},
+			OnSpecial: func() {
+				sfx := wardenSpecialSFX(s.wardenType)
+				s.audioMgr.PlayThrottledAt(sfx, 200, gameAudio.VolWarden)
+			},
+			OnDamage: func(x, y, dmg float64, crit bool) {
+				render.SpawnDamageText(x, y, dmg, crit, false)
+			},
+		})
+		// 战灵 SetTemp 后需重算受影响塔的属性
+		s.towers.Each(func(t *tower.Tower) {
+			t.RecalcStats()
+		})
+	}
 
 	// 6.1 削强：必须在 TickTowerAbilities（ClearTransient）之后，确保 EnemySub 不被清掉
 	s.tickStrengthDrain()
