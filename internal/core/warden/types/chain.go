@@ -30,6 +30,7 @@ type ChainState struct {
 	OrbitDist          float64                  // 围绕敌群的轨道距离
 	lastBonuses        map[*tower.Tower]float64 // 上一帧各塔设置的加成值
 	ChainLinks         []ChainLink              // 当前帧的串联连线（渲染用）
+	buffKey            string                    // 缓存的 buff ID，避免逐帧 Sprintf
 }
 
 // Base 实现 Stateful 接口。
@@ -56,6 +57,7 @@ func (b *ChainBehavior) Init(w *warden.Warden) interface{} {
 		BonusPerTower: warden.ParamOr(p, "bonusPerTower", 10),
 		OrbitDist:     warden.ParamOr(p, "orbitDist", 100.0),
 		lastBonuses:   make(map[*tower.Tower]float64),
+		buffKey:       fmt.Sprintf("chain_warden_%d", w.ID),
 	}
 }
 
@@ -140,7 +142,7 @@ func chainTowerBuff(w *warden.Warden, s *ChainState, ctx *warden.TickContext) {
 	}
 
 	// 应用加成
-	key := fmt.Sprintf("chain_warden_%d", w.ID)
+	key := s.buffKey
 	newBonuses := make(map[*tower.Tower]float64, len(towers))
 	for i, t := range towers {
 		groupSize := groups[strength.UFFind(parent, i)]

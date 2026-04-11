@@ -8,7 +8,6 @@
 package abilities
 
 import (
-	"fmt"
 	"math"
 	"math/rand"
 
@@ -19,9 +18,10 @@ import (
 	"defense2/internal/core/tower"
 )
 
-// 辅助函数（从已删除的旧能力文件迁移）
+// towerAccKey 返回塔的唯一实例标识，用于 package-level map 的键。
+// 直接复用 pool.go 创建时设置的 InstanceKey，避免逐帧 fmt.Sprintf 分配。
 func towerAccKey(t *tower.Tower) string {
-	return fmt.Sprintf("%s_%d_%d", t.Key, t.Row, t.Col)
+	return t.InstanceKey
 }
 
 func distToEnemy(t *tower.Tower, e *enemy.Enemy) float64 {
@@ -308,7 +308,8 @@ func ClearTowerScalingState(key string) {
 	delete(elementSwitchActiveElement, key)
 }
 
-// ResetScalingState 清空所有缩放类能力的运行时状态（测试辅助函数）。
+// ResetScalingState 清空所有缩放类能力的运行时状态。
+// 在游戏结束（胜利/失败切换到结算场景）和测试中调用，防止多局游戏 map 泄漏。
 func ResetScalingState() {
 	killUpgradeStacks = map[string]int{}
 	waveScaleCounters = map[string]int{}

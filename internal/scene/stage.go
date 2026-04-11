@@ -581,6 +581,9 @@ func (s *StageScene) buildModeCtx() *gamemode.Context {
 // finalizeGameStats 结算时最终化游戏统计数据。
 // 从 session 和塔池填充剩余字段（击杀数、波次、Boss、最强塔等）。
 func (s *StageScene) finalizeGameStats() GameStats {
+	// 清除缩放能力全局状态，防止多局游戏 map 泄漏
+	abilities.ResetScalingState()
+
 	gs := s.gameStats
 	gs.TotalKills = s.kills
 	gs.TotalWaves = s.spawner.Wave

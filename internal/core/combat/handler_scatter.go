@@ -18,7 +18,7 @@ func (h *ScatterHandler) Fire(t *tower.Tower, target *enemy.Enemy, ctx *AttackCo
 	baseAngle := math.Atan2(target.Y-t.Y, target.X-t.X)
 	speed := t.ProjectileSpeed
 	if speed <= 0 {
-		speed = 400
+		speed = config.GlobalBalance().Combat.DefaultProjectileSpeed
 	}
 
 	// 从能力配置读取总弹丸数和散布角度（与 bounce 同模式：CalcScale = 总数）

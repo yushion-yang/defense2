@@ -173,24 +173,6 @@ func strengthBreakdown(sd *strength.StrengthData) string {
 	return result
 }
 
-// fmtAttr formats a tower attribute: "base+(scaled)=total".
-// When potential is 0, only the base value is shown.
-func fmtAttr(numFmt string, base, potential, effStr float64) string {
-	if potential == 0 {
-		return fmt.Sprintf(numFmt, base)
-	}
-	ratio := effStr / 100.0
-	scaled := potential * ratio
-	total := base + scaled
-	return fmt.Sprintf(numFmt+"+("+numFmt+")→"+numFmt, base, scaled, total)
-}
-
-// buildAttrSegs builds colored segments for a tower attribute.
-// base(white) + (scaled)(colored) + =total(white).
-func buildAttrSegs(numFmt string, base, potential, effStr float64) []hud.AbilitySegment {
-	return buildAttrSegsWithMods(numFmt, base, potential, effStr, 0, 0)
-}
-
 // buildAttrSegsWithMods builds attribute display with pct/flat modifier bonus.
 func buildAttrSegsWithMods(numFmt string, base, potential, effStr, pctMod, flatMod float64) []hud.AbilitySegment {
 	hasMods := pctMod > 0.001 || pctMod < -0.001 || flatMod > 0.005 || flatMod < -0.005

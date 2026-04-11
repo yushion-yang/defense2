@@ -36,7 +36,7 @@ func (h *RadialHandler) Fire(t *tower.Tower, target *enemy.Enemy, ctx *AttackCon
 	shotRange := t.Range * rangeMult
 	speed := t.ProjectileSpeed
 	if speed <= 0 {
-		speed = 350
+		speed = config.GlobalBalance().Combat.DefaultProjectileSpeed
 	}
 
 	// 以目标方向为基准角，等角间隔发射直线穿透弹
