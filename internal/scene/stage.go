@@ -1105,8 +1105,9 @@ func (s *StageScene) drawEnemyInfoPanel(screen *ebiten.Image, e *enemy.Enemy) {
 	lines = append(lines, L(ttHeader, "--- 移动 ---"))
 	// 计算实际移动速度（与 movement.go 一致）
 	actualSpeed := e.Speed
-	if e.SpeedBuff > 0 {
-		actualSpeed *= (1 + e.SpeedBuff)
+	speedUp := e.GetSpeedUp()
+	if speedUp > 0 {
+		actualSpeed *= (1 + speedUp)
 	}
 	if e.DashActiveT > 0 {
 		actualSpeed *= (1 + e.DashSpeedBoost)
@@ -1120,8 +1121,8 @@ func (s *StageScene) drawEnemyInfoPanel(screen *ebiten.Image, e *enemy.Enemy) {
 		if e.IsSlowed() {
 			speedInfo += fmt.Sprintf(" 减速:×%.0f%%", e.GetSlowFactor()*100)
 		}
-		if e.SpeedBuff > 0 {
-			speedInfo += fmt.Sprintf(" 光环:+%.0f%%", e.SpeedBuff*100)
+		if speedUp > 0 {
+			speedInfo += fmt.Sprintf(" 光环:+%.0f%%", speedUp*100)
 		}
 		if e.DashActiveT > 0 {
 			speedInfo += fmt.Sprintf(" 冲刺:+%.0f%%", e.DashSpeedBoost*100)

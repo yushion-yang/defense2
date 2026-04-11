@@ -494,9 +494,12 @@ func applyWaveBuff(e *Enemy, buffID string) {
 	bc := config.GlobalBalance().Buffs
 	switch buffID {
 	case "berserk":
-		e.BerserkThreshold = bc.Berserk.Threshold
-		e.BerserkSpeedScale = bc.Berserk.SpeedScale
-		// Note: berserk marker buff is added when triggered (behaviors.go UpdateBerserk)
+		// Value = speedScale, Value2 = threshold; actual berserk activation in behaviors.go
+		e.Buffs.Add(buff.Buff{
+			ID: "berserk", Category: buff.CatBehavior, Source: "wave_buff",
+			Value: bc.Berserk.SpeedScale, Value2: bc.Berserk.Threshold,
+			Duration: -1, Remaining: -1,
+		})
 	case "regen":
 		e.RegenPerSec = e.MaxHP * bc.Regen.HpRatio
 		e.Buffs.Add(buff.Buff{ID: "regen", Category: buff.CatBehavior, Source: "waveBuff", Duration: -1, Remaining: -1})
@@ -513,7 +516,10 @@ func applyWaveBuff(e *Enemy, buffID string) {
 		e.AuraSpeedUp = bc.SpeedAura.SpeedUp
 		e.Buffs.Add(buff.Buff{ID: "speedAura", Category: buff.CatBehavior, Source: "waveBuff", Duration: -1, Remaining: -1})
 	case "damageReduce":
-		e.DamageReduceRatio = bc.DamageReduce.Ratio
+		e.Buffs.Add(buff.Buff{
+			ID: "damageReduce", Category: buff.CatDefense, Source: "wave_buff",
+			Value: bc.DamageReduce.Ratio, Duration: -1, Remaining: -1,
+		})
 	case "deathSplit":
 		if e.SplitCount <= 0 {
 			e.SplitCount = bc.DeathSplit.Count

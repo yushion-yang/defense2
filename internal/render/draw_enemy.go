@@ -117,8 +117,10 @@ func (er *EnemyRenderer) DrawEnemies(screen *ebiten.Image, pool *enemy.Pool, ani
 		}
 
 		// --- Buffer aura ring (drawn UNDER body, hidden when silenced) ---
-		if e.Behavior == "buffer" && e.BuffRadius > 0 && !e.AbilitySilenced {
-			vfx.DrawBufferAura(screen, cx, cy, e.BuffRadius, animTime)
+		if e.Behavior == "buffer" && e.HasBufferAura() && !e.AbilitySilenced {
+			if ba, ok := e.Buffs.Get("bufferAura"); ok {
+				vfx.DrawBufferAura(screen, cx, cy, ba.Value2, animTime)
+			}
 		}
 
 		// (旧 healer aura ring 已移到能力 VFX 系统)

@@ -39,12 +39,7 @@ type RevealEvent struct {
 func TickBehaviors(pool *Pool, dt float64) BehaviorEvents {
 	var events BehaviorEvents
 
-	// Phase 1: 清除上一帧的 SpeedBuff（每帧由 buffer 重新写入）
-	pool.Each(func(e *Enemy) {
-		e.SpeedBuff = 0
-	})
-
-	// Phase 2: 执行各行为
+	// 执行各行为（speedUp buff has short duration; BuffList.Tick handles expiry）
 	pool.Each(func(e *Enemy) {
 		if e.IsDying() || e.IsSpawning() {
 			return
@@ -69,7 +64,7 @@ func TickBehaviors(pool *Pool, dt float64) BehaviorEvents {
 			tickStealth(e, dt, &events)
 		case "buffer":
 			tickBuffer(e, pool)
-			if e.BuffRadius > 0 && !e.AbilitySilenced {
+			if e.HasBufferAura() && !e.AbilitySilenced {
 				events.HasBuffer = true
 			}
 		}
@@ -218,11 +213,18 @@ func tickStealth(e *Enemy, dt float64, events *BehaviorEvents) {
 }
 
 // tickBuffer 旗手行为：每帧对范围内友军施加移速加成。
+// Reads radius/amount from bufferAura buff; writes short-lived speedUp buff to targets.
 func tickBuffer(e *Enemy, pool *Pool) {
-	if e.BuffRadius <= 0 || e.AbilitySilenced {
+	b, ok := e.Buffs.Get("bufferAura")
+	if !ok || e.AbilitySilenced {
 		return
 	}
-	r2 := e.BuffRadius * e.BuffRadius
+	amount := b.Value  // speed up ratio
+	radius := b.Value2 // aura radius
+	if radius <= 0 {
+		return
+	}
+	r2 := radius * radius
 	pool.Each(func(other *Enemy) {
 		if other == e || !other.Active || other.IsDying() || other.IsSpawning() {
 			return
@@ -230,10 +232,11 @@ func tickBuffer(e *Enemy, pool *Pool) {
 		dx := other.X - e.X
 		dy := other.Y - e.Y
 		if dx*dx+dy*dy <= r2 {
-			// 取最高加成（多个 buffer 不叠加，取最大值）
-			if e.BuffAmount > other.SpeedBuff {
-				other.SpeedBuff = e.BuffAmount
-			}
+			// Short-lived speedUp buff, refreshed each frame. Strongest mode keeps highest value.
+			other.Buffs.Add(buff.Buff{
+				ID: "speedUp", Category: buff.CatBehavior, Source: "bufferAura",
+				Value: amount, Duration: 0.1, Remaining: 0.1,
+			})
 		}
 	})
 }
@@ -273,12 +276,21 @@ func HandleSplitterDeath(e *Enemy, pool *Pool) []*Enemy {
 
 // UpdateBerserk 检查并触发狂暴状态。
 // 当血量比例降到阈值以下时，永久提升移动速度。
+// Berserk params (speedScale=Value, threshold=Value2) are stored in BuffList.
 // 返回 true 表示本次刚触发狂暴。
 func UpdateBerserk(e *Enemy) bool {
-	// 未配置狂暴或已触发过
-	if e.BerserkThreshold <= 0 || e.BerserkTriggered {
+	// 已触发过
+	if e.BerserkTriggered {
 		return false
 	}
+
+	// 从 BuffList 读取狂暴参数
+	b, ok := e.Buffs.Get("berserk")
+	if !ok {
+		return false
+	}
+	threshold := b.Value2
+	speedScale := b.Value
 
 	// 最大血量为零则跳过
 	if e.MaxHP <= 0 {
@@ -287,14 +299,13 @@ func UpdateBerserk(e *Enemy) bool {
 
 	// 检查血量比例是否低于阈值
 	ratio := e.HP / e.MaxHP
-	if ratio > e.BerserkThreshold {
+	if ratio > threshold {
 		return false
 	}
 
 	// 触发狂暴：永久提升基础速度
 	e.BerserkTriggered = true
-	e.Buffs.Add(buff.Buff{ID: "berserk", Category: buff.CatBehavior, Source: "archetype", Duration: -1, Remaining: -1})
-	e.BaseSpeed *= e.BerserkSpeedScale
+	e.BaseSpeed *= speedScale
 
 	// 如果当前未被减速，同步更新当前速度
 	if !e.IsSlowed() {

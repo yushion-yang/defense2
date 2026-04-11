@@ -152,9 +152,13 @@ func TestBehavior_Berserk(t *testing.T) {
 	e := &enemy.Enemy{
 		HP: 60, MaxHP: 100,
 		BaseSpeed: 100, Speed: 100,
-		BerserkThreshold: 0.5, BerserkSpeedScale: 1.5,
 		Buffs: buff.NewDefaultBuffList(),
 	}
+	// Add berserk buff via BuffList: Value=speedScale, Value2=threshold
+	e.Buffs.Add(buff.Buff{
+		ID: "berserk", Category: buff.CatBehavior, Source: "test",
+		Value: 1.5, Value2: 0.5, Duration: -1, Remaining: -1,
+	})
 	// 60% HP, 不触发
 	triggered := enemy.UpdateBerserk(e)
 	if triggered {

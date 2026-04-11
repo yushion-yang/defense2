@@ -128,9 +128,9 @@ func ProcessDamage(input DamageInput) DamageResult {
 	}
 	result.AfterTargetMod = damage
 
-	// ── 步骤4.1: 减伤比例（damageReduce buff 模板） ──
-	if !IgnoresReduction(dmgType) && e.DamageReduceRatio > 0 {
-		damage *= (1 - e.DamageReduceRatio)
+	// ── 步骤4.1: 减伤比例（damageReduce via BuffList） ──
+	if dr := e.GetDamageReduce(); !IgnoresReduction(dmgType) && dr > 0 {
+		damage *= (1 - dr)
 	}
 
 	// ── 步骤4.25: 虚弱增伤（weaken/weakenZone） ──
