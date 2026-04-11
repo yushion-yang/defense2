@@ -2125,6 +2125,8 @@ func (s *StageScene) updatePlaying() {
 		if s.choicePanel != nil {
 			s.choicePanel.Close()
 		}
+		// 清除缩放类能力运行时状态，防止跨局数据泄漏
+		abilities.ResetScalingState()
 	}
 
 	// AutoPlay 决策钩子
