@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"math"
 
+	"defense2/internal/config"
 	"defense2/internal/core/enemy"
 	"defense2/internal/core/warden"
 )
@@ -125,7 +126,10 @@ func coreAttack(s *CoreState, ctx *warden.TickContext) {
 
 	speed := s.ProjectileSpeed
 	if speed <= 0 {
-		speed = 400
+		speed = config.GlobalBalance().Combat.WardenMechProjectileSpeed
+	}
+	if speed <= 0 {
+		speed = 400 // ultimate fallback
 	}
 
 	inRange := countInRange(s, ctx)

@@ -25,7 +25,10 @@ type CombatBalance struct {
 	ScatterSpreadAngle      float64          `json:"scatterSpreadAngle"`
 	RadialBaseShots         int              `json:"radialBaseShots"`
 	RadialRangeMult         float64          `json:"radialRangeMult"`
-	WideBeamRangeMult       float64          `json:"wideBeamRangeMult"`
+	WideBeamRangeMult          float64 `json:"wideBeamRangeMult"`
+	WardenProjectileSpeed      float64 `json:"wardenProjectileSpeed"`     // 战灵默认弹速
+	WardenMechProjectileSpeed  float64 `json:"wardenMechProjectileSpeed"` // 机甲战灵弹速
+	WardenFireballSpeed        float64 `json:"wardenFireballSpeed"`       // 火灵火球速度
 }
 
 // TowerBalance 塔相关平衡参数。

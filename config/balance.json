@@ -14,7 +14,10 @@
     "scatterSpreadAngle": 60,              "_scatterSpreadAngle": "散射攻击扇形角度（度）",
     "radialBaseShots": 3,                  "_radialBaseShots": "环射攻击基础弹丸数",
     "radialRangeMult": 1.2,                "_radialRangeMult": "环射弹丸射程倍率",
-    "wideBeamRangeMult": 3,                "_wideBeamRangeMult": "贯穿光束射程倍率"
+    "wideBeamRangeMult": 3,                "_wideBeamRangeMult": "贯穿光束射程倍率",
+    "wardenProjectileSpeed": 350,          "_wardenProjectileSpeed": "战灵默认弹射物速度（像素/秒）",
+    "wardenMechProjectileSpeed": 400,      "_wardenMechProjectileSpeed": "机甲战灵弹射物速度（像素/秒）",
+    "wardenFireballSpeed": 350,            "_wardenFireballSpeed": "火灵火球飞行速度（像素/秒）"
   },
   "tower": {
     "strengthBuyCost": 10,                 "_strengthBuyCost": "购买强度的金币费用（每次+10强度）",

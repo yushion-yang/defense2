@@ -22,7 +22,7 @@
   },
 
   "boss": {
-    "everyNWaves": 5,                "_everyNWaves": "每隔N波出现一次Boss",
+    "everyNWaves": 4,                "_everyNWaves": "每隔N波出现一次Boss",
     "hpMultBase": 8,                 "_hpMultBase": "Boss生命值倍率（基于普通敌人）",
     "radiusScale": 1.5,              "_radiusScale": "Boss体型缩放倍率",
     "entranceDelay": 3.0,            "_entranceDelay": "Boss出场前的延迟（秒）",
