@@ -1,4 +1,5 @@
 {
+  "_status": "documentation-only",
   "_description": "能力维度缩放规格 — 各 scaleDim 的缩放类型和上限/下限",
 
   "dimensions": {

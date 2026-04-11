@@ -1,4 +1,5 @@
 {
+  "_status": "documentation-only",
   "_description": "伤害管线规格 — 8 步伤害处理流程的阈值、上限、执行顺序",
 
   "steps": [

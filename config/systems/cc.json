@@ -1,4 +1,5 @@
 {
+  "_status": "documentation-only",
   "_description": "CC（人群控制）系统规格 — 减速/眩晕的施加规则、免疫层级、韧性公式",
 
   "types": {

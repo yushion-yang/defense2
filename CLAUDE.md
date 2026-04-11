@@ -13,7 +13,7 @@ Go/Ebitengine tower defense game. Full port from JS version.
 ## Architecture
 
 - **Engine**: Ebitengine v2.9.9
-- **Pattern**: Scene state machine (title -> select -> stage -> result)
+- **Pattern**: Scene state machine: Title → Select → {CampaignSelect | TestSelect | Settings} → Stage(含 WardenSelect 覆盖层) → Result
 - **Layout**: Landscape 1200x540
 - **Config**: JSON via `//go:embed`, reused from JS version
 

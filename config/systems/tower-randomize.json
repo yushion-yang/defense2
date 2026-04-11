@@ -1,4 +1,5 @@
 {
+  "_status": "documentation-only",
   "_description": "塔随机属性系统规格 — tier 预算、base/potential 分配、属性划转参数",
 
   "tierBudget": 6,
