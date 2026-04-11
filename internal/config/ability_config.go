@@ -121,7 +121,11 @@ func (d *AbilityDef) FormatScale(strength float64) string {
 	scaled := d.Potential * (strength / 100.0)
 	total := d.Base + scaled
 	if d.Base < 1 {
-		return fmt.Sprintf("%s %.0f%%+(%.0f%%)=%.0f%%", d.ScaleDim, d.Base*100, scaled*100, total*100)
+		display := total
+		if (d.ScaleDim == "chance" || d.ScaleDim == "factor") && display > 1 {
+			display = 1
+		}
+		return fmt.Sprintf("%s %.0f%%+(%.0f%%)=%.0f%%", d.ScaleDim, d.Base*100, scaled*100, display*100)
 	}
 	return fmt.Sprintf("%s %.0f+(%.0f)=%.0f", d.ScaleDim, d.Base, scaled, total)
 }

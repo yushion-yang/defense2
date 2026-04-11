@@ -257,6 +257,12 @@ func fmtNum(v float64) string {
 	return fmt.Sprintf("%.0f", v)
 }
 
+// isPercentCapped 判断维度是否应在展示层 clamp 到 100%。
+// chance（概率）和 factor（减速因子）超过 100% 语义不成立。
+func isPercentCapped(scaleDim string) bool {
+	return scaleDim == "chance" || scaleDim == "factor"
+}
+
 // ---------------------------------------------------------------------------
 // Ability VM builder
 // ---------------------------------------------------------------------------
@@ -325,6 +331,11 @@ func FormatAbilityDisplay(def *config.AbilityDef, effStr float64) string {
 	}
 	scaled := def.Potential * (effStr / 100.0)
 	total := def.Base + scaled
+	// 概率/减速类展示 clamp 到 100%（实际运行时由 ApplyXxx 各自处理上限）
+	displayTotal := total
+	if isPercentCapped(def.ScaleDim) && displayTotal > 1 {
+		displayTotal = 1
+	}
 
 	var b strings.Builder
 	i := 0
@@ -344,7 +355,7 @@ func FormatAbilityDisplay(def *config.AbilityDef, effStr float64) string {
 		i += end + 1
 		switch ph {
 		case "s%":
-			b.WriteString(fmt.Sprintf("%.0f%%", total*100))
+			b.WriteString(fmt.Sprintf("%.0f%%", displayTotal*100))
 		case "s":
 			b.WriteString(fmtNum(total))
 		case "si":
@@ -368,6 +379,11 @@ func buildAbilitySegments(def *config.AbilityDef, effStr float64) []hud.AbilityS
 
 	scaled := def.Potential * (effStr / 100.0)
 	total := def.Base + scaled
+	// 概率/减速类展示 clamp 到 100%
+	displayTotal := total
+	if isPercentCapped(def.ScaleDim) && displayTotal > 1 {
+		displayTotal = 1
+	}
 	sClr := scaledColor(scaled, def.Potential)
 
 	var segs []hud.AbilitySegment
@@ -394,12 +410,16 @@ func buildAbilitySegments(def *config.AbilityDef, effStr float64) []hud.AbilityS
 		case "s%":
 			if def.Base == 0 {
 				// base=0 时只显示缩放值
-				segs = append(segs, hud.AbilitySegment{Text: fmt.Sprintf("%.0f%%", scaled*100), Kind: "scaled", Color: sClr})
+				dv := scaled
+				if isPercentCapped(def.ScaleDim) && dv > 1 {
+					dv = 1
+				}
+				segs = append(segs, hud.AbilitySegment{Text: fmt.Sprintf("%.0f%%", dv*100), Kind: "scaled", Color: sClr})
 			} else {
 				segs = append(segs,
 					hud.AbilitySegment{Text: fmt.Sprintf("%.0f%%+", def.Base*100), Kind: "base"},
 					hud.AbilitySegment{Text: fmt.Sprintf("(%.0f%%)", scaled*100), Kind: "scaled", Color: sClr},
-					hud.AbilitySegment{Text: fmt.Sprintf("→%.0f%%", total*100), Kind: "total"},
+					hud.AbilitySegment{Text: fmt.Sprintf("→%.0f%%", displayTotal*100), Kind: "total"},
 				)
 			}
 		case "s":
