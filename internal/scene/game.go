@@ -64,6 +64,7 @@ func NewGame() *Game {
 	config.LoadTierPresets()           // 加载塔属性档位预设（S/A/B/C/D）
 	config.LoadAndCacheWardenConfigs() // 加载战灵配置并缓存
 	config.LoadBuffRules()             // 加载 buff 堆叠规则
+	config.LoadWaveCompositions()      // 加载波次出怪组合配置
 	if err := postprocess.InitShaders(); err != nil {
 		log.Printf("后处理着色器编译失败（bloom 禁用）: %v", err)
 	}

@@ -18,34 +18,28 @@ type waveEntry struct {
 	weight    int
 }
 
-// waveCompositions 按波次阶段定义原型权重分布。
-// 索引越大对应波次越高。Spawner 根据当前 Wave 选择合适的阶段。
-var waveCompositions = []struct {
-	maxWave int // 该阶段适用的最大波次号（含），0 表示无上限
-	entries []waveEntry
-}{
-	{maxWave: 3, entries: []waveEntry{
-		{"normal", 100},
-	}},
-	{maxWave: 6, entries: []waveEntry{
-		{"normal", 60}, {"runner", 20}, {"swarm", 20},
-	}},
-	{maxWave: 9, entries: []waveEntry{
-		{"normal", 40}, {"runner", 15}, {"tank", 10}, {"armored", 10},
-		{"swarm", 10}, {"shielder", 5}, {"phantom", 5}, {"steadfast", 5},
-	}},
-	{maxWave: 14, entries: []waveEntry{
-		{"normal", 25}, {"runner", 10}, {"tank", 8}, {"armored", 8},
-		{"swarm", 8}, {"shielder", 5}, {"phantom", 5}, {"steadfast", 5},
-		{"healer", 5}, {"buffer", 5}, {"ironwill", 5}, {"colossus", 3},
-		{"splitter", 4}, {"phaser", 4},
-	}},
-	{maxWave: 0, entries: []waveEntry{ // wave 15+
-		{"normal", 15}, {"runner", 8}, {"tank", 7}, {"armored", 7},
-		{"swarm", 6}, {"shielder", 5}, {"phantom", 5}, {"steadfast", 4},
-		{"healer", 5}, {"buffer", 5}, {"ironwill", 5}, {"colossus", 4},
-		{"splitter", 4}, {"phaser", 4}, {"drainer", 4}, {"summoner", 4}, {"purifier", 2},
-	}},
+// getComposition 根据波次号从配置中获取对应的原型权重表。
+func getComposition(wave int) []waveEntry {
+	comps := config.GlobalWaveCompositions()
+	for _, c := range comps {
+		if c.MaxWave == 0 || wave <= c.MaxWave {
+			entries := make([]waveEntry, 0, len(c.Enemies))
+			for arch, w := range c.Enemies {
+				entries = append(entries, waveEntry{archetype: arch, weight: w})
+			}
+			return entries
+		}
+	}
+	// 回退到最后一个阶段
+	if len(comps) > 0 {
+		last := comps[len(comps)-1]
+		entries := make([]waveEntry, 0, len(last.Enemies))
+		for arch, w := range last.Enemies {
+			entries = append(entries, waveEntry{archetype: arch, weight: w})
+		}
+		return entries
+	}
+	return []waveEntry{{"normal", 100}}
 }
 
 // Spawner 波次出怪控制器。
@@ -240,6 +234,57 @@ type WavePreviewEntry struct {
 	Count     int
 }
 
+// PreviewWave 返回指定波次的敌人组合预览（无需 Spawner 实例）。
+// archetypes 提供原型 Label 映射，可为 nil（此时 Label 用原型名）。
+// 返回各原型预计数量、总数量和是否为 Boss 波。
+func PreviewWave(wave, maxWaves, enemiesPerWave int, archetypes map[string]*SpawnConfig) ([]WavePreviewEntry, int, bool) {
+	if wave < 1 || wave > maxWaves {
+		return nil, 0, false
+	}
+
+	bal := config.GlobalBalance().Spawner
+	count := enemiesPerWave + wave
+	isBoss := wave%bal.BossEveryNWaves == 0
+	if isBoss {
+		count++
+	}
+	totalCount := count
+
+	comp := getComposition(wave)
+
+	totalWeight := 0
+	for _, e := range comp {
+		totalWeight += e.weight
+	}
+	if totalWeight == 0 {
+		return nil, totalCount, isBoss
+	}
+
+	normalCount := count
+	if isBoss {
+		normalCount--
+	}
+	var entries []WavePreviewEntry
+	for _, e := range comp {
+		n := normalCount * e.weight / totalWeight
+		if n <= 0 {
+			n = 1
+		}
+		label := e.archetype
+		if archetypes != nil {
+			if cfg, ok := archetypes[e.archetype]; ok && cfg != nil && cfg.Label != "" {
+				label = cfg.Label
+			}
+		}
+		entries = append(entries, WavePreviewEntry{
+			Archetype: e.archetype,
+			Label:     label,
+			Count:     n,
+		})
+	}
+	return entries, totalCount, isBoss
+}
+
 // NextWavePreview 返回下一波的预览信息。
 func (s *Spawner) NextWavePreview() (entries []WavePreviewEntry, totalCount int, isBoss bool) {
 	nextWave := s.Wave + 1
@@ -259,16 +304,7 @@ func (s *Spawner) NextWavePreview() (entries []WavePreviewEntry, totalCount int,
 	totalCount = count
 
 	// 获取原型权重分布
-	var comp []waveEntry
-	for _, c := range waveCompositions {
-		if c.maxWave == 0 || nextWave <= c.maxWave {
-			comp = c.entries
-			break
-		}
-	}
-	if comp == nil && len(waveCompositions) > 0 {
-		comp = waveCompositions[len(waveCompositions)-1].entries
-	}
+	comp := getComposition(nextWave)
 
 	// 计算各原型大概数量
 	totalWeight := 0
@@ -412,13 +448,7 @@ func (s *Spawner) matchesFilter(name string, cfg *SpawnConfig) bool {
 
 // compositionForWave 返回当前波次对应的原型权重表。
 func (s *Spawner) compositionForWave() []waveEntry {
-	for _, c := range waveCompositions {
-		if c.maxWave == 0 || s.Wave <= c.maxWave {
-			return c.entries
-		}
-	}
-	// 回退到最后一个阶段
-	return waveCompositions[len(waveCompositions)-1].entries
+	return getComposition(s.Wave)
 }
 
 // getConfig 查找原型对应的 SpawnConfig。

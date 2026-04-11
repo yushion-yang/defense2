@@ -28,13 +28,13 @@ func TestConsistency_WaveArchetypesExistInEnemyCore(t *testing.T) {
 		t.Fatal("敌人原型表为空")
 	}
 
-	// 从 spawner.go 中定义的 waveCompositions 提取所有引用的原型名
-	// 这些原型名在代码中硬编码，我们验证它们都存在于配置中
-	referencedArchetypes := []string{
-		"normal", "runner", "swarm", "tank", "armored",
-		"shielder", "phantom", "steadfast", "healer", "buffer",
-		"ironwill", "colossus", "splitter", "phaser", "drainer",
-		"summoner", "purifier",
+	// 从 wave-compositions.json 动态读取所有引用的原型名
+	if err := config.LoadWaveCompositions(); err != nil {
+		t.Fatalf("加载波次组合配置失败: %v", err)
+	}
+	referencedArchetypes := config.WaveCompositionArchetypes()
+	if len(referencedArchetypes) == 0 {
+		t.Fatal("波次组合中无原型引用")
 	}
 
 	for _, arch := range referencedArchetypes {
