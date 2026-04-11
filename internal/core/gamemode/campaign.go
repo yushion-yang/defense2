@@ -34,7 +34,7 @@ func (m *CampaignMode) OnWaveCleared(wave int, _ *Context) WaveClearResult {
 	return WaveClearResult{
 		BonusGold:    bonus,
 		PerfectBonus: perfect,
-		Message:      fmt.Sprintf("Wave %d clear! +$%d", wave, bonus),
+		Message:      fmt.Sprintf("第%d波通关! +$%d", wave, bonus),
 	}
 }
 

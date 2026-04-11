@@ -40,10 +40,10 @@ func (m *EndlessMode) OnWaveCleared(wave int, ctx *Context) WaveClearResult {
 	econ := modeEcon("endless")
 	bonus := econ.WaveBonus.Calc(wave)
 	perfect := econ.PerfectBonus.Calc(wave)
-	msg := fmt.Sprintf("Wave %d clear! +$%d", wave, bonus)
+	msg := fmt.Sprintf("第%d波通关! +$%d", wave, bonus)
 	bossN := config.GlobalBalance().Spawner.BossEveryNWaves
 	if bossN > 0 && wave%bossN == 0 {
-		msg = fmt.Sprintf("Wave %d clear! Boss 波! +$%d", wave, bonus)
+		msg = fmt.Sprintf("第%d波通关! 首领波! +$%d", wave, bonus)
 	}
 	return WaveClearResult{
 		BonusGold:    bonus,

@@ -56,7 +56,7 @@ func (m *BossRushMode) OnWaveCleared(wave int, _ *Context) WaveClearResult {
 	return WaveClearResult{
 		BonusGold:    bonus,
 		PerfectBonus: perfect,
-		Message:      fmt.Sprintf("Boss %d defeated! +$%d", wave, bonus),
+		Message:      fmt.Sprintf("首领%d击败! +$%d", wave, bonus),
 	}
 }
 
