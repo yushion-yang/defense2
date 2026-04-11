@@ -15,6 +15,8 @@ import (
 // ItemCardVM is the view-model for a single item card (no core imports).
 type ItemCardVM struct {
 	Name  string
+	Desc  string // 描述文字（如 "基础伤害+2"）
+	Icon  string // 图标名（如 "item-stone"）
 	Count int
 	Color color.RGBA
 	Kind  int // item.Kind as int (avoid importing item in hud)
@@ -30,8 +32,8 @@ type ItemPanelData struct {
 const (
 	ipCols    = 2
 	ipRows    = 3
-	ipCardW   = float32(110)
-	ipCardH   = float32(50)
+	ipCardW   = float32(120)
+	ipCardH   = float32(58)
 	ipCardGap = float32(8)
 	ipCardR   = float32(8)
 	ipPadX    = float32(14)
@@ -44,7 +46,7 @@ const (
 // itemPanelMetrics computes the panel geometry.
 type itemPanelMetrics struct {
 	panelX, panelY, panelW, panelH float32
-	gridX, gridY                    float32
+	gridX, gridY                   float32
 }
 
 func calcItemPanelMetrics() itemPanelMetrics {
@@ -103,8 +105,8 @@ func DrawItemPanel(screen *ebiten.Image, d ItemPanelData) {
 	}
 }
 
-// itemIconName maps item Kind (as int) to the corresponding stat icon name.
-func itemIconName(kind int) string {
+// itemIconFallback maps item Kind (as int) to a fallback stat icon name.
+func itemIconFallback(kind int) string {
 	switch kind {
 	case 0, 1: // BaseDamage, PotentialDamage
 		return "stat-damage"
@@ -115,6 +117,20 @@ func itemIconName(kind int) string {
 	default:
 		return "stat-damage"
 	}
+}
+
+// resolveItemIcon returns the icon image for a card, trying card.Icon first then fallback.
+func resolveItemIcon(card ItemCardVM) *ebiten.Image {
+	im := render.GlobalIcons()
+	if im == nil {
+		return nil
+	}
+	if card.Icon != "" {
+		if img := im.Get(card.Icon); img != nil {
+			return img
+		}
+	}
+	return im.Get(itemIconFallback(card.Kind))
 }
 
 // drawItemCard renders a single item card.
@@ -128,27 +144,20 @@ func drawItemCard(screen *ebiten.Image, fm *render.FontManager, card ItemCardVM,
 	}
 	draw.RoundRect(screen, cx, cy, ipCardW, ipCardH, ipCardR, cardBg)
 
-	// Stat icon with colored circle background (left side)
-	iconCX := cx + 16
-	iconCY := cy + ipCardH/2
-	circleClr := card.Color
-	if !available {
-		circleClr.A = 80
-	}
-	// Colored circle behind icon for base/potential differentiation
-	draw.FilledCircle(screen, iconCX, iconCY, 12, color.RGBA{
-		R: circleClr.R, G: circleClr.G, B: circleClr.B, A: circleClr.A / 2,
-	})
-	// Stat icon on top
-	if im := render.GlobalIcons(); im != nil {
-		if img := im.Get(itemIconName(card.Kind)); img != nil {
-			draw.Sprite(screen, img, float64(iconCX), float64(iconCY), 18)
+	// Item icon (left side)
+	iconCX := cx + 18
+	iconCY := cy + ipCardH/2 - 2
+	if img := resolveItemIcon(card); img != nil {
+		alpha := float32(1)
+		if !available {
+			alpha = 0.35
 		}
+		draw.SpriteAlpha(screen, img, float64(iconCX), float64(iconCY), 28, alpha)
 	}
 
 	// Name text
-	textX := float64(iconCX) + 12 + 8
-	textY := float64(cy) + 10
+	textX := float64(iconCX) + 18
+	textY := float64(cy) + 6
 	nameClr := color.RGBA{R: 220, G: 230, B: 245, A: 255}
 	if !available {
 		nameClr = theme.TextLocked
@@ -161,7 +170,16 @@ func drawItemCard(screen *ebiten.Image, fm *render.FontManager, card ItemCardVM,
 	if !available {
 		countClr = theme.TextLocked
 	}
-	fm.DrawText(screen, countTxt, textX, textY+16, theme.FontXS, countClr)
+	fm.DrawText(screen, countTxt, textX+float64(fm.MeasureText(card.Name, theme.FontSM))+4, textY, theme.FontXS, countClr)
+
+	// Description text
+	if card.Desc != "" {
+		descClr := theme.TextMuted
+		if !available {
+			descClr = theme.TextLocked
+		}
+		fm.DrawText(screen, card.Desc, textX, textY+16, theme.FontXS, descClr)
+	}
 }
 
 // ItemPanelHitTest returns the card index hit by (px, py), or -1.
@@ -206,22 +224,21 @@ func ItemPanelContains(px, py float32) bool {
 }
 
 // DrawDragItem renders a floating item at cursor position during drag.
-func DrawDragItem(screen *ebiten.Image, x, y float32, clr color.RGBA, name string, kind int) {
+func DrawDragItem(screen *ebiten.Image, x, y float32, clr color.RGBA, name string, kind int, icon string) {
 	fm := render.GlobalFont()
 
 	// Colored circle background
-	draw.FilledCircle(screen, x, y, 16, color.RGBA{R: clr.R, G: clr.G, B: clr.B, A: 150})
+	draw.FilledCircle(screen, x, y, 18, color.RGBA{R: clr.R, G: clr.G, B: clr.B, A: 150})
 	// White outline
-	draw.CircleOutline(screen, x, y, 16, 2, color.RGBA{R: 255, G: 255, B: 255, A: 220})
-	// Stat icon on top
-	if im := render.GlobalIcons(); im != nil {
-		if img := im.Get(itemIconName(kind)); img != nil {
-			draw.Sprite(screen, img, float64(x), float64(y), 20)
-		}
+	draw.CircleOutline(screen, x, y, 18, 2, color.RGBA{R: 255, G: 255, B: 255, A: 220})
+	// Item icon on top
+	vm := ItemCardVM{Icon: icon, Kind: kind}
+	if img := resolveItemIcon(vm); img != nil {
+		draw.Sprite(screen, img, float64(x), float64(y), 28)
 	}
 
 	// Name text below
 	if fm != nil {
-		fm.DrawText(screen, name, float64(x)-20, float64(y)+20, theme.FontXS, color.White)
+		fm.DrawCenteredText(screen, name, float64(x), float64(y)+22, theme.FontXS, color.White)
 	}
 }

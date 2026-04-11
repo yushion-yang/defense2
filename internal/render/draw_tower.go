@@ -5,7 +5,6 @@ package render
 
 import (
 	"fmt"
-	"image/color"
 	"math"
 
 	"defense2/internal/config"
@@ -241,11 +240,9 @@ func (tr *TowerRenderer) getTowerFrame(t *tower.Tower, dt float64) *ebiten.Image
 func DrawTowerRangePreview(screen *ebiten.Image, cx, cy float32, r float64, valid bool) {
 	fr := float32(r)
 
-	var strokeClr color.RGBA
+	strokeClr := theme.TowerRangeInvalid
 	if valid {
-		strokeClr = color.RGBA{R: 34, G: 197, B: 94, A: 153} // green 0.6 alpha
-	} else {
-		strokeClr = color.RGBA{R: 239, G: 68, B: 68, A: 153} // red 0.6 alpha
+		strokeClr = theme.TowerRangeValid
 	}
 
 	// Range circle (outline only)

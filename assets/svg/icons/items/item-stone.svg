@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <circle cx="32" cy="32" r="30" fill="#1e293b"/>
+  <!-- Whetstone body -->
+  <rect x="16" y="24" width="32" height="18" rx="3" fill="#a8a29e"/>
+  <rect x="16" y="24" width="32" height="18" rx="3" fill="url(#sg)" opacity="0.6"/>
+  <!-- Surface grain lines -->
+  <line x1="19" y1="28" x2="45" y2="28" stroke="#78716c" stroke-width="1" opacity="0.5"/>
+  <line x1="19" y1="33" x2="45" y2="33" stroke="#78716c" stroke-width="1" opacity="0.5"/>
+  <line x1="19" y1="38" x2="45" y2="38" stroke="#78716c" stroke-width="1" opacity="0.5"/>
+  <!-- Sparks (red, damage theme) -->
+  <circle cx="38" cy="20" r="2" fill="#ef4444"/>
+  <circle cx="42" cy="17" r="1.5" fill="#f87171"/>
+  <circle cx="35" cy="16" r="1" fill="#fca5a5"/>
+  <circle cx="44" cy="22" r="1" fill="#fca5a5"/>
+  <!-- Red glow on stone -->
+  <rect x="20" y="26" width="24" height="3" rx="1" fill="#ef4444" opacity="0.3"/>
+  <defs>
+    <linearGradient id="sg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#d6d3d1"/>
+      <stop offset="1" stop-color="#78716c"/>
+    </linearGradient>
+  </defs>
+</svg>

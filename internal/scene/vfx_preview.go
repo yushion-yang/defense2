@@ -259,19 +259,19 @@ func (s *VFXPreviewScene) vfxTriggerRegistry() map[string]func(s *VFXPreviewScen
 		"immunityRing":     func(s *VFXPreviewScene) { s.activateVFX("immunityRing", 0) },
 
 		// Enemy ability trigger VFX
-		"blockFlash":     func(s *VFXPreviewScene) { s.activateVFX("blockFlash", 0) },
-		"dodgeFlash":     func(s *VFXPreviewScene) { s.activateVFX("dodgeFlash", 0) },
-		"armorSpark":     func(s *VFXPreviewScene) { s.activateVFX("armorSpark", 0) },
-		"damageCapPulse": func(s *VFXPreviewScene) { s.activateVFX("damageCapPulse", 0) },
-		"purgeWave":      func(s *VFXPreviewScene) { s.activateVFX("purgeWave", 0) },
-		"phaseAura":      func(s *VFXPreviewScene) { s.activateVFX("phaseAura", 0) },
-		"dashTrails":     func(s *VFXPreviewScene) { s.activateVFX("dashTrails", 0) },
-		"healerAura":     func(s *VFXPreviewScene) { s.activateVFX("healerAura", 0) },
-		"speedAura":      func(s *VFXPreviewScene) { s.activateVFX("speedAura", 0) },
-		"strengthDrain":  func(s *VFXPreviewScene) { s.activateVFX("strengthDrain", 0) },
-		"slowOverlay":    func(s *VFXPreviewScene) { s.activateVFX("slowOverlay", 0) },
-		"burnOverlay":    func(s *VFXPreviewScene) { s.activateVFX("burnOverlay", 0) },
-		"poisonOverlay":       func(s *VFXPreviewScene) { s.activateVFX("poisonOverlay", 0) },
+		"blockFlash":         func(s *VFXPreviewScene) { s.activateVFX("blockFlash", 0) },
+		"dodgeFlash":         func(s *VFXPreviewScene) { s.activateVFX("dodgeFlash", 0) },
+		"armorSpark":         func(s *VFXPreviewScene) { s.activateVFX("armorSpark", 0) },
+		"damageCapPulse":     func(s *VFXPreviewScene) { s.activateVFX("damageCapPulse", 0) },
+		"purgeWave":          func(s *VFXPreviewScene) { s.activateVFX("purgeWave", 0) },
+		"phaseAura":          func(s *VFXPreviewScene) { s.activateVFX("phaseAura", 0) },
+		"dashTrails":         func(s *VFXPreviewScene) { s.activateVFX("dashTrails", 0) },
+		"healerAura":         func(s *VFXPreviewScene) { s.activateVFX("healerAura", 0) },
+		"speedAura":          func(s *VFXPreviewScene) { s.activateVFX("speedAura", 0) },
+		"strengthDrain":      func(s *VFXPreviewScene) { s.activateVFX("strengthDrain", 0) },
+		"slowOverlay":        func(s *VFXPreviewScene) { s.activateVFX("slowOverlay", 0) },
+		"burnOverlay":        func(s *VFXPreviewScene) { s.activateVFX("burnOverlay", 0) },
+		"poisonOverlay":      func(s *VFXPreviewScene) { s.activateVFX("poisonOverlay", 0) },
 		"damageReduceShield": func(s *VFXPreviewScene) { s.activateVFX("damageReduceShield", 0) },
 		"berserkFlare":       func(s *VFXPreviewScene) { s.activateVFX("berserkFlare", 0) },
 		"regenAura":          func(s *VFXPreviewScene) { s.activateVFX("regenAura", 0) },
@@ -878,7 +878,7 @@ func (s *VFXPreviewScene) drawActiveVFX(screen *ebiten.Image) {
 	case "spinBlades":
 		vfx.DrawSpinBlades(screen, fcx, fcy, 60, t*3, 1.0)
 	case "strengthGlow":
-		vfx.DrawStrengthGlow(screen, fcx, fcy, 120, t)
+		vfx.DrawStrengthGlow(screen, fcx, fcy, 900, t)
 	case "auraPulse":
 		vfx.DrawAuraPulse(screen, fcx, fcy, 80, color.RGBA{R: 255, G: 160, B: 60, A: 255}, t)
 	case "damageUpAura":

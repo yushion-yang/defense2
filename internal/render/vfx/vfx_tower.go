@@ -178,28 +178,99 @@ func DrawSpinBlades(screen *ebiten.Image, cx, cy, outerR float32, spinAngle, act
 
 const towerSpriteSize = 64
 
-// DrawStrengthGlow 根据力量溢出值绘制层级光环。
+// DrawStrengthGlow 根据力量溢出值绘制层级力量标识。
 // overflow: 超过基线 100 的力量值。
+// 6 个层级：50/150/300/500/700/900，以旋转菱形、弧线段、虚线环组合表现，
+// 不使用实心圆/Glow，紧凑贴合塔体。
 func DrawStrengthGlow(screen *ebiten.Image, cx, cy float32, overflow float64, animTime float64) {
-	if overflow >= 50 {
-		// Tier 1: warm yellow ring + subtle glow
-		pulse1 := 0.5 + 0.5*math.Sin(animTime*2)
-		ringAlpha := uint8(50 + 20*pulse1)
-		draw.Glow(screen, cx, cy, float32(towerSpriteSize*0.35), float32(towerSpriteSize*0.5), color.RGBA{255, 230, 150, uint8(20 + 10*pulse1)})
-		draw.CircleOutline(screen, cx, cy, float32(towerSpriteSize*0.4), 1.5, color.RGBA{255, 230, 150, ringAlpha})
+	if overflow < 50 {
+		return
 	}
-	if overflow >= 100 {
-		// Tier 2: orange second ring
-		pulse2 := 0.5 + 0.5*math.Sin(animTime*2.5)
-		ringAlpha2 := uint8(45 + 20*pulse2)
-		draw.CircleOutline(screen, cx, cy, float32(towerSpriteSize*0.5), 1.5, color.RGBA{255, 200, 80, ringAlpha2})
+
+	// ── T1 (50+): 4 个缓慢旋转的小菱形标记 ──
+	{
+		rot := animTime * 0.8
+		pulse := 0.5 + 0.5*math.Sin(animTime*2)
+		r := float32(15)
+		a := uint8(45 + 25*pulse)
+		clr := color.RGBA{255, 220, 130, a}
+		for i := 0; i < 4; i++ {
+			angle := rot + float64(i)*math.Pi/2
+			dx := r * float32(math.Cos(angle))
+			dy := r * float32(math.Sin(angle))
+			draw.DiamondRotated(screen, cx+dx, cy+dy, 3, 1, angle, clr)
+		}
 	}
+
+	// ── T2 (150+): 2 段旋转弧线 ──
 	if overflow >= 150 {
-		// Tier 3: bright gold pulsing + strong glow
-		pulse3 := 0.5 + 0.5*math.Sin(animTime*3)
-		ringAlpha3 := uint8(50 + 30*pulse3)
-		draw.Glow(screen, cx, cy, float32(towerSpriteSize*0.45), float32(towerSpriteSize*0.65), color.RGBA{255, 200, 50, uint8(25 + 15*pulse3)})
-		draw.CircleOutline(screen, cx, cy, float32(towerSpriteSize*0.6), 1.5, color.RGBA{255, 200, 50, ringAlpha3})
+		rot := animTime * 1.2
+		pulse := 0.5 + 0.5*math.Sin(animTime*2.5)
+		r := float32(17)
+		a := uint8(50 + 25*pulse)
+		clr := color.RGBA{255, 200, 90, a}
+		arcLen := float32(math.Pi * 0.45)
+		for i := 0; i < 2; i++ {
+			start := float32(rot) + float32(i)*math.Pi
+			draw.Arc(screen, cx, cy, r, start, start+arcLen, 1.2, clr)
+		}
+	}
+
+	// ── T3 (300+): 3 段反向旋转弧线（外层） ──
+	if overflow >= 300 {
+		rot := -animTime * 1.5
+		pulse := 0.5 + 0.5*math.Sin(animTime*3)
+		r := float32(20)
+		a := uint8(50 + 30*pulse)
+		clr := color.RGBA{255, 180, 60, a}
+		arcLen := float32(math.Pi * 0.35)
+		for i := 0; i < 3; i++ {
+			start := float32(rot) + float32(i)*math.Pi*2/3
+			draw.Arc(screen, cx, cy, r, start, start+arcLen, 1.3, clr)
+		}
+	}
+
+	// ── T4 (500+): 脉冲虚线内环 ──
+	if overflow >= 500 {
+		pulse := 0.5 + 0.5*math.Sin(animTime*2)
+		r := float32(13 + pulse*1.5)
+		a := uint8(40 + 30*pulse)
+		clr := color.RGBA{255, 170, 40, a}
+		draw.DashedCircle(screen, cx, cy, r, 1, 3, 3, clr)
+	}
+
+	// ── T5 (700+): 外层 4 菱形 + 放射短线 ──
+	if overflow >= 700 {
+		rot := animTime * 0.6
+		pulse := 0.5 + 0.5*math.Sin(animTime*3.5)
+		a := uint8(55 + 35*pulse)
+		clr := color.RGBA{255, 150, 30, a}
+		r := float32(23)
+		for i := 0; i < 4; i++ {
+			angle := rot + float64(i)*math.Pi/2 + math.Pi/4
+			dx := r * float32(math.Cos(angle))
+			dy := r * float32(math.Sin(angle))
+			draw.DiamondRotated(screen, cx+dx, cy+dy, 3.5, 1.2, angle, clr)
+			// 放射短线从菱形向外延伸
+			outerR := r + 5
+			dx2 := outerR * float32(math.Cos(angle))
+			dy2 := outerR * float32(math.Sin(angle))
+			draw.ThickLine(screen, cx+dx, cy+dy, cx+dx2, cy+dy2, 1, clr)
+		}
+	}
+
+	// ── T6 (900+): 密集弧段光冠（6 段交替旋转） ──
+	if overflow >= 900 {
+		rot := animTime * 2.0
+		pulse := 0.5 + 0.5*math.Sin(animTime*4)
+		r := float32(25)
+		a := uint8(60 + 40*pulse)
+		clr := color.RGBA{255, 130, 20, a}
+		arcLen := float32(math.Pi * 0.2)
+		for i := 0; i < 6; i++ {
+			start := float32(rot) + float32(i)*math.Pi/3
+			draw.Arc(screen, cx, cy, r, start, start+arcLen, 1.5, clr)
+		}
 	}
 }
 

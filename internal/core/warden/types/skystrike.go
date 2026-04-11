@@ -5,7 +5,7 @@ package types
 
 import (
 	"fmt"
-	"math/rand"
+	"sort"
 
 	"defense2/internal/core/enemy"
 	"defense2/internal/core/warden"
@@ -186,9 +186,9 @@ func skystrikeSpecial(s *SkystrikeState, ctx *warden.TickContext) {
 	}
 }
 
-// 模式 1：随机 N 目标，各受 ratio% 攻击力伤害。
+// 模式 1：最近 N 目标，各受 ratio% 攻击力伤害。
 func skystrikeMulti(s *SkystrikeState, ctx *warden.TickContext, alive []*enemy.Enemy) {
-	targets := pickRandom(alive, s.MultiTargets)
+	targets := pickNearest(alive, s.MultiTargets, s.X, s.Y)
 	dmg := s.Damage * s.MultiDmgRatio
 	for _, e := range targets {
 		applyDmg(e, dmg, ctx)
@@ -196,9 +196,9 @@ func skystrikeMulti(s *SkystrikeState, ctx *warden.TickContext, alive []*enemy.E
 	}
 }
 
-// 模式 2：随机单目标，N 段延时连击（每段间隔 0.15s）。
+// 模式 2：最近单目标，N 段延时连击（每段间隔 0.15s）。
 func skystrikeBurst(s *SkystrikeState, ctx *warden.TickContext, alive []*enemy.Enemy) {
-	target := alive[rand.Intn(len(alive))]
+	target := pickNearest(alive, 1, s.X, s.Y)[0]
 	dmg := s.Damage * s.BurstDmgRatio
 	// 第一段立即出伤
 	applyDmg(target, dmg, ctx)
@@ -210,7 +210,7 @@ func skystrikeBurst(s *SkystrikeState, ctx *warden.TickContext, alive []*enemy.E
 	s.BurstDelay = 0.15
 }
 
-// 模式 3：随机 N 目标，各受 X% 最大生命值伤害（Boss 免疫）。
+// 模式 3：最近 N 目标，各受 X% 最大生命值伤害（Boss 免疫）。
 func skystrikeHpPercent(s *SkystrikeState, ctx *warden.TickContext, alive []*enemy.Enemy) {
 	// 过滤掉 Boss（Boss 免疫百分比伤害）
 	var nonBoss []*enemy.Enemy
@@ -222,7 +222,7 @@ func skystrikeHpPercent(s *SkystrikeState, ctx *warden.TickContext, alive []*ene
 	if len(nonBoss) == 0 {
 		return
 	}
-	targets := pickRandom(nonBoss, s.HpTargets)
+	targets := pickNearest(nonBoss, s.HpTargets, s.X, s.Y)
 	for _, e := range targets {
 		dmg := e.MaxHP * s.HpPercent
 		applyDmg(e, dmg, ctx)
@@ -244,17 +244,17 @@ func collectAlive(pool *enemy.Pool) []*enemy.Enemy {
 	return result
 }
 
-// pickRandom 从列表中随机选 n 个（不重复，不足则全选）。
-func pickRandom(list []*enemy.Enemy, n int) []*enemy.Enemy {
+// pickNearest 从列表中选距离 (sx,sy) 最近的 n 个（不足则全选）。
+func pickNearest(list []*enemy.Enemy, n int, sx, sy float64) []*enemy.Enemy {
 	if n >= len(list) {
 		return list
 	}
-	perm := rand.Perm(len(list))
-	result := make([]*enemy.Enemy, n)
-	for i := 0; i < n; i++ {
-		result[i] = list[perm[i]]
-	}
-	return result
+	sort.Slice(list, func(i, j int) bool {
+		di := (list[i].X-sx)*(list[i].X-sx) + (list[i].Y-sy)*(list[i].Y-sy)
+		dj := (list[j].X-sx)*(list[j].X-sx) + (list[j].Y-sy)*(list[j].Y-sy)
+		return di < dj
+	})
+	return list[:n]
 }
 
 // addStrike 在指定敌人位置添加一个天降打击特效。

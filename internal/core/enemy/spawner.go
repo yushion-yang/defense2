@@ -5,6 +5,7 @@ package enemy
 
 import (
 	"math/rand"
+	"sort"
 
 	"defense2/internal/config"
 	"defense2/internal/core/buff"
@@ -335,6 +336,10 @@ func (s *Spawner) NextWavePreview() (entries []WavePreviewEntry, totalCount int,
 			Count:     n,
 		})
 	}
+	// 按原型名排序，保证每帧渲染顺序一致（map 迭代无序）
+	sort.Slice(entries, func(i, j int) bool {
+		return entries[i].Archetype < entries[j].Archetype
+	})
 	return entries, totalCount, isBoss
 }
 

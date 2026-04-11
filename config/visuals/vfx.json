@@ -324,7 +324,7 @@
           "id": "strengthGlow",
           "name": "StrengthGlow",
           "label": "力量光环",
-          "description": "力量溢出时的层级光环：50/100/150 三个层级递增"
+          "description": "力量溢出时的层级标识：T1(50+)旋转菱形/T2(150+)弧线段/T3(300+)反向弧/T4(500+)虚线环/T5(700+)放射菱形/T6(900+)密集光冠"
         },
         {
           "id": "auraPulse",

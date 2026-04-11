@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <circle cx="32" cy="32" r="30" fill="#1e293b"/>
+  <!-- Scroll body -->
+  <rect x="20" y="14" width="24" height="36" rx="2" fill="#fef3c7"/>
+  <!-- Top roll -->
+  <ellipse cx="32" cy="14" rx="14" ry="4" fill="#f59e0b"/>
+  <ellipse cx="32" cy="14" rx="14" ry="3" fill="#fde68a"/>
+  <!-- Bottom roll -->
+  <ellipse cx="32" cy="50" rx="14" ry="4" fill="#f59e0b"/>
+  <ellipse cx="32" cy="50" rx="14" ry="3" fill="#fde68a"/>
+  <!-- Damage symbol (sword silhouette) -->
+  <polygon points="32,20 35,34 32,32 29,34" fill="#dc2626"/>
+  <rect x="30" y="34" width="4" height="2" rx="0.5" fill="#dc2626"/>
+  <rect x="28" y="36" width="8" height="2" rx="1" fill="#dc2626"/>
+  <rect x="30.5" y="38" width="3" height="4" rx="0.5" fill="#dc2626"/>
+  <!-- Red glow -->
+  <circle cx="32" cy="30" r="10" fill="#ef4444" opacity="0.15"/>
+</svg>

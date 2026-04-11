@@ -51,8 +51,8 @@ func ensureBg(w, h int, top, bot color.RGBA) *draw.CachedGradient {
 // ---------------------------------------------------------------------------
 
 var (
-	mapCache         *ebiten.Image
-	mapCacheDirty    = true
+	mapCache          *ebiten.Image
+	mapCacheDirty     = true
 	mapCacheLastBuild bool // tracks the buildMode used to render the cache
 )
 
@@ -184,7 +184,7 @@ func drawWaypointPath(screen *ebiten.Image, waypoints []gamemap.Point, pathClr c
 
 		// Shadow (2px below, darker, slightly thicker) for depth.
 		draw.ThickLine(screen, x1, y1+2, x2, y2+2,
-			theme.MapPathStrokeW+1, color.RGBA{0, 0, 0, 30})
+			theme.MapPathStrokeW+1, theme.MapPathShadow)
 
 		// Thick rounded base stroke.
 		draw.ThickLine(screen, x1, y1, x2, y2,
@@ -236,8 +236,8 @@ func drawSlots(screen *ebiten.Image, gm *gamemap.GameMap, fm *FontManager, tower
 				// 已占用格子不绘制底色，塔精灵会覆盖
 			} else if buildMode {
 				// Build mode empty slot: 凹陷效果 + 金黄色轮廓 + "+" 号
-				draw.FilledCircle(screen, cx, cy, theme.MapSlotRadius, color.RGBA{R: 10, G: 15, B: 30, A: 35})
-				draw.CircleOutline(screen, cx, cy, theme.MapSlotRadius-2, 1, color.RGBA{R: 5, G: 10, B: 20, A: 25})
+				draw.FilledCircle(screen, cx, cy, theme.MapSlotRadius, theme.SlotDeprBuild)
+				draw.CircleOutline(screen, cx, cy, theme.MapSlotRadius-2, 1, theme.SlotDeprBuildInner)
 				draw.CircleOutline(screen, cx, cy, theme.MapSlotRadius, 1.5, theme.SlotBuildRing)
 
 				ringClr := theme.SlotBuildPulse
@@ -252,8 +252,8 @@ func drawSlots(screen *ebiten.Image, gm *gamemap.GameMap, fm *FontManager, tower
 				}
 			} else {
 				// Normal mode empty slot: 凹陷效果 + 轮廓线
-				draw.FilledCircle(screen, cx, cy, theme.MapSlotRadius, color.RGBA{R: 10, G: 15, B: 30, A: 25})
-				draw.CircleOutline(screen, cx, cy, theme.MapSlotRadius-2, 1, color.RGBA{R: 5, G: 10, B: 20, A: 18})
+				draw.FilledCircle(screen, cx, cy, theme.MapSlotRadius, theme.SlotDeprIdle)
+				draw.CircleOutline(screen, cx, cy, theme.MapSlotRadius-2, 1, theme.SlotDeprIdleInner)
 				draw.CircleOutline(screen, cx, cy, theme.MapSlotRadius, 1.5, theme.SlotIdleRing)
 			}
 		}
@@ -269,8 +269,8 @@ func drawSpawnBaseMarkers(screen *ebiten.Image, gm *gamemap.GameMap) {
 	cfg := gm.Config
 
 	// Subtle spawn (red) and base (blue) markers with low alpha.
-	spawnClr := color.RGBA{R: 180, G: 60, B: 60, A: 30}
-	baseClr := color.RGBA{R: 60, G: 60, B: 180, A: 30}
+	spawnClr := theme.MapSpawnMarker
+	baseClr := theme.MapBaseMarker
 
 	cs := float64(gm.CellSize)
 	halfCS := float32(cs / 2)
@@ -373,9 +373,9 @@ func drawTerrainDecorations(screen *ebiten.Image, gm *gamemap.GameMap, dotClr co
 // ---------------------------------------------------------------------------
 
 var (
-	parallaxStars  [][3]float64
-	parallaxW      float64
-	parallaxH      float64
+	parallaxStars [][3]float64
+	parallaxW     float64
+	parallaxH     float64
 )
 
 func initParallaxStars(w, h float64) {
@@ -413,6 +413,6 @@ func DrawParallaxBG(screen *ebiten.Image, animTime, worldW, worldH float64) {
 		alpha := uint8(15 + (i%4)*5)
 		r := float32(s[2])
 		draw.FilledCircle(screen, float32(x), float32(y), r,
-			color.RGBA{R: 180, G: 200, B: 255, A: alpha})
+			color.RGBA{R: theme.MapParallaxStar.R, G: theme.MapParallaxStar.G, B: theme.MapParallaxStar.B, A: alpha})
 	}
 }

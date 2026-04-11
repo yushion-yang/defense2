@@ -13,6 +13,7 @@ import (
 	"defense2/internal/render/anim"
 	"defense2/internal/render/draw"
 	"defense2/internal/render/sprite"
+	"defense2/internal/render/theme"
 	"defense2/internal/render/vfx"
 
 	"github.com/hajimehoshi/ebiten/v2"
@@ -158,17 +159,17 @@ func wardenSpriteRotation(typ string, facingAngle float64) float64 {
 func wardenShootColor(typ string) color.RGBA {
 	switch typ {
 	case "prince":
-		return color.RGBA{R: 255, G: 140, B: 30, A: 200}
+		return theme.WardenPrince
 	case "core":
-		return color.RGBA{R: 100, G: 180, B: 255, A: 200}
+		return theme.WardenCore
 	case "chain":
-		return color.RGBA{R: 160, G: 80, B: 255, A: 200}
+		return theme.WardenChain
 	case "skystrike":
-		return color.RGBA{R: 80, G: 200, B: 255, A: 200}
+		return theme.WardenSkystrike
 	case "envoy":
-		return color.RGBA{R: 255, G: 200, B: 100, A: 200}
+		return theme.WardenEnvoy
 	default:
-		return color.RGBA{R: 200, G: 200, B: 200, A: 200}
+		return theme.WardenDefault
 	}
 }
 
@@ -195,7 +196,7 @@ func drawPrinceEffects(screen *ebiten.Image, s *wardenTypes.PrinceState, animTim
 
 func drawCoreEffects(screen *ebiten.Image, s *warden.WardenState) {
 	vfx.DrawShootFlash(screen, float32(s.X), float32(s.Y), s.ShootTimer,
-		color.RGBA{R: 100, G: 200, B: 255, A: 200})
+		theme.WardenCore)
 }
 
 // ── 聚能特效：串联电弧 ──
@@ -208,7 +209,7 @@ func drawChainEffects(screen *ebiten.Image, s *wardenTypes.ChainState, animTime 
 	vfx.DrawChainLinks(screen, links, animTime)
 
 	vfx.DrawShootFlash(screen, float32(s.X), float32(s.Y), s.ShootTimer,
-		color.RGBA{R: 160, G: 80, B: 255, A: 200})
+		theme.WardenChain)
 }
 
 // ── 水灵特效：每个被选中敌人头顶天降冰柱 + 轻微命中闪光 ──
@@ -223,7 +224,7 @@ func drawSkystrikeEffects(screen *ebiten.Image, s *wardenTypes.SkystrikeState) {
 
 func drawEnvoyEffects(screen *ebiten.Image, s *wardenTypes.EnvoyState, animTime float64) {
 	vfx.DrawShootFlash(screen, float32(s.X), float32(s.Y), s.ShootTimer,
-		color.RGBA{R: 255, G: 210, B: 80, A: 200})
+		theme.WardenEnvoy)
 
 	if s.BuffedTower == nil || !s.BuffedTower.Active || s.BuffExpiry <= 0 {
 		return

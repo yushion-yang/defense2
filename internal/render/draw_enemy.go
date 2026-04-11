@@ -187,9 +187,9 @@ func (er *EnemyRenderer) DrawEnemies(screen *ebiten.Image, pool *enemy.Pool, ani
 				draw.SpriteRotated(screen, img, float64(cx), float64(cy), displaySize, wobbleRot, wobbleY)
 			}
 		} else {
-			bodyColor := color.RGBA{R: 200, G: 60, B: 60, A: 255}
+			bodyColor := theme.EnemyFallback
 			if e.Boss {
-				bodyColor = color.RGBA{R: 220, G: 160, B: 40, A: 255}
+				bodyColor = theme.EnemyFallbackBoss
 			}
 			if e.IsStealthed() {
 				bodyColor.A = 38
@@ -273,9 +273,9 @@ func (er *EnemyRenderer) DrawEnemies(screen *ebiten.Image, pool *enemy.Pool, ani
 			// 免疫脚环（只显示天生能力，净化临时免疫用白色微光）
 			footR := float32(e.Radius) + 2
 			if hasAbility(e, "ccImmune") {
-				vfx.DrawImmunityRing(screen, cx, cy, footR, color.RGBA{R: 220, G: 60, B: 60, A: 80}, animTime)
+				vfx.DrawImmunityRing(screen, cx, cy, footR, theme.EnemyImmuneCC, animTime)
 			} else if hasAbility(e, "slowImmune") {
-				vfx.DrawImmunityRing(screen, cx, cy, footR, color.RGBA{R: 60, G: 180, B: 200, A: 80}, animTime)
+				vfx.DrawImmunityRing(screen, cx, cy, footR, theme.EnemyImmuneSlow, animTime)
 			}
 
 			// 盾牌叠加（能力对应颜色盾牌）
@@ -385,7 +385,7 @@ func drawHPBars(screen *ebiten.Image, bars []hpBarEntry, animTime float64) {
 					trailRatio = 1
 				}
 				draw.FilledRect(screen, barX, barY, b.barW*trailRatio, b.barH,
-					color.RGBA{R: 251, G: 146, B: 60, A: 255}, true)
+					theme.EnemyHPBarTrail, true)
 			}
 
 			// HP fill
@@ -400,11 +400,11 @@ func drawHPBars(screen *ebiten.Image, bars []hpBarEntry, animTime float64) {
 			var fillClr color.RGBA
 			switch {
 			case ratio > 0.6:
-				fillClr = color.RGBA{R: 239, G: 68, B: 68, A: 255}
+				fillClr = theme.EnemyHPFillHigh
 			case ratio > 0.3:
-				fillClr = color.RGBA{R: 220, G: 38, B: 38, A: 255}
+				fillClr = theme.EnemyHPFillMid
 			default:
-				fillClr = color.RGBA{R: 153, G: 27, B: 27, A: 255}
+				fillClr = theme.EnemyHPFillLow
 			}
 			draw.FilledRect(screen, barX, barY, fillW, b.barH, fillClr, true)
 
@@ -422,19 +422,19 @@ func drawHPBars(screen *ebiten.Image, bars []hpBarEntry, animTime float64) {
 		var dotsArr [5]vfx.StatusDot
 		dots := dotsArr[:0]
 		if b.slowed {
-			dots = append(dots, vfx.StatusDot{Color: color.RGBA{R: 125, G: 211, B: 252, A: 235}})
+			dots = append(dots, vfx.StatusDot{Color: theme.EnemyDotSlowed})
 		}
 		if b.stunned {
-			dots = append(dots, vfx.StatusDot{Color: color.RGBA{R: 255, G: 255, B: 100, A: 235}})
+			dots = append(dots, vfx.StatusDot{Color: theme.EnemyDotStunned})
 		}
 		if b.rooted {
-			dots = append(dots, vfx.StatusDot{Color: color.RGBA{R: 139, G: 90, B: 43, A: 235}})
+			dots = append(dots, vfx.StatusDot{Color: theme.EnemyDotRooted})
 		}
 		if b.bleeding {
-			dots = append(dots, vfx.StatusDot{Color: color.RGBA{R: 239, G: 68, B: 68, A: 255}})
+			dots = append(dots, vfx.StatusDot{Color: theme.EnemyDotBleeding})
 		}
 		if b.burning {
-			dots = append(dots, vfx.StatusDot{Color: color.RGBA{R: 255, G: 140, B: 40, A: 255}})
+			dots = append(dots, vfx.StatusDot{Color: theme.EnemyDotBurning})
 		}
 		if len(dots) > 0 {
 			vfx.DrawStatusDots(screen, b.cx, dotY, dots, animTime)

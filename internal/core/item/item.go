@@ -1,7 +1,9 @@
 package item
 
 import (
+	"fmt"
 	"image/color"
+	"strings"
 
 	"defense2/internal/config"
 	"defense2/internal/core/tower"
@@ -31,6 +33,8 @@ var AllKinds = [...]Kind{
 type Def struct {
 	Kind       Kind
 	Name       string
+	Desc       string // 描述文字（已替换 {v} 占位符）
+	Icon       string // 图标名（用于 IconManager.Get）
 	BoostVal   float64
 	Color      color.RGBA
 	StartCount int
@@ -56,6 +60,16 @@ var kindFromString = map[string]Kind{
 	"potentialRange":  KindPotentialRange,
 }
 
+// itemIcons 每种道具对应的图标名。
+var itemIcons = [KindCount]string{
+	KindBaseDamage:      "item-stone",
+	KindPotentialDamage: "item-scroll-damage",
+	KindBaseSpeed:       "item-gear",
+	KindPotentialSpeed:  "item-scroll-speed",
+	KindBaseRange:       "item-lens",
+	KindPotentialRange:  "item-scroll-range",
+}
+
 // Defs holds the definition for every item kind (populated from balance.json).
 var Defs = initDefs()
 
@@ -68,9 +82,18 @@ func initDefs() [KindCount]Def {
 		if !ok {
 			continue
 		}
+		// 将 {v} 占位符替换为实际数值
+		desc := it.Description
+		if it.Boost == float64(int(it.Boost)) {
+			desc = strings.ReplaceAll(desc, "{v}", fmt.Sprintf("%d", int(it.Boost)))
+		} else {
+			desc = strings.ReplaceAll(desc, "{v}", fmt.Sprintf("%.2f", it.Boost))
+		}
 		defs[k] = Def{
 			Kind:       k,
 			Name:       it.Label,
+			Desc:       desc,
+			Icon:       itemIcons[k],
 			BoostVal:   it.Boost,
 			Color:      itemColors[k],
 			StartCount: it.StartCount,

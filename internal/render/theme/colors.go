@@ -74,7 +74,6 @@ var (
 	ToneDisabled  = rgba(30, 41, 59, 97)    // 0.38 * 255 ≈ 97
 )
 
-
 // ---------------------------------------------------------------------------
 // Resources
 // ---------------------------------------------------------------------------
@@ -90,11 +89,15 @@ var (
 // ---------------------------------------------------------------------------
 
 var (
-	MapGradientTop = hex(0x193549)
-	MapGradientBot = hex(0x1b4332)
-	MapDotGrid     = rgba(255, 255, 255, 8) // 0.03 * 255 ≈ 8
-	MapPathStroke  = hex(0xd6d3d1)
-	MapPathLabel   = rgba(255, 255, 255, 46) // 0.18 * 255 ≈ 46
+	MapGradientTop  = hex(0x193549)
+	MapGradientBot  = hex(0x1b4332)
+	MapDotGrid      = rgba(255, 255, 255, 8) // 0.03 * 255 ≈ 8
+	MapPathStroke   = hex(0xd6d3d1)
+	MapPathLabel    = rgba(255, 255, 255, 46) // 0.18 * 255 ≈ 46
+	MapPathShadow   = rgba(0, 0, 0, 30)       // 路径阴影
+	MapSpawnMarker  = rgba(180, 60, 60, 30)   // 出怪点标记（淡红）
+	MapBaseMarker   = rgba(60, 60, 180, 30)   // 基地标记（淡蓝）
+	MapParallaxStar = rgba(180, 200, 255, 0)  // 视差星星 RGB（alpha 动态）
 )
 
 // ---------------------------------------------------------------------------
@@ -134,12 +137,16 @@ func MapThemeFor(name string) MapTheme {
 // ---------------------------------------------------------------------------
 
 var (
-	SlotEmpty      = rgba(255, 255, 255, 12) // 空闲态内部微填充
-	SlotIdleRing   = rgba(180, 200, 220, 50) // 空闲态淡灰轮廓
-	SlotBuildRing  = rgba(220, 180, 60, 180) // 建造态金黄轮廓
-	SlotBuildPulse = rgba(251, 191, 36, 255) // 建造态脉冲外圈
-	SlotPlusSign   = rgba(250, 220, 120, 220) // "+" 号颜色
-	SlotHintLabel  = hex(0xbfdbfe)
+	SlotEmpty          = rgba(255, 255, 255, 12)  // 空闲态内部微填充
+	SlotIdleRing       = rgba(180, 200, 220, 50)  // 空闲态淡灰轮廓
+	SlotBuildRing      = rgba(220, 180, 60, 180)  // 建造态金黄轮廓
+	SlotBuildPulse     = rgba(251, 191, 36, 255)  // 建造态脉冲外圈
+	SlotPlusSign       = rgba(250, 220, 120, 220) // "+" 号颜色
+	SlotHintLabel      = hex(0xbfdbfe)
+	SlotDeprBuild      = rgba(10, 15, 30, 35) // 建造态凹陷填充
+	SlotDeprBuildInner = rgba(5, 10, 20, 25)  // 建造态凹陷内环
+	SlotDeprIdle       = rgba(10, 15, 30, 25) // 空闲态凹陷填充
+	SlotDeprIdleInner  = rgba(5, 10, 20, 18)  // 空闲态凹陷内环
 )
 
 // ---------------------------------------------------------------------------
@@ -154,6 +161,8 @@ var (
 	TowerFallbackDef   = hex(0x38bdf8)
 	TowerBarrel        = hex(0x082f49)
 	TowerNameLabel     = rgba(255, 255, 255, 217) // 0.85 * 255 ≈ 217
+	TowerRangeValid    = rgba(34, 197, 94, 153)   // 放置预览有效（绿）
+	TowerRangeInvalid  = rgba(239, 68, 68, 153)   // 放置预览无效（红）
 )
 
 // ---------------------------------------------------------------------------
@@ -171,16 +180,25 @@ var (
 // ---------------------------------------------------------------------------
 
 var (
-	EnemyHPBarBorder = hex(0x0f172a)
-	EnemyHPBarBg     = hex(0x1e293b)
-	EnemyHPBarTrail  = hex(0xfb923c)
-	EnemyHPFillHigh  = hex(0xef4444)      // >60%
-	EnemyHPFillMid   = hex(0xdc2626)      // >30%
-	EnemyHPFillLow   = hex(0x991b1b)      // <=30%
-	EnemyHPSegDiv    = rgba(0, 0, 0, 102) // 0.4 * 255 ≈ 102
-	EnemyBossInner   = rgba(244, 63, 94, 255)
-	EnemyBossOuter   = rgba(251, 113, 133, 255)
-	EnemyRunnerPulse = rgba(251, 146, 60, 115)  // 0.45 * 255 ≈ 115
+	EnemyHPBarBorder  = hex(0x0f172a)
+	EnemyHPBarBg      = hex(0x1e293b)
+	EnemyHPBarTrail   = hex(0xfb923c)
+	EnemyHPFillHigh   = hex(0xef4444)      // >60%
+	EnemyHPFillMid    = hex(0xdc2626)      // >30%
+	EnemyHPFillLow    = hex(0x991b1b)      // <=30%
+	EnemyHPSegDiv     = rgba(0, 0, 0, 102) // 0.4 * 255 ≈ 102
+	EnemyBossInner    = rgba(244, 63, 94, 255)
+	EnemyBossOuter    = rgba(251, 113, 133, 255)
+	EnemyRunnerPulse  = rgba(251, 146, 60, 115)  // 0.45 * 255 ≈ 115
+	EnemyFallback     = hex(0xc83c3c)            // 无精灵时 fallback 体色
+	EnemyFallbackBoss = hex(0xdca028)            // Boss fallback 体色
+	EnemyImmuneCC     = rgba(220, 60, 60, 80)    // CC 免疫脚环
+	EnemyImmuneSlow   = rgba(60, 180, 200, 80)   // 减速免疫脚环
+	EnemyDotSlowed    = rgba(125, 211, 252, 235) // 状态点：减速
+	EnemyDotStunned   = rgba(255, 255, 100, 235) // 状态点：眩晕
+	EnemyDotRooted    = rgba(139, 90, 43, 235)   // 状态点：禁锢
+	EnemyDotBleeding  = rgba(239, 68, 68, 255)   // 状态点：流血
+	EnemyDotBurning   = rgba(255, 140, 40, 255)  // 状态点：燃烧
 )
 
 // ---------------------------------------------------------------------------
@@ -268,6 +286,19 @@ var (
 	ResultStatsBg = rgba(255, 255, 255, 10) // 0.04 * 255 ≈ 10
 	SelectGradTop = hex(0x0b1220)
 	SelectGradBot = hex(0x172554)
+)
+
+// ---------------------------------------------------------------------------
+// Warden
+// ---------------------------------------------------------------------------
+
+var (
+	WardenPrince    = rgba(255, 140, 30, 200)  // 火灵（橙）
+	WardenCore      = rgba(100, 180, 255, 200) // 机甲（蓝）
+	WardenChain     = rgba(160, 80, 255, 200)  // 聚能（紫）
+	WardenSkystrike = rgba(80, 200, 255, 200)  // 水灵（青）
+	WardenEnvoy     = rgba(255, 200, 100, 200) // 金灵（金）
+	WardenDefault   = rgba(200, 200, 200, 200) // 默认（灰）
 )
 
 // ---------------------------------------------------------------------------
