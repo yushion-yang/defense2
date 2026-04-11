@@ -1,31 +1,34 @@
 {
   "_meta": {
-    "description": "塔属性档位预设表——3档(S/B/D)，每档独立潜力",
-    "version": "3.2",
-    "note": "公式: attr = tiers[档].base + tiers[档].potential × (strength/100)。设计约束: 400强度时三档总值对齐。S起点强成长慢，D起点弱成长快。"
+    "description": "塔属性档位预设表——3档(S/B/D)，每档独立潜力 + 共享潜力基数",
+    "version": "3.3",
+    "note": "公式: attr = tiers[档].base + (basePotential + tiers[档].potential) × (strength/100)。basePotential 为所有档位共享的潜力基数。"
   },
   "damage": {
     "_align": "400强度时三档对齐≈40",
+    "basePotential": 3,
     "tiers": {
-      "S": { "base": 20,  "potential": 5    },
-      "B": { "base": 10,  "potential": 7.5  },
-      "D": { "base": 5,   "potential": 8.75 }
+      "S": { "base": 20,  "potential": 5  },
+      "B": { "base": 10,  "potential": 8  },
+      "D": { "base": 5,   "potential": 10 }
     }
   },
   "attackSpeed": {
     "_align": "400强度时三档对齐≈1.6",
+    "basePotential": 0.02,
     "tiers": {
-      "S": { "base": 0.8, "potential": 0.2  },
-      "B": { "base": 0.4, "potential": 0.3  },
-      "D": { "base": 0.2, "potential": 0.35 }
+      "S": { "base": 0.8, "potential": 0.05  },
+      "B": { "base": 0.6, "potential": 0.07  },
+      "D": { "base": 0.5, "potential": 0.10 }
     }
   },
   "range": {
     "_align": "400强度时三档对齐≈200",
+    "basePotential": 5,
     "tiers": {
-      "S": { "base": 160, "potential": 10 },
-      "B": { "base": 120, "potential": 20 },
-      "D": { "base": 100, "potential": 25 }
+      "S": { "base": 150, "potential": 7 },
+      "B": { "base": 130, "potential": 10 },
+      "D": { "base": 120, "potential": 15 }
     }
   }
 }
