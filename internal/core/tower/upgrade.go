@@ -172,9 +172,9 @@ func (t *Tower) AddAbility(abilityType string) bool {
 }
 
 // applyEnhance 强化能力：一次性提升塔的基础和潜力属性。
-// 固定使用 base 值（不受强度影响），确保行为与描述一致。
+// 使用 param 固定参数（不受强度影响），确保行为与描述一致。
 func applyEnhance(t *Tower, def *config.AbilityDef) {
-	boost := def.Base // 固定 20%，不走 CalcScale(str)
+	boost := def.Param // 固定 20%，从 param 读取，不走 CalcScale(str)
 
 	t.BaseDamage *= 1 + boost
 	t.PotentialDamage *= 1 + boost

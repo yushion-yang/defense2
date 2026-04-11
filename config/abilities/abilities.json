@@ -30,7 +30,7 @@
     }
   },
 
-  "enhance"        : {"type":"enhance"        , "label":"强化"    , "icon":"stat-damage"    , "category":"attack"  , "scaleDim":"statBoost"        , "base":0.2   , "potential":0            , "param":0      , "paramDim":""            , "display":"永久提升基础+潜力: 伤害/攻速/射程提升{s%}" },
+  "enhance"        : {"type":"enhance"        , "label":"强化"    , "icon":"stat-damage"    , "category":"attack"  , "scaleDim":""                 , "base":0     , "potential":0            , "param":0.2    , "paramDim":"statBoost"   , "display":"永久提升基础+潜力: 伤害/攻速/射程提升{p%}" },
   "scatter"        : {"type":"scatter"        , "label":"散射"    , "icon":"multishot"      , "category":"attack"  , "scaleDim":"pellets"          , "base":3     , "potential":0.5        , "param":60     , "paramDim":"spreadAngle" , "display":"发射最多{si}颗弹丸, {p}度扇形散布"            },
   "wideBeam"       : {"type":"wideBeam"       , "label":"贯穿光束"  , "icon":"stat-range"     , "category":"attack"  , "scaleDim":"beamWidth"        , "base":6     , "potential":4          , "param":2      , "paramDim":"rangeMult"   , "display":"宽{s}光束穿透所有敌人, 射程×{p}"              },
   "spinAoe"        : {"type":"spinAoe"        , "label":"旋风"    , "icon":"stat-splash"    , "category":"attack"  , "scaleDim":"innerBonus"       , "base":0.5   , "potential":0.3        , "param":0.5    , "paramDim":"innerRatio"  , "display":"对周围敌人造成伤害, 内圈{p}范围额外+{s%}"             },

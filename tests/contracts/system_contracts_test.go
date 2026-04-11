@@ -66,8 +66,8 @@ func TestAbilityHasRequiredFields(t *testing.T) {
 			if def.Category == "" {
 				t.Errorf("能力 %q 缺少 category", name)
 			}
-			if def.ScaleDim == "" {
-				t.Errorf("能力 %q 缺少 scaleDim", name)
+			if def.ScaleDim == "" && def.ParamDim == "" {
+				t.Errorf("能力 %q 缺少 scaleDim 和 paramDim（至少需要一个维度标识）", name)
 			}
 		})
 	}

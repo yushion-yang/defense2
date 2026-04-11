@@ -279,7 +279,7 @@ func computeExpected(d abilityTestDef) float64 {
 				sv := def.CalcScale(defaultStr)
 				switch d.Assert {
 				case "cfg_tower_damage_boosted":
-					return def.Base // enhance 固定用 base（不受强度影响）
+					return def.Param // enhance 固定用 param（不受强度影响）
 				case "cfg_enemy_speed_ratio":
 					// slowPower: factor = 1 - sv, slowDuration: factor = 1 - param
 					if d.TowerAbility == "slowPower" {
