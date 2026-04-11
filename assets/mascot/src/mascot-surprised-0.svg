@@ -1,0 +1,362 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 140 280">
+  <defs>
+    <!-- Hair -->
+    <linearGradient id="hair" x1="0.2" y1="0" x2="0.8" y2="1">
+      <stop offset="0%" stop-color="#D0B0F8"/>
+      <stop offset="40%" stop-color="#B090E8"/>
+      <stop offset="100%" stop-color="#8868C8"/>
+    </linearGradient>
+    <linearGradient id="hairDeep" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#9870D0"/>
+      <stop offset="100%" stop-color="#7050B0"/>
+    </linearGradient>
+    <linearGradient id="hairShine" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#E0D0FF" stop-opacity="0.6"/>
+      <stop offset="100%" stop-color="#E0D0FF" stop-opacity="0"/>
+    </linearGradient>
+
+    <!-- Eyes -->
+    <radialGradient id="irisL" cx="0.42" cy="0.32" r="0.58">
+      <stop offset="0%" stop-color="#A0DFFF"/>
+      <stop offset="35%" stop-color="#60B8F8"/>
+      <stop offset="70%" stop-color="#3888E8"/>
+      <stop offset="100%" stop-color="#2060C8"/>
+    </radialGradient>
+    <radialGradient id="irisR" cx="0.42" cy="0.32" r="0.58">
+      <stop offset="0%" stop-color="#A0DFFF"/>
+      <stop offset="35%" stop-color="#60B8F8"/>
+      <stop offset="70%" stop-color="#3888E8"/>
+      <stop offset="100%" stop-color="#2060C8"/>
+    </radialGradient>
+
+    <!-- Outfit -->
+    <linearGradient id="blazer" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#4A78E0"/>
+      <stop offset="100%" stop-color="#3860C8"/>
+    </linearGradient>
+    <linearGradient id="blazerShadow" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#3860C8"/>
+      <stop offset="100%" stop-color="#2850B0"/>
+    </linearGradient>
+    <linearGradient id="skirt" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#3868D8"/>
+      <stop offset="100%" stop-color="#2850B8"/>
+    </linearGradient>
+    <linearGradient id="skin" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#FFE8D8"/>
+      <stop offset="100%" stop-color="#FFD8C4"/>
+    </linearGradient>
+    <linearGradient id="sock" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#F8F8FF"/>
+      <stop offset="100%" stop-color="#E8E8F4"/>
+    </linearGradient>
+  </defs>
+
+  <!-- ======== BACK HAIR (behind everything) ======== -->
+  <!-- Main volume -->
+  <path d="M 24,30 C 18,40 14,55 14,70
+           C 14,90 20,100 24,105
+           L 24,60 Z" fill="url(#hairDeep)" opacity="0.6"/>
+  <path d="M 116,30 C 122,40 126,55 126,70
+           C 126,90 120,100 116,105
+           L 116,60 Z" fill="url(#hairDeep)" opacity="0.6"/>
+  <ellipse cx="70" cy="38" rx="38" ry="34" fill="url(#hair)"/>
+
+  <!-- Twin tail LEFT — long flowing down to hip -->
+  <path d="M 28,42
+           C 18,55 10,80 8,110
+           C 6,140 10,165 16,185
+           C 18,192 24,190 22,182
+           C 18,164 14,140 16,115
+           C 18,90 24,68 32,50 Z" fill="url(#hairDeep)"/>
+  <path d="M 30,44
+           C 22,56 15,78 13,106
+           C 11,134 14,158 19,178
+           C 20,183 24,182 23,177
+           C 19,158 16,136 18,110
+           C 20,86 26,66 33,52 Z" fill="url(#hair)"/>
+  <!-- Hair shine on left tail -->
+  <path d="M 26,60 C 22,75 19,95 18,115
+           C 19,112 22,92 25,76 Z" fill="url(#hairShine)"/>
+
+  <!-- Twin tail RIGHT -->
+  <path d="M 112,42
+           C 122,55 130,80 132,110
+           C 134,140 130,165 124,185
+           C 122,192 116,190 118,182
+           C 122,164 126,140 124,115
+           C 122,90 116,68 108,50 Z" fill="url(#hairDeep)"/>
+  <path d="M 110,44
+           C 118,56 125,78 127,106
+           C 129,134 126,158 121,178
+           C 120,183 116,182 117,177
+           C 121,158 124,136 122,110
+           C 120,86 114,66 107,52 Z" fill="url(#hair)"/>
+  <path d="M 114,60 C 118,75 121,95 122,115
+           C 121,112 118,92 115,76 Z" fill="url(#hairShine)"/>
+
+  <!-- Hair tie ribbons LEFT -->
+  <path d="M 22,44 L 14,38 L 18,46 Z" fill="#FF5888"/>
+  <path d="M 22,44 L 16,52 L 22,48 Z" fill="#FF5888"/>
+  <circle cx="24" cy="45" r="3.5" fill="#FF6898"/>
+  <circle cx="24" cy="45" r="2" fill="#FF80A8"/>
+
+  <!-- Hair tie ribbons RIGHT -->
+  <path d="M 118,44 L 126,38 L 122,46 Z" fill="#FF5888"/>
+  <path d="M 118,44 L 124,52 L 118,48 Z" fill="#FF5888"/>
+  <circle cx="116" cy="45" r="3.5" fill="#FF6898"/>
+  <circle cx="116" cy="45" r="2" fill="#FF80A8"/>
+
+  <!-- ======== FACE ======== -->
+  <ellipse cx="70" cy="42" rx="26" ry="27" fill="#FFE4D0"/>
+  <!-- Jaw contour subtlety -->
+  <path d="M 48,50 Q 55,68 70,70 Q 85,68 92,50"
+        fill="#FFD8C0" opacity="0.3"/>
+
+  <!-- ======== EYES ======== -->
+  <!-- LEFT EYE — elegant bishoujo style -->
+  <!-- Sclera -->
+  <path d="M 48,38 Q 54,32 62,34 Q 66,38 64,44 Q 58,49 50,47 Q 46,44 48,38 Z" fill="white"/>
+  <!-- Iris -->
+  <ellipse cx="56" cy="40" rx="7.5" ry="8.5" fill="url(#irisL)"/>
+  <!-- Pupil -->
+  <ellipse cx="56" cy="42" rx="3.5" ry="4.5" fill="#0C1438"/>
+  <!-- Main highlight -->
+  <ellipse cx="53" cy="36.5" rx="3" ry="2.5" fill="white" opacity="0.95"/>
+  <!-- Secondary highlight -->
+  <circle cx="59.5" cy="43" r="1.8" fill="white" opacity="0.6"/>
+  <!-- Tiny sparkle -->
+  <circle cx="54" cy="39.5" r="0.8" fill="white" opacity="0.5"/>
+  <!-- Upper eyelid — thick elegant curve -->
+  <path d="M 47,37.5 Q 50,32 56,31 Q 62,32 66,37"
+        fill="none" stroke="#402870" stroke-width="2.4" stroke-linecap="round"/>
+  <!-- Upper lashes -->
+  <path d="M 47,37.5 L 44.5,35" stroke="#402870" stroke-width="2" stroke-linecap="round"/>
+  <path d="M 49,35.5 L 47.5,33" stroke="#402870" stroke-width="1.2" stroke-linecap="round"/>
+  <path d="M 66,37 L 68,34.5" stroke="#402870" stroke-width="1.8" stroke-linecap="round"/>
+  <!-- Lower lash line -->
+  <path d="M 50,47 Q 56,49.5 62,46"
+        fill="none" stroke="#806098" stroke-width="0.6" stroke-linecap="round" opacity="0.5"/>
+  <!-- Lower lash accents -->
+  <path d="M 49,47.5 L 48,49" stroke="#806098" stroke-width="0.8" stroke-linecap="round" opacity="0.4"/>
+  <path d="M 63,45.5 L 64.5,47" stroke="#806098" stroke-width="0.8" stroke-linecap="round" opacity="0.4"/>
+
+  <!-- RIGHT EYE -->
+  <path d="M 92,38 Q 86,32 78,34 Q 74,38 76,44 Q 82,49 90,47 Q 94,44 92,38 Z" fill="white"/>
+  <ellipse cx="84" cy="40" rx="7.5" ry="8.5" fill="url(#irisR)"/>
+  <ellipse cx="84" cy="42" rx="3.5" ry="4.5" fill="#0C1438"/>
+  <ellipse cx="81" cy="36.5" rx="3" ry="2.5" fill="white" opacity="0.95"/>
+  <circle cx="87.5" cy="43" r="1.8" fill="white" opacity="0.6"/>
+  <circle cx="82" cy="39.5" r="0.8" fill="white" opacity="0.5"/>
+  <path d="M 93,37.5 Q 90,32 84,31 Q 78,32 74,37"
+        fill="none" stroke="#402870" stroke-width="2.4" stroke-linecap="round"/>
+  <path d="M 93,37.5 L 95.5,35" stroke="#402870" stroke-width="2" stroke-linecap="round"/>
+  <path d="M 91,35.5 L 92.5,33" stroke="#402870" stroke-width="1.2" stroke-linecap="round"/>
+  <path d="M 74,37 L 72,34.5" stroke="#402870" stroke-width="1.8" stroke-linecap="round"/>
+  <path d="M 90,47 Q 84,49.5 78,46"
+        fill="none" stroke="#806098" stroke-width="0.6" stroke-linecap="round" opacity="0.5"/>
+  <path d="M 91,47.5 L 92,49" stroke="#806098" stroke-width="0.8" stroke-linecap="round" opacity="0.4"/>
+  <path d="M 77,45.5 L 75.5,47" stroke="#806098" stroke-width="0.8" stroke-linecap="round" opacity="0.4"/>
+
+  <!-- ======== BLUSH ======== -->
+  <ellipse cx="48" cy="50" rx="6" ry="3" fill="#FF9898" opacity="0.25"/>
+  <ellipse cx="92" cy="50" rx="6" ry="3" fill="#FF9898" opacity="0.25"/>
+
+  <!-- ======== NOSE (subtle) ======== -->
+  <path d="M 69.5,49 L 70,51.5" stroke="#E0B8A0" stroke-width="1" stroke-linecap="round" opacity="0.6"/>
+
+  <!-- ======== MOUTH (surprised — small O) ======== -->
+  <ellipse cx="70" cy="59" rx="3.5" ry="4" fill="#C05050"/>
+  <ellipse cx="70" cy="58.5" rx="2.5" ry="2.5" fill="#D06868"/>
+
+  <!-- ======== FRONT HAIR (BANGS) ======== -->
+  <!-- Main bangs mass -->
+  <path d="M 30,38
+           C 28,22 38,10 52,6
+           C 60,4 80,4 88,6
+           C 102,10 112,22 110,38
+           C 108,32 102,24 94,20
+           Q 86,16 78,18
+           Q 72,14 70,14
+           Q 68,14 62,18
+           Q 54,16 46,20
+           C 38,24 32,32 30,38 Z" fill="url(#hair)"/>
+
+  <!-- Individual bang strands for texture -->
+  <path d="M 42,36 C 40,26 44,16 50,10" fill="none" stroke="#D4C0F0" stroke-width="0.7" opacity="0.5"/>
+  <path d="M 55,32 C 54,22 58,12 64,7" fill="none" stroke="#D4C0F0" stroke-width="0.7" opacity="0.5"/>
+  <path d="M 70,30 C 70,20 72,12 76,8" fill="none" stroke="#D4C0F0" stroke-width="0.7" opacity="0.5"/>
+  <path d="M 82,32 C 82,24 84,16 88,10" fill="none" stroke="#D4C0F0" stroke-width="0.7" opacity="0.5"/>
+  <path d="M 96,36 C 98,28 96,20 90,12" fill="none" stroke="#D4C0F0" stroke-width="0.7" opacity="0.5"/>
+
+  <!-- Wispy side strands framing face -->
+  <path d="M 32,38 C 28,52 26,68 27,82
+           C 28,88 32,86 31,80
+           C 30,68 32,54 34,44 Z" fill="url(#hair)"/>
+  <path d="M 34,40 C 30,54 29,66 30,78
+           C 31,82 33,81 32,76
+           C 31,66 33,54 35,45 Z" fill="#C0A0E8" opacity="0.5"/>
+
+  <path d="M 108,38 C 112,52 114,68 113,82
+           C 112,88 108,86 109,80
+           C 110,68 108,54 106,44 Z" fill="url(#hair)"/>
+  <path d="M 106,40 C 110,54 111,66 110,78
+           C 109,82 107,81 108,76
+           C 109,66 107,54 105,45 Z" fill="#C0A0E8" opacity="0.5"/>
+
+  <!-- ======== BERET ======== -->
+  <ellipse cx="70" cy="10" rx="26" ry="9" fill="#3868D0"/>
+  <ellipse cx="70" cy="8" rx="22" ry="7.5" fill="#4878E0"/>
+  <ellipse cx="70" cy="7" rx="18" ry="5" fill="#5088E8" opacity="0.5"/>
+  <!-- Pom-pom -->
+  <circle cx="70" cy="1.5" r="3.5" fill="#5888F0"/>
+  <circle cx="70" cy="1.5" r="2" fill="#70A0FF" opacity="0.7"/>
+  <!-- Band -->
+  <path d="M 44,11 Q 70,17 96,11" fill="none" stroke="#2850A8" stroke-width="1"/>
+  <!-- Gold badge star -->
+  <polygon points="58,10 59.5,7 61,10 64,10.5 62,12.5 62.5,15.5 60,14 57.5,15.5 58,12.5 56,10.5"
+           fill="#FFD700" stroke="#D4A800" stroke-width="0.3"/>
+
+  <!-- ======== NECK ======== -->
+  <path d="M 62,66 C 62,72 65,74 70,74 C 75,74 78,72 78,66 Z" fill="url(#skin)"/>
+  <!-- Neck shadow -->
+  <ellipse cx="70" cy="72" rx="7" ry="3" fill="#F0C8B0" opacity="0.3"/>
+
+  <!-- ======== BODY ======== -->
+  <!-- White blouse base -->
+  <path d="M 48,76
+           C 46,84 44,92 44,100
+           C 44,106 46,112 48,116
+           L 92,116
+           C 94,112 96,106 96,100
+           C 96,92 94,84 92,76 Z" fill="white"/>
+
+  <!-- Blazer jacket -->
+  <path d="M 42,76
+           C 40,85 38,96 39,108
+           L 39,120 L 52,120
+           C 50,112 48,100 50,88
+           L 70,100 Z" fill="url(#blazer)"/>
+  <path d="M 98,76
+           C 100,85 102,96 101,108
+           L 101,120 L 88,120
+           C 90,112 92,100 90,88
+           L 70,100 Z" fill="url(#blazer)"/>
+
+  <!-- Blazer lapels -->
+  <path d="M 52,76 L 70,98 L 66,100 L 50,80 Z" fill="#5088E8" opacity="0.3"/>
+  <path d="M 88,76 L 70,98 L 74,100 L 90,80 Z" fill="#5088E8" opacity="0.3"/>
+
+  <!-- Blazer button -->
+  <circle cx="70" cy="103" r="2" fill="#FFD700"/>
+  <circle cx="70" cy="103" r="1" fill="#FFEDA0"/>
+
+  <!-- Collar / ribbon -->
+  <path d="M 60,76 L 70,72 L 80,76 L 76,76 L 70,73.5 L 64,76 Z" fill="white"/>
+  <!-- Ribbon bow -->
+  <path d="M 62,76 L 55,72 L 60,78 Z" fill="#FF5080"/>
+  <path d="M 78,76 L 85,72 L 80,78 Z" fill="#FF5080"/>
+  <path d="M 62,76 L 57,82 L 63,79 Z" fill="#FF4070"/>
+  <path d="M 78,76 L 83,82 L 77,79 Z" fill="#FF4070"/>
+  <circle cx="70" cy="77" r="3.5" fill="#FF5888"/>
+  <circle cx="70" cy="77" r="2" fill="#FF70A0"/>
+  <!-- Ribbon tails -->
+  <path d="M 67,80 L 62,95 L 65,92 Z" fill="#FF4070" opacity="0.8"/>
+  <path d="M 73,80 L 78,95 L 75,92 Z" fill="#FF4070" opacity="0.8"/>
+
+  <!-- ======== ARMS ======== -->
+  <!-- Left arm -->
+  <path d="M 42,78
+           C 36,86 30,98 28,112
+           C 26,122 28,132 30,138
+           C 32,140 35,138 34,134
+           C 32,126 30,116 32,106
+           C 34,96 38,86 42,82 Z" fill="url(#skin)"/>
+  <!-- Left blazer sleeve -->
+  <path d="M 42,78 C 38,82 34,90 32,98
+           L 36,100 C 38,92 40,84 42,80 Z" fill="url(#blazer)"/>
+  <!-- Left hand -->
+  <ellipse cx="31" cy="138" rx="4" ry="5" fill="#FFE0CC"/>
+  <!-- Fingers suggestion -->
+  <path d="M 28,136 Q 27,140 29,142" fill="none" stroke="#F0C8B0" stroke-width="0.6" opacity="0.5"/>
+
+  <!-- Right arm -->
+  <path d="M 98,78
+           C 104,86 110,98 112,112
+           C 114,122 112,132 110,138
+           C 108,140 105,138 106,134
+           C 108,126 110,116 108,106
+           C 106,96 102,86 98,82 Z" fill="url(#skin)"/>
+  <path d="M 98,78 C 102,82 106,90 108,98
+           L 104,100 C 102,92 100,84 98,80 Z" fill="url(#blazer)"/>
+  <ellipse cx="109" cy="138" rx="4" ry="5" fill="#FFE0CC"/>
+  <path d="M 112,136 Q 113,140 111,142" fill="none" stroke="#F0C8B0" stroke-width="0.6" opacity="0.5"/>
+
+  <!-- ======== SKIRT ======== -->
+  <path d="M 38,116
+           C 34,130 28,148 24,162
+           L 116,162
+           C 112,148 106,130 102,116 Z" fill="url(#skirt)"/>
+  <!-- Pleat lines -->
+  <line x1="46" y1="116" x2="34" y2="162" stroke="#2048A0" stroke-width="0.6" opacity="0.3"/>
+  <line x1="54" y1="116" x2="44" y2="162" stroke="#2048A0" stroke-width="0.6" opacity="0.3"/>
+  <line x1="62" y1="116" x2="56" y2="162" stroke="#2048A0" stroke-width="0.6" opacity="0.3"/>
+  <line x1="70" y1="116" x2="70" y2="162" stroke="#2048A0" stroke-width="0.6" opacity="0.3"/>
+  <line x1="78" y1="116" x2="84" y2="162" stroke="#2048A0" stroke-width="0.6" opacity="0.3"/>
+  <line x1="86" y1="116" x2="96" y2="162" stroke="#2048A0" stroke-width="0.6" opacity="0.3"/>
+  <line x1="94" y1="116" x2="106" y2="162" stroke="#2048A0" stroke-width="0.6" opacity="0.3"/>
+  <!-- Hem highlight -->
+  <path d="M 24,161 L 116,161" stroke="white" stroke-width="0.6" opacity="0.15"/>
+  <!-- Waistband -->
+  <rect x="38" y="115" width="64" height="4" rx="1" fill="#3060C0"/>
+
+  <!-- ======== LEGS ======== -->
+  <!-- Left leg -->
+  <path d="M 46,162 C 44,180 42,200 42,218
+           Q 42,228 52,228
+           Q 62,228 62,218
+           C 62,200 60,180 58,162 Z" fill="url(#sock)"/>
+  <!-- Right leg -->
+  <path d="M 82,162 C 80,180 78,200 78,218
+           Q 78,228 88,228
+           Q 98,228 98,218
+           C 98,200 96,180 94,162 Z" fill="url(#sock)"/>
+
+  <!-- Sock top bands -->
+  <path d="M 45,164 L 59,164" stroke="#D0D0E8" stroke-width="2" stroke-linecap="round"/>
+  <path d="M 81,164 L 95,164" stroke="#D0D0E8" stroke-width="2" stroke-linecap="round"/>
+  <!-- Sock subtle stripes -->
+  <path d="M 44,180 L 61,180" stroke="#E8E8F8" stroke-width="0.5" opacity="0.5"/>
+  <path d="M 79,180 L 97,180" stroke="#E8E8F8" stroke-width="0.5" opacity="0.5"/>
+
+  <!-- ======== SHOES ======== -->
+  <!-- Left shoe -->
+  <path d="M 38,220 C 38,230 42,234 52,234
+           C 62,234 66,230 66,220
+           L 62,218 C 62,226 58,230 52,230
+           C 46,230 42,226 42,218 Z" fill="#2A2A44"/>
+  <!-- Shoe strap -->
+  <path d="M 40,222 L 64,222" stroke="#4070D0" stroke-width="1.5" stroke-linecap="round"/>
+  <circle cx="52" cy="222" r="1.5" fill="#FFD700"/>
+
+  <!-- Right shoe -->
+  <path d="M 74,220 C 74,230 78,234 88,234
+           C 98,234 102,230 102,220
+           L 98,218 C 98,226 94,230 88,230
+           C 82,230 78,226 78,218 Z" fill="#2A2A44"/>
+  <path d="M 76,222 L 100,222" stroke="#4070D0" stroke-width="1.5" stroke-linecap="round"/>
+  <circle cx="88" cy="222" r="1.5" fill="#FFD700"/>
+
+  <!-- ======== HAIR FRONT WISPS (over shoulders) ======== -->
+  <!-- These float in front of the blazer for depth -->
+  <path d="M 34,42 C 30,56 28,72 30,92
+           C 31,96 34,94 33,90
+           C 32,74 33,58 36,46 Z" fill="url(#hair)" opacity="0.7"/>
+  <path d="M 106,42 C 110,56 112,72 110,92
+           C 109,96 106,94 107,90
+           C 108,74 107,58 104,46 Z" fill="url(#hair)" opacity="0.7"/>
+
+  <!-- ======== AHOGE (antenna hair) ======== -->
+  <path d="M 68,8 C 65,0 72,-4 78,2 C 74,0 70,2 70,6"
+        fill="none" stroke="url(#hair)" stroke-width="2" stroke-linecap="round"/>
+</svg>

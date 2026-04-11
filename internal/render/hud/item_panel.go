@@ -148,11 +148,12 @@ func drawItemCard(screen *ebiten.Image, fm *render.FontManager, card ItemCardVM,
 	iconCX := cx + 18
 	iconCY := cy + ipCardH/2 - 2
 	if img := resolveItemIcon(card); img != nil {
-		alpha := float32(1)
-		if !available {
-			alpha = 0.35
+		if available {
+			draw.Sprite(screen, img, float64(iconCX), float64(iconCY), 28)
+		} else {
+			logScale := 28.0 / float64(img.Bounds().Dx())
+			draw.SpriteScaledRotatedAlpha(screen, img, float64(iconCX), float64(iconCY), logScale, 0, 0.35)
 		}
-		draw.SpriteAlpha(screen, img, float64(iconCX), float64(iconCY), 28, alpha)
 	}
 
 	// Name text

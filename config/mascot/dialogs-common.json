@@ -8,5 +8,39 @@
     ],
     "once": false,
     "priority": 1
+  },
+  {
+    "id": "easter_panic_1",
+    "scene": "*",
+    "trigger": "panic_recover",
+    "lines": [
+      {"text": "呜哇！刚、刚才什么都没发生哦！", "expression": "surprised", "autoAdvance": 4},
+      {"text": "...好吧，你见证了游戏还不完善的瞬间。", "expression": "talk", "autoAdvance": 5},
+      {"text": "恭喜获得隐藏成就：「Bug见证者」！", "expression": "happy", "autoAdvance": 4}
+    ],
+    "once": false,
+    "priority": 99
+  },
+  {
+    "id": "easter_panic_2",
+    "scene": "*",
+    "trigger": "panic_recover",
+    "lines": [
+      {"text": "又、又来了...这次我假装没看到。", "expression": "surprised", "autoAdvance": 4},
+      {"text": "放心，我已经偷偷帮你稳住了！", "expression": "happy", "autoAdvance": 4}
+    ],
+    "once": false,
+    "priority": 98
+  },
+  {
+    "id": "easter_panic_3",
+    "scene": "*",
+    "trigger": "panic_recover",
+    "lines": [
+      {"text": "开发者大概在某个深夜写下了这段代码...", "expression": "talk", "autoAdvance": 5},
+      {"text": "没关系，游戏还在跑着呢！继续加油！", "expression": "happy", "autoAdvance": 4}
+    ],
+    "once": false,
+    "priority": 97
   }
 ]

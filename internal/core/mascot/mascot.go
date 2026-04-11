@@ -1,5 +1,7 @@
 package mascot
 
+import "math/rand"
+
 // MascotVM is the view-model snapshot for rendering.
 type MascotVM struct {
 	Visible    bool
@@ -16,9 +18,9 @@ type Guide struct {
 	shownIDs map[string]bool // Once dialog IDs that have been shown
 
 	// active dialog state
-	active   *Dialog
-	lineIdx  int
-	timer    float64
+	active  *Dialog
+	lineIdx int
+	timer   float64
 }
 
 // NewGuide creates a Guide preloaded with dialogs.
@@ -93,6 +95,31 @@ func (g *Guide) ShownIDs() map[string]bool {
 		out[k] = v
 	}
 	return out
+}
+
+// ForceTrigger fires a named event, interrupting any active dialog.
+// Used for high-priority events like panic recovery.
+// Randomly picks among all matching dialogs (not just highest priority).
+func (g *Guide) ForceTrigger(event string) {
+	// Finish current dialog if any.
+	if g.active != nil {
+		g.finishDialog()
+	}
+	var candidates []*Dialog
+	for i := range g.dialogs {
+		d := &g.dialogs[i]
+		if d.Trigger != event {
+			continue
+		}
+		if d.Scene != "*" && d.Scene != g.scene {
+			continue
+		}
+		candidates = append(candidates, d)
+	}
+	if len(candidates) > 0 {
+		pick := candidates[rand.Intn(len(candidates))]
+		g.startDialog(pick)
+	}
 }
 
 // tryTrigger finds the best matching dialog for the given event and starts it.

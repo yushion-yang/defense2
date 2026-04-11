@@ -22,25 +22,28 @@ type waveEntry struct {
 // getComposition 根据波次号从配置中获取对应的原型权重表。
 func getComposition(wave int) []waveEntry {
 	comps := config.GlobalWaveCompositions()
+	var enemies map[string]int
 	for _, c := range comps {
 		if c.MaxWave == 0 || wave <= c.MaxWave {
-			entries := make([]waveEntry, 0, len(c.Enemies))
-			for arch, w := range c.Enemies {
-				entries = append(entries, waveEntry{archetype: arch, weight: w})
-			}
-			return entries
+			enemies = c.Enemies
+			break
 		}
 	}
-	// 回退到最后一个阶段
-	if len(comps) > 0 {
-		last := comps[len(comps)-1]
-		entries := make([]waveEntry, 0, len(last.Enemies))
-		for arch, w := range last.Enemies {
-			entries = append(entries, waveEntry{archetype: arch, weight: w})
-		}
-		return entries
+	if enemies == nil && len(comps) > 0 {
+		enemies = comps[len(comps)-1].Enemies
 	}
-	return []waveEntry{{"normal", 100}}
+	if len(enemies) == 0 {
+		return []waveEntry{{"normal", 100}}
+	}
+	entries := make([]waveEntry, 0, len(enemies))
+	for arch, w := range enemies {
+		entries = append(entries, waveEntry{archetype: arch, weight: w})
+	}
+	// 按原型名排序，确保 map 迭代的不确定顺序不影响后续计算
+	sort.Slice(entries, func(i, j int) bool {
+		return entries[i].archetype < entries[j].archetype
+	})
+	return entries
 }
 
 // Spawner 波次出怪控制器。

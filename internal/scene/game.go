@@ -3,8 +3,10 @@
 package scene
 
 import (
+	"fmt"
 	"image/color"
 	"log"
+	"runtime/debug"
 	"strconv"
 
 	gameAudio "defense2/internal/audio"
@@ -223,7 +225,7 @@ func (g *Game) Update() error {
 		}
 	}
 
-	err := g.current.Update()
+	err := g.safeSceneUpdate()
 
 	// 吉祥物向导更新（HeadlessMode 已在上方 turbo 路径返回，此处必为正常模式）
 	if g.mascot != nil {
@@ -256,7 +258,7 @@ func (g *Game) Update() error {
 
 // Draw 每帧渲染：委托给当前场景，叠加过渡遮罩。
 func (g *Game) Draw(screen *ebiten.Image) {
-	g.current.Draw(screen)
+	g.safeSceneDraw(screen)
 
 	// 吉祥物覆盖层（场景之上、过渡遮罩之下）
 	if g.mascot != nil {
@@ -307,6 +309,37 @@ func (g *Game) Layout(_, _ int) (int, int) {
 func (g *Game) LayoutF(_, _ float64) (float64, float64) {
 	draw.Scale = ebiten.Monitor().DeviceScaleFactor()
 	return float64(g.width) * draw.Scale, float64(g.height) * draw.Scale
+}
+
+// safeSceneUpdate 包装场景 Update，捕获 panic 并触发萌妹彩蛋。
+// 返回 nil 让 Ebitengine 继续运行（非 nil error 会导致游戏退出）。
+func (g *Game) safeSceneUpdate() error {
+	var sceneErr error
+	func() {
+		defer func() {
+			if r := recover(); r != nil {
+				log.Printf("[panic-recover] scene Update panic: %v\n%s", r, debug.Stack())
+				if g.mascot != nil {
+					g.mascot.ForceTrigger("panic_recover")
+				}
+			}
+		}()
+		sceneErr = g.current.Update()
+	}()
+	return sceneErr
+}
+
+// safeSceneDraw 包装场景 Draw，捕获 panic 并触发萌妹彩蛋。
+func (g *Game) safeSceneDraw(screen *ebiten.Image) {
+	defer func() {
+		if r := recover(); r != nil {
+			log.Printf("[panic-recover] scene Draw panic: %v\n%s", r, debug.Stack())
+			if g.mascot != nil {
+				g.mascot.ForceTrigger("panic_recover")
+			}
+		}
+	}()
+	g.current.Draw(screen)
 }
 
 // currentSceneName 返回当前场景的字符串标识（供吉祥物向导匹配对话用）。

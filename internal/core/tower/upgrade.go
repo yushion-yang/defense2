@@ -48,8 +48,13 @@ func (t *Tower) PendingSlots(wavesCleared int) int {
 }
 
 // HasPendingUpgrade 返回塔是否有待选择的能力。
+// 同时检查波次解锁的空槽和花钱解锁但尚未选择的 PendingChoices。
 func (t *Tower) HasPendingUpgrade(wavesCleared int) bool {
-	return t.PendingSlots(wavesCleared) > 0
+	if t.PendingSlots(wavesCleared) > 0 {
+		return true
+	}
+	// 花钱解锁的槽位不受 wavesCleared 限制，检查 PendingChoices 缓存
+	return PendingCount(t) > 0
 }
 
 // NextUpgradeCost 返回塔下一次能力槽解锁的金币费用。

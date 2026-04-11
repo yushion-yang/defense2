@@ -2652,7 +2652,7 @@ func (s *StageScene) drawScene(screen *ebiten.Image) {
 	if s.dragItemActive {
 		mx, my := s.gesture.CursorPos()
 		def := item.Defs[s.dragItemKind]
-		hud.DrawDragItem(screen, float32(mx), float32(my), def.Color, def.Name, int(s.dragItemKind))
+		hud.DrawDragItem(screen, float32(mx), float32(my), def.Color, def.Name, int(s.dragItemKind), def.Icon)
 	}
 
 	// Toast 通知
@@ -2747,6 +2747,8 @@ func (s *StageScene) buildItemPanelCards() []hud.ItemCardVM {
 	for _, k := range item.AllKinds {
 		cards[k] = hud.ItemCardVM{
 			Name:  item.Defs[k].Name,
+			Desc:  item.Defs[k].Desc,
+			Icon:  item.Defs[k].Icon,
 			Count: s.inventory.Count(k),
 			Color: item.Defs[k].Color,
 			Kind:  int(k),

@@ -151,13 +151,13 @@ func DrawSpinBlades(screen *ebiten.Image, cx, cy, outerR float32, spinAngle, act
 		tipX := cx + outerR*leadCos
 		tipY := cy + outerR*leadSin
 		tipA := uint8(120 * a)
-		draw.FilledCircle(screen, tipX, tipY, 2.5, color.RGBA{R: 220, G: 255, B: 160, A: tipA})
+		draw.Diamond(screen, tipX, tipY, 2.5, 1, color.RGBA{R: 220, G: 255, B: 160, A: tipA})
 
 		// ── Layer 6: 刃尾衰减点 ──
 		tailX := cx + outerR*trailCos
 		tailY := cy + outerR*trailSin
 		tailA := uint8(40 * a)
-		draw.FilledCircle(screen, tailX, tailY, 1.5, color.RGBA{R: 130, G: 200, B: 40, A: tailA})
+		draw.Diamond(screen, tailX, tailY, 1.5, 0.8, color.RGBA{R: 130, G: 200, B: 40, A: tailA})
 	}
 
 	// ── Layer 7: 中心旋转光核（与精灵呼应的内部旋涡） ──
@@ -382,7 +382,7 @@ func DrawPoisonZone(screen *ebiten.Image, cx, cy float32, radius float64, animTi
 	a := auraBreathAlpha(animTime, 1.6, 15, 35)
 	draw.CircleOutline(screen, cx, cy, r32, 0.8, color.RGBA{R: 120, G: 200, B: 60, A: a})
 	drawAuraMarkers(screen, cx, cy, r32, 2, animTime, 0.2, func(s *ebiten.Image, mx, my float32, ma uint8) {
-		draw.FilledCircle(s, mx, my, 2, color.RGBA{R: 120, G: 200, B: 60, A: ma})
+		draw.Diamond(s, mx, my, 2, 0.8, color.RGBA{R: 120, G: 200, B: 60, A: ma})
 	})
 }
 
@@ -432,7 +432,7 @@ func DrawBuffDots(screen *ebiten.Image, cx, cy float32, buffCount int) {
 	startX := cx - float32(n-1)*dotSpacing/2
 	for i := 0; i < n; i++ {
 		dx := startX + float32(i)*dotSpacing
-		draw.FilledCircle(screen, dx, dotY, dotR,
+		draw.Diamond(screen, dx, dotY, dotR, 0.8,
 			color.RGBA{R: 180, G: 140, B: 255, A: 180})
 	}
 }
@@ -459,7 +459,7 @@ func DrawPentagram(screen *ebiten.Image, cx, cy float32, remainRatio float64, an
 	drawPentagramStar(screen, cx, cy, starR*0.85, rotation, alpha)
 
 	// 内层光晕
-	draw.FilledCircle(screen, cx, cy, 8*pulse,
+	draw.DiamondRotated(screen, cx, cy, 6*pulse, 1.2, float64(rotation),
 		color.RGBA{R: 255, G: 230, B: 120, A: alpha / 3})
 }
 
@@ -482,7 +482,7 @@ func drawPentagramStar(screen *ebiten.Image, cx, cy, r float32, rotation float32
 	}
 
 	for _, pt := range pts {
-		draw.FilledCircle(screen, pt[0], pt[1], 2,
+		draw.Diamond(screen, pt[0], pt[1], 2, 0.8,
 			color.RGBA{R: 255, G: 240, B: 150, A: alpha})
 	}
 }

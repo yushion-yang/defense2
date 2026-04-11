@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"image/color"
 	"math"
+	"sort"
 	"strings"
 
 	"defense2/internal/config"
@@ -99,15 +100,52 @@ func BuildInfoPanelVM(t *tower.Tower, sellValue int, wavesCleared int, testMode 
 		vm.Abilities = append(vm.Abilities, buildAbilityVM(abType, abTable, effStr))
 	}
 
-	// Buffs — skip aura buffs (CatAura) which refresh each frame and would flicker
+	// Buffs — aggregate aura buffs by ID (they refresh each frame, so show merged summary)
+	type auraAgg struct {
+		totalValue  float64
+		sourceCount int
+		id          string
+	}
+	auraMap := map[string]*auraAgg{}
 	for _, b := range t.Buffs.Active() {
 		if b.Category == buff.CatAura {
+			agg, ok := auraMap[b.ID]
+			if !ok {
+				agg = &auraAgg{id: b.ID}
+				auraMap[b.ID] = agg
+			}
+			agg.totalValue += b.Value
+			agg.sourceCount++
 			continue
 		}
 		vm.Buffs = append(vm.Buffs, hud.BuffVM{
 			Source:    b.Source,
 			Desc:      buffLabel(b.ID),
 			Remaining: b.Remaining,
+		})
+	}
+	// Append merged aura summaries (sorted by ID for stable display order)
+	auraIDs := make([]string, 0, len(auraMap))
+	for id := range auraMap {
+		auraIDs = append(auraIDs, id)
+	}
+	sort.Strings(auraIDs)
+	for _, id := range auraIDs {
+		agg := auraMap[id]
+		desc := buffLabel(agg.id)
+		if isPercentBuff(agg.id) {
+			desc += fmt.Sprintf(" +%.0f%%", agg.totalValue*100)
+		} else {
+			desc += fmt.Sprintf(" +%s", fmtNum(agg.totalValue))
+		}
+		src := "光环"
+		if agg.sourceCount > 1 {
+			src = fmt.Sprintf("光环×%d", agg.sourceCount)
+		}
+		vm.Buffs = append(vm.Buffs, hud.BuffVM{
+			Source:    src,
+			Desc:      desc,
+			Remaining: -1, // permanent (refreshed each frame)
 		})
 	}
 
@@ -231,17 +269,34 @@ func attackStyleLabel(style string) string {
 
 // buffLabels maps raw buff IDs to player-friendly Chinese labels.
 var buffLabels = map[string]string{
-	"aura:damageAmp": "增伤光环",
-	"aura:pctDamage": "百分比伤害光环",
-	"aura:pctSpeed":  "攻速光环",
-	"aura:flatRange": "射程光环",
-	"aura:crit":      "暴击光环",
+	// Tower auras (CatAura)
+	"aura:damageAmp": "增伤",
+	"aura:pctDamage": "百分比伤害",
+	"aura:pctSpeed":  "攻速",
+	"aura:flatRange": "射程",
+	"aura:crit":      "暴击",
 	"towerStrength":  "强度增益",
-	"stealth":        "隐身",
-	"berserk":        "狂暴",
-	"regen":          "再生",
-	"healAura":       "治疗光环",
-	"speedAura":      "加速光环",
+	// CC (CatCC)
+	"stun": "眩晕",
+	"slow": "减速",
+	"root": "禁锢",
+	// DoT (CatDoT)
+	"bleed":  "流血",
+	"burn":   "燃烧",
+	"poison": "中毒",
+	// Defense (CatDefense)
+	"controlImmune": "控制免疫",
+	"damageReduce":  "减伤",
+	// Debuff (CatDebuff)
+	"weaken": "易伤",
+	// Behavior (CatBehavior)
+	"stealth":    "隐身",
+	"berserk":    "狂暴",
+	"regen":      "再生",
+	"healAura":   "治疗光环",
+	"bufferAura": "加速光环",
+	"speedUp":    "加速",
+	"phaseShift": "相位转移",
 }
 
 // buffLabel returns a player-friendly label for a buff ID.
@@ -250,6 +305,15 @@ func buffLabel(id string) string {
 		return label
 	}
 	return id // fallback to raw ID
+}
+
+// isPercentBuff returns true if the buff value represents a percentage (0-1 → 0%-100%).
+func isPercentBuff(id string) bool {
+	switch id {
+	case "aura:damageAmp", "aura:pctDamage", "aura:pctSpeed", "aura:crit":
+		return true
+	}
+	return false
 }
 
 // scaledColor returns the color based on comparison of scaled value vs potential.

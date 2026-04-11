@@ -8,7 +8,7 @@
     "hpBase": 52,                    "_hpBase": "敌人基础生命值（第1波）",
     "hpPerWave": 21,                 "_hpPerWave": "每波生命值递增量",
     "speedBase": 58,                 "_speedBase": "敌人基础移动速度（像素/秒）",
-    "speedPerWave": 5,               "_speedPerWave": "每波移动速度递增量",
+    "speedPerWave": 0,               "_speedPerWave": "每波移动速度递增量（0=不增长）",
     "enemiesPerWave": 5,             "_enemiesPerWave": "每波基础敌人数（实际=base+wave）",
     "spawnInterval": 0.6,            "_spawnInterval": "同波敌人之间的出生间隔（秒）",
     "spawnBaseInterval": 0.92,       "_spawnBaseInterval": "出怪间隔基础值（逐波衰减）",
