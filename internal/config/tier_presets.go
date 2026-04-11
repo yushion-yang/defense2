@@ -1,5 +1,5 @@
 // tier_presets.go — 塔属性档位预设加载。
-// 从 tier-presets.json 读取 S/A/B/C/D 五档属性范围。
+// 从 tier-presets.json 读取 S/B/D 三档属性值 + 共享潜力基数。
 package config
 
 import (
@@ -7,16 +7,16 @@ import (
 	"fmt"
 )
 
-// TierRange 单个档位的数值范围。
-type TierRange struct {
-	Min float64 `json:"min"`
-	Max float64 `json:"max"`
-	Ref float64 `json:"ref"`
+// TierValue 单个档位的基础值和潜力。
+type TierValue struct {
+	Base      float64 `json:"base"`
+	Potential float64 `json:"potential"`
 }
 
-// AttrTiers 单个属性的五档预设。
+// AttrTiers 单个属性的档位预设。
 type AttrTiers struct {
-	Tiers map[string]TierRange `json:"tiers"` // "S"/"A"/"B"/"C"/"D"
+	BasePotential float64              `json:"basePotential"` // 共享潜力基数
+	Tiers         map[string]TierValue `json:"tiers"`         // "S"/"B"/"D"
 }
 
 // TierPresets 完整预设表。
@@ -31,8 +31,8 @@ var globalTierPresets *TierPresets
 // GlobalTierPresets 返回全局预设表。
 func GlobalTierPresets() *TierPresets { return globalTierPresets }
 
-// TierNames 五档名称（从高到低）。
-var TierNames = []string{"S", "A", "B", "C", "D"}
+// TierNames 三档名称。
+var TierNames = []string{"S", "B", "D"}
 
 // LoadTierPresets 加载档位预设。
 func LoadTierPresets() (*TierPresets, error) {

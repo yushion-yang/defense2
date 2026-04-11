@@ -57,6 +57,7 @@ type InfoPanelVM struct {
 	DamageSegs []AbilitySegment
 	SpeedSegs  []AbilitySegment
 	RangeSegs  []AbilitySegment
+	Specialty  int // 专精属性 (0=damage, 1=speed, 2=range)，对应行显示星标
 
 	// Attack style row
 	AttackStyleText string // e.g. "攻击: 投射物"
@@ -157,13 +158,14 @@ func DrawInfoPanel(screen *ebiten.Image, vm InfoPanelVM) {
 	)
 	im := render.GlobalIcons()
 	attrRows := []struct {
-		icon  string
-		label string
-		segs  []AbilitySegment
+		icon      string
+		label     string
+		segs      []AbilitySegment
+		specialty bool
 	}{
-		{"stat-damage", "伤害", vm.DamageSegs},
-		{"stat-atkspd", "攻速", vm.SpeedSegs},
-		{"stat-range", "射程", vm.RangeSegs},
+		{"stat-damage", "伤害", vm.DamageSegs, vm.Specialty == 0},
+		{"stat-atkspd", "攻速", vm.SpeedSegs, vm.Specialty == 1},
+		{"stat-range", "射程", vm.RangeSegs, vm.Specialty == 2},
 	}
 	for _, ar := range attrRows {
 		ar := ar
@@ -173,7 +175,13 @@ func DrawInfoPanel(screen *ebiten.Image, vm InfoPanelVM) {
 				drawStatIcon(screen, im, ar.icon, rx, ry, iconSize)
 			})
 			row.AddFixed(labelW, func(screen *ebiten.Image, rx, ry, rw, rh float64) {
-				fm.DrawText(screen, ar.label, rx, ry, theme.FontSM, theme.TextMuted)
+				labelClr := theme.TextMuted
+				prefix := ""
+				if ar.specialty {
+					prefix = "\u2605" // ★
+					labelClr = color.RGBA{R: 255, G: 200, B: 50, A: 255} // gold
+				}
+				fm.DrawText(screen, prefix+ar.label, rx, ry, theme.FontSM, labelClr)
 			})
 			row.AddFill(func(screen *ebiten.Image, rx, ry, rw, rh float64) {
 				sx := rx

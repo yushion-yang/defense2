@@ -18,15 +18,16 @@ func TestPlaceFromSnapshot(t *testing.T) {
 	snap := config.TowerSnapshot{
 		Row: 3, Col: 5, Key: "prism",
 		AbilitySlots:    [6]string{"scatter", "", "auraDamage", "", "", ""},
-		DamageTier:      "A",
+		DamageTier:      "S",
 		SpeedTier:       "B",
-		RangeTier:       "S",
+		RangeTier:       "D",
 		BaseDamage:      12.0,
 		PotentialDamage: 8.0,
 		BaseSpeed:       1.5,
 		PotentialSpeed:  0.5,
 		BaseRange:       120.0,
 		PotentialRange:  30.0,
+		Specialty:       2,
 	}
 	tw := p.PlaceFromSnapshot(3, 5, 200.0, 300.0, def, snap)
 	if tw == nil {
@@ -38,14 +39,17 @@ func TestPlaceFromSnapshot(t *testing.T) {
 	if tw.Key != "prism" {
 		t.Errorf("key = %q, want %q", tw.Key, "prism")
 	}
-	if tw.DamageTier != "A" {
-		t.Errorf("DamageTier = %q, want %q", tw.DamageTier, "A")
+	if tw.DamageTier != "S" {
+		t.Errorf("DamageTier = %q, want %q", tw.DamageTier, "S")
 	}
 	if tw.SpeedTier != "B" {
 		t.Errorf("SpeedTier = %q, want %q", tw.SpeedTier, "B")
 	}
-	if tw.RangeTier != "S" {
-		t.Errorf("RangeTier = %q, want %q", tw.RangeTier, "S")
+	if tw.RangeTier != "D" {
+		t.Errorf("RangeTier = %q, want %q", tw.RangeTier, "D")
+	}
+	if tw.Specialty != 2 {
+		t.Errorf("Specialty = %d, want 2", tw.Specialty)
 	}
 	// Verify snapshot values used, not def values
 	if diff := tw.BaseDamage - 12.0; diff > 0.01 || diff < -0.01 {

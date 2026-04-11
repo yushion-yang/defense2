@@ -87,15 +87,7 @@ func (p *Pool) Place(row, col int, cx, cy float64, def TowerDef) *Tower {
 			t := &p.towers[i]
 			initTower(t, row, col, cx, cy, def)
 
-			// 战力缩放参数（从配置定义）
-			t.BaseDamage = def.CfgBaseDamage
-			t.BaseRange = def.CfgBaseRange
-			t.BaseSpeed = def.CfgBaseSpeed
-			t.PotentialDamage = def.PotentialDamage
-			t.PotentialSpeed = def.PotentialSpeed
-			t.PotentialRange = def.PotentialRange
-
-			// 随机属性
+			// 随机属性（ApplyRandomStats 从 tier-presets 设置 Base/Potential/Specialty 并 RecalcStats）
 			stats := RollTowerStats()
 			ApplyRandomStats(t, stats)
 			t.DamageTier = stats.DamageTier
@@ -126,6 +118,7 @@ func (p *Pool) PlaceFromSnapshot(row, col int, cx, cy float64, def TowerDef, sna
 			t.DamageTier = snap.DamageTier
 			t.SpeedTier = snap.SpeedTier
 			t.RangeTier = snap.RangeTier
+			t.Specialty = snap.Specialty
 
 			return p.allocSlot(t, row, col)
 		}

@@ -47,6 +47,9 @@ func BuildInfoPanelVM(t *tower.Tower, sellValue int, wavesCleared int, testMode 
 		vm.StrengthText = strTxt
 	}
 
+	// Specialty
+	vm.Specialty = t.Specialty
+
 	// Attribute segments (colored base + scaled + total + aura bonus from BuffList)
 	var pctDamage, pctSpeed, flatRange float64
 	if t.Buffs != nil {

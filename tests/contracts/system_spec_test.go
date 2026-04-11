@@ -7,7 +7,6 @@ import (
 
 	"defense2/internal/config"
 	"defense2/internal/core/buff"
-	"defense2/internal/core/tower"
 )
 
 // ═══════════════════════════════════════
@@ -258,9 +257,16 @@ func TestBuffStackSpec_SlowCap(t *testing.T) {
 // P2: 塔随机化规格
 // ═══════════════════════════════════════
 
-func TestTowerRandomizeSpec_TierBudget(t *testing.T) {
-	if tower.TierBudget <= 0 || tower.TierBudget > 10 {
-		t.Errorf("TierBudget = %d, 应在 (0, 10] 范围内", tower.TierBudget)
+func TestTowerRandomizeSpec_TierNames(t *testing.T) {
+	want := []string{"S", "B", "D"}
+	got := config.TierNames
+	if len(got) != len(want) {
+		t.Fatalf("TierNames len = %d, want %d", len(got), len(want))
+	}
+	for i := range want {
+		if got[i] != want[i] {
+			t.Errorf("TierNames[%d] = %q, want %q", i, got[i], want[i])
+		}
 	}
 }
 

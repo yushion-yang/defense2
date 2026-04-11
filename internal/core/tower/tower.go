@@ -46,6 +46,7 @@ type Tower struct {
 	DamageTier string
 	SpeedTier  string
 	RangeTier  string
+	Specialty  int // 专精属性 (0=damage, 1=speed, 2=range)
 	Color      [3]uint8 // 显示颜色 RGB
 	FireAnim   float64  // 射击动画计时器（射击时设为 0.15，逐帧衰减）
 	Angle      float64  // 朝向角度（弧度，0=向上，顺时针）

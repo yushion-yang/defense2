@@ -1,5 +1,5 @@
 // tier_presets_contracts_test.go — 塔属性档位预设契约测试。
-// 验证 config/towers/tier-presets.json 的结构完整性、范围合法性和档位排序。
+// 验证 config/towers/tier-presets.json 的结构完整性和数值合法性。
 package contracts_test
 
 import (
@@ -19,7 +19,7 @@ func TestTierPresetsLoads(t *testing.T) {
 	}
 }
 
-// TestTierPresetsAllDimensionsComplete 验证 damage/attackSpeed/range 各有 S/A/B/C/D 五档。
+// TestTierPresetsAllDimensionsComplete 验证 damage/attackSpeed/range 各有 S/B/D 三档。
 func TestTierPresetsAllDimensionsComplete(t *testing.T) {
 	tp, err := config.LoadTierPresets()
 	if err != nil {
@@ -40,8 +40,8 @@ func TestTierPresetsAllDimensionsComplete(t *testing.T) {
 	}
 }
 
-// TestTierPresetsRangeValid 验证每档 min > 0, max > min, min <= ref <= max。
-func TestTierPresetsRangeValid(t *testing.T) {
+// TestTierPresetsValuesPositive 验证每档 base > 0, potential >= 0。
+func TestTierPresetsValuesPositive(t *testing.T) {
 	tp, err := config.LoadTierPresets()
 	if err != nil {
 		t.Fatalf("LoadTierPresets 失败: %v", err)
@@ -53,24 +53,24 @@ func TestTierPresetsRangeValid(t *testing.T) {
 		"range":       tp.Range,
 	}
 	for dimName, at := range dims {
-		for tier, r := range at.Tiers {
+		if at.BasePotential < 0 {
+			t.Errorf("%s: basePotential=%.2f 应 >= 0", dimName, at.BasePotential)
+		}
+		for tier, tv := range at.Tiers {
 			t.Run(dimName+"/"+tier, func(t *testing.T) {
-				if r.Min <= 0 {
-					t.Errorf("min=%.2f 应 > 0", r.Min)
+				if tv.Base <= 0 {
+					t.Errorf("base=%.2f 应 > 0", tv.Base)
 				}
-				if r.Max <= r.Min {
-					t.Errorf("max=%.2f 应 > min=%.2f", r.Max, r.Min)
-				}
-				if r.Ref < r.Min || r.Ref > r.Max {
-					t.Errorf("ref=%.2f 应在 [min=%.2f, max=%.2f] 范围内", r.Ref, r.Min, r.Max)
+				if tv.Potential < 0 {
+					t.Errorf("potential=%.2f 应 >= 0", tv.Potential)
 				}
 			})
 		}
 	}
 }
 
-// TestTierPresetsOrderDescending 验证 S.ref > A.ref > B.ref > C.ref > D.ref。
-func TestTierPresetsOrderDescending(t *testing.T) {
+// TestTierPresetsBaseOrderDescending 验证 S.base > B.base > D.base（高档基础值更高）。
+func TestTierPresetsBaseOrderDescending(t *testing.T) {
 	tp, err := config.LoadTierPresets()
 	if err != nil {
 		t.Fatalf("LoadTierPresets 失败: %v", err)
@@ -81,22 +81,23 @@ func TestTierPresetsOrderDescending(t *testing.T) {
 		"attackSpeed": tp.AttackSpeed,
 		"range":       tp.Range,
 	}
-	order := config.TierNames // S, A, B, C, D
+	order := config.TierNames // S, B, D
 	for dimName, at := range dims {
 		t.Run(dimName, func(t *testing.T) {
 			for i := 1; i < len(order); i++ {
 				prev := at.Tiers[order[i-1]]
 				curr := at.Tiers[order[i]]
-				if curr.Ref >= prev.Ref {
-					t.Errorf("%s.ref=%.2f 应 < %s.ref=%.2f", order[i], curr.Ref, order[i-1], prev.Ref)
+				if curr.Base >= prev.Base {
+					t.Errorf("%s.base=%.2f 应 < %s.base=%.2f", order[i], curr.Base, order[i-1], prev.Base)
 				}
 			}
 		})
 	}
 }
 
-// TestTierPresetsNonOverlapping 验证高档 min >= 低档 max（档位间无交叉）。
-func TestTierPresetsNonOverlapping(t *testing.T) {
+// TestTierPresetsPotentialOrderAscending 验证 S.potential < B.potential < D.potential
+// （低档基础值低但潜力更高，高强度时追平）。
+func TestTierPresetsPotentialOrderAscending(t *testing.T) {
 	tp, err := config.LoadTierPresets()
 	if err != nil {
 		t.Fatalf("LoadTierPresets 失败: %v", err)
@@ -107,15 +108,14 @@ func TestTierPresetsNonOverlapping(t *testing.T) {
 		"attackSpeed": tp.AttackSpeed,
 		"range":       tp.Range,
 	}
-	order := config.TierNames
+	order := config.TierNames // S, B, D
 	for dimName, at := range dims {
 		t.Run(dimName, func(t *testing.T) {
 			for i := 1; i < len(order); i++ {
-				higher := at.Tiers[order[i-1]]
-				lower := at.Tiers[order[i]]
-				if higher.Min < lower.Max {
-					t.Errorf("%s.min=%.2f 应 >= %s.max=%.2f（档位间不应交叉）",
-						order[i-1], higher.Min, order[i], lower.Max)
+				prev := at.Tiers[order[i-1]]
+				curr := at.Tiers[order[i]]
+				if curr.Potential <= prev.Potential {
+					t.Errorf("%s.potential=%.2f 应 > %s.potential=%.2f", order[i], curr.Potential, order[i-1], prev.Potential)
 				}
 			}
 		})

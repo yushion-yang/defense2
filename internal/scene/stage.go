@@ -1249,6 +1249,7 @@ func (s *StageScene) saveScenario(name string) {
 			PotentialSpeed:  t.PotentialSpeed,
 			BaseRange:       t.BaseRange,
 			PotentialRange:  t.PotentialRange,
+			Specialty:       t.Specialty,
 			Strength:        permStr,
 		})
 	})

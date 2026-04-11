@@ -19,7 +19,7 @@ func TestParseScenarioData(t *testing.T) {
 			"row": 3, "col": 5,
 			"key": "prism",
 			"abilitySlots": ["scatter","","auraDamage","","",""],
-			"damageTier": "A", "speedTier": "B", "rangeTier": "S",
+			"damageTier": "S", "speedTier": "B", "rangeTier": "D",
 			"baseDamage": 12.0, "potentialDamage": 8.0,
 			"baseSpeed": 1.5, "potentialSpeed": 0.5,
 			"baseRange": 120.0, "potentialRange": 30.0
@@ -55,8 +55,8 @@ func TestParseScenarioData(t *testing.T) {
 	if tw.AbilitySlots != wantSlots {
 		t.Errorf("AbilitySlots = %v, want %v", tw.AbilitySlots, wantSlots)
 	}
-	if tw.DamageTier != "A" {
-		t.Errorf("DamageTier = %q, want %q", tw.DamageTier, "A")
+	if tw.DamageTier != "S" {
+		t.Errorf("DamageTier = %q, want %q", tw.DamageTier, "S")
 	}
 	if diff := tw.BaseDamage - 12.0; diff > 0.01 || diff < -0.01 {
 		t.Errorf("BaseDamage = %f, want 12.0", tw.BaseDamage)
