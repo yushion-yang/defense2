@@ -103,11 +103,12 @@ func NewGame() *Game {
 		}
 	}
 	// 加载吉祥物向导（非致命：文件缺失仅输出日志）
-	mascotDialogs, err := mascot.LoadAllDialogs(config.GetAssetFS())
+	mascotDialogs, err := mascot.LoadAllDialogs(config.GetDataFS())
 	if err != nil {
 		log.Printf("[mascot] dialog load error: %v", err)
 	}
-	g.mascot = mascot.NewGuide(mascotDialogs, nil) // TODO: load shown IDs from persistence
+	// TODO: load MascotShown from ProgressManager once it's accessible at Game level
+	g.mascot = mascot.NewGuide(mascotDialogs, nil)
 
 	if !HeadlessMode {
 		g.mascotAnim = render.LoadMascotSprites(config.GetAssetFS())

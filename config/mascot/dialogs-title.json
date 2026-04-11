@@ -1,0 +1,13 @@
+[
+  {
+    "id": "title_welcome",
+    "scene": "title",
+    "trigger": "scene_enter",
+    "lines": [
+      {"text": "欢迎回来，指挥官！", "expression": "happy", "autoAdvance": 4},
+      {"text": "准备好迎接新的挑战了吗？", "expression": "talk", "autoAdvance": 3}
+    ],
+    "once": false,
+    "priority": 10
+  }
+]

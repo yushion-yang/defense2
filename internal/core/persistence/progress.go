@@ -70,13 +70,14 @@ func UnlockRequirement(prefix, key string) string {
 
 // Progress 玩家进度数据（序列化到存储中）。
 type Progress struct {
-	HighScores    map[string]int `json:"highScores"`    // 各关卡最高击杀数（mapID → kills）
-	UnlockedMaps  []string       `json:"unlockedMaps"`  // 已解锁关卡 ID 列表（向后兼容）
-	TotalKills    int            `json:"totalKills"`    // 累计击杀总数
-	TotalWins     int            `json:"totalWins"`     // 累计胜利次数
-	TotalGames    int            `json:"totalGames"`    // 累计游戏场次
-	TutorialDone  bool           `json:"tutorialDone"`  // 教程是否已完成
-	Unlocks       UnlockData     `json:"unlocks"`       // 解锁进度
+	HighScores    map[string]int  `json:"highScores"`    // 各关卡最高击杀数（mapID → kills）
+	UnlockedMaps  []string        `json:"unlockedMaps"`  // 已解锁关卡 ID 列表（向后兼容）
+	TotalKills    int             `json:"totalKills"`    // 累计击杀总数
+	TotalWins     int             `json:"totalWins"`     // 累计胜利次数
+	TotalGames    int             `json:"totalGames"`    // 累计游戏场次
+	TutorialDone  bool            `json:"tutorialDone"`  // 教程是否已完成
+	Unlocks       UnlockData      `json:"unlocks"`       // 解锁进度
+	MascotShown   map[string]bool `json:"mascotShown"`   // 吉祥物 Once 对话已展示 ID 集合
 }
 
 // NewProgress 创建初始进度（默认解锁 map_01）。
@@ -85,6 +86,7 @@ func NewProgress() *Progress {
 		HighScores:   make(map[string]int),
 		UnlockedMaps: []string{"map_01"},
 		Unlocks:      NewUnlockData(),
+		MascotShown:  make(map[string]bool),
 	}
 }
 
@@ -324,6 +326,20 @@ func (pm *ProgressManager) IsWardenUnlocked(wardenKey string) bool {
 		return true
 	}
 	return pm.progress.Unlocks.Wardens[wardenKey]
+}
+
+// MascotShownIDs returns the set of mascot dialog IDs already shown.
+func (pm *ProgressManager) MascotShownIDs() map[string]bool {
+	if pm.progress.MascotShown == nil {
+		pm.progress.MascotShown = make(map[string]bool)
+	}
+	return pm.progress.MascotShown
+}
+
+// SaveMascotShown persists the set of mascot dialog IDs that have been shown.
+func (pm *ProgressManager) SaveMascotShown(ids map[string]bool) {
+	pm.progress.MascotShown = ids
+	pm.save()
 }
 
 // unlockNext 通关后解锁下一关（旧逻辑，保持向后兼容）。

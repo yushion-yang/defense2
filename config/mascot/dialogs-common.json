@@ -1,0 +1,12 @@
+[
+  {
+    "id": "idle_tip_1",
+    "scene": "*",
+    "trigger": "idle_timeout",
+    "lines": [
+      {"text": "有什么不明白的，点我就好~", "expression": "talk", "autoAdvance": 4}
+    ],
+    "once": false,
+    "priority": 1
+  }
+]

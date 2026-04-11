@@ -1,0 +1,42 @@
+[
+  {
+    "id": "stage_first_enter",
+    "scene": "stage",
+    "trigger": "scene_enter",
+    "lines": [
+      {"text": "战场准备就绪！先建一座防御塔吧。", "expression": "talk", "autoAdvance": 5}
+    ],
+    "once": true,
+    "priority": 10
+  },
+  {
+    "id": "stage_wave_start",
+    "scene": "stage",
+    "trigger": "wave_start",
+    "lines": [
+      {"text": "敌人来了！注意防线！", "expression": "surprised", "autoAdvance": 3}
+    ],
+    "once": true,
+    "priority": 5
+  },
+  {
+    "id": "stage_first_upgrade",
+    "scene": "stage",
+    "trigger": "upgrade",
+    "lines": [
+      {"text": "升级成功！塔变强了呢~", "expression": "happy", "autoAdvance": 3}
+    ],
+    "once": true,
+    "priority": 5
+  },
+  {
+    "id": "stage_first_item",
+    "scene": "stage",
+    "trigger": "item_use",
+    "lines": [
+      {"text": "道具用得好！合理使用道具是胜利的关键。", "expression": "happy", "autoAdvance": 4}
+    ],
+    "once": true,
+    "priority": 5
+  }
+]
