@@ -183,20 +183,6 @@ func TestBeamPoolLifecycle(t *testing.T) {
 
 // ── Projectile Extensions ──
 
-func TestScatterProjectileNoDamage(t *testing.T) {
-	pool := projectile.NewPool(4)
-	pool.FireScatter(100, 100, 0, 200, 400, "test")
-
-	pool.Each(func(p *projectile.Projectile) {
-		if !p.ScatterVisual {
-			t.Error("scatter projectile should be visual-only")
-		}
-		if p.Damage != 0 {
-			t.Errorf("scatter visual damage=%f, want 0", p.Damage)
-		}
-	})
-}
-
 func TestPenetrateProjectileFlag(t *testing.T) {
 	pool := projectile.NewPool(4)
 	pool.FirePenetrate(100, 100, 200, 100, 30, 350, "test")

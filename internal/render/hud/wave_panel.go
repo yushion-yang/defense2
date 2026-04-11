@@ -185,18 +185,3 @@ func WavePanelHandleHitTest(px, py float32, state *WavePanelState) bool {
 	return px >= x && px <= x+w && py >= y && py <= y+h
 }
 
-// WavePanelContains 检查点击是否在波次面板（含 handle）区域内。
-func WavePanelContains(px, py float32, state *WavePanelState) bool {
-	if WavePanelHandleHitTest(px, py, state) {
-		return true
-	}
-	// 面板主体
-	if state.SlideT < 0.01 {
-		return false
-	}
-	t := easeOut(state.SlideT)
-	screenH := float32(game.ScreenHeight)
-	panelX := wpMarginL - wpPanelW + float32(t)*wpPanelW
-	panelY := screenH - wpHandleH - wpMarginB // 简化：用 handle 高度近似
-	return px >= panelX && px <= panelX+wpPanelW && py >= panelY && py <= screenH
-}

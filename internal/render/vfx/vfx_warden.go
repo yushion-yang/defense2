@@ -24,13 +24,6 @@ type FireballVFX struct {
 	StartX, StartY, EndX, EndY float64
 }
 
-// StrikeVFX 天击打击点参数。
-type StrikeVFX struct {
-	X, Y  float64
-	Timer float64 // 1→0
-	Mode  int     // 1=冰锥, 2=水滴, 3=水柱
-}
-
 // ── 移动拖尾 ────────────────────────────────────────
 
 // DrawMovementTrail 绘制战灵移动拖尾。

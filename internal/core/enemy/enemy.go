@@ -16,16 +16,6 @@ type Threshold struct {
 	Triggered bool    // 是否已触发
 }
 
-// AddThreshold 注册一个 HP 阈值触发器。
-func AddThreshold(e *Enemy, typ string, ratio float64) {
-	if e.Thresholds == nil {
-		e.Thresholds = make([]Threshold, 0, 4)
-	}
-	e.Thresholds = append(e.Thresholds, Threshold{
-		Type:  typ,
-		Ratio: ratio,
-	})
-}
 
 // CheckThresholds 检查并返回本次伤害触发的阈值列表。
 func CheckThresholds(e *Enemy) []Threshold {

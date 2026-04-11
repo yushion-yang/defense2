@@ -156,21 +156,6 @@ type StageScene struct {
 	gameStats         GameStats             // 详细游戏统计
 }
 
-// NewStageScene 创建游戏主场景，默认加载 map_01。
-func NewStageScene(sw Switcher) *StageScene {
-	return NewStageSceneWithOpts(sw, StageOptions{MapID: "map_01", WardenType: "envoy"})
-}
-
-// NewStageSceneWithMap 创建游戏主场景，加载指定地图（默认金灵战灵）。
-func NewStageSceneWithMap(sw Switcher, mapID string) *StageScene {
-	return NewStageSceneWithOpts(sw, StageOptions{MapID: mapID, WardenType: "envoy"})
-}
-
-// NewStageSceneWithOptions 创建游戏主场景，指定地图和战灵类型（向后兼容）。
-func NewStageSceneWithOptions(sw Switcher, mapID, wardenType string) *StageScene {
-	return NewStageSceneWithOpts(sw, StageOptions{MapID: mapID, WardenType: wardenType})
-}
-
 // NewStageSceneWithOpts 创建游戏主场景，接受完整配置选项。
 func NewStageSceneWithOpts(sw Switcher, opts StageOptions) *StageScene {
 	cfg, err := config.LoadMap(opts.MapID)
@@ -2166,11 +2151,6 @@ func readScreenPixels(screen *ebiten.Image) *image.NRGBA {
 
 // screenshotWG 追踪所有异步截图 goroutine，确保进程退出前全部完成。
 var screenshotWG sync.WaitGroup
-
-// WaitScreenshots 等待所有异步截图完成。在进程退出前调用。
-func WaitScreenshots() {
-	screenshotWG.Wait()
-}
 
 // saveImageAsync 异步编码并保存 PNG（不涉及 GPU 操作，可安全在 goroutine 中执行）。
 func saveImageAsync(img *image.NRGBA, path string) {

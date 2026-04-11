@@ -295,8 +295,10 @@ func TestPipeline_DamageCapDisabledBySilence(t *testing.T) {
 
 func TestPipeline_Thresholds(t *testing.T) {
 	e := makePipelineEnemy(100, 100)
-	enemy.AddThreshold(e, "berserk", 0.5)
-	enemy.AddThreshold(e, "phase2", 0.3)
+	e.Thresholds = append(e.Thresholds,
+		enemy.Threshold{Type: "berserk", Ratio: 0.5},
+		enemy.Threshold{Type: "phase2", Ratio: 0.3},
+	)
 
 	// 打到60HP (60%)，不触发
 	r1 := combat.ProcessDamage(combat.DamageInput{
