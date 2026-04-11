@@ -424,6 +424,9 @@ func buildAbilitySegments(def *config.AbilityDef, effStr float64) []hud.AbilityS
 					dv = 1
 				}
 				segs = append(segs, hud.AbilitySegment{Text: fmt.Sprintf("%.0f%%", dv*100), Kind: "scaled", Color: sClr})
+			} else if def.Potential == 0 {
+				// potential=0 时只显示 base（无成长，如 bleedDot 1%）
+				segs = append(segs, hud.AbilitySegment{Text: fmt.Sprintf("%.0f%%", def.Base*100), Kind: "base"})
 			} else {
 				segs = append(segs,
 					hud.AbilitySegment{Text: fmt.Sprintf("%.0f%%+", def.Base*100), Kind: "base"},
@@ -438,6 +441,9 @@ func buildAbilitySegments(def *config.AbilityDef, effStr float64) []hud.AbilityS
 			}
 			if def.Base == 0 {
 				segs = append(segs, hud.AbilitySegment{Text: fmt.Sprintf(nf, scaled), Kind: "scaled", Color: sClr})
+			} else if def.Potential == 0 {
+				// potential=0 时只显示 base（无成长）
+				segs = append(segs, hud.AbilitySegment{Text: fmt.Sprintf(nf, def.Base), Kind: "base"})
 			} else {
 				segs = append(segs,
 					hud.AbilitySegment{Text: fmt.Sprintf(nf+"+", def.Base), Kind: "base"},
@@ -448,6 +454,9 @@ func buildAbilitySegments(def *config.AbilityDef, effStr float64) []hud.AbilityS
 		case "si":
 			if def.Base == 0 {
 				segs = append(segs, hud.AbilitySegment{Text: fmt.Sprintf("%.0f", math.Floor(scaled)), Kind: "scaled", Color: sClr})
+			} else if def.Potential == 0 {
+				// potential=0 时只显示 base（无成长）
+				segs = append(segs, hud.AbilitySegment{Text: fmt.Sprintf("%.0f", math.Floor(def.Base)), Kind: "base"})
 			} else {
 				segs = append(segs,
 					hud.AbilitySegment{Text: fmt.Sprintf("%.0f+", math.Floor(def.Base)), Kind: "base"},
