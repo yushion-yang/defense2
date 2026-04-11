@@ -90,10 +90,6 @@ func (p *Pool) Spawn(x, y, baseHP, baseSpeed float64, pathIndex int, archetype s
 			e.TeleportSkip = cfg.TeleportSkip
 			e.TeleportTimer = cfg.TeleportInterval // 首次传送需等满间隔
 
-			// 旗手光环
-			e.AuraRange = cfg.AuraRange
-			e.AuraSpeedUp = cfg.AuraSpeedUp
-
 			// 应用行为配置
 			e.Behavior = cfg.Behavior
 			if cfg.StealthDuration > 0 {
@@ -111,24 +107,23 @@ func (p *Pool) Spawn(x, y, baseHP, baseSpeed float64, pathIndex int, archetype s
 				}
 			}
 			if cfg.HealScale > 0 {
-				e.HealPower = cfg.HealScale
-				e.HealRadius = cfg.HealRadius
+				e.Buffs.Add(buff.Buff{
+					ID: "healAura", Category: buff.CatBehavior, Source: "archetype",
+					Value: cfg.HealScale, Value2: cfg.HealRadius,
+					Duration: -1, Remaining: -1,
+				})
 				e.HealInterval = cfg.HealInterval
 				if e.HealInterval <= 0 {
 					e.HealInterval = 2.5
 				}
+				e.HealCooldown = 0
 			}
 			if cfg.AuraRange > 0 {
-				e.BuffRadius = cfg.AuraRange
-				e.BuffAmount = cfg.AuraSpeedUp
-			}
-
-			// Behavioral marker buffs (display only, permanent)
-			if cfg.HealScale > 0 {
-				e.Buffs.Add(buff.Buff{ID: "healAura", Category: buff.CatBehavior, Source: "archetype", Duration: -1, Remaining: -1})
-			}
-			if cfg.AuraRange > 0 {
-				e.Buffs.Add(buff.Buff{ID: "speedAura", Category: buff.CatBehavior, Source: "archetype", Duration: -1, Remaining: -1})
+				e.Buffs.Add(buff.Buff{
+					ID: "bufferAura", Category: buff.CatBehavior, Source: "archetype",
+					Value: cfg.AuraSpeedUp, Value2: cfg.AuraRange,
+					Duration: -1, Remaining: -1,
+				})
 			}
 
 			// 能力系统字段
@@ -140,9 +135,14 @@ func (p *Pool) Spawn(x, y, baseHP, baseSpeed float64, pathIndex int, archetype s
 			e.DashSpeedBoost = cfg.DashSpeedBoost
 			e.DashDuration = cfg.DashDuration
 			e.DashCooldown = cfg.DashCooldown
-			e.PhaseDuration = cfg.PhaseDuration
-			e.PhaseCooldown = cfg.PhaseCooldown
-			e.PhaseTimer = cfg.PhaseCooldown // 首次需等满冷却
+			if cfg.PhaseDuration > 0 {
+				e.Buffs.Add(buff.Buff{
+					ID: "phaseShift", Category: buff.CatBehavior, Source: "archetype",
+					Value: cfg.PhaseDuration, Value2: cfg.PhaseCooldown,
+					Duration: -1, Remaining: -1,
+				})
+				e.PhaseTimer = cfg.PhaseCooldown // 首次需等满冷却（runtime state）
+			}
 			e.StrDrainRatio = cfg.StrDrainRatio
 			e.StrDrainInterval = cfg.StrDrainInterval
 			e.StrDrainDuration = cfg.StrDrainDuration

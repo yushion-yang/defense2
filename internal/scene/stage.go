@@ -1106,8 +1106,9 @@ func (s *StageScene) drawEnemyInfoPanel(screen *ebiten.Image, e *enemy.Enemy) {
 	lines = append(lines, L(ttHeader, "--- 移动 ---"))
 	// 计算实际移动速度（与 movement.go 一致）
 	actualSpeed := e.Speed
-	if e.SpeedBuff > 0 {
-		actualSpeed *= (1 + e.SpeedBuff)
+	speedUp := e.GetSpeedUp()
+	if speedUp > 0 {
+		actualSpeed *= (1 + speedUp)
 	}
 	if e.DashActiveT > 0 {
 		actualSpeed *= (1 + e.DashSpeedBoost)
@@ -1121,8 +1122,8 @@ func (s *StageScene) drawEnemyInfoPanel(screen *ebiten.Image, e *enemy.Enemy) {
 		if e.IsSlowed() {
 			speedInfo += fmt.Sprintf(" 减速:×%.0f%%", e.GetSlowFactor()*100)
 		}
-		if e.SpeedBuff > 0 {
-			speedInfo += fmt.Sprintf(" 光环:+%.0f%%", e.SpeedBuff*100)
+		if speedUp > 0 {
+			speedInfo += fmt.Sprintf(" 光环:+%.0f%%", speedUp*100)
 		}
 		if e.DashActiveT > 0 {
 			speedInfo += fmt.Sprintf(" 冲刺:+%.0f%%", e.DashSpeedBoost*100)
@@ -1498,18 +1499,18 @@ func (s *StageScene) drawEnemyAbilityVFX(screen *ebiten.Image) {
 		}
 
 		// 治疗光环范围圈（绿色虚线圈）
-		if e.HealPower > 0 && e.HealRadius > 0 && !e.IsDying() {
-			hr := float32(e.HealRadius)
-			vfx.DrawHealerAura(screen, ex, ey, hr, animTime)
+		if hp, hr, ok := e.GetHealAuraParams(); ok && hp > 0 && !e.IsDying() {
+			_ = hp
+			vfx.DrawHealerAura(screen, ex, ey, float32(hr), animTime)
 			if e.HealCooldown > e.HealInterval-0.4 {
 				progress := (e.HealInterval - e.HealCooldown) / 0.4
-				vfx.DrawHealPulse(screen, ex, ey, float32(e.Radius), hr, progress)
+				vfx.DrawHealPulse(screen, ex, ey, float32(e.Radius), float32(hr), progress)
 			}
 		}
 
 		// 加速光环范围圈（橙色虚线圈）
-		if e.AuraRange > 0 && e.AuraSpeedUp > 0 && !e.IsDying() {
-			vfx.DrawSpeedAura(screen, ex, ey, e.AuraRange, animTime)
+		if su, ar, ok := e.GetBufferAuraParams(); ok && su > 0 && !e.IsDying() {
+			vfx.DrawSpeedAura(screen, ex, ey, ar, animTime)
 		}
 	})
 }
@@ -3100,7 +3101,7 @@ func (s *StageScene) buildAutoPlaySnapshot() AutoPlaySnapshot {
 			AbilitySilenced: e.AbilitySilenced, PhaseActive: e.PhaseActive,
 			ArmorFlat: e.ArmorFlat, EvasionChance: e.EvasionChance,
 			DamageCap: e.DamageCap, DamageCapPct: e.DamageCapPercent,
-			HealRadius: e.HealRadius, BuffRadius: e.BuffRadius,
+			HealRadius: e.GetHealRadius(), BuffRadius: e.GetBufferRadius(),
 			SplitCount: e.SplitCount, AbilityIDs: e.AbilityIDs,
 		})
 	})

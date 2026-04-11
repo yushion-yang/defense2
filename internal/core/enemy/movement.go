@@ -41,8 +41,8 @@ func MoveAlongPath(e *Enemy, fallbackWaypoints []gamemap.Point, dt float64) bool
 
 	// 应用光环/受击冲刺加速
 	speed := e.Speed
-	if e.SpeedBuff > 0 {
-		speed *= (1 + e.SpeedBuff)
+	if su := e.GetSpeedUp(); su > 0 {
+		speed *= (1 + su)
 	}
 	if e.DashActiveT > 0 {
 		speed *= (1 + e.DashSpeedBoost)

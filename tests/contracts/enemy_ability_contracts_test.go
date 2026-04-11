@@ -9,6 +9,22 @@ import (
 	"defense2/internal/core/enemy"
 )
 
+// phaseVal reads phaseShift buff params from enemy's BuffList.
+// duration=true returns Value (phaseDuration), false returns Value2 (phaseCooldown).
+func phaseVal(e *enemy.Enemy, duration bool) float64 {
+	if e.Buffs == nil {
+		return 0
+	}
+	b, ok := e.Buffs.Get("phaseShift")
+	if !ok {
+		return 0
+	}
+	if duration {
+		return b.Value
+	}
+	return b.Value2
+}
+
 // validAbilityCategories 能力配置中允许的类别集合。
 var validAbilityCategories = map[string]bool{
 	"defense":  true,
@@ -193,8 +209,8 @@ func TestEnemyAbilitySpawnCopy(t *testing.T) {
 		{"DashSpeedBoost", e.DashSpeedBoost, 0.5},
 		{"DashDuration", e.DashDuration, 2},
 		{"DashCooldown", e.DashCooldown, 5},
-		{"PhaseDuration", e.PhaseDuration, 2},
-		{"PhaseCooldown", e.PhaseCooldown, 4},
+		{"PhaseShift(duration)", phaseVal(e, true), 2},
+		{"PhaseShift(cooldown)", phaseVal(e, false), 4},
 		{"StrDrainRatio", e.StrDrainRatio, 0.5},
 		{"StrDrainInterval", e.StrDrainInterval, 10},
 		{"StrDrainDuration", e.StrDrainDuration, 6},
