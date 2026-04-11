@@ -260,7 +260,19 @@ func AllChoicesForCategory(cat int) []config.AbilityDef {
 	return result
 }
 
+// disabledAbilities 禁用能力黑名单。
+// 这些能力的实现尚未完成（TODO: 待 BuffList 集成后启用），
+// 玩家选择后无任何效果，因此从候选池中排除。
+var disabledAbilities = map[string]bool{
+	"killUpgrade":   true, // TODO: integrate kill-based scaling via BuffList
+	"waveScale":     true, // TODO: integrate wave-scale boosts via BuffList
+	"neighborBoost": true, // TODO: integrate neighbor boost via BuffList
+	"elementSwitch": true, // TODO: integrate element boosts via BuffList
+	"periodicCast":  true, // case 2 (buffAoe) is a no-op; disable until all modes work
+}
+
 // AbilitiesForCategory 返回指定类别中可选择的能力列表，按 Type 字母序排列。
+// 已禁用的能力（disabledAbilities）不会出现在候选池中。
 func AbilitiesForCategory(category int) []*config.AbilityDef {
 	table := config.GlobalAbilityTable()
 	if table == nil {
@@ -268,7 +280,7 @@ func AbilitiesForCategory(category int) []*config.AbilityDef {
 	}
 	var result []*config.AbilityDef
 	for _, def := range table {
-		if def.CategoryIndex() == category {
+		if def.CategoryIndex() == category && !disabledAbilities[def.Type] {
 			result = append(result, def)
 		}
 	}

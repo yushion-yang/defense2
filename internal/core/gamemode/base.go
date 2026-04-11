@@ -40,7 +40,7 @@ func (b *baseMode) OnWaveCleared(wave int, _ *Context) WaveClearResult {
 	bonus := econ.WaveBonus.Calc(wave)
 	return WaveClearResult{
 		BonusGold: bonus,
-		Message:   fmt.Sprintf("Wave %d clear! +$%d", wave, bonus),
+		Message:   fmt.Sprintf("第%d波通关! +$%d", wave, bonus),
 	}
 }
 

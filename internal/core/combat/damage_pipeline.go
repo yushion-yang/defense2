@@ -161,7 +161,7 @@ func ProcessDamage(input DamageInput) DamageResult {
 		}
 		if capped {
 			e.DamageCapHit = 0.3
-			e.SetFloatText("CAP", 255, 180, 40)
+			e.SetFloatText("上限", 255, 180, 40)
 		}
 	}
 	result.AfterDamageCap = damage

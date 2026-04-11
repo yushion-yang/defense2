@@ -44,7 +44,7 @@ func ApplyHit(input HitInput, onHit HitCallback) HitOutput {
 	if e.EvasionChance > 0 && !e.AbilitySilenced {
 		if rand.Float64() < e.EvasionChance {
 			e.DodgeFlash = 0.3
-			e.SetFloatText("MISS", 255, 255, 255)
+			e.SetFloatText("闪避", 255, 255, 255)
 			if input.OnCC != nil {
 				input.OnCC(e.X, e.Y, "dodge")
 			}
