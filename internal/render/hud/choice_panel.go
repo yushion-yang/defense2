@@ -18,11 +18,12 @@ import (
 
 // ChoiceOption 选择项。
 type ChoiceOption struct {
-	Label       string      // 选项标签
-	Description string      // 选项描述
-	Tier        string      // 品质（normal/rare/epic）
-	Icon        string      // 图标 key（对应 assets/icons/abilities/{icon}.png）
-	Data        interface{} // 携带数据（调用方自行断言）
+	Label       string           // 选项标签
+	Description string           // 选项描述（纯文本 fallback）
+	Segments    []AbilitySegment // 带颜色的分段描述（优先于 Description）
+	Tier        string           // 品质（normal/rare/epic）
+	Icon        string           // 图标 key（对应 assets/icons/abilities/{icon}.png）
+	Data        interface{}      // 携带数据（调用方自行断言）
 }
 
 // IconReader 图标资源读取接口。
@@ -273,11 +274,17 @@ func (p *ChoicePanel) Draw(screen *ebiten.Image) {
 		labelY := tierLabelY + 14
 		fm.DrawCenteredBoldText(screen, opt.Label, centerX, labelY, lay.labelSize, theme.TextTitle)
 
-		// 描述（卡片下部，自动换行）
+		// 描述（卡片下部）
 		descY := labelY + 18
-		maxW := float64(lay.cardW - lay.pad*2)
-		drawWrappedText(screen, fm, opt.Description,
-			float64(cx)+float64(lay.pad), descY, maxW, lay.descSize, theme.TextBody)
+		if len(opt.Segments) > 0 {
+			// 带颜色的分段描述（与炮塔 HUD 一致）
+			drawSegmentsWrapped(screen, fm, opt.Segments,
+				float64(cx)+float64(lay.pad), descY, float64(lay.cardW-lay.pad*2), lay.descSize)
+		} else {
+			maxW := float64(lay.cardW - lay.pad*2)
+			drawWrappedText(screen, fm, opt.Description,
+				float64(cx)+float64(lay.pad), descY, maxW, lay.descSize, theme.TextBody)
+		}
 	}
 }
 
@@ -295,6 +302,41 @@ func tierColor(tier string) color.RGBA {
 		return clr
 	}
 	return tierColors["normal"]
+}
+
+// drawSegmentsWrapped 渲染带颜色的 AbilitySegment 列表，自动换行。
+// 与 info_panel.go drawAbilityRowVM 的渲染风格一致。
+func drawSegmentsWrapped(screen *ebiten.Image, fm *render.FontManager, segs []AbilitySegment, x, y, maxW, fontSize float64) {
+	lineH := fontSize + 3
+	curX := x
+	curY := y
+
+	for _, seg := range segs {
+		segW := fm.MeasureText(seg.Text, fontSize)
+		// 换行检测
+		if curX+segW > x+maxW && curX > x {
+			curX = x
+			curY += lineH
+		}
+
+		var clr color.Color
+		switch seg.Kind {
+		case "text":
+			clr = theme.TextMuted
+		case "base", "total":
+			clr = theme.TextBody
+		case "scaled":
+			clr = seg.Color
+			if clr == nil {
+				clr = theme.TextBody
+			}
+		default:
+			clr = theme.TextBody
+		}
+
+		fm.DrawText(screen, seg.Text, curX, curY, fontSize, clr)
+		curX += segW
+	}
 }
 
 // drawWrappedText 在指定宽度内自动换行绘制文本。

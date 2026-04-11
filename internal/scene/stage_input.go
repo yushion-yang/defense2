@@ -716,20 +716,20 @@ func (s *StageScene) openAbilityChoicePanel() {
 		return
 	}
 
-	// 构建 ChoiceOption（描述替换模板占位符为实际值）
+	// 构建 ChoiceOption（使用与炮塔 HUD 一致的分段描述）
 	var effStr float64
 	if t.Strength != nil {
 		effStr = t.Strength.Effective()
 	}
 	opts := make([]hud.ChoiceOption, len(choices))
 	for i, c := range choices {
-		desc := FormatAbilityDisplay(&c, effStr)
+		segs := buildAbilitySegments(&c, effStr)
 		opts[i] = hud.ChoiceOption{
-			Label:       c.Label,
-			Description: desc,
-			Tier:        "normal",
-			Icon:        c.Icon,
-			Data:        c.Type,
+			Label:    c.Label,
+			Segments: segs,
+			Tier:     "normal",
+			Icon:     c.Icon,
+			Data:     c.Type,
 		}
 	}
 
@@ -798,13 +798,13 @@ func (s *StageScene) openTestCategoryAbilities(t *tower.Tower, cat int) {
 	}
 	opts := make([]hud.ChoiceOption, len(choices))
 	for i, c := range choices {
-		desc := FormatAbilityDisplay(&c, effStr)
+		segs := buildAbilitySegments(&c, effStr)
 		opts[i] = hud.ChoiceOption{
-			Label:       c.Label,
-			Description: desc,
-			Tier:        "normal",
-			Icon:        c.Icon,
-			Data:        c.Type,
+			Label:    c.Label,
+			Segments: segs,
+			Tier:     "normal",
+			Icon:     c.Icon,
+			Data:     c.Type,
 		}
 	}
 
