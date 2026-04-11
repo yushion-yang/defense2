@@ -26,7 +26,9 @@
     "hpMultBase": 8,                 "_hpMultBase": "Boss生命值倍率（基于普通敌人）",
     "radiusScale": 1.5,              "_radiusScale": "Boss体型缩放倍率",
     "entranceDelay": 3.0,            "_entranceDelay": "Boss出场前的延迟（秒）",
-    "rewardMultiplier": 5,           "_rewardMultiplier": "Boss击杀奖励倍率"
+    "rewardMultiplier": 5,           "_rewardMultiplier": "Boss击杀奖励倍率",
+    "percentHpCap": 0.05,            "_percentHpCap": "Boss百分比生命伤害上限（每次最多5%最大生命）",
+    "dyingDuration": 0.5,            "_dyingDuration": "Boss死亡动画时长（秒）"
   },
 
   "compositions": [

@@ -218,8 +218,12 @@ func (p *Pool) Kill(e *Enemy) {
 		e.DyingTimer = dying.NormalDuration
 		e.DyingDuration = dying.NormalDuration
 		if e.Boss {
-			e.DyingTimer = dying.BossDuration
-			e.DyingDuration = dying.BossDuration
+			bossDur := config.GlobalSpawnerConfig().Boss.DyingDuration
+			if bossDur <= 0 {
+				bossDur = dying.BossDuration // fallback
+			}
+			e.DyingTimer = bossDur
+			e.DyingDuration = bossDur
 		}
 		// Clear stealth so death animation renders at full alpha
 		e.Buffs.RemoveByID(buff.IDStealth)

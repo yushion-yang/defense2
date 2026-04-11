@@ -101,7 +101,7 @@ func ApplyDamage(input DamageInput) DamageResult {
 	if input.IsPercentHP && e.Boss {
 		cap := input.PercentCap
 		if cap <= 0 {
-			cap = config.GlobalBalance().Combat.BossPercentHpCap
+			cap = config.GlobalSpawnerConfig().Boss.PercentHpCap
 		}
 		maxDmg := e.MaxHP * cap
 		if maxDmg < 1 {

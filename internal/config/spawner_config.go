@@ -27,13 +27,15 @@ type SpawnerTiming struct {
 	FirstWaveInterval float64 `json:"firstWaveInterval"`
 }
 
-// SpawnerBoss Boss 配置参数。
+// SpawnerBoss Boss 完整配置参数（出怪+战斗+动画）。
 type SpawnerBoss struct {
 	EveryNWaves      int     `json:"everyNWaves"`
 	HpMultBase       float64 `json:"hpMultBase"`
 	RadiusScale      float64 `json:"radiusScale"`
 	EntranceDelay    float64 `json:"entranceDelay"`
 	RewardMultiplier float64 `json:"rewardMultiplier"`
+	PercentHpCap     float64 `json:"percentHpCap"`   // %HP 伤害上限（原 combat.bossPercentHpCap）
+	DyingDuration    float64 `json:"dyingDuration"`   // 死亡动画时长（原 dying.bossDuration）
 }
 
 // WaveBuffTier 波次 buff 档位。

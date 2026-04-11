@@ -115,9 +115,9 @@ func TestEconomySpec_TimedHasTargetSeconds(t *testing.T) {
 // ═══════════════════════════════════════
 
 func TestDamagePipelineSpec_BossPercentCap(t *testing.T) {
-	bal := config.GlobalBalance()
-	if bal.Combat.BossPercentHpCap <= 0 || bal.Combat.BossPercentHpCap > 0.2 {
-		t.Errorf("bossPercentHpCap = %f, want (0, 0.2]", bal.Combat.BossPercentHpCap)
+	sc := config.GlobalSpawnerConfig()
+	if sc.Boss.PercentHpCap <= 0 || sc.Boss.PercentHpCap > 0.2 {
+		t.Errorf("boss.percentHpCap = %f, want (0, 0.2]", sc.Boss.PercentHpCap)
 	}
 }
 
