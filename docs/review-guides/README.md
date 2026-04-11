@@ -26,6 +26,7 @@
 | 11 | `11-rendering-visual.md` | 渲染代码、精灵/动画/HP bar/HUD 布局 | 10 min |
 | 12 | `12-interaction-statemachine.md` | 交互状态机、ESC 路径、输入冲突 | 10 min |
 | 13 | `13-ability-interaction.md` | 炮塔/怪物能力交互、沉默一致性、视觉完整性 | 15 min |
+| 14 | `14-deep-audit.md` | **深度审查**：基于历史 bug 模式的 7 类 50+ 项系统性排查 | 30 min |
 
 ## 新增审核文档
 
