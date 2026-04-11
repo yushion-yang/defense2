@@ -1,12 +1,9 @@
-// wave_composition_config.go — 波次出怪组合配置加载。
-// 从 config/systems/wave-compositions.json 读取按波次阶段定义的原型权重分布。
+// wave_composition_config.go — 波次出怪组合类型定义和辅助函数。
+// 波次组合数据现由 config/systems/spawner.json 提供（通过 spawner_config.go 加载）。
+// 本文件保留 WaveComposition 类型和辅助工具，以及向后兼容的访问函数。
 package config
 
-import (
-	"encoding/json"
-	"fmt"
-	"sort"
-)
+import "sort"
 
 // WaveComposition 波次阶段出怪配置。
 type WaveComposition struct {
@@ -29,38 +26,13 @@ func (wc *WaveComposition) SortedEnemies() [][2]interface{} {
 	return result
 }
 
-// waveCompositionFile 对应 JSON 文件顶层结构。
-type waveCompositionFile struct {
-	Compositions []WaveComposition `json:"compositions"`
-}
-
-// globalWaveCompositions 全局缓存。
+// globalWaveCompositions 全局缓存（由 LoadSpawnerConfig 写入）。
 var globalWaveCompositions []WaveComposition
 
-// GlobalWaveCompositions 返回全局波次组合配置。LoadWaveCompositions 成功后可用。
+// GlobalWaveCompositions 返回全局波次组合配置。
+// 数据来自 spawner.json 的 compositions 区段，由 LoadSpawnerConfig 加载。
 func GlobalWaveCompositions() []WaveComposition {
 	return globalWaveCompositions
-}
-
-// LoadWaveCompositions 从 config/systems/wave-compositions.json 加载波次组合配置。
-// 必须在 SetDataFS() 之后调用。
-func LoadWaveCompositions() error {
-	if dataFS == nil {
-		return fmt.Errorf("load wave compositions: dataFS not initialized")
-	}
-	data, err := dataFS.ReadFile("config/systems/wave-compositions.json")
-	if err != nil {
-		return fmt.Errorf("load wave compositions: %w", err)
-	}
-	var f waveCompositionFile
-	if err := json.Unmarshal(data, &f); err != nil {
-		return fmt.Errorf("parse wave compositions: %w", err)
-	}
-	if len(f.Compositions) == 0 {
-		return fmt.Errorf("wave compositions: empty compositions array")
-	}
-	globalWaveCompositions = f.Compositions
-	return nil
 }
 
 // WaveCompositionArchetypes 返回波次组合中引用的所有原型名（去重）。

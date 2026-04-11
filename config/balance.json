@@ -1,24 +1,4 @@
 {
-  "spawner": {
-    "hpBase": 52,                          "_hpBase": "敌人基础生命值（第1波）",
-    "hpPerWave": 21,                       "_hpPerWave": "每波生命值递增量",
-    "speedBase": 58,                       "_speedBase": "敌人基础移动速度（像素/秒）",
-    "speedPerWave": 5,                     "_speedPerWave": "每波移动速度递增量",
-    "enemiesPerWave": 5,                   "_enemiesPerWave": "每波敌人数量",
-    "spawnInterval": 0.6,                  "_spawnInterval": "同波敌人之间的出生间隔（秒）",
-    "waveInterval": 10,                    "_waveInterval": "波次间歇时间（秒）",
-    "firstWaveInterval": 20,               "_firstWaveInterval": "第1波开始前的准备时间（秒）",
-    "bossEveryNWaves": 5,                  "_bossEveryNWaves": "每隔N波出现一次Boss",
-    "bossHpMultBase": 8,                   "_bossHpMultBase": "Boss生命值倍率（基于普通敌人）",
-    "bossRadiusScale": 1.5,                "_bossRadiusScale": "Boss体型缩放倍率",
-    "bossEntranceDelay": 3.0,              "_bossEntranceDelay": "Boss出场前的延迟（秒）",
-    "buffChance": 0.3,                     "_buffChance": "敌人携带buff的概率（30%）",
-    "buffMinWaves": [6, 16, 26],           "_buffMinWaves": "各buff档位的最低解锁波次",
-    "buffMaxBuffs": [1, 1, 2],             "_buffMaxBuffs": "各档位敌人最多携带的buff数量",
-    "spawnBaseInterval": 0.92,             "_spawnBaseInterval": "出怪间隔基础值（秒，逐波衰减）",
-    "spawnMinInterval": 0.18,              "_spawnMinInterval": "出怪间隔最小值（秒，衰减下限）",
-    "spawnDecayPerWave": 0.03              ,"_spawnDecayPerWave": "每波出怪间隔衰减量（秒）"
-  },
   "economy": {
     "killReward": 15,                      "_killReward": "击杀敌人基础金币奖励",
     "sellRefundRatio": 0.7                 ,"_sellRefundRatio": "卖塔退款比例（70%）"
@@ -78,22 +58,15 @@
     "defaultGrowthOnKill": 2,              "_defaultGrowthOnKill": "战灵每次击杀成长强度",
     "defaultGrowthOnWaveClear": 5          ,"_defaultGrowthOnWaveClear": "战灵每波通关成长强度"
   },
-  "buffs": {
-    "berserk": { "threshold": 0.5, "speedScale": 1.5 },
-    "_berserk": "狂暴：生命低于50%时移速提升50%",
-    "regen": { "hpRatio": 0.02 },
-    "_regen": "再生：每秒回复2%最大生命",
-    "healAura": { "power": 0.05, "radius": 80, "interval": 3.0 },
-    "_healAura": "治疗光环：半径80内每3秒回复5%最大生命",
-    "speedAura": { "radius": 80, "speedUp": 0.2 },
-    "_speedAura": "加速光环：半径80内移速提升20%",
-    "damageReduce": { "ratio": 0.3 },
-    "_damageReduce": "减伤：受到伤害降低30%",
-    "deathSplit": { "count": 2, "hpRatio": 0.3, "speedScale": 1.4 },
-    "_deathSplit": "死亡分裂：死后分裂为2个子体，各30%生命、140%速度"
-  },
   "gameplay": {
     "starRatingThreshold": 0.8,            "_starRatingThreshold": "星级评定阈值（保留80%以上生命得满星）",
     "multiKillWindow": 1.5                 ,"_multiKillWindow": "连杀判定时间窗口（秒）"
+  },
+  "itemDrop": {
+    "cycleWaves": 3,                       "_cycleWaves": "每N波为一个掉落周期",
+    "dropChance": 0.08,                    "_dropChance": "每次击杀的掉落概率（8%）",
+    "maxPerCycle": 3,                      "_maxPerCycle": "每周期最多掉落数",
+    "groundSec": 1.0,                      "_groundSec": "掉落物在地面停留时长（秒）",
+    "flySec": 0.6                          ,"_flySec": "飞行动画时长（秒）"
   }
 }

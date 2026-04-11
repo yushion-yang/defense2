@@ -39,7 +39,7 @@ func (s *SysSpawn) Tick(ctx *TickCtx) bool {
 	if ctx.Spawner.Wave > s.prevWave {
 		*ctx.WaveLivesSnap = *ctx.Lives
 		if ctx.CB.OnWaveStart != nil {
-			bossN := config.GlobalBalance().Spawner.BossEveryNWaves
+			bossN := config.GlobalSpawnerConfig().Boss.EveryNWaves
 			ctx.CB.OnWaveStart(ctx.Spawner.Wave, bossN > 0 && ctx.Spawner.Wave%bossN == 0)
 		}
 	}

@@ -133,29 +133,29 @@ func TestDamagePipelineSpec_MaxDamageAmplify(t *testing.T) {
 // ═══════════════════════════════════════
 
 func TestBossSpec_EntranceDelay(t *testing.T) {
-	bal := config.GlobalBalance()
-	if bal.Spawner.BossEntranceDelay <= 0 {
+	sc := config.GlobalSpawnerConfig()
+	if sc.Boss.EntranceDelay <= 0 {
 		t.Error("bossEntranceDelay should > 0")
 	}
 }
 
 func TestBossSpec_HpMultBase(t *testing.T) {
-	bal := config.GlobalBalance()
-	if bal.Spawner.BossHpMultBase <= 0 {
+	sc := config.GlobalSpawnerConfig()
+	if sc.Boss.HpMultBase <= 0 {
 		t.Error("bossHpMultBase should > 0")
 	}
 }
 
 func TestBossSpec_EveryNWaves(t *testing.T) {
-	bal := config.GlobalBalance()
-	if bal.Spawner.BossEveryNWaves <= 0 {
+	sc := config.GlobalSpawnerConfig()
+	if sc.Boss.EveryNWaves <= 0 {
 		t.Error("bossEveryNWaves should > 0")
 	}
 }
 
 func TestBossSpec_RadiusScale(t *testing.T) {
-	bal := config.GlobalBalance()
-	if bal.Spawner.BossRadiusScale <= 1 {
+	sc := config.GlobalSpawnerConfig()
+	if sc.Boss.RadiusScale <= 1 {
 		t.Error("bossRadiusScale should > 1")
 	}
 }
@@ -194,26 +194,26 @@ func TestAttributeSpec_StrengthBuyCost(t *testing.T) {
 // ═══════════════════════════════════════
 
 func TestWaveSpec_BuffTiersConsistent(t *testing.T) {
-	bal := config.GlobalBalance()
-	if len(bal.Spawner.BuffMinWaves) != len(bal.Spawner.BuffMaxBuffs) {
-		t.Errorf("BuffMinWaves len=%d != BuffMaxBuffs len=%d",
-			len(bal.Spawner.BuffMinWaves), len(bal.Spawner.BuffMaxBuffs))
+	sc := config.GlobalSpawnerConfig()
+	tiers := sc.WaveBuffs.Tiers
+	if len(tiers) == 0 {
+		t.Fatal("WaveBuffs.Tiers is empty")
 	}
 	// minWaves 应递增
-	for i := 1; i < len(bal.Spawner.BuffMinWaves); i++ {
-		if bal.Spawner.BuffMinWaves[i] <= bal.Spawner.BuffMinWaves[i-1] {
-			t.Errorf("BuffMinWaves[%d]=%d should > BuffMinWaves[%d]=%d",
-				i, bal.Spawner.BuffMinWaves[i], i-1, bal.Spawner.BuffMinWaves[i-1])
+	for i := 1; i < len(tiers); i++ {
+		if tiers[i].MinWave <= tiers[i-1].MinWave {
+			t.Errorf("Tiers[%d].MinWave=%d should > Tiers[%d].MinWave=%d",
+				i, tiers[i].MinWave, i-1, tiers[i-1].MinWave)
 		}
 	}
 }
 
 func TestWaveSpec_HpPerWavePositive(t *testing.T) {
-	bal := config.GlobalBalance()
-	if bal.Spawner.HpPerWave <= 0 {
+	sc := config.GlobalSpawnerConfig()
+	if sc.Scaling.HpPerWave <= 0 {
 		t.Error("hpPerWave should > 0")
 	}
-	if bal.Spawner.SpeedPerWave <= 0 {
+	if sc.Scaling.SpeedPerWave <= 0 {
 		t.Error("speedPerWave should > 0")
 	}
 }

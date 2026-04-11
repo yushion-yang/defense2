@@ -22,7 +22,7 @@ func (b *baseMode) OnEnemyKilled(_ bool, _ *Context) {}
 func (b *baseMode) OnEnemyLeaked(_ *Context)         {}
 func (b *baseMode) ShouldAutoStart() bool            { return true }
 func (b *baseMode) IntermissionSecs() float64 {
-	if wi := config.GlobalBalance().Spawner.WaveInterval; wi > 0 {
+	if wi := config.GlobalSpawnerConfig().Timing.WaveInterval; wi > 0 {
 		return wi
 	}
 	return 10

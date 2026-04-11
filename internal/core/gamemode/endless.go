@@ -41,7 +41,7 @@ func (m *EndlessMode) OnWaveCleared(wave int, ctx *Context) WaveClearResult {
 	bonus := econ.WaveBonus.Calc(wave)
 	perfect := econ.PerfectBonus.Calc(wave)
 	msg := fmt.Sprintf("第%d波通关! +$%d", wave, bonus)
-	bossN := config.GlobalBalance().Spawner.BossEveryNWaves
+	bossN := config.GlobalSpawnerConfig().Boss.EveryNWaves
 	if bossN > 0 && wave%bossN == 0 {
 		msg = fmt.Sprintf("第%d波通关! 首领波! +$%d", wave, bonus)
 	}

@@ -69,15 +69,15 @@ type Spawner struct {
 
 // NewSpawner 创建出怪管理器。
 func NewSpawner(gm *gamemap.GameMap, maxWaves int) *Spawner {
-	bal := config.GlobalBalance().Spawner
+	sc := config.GlobalSpawnerConfig()
 	return &Spawner{
 		Wave:              0,
 		MaxWaves:          maxWaves,
-		EnemiesPerWave:    bal.EnemiesPerWave,
-		SpawnInterval:     bal.SpawnInterval,
-		WaveInterval:      bal.WaveInterval,
-		FirstWaveInterval: bal.FirstWaveInterval,
-		WaveTimer:         bal.FirstWaveInterval,
+		EnemiesPerWave:    sc.Scaling.EnemiesPerWave,
+		SpawnInterval:     sc.Scaling.SpawnInterval,
+		WaveInterval:      sc.Timing.WaveInterval,
+		FirstWaveInterval: sc.Timing.FirstWaveInterval,
+		WaveTimer:         sc.Timing.FirstWaveInterval,
 		GameMap:           gm,
 	}
 }
@@ -138,9 +138,9 @@ func (s *Spawner) Tick(pool *Pool, dt float64) {
 			if spdScale <= 0 {
 				spdScale = 1.0
 			}
-			bal := config.GlobalBalance().Spawner
-			baseHP := (bal.HpBase + float64(s.Wave)*bal.HpPerWave) * hpScale
-			baseSpeed := (bal.SpeedBase + float64(s.Wave)*bal.SpeedPerWave) * spdScale
+			sc := config.GlobalSpawnerConfig()
+			baseHP := (sc.Scaling.HpBase + float64(s.Wave)*sc.Scaling.HpPerWave) * hpScale
+			baseSpeed := (sc.Scaling.SpeedBase + float64(s.Wave)*sc.Scaling.SpeedPerWave) * spdScale
 
 			var archetype string
 			var cfg *SpawnConfig
@@ -153,8 +153,8 @@ func (s *Spawner) Tick(pool *Pool, dt float64) {
 					// 复制一份避免修改原始配置
 					bossCfg := *cfg
 					bossCfg.Boss = true
-					bossCfg.HpScale *= bal.BossHpMultBase + float64(s.Wave) // Boss HP 随波次增长
-					bossCfg.Radius *= bal.BossRadiusScale                   // Boss 体型更大
+					bossCfg.HpScale *= sc.Boss.HpMultBase + float64(s.Wave) // Boss HP 随波次增长
+					bossCfg.Radius *= sc.Boss.RadiusScale                   // Boss 体型更大
 					cfg = &bossCfg
 					tel.T.Record("boss", archetype)
 				}
@@ -216,12 +216,13 @@ func (s *Spawner) startWave() {
 	s.SpawnIndex = 0
 	s.SpawnTimer = 0
 	s.WaveActive = true
+	sc := config.GlobalSpawnerConfig()
 	// 逐波衰减出怪间隔
-	s.SpawnInterval = config.GlobalBalance().Spawner.EffectiveSpawnInterval(s.Wave)
-	s.bossQueued = s.BossEveryWave || (s.Wave%config.GlobalBalance().Spawner.BossEveryNWaves == 0)
+	s.SpawnInterval = sc.EffectiveSpawnInterval(s.Wave)
+	s.bossQueued = s.BossEveryWave || (s.Wave%sc.Boss.EveryNWaves == 0)
 	// Boss 波入场延迟：给玩家 3 秒准备时间
 	if s.bossQueued {
-		s.EntranceDelay = config.GlobalBalance().Spawner.BossEntranceDelay
+		s.EntranceDelay = sc.Boss.EntranceDelay
 	} else {
 		s.EntranceDelay = 0
 	}
@@ -242,9 +243,9 @@ func PreviewWave(wave, maxWaves, enemiesPerWave int, archetypes map[string]*Spaw
 		return nil, 0, false
 	}
 
-	bal := config.GlobalBalance().Spawner
+	sc := config.GlobalSpawnerConfig()
 	count := enemiesPerWave + wave
-	isBoss := wave%bal.BossEveryNWaves == 0
+	isBoss := wave%sc.Boss.EveryNWaves == 0
 	if isBoss {
 		count++
 	}
@@ -297,7 +298,7 @@ func (s *Spawner) NextWavePreview() (entries []WavePreviewEntry, totalCount int,
 	if s.FixedCount > 0 {
 		count = s.FixedCount
 	}
-	isBoss = s.BossEveryWave || nextWave%config.GlobalBalance().Spawner.BossEveryNWaves == 0
+	isBoss = s.BossEveryWave || nextWave%config.GlobalSpawnerConfig().Boss.EveryNWaves == 0
 	if isBoss {
 		count++ // Boss 额外一个
 	}
@@ -471,28 +472,20 @@ func (s *Spawner) getConfig(archetype string) *SpawnConfig {
 // 16-25 波：最多 2 个（扩展池）
 // 26+ 波：最多 2 个（完整池）
 
-// buffPoolsByTier 各 tier 可用的 buff 模板池（从低到高）。
-var buffPoolsByTier = [][]string{
-	{"berserk", "regen", "healAura", "speedAura"},
-	{"berserk", "regen", "healAura", "speedAura", "damageReduce"},
-	{"berserk", "regen", "healAura", "speedAura", "damageReduce", "deathSplit"},
-}
-
 // applyWaveBuffs 根据当前波次为刚生成的敌人随机注入 buff。
-// Boss 不注入波次 buff。minWaves/maxBuffs 从 balance.json 读取。
-// 值来自 config/enemies/abilities.json（与原型能力系统保持一致）。
+// Boss 不注入波次 buff。tier/pool/chance 从 spawner.json waveBuffs 区段读取。
 func (s *Spawner) applyWaveBuffs(e *Enemy) {
 	if e.Boss {
 		return
 	}
 
-	bal := config.GlobalBalance().Spawner
+	wb := config.GlobalSpawnerConfig().WaveBuffs
 	var buffPool []string
 	maxBuffs := 0
-	for i, minW := range bal.BuffMinWaves {
-		if s.Wave >= minW && i < len(bal.BuffMaxBuffs) && i < len(buffPoolsByTier) {
-			buffPool = buffPoolsByTier[i]
-			maxBuffs = bal.BuffMaxBuffs[i]
+	for _, tier := range wb.Tiers {
+		if s.Wave >= tier.MinWave {
+			buffPool = tier.Pool
+			maxBuffs = tier.MaxBuffs
 		}
 	}
 	if maxBuffs <= 0 || len(buffPool) == 0 {
@@ -500,7 +493,7 @@ func (s *Spawner) applyWaveBuffs(e *Enemy) {
 	}
 
 	// buffChance 概率注入 buff（不是每个敌人都有）
-	if rand.Float64() > config.GlobalBalance().Spawner.BuffChance {
+	if rand.Float64() > wb.Chance {
 		return
 	}
 
@@ -515,56 +508,68 @@ func (s *Spawner) applyWaveBuffs(e *Enemy) {
 	}
 }
 
-// applyWaveBuff 直接设置敌人字段，数值从 balance.json buffs 区段读取。
+// applyWaveBuff 根据 buffID 从 enemies/abilities.json 读取能力参数，注入对应 buff。
 func applyWaveBuff(e *Enemy, buffID string) {
 	tel.T.Record("enemy_template", buffID)
-	bc := config.GlobalBalance().Buffs
+	table := config.GlobalEnemyAbilityTable()
+	if table == nil {
+		return
+	}
+	def := table[buffID]
+	if def == nil {
+		return
+	}
 	switch buffID {
 	case "berserk":
-		// Value = speedScale, Value2 = threshold; actual berserk activation in behaviors.go
+		// base=threshold(0.5), param=speedScale(1.5)
 		e.Buffs.Add(buff.Buff{
 			ID: buff.IDBerserk, Category: buff.CatBehavior, Source: "wave_buff",
-			Value: bc.Berserk.SpeedScale, Value2: bc.Berserk.Threshold,
+			Value: def.Param, Value2: def.Base,
 			Duration: -1, Remaining: -1,
 		})
 	case "regen":
+		// base=hpRatio(0.02)
 		e.Buffs.Add(buff.Buff{
 			ID: buff.IDRegen, Category: buff.CatBehavior, Source: "wave_buff",
-			Value: e.MaxHP * bc.Regen.HpRatio, Duration: -1, Remaining: -1,
+			Value: e.MaxHP * def.Base, Duration: -1, Remaining: -1,
 		})
 	case "healAura":
+		// base=healPercent(0.05), param=radius(80)
 		e.Buffs.Add(buff.Buff{
 			ID: buff.IDHealAura, Category: buff.CatBehavior, Source: "wave_buff",
-			Value: bc.HealAura.Power, Value2: bc.HealAura.Radius,
+			Value: def.Base, Value2: def.Param,
 			Duration: -1, Remaining: -1,
 		})
-		e.HealInterval = bc.HealAura.Interval
+		e.HealInterval = 3 // 固定3s（与 applyEnemyAbilityToSpawnConfig 一致）
 		e.HealCooldown = 0
 	case "speedAura":
+		// base=bonus(0.2), param=radius(80)
 		e.Buffs.Add(buff.Buff{
 			ID: buff.IDBufferAura, Category: buff.CatBehavior, Source: "wave_buff",
-			Value: bc.SpeedAura.SpeedUp, Value2: bc.SpeedAura.Radius,
+			Value: def.Base, Value2: def.Param,
 			Duration: -1, Remaining: -1,
 		})
 	case "damageReduce":
+		// base=ratio(0.3)
 		e.Buffs.Add(buff.Buff{
 			ID: buff.IDDamageReduce, Category: buff.CatDefense, Source: "wave_buff",
-			Value: bc.DamageReduce.Ratio, Duration: -1, Remaining: -1,
+			Value: def.Base, Duration: -1, Remaining: -1,
 		})
 	case "deathSplit":
+		// base=count(2), param=hpRatio(0.3)
 		if e.SplitCount <= 0 {
-			e.SplitCount = bc.DeathSplit.Count
+			e.SplitCount = int(def.Base)
 		}
 		if e.SplitHPRatio <= 0 {
-			e.SplitHPRatio = bc.DeathSplit.HpRatio
+			e.SplitHPRatio = def.Param
 		}
 		if e.SplitSpeedScale <= 0 {
-			e.SplitSpeedScale = bc.DeathSplit.SpeedScale
+			e.SplitSpeedScale = 1.4
 		}
 	}
 }
 
 // IsBossWave 返回当前波次是否为 Boss 波。
 func (s *Spawner) IsBossWave() bool {
-	return s.BossEveryWave || (s.Wave > 0 && s.Wave%config.GlobalBalance().Spawner.BossEveryNWaves == 0)
+	return s.BossEveryWave || (s.Wave > 0 && s.Wave%config.GlobalSpawnerConfig().Boss.EveryNWaves == 0)
 }

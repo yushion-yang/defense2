@@ -12,7 +12,8 @@ import (
 
 func init() {
 	config.SetDataFS(&defense2.DataFS)
-	_ = config.LoadBuffRules() // ensure buff stacking rules are available for tests
+	_ = config.LoadBuffRules()     // ensure buff stacking rules are available for tests
+	_ = config.LoadSpawnerConfig() // ensure spawner config is available for tests
 }
 
 // TestTowerConfigRanges 验证所有塔配置字段在合法范围内。

@@ -23,8 +23,6 @@ func TestBalanceFieldsNonZero(t *testing.T) {
 		check func() bool
 		msg   string
 	}{
-		{"Spawner.HpBase", func() bool { return bal.Spawner.HpBase > 0 }, "should be > 0"},
-		{"Spawner.SpeedBase", func() bool { return bal.Spawner.SpeedBase > 0 }, "should be > 0"},
 		{"Combat.MinSpeedRatio", func() bool { return bal.Combat.MinSpeedRatio > 0 && bal.Combat.MinSpeedRatio < 1 }, "should be in (0, 1)"},
 		{"Economy.KillReward", func() bool { return bal.Economy.KillReward > 0 }, "should be > 0"},
 		{"Chain.Distance", func() bool { return bal.Chain.Distance > 0 }, "should be > 0"},
@@ -52,16 +50,6 @@ func TestBalanceLoadedFieldsValid(t *testing.T) {
 		check func() bool
 		msg   string
 	}{
-		// Spawner
-		{"Spawner.HpBase", func() bool { return bal.Spawner.HpBase > 0 }, "should be > 0"},
-		{"Spawner.HpPerWave", func() bool { return bal.Spawner.HpPerWave > 0 }, "should be > 0"},
-		{"Spawner.SpeedBase", func() bool { return bal.Spawner.SpeedBase > 0 }, "should be > 0"},
-		{"Spawner.SpawnInterval", func() bool { return bal.Spawner.SpawnInterval > 0 }, "should be > 0"},
-		{"Spawner.WaveInterval", func() bool { return bal.Spawner.WaveInterval > 0 }, "should be > 0"},
-		{"Spawner.EnemiesPerWave", func() bool { return bal.Spawner.EnemiesPerWave > 0 }, "should be > 0"},
-		{"Spawner.BossEveryNWaves", func() bool { return bal.Spawner.BossEveryNWaves > 0 }, "should be > 0"},
-		{"Spawner.BossHpMultBase", func() bool { return bal.Spawner.BossHpMultBase > 0 }, "should be > 0"},
-
 		// Economy
 		{"Economy.KillReward", func() bool { return bal.Economy.KillReward > 0 }, "should be > 0"},
 		{"Economy.SellRefundRatio", func() bool { return bal.Economy.SellRefundRatio > 0 && bal.Economy.SellRefundRatio < 1 }, "should be in (0, 1)"},
@@ -133,27 +121,24 @@ func TestBalanceItemsComplete(t *testing.T) {
 	}
 }
 
-// TestBalanceSpawnerFormula 验证出怪公式产出合理值。
-func TestBalanceSpawnerFormula(t *testing.T) {
-	bal, err := config.LoadBalance()
-	if err != nil {
-		t.Fatalf("LoadBalance() 失败: %v", err)
-	}
+// TestSpawnerConfigFormula 验证出怪公式产出合理值。
+func TestSpawnerConfigFormula(t *testing.T) {
+	sc := config.GlobalSpawnerConfig()
 
 	// HP at wave 1 = HpBase + 1*HpPerWave
-	hpWave1 := bal.Spawner.HpBase + 1*bal.Spawner.HpPerWave
+	hpWave1 := sc.Scaling.HpBase + 1*sc.Scaling.HpPerWave
 	if hpWave1 <= 0 {
 		t.Errorf("HP at wave 1 = %.1f, want > 0", hpWave1)
 	}
 
 	// Speed at wave 10 = SpeedBase + 10*SpeedPerWave
-	speedWave10 := bal.Spawner.SpeedBase + 10*bal.Spawner.SpeedPerWave
+	speedWave10 := sc.Scaling.SpeedBase + 10*sc.Scaling.SpeedPerWave
 	if speedWave10 <= 0 {
 		t.Errorf("Speed at wave 10 = %.1f, want > 0", speedWave10)
 	}
 
 	// HP should grow with waves
-	hpWave20 := bal.Spawner.HpBase + 20*bal.Spawner.HpPerWave
+	hpWave20 := sc.Scaling.HpBase + 20*sc.Scaling.HpPerWave
 	if hpWave20 <= hpWave1 {
 		t.Errorf("HP at wave 20 (%.1f) should > HP at wave 1 (%.1f)", hpWave20, hpWave1)
 	}

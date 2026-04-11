@@ -7,41 +7,6 @@ import (
 	"fmt"
 )
 
-// SpawnerBalance 出怪相关平衡参数。
-type SpawnerBalance struct {
-	HpBase            float64 `json:"hpBase"`
-	HpPerWave         float64 `json:"hpPerWave"`
-	SpeedBase         float64 `json:"speedBase"`
-	SpeedPerWave      float64 `json:"speedPerWave"`
-	EnemiesPerWave    int     `json:"enemiesPerWave"`
-	SpawnInterval     float64 `json:"spawnInterval"`
-	WaveInterval      float64 `json:"waveInterval"`
-	FirstWaveInterval float64 `json:"firstWaveInterval"`
-	BossEveryNWaves   int     `json:"bossEveryNWaves"`
-	BossHpMultBase    float64 `json:"bossHpMultBase"`
-	BossRadiusScale   float64 `json:"bossRadiusScale"`
-	BossEntranceDelay float64 `json:"bossEntranceDelay"`
-	BuffChance        float64 `json:"buffChance"`
-	BuffMinWaves      []int   `json:"buffMinWaves"`
-	BuffMaxBuffs      []int   `json:"buffMaxBuffs"`
-	SpawnBaseInterval float64 `json:"spawnBaseInterval"`
-	SpawnMinInterval  float64 `json:"spawnMinInterval"`
-	SpawnDecayPerWave float64 `json:"spawnDecayPerWave"`
-}
-
-// EffectiveSpawnInterval 返回指定波次的出怪间隔（含衰减）。
-// SpawnBaseInterval > 0 时启用衰减系统，否则 fallback 到固定 SpawnInterval。
-func (b SpawnerBalance) EffectiveSpawnInterval(wave int) float64 {
-	if b.SpawnBaseInterval > 0 {
-		interval := b.SpawnBaseInterval - float64(wave)*b.SpawnDecayPerWave
-		if interval < b.SpawnMinInterval {
-			interval = b.SpawnMinInterval
-		}
-		return interval
-	}
-	return b.SpawnInterval
-}
-
 // EconomyBalance 经济相关平衡参数。
 type EconomyBalance struct {
 	KillReward      float64 `json:"killReward"`
@@ -117,61 +82,25 @@ type WardenBalance struct {
 	DefaultGrowthOnWaveClear float64 `json:"defaultGrowthOnWaveClear"`
 }
 
+// ItemDropBalance 道具掉落参数。
+type ItemDropBalance struct {
+	CycleWaves  int     `json:"cycleWaves"`
+	DropChance  float64 `json:"dropChance"`
+	MaxPerCycle int     `json:"maxPerCycle"`
+	GroundSec   float64 `json:"groundSec"`
+	FlySec      float64 `json:"flySec"`
+}
+
 // GameplayBalance 通用游戏性参数。
 type GameplayBalance struct {
 	StarRatingThreshold float64 `json:"starRatingThreshold"`
 	MultiKillWindow     float64 `json:"multiKillWindow"`
 }
 
-// BerserkBuff 狂暴 buff 配置。
-type BerserkBuff struct {
-	Threshold  float64 `json:"threshold"`  // 激活血量比例
-	SpeedScale float64 `json:"speedScale"` // 激活后速度倍率
-}
-
-// RegenBuff 回复 buff 配置。
-type RegenBuff struct {
-	HpRatio float64 `json:"hpRatio"` // 每秒回复占 MaxHP 比例
-}
-
-// HealAuraBuff 治疗光环配置。
-type HealAuraBuff struct {
-	Power    float64 `json:"power"`    // 每次治疗占 MaxHP 比例
-	Radius   float64 `json:"radius"`   // 治疗范围
-	Interval float64 `json:"interval"` // 治疗间隔（秒）
-}
-
-// SpeedAuraBuff 加速光环配置。
-type SpeedAuraBuff struct {
-	Radius  float64 `json:"radius"`  // 光环范围
-	SpeedUp float64 `json:"speedUp"` // 加速比例
-}
-
-// DamageReduceBuff 减伤配置。
-type DamageReduceBuff struct {
-	Ratio float64 `json:"ratio"` // 减伤比例
-}
-
-// DeathSplitBuff 死亡分裂配置。
-type DeathSplitBuff struct {
-	Count      int     `json:"count"`      // 分裂数量
-	HpRatio    float64 `json:"hpRatio"`    // 子体 HP 比例
-	SpeedScale float64 `json:"speedScale"` // 子体速度倍率
-}
-
-// BuffsBalance 波次 buff 配置。
-type BuffsBalance struct {
-	Berserk      BerserkBuff      `json:"berserk"`
-	Regen        RegenBuff        `json:"regen"`
-	HealAura     HealAuraBuff     `json:"healAura"`
-	SpeedAura    SpeedAuraBuff    `json:"speedAura"`
-	DamageReduce DamageReduceBuff `json:"damageReduce"`
-	DeathSplit   DeathSplitBuff   `json:"deathSplit"`
-}
-
 // BalanceConfig 游戏平衡参数总配置。
+// 出怪相关参数（spawner/buffs）已迁移至 config/systems/spawner.json，
+// 通过 spawner_config.go 的 GlobalSpawnerConfig() 访问。
 type BalanceConfig struct {
-	Spawner    SpawnerBalance    `json:"spawner"`
 	Economy    EconomyBalance    `json:"economy"`
 	Combat     CombatBalance     `json:"combat"`
 	Tower      TowerBalance      `json:"tower"`
@@ -182,7 +111,7 @@ type BalanceConfig struct {
 	Dying      DyingBalance      `json:"dying"`
 	Warden     WardenBalance     `json:"warden"`
 	Gameplay   GameplayBalance   `json:"gameplay"`
-	Buffs      BuffsBalance      `json:"buffs"`
+	ItemDrop   ItemDropBalance   `json:"itemDrop"`
 }
 
 // globalBalance 全局缓存。
@@ -217,12 +146,6 @@ func LoadBalance() (*BalanceConfig, error) {
 // defaultBalance 返回所有参数的默认值（确保向后兼容）。
 func defaultBalance() *BalanceConfig {
 	return &BalanceConfig{
-		Spawner: SpawnerBalance{
-			HpBase: 52, HpPerWave: 21, SpeedBase: 58, SpeedPerWave: 5,
-			EnemiesPerWave: 5, SpawnInterval: 0.6, WaveInterval: 10, FirstWaveInterval: 20,
-			BossEveryNWaves: 5, BossHpMultBase: 8, BossRadiusScale: 1.5, BossEntranceDelay: 3.0,
-			BuffChance: 0.3, BuffMinWaves: []int{6, 16, 26}, BuffMaxBuffs: []int{1, 1, 2},
-		},
 		Economy: EconomyBalance{KillReward: 15, SellRefundRatio: 0.7},
 		Combat: CombatBalance{
 			MaxDamageAmplify: 0.5, MinSpeedRatio: 0.2, DotTickInterval: 0.5, BossPercentHpCap: 0.05,
@@ -248,13 +171,6 @@ func defaultBalance() *BalanceConfig {
 		Dying:      DyingBalance{NormalDuration: 0.3, BossDuration: 0.5},
 		Warden:     WardenBalance{InitialStrength: 100, DefaultGrowthOnKill: 2, DefaultGrowthOnWaveClear: 5},
 		Gameplay:   GameplayBalance{StarRatingThreshold: 0.8, MultiKillWindow: 1.5},
-		Buffs: BuffsBalance{
-			Berserk:      BerserkBuff{Threshold: 0.5, SpeedScale: 1.5},
-			Regen:        RegenBuff{HpRatio: 0.02},
-			HealAura:     HealAuraBuff{Power: 0.05, Radius: 80, Interval: 3},
-			SpeedAura:    SpeedAuraBuff{Radius: 80, SpeedUp: 0.2},
-			DamageReduce: DamageReduceBuff{Ratio: 0.3},
-			DeathSplit:   DeathSplitBuff{Count: 2, HpRatio: 0.3, SpeedScale: 1.4},
-		},
+		ItemDrop:   ItemDropBalance{CycleWaves: 3, DropChance: 0.08, MaxPerCycle: 3, GroundSec: 1.0, FlySec: 0.6},
 	}
 }

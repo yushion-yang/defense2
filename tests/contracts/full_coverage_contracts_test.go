@@ -51,8 +51,8 @@ func TestPoolSizesPositive(t *testing.T) {
 }
 
 func TestEnemyPoolLargerThanMaxWaveSize(t *testing.T) {
-	bal := config.GlobalBalance()
-	maxWaveEnemies := bal.Spawner.EnemiesPerWave + 25 + 1 // base + growth + boss
+	sc := config.GlobalSpawnerConfig()
+	maxWaveEnemies := sc.Scaling.EnemiesPerWave + 25 + 1 // base + growth + boss
 	if game.MaxEnemies < maxWaveEnemies*2 {
 		t.Errorf("MaxEnemies=%d 应 >= %d（最大单波 %d 的 2 倍）", game.MaxEnemies, maxWaveEnemies*2, maxWaveEnemies)
 	}
@@ -339,8 +339,8 @@ func TestAllMapsHavePathCells(t *testing.T) {
 // ═══════════════════════════════════════
 
 func TestBossHPMultiplierIncreases(t *testing.T) {
-	bal := config.GlobalBalance()
-	base := bal.Spawner.BossHpMultBase
+	sc := config.GlobalSpawnerConfig()
+	base := sc.Boss.HpMultBase
 	prev := 0.0
 	for wave := 5; wave <= 25; wave += 5 {
 		mul := base + float64(wave)

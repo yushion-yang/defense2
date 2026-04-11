@@ -1,0 +1,83 @@
+{
+  "_meta": {
+    "description": "出怪系统完整配置——敌人数值、波次组成、Boss规则、波次Buff",
+    "version": "1.0"
+  },
+
+  "scaling": {
+    "hpBase": 52,                    "_hpBase": "敌人基础生命值（第1波）",
+    "hpPerWave": 21,                 "_hpPerWave": "每波生命值递增量",
+    "speedBase": 58,                 "_speedBase": "敌人基础移动速度（像素/秒）",
+    "speedPerWave": 5,               "_speedPerWave": "每波移动速度递增量",
+    "enemiesPerWave": 5,             "_enemiesPerWave": "每波基础敌人数（实际=base+wave）",
+    "spawnInterval": 0.6,            "_spawnInterval": "同波敌人之间的出生间隔（秒）",
+    "spawnBaseInterval": 0.92,       "_spawnBaseInterval": "出怪间隔基础值（逐波衰减）",
+    "spawnMinInterval": 0.18,        "_spawnMinInterval": "出怪间隔最小值（衰减下限）",
+    "spawnDecayPerWave": 0.03,       "_spawnDecayPerWave": "每波出怪间隔衰减量"
+  },
+
+  "timing": {
+    "waveInterval": 10,              "_waveInterval": "波次间歇时间（秒）",
+    "firstWaveInterval": 20,         "_firstWaveInterval": "第1波开始前的准备时间（秒）"
+  },
+
+  "boss": {
+    "everyNWaves": 5,                "_everyNWaves": "每隔N波出现一次Boss",
+    "hpMultBase": 8,                 "_hpMultBase": "Boss生命值倍率（基于普通敌人）",
+    "radiusScale": 1.5,              "_radiusScale": "Boss体型缩放倍率",
+    "entranceDelay": 3.0,            "_entranceDelay": "Boss出场前的延迟（秒）",
+    "rewardMultiplier": 5,           "_rewardMultiplier": "Boss击杀奖励倍率"
+  },
+
+  "compositions": [
+    {
+      "maxWave": 3,
+      "_desc": "早期：纯普通兵",
+      "enemies": { "normal": 100 }
+    },
+    {
+      "maxWave": 6,
+      "_desc": "前期：加入跑者和虫群",
+      "enemies": { "normal": 60, "runner": 20, "swarm": 20 }
+    },
+    {
+      "maxWave": 9,
+      "_desc": "中前期：8种原型混合",
+      "enemies": {
+        "normal": 40, "runner": 15, "tank": 10, "armored": 10,
+        "swarm": 10, "shielder": 5, "phantom": 5, "steadfast": 5
+      }
+    },
+    {
+      "maxWave": 14,
+      "_desc": "中期：14种原型，加入行为型敌人",
+      "enemies": {
+        "normal": 25, "runner": 10, "tank": 8, "armored": 8,
+        "swarm": 8, "shielder": 5, "phantom": 5, "steadfast": 5,
+        "healer": 5, "buffer": 5, "ironwill": 5, "colossus": 3,
+        "splitter": 4, "phaser": 4
+      }
+    },
+    {
+      "maxWave": 0,
+      "_desc": "后期(15+)：全部17种原型",
+      "enemies": {
+        "normal": 15, "runner": 8, "tank": 7, "armored": 7,
+        "swarm": 6, "shielder": 5, "phantom": 5, "steadfast": 4,
+        "healer": 5, "buffer": 5, "ironwill": 5, "colossus": 4,
+        "splitter": 4, "phaser": 4, "drainer": 4, "summoner": 4, "purifier": 2
+      }
+    }
+  ],
+
+  "waveBuffs": {
+    "_desc": "波次自动注入buff——达到指定波次后，非Boss敌人有概率携带buff",
+    "chance": 0.3,                   "_chance": "携带buff的概率（30%）",
+    "_note": "各buff具体参数从 config/enemies/abilities.json 读取",
+    "tiers": [
+      { "minWave": 6,  "maxBuffs": 1, "pool": ["berserk", "regen", "healAura", "speedAura"] },
+      { "minWave": 16, "maxBuffs": 1, "pool": ["berserk", "regen", "healAura", "speedAura", "damageReduce"] },
+      { "minWave": 26, "maxBuffs": 2, "pool": ["berserk", "regen", "healAura", "speedAura", "damageReduce", "deathSplit"] }
+    ]
+  }
+}

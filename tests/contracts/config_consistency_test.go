@@ -28,9 +28,9 @@ func TestConsistency_WaveArchetypesExistInEnemyCore(t *testing.T) {
 		t.Fatal("敌人原型表为空")
 	}
 
-	// 从 wave-compositions.json 动态读取所有引用的原型名
-	if err := config.LoadWaveCompositions(); err != nil {
-		t.Fatalf("加载波次组合配置失败: %v", err)
+	// 从 spawner.json compositions 动态读取所有引用的原型名
+	if err := config.LoadSpawnerConfig(); err != nil {
+		t.Fatalf("加载出怪配置失败: %v", err)
 	}
 	referencedArchetypes := config.WaveCompositionArchetypes()
 	if len(referencedArchetypes) == 0 {

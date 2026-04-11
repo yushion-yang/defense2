@@ -106,10 +106,10 @@ func (s *WavePreviewScene) computeWaves() {
 		return
 	}
 	m := s.maps[s.selectedID]
-	bal := config.GlobalBalance().Spawner
+	sc := config.GlobalSpawnerConfig()
 
 	for w := 1; w <= m.Waves; w++ {
-		entries, total, isBoss := enemy.PreviewWave(w, m.Waves, bal.EnemiesPerWave, s.archetypes)
+		entries, total, isBoss := enemy.PreviewWave(w, m.Waves, sc.Scaling.EnemiesPerWave, s.archetypes)
 		// Sort entries by weight (count) descending for readability.
 		sort.Slice(entries, func(i, j int) bool {
 			return entries[i].Count > entries[j].Count
