@@ -11,13 +11,17 @@ import (
 	"defense2/internal/config"
 	"defense2/internal/core/event"
 	"defense2/internal/core/game"
+	"defense2/internal/core/mascot"
 	"defense2/internal/core/tower/abilities"
 	"defense2/internal/render"
+	"defense2/internal/render/anim"
 	"defense2/internal/render/draw"
+	"defense2/internal/render/hud"
 	"defense2/internal/render/postprocess"
 	"defense2/internal/render/theme"
 
 	"github.com/hajimehoshi/ebiten/v2"
+	"github.com/hajimehoshi/ebiten/v2/inpututil"
 )
 
 // transitionState 场景过渡状态。
@@ -45,6 +49,12 @@ type Game struct {
 	transState  transitionState // 当前过渡状态
 	transAlpha  float64         // 0.0（透明）→ 1.0（全黑）
 	pendingNext Scene           // 淡出完成后切换到的场景
+
+	// 吉祥物向导系统
+	mascot        *mascot.Guide  // 对话状态机
+	mascotAnim    *anim.Animator // 表情帧动画
+	mascotTime    float64        // 全局动画计时（idle bob 用）
+	prevSceneName string         // 上一帧场景名（避免每帧重复 SetScene）
 }
 
 // HeadlessMode 自动对局模式开关: 跳过音效加载 + 直接切场景 + turbo tick。
@@ -92,6 +102,17 @@ func NewGame() *Game {
 			game.CurrentQuality = game.QualityLevel(sd.Quality)
 		}
 	}
+	// 加载吉祥物向导（非致命：文件缺失仅输出日志）
+	mascotDialogs, err := mascot.LoadAllDialogs(config.GetAssetFS())
+	if err != nil {
+		log.Printf("[mascot] dialog load error: %v", err)
+	}
+	g.mascot = mascot.NewGuide(mascotDialogs, nil) // TODO: load shown IDs from persistence
+
+	if !HeadlessMode {
+		g.mascotAnim = render.LoadMascotSprites(config.GetAssetFS())
+	}
+
 	if !HeadlessMode {
 		g.current = NewSelectScene(g)
 	}
@@ -201,12 +222,60 @@ func (g *Game) Update() error {
 		}
 	}
 
-	return g.current.Update()
+	err := g.current.Update()
+
+	// 吉祥物向导更新（HeadlessMode 已在上方 turbo 路径返回，此处必为正常模式）
+	if g.mascot != nil {
+		const dt = 1.0 / 60.0
+		g.mascotTime += dt
+
+		// 仅在场景变化时通知 Guide（避免每帧重复触发 scene_enter）
+		if name := g.currentSceneName(); name != g.prevSceneName {
+			g.mascot.SetScene(name)
+			g.prevSceneName = name
+		}
+		g.mascot.Tick(dt)
+
+		// 更新吉祥物帧动画
+		if g.mascotAnim != nil {
+			g.mascotAnim.Update(dt)
+		}
+
+		// 处理吉祥物点击（JustPressed 单次触发，适合 click-to-advance）
+		if inpututil.IsMouseButtonJustPressed(ebiten.MouseButtonLeft) {
+			mx, my := draw.CursorPos()
+			if hud.MascotHitTest(mx, my) {
+				g.mascot.ClickAdvance()
+			}
+		}
+	}
+
+	return err
 }
 
 // Draw 每帧渲染：委托给当前场景，叠加过渡遮罩。
 func (g *Game) Draw(screen *ebiten.Image) {
 	g.current.Draw(screen)
+
+	// 吉祥物覆盖层（场景之上、过渡遮罩之下）
+	if g.mascot != nil {
+		coreVM := g.mascot.VM()
+		overlayVM := hud.MascotOverlayVM{
+			Visible:    coreVM.Visible,
+			HasDialog:  coreVM.HasDialog,
+			Text:       coreVM.Text,
+			Expression: coreVM.Expression,
+			CanClick:   coreVM.CanClick,
+			AnimTime:   g.mascotTime,
+		}
+		if g.mascotAnim != nil {
+			if g.mascotAnim.HasAnim(coreVM.Expression) {
+				g.mascotAnim.Play(coreVM.Expression)
+			}
+			overlayVM.Sprite = g.mascotAnim.CurrentImage()
+		}
+		hud.DrawMascotOverlay(screen, overlayVM)
+	}
 
 	// 过渡遮罩（全屏半透明黑色）
 	if g.transAlpha > 0 {
@@ -237,4 +306,28 @@ func (g *Game) Layout(_, _ int) (int, int) {
 func (g *Game) LayoutF(_, _ float64) (float64, float64) {
 	draw.Scale = ebiten.Monitor().DeviceScaleFactor()
 	return float64(g.width) * draw.Scale, float64(g.height) * draw.Scale
+}
+
+// currentSceneName 返回当前场景的字符串标识（供吉祥物向导匹配对话用）。
+func (g *Game) currentSceneName() string {
+	switch g.current.(type) {
+	case *TitleScene:
+		return "title"
+	case *SelectScene:
+		return "select"
+	case *CampaignSelectScene:
+		return "campaign_select"
+	case *TestSelectScene:
+		return "test_select"
+	case *StageScene:
+		return "stage"
+	case *ResultScene:
+		return "result"
+	case *SettingsScene:
+		return "settings"
+	case *WardenSelectScene:
+		return "warden_select"
+	default:
+		return "other"
+	}
 }
