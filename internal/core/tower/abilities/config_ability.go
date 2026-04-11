@@ -4,7 +4,6 @@
 package abilities
 
 import (
-	"fmt"
 	"math"
 	"math/rand"
 
@@ -204,7 +203,7 @@ func (a *ConfigAbility) OnTick(t *tower.Tower, ctx *tower.TickContext) *tower.Ti
 	switch a.Def.Type {
 	case "damageUpAura":
 		// scaleDim=bonus(比例), param=radius — via BuffList aura:damageAmp
-		srcKey := fmt.Sprintf("dmgAura_%s_%d_%d", t.Key, t.Row, t.Col)
+		srcKey := "dmgAura_" + t.InstanceKey
 		ctx.Towers.Each(func(other *tower.Tower) {
 			if math.Hypot(t.X-other.X, t.Y-other.Y) <= pm {
 				other.Buffs.Add(buff.Buff{
@@ -217,7 +216,7 @@ func (a *ConfigAbility) OnTick(t *tower.Tower, ctx *tower.TickContext) *tower.Ti
 
 	case "attackSpeedAura":
 		// scaleDim=bonus(比例), param=radius — via BuffList aura:pctSpeed
-		srcKey := fmt.Sprintf("spdAura_%s_%d_%d", t.Key, t.Row, t.Col)
+		srcKey := "spdAura_" + t.InstanceKey
 		ctx.Towers.Each(func(other *tower.Tower) {
 			if math.Hypot(t.X-other.X, t.Y-other.Y) <= pm {
 				other.Buffs.Add(buff.Buff{
@@ -230,7 +229,7 @@ func (a *ConfigAbility) OnTick(t *tower.Tower, ctx *tower.TickContext) *tower.Ti
 
 	case "rangeAura":
 		// scaleDim=bonus(像素), param=radius — via BuffList aura:flatRange
-		srcKey := fmt.Sprintf("rngAura_%s_%d_%d", t.Key, t.Row, t.Col)
+		srcKey := "rngAura_" + t.InstanceKey
 		ctx.Towers.Each(func(other *tower.Tower) {
 			if math.Hypot(t.X-other.X, t.Y-other.Y) <= pm {
 				other.Buffs.Add(buff.Buff{
@@ -243,7 +242,7 @@ func (a *ConfigAbility) OnTick(t *tower.Tower, ctx *tower.TickContext) *tower.Ti
 
 	case "critAura":
 		// scaleDim=bonus(暴击率加成), param=radius — via BuffList aura:crit
-		srcKey := fmt.Sprintf("critAura_%s_%d_%d", t.Key, t.Row, t.Col)
+		srcKey := "critAura_" + t.InstanceKey
 		ctx.Towers.Each(func(other *tower.Tower) {
 			if math.Hypot(t.X-other.X, t.Y-other.Y) <= pm {
 				other.Buffs.Add(buff.Buff{
@@ -263,7 +262,7 @@ func (a *ConfigAbility) OnTick(t *tower.Tower, ctx *tower.TickContext) *tower.Ti
 			}
 		})
 		if alone {
-			srcKey := fmt.Sprintf("solo_%s_%d_%d", t.Key, t.Row, t.Col)
+			srcKey := "solo_" + t.InstanceKey
 			t.Buffs.Add(buff.Buff{
 				ID: "aura:damageAmp", Category: buff.CatAura,
 				Source: srcKey, Value: sv,

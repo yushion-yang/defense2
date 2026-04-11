@@ -48,6 +48,11 @@
 - [x] 串联没有加属性。（根因：chainActive 标志判断了 "envoy" 而非 "chain"，全局链网络从未激活。修复：改为 "chain"）
 - [ ] 集中怪播放的特效并没有跟随怪物移动的位置。
 - [ ] Warden 活动范围受限：84% 场景触发 `warden_range_limited`，排查是 AI 策略局限还是移动逻辑 bug。
+- [ ] silenceZone 无免疫检查：控制免疫敌人也被沉默，缺 ApplySilence 函数/免疫/tenacity/浮字/VFX/SFX（审查项 5.1/5.2）
+- [ ] scaling.go 全局 map（killUpgradeStacks 等 6 个）多局游戏不清理，ResetScalingState() 仅 test 调用，内存泄漏（审查项 5.3）
+- [ ] envoy.go:127,158 调用 Strength.RemoveTemp() 无 nil 检查，apply 路径有 ensureStrength() 但 cleanup 路径没有，潜在 panic（审查项 5.4）
+- [ ] radial handler fallback 速度 350、scatter handler fallback 速度 400，与 balance.json defaultProjectileSpeed=300 不一致（审查项 6.2）
+- [ ] railgun 塔无 sprite 资源目录 `assets/towers/railgun/`，无 spriteKey 映射，渲染 fallback 为 sentinel 外观（审查项 7.1）
 
 ## 历史归档（相关系统已重构/移除）
 

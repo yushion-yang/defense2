@@ -124,7 +124,9 @@ func (b *EnvoyBehavior) Tick(w *warden.Warden, ctx *warden.TickContext) {
 	if s.BuffedTower != nil && !s.BuffedTower.Active {
 		key := fmt.Sprintf("envoy_buff_%d", w.ID)
 		s.BuffedTower.Buffs.RemoveByID(key)
-		s.BuffedTower.Strength.RemoveTemp(key)
+		if s.BuffedTower.Strength != nil {
+			s.BuffedTower.Strength.RemoveTemp(key)
+		}
 		s.BuffedTower = nil
 		s.BuffExpiry = 0
 	}
@@ -155,7 +157,9 @@ func applyEnvoyBuff(w *warden.Warden, s *EnvoyState, ctx *warden.TickContext) {
 	// 切换目标时，主动移除旧塔的临时 buff
 	if s.BuffedTower != nil && s.BuffedTower != best {
 		s.BuffedTower.Buffs.RemoveByID(key)
-		s.BuffedTower.Strength.RemoveTemp(key)
+		if s.BuffedTower.Strength != nil {
+			s.BuffedTower.Strength.RemoveTemp(key)
+		}
 	}
 
 	ensureStrength(best)

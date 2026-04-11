@@ -2,6 +2,8 @@
 // 提供创建/销毁/升级的观察者模式，外部模块通过注册函数响应塔事件。
 package tower
 
+import "log"
+
 // 模块级钩子数组（观察者模式）。
 var (
 	onCreateHooks  []func(t *Tower) // 创建时触发
@@ -52,8 +54,7 @@ func executeHooks(hooks []func(t *Tower), t *Tower) {
 		func() {
 			defer func() {
 				if r := recover(); r != nil {
-					// 钩子 panic 不传播（生产环境可替换为日志）
-					_ = r
+					log.Printf("tower lifecycle hook panic: %v", r)
 				}
 			}()
 			hook(t)

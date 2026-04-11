@@ -211,11 +211,6 @@ func DrawRootGround(screen *ebiten.Image, cx, cy, radius float32) {
 	draw.FilledCircle(screen, cx, cy+radius, radius*0.8, color.RGBA{100, 70, 40, 60})
 }
 
-// DrawFlyingShadow draws gray ground shadow for flying enemy.
-func DrawFlyingShadow(screen *ebiten.Image, cx, cy, radius float32, shadowClr color.RGBA) {
-	draw.FilledCircle(screen, cx+2, cy+8, radius*1.3, shadowClr)
-}
-
 // ── Enemy Body Overlays ─────────────────────────────
 
 // DrawSlowOverlay draws blue ice overlay on slowed enemy body.

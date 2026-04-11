@@ -271,9 +271,10 @@ func (er *EnemyRenderer) DrawEnemies(screen *ebiten.Image, pool *enemy.Pool, ani
 			// (Elite center tick removed)
 		}
 
-		// --- Status effect dots ---
+		// --- Status effect dots (栈分配，避免逐帧堆分配) ---
 		dotY := cy - barOffY - 4
-		var dots []vfx.StatusDot
+		var dotsArr [5]vfx.StatusDot
+		dots := dotsArr[:0]
 		if e.IsSlowed() {
 			dots = append(dots, vfx.StatusDot{Color: color.RGBA{R: 125, G: 211, B: 252, A: 235}})
 		}

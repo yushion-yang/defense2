@@ -43,7 +43,9 @@ func TickTowerAbilities(towers *tower.Pool, enemies *enemy.Pool, dt float64, cha
 
 	// --- Phase 1.1: tick 塔 buff（递减时间，移除过期 buff）---
 	towers.Each(func(t *tower.Tower) {
-		t.Buffs.Tick(dt)
+		if t.Buffs != nil {
+			t.Buffs.Tick(dt)
+		}
 	})
 
 	// --- Phase 1.5: 重置敌人每帧临时状态（沉默/区域虚弱等，由区域能力重新设置） ---

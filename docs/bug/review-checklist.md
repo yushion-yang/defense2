@@ -1,113 +1,121 @@
 # 代码审查清单
 
 > 基于已修复 bug 的模式归纳 + 代码实际扫描推导而成。
-> 用途：新 session 中让 AI 逐项执行审查，发现未知 bug 和待优化项。
+> 最近审查日期：2026-04-11
+
+---
+
+## 审查结果总览
+
+| 结论 | 数量 | 说明 |
+|------|------|------|
+| PASS | 10 | 检查通过，无问题 |
+| WARN | 14 | 存在隐患或待优化，非紧急 |
+| FAIL | 14 | 确认存在问题，需修复 |
 
 ---
 
 ## 一、配置-代码一致性
 
-> 历史教训：JSON tag 猜测、写了函数没调用、配置字段名不匹配。
-
-| # | 审查项 | 执行方法 | 已知发现 |
-|---|--------|---------|---------|
-| 1.1 | abilities.json 每个 type 在 config_ability.go 的 OnHit/OnTick 中有对应 case | grep abilities.json 的 type → grep config_ability.go 的 case | `deathMark` 不在 abilities.json 中，代码用硬编码 fallback |
-| 1.2 | config_ability.go 每个 case 在 abilities.json 中有定义 | 反向检查 | `spinAoe` 的 OnHit/OnTick 是 no-op（逻辑在 handler_spinaoe.go） |
-| 1.3 | attackStyleLabel 覆盖所有攻击方式 | 对比 pool.go spriteKeyForStyle 的 style 列表 vs stage_info_vm.go attackStyleLabel | 缺 `bounce` 和 `multiTarget` 中文标签 |
-| 1.4 | enemies-core.json 每个 archetype 在 spawner 中可生成 | 检查 phase 权重表是否覆盖所有 18 种 | — |
-| 1.5 | balance.json 参数与 settings.json 无重复 | grep 同名参数 | killReward/sellRefundRatio 两处定义（值一致但双源） |
-| 1.6 | vfx.json 每个 VFX ID 在 vfx 包中有对应函数，且在 preview registry 注册 | 三方交叉检查 | — |
+| # | 结论 | 审查项 | 证据 |
+|---|------|--------|------|
+| 1.1 | **PASS** | abilities.json 每个 type 在 config_ability.go 有对应 case | 31 个 type 全覆盖。攻击方式类(scatter/wideBeam/spinAoe/radial)走 pipeline 分发不走 OnHit/OnTick，符合设计 |
+| 1.2 | **WARN** | config_ability.go 每个 case 在 abilities.json 中有定义 | `"stun"` (config_ability.go:123) 是废弃别名；`"deathMark"` (config_ability.go:181) 无 JSON 定义，apply_hit.go:310 查表返回 nil 后走硬编码 fallback |
+| 1.3 | **PASS** | attackStyleLabel 覆盖所有攻击方式 | 5 个 AttackStyle 常量(tower.go:19-23)全部有中文标签(stage_info_vm.go:225-231)。bounce/multiTarget/splash 不是独立 AttackStyle，用 projectile |
+| 1.4 | **PASS** | enemies-core.json 每个 archetype 在 spawner 可生成 | 17/18 战斗原型覆盖（wave 15+ 全出）。`dummy` 为测试桩（hpScale=10000, speed=0），仅 EnemyFilter 可触发，符合设计 |
+| 1.5 | **WARN** | balance.json 参数与 settings.json 无重复 | 11+ 参数重复定义，settings.json 标记为 `_legacy_*` 但仍保留。一处值冲突：minSpeedRatio(0.2) vs slowCap(0.30)。代码只读 balance.json |
+| 1.6 | **PASS** | vfx.json 每个 VFX ID 有函数 + preview 注册 | 80/80 全覆盖，零缺口 |
 
 ## 二、死代码与未使用导出
 
-> 历史教训：写了函数但没调用，旧系统残留。
-
-| # | 审查项 | 执行方法 | 已知发现 |
-|---|--------|---------|---------|
-| 2.1 | vfx/ 包所有导出函数有外部调用者 | grep 每个 Draw/Apply 函数 | `DrawFlyingShadow` 无调用者 |
-| 2.2 | combat/ 包导出函数有调用者 | grep ApplyXxx 函数 | `ApplyRoot` 零调用者（root CC 完全孤立）；`ApplyDamageUp`/`ApplyDamageDown` 无生产调用 |
-| 2.3 | stage_info_vm.go 辅助函数有调用者 | grep fmtAttr/buildAttrSegs 等 | `fmtAttr`、`buildAttrSegs` 无调用者 |
-| 2.4 | theme/colors.go 所有常量有引用 | grep 每个常量名 | 13 个未使用常量（EnemySwarmTri, EnemyHPBar*, TowerRangeFill, Buff*, MapDotGrid） |
-| 2.5 | audio SFX 常量有 Play 调用 | grep 每个 SFX 常量 | 6 个孤立常量（SFXExplode, SFXEnemyDeathElite, SFXSpeedToggle, SFXKnockback, SFXShieldBreak, SFXHitShield） |
-| 2.6 | scaling.go 中注册的能力是否有实际效果 | 检查 OnTick 是否 return 空 TickResult | `KillUpgrade`/`WaveScale`/`NeighborBoost`/火元素/雷元素 是 TODO stub，玩家获取后零效果 |
+| # | 结论 | 审查项 | 证据 |
+|---|------|--------|------|
+| 2.1 | **FAIL** | vfx/ 包所有导出函数有外部调用者 | `DrawFlyingShadow` (vfx_stage.go:215) 零外部调用者 |
+| 2.2 | **FAIL** | combat/ 包导出函数有调用者 | `ApplyRoot` (crowd_control.go:92)、`ApplyDamageUp` (:216)、`ApplyDamageDown` (:224)、`ApplyControlImmunity` (:120) 零外部调用 |
+| 2.3 | **FAIL** | stage_info_vm.go 辅助函数有调用者 | `fmtAttr` (:178)、`buildAttrSegs` (:190) 无调用者 |
+| 2.4 | **FAIL** | theme/colors.go 所有常量有引用 | 10 个未使用：FactionBase/Output/Control/Support(:83-86), ToneDanger(:72), MapPathDash(:108), SlotHintPulse(:154), EnemySwarmTri(:200), BuffCrit(:181), BuffStr(:182) |
+| 2.5 | **FAIL** | audio SFX 常量有 Play 调用 | 8 个从未播放：SFXHit(:205), SFXEnemyDeathElite(:207), SFXExplode(:217), SFXKnockback(:239), SFXShieldBreak(:241), SFXHitShield(:242), SFXChoiceAppear(:232), SFXChoiceSelect(:233)。3 个仅 fallback 间接引用 |
+| 2.6 | **FAIL** | scaling.go 注册能力有实际效果 | 3/5 纯 TODO stub 无效果：KillUpgrade(:62), WaveScale(:86), NeighborBoost(:191)。2/5 部分功能：PeriodicCast case 2 是 stub, ElementSwitch 火/雷是 stub |
 
 ## 三、展示与 HUD
 
-> 历史教训：描述显示错误、颜色不对、占位符暴露、英文残留。
-
-| # | 审查项 | 执行方法 | 已知发现 |
-|---|--------|---------|---------|
-| 3.1 | potential=0 的能力，{s%} 显示是否有意义 | 遍历 abilities.json 中 potential=0 的条目 | `bleedDot`(1%) / `enhance`(20%) 永远固定值，描述暗示会成长 |
-| 3.2 | 概率/减速类展示是否 clamp 到 100% | 检查 FormatAbilityDisplay 和 buildAbilitySegments | 已修复（isPercentCapped） |
-| 3.3 | 所有用户可见文本是否中文化 | grep 英文字符串 in HUD/toast/panel | — |
-| 3.4 | 100 强度时属性颜色是否全白 | 检查 scaledColor 在 scaled==potential 时的返回 | 已修复 |
-| 3.5 | potential=0 的部分是否隐藏 +（0%）展示 | 检查 buildAbilitySegments 对 potential=0 的处理 | 待修复（optimization.md 已记录） |
-| 3.6 | CC/DoT 命中时是否有浮字反馈 | 检查 ApplyStun/ApplySlow 成功路径 | 成功施加 stun/slow/root/bleed/burn/poison 时**无浮字** |
-| 3.7 | 免疫浮字是否声明具体类型 | 检查"免疫"文本是否区分减速/控制/伤害 | 待修复（record.md 已记录） |
+| # | 结论 | 审查项 | 证据 |
+|---|------|--------|------|
+| 3.1 | **FAIL** | potential=0 的能力 {s%} 显示有意义 | `bleedDot`(base=0.01, potential=0) 显示 `1%+(0%)→1%`，零成长段误导玩家。`enhance`(base=0.2, potential=0) 同理显示 `20%+(0%)→20%` |
+| 3.2 | **PASS** | 概率/减速类展示 clamp 到 100% | `isPercentCapped` (stage_info_vm.go:289) 正确处理 chance/factor 维度，FormatAbilityDisplay 和 buildAbilitySegments 两处均已 clamp |
+| 3.3 | **WARN** | 所有用户可见文本中文化 | 玩家可见英文：`"MISS"` (apply_hit.go:47)、`"CAP"` (damage_pipeline.go:164)。可接受的键盘标签：`Esc`/`S`/`B`/`Del` (pause_menu.go:86)。调试面板英文忽略 |
+| 3.4 | **PASS** | 100 强度时属性颜色全白 | `scaledColor` (stage_info_vm.go:262) 在 scaled==potential 时返回 `theme.TextBody`(0xe2e8f0 近白色)，非绿非红 |
+| 3.5 | **FAIL** | potential=0 隐藏 +(0%) 展示 | `buildAbilitySegments` 的 {s%} 分支(stage_info_vm.go:446-450) 在 base>0 && potential=0 时仍输出三段 `"base%+(0%)→base%"`，零成长段无意义 |
+| 3.6 | **FAIL** | CC/DoT 命中有浮字反馈 | ApplyStun/ApplySlow 成功路径无浮字，仅免疫路径有。bleed/burn/poison/weaken 施加时均无浮字 |
+| 3.7 | **FAIL** | 免疫浮字声明具体类型 | 全部显示通用 `"免疫"` 无类型区分。仅通过颜色微调区分：红色=控制免疫(crowd_control.go:21,95)，蓝色=减速免疫(:52) |
 
 ## 四、性能热路径
 
-> 历史教训：config_ability.go 热路径 fmt.Printf 导致帧率暴跌。
-
-| # | 审查项 | 执行方法 | 已知发现 |
-|---|--------|---------|---------|
-| 4.1 | core/ 和 render/ 的 Tick/Update/Draw 中无 fmt.Sprintf | grep fmt.Sprintf 排除 test 文件 | `towerAccKey()` 每帧每塔 8 次 Sprintf（应用 InstanceKey）；5 个 aura 每帧 Sprintf srcKey |
-| 4.2 | sprite cache key 无逐帧分配 | 检查 cache.go cacheKey() | 每帧每实体 fmt.Sprintf 生成缓存键 |
-| 4.3 | Draw 函数中无堆分配 slice | 检查 var xxx []Type + append 模式 | draw_enemy.go 的 `var dots []vfx.StatusDot` 逐敌逐帧分配 |
-| 4.4 | 战灵 ID 键无逐帧生成 | 检查 envoy.go/chain.go 的 Sprintf | `envoy_buff_%d` 和 `chain_warden_%d` 每 tick Sprintf |
-| 4.5 | Telemetry 锁竞争 | 检查 tel.T.Record() 调用频率 | 单帧内 damage_pipeline 14 次 mutex lock |
+| # | 结论 | 审查项 | 证据 |
+|---|------|--------|------|
+| 4.1 | **WARN** | core/render 的 Tick/Draw 中无 fmt.Sprintf | 15+ 处 Sprintf 在每帧路径。最高频：aura 能力 srcKey(config_ability.go:207-266) 每光环塔每帧；chain.go:143 每帧生成稳定字符串 |
+| 4.2 | **WARN** | sprite cache key 无逐帧分配 | cacheKey() (sprite/cache.go:51) 用 fmt.Sprintf，每次 Get 调用均触发。draw_enemy.go 有 spritePathCache 部分缓解 |
+| 4.3 | **WARN** | Draw 函数中无堆分配 slice | draw_projectile.go:20 每弹道每帧 `make([]TrailPt, N)`；draw_enemy.go:276 每敌每帧 `var dots []StatusDot` + append |
+| 4.4 | **FAIL** | 战灵 ID 键无逐帧生成 | chain.go:143 `fmt.Sprintf("chain_warden_%d", w.ID)` 每帧执行，ID 不变应在 Init 时缓存 |
+| 4.5 | **FAIL** | Telemetry 锁竞争 | damage_pipeline.go 单次伤害事件 10 次 tel.T.Record()，每次 sync.Mutex lock/unlock。多塔战斗每帧数百次 mutex 操作 |
 
 ## 五、游戏逻辑完整性
 
-> 历史教训：buff 加错属性、沉默对加速无效、削强连同攻速压制。
-
-| # | 审查项 | 执行方法 | 已知发现 |
-|---|--------|---------|---------|
-| 5.1 | 沉默（silence）是否有免疫检查和视觉反馈 | 检查 config_ability.go silenceZone case | 无 IsSilenceImmune 检查，无浮字，无 VFX 覆层，无音效 |
-| 5.2 | 所有 CC 类型是否有完整管线（apply → immunity check → tenacity → float text → VFX → SFX） | 逐一检查 stun/slow/root/silence | root 无调用者；silence 缺免疫/浮字/VFX/SFX |
-| 5.3 | scaling.go 的 package-level map 是否在游戏结束后清理 | 检查 ResetScalingState 调用点 | 仅 test 调用，生产从不调用 → 多局游戏 map 无限增长 |
-| 5.4 | 战灵 cleanup 路径是否有 nil guard | 检查 envoy cleanup 对 Strength/Buffs 的访问 | envoy.go 清理非活跃塔时无 Strength nil 检查 |
-| 5.5 | tick_abilities.go 对 Buffs 是否有 nil 检查 | 与 RecalcStats 的防御模式对比 | 不一致（RecalcStats 检查了，tick_abilities 没检查） |
-| 5.6 | 核心机甲战灵 AoE 模式是否有视觉区分 | 检查 draw_warden.go 对 AoE 模式的渲染 | 无区分，AoE 与单体射击视觉相同 |
+| # | 结论 | 审查项 | 证据 |
+|---|------|--------|------|
+| 5.1 | **FAIL** | 沉默有免疫检查和视觉反馈 | silenceZone (config_ability.go:282-292) 直接 `e.Silenced=true` 无免疫检查、无 tenacity、无浮字、无 VFX 覆层、无 SFX |
+| 5.2 | **FAIL** | 所有 CC 类型有完整管线 | stun/slow/root 有 Apply 函数+免疫+tenacity+VFX，但均无成功浮字。silence 完全缺失管线（无 ApplySilence 函数、无免疫、无 VFX、无 SFX）。root 有完整实现但零调用者 |
+| 5.3 | **FAIL** | scaling.go package-level map 游戏结束后清理 | `ResetScalingState()` (scaling.go:312) 零生产调用者，仅 test 调用。多局游戏 6 个 map 无限增长 |
+| 5.4 | **FAIL** | 战灵 cleanup 路径有 nil guard | envoy.go:127,158 调用 `Strength.RemoveTemp(key)` 无 nil 检查；apply 路径(envoy.go:161)有 `ensureStrength()`，不一致 |
+| 5.5 | **WARN** | tick_abilities.go 对 Buffs 有 nil 检查 | tick_abilities.go:46 `t.Buffs.Tick(dt)` 无 nil 检查，RecalcStats (tower.go:132) 有。pool.go:70 初始化保障当前安全，但防御模式不一致 |
+| 5.6 | **FAIL** | 核心机甲 AoE 模式有视觉区分 | drawCoreEffects (draw_warden.go:196) 仅绘制通用 shoot flash，AoE 模式与单目标无区分。CoreState 无 AoEActive 标志暴露给渲染层 |
 
 ## 六、硬编码魔数
 
-> 历史教训：hardcoded 常量应从配置读取。
-
-| # | 审查项 | 执行方法 | 已知发现 |
-|---|--------|---------|---------|
-| 6.1 | scaling.go 能力参数是否从配置读取 | 逐行检查数字字面量 | 14+ 处硬编码（killUpgrade 1%/stack, waveScale 5%/wave, periodicCast 8s/120px, neighborBoost 20%, elementCycle 5s, 冰减速 0.7/0.5s, 毒 2DPS 等） |
-| 6.2 | combat handler fallback 速度是否从 balance.json 读取 | 检查 handler_radial.go/handler_scatter.go | radial fallback 350, scatter fallback 400 硬编码 |
-| 6.3 | handler_spinaoe.go 旋转参数是否从配置读取 | 检查 spinSpeed/innerRatio/innerBonusMul | spinSpeed=3.0, innerRatio=0.5, innerBonusMul=1.5 硬编码 |
-| 6.4 | apply_hit.go deathMark 默认值 | 检查 fallback 路径 | explodeDmg=10+15*(str/100), explodeR=50 硬编码 |
+| # | 结论 | 审查项 | 证据 |
+|---|------|--------|------|
+| 6.1 | **WARN** | scaling.go 能力参数从配置读取 | 15 个魔数无配置来源。活跃代码：冰减速 0.7/0.5s(scaling.go:269-270)、毒伤 2DPS(:289)、stunAoe 0.6s(:150)。TODO stub 中的魔数暂不紧急 |
+| 6.2 | **FAIL** | combat handler fallback 速度从 balance.json 读 | radial 350(handler_radial.go:39)、scatter 400(handler_scatter.go:21) 硬编码，balance.json defaultProjectileSpeed=300 未引用 |
+| 6.3 | **WARN** | handler_spinaoe.go 旋转参数从配置读取 | spinSpeed=3.0/0.3(:27)、innerRatio=0.5(:45)、innerBonusMul=1.5(:46)、视觉时间 0.3/0.4(:84-85) 硬编码。innerRatio 与 abilities.json 一致但为复制值 |
+| 6.4 | **WARN** | apply_hit.go deathMark 默认值 | deathMark 不在 abilities.json → 查表永远返回 nil → fallback 公式 `10+15*(str/100)` 和 radius=50 实际是唯一路径 |
 
 ## 七、资源完整性
 
-> 历史教训：sprite 缺失导致白圈 fallback。
-
-| # | 审查项 | 执行方法 | 已知发现 |
-|---|--------|---------|---------|
-| 7.1 | 10 种塔视觉变体是否都有 sprite 目录和映射 | ls assets/towers/ + 检查 spriteKeyForStyle | `railgun` 无 sprite 资源、无映射，渲染为 sentinel |
-| 7.2 | sfx.json 中映射的 WAV 文件是否都存在 | 交叉检查 config/audio/sfx.json vs assets/audio/ | pierce 相关 WAV 可能为废弃资源 |
-| 7.3 | 颜色字面量是否应使用 theme 常量 | grep `color.RGBA{` in draw_*.go | ~49 处硬编码颜色应引用 theme 常量 |
+| # | 结论 | 审查项 | 证据 |
+|---|------|--------|------|
+| 7.1 | **FAIL** | 10 种塔视觉变体都有 sprite 目录和映射 | `assets/towers/railgun/` 缺失，无 spriteKey 映射，渲染 fallback 为 sentinel。其余 9 种完整 |
+| 7.2 | **WARN** | sfx.json 映射的 WAV 文件都存在 | 126 个 WAV 全存在。`fire-pierce.wav`/`hit-pierce.wav` 引用不存在的 `pierce` 攻击方式未标记废弃。`root-apply.wav` 存在但未被 sfx.json 引用 |
+| 7.3 | **WARN** | 颜色字面量使用 theme 常量 | 28 处 `color.RGBA{}` 硬编码（draw_enemy 14 + draw_tower 5 + draw_warden 9），约 19 处可替换为 theme 常量 |
 
 ## 八、错误处理
 
-> 历史教训：静默失败导致难以排查。
-
-| # | 审查项 | 执行方法 | 已知发现 |
-|---|--------|---------|---------|
-| 8.1 | 持久化 load 是否处理错误 | 检查 progress.go 的 Get 调用 | `_ = s.Get(progressKey, ...)` 静默忽略错误 |
-| 8.2 | lifecycle hook panic 是否有日志 | 检查 recover 块 | `_ = r` 完全吞掉 panic，开发时隐藏 bug |
-| 8.3 | 自动播放 package-level map 是否线程安全 | 检查 scaling.go 全局变量注释 | 单线程注释，但 autoplay 并行实例会竞争 |
+| # | 结论 | 审查项 | 证据 |
+|---|------|--------|------|
+| 8.1 | **WARN** | 持久化 load 处理错误 | progress.go:107 `_ = s.Get(...)` 静默忽略错误。首次启动无文件时预期，但存档损坏时也会静默丢失 |
+| 8.2 | **WARN** | lifecycle hook panic 有日志 | 4 处 recover 块中 3 处有 log。tower/lifecycle.go:54 `_ = r` 静默吞掉 panic，注释说"生产环境可替换为日志" |
+| 8.3 | **PASS** | 自动播放 package-level map 线程安全 | autoplay 顺序执行(cmd/autoplay/main.go:162 for 循环)，无并发。单线程注释准确 |
 
 ---
 
-## 使用方法
+## 新发现汇总（本次审查新增）
 
-```
-# 新 session 中执行
-请按照 docs/bug/review-checklist.md 的审查项逐一执行检查，
-对每个审查项给出 PASS / FAIL / WARN 结论和具体证据（文件:行号）。
-将新发现的 bug 追加到 docs/bug/record.md，优化项追加到 docs/bug/optimization.md。
-```
+### 新增 Bug（→ record.md）
+
+| 来源 | 问题 |
+|------|------|
+| 5.1/5.2 | silenceZone 无免疫检查，控制免疫敌人也被沉默 |
+| 5.3 | scaling.go 全局 map 多局游戏不清理，内存泄漏 |
+| 5.4 | envoy.go:127,158 Strength 无 nil 检查，潜在 panic |
+| 6.2 | radial/scatter handler 用硬编码速度 350/400，不用 balance.json 的 300 |
+| 7.1 | railgun 无 sprite 资源，渲染为 sentinel 外观 |
+
+### 新增优化项（→ optimization.md）
+
+| 来源 | 问题 |
+|------|------|
+| 2.1-2.5 | 死代码清理：DrawFlyingShadow、ApplyRoot/DamageUp/Down/ControlImmunity、fmtAttr/buildAttrSegs、10 theme 常量、8 SFX 常量 |
+| 2.6 | 3 个 TODO stub 能力(KillUpgrade/WaveScale/NeighborBoost)对玩家无效果 |
+| 3.1/3.5 | potential=0 能力展示 +(0%) 零成长段 |
+| 3.3 | "MISS"/"CAP" 英文浮字 |
+| 4.1-4.5 | 热路径 fmt.Sprintf 和 slice 分配优化 |
+| 7.3 | 28 处颜色硬编码可提取到 theme |
