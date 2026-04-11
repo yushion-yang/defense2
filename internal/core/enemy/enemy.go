@@ -95,7 +95,6 @@ type AbilityFields struct {
 	ProjectileBlockChance float64 // 弹幕盾：阻挡弹射物概率（0=无）
 	ArmorFlat             float64 // 装甲：每次受击固定减免
 	EvasionChance         float64 // 闪避：完全闪避概率（0=无）
-	DamageReduceRatio     float64 // 受伤减免比例（0~1，由 buff 模板设置）
 
 	// movement
 	DashSpeedBoost float64 // 受击冲刺：速度提升比例
@@ -103,8 +102,6 @@ type AbilityFields struct {
 	DashCooldown   float64 // 受击冲刺：冷却时间（秒）
 	DashCooldownT  float64 // 受击冲刺：当前冷却倒计时
 	DashActiveT    float64 // 受击冲刺：当前激活倒计时
-	PhaseDuration  float64 // 相位偏移：免伤持续时间（秒）
-	PhaseCooldown  float64 // 相位偏移：冷却时间（秒）
 	PhaseTimer     float64 // 相位偏移：当前计时（>0 免伤中, <0 冷却中）
 	PhaseActive    bool    // 相位偏移：当前是否免伤
 
@@ -178,15 +175,10 @@ type Enemy struct {
 	Buffs *buff.BuffList // 统一状态效果管理（CC/DoT/debuff）
 
 	// ── 行为 ──
-	Behavior          string  // 行为类型标识（"healer"/"stealth"/"splitter"/"buffer"/"regenerator"/""）
-	BerserkThreshold  float64 // 狂暴触发血量比例（如0.5=50%HP）
-	BerserkSpeedScale float64 // 狂暴速度倍率
-	BerserkTriggered  bool    // 狂暴是否已触发（一次性）
-	RegenPerSec       float64 // 每秒回血量
-	HealPower         float64 // 治疗光环治疗量
-	HealRadius        float64 // 治疗光环范围
-	HealInterval      float64 // 治疗光环间隔（秒）
-	HealCooldown      float64 // 治疗光环当前冷却
+	Behavior         string  // 行为类型标识（"healer"/"stealth"/"splitter"/"buffer"/"regenerator"/""）
+	BerserkTriggered bool    // 狂暴是否已触发（一次性）
+	HealInterval     float64 // 治疗光环间隔（秒）
+	HealCooldown     float64 // 治疗光环当前冷却
 
 	// ── 分裂 ──
 	SplitCount      int     // 死亡分裂子体数量（0=不分裂）
@@ -199,12 +191,7 @@ type Enemy struct {
 	TeleportSkip     int     // 每次传送跳过的路径段数
 	TeleportTimer    float64 // 传送冷却倒计时
 
-	// ── 旗手光环 ──
-	BuffRadius  float64 // 光环加速范围（像素）
-	BuffAmount  float64 // 光环移速加成（如 0.2 = +20%）
-	SpeedBuff   float64 // 当前帧受到的光环加速值（由 buffer 每帧写入，movement 读取）
-	AuraRange   float64 // 光环范围（像素，0=无光环）
-	AuraSpeedUp float64 // 光环加速比例（如 0.2 = +20%）
+	// (旗手光环参数已迁移至 BuffList "bufferAura"/"speedUp" buff)
 
 	// ── 嵌入子结构体 ──
 	StatusEffects
