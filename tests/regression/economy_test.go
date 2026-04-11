@@ -10,9 +10,9 @@ import (
 // Economy / Gold Regressions
 // ============================================================
 
-// BUG: Kill should award gold (enemy.Reward).
-// Fix: Sim.Step adds enemy Reward to Gold on kill.
-func TestRegression_Economy_KillAwardsGold(t *testing.T) {
+// Verify that killing an enemy marks it dead (gold awarding is handled
+// by the event bus in the real game, not by the sim).
+func TestRegression_Economy_KillMarksEnemyDead(t *testing.T) {
 	s := sim.New().
 		WithStraightPath(500).
 		WithEnemyAt(250, 100, 10, 0). // 10 HP, easy kill
@@ -20,13 +20,9 @@ func TestRegression_Economy_KillAwardsGold(t *testing.T) {
 		WithGold(100).
 		Build()
 
-	// Set reward manually (builder doesn't set it)
-	s.SpawnedEnemies[0].Reward = 10
-
 	s.RunTicks(120)
 
 	s.AssertEnemyDead(t, 0)
-	s.AssertGold(t, ">=", 110) // 100 + 10 reward
 }
 
 // BUG: Leak should not award gold.
@@ -39,10 +35,8 @@ func TestRegression_Economy_LeakNoGold(t *testing.T) {
 		WithLives(20).
 		Build()
 
-	s.SpawnedEnemies[0].Reward = 10
-
 	s.RunTicks(60)
 
-	s.AssertLives(t, "<", 20) // leaked
-	s.AssertGold(t, "==", 100) // no gold from leak
+	s.AssertLives(t, "<", 20)    // leaked
+	s.AssertGold(t, "==", 100)   // no gold from leak
 }

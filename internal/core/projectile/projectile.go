@@ -24,6 +24,7 @@ type Projectile struct {
 	Life           float64              // 剩余存活时间（秒）
 	MaxLife        float64              // 最大存活时间（秒）
 	Target         *enemy.Enemy         // 追踪目标（nil = 直线飞行）
+	TargetID       int                  // 发射时锁定目标的 ID（用于检测槽位复用 ABA 问题）
 	SourceTowerKey string               // 发射塔的 Key（用于能力触发）
 	BounceCount    int                  // 已弹射次数（0 = 原始弹射物）
 	BounceHitIDs   []int                // 弹射链已命中敌人 ID（避免弹回已命中目标）

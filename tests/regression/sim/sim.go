@@ -104,7 +104,7 @@ func (s *Sim) Step() {
 				})
 				if result.Killed {
 					s.Kills++
-					s.Gold += e.Reward
+	
 					s.Enemies.Kill(e)
 				}
 			})
@@ -116,7 +116,7 @@ func (s *Sim) Step() {
 			})
 			if result.Killed {
 				s.Kills++
-				s.Gold += target.Reward
+
 				s.Enemies.Kill(target)
 			}
 		default:
@@ -159,7 +159,7 @@ func (s *Sim) Step() {
 			})
 			if result.Killed {
 				s.Kills++
-				s.Gold += e.Reward
+
 				s.Enemies.Kill(e)
 			}
 			s.Projectiles.Release(p)
@@ -178,7 +178,7 @@ func (s *Sim) Step() {
 				})
 				if r.Killed {
 					s.Kills++
-					s.Gold += e.Reward
+	
 					s.Enemies.Kill(e)
 				}
 				e.LastDotDmg = 0

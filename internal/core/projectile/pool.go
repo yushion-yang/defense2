@@ -76,6 +76,9 @@ func (p *Pool) Fire(sx, sy, tx, ty, damage, speed, radius float64, target *enemy
 	proj.MaxLife = 3.0
 	proj.Life = proj.MaxLife
 	proj.Target = target
+	if target != nil {
+		proj.TargetID = target.ID
+	}
 	proj.SourceTowerKey = towerKey
 
 	p.Count++
@@ -108,6 +111,9 @@ func (p *Pool) FireBounce(sx, sy float64, target *enemy.Enemy, damage, speed, ra
 	proj.MaxLife = 2.0
 	proj.Life = proj.MaxLife
 	proj.Target = target
+	if target != nil {
+		proj.TargetID = target.ID
+	}
 	proj.SourceTowerKey = towerKey
 	proj.BounceCount = bounceCount
 	proj.BounceHitIDs = hitIDs
@@ -125,10 +131,10 @@ func (p *Pool) Update(dt float64) {
 		}
 
 		// 追踪：所有有目标的弹（普通弹/弹射弹/蓄力弹）统一行为：
-		//   - 目标存活 → 每帧重算朝向，完美追踪
-		//   - 目标死亡 → 弹射物立即消失（塔防惯例，不继续飞行）
+		//   - 目标存活且 ID 匹配 → 每帧重算朝向，完美追踪
+		//   - 目标死亡或 ID 不匹配（槽位被复用 ABA 问题）→ 弹射物立即消失
 		if proj.Target != nil {
-			if proj.Target.Active {
+			if proj.Target.Active && proj.Target.ID == proj.TargetID {
 				dx := proj.Target.X - proj.X
 				dy := proj.Target.Y - proj.Y
 				dist := math.Hypot(dx, dy)

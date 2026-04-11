@@ -21,7 +21,6 @@ type SpawnEntry struct {
 	HpScale    float64 // HP 倍率
 	SpeedScale float64 // 速度倍率
 	Radius     float64 // 半径
-	Reward     int     // 击杀奖励
 	Boss       bool    // 是否 Boss
 }
 
@@ -185,9 +184,6 @@ func drawSpawnTooltip(screen *ebiten.Image, fm *render.FontManager, e SpawnEntry
 	attrX += 60
 
 	fm.DrawText(screen, fmt.Sprintf("半径:%.0f", e.Radius), attrX, ty, theme.FontSM, color.RGBA{R: 160, G: 160, B: 180, A: 200})
-	ty += 16
-
-	fm.DrawText(screen, fmt.Sprintf("击杀奖励: %d 金币", e.Reward), tx, ty, theme.FontXS, color.RGBA{R: 250, G: 190, B: 60, A: 200})
 }
 
 // SpawnMenuHitTest 检测点击了哪个敌人卡片，返回索引或 -1。

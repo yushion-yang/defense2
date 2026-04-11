@@ -11,7 +11,6 @@ type SpawnConfig struct {
 	SpeedScale  float64 // 速度倍率（应用于 baseSpeed）
 	Radius      float64 // 碰撞半径（像素绝对值）
 	Boss        bool    // 是否为 Boss
-	Reward      int     // 击杀奖励金币
 
 	// ── 行为配置 ──
 	Behavior        string  // 行为类型标识（"healer"/"stealth"/"splitter"/"buffer"/"regenerator"/""）
@@ -63,6 +62,5 @@ func DefaultSpawnConfig() *SpawnConfig {
 		HpScale:    1,
 		SpeedScale: 1,
 		Radius:     8,
-		Reward:     15, // 默认击杀奖金
 	}
 }

@@ -9,11 +9,10 @@ package enemy
 const maxSpeedScale = 2.4
 
 // ApplyEnemyEvent 对敌人施加波次事件增益。
-// kind 支持 4 种类型：
+// kind 支持 3 种类型：
 //   - "hpPercent": 按最大血量百分比增加血量/最大血量
 //   - "periodicHealPercent": 设置每秒回血量（按最大血量百分比）
 //   - "speedPercent": 按百分比提升基础速度（上限 2.4x）
-//   - "rewardPercent": 按百分比提升击杀奖励（最少 1 金币）
 func ApplyEnemyEvent(e *Enemy, kind string, value float64) {
 	switch kind {
 	case "hpPercent":
@@ -38,13 +37,6 @@ func ApplyEnemyEvent(e *Enemy, kind string, value float64) {
 		// 同步当前速度（如果未被减速）
 		if !e.IsSlowed() {
 			e.Speed = e.BaseSpeed
-		}
-
-	case "rewardPercent":
-		// 按百分比提升奖励，最少 1 金币
-		e.Reward = int(float64(e.Reward) * (1 + value))
-		if e.Reward < 1 {
-			e.Reward = 1
 		}
 	}
 }

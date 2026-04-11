@@ -104,8 +104,11 @@ func TickProjectileHits(projectiles *projectile.Pool, enemies *enemy.Pool, tower
 			}
 
 			// 追踪弹只和锁定目标碰撞（穿透弹除外）
-			if p.Target != nil && !p.Penetrate && e != p.Target {
-				return
+			// ID 校验防止敌人槽位复用后误命中新敌人（ABA 问题）
+			if p.Target != nil && !p.Penetrate {
+				if e != p.Target || p.Target.ID != p.TargetID {
+					return
+				}
 			}
 
 			dx := p.X - e.X

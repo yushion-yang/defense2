@@ -150,7 +150,6 @@ type Enemy struct {
 	Path      []gamemap.Point // 该敌人的行进路径（多路径地图时各敌人可能不同）
 
 	// ── 经济 ──
-	Reward      int     // 击杀奖励金币
 	RewardScale float64 // 原型奖励倍率（如 tank=1.35, runner=0.72）
 	ReachedEnd  bool    // 是否已到达路径终点（基地）
 

@@ -1102,7 +1102,7 @@ func (s *StageScene) drawEnemyInfoPanel(screen *ebiten.Image, e *enemy.Enemy) {
 	// ── 生命 ──
 	lines = append(lines, L(ttHeader, "--- 生命 ---"))
 	lines = append(lines, L(ttWhite, "血量: %.0f / %.0f  (%.1f%%)", e.HP, e.MaxHP, e.HP/e.MaxHP*100))
-	lines = append(lines, L(ttDim, "显示血量: %.0f  奖励: %d金 (×%.2f)", e.DisplayHP, e.Reward, e.RewardScale))
+	lines = append(lines, L(ttDim, "显示血量: %.0f  奖励倍率: ×%.2f", e.DisplayHP, e.RewardScale))
 
 	// ── 移动 ──
 	lines = append(lines, L(ttHeader, "--- 移动 ---"))
@@ -1593,8 +1593,7 @@ func (s *StageScene) spawnEntries() []hud.SpawnEntry {
 		entries = append(entries, hud.SpawnEntry{
 			Name: name, Label: cfg.Label,
 			HpScale: cfg.HpScale, SpeedScale: cfg.SpeedScale,
-			Radius: cfg.Radius,
-			Reward: cfg.Reward, Boss: cfg.Boss,
+			Radius: cfg.Radius, Boss: cfg.Boss,
 		})
 	}
 	return entries

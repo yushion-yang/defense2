@@ -221,24 +221,18 @@ func TestEvent_HPPercent(t *testing.T) {
 
 func TestBuffTemplate_ApplyFlags_Elite(t *testing.T) {
 	// "elite" flag was removed from ApplyFlags — it is now a no-op.
-	e := &enemy.Enemy{HP: 100, MaxHP: 100, Speed: 50, BaseSpeed: 50, Reward: 10}
+	e := &enemy.Enemy{HP: 100, MaxHP: 100, Speed: 50, BaseSpeed: 50}
 	enemy.ApplyFlags(e, []string{"elite"})
 	if math.Abs(e.MaxHP-100) > 1e-9 {
 		t.Errorf("elite flag (removed) MaxHP=%.1f, 期望100(不变)", e.MaxHP)
 	}
-	if e.Reward != 10 {
-		t.Errorf("elite flag (removed) Reward=%d, 期望10(不变)", e.Reward)
-	}
 }
 
 func TestBuffTemplate_ApplyFlags_Boss(t *testing.T) {
-	e := &enemy.Enemy{HP: 100, MaxHP: 100, Reward: 10}
+	e := &enemy.Enemy{HP: 100, MaxHP: 100}
 	enemy.ApplyFlags(e, []string{"boss"})
 	if math.Abs(e.MaxHP-3000) > 1e-9 {
 		t.Errorf("boss flag MaxHP=%.1f, 期望3000", e.MaxHP)
-	}
-	if e.Reward != 50 {
-		t.Errorf("boss flag Reward=%d, 期望50", e.Reward)
 	}
 	if !e.Boss {
 		t.Error("boss flag应设置Boss=true")

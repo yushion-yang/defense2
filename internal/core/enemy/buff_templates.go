@@ -6,14 +6,13 @@ package enemy
 
 // ApplyFlags applies flag effects to an enemy.
 // Supported flags:
-//   - "boss": HP*30, Reward*5
+//   - "boss": HP*30
 func ApplyFlags(e *Enemy, flags []string) {
 	for _, flag := range flags {
 		switch flag {
 		case "boss":
 			e.MaxHP *= 30
 			e.HP *= 30
-			e.Reward *= 5
 			e.Boss = true
 		}
 	}

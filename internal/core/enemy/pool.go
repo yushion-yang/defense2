@@ -76,7 +76,6 @@ func (p *Pool) Spawn(x, y, baseHP, baseSpeed float64, pathIndex int, archetype s
 
 			// 基础配置
 			e.Boss = cfg.Boss
-			e.Reward = cfg.Reward
 			e.RewardScale = cfg.RewardScale
 			if e.RewardScale <= 0 {
 				e.RewardScale = 1
