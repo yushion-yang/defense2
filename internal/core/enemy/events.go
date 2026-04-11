@@ -3,6 +3,8 @@
 // 以及精英晋升逻辑。
 package enemy
 
+import "defense2/internal/core/buff"
+
 // ── 速度上限 ──
 
 // maxSpeedScale 速度百分比加成的上限倍率（防止敌人过快）。
@@ -22,8 +24,11 @@ func ApplyEnemyEvent(e *Enemy, kind string, value float64) {
 		e.HP += bonus
 
 	case "periodicHealPercent":
-		// 设置每秒回血量（按最大血量百分比）
-		e.RegenPerSec = e.MaxHP * value
+		// 设置每秒回血量（按最大血量百分比）via BuffList
+		e.Buffs.Add(buff.Buff{
+			ID: "regen", Category: buff.CatBehavior, Source: "wave_event",
+			Value: e.MaxHP * value, Duration: -1, Remaining: -1,
+		})
 
 	case "speedPercent":
 		// 按百分比提升基础速度，上限 2.4 倍原始速度

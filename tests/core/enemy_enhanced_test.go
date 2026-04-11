@@ -187,8 +187,8 @@ func TestBehavior_Berserk(t *testing.T) {
 }
 
 func TestBehavior_Regeneration(t *testing.T) {
-	e := &enemy.Enemy{HP: 50, MaxHP: 100, RegenPerSec: 10}
-	healed := enemy.UpdateRegeneration(e, 1.0)
+	e := &enemy.Enemy{HP: 50, MaxHP: 100}
+	healed := enemy.UpdateRegeneration(e, 10, 1.0) // regenPerSec=10, dt=1.0
 	if math.Abs(healed-10) > 1e-9 {
 		t.Errorf("回血量=%.1f, 期望10", healed)
 	}
@@ -198,7 +198,7 @@ func TestBehavior_Regeneration(t *testing.T) {
 
 	// 不超过 MaxHP
 	e.HP = 95
-	healed = enemy.UpdateRegeneration(e, 1.0)
+	healed = enemy.UpdateRegeneration(e, 10, 1.0)
 	if e.HP > e.MaxHP {
 		t.Errorf("HP=%.1f 超过MaxHP=%.1f", e.HP, e.MaxHP)
 	}

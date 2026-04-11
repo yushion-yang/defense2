@@ -50,9 +50,9 @@ func TickBehaviors(pool *Pool, dt float64) BehaviorEvents {
 			events.Berserks++
 		}
 
-		// 自然回血（所有配置了 RegenPerSec 的敌人，包括 regenerator 行为）
-		if e.RegenPerSec > 0 {
-			if UpdateRegeneration(e, dt) > 0 {
+		// 自然回血（从 BuffList 读取 regen Value）
+		if b, ok := e.Buffs.Get("regen"); ok && b.Value > 0 {
+			if UpdateRegeneration(e, b.Value, dt) > 0 {
 				events.Regens++
 			}
 		}
@@ -83,19 +83,19 @@ func TickBehaviors(pool *Pool, dt float64) BehaviorEvents {
 			e.DashCooldownT -= dt
 		}
 
-		// 相位偏移
-		if e.PhaseCooldown > 0 && !e.AbilitySilenced {
+		// 相位偏移（duration=Value, cooldown=Value2 from BuffList）
+		if pb, ok := e.Buffs.Get("phaseShift"); ok && !e.AbilitySilenced {
 			e.PhaseTimer -= dt
 			if e.PhaseTimer <= 0 && !e.PhaseActive {
 				// 进入免伤相位（可被选中/命中，但免疫伤害）
 				e.PhaseActive = true
 				e.IsDamageImmune = true
-				e.PhaseTimer = e.PhaseDuration
+				e.PhaseTimer = pb.Value // phaseDuration
 			} else if e.PhaseActive && e.PhaseTimer <= 0 {
 				// 相位结束
 				e.PhaseActive = false
 				e.IsDamageImmune = false
-				e.PhaseTimer = e.PhaseCooldown
+				e.PhaseTimer = pb.Value2 // phaseCooldown
 			}
 		}
 
@@ -155,8 +155,15 @@ func TickBehaviors(pool *Pool, dt float64) BehaviorEvents {
 }
 
 // tickHealer 治疗兵行为：周期性治疗范围内友军。
+// Reads power/radius from healAura buff; HealInterval/HealCooldown are runtime state on Enemy.
 func tickHealer(e *Enemy, pool *Pool, dt float64, events *BehaviorEvents) {
-	if e.HealPower <= 0 || e.AbilitySilenced {
+	b, ok := e.Buffs.Get("healAura")
+	if !ok || e.AbilitySilenced {
+		return
+	}
+	healPower := b.Value
+	healRadius := b.Value2
+	if healPower <= 0 {
 		return
 	}
 
@@ -166,7 +173,7 @@ func tickHealer(e *Enemy, pool *Pool, dt float64, events *BehaviorEvents) {
 	}
 	e.HealCooldown = e.HealInterval
 
-	r2 := e.HealRadius * e.HealRadius
+	r2 := healRadius * healRadius
 	pool.Each(func(other *Enemy) {
 		if !other.Active || other.IsDying() || other.IsSpawning() {
 			return
@@ -180,7 +187,7 @@ func tickHealer(e *Enemy, pool *Pool, dt float64, events *BehaviorEvents) {
 			return
 		}
 		// HealPower 作为比例（如0.05=5%），按目标MaxHP计算治疗量
-		healAmount := other.MaxHP * e.HealPower
+		healAmount := other.MaxHP * healPower
 		restored := math.Min(healAmount, other.MaxHP-other.HP)
 		other.HP += restored
 		events.Heals = append(events.Heals, HealEvent{
@@ -318,14 +325,15 @@ func UpdateBerserk(e *Enemy) bool {
 }
 
 // UpdateRegeneration 处理敌人自然回血。
+// regenPerSec is the healing rate from the regen buff's Value.
 // 返回本帧实际回复的血量。
-func UpdateRegeneration(e *Enemy, dt float64) float64 {
-	if e.RegenPerSec <= 0 || e.HP >= e.MaxHP {
+func UpdateRegeneration(e *Enemy, regenPerSec, dt float64) float64 {
+	if regenPerSec <= 0 || e.HP >= e.MaxHP {
 		return 0
 	}
 
 	// 计算实际回复量（不超过最大血量）
-	healed := math.Min(e.RegenPerSec*dt, e.MaxHP-e.HP)
+	healed := math.Min(regenPerSec*dt, e.MaxHP-e.HP)
 	e.HP += healed
 	return healed
 }

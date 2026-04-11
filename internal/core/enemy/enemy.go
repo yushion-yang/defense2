@@ -312,6 +312,46 @@ func (e *Enemy) HasBufferAura() bool { return e.Buffs != nil && e.Buffs.Has("buf
 // HasPhaseShift returns true if the enemy has an active phaseShift buff.
 func (e *Enemy) HasPhaseShift() bool { return e.Buffs != nil && e.Buffs.Has("phaseShift") }
 
+// GetHealRadius returns the heal aura radius from BuffList (0 if none).
+func (e *Enemy) GetHealRadius() float64 {
+	if _, r, ok := e.GetHealAuraParams(); ok {
+		return r
+	}
+	return 0
+}
+
+// GetBufferRadius returns the buffer aura radius from BuffList (0 if none).
+func (e *Enemy) GetBufferRadius() float64 {
+	if _, r, ok := e.GetBufferAuraParams(); ok {
+		return r
+	}
+	return 0
+}
+
+// GetHealAuraParams returns (power, radius, ok) from the healAura buff.
+func (e *Enemy) GetHealAuraParams() (power, radius float64, ok bool) {
+	if e.Buffs == nil {
+		return 0, 0, false
+	}
+	b, found := e.Buffs.Get("healAura")
+	if !found {
+		return 0, 0, false
+	}
+	return b.Value, b.Value2, true
+}
+
+// GetBufferAuraParams returns (speedUp, radius, ok) from the bufferAura buff.
+func (e *Enemy) GetBufferAuraParams() (speedUp, radius float64, ok bool) {
+	if e.Buffs == nil {
+		return 0, 0, false
+	}
+	b, found := e.Buffs.Get("bufferAura")
+	if !found {
+		return 0, 0, false
+	}
+	return b.Value, b.Value2, true
+}
+
 // GetDamageReduce returns the damage reduction value from BuffList (0 = no reduction).
 func (e *Enemy) GetDamageReduce() float64 {
 	if e.Buffs == nil {
