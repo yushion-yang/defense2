@@ -668,7 +668,7 @@ func applyWaveBuff(e *Enemy, buffID string, wave int) {
 // ApplyAbilityPotentials 根据波次为原型能力叠加 potential 增量。
 // delta = potential * wave，叠加到 spawn 时已设置的 base 值之上。
 func ApplyAbilityPotentials(e *Enemy, cfg *SpawnConfig, wave int) {
-	if wave <= 0 || len(cfg.AbilityPotentials) == 0 {
+	if cfg == nil || wave <= 0 || len(cfg.AbilityPotentials) == 0 {
 		return
 	}
 	for _, ap := range cfg.AbilityPotentials {

@@ -1380,7 +1380,7 @@ func (s *StageScene) drawEnemyInfoPanel(screen *ebiten.Image, e *enemy.Enemy) {
 	}
 	lines = append(lines, L(ttWhite, "%s  路径:%d/%d", speedInfo, e.PathIndex, len(e.Path)))
 
-	// ── 装配能力（从能力配置表读取描述）──
+	// ── 装配能力（从能力配置表读取描述 + 实际运行时值）──
 	abilTable := config.GlobalEnemyAbilityTable()
 	if len(e.AbilityIDs) > 0 && abilTable != nil {
 		lines = append(lines, L(ttHeader, "--- 能力 ---"))
@@ -1395,7 +1395,13 @@ func (s *StageScene) drawEnemyInfoPanel(screen *ebiten.Image, e *enemy.Enemy) {
 			if silenced {
 				label += " [沉默]"
 			}
-			lines = append(lines, L(ttCyan, "  %s: %s", label, def.Description))
+			// 显示实际运行时属性值
+			runtimeVal := abilityRuntimeValue(e, aid)
+			if runtimeVal != "" {
+				lines = append(lines, L(ttCyan, "  %s: %s  [实际:%s]", label, def.Description, runtimeVal))
+			} else {
+				lines = append(lines, L(ttCyan, "  %s: %s", label, def.Description))
+			}
 		}
 	}
 
@@ -3132,6 +3138,28 @@ func convertArchetypesToSpawnConfigs(archetypes map[string]*config.EnemyArchetyp
 		result[key] = sc
 	}
 	return result
+}
+
+// abilityRuntimeValue 返回敌人某个能力的运行时实际值（用于测试模式 info panel）。
+func abilityRuntimeValue(e *enemy.Enemy, abilityID string) string {
+	switch abilityID {
+	case "armorPlating":
+		return fmt.Sprintf("减免=%.1f", e.ArmorFlat)
+	case "damageCap":
+		return fmt.Sprintf("上限=%.1f", e.DamageCap)
+	case "damageCapPercent":
+		return fmt.Sprintf("上限=%.2f%%HP", e.DamageCapPercent*100)
+	case "evasion":
+		return fmt.Sprintf("闪避=%.0f%%", e.EvasionChance*100)
+	case "projectileBlock":
+		return fmt.Sprintf("格挡=%.0f%%", e.ProjectileBlockChance*100)
+	case "strengthDrain":
+		return fmt.Sprintf("削弱=%.0f%%", e.StrDrainRatio*100)
+	case "dashOnHit":
+		return fmt.Sprintf("冲刺+%.0f%%", e.DashSpeedBoost*100)
+	default:
+		return ""
+	}
 }
 
 // applyEnemyAbilityToSpawnConfig 将一个怪物能力应用到 SpawnConfig。
