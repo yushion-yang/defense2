@@ -86,6 +86,8 @@ func (s *LoadingScene) Update() error {
 		config.LoadAndCacheWardenConfigs()
 		config.LoadBuffRules()
 		config.LoadSpawnerConfig()
+		// 配置全部加载后，用 i18n 覆盖所有显示文本字段
+		config.ResolveConfigLabels()
 		s.progress = 0.10
 		s.phase = phaseShaders
 

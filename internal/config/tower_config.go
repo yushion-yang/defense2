@@ -89,11 +89,20 @@ func LoadTowerFile(path string) (*TowerFileData, error) {
 	return result, nil
 }
 
-// LoadAllTowers 加载所有塔配置（从 towers.json）。
+// globalTowerTable 全局塔配置缓存。
+var globalTowerTable map[string]*TowerJSON
+
+// GlobalTowerTable 返回全局缓存的塔配置表。
+func GlobalTowerTable() map[string]*TowerJSON {
+	return globalTowerTable
+}
+
+// LoadAllTowers 加载所有塔配置（从 towers.json）并缓存。
 func LoadAllTowers() (map[string]*TowerJSON, error) {
 	fd, err := LoadTowerFile("config/towers/towers.json")
 	if err != nil {
 		return nil, err
 	}
+	globalTowerTable = fd.Towers
 	return fd.Towers, nil
 }
