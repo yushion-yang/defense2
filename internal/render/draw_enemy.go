@@ -430,39 +430,32 @@ func drawHPBars(screen *ebiten.Image, bars []hpBarEntry, animTime float64) {
 		}
 
 		// Status effect dots (above the bar)
-		// VFXMinimal: skip dots entirely; VFXReduced: limit to 3 dots
-		if CurrentVFXLevel < VFXMinimal {
-			dotY := barY - 4
-			var dotsArr [7]vfx.StatusDot
-			dots := dotsArr[:0]
-			if b.slowed {
-				dots = append(dots, vfx.StatusDot{Color: theme.EnemyDotSlowed})
-			}
-			if b.stunned {
-				dots = append(dots, vfx.StatusDot{Color: theme.EnemyDotStunned})
-			}
-			if b.rooted {
-				dots = append(dots, vfx.StatusDot{Color: theme.EnemyDotRooted})
-			}
-			if b.bleeding {
-				dots = append(dots, vfx.StatusDot{Color: theme.EnemyDotBleeding})
-			}
-			if b.burning {
-				dots = append(dots, vfx.StatusDot{Color: theme.EnemyDotBurning})
-			}
-			if b.poisoned {
-				dots = append(dots, vfx.StatusDot{Color: theme.EnemyDotPoison})
-			}
-			if b.weakened {
-				dots = append(dots, vfx.StatusDot{Color: theme.EnemyDotWeaken})
-			}
-			// VFXReduced: cap at 3 most important dots
-			if CurrentVFXLevel >= VFXReduced && len(dots) > 3 {
-				dots = dots[:3]
-			}
-			if len(dots) > 0 {
-				vfx.DrawStatusDots(screen, b.cx, dotY, dots, animTime)
-			}
+		dotY := barY - 4
+		var dotsArr [7]vfx.StatusDot
+		dots := dotsArr[:0]
+		if b.slowed {
+			dots = append(dots, vfx.StatusDot{Color: theme.EnemyDotSlowed})
+		}
+		if b.stunned {
+			dots = append(dots, vfx.StatusDot{Color: theme.EnemyDotStunned})
+		}
+		if b.rooted {
+			dots = append(dots, vfx.StatusDot{Color: theme.EnemyDotRooted})
+		}
+		if b.bleeding {
+			dots = append(dots, vfx.StatusDot{Color: theme.EnemyDotBleeding})
+		}
+		if b.burning {
+			dots = append(dots, vfx.StatusDot{Color: theme.EnemyDotBurning})
+		}
+		if b.poisoned {
+			dots = append(dots, vfx.StatusDot{Color: theme.EnemyDotPoison})
+		}
+		if b.weakened {
+			dots = append(dots, vfx.StatusDot{Color: theme.EnemyDotWeaken})
+		}
+		if len(dots) > 0 {
+			vfx.DrawStatusDots(screen, b.cx, dotY, dots, animTime)
 		}
 	}
 }

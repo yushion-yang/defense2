@@ -2602,11 +2602,7 @@ func (s *StageScene) drawScene(screen *ebiten.Image) {
 	// 设置视口裁剪参数 + VFX 细节等级
 	render.SetViewport(s.camX, s.camY, useCamera)
 	// 用实际 TPS 估算帧时间：TPS=60 → 16.7ms, TPS=30 → 33.3ms
-	lastFrameMs := 16.67
-	if tps := ebiten.ActualTPS(); tps > 0 {
-		lastFrameMs = 1000.0 / tps
-	}
-	render.UpdateVFXLevel(lastFrameMs, s.enemies.Count, s.projectiles.Count, s.towers.Count)
+	// (VFX level auto-adjustment removed — always render at full quality)
 
 	// 地图（渐变背景覆盖全屏，无需 Fill）
 	animTime := float64(s.frame) / 60.0
