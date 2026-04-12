@@ -1,0 +1,13 @@
+{
+  "_meta.locale": "zh",
+  "_meta.name": "简体中文",
+
+  "settings.title": "设    置",
+  "settings.sfx_volume": "音效音量",
+  "settings.bgm_volume": "音乐音量",
+  "settings.quality": "画    质",
+  "settings.quality.high": "高",
+  "settings.quality.medium": "中",
+  "settings.quality.low": "低",
+  "settings.back": "返回"
+}

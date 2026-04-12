@@ -1,0 +1,13 @@
+{
+  "_meta.locale": "en",
+  "_meta.name": "English",
+
+  "settings.title": "Settings",
+  "settings.sfx_volume": "SFX Volume",
+  "settings.bgm_volume": "BGM Volume",
+  "settings.quality": "Quality",
+  "settings.quality.high": "High",
+  "settings.quality.medium": "Med",
+  "settings.quality.low": "Low",
+  "settings.back": "Back"
+}

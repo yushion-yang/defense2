@@ -6,7 +6,7 @@ import "embed"
 
 // DataFS 配置文件系统（JSON 配置）。
 //
-//go:embed config/levels/*.json config/towers/*.json config/enemies/*.json config/wardens/*.json config/abilities/*.json config/systems/*.json config/visuals/*.json config/audio/*.json config/settings.json config/balance.json config/autoplay/*.json all:config/scenarios config/llm/*.json config/mascot/*.json
+//go:embed config/levels/*.json config/towers/*.json config/enemies/*.json config/wardens/*.json config/abilities/*.json config/systems/*.json config/visuals/*.json config/audio/*.json config/settings.json config/balance.json config/autoplay/*.json all:config/scenarios config/llm/*.json config/mascot/*.json config/i18n/*.json
 var DataFS embed.FS
 
 // AssetFS 资源文件系统（PNG 精灵 + WAV 音频）。

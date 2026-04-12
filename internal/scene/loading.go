@@ -13,6 +13,7 @@ import (
 	"defense2/internal/core/game"
 	"defense2/internal/core/mascot"
 	"defense2/internal/core/tower/abilities"
+	"defense2/internal/i18n"
 	"defense2/internal/render"
 	"defense2/internal/render/draw"
 	"defense2/internal/render/postprocess"
@@ -73,6 +74,11 @@ func (s *LoadingScene) Update() error {
 	switch s.phase {
 	case phaseConfigs:
 		s.statusText = "Loading configs..."
+		// i18n 必须在其他配置之前初始化
+		locale := LoadSettings().Locale
+		if err := i18n.Init(config.GetDataFS(), locale); err != nil {
+			log.Printf("i18n init: %v (continuing with fallback)", err)
+		}
 		render.InitGlobalIcons(config.GetAssetFS())
 		abilities.InitConfigAbilities()
 		config.LoadBalance()
