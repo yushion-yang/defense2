@@ -3,8 +3,8 @@
 // then renders everything in 1-2 DrawTriangles calls instead of
 // 12,000+ individual draw.FilledCircle/ThickLine calls.
 //
-// Pattern: same as particle.Pool — pre-allocated vertex/index slices,
-// quads for circles, stretched quads for lines, single white-pixel source.
+// Uses a pre-rendered circle texture (soft-edge radial gradient) so trail
+// dots render as smooth circles, not squares. No AntiAlias flag needed.
 package render
 
 import (
@@ -21,15 +21,66 @@ import (
 )
 
 // trailBatch collects trail geometry for batch rendering.
-// Not goroutine-safe (Ebitengine is single-threaded).
 var trailBatch struct {
-	// Circle dots (trail points + glow endpoints)
 	circVs []ebiten.Vertex
 	circIs []uint16
-	// Line segments (connectors between trail points)
 	lineVs []ebiten.Vertex
 	lineIs []uint16
 }
+
+// ── Circle texture (soft-edge radial gradient) ───────────────────────
+
+const circTexSize = 32 // 32x32 pre-rendered circle with soft edge
+
+var (
+	circTexOnce  sync.Once
+	circTexImage *ebiten.Image
+	// UV coords for sampling the circle center region
+	circU0, circV0, circU1, circV1 float32
+)
+
+func trailCircleTex() *ebiten.Image {
+	circTexOnce.Do(func() {
+		const s = circTexSize
+		circTexImage = ebiten.NewImage(s, s)
+		pix := make([]byte, s*s*4)
+		center := float64(s) / 2
+		maxR := center - 0.5 // leave half-pixel border
+
+		for y := 0; y < s; y++ {
+			for x := 0; x < s; x++ {
+				dx := float64(x) + 0.5 - center
+				dy := float64(y) + 0.5 - center
+				dist := math.Sqrt(dx*dx + dy*dy)
+
+				var alpha float64
+				if dist <= maxR-1.5 {
+					alpha = 1.0 // solid core
+				} else if dist <= maxR {
+					alpha = 1.0 - (dist-(maxR-1.5))/1.5 // smooth fade at edge
+				}
+				// else alpha = 0 (outside circle)
+
+				a := byte(alpha * 255)
+				off := (y*s + x) * 4
+				pix[off+0] = a // pre-multiplied white: R=A, G=A, B=A, A=A
+				pix[off+1] = a
+				pix[off+2] = a
+				pix[off+3] = a
+			}
+		}
+		circTexImage.WritePixels(pix)
+
+		// UV: sample full texture (0..circTexSize maps to SrcX/SrcY)
+		circU0 = 0
+		circV0 = 0
+		circU1 = float32(s)
+		circV1 = float32(s)
+	})
+	return circTexImage
+}
+
+// ── White pixel for line segments ────────────────────────────────────
 
 var (
 	trailWhiteOnce  sync.Once
@@ -48,17 +99,19 @@ func trailWhitePixel() *ebiten.Image {
 	return trailWhiteImage
 }
 
+// ── Init ─────────────────────────────────────────────────────────────
+
 func init() {
-	// Pre-allocate for worst case: 1024 projectiles × 6 trail points
-	const maxDots = 1024 * 7   // 6 trail + 1 glow per projectile
-	const maxLines = 1024 * 5  // up to 5 connector lines per projectile
+	const maxDots = 1024 * 7
+	const maxLines = 1024 * 5
 	trailBatch.circVs = make([]ebiten.Vertex, 0, maxDots*4)
 	trailBatch.circIs = make([]uint16, 0, maxDots*6)
 	trailBatch.lineVs = make([]ebiten.Vertex, 0, maxLines*4)
 	trailBatch.lineIs = make([]uint16, 0, maxLines*6)
 }
 
-// beginTrailBatch resets the batch buffers for a new frame.
+// ── Batch API ────────────────────────────────────────────────────────
+
 func beginTrailBatch() {
 	trailBatch.circVs = trailBatch.circVs[:0]
 	trailBatch.circIs = trailBatch.circIs[:0]
@@ -66,7 +119,7 @@ func beginTrailBatch() {
 	trailBatch.lineIs = trailBatch.lineIs[:0]
 }
 
-// addTrailDot adds a filled circle to the batch.
+// addTrailDot adds a soft circle to the batch using the circle texture.
 func addTrailDot(cx, cy, radius float32, clr color.RGBA) {
 	if clr.A == 0 || radius <= 0 {
 		return
@@ -82,15 +135,15 @@ func addTrailDot(cx, cy, radius float32, clr color.RGBA) {
 
 	idx := uint16(len(trailBatch.circVs))
 	trailBatch.circVs = append(trailBatch.circVs,
-		ebiten.Vertex{DstX: sx - r, DstY: sy - r, SrcX: 1, SrcY: 1, ColorR: cr, ColorG: cg, ColorB: cb, ColorA: ca},
-		ebiten.Vertex{DstX: sx + r, DstY: sy - r, SrcX: 2, SrcY: 1, ColorR: cr, ColorG: cg, ColorB: cb, ColorA: ca},
-		ebiten.Vertex{DstX: sx + r, DstY: sy + r, SrcX: 2, SrcY: 2, ColorR: cr, ColorG: cg, ColorB: cb, ColorA: ca},
-		ebiten.Vertex{DstX: sx - r, DstY: sy + r, SrcX: 1, SrcY: 2, ColorR: cr, ColorG: cg, ColorB: cb, ColorA: ca},
+		ebiten.Vertex{DstX: sx - r, DstY: sy - r, SrcX: circU0, SrcY: circV0, ColorR: cr, ColorG: cg, ColorB: cb, ColorA: ca},
+		ebiten.Vertex{DstX: sx + r, DstY: sy - r, SrcX: circU1, SrcY: circV0, ColorR: cr, ColorG: cg, ColorB: cb, ColorA: ca},
+		ebiten.Vertex{DstX: sx + r, DstY: sy + r, SrcX: circU1, SrcY: circV1, ColorR: cr, ColorG: cg, ColorB: cb, ColorA: ca},
+		ebiten.Vertex{DstX: sx - r, DstY: sy + r, SrcX: circU0, SrcY: circV1, ColorR: cr, ColorG: cg, ColorB: cb, ColorA: ca},
 	)
 	trailBatch.circIs = append(trailBatch.circIs, idx, idx+1, idx+2, idx, idx+2, idx+3)
 }
 
-// addTrailLine adds a thick line segment to the batch as a rotated quad.
+// addTrailLine adds a thick line segment as a rotated quad.
 func addTrailLine(x1, y1, x2, y2, width float32, clr color.RGBA) {
 	if clr.A == 0 || width <= 0 {
 		return
@@ -107,7 +160,6 @@ func addTrailLine(x1, y1, x2, y2, width float32, clr color.RGBA) {
 	if length < 0.001 {
 		return
 	}
-	// Perpendicular normal
 	nx := float32(-dy / length * float64(w))
 	ny := float32(dx / length * float64(w))
 
@@ -151,7 +203,6 @@ func collectTrail(p *projectile.Projectile) {
 		curX := float32(pt.X)
 		curY := float32(pt.Y)
 
-		// Connector line
 		if prevActive {
 			lineAlpha := prevAlpha
 			if alpha < lineAlpha {
@@ -165,10 +216,8 @@ func collectTrail(p *projectile.Projectile) {
 			addTrailLine(prevX, prevY, curX, curY, lineW, lineClr)
 		}
 
-		// Trail dot
 		addTrailDot(curX, curY, r, clr)
 
-		// Newest point glow (larger, same color)
 		if i == n-1 {
 			addTrailDot(curX, curY, r*1.5, color.RGBA{R: clr.R, G: clr.G, B: clr.B, A: clr.A / 3})
 		}
@@ -181,18 +230,16 @@ func collectTrail(p *projectile.Projectile) {
 }
 
 // flushTrailBatch renders all collected trail geometry.
+// No AntiAlias — the circle texture already has soft edges.
 func flushTrailBatch(screen *ebiten.Image) {
-	wp := trailWhitePixel()
-	opts := &ebiten.DrawTrianglesOptions{
-		AntiAlias: true,
-	}
-
-	// Lines first (behind dots)
+	// Lines: use white pixel, no AA needed for thin connectors
 	if len(trailBatch.lineVs) > 0 {
-		screen.DrawTriangles(trailBatch.lineVs, trailBatch.lineIs, wp, opts)
+		screen.DrawTriangles(trailBatch.lineVs, trailBatch.lineIs, trailWhitePixel(),
+			&ebiten.DrawTrianglesOptions{})
 	}
-	// Then dots (on top)
+	// Dots: use circle texture for smooth round shapes
 	if len(trailBatch.circVs) > 0 {
-		screen.DrawTriangles(trailBatch.circVs, trailBatch.circIs, wp, opts)
+		screen.DrawTriangles(trailBatch.circVs, trailBatch.circIs, trailCircleTex(),
+			&ebiten.DrawTrianglesOptions{})
 	}
 }
