@@ -5,6 +5,7 @@ package scene
 import (
 	gameAudio "defense2/internal/audio"
 	"defense2/internal/core/event"
+	"defense2/internal/core/mascot"
 
 	"github.com/hajimehoshi/ebiten/v2"
 )
@@ -13,6 +14,16 @@ import (
 type Scene interface {
 	Update() error             // 每帧逻辑更新
 	Draw(screen *ebiten.Image) // 每帧渲染
+}
+
+// MascotSnapshotProvider is implemented by scenes that provide game state for the mascot.
+type MascotSnapshotProvider interface {
+	MascotSnapshot() mascot.StageSnapshot
+}
+
+// MascotActionExecutor is implemented by scenes that can execute mascot actions.
+type MascotActionExecutor interface {
+	ExecuteMascotAction(action *mascot.MascotAction) bool
 }
 
 // Switcher 场景切换器接口，允许场景请求跳转到另一个场景。

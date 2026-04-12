@@ -32,6 +32,7 @@ import (
 	"defense2/internal/core/event"
 	"defense2/internal/core/game"
 	"defense2/internal/core/gamemap"
+	"defense2/internal/core/mascot"
 	"defense2/internal/core/gamemode"
 	"defense2/internal/core/item"
 	"defense2/internal/core/persistence"
@@ -90,6 +91,7 @@ type StageScene struct {
 	beams            *combat.BeamPool             // 光束视觉对象池
 	econ             economy.Config               // 经济配置
 	lives            int                          // 剩余生命值
+	maxLives         int                          // 初始生命值上限（吉祥物条件评估用）
 	gold             int                          // 当前金币
 	kills            int                          // 累计击杀数
 	towerDefs        []tower.TowerDef             // 可建造的塔类型列表
@@ -287,6 +289,7 @@ func NewStageSceneWithOpts(sw Switcher, opts StageOptions) *StageScene {
 		tutorial:        tut,
 		progressMgr:     pm,
 		lives:           diff.StartingLives,
+		maxLives:        diff.StartingLives,
 		gold:            startGold,
 		towerDefs:       filterUnlockedTowers(loadTowerDefsOrFallback(), pm),
 		selectedDef:     0,
@@ -328,6 +331,7 @@ func NewStageSceneWithOpts(sw Switcher, opts StageOptions) *StageScene {
 	}
 	if opts.Lives > 0 {
 		s.lives = opts.Lives
+		s.maxLives = opts.Lives
 	}
 	if opts.Waves > 0 {
 		spawner.MaxWaves = opts.Waves
@@ -387,6 +391,48 @@ func NewStageSceneWithOpts(sw Switcher, opts StageOptions) *StageScene {
 	s.bus = sw.EventBus()
 
 	return s
+}
+
+// MascotSnapshot returns a pure-value snapshot of the current stage state
+// for the mascot condition evaluation system.
+func (s *StageScene) MascotSnapshot() mascot.StageSnapshot {
+	return mascot.StageSnapshot{
+		Wave:        s.spawner.Wave,
+		MaxWaves:    s.spawner.MaxWaves,
+		Lives:       s.lives,
+		MaxLives:    s.maxLives,
+		Gold:        s.gold,
+		EnemyCount:  s.enemies.Count,
+		TowerCount:  s.towers.Count,
+		Kills:       s.kills,
+		MultiKill:   s.multiKillCount,
+		ElapsedSecs: s.session.ElapsedTime,
+		IsBossWave:  s.spawner.IsBossWave(),
+		WaveActive:  s.spawner.WaveActive,
+	}
+}
+
+// ExecuteMascotAction executes a mascot battle assistance action.
+// Returns true if the action was successfully performed.
+func (s *StageScene) ExecuteMascotAction(action *mascot.MascotAction) bool {
+	if action.Type != mascot.ActionKillWeakEnemy {
+		return false
+	}
+	// Find the weakest non-boss, non-dying active enemy.
+	var weakest *enemy.Enemy
+	s.enemies.Each(func(e *enemy.Enemy) {
+		if !e.Active || e.Boss || e.DyingTimer > 0 {
+			return
+		}
+		if weakest == nil || e.HP < weakest.HP {
+			weakest = e
+		}
+	})
+	if weakest == nil {
+		return false
+	}
+	s.enemies.Kill(weakest)
+	return true
 }
 
 // subscribeBus 注册所有事件总线订阅。

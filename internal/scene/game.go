@@ -3,11 +3,11 @@
 package scene
 
 import (
-	"fmt"
 	"image/color"
 	"log"
 	"runtime/debug"
 	"strconv"
+	"time"
 
 	gameAudio "defense2/internal/audio"
 	"defense2/internal/config"
@@ -57,6 +57,7 @@ type Game struct {
 	mascotAnim    *anim.Animator // 表情帧动画
 	mascotTime    float64        // 全局动画计时（idle bob 用）
 	prevSceneName string         // 上一帧场景名（避免每帧重复 SetScene）
+	sessionStart  time.Time      // 游戏启动时间（吉祥物 SessionSecs 用）
 }
 
 // HeadlessMode 自动对局模式开关: 跳过音效加载 + 直接切场景 + turbo tick。
@@ -111,6 +112,8 @@ func NewGame() *Game {
 	}
 	// TODO: load MascotShown from ProgressManager once it's accessible at Game level
 	g.mascot = mascot.NewGuide(mascotDialogs, nil)
+	g.mascot.InitConditions(mascot.DefaultConditions())
+	g.sessionStart = time.Now()
 
 	if !HeadlessMode {
 		g.mascotAnim = render.LoadMascotSprites(config.GetAssetFS())
@@ -244,11 +247,38 @@ func (g *Game) Update() error {
 			g.mascotAnim.Update(dt)
 		}
 
+		// Build game context for condition evaluation
+		ctx := mascot.GameContext{
+			SceneName:   g.currentSceneName(),
+			HourOfDay:   time.Now().Hour(),
+			SessionSecs: time.Since(g.sessionStart).Seconds(),
+		}
+		if provider, ok := g.current.(MascotSnapshotProvider); ok {
+			ctx.InStage = true
+			ctx.StageSnapshot = provider.MascotSnapshot()
+		}
+		g.mascot.UpdateContext(ctx)
+
+		// Route pending mascot actions to the active scene
+		if action := g.mascot.ConsumeAction(); action != nil {
+			if executor, ok := g.current.(MascotActionExecutor); ok {
+				if executor.ExecuteMascotAction(action) {
+					g.mascot.NotifyActionComplete(action.Type)
+				}
+			}
+		}
+
 		// 处理吉祥物点击（JustPressed 单次触发，适合 click-to-advance）
 		if inpututil.IsMouseButtonJustPressed(ebiten.MouseButtonLeft) {
 			mx, my := draw.CursorPos()
 			if hud.MascotHitTest(mx, my) {
-				g.mascot.ClickAdvance()
+				if g.mascot.HasActiveDialog() {
+					g.mascot.ClickAdvance()
+				} else if g.mascot.AbilityReady() {
+					g.mascot.RequestHelp()
+				} else {
+					g.mascot.Trigger("mascot_tap")
+				}
 			}
 		}
 	}
