@@ -39,6 +39,15 @@ var gameModes = []gameModeUI{
 	{"challenge", "挑战", "★", "特殊规则", "map_04", true},
 }
 
+func init() {
+	if game.DevMode {
+		gameModes = append(gameModes, gameModeUI{
+			ID: "test", Name: "测试", Icon: "⚙", Description: "开发测试场景",
+			DefaultMap: "map_01", ComingSoon: false,
+		})
+	}
+}
+
 // ── 难度定义 ────────────────────────────────────
 
 type difficultyUI struct {
@@ -235,6 +244,11 @@ func (s *SelectScene) startGame() {
 	// 战役模式进入关卡选择
 	if mode.ID == "campaign" {
 		s.switcher.SwitchScene(NewCampaignSelectScene(s.switcher))
+		return
+	}
+	// 测试模式进入测试场景选择器
+	if mode.ID == "test" {
+		s.switcher.SwitchScene(NewTestSelectScene(s.switcher))
 		return
 	}
 	// 其他模式直接进入 Stage（战灵在 Stage 内第一波倒计时结束时选择）
