@@ -7,6 +7,7 @@ import (
 
 	"defense2/internal/config"
 	"defense2/internal/core/game"
+	"defense2/internal/i18n"
 	"defense2/internal/render"
 	"defense2/internal/render/draw"
 	"defense2/internal/render/theme"
@@ -21,15 +22,22 @@ type testCategory struct {
 	Name string
 }
 
-var testCategories = []testCategory{
-	{"all", "全部"},
-	{"tower", "炮塔测试"},
-	{"enemy", "怪物测试"},
-	{"combo", "综合测试"},
-	{"ability", "能力测试"},
-	{"dps", "DPS测试"},
-	{"bench", "基准测试"},
-	{"custom", "自定义"},
+var testCategories []testCategory
+
+func initTestCategories() {
+	if len(testCategories) > 0 {
+		return
+	}
+	testCategories = []testCategory{
+		{"all", i18n.T("scene.test.cat.all")},
+		{"tower", i18n.T("scene.test.cat.tower")},
+		{"enemy", i18n.T("scene.test.cat.enemy")},
+		{"combo", i18n.T("scene.test.cat.combo")},
+		{"ability", i18n.T("scene.test.cat.ability")},
+		{"dps", i18n.T("scene.test.cat.dps")},
+		{"bench", i18n.T("scene.test.cat.bench")},
+		{"custom", i18n.T("scene.test.cat.custom")},
+	}
 }
 
 type testScenario struct {
@@ -104,6 +112,7 @@ type TestSelectScene struct {
 
 // NewTestSelectScene 创建测试场景选择器。
 func NewTestSelectScene(sw Switcher) *TestSelectScene {
+	initTestCategories()
 	s := &TestSelectScene{
 		switcher:    sw,
 		selectedIdx: -1,
@@ -314,10 +323,10 @@ func (s *TestSelectScene) Draw(screen *ebiten.Image) {
 	// ── 返回按钮 ──
 	backX, backY := float32(20), float32(16)
 	draw.RoundRect(screen, backX, backY, 70, 28, 12, theme.BtnSecondary)
-	fm.DrawCenteredText(screen, "<- 返回", float64(backX)+35, float64(backY)+6, theme.FontMD, theme.TextBody)
+	fm.DrawCenteredText(screen, i18n.T("scene.common.back"), float64(backX)+35, float64(backY)+6, theme.FontMD, theme.TextBody)
 
 	// ── 标题 ──
-	fm.DrawCenteredText(screen, "测试模式 — 选择场景", sw/2, 20, 22, theme.TextTitle)
+	fm.DrawCenteredText(screen, i18n.T("scene.test.title"), sw/2, 20, 22, theme.TextTitle)
 
 	// ── 分类标签 ──
 	tabW := 80.0
@@ -437,10 +446,10 @@ func (s *TestSelectScene) Draw(screen *ebiten.Image) {
 			btnClr = color.RGBA{R: 80, G: 200, B: 100, A: 255}
 		}
 		draw.RoundRect(screen, bx, by, bw, bh, 14, btnClr)
-		fm.DrawCenteredText(screen, "开始场景", sw/2, float64(by)+9, theme.FontLG, theme.TextTitle)
+		fm.DrawCenteredText(screen, i18n.T("scene.test.start"), sw/2, float64(by)+9, theme.FontLG, theme.TextTitle)
 	} else {
 		draw.RoundRect(screen, bx, by, bw, bh, 14, theme.BtnMuted)
-		fm.DrawCenteredText(screen, "请选择场景", sw/2, float64(by)+9, theme.FontLG, theme.TextLocked)
+		fm.DrawCenteredText(screen, i18n.T("scene.test.select_hint"), sw/2, float64(by)+9, theme.FontLG, theme.TextLocked)
 	}
 }
 

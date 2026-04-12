@@ -2,6 +2,8 @@
 // 用于开发调试：无失败、自定义金币/生命/波次、不触发事件。
 package gamemode
 
+import "defense2/internal/i18n"
+
 // TestMode 测试模式。
 type TestMode struct {
 	baseMode
@@ -41,7 +43,7 @@ func (m *TestMode) GetHUDConfig(_ *Context) HUDConfig {
 
 func (m *TestMode) GetEndData(ctx *Context) EndData {
 	return EndData{
-		ModeName: "测试模式",
+		ModeName: i18n.T("mode.test.name"),
 		Score:    0,
 		Extra: map[string]any{
 			"waves": ctx.Wave,

@@ -169,7 +169,7 @@ func chainTowerBuff(w *warden.Warden, s *ChainState, ctx *warden.TickContext) {
 		t.Buffs.Add(buff.Buff{
 			ID:        key,
 			Category:  buff.CatAura,
-			Source:    "聚能战灵",
+			Source:    "chain_warden",
 			Value:     bonus,
 			Duration:  -1,
 			Remaining: -1, // 永久，每帧刷新

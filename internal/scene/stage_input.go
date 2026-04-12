@@ -4,7 +4,6 @@
 package scene
 
 import (
-	"fmt"
 	"math"
 
 	gameAudio "defense2/internal/audio"
@@ -14,6 +13,7 @@ import (
 	"defense2/internal/core/game"
 	"defense2/internal/core/item"
 	"defense2/internal/core/tower"
+	"defense2/internal/i18n"
 	"defense2/internal/input"
 	"defense2/internal/render/draw"
 	"defense2/internal/render/hud"
@@ -61,11 +61,11 @@ func (s *StageScene) handleInput() {
 				s.achieveTracker.SessionItemsUsed++
 				if s.achieveTracker.SessionItemsUsed >= achievement.ThresholdOf("item_master") {
 					if s.achieveTracker.Unlock("item_master") {
-						hud.ShowToast("成就解锁: 道具大师")
+						hud.ShowToast(i18n.TF("game.achieve.unlocked", i18n.T("game.achieve.item_master")))
 					}
 				}
 			} else {
-				hud.ShowToast("请拖拽到炮塔上使用")
+				hud.ShowToast(i18n.T("game.item.drag_to_tower"))
 			}
 			s.dragItemActive = false
 			s.dragHoverTower = nil
@@ -234,7 +234,7 @@ func (s *StageScene) handleInput() {
 		if inpututil.IsKeyJustPressed(ebiten.KeyDelete) || inpututil.IsKeyJustPressed(ebiten.KeyBackspace) {
 			if s.hoveredEnemy != nil && s.hoveredEnemy.Active && !s.hoveredEnemy.IsDying() {
 				s.enemies.Kill(s.hoveredEnemy)
-				hud.ShowToast("已消灭: " + s.hoveredEnemy.Archetype)
+				hud.ShowToast(i18n.TF("game.debug.killed", s.hoveredEnemy.Archetype))
 			}
 		}
 		if inpututil.IsKeyJustPressed(ebiten.KeyD) {
@@ -242,13 +242,13 @@ func (s *StageScene) handleInput() {
 		}
 		if inpututil.IsKeyJustPressed(ebiten.KeyG) {
 			s.gold += 500
-			hud.ShowToast("+500 金币")
+			hud.ShowToast(i18n.T("game.debug.gold_500"))
 		}
 		if inpututil.IsKeyJustPressed(ebiten.KeyK) {
 			s.enemies.Each(func(e *enemy.Enemy) {
 				e.HP = 0
 			})
-			hud.ShowToast("清除全场敌人")
+			hud.ShowToast(i18n.T("game.debug.clear_enemies"))
 		}
 		if inpututil.IsKeyJustPressed(ebiten.KeyN) {
 			s.enemies.Each(func(e *enemy.Enemy) {
@@ -260,7 +260,7 @@ func (s *StageScene) handleInput() {
 			if s.spawner.Wave > prevWave {
 				s.onWaveTransition(prevWave)
 			}
-			hud.ShowToast("跳到下一波")
+			hud.ShowToast(i18n.T("game.debug.next_wave"))
 		}
 	}
 
@@ -451,7 +451,7 @@ func (s *StageScene) handleInput() {
 		if placed {
 			s.imode = modeIdle
 		} else if s.towerAtPixel(wtx, wty) != nil {
-			hud.ShowToast("此位置已有塔")
+			hud.ShowToast(i18n.T("game.build.occupied"))
 		}
 
 	case modeSpawnMenu:
@@ -463,7 +463,7 @@ func (s *StageScene) handleInput() {
 			if entries[idx].Label != "" {
 				label = entries[idx].Label
 			}
-			hud.ShowToast("点击地图放置: " + label)
+			hud.ShowToast(i18n.TF("game.spawn.place_hint", label))
 		} else {
 			s.imode = modeIdle
 			s.spawnMode = false
@@ -502,14 +502,14 @@ func (s *StageScene) handleInput() {
 				if e != nil {
 					e.Path = path
 				}
-				hud.ShowToast("动怪: " + label + "  (按Esc退出)")
+				hud.ShowToast(i18n.TF("game.spawn.moving", label))
 			} else {
 				// 造静怪：标记为木桩怪，不移动
 				e := s.enemies.Spawn(wtx, wty, 1000, 0, 0, s.spawnType, cfg)
 				if e != nil {
 					e.IsDummy = true
 				}
-				hud.ShowToast("静怪: " + label + "  (按Esc退出)")
+				hud.ShowToast(i18n.TF("game.spawn.static", label))
 			}
 		}
 
@@ -611,7 +611,7 @@ func (s *StageScene) tryUpgradeTower() {
 	s.gold -= spent
 	s.gameStats.GoldSpent += spent
 	s.bus.Emit(event.EvtTowerUpgraded, event.TowerUpgradedPayload{TowerKey: t.Key, Spent: spent})
-	s.showNotify(fmt.Sprintf("强度+10 (-$%d)", spent))
+	s.showNotify(i18n.TF("game.tower.str_up_10", spent))
 }
 
 // tryBulkUpgradeTower 为选中的塔一次性购买 50 点永久强度（花费 5 倍单次费用）。
@@ -631,7 +631,7 @@ func (s *StageScene) tryBulkUpgradeTower() {
 	s.gold -= cost
 	s.gameStats.GoldSpent += cost
 	s.bus.Emit(event.EvtTowerUpgraded, event.TowerUpgradedPayload{TowerKey: t.Key, Spent: cost})
-	s.showNotify(fmt.Sprintf("强度+50 (-$%d)", cost))
+	s.showNotify(i18n.TF("game.tower.str_up_50", cost))
 }
 
 // tryUnlockAbilitySlot 花钱解锁选中塔的下一个能力槽位并 roll 候选选项。
@@ -657,7 +657,7 @@ func (s *StageScene) tryUnlockAbilitySlot() {
 	t.Cost += cost  // 累计到塔总投资（影响卖出退款）
 	t.PaidUnlocks++ // 记录付费解锁次数（影响下次费用）
 	catName := tower.CategoryName(cat)
-	hud.ShowToast(fmt.Sprintf("解锁: %s (-$%d)", catName, cost))
+	hud.ShowToast(i18n.TF("game.tower.unlock_slot", catName, cost))
 	s.audioMgr.PlayAt(gameAudio.SFXUIOpen, gameAudio.VolUI)
 }
 
@@ -784,11 +784,11 @@ func (s *StageScene) openAbilityChoicePanel() {
 	}
 
 	catName := tower.CategoryName(nextCat)
-	s.choicePanel.Show("选择"+catName, opts, func(idx int, opt hud.ChoiceOption) {
+	s.choicePanel.Show(i18n.TF("game.ability.choose_cat", catName), opts, func(idx int, opt hud.ChoiceOption) {
 		abilType, _ := opt.Data.(string)
 		if abilType != "" && t.AddAbility(abilType) {
 			tower.ClearPendingChoice(t, nextCat)
-			hud.ShowToast("获得能力: " + opt.Label)
+			hud.ShowToast(i18n.TF("game.ability.gained", opt.Label))
 			s.bus.Emit(event.EvtTowerUpgraded, event.TowerUpgradedPayload{TowerKey: t.Key})
 		}
 	})
@@ -806,7 +806,7 @@ func (s *StageScene) openTestAbilityChoicePanel(t *tower.Tower) {
 		}
 	}
 	if len(emptyCats) == 0 {
-		hud.ShowToast("所有能力位已满")
+		hud.ShowToast(i18n.T("game.ability.all_full"))
 		return
 	}
 
@@ -822,12 +822,12 @@ func (s *StageScene) openTestAbilityChoicePanel(t *tower.Tower) {
 		count := len(tower.AbilitiesForCategory(cat))
 		opts[i] = hud.ChoiceOption{
 			Label:       tower.CategoryName(cat),
-			Description: fmt.Sprintf("共%d个能力可选", count),
+			Description: i18n.TF("game.ability.cat_count", count),
 			Tier:        "normal",
 			Data:        cat,
 		}
 	}
-	s.choicePanel.Show("选择能力类别", opts, func(idx int, opt hud.ChoiceOption) {
+	s.choicePanel.Show(i18n.T("game.ability.choose_category"), opts, func(idx int, opt hud.ChoiceOption) {
 		cat, _ := opt.Data.(int)
 		s.openTestCategoryAbilities(t, cat)
 	})
@@ -838,7 +838,7 @@ func (s *StageScene) openTestAbilityChoicePanel(t *tower.Tower) {
 func (s *StageScene) openTestCategoryAbilities(t *tower.Tower, cat int) {
 	choices := tower.AllChoicesForCategory(cat)
 	if len(choices) == 0 {
-		hud.ShowToast("该类别无可用能力")
+		hud.ShowToast(i18n.T("game.ability.none_available"))
 		return
 	}
 
@@ -859,11 +859,11 @@ func (s *StageScene) openTestCategoryAbilities(t *tower.Tower, cat int) {
 	}
 
 	catName := tower.CategoryName(cat)
-	s.choicePanel.Show("[测试] "+catName, opts, func(idx int, opt hud.ChoiceOption) {
+	s.choicePanel.Show(i18n.TF("game.ability.test_cat", catName), opts, func(idx int, opt hud.ChoiceOption) {
 		abilType, _ := opt.Data.(string)
 		if abilType != "" && t.AddAbility(abilType) {
 			tower.ClearPendingChoice(t, cat)
-			hud.ShowToast("获得能力: " + opt.Label)
+			hud.ShowToast(i18n.TF("game.ability.gained", opt.Label))
 			s.bus.Emit(event.EvtTowerUpgraded, event.TowerUpgradedPayload{TowerKey: t.Key})
 		}
 	})

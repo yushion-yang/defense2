@@ -3,10 +3,10 @@
 package hud
 
 import (
-	"fmt"
 	"strconv"
 
 	"defense2/internal/core/game"
+	"defense2/internal/i18n"
 	"defense2/internal/render"
 	"defense2/internal/render/draw"
 	"defense2/internal/render/theme"
@@ -55,7 +55,7 @@ func (o *DebugOverlay) DrawWorld(screen *ebiten.Image, towers, enemies interface
 	}
 	towerCount := countSlice(towers)
 	enemyCount := countSlice(enemies)
-	text := fmt.Sprintf("调试: %d塔 / %d敌", towerCount, enemyCount)
+	text := i18n.TF("hud.debug.entity_count", towerCount, enemyCount)
 	fm.DrawText(screen, text, 10, float64(game.ScreenHeight)-30, theme.FontCaption, theme.DebugTextClr)
 }
 
@@ -76,7 +76,7 @@ func (o *DebugOverlay) DrawHUD(screen *ebiten.Image, towerCount, enemyCount, bea
 	draw.FilledRect(screen, 0, barY, float32(game.ScreenWidth), barH, bgClr, false)
 
 	// 统计文本
-	stats := fmt.Sprintf("塔:%d  敌:%d  光束:%d  弹:%d", towerCount, enemyCount, beamCount, projCount)
+	stats := i18n.TF("hud.debug.stats", towerCount, enemyCount, beamCount, projCount)
 	textClr := theme.DebugStatsClr
 	fm.DrawCenteredText(screen, stats, float64(game.ScreenWidth)/2, float64(barY)+2, theme.FontCaption, textClr)
 }

@@ -227,7 +227,7 @@ func (s *LoadingScene) Draw(screen *ebiten.Image) {
 	// 标题
 	fm.DrawCenteredBoldText(screen, "Mini Tower Defense", sw/2, sh/2-50, 28, loadingTextMain)
 	// 副标题
-	fm.DrawCenteredText(screen, "迷你塔防", sw/2, sh/2-18, 14, loadingTextSub)
+	fm.DrawCenteredText(screen, i18n.T("scene.loading.subtitle"), sw/2, sh/2-18, 14, loadingTextSub)
 
 	// --- 进度条 ---
 	barX := cx - loadBarWidth/2

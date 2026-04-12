@@ -32,6 +32,7 @@ import (
 	"defense2/internal/core/event"
 	"defense2/internal/core/game"
 	"defense2/internal/core/gamemap"
+	"defense2/internal/i18n"
 	"defense2/internal/core/gamemode"
 	"defense2/internal/core/item"
 	"defense2/internal/core/mascot"
@@ -516,11 +517,11 @@ func (s *StageScene) subscribeBus() {
 		// 成就: 累计建塔 + 单局塔种类
 		s.achieveTracker.IncrTowersBuilt()
 		if s.achieveTracker.TotalTowersBuilt >= achievement.ThresholdOf("builder_10") {
-			s.unlockAchievement("builder_10", "塔防新手")
+			s.unlockAchievement("builder_10", i18n.T("game.achieve.builder_10"))
 		}
 		s.achieveTracker.SessionTowerTypes[p.TowerKey] = true
 		if len(s.achieveTracker.SessionTowerTypes) >= achievement.ThresholdOf("all_towers") {
-			s.unlockAchievement("all_towers", "全能战士")
+			s.unlockAchievement("all_towers", i18n.T("game.achieve.all_towers"))
 		}
 	})
 	event.OnTyped(bus, event.EvtTowerUpgraded, func(_ event.TowerUpgradedPayload) {
@@ -562,7 +563,7 @@ func (s *StageScene) subscribeBus() {
 				}
 			})
 			if newUnlocked > prevUnlocked && newPending > 0 {
-				hud.ShowToast(fmt.Sprintf("新能力位解锁! %d座塔可选择能力", newPending))
+				hud.ShowToast(i18n.TF("game.ability.new_slots", newPending))
 			}
 		}
 		if s.wardenReady && s.wardenUnit != nil {
@@ -582,7 +583,7 @@ func (s *StageScene) subscribeBus() {
 		s.tutorial.OnEvent("waveCleared")
 		// 成就: Endless 模式 50 波
 		if s.modeID == "endless" && p.Wave >= achievement.ThresholdOf("endless_50") {
-			s.unlockAchievement("endless_50", "不灭传说")
+			s.unlockAchievement("endless_50", i18n.T("game.achieve.endless_50"))
 		}
 	})
 
@@ -605,16 +606,16 @@ func (s *StageScene) subscribeBus() {
 		// 成就: 击杀数 + Boss + 金币
 		s.achieveTracker.SessionKills++
 		if s.achieveTracker.SessionKills >= achievement.ThresholdOf("centurion") {
-			s.unlockAchievement("centurion", "百杀")
+			s.unlockAchievement("centurion", i18n.T("game.achieve.centurion"))
 		}
 		if p.IsBoss {
-			s.unlockAchievement("first_boss", "首个Boss")
+			s.unlockAchievement("first_boss", i18n.T("game.achieve.first_boss"))
 		}
 		if s.gold > s.achieveTracker.SessionMaxGold {
 			s.achieveTracker.SessionMaxGold = s.gold
 		}
 		if s.achieveTracker.SessionMaxGold >= achievement.ThresholdOf("rich") {
-			s.unlockAchievement("rich", "富甲一方")
+			s.unlockAchievement("rich", i18n.T("game.achieve.rich"))
 		}
 	})
 }
@@ -622,7 +623,7 @@ func (s *StageScene) subscribeBus() {
 // unlockAchievement 尝试解锁成就并显示 Toast 提示。
 func (s *StageScene) unlockAchievement(id, name string) {
 	if s.achieveTracker.Unlock(id) {
-		hud.ShowToast("成就解锁: " + name)
+		hud.ShowToast(i18n.TF("game.achieve.unlocked", name))
 	}
 }
 
@@ -750,7 +751,7 @@ func (s *StageScene) drawItemDropsFly(screen *ebiten.Image) {
 // checkVictoryAchievements checks and unlocks all victory-related achievements.
 func (s *StageScene) checkVictoryAchievements() {
 	// first_win — any victory
-	s.unlockAchievement("first_win", "初次胜利")
+	s.unlockAchievement("first_win", i18n.T("game.achieve.first_win"))
 
 	// Star rating (same logic as result.go calcStars)
 	stars := 1
@@ -762,25 +763,25 @@ func (s *StageScene) checkVictoryAchievements() {
 
 	// perfect_star — any map 3 stars
 	if stars == 3 {
-		s.unlockAchievement("perfect_star", "完美主义")
+		s.unlockAchievement("perfect_star", i18n.T("game.achieve.perfect_star"))
 	}
 
 	// no_leak_hard — Hard difficulty, zero leaks
 	if s.diffID == "hard" && s.session.Stats.Leaked == 0 {
-		s.unlockAchievement("no_leak_hard", "零泄漏")
+		s.unlockAchievement("no_leak_hard", i18n.T("game.achieve.no_leak_hard"))
 	}
 
 	// speedrun — victory within 10 minutes
 	if s.session.ElapsedTime <= float64(achievement.ThresholdOf("speedrun")) {
-		s.unlockAchievement("speedrun", "速通")
+		s.unlockAchievement("speedrun", i18n.T("game.achieve.speedrun"))
 	}
 
 	// extreme_master — any Extreme victory
 	if s.diffID == "extreme" {
-		s.unlockAchievement("extreme_master", "大师")
+		s.unlockAchievement("extreme_master", i18n.T("game.achieve.extreme_master"))
 		// extreme_perfect — Extreme + 3 stars
 		if stars == 3 {
-			s.unlockAchievement("extreme_perfect", "完美大师")
+			s.unlockAchievement("extreme_perfect", i18n.T("game.achieve.extreme_perfect"))
 		}
 	}
 }
@@ -1057,7 +1058,7 @@ func (s *StageScene) trySellTower(px, py float64) {
 	render.SpawnGoldText(t.X, t.Y-10, refund)
 	s.selectedTower = nil
 	s.bus.Emit(event.EvtTowerSold, event.TowerSoldPayload{TowerKey: t.Key, Refund: refund})
-	s.showNotify(fmt.Sprintf("已卖出 +$%d", refund))
+	s.showNotify(i18n.TF("game.tower.sold", refund))
 }
 
 // showNotify 显示屏幕中央通知（通过 toast 系统，自动淡出）。
@@ -1067,37 +1068,37 @@ func (s *StageScene) showNotify(msg string) {
 
 // debugActions 返回调试面板按钮列表（仅测试模式使用）。
 func (s *StageScene) debugActions() []hud.DebugAction {
-	rangeLabel := "显示射程圈"
+	rangeLabel := i18n.T("game.debug.show_range")
 	if s.debugShowRange {
-		rangeLabel = "隐藏射程圈"
+		rangeLabel = i18n.T("game.debug.hide_range")
 	}
 	inSpawn := s.imode == modeSpawnMenu || s.imode == modeSpawnPlace
 
 	actions := []hud.DebugAction{
 		// ── 强度 ──
-		{Label: "强度", IsSection: true},
-		{Label: "全场塔 +50 强度", Action: func() {
+		{Label: i18n.T("game.debug.sec_str"), IsSection: true},
+		{Label: i18n.T("game.debug.str_plus50"), Action: func() {
 			s.towers.Each(func(t *tower.Tower) {
 				if t.Strength != nil {
 					t.Strength.AddPermanent(50)
 				}
 			})
 		}},
-		{Label: "全场塔 -50 强度", Action: func() {
+		{Label: i18n.T("game.debug.str_minus50"), Action: func() {
 			s.towers.Each(func(t *tower.Tower) {
 				if t.Strength != nil {
 					t.Strength.AddPermanent(-50)
 				}
 			})
 		}},
-		{Label: "全场塔强度重置", Action: func() {
+		{Label: i18n.T("game.debug.str_reset"), Action: func() {
 			s.towers.Each(func(t *tower.Tower) {
 				if t.Strength != nil {
 					t.Strength.ResetPermanent()
 				}
 			})
 		}},
-		{Label: "全场塔 +10000 强度", Action: func() {
+		{Label: i18n.T("game.debug.str_plus10k"), Action: func() {
 			s.towers.Each(func(t *tower.Tower) {
 				if t.Strength != nil {
 					t.Strength.AddPermanent(10000)
@@ -1110,11 +1111,11 @@ func (s *StageScene) debugActions() []hud.DebugAction {
 	// ── 战灵 ──
 	if s.wardenUnit != nil && s.wardenUnit.Active {
 		actions = append(actions,
-			hud.DebugAction{Label: "战灵", IsSection: true},
-			hud.DebugAction{Label: "战灵强度 +100", Action: func() {
+			hud.DebugAction{Label: i18n.T("game.debug.sec_warden"), IsSection: true},
+			hud.DebugAction{Label: i18n.T("game.debug.warden_str100"), Action: func() {
 				s.wardenUnit.SelfStrength += 100
 			}},
-			hud.DebugAction{Label: "战灵升级", Action: func() {
+			hud.DebugAction{Label: i18n.T("game.debug.warden_lvup"), Action: func() {
 				s.wardenUnit.SelfStrength += 50
 			}},
 		)
@@ -1122,16 +1123,16 @@ func (s *StageScene) debugActions() []hud.DebugAction {
 
 	// ── 经济 ──
 	actions = append(actions,
-		hud.DebugAction{Label: "经济", IsSection: true},
-		hud.DebugAction{Label: "+500 金币", Action: func() { s.gold += 500 }},
-		hud.DebugAction{Label: "+5000 金币", Action: func() { s.gold += 5000 }},
-		hud.DebugAction{Label: "金币归零", Action: func() { s.gold = 0 }},
+		hud.DebugAction{Label: i18n.T("game.debug.sec_economy"), IsSection: true},
+		hud.DebugAction{Label: i18n.T("game.debug.gold_500"), Action: func() { s.gold += 500 }},
+		hud.DebugAction{Label: i18n.T("game.debug.gold_5000"), Action: func() { s.gold += 5000 }},
+		hud.DebugAction{Label: i18n.T("game.debug.gold_zero"), Action: func() { s.gold = 0 }},
 	)
 
 	// ── 波次 ──
 	actions = append(actions,
-		hud.DebugAction{Label: "波次", IsSection: true},
-		hud.DebugAction{Label: "跳到下一波", Action: func() {
+		hud.DebugAction{Label: i18n.T("game.debug.sec_wave"), IsSection: true},
+		hud.DebugAction{Label: i18n.T("game.debug.next_wave"), Action: func() {
 			s.enemies.Each(func(e *enemy.Enemy) { e.HP = 0 })
 			s.spawner.WaveActive = false
 			prevWave := s.spawner.Wave
@@ -1140,17 +1141,17 @@ func (s *StageScene) debugActions() []hud.DebugAction {
 				s.onWaveTransition(prevWave)
 			}
 		}},
-		hud.DebugAction{Label: "清除全场敌人", Action: func() {
+		hud.DebugAction{Label: i18n.T("game.debug.clear_enemies"), Action: func() {
 			s.enemies.Each(func(e *enemy.Enemy) { e.HP = 0 })
 		}},
-		hud.DebugAction{Label: "生成 Boss", Action: func() { s.spawnBoss() }},
+		hud.DebugAction{Label: i18n.T("game.debug.spawn_boss"), Action: func() { s.spawnBoss() }},
 	)
 
 	// ── 造怪 ──
 	if inSpawn {
 		actions = append(actions,
-			hud.DebugAction{Label: "造怪", IsSection: true},
-			hud.DebugAction{Label: "退出造怪", Action: func() {
+			hud.DebugAction{Label: i18n.T("game.debug.sec_spawn"), IsSection: true},
+			hud.DebugAction{Label: i18n.T("game.debug.exit_spawn"), Action: func() {
 				s.imode = modeIdle
 				s.spawnMode = false
 				s.spawnType = ""
@@ -1158,14 +1159,14 @@ func (s *StageScene) debugActions() []hud.DebugAction {
 		)
 	} else {
 		actions = append(actions,
-			hud.DebugAction{Label: "造怪", IsSection: true},
-			hud.DebugAction{Label: "造静怪", Action: func() {
+			hud.DebugAction{Label: i18n.T("game.debug.sec_spawn"), IsSection: true},
+			hud.DebugAction{Label: i18n.T("game.debug.spawn_static"), Action: func() {
 				s.imode = modeSpawnMenu
 				s.spawnMode = true
 				s.spawnMoving = false
 				s.spawnType = ""
 			}},
-			hud.DebugAction{Label: "造动怪", Action: func() {
+			hud.DebugAction{Label: i18n.T("game.debug.spawn_moving"), Action: func() {
 				s.imode = modeSpawnMenu
 				s.spawnMode = true
 				s.spawnMoving = true
@@ -1176,26 +1177,26 @@ func (s *StageScene) debugActions() []hud.DebugAction {
 
 	// ── 塔操作 ──
 	actions = append(actions,
-		hud.DebugAction{Label: "塔操作", IsSection: true},
+		hud.DebugAction{Label: i18n.T("game.debug.sec_tower"), IsSection: true},
 	)
 
 	// ── 敌方 ──
 	actions = append(actions,
-		hud.DebugAction{Label: "敌方", IsSection: true},
-		hud.DebugAction{Label: "敌方全场减 50% HP", Action: func() {
+		hud.DebugAction{Label: i18n.T("game.debug.sec_enemy"), IsSection: true},
+		hud.DebugAction{Label: i18n.T("game.debug.enemy_half_hp"), Action: func() {
 			s.enemies.Each(func(e *enemy.Enemy) { e.HP *= 0.5 })
 		}},
 	)
 
 	// ── 显示 ──
 	actions = append(actions,
-		hud.DebugAction{Label: "显示", IsSection: true},
+		hud.DebugAction{Label: i18n.T("game.debug.sec_display"), IsSection: true},
 		hud.DebugAction{Label: rangeLabel, Action: func() { s.debugShowRange = !s.debugShowRange }},
 	)
 
 	// ── 场景快照 ──
 	actions = append(actions,
-		hud.DebugAction{Label: "场景快照", IsSection: true},
+		hud.DebugAction{Label: i18n.T("game.debug.sec_snapshot"), IsSection: true},
 		hud.DebugAction{Label: "Save Scenario", Action: func() {
 			s.saveNaming = true
 			s.saveNameBuf = ""
@@ -1204,11 +1205,11 @@ func (s *StageScene) debugActions() []hud.DebugAction {
 
 	// ── 配置审计 ──
 	actions = append(actions,
-		hud.DebugAction{Label: "配置审计", IsSection: true},
-		hud.DebugAction{Label: "能力装备检查", Action: func() {
+		hud.DebugAction{Label: i18n.T("game.debug.sec_audit"), IsSection: true},
+		hud.DebugAction{Label: i18n.T("game.debug.ability_audit"), Action: func() {
 			audit, err := config.AuditAbilities()
 			if err != nil {
-				hud.ShowToast("审计失败: " + err.Error())
+				hud.ShowToast(i18n.TF("game.debug.audit_failed", err.Error()))
 				return
 			}
 			msg := fmt.Sprintf("总%d 装备%d 储备%d", audit.Total, len(audit.Equipped), len(audit.NotEquipped))
@@ -1259,7 +1260,7 @@ func (s *StageScene) updateSaveNaming() {
 	// Escape = cancel
 	if inpututil.IsKeyJustPressed(ebiten.KeyEscape) {
 		s.saveNaming = false
-		hud.ShowToast("保存已取消")
+		hud.ShowToast(i18n.T("game.debug.save_cancelled"))
 	}
 }
 
@@ -1579,21 +1580,21 @@ func (s *StageScene) saveScenario(name string) {
 
 	data, err := json.MarshalIndent(sd, "", "  ")
 	if err != nil {
-		hud.ShowToast("保存失败: " + err.Error())
+		hud.ShowToast(i18n.TF("game.debug.save_failed", err.Error()))
 		return
 	}
 
 	path := filepath.Join("config", "scenarios", sd.ID+".json")
 	if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
-		hud.ShowToast("保存失败: " + err.Error())
+		hud.ShowToast(i18n.TF("game.debug.save_failed", err.Error()))
 		return
 	}
 	if err := os.WriteFile(path, data, 0o644); err != nil {
-		hud.ShowToast("保存失败: " + err.Error())
+		hud.ShowToast(i18n.TF("game.debug.save_failed", err.Error()))
 		return
 	}
 
-	hud.ShowToast(fmt.Sprintf("已保存: %s", path))
+	hud.ShowToast(i18n.TF("game.debug.saved", path))
 	fmt.Printf("Scenario saved: %s\n", path)
 }
 
@@ -2279,7 +2280,7 @@ func (s *StageScene) updatePlaying() {
 			}
 			// Overkill detection: damage > 2x MaxHP on non-boss
 			if e.MaxHP > 0 && damage/e.MaxHP > 2.0 && !e.Boss {
-				render.SpawnText(e.X, e.Y-20, "过量击杀", color.RGBA{R: 255, G: 215, B: 0, A: 255}, 16, 1.5)
+				render.SpawnText(e.X, e.Y-20, i18n.T("game.streak.overkill"), color.RGBA{R: 255, G: 215, B: 0, A: 255}, 16, 1.5)
 				particle.EmitDeathBurstLarge(s.particlePool, e.X, e.Y)
 				render.TriggerShake(2.0, 0.15)
 			}
@@ -2293,25 +2294,25 @@ func (s *StageScene) updatePlaying() {
 				s.achieveTracker.SessionMaxStreak = s.multiKillCount
 			}
 			if s.multiKillCount >= achievement.ThresholdOf("killstreak_20") {
-				s.unlockAchievement("killstreak_20", "连杀达人")
+				s.unlockAchievement("killstreak_20", i18n.T("game.achieve.killstreak_20"))
 			}
 			// Multi-kill tier feedback
 			cx := float64(game.ScreenWidth) / 2
 			cy := float64(game.ScreenHeight)/2 - 30
 			switch {
 			case s.multiKillCount == 3:
-				render.SpawnText(cx, cy, "×3 连杀!", color.RGBA{R: 255, G: 255, B: 255, A: 220}, 14, 1.2)
+				render.SpawnText(cx, cy, i18n.T("game.streak.x3"), color.RGBA{R: 255, G: 255, B: 255, A: 220}, 14, 1.2)
 			case s.multiKillCount == 5:
-				render.SpawnText(cx, cy, "×5 连杀!", color.RGBA{R: 255, G: 220, B: 60, A: 255}, 16, 1.5)
+				render.SpawnText(cx, cy, i18n.T("game.streak.x5"), color.RGBA{R: 255, G: 220, B: 60, A: 255}, 16, 1.5)
 				render.TriggerShake(1.5, 0.1)
 			case s.multiKillCount == 10:
-				render.SpawnText(cx, cy, "×10 超级连杀!", color.RGBA{R: 255, G: 140, B: 40, A: 255}, 18, 2.0)
+				render.SpawnText(cx, cy, i18n.T("game.streak.x10"), color.RGBA{R: 255, G: 140, B: 40, A: 255}, 18, 2.0)
 				render.TriggerShake(2.0, 0.15)
 			case s.multiKillCount == 20:
-				render.SpawnText(cx, cy, "×20 无双!", color.RGBA{R: 255, G: 60, B: 40, A: 255}, 22, 2.0)
+				render.SpawnText(cx, cy, i18n.T("game.streak.x20"), color.RGBA{R: 255, G: 60, B: 40, A: 255}, 22, 2.0)
 				render.TriggerShake(3.0, 0.2)
 			case s.multiKillCount == 50:
-				render.SpawnText(cx, cy, "×50 传说!", color.RGBA{R: 255, G: 215, B: 0, A: 255}, 24, 2.5)
+				render.SpawnText(cx, cy, i18n.T("game.streak.x50"), color.RGBA{R: 255, G: 215, B: 0, A: 255}, 24, 2.5)
 				s.timeScale.Trigger(0.3, 0.1, 0.3, 0.3)
 			}
 			// Kill audio + boss-specific feedback
@@ -2411,7 +2412,7 @@ func (s *StageScene) updatePlaying() {
 			s.checkVictoryAchievements()
 			// 显示新解锁提示
 			for _, name := range newUnlocks {
-				hud.ShowToast("解锁: " + name)
+				hud.ShowToast(i18n.TF("game.stage.unlocked", name))
 			}
 		} else if s.session.Status == gamemode.StatusDefeat {
 			s.state = stateDefeat
@@ -2525,7 +2526,7 @@ func (s *StageScene) Draw(screen *ebiten.Image) {
 			fname := filepath.Join("docs", "bug", "pic",
 				fmt.Sprintf("screenshot_%s.png", time.Now().Format("20060102_150405")))
 			saveImageAsync(img, fname)
-			hud.ShowToast("截图已保存")
+			hud.ShowToast(i18n.T("game.stage.screenshot_saved"))
 			log.Printf("screenshot saved: %s", fname)
 		}
 	}
@@ -2833,11 +2834,11 @@ func (s *StageScene) drawScene(screen *ebiten.Image) {
 		draw.RoundRect(screen, 0, 0, float32(game.ScreenWidth), float32(game.ScreenHeight), 0, theme.HUDGameOverlay)
 		if fm := render.GlobalFont(); fm != nil {
 			if s.state == stateVictory {
-				fm.DrawCenteredText(screen, "胜利!", float64(game.ScreenWidth)/2, float64(game.ScreenHeight)/2-20, 52, theme.HUDVictoryColor)
+				fm.DrawCenteredText(screen, i18n.T("game.stage.victory"), float64(game.ScreenWidth)/2, float64(game.ScreenHeight)/2-20, 52, theme.HUDVictoryColor)
 			} else {
-				fm.DrawCenteredText(screen, "失败!", float64(game.ScreenWidth)/2, float64(game.ScreenHeight)/2-20, 52, theme.HUDDefeatColor)
+				fm.DrawCenteredText(screen, i18n.T("game.stage.defeat"), float64(game.ScreenWidth)/2, float64(game.ScreenHeight)/2-20, 52, theme.HUDDefeatColor)
 			}
-			fm.DrawCenteredText(screen, fmt.Sprintf("击杀: %d  点击继续", s.kills), float64(game.ScreenWidth)/2, float64(game.ScreenHeight)/2+30, theme.FontH2, theme.TextMuted)
+			fm.DrawCenteredText(screen, i18n.TF("game.stage.kills_continue", s.kills), float64(game.ScreenWidth)/2, float64(game.ScreenHeight)/2+30, theme.FontH2, theme.TextMuted)
 		}
 	}
 }
@@ -2917,20 +2918,12 @@ func (s *StageScene) buildItemPanelCards() []hud.ItemCardVM {
 
 // attackStyleDesc 返回攻击方式的纯功能描述（不含数值）。
 func attackStyleDesc(abilType string) string {
-	m := map[string]string{
-		"enhance":     "一次性全面提升基础属性",
-		"scatter":     "发射多颗弹丸，锥形散布",
-		"wideBeam":    "宽光束穿透所有敌人",
-		"spinAoe":     "旋转范围伤害，内圈额外加伤",
-		"bounce":      "弹射多个敌人",
-		"splash":      "命中后对周围敌人造成溅射伤害",
-		"multiTarget": "同时攻击多个目标",
-		"radial":      "360度发射穿透弹，1.2倍射程",
+	key := "game.attack_desc." + abilType
+	label := i18n.T(key)
+	if label == key {
+		return ""
 	}
-	if d, ok := m[abilType]; ok {
-		return d
-	}
-	return ""
+	return label
 }
 
 // towerRoleTags 返回塔的角色标签和颜色。
@@ -2938,26 +2931,26 @@ func towerRoleTags(def tower.TowerDef) (string, color.RGBA) {
 	for _, ab := range def.Abilities {
 		switch ab {
 		case "onHitSlow":
-			return "控制·减速", color.RGBA{R: 80, G: 180, B: 220, A: 255}
+			return i18n.T("game.role.control_slow"), color.RGBA{R: 80, G: 180, B: 220, A: 255}
 		case "stun":
-			return "输出·眩晕", color.RGBA{R: 180, G: 120, B: 220, A: 255}
+			return i18n.T("game.role.output_stun"), color.RGBA{R: 180, G: 120, B: 220, A: 255}
 		case "bounce":
-			return "输出·连锁", color.RGBA{R: 220, G: 180, B: 80, A: 255}
+			return i18n.T("game.role.output_chain"), color.RGBA{R: 220, G: 180, B: 80, A: 255}
 		case "splash":
-			return "输出·溅射", color.RGBA{R: 220, G: 120, B: 80, A: 255}
+			return i18n.T("game.role.output_splash"), color.RGBA{R: 220, G: 120, B: 80, A: 255}
 		case "bleedDot", "burn":
-			return "输出·持续", color.RGBA{R: 220, G: 80, B: 80, A: 255}
+			return i18n.T("game.role.output_dot"), color.RGBA{R: 220, G: 80, B: 80, A: 255}
 		case "executionBonus", "percentHpDamage":
-			return "输出·斩杀", color.RGBA{R: 180, G: 60, B: 60, A: 255}
+			return i18n.T("game.role.output_execute"), color.RGBA{R: 180, G: 60, B: 60, A: 255}
 		case "damageUpAura", "attackSpeedAura":
-			return "辅助·光环", color.RGBA{R: 80, G: 200, B: 120, A: 255}
+			return i18n.T("game.role.support_aura"), color.RGBA{R: 80, G: 200, B: 120, A: 255}
 		case "poisonZone", "silenceZone":
-			return "控制·区域", color.RGBA{R: 100, G: 160, B: 200, A: 255}
+			return i18n.T("game.role.control_zone"), color.RGBA{R: 100, G: 160, B: 200, A: 255}
 		case "goldPassive":
-			return "经济", color.RGBA{R: 220, G: 200, B: 80, A: 255}
+			return i18n.T("game.role.economy"), color.RGBA{R: 220, G: 200, B: 80, A: 255}
 		}
 	}
-	return "输出", color.RGBA{R: 200, G: 200, B: 200, A: 200}
+	return i18n.T("game.role.output"), color.RGBA{R: 200, G: 200, B: 200, A: 200}
 }
 
 // towerTypeIcon 返回塔类型图标名。
@@ -3070,13 +3063,13 @@ func (s *StageScene) buildWardenPanelData() hud.WardenPanelData {
 	if cfg.GrowthOnKill > 0 || cfg.GrowthOnWaveClear > 0 {
 		parts := ""
 		if cfg.GrowthOnKill > 0 {
-			parts += fmt.Sprintf("击杀+%.0f", cfg.GrowthOnKill)
+			parts += i18n.TF("game.warden.growth_kill_val", cfg.GrowthOnKill)
 		}
 		if cfg.GrowthOnWaveClear > 0 {
 			if parts != "" {
 				parts += " "
 			}
-			parts += fmt.Sprintf("通波+%.0f", cfg.GrowthOnWaveClear)
+			parts += i18n.TF("game.warden.growth_wave_val", cfg.GrowthOnWaveClear)
 		}
 		d.GrowthDesc = parts
 	}
@@ -3273,7 +3266,7 @@ func (s *StageScene) onWaveTransition(prevWave int) {
 		perfect := s.lives == s.waveLivesSnapshot && result.PerfectBonus > 0
 		if perfect {
 			render.SpawnText(float64(game.ScreenWidth)/2, float64(game.ScreenHeight)/2-50,
-				"完美!", color.RGBA{255, 215, 0, 255}, 20, 2.0)
+				i18n.T("game.stage.perfect"), color.RGBA{255, 215, 0, 255}, 20, 2.0)
 		}
 		s.showNotify(result.Message)
 

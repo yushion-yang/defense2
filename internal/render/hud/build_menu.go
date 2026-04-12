@@ -6,6 +6,7 @@ import (
 	"image/color"
 	"strconv"
 
+	"defense2/internal/i18n"
 	"defense2/internal/render"
 	"defense2/internal/render/draw"
 	"defense2/internal/render/theme"
@@ -105,10 +106,10 @@ func DrawBuildMenu(screen *ebiten.Image, d BuildMenuData) {
 
 	titleX := float64(m.panelX) + float64(bpPadX)
 	titleY := float64(m.panelY) + 8
-	fm.DrawBoldText(screen, "建造炮塔", titleX, titleY, theme.FontLG, theme.TextTitle)
+	fm.DrawBoldText(screen, i18n.T("hud.build.title"), titleX, titleY, theme.FontLG, theme.TextTitle)
 
 	closeX := float64(m.panelX) + float64(m.panelW) - float64(bpPadX) - 40
-	fm.DrawText(screen, "关闭", closeX, titleY+2, theme.FontMD, theme.TextMuted)
+	fm.DrawText(screen, i18n.T("hud.build.close"), closeX, titleY+2, theme.FontMD, theme.TextMuted)
 
 	for i, card := range d.Cards {
 		col := i % bpCols
@@ -206,7 +207,7 @@ func drawVariantCard(screen *ebiten.Image, fm *render.FontManager, card BuildCar
 	fm.DrawText(screen, card.RoleTag, nameX, nameY+18, theme.FontXS, card.RoleColor)
 
 	// "选择能力后" tag at bottom-left
-	fm.DrawText(screen, "选择能力后", nameX, float64(cy)+float64(bpCardH)-16, theme.FontXS,
+	fm.DrawText(screen, i18n.T("hud.build.after_ability"), nameX, float64(cy)+float64(bpCardH)-16, theme.FontXS,
 		color.RGBA{R: 120, G: 140, B: 170, A: 140})
 
 	// Sprite preview (right side, same as buildable cards)

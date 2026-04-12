@@ -8,6 +8,7 @@ import (
 
 	"defense2/internal/config"
 	"defense2/internal/core/persistence"
+	"defense2/internal/i18n"
 	"defense2/internal/render/hud"
 )
 
@@ -25,14 +26,12 @@ var wardenOrder = []string{"prince", "core", "chain", "skystrike", "envoy"}
 
 // categoryName 将 config category 转为显示名。
 func categoryName(cat string) string {
-	switch cat {
-	case "mobile":
-		return "移动型"
-	case "indirect":
-		return "间接型"
-	default:
+	key := "game.warden.cat." + cat
+	label := i18n.T(key)
+	if label == key {
 		return cat
 	}
+	return label
 }
 
 // BuildWardenOptions 从 wardens.json 配置构建选择列表。
@@ -40,7 +39,7 @@ func categoryName(cat string) string {
 func BuildWardenOptions(pm ...*persistence.ProgressManager) []hud.WardenOption {
 	cfgs, err := config.LoadWardenConfigs()
 	if err != nil {
-		return []hud.WardenOption{{Key: "none", Name: "纯塔挑战", Category: "-", Description: "不选择战灵，纯靠塔防御。", Color: color.RGBA{R: 120, G: 120, B: 130, A: 255}}}
+		return []hud.WardenOption{{Key: "none", Name: i18n.T("game.warden.none_name"), Category: "-", Description: i18n.T("game.warden.none_desc"), Color: color.RGBA{R: 120, G: 120, B: 130, A: 255}}}
 	}
 
 	var mgr *persistence.ProgressManager
@@ -57,11 +56,11 @@ func BuildWardenOptions(pm ...*persistence.ProgressManager) []hud.WardenOption {
 		clr := wardenColors[key]
 		growthKill := "-"
 		if c.GrowthOnKill > 0 {
-			growthKill = fmt.Sprintf("+%.0f 强度", c.GrowthOnKill)
+			growthKill = fmt.Sprintf("+%.0f %s", c.GrowthOnKill, i18n.T("game.warden.str"))
 		}
 		growthWave := "-"
 		if c.GrowthOnWaveClear > 0 {
-			growthWave = fmt.Sprintf("+%.0f 强度", c.GrowthOnWaveClear)
+			growthWave = fmt.Sprintf("+%.0f %s", c.GrowthOnWaveClear, i18n.T("game.warden.str"))
 		}
 
 		locked := false
@@ -70,7 +69,7 @@ func BuildWardenOptions(pm ...*persistence.ProgressManager) []hud.WardenOption {
 			locked = true
 			lockReason = persistence.UnlockRequirement("warden", key)
 			if lockReason == "" {
-				lockReason = "该战灵尚未解锁"
+				lockReason = i18n.T("game.warden.locked")
 			}
 		}
 
@@ -103,9 +102,9 @@ func BuildWardenOptions(pm ...*persistence.ProgressManager) []hud.WardenOption {
 	// "不选" 选项
 	opts = append(opts, hud.WardenOption{
 		Key:         "none",
-		Name:        "纯塔挑战",
+		Name:        i18n.T("game.warden.none_name"),
 		Category:    "-",
-		Description: "不选择战灵，纯靠塔防御。",
+		Description: i18n.T("game.warden.none_desc"),
 		Color:       color.RGBA{R: 120, G: 120, B: 130, A: 255},
 	})
 	return opts

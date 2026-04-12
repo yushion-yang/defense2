@@ -20,6 +20,7 @@ import (
 	"defense2/internal/config"
 	"defense2/internal/core/enemy"
 	tel "defense2/internal/core/telemetry"
+	"defense2/internal/i18n"
 )
 
 const damageCapFlashDuration = 0.3 // 伤害上限触发视觉时长(秒)
@@ -78,21 +79,21 @@ func ApplyDamage(input DamageInput) DamageResult {
 		if e.IsUntargetable {
 			result.Blocked = true
 			result.BlockedReason = "untargetable"
-			e.SetFloatText("免伤", 160, 80, 255)
+			e.SetFloatText(i18n.T("combat.damage_immune"), 160, 80, 255)
 			tel.T.Record("pipeline", "immunity_block_untargetable")
 			return result
 		}
 		if e.IsInvincible {
 			result.Blocked = true
 			result.BlockedReason = "invincible"
-			e.SetFloatText("免伤", 160, 80, 255)
+			e.SetFloatText(i18n.T("combat.damage_immune"), 160, 80, 255)
 			tel.T.Record("pipeline", "immunity_block_invincible")
 			return result
 		}
 		if e.IsDamageImmune {
 			result.Blocked = true
 			result.BlockedReason = "damageImmune"
-			e.SetFloatText("免伤", 160, 80, 255)
+			e.SetFloatText(i18n.T("combat.damage_immune"), 160, 80, 255)
 			tel.T.Record("pipeline", "immunity_block_immune")
 			return result
 		}
@@ -157,7 +158,7 @@ func ApplyDamage(input DamageInput) DamageResult {
 		}
 		if capped {
 			e.DamageCapHit = damageCapFlashDuration
-			e.SetFloatText("上限", 255, 180, 40)
+			e.SetFloatText(i18n.T("combat.damage_cap"), 255, 180, 40)
 		}
 	}
 	result.AfterDamageCap = damage

@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"image/color"
 
+	"defense2/internal/i18n"
 	"defense2/internal/render"
 	"defense2/internal/render/draw"
 	"defense2/internal/render/theme"
@@ -90,7 +91,7 @@ func DrawItemPanel(screen *ebiten.Image, d ItemPanelData) {
 	// Title
 	titleX := float64(m.panelX) + float64(ipPadX)
 	titleY := float64(m.panelY) + 6
-	fm.DrawBoldText(screen, "道具", titleX, titleY, theme.FontLG, theme.TextTitle)
+	fm.DrawBoldText(screen, i18n.T("hud.item.title"), titleX, titleY, theme.FontLG, theme.TextTitle)
 
 	// Cards
 	for i, card := range d.Cards {

@@ -25,6 +25,7 @@ var i18nAllowedPaths = []string{
 	filepath.Join("internal", "scene", "audio_preview.go"),// 开发工具
 	filepath.Join("internal", "scene", "vfx_preview.go"),  // 开发工具
 	filepath.Join("internal", "scene", "wave_preview.go"), // 开发工具
+	filepath.Join("internal", "scene", "test_select.go"),  // 测试模式选择器（开发工具）
 	filepath.Join("cmd"),                         // CLI 入口
 }
 
@@ -33,7 +34,12 @@ var i18nAllowedLinePatterns = []*regexp.Regexp{
 	regexp.MustCompile(`i18n\.T\(`),      // 已使用 i18n.T()
 	regexp.MustCompile(`i18n\.TF\(`),     // 已使用 i18n.TF()
 	regexp.MustCompile(`log\.Printf?\(`), // log 语句
-	regexp.MustCompile(`fmt\.Errorf?\(`), // 错误消息（内部）
+	regexp.MustCompile(`fmt\.Errorf?\(`),  // 错误消息（内部）
+	regexp.MustCompile(`fmt\.Printf?\(`), // debug 打印（内部）
+	regexp.MustCompile(`fmt\.Sprintf\(`),            // 格式化（内部，debug用）
+	regexp.MustCompile(`lines\s*=\s*append\(lines`), // debug info panel 行（drawEnemyInfoPanel）
+	regexp.MustCompile(`speedInfo\s*\+=`),           // debug speed info 拼接
+	regexp.MustCompile(`label\s*\+=`),               // debug label 拼接
 	regexp.MustCompile(`//`),             // 行内注释
 	regexp.MustCompile(`t\.Fatalf?\(`),   // 测试断言
 	regexp.MustCompile(`t\.Errorf?\(`),   // 测试断言

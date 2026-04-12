@@ -8,6 +8,7 @@ import (
 	"sort"
 
 	"defense2/internal/config"
+	"defense2/internal/i18n"
 )
 
 // MaxAbilitySlots 最大能力槽位数（6 大类别各一个）。
@@ -290,22 +291,22 @@ func AbilitiesForCategory(category int) []*config.AbilityDef {
 	return result
 }
 
-// CategoryName 返回类别的中文名称。
+// CategoryName 返回类别的本地化名称。
 func CategoryName(cat int) string {
 	switch cat {
 	case config.AbilityCatAttack:
-		return "攻击模式"
+		return i18n.T("tower.category.attack")
 	case config.AbilityCatCC:
-		return "控制效果"
+		return i18n.T("tower.category.cc")
 	case config.AbilityCatDamage:
-		return "命中加伤"
+		return i18n.T("tower.category.damage")
 	case config.AbilityCatBuff:
-		return "增益光环"
+		return i18n.T("tower.category.buff")
 	case config.AbilityCatDoT:
-		return "持续伤害"
+		return i18n.T("tower.category.dot")
 	case config.AbilityCatZone:
-		return "范围效果"
+		return i18n.T("tower.category.zone")
 	default:
-		return "未知"
+		return i18n.T("tower.category.unknown")
 	}
 }

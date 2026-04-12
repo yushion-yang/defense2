@@ -7,6 +7,7 @@ import (
 	"defense2/internal/core/buff"
 	"defense2/internal/core/enemy"
 	tel "defense2/internal/core/telemetry"
+	"defense2/internal/i18n"
 )
 
 // MinSpeedRatio 返回全局减速下限（从 balance.json 实时读取，不再冻结于 init 时刻）。
@@ -18,7 +19,7 @@ func MinSpeedRatio() float64 { return config.GlobalBalance().Combat.MinSpeedRati
 func ApplyStun(e *enemy.Enemy, duration float64, source string) bool {
 	// 控制免疫检查（archetype flags + BuffList）
 	if e.IsControlImmune || e.IsStunImmune || e.HasControlImmunity() {
-		e.SetFloatText("免疫", 220, 60, 60)
+		e.SetFloatText(i18n.T("combat.immune"), 220, 60, 60)
 		return false
 	}
 
@@ -38,7 +39,7 @@ func ApplyStun(e *enemy.Enemy, duration float64, source string) bool {
 		Remaining: actualDuration,
 	})
 	if !wasStunned {
-		e.SetFloatText("眩晕", 255, 220, 60)
+		e.SetFloatText(i18n.T("combat.stun"), 255, 220, 60)
 	}
 	tel.T.Record("cc", "stun")
 	return true
@@ -51,9 +52,9 @@ func ApplySlow(e *enemy.Enemy, factor, duration float64, source string) bool {
 	// 控制免疫检查（archetype flags + BuffList）
 	if e.IsControlImmune || e.IsSlowImmune || e.HasControlImmunity() {
 		if e.IsControlImmune || e.HasControlImmunity() {
-			e.SetFloatText("免疫", 220, 60, 60)
+			e.SetFloatText(i18n.T("combat.immune"), 220, 60, 60)
 		} else {
-			e.SetFloatText("免疫", 60, 180, 200)
+			e.SetFloatText(i18n.T("combat.immune"), 60, 180, 200)
 		}
 		return false
 	}
@@ -87,7 +88,7 @@ func ApplySlow(e *enemy.Enemy, factor, duration float64, source string) bool {
 	})
 	e.Speed = e.BaseSpeed * factor
 	if !hasExisting {
-		e.SetFloatText("减速", 60, 180, 255)
+		e.SetFloatText(i18n.T("combat.slow"), 60, 180, 255)
 	}
 	tel.T.Record("cc", "slow")
 	return true

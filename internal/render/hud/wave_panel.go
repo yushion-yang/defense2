@@ -7,6 +7,7 @@ import (
 	"strconv"
 
 	"defense2/internal/core/game"
+	"defense2/internal/i18n"
 	"defense2/internal/render"
 	"defense2/internal/render/draw"
 	"defense2/internal/render/theme"
@@ -113,20 +114,20 @@ func DrawWavePanel(screen *ebiten.Image, d WavePanelData, state *WavePanelState)
 		y := float64(handleY) + float64(wpPad)
 
 		// 波次号
-		waveTxt := strconv.Itoa(d.WaveNum) + "/" + strconv.Itoa(d.MaxWaves) + "波"
+		waveTxt := i18n.TF("hud.wavepanel.wave_status", d.WaveNum, d.MaxWaves)
 		fm.DrawBoldText(screen, waveTxt, x, y, theme.FontH2, theme.ResWaves)
 		y += float64(wpLineH)
 
 		// 场上敌人
-		enemyTxt := "场上: " + strconv.Itoa(d.EnemyCount)
+		enemyTxt := i18n.TF("hud.wavepanel.on_field", d.EnemyCount)
 		fm.DrawText(screen, enemyTxt, x, y, theme.FontCaption, theme.TextBody)
 		y += float64(wpLineH)
 
 		// 下一波预览
 		if d.NextWaveCount > 0 && !d.AllDone {
-			nextTxt := "下一波: " + strconv.Itoa(d.NextWaveCount) + "怪"
+			nextTxt := i18n.TF("hud.wavepanel.next_wave", d.NextWaveCount)
 			if d.NextWaveBoss {
-				nextTxt += " [首领]"
+				nextTxt += " " + i18n.T("hud.wavepanel.boss_tag")
 			}
 			clr := theme.TextMuted
 			if d.NextWaveBoss {
@@ -145,7 +146,7 @@ func DrawWavePanel(screen *ebiten.Image, d WavePanelData, state *WavePanelState)
 				y += float64(wpLineH)
 			}
 		} else if d.AllDone {
-			fm.DrawText(screen, "最终波!", x, y, theme.FontCaption,
+			fm.DrawText(screen, i18n.T("hud.wavepanel.final_wave"), x, y, theme.FontCaption,
 				color.RGBA{R: 255, G: 215, B: 0, A: 255})
 		}
 	}
@@ -156,7 +157,7 @@ func DrawWavePanel(screen *ebiten.Image, d WavePanelData, state *WavePanelState)
 
 	hx := float64(handleX) + 8
 	hy := float64(handleY) + 8
-	waveLbl := strconv.Itoa(d.WaveNum) + "波"
+	waveLbl := i18n.TF("hud.wavepanel.wave_short", d.WaveNum)
 	fm.DrawBoldText(screen, waveLbl, hx, hy, theme.FontBody, theme.ResWaves)
 
 	// 箭头

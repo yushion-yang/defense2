@@ -6,6 +6,7 @@ import (
 	"image/color"
 
 	"defense2/internal/core/game"
+	"defense2/internal/i18n"
 	"defense2/internal/render"
 	"defense2/internal/render/draw"
 	"defense2/internal/render/theme"
@@ -96,7 +97,7 @@ func DrawDebugPanel(screen *ebiten.Image, d DebugPanelData) {
 	// Title + close button（固定在顶部，不滚动）
 	ix := float64(panelX) + float64(debugPanelPad)
 	iy := float64(panelY) + float64(debugPanelPad)
-	fm.DrawBoldText(screen, "调试面板", ix, iy, theme.FontMD, color.RGBA{R: 120, G: 180, B: 255, A: 255})
+	fm.DrawBoldText(screen, i18n.T("hud.debug.panel_title"), ix, iy, theme.FontMD, color.RGBA{R: 120, G: 180, B: 255, A: 255})
 
 	closeX := float64(panelX) + float64(panelW) - float64(debugPanelPad) - float64(debugCloseSize)
 	closeY := iy

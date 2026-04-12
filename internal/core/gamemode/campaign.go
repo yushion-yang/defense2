@@ -2,7 +2,7 @@
 // 标准模式：通过全部波次即胜利。波次通关有金币奖励和完美波次奖励。
 package gamemode
 
-import "fmt"
+import "defense2/internal/i18n"
 
 // CampaignMode 战役模式。
 type CampaignMode struct {
@@ -34,7 +34,7 @@ func (m *CampaignMode) OnWaveCleared(wave int, _ *Context) WaveClearResult {
 	return WaveClearResult{
 		BonusGold:    bonus,
 		PerfectBonus: perfect,
-		Message:      fmt.Sprintf("第%d波通关! +$%d", wave, bonus),
+		Message:      i18n.TF("mode.wave_clear", wave, bonus),
 	}
 }
 
@@ -48,7 +48,7 @@ func (m *CampaignMode) GetScore(ctx *Context) int {
 
 func (m *CampaignMode) GetEndData(ctx *Context) EndData {
 	return EndData{
-		ModeName: "战役模式",
+		ModeName: i18n.T("mode.campaign.name"),
 		Score:    m.GetScore(ctx),
 		Extra: map[string]any{
 			"waves":      ctx.Wave,

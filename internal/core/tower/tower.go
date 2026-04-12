@@ -7,6 +7,7 @@ import (
 	"defense2/internal/core/buff"
 	"defense2/internal/core/enemy"
 	"defense2/internal/core/strength"
+	"defense2/internal/i18n"
 )
 
 // StrengthBuyCost 返回购买强度的金币花费（从 balance.json 实时读取）。
@@ -219,18 +220,10 @@ var abilitySpriteMap = map[string]string{
 	AbilityBarrage:     "gatling",
 }
 
-// abilitySpriteLabels 精灵标识 → 中文名映射。
-var abilitySpriteLabels = map[string]string{
-	"sentinel": "哨兵",
-	"fortress": "堡垒",
-	"shotgun":  "霰弹",
-	"prism":    "棱光",
-	"cyclone":  "旋刃",
-	"ricochet": "链弹",
-	"mortar":   "轰炸",
-	"hydra":    "多管",
-	"nova":     "星爆",
-	"gatling":  "加特林",
+// spriteLabelKeys 精灵标识列表（运行时通过 i18n.T 查询本地化名称）。
+var spriteLabelKeys = []string{
+	"sentinel", "fortress", "shotgun", "prism", "cyclone",
+	"ricochet", "mortar", "hydra", "nova", "gatling",
 }
 
 // AbilitySpriteKey 根据攻击能力类型返回精灵资源标识。
@@ -241,10 +234,7 @@ func AbilitySpriteKey(abilityType string) string {
 	return "sentinel"
 }
 
-// SpriteLabelFor 返回精灵标识对应的中文名称。
+// SpriteLabelFor 返回精灵标识对应的本地化名称。
 func SpriteLabelFor(spriteKey string) string {
-	if label, ok := abilitySpriteLabels[spriteKey]; ok {
-		return label
-	}
-	return "哨兵"
+	return i18n.T("tower.sprite." + spriteKey)
 }

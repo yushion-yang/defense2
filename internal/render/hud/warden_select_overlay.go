@@ -3,10 +3,10 @@
 package hud
 
 import (
-	"fmt"
 	"image/color"
 
 	"defense2/internal/core/game"
+	"defense2/internal/i18n"
 	"defense2/internal/render"
 	"defense2/internal/render/draw"
 	"defense2/internal/render/theme"
@@ -180,8 +180,8 @@ func (o *WardenSelectOverlay) Draw(screen *ebiten.Image) {
 	draw.FilledRect(screen, 0, 0, float32(sw), float32(sh), theme.HUDGameOverlay, false)
 
 	// 标题
-	fm.DrawCenteredBoldText(screen, "选择你的战灵", sw/2, 20, 22, theme.TextTitle)
-	fm.DrawCenteredText(screen, "选择最适合的战灵 — 或不选，挑战纯塔模式", sw/2, 50, 11, theme.TextMuted)
+	fm.DrawCenteredBoldText(screen, i18n.T("hud.wardensel.title"), sw/2, 20, 22, theme.TextTitle)
+	fm.DrawCenteredText(screen, i18n.T("hud.wardensel.subtitle"), sw/2, 50, 11, theme.TextMuted)
 
 	// 左侧列表
 	for i, opt := range o.options {
@@ -217,12 +217,12 @@ func (o *WardenSelectOverlay) Draw(screen *ebiten.Image) {
 
 		if locked {
 			fm.DrawBoldText(screen, opt.Name, float64(x)+12, float64(y)+8, theme.FontLG, nameClr)
-			fm.DrawText(screen, "[ 锁定 ]", float64(x)+12, float64(y)+26, theme.FontXS, theme.TextLocked)
+			fm.DrawText(screen, i18n.T("hud.wardensel.locked"), float64(x)+12, float64(y)+26, theme.FontXS, theme.TextLocked)
 		} else {
 			fm.DrawBoldText(screen, opt.Name, float64(x)+12, float64(y)+8, theme.FontLG, nameClr)
 			if opt.Category != "-" {
 				catClr := theme.TextMuted
-				if opt.Category == "移动型" {
+				if opt.Category == i18n.T("hud.wardensel.cat_mobile") {
 					catClr = color.RGBA{R: 100, G: 200, B: 130, A: 200}
 				} else {
 					catClr = color.RGBA{R: 200, G: 160, B: 100, A: 200}
@@ -245,7 +245,7 @@ func (o *WardenSelectOverlay) Draw(screen *ebiten.Image) {
 		confirmClr = color.RGBA{R: 60, G: 180, B: 100, A: 255}
 	}
 	draw.RoundRect(screen, float32(btnStartX), float32(woBtnY), float32(woBtnW), float32(woBtnH), 14, confirmClr)
-	confirmLabel := fmt.Sprintf("选择 %s", opt.Name)
+	confirmLabel := i18n.TF("hud.wardensel.confirm", opt.Name)
 	fm.DrawCenteredBoldText(screen, confirmLabel, btnStartX+woBtnW/2, woBtnY+9, theme.FontLG, theme.TextTitle)
 
 	skipClr := theme.BtnSecondary
@@ -254,7 +254,7 @@ func (o *WardenSelectOverlay) Draw(screen *ebiten.Image) {
 	}
 	skipX := btnStartX + woBtnW + woBtnGap
 	draw.RoundRect(screen, float32(skipX), float32(woBtnY), float32(woBtnW), float32(woBtnH), 14, skipClr)
-	fm.DrawCenteredText(screen, "不选（纯塔挑战）", skipX+woBtnW/2, woBtnY+10, theme.FontMD, theme.TextMuted)
+	fm.DrawCenteredText(screen, i18n.T("hud.wardensel.skip"), skipX+woBtnW/2, woBtnY+10, theme.FontMD, theme.TextMuted)
 }
 
 func (o *WardenSelectOverlay) drawDetail(screen *ebiten.Image, fm *render.FontManager, opt WardenOption) {
@@ -267,13 +267,13 @@ func (o *WardenSelectOverlay) drawDetail(screen *ebiten.Image, fm *render.FontMa
 	draw.StrokeRoundRect(screen, x, y, w, h, 12, 1, theme.PanelBorder)
 
 	if opt.Key == "none" {
-		fm.DrawCenteredText(screen, "不使用战灵，纯塔防御模式", float64(x)+float64(w)/2, float64(y)+float64(h)/2-10, theme.FontLG, theme.TextMuted)
+		fm.DrawCenteredText(screen, i18n.T("hud.wardensel.none_desc"), float64(x)+float64(w)/2, float64(y)+float64(h)/2-10, theme.FontLG, theme.TextMuted)
 		return
 	}
 
 	if opt.Locked {
 		fm.DrawCenteredBoldText(screen, opt.Name, float64(x)+float64(w)/2, float64(y)+float64(h)/2-20, 20, theme.TextLocked)
-		fm.DrawCenteredText(screen, "[ 锁定 ]", float64(x)+float64(w)/2, float64(y)+float64(h)/2+10, theme.FontLG, theme.TextLocked)
+		fm.DrawCenteredText(screen, i18n.T("hud.wardensel.locked"), float64(x)+float64(w)/2, float64(y)+float64(h)/2+10, theme.FontLG, theme.TextLocked)
 		if opt.LockReason != "" {
 			fm.DrawCenteredText(screen, opt.LockReason, float64(x)+float64(w)/2, float64(y)+float64(h)/2+34, theme.FontMD, theme.TextLocked)
 		}
@@ -292,7 +292,7 @@ func (o *WardenSelectOverlay) drawDetail(screen *ebiten.Image, fm *render.FontMa
 		}
 	}
 
-	fm.DrawBoldText(screen, fmt.Sprintf("战灵 · %s", opt.Name), px, py, 18, theme.TextTitle)
+	fm.DrawBoldText(screen, i18n.TF("hud.wardensel.detail_title", opt.Name), px, py, 18, theme.TextTitle)
 	py += 24
 
 	contentW := float64(w) - 40 - 80 // 留出右侧精灵预览空间
@@ -335,7 +335,7 @@ func (o *WardenSelectOverlay) drawDetail(screen *ebiten.Image, fm *render.FontMa
 	draw.Line(screen, float32(px), float32(py), float32(px)+w-40, float32(py), 1, theme.PanelBorder, false)
 	py += 12
 
-	fm.DrawBoldText(screen, "1级 属性", px, py, theme.FontMD, theme.TextTitle)
+	fm.DrawBoldText(screen, i18n.T("hud.wardensel.base_stats"), px, py, theme.FontMD, theme.TextTitle)
 	py += 20
 
 	attrClr := theme.TextBody
@@ -343,12 +343,12 @@ func (o *WardenSelectOverlay) drawDetail(screen *ebiten.Image, fm *render.FontMa
 	colW := 150.0
 
 	attrs := []struct{ iconName, label, value string }{
-		{"stat-damage", "伤害", opt.Damage},
-		{"stat-atkspd", "间隔", opt.Interval},
-		{"stat-movspd", "速度", opt.Speed},
-		{"stat-splash", "范围", opt.AoE},
-		{"stat-atkspd", "持续", opt.Duration},
-		{"burn", "持伤", opt.DoT},
+		{"stat-damage", i18n.T("hud.stat.damage"), opt.Damage},
+		{"stat-atkspd", i18n.T("hud.wardensel.interval"), opt.Interval},
+		{"stat-movspd", i18n.T("hud.wardensel.speed"), opt.Speed},
+		{"stat-splash", i18n.T("hud.stat.range"), opt.AoE},
+		{"stat-atkspd", i18n.T("hud.wardensel.duration"), opt.Duration},
+		{"burn", i18n.T("hud.wardensel.dot"), opt.DoT},
 	}
 
 	im := render.GlobalIcons()
@@ -370,18 +370,18 @@ func (o *WardenSelectOverlay) drawDetail(screen *ebiten.Image, fm *render.FontMa
 	}
 
 	py += 40
-	fm.DrawBoldText(screen, "成长", px, py, theme.FontMD, theme.TextTitle)
+	fm.DrawBoldText(screen, i18n.T("hud.wardensel.growth"), px, py, theme.FontMD, theme.TextTitle)
 	py += 18
 	growthClr := color.RGBA{R: 76, G: 175, B: 80, A: 255}
 	growthText := ""
 	if opt.GrowthKill != "-" && opt.GrowthKill != "" {
-		growthText += fmt.Sprintf("击杀 %s", opt.GrowthKill)
+		growthText += i18n.TF("hud.wardensel.growth_kill", opt.GrowthKill)
 	}
 	if opt.GrowthWave != "-" && opt.GrowthWave != "" {
 		if growthText != "" {
 			growthText += "    "
 		}
-		growthText += fmt.Sprintf("通波 %s", opt.GrowthWave)
+		growthText += i18n.TF("hud.wardensel.growth_wave", opt.GrowthWave)
 	}
 	if growthText != "" {
 		fm.DrawText(screen, growthText, px, py, theme.FontSM, growthClr)

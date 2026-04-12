@@ -10,6 +10,7 @@ import (
 	"strconv"
 
 	"defense2/internal/core/game"
+	"defense2/internal/i18n"
 	"defense2/internal/render"
 	"defense2/internal/render/draw"
 	"defense2/internal/render/easing"
@@ -261,7 +262,7 @@ func (s *ResultScene) drawTitle(screen *ebiten.Image, fm *render.FontManager, cx
 	if d.Won {
 		// Victory: scale 0.5 → 1.1 → 1.0 (overshoot bounce)
 		scale := victoryTitleScale(titleProgress)
-		titleText := "防守成功"
+		titleText := i18n.T("scene.result.victory")
 		clr := colorWithAlpha(theme.HUDVictoryColor, titleAlpha)
 
 		// Draw scaled via offscreen image approach — simpler: adjust font size
@@ -269,7 +270,7 @@ func (s *ResultScene) drawTitle(screen *ebiten.Image, fm *render.FontManager, cx
 		fm.DrawCenteredText(screen, titleText, cx, titleY-(scale-1)*20, scaledSize, clr)
 	} else {
 		// Defeat: shake wobble + fade in
-		titleText := "游戏结束"
+		titleText := i18n.T("scene.result.defeat")
 		clr := colorWithAlpha(theme.HUDDefeatColor, titleAlpha)
 
 		// Shake offset that decays
@@ -288,7 +289,7 @@ func (s *ResultScene) drawTitle(screen *ebiten.Image, fm *render.FontManager, cx
 	} else {
 		subAlpha = 1
 	}
-	subTxt := fmt.Sprintf("地图: %s", d.MapName)
+	subTxt := i18n.TF("scene.result.map_name", d.MapName)
 	fm.DrawCenteredText(screen, subTxt, cx, subY, theme.FontH1, colorWithAlpha(theme.TextMuted, subAlpha))
 }
 
@@ -410,12 +411,12 @@ func (s *ResultScene) drawStats(screen *ebiten.Image, fm *render.FontManager, cx
 		clr    color.Color
 	}
 	items := []statItem{
-		{"波次", d.Waves, "waves", theme.ResWaves},
-		{"击杀", d.Kills, "d", theme.HUDDefeatColor},
-		{"分数", d.Score, "d", theme.TonePrimary},
-		{"金币", d.Gold, "d", theme.ResGold},
-		{"塔数", d.Towers, "d", theme.StatusStrUp},
-		{"用时", int(d.ElapsedSecs), "time", theme.StatusWarden},
+		{i18n.T("scene.result.stat.waves"), d.Waves, "waves", theme.ResWaves},
+		{i18n.T("scene.result.stat.kills"), d.Kills, "d", theme.HUDDefeatColor},
+		{i18n.T("scene.result.stat.score"), d.Score, "d", theme.TonePrimary},
+		{i18n.T("scene.result.stat.gold"), d.Gold, "d", theme.ResGold},
+		{i18n.T("scene.result.stat.towers"), d.Towers, "d", theme.StatusStrUp},
+		{i18n.T("scene.result.stat.time"), int(d.ElapsedSecs), "time", theme.StatusWarden},
 	}
 
 	colW := (float64(panelW) - padX*2) / cols
@@ -503,21 +504,21 @@ func (s *ResultScene) drawDetailedStats(screen *ebiten.Image, fm *render.FontMan
 	// Format best tower
 	bestTower := "-"
 	if gs.BestTowerName != "" && gs.BestTowerKills > 0 {
-		bestTower = gs.BestTowerName + " (" + strconv.Itoa(gs.BestTowerKills) + "杀)"
+		bestTower = gs.BestTowerName + " (" + i18n.TF("scene.result.detail.kills_count", gs.BestTowerKills) + ")"
 	}
 
 	// Format time: M:SS
 	timeText := formatTime(int(gs.TimePlayed))
 
 	details := []detailItem{
-		{"金币收支", goldText, theme.ResGold},
-		{"建塔/卖塔", strconv.Itoa(gs.TowersBuilt) + " / " + strconv.Itoa(gs.TowersSold), theme.StatusStrUp},
-		{"Boss击杀", strconv.Itoa(gs.BossKills), theme.StatusExcl},
-		{"泄漏", strconv.Itoa(gs.LeaksTotal), theme.StatusStrDown},
-		{"道具使用", strconv.Itoa(gs.ItemsUsed), theme.StatusSkill},
-		{"最大连杀", strconv.Itoa(gs.MaxKillStreak), theme.StatusWarden},
-		{"最强塔", bestTower, theme.TonePrimary},
-		{"游戏时间", timeText, theme.TextMuted},
+		{i18n.T("scene.result.detail.gold_flow"), goldText, theme.ResGold},
+		{i18n.T("scene.result.detail.build_sell"), strconv.Itoa(gs.TowersBuilt) + " / " + strconv.Itoa(gs.TowersSold), theme.StatusStrUp},
+		{i18n.T("scene.result.detail.boss_kills"), strconv.Itoa(gs.BossKills), theme.StatusExcl},
+		{i18n.T("scene.result.detail.leaks"), strconv.Itoa(gs.LeaksTotal), theme.StatusStrDown},
+		{i18n.T("scene.result.detail.items_used"), strconv.Itoa(gs.ItemsUsed), theme.StatusSkill},
+		{i18n.T("scene.result.detail.max_streak"), strconv.Itoa(gs.MaxKillStreak), theme.StatusWarden},
+		{i18n.T("scene.result.detail.best_tower"), bestTower, theme.TonePrimary},
+		{i18n.T("scene.result.detail.game_time"), timeText, theme.TextMuted},
 	}
 
 	// Stagger delay: start after core stats finish (6 items × stagger)
@@ -589,7 +590,7 @@ func (s *ResultScene) drawButtons(screen *ebiten.Image, fm *render.FontManager, 
 	replayX := float32(cx) - btnW - btnGap/2
 	draw.RoundRect(screen, replayX, actualY, btnW, btnH, btnR,
 		colorWithAlpha(theme.TonePrimary, alpha))
-	fm.DrawCenteredText(screen, "重玩",
+	fm.DrawCenteredText(screen, i18n.T("scene.result.replay"),
 		float64(replayX)+float64(btnW)/2, float64(actualY)+float64(btnH)/2-6,
 		theme.FontH2, colorWithAlpha(color.White, alpha))
 
@@ -597,7 +598,7 @@ func (s *ResultScene) drawButtons(screen *ebiten.Image, fm *render.FontManager, 
 	menuX := float32(cx) + btnGap/2
 	draw.RoundRect(screen, menuX, actualY, btnW, btnH, btnR,
 		colorWithAlpha(theme.ToneSecondary, alpha))
-	fm.DrawCenteredText(screen, "选关",
+	fm.DrawCenteredText(screen, i18n.T("scene.result.menu"),
 		float64(menuX)+float64(btnW)/2, float64(actualY)+float64(btnH)/2-6,
 		theme.FontH2, colorWithAlpha(color.White, alpha))
 }

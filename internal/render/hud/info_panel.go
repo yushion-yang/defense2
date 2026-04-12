@@ -7,6 +7,7 @@ import (
 	"image/color"
 	"strconv"
 
+	"defense2/internal/i18n"
 	"defense2/internal/render"
 	"defense2/internal/render/draw"
 	"defense2/internal/render/theme"
@@ -181,9 +182,9 @@ func DrawInfoPanel(screen *ebiten.Image, vm InfoPanelVM) {
 		segs      []AbilitySegment
 		specialty bool
 	}{
-		{"stat-damage", "伤害", vm.DamageSegs, vm.Specialty == 0},
-		{"stat-atkspd", "攻速", vm.SpeedSegs, vm.Specialty == 1},
-		{"stat-range", "射程", vm.RangeSegs, vm.Specialty == 2},
+		{"stat-damage", i18n.T("hud.stat.damage"), vm.DamageSegs, vm.Specialty == 0},
+		{"stat-atkspd", i18n.T("hud.stat.atkspd"), vm.SpeedSegs, vm.Specialty == 1},
+		{"stat-range", i18n.T("hud.stat.range"), vm.RangeSegs, vm.Specialty == 2},
 	}
 	for _, ar := range attrRows {
 		ar := ar
@@ -244,7 +245,7 @@ func DrawInfoPanel(screen *ebiten.Image, vm InfoPanelVM) {
 				remaining := maxAbil - i
 				if remaining > 0 {
 					panel.AddRow(abilityH, func(screen *ebiten.Image, x, y float64, _ float64) {
-						fm.DrawText(screen, "...+"+strconv.Itoa(remaining)+"个能力", x, y, theme.FontXS, theme.TextMuted)
+						fm.DrawText(screen, i18n.TF("hud.info.more_abilities", remaining), x, y, theme.FontXS, theme.TextMuted)
 					})
 					usedH += abilityH
 				}
@@ -268,7 +269,7 @@ func DrawInfoPanel(screen *ebiten.Image, vm InfoPanelVM) {
 				remaining := len(vm.Buffs) - i
 				if remaining > 0 {
 					panel.AddRow(buffH, func(screen *ebiten.Image, x, y float64, _ float64) {
-						fm.DrawText(screen, "...+"+strconv.Itoa(remaining)+"个buff", x, y, theme.FontXS, theme.TextMuted)
+						fm.DrawText(screen, i18n.TF("hud.info.more_buffs", remaining), x, y, theme.FontXS, theme.TextMuted)
 					})
 					usedH += buffH
 				}
@@ -302,7 +303,7 @@ func DrawInfoPanel(screen *ebiten.Image, vm InfoPanelVM) {
 				btnClr = color.RGBA{R: 230, G: 190, B: 60, A: 255}
 			}
 			draw.RoundRect(screen, btnRect.X, btnRect.Y, btnRect.W, btnRect.H, 6, btnClr)
-			label := "选择能力 (" + strconv.Itoa(vm.PendingCount) + ")"
+			label := i18n.TF("hud.info.select_ability", vm.PendingCount)
 			fm.DrawCenteredBoldText(screen, label,
 				float64(btnRect.X)+float64(btnRect.W)/2, y+7, theme.FontSM, theme.TextTitle)
 			lastAbilityBtnRect = btnRect
@@ -328,7 +329,7 @@ func DrawInfoPanel(screen *ebiten.Image, vm InfoPanelVM) {
 				btnClr = color.RGBA{R: 80, G: 80, B: 80, A: 200} // gray
 			}
 			draw.RoundRect(screen, btnRect.X, btnRect.Y, btnRect.W, btnRect.H, 6, btnClr)
-			label := "解锁能力 $" + strconv.Itoa(vm.UnlockCost)
+			label := i18n.TF("hud.info.unlock_ability", vm.UnlockCost)
 			textClr := theme.TextTitle
 			if !affordable {
 				textClr = color.RGBA{R: 160, G: 160, B: 160, A: 255}
@@ -410,7 +411,7 @@ func drawSlotRow(screen *ebiten.Image, fm *render.FontManager, slot SlotVM, x, y
 
 	if slot.HasPending {
 		// Pending slot: gold flash
-		fm.DrawText(screen, "⚡ "+slot.CategoryName+" — 待选择", x, y, theme.FontSM,
+		fm.DrawText(screen, "⚡ "+slot.CategoryName+" — "+i18n.T("hud.info.pending"), x, y, theme.FontSM,
 			color.RGBA{R: 250, G: 200, B: 50, A: 230})
 		return
 	}

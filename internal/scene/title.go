@@ -8,6 +8,7 @@ import (
 
 	gameAudio "defense2/internal/audio"
 	"defense2/internal/core/game"
+	"defense2/internal/i18n"
 	"defense2/internal/render"
 	"defense2/internal/render/draw"
 
@@ -76,13 +77,13 @@ func (s *TitleScene) Draw(screen *ebiten.Image) {
 	fm := s.fontMgr
 
 	// 游戏标题
-	fm.DrawCenteredBoldText(screen, "塔防战棋", sw/2, sh/2-40, 32, textWhite)
+	fm.DrawCenteredBoldText(screen, i18n.T("scene.title.game_name"), sw/2, sh/2-40, 32, textWhite)
 
 	// 脉冲提示
 	pulse := 0.5 + 0.5*math.Sin(s.pulseTime*3)
 	alpha := uint8(100 + 155*pulse)
 	pulseClr := color.RGBA{R: 200, G: 210, B: 220, A: alpha}
-	fm.DrawCenteredText(screen, "点击开始", sw/2, sh/2+40, 14, pulseClr)
+	fm.DrawCenteredText(screen, i18n.T("scene.title.tap_to_start"), sw/2, sh/2+40, 14, pulseClr)
 
 	// 版本
 	fm.DrawCenteredText(screen, "v0.1.0", sw/2, sh-20, 10, textDim)

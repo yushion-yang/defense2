@@ -3,8 +3,9 @@
 package gamemode
 
 import (
-	"fmt"
 	"math"
+
+	"defense2/internal/i18n"
 )
 
 const defaultTotalBosses = 5
@@ -56,7 +57,7 @@ func (m *BossRushMode) OnWaveCleared(wave int, _ *Context) WaveClearResult {
 	return WaveClearResult{
 		BonusGold:    bonus,
 		PerfectBonus: perfect,
-		Message:      fmt.Sprintf("首领%d击败! +$%d", wave, bonus),
+		Message:      i18n.TF("mode.bossrush.boss_defeated", wave, bonus),
 	}
 }
 
@@ -76,7 +77,7 @@ func (m *BossRushMode) GetHUDConfig(_ *Context) HUDConfig {
 
 func (m *BossRushMode) GetEndData(ctx *Context) EndData {
 	return EndData{
-		ModeName: "Boss 竞速",
+		ModeName: i18n.T("mode.bossrush.name"),
 		Score:    m.GetScore(ctx),
 		Extra: map[string]any{
 			"bossesKilled": m.bossesKilled,

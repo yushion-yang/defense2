@@ -10,6 +10,7 @@ import (
 	"defense2/internal/config"
 	"defense2/internal/core/game"
 	"defense2/internal/core/persistence"
+	"defense2/internal/i18n"
 	"defense2/internal/render"
 	"defense2/internal/render/draw"
 	"defense2/internal/render/hud"
@@ -31,12 +32,19 @@ type gameModeUI struct {
 	ComingSoon  bool   // true = 显示"敬请期待"，不可选
 }
 
-var gameModes = []gameModeUI{
-	{"campaign", "战役", "stat-damage", "清除所有波次", "map_01", false},
-	{"endless", "无尽", "∞", "坚持越久越好", "map_01", true},
-	{"timedDefense", "限时", "stat-atkspd", "存活5分钟", "map_02", true},
-	{"bossRush", "首领", "execute", "连续挑战首领", "map_03", true},
-	{"challenge", "挑战", "★", "特殊规则", "map_04", true},
+var gameModes []gameModeUI
+
+func initGameModes() {
+	if len(gameModes) > 0 {
+		return
+	}
+	gameModes = []gameModeUI{
+		{"campaign", i18n.T("scene.select.mode.campaign"), "stat-damage", i18n.T("scene.select.mode.campaign_desc"), "map_01", false},
+		{"endless", i18n.T("scene.select.mode.endless"), "∞", i18n.T("scene.select.mode.endless_desc"), "map_01", true},
+		{"timedDefense", i18n.T("scene.select.mode.timed"), "stat-atkspd", i18n.T("scene.select.mode.timed_desc"), "map_02", true},
+		{"bossRush", i18n.T("scene.select.mode.boss"), "execute", i18n.T("scene.select.mode.boss_desc"), "map_03", true},
+		{"challenge", i18n.T("scene.select.mode.challenge"), "★", i18n.T("scene.select.mode.challenge_desc"), "map_04", true},
+	}
 }
 
 // ── 难度定义 ────────────────────────────────────
@@ -47,11 +55,18 @@ type difficultyUI struct {
 	Description string
 }
 
-var defaultDifficulties = []difficultyUI{
-	{"easy", "简单", "怪物较弱，金币充足"},
-	{"normal", "普通", "标准难度"},
-	{"hard", "困难", "怪物更强，金币更少"},
-	{"extreme", "极限", "地狱难度"},
+var defaultDifficulties []difficultyUI
+
+func initDefaultDifficulties() {
+	if len(defaultDifficulties) > 0 {
+		return
+	}
+	defaultDifficulties = []difficultyUI{
+		{"easy", i18n.T("scene.select.diff.easy"), i18n.T("scene.select.diff.easy_desc")},
+		{"normal", i18n.T("scene.select.diff.normal"), i18n.T("scene.select.diff.normal_desc")},
+		{"hard", i18n.T("scene.select.diff.hard"), i18n.T("scene.select.diff.hard_desc")},
+		{"extreme", i18n.T("scene.select.diff.extreme"), i18n.T("scene.select.diff.extreme_desc")},
+	}
 }
 
 // ── 布局常量 ────────────────────────────────────
@@ -110,6 +125,8 @@ type SelectScene struct {
 
 // NewSelectScene 创建选关场景。
 func NewSelectScene(sw Switcher) *SelectScene {
+	initGameModes()
+	initDefaultDifficulties()
 	store, err := persistence.DefaultStorage()
 	if err != nil {
 		store = persistence.NewMemoryStorage()
@@ -153,6 +170,7 @@ func NewSelectScene(sw Switcher) *SelectScene {
 }
 
 func loadDifficulties() []difficultyUI {
+	initDefaultDifficulties()
 	modes, _, err := config.LoadDifficultyModes()
 	if err != nil {
 		return defaultDifficulties
@@ -168,7 +186,7 @@ func loadDifficulties() []difficultyUI {
 		diffs = append(diffs, difficultyUI{
 			ID:          id,
 			Name:        m.Label,
-			Description: m.Label + "难度",
+			Description: m.Label + i18n.T("scene.select.diff_suffix"),
 		})
 	}
 	if len(diffs) == 0 {
@@ -206,7 +224,7 @@ func (s *SelectScene) Update() error {
 	if isTapJustPressed() {
 		if idx := s.hitTestModeCards(mxf, myf); idx >= 0 {
 			if gameModes[idx].ComingSoon {
-				hud.ShowToast("敬请期待")
+				hud.ShowToast(i18n.T("scene.select.coming_soon"))
 			} else {
 				s.selectedMode = idx
 				playUIClick(s.switcher)
@@ -322,7 +340,7 @@ func (s *SelectScene) Draw(screen *ebiten.Image) {
 	pulse := 1.0 + 0.015*math.Sin(animTime*2) // scale oscillates 0.985 - 1.015
 	titleSize := 28.0 * pulse
 	fm.DrawCenteredBoldText(screen, "Mini Tower Defense", scW/2, 28, titleSize, textWhite)
-	fm.DrawCenteredText(screen, "选择游戏模式", scW/2, 60, 14, textGray)
+	fm.DrawCenteredText(screen, i18n.T("scene.select.choose_mode"), scW/2, 60, 14, textGray)
 
 	// ── 模式卡片 ──
 	startX := rowStartX(cardW, cardGap, len(gameModes))
@@ -341,7 +359,7 @@ func (s *SelectScene) Draw(screen *ebiten.Image) {
 			if hovered {
 				lockedBg = color.RGBA{R: 28, G: 33, B: 52, A: 255}
 			}
-			ui.IconCard(screen, x, y, w, h, mode.Icon, mode.Name, "敬请期待", ui.IconCardStyle{
+			ui.IconCard(screen, x, y, w, h, mode.Icon, mode.Name, i18n.T("scene.select.coming_soon"), ui.IconCardStyle{
 				CardStyle: ui.CardStyle{
 					BgColor:     lockedBg,
 					BorderColor: lockedBorder,
@@ -384,7 +402,7 @@ func (s *SelectScene) Draw(screen *ebiten.Image) {
 	if s.hoverStart {
 		btnClr = greenBtnHover
 	}
-	ui.Button(screen, bx, by, bw, bh, "开始游戏", ui.ButtonStyle{
+	ui.Button(screen, bx, by, bw, bh, i18n.T("scene.select.start_game"), ui.ButtonStyle{
 		BgColor:  btnClr,
 		FontSize: 18,
 		Radius:   20,
@@ -392,7 +410,7 @@ func (s *SelectScene) Draw(screen *ebiten.Image) {
 	})
 
 	// ── 难度标签 ──
-	fm.DrawCenteredText(screen, "难度", scW/2, diffLabelY, 12, textGray)
+	fm.DrawCenteredText(screen, i18n.T("scene.select.difficulty"), scW/2, diffLabelY, 12, textGray)
 
 	// ── 难度按钮 ──
 	dStartX := rowStartX(diffBtnW, diffBtnGap, len(s.difficulties))
@@ -437,10 +455,10 @@ func (s *SelectScene) Draw(screen *ebiten.Image) {
 	if mapName == "" {
 		mapName = mapID
 	}
-	fm.DrawCenteredText(screen, "地图: "+mapName, scW/2, 358, 10, textGray)
+	fm.DrawCenteredText(screen, i18n.TF("scene.select.map_name", mapName), scW/2, 358, 10, textGray)
 
 	// ── 设置按钮（右下角） ──
-	ui.Button(screen, float32(settingsBtnX), float32(settingsBtnY), float32(settingsBtnW), float32(settingsBtnH), "设置", ui.ButtonStyle{
+	ui.Button(screen, float32(settingsBtnX), float32(settingsBtnY), float32(settingsBtnW), float32(settingsBtnH), i18n.T("scene.select.settings"), ui.ButtonStyle{
 		BgColor:   theme.BtnSecondary,
 		TextColor: textGray,
 		FontSize:  12,
@@ -448,7 +466,7 @@ func (s *SelectScene) Draw(screen *ebiten.Image) {
 	})
 
 	// ── 底部提示 ──
-	fm.DrawCenteredText(screen, "点击卡片选择模式和难度", scW/2, scH-30, 10, textDim)
+	fm.DrawCenteredText(screen, i18n.T("scene.select.hint"), scW/2, scH-30, 10, textDim)
 	// Version text with muted color
 	versionColor := color.RGBA{R: 60, G: 65, B: 80, A: 255}
 	fm.DrawCenteredText(screen, "v0.1.0", scW/2, scH-12, 9, versionColor)
