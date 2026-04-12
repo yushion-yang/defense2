@@ -218,14 +218,18 @@ func (t *Tower) AddAbility(abilityType string) bool {
 // applyEnhance 强化能力：一次性提升塔的基础和潜力属性。
 // 使用 param 固定参数（不受强度影响），确保行为与描述一致。
 func applyEnhance(t *Tower, def *config.AbilityDef) {
-	boost := def.Param // 固定 20%，从 param 读取，不走 CalcScale(str)
+	boost := def.Param  // 伤害/攻速增幅
+	rangeBoost := def.Param2 // 射程增幅（独立配置）
+	if rangeBoost <= 0 {
+		rangeBoost = boost / 2 // 兼容：未配置时回退到 param 的一半
+	}
 
 	t.BaseDamage *= 1 + boost
 	t.PotentialDamage *= 1 + boost
 	t.BaseSpeed *= 1 + boost
 	t.PotentialSpeed *= 1 + boost
-	t.BaseRange *= 1 + boost/2 // 射程提升减半避免过强
-	t.PotentialRange *= 1 + boost/2
+	t.BaseRange *= 1 + rangeBoost
+	t.PotentialRange *= 1 + rangeBoost
 	t.RecalcStats()
 }
 
