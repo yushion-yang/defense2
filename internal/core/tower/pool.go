@@ -199,6 +199,8 @@ func spriteKeyForStyle(style AttackStyle) string {
 		return "prism"
 	case StyleSpinAoE:
 		return "cyclone"
+	case StyleBarrage:
+		return "gatling"
 	default:
 		return "sentinel"
 	}

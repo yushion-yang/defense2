@@ -25,6 +25,21 @@ const (
 	defaultDeathExpR    = 50.0  // 死亡爆炸默认半径
 )
 
+// blockableStyles 定义弹幕盾可拦截的攻击方式。
+// 盾牌阻止传播（穿透/弹射）但不阻止伤害。
+var blockableStyles = map[string]bool{
+	tower.AbilityBounce:  true,
+	tower.AbilityScatter: true,
+	tower.AbilityRadial:  true,
+	tower.AbilityBarrage: true,
+	"fireball":           true, // 战灵火球
+}
+
+// ShouldShieldBlock 返回弹幕盾是否应拦截指定攻击方式的传播。
+func ShouldShieldBlock(e *enemy.Enemy, style string) bool {
+	return e.ProjectileBlockChance > 0 && !e.AbilitySilenced && blockableStyles[style]
+}
+
 // HitInput 描述一次命中事件。
 type HitInput struct {
 	Tower       *tower.Tower               // 来源塔（可为 nil，如战灵弹射物）
@@ -65,12 +80,7 @@ func ApplyHit(input HitInput, onHit HitCallback) HitOutput {
 	}
 
 	// 弹幕盾标记（正常受伤，末尾标记阻止弹射物继续传播）
-	shieldBlocked := false
-	if e.ProjectileBlockChance > 0 && !e.AbilitySilenced {
-		if input.Style == tower.AbilityBounce || input.Style == tower.AbilityRadial || input.Style == tower.AbilityScatter {
-			shieldBlocked = true
-		}
-	}
+	shieldBlocked := ShouldShieldBlock(e, input.Style)
 
 	totalDmg := input.BaseDamage
 	isCrit := false
@@ -106,6 +116,7 @@ func ApplyHit(input HitInput, onHit HitCallback) HitOutput {
 	}
 
 	// 遍历塔能力，触发 OnHit（weaken 等 debuff 在此设置，立即对本次命中生效）
+	var separateDmg float64 // 独立二段伤害（对抗 damageCap）
 	if input.Tower != nil {
 		for _, aName := range input.Tower.Abilities {
 			ab, ok := tower.Lookup(aName)
@@ -117,6 +128,7 @@ func ApplyHit(input HitInput, onHit HitCallback) HitOutput {
 				continue
 			}
 			totalDmg += result.BonusDamage
+			separateDmg += result.SeparateDamage
 			if result.IsCrit {
 				isCrit = true
 			}
@@ -148,6 +160,19 @@ func ApplyHit(input HitInput, onHit HitCallback) HitOutput {
 	finalDmg := pipeResult.FinalDamage
 	if pipeResult.Blocked {
 		finalDmg = 0
+	}
+
+	// 独立二段伤害（固伤能力，单独走伤害管线以独立受 damageCap 限制）
+	if separateDmg > 0 && !killed && e.Active && !e.IsDying() {
+		sep := ApplyDamage(DamageInput{
+			Target:     e,
+			RawDamage:  separateDmg,
+			DamageType: DmgPhysical,
+		})
+		finalDmg += sep.FinalDamage
+		if sep.Killed {
+			killed = true
+		}
 	}
 
 	// 命中回调（飘字、音效等）
@@ -267,7 +292,7 @@ func applyHitEffectsUnified(r *tower.HitResult, target *enemy.Enemy, p *projecti
 		})
 	}
 	// 弹幕盾阻止弹射继续链接
-	if r.Bounce != nil && p.BounceCount < r.Bounce.MaxBounces && projectiles != nil && !(target.ProjectileBlockChance > 0 && !target.AbilitySilenced) {
+	if r.Bounce != nil && p.BounceCount < r.Bounce.MaxBounces && projectiles != nil && !ShouldShieldBlock(target, tower.AbilityBounce) {
 		hitIDs := append([]int{}, p.BounceHitIDs...)
 		hitIDs = append(hitIDs, target.ID)
 

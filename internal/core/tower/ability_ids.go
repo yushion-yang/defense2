@@ -61,6 +61,7 @@ const (
 	AbilityWideBeam = "wideBeam"
 	AbilitySpinAoe  = "spinAoe"
 	AbilityRadial   = "radial"
+	AbilityBarrage  = "barrage"
 )
 
 // 已禁用能力（实现未完成）

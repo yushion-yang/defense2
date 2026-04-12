@@ -93,4 +93,5 @@ func init() {
 	Register(tower.StyleScatter, &ScatterHandler{})
 	Register(tower.StyleSpinAoE, &SpinAoEHandler{})
 	Register(tower.StyleRadial, &RadialHandler{})
+	Register(tower.StyleBarrage, &BarrageHandler{})
 }

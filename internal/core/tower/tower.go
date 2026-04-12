@@ -21,6 +21,7 @@ const (
 	StyleScatter    AttackStyle = "scatter"    // 锥形散射
 	StyleSpinAoE    AttackStyle = "spin_aoe"   // 旋转范围伤害
 	StyleRadial     AttackStyle = "radial"     // 360度环射弹
+	StyleBarrage    AttackStyle = "barrage"    // 连射（多弹丸微延迟）
 )
 
 // Tower 已放置的塔实体。
@@ -67,6 +68,11 @@ type Tower struct {
 	// SpinAoE 运行时状态
 	SpinAngle  float64 // 旋转角度（弧度）
 	SpinActive float64 // 旋转激活计时器
+
+	// Barrage 连射运行时状态
+	BarrageBurst  int     // 连射剩余发射数（>0 表示正在连射）
+	BarrageTimer  float64 // 下一弹倒计时（秒）
+	BarrageTarget *enemy.Enemy // 连射锁定目标（目标死亡时切换）
 
 	// GoldPassive 运行时状态
 	GoldCooldown float64 // 被动产金冷却计时器
@@ -186,6 +192,8 @@ func (t *Tower) ResolveAttackStyle() AttackStyle {
 		return StyleSpinAoE
 	case AbilityRadial:
 		return StyleRadial
+	case AbilityBarrage:
+		return StyleBarrage
 	default:
 		// bounce/splash/multiTarget/空 → 都用 projectile
 		if t.AttackStyleID != "" {
@@ -205,6 +213,7 @@ var abilitySpriteMap = map[string]string{
 	AbilitySplash:      "mortar",
 	AbilityMultiTarget: "hydra",
 	AbilityRadial:      "nova",
+	AbilityBarrage:     "gatling",
 }
 
 // abilitySpriteLabels 精灵标识 → 中文名映射。
@@ -218,6 +227,7 @@ var abilitySpriteLabels = map[string]string{
 	"mortar":   "轰炸",
 	"hydra":    "多管",
 	"nova":     "星爆",
+	"gatling":  "加特林",
 }
 
 // AbilitySpriteKey 根据攻击能力类型返回精灵资源标识。
