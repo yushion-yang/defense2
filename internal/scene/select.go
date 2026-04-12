@@ -229,10 +229,6 @@ func (s *SelectScene) startGame() {
 		s.switcher.SwitchScene(NewTestSelectScene(s.switcher))
 		return
 	}
-	// TODO: 临时 panic 测试萌妹彩蛋，验证后删除
-	if mode.ID == "endless" {
-		panic("测试 panic：无尽模式触发彩蛋")
-	}
 	// 其他模式直接进入 Stage（战灵在 Stage 内第一波倒计时结束时选择）
 	s.switcher.SwitchScene(NewStageSceneWithOpts(s.switcher, StageOptions{
 		MapID:        mode.DefaultMap,

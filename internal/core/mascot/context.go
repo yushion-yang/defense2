@@ -15,6 +15,20 @@ type StageSnapshot struct {
 	ElapsedSecs float64 // seconds since stage start
 	IsBossWave  bool
 	WaveActive  bool
+
+	// Performance (from PerfTracker)
+	FPS        float64
+	AvgFrameMs float64
+	HeapMB     float64
+	GCPauseUs  uint64
+
+	// UI Context
+	InteractMode       int      // 0=idle, 1=buildMenu, 3=towerSel, 7=wardenSel, 8=upgrade, 9=itemPanel
+	SelectedTowerLabel string   // tower name when modeTowerSel
+	SelectedTowerStyle string   // attack style name
+	ChoiceAbilities    []string // ability labels during modeUpgrade
+	WardenType         string   // current warden type key
+	QualityLevel       int      // 0=High, 1=Medium, 2=Low
 }
 
 // GameContext is the complete context for condition evaluation.

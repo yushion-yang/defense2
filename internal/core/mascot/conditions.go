@@ -12,6 +12,9 @@ type ConditionState struct {
 	PrevWave         int                // for detecting wave changes
 	PrevInStage      bool               // for detecting stage enter/exit
 	LastGreetingBand int                // -1 = none, 0=morning, 1=afternoon, 2=evening, 3=latenight
+	PrevInteractMode int                // for detecting UI mode changes
+	PrevQuality      int                // for detecting quality downgrades (-1 = uninitialized)
+	LowFPSFrames     int                // consecutive eval cycles with FPS < 30
 }
 
 // NewConditionState creates a zero-value condition state ready for use.
@@ -20,6 +23,7 @@ func NewConditionState() *ConditionState {
 		LastFireTime:     make(map[string]float64),
 		TriggeredOnce:    make(map[string]bool),
 		LastGreetingBand: -1,
+		PrevQuality:      -1,
 	}
 }
 

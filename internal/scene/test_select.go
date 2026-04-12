@@ -68,6 +68,7 @@ var testScenarios = []testScenario{
 	{"vfx-preview", "特效预览", "stat-splash", "VFX 特效预览与调试工具", "bench", "", 0, 0, 0, color.RGBA{R: 200, G: 100, B: 255, A: 255}, "", false},
 	{"audio-preview", "音效预览", "stat-splash", "音效(SFX+BGM)预览与试听工具", "bench", "", 0, 0, 0, color.RGBA{R: 100, G: 200, B: 255, A: 255}, "", false},
 	{"wave-preview", "波次预览", "stat-target", "各地图波次出怪组合查看工具", "bench", "", 0, 0, 0, color.RGBA{R: 120, G: 200, B: 160, A: 255}, "", false},
+	{"map-editor", "地图编辑", "stat-target", "塔位布局可视化编辑工具", "bench", "", 0, 0, 0, color.RGBA{R: 180, G: 200, B: 100, A: 255}, "", false},
 }
 
 // ── 布局常量 ────────────────────────────────────
@@ -225,6 +226,11 @@ func (s *TestSelectScene) startScenario() {
 	// Wave preview is a standalone scene — no StageScene needed.
 	if sc.ID == "wave-preview" {
 		s.switcher.SwitchScene(NewWavePreviewScene(s.switcher))
+		return
+	}
+	// Map editor is a standalone scene — no StageScene needed.
+	if sc.ID == "map-editor" {
+		s.switcher.SwitchScene(NewMapEditorScene(s.switcher))
 		return
 	}
 	s.switcher.SwitchScene(NewStageSceneWithOpts(s.switcher, StageOptions{
