@@ -4,11 +4,13 @@ import "math/rand"
 
 // MascotVM is the view-model snapshot for rendering.
 type MascotVM struct {
-	Visible    bool
-	HasDialog  bool
-	Text       string
-	Expression string
-	CanClick   bool // true = click to advance
+	Visible      bool
+	HasDialog    bool
+	Text         string
+	Expression   string
+	CanClick     bool    // true = click to advance
+	AbilityReady bool
+	CooldownPct  float64 // 0.0 = ready, 1.0 = full cooldown
 }
 
 // Guide is the mascot state machine that drives dialog playback.
@@ -21,6 +23,18 @@ type Guide struct {
 	active  *Dialog
 	lineIdx int
 	timer   float64
+
+	// Condition evaluation
+	condFuncs    []ConditionFunc
+	condState    *ConditionState
+	evalInterval float64 // seconds between evaluations (default 5.0)
+	evalTimer    float64
+	lastCtx      *GameContext
+
+	// Ability system
+	abilityCooldown    float64 // remaining seconds (0 = ready)
+	abilityCooldownMax float64 // default 30.0
+	pendingAction      *MascotAction
 }
 
 // NewGuide creates a Guide preloaded with dialogs.
@@ -31,8 +45,10 @@ func NewGuide(dialogs []Dialog, shownIDs map[string]bool) *Guide {
 		shown = make(map[string]bool)
 	}
 	return &Guide{
-		dialogs:  dialogs,
-		shownIDs: shown,
+		dialogs:            dialogs,
+		shownIDs:           shown,
+		evalInterval:       5.0,
+		abilityCooldownMax: 30.0,
 	}
 }
 
@@ -47,8 +63,21 @@ func (g *Guide) Trigger(event string) {
 	g.tryTrigger(event)
 }
 
-// Tick advances auto-advance timers. dt is in seconds.
+// Tick advances auto-advance timers and decrements ability cooldown. dt is in seconds.
 func (g *Guide) Tick(dt float64) {
+	// Decrement ability cooldown.
+	if g.abilityCooldown > 0 {
+		g.abilityCooldown -= dt
+		if g.abilityCooldown < 0 {
+			g.abilityCooldown = 0
+		}
+	}
+
+	// Decrement condition eval timer.
+	if g.condFuncs != nil {
+		g.evalTimer -= dt
+	}
+
 	if g.active == nil {
 		return
 	}
@@ -74,7 +103,14 @@ func (g *Guide) ClickAdvance() {
 // VM returns a snapshot of the current mascot state for rendering.
 func (g *Guide) VM() MascotVM {
 	vm := MascotVM{
-		Visible: true,
+		Visible:      true,
+		AbilityReady: g.AbilityReady(),
+	}
+	if g.abilityCooldownMax > 0 && g.abilityCooldown > 0 {
+		vm.CooldownPct = g.abilityCooldown / g.abilityCooldownMax
+		if vm.CooldownPct > 1.0 {
+			vm.CooldownPct = 1.0
+		}
 	}
 	if g.active == nil {
 		return vm
@@ -95,6 +131,84 @@ func (g *Guide) ShownIDs() map[string]bool {
 		out[k] = v
 	}
 	return out
+}
+
+// InitConditions sets up condition evaluation with the given condition functions.
+// If funcs is nil, no automatic condition evaluation occurs.
+func (g *Guide) InitConditions(funcs []ConditionFunc) {
+	g.condFuncs = funcs
+	g.condState = NewConditionState()
+	g.evalTimer = g.evalInterval
+}
+
+// UpdateContext stores the latest game context and evaluates conditions when the
+// evaluation timer has elapsed.
+func (g *Guide) UpdateContext(ctx GameContext) {
+	ctxCopy := ctx
+	g.lastCtx = &ctxCopy
+
+	if g.condFuncs == nil || g.condState == nil {
+		return
+	}
+
+	if g.evalTimer > 0 {
+		return
+	}
+
+	// Reset eval timer.
+	g.evalTimer = g.evalInterval
+
+	// Evaluate conditions: first non-empty result wins.
+	for _, fn := range g.condFuncs {
+		trigger := fn(&ctx, g.condState)
+		if trigger != "" {
+			g.condState.markFired(trigger, ctx.SessionSecs)
+			g.tryTrigger(trigger)
+			break
+		}
+	}
+
+	// Update tracking state.
+	g.condState.PrevWave = ctx.Wave
+	g.condState.PrevInStage = ctx.InStage
+}
+
+// HasActiveDialog returns true if a dialog is currently being displayed.
+func (g *Guide) HasActiveDialog() bool {
+	return g.active != nil
+}
+
+// AbilityReady returns true if the mascot ability can be used.
+func (g *Guide) AbilityReady() bool {
+	return g.abilityCooldown <= 0 && g.lastCtx != nil && g.lastCtx.InStage
+}
+
+// RequestHelp requests the mascot to perform its battle assistance ability.
+// Returns the action if ability is ready, or nil if on cooldown / not in stage.
+func (g *Guide) RequestHelp() *MascotAction {
+	if !g.AbilityReady() {
+		g.ForceTrigger("mascot_not_ready")
+		return nil
+	}
+
+	action := &MascotAction{Type: ActionKillWeakEnemy}
+	g.pendingAction = action
+	g.abilityCooldown = g.abilityCooldownMax
+	g.ForceTrigger("mascot_help")
+	return action
+}
+
+// ConsumeAction returns and clears the pending mascot action.
+func (g *Guide) ConsumeAction() *MascotAction {
+	a := g.pendingAction
+	g.pendingAction = nil
+	return a
+}
+
+// NotifyActionComplete informs the mascot that an action was completed.
+func (g *Guide) NotifyActionComplete(t ActionType) {
+	_ = t // reserved for future action-type-specific responses
+	g.ForceTrigger("mascot_kill_success")
 }
 
 // ForceTrigger fires a named event, interrupting any active dialog.

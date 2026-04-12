@@ -339,3 +339,279 @@ func TestTickNoDialogNoPanic(t *testing.T) {
 	g.Tick(1.0)
 	g.ClickAdvance()
 }
+
+// --- New tests for condition evaluation and ability system ---
+
+// newConditionTestGuide builds a Guide with condition-triggerable dialogs.
+func newConditionTestGuide() *Guide {
+	dialogs := []Dialog{
+		{
+			ID:      "low_health_tip",
+			Scene:   "stage",
+			Trigger: "lowHealth",
+			Lines:   []Line{{Text: "Watch your health!", Expression: "surprised"}},
+		},
+		{
+			ID:      "help_dialog",
+			Scene:   "stage",
+			Trigger: "mascot_help",
+			Lines:   []Line{{Text: "Leave it to me!", Expression: "happy", AutoAdvance: 2.0}},
+		},
+		{
+			ID:      "not_ready_dialog",
+			Scene:   "stage",
+			Trigger: "mascot_not_ready",
+			Lines:   []Line{{Text: "I'm not ready yet...", Expression: "idle", AutoAdvance: 2.0}},
+		},
+		{
+			ID:      "kill_success_dialog",
+			Scene:   "*",
+			Trigger: "mascot_kill_success",
+			Lines:   []Line{{Text: "Got one!", Expression: "happy", AutoAdvance: 2.0}},
+		},
+		{
+			ID:      "boss_dialog",
+			Scene:   "stage",
+			Trigger: "bossIncoming",
+			Lines:   []Line{{Text: "Boss incoming!", Expression: "surprised"}},
+		},
+	}
+	g := NewGuide(dialogs, nil)
+	g.SetScene("stage")
+	return g
+}
+
+func TestUpdateContextTriggersCondition(t *testing.T) {
+	g := newConditionTestGuide()
+
+	// Only use the lowHealth condition for a controlled test.
+	g.evalInterval = 1.0 // evaluate every 1s for faster test
+	g.InitConditions([]ConditionFunc{condLowHealth()})
+
+	ctx := GameContext{
+		SceneName:   "stage",
+		SessionSecs: 100,
+		InStage:     true,
+		StageSnapshot: StageSnapshot{
+			Lives:    3,
+			MaxLives: 20, // 3/20 = 15%, well below 30%
+		},
+	}
+	g.UpdateContext(ctx)
+
+	// First update won't trigger because evalTimer starts at 0 and needs
+	// to count down. Let's tick past the interval.
+	g.Tick(1.1)
+	ctx.SessionSecs = 101.1
+	g.UpdateContext(ctx)
+
+	vm := g.VM()
+	if !vm.HasDialog {
+		t.Fatal("expected lowHealth condition to trigger a dialog")
+	}
+	if vm.Text != "Watch your health!" {
+		t.Fatalf("expected lowHealth dialog text, got %q", vm.Text)
+	}
+}
+
+func TestAbilityRequestAndConsume(t *testing.T) {
+	g := newConditionTestGuide()
+	g.InitConditions(nil)
+
+	// Set context so we're in stage.
+	ctx := GameContext{
+		SceneName:   "stage",
+		SessionSecs: 100,
+		InStage:     true,
+		StageSnapshot: StageSnapshot{
+			Lives:      10,
+			MaxLives:   20,
+			EnemyCount: 5,
+		},
+	}
+	g.UpdateContext(ctx)
+
+	// Ability should be ready (no cooldown, in stage).
+	if !g.AbilityReady() {
+		t.Fatal("expected ability to be ready")
+	}
+
+	// Request help.
+	action := g.RequestHelp()
+	if action == nil {
+		t.Fatal("expected non-nil action from RequestHelp")
+	}
+	if action.Type != ActionKillWeakEnemy {
+		t.Fatalf("expected ActionKillWeakEnemy, got %q", action.Type)
+	}
+
+	// Verify dialog triggered.
+	vm := g.VM()
+	if !vm.HasDialog {
+		t.Fatal("expected mascot_help dialog after RequestHelp")
+	}
+
+	// Consume the action.
+	consumed := g.ConsumeAction()
+	if consumed == nil {
+		t.Fatal("expected non-nil consumed action")
+	}
+	if consumed.Type != ActionKillWeakEnemy {
+		t.Fatalf("expected ActionKillWeakEnemy, got %q", consumed.Type)
+	}
+
+	// Second consume returns nil.
+	if g.ConsumeAction() != nil {
+		t.Fatal("expected nil on second ConsumeAction")
+	}
+
+	// Notify completion — dismiss current dialog first.
+	g.ClickAdvance()
+	g.NotifyActionComplete(ActionKillWeakEnemy)
+
+	vm = g.VM()
+	if !vm.HasDialog {
+		t.Fatal("expected mascot_kill_success dialog after NotifyActionComplete")
+	}
+	if vm.Text != "Got one!" {
+		t.Fatalf("expected kill success text, got %q", vm.Text)
+	}
+}
+
+func TestAbilityCooldown(t *testing.T) {
+	g := newConditionTestGuide()
+	g.InitConditions(nil)
+
+	ctx := GameContext{
+		SceneName:   "stage",
+		SessionSecs: 100,
+		InStage:     true,
+		StageSnapshot: StageSnapshot{
+			Lives:      10,
+			MaxLives:   20,
+			EnemyCount: 5,
+		},
+	}
+	g.UpdateContext(ctx)
+
+	// First request: should succeed.
+	action := g.RequestHelp()
+	if action == nil {
+		t.Fatal("expected first RequestHelp to succeed")
+	}
+
+	// Ability should now be on cooldown.
+	if g.AbilityReady() {
+		t.Fatal("expected ability NOT ready after use")
+	}
+
+	// Dismiss the help dialog.
+	g.ClickAdvance()
+
+	// Second request during cooldown: should return nil and trigger not_ready dialog.
+	action = g.RequestHelp()
+	if action != nil {
+		t.Fatal("expected nil action during cooldown")
+	}
+
+	vm := g.VM()
+	if !vm.HasDialog {
+		t.Fatal("expected mascot_not_ready dialog during cooldown")
+	}
+	if vm.Text != "I'm not ready yet..." {
+		t.Fatalf("expected not_ready text, got %q", vm.Text)
+	}
+
+	// Verify CooldownPct in VM.
+	if vm.CooldownPct <= 0 || vm.CooldownPct > 1.0 {
+		t.Fatalf("expected CooldownPct in (0, 1.0], got %f", vm.CooldownPct)
+	}
+
+	// Tick past cooldown.
+	g.ClickAdvance() // dismiss not_ready dialog
+	g.Tick(31.0)
+
+	// Should be ready again.
+	if !g.AbilityReady() {
+		t.Fatal("expected ability ready after cooldown expires")
+	}
+
+	vm = g.VM()
+	if vm.CooldownPct != 0 {
+		t.Fatalf("expected CooldownPct=0 when ready, got %f", vm.CooldownPct)
+	}
+}
+
+func TestAbilityNotInStage(t *testing.T) {
+	g := newConditionTestGuide()
+	g.InitConditions(nil)
+	g.SetScene("title")
+
+	// Context says not in stage.
+	ctx := GameContext{
+		SceneName:   "title",
+		SessionSecs: 100,
+		InStage:     false,
+	}
+	g.UpdateContext(ctx)
+
+	if g.AbilityReady() {
+		t.Fatal("expected ability NOT ready outside stage")
+	}
+
+	action := g.RequestHelp()
+	if action != nil {
+		t.Fatal("expected nil action outside stage")
+	}
+}
+
+func TestHasActiveDialog(t *testing.T) {
+	g := newTestGuide()
+	g.SetScene("title") // starts welcome dialog
+
+	if !g.HasActiveDialog() {
+		t.Fatal("expected HasActiveDialog=true with active dialog")
+	}
+
+	g.ClickAdvance() // advance line 1
+	g.ClickAdvance() // finish dialog
+
+	if g.HasActiveDialog() {
+		t.Fatal("expected HasActiveDialog=false after dialog finished")
+	}
+}
+
+func TestVMAbilityFields(t *testing.T) {
+	g := newConditionTestGuide()
+	g.InitConditions(nil)
+
+	// Not in stage: AbilityReady=false, CooldownPct=0.
+	ctx := GameContext{
+		SceneName: "title",
+		InStage:   false,
+	}
+	g.UpdateContext(ctx)
+	vm := g.VM()
+	if vm.AbilityReady {
+		t.Fatal("expected AbilityReady=false outside stage")
+	}
+
+	// In stage, ready.
+	ctx = GameContext{
+		SceneName:   "stage",
+		SessionSecs: 100,
+		InStage:     true,
+		StageSnapshot: StageSnapshot{
+			Lives:    10,
+			MaxLives: 20,
+		},
+	}
+	g.UpdateContext(ctx)
+	vm = g.VM()
+	if !vm.AbilityReady {
+		t.Fatal("expected AbilityReady=true in stage with no cooldown")
+	}
+	if vm.CooldownPct != 0 {
+		t.Fatalf("expected CooldownPct=0, got %f", vm.CooldownPct)
+	}
+}
