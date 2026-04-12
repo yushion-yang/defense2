@@ -1,0 +1,32 @@
+{
+  "id": "池满压力测试",
+  "name": "敌人池溢出压力测试",
+  "description": "大量分裂+召唤怪测试256敌人池上限，检测pool_high_usage和溢出",
+  "mapID": "map_test_large",
+  "gold": 99999,
+  "lives": 999,
+  "waves": 30,
+  "enemyFilter": "",
+  "manualWave": false,
+  "towers": [
+    {
+      "row": 4, "col": 4, "key": "basic",
+      "abilitySlots": ["splash", "", "", "", "", ""],
+      "damageTier": "D", "speedTier": "B", "rangeTier": "B",
+      "baseDamage": 5, "potentialDamage": 3,
+      "baseSpeed": 0.6, "potentialSpeed": 0.04,
+      "baseRange": 150, "potentialRange": 20,
+      "strength": 50
+    },
+    {
+      "row": 4, "col": 8, "key": "basic",
+      "abilitySlots": ["bounce", "", "", "", "", ""],
+      "damageTier": "D", "speedTier": "B", "rangeTier": "B",
+      "baseDamage": 5, "potentialDamage": 3,
+      "baseSpeed": 0.6, "potentialSpeed": 0.04,
+      "baseRange": 150, "potentialRange": 20,
+      "strength": 50
+    }
+  ],
+  "enemies": []
+}

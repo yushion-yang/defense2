@@ -1,0 +1,13 @@
+{
+  "id": "经济崩溃",
+  "name": "极限经济压力",
+  "description": "极低初始金币+extreme难度，测试economy_stall和gold_negative边界",
+  "mapID": "map_01",
+  "gold": 30,
+  "lives": 5,
+  "waves": 15,
+  "enemyFilter": "",
+  "manualWave": false,
+  "towers": [],
+  "enemies": []
+}

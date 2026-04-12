@@ -1,0 +1,13 @@
+{
+  "id": "真实战役_map08_extreme",
+  "name": "真实战役 Map08 Extreme",
+  "description": "最难关卡+最高难度，测试后期HP缩放/经济极限/战灵覆盖",
+  "mapID": "map_08",
+  "gold": 80,
+  "lives": 10,
+  "waves": 25,
+  "enemyFilter": "",
+  "manualWave": false,
+  "towers": [],
+  "enemies": []
+}

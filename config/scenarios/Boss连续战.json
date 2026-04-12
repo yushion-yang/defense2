@@ -1,0 +1,50 @@
+{
+  "id": "Boss连续战",
+  "name": "Boss 连续出现压力测试",
+  "description": "高波次密集Boss，测试boss_too_weak/boss净化/damageCap管线",
+  "mapID": "map_test_large",
+  "gold": 99999,
+  "lives": 999,
+  "waves": 50,
+  "enemyFilter": "",
+  "manualWave": false,
+  "towers": [
+    {
+      "row": 4, "col": 4, "key": "basic",
+      "abilitySlots": ["barrage", "", "", "", "", ""],
+      "damageTier": "S", "speedTier": "B", "rangeTier": "B",
+      "baseDamage": 20, "potentialDamage": 15,
+      "baseSpeed": 0.6, "potentialSpeed": 0.04,
+      "baseRange": 150, "potentialRange": 20,
+      "strength": 200
+    },
+    {
+      "row": 4, "col": 8, "key": "basic",
+      "abilitySlots": ["silenceZone", "", "", "", "", ""],
+      "damageTier": "B", "speedTier": "B", "rangeTier": "S",
+      "baseDamage": 10, "potentialDamage": 8,
+      "baseSpeed": 0.6, "potentialSpeed": 0.04,
+      "baseRange": 200, "potentialRange": 40,
+      "strength": 200
+    },
+    {
+      "row": 6, "col": 6, "key": "basic",
+      "abilitySlots": ["weakenZone", "", "", "", "", ""],
+      "damageTier": "B", "speedTier": "B", "rangeTier": "S",
+      "baseDamage": 10, "potentialDamage": 8,
+      "baseSpeed": 0.6, "potentialSpeed": 0.04,
+      "baseRange": 200, "potentialRange": 40,
+      "strength": 200
+    },
+    {
+      "row": 6, "col": 10, "key": "basic",
+      "abilitySlots": ["crit", "flatDamage", "", "", "", ""],
+      "damageTier": "S", "speedTier": "B", "rangeTier": "B",
+      "baseDamage": 20, "potentialDamage": 15,
+      "baseSpeed": 0.6, "potentialSpeed": 0.04,
+      "baseRange": 150, "potentialRange": 20,
+      "strength": 200
+    }
+  ],
+  "enemies": []
+}
