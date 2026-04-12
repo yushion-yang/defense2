@@ -113,8 +113,11 @@ func (s *StrengthData) RemoveEnemyDebuffs(sourceID string) {
 }
 
 // ClearTransient 清除所有临时数据（Temp + EnemyMul + EnemySub），保留 Base + Permanent。
-func (s *StrengthData) ClearTransient() {
-	s.Temp = make(map[string]float64)
-	s.EnemyMul = make(map[string]float64)
-	s.EnemySub = make(map[string]float64)
+// 返回 true 如果有数据被清除（用于脏标记优化）。
+func (s *StrengthData) ClearTransient() bool {
+	dirty := len(s.Temp) > 0 || len(s.EnemyMul) > 0 || len(s.EnemySub) > 0
+	clear(s.Temp)
+	clear(s.EnemyMul)
+	clear(s.EnemySub)
+	return dirty
 }

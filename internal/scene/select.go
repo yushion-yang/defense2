@@ -103,6 +103,8 @@ type SelectScene struct {
 	particlePool *particle.Pool // 环境粒子池
 	ambientTimer float64        // 粒子发射计时器
 	frame        int            // 帧计数（用于动画）
+
+	bgGrad *draw.CachedGradient // 背景渐变缓存
 }
 
 // NewSelectScene 创建选关场景。
@@ -145,6 +147,7 @@ func NewSelectScene(sw Switcher) *SelectScene {
 		difficulties: diffs,
 		mapNames:     mapNames,
 		particlePool: particle.NewPool(),
+		bgGrad:       draw.NewCachedGradient(game.ScreenWidth, game.ScreenHeight, theme.SelectGradTop, theme.SelectGradBot),
 	}
 }
 
@@ -302,7 +305,7 @@ var (
 )
 
 func (s *SelectScene) Draw(screen *ebiten.Image) {
-	draw.LinearGradientV(screen, 0, 0, game.ScreenWidth, game.ScreenHeight, theme.SelectGradTop, theme.SelectGradBot)
+	s.bgGrad.Draw(screen, 0, 0)
 
 	// Ambient particles (behind all UI)
 	s.particlePool.Draw(screen)

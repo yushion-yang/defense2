@@ -2108,9 +2108,12 @@ func (s *StageScene) updatePlaying() {
 				render.SpawnDamageText(x, y, dmg, crit, false)
 			},
 		})
-		// 战灵 SetTemp 后需重算受影响塔的属性
+		// 战灵 SetTemp 后需重算受影响塔的属性（仅脏标记塔）
 		s.towers.Each(func(t *tower.Tower) {
-			t.RecalcStats()
+			if t.StatsDirty {
+				t.RecalcStats()
+				t.StatsDirty = false
+			}
 		})
 	}
 

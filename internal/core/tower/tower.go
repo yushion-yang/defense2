@@ -48,7 +48,7 @@ type Tower struct {
 	DamageTier string
 	SpeedTier  string
 	RangeTier  string
-	Specialty  int // 专精属性 (0=damage, 1=speed, 2=range)
+	Specialty  int      // 专精属性 (0=damage, 1=speed, 2=range)
 	Color      [3]uint8 // 显示颜色 RGB
 	FireAnim   float64  // 射击动画计时器（射击时设为 0.15，逐帧衰减）
 	Angle      float64  // 朝向角度（弧度，0=向上，顺时针）
@@ -70,8 +70,8 @@ type Tower struct {
 	SpinActive float64 // 旋转激活计时器
 
 	// Barrage 连射运行时状态
-	BarrageBurst  int     // 连射剩余发射数（>0 表示正在连射）
-	BarrageTimer  float64 // 下一弹倒计时（秒）
+	BarrageBurst  int          // 连射剩余发射数（>0 表示正在连射）
+	BarrageTimer  float64      // 下一弹倒计时（秒）
 	BarrageTarget *enemy.Enemy // 连射锁定目标（目标死亡时切换）
 
 	// GoldPassive 运行时状态
@@ -104,6 +104,9 @@ type Tower struct {
 	BuildAnim float64 // >0 during build-in animation (seconds remaining, starts at 0.3)
 	SellAnim  float64 // >0 during sell-out animation (seconds remaining, starts at 0.25)
 	Selling   bool    // true when tower is in sell animation (skip gameplay logic)
+
+	// 性能优化：脏标记，仅当强度/buff 变化时才需要 RecalcStats
+	StatsDirty bool
 }
 
 // BuyStrength 花费金币购买永久强度。返回实际花费。

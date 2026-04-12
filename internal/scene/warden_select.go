@@ -52,6 +52,8 @@ type WardenSelectScene struct {
 	hoverIdx       int // 列表悬停
 	hoverConfirm   bool
 	hoverSkip      bool
+
+	bgGrad *draw.CachedGradient // 背景渐变缓存
 }
 
 func NewWardenSelectScene(sw Switcher, mapID, modeID, diffID string) *WardenSelectScene {
@@ -64,6 +66,7 @@ func NewWardenSelectScene(sw Switcher, mapID, modeID, diffID string) *WardenSele
 		diffID:         diffID,
 		selectedIdx:    0,
 		hoverIdx:       -1,
+		bgGrad:         draw.NewCachedGradient(game.ScreenWidth, game.ScreenHeight, theme.SelectGradTop, theme.SelectGradBot),
 	}
 }
 
@@ -143,8 +146,7 @@ func (s *WardenSelectScene) hitTestBtn(mx, my float64, btnIdx int) bool {
 // ── Draw ────────────────────────────────────────
 
 func (s *WardenSelectScene) Draw(screen *ebiten.Image) {
-	draw.LinearGradientV(screen, 0, 0, game.ScreenWidth, game.ScreenHeight,
-		theme.SelectGradTop, theme.SelectGradBot)
+	s.bgGrad.Draw(screen, 0, 0)
 
 	fm := s.fontMgr
 	if fm == nil {

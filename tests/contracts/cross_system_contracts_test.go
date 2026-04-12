@@ -28,16 +28,15 @@ func TestEveryTowerAbilityExistsInConfig(t *testing.T) {
 	}
 }
 
-// TestBalanceAndEconomyKillRewardConsistent 验证 balance.json 和 economy.json 的击杀奖励一致。
-func TestBalanceAndEconomyKillRewardConsistent(t *testing.T) {
-	bal := config.GlobalBalance()
+// TestEconomyKillRewardPositive 验证 economy.json 的击杀奖励为正数。
+// 注：balance.json 经济区段已迁移到 economy.json，不再做两者一致性检查。
+func TestEconomyKillRewardPositive(t *testing.T) {
 	spec := config.GlobalEconomySpec()
-	if spec == nil || spec.Global.KillReward == 0 {
-		t.Skip("economy spec 未加载或 killReward=0")
+	if spec == nil {
+		t.Skip("economy spec 未加载")
 	}
-	if int(bal.Economy.KillReward) != spec.Global.KillReward {
-		t.Errorf("balance KillReward=%.0f != economy spec KillReward=%d",
-			bal.Economy.KillReward, spec.Global.KillReward)
+	if spec.Global.KillReward <= 0 {
+		t.Errorf("economy spec KillReward=%d, should > 0", spec.Global.KillReward)
 	}
 }
 

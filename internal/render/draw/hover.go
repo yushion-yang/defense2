@@ -37,6 +37,8 @@ var (
 	hvConsumed bool    // true for 1 frame after long-press release
 	hvTouchID  ebiten.TouchID
 	hvTracking bool // whether hvTouchID is valid
+	hvTouchBuf [8]ebiten.TouchID
+	hvJPBuf    [8]ebiten.TouchID
 )
 
 // TickHover updates the long-press tracker. Must be called once per frame
@@ -45,8 +47,8 @@ func TickHover() {
 	// Clear consumed flag from previous frame.
 	hvConsumed = false
 
-	// Detect active touches.
-	ids := ebiten.AppendTouchIDs(nil)
+	// Detect active touches (reuse buffer to avoid per-frame allocation).
+	ids := ebiten.AppendTouchIDs(hvTouchBuf[:0])
 	touching := len(ids) > 0
 
 	switch hvPhase {
@@ -55,7 +57,7 @@ func TickHover() {
 			return
 		}
 		// New touch — start tracking.
-		justPressed := inpututil.AppendJustPressedTouchIDs(nil)
+		justPressed := inpututil.AppendJustPressedTouchIDs(hvJPBuf[:0])
 		if len(justPressed) == 0 {
 			return
 		}

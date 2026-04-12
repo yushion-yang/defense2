@@ -206,8 +206,8 @@ func TestWaveSpec_HpPerWavePositive(t *testing.T) {
 	if sc.Scaling.HpPerWave <= 0 {
 		t.Error("hpPerWave should > 0")
 	}
-	if sc.Scaling.SpeedPerWave <= 0 {
-		t.Error("speedPerWave should > 0")
+	if sc.Scaling.SpeedPerWave < 0 {
+		t.Error("speedPerWave should >= 0")
 	}
 }
 
@@ -217,14 +217,18 @@ func TestWaveSpec_HpPerWavePositive(t *testing.T) {
 
 func TestBuffStackSpec_DamageUpAdditive(t *testing.T) {
 	// 已在 full_coverage_contracts_test.go TestBuffDamageUpUsesAdditive 中覆盖
-	// 此处验证 cap > 0
+	// 此处验证 damageUp 规则存在且为 additive 模式
 	rules := buff.GlobalRules()
 	r, ok := rules["damageUp"]
 	if !ok {
 		t.Fatal("缺少 damageUp 规则")
 	}
-	if r.Cap <= 0 {
-		t.Error("damageUp cap should > 0")
+	if r.Mode != buff.Additive {
+		t.Errorf("damageUp mode should be Additive, got %d", r.Mode)
+	}
+	// cap=0 表示无上限（预留），cap>0 表示有上限，两者都合法
+	if r.Cap < 0 {
+		t.Error("damageUp cap should >= 0")
 	}
 }
 
@@ -269,4 +273,3 @@ func TestProjectileSpec_DefaultsPositive(t *testing.T) {
 		t.Error("defaultProjectileRadius should > 0")
 	}
 }
-

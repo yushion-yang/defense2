@@ -64,6 +64,8 @@ type CampaignSelectScene struct {
 
 	particlePool *particle.Pool
 	ambientTimer float64
+
+	bgGrad *draw.CachedGradient // 背景渐变缓存
 }
 
 // NewCampaignSelectScene 创建战役关卡选择场景。
@@ -90,6 +92,7 @@ func NewCampaignSelectScene(sw Switcher) *CampaignSelectScene {
 		hoverMap:     -1,
 		hoverDiff:    -1,
 		particlePool: particle.NewPool(),
+		bgGrad:       draw.NewCachedGradient(game.ScreenWidth, game.ScreenHeight, theme.SelectGradTop, theme.SelectGradBot),
 	}
 }
 
@@ -214,8 +217,7 @@ func (s *CampaignSelectScene) hitTestStartBtn(mx, my float64) bool {
 // ── Draw ────────────────────────────────────────
 
 func (s *CampaignSelectScene) Draw(screen *ebiten.Image) {
-	draw.LinearGradientV(screen, 0, 0, game.ScreenWidth, game.ScreenHeight,
-		theme.SelectGradTop, theme.SelectGradBot)
+	s.bgGrad.Draw(screen, 0, 0)
 
 	s.particlePool.Draw(screen)
 

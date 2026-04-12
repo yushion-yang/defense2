@@ -26,8 +26,8 @@ const (
 	settingsRadius = float32(14)
 
 	sliderBarW = float32(200) // 滑块条宽度
-	sliderBarH = float32(8)  // 滑块条高度
-	sliderKnob = float32(14) // 滑块手柄直径
+	sliderBarH = float32(8)   // 滑块条高度
+	sliderKnob = float32(14)  // 滑块手柄直径
 
 	qualityBtnW   = float32(60)
 	qualityBtnH   = float32(30)
@@ -50,6 +50,8 @@ type SettingsScene struct {
 
 	draggingSFX bool // 正在拖动音效滑块
 	draggingBGM bool // 正在拖动音乐滑块
+
+	bgGrad *draw.CachedGradient // 背景渐变缓存
 }
 
 // NewSettingsScene 创建设置场景。
@@ -71,6 +73,7 @@ func NewSettingsScene(sw Switcher, returnTo Scene) *SettingsScene {
 		sfxVol:      sfx,
 		bgmVol:      bgm,
 		quality:     int(game.CurrentQuality),
+		bgGrad:      draw.NewCachedGradient(game.ScreenWidth, game.ScreenHeight, theme.SelectGradTop, theme.SelectGradBot),
 	}
 }
 
@@ -211,7 +214,7 @@ func (s *SettingsScene) persist() {
 
 func (s *SettingsScene) Draw(screen *ebiten.Image) {
 	// 背景渐变
-	draw.LinearGradientV(screen, 0, 0, game.ScreenWidth, game.ScreenHeight, theme.SelectGradTop, theme.SelectGradBot)
+	s.bgGrad.Draw(screen, 0, 0)
 
 	fm := render.GlobalFont()
 	if fm == nil {

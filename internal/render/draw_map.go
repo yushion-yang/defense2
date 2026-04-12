@@ -192,9 +192,9 @@ func drawWaypointPath(screen *ebiten.Image, waypoints []gamemap.Point, pathClr c
 
 		// Center dashed line (slightly muted variant of path color).
 		dashClr := color.RGBA{
-			R: uint8(float64(pathClr.R) * 0.7),
-			G: uint8(float64(pathClr.G) * 0.7),
-			B: uint8(float64(pathClr.B) * 0.7),
+			R: uint8(float64(pathClr.R) * theme.MapPathDashDarken),
+			G: uint8(float64(pathClr.G) * theme.MapPathDashDarken),
+			B: uint8(float64(pathClr.B) * theme.MapPathDashDarken),
 			A: pathClr.A,
 		}
 		draw.DashedLine(screen, x1, y1, x2, y2,
@@ -332,9 +332,9 @@ func drawTerrainDecorations(screen *ebiten.Image, gm *gamemap.GameMap, dotClr co
 	cfg := gm.Config
 
 	// Derive decoration colors from the theme dot color.
-	decoA := color.RGBA{R: dotClr.R, G: dotClr.G, B: dotClr.B, A: 25}
-	decoB := color.RGBA{R: dotClr.R, G: dotClr.G, B: dotClr.B, A: 20}
-	decoC := color.RGBA{R: dotClr.R, G: dotClr.G, B: dotClr.B, A: 15}
+	decoA := color.RGBA{R: dotClr.R, G: dotClr.G, B: dotClr.B, A: theme.MapDecoAlphaA}
+	decoB := color.RGBA{R: dotClr.R, G: dotClr.G, B: dotClr.B, A: theme.MapDecoAlphaB}
+	decoC := color.RGBA{R: dotClr.R, G: dotClr.G, B: dotClr.B, A: theme.MapDecoAlphaC}
 
 	for row := 0; row < cfg.Rows; row++ {
 		for col := 0; col < cfg.Cols; col++ {

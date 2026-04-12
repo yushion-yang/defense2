@@ -3,8 +3,8 @@
 package hud
 
 import (
-	"fmt"
 	"image/color"
+	"strconv"
 
 	"defense2/internal/render"
 	"defense2/internal/render/draw"
@@ -21,12 +21,12 @@ type BuildCardVM struct {
 	Damage      float64
 	AttackSpeed float64
 	Range       float64
-	RoleTag     string         // 预计算的角色标签："输出·减速"/"辅助·光环"/...
-	RoleColor   color.RGBA     // 角色标签颜色
-	TypeIcon    string         // 塔类型图标名："tower-freeze"/""
-	Sprite      *ebiten.Image  // 预加载的精灵图
-	Buildable   bool           // true=可建造, false=仅展示变体
-	AbilityDesc string         // 变体卡的能力描述文本
+	RoleTag     string        // 预计算的角色标签："输出·减速"/"辅助·光环"/...
+	RoleColor   color.RGBA    // 角色标签颜色
+	TypeIcon    string        // 塔类型图标名："tower-freeze"/""
+	Sprite      *ebiten.Image // 预加载的精灵图
+	Buildable   bool          // true=可建造, false=仅展示变体
+	AbilityDesc string        // 变体卡的能力描述文本
 }
 
 // BuildMenuData holds the runtime data the build menu needs to render.
@@ -41,22 +41,22 @@ type BuildMenuData struct {
 
 // Build panel constants
 const (
-	bpCols     = 5     // cards per row
-	bpCardW    = float32(100)
-	bpCardH    = float32(80)
-	bpCardGap  = float32(8)
-	bpCardR    = float32(8)
-	bpPadX     = float32(16)
-	bpPadY     = float32(12)
-	bpHeaderH  = float32(32)
-	bpTitleH   = float32(28)
+	bpCols    = 5 // cards per row
+	bpCardW   = float32(100)
+	bpCardH   = float32(80)
+	bpCardGap = float32(8)
+	bpCardR   = float32(8)
+	bpPadX    = float32(16)
+	bpPadY    = float32(12)
+	bpHeaderH = float32(32)
+	bpTitleH  = float32(28)
 )
 
 // buildPanelMetrics computes the panel geometry from the card count.
 type buildPanelMetrics struct {
 	panelX, panelY, panelW, panelH float32
-	gridX, gridY                    float32
-	rows                            int
+	gridX, gridY                   float32
+	rows                           int
 }
 
 func calcBuildPanelMetrics(count int) buildPanelMetrics {
@@ -154,7 +154,7 @@ func drawBuildableCard(screen *ebiten.Image, fm *render.FontManager, card BuildC
 	nameY := float64(cy) + 6
 	fm.DrawBoldText(screen, card.Label, nameX, nameY, theme.FontMD, color.White)
 
-	costTxt := fmt.Sprintf("%dG", card.Cost)
+	costTxt := strconv.Itoa(card.Cost) + "G"
 	costClr := theme.BuildCostColor
 	if !affordable {
 		costClr = color.RGBA{R: 200, G: 80, B: 80, A: 200}
@@ -239,7 +239,7 @@ func drawBuildCardTooltip(screen *ebiten.Image, fm *render.FontManager, card Bui
 	ty := float64(tipY) + 8
 
 	fm.DrawBoldText(screen, card.Label, tx, ty, theme.FontLG, theme.TextTitle)
-	fm.DrawText(screen, fmt.Sprintf("%s · %dG", card.RoleTag, card.Cost), tx, ty+18, theme.FontSM, card.RoleColor)
+	fm.DrawText(screen, card.RoleTag+" · "+strconv.Itoa(card.Cost)+"G", tx, ty+18, theme.FontSM, card.RoleColor)
 
 	ty += 38
 	im := render.GlobalIcons()
@@ -247,13 +247,13 @@ func drawBuildCardTooltip(screen *ebiten.Image, fm *render.FontManager, card Bui
 	const tipIconGap = 4.0
 
 	drawStatIcon(screen, im, "stat-damage", tx, ty, tipIconSz)
-	fm.DrawText(screen, fmt.Sprintf("%.0f", card.Damage), tx+tipIconSz+tipIconGap, ty, theme.FontSM, theme.InfoAttrDamage)
+	fm.DrawText(screen, strconv.FormatFloat(card.Damage, 'f', 0, 64), tx+tipIconSz+tipIconGap, ty, theme.FontSM, theme.InfoAttrDamage)
 
 	drawStatIcon(screen, im, "stat-atkspd", tx+60, ty, tipIconSz)
-	fm.DrawText(screen, fmt.Sprintf("%.2fs", 1.0/card.AttackSpeed), tx+60+tipIconSz+tipIconGap, ty, theme.FontSM, theme.InfoAttrAtkSpd)
+	fm.DrawText(screen, strconv.FormatFloat(1.0/card.AttackSpeed, 'f', 2, 64)+"s", tx+60+tipIconSz+tipIconGap, ty, theme.FontSM, theme.InfoAttrAtkSpd)
 
 	drawStatIcon(screen, im, "stat-range", tx+140, ty, tipIconSz)
-	fm.DrawText(screen, fmt.Sprintf("%.0f", card.Range), tx+140+tipIconSz+tipIconGap, ty, theme.FontSM, theme.InfoAttrRange)
+	fm.DrawText(screen, strconv.FormatFloat(card.Range, 'f', 0, 64), tx+140+tipIconSz+tipIconGap, ty, theme.FontSM, theme.InfoAttrRange)
 }
 
 // drawVariantTooltip renders a tooltip for display-only variant cards.

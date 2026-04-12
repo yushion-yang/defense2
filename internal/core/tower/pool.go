@@ -4,6 +4,8 @@ package tower
 
 import (
 	"fmt"
+	"strconv"
+	"strings"
 
 	"defense2/internal/config"
 	"defense2/internal/core/buff"
@@ -19,10 +21,10 @@ const (
 
 // Pool 固定大小的塔对象池。
 type Pool struct {
-	towers     []Tower // 预分配的塔槽位数组
-	Count      int     // 当前已放置的塔数量
+	towers     []Tower                          // 预分配的塔槽位数组
+	Count      int                              // 当前已放置的塔数量
 	grid       [gridMaxRows][gridMaxCols]*Tower // spatial index for O(1) At() lookup
-	RemoveHook func(instanceKey string) // 可选：塔移除时的清理回调（由上层设置，避免循环依赖）
+	RemoveHook func(instanceKey string)         // 可选：塔移除时的清理回调（由上层设置，避免循环依赖）
 }
 
 // NewPool 创建指定容量的塔对象池。
@@ -150,6 +152,30 @@ func (p *Pool) Each(fn func(t *Tower)) {
 	}
 }
 
+// ByInstanceKey 根据 InstanceKey（格式 "key_row_col"）反查塔。O(1) via grid index.
+// 用于替代每帧构建 map[string]*Tower 的开销。
+func (p *Pool) ByInstanceKey(key string) *Tower {
+	// 从末尾找最后两个 '_' 分隔符，提取 row 和 col
+	lastUS := strings.LastIndexByte(key, '_')
+	if lastUS <= 0 {
+		return nil
+	}
+	col, err := strconv.Atoi(key[lastUS+1:])
+	if err != nil {
+		return nil
+	}
+	rest := key[:lastUS]
+	secondUS := strings.LastIndexByte(rest, '_')
+	if secondUS < 0 {
+		return nil
+	}
+	row, err := strconv.Atoi(rest[secondUS+1:])
+	if err != nil {
+		return nil
+	}
+	return p.At(row, col)
+}
+
 // At 返回指定网格位置 (row, col) 上的塔，无塔则返回 nil。O(1) via grid index.
 func (p *Pool) At(row, col int) *Tower {
 	if row < 0 || row >= gridMaxRows || col < 0 || col >= gridMaxCols {
@@ -205,4 +231,3 @@ func spriteKeyForStyle(style AttackStyle) string {
 		return "sentinel"
 	}
 }
-

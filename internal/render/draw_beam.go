@@ -8,6 +8,7 @@ import (
 
 	"defense2/internal/core/combat"
 	"defense2/internal/render/draw"
+	"defense2/internal/render/theme"
 
 	"github.com/hajimehoshi/ebiten/v2"
 )
@@ -75,7 +76,7 @@ func DrawBeams(screen *ebiten.Image, beams *combat.BeamPool, animDT float64) {
 		// ── Layer 5: White-hot center ──
 		whiteA := uint8(float64(a8) * 0.9)
 		draw.ThickLine(screen, x1, y1, x2, y2, w*0.4,
-			color.RGBA{R: 255, G: 255, B: 255, A: whiteA})
+			color.RGBA{R: theme.BeamHighlight.R, G: theme.BeamHighlight.G, B: theme.BeamHighlight.B, A: whiteA})
 
 		// ── Layer 6: Energy flow nodes (5 pulses traveling along beam) ──
 		if beamLen > 5 {
@@ -87,7 +88,7 @@ func DrawBeams(screen *ebiten.Image, beams *combat.BeamPool, animDT float64) {
 				nodePulse := 0.6 + 0.4*math.Sin(beamAnimClock*15+float64(i)*2.5)
 				nodeA := uint8(float64(a8) * nodePulse)
 				draw.FilledCircle(screen, nx, ny, nodeR,
-					color.RGBA{R: 255, G: 255, B: 255, A: nodeA})
+					color.RGBA{R: theme.BeamHighlight.R, G: theme.BeamHighlight.G, B: theme.BeamHighlight.B, A: nodeA})
 				// Node glow halo
 				draw.FilledCircle(screen, nx, ny, nodeR*2,
 					color.RGBA{R: b.Color[0], G: b.Color[1], B: b.Color[2], A: nodeA / 3})
@@ -107,7 +108,7 @@ func DrawBeams(screen *ebiten.Image, beams *combat.BeamPool, animDT float64) {
 				sy := float32(float64(y1) + dy*t + perpY*sparkOffset)
 				sparkA := uint8(float64(a8) * (0.4 + 0.3*math.Sin(beamAnimClock*12+float64(i))))
 				draw.FilledCircle(screen, sx, sy, 1.5,
-					color.RGBA{R: 255, G: 255, B: 255, A: sparkA})
+					color.RGBA{R: theme.BeamHighlight.R, G: theme.BeamHighlight.G, B: theme.BeamHighlight.B, A: sparkA})
 			}
 		}
 
@@ -117,13 +118,13 @@ func DrawBeams(screen *ebiten.Image, beams *combat.BeamPool, animDT float64) {
 		draw.Glow(screen, x1, y1, w*0.5, w*2.5,
 			color.RGBA{R: b.Color[0], G: b.Color[1], B: b.Color[2], A: srcFlareA})
 		draw.FilledCircle(screen, x1, y1, w*0.4,
-			color.RGBA{R: 255, G: 255, B: 255, A: uint8(float64(a8) * 0.6 * srcPulse)})
+			color.RGBA{R: theme.BeamHighlight.R, G: theme.BeamHighlight.G, B: theme.BeamHighlight.B, A: uint8(float64(a8) * 0.6 * srcPulse)})
 
 		// ── Target impact (large flare + white core + double expanding rings) ──
 		draw.Glow(screen, x2, y2, w*1.2, w*4,
 			color.RGBA{R: b.Color[0], G: b.Color[1], B: b.Color[2], A: a8})
 		draw.FilledCircle(screen, x2, y2, w*0.6,
-			color.RGBA{R: 255, G: 255, B: 255, A: uint8(float64(a8) * 0.8)})
+			color.RGBA{R: theme.BeamHighlight.R, G: theme.BeamHighlight.G, B: theme.BeamHighlight.B, A: uint8(float64(a8) * 0.8)})
 		// Inner expanding ring
 		ring1R := w*1.5 + float32(progress)*w*2
 		ring1A := uint8(float64(a8) * (1 - progress) * 0.6)
@@ -135,7 +136,7 @@ func DrawBeams(screen *ebiten.Image, beams *combat.BeamPool, animDT float64) {
 			ring2R := w*2 + float32(ring2Prog)*w*3
 			ring2A := uint8(float64(a8) * (1 - ring2Prog) * 0.3)
 			draw.CircleOutline(screen, x2, y2, ring2R, 1,
-				color.RGBA{R: 255, G: 255, B: 255, A: ring2A})
+				color.RGBA{R: theme.BeamHighlight.R, G: theme.BeamHighlight.G, B: theme.BeamHighlight.B, A: ring2A})
 		}
 	})
 }

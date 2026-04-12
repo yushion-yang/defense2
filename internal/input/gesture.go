@@ -13,9 +13,9 @@
 //	  已拖拽 → 结束拖拽，不触发 Tap
 //
 // 防误触机制：
-//	- 所有操作在松开时触发，不在按下时触发
-//	- UI 区域按下后滑开 → 松开时不触发（和 iOS 按钮行为一致）
-//	- 游戏区小幅移动（< 阈值）仍判定为 Tap
+//   - 所有操作在松开时触发，不在按下时触发
+//   - UI 区域按下后滑开 → 松开时不触发（和 iOS 按钮行为一致）
+//   - 游戏区小幅移动（< 阈值）仍判定为 Tap
 package input
 
 import (
@@ -30,9 +30,9 @@ import (
 // Gesture 统一手势识别器。
 type Gesture struct {
 	// 配置（创建后设置）
-	DragThreshold float64                         // 拖拽判定阈值（逻辑像素），默认 5
-	DragEnabled   bool                            // 是否允许拖拽（由外部状态机控制）
-	IsOnUI        func(x, y float64) bool         // 判断点是否在 UI 区域（UI 区不启动拖拽）
+	DragThreshold float64                               // 拖拽判定阈值（逻辑像素），默认 5
+	DragEnabled   bool                                  // 是否允许拖拽（由外部状态机控制）
+	IsOnUI        func(x, y float64) bool               // 判断点是否在 UI 区域（UI 区不启动拖拽）
 	ToLogical     func(x, y float64) (float64, float64) // 原生→逻辑坐标转换
 
 	// ── 当前帧输出（每帧 Update 后读取） ──
@@ -52,7 +52,7 @@ type Gesture struct {
 	startX       float64 // 按下起点（逻辑坐标）
 	startY       float64
 	prevX, prevY float64
-	movedBeyond  bool    // 是否移动超过阈值
+	movedBeyond  bool // 是否移动超过阈值
 }
 
 // NewGesture 创建手势识别器。
@@ -150,8 +150,11 @@ func (g *Gesture) logicalPos() (float64, float64) {
 	return rx, ry
 }
 
+// Pre-allocated touch ID buffers (single-threaded Ebitengine model).
+var gTouchBuf [8]ebiten.TouchID
+
 func (g *Gesture) rawPos() (float64, float64) {
-	if ids := ebiten.AppendTouchIDs(nil); len(ids) > 0 {
+	if ids := ebiten.AppendTouchIDs(gTouchBuf[:0]); len(ids) > 0 {
 		tx, ty := ebiten.TouchPosition(ids[0])
 		return float64(tx), float64(ty)
 	}
@@ -160,9 +163,9 @@ func (g *Gesture) rawPos() (float64, float64) {
 }
 
 func (g *Gesture) isDown() bool {
-	return ebiten.IsMouseButtonPressed(ebiten.MouseButtonLeft) || len(ebiten.AppendTouchIDs(nil)) > 0
+	return ebiten.IsMouseButtonPressed(ebiten.MouseButtonLeft) || len(ebiten.AppendTouchIDs(gTouchBuf[:0])) > 0
 }
 
 func (g *Gesture) isJustDown() bool {
-	return inpututil.IsMouseButtonJustPressed(ebiten.MouseButtonLeft) || len(inpututil.AppendJustPressedTouchIDs(nil)) > 0
+	return inpututil.IsMouseButtonJustPressed(ebiten.MouseButtonLeft) || len(inpututil.AppendJustPressedTouchIDs(gTouchBuf[:0])) > 0
 }

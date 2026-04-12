@@ -17,11 +17,11 @@ func DrawProjectiles(screen *ebiten.Image, pool *projectile.Pool) {
 	pool.Each(func(p *projectile.Projectile) {
 		// Trail first (behind body)
 		baseClr := vfx.ProjectileTrailColor(p.SourceTowerKey)
-		trail := make([]vfx.TrailPt, projectile.TrailLen)
+		var trailArr [projectile.TrailLen]vfx.TrailPt
 		for i := 0; i < projectile.TrailLen; i++ {
-			trail[i] = vfx.TrailPt{X: p.Trail[i].X, Y: p.Trail[i].Y, Active: p.Trail[i].Active}
+			trailArr[i] = vfx.TrailPt{X: p.Trail[i].X, Y: p.Trail[i].Y, Active: p.Trail[i].Active}
 		}
-		vfx.DrawProjectileTrail(screen, trail, p.TrailCursor, baseClr)
+		vfx.DrawProjectileTrail(screen, trailArr[:], p.TrailCursor, baseClr)
 
 		// Body
 		angle := math.Atan2(p.VY, p.VX)

@@ -25,6 +25,7 @@ func TickTowerAbilities(towers *tower.Pool, enemies *enemy.Pool, dt float64, cha
 		if t.Strength != nil {
 			t.Strength.ClearTransient()
 		}
+		t.StatsDirty = false // reset dirty flag before abilities/warden set it
 		resetTowerStats(t)
 	})
 
@@ -39,6 +40,12 @@ func TickTowerAbilities(towers *tower.Pool, enemies *enemy.Pool, dt float64, cha
 			idx++
 		})
 		strength.RebuildChainNetwork(chainTowersBuf)
+		// 链网络可能设置了 SetTemp，标记受影响的塔
+		towers.Each(func(t *tower.Tower) {
+			if t.Strength != nil && len(t.Strength.Temp) > 0 {
+				t.StatsDirty = true
+			}
+		})
 	}
 
 	// --- Phase 1.1: tick 塔 buff（递减时间，移除过期 buff）---

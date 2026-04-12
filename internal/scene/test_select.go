@@ -98,6 +98,8 @@ type TestSelectScene struct {
 	hoverStart      bool
 	filtered        []int          // 当前筛选后的场景索引列表
 	customScenarios []testScenario // 从 JSON 加载的自定义场景
+
+	bgGrad *draw.CachedGradient // 背景渐变缓存
 }
 
 // NewTestSelectScene 创建测试场景选择器。
@@ -107,6 +109,7 @@ func NewTestSelectScene(sw Switcher) *TestSelectScene {
 		selectedIdx: -1,
 		hoverIdx:    -1,
 		hoverTab:    -1,
+		bgGrad:      draw.NewCachedGradient(game.ScreenWidth, game.ScreenHeight, theme.SelectGradTop, theme.SelectGradBot),
 	}
 	s.loadCustomScenarios()
 	s.updateFilter()
@@ -298,8 +301,7 @@ func (s *TestSelectScene) hitTestStartBtn(mx, my float64) bool {
 // ── Draw ────────────────────────────────────────
 
 func (s *TestSelectScene) Draw(screen *ebiten.Image) {
-	draw.LinearGradientV(screen, 0, 0, game.ScreenWidth, game.ScreenHeight,
-		theme.SelectGradTop, theme.SelectGradBot)
+	s.bgGrad.Draw(screen, 0, 0)
 
 	fm := render.GlobalFont()
 	if fm == nil {

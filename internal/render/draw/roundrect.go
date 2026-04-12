@@ -27,10 +27,20 @@ func whitePixel() *ebiten.Image {
 	return whitePixelImage
 }
 
+// Pre-allocated vertex/index buffers for FillPath. Reused across calls to
+// avoid per-call heap allocation. Safe because Ebitengine is single-threaded.
+var (
+	fillVs []ebiten.Vertex
+	fillIs []uint16
+)
+
 // FillPath renders a vector.Path as a solid fill using DrawTriangles with a
 // white pixel source. This gives us full control over vertex colors.
 func FillPath(screen *ebiten.Image, path *vector.Path, clr color.Color) {
-	vs, is := path.AppendVerticesAndIndicesForFilling(nil, nil)
+	fillVs = fillVs[:0]
+	fillIs = fillIs[:0]
+	fillVs, fillIs = path.AppendVerticesAndIndicesForFilling(fillVs, fillIs)
+	vs, is := fillVs, fillIs
 	if len(vs) == 0 {
 		return
 	}

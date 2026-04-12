@@ -141,6 +141,7 @@ func (b *EnvoyBehavior) Tick(w *warden.Warden, ctx *warden.TickContext) {
 			if tempBonus > 0 {
 				key := fmt.Sprintf("envoy_buff_%d", w.ID)
 				s.BuffedTower.Strength.SetTemp(key, tempBonus)
+				s.BuffedTower.StatsDirty = true
 			}
 		}
 	}
@@ -191,6 +192,7 @@ func applyEnvoyBuff(w *warden.Warden, s *EnvoyState, ctx *warden.TickContext) {
 	if tempBonus > 0 {
 		best.Strength.SetTemp(key, tempBonus)
 	}
+	best.StatsDirty = true
 
 	// 记录用于渲染
 	s.BuffedTower = best

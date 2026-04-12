@@ -76,6 +76,8 @@ type MapEditorScene struct {
 
 	// D-pad hover/press state (floating overlay)
 	dpadHover int // 0=none, 1=up, 2=down, 3=left, 4=right
+
+	bgGrad *draw.CachedGradient // 背景渐变缓存
 }
 
 // NewMapEditorScene creates a map editor scene.
@@ -84,6 +86,7 @@ func NewMapEditorScene(sw Switcher) *MapEditorScene {
 		switcher: sw,
 		hoverRow: -1,
 		hoverCol: -1,
+		bgGrad:   draw.NewCachedGradient(game.ScreenWidth, game.ScreenHeight, theme.SelectGradTop, theme.SelectGradBot),
 	}
 	s.maps, _ = config.LoadLevelList()
 	if len(s.maps) > 0 {
@@ -492,8 +495,7 @@ func (s *MapEditorScene) gridOffset() (float64, float64) {
 
 func (s *MapEditorScene) Draw(screen *ebiten.Image) {
 	// Background gradient
-	draw.LinearGradientV(screen, 0, 0, game.ScreenWidth, game.ScreenHeight,
-		theme.SelectGradTop, theme.SelectGradBot)
+	s.bgGrad.Draw(screen, 0, 0)
 
 	fm := render.GlobalFont()
 	if fm == nil {

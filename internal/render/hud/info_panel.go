@@ -4,8 +4,8 @@
 package hud
 
 import (
-	"fmt"
 	"image/color"
+	"strconv"
 
 	"defense2/internal/render"
 	"defense2/internal/render/draw"
@@ -244,7 +244,7 @@ func DrawInfoPanel(screen *ebiten.Image, vm InfoPanelVM) {
 				remaining := maxAbil - i
 				if remaining > 0 {
 					panel.AddRow(abilityH, func(screen *ebiten.Image, x, y float64, _ float64) {
-						fm.DrawText(screen, fmt.Sprintf("...+%d个能力", remaining), x, y, theme.FontXS, theme.TextMuted)
+						fm.DrawText(screen, "...+"+strconv.Itoa(remaining)+"个能力", x, y, theme.FontXS, theme.TextMuted)
 					})
 					usedH += abilityH
 				}
@@ -268,7 +268,7 @@ func DrawInfoPanel(screen *ebiten.Image, vm InfoPanelVM) {
 				remaining := len(vm.Buffs) - i
 				if remaining > 0 {
 					panel.AddRow(buffH, func(screen *ebiten.Image, x, y float64, _ float64) {
-						fm.DrawText(screen, fmt.Sprintf("...+%d个buff", remaining), x, y, theme.FontXS, theme.TextMuted)
+						fm.DrawText(screen, "...+"+strconv.Itoa(remaining)+"个buff", x, y, theme.FontXS, theme.TextMuted)
 					})
 					usedH += buffH
 				}
@@ -281,7 +281,7 @@ func DrawInfoPanel(screen *ebiten.Image, vm InfoPanelVM) {
 				srcW := fm.MeasureText(b.Source, theme.FontXS)
 				fm.DrawText(screen, b.Desc, x+srcW+6, y, theme.FontXS, theme.TextMuted)
 				if b.Remaining >= 0 {
-					timeStr := fmt.Sprintf("%.0fs", b.Remaining)
+					timeStr := strconv.FormatFloat(b.Remaining, 'f', 0, 64) + "s"
 					fm.DrawRightText(screen, timeStr, x+w, y, theme.FontXS, theme.TextMuted)
 				}
 			})
@@ -302,7 +302,7 @@ func DrawInfoPanel(screen *ebiten.Image, vm InfoPanelVM) {
 				btnClr = color.RGBA{R: 230, G: 190, B: 60, A: 255}
 			}
 			draw.RoundRect(screen, btnRect.X, btnRect.Y, btnRect.W, btnRect.H, 6, btnClr)
-			label := fmt.Sprintf("选择能力 (%d)", vm.PendingCount)
+			label := "选择能力 (" + strconv.Itoa(vm.PendingCount) + ")"
 			fm.DrawCenteredBoldText(screen, label,
 				float64(btnRect.X)+float64(btnRect.W)/2, y+7, theme.FontSM, theme.TextTitle)
 			lastAbilityBtnRect = btnRect
@@ -328,7 +328,7 @@ func DrawInfoPanel(screen *ebiten.Image, vm InfoPanelVM) {
 				btnClr = color.RGBA{R: 80, G: 80, B: 80, A: 200} // gray
 			}
 			draw.RoundRect(screen, btnRect.X, btnRect.Y, btnRect.W, btnRect.H, 6, btnClr)
-			label := fmt.Sprintf("解锁能力 $%d", vm.UnlockCost)
+			label := "解锁能力 $" + strconv.Itoa(vm.UnlockCost)
 			textClr := theme.TextTitle
 			if !affordable {
 				textClr = color.RGBA{R: 160, G: 160, B: 160, A: 255}
