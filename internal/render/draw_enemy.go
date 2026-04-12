@@ -131,22 +131,22 @@ func (er *EnemyRenderer) DrawEnemies(screen *ebiten.Image, pool *enemy.Pool, ani
 		r := float32(e.Radius)
 
 		// --- Boss pulsing rings ---
-		if CurrentVFXLevel < VFXMinimal && e.Boss {
+		if e.Boss {
 			vfx.DrawBossPulse(screen, cx, cy, r, animTime)
 		}
 
 		// --- Runner pulsing ring ---
-		if CurrentVFXLevel < VFXMinimal && e.Archetype == "runner" {
+		if e.Archetype == "runner" {
 			vfx.DrawRunnerRing(screen, cx, cy, r, animTime)
 		}
 
 		// --- Root ground effect (drawn UNDER enemy body) ---
-		if CurrentVFXLevel < VFXMinimal && e.IsRooted() {
+		if e.IsRooted() {
 			vfx.DrawRootGround(screen, cx, cy, r)
 		}
 
 		// --- Buffer aura ring (drawn UNDER body, hidden when silenced) ---
-		if CurrentVFXLevel < VFXMinimal && e.Behavior == "buffer" && e.HasBufferAura() && !e.AbilitySilenced {
+		if e.Behavior == "buffer" && e.HasBufferAura() && !e.AbilitySilenced {
 			if ba, ok := e.Buffs.Get("bufferAura"); ok {
 				vfx.DrawBufferAura(screen, cx, cy, ba.Value2, animTime)
 			}
@@ -212,38 +212,36 @@ func (er *EnemyRenderer) DrawEnemies(screen *ebiten.Image, pool *enemy.Pool, ani
 		}
 
 		// --- Buff behavior VFX (drawn over body) ---
-		if CurrentVFXLevel < VFXMinimal && e.GetDamageReduce() > 0 {
+		if e.GetDamageReduce() > 0 {
 			vfx.DrawDamageReduceShield(screen, cx, cy, float32(e.Radius), animTime)
 		}
-		if CurrentVFXLevel < VFXReduced && e.HasBerserk() && e.BerserkTriggered {
+		if e.HasBerserk() && e.BerserkTriggered {
 			vfx.DrawBerserkFlare(screen, cx, cy, float32(e.Radius), animTime)
 		}
-		if CurrentVFXLevel < VFXReduced && e.HasRegen() {
+		if e.HasRegen() {
 			vfx.DrawRegenAura(screen, cx, cy, float32(e.Radius), animTime)
 		}
 
 		// --- Status effect body overlays (subtle, sprite-sized) ---
 		spriteR := float32(enemySpriteSize) / 2
-		if CurrentVFXLevel < VFXMinimal {
-			if e.IsSlowed() {
-				vfx.DrawSlowOverlay(screen, cx, cy, spriteR, animTime)
-			}
-			if e.IsBurning() {
-				vfx.DrawBurnOverlay(screen, cx, cy, spriteR, animTime)
-			}
-			if e.Buffs != nil && e.Buffs.Has("poison") {
-				vfx.DrawPoisonOverlay(screen, cx, cy, spriteR, animTime)
-			}
+		if e.IsSlowed() {
+			vfx.DrawSlowOverlay(screen, cx, cy, spriteR, animTime)
+		}
+		if e.IsBurning() {
+			vfx.DrawBurnOverlay(screen, cx, cy, spriteR, animTime)
+		}
+		if e.Buffs != nil && e.Buffs.Has("poison") {
+			vfx.DrawPoisonOverlay(screen, cx, cy, spriteR, animTime)
+		}
 
-			// --- Stun rotating stars ---
-			if e.IsStunned() {
-				vfx.DrawStunStars(screen, cx, cy, r, animTime)
-			}
+		// --- Stun rotating stars ---
+		if e.IsStunned() {
+			vfx.DrawStunStars(screen, cx, cy, r, animTime)
+		}
 
-			// --- Hit flash overlay ---
-			if e.HitFlash > 0 && !e.IsDying() {
-				vfx.DrawHitFlash(screen, cx, cy, spriteR, e.HitFlash)
-			}
+		// --- Hit flash overlay ---
+		if e.HitFlash > 0 && !e.IsDying() {
+			vfx.DrawHitFlash(screen, cx, cy, spriteR, e.HitFlash)
 		}
 
 		// (tank overlay removed — was debug placeholder)
@@ -277,13 +275,13 @@ func (er *EnemyRenderer) DrawEnemies(screen *ebiten.Image, pool *enemy.Pool, ani
 				rooted:   e.IsRooted(),
 				bleeding: e.IsBleeding(),
 				burning:  e.IsBurning(),
-			poisoned: e.IsPoisoned(),
-			weakened: e.IsWeakened(),
+				poisoned: e.IsPoisoned(),
+				weakened: e.IsWeakened(),
 			})
 		}
 
 		// --- 能力常驻视觉（被沉默时全部隐藏）---
-		if !e.AbilitySilenced && CurrentVFXLevel < VFXMinimal {
+		if !e.AbilitySilenced {
 			// 免疫脚环（只显示天生能力，净化临时免疫用白色微光）
 			footR := float32(e.Radius) + 2
 			if hasAbility(e, "ccImmune") {
@@ -311,7 +309,7 @@ func (er *EnemyRenderer) DrawEnemies(screen *ebiten.Image, pool *enemy.Pool, ani
 			}
 
 			// 净化免疫期白色微光
-			if CurrentVFXLevel < VFXReduced && e.PurgeInterval > 0 && e.HasControlImmunity() {
+			if e.PurgeInterval > 0 && e.HasControlImmunity() {
 				vfx.DrawPurgeGlow(screen, cx, cy, float32(e.Radius), animTime)
 			}
 		}

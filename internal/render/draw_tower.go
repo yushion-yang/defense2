@@ -89,18 +89,11 @@ func (tr *TowerRenderer) DrawTowers(screen *ebiten.Image, pool *tower.Pool, sele
 		}
 
 		// --- Under-body VFX (drawn BEFORE sprite so they don't obscure it) ---
-		// VFXMinimal: 跳过所有塔 VFX（仅精灵+标签）
-		if CurrentVFXLevel < VFXMinimal {
-			if !t.Selling && t.BuildAnim <= 0 && t.Strength != nil {
-				maxTier := 6
-				if CurrentVFXLevel >= VFXReduced {
-					maxTier = 3 // Reduced: 只到 T3
-				}
-				vfx.DrawStrengthGlowCapped(screen, cx, cy, t.Strength.Overflow(), animTime, maxTier)
-			}
-			if !t.Selling && t.BuildAnim <= 0 {
-				drawTowerAuras(screen, t, cx, cy, animTime)
-			}
+		if !t.Selling && t.BuildAnim <= 0 && t.Strength != nil {
+			vfx.DrawStrengthGlow(screen, cx, cy, t.Strength.Overflow(), animTime)
+		}
+		if !t.Selling && t.BuildAnim <= 0 {
+			drawTowerAuras(screen, t, cx, cy, animTime)
 		}
 
 		// --- Tower body (animated or static, rotated toward target) ---
@@ -149,7 +142,7 @@ func (tr *TowerRenderer) DrawTowers(screen *ebiten.Image, pool *tower.Pool, sele
 		// 不再叠加白色圆——高攻速塔会导致持续白圈。
 
 		// --- Spin AoE visual: rotating blade arcs ---
-		if CurrentVFXLevel < VFXMinimal && !t.Selling && t.BuildAnim <= 0 && t.AttackStyleID == tower.StyleSpinAoE && t.SpinActive > 0 {
+		if !t.Selling && t.BuildAnim <= 0 && t.AttackStyleID == tower.StyleSpinAoE && t.SpinActive > 0 {
 			vfx.DrawSpinBlades(screen, cx, cy, vfxRadius(t.Range), t.SpinAngle, t.SpinActive/0.3)
 		}
 
