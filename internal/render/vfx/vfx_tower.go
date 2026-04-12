@@ -178,11 +178,16 @@ func DrawSpinBlades(screen *ebiten.Image, cx, cy, outerR float32, spinAngle, act
 
 const towerSpriteSize = 64
 
-// DrawStrengthGlow 根据力量溢出值绘制层级力量标识。
+// DrawStrengthGlow 根据力量溢出值绘制层级力量标识（完整 T1-T6）。
+func DrawStrengthGlow(screen *ebiten.Image, cx, cy float32, overflow float64, animTime float64) {
+	DrawStrengthGlowCapped(screen, cx, cy, overflow, animTime, 6)
+}
+
+// DrawStrengthGlowCapped 根据力量溢出值绘制层级力量标识，最高到 maxTier 层。
 // overflow: 超过基线 100 的力量值。
 // 6 个层级：50/150/300/500/700/900，以旋转菱形、弧线段、虚线环组合表现，
 // 不使用实心圆/Glow，紧凑贴合塔体。
-func DrawStrengthGlow(screen *ebiten.Image, cx, cy float32, overflow float64, animTime float64) {
+func DrawStrengthGlowCapped(screen *ebiten.Image, cx, cy float32, overflow float64, animTime float64, maxTier int) {
 	if overflow < 50 {
 		return
 	}
@@ -203,7 +208,7 @@ func DrawStrengthGlow(screen *ebiten.Image, cx, cy float32, overflow float64, an
 	}
 
 	// ── T2 (150+): 2 段旋转弧线 ──
-	if overflow >= 150 {
+	if overflow >= 150 && maxTier >= 2 {
 		rot := animTime * 1.2
 		pulse := 0.5 + 0.5*math.Sin(animTime*2.5)
 		r := float32(17)
@@ -217,7 +222,7 @@ func DrawStrengthGlow(screen *ebiten.Image, cx, cy float32, overflow float64, an
 	}
 
 	// ── T3 (300+): 3 段反向旋转弧线（外层） ──
-	if overflow >= 300 {
+	if overflow >= 300 && maxTier >= 3 {
 		rot := -animTime * 1.5
 		pulse := 0.5 + 0.5*math.Sin(animTime*3)
 		r := float32(20)
@@ -231,7 +236,7 @@ func DrawStrengthGlow(screen *ebiten.Image, cx, cy float32, overflow float64, an
 	}
 
 	// ── T4 (500+): 脉冲虚线内环 ──
-	if overflow >= 500 {
+	if overflow >= 500 && maxTier >= 4 {
 		pulse := 0.5 + 0.5*math.Sin(animTime*2)
 		r := float32(13 + pulse*1.5)
 		a := uint8(40 + 30*pulse)
@@ -240,7 +245,7 @@ func DrawStrengthGlow(screen *ebiten.Image, cx, cy float32, overflow float64, an
 	}
 
 	// ── T5 (700+): 外层 4 菱形 + 放射短线 ──
-	if overflow >= 700 {
+	if overflow >= 700 && maxTier >= 5 {
 		rot := animTime * 0.6
 		pulse := 0.5 + 0.5*math.Sin(animTime*3.5)
 		a := uint8(55 + 35*pulse)
@@ -260,7 +265,7 @@ func DrawStrengthGlow(screen *ebiten.Image, cx, cy float32, overflow float64, an
 	}
 
 	// ── T6 (900+): 密集弧段光冠（6 段交替旋转） ──
-	if overflow >= 900 {
+	if overflow >= 900 && maxTier >= 6 {
 		rot := animTime * 2.0
 		pulse := 0.5 + 0.5*math.Sin(animTime*4)
 		r := float32(25)

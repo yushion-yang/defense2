@@ -41,6 +41,17 @@ func NewTowerRenderer(assetFS AssetReader) *TowerRenderer {
 
 const towerSpriteSize = 64 // display size in pixels, matching theme.TowerBaseSize
 
+// vfxRadius 将游戏 Range 钳制到视觉安全范围，防止极端强度下 VFX 爆炸。
+// 游戏逻辑仍用原始 Range（索敌/碰撞），仅渲染用钳制值。
+const maxVFXRadius = 400
+
+func vfxRadius(r float64) float32 {
+	if r > maxVFXRadius {
+		return maxVFXRadius
+	}
+	return float32(r)
+}
+
 // towerAnimScaleAlpha computes the scale multiplier and alpha for build/sell animations.
 // Returns (scaleMul, alpha) where scaleMul=1 and alpha=1 mean no animation active.
 func towerAnimScaleAlpha(t *tower.Tower) (float64, float64) {
@@ -74,15 +85,22 @@ func (tr *TowerRenderer) DrawTowers(screen *ebiten.Image, pool *tower.Pool, sele
 		if selected && !t.Selling {
 			vfx.DrawSelectionRing(screen, cx, cy,
 				theme.TowerSelectionRingR, theme.TowerSelectionWidth, theme.TowerSelectionRing,
-				float32(t.Range), theme.TowerRangeStrokeWidth, theme.TowerRangeStroke)
+				vfxRadius(t.Range), theme.TowerRangeStrokeWidth, theme.TowerRangeStroke)
 		}
 
 		// --- Under-body VFX (drawn BEFORE sprite so they don't obscure it) ---
-		if !t.Selling && t.BuildAnim <= 0 && t.Strength != nil {
-			vfx.DrawStrengthGlow(screen, cx, cy, t.Strength.Overflow(), animTime)
-		}
-		if !t.Selling && t.BuildAnim <= 0 {
-			drawTowerAuras(screen, t, cx, cy, animTime)
+		// VFXMinimal: 跳过所有塔 VFX（仅精灵+标签）
+		if CurrentVFXLevel < VFXMinimal {
+			if !t.Selling && t.BuildAnim <= 0 && t.Strength != nil {
+				maxTier := 6
+				if CurrentVFXLevel >= VFXReduced {
+					maxTier = 3 // Reduced: 只到 T3
+				}
+				vfx.DrawStrengthGlowCapped(screen, cx, cy, t.Strength.Overflow(), animTime, maxTier)
+			}
+			if !t.Selling && t.BuildAnim <= 0 {
+				drawTowerAuras(screen, t, cx, cy, animTime)
+			}
 		}
 
 		// --- Tower body (animated or static, rotated toward target) ---
@@ -131,8 +149,8 @@ func (tr *TowerRenderer) DrawTowers(screen *ebiten.Image, pool *tower.Pool, sele
 		// 不再叠加白色圆——高攻速塔会导致持续白圈。
 
 		// --- Spin AoE visual: rotating blade arcs ---
-		if !t.Selling && t.BuildAnim <= 0 && t.AttackStyleID == tower.StyleSpinAoE && t.SpinActive > 0 {
-			vfx.DrawSpinBlades(screen, cx, cy, float32(t.Range), t.SpinAngle, t.SpinActive/0.3)
+		if CurrentVFXLevel < VFXMinimal && !t.Selling && t.BuildAnim <= 0 && t.AttackStyleID == tower.StyleSpinAoE && t.SpinActive > 0 {
+			vfx.DrawSpinBlades(screen, cx, cy, vfxRadius(t.Range), t.SpinAngle, t.SpinActive/0.3)
 		}
 
 		// --- Buff indicator dots ---
@@ -294,7 +312,7 @@ func drawTowerAuras(screen *ebiten.Image, t *tower.Tower, cx, cy float32, animTi
 		}
 		var radius float64
 		if entry.UseTowerRange {
-			radius = t.Range
+			radius = float64(vfxRadius(t.Range))
 		} else if def, exists := table[abName]; exists && def.Param > 0 {
 			radius = def.Param
 		}

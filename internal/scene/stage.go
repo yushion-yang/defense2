@@ -2590,8 +2590,9 @@ func (s *StageScene) drawScene(screen *ebiten.Image) {
 
 	// ── 世界元素（受相机偏移影响）──
 
-	// 设置视口裁剪参数（大地图跳过屏幕外实体的渲染）
+	// 设置视口裁剪参数 + VFX 细节等级（大地图跳过屏幕外实体，高负载自动降级 VFX）
 	render.SetViewport(s.camX, s.camY, useCamera)
+	render.UpdateVFXLevel(s.enemies.Count, s.projectiles.Count, s.towers.Count)
 
 	// 地图（渐变背景覆盖全屏，无需 Fill）
 	animTime := float64(s.frame) / 60.0

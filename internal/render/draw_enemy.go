@@ -131,22 +131,22 @@ func (er *EnemyRenderer) DrawEnemies(screen *ebiten.Image, pool *enemy.Pool, ani
 		r := float32(e.Radius)
 
 		// --- Boss pulsing rings ---
-		if e.Boss {
+		if CurrentVFXLevel < VFXMinimal && e.Boss {
 			vfx.DrawBossPulse(screen, cx, cy, r, animTime)
 		}
 
 		// --- Runner pulsing ring ---
-		if e.Archetype == "runner" {
+		if CurrentVFXLevel < VFXMinimal && e.Archetype == "runner" {
 			vfx.DrawRunnerRing(screen, cx, cy, r, animTime)
 		}
 
 		// --- Root ground effect (drawn UNDER enemy body) ---
-		if e.IsRooted() {
+		if CurrentVFXLevel < VFXMinimal && e.IsRooted() {
 			vfx.DrawRootGround(screen, cx, cy, r)
 		}
 
 		// --- Buffer aura ring (drawn UNDER body, hidden when silenced) ---
-		if e.Behavior == "buffer" && e.HasBufferAura() && !e.AbilitySilenced {
+		if CurrentVFXLevel < VFXMinimal && e.Behavior == "buffer" && e.HasBufferAura() && !e.AbilitySilenced {
 			if ba, ok := e.Buffs.Get("bufferAura"); ok {
 				vfx.DrawBufferAura(screen, cx, cy, ba.Value2, animTime)
 			}
@@ -212,36 +212,38 @@ func (er *EnemyRenderer) DrawEnemies(screen *ebiten.Image, pool *enemy.Pool, ani
 		}
 
 		// --- Buff behavior VFX (drawn over body) ---
-		if e.GetDamageReduce() > 0 {
+		if CurrentVFXLevel < VFXMinimal && e.GetDamageReduce() > 0 {
 			vfx.DrawDamageReduceShield(screen, cx, cy, float32(e.Radius), animTime)
 		}
-		if e.HasBerserk() && e.BerserkTriggered {
+		if CurrentVFXLevel < VFXReduced && e.HasBerserk() && e.BerserkTriggered {
 			vfx.DrawBerserkFlare(screen, cx, cy, float32(e.Radius), animTime)
 		}
-		if e.HasRegen() {
+		if CurrentVFXLevel < VFXReduced && e.HasRegen() {
 			vfx.DrawRegenAura(screen, cx, cy, float32(e.Radius), animTime)
 		}
 
 		// --- Status effect body overlays (subtle, sprite-sized) ---
 		spriteR := float32(enemySpriteSize) / 2
-		if e.IsSlowed() {
-			vfx.DrawSlowOverlay(screen, cx, cy, spriteR, animTime)
-		}
-		if e.IsBurning() {
-			vfx.DrawBurnOverlay(screen, cx, cy, spriteR, animTime)
-		}
-		if e.Buffs != nil && e.Buffs.Has("poison") {
-			vfx.DrawPoisonOverlay(screen, cx, cy, spriteR, animTime)
-		}
+		if CurrentVFXLevel < VFXMinimal {
+			if e.IsSlowed() {
+				vfx.DrawSlowOverlay(screen, cx, cy, spriteR, animTime)
+			}
+			if e.IsBurning() {
+				vfx.DrawBurnOverlay(screen, cx, cy, spriteR, animTime)
+			}
+			if e.Buffs != nil && e.Buffs.Has("poison") {
+				vfx.DrawPoisonOverlay(screen, cx, cy, spriteR, animTime)
+			}
 
-		// --- Stun rotating stars ---
-		if e.IsStunned() {
-			vfx.DrawStunStars(screen, cx, cy, r, animTime)
-		}
+			// --- Stun rotating stars ---
+			if e.IsStunned() {
+				vfx.DrawStunStars(screen, cx, cy, r, animTime)
+			}
 
-		// --- Hit flash overlay ---
-		if e.HitFlash > 0 && !e.IsDying() {
-			vfx.DrawHitFlash(screen, cx, cy, spriteR, e.HitFlash)
+			// --- Hit flash overlay ---
+			if e.HitFlash > 0 && !e.IsDying() {
+				vfx.DrawHitFlash(screen, cx, cy, spriteR, e.HitFlash)
+			}
 		}
 
 		// (tank overlay removed — was debug placeholder)
@@ -281,7 +283,7 @@ func (er *EnemyRenderer) DrawEnemies(screen *ebiten.Image, pool *enemy.Pool, ani
 		}
 
 		// --- 能力常驻视觉（被沉默时全部隐藏）---
-		if !e.AbilitySilenced {
+		if !e.AbilitySilenced && CurrentVFXLevel < VFXMinimal {
 			// 免疫脚环（只显示天生能力，净化临时免疫用白色微光）
 			footR := float32(e.Radius) + 2
 			if hasAbility(e, "ccImmune") {
@@ -309,7 +311,7 @@ func (er *EnemyRenderer) DrawEnemies(screen *ebiten.Image, pool *enemy.Pool, ani
 			}
 
 			// 净化免疫期白色微光
-			if e.PurgeInterval > 0 && e.HasControlImmunity() {
+			if CurrentVFXLevel < VFXReduced && e.PurgeInterval > 0 && e.HasControlImmunity() {
 				vfx.DrawPurgeGlow(screen, cx, cy, float32(e.Radius), animTime)
 			}
 		}
@@ -430,32 +432,39 @@ func drawHPBars(screen *ebiten.Image, bars []hpBarEntry, animTime float64) {
 		}
 
 		// Status effect dots (above the bar)
-		dotY := barY - 4
-		var dotsArr [7]vfx.StatusDot
-		dots := dotsArr[:0]
-		if b.slowed {
-			dots = append(dots, vfx.StatusDot{Color: theme.EnemyDotSlowed})
-		}
-		if b.stunned {
-			dots = append(dots, vfx.StatusDot{Color: theme.EnemyDotStunned})
-		}
-		if b.rooted {
-			dots = append(dots, vfx.StatusDot{Color: theme.EnemyDotRooted})
-		}
-		if b.bleeding {
-			dots = append(dots, vfx.StatusDot{Color: theme.EnemyDotBleeding})
-		}
-		if b.burning {
-			dots = append(dots, vfx.StatusDot{Color: theme.EnemyDotBurning})
-		}
-		if b.poisoned {
-			dots = append(dots, vfx.StatusDot{Color: theme.EnemyDotPoison})
-		}
-		if b.weakened {
-			dots = append(dots, vfx.StatusDot{Color: theme.EnemyDotWeaken})
-		}
-		if len(dots) > 0 {
-			vfx.DrawStatusDots(screen, b.cx, dotY, dots, animTime)
+		// VFXMinimal: skip dots entirely; VFXReduced: limit to 3 dots
+		if CurrentVFXLevel < VFXMinimal {
+			dotY := barY - 4
+			var dotsArr [7]vfx.StatusDot
+			dots := dotsArr[:0]
+			if b.slowed {
+				dots = append(dots, vfx.StatusDot{Color: theme.EnemyDotSlowed})
+			}
+			if b.stunned {
+				dots = append(dots, vfx.StatusDot{Color: theme.EnemyDotStunned})
+			}
+			if b.rooted {
+				dots = append(dots, vfx.StatusDot{Color: theme.EnemyDotRooted})
+			}
+			if b.bleeding {
+				dots = append(dots, vfx.StatusDot{Color: theme.EnemyDotBleeding})
+			}
+			if b.burning {
+				dots = append(dots, vfx.StatusDot{Color: theme.EnemyDotBurning})
+			}
+			if b.poisoned {
+				dots = append(dots, vfx.StatusDot{Color: theme.EnemyDotPoison})
+			}
+			if b.weakened {
+				dots = append(dots, vfx.StatusDot{Color: theme.EnemyDotWeaken})
+			}
+			// VFXReduced: cap at 3 most important dots
+			if CurrentVFXLevel >= VFXReduced && len(dots) > 3 {
+				dots = dots[:3]
+			}
+			if len(dots) > 0 {
+				vfx.DrawStatusDots(screen, b.cx, dotY, dots, animTime)
+			}
 		}
 	}
 }
