@@ -101,8 +101,6 @@ func (s *MapEditorScene) Update() error {
 		s.toastTimer -= 1.0 / 60.0
 	}
 
-	mx, my := draw.CursorPos()
-
 	// ── Keyboard shortcuts ──
 	if inpututil.IsKeyJustPressed(ebiten.KeyEscape) {
 		playUIClick(s.switcher)
@@ -125,11 +123,17 @@ func (s *MapEditorScene) Update() error {
 		playUIClick(s.switcher)
 	}
 
-	// ── Hover detection ──
-	s.hoverTab = s.hitTestMapTabs(mx, my)
-	s.updateHoverCell(mx, my)
+	// ── Hover detection (desktop=mouse, touch=long-press) ──
+	if hx, hy, hov := draw.HoverPos(); hov {
+		s.hoverTab = s.hitTestMapTabs(hx, hy)
+		s.updateHoverCell(hx, hy)
+	} else {
+		s.hoverTab = -1
+		s.hoverRow, s.hoverCol = -1, -1
+	}
 
 	// ── Click handling ──
+	mx, my := draw.CursorPos()
 	if isTapJustPressed() {
 		// Back button
 		if mx >= 10 && mx <= 70 && my >= 10 && my <= 34 {

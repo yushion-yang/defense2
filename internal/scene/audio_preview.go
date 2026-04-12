@@ -241,10 +241,15 @@ func (s *AudioPreviewScene) Update() error {
 		s.clampScroll()
 	}
 
-	// Mouse input.
-	mxf, myf := draw.CursorPos()
-	s.updateHover(mxf, myf)
+	// Hover (desktop=mouse, touch=long-press).
+	if hx, hy, hov := draw.HoverPos(); hov {
+		s.updateHover(hx, hy)
+	} else {
+		s.updateHover(-1, -1)
+	}
+	// Click.
 	if isTapJustPressed() {
+		mxf, myf := draw.CursorPos()
 		s.handleClick(mxf, myf)
 	}
 

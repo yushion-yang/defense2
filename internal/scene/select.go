@@ -187,13 +187,18 @@ func (s *SelectScene) Update() error {
 	}
 	s.particlePool.Update(dt)
 
-	// 鼠标悬停检测
-	mxf, myf := draw.CursorPos()
-	s.hoverMode = s.hitTestModeCards(mxf, myf)
-	s.hoverDiff = s.hitTestDiffButtons(mxf, myf)
-	s.hoverStart = s.hitTestStartButton(mxf, myf)
+	// 悬停检测（桌面=鼠标光标, 触摸=长按）
+	if hx, hy, hov := draw.HoverPos(); hov {
+		s.hoverMode = s.hitTestModeCards(hx, hy)
+		s.hoverDiff = s.hitTestDiffButtons(hx, hy)
+		s.hoverStart = s.hitTestStartButton(hx, hy)
+	} else {
+		s.hoverMode, s.hoverDiff = -1, -1
+		s.hoverStart = false
+	}
 
 	// 鼠标/触摸点击
+	mxf, myf := draw.CursorPos()
 	if isTapJustPressed() {
 		if idx := s.hitTestModeCards(mxf, myf); idx >= 0 {
 			s.selectedMode = idx

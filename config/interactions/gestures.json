@@ -97,10 +97,28 @@
       "note": "不走 Gesture 统一流程，因为道具拖拽需要在按下瞬间启动（Gesture 的 tap 在释放时才触发）"
     },
     {
+      "id": "longPressHover",
+      "name": "长按悬浮",
+      "description": "触摸设备专用。手指按住不动超过 500ms 后进入悬浮模式，手指位置等同鼠标光标，可触发 tooltip/高亮。桌面端无影响。",
+      "detectionMethod": "draw.HoverPos() (x, y float64, active bool)",
+      "detectionLogic": [
+        "1. 触摸按下 → 进入 hoverWaiting，记录起点",
+        "2. 按住期间若移动 >10px → 取消，回到正常 tap/drag 流程",
+        "3. 按住 30 帧(~500ms)不动 → 进入 hoverActive，手指位置=悬浮位置",
+        "4. hoverActive 中手指移动 → 更新悬浮位置（手指当光标滑动）",
+        "5. 松开 → 设 LongPressConsumed()=true（1 帧），抑制 tap"
+      ],
+      "parameters": {
+        "longPressFrames": { "value": 30, "unit": "frames (~500ms at 60fps)" },
+        "moveLimit": { "value": 10, "unit": "logicalPixels" }
+      },
+      "sourceFile": "internal/render/draw/hover.go"
+    },
+    {
       "id": "hover",
-      "name": "鼠标悬停",
-      "description": "每帧检测鼠标位置与 HUD 元素的命中关系。仅桌面端有效，触摸设备无悬停。",
-      "detectionMethod": "draw.CursorPos() 获取逻辑坐标 + HitTest/HoverTest 函数",
+      "name": "鼠标悬停/长按悬浮",
+      "description": "桌面端通过鼠标光标，触摸端通过长按悬浮。统一通过 draw.HoverPos() 查询。",
+      "detectionMethod": "draw.HoverPos() 获取有效悬浮位置 + HitTest/HoverTest 函数",
       "behaviors": [
         {
           "target": "buildMenu.towerCards",
