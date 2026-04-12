@@ -160,10 +160,10 @@ func (s *ResultScene) Update() error {
 		if s.hitReplayButton(mx, my) {
 			playUIClick(s.switcher)
 			s.switcher.SwitchScene(NewStageSceneWithOpts(s.switcher, StageOptions{
-				MapID: s.data.MapID,
-
+				MapID:        s.data.MapID,
 				ModeID:       s.data.ModeID,
 				DifficultyID: s.data.DifficultyID,
+				WardenType:   s.data.WardenType,
 			}))
 			return nil
 		}
@@ -411,7 +411,7 @@ func (s *ResultScene) drawStats(screen *ebiten.Image, fm *render.FontManager, cx
 	}
 	items := []statItem{
 		{"波次", d.Waves, "waves", theme.ResWaves},
-		{"击杀", d.Kills, "d", theme.HUDDefeatColor},
+		{"击杀", d.Kills, "d", theme.StatusStrNorm},
 		{"分数", d.Score, "d", theme.TonePrimary},
 		{"金币", d.Gold, "d", theme.ResGold},
 		{"塔数", d.Towers, "d", theme.StatusStrUp},

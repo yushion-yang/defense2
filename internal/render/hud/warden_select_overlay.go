@@ -181,7 +181,7 @@ func (o *WardenSelectOverlay) Draw(screen *ebiten.Image) {
 
 	// 标题
 	fm.DrawCenteredBoldText(screen, "选择你的战灵", sw/2, 20, 22, theme.TextTitle)
-	fm.DrawCenteredText(screen, "选择最适合的战灵 — 或不选，挑战纯塔模式", sw/2, 50, 11, theme.TextMuted)
+	fm.DrawCenteredText(screen, "战灵是与你并肩作战的英雄，拥有独特的攻击和技能 — 也可不选，挑战纯塔模式", sw/2, 50, 11, theme.TextMuted)
 
 	// 左侧列表
 	for i, opt := range o.options {

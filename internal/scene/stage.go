@@ -106,6 +106,7 @@ type StageScene struct {
 	wardenOverlay    *hud.WardenSelectOverlay     // 战灵选择覆盖层
 	wardenReady      bool                         // 战灵已选择并激活
 	tutorial         *tutorial.Tutorial           // 新手教程
+	tutorialSaved    bool                         // 教程完成已持久化（避免每帧重复写入）
 	progressMgr      *persistence.ProgressManager // 持久化进度管理器
 	lastWave         int                          // 上一帧的波次号
 	wardenType       string                       // 战灵类型标识（用于重玩传递）
@@ -957,8 +958,9 @@ func (s *StageScene) Update() error {
 
 	// 教程自动推进计时器
 	s.tutorial.Tick(dt)
-	if s.tutorial.Done {
+	if s.tutorial.Done && !s.tutorialSaved {
 		s.progressMgr.SetTutorialDone()
+		s.tutorialSaved = true
 	}
 
 	// 自适应画质：根据帧耗时动态调整画质等级
