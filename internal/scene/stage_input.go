@@ -223,10 +223,13 @@ func (s *StageScene) handleInput() {
 		return
 	}
 	if inpututil.IsKeyJustPressed(ebiten.KeyDelete) || inpututil.IsKeyJustPressed(ebiten.KeyBackspace) {
-		if s.imode == modeTowerSel && s.selectedTower != nil {
+		// testMode: 有 hoveredEnemy 时优先杀敌，避免与卖塔冲突
+		if s.testMode && s.hoveredEnemy != nil && s.hoveredEnemy.Active && !s.hoveredEnemy.IsDying() {
+			s.enemies.Kill(s.hoveredEnemy)
+			hud.ShowToast("已消灭: " + s.hoveredEnemy.Archetype)
+		} else if s.imode == modeTowerSel && s.selectedTower != nil {
 			s.trySellTower(s.selectedTower.X, s.selectedTower.Y)
 			s.imode = modeIdle
-			return
 		}
 	}
 
@@ -237,13 +240,6 @@ func (s *StageScene) handleInput() {
 
 	// 测试模式专用快捷键
 	if s.testMode {
-		// Delete: 消灭距离鼠标最近的怪物
-		if inpututil.IsKeyJustPressed(ebiten.KeyDelete) || inpututil.IsKeyJustPressed(ebiten.KeyBackspace) {
-			if s.hoveredEnemy != nil && s.hoveredEnemy.Active && !s.hoveredEnemy.IsDying() {
-				s.enemies.Kill(s.hoveredEnemy)
-				hud.ShowToast("已消灭: " + s.hoveredEnemy.Archetype)
-			}
-		}
 		if inpututil.IsKeyJustPressed(ebiten.KeyD) {
 			s.debugPanelOpen = !s.debugPanelOpen
 		}

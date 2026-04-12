@@ -35,6 +35,11 @@
           "key": "Escape",
           "bindings": [
             {
+              "mode": "_priority",
+              "action": "closeDebugPanel",
+              "description": "debugPanel 打开时优先关闭（不改变 imode）"
+            },
+            {
               "mode": "modeBuildMenu",
               "action": "exitBuildMenu",
               "description": "关闭造塔菜单 → modeIdle"

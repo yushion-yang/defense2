@@ -76,7 +76,7 @@
           "TopBar 区域",
           "ToggleButtons 区域",
           "ActionBar 区域",
-          "屏幕底部 120px 区域"
+          "屏幕底部 60px 区域"
         ],
         "behavior": "按下位置在 UI 区域内时，不启动拖拽（防止操作按钮时误触拖拽）"
       },

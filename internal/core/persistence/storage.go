@@ -59,7 +59,7 @@ func (s *FileStorage) Get(key string, target interface{}) error {
 	return json.Unmarshal(data, target)
 }
 
-// Set 序列化并写入键值。
+// Set 序列化并原子写入键值（write-to-temp-then-rename 防崩溃丢数据）。
 func (s *FileStorage) Set(key string, value interface{}) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
@@ -67,7 +67,12 @@ func (s *FileStorage) Set(key string, value interface{}) error {
 	if err != nil {
 		return err
 	}
-	return os.WriteFile(s.path(key), data, 0644)
+	target := s.path(key)
+	tmp := target + ".tmp"
+	if err := os.WriteFile(tmp, data, 0644); err != nil {
+		return err
+	}
+	return os.Rename(tmp, target)
 }
 
 // Has 检查键是否存在。

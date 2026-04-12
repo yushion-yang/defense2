@@ -17,6 +17,7 @@ import (
 	"defense2/internal/render/ui"
 
 	"github.com/hajimehoshi/ebiten/v2"
+	"github.com/hajimehoshi/ebiten/v2/inpututil"
 )
 
 // ── 布局常量 ────────────────────────────────────
@@ -119,6 +120,13 @@ func (s *CampaignSelectScene) Update() error {
 		s.hoverMap, s.hoverDiff = -1, -1
 		s.hoverStart = false
 		s.hoverBack = false
+	}
+
+	// Esc 返回
+	if inpututil.IsKeyJustPressed(ebiten.KeyEscape) {
+		playUIClick(s.switcher)
+		s.switcher.SwitchScene(NewSelectScene(s.switcher))
+		return nil
 	}
 
 	mx, my := draw.CursorPos()

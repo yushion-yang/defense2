@@ -37,7 +37,7 @@
           "targets": [
             { "index": 0, "mode": "campaign", "label": "战役模式" },
             { "index": 1, "mode": "endless", "label": "无尽模式" },
-            { "index": 2, "mode": "timed", "label": "限时模式" },
+            { "index": 2, "mode": "timedDefense", "label": "限时模式" },
             { "index": 3, "mode": "bossRush", "label": "Boss 突袭" },
             { "index": 4, "mode": "challenge", "label": "挑战模式" },
             { "index": 5, "mode": "test", "label": "测试模式" }

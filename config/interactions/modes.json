@@ -153,6 +153,12 @@
           "triggerType": "keyboard",
           "description": "按 Esc 取消放置",
           "target": "modeIdle"
+        },
+        {
+          "trigger": "keyB",
+          "triggerType": "keyboard",
+          "description": "按 B 取消放置",
+          "target": "modeIdle"
         }
       ]
     },
@@ -224,6 +230,21 @@
           "triggerType": "tap",
           "description": "点击地图空白区域",
           "target": "modeIdle"
+        },
+        {
+          "trigger": "clickUnlockBtn",
+          "triggerType": "tap",
+          "description": "点击信息面板的「解锁能力槽」按钮",
+          "target": "modeTowerSel",
+          "action": "花费金币解锁一个能力槽位",
+          "condition": "gold >= unlockCost && hasLockedSlots"
+        },
+        {
+          "trigger": "clickBulkUpgradeBtn",
+          "triggerType": "tap",
+          "description": "点击信息面板的批量升级按钮",
+          "target": "modeTowerSel",
+          "action": "花费金币批量升级强度"
         },
         {
           "trigger": "keyEsc",
