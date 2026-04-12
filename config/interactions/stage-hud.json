@@ -210,6 +210,23 @@
           "hitTestFn": "InfoPanelSellHitTest",
           "action": "sellTower → modeIdle",
           "style": { "color": "red" }
+        },
+        {
+          "id": "unlockBtn",
+          "trigger": "tap",
+          "target": "unlockButton",
+          "label": "解锁能力槽 $N",
+          "hitTestFn": "HitTestUnlockBtn",
+          "action": "unlockAbilitySlot",
+          "condition": "gold >= unlockCost && hasLockedSlots"
+        },
+        {
+          "id": "bulkUpgradeBtn",
+          "trigger": "tap",
+          "target": "bulkUpgradeButton",
+          "label": "批量升级",
+          "hitTestFn": "InfoPanelBulkUpgradeHitTest",
+          "action": "bulkUpgradeTowerStrength"
         }
       ]
     },

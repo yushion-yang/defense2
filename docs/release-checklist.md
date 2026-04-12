@@ -29,12 +29,12 @@
 
 | # | 任务 | 优先级 | 状态 |
 |---|------|--------|------|
-| I1 | itemPanel hover 反馈（与 buildMenu/spawnMenu 一致） | P2 | [ ] |
-| I2 | actionBar/topBar/pauseMenu/resultScene 按钮 hover 反馈 | P3 | [ ] |
-| I3 | debugPanel 支持 Esc 关闭 | P3 | [ ] |
-| I4 | 底部拖拽死区从 120px 缩减到实际 ActionBar 高度 | P2 | [ ] |
+| I1 | itemPanel hover 反馈（与 buildMenu/spawnMenu 一致） | P2 | [x] |
+| I2 | actionBar/topBar/pauseMenu/resultScene 按钮 hover 反馈 | P3 | [x] |
+| I3 | debugPanel 支持 Esc 关闭 | P3 | [x] |
+| I4 | 底部拖拽死区从 120px 缩减到 60px | P2 | [x] |
 | I5 | Delete/Backspace 在 testMode 双重触发（卖塔+杀敌） | P3 | [ ] |
-| I6 | modeUpgrade 中 Esc 处理死代码清理 | P3 | [ ] |
+| I6 | modeUpgrade 中 Esc 处理死代码清理 | P3 | [x] |
 | I7 | 根据交互配置文件全面审查系统交互 | P2 | [ ] |
 
 ---
@@ -86,8 +86,8 @@
 
 | # | 任务 | 工作量 | 状态 |
 |---|------|--------|------|
-| D1 | Makefile 添加 android target（ebitenmobile → .aar → APK） | 中 | [ ] |
-| D2 | AndroidManifest.xml + build.gradle 配置 | 中 | [ ] |
+| D1 | Makefile 添加 android target（ebitenmobile → .aar → APK） | 中 | [x] |
+| D2 | AndroidManifest.xml + build.gradle 配置 | 中 | [x] |
 | D3 | App Icon（各分辨率 mipmap） | 小 | [ ] |
 | D4 | APK 签名配置 | 小 | [ ] |
 | D5 | ProGuard/混淆配置（如需要） | 小 | [ ] |

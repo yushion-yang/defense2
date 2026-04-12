@@ -12,6 +12,7 @@ import (
 	"defense2/internal/render/theme"
 
 	"github.com/hajimehoshi/ebiten/v2"
+	"github.com/hajimehoshi/ebiten/v2/inpututil"
 )
 
 // ── 测试场景数据 ────────────────────────────────
@@ -186,6 +187,13 @@ func (s *TestSelectScene) Update() error {
 	} else {
 		s.hoverTab, s.hoverIdx = -1, -1
 		s.hoverStart = false
+	}
+
+	// Esc 返回
+	if inpututil.IsKeyJustPressed(ebiten.KeyEscape) {
+		playUIClick(s.switcher)
+		s.switcher.SwitchScene(NewSelectScene(s.switcher))
+		return nil
 	}
 
 	// 鼠标/触摸点击

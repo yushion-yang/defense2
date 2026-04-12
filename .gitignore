@@ -29,6 +29,12 @@ config/llm/models/*.bin
 __pycache__/
 .pytest_cache/
 
+# Android signing (never commit)
+android/keystore.properties
+android/*.keystore
+android/*.jks
+android/app/build/
+
 # OS
 .DS_Store
 Thumbs.db
