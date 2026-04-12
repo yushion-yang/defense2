@@ -47,7 +47,7 @@ type hpBarEntry struct {
 	displayHP  float64
 	boss       bool
 	// status dots
-	slowed, stunned, rooted, bleeding, burning bool
+	slowed, stunned, rooted, bleeding, burning, poisoned, weakened bool
 }
 
 // spritePathCache caches fmt.Sprintf results to avoid per-frame allocations.
@@ -253,7 +253,7 @@ func (er *EnemyRenderer) DrawEnemies(screen *ebiten.Image, pool *enemy.Pool, ani
 
 		// Collect HP bar entries for Pass 3 (deferred drawing with repulsion).
 		// Skip full-HP enemies unless they have status effects (C: hide-when-full).
-		hasStatus := e.IsSlowed() || e.IsStunned() || e.IsRooted() || e.IsBleeding() || e.IsBurning()
+		hasStatus := e.IsSlowed() || e.IsStunned() || e.IsRooted() || e.IsBleeding() || e.IsBurning() || e.IsPoisoned() || e.IsWeakened()
 		if e.HP < e.MaxHP || e.Boss || hasStatus {
 			var barW, barH, barOffY float32
 			if e.Boss {
@@ -275,6 +275,8 @@ func (er *EnemyRenderer) DrawEnemies(screen *ebiten.Image, pool *enemy.Pool, ani
 				rooted:   e.IsRooted(),
 				bleeding: e.IsBleeding(),
 				burning:  e.IsBurning(),
+			poisoned: e.IsPoisoned(),
+			weakened: e.IsWeakened(),
 			})
 		}
 
@@ -429,7 +431,7 @@ func drawHPBars(screen *ebiten.Image, bars []hpBarEntry, animTime float64) {
 
 		// Status effect dots (above the bar)
 		dotY := barY - 4
-		var dotsArr [5]vfx.StatusDot
+		var dotsArr [7]vfx.StatusDot
 		dots := dotsArr[:0]
 		if b.slowed {
 			dots = append(dots, vfx.StatusDot{Color: theme.EnemyDotSlowed})
@@ -445,6 +447,12 @@ func drawHPBars(screen *ebiten.Image, bars []hpBarEntry, animTime float64) {
 		}
 		if b.burning {
 			dots = append(dots, vfx.StatusDot{Color: theme.EnemyDotBurning})
+		}
+		if b.poisoned {
+			dots = append(dots, vfx.StatusDot{Color: theme.EnemyDotPoison})
+		}
+		if b.weakened {
+			dots = append(dots, vfx.StatusDot{Color: theme.EnemyDotWeaken})
 		}
 		if len(dots) > 0 {
 			vfx.DrawStatusDots(screen, b.cx, dotY, dots, animTime)

@@ -199,6 +199,8 @@ var (
 	EnemyDotRooted    = rgba(139, 90, 43, 235)   // 状态点：禁锢
 	EnemyDotBleeding  = rgba(239, 68, 68, 255)   // 状态点：流血
 	EnemyDotBurning   = rgba(255, 140, 40, 255)  // 状态点：燃烧
+	EnemyDotPoison    = rgba(80, 200, 80, 235)   // 状态点：中毒
+	EnemyDotWeaken    = rgba(180, 100, 220, 235) // 状态点：虚弱
 )
 
 // ---------------------------------------------------------------------------
