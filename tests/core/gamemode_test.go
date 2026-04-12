@@ -70,8 +70,8 @@ func TestCampaignWaveClearBonus(t *testing.T) {
 	m := gamemode.NewCampaignMode()
 	ctx := testCtx(5, 12, 20, 0, 0)
 	result := m.OnWaveCleared(5, ctx)
-	expectedBonus := 12 + 5*4  // = 32
-	expectedPerfect := 8 + 5*2 // = 18
+	expectedBonus := 12 + 5*4 // = 32
+	expectedPerfect := 2 + 5*2 // = 12 (economy.json campaign: base=2, perWave=2)
 	if result.BonusGold != expectedBonus {
 		t.Errorf("bonus = %d, want %d", result.BonusGold, expectedBonus)
 	}

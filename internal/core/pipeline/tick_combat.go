@@ -129,38 +129,37 @@ func TickProjectileHits(projectiles *projectile.Pool, enemies *enemy.Pool, tower
 			return
 		}
 
-		// 非追踪弹/穿透弹：空间网格查询附近敌人
-		candidates := grid.Query(p.X, p.Y, p.Radius+32) // +32 覆盖最大敌人半径
-		for _, idx := range candidates {
-			if !p.Active {
-				break
+		// 非追踪弹/穿透弹：空间网格查询附近敌人（grid=nil 时回退全量遍历）
+		checkEnemy := func(e *enemy.Enemy) {
+			if !p.Active || !e.Active || e.IsDying() || e.IsSpawning() {
+				return
 			}
-			e := enemies.ByIndex(idx)
-			if !e.Active || e.IsDying() || e.IsSpawning() {
-				continue
-			}
-
 			dx := p.X - e.X
 			dy := p.Y - e.Y
 			if math.Hypot(dx, dy) > p.Radius+e.Radius {
-				continue
+				return
 			}
-
-			// 穿透弹：跳过已命中的敌人
 			if p.Penetrate {
-				hit := false
 				for _, hitID := range p.PenHitIDs {
 					if hitID == e.ID {
-						hit = true
-						break
+						return
 					}
 				}
-				if hit {
-					continue
-				}
 			}
-
 			kills += processHit(p, e, towers, enemies, projectiles, onHit, onCC, onSplashVFX)
+		}
+
+		if grid != nil {
+			for _, idx := range grid.Query(p.X, p.Y, p.Radius+32) {
+				if !p.Active {
+					break
+				}
+				checkEnemy(enemies.ByIndex(idx))
+			}
+		} else {
+			enemies.Each(func(e *enemy.Enemy) {
+				checkEnemy(e)
+			})
 		}
 	})
 
