@@ -1245,7 +1245,7 @@ func (s *StageScene) updateSaveNaming() {
 	// Escape = cancel
 	if inpututil.IsKeyJustPressed(ebiten.KeyEscape) {
 		s.saveNaming = false
-		hud.ShowToast("Save cancelled")
+		hud.ShowToast("保存已取消")
 	}
 }
 
@@ -1565,21 +1565,21 @@ func (s *StageScene) saveScenario(name string) {
 
 	data, err := json.MarshalIndent(sd, "", "  ")
 	if err != nil {
-		hud.ShowToast("Save failed: " + err.Error())
+		hud.ShowToast("保存失败: " + err.Error())
 		return
 	}
 
 	path := filepath.Join("config", "scenarios", sd.ID+".json")
 	if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
-		hud.ShowToast("Save failed: " + err.Error())
+		hud.ShowToast("保存失败: " + err.Error())
 		return
 	}
 	if err := os.WriteFile(path, data, 0o644); err != nil {
-		hud.ShowToast("Save failed: " + err.Error())
+		hud.ShowToast("保存失败: " + err.Error())
 		return
 	}
 
-	hud.ShowToast(fmt.Sprintf("Saved: %s", path))
+	hud.ShowToast(fmt.Sprintf("已保存: %s", path))
 	fmt.Printf("Scenario saved: %s\n", path)
 }
 
@@ -2265,7 +2265,7 @@ func (s *StageScene) updatePlaying() {
 			}
 			// Overkill detection: damage > 2x MaxHP on non-boss
 			if e.MaxHP > 0 && damage/e.MaxHP > 2.0 && !e.Boss {
-				render.SpawnText(e.X, e.Y-20, "OVERKILL", color.RGBA{R: 255, G: 215, B: 0, A: 255}, 16, 1.5)
+				render.SpawnText(e.X, e.Y-20, "过量击杀", color.RGBA{R: 255, G: 215, B: 0, A: 255}, 16, 1.5)
 				particle.EmitDeathBurstLarge(s.particlePool, e.X, e.Y)
 				render.TriggerShake(2.0, 0.15)
 			}
@@ -3217,6 +3217,15 @@ func applyEnemyAbilityToSpawnConfig(sc *enemy.SpawnConfig, def *config.EnemyAbil
 		sc.AuraSpeedUp = def.Base
 		sc.AuraRange = def.Param
 		sc.Behavior = "buffer"
+
+	// ── behavior buff ──
+	case "damageReduce":
+		sc.DamageReduceRatio = def.Base // base=减伤比例(0.3)
+	case "berserk":
+		sc.BerserkThreshold = def.Base   // base=血线阈值(0.5)
+		sc.BerserkSpeedScale = def.Param // param=速度倍率(1.5)
+	case "regen":
+		sc.RegenRatio = def.Base // base=回血占比(0.02)
 
 	// ── death ──
 	case "deathSplit":

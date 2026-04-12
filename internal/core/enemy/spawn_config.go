@@ -53,6 +53,12 @@ type SpawnConfig struct {
 	DeathSpawnArch        string  // 死亡召唤原型
 	PurgeInterval         float64 // 净化间隔
 	PurgeImmuneDur        float64 // 净化免疫时间
+	// ── 行为 buff（原型级）──
+	DamageReduceRatio  float64 // 减伤比例（0~1，0=无减伤）
+	BerserkThreshold   float64 // 狂暴触发血线（0.5=50% HP）
+	BerserkSpeedScale  float64 // 狂暴速度倍率
+	RegenRatio         float64 // 回血比例（占 MaxHP/秒）
+
 	// 免疫
 	CCImmune   bool // 全控制免疫
 	SlowImmune bool // 减速免疫

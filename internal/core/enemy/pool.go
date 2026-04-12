@@ -132,6 +132,27 @@ func (p *Pool) Spawn(x, y, baseHP, baseSpeed float64, pathIndex int, archetype s
 				})
 			}
 
+			// 行为 buff（原型级）
+			if cfg.DamageReduceRatio > 0 {
+				e.Buffs.Add(buff.Buff{
+					ID: buff.IDDamageReduce, Category: buff.CatDefense, Source: "archetype",
+					Value: cfg.DamageReduceRatio, Duration: -1, Remaining: -1,
+				})
+			}
+			if cfg.BerserkThreshold > 0 {
+				e.Buffs.Add(buff.Buff{
+					ID: buff.IDBerserk, Category: buff.CatBehavior, Source: "archetype",
+					Value: cfg.BerserkSpeedScale, Value2: cfg.BerserkThreshold,
+					Duration: -1, Remaining: -1,
+				})
+			}
+			if cfg.RegenRatio > 0 {
+				e.Buffs.Add(buff.Buff{
+					ID: buff.IDRegen, Category: buff.CatBehavior, Source: "archetype",
+					Value: e.MaxHP * cfg.RegenRatio, Duration: -1, Remaining: -1,
+				})
+			}
+
 			// 能力系统字段
 			e.DamageCap = cfg.DamageCap
 			e.DamageCapPercent = cfg.DamageCapPercent
