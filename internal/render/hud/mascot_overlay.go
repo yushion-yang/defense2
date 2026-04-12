@@ -4,6 +4,7 @@
 package hud
 
 import (
+	"image/color"
 	"math"
 
 	"defense2/internal/render/draw"
@@ -25,13 +26,15 @@ var mascotPlaceholderClr = theme.PanelBg
 
 // MascotOverlayVM is the view-model for the mascot overlay.
 type MascotOverlayVM struct {
-	Visible    bool
-	HasDialog  bool
-	Text       string
-	Expression string
-	CanClick   bool
-	Sprite     *ebiten.Image // current frame (nil = use placeholder)
-	AnimTime   float64       // for idle bob
+	Visible      bool
+	HasDialog    bool
+	Text         string
+	Expression   string
+	CanClick     bool
+	Sprite       *ebiten.Image // current frame (nil = use placeholder)
+	AnimTime     float64       // for idle bob
+	AbilityReady bool          // true when mascot ability is usable
+	CooldownPct  float64       // 0.0 = ready, 1.0 = full cooldown
 }
 
 // mascotBasePos returns the mascot center-bottom position in logical coordinates.
@@ -87,6 +90,14 @@ func DrawMascotOverlay(screen *ebiten.Image, vm MascotOverlayVM) {
 		phX := cx - phW/2
 		phY := float32(spriteCY) - phH/2
 		draw.RoundRect(screen, phX, phY, phW, phH, 12, mascotPlaceholderClr)
+	}
+
+	// Ability-ready pulsing ring (only when no dialog is showing).
+	if vm.AbilityReady && !vm.HasDialog {
+		pulseAlpha := 60.0 + 100.0*((math.Sin(vm.AnimTime*3.0)+1.0)/2.0) // 60-160
+		ringR := mascotSpriteW/2 + 6
+		draw.CircleOutline(screen, float32(spriteCX), float32(spriteCY), ringR, 1.5,
+			color.RGBA{R: 255, G: 100, B: 180, A: uint8(pulseAlpha)})
 	}
 
 	// Speech bubble above mascot.

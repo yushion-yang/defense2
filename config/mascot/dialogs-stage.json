@@ -38,5 +38,116 @@
     ],
     "once": true,
     "priority": 5
+  },
+  {
+    "id": "stage_low_health",
+    "scene": "stage",
+    "trigger": "low_health",
+    "lines": [
+      {"text": "生命值很低了！小心防守！", "expression": "surprised", "autoAdvance": 4}
+    ],
+    "once": false,
+    "priority": 8
+  },
+  {
+    "id": "stage_enemy_swarm",
+    "scene": "stage",
+    "trigger": "enemy_swarm",
+    "lines": [
+      {"text": "好多敌人涌过来了！集中火力！", "expression": "surprised", "autoAdvance": 3}
+    ],
+    "once": false,
+    "priority": 6
+  },
+  {
+    "id": "stage_gold_shortage",
+    "scene": "stage",
+    "trigger": "gold_shortage",
+    "lines": [
+      {"text": "金币不够了...要精打细算哦。", "expression": "talk", "autoAdvance": 4}
+    ],
+    "once": false,
+    "priority": 4
+  },
+  {
+    "id": "stage_boss_incoming",
+    "scene": "stage",
+    "trigger": "boss_incoming",
+    "lines": [
+      {"text": "Boss来了！做好准备！", "expression": "surprised", "autoAdvance": 3},
+      {"text": "沉住气，你可以的！", "expression": "talk", "autoAdvance": 3}
+    ],
+    "once": false,
+    "priority": 9
+  },
+  {
+    "id": "stage_wave_complete",
+    "scene": "stage",
+    "trigger": "wave_complete",
+    "lines": [
+      {"text": "干得漂亮！", "expression": "happy", "autoAdvance": 3}
+    ],
+    "once": false,
+    "priority": 5
+  },
+  {
+    "id": "stage_kill_streak",
+    "scene": "stage",
+    "trigger": "kill_streak",
+    "lines": [
+      {"text": "连杀！你太强了！", "expression": "happy", "autoAdvance": 3}
+    ],
+    "once": false,
+    "priority": 6
+  },
+  {
+    "id": "stage_mascot_help_1",
+    "scene": "stage",
+    "trigger": "mascot_help",
+    "lines": [
+      {"text": "交给我吧！看我的~", "expression": "happy", "autoAdvance": 3}
+    ],
+    "once": false,
+    "priority": 7
+  },
+  {
+    "id": "stage_mascot_help_2",
+    "scene": "stage",
+    "trigger": "mascot_help",
+    "lines": [
+      {"text": "让我来帮忙！", "expression": "happy", "autoAdvance": 3}
+    ],
+    "once": false,
+    "priority": 7
+  },
+  {
+    "id": "stage_mascot_kill_success_1",
+    "scene": "stage",
+    "trigger": "mascot_kill_success",
+    "lines": [
+      {"text": "搞定！小意思啦~", "expression": "happy", "autoAdvance": 3}
+    ],
+    "once": false,
+    "priority": 7
+  },
+  {
+    "id": "stage_mascot_kill_success_2",
+    "scene": "stage",
+    "trigger": "mascot_kill_success",
+    "lines": [
+      {"text": "帮你解决了一个！", "expression": "happy", "autoAdvance": 3}
+    ],
+    "once": false,
+    "priority": 7
+  },
+  {
+    "id": "stage_mascot_not_ready",
+    "scene": "stage",
+    "trigger": "mascot_not_ready",
+    "lines": [
+      {"text": "再等一下下，我还在蓄力中...", "expression": "talk", "autoAdvance": 3}
+    ],
+    "once": false,
+    "priority": 6
   }
 ]

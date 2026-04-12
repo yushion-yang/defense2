@@ -294,12 +294,14 @@ func (g *Game) Draw(screen *ebiten.Image) {
 	if g.mascot != nil {
 		coreVM := g.mascot.VM()
 		overlayVM := hud.MascotOverlayVM{
-			Visible:    coreVM.Visible,
-			HasDialog:  coreVM.HasDialog,
-			Text:       coreVM.Text,
-			Expression: coreVM.Expression,
-			CanClick:   coreVM.CanClick,
-			AnimTime:   g.mascotTime,
+			Visible:      coreVM.Visible,
+			HasDialog:    coreVM.HasDialog,
+			Text:         coreVM.Text,
+			Expression:   coreVM.Expression,
+			CanClick:     coreVM.CanClick,
+			AnimTime:     g.mascotTime,
+			AbilityReady: coreVM.AbilityReady,
+			CooldownPct:  coreVM.CooldownPct,
 		}
 		if g.mascotAnim != nil {
 			if g.mascotAnim.HasAnim(coreVM.Expression) {

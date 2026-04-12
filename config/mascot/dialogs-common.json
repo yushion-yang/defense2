@@ -42,5 +42,218 @@
     ],
     "once": false,
     "priority": 97
+  },
+  {
+    "id": "greet_morning",
+    "scene": "*",
+    "trigger": "greet_morning",
+    "lines": [
+      {"text": "早上好！今天也一起守护防线吧。", "expression": "happy", "autoAdvance": 4}
+    ],
+    "once": false,
+    "priority": 5
+  },
+  {
+    "id": "greet_afternoon",
+    "scene": "*",
+    "trigger": "greet_afternoon",
+    "lines": [
+      {"text": "下午好~来一局放松一下？", "expression": "idle", "autoAdvance": 4}
+    ],
+    "once": false,
+    "priority": 5
+  },
+  {
+    "id": "greet_evening",
+    "scene": "*",
+    "trigger": "greet_evening",
+    "lines": [
+      {"text": "晚上好！夜间战斗，别打瞌睡哦。", "expression": "talk", "autoAdvance": 4}
+    ],
+    "once": false,
+    "priority": 5
+  },
+  {
+    "id": "greet_latenight",
+    "scene": "*",
+    "trigger": "greet_latenight",
+    "lines": [
+      {"text": "这么晚了还在玩...要注意休息哦。", "expression": "surprised", "autoAdvance": 4},
+      {"text": "不过...能陪你打一局我也很开心。", "expression": "happy", "autoAdvance": 4}
+    ],
+    "once": false,
+    "priority": 5
+  },
+  {
+    "id": "session_30min",
+    "scene": "*",
+    "trigger": "session_30min",
+    "lines": [
+      {"text": "已经玩了半个小时了，状态不错！", "expression": "talk", "autoAdvance": 4}
+    ],
+    "once": true,
+    "priority": 3
+  },
+  {
+    "id": "session_60min",
+    "scene": "*",
+    "trigger": "session_60min",
+    "lines": [
+      {"text": "一个小时了！休息一下眼睛吧。", "expression": "talk", "autoAdvance": 4},
+      {"text": "...你不休息？好吧，我陪你。", "expression": "happy", "autoAdvance": 4}
+    ],
+    "once": true,
+    "priority": 4
+  },
+  {
+    "id": "session_90min",
+    "scene": "*",
+    "trigger": "session_90min",
+    "lines": [
+      {"text": "一个半小时了！真的该休息了...", "expression": "surprised", "autoAdvance": 4},
+      {"text": "我都替你的眼睛担心了！", "expression": "talk", "autoAdvance": 4}
+    ],
+    "once": true,
+    "priority": 4
+  },
+  {
+    "id": "idle_chatter_1",
+    "scene": "*",
+    "trigger": "idle_chatter",
+    "lines": [
+      {"text": "知道吗？不同塔的攻击方式差别很大哦~", "expression": "talk", "autoAdvance": 4}
+    ],
+    "once": false,
+    "priority": 1
+  },
+  {
+    "id": "idle_chatter_2",
+    "scene": "*",
+    "trigger": "idle_chatter",
+    "lines": [
+      {"text": "升级比建新塔更划算，记住了吗？", "expression": "talk", "autoAdvance": 4}
+    ],
+    "once": false,
+    "priority": 1
+  },
+  {
+    "id": "idle_chatter_3",
+    "scene": "*",
+    "trigger": "idle_chatter",
+    "lines": [
+      {"text": "道具要用在关键时刻，别浪费了~", "expression": "talk", "autoAdvance": 4}
+    ],
+    "once": false,
+    "priority": 1
+  },
+  {
+    "id": "idle_chatter_4",
+    "scene": "*",
+    "trigger": "idle_chatter",
+    "lines": [
+      {"text": "Boss关之前多准备准备...", "expression": "idle", "autoAdvance": 4}
+    ],
+    "once": false,
+    "priority": 1
+  },
+  {
+    "id": "idle_chatter_5",
+    "scene": "*",
+    "trigger": "idle_chatter",
+    "lines": [
+      {"text": "我最喜欢看你连杀的样子了！", "expression": "happy", "autoAdvance": 4}
+    ],
+    "once": false,
+    "priority": 1
+  },
+  {
+    "id": "milestone_wins_1",
+    "scene": "*",
+    "trigger": "milestone_wins_1",
+    "lines": [
+      {"text": "第一场胜利！恭喜你，指挥官！", "expression": "happy", "autoAdvance": 4}
+    ],
+    "once": true,
+    "priority": 8
+  },
+  {
+    "id": "milestone_wins_5",
+    "scene": "*",
+    "trigger": "milestone_wins_5",
+    "lines": [
+      {"text": "已经赢了5场了！越来越厉害了呢。", "expression": "happy", "autoAdvance": 4}
+    ],
+    "once": true,
+    "priority": 8
+  },
+  {
+    "id": "milestone_wins_10",
+    "scene": "*",
+    "trigger": "milestone_wins_10",
+    "lines": [
+      {"text": "10连胜！你简直是天才指挥官！", "expression": "happy", "autoAdvance": 4}
+    ],
+    "once": true,
+    "priority": 8
+  },
+  {
+    "id": "milestone_kills_100",
+    "scene": "*",
+    "trigger": "milestone_kills_100",
+    "lines": [
+      {"text": "击杀100个敌人了！小有成就。", "expression": "talk", "autoAdvance": 4}
+    ],
+    "once": true,
+    "priority": 7
+  },
+  {
+    "id": "milestone_kills_500",
+    "scene": "*",
+    "trigger": "milestone_kills_500",
+    "lines": [
+      {"text": "500个击杀！敌人听到你的名字都会发抖。", "expression": "happy", "autoAdvance": 4}
+    ],
+    "once": true,
+    "priority": 7
+  },
+  {
+    "id": "milestone_kills_1000",
+    "scene": "*",
+    "trigger": "milestone_kills_1000",
+    "lines": [
+      {"text": "1000个击杀！！传说级指挥官！", "expression": "happy", "autoAdvance": 4}
+    ],
+    "once": true,
+    "priority": 7
+  },
+  {
+    "id": "mascot_tap_1",
+    "scene": "*",
+    "trigger": "mascot_tap",
+    "lines": [
+      {"text": "嗯？需要什么帮助吗？", "expression": "talk", "autoAdvance": 3}
+    ],
+    "once": false,
+    "priority": 1
+  },
+  {
+    "id": "mascot_tap_2",
+    "scene": "*",
+    "trigger": "mascot_tap",
+    "lines": [
+      {"text": "别戳我啦~", "expression": "surprised", "autoAdvance": 3}
+    ],
+    "once": false,
+    "priority": 1
+  },
+  {
+    "id": "mascot_tap_3",
+    "scene": "*",
+    "trigger": "mascot_tap",
+    "lines": [
+      {"text": "我在呢，有什么事？", "expression": "idle", "autoAdvance": 3}
+    ],
+    "once": false,
+    "priority": 1
   }
 ]
