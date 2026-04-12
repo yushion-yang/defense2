@@ -291,9 +291,9 @@ func drawVariantTooltip(screen *ebiten.Image, fm *render.FontManager, card Build
 	fm.DrawText(screen, card.AbilityDesc, tx, ty+20, theme.FontXS, theme.TextMuted)
 }
 
-// BuildMenuHitTest returns the buildable tower card index hit by (px, py), or -1.
+// BuildMenuHitTest returns the buildable tower card index hit by (px, py).
 // totalCount is total cards (for panel sizing), buildableCount is the clickable subset.
-// Returns -2 for close button, -1 for miss/non-buildable card.
+// Returns: ≥0 = buildable card index, -1 = outside panel, -2 = close button, -3 = inside panel but no card hit.
 func BuildMenuHitTest(px, py float32, totalCount, buildableCount int) int {
 	if totalCount <= 0 {
 		return -1
@@ -303,7 +303,7 @@ func BuildMenuHitTest(px, py float32, totalCount, buildableCount int) int {
 
 	// Quick panel bounds check
 	if px < m.panelX || px > m.panelX+m.panelW || py < m.panelY || py > m.panelY+m.panelH {
-		return -1
+		return -1 // outside panel
 	}
 
 	// Close button area (top-right corner)
@@ -323,7 +323,7 @@ func BuildMenuHitTest(px, py float32, totalCount, buildableCount int) int {
 			return i
 		}
 	}
-	return -1
+	return -3 // inside panel but no buildable card hit (e.g. variant card, padding)
 }
 
 // BuildMenuHoverTest returns the card index the mouse is hovering over (all cards, including variants).

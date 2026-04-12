@@ -205,6 +205,14 @@
           "action": "同 clickSellBtn"
         },
         {
+          "trigger": "keyS",
+          "triggerType": "keyboard",
+          "description": "按 S 键开始下一波",
+          "target": "modeTowerSel",
+          "action": "startNextWave",
+          "condition": "waveNotActive && notAllWavesDone"
+        },
+        {
           "trigger": "clickAnotherTower",
           "triggerType": "tap",
           "description": "点击另一座炮塔",

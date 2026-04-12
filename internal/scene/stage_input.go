@@ -219,6 +219,7 @@ func (s *StageScene) handleInput() {
 		if s.imode == modeTowerSel && s.selectedTower != nil {
 			s.trySellTower(s.selectedTower.X, s.selectedTower.Y)
 			s.imode = modeIdle
+			return
 		}
 	}
 
@@ -436,10 +437,10 @@ func (s *StageScene) handleInput() {
 
 	case modeBuildMenu:
 		idx := hud.BuildMenuHitTest(ftx, fty, s.buildMenuTotalCards(), len(s.towerDefs))
-		if idx == -2 || idx == -1 {
+		if idx == -2 || idx == -1 { // close button or outside panel
 			s.imode = modeIdle
 			s.audioMgr.PlayAt(gameAudio.SFXUIClose, gameAudio.VolUI)
-		} else if idx >= 0 {
+		} else if idx >= 0 { // buildable card
 			s.selectedDef = idx
 			s.selectedTower = nil
 			s.imode = modeBuildPlace
@@ -538,14 +539,12 @@ func (s *StageScene) handleInput() {
 		}
 
 	case modeItemPanel:
-		// 点击面板外 → 关闭（卡片点击已在上面的 press-down 检测中处理）
+		// 点击面板外 → 关闭（卡片点击已在上面的 press-down 检测中处理，
+		// ActionBar 点击已在上面 ActionBarHitTest 中 return，不会到达此处）
 		if !hud.ItemPanelContains(ftx, fty) {
-			abtn := hud.ActionBarHitTest(ftx, fty)
-			if abtn == "" {
-				s.imode = modeIdle
-				s.itemPanelOpen = false
-				s.audioMgr.PlayAt(gameAudio.SFXUIClose, gameAudio.VolUI)
-			}
+			s.imode = modeIdle
+			s.itemPanelOpen = false
+			s.audioMgr.PlayAt(gameAudio.SFXUIClose, gameAudio.VolUI)
 		}
 	}
 }

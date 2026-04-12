@@ -106,10 +106,14 @@ func (g *Gesture) Update() {
 			g.tapped = true
 			g.tapX, g.tapY = px, py
 		} else if !g.dragging {
-			// 移动过但没启动拖拽 → 仍判定为 Tap
-			// （DragEnabled=false 时不可能启动拖拽，移动不应吞掉点击）
-			g.tapped = true
-			g.tapX, g.tapY = px, py
+			// 移动过但没启动拖拽。区分两种情况：
+			// (a) DragEnabled=false → 模式本身禁用拖拽，移动不应吞掉点击
+			// (b) DragEnabled=true + onUI → UI 保护拦截了拖拽，
+			//     按住 UI 按钮并滑开应取消操作（同 iOS/Android 行为）
+			if !(g.DragEnabled && g.onUI) {
+				g.tapped = true
+				g.tapX, g.tapY = px, py
+			}
 		}
 		// 拖拽中松开：结束拖拽，不触发 Tap
 		g.tracking = false
