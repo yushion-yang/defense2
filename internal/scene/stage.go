@@ -315,6 +315,8 @@ func NewStageSceneWithOpts(sw Switcher, opts StageOptions) *StageScene {
 		wavePanelOpen:   true,
 		wardenPanelOpen: false,
 		achieveTracker:  achTracker,
+		collisionGrid:   physics.NewSpatialGrid(float64(gm.PixelWidth()), float64(gm.PixelHeight())),
+		entityPosBuf:    make([]physics.EntityPos, 0, game.MaxEnemies),
 	}
 
 	// 死亡召唤音效回调
@@ -1965,51 +1967,40 @@ func (s *StageScene) updatePlaying() {
 		}
 	})
 
-	// Step 5: 敌人行为 tick（传送；狂暴/回血由 TickBehaviors 统一处理）
+	// Steps 5-8 merged: 传送/移动/出生动画/死亡动画 (single pass over active enemies)
+	// Step 6 (movement) can call KillImmediate (pool mutation), so we use Each() for safety.
 	s.enemies.Each(func(e *enemy.Enemy) {
-		if e.IsDying() || e.IsSpawning() {
-			return
-		}
-		if enemy.TickTeleport(e, gameDT) {
-			s.audioMgr.PlayThrottledAt("teleportBlink", 200, gameAudio.VolHit)
-		}
-	})
-
-	// Step 6: 敌人移动（到达终点扣生命）
-	s.enemies.Each(func(e *enemy.Enemy) {
-		if e.IsDying() || e.IsSpawning() {
-			return // dying/spawning enemies don't move
-		}
-		if enemy.MoveAlongPath(e, s.gameMap.Waypoints, gameDT) {
-			s.lives--
-			if s.lives < 0 {
-				s.lives = 0
-			}
-			s.enemies.KillImmediate(e) // leaked enemies vanish instantly, no dying anim
-			fx := s.postPipeline.Effects
-			fx.HitTintR, fx.HitTintG, fx.HitTintB = 1.0, 0.1, 0.1 // red flash on leak
-			fx.TriggerHitFlash(0.15)
-			s.bus.Emit(event.EvtEnemyLeaked, event.EnemyLeakedPayload{})
-		}
-	})
-
-	// Step 7: Tick spawn animation countdown
-	s.enemies.Each(func(e *enemy.Enemy) {
-		if e.SpawnTimer > 0 {
-			e.SpawnTimer -= gameDT
-			if e.SpawnTimer < 0 {
-				e.SpawnTimer = 0
-			}
-		}
-	})
-
-	// Step 8: Tick dying enemies (shrink+fade animation countdown)
-	s.enemies.Each(func(e *enemy.Enemy) {
+		// Step 8: dying enemies — tick shrink+fade animation
 		if e.IsDying() {
 			e.DyingTimer -= gameDT
 			if e.DyingTimer <= 0 {
 				s.enemies.FinishDying(e)
 			}
+			return
+		}
+		// Step 7: spawn animation countdown
+		if e.IsSpawning() {
+			e.SpawnTimer -= gameDT
+			if e.SpawnTimer < 0 {
+				e.SpawnTimer = 0
+			}
+			return
+		}
+		// Step 5: teleport
+		if enemy.TickTeleport(e, gameDT) {
+			s.audioMgr.PlayThrottledAt("teleportBlink", 200, gameAudio.VolHit)
+		}
+		// Step 6: movement (may KillImmediate on leak)
+		if enemy.MoveAlongPath(e, s.gameMap.Waypoints, gameDT) {
+			s.lives--
+			if s.lives < 0 {
+				s.lives = 0
+			}
+			s.enemies.KillImmediate(e)
+			fx := s.postPipeline.Effects
+			fx.HitTintR, fx.HitTintG, fx.HitTintB = 1.0, 0.1, 0.1
+			fx.TriggerHitFlash(0.15)
+			s.bus.Emit(event.EvtEnemyLeaked, event.EnemyLeakedPayload{})
 		}
 	})
 
@@ -2246,8 +2237,16 @@ func (s *StageScene) updatePlaying() {
 	s.projectiles.Tick(gameDT)
 	s.beams.Tick(gameDT)
 
-	// Step 18: 弹射物命中检测（含能力触发）
-	pipeline.TickProjectileHits(s.projectiles, s.enemies, s.towers, nil, func(e *enemy.Enemy, damage float64, killed bool, attackStyle string, crit bool) {
+	// Step 18: 重建碰撞网格 + 弹射物命中检测
+	s.entityPosBuf = s.entityPosBuf[:0]
+	for i := 0; i < s.enemies.Len(); i++ {
+		e := s.enemies.ByIndex(i)
+		s.entityPosBuf = append(s.entityPosBuf, physics.EntityPos{
+			Index: i, X: e.X, Y: e.Y, Active: e.Active && !e.IsDying() && !e.IsSpawning(),
+		})
+	}
+	s.collisionGrid.Rebuild(s.entityPosBuf)
+	pipeline.TickProjectileHits(s.projectiles, s.enemies, s.towers, s.collisionGrid, func(e *enemy.Enemy, damage float64, killed bool, attackStyle string, crit bool) {
 		if damage > 0 {
 			render.SpawnDamageText(e.X, e.Y-15, damage, crit, e.Boss)
 			if e.HitFlash < 0.06 && e.Age > 0.1 { // 出生 0.1s 内不闪白
@@ -2587,6 +2586,9 @@ func (s *StageScene) drawScene(screen *ebiten.Image) {
 	}
 
 	// ── 世界元素（受相机偏移影响）──
+
+	// 设置视口裁剪参数（大地图跳过屏幕外实体的渲染）
+	render.SetViewport(s.camX, s.camY, useCamera)
 
 	// 地图（渐变背景覆盖全屏，无需 Fill）
 	animTime := float64(s.frame) / 60.0

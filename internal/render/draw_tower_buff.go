@@ -15,6 +15,11 @@ import (
 // DrawTowerBuffEffect 在被金灵 buff 的塔上绘制五角星芒阵。
 // 只对 ID 含 "envoy_buff" 的 buff 生效。
 func DrawTowerBuffEffect(screen *ebiten.Image, t *tower.Tower, animTime float64) {
+	// Viewport culling
+	if !IsInView(t.X, t.Y) {
+		return
+	}
+
 	var envoyBuff *buff.Buff
 	for _, b := range t.Buffs.Active() {
 		if strings.Contains(b.ID, "envoy_buff") {

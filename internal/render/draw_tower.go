@@ -53,9 +53,14 @@ func towerAnimScaleAlpha(t *tower.Tower) (float64, float64) {
 // DrawTowers renders all placed towers.
 func (tr *TowerRenderer) DrawTowers(screen *ebiten.Image, pool *tower.Pool, selectedTower *tower.Tower, animTime float64) {
 	pool.Each(func(t *tower.Tower) {
+		// Viewport culling: skip off-screen towers (selected tower always rendered)
+		selected := selectedTower != nil && t == selectedTower
+		if !selected && !IsInView(t.X, t.Y) {
+			return
+		}
+
 		cx := float32(t.X)
 		cy := float32(t.Y)
-		selected := selectedTower != nil && t == selectedTower
 
 		// Compute animation scale and alpha
 		animScale, animAlpha := towerAnimScaleAlpha(t)

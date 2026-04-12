@@ -15,6 +15,11 @@ import (
 // DrawProjectiles renders all alive projectiles with trail + per-tower-type visuals.
 func DrawProjectiles(screen *ebiten.Image, pool *projectile.Pool) {
 	pool.Each(func(p *projectile.Projectile) {
+		// Viewport culling: skip projectiles outside camera view
+		if !IsInView(p.X, p.Y) {
+			return
+		}
+
 		// Trail first (behind body)
 		baseClr := vfx.ProjectileTrailColor(p.SourceTowerKey)
 		var trailArr [projectile.TrailLen]vfx.TrailPt

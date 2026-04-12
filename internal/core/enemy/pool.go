@@ -18,9 +18,10 @@ const (
 
 // Pool 固定大小的敌人对象池。
 type Pool struct {
-	enemies []Enemy // 预分配的敌人槽位数组
-	Count   int     // 当前存活敌人数量
-	nextID  int     // 递增 ID 计数器
+	enemies   []Enemy // 预分配的敌人槽位数组
+	activeIdx []int   // 活跃敌人的 slot 索引列表（含 dying），EachActive 只遍历此列表
+	Count     int     // 当前存活敌人数量（不含 dying）
+	nextID    int     // 递增 ID 计数器
 	// OnSplit 击杀时分裂回调（可选，由 stage 层注册）。
 	OnSplit func(children []*Enemy)
 	// OnDeathSpawn 死亡召唤回调（可选，由 stage 层注册）。
@@ -30,7 +31,8 @@ type Pool struct {
 // NewPool 创建指定容量的敌人对象池。
 func NewPool(cap int) *Pool {
 	return &Pool{
-		enemies: make([]Enemy, cap),
+		enemies:   make([]Enemy, cap),
+		activeIdx: make([]int, 0, cap),
 	}
 }
 
@@ -197,6 +199,7 @@ func (p *Pool) Spawn(x, y, baseHP, baseSpeed float64, pathIndex int, archetype s
 			}
 			e.SpawnDuration = e.SpawnTimer
 
+			p.activeIdx = append(p.activeIdx, i)
 			p.Count++
 			return e
 		}
@@ -267,6 +270,7 @@ func (p *Pool) KillImmediate(e *Enemy) {
 		}
 		e.Active = false
 		e.DyingTimer = 0
+		p.removeFromActive(p.slotIndexOf(e))
 	}
 }
 
@@ -274,6 +278,29 @@ func (p *Pool) KillImmediate(e *Enemy) {
 func (p *Pool) FinishDying(e *Enemy) {
 	e.Active = false
 	e.DyingTimer = 0
+	p.removeFromActive(p.slotIndexOf(e))
+}
+
+// removeFromActive 从 activeIdx 中移除指定 slot 索引（swap-remove，O(n) worst case）。
+func (p *Pool) removeFromActive(slotIdx int) {
+	for i, idx := range p.activeIdx {
+		if idx == slotIdx {
+			last := len(p.activeIdx) - 1
+			p.activeIdx[i] = p.activeIdx[last]
+			p.activeIdx = p.activeIdx[:last]
+			return
+		}
+	}
+}
+
+// slotIndexOf 返回敌人在池中的 slot 索引。
+func (p *Pool) slotIndexOf(e *Enemy) int {
+	for i := range p.enemies {
+		if &p.enemies[i] == e {
+			return i
+		}
+	}
+	return -1
 }
 
 // Len 返回池的槽位总数（非存活数量）。
@@ -282,12 +309,20 @@ func (p *Pool) Len() int { return len(p.enemies) }
 // ByIndex 返回指定索引的敌人指针（不检查 Active 状态）。
 func (p *Pool) ByIndex(i int) *Enemy { return &p.enemies[i] }
 
-// Each 遍历所有存活敌人并执行回调。
+// Each 遍历所有存活敌人并执行回调（全量扫描，兼容旧代码）。
 func (p *Pool) Each(fn func(e *Enemy)) {
 	for i := range p.enemies {
 		if p.enemies[i].Active {
 			fn(&p.enemies[i])
 		}
+	}
+}
+
+// EachActive 仅遍历活跃索引列表中的敌人（含 dying）。
+// 比 Each 快：跳过空槽位，只访问实际存活/dying 的敌人。
+func (p *Pool) EachActive(fn func(e *Enemy)) {
+	for _, idx := range p.activeIdx {
+		fn(&p.enemies[idx])
 	}
 }
 
@@ -297,4 +332,5 @@ func (p *Pool) ClearAll() {
 		p.enemies[i] = Enemy{}
 	}
 	p.Count = 0
+	p.activeIdx = p.activeIdx[:0]
 }

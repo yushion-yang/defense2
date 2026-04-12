@@ -83,6 +83,10 @@ func (er *EnemyRenderer) DrawEnemies(screen *ebiten.Image, pool *enemy.Pool, ani
 		if e.DyingDuration <= 0 {
 			return
 		}
+		// Viewport culling: skip dying enemies outside camera view
+		if !IsInView(e.X, e.Y) {
+			return
+		}
 		cx := float32(e.X)
 		cy := float32(e.Y)
 		scale, alphaF, offsetY := vfx.DyingAnimParams(e.DyingTimer, e.DyingDuration)
@@ -115,6 +119,12 @@ func (er *EnemyRenderer) DrawEnemies(screen *ebiten.Image, pool *enemy.Pool, ani
 		if e.IsDying() {
 			return
 		}
+
+		// Viewport culling: skip rendering for off-screen enemies
+		if !IsInView(e.X, e.Y) {
+			return
+		}
+
 		cx := float32(e.X)
 		cy := float32(e.Y)
 
