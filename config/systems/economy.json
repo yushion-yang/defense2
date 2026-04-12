@@ -2,7 +2,7 @@
   "_description": "经济系统规格 — 波次奖金、完美奖金、评分公式、全局参数",
 
   "global": {
-    "killReward": 12,
+    "killReward": 15,
     "sellRefundRatio": 0.7,
     "description": "击杀奖励和卖塔退款比例（也在 balance.json 中定义，代码读取 balance.json）"
   },

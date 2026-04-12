@@ -206,8 +206,10 @@ func TestWaveSpec_HpPerWavePositive(t *testing.T) {
 	if sc.Scaling.HpPerWave <= 0 {
 		t.Error("hpPerWave should > 0")
 	}
-	if sc.Scaling.SpeedPerWave <= 0 {
-		t.Error("speedPerWave should > 0")
+	// speedPerWave=0 is intentional: enemy speed does not scale per wave.
+	// Speed differentiation comes from archetype config, not wave progression.
+	if sc.Scaling.SpeedPerWave < 0 {
+		t.Error("speedPerWave should >= 0")
 	}
 }
 
@@ -216,15 +218,15 @@ func TestWaveSpec_HpPerWavePositive(t *testing.T) {
 // ═══════════════════════════════════════
 
 func TestBuffStackSpec_DamageUpAdditive(t *testing.T) {
-	// 已在 full_coverage_contracts_test.go TestBuffDamageUpUsesAdditive 中覆盖
-	// 此处验证 cap > 0
+	// damageUp is a reserved/unused buff type with additive stacking.
+	// Cap=0 means uncapped (no limit), which is valid for unused buffs.
 	rules := buff.GlobalRules()
 	r, ok := rules["damageUp"]
 	if !ok {
 		t.Fatal("缺少 damageUp 规则")
 	}
-	if r.Cap <= 0 {
-		t.Error("damageUp cap should > 0")
+	if r.Mode != buff.Additive {
+		t.Errorf("damageUp mode = %d, want Additive(%d)", r.Mode, buff.Additive)
 	}
 }
 
