@@ -80,6 +80,7 @@ type StageScene struct {
 	bus              *event.Bus                   // 事件总线（从 Switcher 获取）
 	busSubscribed    bool                         // Bus 订阅是否已完成（延迟到首次 Update）
 	session          *gamemode.Session            // 游戏模式会话
+	modeCtx          gamemode.Context             // 缓存的模式上下文（避免每帧分配）
 	modeID           string                       // 模式 ID（用于重玩）
 	diffID           string                       // 难度 ID（用于重玩）
 	frame            int                          // 当前帧计数
@@ -320,6 +321,9 @@ func NewStageSceneWithOpts(sw Switcher, opts StageOptions) *StageScene {
 		collisionGrid:   physics.NewSpatialGrid(float64(gm.PixelWidth()), float64(gm.PixelHeight())),
 		entityPosBuf:    make([]physics.EntityPos, 0, game.MaxEnemies),
 	}
+
+	// 初始化模式上下文闭包（只设一次，避免每帧分配）
+	s.initModeCtx()
 
 	// 死亡召唤音效回调
 	s.enemies.OnDeathSpawn = func(_ *enemy.Enemy, _ int) {
@@ -787,24 +791,29 @@ func (s *StageScene) checkVictoryAchievements() {
 	}
 }
 
-// buildModeCtx 构建游戏模式上下文快照。
+// buildModeCtx 更新缓存的游戏模式上下文并返回。
+// 闭包在 initModeCtx 中设一次，每帧只更新值字段（零分配）。
 func (s *StageScene) buildModeCtx() *gamemode.Context {
-	return &gamemode.Context{
-		Wave:         s.spawner.Wave,
-		MaxWaves:     s.spawner.MaxWaves,
-		Lives:        s.lives,
-		Gold:         s.gold,
-		Kills:        s.kills,
-		Leaked:       s.session.Stats.Leaked,
-		TowersBuilt:  s.session.Stats.TowersBuilt,
-		EnemiesAlive: s.enemies.Count,
-		ElapsedTime:  s.session.ElapsedTime,
-		Spawning:     !s.spawner.IsClear(s.enemies),
-		SetLives:     func(v int) { s.lives = v },
-		SetGold:      func(v int) { s.gold = v },
-		AddGold:      func(v int) { s.gold += v },
-		SetMaxWaves:  func(v int) { s.spawner.MaxWaves = v },
-	}
+	c := &s.modeCtx
+	c.Wave = s.spawner.Wave
+	c.MaxWaves = s.spawner.MaxWaves
+	c.Lives = s.lives
+	c.Gold = s.gold
+	c.Kills = s.kills
+	c.Leaked = s.session.Stats.Leaked
+	c.TowersBuilt = s.session.Stats.TowersBuilt
+	c.EnemiesAlive = s.enemies.Count
+	c.ElapsedTime = s.session.ElapsedTime
+	c.Spawning = !s.spawner.IsClear(s.enemies)
+	return c
+}
+
+// initModeCtx 初始化 modeCtx 的闭包字段（只调用一次）。
+func (s *StageScene) initModeCtx() {
+	s.modeCtx.SetLives = func(v int) { s.lives = v }
+	s.modeCtx.SetGold = func(v int) { s.gold = v }
+	s.modeCtx.AddGold = func(v int) { s.gold += v }
+	s.modeCtx.SetMaxWaves = func(v int) { s.spawner.MaxWaves = v }
 }
 
 // finalizeGameStats 结算时最终化游戏统计数据。

@@ -160,7 +160,7 @@ func (s *LoadingScene) Update() error {
 	case phaseDone:
 		s.holdFrames++
 		if s.holdFrames >= loadingHoldFrames {
-			s.g.SwitchScene(NewSelectScene(s.g))
+			s.g.SwitchScene(NewTitleScene(s.g))
 		}
 	}
 
