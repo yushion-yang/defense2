@@ -13,11 +13,8 @@ import (
 // Command 统一输入命令，每帧由 Manager 生成。
 type Command struct {
 	// 点击/触摸事件
-	TapX, TapY  int  // 本帧点击位置（无点击时为 -1）
-	Tapped      bool // 本帧是否发生了点击/触摸
-	RightTapped bool // 本帧是否右键点击
-	RightTapX   int  // 右键点击 X
-	RightTapY   int  // 右键点击 Y
+	TapX, TapY int  // 本帧点击位置（无点击时为 -1）
+	Tapped     bool // 本帧是否发生了点击/触摸
 
 	// 持续状态
 	CursorX, CursorY int    // 当前鼠标/触摸位置
@@ -36,7 +33,6 @@ func NewManager() *Manager {
 func (m *Manager) Update() Command {
 	cmd := Command{
 		TapX: -1, TapY: -1,
-		RightTapX: -1, RightTapY: -1,
 	}
 
 	// 鼠标位置（逻辑坐标）
@@ -48,12 +44,6 @@ func (m *Manager) Update() Command {
 		cmd.Tapped = true
 		cmd.TapX, cmd.TapY = cmd.CursorX, cmd.CursorY
 		cmd.Source = "mouse"
-	}
-
-	// 鼠标右键点击
-	if inpututil.IsMouseButtonJustPressed(ebiten.MouseButtonRight) {
-		cmd.RightTapped = true
-		cmd.RightTapX, cmd.RightTapY = cmd.CursorX, cmd.CursorY
 	}
 
 	// 触摸（优先于鼠标）

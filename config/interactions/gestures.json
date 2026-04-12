@@ -31,7 +31,11 @@
         "1. 检测到按下（鼠标左键 or 触摸开始）",
         "2. 记录按下位置 (pressX, pressY)",
         "3. 持续检测移动距离 = 当前位置与按下位置的距离",
-        "4. 释放时：若距离 < DragThreshold 且未被标记为拖拽 → 触发 JustTapped()",
+        "4. 释放时判定：",
+        "   a. 未超过阈值 → Tap",
+        "   b. 超过阈值 + DragEnabled=false → Tap（模式禁用拖拽，不吞掉点击）",
+        "   c. 超过阈值 + DragEnabled=true + onUI → 取消（同 iOS 按钮滑离取消行为）",
+        "   d. 超过阈值 + 启动了拖拽 → 不触发 Tap",
         "5. TapPos() 返回释放位置的逻辑坐标"
       ],
       "parameters": {

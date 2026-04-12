@@ -143,6 +143,18 @@
           "label": "关闭"
         },
         {
+          "trigger": "tap",
+          "target": "outsidePanel",
+          "hitTestFn": "BuildMenuHitTest → -1",
+          "action": "closeBuildMenu → modeIdle"
+        },
+        {
+          "trigger": "tap",
+          "target": "variantCardOrPadding",
+          "hitTestFn": "BuildMenuHitTest → -3",
+          "action": "无操作（点击变种卡或面板内空白不关闭菜单）"
+        },
+        {
           "trigger": "hover",
           "target": "anyCard",
           "hitTestFn": "BuildMenuHoverTest → cardIndex",

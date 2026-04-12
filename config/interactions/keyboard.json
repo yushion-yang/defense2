@@ -8,25 +8,26 @@
           "key": "F2",
           "action": "toggleDebugOverlay",
           "description": "切换调试信息覆盖层（FPS/实体数量/性能指标）",
-          "modeConstraint": "any"
+          "modeConstraint": "playingNonOverlay",
+          "note": "不含 modePaused/modeUpgrade/modeWardenSelect/modeItemDrag（这些模式有独立输入处理或提前 return）"
         },
         {
           "key": "1",
           "action": "setSpeed1x",
           "description": "设置游戏速度为 1 倍",
-          "modeConstraint": "any"
+          "modeConstraint": "playingNonOverlay"
         },
         {
           "key": "2",
           "action": "setSpeed2x",
           "description": "设置游戏速度为 2 倍",
-          "modeConstraint": "any"
+          "modeConstraint": "playingNonOverlay"
         },
         {
           "key": "3",
           "action": "setSpeed3x",
           "description": "设置游戏速度为 3 倍",
-          "modeConstraint": "any"
+          "modeConstraint": "playingNonOverlay"
         }
       ],
       "modeSpecific": [
@@ -94,14 +95,20 @@
           "key": "B",
           "bindings": [
             {
-              "mode": "modeIdle",
-              "action": "toggleBuildMenu",
-              "description": "打开造塔菜单 → modeBuildMenu"
+              "mode": "modeBuildMenu",
+              "action": "closeBuildMenu",
+              "description": "关闭造塔菜单 → modeIdle"
             },
             {
-              "mode": "modeBuildMenu",
-              "action": "toggleBuildMenu",
-              "description": "关闭造塔菜单 → modeIdle"
+              "mode": "modeBuildPlace",
+              "action": "cancelBuildPlace",
+              "description": "取消放置 → modeIdle"
+            },
+            {
+              "mode": "other",
+              "action": "enterBuildMode",
+              "description": "清除当前状态（造怪/道具/选塔），进入造塔模式",
+              "note": "除 modePaused/modeUpgrade/modeWardenSelect/modeItemDrag 外均可触发"
             }
           ]
         },
