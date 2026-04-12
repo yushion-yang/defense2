@@ -155,17 +155,11 @@ func (t *Tower) RecalcStats() {
 	if floor := config.GlobalBalance().Tower.AttackSpeedFloor; t.AttackSpeed < floor {
 		t.AttackSpeed = floor // 攻速保底
 	}
-	if t.AttackSpeed > 30 {
-		t.AttackSpeed = 30 // 攻速硬上限（每帧 0.5 发，防止极端强度卡顿）
-	}
 
 	baseRng := t.BaseRange + t.PotentialRange*ratio
 	t.Range = baseRng + flatRange
 	if t.Range < t.BaseRange {
 		t.Range = t.BaseRange // 射程不低于基础值
-	}
-	if t.Range > 600 {
-		t.Range = 600 // 射程硬上限（防止极大半径 VFX 卡顿）
 	}
 }
 
