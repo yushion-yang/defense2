@@ -67,61 +67,38 @@ var HeadlessMode bool
 // turboTicksPerFrame turbo 模式下每帧推进的 tick 数上限。
 const turboTicksPerFrame = 5000
 
-// NewGame 创建游戏实例，初始场景为标题画面。
+// NewGame 创建游戏实例。
+// 正常模式：仅初始化字体，其余资源由 LoadingScene 分帧加载。
+// HeadlessMode：同步加载所有资源（无 UI）。
 func NewGame() *Game {
-	// 字体/图标/着色器始终加载
+	// 字体必须同步初始化（LoadingScene 需要画文字）
 	initFont()
-	render.InitGlobalIcons(config.GetAssetFS())
-	abilities.InitConfigAbilities()
-	config.LoadBalance()               // 加载平衡参数配置
-	config.LoadTierPresets()           // 加载塔属性档位预设（S/A/B/C/D）
-	config.LoadAndCacheWardenConfigs() // 加载战灵配置并缓存
-	config.LoadBuffRules()             // 加载 buff 堆叠规则
-	config.LoadSpawnerConfig()         // 加载出怪系统完整配置（含波次组合+buff）
-	if err := postprocess.InitShaders(); err != nil {
-		log.Printf("后处理着色器编译失败（bloom 禁用）: %v", err)
-	}
-	// 音效: HeadlessMode 跳过加载（自动对局不需要声音）
-	var am *gameAudio.Manager
-	if !HeadlessMode {
-		am = initAudio()
-	} else {
-		am = gameAudio.NewManager()
-	}
+
 	g := &Game{
-		width:    game.ScreenWidth,
-		height:   game.ScreenHeight,
-		audioMgr: am,
-		bus:      event.NewBus(),
+		width:        game.ScreenWidth,
+		height:       game.ScreenHeight,
+		bus:          event.NewBus(),
+		sessionStart: time.Now(),
 	}
-	// 加载持久化设置（音量/画质）
+
 	if !HeadlessMode {
-		sd := LoadSettings()
-		log.Printf("[settings] sfxEnabled=%v sfxVol=%.2f bgmVol=%.2f", sd.SFXEnabled, sd.SFXVolume, sd.BGMVolume)
-		am.SetSFXEnabled(sd.SFXEnabled)
-		am.SetVolume(sd.SFXVolume)
-		am.SetBGMVolume(sd.BGMVolume)
-		if sd.Quality >= 0 && sd.Quality <= 2 {
-			game.CurrentQuality = game.QualityLevel(sd.Quality)
+		// 正常模式：进入加载场景，由 LoadingScene 分帧完成剩余初始化
+		g.current = NewLoadingScene(g)
+	} else {
+		// HeadlessMode：同步加载全部资源（autoplay 不需要 UI）
+		render.InitGlobalIcons(config.GetAssetFS())
+		abilities.InitConfigAbilities()
+		config.LoadBalance()
+		config.LoadTierPresets()
+		config.LoadAndCacheWardenConfigs()
+		config.LoadBuffRules()
+		config.LoadSpawnerConfig()
+		if err := postprocess.InitShaders(); err != nil {
+			log.Printf("后处理着色器编译失败（bloom 禁用）: %v", err)
 		}
-	}
-	// 加载吉祥物向导（非致命：文件缺失仅输出日志）
-	mascotDialogs, err := mascot.LoadAllDialogs(config.GetDataFS())
-	if err != nil {
-		log.Printf("[mascot] dialog load error: %v", err)
-	}
-	// TODO: load MascotShown from ProgressManager once it's accessible at Game level
-	g.mascot = mascot.NewGuide(mascotDialogs, nil)
-	g.mascot.InitConditions(mascot.DefaultConditions())
-	g.sessionStart = time.Now()
-
-	if !HeadlessMode {
-		g.mascotAnim = render.LoadMascotSprites(config.GetAssetFS())
+		g.audioMgr = gameAudio.NewManager()
 	}
 
-	if !HeadlessMode {
-		g.current = NewSelectScene(g)
-	}
 	return g
 }
 
@@ -381,6 +358,8 @@ func (g *Game) safeSceneDraw(screen *ebiten.Image) {
 // currentSceneName 返回当前场景的字符串标识（供吉祥物向导匹配对话用）。
 func (g *Game) currentSceneName() string {
 	switch g.current.(type) {
+	case *LoadingScene:
+		return "loading"
 	case *TitleScene:
 		return "title"
 	case *SelectScene:
