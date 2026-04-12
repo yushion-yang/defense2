@@ -175,14 +175,18 @@ func (s *TestSelectScene) updateFilter() {
 // ── Update ──────────────────────────────────────
 
 func (s *TestSelectScene) Update() error {
-	mxf, myf := draw.CursorPos()
-
-	// 鼠标悬停
-	s.hoverTab = s.hitTestTabs(mxf, myf)
-	s.hoverIdx = s.hitTestCards(mxf, myf)
-	s.hoverStart = s.hitTestStartBtn(mxf, myf)
+	// 悬停检测（桌面=鼠标光标, 触摸=长按）
+	if hx, hy, hov := draw.HoverPos(); hov {
+		s.hoverTab = s.hitTestTabs(hx, hy)
+		s.hoverIdx = s.hitTestCards(hx, hy)
+		s.hoverStart = s.hitTestStartBtn(hx, hy)
+	} else {
+		s.hoverTab, s.hoverIdx = -1, -1
+		s.hoverStart = false
+	}
 
 	// 鼠标/触摸点击
+	mxf, myf := draw.CursorPos()
 	if isTapJustPressed() {
 		// 返回按钮
 		if mxf >= 20 && mxf <= 90 && myf >= 16 && myf <= 44 {

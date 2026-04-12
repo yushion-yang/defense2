@@ -296,8 +296,8 @@ func DrawInfoPanel(screen *ebiten.Image, vm InfoPanelVM) {
 		panel.AddRow(32, func(screen *ebiten.Image, x, y float64, w float64) {
 			btnRect := ui.Rect{X: float32(x), Y: float32(y), W: float32(w), H: 30}
 			btnClr := color.RGBA{R: 200, G: 160, B: 40, A: 255} // gold
-			mx, my := draw.CursorPos()
-			if float32(mx) >= btnRect.X && float32(mx) <= btnRect.X+btnRect.W &&
+			mx, my, hov := draw.HoverPos()
+			if hov && float32(mx) >= btnRect.X && float32(mx) <= btnRect.X+btnRect.W &&
 				float32(my) >= btnRect.Y && float32(my) <= btnRect.Y+btnRect.H {
 				btnClr = color.RGBA{R: 230, G: 190, B: 60, A: 255}
 			}
@@ -319,8 +319,8 @@ func DrawInfoPanel(screen *ebiten.Image, vm InfoPanelVM) {
 			var btnClr color.RGBA
 			if affordable {
 				btnClr = color.RGBA{R: 60, G: 160, B: 200, A: 255} // blue
-				mx, my := draw.CursorPos()
-				if float32(mx) >= btnRect.X && float32(mx) <= btnRect.X+btnRect.W &&
+				mx, my, hov := draw.HoverPos()
+				if hov && float32(mx) >= btnRect.X && float32(mx) <= btnRect.X+btnRect.W &&
 					float32(my) >= btnRect.Y && float32(my) <= btnRect.Y+btnRect.H {
 					btnClr = color.RGBA{R: 80, G: 190, B: 230, A: 255}
 				}

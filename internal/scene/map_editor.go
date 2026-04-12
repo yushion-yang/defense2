@@ -184,29 +184,33 @@ func (s *MapEditorScene) Update() error {
 		}
 	}
 
-	// ── D-pad hover detection (floating above HUD) ──
-	s.dpadHover = s.hitTestDpad(mx, my)
+	// ── Hover detection (desktop=mouse, touch=long-press) ──
+	hx, hy, hov := draw.HoverPos()
+	if hov {
+		s.dpadHover = s.hitTestDpad(hx, hy)
+	} else {
+		s.dpadHover = 0
+	}
 
-	// ── HUD hover detection ──
 	inHUD := my >= sh-meCtrlH
 	onDpad := s.dpadHover > 0
 	s.hoverBack = false
 	s.hoverPrev = false
 	s.hoverNext = false
 	s.hoverSave = false
-	if inHUD {
-		s.hoverBack = s.hitTestBackBtn(mx, my)
-		s.hoverPrev = s.hitTestPrevBtn(mx, my)
-		s.hoverNext = s.hitTestNextBtn(mx, my)
-		s.hoverSave = s.hitTestSaveBtn(mx, my)
+	if hov && inHUD {
+		s.hoverBack = s.hitTestBackBtn(hx, hy)
+		s.hoverPrev = s.hitTestPrevBtn(hx, hy)
+		s.hoverNext = s.hitTestNextBtn(hx, hy)
+		s.hoverSave = s.hitTestSaveBtn(hx, hy)
 	}
 
 	// ── Grid hover (only above HUD and not on D-pad) ──
-	if inHUD || onDpad {
+	if !hov || inHUD || onDpad {
 		s.hoverRow = -1
 		s.hoverCol = -1
 	} else {
-		s.updateHoverCell(mx, my)
+		s.updateHoverCell(hx, hy)
 	}
 
 	// ── D-pad click (held = continuous pan) ──

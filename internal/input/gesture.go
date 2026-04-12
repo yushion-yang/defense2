@@ -21,6 +21,8 @@ package input
 import (
 	"math"
 
+	"defense2/internal/render/draw"
+
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/hajimehoshi/ebiten/v2/inpututil"
 )
@@ -101,6 +103,13 @@ func (g *Gesture) Update() {
 
 	case g.tracking && !down:
 		// ── 松开 ──
+		// 长按悬浮已消费此次释放 → 不触发 Tap
+		if draw.LongPressConsumed() {
+			g.tracking = false
+			g.dragging = false
+			g.movedBeyond = false
+			break
+		}
 		if !g.movedBeyond {
 			// 没移动过 → Tap
 			g.tapped = true

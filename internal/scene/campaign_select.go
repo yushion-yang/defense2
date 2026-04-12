@@ -106,15 +106,22 @@ func (s *CampaignSelectScene) Update() error {
 	}
 	s.particlePool.Update(dt)
 
-	mx, my := draw.CursorPos()
-	s.hoverMap = s.hitTestMapCards(mx, my)
-	s.hoverDiff = s.hitTestDiffBtns(mx, my)
-	s.hoverStart = s.hitTestStartBtn(mx, my)
-	s.hoverBack = mx >= 20 && mx <= 90 && my >= 16 && my <= 44
+	// 悬停检测（桌面=鼠标光标, 触摸=长按）
+	if hx, hy, hov := draw.HoverPos(); hov {
+		s.hoverMap = s.hitTestMapCards(hx, hy)
+		s.hoverDiff = s.hitTestDiffBtns(hx, hy)
+		s.hoverStart = s.hitTestStartBtn(hx, hy)
+		s.hoverBack = hx >= 20 && hx <= 90 && hy >= 16 && hy <= 44
+	} else {
+		s.hoverMap, s.hoverDiff = -1, -1
+		s.hoverStart = false
+		s.hoverBack = false
+	}
 
+	mx, my := draw.CursorPos()
 	if isTapJustPressed() {
 		// 返回
-		if s.hoverBack {
+		if mx >= 20 && mx <= 90 && my >= 16 && my <= 44 {
 			playUIClick(s.switcher)
 			s.switcher.SwitchScene(NewSelectScene(s.switcher))
 			return nil

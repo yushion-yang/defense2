@@ -16,7 +16,11 @@ import (
 )
 
 // isTapJustPressed 检测本帧是否有鼠标左键或触摸点击。
+// 长按悬浮释放不算点击。
 func isTapJustPressed() bool {
+	if draw.LongPressConsumed() {
+		return false
+	}
 	if inpututil.IsMouseButtonJustPressed(ebiten.MouseButtonLeft) {
 		return true
 	}

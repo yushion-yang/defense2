@@ -203,6 +203,9 @@ func (g *Game) Update() error {
 		return nil
 	}
 
+	// 更新全局长按悬浮追踪器（触摸设备上长按=悬浮）
+	draw.TickHover()
+
 	// 兼容旧的 next 直接切换（无过渡）
 	if g.next != nil {
 		g.current = g.next

@@ -152,11 +152,15 @@ func (s *WavePreviewScene) Update() error {
 		}
 	}
 
-	// Mouse input.
-	mxf, myf := draw.CursorPos()
-	s.hoverMap = s.hitTestMapList(mxf, myf)
+	// Hover (desktop=mouse, touch=long-press).
+	if hx, hy, hov := draw.HoverPos(); hov {
+		s.hoverMap = s.hitTestMapList(hx, hy)
+	} else {
+		s.hoverMap = -1
+	}
 
 	if isTapJustPressed() {
+		mxf, myf := draw.CursorPos()
 		s.handleClick(mxf, myf)
 	}
 

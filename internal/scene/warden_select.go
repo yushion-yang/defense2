@@ -68,13 +68,18 @@ func NewWardenSelectScene(sw Switcher, mapID, modeID, diffID string) *WardenSele
 }
 
 func (s *WardenSelectScene) Update() error {
+	// 悬停检测（桌面=鼠标光标, 触摸=长按）
+	if hx, hy, hov := draw.HoverPos(); hov {
+		s.hoverIdx = s.hitTestList(hx, hy)
+		s.hoverConfirm = s.hitTestBtn(hx, hy, 0)
+		s.hoverSkip = s.hitTestBtn(hx, hy, 1)
+	} else {
+		s.hoverIdx = -1
+		s.hoverConfirm = false
+		s.hoverSkip = false
+	}
+
 	mx, my := draw.CursorPos()
-
-	// 悬停检测
-	s.hoverIdx = s.hitTestList(mx, my)
-	s.hoverConfirm = s.hitTestBtn(mx, my, 0)
-	s.hoverSkip = s.hitTestBtn(mx, my, 1)
-
 	if isTapJustPressed() {
 		// 返回
 		if mx >= 20 && mx <= 90 && my >= 16 && my <= 44 {
