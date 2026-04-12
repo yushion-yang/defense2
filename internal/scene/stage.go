@@ -130,6 +130,7 @@ type StageScene struct {
 	imode             interactMode          // 交互状态机
 	prePauseMode      interactMode          // 暂停前的交互模式（恢复用）
 	buildHoverIdx     int                   // 建塔面板鼠标悬停索引
+	itemHoverIdx      int                   // 道具面板鼠标悬停索引
 	gesture           *input.Gesture        // 统一手势识别器
 	waveLivesSnapshot int                   // 波开始时的生命快照（用于完美波次检测）
 	// 相机（大地图拖拽）
@@ -2899,7 +2900,7 @@ func (s *StageScene) buildItemPanelData() hud.ItemPanelData {
 	if s.imode != modeItemPanel && s.imode != modeItemDrag {
 		return hud.ItemPanelData{Visible: false}
 	}
-	return hud.ItemPanelData{Cards: s.buildItemPanelCards(), Visible: true}
+	return hud.ItemPanelData{Cards: s.buildItemPanelCards(), Visible: true, HoverIdx: s.itemHoverIdx}
 }
 
 func (s *StageScene) buildItemPanelCards() []hud.ItemCardVM {

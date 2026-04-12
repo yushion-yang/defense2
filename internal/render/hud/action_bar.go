@@ -78,12 +78,16 @@ func DrawActionBar(screen *ebiten.Image, d ActionBarData) {
 	}
 
 	// ── Measure total button width ──
+	// Hover detection using last frame's rects
+	mx, my := draw.CursorPos()
+	hoverIdx := ui.HitTestButtonRow(lastActionBarBtnRects, float64(mx), float64(my))
+
 	const btnPadX float32 = 16
 	items := make([]ui.ButtonRowItem, len(btns))
 	names := make([]string, len(btns))
 	totalBtnW := float32(0)
 	for i, b := range btns {
-		items[i] = ui.ButtonRowItem{Label: b.label, Color: b.clr, State: btnStates[b.name]}
+		items[i] = ui.ButtonRowItem{Label: b.label, Color: b.clr, State: btnStates[b.name], Hovered: i == hoverIdx}
 		names[i] = b.name
 		tw := float32(fm.MeasureText(b.label, theme.FontH2))
 		w := tw + btnPadX*2

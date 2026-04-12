@@ -105,6 +105,11 @@ func (s *StageScene) handleInput() {
 	} else {
 		s.spawnHoverIdx = -1
 	}
+	if s.imode == modeItemPanel {
+		s.itemHoverIdx = hud.ItemPanelHoverTest(fmx, fmy, len(s.buildItemPanelCards()))
+	} else {
+		s.itemHoverIdx = -1
+	}
 
 	// ── 键盘快捷键 ──
 	// modeUpgrade: ChoicePanel 每帧更新（在键盘和 tap 之前）
@@ -125,6 +130,11 @@ func (s *StageScene) handleInput() {
 	}
 
 	if inpututil.IsKeyJustPressed(ebiten.KeyEscape) {
+		// debugPanel 优先关闭
+		if s.debugPanelOpen {
+			s.debugPanelOpen = false
+			return
+		}
 		switch s.imode {
 		case modeBuildMenu, modeBuildPlace:
 			s.selectedTower = nil
@@ -134,9 +144,6 @@ func (s *StageScene) handleInput() {
 			s.selectedTower = nil
 			s.imode = modeIdle
 			s.audioMgr.PlayAt(gameAudio.SFXUIClose, gameAudio.VolUI)
-		case modeUpgrade:
-			s.choicePanel.Close()
-			s.imode = modeTowerSel
 		case modeSpawnMenu, modeSpawnPlace:
 			s.spawnMode = false
 			s.spawnType = ""
@@ -679,7 +686,7 @@ func newStageGesture() *input.Gesture {
 		if hud.ToggleButtonHitTest(fx, fy, false) {
 			return true
 		}
-		if y > float64(game.ScreenHeight)-120 {
+		if y > float64(game.ScreenHeight)-60 {
 			return true
 		}
 		// ActionBar 区域

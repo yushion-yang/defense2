@@ -219,6 +219,18 @@ func darkenColor(c color.Color, factor float64) color.Color {
 	}
 }
 
+// lightenColor increases the brightness of a color toward white by the given factor.
+func lightenColor(c color.Color, factor float64) color.Color {
+	r, g, b, a := c.RGBA()
+	r8, g8, b8 := float64(r>>8), float64(g>>8), float64(b>>8)
+	return color.RGBA{
+		R: uint8(r8 + (255-r8)*factor),
+		G: uint8(g8 + (255-g8)*factor),
+		B: uint8(b8 + (255-b8)*factor),
+		A: uint8(a >> 8),
+	}
+}
+
 // ---------------------------------------------------------------------------
 // Panel — 圆角面板（半透明背景 + 可选边框）
 // ---------------------------------------------------------------------------

@@ -70,9 +70,23 @@ func DrawPauseMenu(screen *ebiten.Image) {
 		{"返回主菜单", theme.BtnDanger},
 	}
 
-	for _, btn := range buttons {
+	// Hover detection
+	pmx, pmy := draw.CursorPos()
+	hoverAction := PauseMenuHitTest(float32(pmx), float32(pmy))
+
+	for i, btn := range buttons {
+		bgClr := btn.clr
+		if hoverAction == i+1 {
+			// Lighten on hover
+			bgClr = color.RGBA{
+				R: uint8(float64(btn.clr.R) + float64(255-btn.clr.R)*0.15),
+				G: uint8(float64(btn.clr.G) + float64(255-btn.clr.G)*0.15),
+				B: uint8(float64(btn.clr.B) + float64(255-btn.clr.B)*0.15),
+				A: btn.clr.A,
+			}
+		}
 		ui.Button(screen, float32(btnX), float32(btnY), float32(pauseBtnW), float32(pauseBtnH), btn.label, ui.ButtonStyle{
-			BgColor:   btn.clr,
+			BgColor:   bgClr,
 			TextColor: color.White,
 			FontSize:  18,
 			Radius:    pauseBtnR,

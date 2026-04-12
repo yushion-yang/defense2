@@ -24,8 +24,9 @@ type ItemCardVM struct {
 
 // ItemPanelData holds the runtime data the item panel needs to render.
 type ItemPanelData struct {
-	Cards   []ItemCardVM
-	Visible bool
+	Cards    []ItemCardVM
+	Visible  bool
+	HoverIdx int // 鼠标悬停卡片索引，-1 表示无悬停
 }
 
 // Item panel layout constants
@@ -101,7 +102,7 @@ func DrawItemPanel(screen *ebiten.Image, d ItemPanelData) {
 		row := i / ipCols
 		cx := m.gridX + float32(col)*(ipCardW+ipCardGap)
 		cy := m.gridY + float32(row)*(ipCardH+ipCardGap)
-		drawItemCard(screen, fm, card, cx, cy)
+		drawItemCard(screen, fm, card, cx, cy, i == d.HoverIdx)
 	}
 }
 
@@ -134,12 +135,14 @@ func resolveItemIcon(card ItemCardVM) *ebiten.Image {
 }
 
 // drawItemCard renders a single item card.
-func drawItemCard(screen *ebiten.Image, fm *render.FontManager, card ItemCardVM, cx, cy float32) {
+func drawItemCard(screen *ebiten.Image, fm *render.FontManager, card ItemCardVM, cx, cy float32, hovered bool) {
 	available := card.Count > 0
 
 	// Card background
 	cardBg := color.RGBA{R: 30, G: 40, B: 65, A: 220}
-	if !available {
+	if hovered && available {
+		cardBg = color.RGBA{R: 40, G: 55, B: 85, A: 240}
+	} else if !available {
 		cardBg.A = 120
 	}
 	draw.RoundRect(screen, cx, cy, ipCardW, ipCardH, ipCardR, cardBg)
@@ -212,6 +215,31 @@ func ItemPanelHitTest(px, py float32, cards []ItemCardVM) int {
 				return i
 			}
 			return -1
+		}
+	}
+	return -1
+}
+
+// ItemPanelHoverTest returns the card index the mouse is hovering over, or -1.
+// Unlike HitTest, includes unavailable cards for visual hover feedback.
+func ItemPanelHoverTest(px, py float32, count int) int {
+	if count <= 0 {
+		return -1
+	}
+	m := calcItemPanelMetrics()
+	if px < m.panelX || px > m.panelX+m.panelW || py < m.panelY || py > m.panelY+m.panelH {
+		return -1
+	}
+	if count > ipCols*ipRows {
+		count = ipCols * ipRows
+	}
+	for i := 0; i < count; i++ {
+		col := i % ipCols
+		row := i / ipCols
+		cx := m.gridX + float32(col)*(ipCardW+ipCardGap)
+		cy := m.gridY + float32(row)*(ipCardH+ipCardGap)
+		if px >= cx && px <= cx+ipCardW && py >= cy && py <= cy+ipCardH {
+			return i
 		}
 	}
 	return -1

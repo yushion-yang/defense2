@@ -92,10 +92,11 @@ func AnchoredRect(anchor Anchor, w, h float32, marginTop, marginRight, marginBot
 
 // ButtonRowItem 按钮行中的一个按钮。
 type ButtonRowItem struct {
-	Label string
-	Color color.Color    // 背景色
-	Bold  bool
-	State *ButtonState   // optional interactive animation state
+	Label   string
+	Color   color.Color  // 背景色
+	Bold    bool
+	State   *ButtonState // optional interactive animation state
+	Hovered bool         // 鼠标悬停状态
 }
 
 // ButtonRowStyle 按钮行样式。
@@ -149,6 +150,9 @@ func DrawButtonRow(screen *ebiten.Image, area Rect, items []ButtonRowItem, style
 		bgClr := item.Color
 		if bgClr == nil {
 			bgClr = color.RGBA{R: 60, G: 70, B: 95, A: 255}
+		}
+		if item.Hovered {
+			bgClr = lightenColor(bgClr, 0.15)
 		}
 		draw.RoundRect(screen, bx, by, btnW, btnH, btnR, bgClr)
 
@@ -220,6 +224,11 @@ func DrawButtonRowAutoWidth(screen *ebiten.Image, area Rect, items []ButtonRowIt
 		bgClr := item.Color
 		if bgClr == nil {
 			bgClr = color.RGBA{R: 60, G: 70, B: 95, A: 255}
+		}
+
+		// Apply hover highlight
+		if item.Hovered {
+			bgClr = lightenColor(bgClr, 0.15)
 		}
 
 		// Apply micro-interaction transforms if ButtonState is present

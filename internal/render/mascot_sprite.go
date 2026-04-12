@@ -31,6 +31,9 @@ var MascotAnimConfig = map[string]struct {
 // Missing files are skipped gracefully.
 func LoadMascotSprites(fs AssetReader) *anim.Animator {
 	a := anim.NewAnimator()
+	if fs == nil {
+		return a
+	}
 
 	for expr, cfg := range MascotAnimConfig {
 		frames := loadMascotFrames(fs, expr)

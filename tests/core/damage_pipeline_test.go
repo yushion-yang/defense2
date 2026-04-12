@@ -222,7 +222,7 @@ func TestPipeline_DamageAmplify(t *testing.T) {
 	}
 }
 
-func TestPipeline_DamageAmplifyFullValue(t *testing.T) {
+func TestPipeline_DamageAmplifyCapped(t *testing.T) {
 	e := makePipelineEnemy(100, 100)
 	e.Buffs.Add(buff.Buff{ID: "weaken", Category: buff.CatDebuff, Source: "test", Value: 0.8, Duration: 5, Remaining: 5})
 
@@ -230,7 +230,7 @@ func TestPipeline_DamageAmplifyFullValue(t *testing.T) {
 		Target:    e,
 		RawDamage: 10,
 	})
-	// 虚弱增伤无上限: 10 * (1 + 0.8) = 18
+	// weaken cap 已移除，0.8 增伤直接生效: 10 * 1.8 = 18
 	if math.Abs(r.HPDamage-18) > 1e-9 {
 		t.Errorf("虚弱增伤 HP伤害=%.1f, 期望18", r.HPDamage)
 	}
