@@ -155,8 +155,11 @@ func (s *SettingsScene) Update() error {
 		}
 	}
 
-	// 鼠标释放：结束拖动
+	// 鼠标释放：结束拖动 + 保存设置（防抖：拖动中不写盘，松开时写一次）
 	if !ebiten.IsMouseButtonPressed(ebiten.MouseButtonLeft) {
+		if s.draggingSFX || s.draggingBGM {
+			s.persist()
+		}
 		s.draggingSFX = false
 		s.draggingBGM = false
 	}
@@ -170,7 +173,6 @@ func (s *SettingsScene) Update() error {
 			if am := s.switcher.AudioManager(); am != nil {
 				am.SetVolume(v)
 			}
-			s.persist()
 		}
 	}
 	if s.draggingBGM {
@@ -181,7 +183,6 @@ func (s *SettingsScene) Update() error {
 			if am := s.switcher.AudioManager(); am != nil {
 				am.SetBGMVolume(v)
 			}
-			s.persist()
 		}
 	}
 

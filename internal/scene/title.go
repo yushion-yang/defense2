@@ -85,7 +85,7 @@ func (s *TitleScene) Draw(screen *ebiten.Image) {
 	fm.DrawCenteredText(screen, "点击开始", sw/2, sh/2+40, 14, pulseClr)
 
 	// 版本
-	fm.DrawCenteredText(screen, "v0.1.0", sw/2, sh-20, 10, textDim)
+	fm.DrawCenteredText(screen, game.Version, sw/2, sh-20, 10, textDim)
 }
 
 // drawTitleDecorations 绘制标题画面的几何装饰。

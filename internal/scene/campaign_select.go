@@ -284,7 +284,7 @@ func (s *CampaignSelectScene) Draw(screen *ebiten.Image) {
 
 	// ── 底部提示 ──
 	fm.DrawCenteredText(screen, "点击卡片选择关卡", sw/2, sh-30, 10, textDim)
-	fm.DrawCenteredText(screen, "v0.1.0", sw/2, sh-12, 9, color.RGBA{R: 60, G: 65, B: 80, A: 255})
+	fm.DrawCenteredText(screen, game.Version, sw/2, sh-12, 9, color.RGBA{R: 60, G: 65, B: 80, A: 255})
 }
 
 func (s *CampaignSelectScene) drawMapCards(screen *ebiten.Image, fm *render.FontManager) {

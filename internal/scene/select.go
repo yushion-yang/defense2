@@ -352,6 +352,9 @@ func (s *SelectScene) Draw(screen *ebiten.Image) {
 				NameBold:  true,
 				DescColor: textDim,
 			})
+			// 右上角锁定标记
+			lockClr := color.RGBA{R: 80, G: 85, B: 100, A: 180}
+			fm.DrawText(screen, "[锁]", float64(x+w)-30, float64(y)+4, theme.FontXS, lockClr)
 		} else {
 			bg := cardBg
 			if hovered && !selected {
@@ -451,7 +454,7 @@ func (s *SelectScene) Draw(screen *ebiten.Image) {
 	fm.DrawCenteredText(screen, "点击卡片选择模式和难度", scW/2, scH-30, 10, textDim)
 	// Version text with muted color
 	versionColor := color.RGBA{R: 60, G: 65, B: 80, A: 255}
-	fm.DrawCenteredText(screen, "v0.1.0", scW/2, scH-12, 9, versionColor)
+	fm.DrawCenteredText(screen, game.Version, scW/2, scH-12, 9, versionColor)
 }
 
 // strokeRect 绘制矩形边框。

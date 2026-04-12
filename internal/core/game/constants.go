@@ -2,6 +2,9 @@
 // 定义屏幕分辨率、对象池容量、帧率等核心常量。
 package game
 
+// Version 游戏版本号（集中管理，各场景引用此常量）。
+const Version = "v0.1.0"
+
 // 屏幕逻辑分辨率（横屏塔防布局）
 const (
 	ScreenWidth  = 1200
