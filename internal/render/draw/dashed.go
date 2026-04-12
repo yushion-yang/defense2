@@ -62,8 +62,10 @@ func DashedCircle(screen *ebiten.Image, cx, cy, r, width, dashLen, gapLen float3
 
 	var dist float64
 	drawing := true
+	draws := 0
+	const maxDashes = 64 // 防止极大半径导致数千次 StrokeLine
 
-	for dist < circumference {
+	for dist < circumference && draws < maxDashes {
 		if drawing {
 			segEnd := dist + float64(dashLen)
 			if segEnd > circumference {
@@ -79,6 +81,7 @@ func DashedCircle(screen *ebiten.Image, cx, cy, r, width, dashLen, gapLen float3
 			ey := float32(float64(cy) + float64(r)*math.Sin(endAngle))
 
 			vector.StrokeLine(screen, sx, sy, ex, ey, width, clr, true)
+			draws++
 			dist = segEnd
 		} else {
 			dist += float64(gapLen)
