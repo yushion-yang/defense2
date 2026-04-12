@@ -12,6 +12,7 @@ import (
 	"defense2/internal/core/persistence"
 	"defense2/internal/render"
 	"defense2/internal/render/draw"
+	"defense2/internal/render/hud"
 	"defense2/internal/render/particle"
 	"defense2/internal/render/theme"
 	"defense2/internal/render/ui"
@@ -27,15 +28,15 @@ type gameModeUI struct {
 	Icon        string // 图标字符
 	Description string
 	DefaultMap  string
+	ComingSoon  bool   // true = 显示"敬请期待"，不可选
 }
 
 var gameModes = []gameModeUI{
-	{"campaign", "战役", "stat-damage", "清除所有波次", "map_01"},
-	{"endless", "无尽", "∞", "坚持越久越好", "map_01"},
-	{"timedDefense", "限时", "stat-atkspd", "存活5分钟", "map_02"},
-	{"bossRush", "首领", "execute", "连续挑战首领", "map_03"},
-	{"challenge", "挑战", "★", "特殊规则", "map_04"},
-	{"test", "测试", "stat-dps", "所有怪物静止排列", "map_test"},
+	{"campaign", "战役", "stat-damage", "清除所有波次", "map_01", false},
+	{"endless", "无尽", "∞", "坚持越久越好", "map_01", true},
+	{"timedDefense", "限时", "stat-atkspd", "存活5分钟", "map_02", true},
+	{"bossRush", "首领", "execute", "连续挑战首领", "map_03", true},
+	{"challenge", "挑战", "★", "特殊规则", "map_04", true},
 }
 
 // ── 难度定义 ────────────────────────────────────
@@ -201,8 +202,12 @@ func (s *SelectScene) Update() error {
 	mxf, myf := draw.CursorPos()
 	if isTapJustPressed() {
 		if idx := s.hitTestModeCards(mxf, myf); idx >= 0 {
-			s.selectedMode = idx
-			playUIClick(s.switcher)
+			if gameModes[idx].ComingSoon {
+				hud.ShowToast("敬请期待")
+			} else {
+				s.selectedMode = idx
+				playUIClick(s.switcher)
+			}
 		}
 		if idx := s.hitTestDiffButtons(mxf, myf); idx >= 0 {
 			s.selectedDiff = idx
@@ -227,11 +232,6 @@ func (s *SelectScene) startGame() {
 	// 战役模式进入关卡选择
 	if mode.ID == "campaign" {
 		s.switcher.SwitchScene(NewCampaignSelectScene(s.switcher))
-		return
-	}
-	// 测试模式进入专用场景选择器
-	if mode.ID == "test" {
-		s.switcher.SwitchScene(NewTestSelectScene(s.switcher))
 		return
 	}
 	// 其他模式直接进入 Stage（战灵在 Stage 内第一波倒计时结束时选择）
@@ -331,26 +331,45 @@ func (s *SelectScene) Draw(screen *ebiten.Image) {
 		selected := i == s.selectedMode
 		hovered := i == s.hoverMode
 
-		bg := cardBg
-		if hovered && !selected {
-			bg = cardHoverBg
+		if mode.ComingSoon {
+			// 锁定模式：暗色卡片 + "敬请期待"
+			lockedBg := color.RGBA{R: 20, G: 25, B: 40, A: 255}
+			lockedBorder := color.RGBA{R: 40, G: 45, B: 60, A: 255}
+			if hovered {
+				lockedBg = color.RGBA{R: 28, G: 33, B: 52, A: 255}
+			}
+			ui.IconCard(screen, x, y, w, h, mode.Icon, mode.Name, "敬请期待", ui.IconCardStyle{
+				CardStyle: ui.CardStyle{
+					BgColor:     lockedBg,
+					BorderColor: lockedBorder,
+					Radius:      12,
+					BorderWidth: 1.5,
+				},
+				NameColor: theme.TextLocked,
+				NameBold:  true,
+				DescColor: textDim,
+			})
+		} else {
+			bg := cardBg
+			if hovered && !selected {
+				bg = cardHoverBg
+			}
+			ui.IconCard(screen, x, y, w, h, mode.Icon, mode.Name, mode.Description, ui.IconCardStyle{
+				CardStyle: ui.CardStyle{
+					BgColor:       bg,
+					BorderColor:   cardBorder,
+					Radius:        12,
+					BorderWidth:   1.5,
+					Selected:      selected,
+					SelectedColor: greenAccent,
+					HighlightBar:  true,
+					BarWidth:      40,
+				},
+				NameColor: textWhite,
+				NameBold:  true,
+				DescColor: textGray,
+			})
 		}
-
-		ui.IconCard(screen, x, y, w, h, mode.Icon, mode.Name, mode.Description, ui.IconCardStyle{
-			CardStyle: ui.CardStyle{
-				BgColor:       bg,
-				BorderColor:   cardBorder,
-				Radius:        12,
-				BorderWidth:   1.5,
-				Selected:      selected,
-				SelectedColor: greenAccent,
-				HighlightBar:  true,
-				BarWidth:      40,
-			},
-			NameColor: textWhite,
-			NameBold:  true,
-			DescColor: textGray,
-		})
 	}
 
 	// ── 开始按钮 ──
