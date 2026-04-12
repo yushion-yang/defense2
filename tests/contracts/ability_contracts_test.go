@@ -189,8 +189,9 @@ func TestAbility_FlatDamage_ReturnsBonusDamage(t *testing.T) {
 	if result == nil {
 		t.Fatal("flatDamage OnHit 返回 nil")
 	}
+	// flatDamage uses SeparateDamage (independent second hit to bypass damageCap)
 	if result.SeparateDamage <= 0 {
-		t.Errorf("flatDamage SeparateDamage=%.1f 应 > 0（独立二段伤害对抗 damageCap）", result.SeparateDamage)
+		t.Errorf("flatDamage SeparateDamage=%.1f 应 > 0", result.SeparateDamage)
 	}
 }
 
