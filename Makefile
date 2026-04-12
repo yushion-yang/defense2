@@ -1,4 +1,4 @@
-.PHONY: run test test-cover lint check-all build-wasm clean arch generate-wardens generate-assets
+.PHONY: run test test-cover lint check-all build-wasm android android-aar clean arch generate-wardens generate-assets
 
 # Desktop development
 run:
@@ -28,6 +28,15 @@ build-wasm:
 	cp "$$(go env GOROOT)/lib/wasm/wasm_exec.js" dist/web/
 	cp web/index.html dist/web/
 	@echo "WASM build done. Serve dist/web/"
+
+# Android: build .aar from Go code, then assemble APK via Gradle
+android-aar:
+	ebitenmobile bind -target android -javapkg com.defense2.game -o android/app/libs/mobile.aar ./cmd/mobile/
+	@echo "AAR built: android/app/libs/mobile.aar"
+
+android: android-aar
+	cd android && ./gradlew assembleDebug
+	@echo "APK: android/app/build/outputs/apk/debug/app-debug.apk"
 
 # Asset generation: visual description JSON → SVG → PNG
 generate-wardens:

@@ -36,10 +36,10 @@ func TestCellAt(t *testing.T) {
 	}
 	gm := gamemap.NewGameMap(m)
 
-	// Cell [1][0] is spawn (4)
-	cell := gm.CellAt(30, 90) // col=0 center=30, row=1 center=90
+	// Cell [4][3] is spawn (4) — map_01 is 24x13, spawn at row=4 col=3
+	cell := gm.CellAt(210, 270) // col=3 center=210, row=4 center=270
 	if cell != config.CellSpawn {
-		t.Fatalf("expected CellSpawn (4) at [1][0], got %d", cell)
+		t.Fatalf("expected CellSpawn (4) at [4][3], got %d", cell)
 	}
 
 	// Out of bounds
@@ -56,8 +56,8 @@ func TestPixelDimensions(t *testing.T) {
 	}
 	gm := gamemap.NewGameMap(m)
 
-	expectedW := float64(22 * 60)
-	expectedH := float64(10 * 60)
+	expectedW := float64(24 * 60) // map_01: 24 cols × 60
+	expectedH := float64(13 * 60) // map_01: 13 rows × 60
 	if gm.PixelWidth() != expectedW {
 		t.Fatalf("expected width %.0f, got %.0f", expectedW, gm.PixelWidth())
 	}

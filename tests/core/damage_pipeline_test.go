@@ -224,15 +224,15 @@ func TestPipeline_DamageAmplify(t *testing.T) {
 
 func TestPipeline_DamageAmplifyCapped(t *testing.T) {
 	e := makePipelineEnemy(100, 100)
-	e.Buffs.Add(buff.Buff{ID: "weaken", Category: buff.CatDebuff, Source: "test", Value: 0.8, Duration: 5, Remaining: 5}) // 超过上限 0.5
+	e.Buffs.Add(buff.Buff{ID: "weaken", Category: buff.CatDebuff, Source: "test", Value: 0.8, Duration: 5, Remaining: 5})
 
 	r := combat.ApplyDamage(combat.DamageInput{
 		Target:    e,
 		RawDamage: 10,
 	})
-	// 应限制到 0.5: 10 * 1.5 = 15
-	if math.Abs(r.HPDamage-15) > 1e-9 {
-		t.Errorf("虚弱增伤应被限制到50%%, HP伤害=%.1f, 期望15", r.HPDamage)
+	// weaken cap 已移除，0.8 增伤直接生效: 10 * 1.8 = 18
+	if math.Abs(r.HPDamage-18) > 1e-9 {
+		t.Errorf("虚弱增伤 HP伤害=%.1f, 期望18", r.HPDamage)
 	}
 }
 

@@ -585,18 +585,33 @@ func (s *ResultScene) drawButtons(screen *ebiten.Image, fm *render.FontManager, 
 
 	actualY := float32(btnBaseY + slideOffset)
 
-	// Replay button (green)
 	replayX := float32(cx) - btnW - btnGap/2
+	menuX := float32(cx) + btnGap/2
+
+	// Hover detection
+	hmxF, hmyF := draw.CursorPos()
+	hmx, hmy := float32(hmxF), float32(hmyF)
+	hoverReplay := hmx >= replayX && hmx <= replayX+btnW && hmy >= actualY && hmy <= actualY+btnH
+	hoverMenu := hmx >= menuX && hmx <= menuX+btnW && hmy >= actualY && hmy <= actualY+btnH
+
+	// Replay button (green)
+	replayClr := theme.TonePrimary
+	if hoverReplay && alpha >= 1 {
+		replayClr = lightenRGBA(replayClr, 0.15)
+	}
 	draw.RoundRect(screen, replayX, actualY, btnW, btnH, btnR,
-		colorWithAlpha(theme.TonePrimary, alpha))
+		colorWithAlpha(replayClr, alpha))
 	fm.DrawCenteredText(screen, "重玩",
 		float64(replayX)+float64(btnW)/2, float64(actualY)+float64(btnH)/2-6,
 		theme.FontH2, colorWithAlpha(color.White, alpha))
 
 	// Menu button (gray)
-	menuX := float32(cx) + btnGap/2
+	menuClr := theme.ToneSecondary
+	if hoverMenu && alpha >= 1 {
+		menuClr = lightenRGBA(menuClr, 0.15)
+	}
 	draw.RoundRect(screen, menuX, actualY, btnW, btnH, btnR,
-		colorWithAlpha(theme.ToneSecondary, alpha))
+		colorWithAlpha(menuClr, alpha))
 	fm.DrawCenteredText(screen, "选关",
 		float64(menuX)+float64(btnW)/2, float64(actualY)+float64(btnH)/2-6,
 		theme.FontH2, colorWithAlpha(color.White, alpha))
@@ -626,6 +641,16 @@ func clampF(v, lo, hi float64) float64 {
 		return hi
 	}
 	return v
+}
+
+// lightenRGBA lightens an RGBA color toward white by factor (0-1).
+func lightenRGBA(c color.RGBA, factor float64) color.RGBA {
+	return color.RGBA{
+		R: uint8(float64(c.R) + float64(255-c.R)*factor),
+		G: uint8(float64(c.G) + float64(255-c.G)*factor),
+		B: uint8(float64(c.B) + float64(255-c.B)*factor),
+		A: c.A,
+	}
 }
 
 // colorWithAlpha applies an alpha multiplier (0-1) to a color.

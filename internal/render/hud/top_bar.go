@@ -162,10 +162,14 @@ func DrawTopBar(screen *ebiten.Image, d TopBarData) {
 	// 截图按钮（所有模式可用）
 	btns = append(btns, btnDef{"screenshot", "截图", theme.ToneSecondary})
 
+	// Hover detection using last frame's rects
+	mx, my := draw.CursorPos()
+	tbHoverIdx := ui.HitTestButtonRow(lastTopBarBtnRects, float64(mx), float64(my))
+
 	items := make([]ui.ButtonRowItem, len(btns))
 	names := make([]string, len(btns))
 	for i, b := range btns {
-		items[i] = ui.ButtonRowItem{Label: b.label, Color: b.clr}
+		items[i] = ui.ButtonRowItem{Label: b.label, Color: b.clr, Hovered: i == tbHoverIdx}
 		names[i] = b.name
 	}
 
