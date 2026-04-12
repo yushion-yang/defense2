@@ -133,6 +133,18 @@ func DrawProjectileTrail(screen *ebiten.Image, trail []TrailPt, cursor int, base
 	}
 }
 
+// DrawWindArcs 绘制风系弹道的两个弧线装饰（从批量化弹体中拆出的仅 arc 部分）。
+func DrawWindArcs(screen *ebiten.Image, cx, cy float32, angle float64) {
+	arcR := float32(theme.ProjDefaultR + 2)
+	sweepHalf := float32(0.2)
+	a1 := float32(angle) + math.Pi/3
+	draw.Arc(screen, cx, cy, arcR, a1-sweepHalf, a1+sweepHalf, 1,
+		color.RGBA{R: theme.ProjWind.R, G: theme.ProjWind.G, B: theme.ProjWind.B, A: 140})
+	a2 := float32(angle) + math.Pi + math.Pi/3
+	draw.Arc(screen, cx, cy, arcR, a2-sweepHalf, a2+sweepHalf, 1,
+		color.RGBA{R: theme.ProjWind.R, G: theme.ProjWind.G, B: theme.ProjWind.B, A: 140})
+}
+
 // ProjectileTrailColor 根据塔类型返回拖尾基础颜色。
 func ProjectileTrailColor(towerKey string) color.RGBA {
 	switch {
