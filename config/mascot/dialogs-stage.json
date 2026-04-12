@@ -149,5 +149,106 @@
     ],
     "once": false,
     "priority": 6
+  },
+  {
+    "id": "perf_fps_low",
+    "scene": "stage",
+    "trigger": "perf_fps_low",
+    "lines": [
+      {"text": "画面好像有点卡...这优化还得再加把劲啊。", "expression": "talk", "autoAdvance": 4}
+    ],
+    "once": false,
+    "priority": 6
+  },
+  {
+    "id": "perf_fps_great",
+    "scene": "stage",
+    "trigger": "perf_fps_great",
+    "lines": [
+      {"text": "帧率超稳！你的设备性能真不错~", "expression": "happy", "autoAdvance": 4}
+    ],
+    "once": false,
+    "priority": 3
+  },
+  {
+    "id": "perf_gc_heavy",
+    "scene": "stage",
+    "trigger": "perf_gc_heavy",
+    "lines": [
+      {"text": "内存回收有点频繁...是不是哪里泄漏了？", "expression": "surprised", "autoAdvance": 4}
+    ],
+    "once": false,
+    "priority": 5
+  },
+  {
+    "id": "ui_tower_info",
+    "scene": "stage",
+    "trigger": "ui_tower_selected",
+    "lines": [
+      {"text": "看看这座塔的数据，强度越高伤害越大哦。", "expression": "talk", "autoAdvance": 4}
+    ],
+    "once": false,
+    "priority": 7
+  },
+  {
+    "id": "ui_ability_tip",
+    "scene": "stage",
+    "trigger": "ui_ability_choice",
+    "lines": [
+      {"text": "选能力要看品质！紫色史诗最强，但绿色普通也很实用。", "expression": "talk", "autoAdvance": 5}
+    ],
+    "once": false,
+    "priority": 8
+  },
+  {
+    "id": "ui_warden_tip",
+    "scene": "stage",
+    "trigger": "ui_warden_select",
+    "lines": [
+      {"text": "每个战灵有不同的战斗风格，选适合你打法的！", "expression": "talk", "autoAdvance": 5}
+    ],
+    "once": false,
+    "priority": 8
+  },
+  {
+    "id": "ui_build_tip",
+    "scene": "stage",
+    "trigger": "ui_build_menu",
+    "lines": [
+      {"text": "塔的位置很重要！尽量放在路径拐弯处。", "expression": "talk", "autoAdvance": 4}
+    ],
+    "once": false,
+    "priority": 6
+  },
+  {
+    "id": "ui_item_tip",
+    "scene": "stage",
+    "trigger": "ui_item_panel",
+    "lines": [
+      {"text": "道具可以直接拖到塔上使用哦~", "expression": "talk", "autoAdvance": 4}
+    ],
+    "once": false,
+    "priority": 6
+  },
+  {
+    "id": "diag_quality_down",
+    "scene": "stage",
+    "trigger": "diag_quality_downgrade",
+    "lines": [
+      {"text": "画质自动降低了...设备有点吃力呢。", "expression": "talk", "autoAdvance": 4},
+      {"text": "不过游戏体验不会受影响的！", "expression": "happy", "autoAdvance": 3}
+    ],
+    "once": true,
+    "priority": 7
+  },
+  {
+    "id": "diag_swarm_critical",
+    "scene": "stage",
+    "trigger": "diag_enemy_swarm_critical",
+    "lines": [
+      {"text": "太多敌人了！防线快要崩溃了！", "expression": "surprised", "autoAdvance": 3}
+    ],
+    "once": false,
+    "priority": 9
   }
 ]

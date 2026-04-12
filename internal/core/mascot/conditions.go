@@ -41,9 +41,24 @@ func (cs *ConditionState) markFired(trigger string, sessionSecs float64) {
 	cs.LastFireTime[trigger] = sessionSecs
 }
 
-// DefaultConditions returns all 10 built-in condition functions.
+// DefaultConditions returns all 20 built-in condition functions.
+// Order determines priority: UI context first, then performance, diagnostics, then original conditions.
 func DefaultConditions() []ConditionFunc {
 	return []ConditionFunc{
+		// UI context (highest priority — respond to user actions immediately)
+		condUITowerSelected(),
+		condUIAbilityChoice(),
+		condUIWardenSelect(),
+		condUIBuildMenu(),
+		condUIItemPanel(),
+		// Performance
+		condPerfFPSLow(),
+		condPerfFPSGreat(),
+		condPerfGCHeavy(),
+		// Diagnostics
+		condDiagQualityDowngrade(),
+		condDiagEnemySwarmCritical(),
+		// Original conditions
 		condBossIncoming(),
 		condLowHealth(),
 		condSessionDuration(),
@@ -257,5 +272,174 @@ func condIdleChatter() ConditionFunc {
 			return ""
 		}
 		return "idleChatter"
+	}
+}
+
+// --- Performance conditions ---
+
+// condPerfFPSLow fires when FPS has been below 30 for at least one eval cycle (~5s). 120s cooldown.
+func condPerfFPSLow() ConditionFunc {
+	return func(ctx *GameContext, state *ConditionState) string {
+		if !ctx.InStage || ctx.FPS <= 0 {
+			state.LowFPSFrames = 0
+			return ""
+		}
+		if ctx.FPS < 30 {
+			state.LowFPSFrames++
+		} else {
+			state.LowFPSFrames = 0
+			return ""
+		}
+		if state.LowFPSFrames < 1 {
+			return ""
+		}
+		if !state.cooldownOK("perf_fps_low", ctx.SessionSecs, 120) {
+			return ""
+		}
+		return "perf_fps_low"
+	}
+}
+
+// condPerfFPSGreat fires when FPS >= 58 and HeapMB < 100. 300s cooldown.
+func condPerfFPSGreat() ConditionFunc {
+	return func(ctx *GameContext, state *ConditionState) string {
+		if !ctx.InStage {
+			return ""
+		}
+		if ctx.FPS < 58 || ctx.HeapMB <= 0 || ctx.HeapMB >= 100 {
+			return ""
+		}
+		if !state.cooldownOK("perf_fps_great", ctx.SessionSecs, 300) {
+			return ""
+		}
+		return "perf_fps_great"
+	}
+}
+
+// condPerfGCHeavy fires when GCPauseUs > 5000. 120s cooldown.
+func condPerfGCHeavy() ConditionFunc {
+	return func(ctx *GameContext, state *ConditionState) string {
+		if !ctx.InStage {
+			return ""
+		}
+		if ctx.GCPauseUs <= 5000 {
+			return ""
+		}
+		if !state.cooldownOK("perf_gc_heavy", ctx.SessionSecs, 120) {
+			return ""
+		}
+		return "perf_gc_heavy"
+	}
+}
+
+// --- UI context conditions ---
+// Note: PrevInteractMode is updated in UpdateContext after all conditions run.
+
+// condUITowerSelected fires when InteractMode changes to 3 (modeTowerSel). 30s cooldown.
+func condUITowerSelected() ConditionFunc {
+	return func(ctx *GameContext, state *ConditionState) string {
+		if !ctx.InStage {
+			return ""
+		}
+		if ctx.InteractMode != 3 || state.PrevInteractMode == 3 {
+			return ""
+		}
+		if !state.cooldownOK("ui_tower_selected", ctx.SessionSecs, 30) {
+			return ""
+		}
+		return "ui_tower_selected"
+	}
+}
+
+// condUIAbilityChoice fires when InteractMode changes to 8 (modeUpgrade). No cooldown.
+func condUIAbilityChoice() ConditionFunc {
+	return func(ctx *GameContext, state *ConditionState) string {
+		if !ctx.InStage {
+			return ""
+		}
+		if ctx.InteractMode != 8 || state.PrevInteractMode == 8 {
+			return ""
+		}
+		return "ui_ability_choice"
+	}
+}
+
+// condUIWardenSelect fires when InteractMode changes to 7 (modeWardenSelect). No cooldown.
+func condUIWardenSelect() ConditionFunc {
+	return func(ctx *GameContext, state *ConditionState) string {
+		if !ctx.InStage {
+			return ""
+		}
+		if ctx.InteractMode != 7 || state.PrevInteractMode == 7 {
+			return ""
+		}
+		return "ui_warden_select"
+	}
+}
+
+// condUIBuildMenu fires when InteractMode changes to 1 (modeBuildMenu). 60s cooldown.
+func condUIBuildMenu() ConditionFunc {
+	return func(ctx *GameContext, state *ConditionState) string {
+		if !ctx.InStage {
+			return ""
+		}
+		if ctx.InteractMode != 1 || state.PrevInteractMode == 1 {
+			return ""
+		}
+		if !state.cooldownOK("ui_build_menu", ctx.SessionSecs, 60) {
+			return ""
+		}
+		return "ui_build_menu"
+	}
+}
+
+// condUIItemPanel fires when InteractMode changes to 9 (modeItemPanel). 60s cooldown.
+func condUIItemPanel() ConditionFunc {
+	return func(ctx *GameContext, state *ConditionState) string {
+		if !ctx.InStage {
+			return ""
+		}
+		if ctx.InteractMode != 9 || state.PrevInteractMode == 9 {
+			return ""
+		}
+		if !state.cooldownOK("ui_item_panel", ctx.SessionSecs, 60) {
+			return ""
+		}
+		return "ui_item_panel"
+	}
+}
+
+// --- Diagnostic conditions ---
+
+// condDiagQualityDowngrade fires once when quality level increases (downgrade). One-shot.
+func condDiagQualityDowngrade() ConditionFunc {
+	return func(ctx *GameContext, state *ConditionState) string {
+		if state.PrevQuality < 0 {
+			return ""
+		}
+		if state.TriggeredOnce["diag_quality_downgrade"] {
+			return ""
+		}
+		if ctx.QualityLevel <= state.PrevQuality {
+			return ""
+		}
+		state.TriggeredOnce["diag_quality_downgrade"] = true
+		return "diag_quality_downgrade"
+	}
+}
+
+// condDiagEnemySwarmCritical fires when EnemyCount > 30. 90s cooldown.
+func condDiagEnemySwarmCritical() ConditionFunc {
+	return func(ctx *GameContext, state *ConditionState) string {
+		if !ctx.InStage {
+			return ""
+		}
+		if ctx.EnemyCount <= 30 {
+			return ""
+		}
+		if !state.cooldownOK("diag_enemy_swarm_critical", ctx.SessionSecs, 90) {
+			return ""
+		}
+		return "diag_enemy_swarm_critical"
 	}
 }

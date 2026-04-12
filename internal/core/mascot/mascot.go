@@ -171,6 +171,8 @@ func (g *Guide) UpdateContext(ctx GameContext) {
 	// Update tracking state.
 	g.condState.PrevWave = ctx.Wave
 	g.condState.PrevInStage = ctx.InStage
+	g.condState.PrevInteractMode = ctx.InteractMode
+	g.condState.PrevQuality = ctx.QualityLevel
 }
 
 // HasActiveDialog returns true if a dialog is currently being displayed.

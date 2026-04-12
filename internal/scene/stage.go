@@ -396,7 +396,7 @@ func NewStageSceneWithOpts(sw Switcher, opts StageOptions) *StageScene {
 // MascotSnapshot returns a pure-value snapshot of the current stage state
 // for the mascot condition evaluation system.
 func (s *StageScene) MascotSnapshot() mascot.StageSnapshot {
-	return mascot.StageSnapshot{
+	snap := mascot.StageSnapshot{
 		Wave:        s.spawner.Wave,
 		MaxWaves:    s.spawner.MaxWaves,
 		Lives:       s.lives,
@@ -409,7 +409,39 @@ func (s *StageScene) MascotSnapshot() mascot.StageSnapshot {
 		ElapsedSecs: s.session.ElapsedTime,
 		IsBossWave:  s.spawner.IsBossWave(),
 		WaveActive:  s.spawner.WaveActive,
+
+		// Performance
+		FPS:        s.perfTracker.FPS,
+		AvgFrameMs: s.perfTracker.AvgUpdateMs + s.perfTracker.AvgDrawMs,
+		HeapMB:     s.perfTracker.HeapMB,
+		GCPauseUs:  s.perfTracker.GCPauseUs,
+
+		// UI Context
+		InteractMode: int(s.imode),
+		QualityLevel: int(game.CurrentQuality),
 	}
+
+	// Tower selection info
+	if s.imode == modeTowerSel && s.selectedTower != nil {
+		snap.SelectedTowerLabel = s.selectedTower.Label
+		snap.SelectedTowerStyle = s.selectedTower.AttackStyleID
+	}
+
+	// Ability choice options
+	if s.imode == modeUpgrade && s.choicePanel != nil && s.choicePanel.Active {
+		labels := make([]string, len(s.choicePanel.Options))
+		for i, opt := range s.choicePanel.Options {
+			labels[i] = opt.Label
+		}
+		snap.ChoiceAbilities = labels
+	}
+
+	// Warden type
+	if s.wardenUnit != nil {
+		snap.WardenType = s.wardenUnit.Type
+	}
+
+	return snap
 }
 
 // ExecuteMascotAction executes a mascot battle assistance action.

@@ -349,7 +349,303 @@ func TestCooldowns(t *testing.T) {
 
 func TestDefaultConditionsCount(t *testing.T) {
 	funcs := DefaultConditions()
-	if len(funcs) != 10 {
-		t.Fatalf("expected 10 default conditions, got %d", len(funcs))
+	if len(funcs) != 20 {
+		t.Fatalf("expected 20 default conditions, got %d", len(funcs))
+	}
+}
+
+// --- Performance condition tests ---
+
+func TestPerfFPSLow(t *testing.T) {
+	cond := condPerfFPSLow()
+	state := NewConditionState()
+
+	// FPS=0 (not yet measured): no trigger.
+	ctx := &GameContext{InStage: true, SessionSecs: 100, StageSnapshot: StageSnapshot{FPS: 0}}
+	if got := cond(ctx, state); got != "" {
+		t.Fatalf("expected no trigger when FPS=0, got %q", got)
+	}
+
+	// FPS >= 30: no trigger, counter resets.
+	ctx = &GameContext{InStage: true, SessionSecs: 100, StageSnapshot: StageSnapshot{FPS: 30}}
+	if got := cond(ctx, state); got != "" {
+		t.Fatalf("expected no trigger when FPS=30, got %q", got)
+	}
+	if state.LowFPSFrames != 0 {
+		t.Fatalf("expected LowFPSFrames=0 after normal FPS, got %d", state.LowFPSFrames)
+	}
+
+	// FPS < 30: first eval increments counter and fires (>= 1 cycle).
+	ctx = &GameContext{InStage: true, SessionSecs: 100, StageSnapshot: StageSnapshot{FPS: 25}}
+	if got := cond(ctx, state); got != "perf_fps_low" {
+		t.Fatalf("expected \"perf_fps_low\" after 1 low cycle, got %q", got)
+	}
+
+	// Mark fired, verify cooldown blocks.
+	state.markFired("perf_fps_low", 100)
+	ctx = &GameContext{InStage: true, SessionSecs: 110, StageSnapshot: StageSnapshot{FPS: 20}}
+	if got := cond(ctx, state); got != "" {
+		t.Fatalf("expected cooldown to block, got %q", got)
+	}
+
+	// After cooldown (120s).
+	ctx = &GameContext{InStage: true, SessionSecs: 221, StageSnapshot: StageSnapshot{FPS: 20}}
+	state.LowFPSFrames = 0 // reset to test fresh
+	if got := cond(ctx, state); got != "perf_fps_low" {
+		t.Fatalf("expected \"perf_fps_low\" after cooldown, got %q", got)
+	}
+
+	// Not in stage: no trigger.
+	ctx = &GameContext{InStage: false, StageSnapshot: StageSnapshot{FPS: 10}}
+	if got := cond(ctx, state); got != "" {
+		t.Fatalf("expected no trigger outside stage, got %q", got)
+	}
+}
+
+func TestPerfFPSGreat(t *testing.T) {
+	cond := condPerfFPSGreat()
+	state := NewConditionState()
+
+	// FPS=60, HeapMB=50: trigger.
+	ctx := &GameContext{InStage: true, SessionSecs: 100, StageSnapshot: StageSnapshot{FPS: 60, HeapMB: 50}}
+	if got := cond(ctx, state); got != "perf_fps_great" {
+		t.Fatalf("expected \"perf_fps_great\", got %q", got)
+	}
+
+	// FPS < 58: no trigger.
+	ctx = &GameContext{InStage: true, SessionSecs: 500, StageSnapshot: StageSnapshot{FPS: 57, HeapMB: 50}}
+	if got := cond(ctx, state); got != "" {
+		t.Fatalf("expected no trigger for FPS=57, got %q", got)
+	}
+
+	// HeapMB >= 100: no trigger.
+	ctx = &GameContext{InStage: true, SessionSecs: 500, StageSnapshot: StageSnapshot{FPS: 60, HeapMB: 100}}
+	if got := cond(ctx, state); got != "" {
+		t.Fatalf("expected no trigger for HeapMB=100, got %q", got)
+	}
+
+	// HeapMB <= 0: no trigger.
+	ctx = &GameContext{InStage: true, SessionSecs: 500, StageSnapshot: StageSnapshot{FPS: 60, HeapMB: 0}}
+	if got := cond(ctx, state); got != "" {
+		t.Fatalf("expected no trigger for HeapMB=0, got %q", got)
+	}
+}
+
+func TestPerfGCHeavy(t *testing.T) {
+	cond := condPerfGCHeavy()
+	state := NewConditionState()
+
+	// GCPauseUs > 5000: trigger.
+	ctx := &GameContext{InStage: true, SessionSecs: 100, StageSnapshot: StageSnapshot{GCPauseUs: 5001}}
+	if got := cond(ctx, state); got != "perf_gc_heavy" {
+		t.Fatalf("expected \"perf_gc_heavy\", got %q", got)
+	}
+
+	// GCPauseUs <= 5000: no trigger.
+	ctx = &GameContext{InStage: true, SessionSecs: 300, StageSnapshot: StageSnapshot{GCPauseUs: 5000}}
+	if got := cond(ctx, state); got != "" {
+		t.Fatalf("expected no trigger for GCPauseUs=5000, got %q", got)
+	}
+
+	// Not in stage: no trigger.
+	ctx = &GameContext{InStage: false, StageSnapshot: StageSnapshot{GCPauseUs: 10000}}
+	if got := cond(ctx, state); got != "" {
+		t.Fatalf("expected no trigger outside stage, got %q", got)
+	}
+}
+
+// --- UI context condition tests ---
+
+func TestUITowerSelected(t *testing.T) {
+	cond := condUITowerSelected()
+	state := NewConditionState()
+
+	// Mode changes from 0 to 3: trigger.
+	ctx := &GameContext{InStage: true, SessionSecs: 100, StageSnapshot: StageSnapshot{InteractMode: 3}}
+	state.PrevInteractMode = 0
+	if got := cond(ctx, state); got != "ui_tower_selected" {
+		t.Fatalf("expected \"ui_tower_selected\", got %q", got)
+	}
+
+	// Same mode (3 to 3): no trigger.
+	state.PrevInteractMode = 3
+	if got := cond(ctx, state); got != "" {
+		t.Fatalf("expected no trigger when mode unchanged, got %q", got)
+	}
+
+	// Cooldown blocks.
+	state.PrevInteractMode = 0
+	state.markFired("ui_tower_selected", 100)
+	ctx.SessionSecs = 110
+	if got := cond(ctx, state); got != "" {
+		t.Fatalf("expected cooldown to block, got %q", got)
+	}
+
+	// After cooldown.
+	ctx.SessionSecs = 131
+	if got := cond(ctx, state); got != "ui_tower_selected" {
+		t.Fatalf("expected \"ui_tower_selected\" after cooldown, got %q", got)
+	}
+}
+
+func TestUIAbilityChoice(t *testing.T) {
+	cond := condUIAbilityChoice()
+	state := NewConditionState()
+
+	// Mode changes from 0 to 8: trigger.
+	ctx := &GameContext{InStage: true, SessionSecs: 100, StageSnapshot: StageSnapshot{InteractMode: 8}}
+	state.PrevInteractMode = 0
+	if got := cond(ctx, state); got != "ui_ability_choice" {
+		t.Fatalf("expected \"ui_ability_choice\", got %q", got)
+	}
+
+	// Same mode: no trigger.
+	state.PrevInteractMode = 8
+	if got := cond(ctx, state); got != "" {
+		t.Fatalf("expected no trigger when mode unchanged, got %q", got)
+	}
+
+	// No cooldown: should fire again on next mode change.
+	state.PrevInteractMode = 0
+	ctx.SessionSecs = 101
+	if got := cond(ctx, state); got != "ui_ability_choice" {
+		t.Fatalf("expected \"ui_ability_choice\" (no cooldown), got %q", got)
+	}
+}
+
+func TestUIWardenSelect(t *testing.T) {
+	cond := condUIWardenSelect()
+	state := NewConditionState()
+
+	// Mode changes from 0 to 7: trigger.
+	ctx := &GameContext{InStage: true, SessionSecs: 100, StageSnapshot: StageSnapshot{InteractMode: 7}}
+	state.PrevInteractMode = 0
+	if got := cond(ctx, state); got != "ui_warden_select" {
+		t.Fatalf("expected \"ui_warden_select\", got %q", got)
+	}
+
+	// Same mode: no trigger.
+	state.PrevInteractMode = 7
+	if got := cond(ctx, state); got != "" {
+		t.Fatalf("expected no trigger when mode unchanged, got %q", got)
+	}
+}
+
+func TestUIBuildMenu(t *testing.T) {
+	cond := condUIBuildMenu()
+	state := NewConditionState()
+
+	// Mode changes from 0 to 1: trigger.
+	ctx := &GameContext{InStage: true, SessionSecs: 100, StageSnapshot: StageSnapshot{InteractMode: 1}}
+	state.PrevInteractMode = 0
+	if got := cond(ctx, state); got != "ui_build_menu" {
+		t.Fatalf("expected \"ui_build_menu\", got %q", got)
+	}
+
+	// Cooldown blocks re-fire.
+	state.markFired("ui_build_menu", 100)
+	state.PrevInteractMode = 0
+	ctx.SessionSecs = 110
+	if got := cond(ctx, state); got != "" {
+		t.Fatalf("expected cooldown to block, got %q", got)
+	}
+
+	// After cooldown.
+	ctx.SessionSecs = 161
+	if got := cond(ctx, state); got != "ui_build_menu" {
+		t.Fatalf("expected \"ui_build_menu\" after cooldown, got %q", got)
+	}
+}
+
+func TestUIItemPanel(t *testing.T) {
+	cond := condUIItemPanel()
+	state := NewConditionState()
+
+	// Mode changes from 0 to 9: trigger.
+	ctx := &GameContext{InStage: true, SessionSecs: 100, StageSnapshot: StageSnapshot{InteractMode: 9}}
+	state.PrevInteractMode = 0
+	if got := cond(ctx, state); got != "ui_item_panel" {
+		t.Fatalf("expected \"ui_item_panel\", got %q", got)
+	}
+
+	// Same mode: no trigger.
+	state.PrevInteractMode = 9
+	if got := cond(ctx, state); got != "" {
+		t.Fatalf("expected no trigger when mode unchanged, got %q", got)
+	}
+}
+
+// --- Diagnostic condition tests ---
+
+func TestDiagQualityDowngrade(t *testing.T) {
+	cond := condDiagQualityDowngrade()
+	state := NewConditionState()
+
+	// PrevQuality=-1 (uninitialized): no trigger.
+	ctx := &GameContext{StageSnapshot: StageSnapshot{QualityLevel: 1}}
+	if got := cond(ctx, state); got != "" {
+		t.Fatalf("expected no trigger when PrevQuality uninitialized, got %q", got)
+	}
+
+	// Quality 0 -> 1 (downgrade): trigger.
+	state.PrevQuality = 0
+	if got := cond(ctx, state); got != "diag_quality_downgrade" {
+		t.Fatalf("expected \"diag_quality_downgrade\", got %q", got)
+	}
+
+	// One-shot: should not fire again.
+	state.PrevQuality = 0
+	ctx.QualityLevel = 2
+	if got := cond(ctx, state); got != "" {
+		t.Fatalf("expected no re-trigger (one-shot), got %q", got)
+	}
+
+	// Quality stays same or improves: no trigger.
+	state2 := NewConditionState()
+	state2.PrevQuality = 1
+	ctx2 := &GameContext{StageSnapshot: StageSnapshot{QualityLevel: 1}}
+	if got := cond(ctx2, state2); got != "" {
+		t.Fatalf("expected no trigger when quality unchanged, got %q", got)
+	}
+	ctx2.QualityLevel = 0
+	if got := cond(ctx2, state2); got != "" {
+		t.Fatalf("expected no trigger when quality improved, got %q", got)
+	}
+}
+
+func TestDiagEnemySwarmCritical(t *testing.T) {
+	cond := condDiagEnemySwarmCritical()
+	state := NewConditionState()
+
+	// EnemyCount <= 30: no trigger.
+	ctx := &GameContext{InStage: true, SessionSecs: 100, StageSnapshot: StageSnapshot{EnemyCount: 30}}
+	if got := cond(ctx, state); got != "" {
+		t.Fatalf("expected no trigger for 30 enemies, got %q", got)
+	}
+
+	// EnemyCount > 30: trigger.
+	ctx.EnemyCount = 31
+	if got := cond(ctx, state); got != "diag_enemy_swarm_critical" {
+		t.Fatalf("expected \"diag_enemy_swarm_critical\", got %q", got)
+	}
+
+	// Cooldown blocks.
+	state.markFired("diag_enemy_swarm_critical", 100)
+	ctx.SessionSecs = 110
+	ctx.EnemyCount = 40
+	if got := cond(ctx, state); got != "" {
+		t.Fatalf("expected cooldown to block, got %q", got)
+	}
+
+	// After cooldown (90s).
+	ctx.SessionSecs = 191
+	if got := cond(ctx, state); got != "diag_enemy_swarm_critical" {
+		t.Fatalf("expected \"diag_enemy_swarm_critical\" after cooldown, got %q", got)
+	}
+
+	// Not in stage: no trigger.
+	ctx = &GameContext{InStage: false, StageSnapshot: StageSnapshot{EnemyCount: 50}}
+	if got := cond(ctx, state); got != "" {
+		t.Fatalf("expected no trigger outside stage, got %q", got)
 	}
 }
