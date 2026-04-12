@@ -18,7 +18,7 @@ func (SysProjectileMove) Tick(ctx *TickCtx) bool {
 type SysProjectileHit struct{}
 
 func (SysProjectileHit) Tick(ctx *TickCtx) bool {
-	TickProjectileHits(ctx.Projectiles, ctx.Enemies, ctx.Towers,
+	TickProjectileHits(ctx.Projectiles, ctx.Enemies, ctx.Towers, nil,
 		func(e *enemy.Enemy, damage float64, killed bool, attackStyle string, crit bool) {
 			if ctx.CB.OnProjectileHit != nil {
 				ctx.CB.OnProjectileHit(e, damage, killed, attackStyle, crit)

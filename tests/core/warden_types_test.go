@@ -237,9 +237,10 @@ func TestSkystrikeModeRotation(t *testing.T) {
 
 	ep, _, _, ctx := newWardenCtx(2.0) // large dt to trigger specials quickly
 
-	// Spawn enemies
+	// Spawn enemies (clear SpawnTimer so collectAlive includes them)
 	for i := 0; i < 5; i++ {
-		ep.Spawn(float64(100+i*20), 200, 1000, 60, 0, "normal", nil)
+		e := ep.Spawn(float64(100+i*20), 200, 1000, 60, 0, "normal", nil)
+		e.SpawnTimer = 0
 	}
 
 	// Tick with large dt (SpecialInterval=1s) to trigger specials

@@ -36,6 +36,7 @@ import (
 	"defense2/internal/core/item"
 	"defense2/internal/core/mascot"
 	"defense2/internal/core/persistence"
+	"defense2/internal/core/physics"
 	"defense2/internal/core/pipeline"
 	"defense2/internal/core/projectile"
 	tel "defense2/internal/core/telemetry"
@@ -180,6 +181,9 @@ type StageScene struct {
 	screenshotPending     bool                  // F12 截图请求标志
 	achieveTracker        *achievement.Tracker  // 成就追踪器
 	gameStats             GameStats             // 详细游戏统计
+	// 性能优化：空间网格索引 + 实体位置缓冲
+	collisionGrid *physics.SpatialGrid
+	entityPosBuf  []physics.EntityPos
 }
 
 // NewStageSceneWithOpts 创建游戏主场景，接受完整配置选项。
@@ -2243,7 +2247,7 @@ func (s *StageScene) updatePlaying() {
 	s.beams.Tick(gameDT)
 
 	// Step 18: 弹射物命中检测（含能力触发）
-	pipeline.TickProjectileHits(s.projectiles, s.enemies, s.towers, func(e *enemy.Enemy, damage float64, killed bool, attackStyle string, crit bool) {
+	pipeline.TickProjectileHits(s.projectiles, s.enemies, s.towers, nil, func(e *enemy.Enemy, damage float64, killed bool, attackStyle string, crit bool) {
 		if damage > 0 {
 			render.SpawnDamageText(e.X, e.Y-15, damage, crit, e.Boss)
 			if e.HitFlash < 0.06 && e.Age > 0.1 { // 出生 0.1s 内不闪白

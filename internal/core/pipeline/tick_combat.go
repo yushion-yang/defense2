@@ -8,6 +8,7 @@ import (
 	"defense2/internal/config"
 	"defense2/internal/core/combat"
 	"defense2/internal/core/enemy"
+	"defense2/internal/core/physics"
 	"defense2/internal/core/projectile"
 	"defense2/internal/core/tower"
 )
@@ -105,78 +106,103 @@ type HitCallback = combat.HitCallback
 // 碰撞规则（塔防模型）：
 //   - 追踪弹（Target != nil）：只和锁定目标碰撞，穿过其他敌人
 //   - 穿透弹（Penetrate=true, 含散射/环射）：对路径上所有敌人碰撞，命中后继续飞行
-func TickProjectileHits(projectiles *projectile.Pool, enemies *enemy.Pool, towers *tower.Pool, onHit HitCallback, onCC combat.CCCallback, onSplashVFX func(x, y, radius float64)) int {
+func TickProjectileHits(projectiles *projectile.Pool, enemies *enemy.Pool, towers *tower.Pool, grid *physics.SpatialGrid, onHit HitCallback, onCC combat.CCCallback, onSplashVFX func(x, y, radius float64)) int {
 	kills := 0
 
-	// Tower lookup via ByInstanceKey (O(1) grid index, zero allocation)
-
 	projectiles.Each(func(p *projectile.Projectile) {
-		enemies.Each(func(e *enemy.Enemy) {
-			if !p.Active || e.IsDying() || e.IsSpawning() {
+		if !p.Active {
+			return
+		}
+
+		// 追踪弹：只和锁定目标碰撞，无需空间查询
+		if p.Target != nil && !p.Penetrate {
+			e := p.Target
+			if !e.Active || e.IsDying() || e.IsSpawning() || e.ID != p.TargetID {
 				return
 			}
+			dx := p.X - e.X
+			dy := p.Y - e.Y
+			if math.Hypot(dx, dy) > p.Radius+e.Radius {
+				return
+			}
+			kills += processHit(p, e, towers, enemies, projectiles, onHit, onCC, onSplashVFX)
+			return
+		}
 
-			// 追踪弹只和锁定目标碰撞（穿透弹除外）
-			// ID 校验防止敌人槽位复用后误命中新敌人（ABA 问题）
-			if p.Target != nil && !p.Penetrate {
-				if e != p.Target || p.Target.ID != p.TargetID {
-					return
-				}
+		// 非追踪弹/穿透弹：空间网格查询附近敌人
+		candidates := grid.Query(p.X, p.Y, p.Radius+32) // +32 覆盖最大敌人半径
+		for _, idx := range candidates {
+			if !p.Active {
+				break
+			}
+			e := enemies.ByIndex(idx)
+			if !e.Active || e.IsDying() || e.IsSpawning() {
+				continue
 			}
 
 			dx := p.X - e.X
 			dy := p.Y - e.Y
-			dist := math.Hypot(dx, dy)
-			if dist > p.Radius+e.Radius {
-				return
+			if math.Hypot(dx, dy) > p.Radius+e.Radius {
+				continue
 			}
 
 			// 穿透弹：跳过已命中的敌人
 			if p.Penetrate {
+				hit := false
 				for _, hitID := range p.PenHitIDs {
 					if hitID == e.ID {
-						return
+						hit = true
+						break
 					}
 				}
-			}
-
-			// ── 统一命中处理 ──
-			var srcTower *tower.Tower
-			if p.SourceTowerKey != "" {
-				srcTower = towers.ByInstanceKey(p.SourceTowerKey)
-			}
-
-			hitStyle := ""
-			if srcTower != nil {
-				hitStyle = string(srcTower.AttackStyleID)
-			}
-			// 弹射弹强制标记为 bounce（不依赖塔的 AttackStyleID）
-			if p.BounceCount > 0 {
-				hitStyle = "bounce"
-			}
-			out := combat.ApplyHit(combat.HitInput{
-				Tower: srcTower, Target: e, BaseDamage: p.Damage, Style: hitStyle,
-				Enemies: enemies, Projectiles: projectiles, Projectile: p, OnCC: onCC,
-				OnSplashVFX: onSplashVFX,
-			}, onHit)
-
-			if out.Killed {
-				kills += 1 + out.ExtraKills
-			}
-
-			if p.Penetrate {
-				p.PenHitIDs = append(p.PenHitIDs, e.ID)
-				// 弹幕盾：阻止穿透弹继续飞行（通过 ApplyHit 返回的统一标记）
-				if out.ProjectileBlocked {
-					projectiles.Release(p)
+				if hit {
+					continue
 				}
-			} else {
-				projectiles.Release(p)
 			}
-		})
+
+			kills += processHit(p, e, towers, enemies, projectiles, onHit, onCC, onSplashVFX)
+		}
 	})
 
 	return kills
+}
+
+// processHit 统一命中处理（追踪弹和空间查询共用）。
+func processHit(p *projectile.Projectile, e *enemy.Enemy, towers *tower.Pool, enemies *enemy.Pool, projectiles *projectile.Pool, onHit HitCallback, onCC combat.CCCallback, onSplashVFX func(x, y, radius float64)) int {
+	var srcTower *tower.Tower
+	if p.SourceTowerKey != "" {
+		srcTower = towers.ByInstanceKey(p.SourceTowerKey)
+	}
+
+	hitStyle := ""
+	if srcTower != nil {
+		hitStyle = string(srcTower.AttackStyleID)
+	}
+	if p.BounceCount > 0 {
+		hitStyle = "bounce"
+	}
+
+	out := combat.ApplyHit(combat.HitInput{
+		Tower: srcTower, Target: e, BaseDamage: p.Damage, Style: hitStyle,
+		Enemies: enemies, Projectiles: projectiles, Projectile: p, OnCC: onCC,
+		OnSplashVFX: onSplashVFX,
+	}, onHit)
+
+	killed := 0
+	if out.Killed {
+		killed = 1 + out.ExtraKills
+	}
+
+	if p.Penetrate {
+		p.PenHitIDs = append(p.PenHitIDs, e.ID)
+		if out.ProjectileBlocked {
+			projectiles.Release(p)
+		}
+	} else {
+		projectiles.Release(p)
+	}
+
+	return killed
 }
 
 // multiTargetCount 返回塔的多目标额外目标数（不含主目标）。

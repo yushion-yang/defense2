@@ -276,6 +276,12 @@ func (p *Pool) FinishDying(e *Enemy) {
 	e.DyingTimer = 0
 }
 
+// Len 返回池的槽位总数（非存活数量）。
+func (p *Pool) Len() int { return len(p.enemies) }
+
+// ByIndex 返回指定索引的敌人指针（不检查 Active 状态）。
+func (p *Pool) ByIndex(i int) *Enemy { return &p.enemies[i] }
+
 // Each 遍历所有存活敌人并执行回调。
 func (p *Pool) Each(fn func(e *Enemy)) {
 	for i := range p.enemies {

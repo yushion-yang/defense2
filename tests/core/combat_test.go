@@ -72,7 +72,7 @@ func TestTickProjectileHits(t *testing.T) {
 	pp.Fire(95, 0, 100, 0, 15, 200, 4, nil, "")
 	pp.Tick(0.01)
 
-	kills := pipeline.TickProjectileHits(pp, ep, tp, nil, nil, nil)
+	kills := pipeline.TickProjectileHits(pp, ep, tp, nil, nil, nil, nil)
 	if kills != 1 {
 		t.Fatalf("expected 1 kill, got %d", kills)
 	}
