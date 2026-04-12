@@ -1,6 +1,7 @@
 // draw_projectile.go — projectile rendering.
-// Dispatches by SourceTowerKey to render different visual styles per tower type.
-// Renders motion trail (fading history positions) before the projectile body.
+// Trail dots and connector lines are batch-rendered via trail_batch.go
+// (1-2 DrawTriangles calls for ALL projectiles instead of 12,000+ individual calls).
+// Body rendering remains per-projectile (visually distinct per tower type).
 package render
 
 import (
@@ -12,23 +13,24 @@ import (
 	"github.com/hajimehoshi/ebiten/v2"
 )
 
-// DrawProjectiles renders all alive projectiles with trail + per-tower-type visuals.
+// DrawProjectiles renders all alive projectiles with batched trails + per-type body.
 func DrawProjectiles(screen *ebiten.Image, pool *projectile.Pool) {
+	// Phase 1: collect all trail geometry into batch buffers
+	beginTrailBatch()
 	pool.Each(func(p *projectile.Projectile) {
-		// Viewport culling: skip projectiles outside camera view
 		if !IsInView(p.X, p.Y) {
 			return
 		}
+		collectTrail(p)
+	})
+	// Phase 2: flush all trails in 1-2 DrawTriangles calls
+	flushTrailBatch(screen)
 
-		// Trail first (behind body)
-		baseClr := vfx.ProjectileTrailColor(p.SourceTowerKey)
-		var trailArr [projectile.TrailLen]vfx.TrailPt
-		for i := 0; i < projectile.TrailLen; i++ {
-			trailArr[i] = vfx.TrailPt{X: p.Trail[i].X, Y: p.Trail[i].Y, Active: p.Trail[i].Active}
+	// Phase 3: draw bodies individually (each type looks different)
+	pool.Each(func(p *projectile.Projectile) {
+		if !IsInView(p.X, p.Y) {
+			return
 		}
-		vfx.DrawProjectileTrail(screen, trailArr[:], p.TrailCursor, baseClr)
-
-		// Body
 		angle := math.Atan2(p.VY, p.VX)
 		vfx.DrawProjectileBody(screen, float32(p.X), float32(p.Y), angle,
 			p.SourceTowerKey, p.Penetrate, p.ScatterVisual)
