@@ -502,14 +502,14 @@ func (s *StageScene) handleInput() {
 				if e != nil {
 					e.Path = path
 				}
-				hud.ShowToast("动怪: " + label + "  (ESC退出)")
+				hud.ShowToast("动怪: " + label + "  (按Esc退出)")
 			} else {
 				// 造静怪：标记为木桩怪，不移动
 				e := s.enemies.Spawn(wtx, wty, 1000, 0, 0, s.spawnType, cfg)
 				if e != nil {
 					e.IsDummy = true
 				}
-				hud.ShowToast("静怪: " + label + "  (ESC退出)")
+				hud.ShowToast("静怪: " + label + "  (按Esc退出)")
 			}
 		}
 

@@ -34,19 +34,19 @@ type Achievement struct {
 var All = []Achievement{
 	{"first_win", "初次胜利", "通关任意地图", TierBronze, 0},
 	{"builder_10", "塔防新手", "累计建造10座塔", TierBronze, 10},
-	{"first_boss", "首个Boss", "击杀首个Boss", TierBronze, 0},
-	{"perfect_star", "完美主义", "任意关卡3星通关", TierSilver, 0},
+	{"first_boss", "首个首领", "击杀首个首领", TierBronze, 0},
+	{"perfect_star", "完美主义", "任意关卡三星通关", TierSilver, 0},
 	{"killstreak_20", "连杀达人", "单局20连杀", TierSilver, 20},
 	{"item_master", "道具大师", "单局使用10个道具", TierSilver, 10},
 	{"all_towers", "全能战士", "单局建造5种不同塔", TierSilver, 5},
 	{"rich", "富甲一方", "单局持有1000金币", TierSilver, 1000},
-	{"all_3star", "全图三星", "所有地图3星通关", TierGold, 0},
+	{"all_3star", "全图三星", "所有地图三星通关", TierGold, 0},
 	{"centurion", "百杀", "单局击杀100敌人", TierGold, 100},
-	{"no_leak_hard", "零泄漏", "Hard难度无泄漏通关", TierGold, 0},
+	{"no_leak_hard", "零泄漏", "困难难度零泄漏通关", TierGold, 0},
 	{"speedrun", "速通", "10分钟内通关", TierGold, 600},
-	{"extreme_master", "大师", "Extreme难度通关", TierDiamond, 0},
-	{"extreme_perfect", "完美大师", "Extreme难度3星通关", TierDiamond, 0},
-	{"endless_50", "不灭传说", "Endless模式坚持50波", TierDiamond, 50},
+	{"extreme_master", "大师", "极限难度通关", TierDiamond, 0},
+	{"extreme_perfect", "完美大师", "极限难度三星通关", TierDiamond, 0},
+	{"endless_50", "不灭传说", "无尽模式坚持50波", TierDiamond, 50},
 }
 
 // ThresholdOf returns the Threshold for a given achievement ID (0 if not found).

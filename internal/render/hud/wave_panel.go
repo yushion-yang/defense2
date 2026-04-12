@@ -102,7 +102,7 @@ func DrawWavePanel(screen *ebiten.Image, d WavePanelData, state *WavePanelState)
 	screenH := float32(game.ScreenHeight)
 	handleY := screenH - panelH - wpMarginB
 	panelX := wpMarginL - wpPanelW + float32(t)*wpPanelW // -panelW ~ 0
-	handleX := panelX + wpPanelW                          // handle 在面板右侧
+	handleX := panelX + wpPanelW                         // handle 在面板右侧
 
 	// 绘制面板主体（slideT > 0 时）
 	if t > 0.01 {
@@ -126,7 +126,7 @@ func DrawWavePanel(screen *ebiten.Image, d WavePanelData, state *WavePanelState)
 		if d.NextWaveCount > 0 && !d.AllDone {
 			nextTxt := fmt.Sprintf("下一波: %d怪", d.NextWaveCount)
 			if d.NextWaveBoss {
-				nextTxt += " [BOSS]"
+				nextTxt += " [首领]"
 			}
 			clr := theme.TextMuted
 			if d.NextWaveBoss {
@@ -184,4 +184,3 @@ func WavePanelHandleHitTest(px, py float32, state *WavePanelState) bool {
 	x, y, w, h := wavePanelHandleRect(state)
 	return px >= x && px <= x+w && py >= y && py <= y+h
 }
-

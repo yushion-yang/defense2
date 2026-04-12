@@ -43,19 +43,18 @@ var unlockRules = []unlockRule{
 var unlockRequirementText = map[string]string{
 	"map:map_02":       "通关 蜿蜒峡谷 解锁",
 	"tower:shotgun":    "通关 蜿蜒峡谷 解锁",
-	"map:map_03":       "通关 交叉路口 解锁",
-	"map:map_04":       "通关 交叉路口 解锁",
-	"warden:core":      "通关 交叉路口 解锁",
-	"tower:prism":      "通关 交叉路口 解锁",
-	"map:map_05":       "通关 螺旋要塞 解锁",
-	"map:map_06":       "通关 螺旋要塞 解锁",
-	"warden:chain":     "通关 螺旋要塞 解锁",
-	"tower:cyclone":    "通关 螺旋要塞 解锁",
+	"map:map_03":       "通关 林间双道 解锁",
+	"map:map_04":       "通关 林间双道 解锁",
+	"warden:core":      "通关 林间双道 解锁",
+	"tower:prism":      "通关 林间双道 解锁",
+	"map:map_05":       "通关 回旋堡垒 解锁",
+	"map:map_06":       "通关 回旋堡垒 解锁",
+	"warden:chain":     "通关 回旋堡垒 解锁",
+	"tower:cyclone":    "通关 回旋堡垒 解锁",
 	"map:map_07":       "通关 迷宫回廊 解锁",
 	"map:map_08":       "通关 迷宫回廊 解锁",
 	"warden:skystrike": "通关 迷宫回廊 解锁",
 	"warden:envoy":     "通关 迷宫回廊 解锁",
-
 }
 
 // UnlockRequirement 返回指定项的解锁条件描述。
@@ -70,14 +69,14 @@ func UnlockRequirement(prefix, key string) string {
 
 // Progress 玩家进度数据（序列化到存储中）。
 type Progress struct {
-	HighScores    map[string]int  `json:"highScores"`    // 各关卡最高击杀数（mapID → kills）
-	UnlockedMaps  []string        `json:"unlockedMaps"`  // 已解锁关卡 ID 列表（向后兼容）
-	TotalKills    int             `json:"totalKills"`    // 累计击杀总数
-	TotalWins     int             `json:"totalWins"`     // 累计胜利次数
-	TotalGames    int             `json:"totalGames"`    // 累计游戏场次
-	TutorialDone  bool            `json:"tutorialDone"`  // 教程是否已完成
-	Unlocks       UnlockData      `json:"unlocks"`       // 解锁进度
-	MascotShown   map[string]bool `json:"mascotShown"`   // 吉祥物 Once 对话已展示 ID 集合
+	HighScores   map[string]int  `json:"highScores"`   // 各关卡最高击杀数（mapID → kills）
+	UnlockedMaps []string        `json:"unlockedMaps"` // 已解锁关卡 ID 列表（向后兼容）
+	TotalKills   int             `json:"totalKills"`   // 累计击杀总数
+	TotalWins    int             `json:"totalWins"`    // 累计胜利次数
+	TotalGames   int             `json:"totalGames"`   // 累计游戏场次
+	TutorialDone bool            `json:"tutorialDone"` // 教程是否已完成
+	Unlocks      UnlockData      `json:"unlocks"`      // 解锁进度
+	MascotShown  map[string]bool `json:"mascotShown"`  // 吉祥物 Once 对话已展示 ID 集合
 }
 
 // NewProgress 创建初始进度（默认解锁 map_01）。
@@ -252,20 +251,20 @@ func (pm *ProgressManager) isAlreadyUnlocked(item string) bool {
 // unlockDisplayName 将解锁项 ID 转为显示名。
 func unlockDisplayName(item string) string {
 	names := map[string]string{
-		"map:map_02":       "关卡: 交叉路口",
-		"map:map_03":       "关卡: 铁壁防线",
-		"map:map_04":       "关卡: 螺旋要塞",
-		"map:map_05":       "关卡: 双线战场",
-		"map:map_06":       "关卡: 迷宫回廊",
-		"map:map_07":       "关卡: 极限窄道",
-		"map:map_08":       "关卡: 竞技场",
-		"tower:shotgun":    "塔: 霰弹塔",
-		"tower:prism":      "塔: 棱镜塔",
-		"tower:cyclone":    "塔: 旋风塔",
+		"map:map_02":    "关卡: 林间双道",
+		"map:map_03":    "关卡: 铁壁防线",
+		"map:map_04":    "关卡: 回旋堡垒",
+		"map:map_05":    "关卡: 双线战场",
+		"map:map_06":    "关卡: 迷宫回廊",
+		"map:map_07":    "关卡: 极限窄道",
+		"map:map_08":    "关卡: 竞技场",
+		"tower:shotgun": "塔: 霰弹塔",
+		"tower:prism":   "塔: 棱镜塔",
+		"tower:cyclone": "塔: 旋风塔",
 
-		"warden:core":      "战灵: 核心",
-		"warden:chain":     "战灵: 连锁",
-		"warden:skystrike": "战灵: 天击",
+		"warden:core":      "战灵: 机甲",
+		"warden:chain":     "战灵: 聚能",
+		"warden:skystrike": "战灵: 水灵",
 		"warden:envoy":     "战灵: 金灵",
 	}
 	if name, ok := names[item]; ok {

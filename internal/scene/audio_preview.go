@@ -29,10 +29,10 @@ type audioCategory struct {
 }
 
 type audioEntry struct {
-	Name string // display name from JSON
-	Key  string // camelCase key for PlaySafe (SFX) or raw key for PlayBGM (BGM)
-	File string // original filename
-	IsBGM bool  // BGM uses PlayBGM instead of PlaySafe
+	Name  string // display name from JSON
+	Key   string // camelCase key for PlaySafe (SFX) or raw key for PlayBGM (BGM)
+	File  string // original filename
+	IsBGM bool   // BGM uses PlayBGM instead of PlaySafe
 }
 
 // ── Layout constants (match VFX Preview) ───────────
@@ -61,10 +61,10 @@ type AudioPreviewScene struct {
 	hoverEntry int
 
 	// Playback state
-	playingKey  string  // currently playing SFX/BGM key ("" = nothing)
-	playingBGM  bool    // true if playing a BGM track
-	playTime    float64 // accumulated time since play started
-	statusDots  float64 // animated dots timer
+	playingKey string  // currently playing SFX/BGM key ("" = nothing)
+	playingBGM bool    // true if playing a BGM track
+	playTime   float64 // accumulated time since play started
+	statusDots float64 // animated dots timer
 
 	// Volume
 	previewVol float64 // preview volume (0.0 ~ 1.0)
@@ -580,7 +580,7 @@ func (s *AudioPreviewScene) drawPreviewArea(screen *ebiten.Image, fm *render.Fon
 			}
 		}
 	} else {
-		fm.DrawCenteredText(screen, "Stopped", cx, statusY, 16, theme.TextLocked)
+		fm.DrawCenteredText(screen, "已停止", cx, statusY, 16, theme.TextLocked)
 	}
 
 	// Volume indicator.
@@ -695,7 +695,7 @@ func (s *AudioPreviewScene) drawControls(screen *ebiten.Image, fm *render.FontMa
 	}
 
 	buttons := []ctrlBtn{
-		{"Back", false},
+		{"返回", false},
 		{playLabel, s.playingKey != ""},
 		{"Vol -", false},
 		{"Vol +", false},

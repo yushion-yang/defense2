@@ -33,7 +33,7 @@ var gameModes = []gameModeUI{
 	{"campaign", "战役", "stat-damage", "清除所有波次", "map_01"},
 	{"endless", "无尽", "∞", "坚持越久越好", "map_01"},
 	{"timedDefense", "限时", "stat-atkspd", "存活5分钟", "map_02"},
-	{"bossRush", "Boss", "execute", "连续挑战Boss", "map_03"},
+	{"bossRush", "首领", "execute", "连续挑战首领", "map_03"},
 	{"challenge", "挑战", "★", "特殊规则", "map_04"},
 	{"test", "测试", "stat-dps", "所有怪物静止排列", "map_test"},
 }

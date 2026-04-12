@@ -1,0 +1,193 @@
+{
+  "id": "盾卫",
+  "name": "盾卫",
+  "description": "4 towers, 10 enemies on map_test_large",
+  "mapID": "map_test_large",
+  "gold": 99999,
+  "lives": 999,
+  "waves": 99,
+  "enemyFilter": "dummy",
+  "manualWave": false,
+  "towers": [
+    {
+      "row": 4,
+      "col": 10,
+      "key": "basic",
+      "abilitySlots": [
+        "bounce",
+        "",
+        "",
+        "",
+        "",
+        ""
+      ],
+      "damageTier": "B",
+      "speedTier": "B",
+      "rangeTier": "B",
+      "baseDamage": 7.282622195739174,
+      "potentialDamage": 8.717377804260826,
+      "baseSpeed": 0.21420578176892532,
+      "potentialSpeed": 0.467379668269474,
+      "baseRange": 66.5399780253358,
+      "potentialRange": 88.50702242100611
+    },
+    {
+      "row": 10,
+      "col": 10,
+      "key": "basic",
+      "abilitySlots": [
+        "scatter",
+        "",
+        "",
+        "",
+        "",
+        ""
+      ],
+      "damageTier": "B",
+      "speedTier": "B",
+      "rangeTier": "B",
+      "baseDamage": 8.691147864842302,
+      "potentialDamage": 9.459394273403785,
+      "baseSpeed": 0.18587354215513743,
+      "potentialSpeed": 0.38304830831407766,
+      "baseRange": 54.277044649006896,
+      "potentialRange": 95.77651603518527
+    },
+    {
+      "row": 10,
+      "col": 20,
+      "key": "basic",
+      "abilitySlots": [
+        "radial",
+        "",
+        "",
+        "",
+        "",
+        ""
+      ],
+      "damageTier": "B",
+      "speedTier": "B",
+      "rangeTier": "B",
+      "baseDamage": 4.71457949786001,
+      "potentialDamage": 8.085420502139991,
+      "baseSpeed": 0.5069942958581685,
+      "potentialSpeed": 0.45012780270477576,
+      "baseRange": 65.62163087172841,
+      "potentialRange": 74.37836912827159
+    },
+    {
+      "row": 4,
+      "col": 18,
+      "key": "basic",
+      "abilitySlots": [
+        "",
+        "",
+        "",
+        "",
+        "",
+        "silenceZone"
+      ],
+      "damageTier": "B",
+      "speedTier": "B",
+      "rangeTier": "B",
+      "baseDamage": 5.653967731965932,
+      "potentialDamage": 9.657025589451653,
+      "baseSpeed": 0.1774281156743815,
+      "potentialSpeed": 0.38216395918066914,
+      "baseRange": 58.20238484656577,
+      "potentialRange": 104.41546703856655
+    }
+  ],
+  "enemies": [
+    {
+      "archetype": "shielder",
+      "x": 445,
+      "y": 369,
+      "pathIndex": 0,
+      "hp": 1291.85457861754,
+      "maxHP": 1500,
+      "isDummy": true
+    },
+    {
+      "archetype": "shielder",
+      "x": 408,
+      "y": 337.5,
+      "pathIndex": 0,
+      "hp": 1336.645120755786,
+      "maxHP": 1500,
+      "isDummy": true
+    },
+    {
+      "archetype": "shielder",
+      "x": 368.5,
+      "y": 323.5,
+      "pathIndex": 0,
+      "hp": 986.8800000000007,
+      "maxHP": 1500,
+      "isDummy": true
+    },
+    {
+      "archetype": "shielder",
+      "x": 843.5,
+      "y": 355,
+      "pathIndex": 0,
+      "hp": 1293.6400000000008,
+      "maxHP": 1500,
+      "isDummy": true
+    },
+    {
+      "archetype": "shielder",
+      "x": 760.5,
+      "y": 379.5,
+      "pathIndex": 0,
+      "hp": 1346.4000000000005,
+      "maxHP": 1500,
+      "isDummy": true
+    },
+    {
+      "archetype": "shielder",
+      "x": 770.5,
+      "y": 448.5,
+      "pathIndex": 0,
+      "hp": 1332.5600000000006,
+      "maxHP": 1500,
+      "isDummy": true
+    },
+    {
+      "archetype": "shielder",
+      "x": 842.5,
+      "y": 472.5,
+      "pathIndex": 0,
+      "hp": 1372.0000000000005,
+      "maxHP": 1500,
+      "isDummy": true
+    },
+    {
+      "archetype": "shielder",
+      "x": 439.5,
+      "y": 122,
+      "pathIndex": 0,
+      "hp": 525.2399999999994,
+      "maxHP": 1500,
+      "isDummy": true
+    },
+    {
+      "archetype": "shielder",
+      "x": 359.5,
+      "y": 125.5,
+      "pathIndex": 0,
+      "hp": 1436.0400000000002,
+      "maxHP": 1500,
+      "isDummy": true
+    },
+    {
+      "archetype": "shielder",
+      "x": 896,
+      "y": 402,
+      "pathIndex": 0,
+      "hp": 1358.1600000000005,
+      "maxHP": 1500,
+      "isDummy": true
+    }
+  ]
+}

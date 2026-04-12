@@ -262,7 +262,7 @@ func attackStyleLabel(style string) string {
 		"projectile": "投射物",
 		"wideBeam":   "宽光束",
 		"scatter":    "散射",
-		"spin_aoe":   "旋转AoE",
+		"spin_aoe":   "旋转范围",
 		"radial":     "环射",
 	}
 	if l, ok := labels[style]; ok {

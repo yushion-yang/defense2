@@ -50,9 +50,9 @@ type WavePreviewScene struct {
 	waves []wavePreviewRow
 
 	// Scroll
-	mapScrollY  float64
-	mapMaxScroll float64
-	waveScrollY  float64
+	mapScrollY    float64
+	mapMaxScroll  float64
+	waveScrollY   float64
 	waveMaxScroll float64
 }
 
@@ -443,10 +443,10 @@ func (s *WavePreviewScene) drawControls(screen *ebiten.Image, fm *render.FontMan
 	btnH := 30.0
 	baseY := sh - wpCtrlH + (wpCtrlH-btnH)/2
 
-	// Single "Back" button centered.
+	// Single "返回" button centered.
 	bx := (sw - btnW) / 2
 	draw.RoundRect(screen, float32(bx), float32(baseY), float32(btnW), float32(btnH), 8, theme.BtnSecondary)
-	fm.DrawCenteredText(screen, "Back", bx+btnW/2, baseY+7, 11, theme.TextTitle)
+	fm.DrawCenteredText(screen, "返回", bx+btnW/2, baseY+7, 11, theme.TextTitle)
 
 	// Map info at bottom-left.
 	if len(s.maps) > 0 && s.selectedID >= 0 && s.selectedID < len(s.maps) {

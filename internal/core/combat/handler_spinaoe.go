@@ -16,6 +16,7 @@ const (
 	spinDefaultDmgRatio  = 0.5 // spin AoE 默认伤害比例
 	spinActiveDuration   = 0.3 // 旋转激活指示时长(秒)
 	spinFireAnimDuration = 0.4 // 开火动画时长(秒)
+	spinMaxShotsPerFrame = 20  // 单帧最大 tick 次数（防止极端攻速卡死）
 )
 
 // SpinAoEHandler 旋转 AoE。
@@ -43,7 +44,7 @@ func (h *SpinAoEHandler) Tick(t *tower.Tower, ctx *AttackContext) {
 		t.SpinActive -= dt
 	}
 
-	// 冷却
+	// 冷却：循环消耗 timer，允许超高攻速每帧多次 tick。
 	t.FireTimer -= dt
 	if t.FireTimer > 0 {
 		return
@@ -59,30 +60,39 @@ func (h *SpinAoEHandler) Tick(t *tower.Tower, ctx *AttackContext) {
 		}
 	}
 
-	hasTarget := false
-	r := t.Range
+	shotInterval := 1.0 / t.AttackSpeed
+	fired := false
+	for shots := 0; t.FireTimer <= 0 && shots < spinMaxShotsPerFrame; shots++ {
+		hasTarget := false
+		r := t.Range
 
-	ctx.Enemies.Each(func(e *enemy.Enemy) {
-		if e.IsDying() || e.IsSpawning() {
-			return
-		}
-		dist := math.Hypot(e.X-t.X, e.Y-t.Y)
-		if dist > r {
-			return
-		}
-		hasTarget = true
-		dmg := t.Damage * damageRatio
-		ApplyHit(HitInput{
-			Tower: t, Target: e, BaseDamage: dmg, Style: ctx.Style,
-			Enemies: ctx.Enemies, Projectiles: ctx.Projectiles, OnCC: ctx.OnCC,
-			OnSplashVFX: ctx.OnSplashVFX,
-		}, ctx.OnHit)
-	})
+		ctx.Enemies.Each(func(e *enemy.Enemy) {
+			if e.IsDying() || e.IsSpawning() {
+				return
+			}
+			dist := math.Hypot(e.X-t.X, e.Y-t.Y)
+			if dist > r {
+				return
+			}
+			hasTarget = true
+			dmg := t.Damage * damageRatio
+			ApplyHit(HitInput{
+				Tower: t, Target: e, BaseDamage: dmg, Style: ctx.Style,
+				Enemies: ctx.Enemies, Projectiles: ctx.Projectiles, OnCC: ctx.OnCC,
+				OnSplashVFX: ctx.OnSplashVFX,
+			}, ctx.OnHit)
+		})
 
-	if hasTarget {
+		if !hasTarget {
+			break
+		}
+		t.FireTimer += shotInterval
+		fired = true
+	}
+
+	if fired {
 		t.SpinActive = spinActiveDuration
 		t.FireAnim = spinFireAnimDuration
-		t.FireTimer = 1.0 / t.AttackSpeed
 		if ctx.OnFire != nil {
 			ctx.OnFire(t, ctx.Style)
 		}

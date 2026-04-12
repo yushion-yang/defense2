@@ -76,10 +76,7 @@ func (s *TitleScene) Draw(screen *ebiten.Image) {
 	fm := s.fontMgr
 
 	// 游戏标题
-	fm.DrawCenteredBoldText(screen, "Mini Tower Defense", sw/2, sh/2-60, 32, textWhite)
-
-	// 副标题
-	fm.DrawCenteredText(screen, "塔防战棋", sw/2, sh/2-20, 16, textGray)
+	fm.DrawCenteredBoldText(screen, "塔防战棋", sw/2, sh/2-40, 32, textWhite)
 
 	// 脉冲提示
 	pulse := 0.5 + 0.5*math.Sin(s.pulseTime*3)
@@ -88,7 +85,7 @@ func (s *TitleScene) Draw(screen *ebiten.Image) {
 	fm.DrawCenteredText(screen, "点击开始", sw/2, sh/2+40, 14, pulseClr)
 
 	// 版本
-	fm.DrawCenteredText(screen, "v1.0", sw/2, sh-20, 10, textDim)
+	fm.DrawCenteredText(screen, "v0.1.0", sw/2, sh-20, 10, textDim)
 }
 
 // drawTitleDecorations 绘制标题画面的几何装饰。

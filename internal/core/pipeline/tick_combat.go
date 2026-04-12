@@ -15,6 +15,7 @@ import (
 const (
 	fireAnimDuration     = 0.4   // 开火动画时长(秒)
 	defaultStrengthValue = 100.0 // 默认强度基准值
+	maxShotsPerFrame     = 20    // 单塔单帧最大射击次数（防止极端攻速卡死）
 )
 
 // TickTowerCombat 塔战斗子管线：按攻击方式分发射击逻辑。
@@ -51,21 +52,27 @@ func TickTowerCombat(towers *tower.Pool, enemies *enemy.Pool, projectiles *proje
 			return
 		}
 
-		// 标准冷却流程
+		// 标准冷却流程：循环消耗 timer，允许超高攻速每帧多次射击。
+		// maxShotsPerFrame 防止极端攻速导致单帧卡死。
 		t.FireTimer -= dt
 		if t.FireTimer > 0 {
 			return
 		}
 
-		target := tower.AcquireTarget(t, enemies)
-		if target == nil {
+		handler := combat.Get(style)
+		if handler == nil {
 			return
 		}
 
-		t.Angle = math.Atan2(target.Y-t.Y, target.X-t.X)
+		shotInterval := 1.0 / t.AttackSpeed
+		shots := 0
+		for t.FireTimer <= 0 && shots < maxShotsPerFrame {
+			target := tower.AcquireTarget(t, enemies)
+			if target == nil {
+				break
+			}
 
-		handler := combat.Get(style)
-		if handler != nil {
+			t.Angle = math.Atan2(target.Y-t.Y, target.X-t.X)
 			handler.Fire(t, target, ctx)
 
 			// 多目标攻击：对额外目标各发射一颗弹
@@ -75,11 +82,16 @@ func TickTowerCombat(towers *tower.Pool, enemies *enemy.Pool, projectiles *proje
 					handler.Fire(t, et, ctx)
 				}
 			}
+
+			t.FireTimer += shotInterval
+			shots++
 		}
-		t.FireTimer = 1.0 / t.AttackSpeed
-		t.FireAnim = fireAnimDuration
-		if onFire != nil {
-			onFire(t, string(style))
+
+		if shots > 0 {
+			t.FireAnim = fireAnimDuration
+			if onFire != nil {
+				onFire(t, string(style))
+			}
 		}
 	})
 }

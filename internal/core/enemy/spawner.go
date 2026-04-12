@@ -70,6 +70,8 @@ type Spawner struct {
 	bossQueued        bool                    // 本波是否需要在末尾追加 Boss
 	EntranceDelay     float64                 // Boss 波入场延迟（秒），>0 时暂停出怪
 	squadMembers      []string                // 本波小队成员（startWave 时选定，按索引出完后转随机）
+	WaitingForClear   bool                    // 出怪完毕，等待场上敌人全灭后才开始倒计时
+	clearWaitElapsed  float64                 // 等待清场已过秒数（保底 60s 超时）
 }
 
 // NewSpawner 创建出怪管理器。
@@ -99,6 +101,16 @@ func (s *Spawner) Tick(pool *Pool, dt float64) {
 
 	// 波间等待
 	if !s.WaveActive {
+		// 等待清场阶段：出怪完毕但场上还有敌人
+		if s.WaitingForClear {
+			s.clearWaitElapsed += dt
+			// 场上敌人全部清理 OR 保底 60 秒后 → 进入倒计时
+			if pool.Count == 0 || s.clearWaitElapsed >= 60 {
+				s.WaitingForClear = false
+				s.WaveTimer = s.WaveInterval
+			}
+			return
+		}
 		// 倒计时始终递减（UI 显示用），到 0 停住
 		if s.WaveTimer > 0 {
 			s.WaveTimer -= dt
@@ -199,7 +211,9 @@ func (s *Spawner) Tick(pool *Pool, dt float64) {
 		if s.Wave >= s.MaxWaves {
 			s.AllDone = true
 		} else {
-			s.WaveTimer = s.WaveInterval
+			// 进入等待清场状态，场上敌人全灭后才开始倒计时
+			s.WaitingForClear = true
+			s.clearWaitElapsed = 0
 		}
 	}
 }
@@ -218,11 +232,12 @@ func (s *Spawner) IsIntermission() bool {
 	return !s.WaveActive && !s.AllDone
 }
 
-// StartNextWave 手动触发下一波（跳过倒计时）。
+// StartNextWave 手动触发下一波（跳过等待清场和倒计时）。
 func (s *Spawner) StartNextWave() {
 	if s.WaveActive || s.AllDone {
 		return
 	}
+	s.WaitingForClear = false
 	s.WaveTimer = 0
 	s.startWave()
 }

@@ -1,7 +1,7 @@
 {
   "id": "增伤",
   "name": "增伤",
-  "description": "6 towers, 7 enemies on map_test_large",
+  "description": "7 towers, 6 enemies on map_test_large",
   "mapID": "map_test_large",
   "gold": 99999,
   "lives": 999,
@@ -140,6 +140,28 @@
       "potentialSpeed": 0.5623955552108552,
       "baseRange": 40,
       "potentialRange": 58.474965832187415
+    },
+    {
+      "row": 4,
+      "col": 18,
+      "key": "basic",
+      "abilitySlots": [
+        "",
+        "",
+        "",
+        "",
+        "",
+        ""
+      ],
+      "damageTier": "B",
+      "speedTier": "S",
+      "rangeTier": "S",
+      "baseDamage": 10,
+      "potentialDamage": 10,
+      "baseSpeed": 0.8,
+      "potentialSpeed": 0.05,
+      "baseRange": 150,
+      "potentialRange": 7
     }
   ],
   "enemies": [
@@ -148,7 +170,7 @@
       "x": 489.5,
       "y": 141.5,
       "pathIndex": 0,
-      "hp": 498608.2742930762,
+      "hp": 497485.0656519275,
       "maxHP": 1000000
     },
     {
@@ -156,7 +178,7 @@
       "x": 871.5,
       "y": 133,
       "pathIndex": 0,
-      "hp": 498709.40557479626,
+      "hp": 498409.40557479626,
       "maxHP": 1000000
     },
     {
@@ -164,7 +186,7 @@
       "x": 330,
       "y": 292,
       "pathIndex": 0,
-      "hp": 494831.96636630426,
+      "hp": 492349.1761476788,
       "maxHP": 1000000
     },
     {
@@ -172,7 +194,7 @@
       "x": 488,
       "y": 373,
       "pathIndex": 0,
-      "hp": 497755.67927704006,
+      "hp": 496538.08592294157,
       "maxHP": 1000000
     },
     {
@@ -180,7 +202,7 @@
       "x": 728,
       "y": 376,
       "pathIndex": 0,
-      "hp": 497464.85901661636,
+      "hp": 496017.6395065086,
       "maxHP": 1000000
     },
     {
@@ -188,15 +210,7 @@
       "x": 956.5,
       "y": 367,
       "pathIndex": 0,
-      "hp": 497124.63281880453,
-      "maxHP": 1000000
-    },
-    {
-      "archetype": "dummy",
-      "x": 426.5,
-      "y": 177,
-      "pathIndex": 0,
-      "hp": 498664.43472513446,
+      "hp": 495975.61520197004,
       "maxHP": 1000000
     }
   ]

@@ -1108,5 +1108,16 @@
     ],
     "once": false,
     "priority": 1
+  },
+  {
+    "id": "idle_ext_111",
+    "scene": "*",
+    "trigger": "idle_chatter",
+    "lines": [
+      {"text": "你知道吗，即使你的炮塔攻速非常快，程序依然能正确处理。", "expression": "talk", "autoAdvance": 6},
+      {"text": "你要不要来试试，把所有道具和钱都用在一个炮塔上。", "expression": "happy", "autoAdvance": 5}
+    ],
+    "once": false,
+    "priority": 1
   }
 ]

@@ -1,0 +1,434 @@
+{
+  "id": "全攻击阵容",
+  "name": "全攻击阵容",
+  "description": "10 towers, 24 enemies on map_test_large",
+  "mapID": "map_test_large",
+  "gold": 99999,
+  "lives": 999,
+  "waves": 99,
+  "enemyFilter": "dummy",
+  "manualWave": false,
+  "towers": [
+    {
+      "row": 4,
+      "col": 4,
+      "key": "basic",
+      "abilitySlots": [
+        "barrage",
+        "",
+        "",
+        "",
+        "",
+        ""
+      ],
+      "damageTier": "B",
+      "speedTier": "S",
+      "rangeTier": "D",
+      "baseDamage": 10,
+      "potentialDamage": 8,
+      "baseSpeed": 0.8,
+      "potentialSpeed": 0.05,
+      "baseRange": 120,
+      "potentialRange": 17,
+      "specialty": 2
+    },
+    {
+      "row": 4,
+      "col": 10,
+      "key": "basic",
+      "abilitySlots": [
+        "bounce",
+        "",
+        "",
+        "",
+        "",
+        ""
+      ],
+      "damageTier": "D",
+      "speedTier": "B",
+      "rangeTier": "D",
+      "baseDamage": 5,
+      "potentialDamage": 10,
+      "baseSpeed": 0.6,
+      "potentialSpeed": 0.09000000000000001,
+      "baseRange": 120,
+      "potentialRange": 15,
+      "specialty": 1
+    },
+    {
+      "row": 4,
+      "col": 16,
+      "key": "basic",
+      "abilitySlots": [
+        "enhance",
+        "",
+        "",
+        "",
+        "",
+        ""
+      ],
+      "damageTier": "D",
+      "speedTier": "D",
+      "rangeTier": "S",
+      "baseDamage": 9,
+      "potentialDamage": 21.6,
+      "baseSpeed": 0.9,
+      "potentialSpeed": 0.18000000000000002,
+      "baseRange": 180,
+      "potentialRange": 8.4
+    },
+    {
+      "row": 2,
+      "col": 22,
+      "key": "basic",
+      "abilitySlots": [
+        "multiTarget",
+        "",
+        "",
+        "",
+        "",
+        ""
+      ],
+      "damageTier": "D",
+      "speedTier": "B",
+      "rangeTier": "D",
+      "baseDamage": 5,
+      "potentialDamage": 10,
+      "baseSpeed": 0.6,
+      "potentialSpeed": 0.09000000000000001,
+      "baseRange": 120,
+      "potentialRange": 15,
+      "specialty": 1
+    },
+    {
+      "row": 10,
+      "col": 22,
+      "key": "basic",
+      "abilitySlots": [
+        "splash",
+        "",
+        "",
+        "",
+        "",
+        ""
+      ],
+      "damageTier": "D",
+      "speedTier": "S",
+      "rangeTier": "S",
+      "baseDamage": 5,
+      "potentialDamage": 10,
+      "baseSpeed": 0.8,
+      "potentialSpeed": 0.05,
+      "baseRange": 150,
+      "potentialRange": 9,
+      "specialty": 2
+    },
+    {
+      "row": 10,
+      "col": 16,
+      "key": "basic",
+      "abilitySlots": [
+        "spinAoe",
+        "",
+        "",
+        "",
+        "",
+        ""
+      ],
+      "damageTier": "S",
+      "speedTier": "D",
+      "rangeTier": "S",
+      "baseDamage": 20,
+      "potentialDamage": 7,
+      "baseSpeed": 0.5,
+      "potentialSpeed": 0.1,
+      "baseRange": 150,
+      "potentialRange": 7
+    },
+    {
+      "row": 10,
+      "col": 10,
+      "key": "basic",
+      "abilitySlots": [
+        "scatter",
+        "",
+        "",
+        "",
+        "",
+        ""
+      ],
+      "damageTier": "B",
+      "speedTier": "S",
+      "rangeTier": "B",
+      "baseDamage": 10,
+      "potentialDamage": 10,
+      "baseSpeed": 0.8,
+      "potentialSpeed": 0.05,
+      "baseRange": 130,
+      "potentialRange": 10
+    },
+    {
+      "row": 8,
+      "col": 4,
+      "key": "basic",
+      "abilitySlots": [
+        "radial",
+        "",
+        "",
+        "",
+        "",
+        ""
+      ],
+      "damageTier": "B",
+      "speedTier": "D",
+      "rangeTier": "D",
+      "baseDamage": 10,
+      "potentialDamage": 8,
+      "baseSpeed": 0.5,
+      "potentialSpeed": 0.12000000000000001,
+      "baseRange": 120,
+      "potentialRange": 15,
+      "specialty": 1
+    },
+    {
+      "row": 2,
+      "col": 2,
+      "key": "basic",
+      "abilitySlots": [
+        "",
+        "",
+        "",
+        "",
+        "",
+        ""
+      ],
+      "damageTier": "D",
+      "speedTier": "D",
+      "rangeTier": "S",
+      "baseDamage": 5,
+      "potentialDamage": 10,
+      "baseSpeed": 0.5,
+      "potentialSpeed": 0.12000000000000001,
+      "baseRange": 150,
+      "potentialRange": 7,
+      "specialty": 1
+    },
+    {
+      "row": 6,
+      "col": 20,
+      "key": "basic",
+      "abilitySlots": [
+        "wideBeam",
+        "",
+        "",
+        "",
+        "",
+        ""
+      ],
+      "damageTier": "B",
+      "speedTier": "B",
+      "rangeTier": "D",
+      "baseDamage": 10,
+      "potentialDamage": 8,
+      "baseSpeed": 0.6,
+      "potentialSpeed": 0.09000000000000001,
+      "baseRange": 120,
+      "potentialRange": 15,
+      "specialty": 1
+    }
+  ],
+  "enemies": [
+    {
+      "archetype": "dummy",
+      "x": 184,
+      "y": 97.5,
+      "pathIndex": 0,
+      "hp": 996545,
+      "maxHP": 1000000
+    },
+    {
+      "archetype": "dummy",
+      "x": 225.5,
+      "y": 97.5,
+      "pathIndex": 0,
+      "hp": 1000000,
+      "maxHP": 1000000
+    },
+    {
+      "archetype": "dummy",
+      "x": 383,
+      "y": 95,
+      "pathIndex": 0,
+      "hp": 995732.800000004,
+      "maxHP": 1000000
+    },
+    {
+      "archetype": "dummy",
+      "x": 439.5,
+      "y": 95,
+      "pathIndex": 0,
+      "hp": 976687.6239999902,
+      "maxHP": 1000000
+    },
+    {
+      "archetype": "dummy",
+      "x": 704.5,
+      "y": 106,
+      "pathIndex": 0,
+      "hp": 995301.9703724775,
+      "maxHP": 1000000
+    },
+    {
+      "archetype": "dummy",
+      "x": 676,
+      "y": 138.5,
+      "pathIndex": 0,
+      "hp": 992760.1067195482,
+      "maxHP": 1000000
+    },
+    {
+      "archetype": "dummy",
+      "x": 985,
+      "y": 93.5,
+      "pathIndex": 0,
+      "hp": 994564.7999999833,
+      "maxHP": 1000000
+    },
+    {
+      "archetype": "dummy",
+      "x": 984.5,
+      "y": 119,
+      "pathIndex": 0,
+      "hp": 996952.2800000022,
+      "maxHP": 1000000
+    },
+    {
+      "archetype": "dummy",
+      "x": 951.5,
+      "y": 233,
+      "pathIndex": 0,
+      "hp": 994780.7839999933,
+      "maxHP": 1000000
+    },
+    {
+      "archetype": "dummy",
+      "x": 958,
+      "y": 276.5,
+      "pathIndex": 0,
+      "hp": 994889.2159999934,
+      "maxHP": 1000000
+    },
+    {
+      "archetype": "dummy",
+      "x": 979,
+      "y": 454,
+      "pathIndex": 0,
+      "hp": 998527.9999999946,
+      "maxHP": 1000000
+    },
+    {
+      "archetype": "dummy",
+      "x": 960.5,
+      "y": 472.5,
+      "pathIndex": 0,
+      "hp": 997247.99999999,
+      "maxHP": 1000000
+    },
+    {
+      "archetype": "dummy",
+      "x": 913.5,
+      "y": 495.5,
+      "pathIndex": 0,
+      "hp": 994794.3999999848,
+      "maxHP": 1000000
+    },
+    {
+      "archetype": "dummy",
+      "x": 870.5,
+      "y": 502.5,
+      "pathIndex": 0,
+      "hp": 999688,
+      "maxHP": 1000000
+    },
+    {
+      "archetype": "dummy",
+      "x": 614.5,
+      "y": 332.5,
+      "pathIndex": 0,
+      "hp": 996150.4198153036,
+      "maxHP": 1000000
+    },
+    {
+      "archetype": "dummy",
+      "x": 661.5,
+      "y": 302.5,
+      "pathIndex": 0,
+      "hp": 998857.7200000007,
+      "maxHP": 1000000
+    },
+    {
+      "archetype": "dummy",
+      "x": 380.5,
+      "y": 352,
+      "pathIndex": 0,
+      "hp": 993058.2385771186,
+      "maxHP": 1000000
+    },
+    {
+      "archetype": "dummy",
+      "x": 408,
+      "y": 329,
+      "pathIndex": 0,
+      "hp": 999300,
+      "maxHP": 1000000
+    },
+    {
+      "archetype": "dummy",
+      "x": 348.5,
+      "y": 302,
+      "pathIndex": 0,
+      "hp": 992478.3893109031,
+      "maxHP": 1000000
+    },
+    {
+      "archetype": "dummy",
+      "x": 248.5,
+      "y": 400.5,
+      "pathIndex": 0,
+      "hp": 995459.9402811425,
+      "maxHP": 1000000
+    },
+    {
+      "archetype": "dummy",
+      "x": 203.5,
+      "y": 251,
+      "pathIndex": 0,
+      "hp": 991787.8616229836,
+      "maxHP": 1000000
+    },
+    {
+      "archetype": "dummy",
+      "x": 103,
+      "y": 367,
+      "pathIndex": 0,
+      "hp": 993317.608223987,
+      "maxHP": 1000000
+    },
+    {
+      "archetype": "dummy",
+      "x": 714,
+      "y": 307.5,
+      "pathIndex": 0,
+      "hp": 998941.8000000005,
+      "maxHP": 1000000
+    },
+    {
+      "archetype": "dummy",
+      "x": 681,
+      "y": 355.5,
+      "pathIndex": 0,
+      "hp": 996862.3394770182,
+      "maxHP": 1000000
+    }
+  ]
+}

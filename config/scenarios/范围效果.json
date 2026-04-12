@@ -1,0 +1,285 @@
+{
+  "id": "范围效果",
+  "name": "范围效果",
+  "description": "5 towers, 18 enemies on map_test_large",
+  "mapID": "map_test_large",
+  "gold": 99999,
+  "lives": 999,
+  "waves": 99,
+  "enemyFilter": "dummy",
+  "manualWave": false,
+  "towers": [
+    {
+      "row": 4,
+      "col": 8,
+      "key": "basic",
+      "abilitySlots": [
+        "",
+        "",
+        "",
+        "",
+        "",
+        "curseZone"
+      ],
+      "damageTier": "B",
+      "speedTier": "S",
+      "rangeTier": "S",
+      "baseDamage": 10,
+      "potentialDamage": 10,
+      "baseSpeed": 0.8,
+      "potentialSpeed": 0.05,
+      "baseRange": 150,
+      "potentialRange": 7
+    },
+    {
+      "row": 4,
+      "col": 18,
+      "key": "basic",
+      "abilitySlots": [
+        "",
+        "",
+        "",
+        "",
+        "",
+        "poisonZone"
+      ],
+      "damageTier": "D",
+      "speedTier": "S",
+      "rangeTier": "S",
+      "baseDamage": 5,
+      "potentialDamage": 12,
+      "baseSpeed": 0.8,
+      "potentialSpeed": 0.05,
+      "baseRange": 150,
+      "potentialRange": 7
+    },
+    {
+      "row": 8,
+      "col": 14,
+      "key": "basic",
+      "abilitySlots": [
+        "",
+        "",
+        "",
+        "",
+        "",
+        "silenceZone"
+      ],
+      "damageTier": "D",
+      "speedTier": "S",
+      "rangeTier": "D",
+      "baseDamage": 5,
+      "potentialDamage": 12,
+      "baseSpeed": 0.8,
+      "potentialSpeed": 0.05,
+      "baseRange": 120,
+      "potentialRange": 15
+    },
+    {
+      "row": 10,
+      "col": 20,
+      "key": "basic",
+      "abilitySlots": [
+        "",
+        "",
+        "",
+        "",
+        "",
+        "weakenZone"
+      ],
+      "damageTier": "D",
+      "speedTier": "D",
+      "rangeTier": "D",
+      "baseDamage": 5,
+      "potentialDamage": 10,
+      "baseSpeed": 0.5,
+      "potentialSpeed": 0.12000000000000001,
+      "baseRange": 120,
+      "potentialRange": 15,
+      "specialty": 1
+    },
+    {
+      "row": 8,
+      "col": 20,
+      "key": "basic",
+      "abilitySlots": [
+        "",
+        "",
+        "",
+        "",
+        "",
+        ""
+      ],
+      "damageTier": "B",
+      "speedTier": "B",
+      "rangeTier": "D",
+      "baseDamage": 10,
+      "potentialDamage": 8,
+      "baseSpeed": 0.6,
+      "potentialSpeed": 0.07,
+      "baseRange": 120,
+      "potentialRange": 17,
+      "specialty": 2
+    }
+  ],
+  "enemies": [
+    {
+      "archetype": "dummy",
+      "x": 788.5,
+      "y": 164,
+      "pathIndex": 0,
+      "hp": 1000000,
+      "maxHP": 1000000
+    },
+    {
+      "archetype": "dummy",
+      "x": 786,
+      "y": 398,
+      "pathIndex": 0,
+      "hp": 1000000,
+      "maxHP": 1000000
+    },
+    {
+      "archetype": "dummy",
+      "x": 386.5,
+      "y": 387.5,
+      "pathIndex": 0,
+      "hp": 1000000,
+      "maxHP": 1000000
+    },
+    {
+      "archetype": "dummy",
+      "x": 738.5,
+      "y": 419.5,
+      "pathIndex": 0,
+      "hp": 1000000,
+      "maxHP": 1000000
+    },
+    {
+      "archetype": "shielder",
+      "x": 423.5,
+      "y": 324,
+      "pathIndex": 0,
+      "hp": 150,
+      "maxHP": 150,
+      "isDummy": true
+    },
+    {
+      "archetype": "dummy",
+      "x": 786,
+      "y": 219.5,
+      "pathIndex": 0,
+      "hp": 1000000,
+      "maxHP": 1000000,
+      "isDummy": true
+    },
+    {
+      "archetype": "dummy",
+      "x": 760,
+      "y": 239.5,
+      "pathIndex": 0,
+      "hp": 1000000,
+      "maxHP": 1000000,
+      "isDummy": true
+    },
+    {
+      "archetype": "dummy",
+      "x": 686,
+      "y": 233,
+      "pathIndex": 0,
+      "hp": 1000000,
+      "maxHP": 1000000,
+      "isDummy": true
+    },
+    {
+      "archetype": "dummy",
+      "x": 681.5,
+      "y": 149.5,
+      "pathIndex": 0,
+      "hp": 1000000,
+      "maxHP": 1000000,
+      "isDummy": true
+    },
+    {
+      "archetype": "dummy",
+      "x": 732,
+      "y": 122,
+      "pathIndex": 0,
+      "hp": 1000000,
+      "maxHP": 1000000,
+      "isDummy": true
+    },
+    {
+      "archetype": "dummy",
+      "x": 415.5,
+      "y": 174.5,
+      "pathIndex": 0,
+      "hp": 1000000,
+      "maxHP": 1000000,
+      "isDummy": true
+    },
+    {
+      "archetype": "dummy",
+      "x": 411.5,
+      "y": 223.5,
+      "pathIndex": 0,
+      "hp": 1000000,
+      "maxHP": 1000000,
+      "isDummy": true
+    },
+    {
+      "archetype": "dummy",
+      "x": 357,
+      "y": 236.5,
+      "pathIndex": 0,
+      "hp": 1000000,
+      "maxHP": 1000000,
+      "isDummy": true
+    },
+    {
+      "archetype": "dummy",
+      "x": 295.5,
+      "y": 259,
+      "pathIndex": 0,
+      "hp": 1000000,
+      "maxHP": 1000000,
+      "isDummy": true
+    },
+    {
+      "archetype": "dummy",
+      "x": 279,
+      "y": 188.5,
+      "pathIndex": 0,
+      "hp": 1000000,
+      "maxHP": 1000000,
+      "isDummy": true
+    },
+    {
+      "archetype": "dummy",
+      "x": 297,
+      "y": 122,
+      "pathIndex": 0,
+      "hp": 1000000,
+      "maxHP": 1000000,
+      "isDummy": true
+    },
+    {
+      "archetype": "dummy",
+      "x": 372.5,
+      "y": 109.5,
+      "pathIndex": 0,
+      "hp": 1000000,
+      "maxHP": 1000000,
+      "isDummy": true
+    },
+    {
+      "archetype": "dummy",
+      "x": 342,
+      "y": 135,
+      "pathIndex": 0,
+      "hp": 1000000,
+      "maxHP": 1000000,
+      "isDummy": true
+    }
+  ]
+}

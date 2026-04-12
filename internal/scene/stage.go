@@ -1091,6 +1091,14 @@ func (s *StageScene) debugActions() []hud.DebugAction {
 				}
 			})
 		}},
+		{Label: "全场塔 +10000 强度", Action: func() {
+			s.towers.Each(func(t *tower.Tower) {
+				if t.Strength != nil {
+					t.Strength.AddPermanent(10000)
+					t.RecalcStats()
+				}
+			})
+		}},
 	}
 
 	// ── 战灵 ──

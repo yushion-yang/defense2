@@ -157,7 +157,7 @@ func (s *VFXPreviewScene) vfxTriggerRegistry() map[string]func(s *VFXPreviewScen
 		"critText":   func(s *VFXPreviewScene) { render.SpawnDamageText(cx, cy, 5678, true, false) },
 		"goldText":   func(s *VFXPreviewScene) { render.SpawnGoldText(cx, cy, 100) },
 		"customText": func(s *VFXPreviewScene) {
-			render.SpawnText(cx, cy, "Hello VFX!", color.RGBA{R: 100, G: 255, B: 200, A: 255}, 14, 1.5)
+			render.SpawnText(cx, cy, "特效预览!", color.RGBA{R: 100, G: 255, B: 200, A: 255}, 14, 1.5)
 		},
 
 		// Post-Processing
@@ -798,8 +798,8 @@ func (s *VFXPreviewScene) drawControls(screen *ebiten.Image, fm *render.FontMana
 		Active bool // toggle/highlight state
 	}
 	buttons := []ctrlBtn{
-		{"Back", false},
-		{"Replay", false},
+		{"返回", false},
+		{"重播", false},
 		{"0.5x", s.speed == 0.5},
 		{"1x", s.speed == 1.0},
 		{"2x", s.speed == 2.0},

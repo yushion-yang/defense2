@@ -252,5 +252,5 @@ func (s *LoadingScene) Draw(screen *ebiten.Image) {
 	// 底部脉冲版本号
 	pulse := 0.5 + 0.5*math.Sin(s.animTime*2)
 	alpha := uint8(60 + 40*pulse)
-	fm.DrawCenteredText(screen, "v1.0", sw/2, sh-16, 10, color.RGBA{R: 90, G: 95, B: 110, A: alpha})
+	fm.DrawCenteredText(screen, "v0.1.0", sw/2, sh-16, 10, color.RGBA{R: 90, G: 95, B: 110, A: alpha})
 }

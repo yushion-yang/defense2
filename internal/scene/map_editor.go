@@ -686,7 +686,7 @@ func (s *MapEditorScene) drawControlBar(screen *ebiten.Image, fm *render.FontMan
 			bg = theme.BtnPrimary
 		}
 		draw.RoundRect(screen, bx, by, float32(meBackBtnW), float32(meBackBtnH), 10, bg)
-		fm.DrawCenteredText(screen, "< Back", float64(bx)+meBackBtnW/2, float64(by)+7, theme.FontSM, theme.TextBody)
+		fm.DrawCenteredText(screen, "← 返回", float64(bx)+meBackBtnW/2, float64(by)+7, theme.FontSM, theme.TextBody)
 	}
 
 	// ── Map prev arrow ──
@@ -744,7 +744,7 @@ func (s *MapEditorScene) drawControlBar(screen *ebiten.Image, fm *render.FontMan
 
 	// ── Dirty indicator (center) ──
 	if s.dirty {
-		fm.DrawCenteredText(screen, "* unsaved", sw/2, barY+14, theme.FontSM,
+		fm.DrawCenteredText(screen, "* 未保存", sw/2, barY+14, theme.FontSM,
 			color.RGBA{R: 251, G: 191, B: 36, A: 220})
 	}
 
@@ -765,7 +765,7 @@ func (s *MapEditorScene) drawControlBar(screen *ebiten.Image, fm *render.FontMan
 			txtClr = theme.TextBody
 		}
 		draw.RoundRect(screen, bx, by, 100, 28, 10, btnClr)
-		fm.DrawCenteredText(screen, "Save ^S", float64(bx)+50, float64(by)+7, theme.FontSM, txtClr)
+		fm.DrawCenteredText(screen, "保存 ^S", float64(bx)+50, float64(by)+7, theme.FontSM, txtClr)
 	}
 
 	// ── Scroll indicator (right of slots, if scrollable) ──

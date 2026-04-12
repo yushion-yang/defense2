@@ -1,0 +1,155 @@
+{
+  "id": "控制效果_高强度",
+  "name": "控制效果 高强度",
+  "description": "4 towers, 5 enemies on map_test_large",
+  "mapID": "map_test_large",
+  "gold": 99999,
+  "lives": 999,
+  "waves": 99,
+  "enemyFilter": "dummy",
+  "manualWave": false,
+  "towers": [
+    {
+      "row": 4,
+      "col": 10,
+      "key": "basic",
+      "abilitySlots": [
+        "",
+        "slowDuration",
+        "",
+        "",
+        "",
+        ""
+      ],
+      "damageTier": "S",
+      "speedTier": "S",
+      "rangeTier": "B",
+      "baseDamage": 20,
+      "potentialDamage": 5,
+      "baseSpeed": 0.8,
+      "potentialSpeed": 0.07,
+      "baseRange": 130,
+      "potentialRange": 10,
+      "specialty": 1,
+      "strength": 900
+    },
+    {
+      "row": 8,
+      "col": 10,
+      "key": "basic",
+      "abilitySlots": [
+        "",
+        "stunChance",
+        "",
+        "",
+        "",
+        ""
+      ],
+      "damageTier": "S",
+      "speedTier": "B",
+      "rangeTier": "B",
+      "baseDamage": 20,
+      "potentialDamage": 5,
+      "baseSpeed": 0.6,
+      "potentialSpeed": 0.07,
+      "baseRange": 130,
+      "potentialRange": 12,
+      "specialty": 2,
+      "strength": 900
+    },
+    {
+      "row": 8,
+      "col": 18,
+      "key": "basic",
+      "abilitySlots": [
+        "",
+        "stunDuration",
+        "",
+        "",
+        "",
+        ""
+      ],
+      "damageTier": "D",
+      "speedTier": "S",
+      "rangeTier": "S",
+      "baseDamage": 5,
+      "potentialDamage": 12,
+      "baseSpeed": 0.8,
+      "potentialSpeed": 0.05,
+      "baseRange": 150,
+      "potentialRange": 7,
+      "strength": 900
+    },
+    {
+      "row": 4,
+      "col": 18,
+      "key": "basic",
+      "abilitySlots": [
+        "",
+        "slowPower",
+        "",
+        "",
+        "",
+        ""
+      ],
+      "damageTier": "S",
+      "speedTier": "S",
+      "rangeTier": "S",
+      "baseDamage": 20,
+      "potentialDamage": 5,
+      "baseSpeed": 0.8,
+      "potentialSpeed": 0.07,
+      "baseRange": 150,
+      "potentialRange": 7,
+      "specialty": 1,
+      "strength": 900
+    }
+  ],
+  "enemies": [
+    {
+      "archetype": "dummy",
+      "x": 530.5,
+      "y": 183.5,
+      "pathIndex": 0,
+      "hp": 9991800,
+      "maxHP": 10000000,
+      "isDummy": true
+    },
+    {
+      "archetype": "dummy",
+      "x": 531,
+      "y": 63,
+      "pathIndex": 0,
+      "hp": 10000000,
+      "maxHP": 10000000,
+      "isDummy": true
+    },
+    {
+      "archetype": "dummy",
+      "x": 805,
+      "y": 173.5,
+      "pathIndex": 0,
+      "hp": 9991830,
+      "maxHP": 10000000,
+      "isDummy": true
+    },
+    {
+      "archetype": "dummy",
+      "x": 492.5,
+      "y": 333,
+      "pathIndex": 0,
+      "hp": 9993170,
+      "maxHP": 10000000,
+      "isDummy": true
+    },
+    {
+      "archetype": "dummy",
+      "x": 816,
+      "y": 349,
+      "pathIndex": 0,
+      "hp": 9989117,
+      "maxHP": 10000000,
+      "isDummy": true
+    }
+  ]
+}

@@ -80,7 +80,7 @@ func DrawSpawnMenu(screen *ebiten.Image, d SpawnMenuData) {
 	fm.DrawCenteredBoldText(screen, "选择敌人类型", float64(panelX)+float64(panelW)/2, float64(panelY)+float64(spawnPad), theme.FontLG, color.White)
 
 	// 右上角关闭提示
-	fm.DrawRightText(screen, "Esc 关闭", float64(panelX)+float64(panelW)-float64(spawnPad), float64(panelY)+float64(spawnPad)+2, theme.FontXS, color.RGBA{R: 160, G: 175, B: 200, A: 220})
+	fm.DrawRightText(screen, "按Esc关闭", float64(panelX)+float64(panelW)-float64(spawnPad), float64(panelY)+float64(spawnPad)+2, theme.FontXS, color.RGBA{R: 160, G: 175, B: 200, A: 220})
 
 	// 卡片网格
 	cardNormal := color.RGBA{R: 25, G: 35, B: 58, A: 240}

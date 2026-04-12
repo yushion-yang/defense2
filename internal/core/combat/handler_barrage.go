@@ -16,6 +16,7 @@ const (
 	barrageDefaultDmgRatio   = 0.5  // 默认每弹伤害比例
 	barrageDefaultBurstDelay = 0.08 // 默认每弹间隔（秒）
 	barrageFireAnimDuration  = 0.15 // 每弹开火动画时长
+	barrageMaxBurstsPerFrame = 10   // 单帧最大连射轮数（防止极端攻速卡死）
 )
 
 // BarrageHandler 连射攻击方式。
@@ -108,7 +109,36 @@ func (h *BarrageHandler) Tick(t *tower.Tower, ctx *AttackContext) {
 		}
 	}
 
-	// 进入连射状态（首弹立即发射）
+	// 超高攻速追赶：冷却间隔 < dt 时，一帧内批量发射多轮 burst。
+	shotInterval := 1.0 / t.AttackSpeed
+	if shotInterval > 0 && -t.FireTimer > shotInterval {
+		extraBursts := int(-t.FireTimer / shotInterval)
+		if extraBursts > barrageMaxBurstsPerFrame-1 {
+			extraBursts = barrageMaxBurstsPerFrame - 1
+		}
+		totalBursts := 1 + extraBursts
+		damageRatio, _ := barrageParams()
+		dmg := t.Damage * damageRatio
+		bal := config.GlobalBalance().Combat
+		speed := t.ProjectileSpeed
+		if speed <= 0 {
+			speed = bal.DefaultProjectileSpeed
+		}
+		t.Angle = math.Atan2(target.Y-t.Y, target.X-t.X)
+		for b := 0; b < totalBursts; b++ {
+			for i := 0; i < bullets; i++ {
+				ctx.Projectiles.Fire(t.X, t.Y, target.X, target.Y, dmg, speed, bal.DefaultProjectileRadius, target, t.InstanceKey)
+			}
+		}
+		t.FireTimer += float64(totalBursts) * shotInterval
+		t.FireAnim = barrageFireAnimDuration
+		if ctx.OnFire != nil {
+			ctx.OnFire(t, ctx.Style)
+		}
+		return
+	}
+
+	// 正常攻速：进入逐帧展开的连射状态
 	_, burstDelay := barrageParams()
 	t.BarrageBurst = bullets
 	t.BarrageTarget = target
