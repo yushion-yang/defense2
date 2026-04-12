@@ -82,6 +82,44 @@ func GenerateTestPlan() []TestCase {
 	// 11. 边界测试 (4)
 	cases = append(cases, generateEdgeCases()...)
 
+	// 12. 最强玩法全地图通关 (40 = 8地图×5风格)
+	cases = append(cases, generateChampionClear()...)
+
+	// 13. 困难模式通关 (3)
+	cases = append(cases, generateHardModeClear()...)
+
+	return cases
+}
+
+// generateChampionClear 最强玩法全地图通关测试。
+func generateChampionClear() []TestCase {
+	var cases []TestCase
+	for _, bs := range CampaignClearScenarios() {
+		cases = append(cases, TestCase{
+			ID:         bs.ID,
+			MapID:      bs.MapID,
+			Difficulty: bs.Difficulty,
+			Warden:     bs.Warden,
+			Strategy:   bs.Strategy,
+			Assertions: bs.Assertions,
+		})
+	}
+	return cases
+}
+
+// generateHardModeClear 困难模式核心地图通关。
+func generateHardModeClear() []TestCase {
+	var cases []TestCase
+	for _, bs := range HardModeClearScenarios() {
+		cases = append(cases, TestCase{
+			ID:         bs.ID,
+			MapID:      bs.MapID,
+			Difficulty: bs.Difficulty,
+			Warden:     bs.Warden,
+			Strategy:   bs.Strategy,
+			Assertions: bs.Assertions,
+		})
+	}
 	return cases
 }
 

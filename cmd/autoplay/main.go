@@ -397,6 +397,19 @@ func restoreStrategy(cfg sessionConfig) autoplay.Strategy {
 			log.Fatalf("create LLM strategy: %v", err)
 		}
 		return s
+	case len(name) > 9 && name[:9] == "champion_":
+		styleMap := map[string]autoplay.ChampionStyle{
+			"champion_balanced": autoplay.StyleBalanced,
+			"champion_elite":    autoplay.StyleElite,
+			"champion_swarm":    autoplay.StyleSwarm,
+			"champion_cc":       autoplay.StyleCC,
+			"champion_dps":      autoplay.StyleDPS,
+		}
+		style := autoplay.StyleBalanced
+		if s, ok := styleMap[name]; ok {
+			style = s
+		}
+		return autoplay.NewChampionStrategy(style, cfg.Warden)
 	case len(name) > 6 && name[:6] == "focus_":
 		return autoplay.NewFocusStrategy(cfg.TowerKey)
 	case len(name) > 9 && name[:9] == "scenario_":
