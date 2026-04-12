@@ -125,6 +125,18 @@ func (bl *BuffList) Get(id string) (Buff, bool) {
 	return result, true
 }
 
+// GetPtr returns a pointer to the first active buff with the given ID.
+// Returns nil if not found. The pointer is valid until the next Add/Remove/Tick call.
+// Use sparingly — primarily for spawn-time adjustments before the game loop starts.
+func (bl *BuffList) GetPtr(id string) *Buff {
+	for i := range bl.active {
+		if bl.active[i].ID == id {
+			return &bl.active[i]
+		}
+	}
+	return nil
+}
+
 // GetAll returns all active buffs with the given ID (useful for IndependentPerSource).
 func (bl *BuffList) GetAll(id string) []Buff {
 	var result []Buff

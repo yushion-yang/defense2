@@ -129,11 +129,19 @@ func (b *EnvoyBehavior) Tick(w *warden.Warden, ctx *warden.TickContext) {
 		s.BuffExpiry = 0
 	}
 
-	// 5. buff 过期追踪（用于渲染）
+	// 5. 每帧重写临时强度（ClearTransient 每帧清空 Temp，需要重建）
 	if s.BuffExpiry > 0 {
 		s.BuffExpiry -= dt
 		if s.BuffExpiry <= 0 {
+			// buff 到期：清引用，不再重写 Temp
 			s.BuffedTower = nil
+		} else if s.BuffedTower != nil && s.BuffedTower.Active && s.BuffedTower.Strength != nil {
+			// buff 存活期间：每帧重写 SetTemp
+			tempBonus := w.PerceivedStrength - s.BuffThreshold
+			if tempBonus > 0 {
+				key := fmt.Sprintf("envoy_buff_%d", w.ID)
+				s.BuffedTower.Strength.SetTemp(key, tempBonus)
+			}
 		}
 	}
 

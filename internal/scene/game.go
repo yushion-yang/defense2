@@ -272,10 +272,11 @@ func (g *Game) Update() error {
 		if inpututil.IsMouseButtonJustPressed(ebiten.MouseButtonLeft) {
 			mx, my := draw.CursorPos()
 			if hud.MascotHitTest(mx, my) {
-				if g.mascot.HasActiveDialog() {
-					g.mascot.ClickAdvance()
-				} else if g.mascot.AbilityReady() {
+				if g.mascot.IsAbilityHintActive() {
+					// Hint 气泡显示时点击 → 触发技能
 					g.mascot.RequestHelp()
+				} else if g.mascot.HasActiveDialog() {
+					g.mascot.ClickAdvance()
 				} else {
 					g.mascot.Trigger("mascot_tap")
 				}

@@ -34,8 +34,8 @@ type SpawnerBoss struct {
 	RadiusScale      float64 `json:"radiusScale"`
 	EntranceDelay    float64 `json:"entranceDelay"`
 	RewardMultiplier float64 `json:"rewardMultiplier"`
-	PercentHpCap     float64 `json:"percentHpCap"`   // %HP 伤害上限（原 combat.bossPercentHpCap）
-	DyingDuration    float64 `json:"dyingDuration"`   // 死亡动画时长（原 dying.bossDuration）
+	PercentHpCap     float64 `json:"percentHpCap"`  // %HP 伤害上限（原 combat.bossPercentHpCap）
+	DyingDuration    float64 `json:"dyingDuration"` // 死亡动画时长（原 dying.bossDuration）
 }
 
 // WaveBuffTier 波次 buff 档位。
@@ -52,6 +52,19 @@ type WaveBuffConfig struct {
 	Tiers  []WaveBuffTier `json:"tiers"`
 }
 
+// SquadTemplate 战术小队模板——一组有配合的敌人组合。
+type SquadTemplate struct {
+	ID      string   `json:"id"`      // 模板唯一标识
+	MinWave int      `json:"minWave"` // 最低波次要求
+	Members []string `json:"members"` // 成员原型列表（按出场顺序）
+}
+
+// SquadsConfig 小队系统配置。
+type SquadsConfig struct {
+	Enabled   bool            `json:"enabled"`   // 是否启用小队系统
+	Templates []SquadTemplate `json:"templates"` // 所有可用小队模板
+}
+
 // SpawnerConfig 出怪系统完整配置。
 type SpawnerConfig struct {
 	Scaling      SpawnerScaling    `json:"scaling"`
@@ -59,6 +72,7 @@ type SpawnerConfig struct {
 	Boss         SpawnerBoss       `json:"boss"`
 	Compositions []WaveComposition `json:"compositions"`
 	WaveBuffs    WaveBuffConfig    `json:"waveBuffs"`
+	Squads       SquadsConfig      `json:"squads"`
 }
 
 // EffectiveSpawnInterval 返回指定波次的出怪间隔（含衰减）。

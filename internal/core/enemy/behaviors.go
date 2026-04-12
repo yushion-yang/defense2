@@ -24,11 +24,17 @@ type HealEvent struct {
 	Target   *Enemy  // 被治疗者指针（避免外部按 ID 遍历查找）
 }
 
+// RegenEvent 回血事件记录（用于渲染回血浮字）。
+type RegenEvent struct {
+	X, Y     float64 // 敌人坐标
+	Restored float64 // 本帧实际回复量
+}
+
 // BehaviorEvents 一帧内行为系统产生的事件（供外部播放音效/VFX）。
 type BehaviorEvents struct {
 	Heals     []HealEvent   // 治疗事件
 	Reveals   []RevealEvent // 隐身破解事件
-	Regens    int           // 本帧有回血的敌人数
+	Regens    []RegenEvent  // 回血事件（含坐标和回复量）
 	Berserks  int           // 本帧刚触发狂暴的敌人数
 	HasBuffer bool          // 本帧是否有活跃的旗手 buffer
 }
@@ -57,21 +63,27 @@ func TickBehaviors(pool *Pool, dt float64) BehaviorEvents {
 
 		// 自然回血（从 BuffList 读取 regen Value）
 		if b, ok := e.Buffs.Get(buff.IDRegen); ok && b.Value > 0 {
-			if TickRegeneration(e, b.Value, dt) > 0 {
-				events.Regens++
+			if healed := TickRegeneration(e, b.Value, dt); healed > 0 {
+				events.Regens = append(events.Regens, RegenEvent{X: e.X, Y: e.Y, Restored: healed})
 			}
 		}
 
-		switch e.Behavior {
-		case BehaviorHealer:
+		// 治疗光环（原型 healer 或波次 buff healAura 均可触发）
+		if e.HasHealAura() {
 			tickHealer(e, pool, dt, &events)
-		case BehaviorStealth:
-			tickStealth(e, dt, &events)
-		case BehaviorBuffer:
+		}
+
+		// 加速光环（原型 buffer 或波次 buff speedAura 均可触发）
+		if e.HasBufferAura() {
 			tickBuffer(e, pool)
-			if e.HasBufferAura() && !e.AbilitySilenced {
+			if !e.AbilitySilenced {
 				events.HasBuffer = true
 			}
+		}
+
+		// 隐身（仅原型 stealth，不通过波次 buff 分配）
+		if e.Behavior == BehaviorStealth {
+			tickStealth(e, dt, &events)
 		}
 		// splitter/deathSpawn 在死亡时触发，不在此处 tick
 

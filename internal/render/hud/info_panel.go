@@ -24,7 +24,7 @@ import (
 // "scaled" (custom color), "total" (body color).
 type AbilitySegment struct {
 	Text  string
-	Kind  string     // "text", "bold", "base", "scaled", "total"
+	Kind  string      // "text", "bold", "base", "scaled", "total"
 	Color color.Color // used when Kind == "scaled"
 }
 
@@ -50,7 +50,7 @@ type InfoPanelVM struct {
 
 	// Title row
 	Label         string
-	StrengthText  string     // e.g. "强度120 ↑(永+20)" — empty if no strength data
+	StrengthText  string      // e.g. "强度120 ↑(永+20)" — empty if no strength data
 	StrengthColor color.Color // nil-safe: ignored when StrengthText == ""
 
 	// Attribute row (segment-based for colored rendering)
@@ -80,8 +80,11 @@ type InfoPanelVM struct {
 	Gold          int  // 当前金币（用于判断是否买得起）
 
 	// Buttons
-	UpgradeButtonText string // e.g. "强度+10 $10"
-	SellButtonText    string // e.g. "卖60"
+	UpgradeButtonText     string // e.g. "强度+10 $10"
+	BulkUpgradeButtonText string // e.g. "强度+50 $50"
+	SellButtonText        string // e.g. "卖60"
+	CanAffordUpgrade      bool   // true if player can afford single upgrade
+	CanAffordBulkUpgrade  bool   // true if player can afford bulk upgrade
 }
 
 // SlotVM 能力槽展示数据。
@@ -99,12 +102,13 @@ type SlotVM struct {
 // ---------------------------------------------------------------------------
 
 var (
-	lastUpgradeRect      ui.Rect
-	lastSellRect         ui.Rect
-	lastAbilityBtnRect   ui.Rect   // "选择能力(N)" 按钮
-	lastUnlockBtnRect   ui.Rect   // "解锁能力 $XX" 按钮
-	lastPanelRect        ui.Rect   // entire info panel bounding box
-	lastPanelVisible     bool
+	lastUpgradeRect     ui.Rect
+	lastBulkUpgradeRect ui.Rect
+	lastSellRect        ui.Rect
+	lastAbilityBtnRect  ui.Rect // "选择能力(N)" 按钮
+	lastUnlockBtnRect   ui.Rect // "解锁能力 $XX" 按钮
+	lastPanelRect       ui.Rect // entire info panel bounding box
+	lastPanelVisible    bool
 )
 
 // HitTestAbilityBtn 检测点击是否在"选择能力(N)"按钮上。
@@ -192,7 +196,7 @@ func DrawInfoPanel(screen *ebiten.Image, vm InfoPanelVM) {
 				labelClr := theme.TextMuted
 				prefix := ""
 				if ar.specialty {
-					prefix = "\u2605" // ★
+					prefix = "\u2605"                                    // ★
 					labelClr = color.RGBA{R: 255, G: 200, B: 50, A: 255} // gold
 				}
 				fm.DrawText(screen, prefix+ar.label, rx, ry, theme.FontSM, labelClr)
@@ -338,13 +342,24 @@ func DrawInfoPanel(screen *ebiten.Image, vm InfoPanelVM) {
 	// 操作按钮：强度+10 / 卖出
 	panel.AddSpace(detailGap)
 	lastUpgradeRect = ui.Rect{}
+	lastBulkUpgradeRect = ui.Rect{}
 	lastSellRect = ui.Rect{}
 
 	panel.AddRow(btnH, func(screen *ebiten.Image, x, y float64, w float64) {
 		area := ui.Rect{X: float32(x), Y: float32(y), W: float32(w), H: btnH}
 
+		upgradeClr := theme.ToneDisabled
+		if vm.CanAffordUpgrade {
+			upgradeClr = theme.TonePrimary
+		}
+		bulkClr := theme.ToneDisabled
+		if vm.CanAffordBulkUpgrade {
+			bulkClr = theme.TonePrimary
+		}
+
 		result := ui.DrawButtonRow(screen, area, []ui.ButtonRowItem{
-			{Label: vm.UpgradeButtonText, Color: theme.TonePrimary},
+			{Label: vm.UpgradeButtonText, Color: upgradeClr},
+			{Label: vm.BulkUpgradeButtonText, Color: bulkClr},
 			{Label: vm.SellButtonText, Color: theme.BtnDanger},
 		}, ui.ButtonRowStyle{
 			Height:   btnH,
@@ -352,9 +367,10 @@ func DrawInfoPanel(screen *ebiten.Image, vm InfoPanelVM) {
 			Radius:   float32(theme.ButtonRadius),
 			FontSize: theme.FontSM,
 		})
-		if len(result.Rects) == 2 {
+		if len(result.Rects) == 3 {
 			lastUpgradeRect = result.Rects[0]
-			lastSellRect = result.Rects[1]
+			lastBulkUpgradeRect = result.Rects[1]
+			lastSellRect = result.Rects[2]
 		}
 	})
 
@@ -469,6 +485,14 @@ func InfoPanelUpgradeHitTest(px, py float32, visible bool) bool {
 	return lastUpgradeRect.Contains(float64(px), float64(py))
 }
 
+// InfoPanelBulkUpgradeHitTest 检查是否点击了大额购买强度按钮。
+func InfoPanelBulkUpgradeHitTest(px, py float32, visible bool) bool {
+	if !visible || !lastPanelVisible {
+		return false
+	}
+	return lastBulkUpgradeRect.Contains(float64(px), float64(py))
+}
+
 // InfoPanelSellHitTest 检查是否点击了卖出按钮。
 func InfoPanelSellHitTest(px, py float32, visible bool) bool {
 	if !visible || !lastPanelVisible {
@@ -476,4 +500,3 @@ func InfoPanelSellHitTest(px, py float32, visible bool) bool {
 	}
 	return lastSellRect.Contains(float64(px), float64(py))
 }
-

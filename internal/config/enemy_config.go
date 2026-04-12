@@ -11,15 +11,15 @@ import (
 
 // EnemyArchetype 敌人原型模板（JSON 配置）。
 type EnemyArchetype struct {
-	ID           string  `json:"id"`           // 原型标识
-	Label        string  `json:"label"`        // 显示名称
-	Color        string  `json:"color"`        // 显示颜色（hex）
-	Sprite       string  `json:"sprite"`       // 精灵目录名（assets/enemies/sprites/{sprite}/）
-	HPScale      float64 `json:"hpScale"`      // 血量倍率（相对基准值）
-	SpeedScale   float64 `json:"speedScale"`   // 速度倍率
-	Radius       float64 `json:"radius"`       // 碰撞半径（像素绝对值）
-	RewardScale  float64 `json:"rewardScale"`  // 击杀奖励倍率
-	Boss         bool    `json:"boss"`         // 是否为 Boss
+	ID          string  `json:"id"`          // 原型标识
+	Label       string  `json:"label"`       // 显示名称
+	Color       string  `json:"color"`       // 显示颜色（hex）
+	Sprite      string  `json:"sprite"`      // 精灵目录名（assets/enemies/sprites/{sprite}/）
+	HPScale     float64 `json:"hpScale"`     // 血量倍率（相对基准值）
+	SpeedScale  float64 `json:"speedScale"`  // 速度倍率
+	Radius      float64 `json:"radius"`      // 碰撞半径（像素绝对值）
+	RewardScale float64 `json:"rewardScale"` // 击杀奖励倍率
+	Boss        bool    `json:"boss"`        // 是否为 Boss
 
 	// 能力装配（能力驱动行为，取代旧的硬编码字段）
 	// 支持两种写法：字符串（用默认参数）或对象（覆盖参数）
@@ -30,25 +30,26 @@ type EnemyArchetype struct {
 
 // EnemyAbilityRef 怪物装配的能力引用（可覆盖默认参数）。
 type EnemyAbilityRef struct {
-	Type  string  // 能力类型标识
-	Base  float64 // 覆盖 base（0=用默认）
-	Param float64 // 覆盖 param（0=用默认）
+	Type      string  // 能力类型标识
+	Base      float64 // 覆盖 base（0=用默认）
+	Potential float64 // 覆盖 potential（0=用默认）
+	Param     float64 // 覆盖 param（0=用默认）
 }
 
 // EnemyAbilityDef 怪物能力定义（从 abilities.json 加载）。
 type EnemyAbilityDef struct {
-	Type         string  `json:"type"`
-	Label        string  `json:"label"`
-	Icon         string  `json:"icon"`
-	Category     string  `json:"category"`
-	ScaleDim     string  `json:"scaleDim"`
-	Base         float64 `json:"base"`
-	Potential    float64 `json:"potential"`
-	Param        float64 `json:"param"`
-	ParamDim     string  `json:"paramDim"`
-	Description  string  `json:"description"`
-	Visual       string  `json:"visual"`       // 视觉效果描述
-	Silenceable  bool    `json:"silenceable"`  // 是否可被沉默禁用
+	Type        string  `json:"type"`
+	Label       string  `json:"label"`
+	Icon        string  `json:"icon"`
+	Category    string  `json:"category"`
+	ScaleDim    string  `json:"scaleDim"`
+	Base        float64 `json:"base"`
+	Potential   float64 `json:"potential"`
+	Param       float64 `json:"param"`
+	ParamDim    string  `json:"paramDim"`
+	Description string  `json:"description"`
+	Visual      string  `json:"visual"`      // 视觉效果描述
+	Silenceable bool    `json:"silenceable"` // 是否可被沉默禁用
 }
 
 // LoadEnemyArchetypes 加载所有敌人原型。
@@ -138,12 +139,13 @@ func parseAbilityRef(raw json.RawMessage) EnemyAbilityRef {
 	}
 	// 再尝试对象
 	var obj struct {
-		Type  string  `json:"type"`
-		Base  float64 `json:"base"`
-		Param float64 `json:"param"`
+		Type      string  `json:"type"`
+		Base      float64 `json:"base"`
+		Potential float64 `json:"potential"`
+		Param     float64 `json:"param"`
 	}
 	if json.Unmarshal(raw, &obj) == nil && obj.Type != "" {
-		return EnemyAbilityRef{Type: obj.Type, Base: obj.Base, Param: obj.Param}
+		return EnemyAbilityRef{Type: obj.Type, Base: obj.Base, Potential: obj.Potential, Param: obj.Param}
 	}
 	return EnemyAbilityRef{}
 }
@@ -190,8 +192,14 @@ func GlobalEnemyAbilityTable() map[string]*EnemyAbilityDef {
 	return enemyAbilityTable
 }
 
-// ResolveEnemyAbility 解析能力引用，合并默认参数和覆盖参数。
+// ResolveEnemyAbility 解析能力引用，合并默认参数和覆盖参数（wave=0，不应用 potential）。
 func ResolveEnemyAbility(ref EnemyAbilityRef) *EnemyAbilityDef {
+	return ResolveEnemyAbilityAtWave(ref, 0)
+}
+
+// ResolveEnemyAbilityAtWave 解析能力引用并应用波次缩放。
+// effectiveBase = base + potential * wave。potential 优先取 ref 覆盖值，回退到 def 默认值。
+func ResolveEnemyAbilityAtWave(ref EnemyAbilityRef, wave int) *EnemyAbilityDef {
 	table := GlobalEnemyAbilityTable()
 	if table == nil {
 		return nil
@@ -205,8 +213,31 @@ func ResolveEnemyAbility(ref EnemyAbilityRef) *EnemyAbilityDef {
 	if ref.Base != 0 {
 		resolved.Base = ref.Base
 	}
+	if ref.Potential != 0 {
+		resolved.Potential = ref.Potential
+	}
 	if ref.Param != 0 {
 		resolved.Param = ref.Param
 	}
+	// 应用波次缩放：effectiveBase = base + potential * wave
+	if wave > 0 && resolved.Potential != 0 {
+		resolved.Base += resolved.Potential * float64(wave)
+	}
 	return &resolved
+}
+
+// ResolveEffectivePotential 返回能力引用的有效 potential 值（ref 覆盖 > def 默认）。
+func ResolveEffectivePotential(ref EnemyAbilityRef) float64 {
+	if ref.Potential != 0 {
+		return ref.Potential
+	}
+	table := GlobalEnemyAbilityTable()
+	if table == nil {
+		return 0
+	}
+	def, ok := table[ref.Type]
+	if !ok {
+		return 0
+	}
+	return def.Potential
 }

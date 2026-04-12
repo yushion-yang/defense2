@@ -26,6 +26,11 @@ func LoadAllDialogs(fs AssetReader) ([]Dialog, error) {
 		"config/mascot/dialogs-stage.json",
 		"config/mascot/dialogs-select.json",
 		"config/mascot/dialogs-common.json",
+		"config/mascot/dialogs-idle.json",
+		"config/mascot/dialogs-idle-2.json",
+		"config/mascot/dialogs-idle-3.json",
+		"config/mascot/dialogs-tap.json",
+		"config/mascot/dialogs-meta.json",
 	}
 	var all []Dialog
 	for _, f := range files {

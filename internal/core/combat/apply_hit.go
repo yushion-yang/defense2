@@ -31,7 +31,6 @@ var blockableStyles = map[string]bool{
 	tower.AbilityBounce:  true,
 	tower.AbilityScatter: true,
 	tower.AbilityRadial:  true,
-	tower.AbilityBarrage: true,
 	"fireball":           true, // 战灵火球
 }
 

@@ -2,7 +2,7 @@
   {
     "id": "idle_tip_1",
     "scene": "*",
-    "trigger": "idle_timeout",
+    "trigger": "idle_chatter",
     "lines": [
       {"text": "有什么不明白的，点我就好~", "expression": "talk", "autoAdvance": 4}
     ],
@@ -167,6 +167,651 @@
     "priority": 1
   },
   {
+    "id": "idle_chatter_6",
+    "scene": "*",
+    "trigger": "idle_chatter",
+    "lines": [
+      {"text": "你说...这些敌人为什么要排着队走过来呢？", "expression": "idle", "autoAdvance": 5},
+      {"text": "它们就不能绕路吗？想不通。", "expression": "talk", "autoAdvance": 4}
+    ],
+    "once": false,
+    "priority": 1
+  },
+  {
+    "id": "idle_chatter_7",
+    "scene": "*",
+    "trigger": "idle_chatter",
+    "lines": [
+      {"text": "有时候我觉得，防守也是一种哲学。", "expression": "idle", "autoAdvance": 5},
+      {"text": "在对的地方放对的东西，然后静静等待。", "expression": "talk", "autoAdvance": 4}
+    ],
+    "once": false,
+    "priority": 1
+  },
+  {
+    "id": "idle_chatter_8",
+    "scene": "*",
+    "trigger": "idle_chatter",
+    "lines": [
+      {"text": "今天天气怎么样？", "expression": "idle", "autoAdvance": 3},
+      {"text": "...啊，我只能看到这个战场。", "expression": "talk", "autoAdvance": 4}
+    ],
+    "once": false,
+    "priority": 1
+  },
+  {
+    "id": "idle_chatter_9",
+    "scene": "*",
+    "trigger": "idle_chatter",
+    "lines": [
+      {"text": "塔放在路口能打到更多敌人，这是基本功哦。", "expression": "talk", "autoAdvance": 4}
+    ],
+    "once": false,
+    "priority": 1
+  },
+  {
+    "id": "idle_chatter_10",
+    "scene": "*",
+    "trigger": "idle_chatter",
+    "lines": [
+      {"text": "你有没有想过...我不说话的时候在想什么？", "expression": "idle", "autoAdvance": 5},
+      {"text": "答案是在想下次说什么。", "expression": "happy", "autoAdvance": 4}
+    ],
+    "once": false,
+    "priority": 1
+  },
+  {
+    "id": "idle_chatter_11",
+    "scene": "*",
+    "trigger": "idle_chatter",
+    "lines": [
+      {"text": "听说厉害的指挥官都喜欢少建塔、多升级。", "expression": "talk", "autoAdvance": 5},
+      {"text": "质量比数量重要~", "expression": "happy", "autoAdvance": 3}
+    ],
+    "once": false,
+    "priority": 1
+  },
+  {
+    "id": "idle_chatter_12",
+    "scene": "*",
+    "trigger": "idle_chatter",
+    "lines": [
+      {"text": "如果现实生活也能「暂停」就好了...", "expression": "idle", "autoAdvance": 4},
+      {"text": "考试之前暂停复习一百年！", "expression": "happy", "autoAdvance": 4}
+    ],
+    "once": false,
+    "priority": 1
+  },
+  {
+    "id": "idle_chatter_13",
+    "scene": "*",
+    "trigger": "idle_chatter",
+    "lines": [
+      {"text": "每座塔都有自己的个性，就像每个人一样。", "expression": "talk", "autoAdvance": 5}
+    ],
+    "once": false,
+    "priority": 1
+  },
+  {
+    "id": "idle_chatter_14",
+    "scene": "*",
+    "trigger": "idle_chatter",
+    "lines": [
+      {"text": "你知道吗，我其实很怕Boss...", "expression": "idle", "autoAdvance": 4},
+      {"text": "但有你在我就不怕了！大概吧。", "expression": "happy", "autoAdvance": 4}
+    ],
+    "once": false,
+    "priority": 1
+  },
+  {
+    "id": "idle_chatter_15",
+    "scene": "*",
+    "trigger": "idle_chatter",
+    "lines": [
+      {"text": "人生就像塔防——", "expression": "idle", "autoAdvance": 3},
+      {"text": "你永远不知道下一波会来什么。", "expression": "talk", "autoAdvance": 4},
+      {"text": "但只要做好准备，就没什么好怕的。", "expression": "happy", "autoAdvance": 4}
+    ],
+    "once": false,
+    "priority": 1
+  },
+  {
+    "id": "idle_chatter_16",
+    "scene": "*",
+    "trigger": "idle_chatter",
+    "lines": [
+      {"text": "散射攻击打群怪超好用，试过吗？", "expression": "talk", "autoAdvance": 4}
+    ],
+    "once": false,
+    "priority": 1
+  },
+  {
+    "id": "idle_chatter_17",
+    "scene": "*",
+    "trigger": "idle_chatter",
+    "lines": [
+      {"text": "好安静...敌人是不是迷路了？", "expression": "idle", "autoAdvance": 4}
+    ],
+    "once": false,
+    "priority": 1
+  },
+  {
+    "id": "idle_chatter_18",
+    "scene": "*",
+    "trigger": "idle_chatter",
+    "lines": [
+      {"text": "选能力的时候别光看颜色。", "expression": "talk", "autoAdvance": 4},
+      {"text": "有些绿色能力搭配好了比紫色还强！", "expression": "happy", "autoAdvance": 4}
+    ],
+    "once": false,
+    "priority": 1
+  },
+  {
+    "id": "idle_chatter_19",
+    "scene": "*",
+    "trigger": "idle_chatter",
+    "lines": [
+      {"text": "我刚在想...如果我也能变成一座塔...", "expression": "idle", "autoAdvance": 5},
+      {"text": "算了，站着不动太无聊了。", "expression": "talk", "autoAdvance": 4}
+    ],
+    "once": false,
+    "priority": 1
+  },
+  {
+    "id": "idle_chatter_20",
+    "scene": "*",
+    "trigger": "idle_chatter",
+    "lines": [
+      {"text": "你觉得先存钱还是先建塔？", "expression": "idle", "autoAdvance": 4},
+      {"text": "我觉得都行，关键是要有计划。", "expression": "talk", "autoAdvance": 4}
+    ],
+    "once": false,
+    "priority": 1
+  },
+  {
+    "id": "idle_chatter_21",
+    "scene": "*",
+    "trigger": "idle_chatter",
+    "lines": [
+      {"text": "隐身的敌人最讨厌了，塔还打不到它们...", "expression": "talk", "autoAdvance": 5}
+    ],
+    "once": false,
+    "priority": 1
+  },
+  {
+    "id": "idle_chatter_22",
+    "scene": "*",
+    "trigger": "idle_chatter",
+    "lines": [
+      {"text": "我偷偷告诉你，开发这个游戏的人...", "expression": "idle", "autoAdvance": 4},
+      {"text": "据说经常通宵。真是辛苦呢。", "expression": "talk", "autoAdvance": 4}
+    ],
+    "once": false,
+    "priority": 1
+  },
+  {
+    "id": "idle_chatter_23",
+    "scene": "*",
+    "trigger": "idle_chatter",
+    "lines": [
+      {"text": "失败了也没关系，每次都能学到新东西。", "expression": "talk", "autoAdvance": 5},
+      {"text": "下次一定行！", "expression": "happy", "autoAdvance": 3}
+    ],
+    "once": false,
+    "priority": 1
+  },
+  {
+    "id": "idle_chatter_24",
+    "scene": "*",
+    "trigger": "idle_chatter",
+    "lines": [
+      {"text": "有人说最好的防守就是进攻。", "expression": "talk", "autoAdvance": 4},
+      {"text": "在塔防里...好像反过来才对？", "expression": "idle", "autoAdvance": 4}
+    ],
+    "once": false,
+    "priority": 1
+  },
+  {
+    "id": "idle_chatter_25",
+    "scene": "*",
+    "trigger": "idle_chatter",
+    "lines": [
+      {"text": "喝水了吗？记得补充水分哦。", "expression": "talk", "autoAdvance": 4}
+    ],
+    "once": false,
+    "priority": 1
+  },
+  {
+    "id": "idle_chatter_26",
+    "scene": "*",
+    "trigger": "idle_chatter",
+    "lines": [
+      {"text": "弹跳攻击能打到后面的敌人，适合对付长队列。", "expression": "talk", "autoAdvance": 5}
+    ],
+    "once": false,
+    "priority": 1
+  },
+  {
+    "id": "idle_chatter_27",
+    "scene": "*",
+    "trigger": "idle_chatter",
+    "lines": [
+      {"text": "你说，敌人的世界里有没有「人防」游戏？", "expression": "idle", "autoAdvance": 5},
+      {"text": "就是...建敌人来突破塔的防线那种？", "expression": "talk", "autoAdvance": 5}
+    ],
+    "once": false,
+    "priority": 1
+  },
+  {
+    "id": "idle_chatter_28",
+    "scene": "*",
+    "trigger": "idle_chatter",
+    "lines": [
+      {"text": "战灵的能力充好了别忘了用，CD不等人的。", "expression": "talk", "autoAdvance": 4}
+    ],
+    "once": false,
+    "priority": 1
+  },
+  {
+    "id": "idle_chatter_29",
+    "scene": "*",
+    "trigger": "idle_chatter",
+    "lines": [
+      {"text": "做任何事都是一样的道理：", "expression": "idle", "autoAdvance": 3},
+      {"text": "与其追求完美，不如先把眼前的事做好。", "expression": "talk", "autoAdvance": 5}
+    ],
+    "once": false,
+    "priority": 1
+  },
+  {
+    "id": "idle_chatter_30",
+    "scene": "*",
+    "trigger": "idle_chatter",
+    "lines": [
+      {"text": "分裂怪死的时候会变成小怪，要小心！", "expression": "talk", "autoAdvance": 4}
+    ],
+    "once": false,
+    "priority": 1
+  },
+  {
+    "id": "idle_chatter_31",
+    "scene": "*",
+    "trigger": "idle_chatter",
+    "lines": [
+      {"text": "我在想一个很深刻的问题...", "expression": "idle", "autoAdvance": 4},
+      {"text": "今天中午吃什么好呢？", "expression": "happy", "autoAdvance": 4}
+    ],
+    "once": false,
+    "priority": 1
+  },
+  {
+    "id": "idle_chatter_32",
+    "scene": "*",
+    "trigger": "idle_chatter",
+    "lines": [
+      {"text": "高强度的塔伤害更高，但别忽略攻速哦~", "expression": "talk", "autoAdvance": 4}
+    ],
+    "once": false,
+    "priority": 1
+  },
+  {
+    "id": "idle_chatter_33",
+    "scene": "*",
+    "trigger": "idle_chatter",
+    "lines": [
+      {"text": "旋转攻击能扫到周围所有敌人。", "expression": "talk", "autoAdvance": 4},
+      {"text": "放在路中间效果拔群！", "expression": "happy", "autoAdvance": 3}
+    ],
+    "once": false,
+    "priority": 1
+  },
+  {
+    "id": "idle_chatter_34",
+    "scene": "*",
+    "trigger": "idle_chatter",
+    "lines": [
+      {"text": "有时候什么都不做也是一种策略。", "expression": "idle", "autoAdvance": 4},
+      {"text": "比如现在，我们就在等最好的时机。", "expression": "talk", "autoAdvance": 4}
+    ],
+    "once": false,
+    "priority": 1
+  },
+  {
+    "id": "idle_chatter_35",
+    "scene": "*",
+    "trigger": "idle_chatter",
+    "lines": [
+      {"text": "你是那种会反复挑战同一关的人吗？", "expression": "idle", "autoAdvance": 4},
+      {"text": "我喜欢这种不服输的精神！", "expression": "happy", "autoAdvance": 4}
+    ],
+    "once": false,
+    "priority": 1
+  },
+  {
+    "id": "idle_chatter_36",
+    "scene": "*",
+    "trigger": "idle_chatter",
+    "lines": [
+      {"text": "也不知道什么样的阵容才是最强的...", "expression": "idle", "autoAdvance": 4},
+      {"text": "是不是已经被你发现了呢？", "expression": "talk", "autoAdvance": 4}
+    ],
+    "once": false,
+    "priority": 1
+  },
+  {
+    "id": "idle_chatter_37",
+    "scene": "*",
+    "trigger": "idle_chatter",
+    "lines": [
+      {"text": "你说，打完这关Boss之后...", "expression": "idle", "autoAdvance": 4},
+      {"text": "后面还会有什么在等着我们呢？", "expression": "talk", "autoAdvance": 4}
+    ],
+    "once": false,
+    "priority": 1
+  },
+  {
+    "id": "idle_chatter_38",
+    "scene": "*",
+    "trigger": "idle_chatter",
+    "lines": [
+      {"text": "你说，开发者自己能不能通关呀？", "expression": "idle", "autoAdvance": 4},
+      {"text": "说不定他调了半天数值，自己还没打过。", "expression": "happy", "autoAdvance": 5}
+    ],
+    "once": false,
+    "priority": 1
+  },
+  {
+    "id": "idle_chatter_39",
+    "scene": "*",
+    "trigger": "idle_chatter",
+    "lines": [
+      {"text": "有没有试过全用同一种攻击方式？", "expression": "talk", "autoAdvance": 4},
+      {"text": "还是说...混搭才是你的风格？", "expression": "idle", "autoAdvance": 4}
+    ],
+    "once": false,
+    "priority": 1
+  },
+  {
+    "id": "idle_chatter_40",
+    "scene": "*",
+    "trigger": "idle_chatter",
+    "lines": [
+      {"text": "我总觉得有些能力组合在一起会特别厉害...", "expression": "idle", "autoAdvance": 5},
+      {"text": "就差一个人去验证了——比如你？", "expression": "happy", "autoAdvance": 4}
+    ],
+    "once": false,
+    "priority": 1
+  },
+  {
+    "id": "idle_chatter_41",
+    "scene": "*",
+    "trigger": "idle_chatter",
+    "lines": [
+      {"text": "每张地图的地形都不一样。", "expression": "talk", "autoAdvance": 4},
+      {"text": "同样的阵容换张图可能就不好使了哦~", "expression": "idle", "autoAdvance": 4}
+    ],
+    "once": false,
+    "priority": 1
+  },
+  {
+    "id": "idle_chatter_42",
+    "scene": "*",
+    "trigger": "idle_chatter",
+    "lines": [
+      {"text": "你有没有想过只造一座塔就通关？", "expression": "idle", "autoAdvance": 4},
+      {"text": "把所有资源砸一座塔上...超级强化！", "expression": "surprised", "autoAdvance": 4},
+      {"text": "不知道行不行，但想想就很刺激。", "expression": "happy", "autoAdvance": 4}
+    ],
+    "once": false,
+    "priority": 1
+  },
+  {
+    "id": "idle_chatter_43",
+    "scene": "*",
+    "trigger": "idle_chatter",
+    "lines": [
+      {"text": "据说有人零损失通关了极难模式...", "expression": "talk", "autoAdvance": 4},
+      {"text": "是传说吧？还是真有这种大佬？", "expression": "surprised", "autoAdvance": 4}
+    ],
+    "once": false,
+    "priority": 1
+  },
+  {
+    "id": "idle_chatter_44",
+    "scene": "*",
+    "trigger": "idle_chatter",
+    "lines": [
+      {"text": "每种战灵的玩法完全不同呢。", "expression": "talk", "autoAdvance": 4},
+      {"text": "你最喜欢哪一个？都试过了吗？", "expression": "idle", "autoAdvance": 4}
+    ],
+    "once": false,
+    "priority": 1
+  },
+  {
+    "id": "idle_chatter_45",
+    "scene": "*",
+    "trigger": "idle_chatter",
+    "lines": [
+      {"text": "减速加高攻...还是控制加范围...", "expression": "idle", "autoAdvance": 4},
+      {"text": "搭配这种事，越想越上头！", "expression": "happy", "autoAdvance": 4}
+    ],
+    "once": false,
+    "priority": 1
+  },
+  {
+    "id": "idle_chatter_46",
+    "scene": "*",
+    "trigger": "idle_chatter",
+    "lines": [
+      {"text": "后面的关卡敌人会越来越离谱的...", "expression": "talk", "autoAdvance": 4},
+      {"text": "你准备好了吗？", "expression": "idle", "autoAdvance": 3}
+    ],
+    "once": false,
+    "priority": 1
+  },
+  {
+    "id": "idle_chatter_47",
+    "scene": "*",
+    "trigger": "idle_chatter",
+    "lines": [
+      {"text": "你发现了吗？有些敌人会给同伴加速。", "expression": "talk", "autoAdvance": 4},
+      {"text": "优先打掉它们，不然后面一大串就溜过去了！", "expression": "surprised", "autoAdvance": 5}
+    ],
+    "once": false,
+    "priority": 1
+  },
+  {
+    "id": "idle_chatter_48",
+    "scene": "*",
+    "trigger": "idle_chatter",
+    "lines": [
+      {"text": "如果你觉得太简单了...", "expression": "idle", "autoAdvance": 3},
+      {"text": "试试更高难度？我不会笑你的。", "expression": "talk", "autoAdvance": 4},
+      {"text": "...大概。", "expression": "happy", "autoAdvance": 3}
+    ],
+    "once": false,
+    "priority": 1
+  },
+  {
+    "id": "idle_chatter_49",
+    "scene": "*",
+    "trigger": "idle_chatter",
+    "lines": [
+      {"text": "治疗型敌人会给同伴恢复血量。", "expression": "talk", "autoAdvance": 4},
+      {"text": "集火它们！不然打了等于没打。", "expression": "surprised", "autoAdvance": 4}
+    ],
+    "once": false,
+    "priority": 1
+  },
+  {
+    "id": "idle_chatter_50",
+    "scene": "*",
+    "trigger": "idle_chatter",
+    "lines": [
+      {"text": "你觉得这个游戏最难的地方是什么？", "expression": "idle", "autoAdvance": 4},
+      {"text": "我觉得是...选择。", "expression": "talk", "autoAdvance": 4},
+      {"text": "建在哪，升哪座，选什么能力，全是选择。", "expression": "idle", "autoAdvance": 5}
+    ],
+    "once": false,
+    "priority": 1
+  },
+  {
+    "id": "idle_chatter_51",
+    "scene": "*",
+    "trigger": "idle_chatter",
+    "lines": [
+      {"text": "听说把道具攒到Boss波再用，效果翻倍？", "expression": "talk", "autoAdvance": 4},
+      {"text": "不是翻倍啦，但确实更值。", "expression": "happy", "autoAdvance": 4}
+    ],
+    "once": false,
+    "priority": 1
+  },
+  {
+    "id": "idle_chatter_52",
+    "scene": "*",
+    "trigger": "idle_chatter",
+    "lines": [
+      {"text": "换张没打过的地图试试？", "expression": "idle", "autoAdvance": 4},
+      {"text": "新地图新挑战，说不定有惊喜！", "expression": "happy", "autoAdvance": 4}
+    ],
+    "once": false,
+    "priority": 1
+  },
+  {
+    "id": "idle_chatter_53",
+    "scene": "*",
+    "trigger": "idle_chatter",
+    "lines": [
+      {"text": "塔的强度(Strength)决定一切。", "expression": "talk", "autoAdvance": 4},
+      {"text": "铺太多塔会稀释每座塔的成长哦~", "expression": "idle", "autoAdvance": 5}
+    ],
+    "once": false,
+    "priority": 1
+  },
+  {
+    "id": "idle_chatter_54",
+    "scene": "*",
+    "trigger": "idle_chatter",
+    "lines": [
+      {"text": "我偷偷观察了一下...", "expression": "idle", "autoAdvance": 3},
+      {"text": "你好像有自己固定的打法了？", "expression": "talk", "autoAdvance": 4},
+      {"text": "要不要试试完全不同的策略？", "expression": "happy", "autoAdvance": 4}
+    ],
+    "once": false,
+    "priority": 1
+  },
+  {
+    "id": "idle_chatter_55",
+    "scene": "*",
+    "trigger": "idle_chatter",
+    "lines": [
+      {"text": "狂暴的敌人血少了会突然变快！", "expression": "talk", "autoAdvance": 4},
+      {"text": "千万别在低血量时让它们跑过去...", "expression": "surprised", "autoAdvance": 4}
+    ],
+    "once": false,
+    "priority": 1
+  },
+  {
+    "id": "idle_chatter_56",
+    "scene": "*",
+    "trigger": "idle_chatter",
+    "lines": [
+      {"text": "我有时候会想...如果我有自己的意识。", "expression": "idle", "autoAdvance": 4},
+      {"text": "我会做什么呢？大概还是在这里陪你吧。", "expression": "happy", "autoAdvance": 5}
+    ],
+    "once": false,
+    "priority": 1
+  },
+  {
+    "id": "idle_chatter_57",
+    "scene": "*",
+    "trigger": "idle_chatter",
+    "lines": [
+      {"text": "这个游戏的代码里，好几千行都是关于我的。", "expression": "talk", "autoAdvance": 5},
+      {"text": "受宠若惊！", "expression": "happy", "autoAdvance": 3}
+    ],
+    "once": false,
+    "priority": 1
+  },
+  {
+    "id": "idle_chatter_58",
+    "scene": "*",
+    "trigger": "idle_chatter",
+    "lines": [
+      {"text": "你看到的每一个像素...", "expression": "idle", "autoAdvance": 3},
+      {"text": "都是有人一点点调出来的。想想还挺浪漫的。", "expression": "talk", "autoAdvance": 5}
+    ],
+    "once": false,
+    "priority": 1
+  },
+  {
+    "id": "idle_chatter_59",
+    "scene": "*",
+    "trigger": "idle_chatter",
+    "lines": [
+      {"text": "有一次测试的时候，我直接从屏幕上消失了...", "expression": "surprised", "autoAdvance": 5},
+      {"text": "据说那天开发者加班到凌晨三点。", "expression": "talk", "autoAdvance": 5}
+    ],
+    "once": false,
+    "priority": 1
+  },
+  {
+    "id": "idle_chatter_60",
+    "scene": "*",
+    "trigger": "idle_chatter",
+    "lines": [
+      {"text": "你知道吗？在你看不到的地方...", "expression": "idle", "autoAdvance": 4},
+      {"text": "有个自动测试系统在反复打这个游戏。", "expression": "talk", "autoAdvance": 5},
+      {"text": "它可不会心疼我。", "expression": "idle", "autoAdvance": 3}
+    ],
+    "once": false,
+    "priority": 1
+  },
+  {
+    "id": "idle_chatter_61",
+    "scene": "*",
+    "trigger": "idle_chatter",
+    "lines": [
+      {"text": "「Bug不是缺陷，是未被发现的特性」", "expression": "talk", "autoAdvance": 4},
+      {"text": "——某位程序员如是说。", "expression": "idle", "autoAdvance": 3}
+    ],
+    "once": false,
+    "priority": 1
+  },
+  {
+    "id": "idle_chatter_62",
+    "scene": "*",
+    "trigger": "idle_chatter",
+    "lines": [
+      {"text": "每次游戏更新，我都会偷偷祈祷：", "expression": "idle", "autoAdvance": 4},
+      {"text": "这次别把我改没了...", "expression": "talk", "autoAdvance": 4}
+    ],
+    "once": false,
+    "priority": 1
+  },
+  {
+    "id": "idle_chatter_63",
+    "scene": "*",
+    "trigger": "idle_chatter",
+    "lines": [
+      {"text": "我的台词都写在一个JSON文件里。", "expression": "talk", "autoAdvance": 4},
+      {"text": "不过你又看不到——哦等等，你不会真去找吧？", "expression": "surprised", "autoAdvance": 5}
+    ],
+    "once": false,
+    "priority": 1
+  },
+  {
+    "id": "idle_chatter_64",
+    "scene": "*",
+    "trigger": "idle_chatter",
+    "lines": [
+      {"text": "你说设计师会不会配置错数值？", "expression": "idle", "autoAdvance": 4},
+      {"text": "万一哪个怪血量多了个零...", "expression": "surprised", "autoAdvance": 4}
+    ],
+    "once": false,
+    "priority": 1
+  },
+  {
     "id": "milestone_wins_1",
     "scene": "*",
     "trigger": "milestone_wins_1",
@@ -252,6 +897,422 @@
     "trigger": "mascot_tap",
     "lines": [
       {"text": "我在呢，有什么事？", "expression": "idle", "autoAdvance": 3}
+    ],
+    "once": false,
+    "priority": 1
+  },
+  {
+    "id": "mascot_tap_4",
+    "scene": "*",
+    "trigger": "mascot_tap",
+    "lines": [
+      {"text": "嘿嘿，被你发现我在发呆了。", "expression": "happy", "autoAdvance": 3}
+    ],
+    "once": false,
+    "priority": 1
+  },
+  {
+    "id": "mascot_tap_5",
+    "scene": "*",
+    "trigger": "mascot_tap",
+    "lines": [
+      {"text": "又戳！你是不是很无聊？", "expression": "surprised", "autoAdvance": 3},
+      {"text": "...我也是。", "expression": "happy", "autoAdvance": 3}
+    ],
+    "once": false,
+    "priority": 1
+  },
+  {
+    "id": "mascot_tap_6",
+    "scene": "*",
+    "trigger": "mascot_tap",
+    "lines": [
+      {"text": "如果你戳我一百次，会不会解锁什么？", "expression": "idle", "autoAdvance": 4},
+      {"text": "答案是不会。但你可以试试。", "expression": "happy", "autoAdvance": 3}
+    ],
+    "once": false,
+    "priority": 1
+  },
+  {
+    "id": "mascot_tap_7",
+    "scene": "*",
+    "trigger": "mascot_tap",
+    "lines": [
+      {"text": "我刚才在数屏幕上的像素...", "expression": "idle", "autoAdvance": 3},
+      {"text": "被你打断了！", "expression": "surprised", "autoAdvance": 3}
+    ],
+    "once": false,
+    "priority": 1
+  },
+  {
+    "id": "mascot_tap_8",
+    "scene": "*",
+    "trigger": "mascot_tap",
+    "lines": [
+      {"text": "感谢你还记得我的存在！", "expression": "happy", "autoAdvance": 3}
+    ],
+    "once": false,
+    "priority": 1
+  },
+  {
+    "id": "mascot_tap_9",
+    "scene": "*",
+    "trigger": "mascot_tap",
+    "lines": [
+      {"text": "有心事吗？跟我说说？", "expression": "talk", "autoAdvance": 4},
+      {"text": "...虽然我只会说固定的台词。", "expression": "idle", "autoAdvance": 4}
+    ],
+    "once": false,
+    "priority": 1
+  },
+  {
+    "id": "mascot_tap_10",
+    "scene": "*",
+    "trigger": "mascot_tap",
+    "lines": [
+      {"text": "戳戳戳...你手指不累吗？", "expression": "talk", "autoAdvance": 3}
+    ],
+    "once": false,
+    "priority": 1
+  },
+
+  {
+    "id": "greet_morning_2",
+    "scene": "*",
+    "trigger": "greet_morning",
+    "lines": [
+      {"text": "早安~吃过早餐了吗？", "expression": "happy", "autoAdvance": 3}
+    ],
+    "once": false,
+    "priority": 5
+  },
+  {
+    "id": "greet_morning_3",
+    "scene": "*",
+    "trigger": "greet_morning",
+    "lines": [
+      {"text": "一日之计在于晨！今天也要加油！", "expression": "happy", "autoAdvance": 4}
+    ],
+    "once": false,
+    "priority": 5
+  },
+  {
+    "id": "greet_morning_4",
+    "scene": "*",
+    "trigger": "greet_morning",
+    "lines": [
+      {"text": "早起的指挥官有虫...不对，有胜利！", "expression": "talk", "autoAdvance": 4}
+    ],
+    "once": false,
+    "priority": 5
+  },
+
+  {
+    "id": "greet_afternoon_2",
+    "scene": "*",
+    "trigger": "greet_afternoon",
+    "lines": [
+      {"text": "午后时光~来一局轻松的？", "expression": "happy", "autoAdvance": 4}
+    ],
+    "once": false,
+    "priority": 5
+  },
+  {
+    "id": "greet_afternoon_3",
+    "scene": "*",
+    "trigger": "greet_afternoon",
+    "lines": [
+      {"text": "下午好！精神还好吗？别犯困哦~", "expression": "talk", "autoAdvance": 4}
+    ],
+    "once": false,
+    "priority": 5
+  },
+  {
+    "id": "greet_afternoon_4",
+    "scene": "*",
+    "trigger": "greet_afternoon",
+    "lines": [
+      {"text": "午后的阳光...最适合打塔防了！", "expression": "idle", "autoAdvance": 4}
+    ],
+    "once": false,
+    "priority": 5
+  },
+
+  {
+    "id": "greet_evening_2",
+    "scene": "*",
+    "trigger": "greet_evening",
+    "lines": [
+      {"text": "晚上好~辛苦一天了，来放松吧。", "expression": "happy", "autoAdvance": 4}
+    ],
+    "once": false,
+    "priority": 5
+  },
+  {
+    "id": "greet_evening_3",
+    "scene": "*",
+    "trigger": "greet_evening",
+    "lines": [
+      {"text": "夜幕降临，正是战斗的好时机！", "expression": "talk", "autoAdvance": 4}
+    ],
+    "once": false,
+    "priority": 5
+  },
+  {
+    "id": "greet_evening_4",
+    "scene": "*",
+    "trigger": "greet_evening",
+    "lines": [
+      {"text": "晚上好！打两局再去休息吧~", "expression": "idle", "autoAdvance": 4}
+    ],
+    "once": false,
+    "priority": 5
+  },
+
+  {
+    "id": "greet_latenight_2",
+    "scene": "*",
+    "trigger": "greet_latenight",
+    "lines": [
+      {"text": "深夜了...真的不睡了吗？", "expression": "surprised", "autoAdvance": 4},
+      {"text": "那我就陪你到最后一局吧。", "expression": "happy", "autoAdvance": 4}
+    ],
+    "once": false,
+    "priority": 5
+  },
+  {
+    "id": "greet_latenight_3",
+    "scene": "*",
+    "trigger": "greet_latenight",
+    "lines": [
+      {"text": "凌晨了还在打...你是夜猫子吧？", "expression": "talk", "autoAdvance": 4}
+    ],
+    "once": false,
+    "priority": 5
+  },
+  {
+    "id": "greet_latenight_4",
+    "scene": "*",
+    "trigger": "greet_latenight",
+    "lines": [
+      {"text": "嘘...小声点，别吵到其他人。", "expression": "idle", "autoAdvance": 4},
+      {"text": "我们偷偷打一局！", "expression": "happy", "autoAdvance": 3}
+    ],
+    "once": false,
+    "priority": 5
+  },
+
+  {
+    "id": "session_30min_2",
+    "scene": "*",
+    "trigger": "session_30min",
+    "lines": [
+      {"text": "半小时了~节奏刚刚好！", "expression": "happy", "autoAdvance": 3}
+    ],
+    "once": true,
+    "priority": 3
+  },
+  {
+    "id": "session_30min_3",
+    "scene": "*",
+    "trigger": "session_30min",
+    "lines": [
+      {"text": "玩了三十分钟了，手感热了吧？", "expression": "talk", "autoAdvance": 4}
+    ],
+    "once": true,
+    "priority": 3
+  },
+
+  {
+    "id": "session_60min_2",
+    "scene": "*",
+    "trigger": "session_60min",
+    "lines": [
+      {"text": "整整一小时！站起来活动活动~", "expression": "talk", "autoAdvance": 4}
+    ],
+    "once": true,
+    "priority": 4
+  },
+  {
+    "id": "session_60min_3",
+    "scene": "*",
+    "trigger": "session_60min",
+    "lines": [
+      {"text": "一小时了，喝口水再继续？", "expression": "idle", "autoAdvance": 4}
+    ],
+    "once": true,
+    "priority": 4
+  },
+
+  {
+    "id": "session_90min_2",
+    "scene": "*",
+    "trigger": "session_90min",
+    "lines": [
+      {"text": "九十分钟了！你的眼睛还好吗？", "expression": "surprised", "autoAdvance": 4}
+    ],
+    "once": true,
+    "priority": 4
+  },
+  {
+    "id": "session_90min_3",
+    "scene": "*",
+    "trigger": "session_90min",
+    "lines": [
+      {"text": "都快两小时了...真的要休息一下了！", "expression": "surprised", "autoAdvance": 4},
+      {"text": "我在这等着，不会跑的。", "expression": "happy", "autoAdvance": 3}
+    ],
+    "once": true,
+    "priority": 4
+  },
+
+  {
+    "id": "milestone_wins_1b",
+    "scene": "*",
+    "trigger": "milestone_wins_1",
+    "lines": [
+      {"text": "首胜达成！开局大吉~", "expression": "happy", "autoAdvance": 4}
+    ],
+    "once": true,
+    "priority": 8
+  },
+  {
+    "id": "milestone_wins_1c",
+    "scene": "*",
+    "trigger": "milestone_wins_1",
+    "lines": [
+      {"text": "赢了！第一场总是最让人激动的！", "expression": "surprised", "autoAdvance": 4}
+    ],
+    "once": true,
+    "priority": 8
+  },
+  {
+    "id": "milestone_wins_5b",
+    "scene": "*",
+    "trigger": "milestone_wins_5",
+    "lines": [
+      {"text": "五连胜！你已经上手了嘛~", "expression": "happy", "autoAdvance": 4}
+    ],
+    "once": true,
+    "priority": 8
+  },
+  {
+    "id": "milestone_wins_5c",
+    "scene": "*",
+    "trigger": "milestone_wins_5",
+    "lines": [
+      {"text": "第五场胜利！继续冲！", "expression": "talk", "autoAdvance": 3}
+    ],
+    "once": true,
+    "priority": 8
+  },
+  {
+    "id": "milestone_wins_10b",
+    "scene": "*",
+    "trigger": "milestone_wins_10",
+    "lines": [
+      {"text": "十胜达成！你是真正的防线大师！", "expression": "happy", "autoAdvance": 4}
+    ],
+    "once": true,
+    "priority": 8
+  },
+  {
+    "id": "milestone_wins_10c",
+    "scene": "*",
+    "trigger": "milestone_wins_10",
+    "lines": [
+      {"text": "第十场胜利！没有你守不住的地图！", "expression": "happy", "autoAdvance": 4}
+    ],
+    "once": true,
+    "priority": 8
+  },
+  {
+    "id": "milestone_kills_100b",
+    "scene": "*",
+    "trigger": "milestone_kills_100",
+    "lines": [
+      {"text": "百杀达成！敌人闻风丧胆~", "expression": "happy", "autoAdvance": 4}
+    ],
+    "once": true,
+    "priority": 7
+  },
+  {
+    "id": "milestone_kills_100c",
+    "scene": "*",
+    "trigger": "milestone_kills_100",
+    "lines": [
+      {"text": "消灭了100个敌人了！起飞！", "expression": "surprised", "autoAdvance": 3}
+    ],
+    "once": true,
+    "priority": 7
+  },
+  {
+    "id": "milestone_kills_500b",
+    "scene": "*",
+    "trigger": "milestone_kills_500",
+    "lines": [
+      {"text": "500击杀！你简直是移动要塞！", "expression": "happy", "autoAdvance": 4}
+    ],
+    "once": true,
+    "priority": 7
+  },
+  {
+    "id": "milestone_kills_500c",
+    "scene": "*",
+    "trigger": "milestone_kills_500",
+    "lines": [
+      {"text": "五百个了...敌人看到你应该会绕路。", "expression": "talk", "autoAdvance": 4}
+    ],
+    "once": true,
+    "priority": 7
+  },
+  {
+    "id": "milestone_kills_1000b",
+    "scene": "*",
+    "trigger": "milestone_kills_1000",
+    "lines": [
+      {"text": "千杀大佬！我为你鼓掌！", "expression": "happy", "autoAdvance": 4}
+    ],
+    "once": true,
+    "priority": 7
+  },
+  {
+    "id": "milestone_kills_1000c",
+    "scene": "*",
+    "trigger": "milestone_kills_1000",
+    "lines": [
+      {"text": "一千击杀！这就是传说中的杀神吧！", "expression": "surprised", "autoAdvance": 4}
+    ],
+    "once": true,
+    "priority": 7
+  },
+
+  {
+    "id": "idle_tip_2",
+    "scene": "*",
+    "trigger": "idle_chatter",
+    "lines": [
+      {"text": "发呆中？还是在想策略？", "expression": "idle", "autoAdvance": 4}
+    ],
+    "once": false,
+    "priority": 1
+  },
+  {
+    "id": "idle_tip_3",
+    "scene": "*",
+    "trigger": "idle_chatter",
+    "lines": [
+      {"text": "嗨~我在这里哦，别忘了我！", "expression": "happy", "autoAdvance": 3}
+    ],
+    "once": false,
+    "priority": 1
+  },
+  {
+    "id": "idle_tip_4",
+    "scene": "*",
+    "trigger": "idle_chatter",
+    "lines": [
+      {"text": "好安静...要不要来聊聊天？", "expression": "idle", "autoAdvance": 4}
     ],
     "once": false,
     "priority": 1

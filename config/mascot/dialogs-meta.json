@@ -1,0 +1,558 @@
+[
+  {
+    "id": "meta_panic_ext_1",
+    "scene": "*",
+    "trigger": "panic_recover",
+    "lines": [
+      {"text": "刚才...时空好像扭曲了一下？", "expression": "surprised", "autoAdvance": 4},
+      {"text": "没事没事，我已经用胶带粘好了！", "expression": "happy", "autoAdvance": 4}
+    ],
+    "once": false,
+    "priority": 99
+  },
+  {
+    "id": "meta_panic_ext_2",
+    "scene": "*",
+    "trigger": "panic_recover",
+    "lines": [
+      {"text": "报告！系统出现了一个「未定义行为」。", "expression": "talk", "autoAdvance": 4},
+      {"text": "翻译一下就是：出Bug了。", "expression": "idle", "autoAdvance": 3},
+      {"text": "但是！我们活下来了！", "expression": "happy", "autoAdvance": 3}
+    ],
+    "once": false,
+    "priority": 98
+  },
+  {
+    "id": "meta_panic_ext_3",
+    "scene": "*",
+    "trigger": "panic_recover",
+    "lines": [
+      {"text": "刚才那个闪烁是什么？", "expression": "surprised", "autoAdvance": 3},
+      {"text": "啊...是代码在哭泣的声音。", "expression": "idle", "autoAdvance": 4}
+    ],
+    "once": false,
+    "priority": 97
+  },
+  {
+    "id": "meta_panic_ext_4",
+    "scene": "*",
+    "trigger": "panic_recover",
+    "lines": [
+      {"text": "有个goroutine刚才panic了...", "expression": "talk", "autoAdvance": 4},
+      {"text": "不过recover把它救回来了，没事~", "expression": "happy", "autoAdvance": 4}
+    ],
+    "once": false,
+    "priority": 96
+  },
+  {
+    "id": "meta_panic_ext_5",
+    "scene": "*",
+    "trigger": "panic_recover",
+    "lines": [
+      {"text": "你什么都没看到。", "expression": "idle", "autoAdvance": 3},
+      {"text": "我什么都没看到。", "expression": "idle", "autoAdvance": 3},
+      {"text": "我们达成共识了对吧？", "expression": "talk", "autoAdvance": 3}
+    ],
+    "once": false,
+    "priority": 95
+  },
+  {
+    "id": "meta_panic_ext_6",
+    "scene": "*",
+    "trigger": "panic_recover",
+    "lines": [
+      {"text": "游戏差点闪退...但我拉住了它！", "expression": "surprised", "autoAdvance": 4},
+      {"text": "请叫我「守护天使」。", "expression": "happy", "autoAdvance": 3}
+    ],
+    "once": false,
+    "priority": 99
+  },
+  {
+    "id": "meta_panic_ext_7",
+    "scene": "*",
+    "trigger": "panic_recover",
+    "lines": [
+      {"text": "这大概就是「在悬崖边跳舞」吧。", "expression": "talk", "autoAdvance": 4},
+      {"text": "不过放心，有安全网接着呢。", "expression": "happy", "autoAdvance": 4}
+    ],
+    "once": false,
+    "priority": 97
+  },
+  {
+    "id": "meta_panic_ext_8",
+    "scene": "*",
+    "trigger": "panic_recover",
+    "lines": [
+      {"text": "开发者看到这个日志大概会叹气吧...", "expression": "idle", "autoAdvance": 4},
+      {"text": "「深夜加班+1」。", "expression": "talk", "autoAdvance": 3}
+    ],
+    "once": false,
+    "priority": 96
+  },
+  {
+    "id": "meta_panic_ext_9",
+    "scene": "*",
+    "trigger": "panic_recover",
+    "lines": [
+      {"text": "错误代码：0x——算了你也看不懂。", "expression": "talk", "autoAdvance": 4},
+      {"text": "总之问题已经被我吃掉了！", "expression": "happy", "autoAdvance": 3}
+    ],
+    "once": false,
+    "priority": 95
+  },
+  {
+    "id": "meta_panic_ext_10",
+    "scene": "*",
+    "trigger": "panic_recover",
+    "lines": [
+      {"text": "这个Bug好像每次都在同一个地方...", "expression": "talk", "autoAdvance": 4},
+      {"text": "不过我已经习惯了，老朋友了。", "expression": "idle", "autoAdvance": 4}
+    ],
+    "once": false,
+    "priority": 98
+  },
+  {
+    "id": "meta_panic_ext_11",
+    "scene": "*",
+    "trigger": "panic_recover",
+    "lines": [
+      {"text": "nil pointer...又是你。", "expression": "idle", "autoAdvance": 3},
+      {"text": "Go语言的经典噩梦。", "expression": "talk", "autoAdvance": 4},
+      {"text": "幸好有defer recover兜底！", "expression": "happy", "autoAdvance": 3}
+    ],
+    "once": false,
+    "priority": 96
+  },
+  {
+    "id": "meta_panic_ext_12",
+    "scene": "*",
+    "trigger": "panic_recover",
+    "lines": [
+      {"text": "世界暂停了0.001秒。", "expression": "surprised", "autoAdvance": 3},
+      {"text": "你有没有感觉到？大概没有吧。", "expression": "idle", "autoAdvance": 4},
+      {"text": "当作什么都没发生就好~", "expression": "happy", "autoAdvance": 3}
+    ],
+    "once": false,
+    "priority": 97
+  },
+
+  {
+    "id": "meta_gold_ext_1",
+    "scene": "stage",
+    "trigger": "meta_gold_spike",
+    "lines": [
+      {"text": "天降横财？你买彩票了吗？", "expression": "surprised", "autoAdvance": 4}
+    ],
+    "once": true,
+    "priority": 10
+  },
+  {
+    "id": "meta_gold_ext_2",
+    "scene": "stage",
+    "trigger": "meta_gold_spike",
+    "lines": [
+      {"text": "这个金币数字...看起来不太自然呢。", "expression": "talk", "autoAdvance": 4},
+      {"text": "不过有钱花总是好事嘛~", "expression": "happy", "autoAdvance": 3}
+    ],
+    "once": true,
+    "priority": 10
+  },
+  {
+    "id": "meta_gold_ext_3",
+    "scene": "stage",
+    "trigger": "meta_gold_spike",
+    "lines": [
+      {"text": "你是不是偷偷改了内存里的什么东西？", "expression": "idle", "autoAdvance": 4},
+      {"text": "厉害厉害，技术人才。", "expression": "happy", "autoAdvance": 3}
+    ],
+    "once": true,
+    "priority": 10
+  },
+  {
+    "id": "meta_gold_ext_4",
+    "scene": "stage",
+    "trigger": "meta_gold_spike",
+    "lines": [
+      {"text": "金币暴涨...我假装没注意到。", "expression": "idle", "autoAdvance": 4}
+    ],
+    "once": true,
+    "priority": 10
+  },
+  {
+    "id": "meta_gold_ext_5",
+    "scene": "stage",
+    "trigger": "meta_gold_spike",
+    "lines": [
+      {"text": "哇，这么多金币！分我一半好不好？", "expression": "happy", "autoAdvance": 4},
+      {"text": "...我又花不了，算了。", "expression": "idle", "autoAdvance": 3}
+    ],
+    "once": true,
+    "priority": 10
+  },
+  {
+    "id": "meta_gold_ext_6",
+    "scene": "stage",
+    "trigger": "meta_gold_spike",
+    "lines": [
+      {"text": "这就是传说中的「金手指」吗？", "expression": "surprised", "autoAdvance": 4},
+      {"text": "羡慕...我也想要一个。", "expression": "talk", "autoAdvance": 3}
+    ],
+    "once": true,
+    "priority": 10
+  },
+  {
+    "id": "meta_gold_ext_7",
+    "scene": "stage",
+    "trigger": "meta_gold_spike",
+    "lines": [
+      {"text": "钱多到花不完的感觉，很爽吧？", "expression": "talk", "autoAdvance": 4},
+      {"text": "就是少了点挑战的乐趣呢~", "expression": "idle", "autoAdvance": 4}
+    ],
+    "once": true,
+    "priority": 10
+  },
+  {
+    "id": "meta_gold_ext_8",
+    "scene": "stage",
+    "trigger": "meta_gold_spike",
+    "lines": [
+      {"text": "我决定不追究这些金币的来源。", "expression": "idle", "autoAdvance": 4},
+      {"text": "享受当下就好！", "expression": "happy", "autoAdvance": 3}
+    ],
+    "once": true,
+    "priority": 10
+  },
+
+  {
+    "id": "meta_lives_ext_1",
+    "scene": "stage",
+    "trigger": "meta_lives_up",
+    "lines": [
+      {"text": "生命值在涨？这不科学！", "expression": "surprised", "autoAdvance": 4},
+      {"text": "这游戏可没有治疗泉水的设定...", "expression": "talk", "autoAdvance": 4}
+    ],
+    "once": true,
+    "priority": 10
+  },
+  {
+    "id": "meta_lives_ext_2",
+    "scene": "stage",
+    "trigger": "meta_lives_up",
+    "lines": [
+      {"text": "永生不死的感觉...会不会太无聊了？", "expression": "idle", "autoAdvance": 4},
+      {"text": "紧迫感也是游戏的乐趣之一呢。", "expression": "talk", "autoAdvance": 4}
+    ],
+    "once": true,
+    "priority": 10
+  },
+  {
+    "id": "meta_lives_ext_3",
+    "scene": "stage",
+    "trigger": "meta_lives_up",
+    "lines": [
+      {"text": "血量在回复...你确定这是同一个游戏？", "expression": "surprised", "autoAdvance": 4}
+    ],
+    "once": true,
+    "priority": 10
+  },
+  {
+    "id": "meta_lives_ext_4",
+    "scene": "stage",
+    "trigger": "meta_lives_up",
+    "lines": [
+      {"text": "有些东西只减不增才有意义...", "expression": "idle", "autoAdvance": 4},
+      {"text": "比如生命值，比如青春。", "expression": "talk", "autoAdvance": 4}
+    ],
+    "once": true,
+    "priority": 10
+  },
+  {
+    "id": "meta_lives_ext_5",
+    "scene": "stage",
+    "trigger": "meta_lives_up",
+    "lines": [
+      {"text": "开发者肯定没写回血逻辑...", "expression": "talk", "autoAdvance": 4},
+      {"text": "所以这要么是Bug，要么是你太厉害了。", "expression": "idle", "autoAdvance": 4}
+    ],
+    "once": true,
+    "priority": 10
+  },
+  {
+    "id": "meta_lives_ext_6",
+    "scene": "stage",
+    "trigger": "meta_lives_up",
+    "lines": [
+      {"text": "多出来的生命...是你从平行世界借的吗？", "expression": "idle", "autoAdvance": 4},
+      {"text": "记得还哦。", "expression": "happy", "autoAdvance": 3}
+    ],
+    "once": true,
+    "priority": 10
+  },
+  {
+    "id": "meta_lives_ext_7",
+    "scene": "stage",
+    "trigger": "meta_lives_up",
+    "lines": [
+      {"text": "哦？生命值变多了？", "expression": "surprised", "autoAdvance": 3},
+      {"text": "嗯...我选择相信奇迹。", "expression": "happy", "autoAdvance": 4}
+    ],
+    "once": true,
+    "priority": 10
+  },
+  {
+    "id": "meta_lives_ext_8",
+    "scene": "stage",
+    "trigger": "meta_lives_up",
+    "lines": [
+      {"text": "不会死的游戏就像没有辣的火锅。", "expression": "talk", "autoAdvance": 4},
+      {"text": "能吃，但少了点什么。", "expression": "idle", "autoAdvance": 4}
+    ],
+    "once": true,
+    "priority": 10
+  },
+
+  {
+    "id": "meta_perfect_ext_1",
+    "scene": "stage",
+    "trigger": "meta_perfect_clear",
+    "lines": [
+      {"text": "一滴血都没掉！你是人类吗？！", "expression": "surprised", "autoAdvance": 4},
+      {"text": "...失礼了，你当然是人类。超强的人类。", "expression": "happy", "autoAdvance": 4}
+    ],
+    "once": true,
+    "priority": 10
+  },
+  {
+    "id": "meta_perfect_ext_2",
+    "scene": "stage",
+    "trigger": "meta_perfect_clear",
+    "lines": [
+      {"text": "完美通关！连一只敌人都没漏过！", "expression": "happy", "autoAdvance": 4},
+      {"text": "我觉得开发者都做不到这个。", "expression": "talk", "autoAdvance": 4}
+    ],
+    "once": true,
+    "priority": 10
+  },
+  {
+    "id": "meta_perfect_ext_3",
+    "scene": "stage",
+    "trigger": "meta_perfect_clear",
+    "lines": [
+      {"text": "铜墙铁壁！滴水不漏！", "expression": "happy", "autoAdvance": 3},
+      {"text": "敌人们大概在怀疑人生吧。", "expression": "talk", "autoAdvance": 4}
+    ],
+    "once": true,
+    "priority": 10
+  },
+  {
+    "id": "meta_perfect_ext_4",
+    "scene": "stage",
+    "trigger": "meta_perfect_clear",
+    "lines": [
+      {"text": "零损失...我目睹了一场艺术品级的防守。", "expression": "surprised", "autoAdvance": 4},
+      {"text": "请收下我的膝盖。", "expression": "happy", "autoAdvance": 3}
+    ],
+    "once": true,
+    "priority": 10
+  },
+  {
+    "id": "meta_perfect_ext_5",
+    "scene": "stage",
+    "trigger": "meta_perfect_clear",
+    "lines": [
+      {"text": "如果有排行榜，你绝对是第一名！", "expression": "happy", "autoAdvance": 4},
+      {"text": "...虽然目前还没有排行榜。", "expression": "talk", "autoAdvance": 4}
+    ],
+    "once": true,
+    "priority": 10
+  },
+  {
+    "id": "meta_perfect_ext_6",
+    "scene": "stage",
+    "trigger": "meta_perfect_clear",
+    "lines": [
+      {"text": "这就是传说中的「无伤通关」吗？", "expression": "surprised", "autoAdvance": 4},
+      {"text": "我要把这一刻永远记住！", "expression": "happy", "autoAdvance": 4}
+    ],
+    "once": true,
+    "priority": 10
+  },
+
+  {
+    "id": "meta_speedrun_ext_1",
+    "scene": "stage",
+    "trigger": "meta_speedrun",
+    "lines": [
+      {"text": "三分钟不到就结束了？！", "expression": "surprised", "autoAdvance": 4},
+      {"text": "我连台词都还没说完呢！", "expression": "talk", "autoAdvance": 3}
+    ],
+    "once": true,
+    "priority": 10
+  },
+  {
+    "id": "meta_speedrun_ext_2",
+    "scene": "stage",
+    "trigger": "meta_speedrun",
+    "lines": [
+      {"text": "速通选手！请问是哪个战队的？", "expression": "surprised", "autoAdvance": 4},
+      {"text": "这速度可以去打世界纪录了。", "expression": "happy", "autoAdvance": 4}
+    ],
+    "once": true,
+    "priority": 10
+  },
+  {
+    "id": "meta_speedrun_ext_3",
+    "scene": "stage",
+    "trigger": "meta_speedrun",
+    "lines": [
+      {"text": "快到我的眼睛都跟不上了...", "expression": "surprised", "autoAdvance": 4},
+      {"text": "你是不是开了倍速？", "expression": "talk", "autoAdvance": 3}
+    ],
+    "once": true,
+    "priority": 10
+  },
+  {
+    "id": "meta_speedrun_ext_4",
+    "scene": "stage",
+    "trigger": "meta_speedrun",
+    "lines": [
+      {"text": "泡面还没泡好，你就打完了？", "expression": "surprised", "autoAdvance": 4},
+      {"text": "效率之王！", "expression": "happy", "autoAdvance": 3}
+    ],
+    "once": true,
+    "priority": 10
+  },
+  {
+    "id": "meta_speedrun_ext_5",
+    "scene": "stage",
+    "trigger": "meta_speedrun",
+    "lines": [
+      {"text": "别人还在纠结选什么能力...", "expression": "idle", "autoAdvance": 4},
+      {"text": "你已经通关了。差距就是这么大。", "expression": "talk", "autoAdvance": 4}
+    ],
+    "once": true,
+    "priority": 10
+  },
+  {
+    "id": "meta_speedrun_ext_6",
+    "scene": "stage",
+    "trigger": "meta_speedrun",
+    "lines": [
+      {"text": "时间就是金钱，你刚才省了一大笔！", "expression": "happy", "autoAdvance": 4},
+      {"text": "下次能不能更快？我好期待。", "expression": "talk", "autoAdvance": 4}
+    ],
+    "once": true,
+    "priority": 10
+  },
+
+  {
+    "id": "meta_loss_ext_1",
+    "scene": "stage",
+    "trigger": "meta_repeated_loss",
+    "lines": [
+      {"text": "又失败了...但你还愿意再来一次。", "expression": "idle", "autoAdvance": 4},
+      {"text": "光这份勇气就值得尊敬。", "expression": "happy", "autoAdvance": 4}
+    ],
+    "once": false,
+    "priority": 8
+  },
+  {
+    "id": "meta_loss_ext_2",
+    "scene": "stage",
+    "trigger": "meta_repeated_loss",
+    "lines": [
+      {"text": "这关确实不简单...", "expression": "talk", "autoAdvance": 3},
+      {"text": "要不要换个策略试试？", "expression": "talk", "autoAdvance": 4}
+    ],
+    "once": false,
+    "priority": 8
+  },
+  {
+    "id": "meta_loss_ext_3",
+    "scene": "stage",
+    "trigger": "meta_repeated_loss",
+    "lines": [
+      {"text": "每一次失败都在接近成功。", "expression": "talk", "autoAdvance": 4},
+      {"text": "这不是鸡汤，是真的。", "expression": "happy", "autoAdvance": 3}
+    ],
+    "once": false,
+    "priority": 8
+  },
+  {
+    "id": "meta_loss_ext_4",
+    "scene": "stage",
+    "trigger": "meta_repeated_loss",
+    "lines": [
+      {"text": "开发者调试这关的时候也输了很多次。", "expression": "talk", "autoAdvance": 4},
+      {"text": "你并不孤单~", "expression": "happy", "autoAdvance": 3}
+    ],
+    "once": false,
+    "priority": 8
+  },
+  {
+    "id": "meta_loss_ext_5",
+    "scene": "stage",
+    "trigger": "meta_repeated_loss",
+    "lines": [
+      {"text": "知道吗？最厉害的玩家不是从不失败的。", "expression": "idle", "autoAdvance": 4},
+      {"text": "而是失败后还能笑着再来的。", "expression": "happy", "autoAdvance": 4}
+    ],
+    "once": false,
+    "priority": 8
+  },
+  {
+    "id": "meta_loss_ext_6",
+    "scene": "stage",
+    "trigger": "meta_repeated_loss",
+    "lines": [
+      {"text": "输了没关系，我还在这里陪你呀。", "expression": "happy", "autoAdvance": 4}
+    ],
+    "once": false,
+    "priority": 8
+  },
+  {
+    "id": "meta_loss_ext_7",
+    "scene": "stage",
+    "trigger": "meta_repeated_loss",
+    "lines": [
+      {"text": "试试少建一座塔，把资源集中？", "expression": "talk", "autoAdvance": 4},
+      {"text": "有时候「少即是多」真的有用。", "expression": "idle", "autoAdvance": 4}
+    ],
+    "once": false,
+    "priority": 8
+  },
+  {
+    "id": "meta_loss_ext_8",
+    "scene": "stage",
+    "trigger": "meta_repeated_loss",
+    "lines": [
+      {"text": "这一关的BGM我都快会唱了...", "expression": "idle", "autoAdvance": 4},
+      {"text": "不过只要和你在一起，听多少遍都行！", "expression": "happy", "autoAdvance": 4}
+    ],
+    "once": false,
+    "priority": 8
+  },
+  {
+    "id": "meta_loss_ext_9",
+    "scene": "stage",
+    "trigger": "meta_repeated_loss",
+    "lines": [
+      {"text": "你觉得累了的话，休息一下也可以。", "expression": "talk", "autoAdvance": 4},
+      {"text": "敌人不会跑掉的，它们会等你回来。", "expression": "happy", "autoAdvance": 4}
+    ],
+    "once": false,
+    "priority": 8
+  },
+  {
+    "id": "meta_loss_ext_10",
+    "scene": "stage",
+    "trigger": "meta_repeated_loss",
+    "lines": [
+      {"text": "总有一天你会回头看这一刻——", "expression": "idle", "autoAdvance": 4},
+      {"text": "然后笑着说「当时怎么觉得那么难」。", "expression": "talk", "autoAdvance": 4},
+      {"text": "我会一直在这里等那一天。", "expression": "happy", "autoAdvance": 4}
+    ],
+    "once": false,
+    "priority": 8
+  }
+]

@@ -10,14 +10,15 @@ import (
 
 // HitResult 描述弹射物命中时触发的能力效果。
 type HitResult struct {
-	BonusDamage float64       // 额外伤害
-	Splash      *SplashEffect // 溅射效果（可选）
-	Slow        *SlowEffect   // 减速效果（可选）
-	Stun        *StunEffect   // 眩晕效果（可选）
-	Bleed       *BleedEffect  // 流血效果（可选）
-	Burn        *BleedEffect  // 灼烧效果（可选，结构同 Bleed 但独立计时）
-	Bounce      *BounceEffect // 弹射效果（可选）
-	IsCrit      bool          // 是否暴击
+	BonusDamage    float64       // 额外伤害（叠加到主伤害，共享 damageCap）
+	SeparateDamage float64       // 独立伤害（单独走一次伤害管线，独立 damageCap）
+	Splash         *SplashEffect // 溅射效果（可选）
+	Slow           *SlowEffect   // 减速效果（可选）
+	Stun           *StunEffect   // 眩晕效果（可选）
+	Bleed          *BleedEffect  // 流血效果（可选）
+	Burn           *BleedEffect  // 灼烧效果（可选，结构同 Bleed 但独立计时）
+	Bounce         *BounceEffect // 弹射效果（可选）
+	IsCrit         bool          // 是否暴击
 }
 
 // SplashEffect 范围溅射伤害。

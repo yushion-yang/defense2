@@ -56,6 +56,15 @@ type SpawnConfig struct {
 	// 免疫
 	CCImmune   bool // 全控制免疫
 	SlowImmune bool // 减速免疫
+
+	// 能力 potential（波次缩放用，仅记录 potential>0 的条目）
+	AbilityPotentials []AbilityPotentialEntry
+}
+
+// AbilityPotentialEntry 记录一个能力的 potential 值，用于 spawn 时按波次叠加。
+type AbilityPotentialEntry struct {
+	Type      string  // 能力类型标识
+	Potential float64 // 每波增量（effectiveBase = base + potential * wave）
 }
 
 // DefaultSpawnConfig 返回默认生成配置（普通敌人）。

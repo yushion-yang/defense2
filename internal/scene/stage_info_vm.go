@@ -170,8 +170,12 @@ func BuildInfoPanelVM(t *tower.Tower, sellValue int, wavesCleared int, testMode 
 	}
 
 	// Buttons
-	vm.UpgradeButtonText = fmt.Sprintf("强度+10 $%d", tower.StrengthBuyCost())
+	upgCost := tower.StrengthBuyCost()
+	vm.UpgradeButtonText = fmt.Sprintf("强度+10 $%d", upgCost)
+	vm.BulkUpgradeButtonText = fmt.Sprintf("强度+50 $%d", upgCost*5)
 	vm.SellButtonText = fmt.Sprintf("卖%d", sellValue)
+	vm.CanAffordUpgrade = gold >= upgCost
+	vm.CanAffordBulkUpgrade = gold >= upgCost*5
 
 	return vm
 }
@@ -304,6 +308,13 @@ func buffLabel(id string) string {
 	if label, ok := buffLabels[id]; ok {
 		return label
 	}
+	// Dynamic warden buff IDs: "chain_warden_<N>", "envoy_buff_<N>"
+	if strings.HasPrefix(id, "chain_warden_") {
+		return "聚能链接"
+	}
+	if strings.HasPrefix(id, "envoy_buff_") {
+		return "金灵强化"
+	}
 	return id // fallback to raw ID
 }
 
@@ -355,9 +366,8 @@ func isPercentCapped(scaleDim string) bool {
 // fallback maps for abilities not in AbilityTable.
 var (
 	fallbackIconMap = map[string]string{
-		"multishot":   "multishot",
-		"pulse":       "pulse",
-		"multiTarget": "multishot",
+		"multishot": "multishot",
+		"pulse":     "pulse",
 	}
 	fallbackLabelMap = map[string]string{
 		"multishot": "多重射击",

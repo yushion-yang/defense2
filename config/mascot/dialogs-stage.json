@@ -151,6 +151,36 @@
     "priority": 6
   },
   {
+    "id": "stage_ability_hint_1",
+    "scene": "stage",
+    "trigger": "mascot_ability_hint",
+    "lines": [
+      {"text": "点击我，帮你消灭一个小怪！", "expression": "happy", "autoAdvance": 8}
+    ],
+    "once": false,
+    "priority": 7
+  },
+  {
+    "id": "stage_ability_hint_2",
+    "scene": "stage",
+    "trigger": "mascot_ability_hint",
+    "lines": [
+      {"text": "我准备好了！点我帮忙~", "expression": "happy", "autoAdvance": 8}
+    ],
+    "once": false,
+    "priority": 7
+  },
+  {
+    "id": "stage_ability_hint_3",
+    "scene": "stage",
+    "trigger": "mascot_ability_hint",
+    "lines": [
+      {"text": "嘿嘿，蓄力完了！要帮忙就点我哦~", "expression": "happy", "autoAdvance": 8}
+    ],
+    "once": false,
+    "priority": 7
+  },
+  {
     "id": "perf_fps_low",
     "scene": "stage",
     "trigger": "perf_fps_low",
@@ -247,6 +277,885 @@
     "trigger": "diag_enemy_swarm_critical",
     "lines": [
       {"text": "太多敌人了！防线快要崩溃了！", "expression": "surprised", "autoAdvance": 3}
+    ],
+    "once": false,
+    "priority": 9
+  },
+
+  {
+    "id": "meta_gold_spike_1",
+    "scene": "stage",
+    "trigger": "meta_gold_spike",
+    "lines": [
+      {"text": "这些金币...是从哪里冒出来的？", "expression": "surprised", "autoAdvance": 4},
+      {"text": "你该不会找到了什么秘密通道吧。", "expression": "talk", "autoAdvance": 4}
+    ],
+    "once": true,
+    "priority": 10
+  },
+  {
+    "id": "meta_gold_spike_2",
+    "scene": "stage",
+    "trigger": "meta_gold_spike",
+    "lines": [
+      {"text": "金币突然这么多...我什么都没看到哦。", "expression": "idle", "autoAdvance": 4},
+      {"text": "（但我全都知道）", "expression": "happy", "autoAdvance": 3}
+    ],
+    "once": true,
+    "priority": 10
+  },
+
+  {
+    "id": "meta_lives_up_1",
+    "scene": "stage",
+    "trigger": "meta_lives_up",
+    "lines": [
+      {"text": "诶？生命值怎么变多了？", "expression": "surprised", "autoAdvance": 4},
+      {"text": "这游戏可没有回血机制的吧...", "expression": "talk", "autoAdvance": 4}
+    ],
+    "once": true,
+    "priority": 10
+  },
+  {
+    "id": "meta_lives_up_2",
+    "scene": "stage",
+    "trigger": "meta_lives_up",
+    "lines": [
+      {"text": "无敌的感觉...是不是有点无聊呢？", "expression": "idle", "autoAdvance": 4},
+      {"text": "偶尔感受一下紧张感也很棒的哦~", "expression": "talk", "autoAdvance": 4}
+    ],
+    "once": true,
+    "priority": 10
+  },
+
+  {
+    "id": "meta_repeated_loss_1",
+    "scene": "stage",
+    "trigger": "meta_repeated_loss",
+    "lines": [
+      {"text": "已经第三次了...但你还在坚持，对吧？", "expression": "talk", "autoAdvance": 5},
+      {"text": "光是这份不服输，就已经很了不起了。", "expression": "happy", "autoAdvance": 4}
+    ],
+    "once": false,
+    "priority": 8
+  },
+  {
+    "id": "meta_repeated_loss_2",
+    "scene": "stage",
+    "trigger": "meta_repeated_loss",
+    "lines": [
+      {"text": "失败不可怕。可怕的是...", "expression": "idle", "autoAdvance": 3},
+      {"text": "算了，没什么可怕的。再来一把！", "expression": "happy", "autoAdvance": 4}
+    ],
+    "once": false,
+    "priority": 8
+  },
+  {
+    "id": "meta_repeated_loss_3",
+    "scene": "stage",
+    "trigger": "meta_repeated_loss",
+    "lines": [
+      {"text": "连开发者测试的时候也经常翻车的。", "expression": "talk", "autoAdvance": 4},
+      {"text": "你已经比他强了，别灰心！", "expression": "happy", "autoAdvance": 4}
+    ],
+    "once": false,
+    "priority": 8
+  },
+
+  {
+    "id": "meta_perfect_clear_1",
+    "scene": "stage",
+    "trigger": "meta_perfect_clear",
+    "lines": [
+      {"text": "零损失通关！？你确定没有开挂？", "expression": "surprised", "autoAdvance": 4},
+      {"text": "...不是？那你比开发者强太多了。", "expression": "happy", "autoAdvance": 4}
+    ],
+    "once": true,
+    "priority": 10
+  },
+  {
+    "id": "meta_perfect_clear_2",
+    "scene": "stage",
+    "trigger": "meta_perfect_clear",
+    "lines": [
+      {"text": "一条命都没丢...完美防守！", "expression": "happy", "autoAdvance": 4},
+      {"text": "你应该去教开发者怎么打这游戏。", "expression": "talk", "autoAdvance": 4}
+    ],
+    "once": true,
+    "priority": 10
+  },
+
+  {
+    "id": "meta_speedrun_1",
+    "scene": "stage",
+    "trigger": "meta_speedrun",
+    "lines": [
+      {"text": "才三分钟就打完了？！这速度...", "expression": "surprised", "autoAdvance": 4},
+      {"text": "世界纪录保持者就是你了（大概）。", "expression": "happy", "autoAdvance": 4}
+    ],
+    "once": true,
+    "priority": 10
+  },
+
+  {
+    "id": "meta_long_pause_1",
+    "scene": "stage",
+    "trigger": "meta_long_pause",
+    "lines": [
+      {"text": "去吃饭了？给我也带一份~", "expression": "happy", "autoAdvance": 4}
+    ],
+    "once": false,
+    "priority": 3
+  },
+  {
+    "id": "meta_long_pause_2",
+    "scene": "stage",
+    "trigger": "meta_long_pause",
+    "lines": [
+      {"text": "...你还在吗？", "expression": "idle", "autoAdvance": 3},
+      {"text": "我都快睡着了...", "expression": "talk", "autoAdvance": 3}
+    ],
+    "once": false,
+    "priority": 3
+  },
+  {
+    "id": "meta_long_pause_3",
+    "scene": "stage",
+    "trigger": "meta_long_pause",
+    "lines": [
+      {"text": "暂停这么久，是在思考人生吗？", "expression": "idle", "autoAdvance": 4},
+      {"text": "想好了就回来，敌人还等着呢。", "expression": "talk", "autoAdvance": 4}
+    ],
+    "once": false,
+    "priority": 3
+  },
+
+  {
+    "id": "meta_no_towers_1",
+    "scene": "stage",
+    "trigger": "meta_no_towers",
+    "lines": [
+      {"text": "你...是故意不建塔的吗？", "expression": "surprised", "autoAdvance": 4},
+      {"text": "这是什么新玩法？无塔挑战？！", "expression": "talk", "autoAdvance": 4}
+    ],
+    "once": true,
+    "priority": 8
+  },
+  {
+    "id": "meta_no_towers_2",
+    "scene": "stage",
+    "trigger": "meta_no_towers",
+    "lines": [
+      {"text": "裸奔通关...我连想都不敢想。", "expression": "surprised", "autoAdvance": 4},
+      {"text": "如果你真做到了，开发者会哭的。", "expression": "happy", "autoAdvance": 4}
+    ],
+    "once": true,
+    "priority": 8
+  },
+
+  {
+    "id": "stage_wave_complete_2",
+    "scene": "stage",
+    "trigger": "wave_complete",
+    "lines": [
+      {"text": "又过了一波！继续保持！", "expression": "happy", "autoAdvance": 3}
+    ],
+    "once": false,
+    "priority": 5
+  },
+  {
+    "id": "stage_wave_complete_3",
+    "scene": "stage",
+    "trigger": "wave_complete",
+    "lines": [
+      {"text": "Nice！防线稳如磐石！", "expression": "happy", "autoAdvance": 3}
+    ],
+    "once": false,
+    "priority": 5
+  },
+  {
+    "id": "stage_wave_complete_4",
+    "scene": "stage",
+    "trigger": "wave_complete",
+    "lines": [
+      {"text": "一波搞定，趁间隙调整一下布局吧。", "expression": "talk", "autoAdvance": 4}
+    ],
+    "once": false,
+    "priority": 5
+  },
+  {
+    "id": "stage_wave_complete_5",
+    "scene": "stage",
+    "trigger": "wave_complete",
+    "lines": [
+      {"text": "敌人被打退了！你太棒了~", "expression": "happy", "autoAdvance": 3}
+    ],
+    "once": false,
+    "priority": 5
+  },
+  {
+    "id": "stage_wave_complete_6",
+    "scene": "stage",
+    "trigger": "wave_complete",
+    "lines": [
+      {"text": "轻松拿下！下一波还远吗？", "expression": "idle", "autoAdvance": 3}
+    ],
+    "once": false,
+    "priority": 5
+  },
+
+  {
+    "id": "stage_boss_2",
+    "scene": "stage",
+    "trigger": "boss_incoming",
+    "lines": [
+      {"text": "注意！Boss波！全力输出！", "expression": "surprised", "autoAdvance": 3}
+    ],
+    "once": false,
+    "priority": 9
+  },
+  {
+    "id": "stage_boss_3",
+    "scene": "stage",
+    "trigger": "boss_incoming",
+    "lines": [
+      {"text": "大家伙来了！所有火力集中！", "expression": "surprised", "autoAdvance": 3}
+    ],
+    "once": false,
+    "priority": 9
+  },
+  {
+    "id": "stage_boss_4",
+    "scene": "stage",
+    "trigger": "boss_incoming",
+    "lines": [
+      {"text": "Boss出场了...深呼吸，你行的！", "expression": "talk", "autoAdvance": 4}
+    ],
+    "once": false,
+    "priority": 9
+  },
+  {
+    "id": "stage_boss_5",
+    "scene": "stage",
+    "trigger": "boss_incoming",
+    "lines": [
+      {"text": "好强的压迫感...这就是Boss吗！", "expression": "surprised", "autoAdvance": 3},
+      {"text": "道具和战灵技能别忘了用！", "expression": "talk", "autoAdvance": 3}
+    ],
+    "once": false,
+    "priority": 9
+  },
+
+  {
+    "id": "stage_low_health_2",
+    "scene": "stage",
+    "trigger": "low_health",
+    "lines": [
+      {"text": "不好了！生命值快见底了！", "expression": "surprised", "autoAdvance": 3}
+    ],
+    "once": false,
+    "priority": 8
+  },
+  {
+    "id": "stage_low_health_3",
+    "scene": "stage",
+    "trigger": "low_health",
+    "lines": [
+      {"text": "再漏一个就危险了...撑住！", "expression": "surprised", "autoAdvance": 3}
+    ],
+    "once": false,
+    "priority": 8
+  },
+  {
+    "id": "stage_low_health_4",
+    "scene": "stage",
+    "trigger": "low_health",
+    "lines": [
+      {"text": "心脏快跳出来了...一条都不能再丢！", "expression": "surprised", "autoAdvance": 4}
+    ],
+    "once": false,
+    "priority": 8
+  },
+  {
+    "id": "stage_low_health_5",
+    "scene": "stage",
+    "trigger": "low_health",
+    "lines": [
+      {"text": "生命值告急！用道具补救一下吧！", "expression": "surprised", "autoAdvance": 3},
+      {"text": "还能扛住的...我相信你！", "expression": "talk", "autoAdvance": 3}
+    ],
+    "once": false,
+    "priority": 8
+  },
+
+  {
+    "id": "stage_swarm_2",
+    "scene": "stage",
+    "trigger": "enemy_swarm",
+    "lines": [
+      {"text": "敌人也太多了吧！密密麻麻的！", "expression": "surprised", "autoAdvance": 3}
+    ],
+    "once": false,
+    "priority": 6
+  },
+  {
+    "id": "stage_swarm_3",
+    "scene": "stage",
+    "trigger": "enemy_swarm",
+    "lines": [
+      {"text": "蜂群来袭！范围攻击该上场了！", "expression": "talk", "autoAdvance": 3}
+    ],
+    "once": false,
+    "priority": 6
+  },
+  {
+    "id": "stage_swarm_4",
+    "scene": "stage",
+    "trigger": "enemy_swarm",
+    "lines": [
+      {"text": "看这阵仗...散射和旋转塔快用上！", "expression": "surprised", "autoAdvance": 4}
+    ],
+    "once": false,
+    "priority": 6
+  },
+  {
+    "id": "stage_swarm_5",
+    "scene": "stage",
+    "trigger": "enemy_swarm",
+    "lines": [
+      {"text": "来了好大一群！别慌，逐个击破！", "expression": "talk", "autoAdvance": 3}
+    ],
+    "once": false,
+    "priority": 6
+  },
+
+  {
+    "id": "stage_gold_2",
+    "scene": "stage",
+    "trigger": "gold_shortage",
+    "lines": [
+      {"text": "钱包空了...先忍忍吧。", "expression": "idle", "autoAdvance": 3}
+    ],
+    "once": false,
+    "priority": 4
+  },
+  {
+    "id": "stage_gold_3",
+    "scene": "stage",
+    "trigger": "gold_shortage",
+    "lines": [
+      {"text": "金币告急！先升级现有塔吧。", "expression": "talk", "autoAdvance": 3}
+    ],
+    "once": false,
+    "priority": 4
+  },
+  {
+    "id": "stage_gold_4",
+    "scene": "stage",
+    "trigger": "gold_shortage",
+    "lines": [
+      {"text": "穷...但穷也有穷的打法！", "expression": "talk", "autoAdvance": 3},
+      {"text": "多击杀就有收入了，加油！", "expression": "happy", "autoAdvance": 3}
+    ],
+    "once": false,
+    "priority": 4
+  },
+  {
+    "id": "stage_gold_5",
+    "scene": "stage",
+    "trigger": "gold_shortage",
+    "lines": [
+      {"text": "没钱了...要不咱省着点花？", "expression": "idle", "autoAdvance": 3}
+    ],
+    "once": false,
+    "priority": 4
+  },
+
+  {
+    "id": "stage_streak_2",
+    "scene": "stage",
+    "trigger": "kill_streak",
+    "lines": [
+      {"text": "连杀中！势不可挡！", "expression": "happy", "autoAdvance": 3}
+    ],
+    "once": false,
+    "priority": 6
+  },
+  {
+    "id": "stage_streak_3",
+    "scene": "stage",
+    "trigger": "kill_streak",
+    "lines": [
+      {"text": "哇！一个接一个倒下了！", "expression": "surprised", "autoAdvance": 3}
+    ],
+    "once": false,
+    "priority": 6
+  },
+  {
+    "id": "stage_streak_4",
+    "scene": "stage",
+    "trigger": "kill_streak",
+    "lines": [
+      {"text": "杀疯了！这伤害也太猛了！", "expression": "happy", "autoAdvance": 3}
+    ],
+    "once": false,
+    "priority": 6
+  },
+  {
+    "id": "stage_streak_5",
+    "scene": "stage",
+    "trigger": "kill_streak",
+    "lines": [
+      {"text": "连杀连杀！继续保持这个节奏！", "expression": "happy", "autoAdvance": 3}
+    ],
+    "once": false,
+    "priority": 6
+  },
+  {
+    "id": "stage_streak_6",
+    "scene": "stage",
+    "trigger": "kill_streak",
+    "lines": [
+      {"text": "敌人排着队送人头！太爽了！", "expression": "happy", "autoAdvance": 3}
+    ],
+    "once": false,
+    "priority": 6
+  },
+
+  {
+    "id": "stage_help_3",
+    "scene": "stage",
+    "trigger": "mascot_help",
+    "lines": [
+      {"text": "看我大显身手！", "expression": "happy", "autoAdvance": 3}
+    ],
+    "once": false,
+    "priority": 7
+  },
+  {
+    "id": "stage_help_4",
+    "scene": "stage",
+    "trigger": "mascot_help",
+    "lines": [
+      {"text": "出击！这次交给我解决！", "expression": "happy", "autoAdvance": 3}
+    ],
+    "once": false,
+    "priority": 7
+  },
+  {
+    "id": "stage_help_5",
+    "scene": "stage",
+    "trigger": "mascot_help",
+    "lines": [
+      {"text": "蓄力完毕，发射——！", "expression": "surprised", "autoAdvance": 3}
+    ],
+    "once": false,
+    "priority": 7
+  },
+  {
+    "id": "stage_help_6",
+    "scene": "stage",
+    "trigger": "mascot_help",
+    "lines": [
+      {"text": "我上了！保护好防线哦~", "expression": "happy", "autoAdvance": 3}
+    ],
+    "once": false,
+    "priority": 7
+  },
+
+  {
+    "id": "stage_kill_done_3",
+    "scene": "stage",
+    "trigger": "mascot_kill_success",
+    "lines": [
+      {"text": "解决了！看我厉害吧~", "expression": "happy", "autoAdvance": 3}
+    ],
+    "once": false,
+    "priority": 7
+  },
+  {
+    "id": "stage_kill_done_4",
+    "scene": "stage",
+    "trigger": "mascot_kill_success",
+    "lines": [
+      {"text": "干掉了！轻轻松松~", "expression": "happy", "autoAdvance": 3}
+    ],
+    "once": false,
+    "priority": 7
+  },
+  {
+    "id": "stage_kill_done_5",
+    "scene": "stage",
+    "trigger": "mascot_kill_success",
+    "lines": [
+      {"text": "又消灭了一个！夸我夸我！", "expression": "happy", "autoAdvance": 3}
+    ],
+    "once": false,
+    "priority": 7
+  },
+  {
+    "id": "stage_kill_done_6",
+    "scene": "stage",
+    "trigger": "mascot_kill_success",
+    "lines": [
+      {"text": "拿下！我可不是花瓶哦~", "expression": "happy", "autoAdvance": 3}
+    ],
+    "once": false,
+    "priority": 7
+  },
+
+  {
+    "id": "stage_not_ready_2",
+    "scene": "stage",
+    "trigger": "mascot_not_ready",
+    "lines": [
+      {"text": "还在冷却中...等我一下~", "expression": "talk", "autoAdvance": 3}
+    ],
+    "once": false,
+    "priority": 6
+  },
+  {
+    "id": "stage_not_ready_3",
+    "scene": "stage",
+    "trigger": "mascot_not_ready",
+    "lines": [
+      {"text": "能量不够啦，马上就好！", "expression": "idle", "autoAdvance": 3}
+    ],
+    "once": false,
+    "priority": 6
+  },
+  {
+    "id": "stage_not_ready_4",
+    "scene": "stage",
+    "trigger": "mascot_not_ready",
+    "lines": [
+      {"text": "急也没用...CD就是CD嘛。", "expression": "talk", "autoAdvance": 3}
+    ],
+    "once": false,
+    "priority": 6
+  },
+
+  {
+    "id": "stage_pause_4",
+    "scene": "stage",
+    "trigger": "meta_long_pause",
+    "lines": [
+      {"text": "该不会睡着了吧？", "expression": "idle", "autoAdvance": 3},
+      {"text": "喂——醒醒——！", "expression": "surprised", "autoAdvance": 3}
+    ],
+    "once": false,
+    "priority": 3
+  },
+  {
+    "id": "stage_pause_5",
+    "scene": "stage",
+    "trigger": "meta_long_pause",
+    "lines": [
+      {"text": "等你好久了...我开始数像素了。", "expression": "idle", "autoAdvance": 4}
+    ],
+    "once": false,
+    "priority": 3
+  },
+  {
+    "id": "stage_pause_6",
+    "scene": "stage",
+    "trigger": "meta_long_pause",
+    "lines": [
+      {"text": "暂停一年我也会在这里等你的。", "expression": "talk", "autoAdvance": 4},
+      {"text": "...当然，最好别那么久。", "expression": "happy", "autoAdvance": 3}
+    ],
+    "once": false,
+    "priority": 3
+  },
+  {
+    "id": "stage_pause_7",
+    "scene": "stage",
+    "trigger": "meta_long_pause",
+    "lines": [
+      {"text": "是去接电话了？还是被猫打断了？", "expression": "idle", "autoAdvance": 4}
+    ],
+    "once": false,
+    "priority": 3
+  },
+  {
+    "id": "stage_pause_8",
+    "scene": "stage",
+    "trigger": "meta_long_pause",
+    "lines": [
+      {"text": "暂停这么久，我都练完广播体操了。", "expression": "happy", "autoAdvance": 4}
+    ],
+    "once": false,
+    "priority": 3
+  },
+
+  {
+    "id": "stage_notower_3",
+    "scene": "stage",
+    "trigger": "meta_no_towers",
+    "lines": [
+      {"text": "一座塔都没有...这也行？", "expression": "surprised", "autoAdvance": 4},
+      {"text": "要不是亲眼看到，我不信有人这么玩。", "expression": "talk", "autoAdvance": 4}
+    ],
+    "once": true,
+    "priority": 8
+  },
+  {
+    "id": "stage_notower_4",
+    "scene": "stage",
+    "trigger": "meta_no_towers",
+    "lines": [
+      {"text": "不建塔...这是传说中的苦行僧模式吗？", "expression": "surprised", "autoAdvance": 4}
+    ],
+    "once": true,
+    "priority": 8
+  },
+  {
+    "id": "stage_notower_5",
+    "scene": "stage",
+    "trigger": "meta_no_towers",
+    "lines": [
+      {"text": "空空的战场...你确定这不是在欺负自己？", "expression": "idle", "autoAdvance": 4}
+    ],
+    "once": true,
+    "priority": 8
+  },
+
+  {
+    "id": "stage_ui_tower_2",
+    "scene": "stage",
+    "trigger": "ui_tower_selected",
+    "lines": [
+      {"text": "选中了！看看它的属性怎么样。", "expression": "talk", "autoAdvance": 3}
+    ],
+    "once": false,
+    "priority": 7
+  },
+  {
+    "id": "stage_ui_tower_3",
+    "scene": "stage",
+    "trigger": "ui_tower_selected",
+    "lines": [
+      {"text": "这座塔的攻击方式挺独特的呢。", "expression": "talk", "autoAdvance": 4}
+    ],
+    "once": false,
+    "priority": 7
+  },
+  {
+    "id": "stage_ui_tower_4",
+    "scene": "stage",
+    "trigger": "ui_tower_selected",
+    "lines": [
+      {"text": "想升级它？还是只是看看？", "expression": "idle", "autoAdvance": 3}
+    ],
+    "once": false,
+    "priority": 7
+  },
+
+  {
+    "id": "stage_ui_ability_2",
+    "scene": "stage",
+    "trigger": "ui_ability_choice",
+    "lines": [
+      {"text": "三个能力...选择困难症犯了！", "expression": "surprised", "autoAdvance": 3},
+      {"text": "看品质和搭配来决定吧~", "expression": "talk", "autoAdvance": 3}
+    ],
+    "once": false,
+    "priority": 8
+  },
+  {
+    "id": "stage_ui_ability_3",
+    "scene": "stage",
+    "trigger": "ui_ability_choice",
+    "lines": [
+      {"text": "新能力！仔细看看效果再选哦。", "expression": "talk", "autoAdvance": 4}
+    ],
+    "once": false,
+    "priority": 8
+  },
+  {
+    "id": "stage_ui_ability_4",
+    "scene": "stage",
+    "trigger": "ui_ability_choice",
+    "lines": [
+      {"text": "选能力的瞬间最让人兴奋了！", "expression": "happy", "autoAdvance": 3}
+    ],
+    "once": false,
+    "priority": 8
+  },
+
+  {
+    "id": "stage_ui_warden_2",
+    "scene": "stage",
+    "trigger": "ui_warden_select",
+    "lines": [
+      {"text": "挑一个战灵搭档吧！每个都很厉害。", "expression": "talk", "autoAdvance": 4}
+    ],
+    "once": false,
+    "priority": 8
+  },
+  {
+    "id": "stage_ui_warden_3",
+    "scene": "stage",
+    "trigger": "ui_warden_select",
+    "lines": [
+      {"text": "战灵选好了就不能换了，想清楚哦~", "expression": "talk", "autoAdvance": 4}
+    ],
+    "once": false,
+    "priority": 8
+  },
+  {
+    "id": "stage_ui_warden_4",
+    "scene": "stage",
+    "trigger": "ui_warden_select",
+    "lines": [
+      {"text": "试试没用过的战灵？说不定有惊喜！", "expression": "happy", "autoAdvance": 4}
+    ],
+    "once": false,
+    "priority": 8
+  },
+
+  {
+    "id": "stage_ui_build_2",
+    "scene": "stage",
+    "trigger": "ui_build_menu",
+    "lines": [
+      {"text": "要造新塔了吗？选好位置再放哦。", "expression": "talk", "autoAdvance": 4}
+    ],
+    "once": false,
+    "priority": 6
+  },
+  {
+    "id": "stage_ui_build_3",
+    "scene": "stage",
+    "trigger": "ui_build_menu",
+    "lines": [
+      {"text": "建塔时机很重要，金币够再出手！", "expression": "talk", "autoAdvance": 4}
+    ],
+    "once": false,
+    "priority": 6
+  },
+  {
+    "id": "stage_ui_build_4",
+    "scene": "stage",
+    "trigger": "ui_build_menu",
+    "lines": [
+      {"text": "少而精比多而弱好，想好再建~", "expression": "idle", "autoAdvance": 4}
+    ],
+    "once": false,
+    "priority": 6
+  },
+
+  {
+    "id": "stage_ui_item_2",
+    "scene": "stage",
+    "trigger": "ui_item_panel",
+    "lines": [
+      {"text": "看看有什么好道具可以用~", "expression": "talk", "autoAdvance": 3}
+    ],
+    "once": false,
+    "priority": 6
+  },
+  {
+    "id": "stage_ui_item_3",
+    "scene": "stage",
+    "trigger": "ui_item_panel",
+    "lines": [
+      {"text": "道具用在核心塔上效果最好哦。", "expression": "talk", "autoAdvance": 4}
+    ],
+    "once": false,
+    "priority": 6
+  },
+  {
+    "id": "stage_ui_item_4",
+    "scene": "stage",
+    "trigger": "ui_item_panel",
+    "lines": [
+      {"text": "别攒太多，关键时刻记得用！", "expression": "talk", "autoAdvance": 3}
+    ],
+    "once": false,
+    "priority": 6
+  },
+
+  {
+    "id": "perf_fps_low_2",
+    "scene": "stage",
+    "trigger": "perf_fps_low",
+    "lines": [
+      {"text": "帧率掉了...敌人太多还是特效太猛？", "expression": "talk", "autoAdvance": 4}
+    ],
+    "once": false,
+    "priority": 6
+  },
+  {
+    "id": "perf_fps_low_3",
+    "scene": "stage",
+    "trigger": "perf_fps_low",
+    "lines": [
+      {"text": "画面有点卡顿...降低画质试试？", "expression": "idle", "autoAdvance": 4}
+    ],
+    "once": false,
+    "priority": 6
+  },
+
+  {
+    "id": "perf_fps_great_2",
+    "scene": "stage",
+    "trigger": "perf_fps_great",
+    "lines": [
+      {"text": "丝滑流畅！打起来真舒服~", "expression": "happy", "autoAdvance": 3}
+    ],
+    "once": false,
+    "priority": 3
+  },
+  {
+    "id": "perf_fps_great_3",
+    "scene": "stage",
+    "trigger": "perf_fps_great",
+    "lines": [
+      {"text": "帧率满格！完美体验！", "expression": "happy", "autoAdvance": 3}
+    ],
+    "once": false,
+    "priority": 3
+  },
+
+  {
+    "id": "perf_gc_heavy_2",
+    "scene": "stage",
+    "trigger": "perf_gc_heavy",
+    "lines": [
+      {"text": "GC又在忙了...程序员的日常。", "expression": "idle", "autoAdvance": 4}
+    ],
+    "once": false,
+    "priority": 5
+  },
+  {
+    "id": "perf_gc_heavy_3",
+    "scene": "stage",
+    "trigger": "perf_gc_heavy",
+    "lines": [
+      {"text": "内存有点紧张...不过还扛得住！", "expression": "talk", "autoAdvance": 4}
+    ],
+    "once": false,
+    "priority": 5
+  },
+
+  {
+    "id": "diag_swarm_critical_2",
+    "scene": "stage",
+    "trigger": "diag_enemy_swarm_critical",
+    "lines": [
+      {"text": "敌人密度爆表了！防线要撑不住了！", "expression": "surprised", "autoAdvance": 3}
+    ],
+    "once": false,
+    "priority": 9
+  },
+  {
+    "id": "diag_swarm_critical_3",
+    "scene": "stage",
+    "trigger": "diag_enemy_swarm_critical",
+    "lines": [
+      {"text": "警告！敌群超载！赶紧集火！", "expression": "surprised", "autoAdvance": 3},
+      {"text": "战灵技能能用就用上！", "expression": "talk", "autoAdvance": 3}
     ],
     "once": false,
     "priority": 9

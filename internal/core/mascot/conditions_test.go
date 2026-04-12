@@ -30,7 +30,7 @@ func TestBossIncoming(t *testing.T) {
 
 	// Trigger when boss wave, active, and wave changed.
 	state.PrevWave = 4
-	if got := cond(ctx, state); got != "bossIncoming" {
+	if got := cond(ctx, state); got != "boss_incoming" {
 		t.Fatalf("expected \"bossIncoming\", got %q", got)
 	}
 }
@@ -48,12 +48,12 @@ func TestLowHealth(t *testing.T) {
 			MaxLives: 20,
 		},
 	}
-	if got := cond(ctx, state); got != "lowHealth" {
+	if got := cond(ctx, state); got != "low_health" {
 		t.Fatalf("expected \"lowHealth\" at 30%% threshold, got %q", got)
 	}
 
 	// Mark as fired.
-	state.markFired("lowHealth", 100)
+	state.markFired("low_health", 100)
 
 	// Same session time: cooldown blocks.
 	if got := cond(ctx, state); got != "" {
@@ -62,7 +62,7 @@ func TestLowHealth(t *testing.T) {
 
 	// After cooldown (60s): should trigger again.
 	ctx.SessionSecs = 161
-	if got := cond(ctx, state); got != "lowHealth" {
+	if got := cond(ctx, state); got != "low_health" {
 		t.Fatalf("expected \"lowHealth\" after cooldown, got %q", got)
 	}
 
@@ -92,8 +92,8 @@ func TestSessionDuration(t *testing.T) {
 
 	// At 30 min: trigger.
 	ctx.SessionSecs = 1800
-	if got := cond(ctx, state); got != "sessionDuration" {
-		t.Fatalf("expected \"sessionDuration\" at 30min, got %q", got)
+	if got := cond(ctx, state); got != "session_30min" {
+		t.Fatalf("expected \"session_30min\" at 30min, got %q", got)
 	}
 
 	// Mark as fired.
@@ -106,8 +106,8 @@ func TestSessionDuration(t *testing.T) {
 
 	// At 60 min: trigger.
 	ctx.SessionSecs = 3600
-	if got := cond(ctx, state); got != "sessionDuration" {
-		t.Fatalf("expected \"sessionDuration\" at 60min, got %q", got)
+	if got := cond(ctx, state); got != "session_60min" {
+		t.Fatalf("expected \"session_60min\" at 60min, got %q", got)
 	}
 }
 
@@ -117,8 +117,8 @@ func TestTimeGreeting(t *testing.T) {
 
 	// Morning (hour=8, band=0). LastGreetingBand starts at -1.
 	ctx := &GameContext{HourOfDay: 8}
-	if got := cond(ctx, state); got != "timeGreeting" {
-		t.Fatalf("expected \"timeGreeting\" for morning, got %q", got)
+	if got := cond(ctx, state); got != "greet_morning" {
+		t.Fatalf("expected \"greet_morning\" for morning, got %q", got)
 	}
 	// State should update.
 	if state.LastGreetingBand != 0 {
@@ -132,8 +132,8 @@ func TestTimeGreeting(t *testing.T) {
 
 	// Afternoon (hour=14, band=1).
 	ctx.HourOfDay = 14
-	if got := cond(ctx, state); got != "timeGreeting" {
-		t.Fatalf("expected \"timeGreeting\" for afternoon, got %q", got)
+	if got := cond(ctx, state); got != "greet_afternoon" {
+		t.Fatalf("expected \"greet_afternoon\" for afternoon, got %q", got)
 	}
 	if state.LastGreetingBand != 1 {
 		t.Fatalf("expected LastGreetingBand=1, got %d", state.LastGreetingBand)
@@ -141,14 +141,14 @@ func TestTimeGreeting(t *testing.T) {
 
 	// Evening (hour=20, band=2).
 	ctx.HourOfDay = 20
-	if got := cond(ctx, state); got != "timeGreeting" {
-		t.Fatalf("expected \"timeGreeting\" for evening, got %q", got)
+	if got := cond(ctx, state); got != "greet_evening" {
+		t.Fatalf("expected \"greet_evening\" for evening, got %q", got)
 	}
 
 	// Late night (hour=2, band=3).
 	ctx.HourOfDay = 2
-	if got := cond(ctx, state); got != "timeGreeting" {
-		t.Fatalf("expected \"timeGreeting\" for late night, got %q", got)
+	if got := cond(ctx, state); got != "greet_latenight" {
+		t.Fatalf("expected \"greet_latenight\" for late night, got %q", got)
 	}
 	if state.LastGreetingBand != 3 {
 		t.Fatalf("expected LastGreetingBand=3, got %d", state.LastGreetingBand)
@@ -162,7 +162,7 @@ func TestWaveComplete(t *testing.T) {
 
 	// Wave increased and not active: trigger.
 	ctx := &GameContext{InStage: true, StageSnapshot: StageSnapshot{Wave: 4, WaveActive: false}}
-	if got := cond(ctx, state); got != "waveComplete" {
+	if got := cond(ctx, state); got != "wave_complete" {
 		t.Fatalf("expected \"waveComplete\", got %q", got)
 	}
 
@@ -195,12 +195,12 @@ func TestKillStreak(t *testing.T) {
 
 	// MultiKill >= 5: trigger.
 	ctx.MultiKill = 5
-	if got := cond(ctx, state); got != "killStreak" {
+	if got := cond(ctx, state); got != "kill_streak" {
 		t.Fatalf("expected \"killStreak\", got %q", got)
 	}
 
 	// Cooldown blocks.
-	state.markFired("killStreak", 100)
+	state.markFired("kill_streak", 100)
 	ctx.MultiKill = 10
 	if got := cond(ctx, state); got != "" {
 		t.Fatalf("expected cooldown to block, got %q", got)
@@ -208,7 +208,7 @@ func TestKillStreak(t *testing.T) {
 
 	// After cooldown.
 	ctx.SessionSecs = 131
-	if got := cond(ctx, state); got != "killStreak" {
+	if got := cond(ctx, state); got != "kill_streak" {
 		t.Fatalf("expected \"killStreak\" after cooldown, got %q", got)
 	}
 }
@@ -219,7 +219,7 @@ func TestGoldShortage(t *testing.T) {
 
 	// Gold < 20, has towers: trigger.
 	ctx := &GameContext{InStage: true, SessionSecs: 100, StageSnapshot: StageSnapshot{Gold: 15, TowerCount: 3}}
-	if got := cond(ctx, state); got != "goldShortage" {
+	if got := cond(ctx, state); got != "gold_shortage" {
 		t.Fatalf("expected \"goldShortage\", got %q", got)
 	}
 
@@ -250,7 +250,7 @@ func TestEnemySwarm(t *testing.T) {
 
 	// EnemyCount > 15: trigger.
 	ctx.EnemyCount = 16
-	if got := cond(ctx, state); got != "enemySwarm" {
+	if got := cond(ctx, state); got != "enemy_swarm" {
 		t.Fatalf("expected \"enemySwarm\", got %q", got)
 	}
 }
@@ -261,8 +261,8 @@ func TestProgressMilestone(t *testing.T) {
 
 	// First win.
 	ctx := &GameContext{TotalWins: 1, TotalKills: 50}
-	if got := cond(ctx, state); got != "progressMilestone" {
-		t.Fatalf("expected \"progressMilestone\" for first win, got %q", got)
+	if got := cond(ctx, state); got != "milestone_wins_1" {
+		t.Fatalf("expected \"milestone_wins_1\" for first win, got %q", got)
 	}
 	// Mark.
 	state.TriggeredOnce["wins_1"] = true
@@ -274,15 +274,15 @@ func TestProgressMilestone(t *testing.T) {
 
 	// 100 kills.
 	ctx.TotalKills = 100
-	if got := cond(ctx, state); got != "progressMilestone" {
-		t.Fatalf("expected \"progressMilestone\" for 100 kills, got %q", got)
+	if got := cond(ctx, state); got != "milestone_kills_100" {
+		t.Fatalf("expected \"milestone_kills_100\" for 100 kills, got %q", got)
 	}
 	state.TriggeredOnce["kills_100"] = true
 
 	// 5 wins.
 	ctx.TotalWins = 5
-	if got := cond(ctx, state); got != "progressMilestone" {
-		t.Fatalf("expected \"progressMilestone\" for 5 wins, got %q", got)
+	if got := cond(ctx, state); got != "milestone_wins_5" {
+		t.Fatalf("expected \"milestone_wins_5\" for 5 wins, got %q", got)
 	}
 }
 
@@ -290,33 +290,25 @@ func TestIdleChatter(t *testing.T) {
 	cond := condIdleChatter()
 	state := NewConditionState()
 
-	// No previous fire: any session time >= 30s should trigger.
-	ctx := &GameContext{SessionSecs: 31}
-	if got := cond(ctx, state); got != "idleChatter" {
-		t.Fatalf("expected \"idleChatter\" after 31s with no fires, got %q", got)
+	// First call: should trigger immediately.
+	ctx := &GameContext{SessionSecs: 1}
+	if got := cond(ctx, state); got != "idle_chatter" {
+		t.Fatalf("expected \"idle_chatter\" on first call, got %q", got)
 	}
 
 	// Mark fired.
-	state.markFired("idleChatter", 31)
+	state.markFired("idle_chatter", 1)
 
-	// Within cooldown: no trigger.
-	ctx.SessionSecs = 50
+	// Within 2s cooldown: no trigger.
+	ctx.SessionSecs = 2
 	if got := cond(ctx, state); got != "" {
 		t.Fatalf("expected cooldown to block idle chatter, got %q", got)
 	}
 
-	// After cooldown: trigger.
-	ctx.SessionSecs = 62
-	if got := cond(ctx, state); got != "idleChatter" {
-		t.Fatalf("expected \"idleChatter\" after cooldown, got %q", got)
-	}
-
-	// With other recent fires: should not trigger if something fired recently.
-	state.markFired("lowHealth", 70)
-	state.markFired("idleChatter", 62) // reset idle
-	ctx.SessionSecs = 80
-	if got := cond(ctx, state); got != "" {
-		t.Fatalf("expected no idle chatter when other trigger fired recently, got %q", got)
+	// After 2s cooldown: trigger again.
+	ctx.SessionSecs = 4
+	if got := cond(ctx, state); got != "idle_chatter" {
+		t.Fatalf("expected \"idle_chatter\" after cooldown, got %q", got)
 	}
 }
 
@@ -349,8 +341,8 @@ func TestCooldowns(t *testing.T) {
 
 func TestDefaultConditionsCount(t *testing.T) {
 	funcs := DefaultConditions()
-	if len(funcs) != 20 {
-		t.Fatalf("expected 20 default conditions, got %d", len(funcs))
+	if len(funcs) != 27 {
+		t.Fatalf("expected 27 default conditions, got %d", len(funcs))
 	}
 }
 

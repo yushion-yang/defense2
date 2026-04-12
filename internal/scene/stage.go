@@ -32,9 +32,9 @@ import (
 	"defense2/internal/core/event"
 	"defense2/internal/core/game"
 	"defense2/internal/core/gamemap"
-	"defense2/internal/core/mascot"
 	"defense2/internal/core/gamemode"
 	"defense2/internal/core/item"
+	"defense2/internal/core/mascot"
 	"defense2/internal/core/persistence"
 	"defense2/internal/core/pipeline"
 	"defense2/internal/core/projectile"
@@ -142,37 +142,44 @@ type StageScene struct {
 	wavesCleared int // 已清除波次数（用于能力解锁）
 	// 测试模式
 	// HUD 面板状态
-	wavePanelOpen     bool               // 左下角波次面板是否展开
-	wavePanelState    hud.WavePanelState // 抽屉动画状态
-	wardenPanelOpen   bool               // 右下角战灵面板是否展开
-	testMode          bool
-	scenarioID        string
-	enemyFilter       string
-	manualWave        bool
-	debugPanelOpen    bool
-	debugShowRange    bool
-	spawnMode         bool
-	spawnMoving       bool         // true=造动怪（放在路径上行走），false=造静怪
-	saveNaming        bool         // 场景命名输入中
-	saveNameBuf       string       // 命名缓冲区
-	hoveredEnemy      *enemy.Enemy // 测试模式：鼠标悬浮的敌人
-	spawnType         string
-	spawnHoverIdx     int
-	initOpts          StageOptions          // 保存原始配置（重新开始用）
-	postPipeline      *postprocess.Pipeline // 后处理管线（bloom 等）
-	particlePool      *particle.Pool        // GPU 粒子系统
-	debugOverlay      *hud.DebugOverlay     // 调试覆盖层（F2 切换）
-	perfTracker       *debug.PerfTracker    // 性能追踪器
-	qualityAdaptive   *game.QualityAdaptive // 自适应画质调节器
-	waveAnnounce      *hud.WaveAnnounce     // 波次开始公告动画
-	ambientTimer      float64               // 环境粒子发射计时器（每秒一次）
-	multiKillCount    int                   // 连续击杀计数
-	multiKillTimer    float64               // 连杀窗口倒计时（1.5s 无击杀后重置）
-	choicePanel       *hud.ChoicePanel      // 能力选择覆盖层
-	autoPlayer        AutoPlayer            // 自动对局驱动（nil=手动模式）
-	screenshotPending bool                  // F12 截图请求标志
-	achieveTracker    *achievement.Tracker  // 成就追踪器
-	gameStats         GameStats             // 详细游戏统计
+	wavePanelOpen   bool               // 左下角波次面板是否展开
+	wavePanelState  hud.WavePanelState // 抽屉动画状态
+	wardenPanelOpen bool               // 右下角战灵面板是否展开
+	testMode        bool
+	scenarioID      string
+	enemyFilter     string
+	manualWave      bool
+	debugPanelOpen  bool
+	debugShowRange  bool
+	spawnMode       bool
+	spawnMoving     bool         // true=造动怪（放在路径上行走），false=造静怪
+	saveNaming      bool         // 场景命名输入中
+	saveNameBuf     string       // 命名缓冲区
+	hoveredEnemy    *enemy.Enemy // 测试模式：鼠标悬浮的敌人
+	spawnType       string
+	spawnHoverIdx   int
+	// 萌妹击杀 VFX
+	mascotKillVFXActive   bool
+	mascotKillVFXX        float64
+	mascotKillVFXY        float64
+	mascotKillVFXTimer    float64
+	mascotKillVFXDuration float64
+	initOpts              StageOptions          // 保存原始配置（重新开始用）
+	postPipeline          *postprocess.Pipeline // 后处理管线（bloom 等）
+	particlePool          *particle.Pool        // GPU 粒子系统
+	debugOverlay          *hud.DebugOverlay     // 调试覆盖层（F2 切换）
+	perfTracker           *debug.PerfTracker    // 性能追踪器
+	qualityAdaptive       *game.QualityAdaptive // 自适应画质调节器
+	waveAnnounce          *hud.WaveAnnounce     // 波次开始公告动画
+	ambientTimer          float64               // 环境粒子发射计时器（每秒一次）
+	multiKillCount        int                   // 连续击杀计数
+	multiKillTimer        float64               // 连杀窗口倒计时（1.5s 无击杀后重置）
+	regenTextCD           float64               // 回血浮字节流冷却（秒）
+	choicePanel           *hud.ChoicePanel      // 能力选择覆盖层
+	autoPlayer            AutoPlayer            // 自动对局驱动（nil=手动模式）
+	screenshotPending     bool                  // F12 截图请求标志
+	achieveTracker        *achievement.Tracker  // 成就追踪器
+	gameStats             GameStats             // 详细游戏统计
 }
 
 // NewStageSceneWithOpts 创建游戏主场景，接受完整配置选项。
@@ -189,6 +196,9 @@ func NewStageSceneWithOpts(sw Switcher, opts StageOptions) *StageScene {
 		}
 	}
 	gm := gamemap.NewGameMap(cfg)
+
+	// 新场景需要重绘地图缓存（旧缓存烘焙了上一局的 towerAt 结果）
+	render.InvalidateMapCache()
 
 	// 初始化持久化
 	store, err := persistence.DefaultStorage()
@@ -390,6 +400,15 @@ func NewStageSceneWithOpts(sw Switcher, opts StageOptions) *StageScene {
 	// 事件总线引用（订阅延迟到首次 Update，避免被场景切换淡出的 bus.Clear 清掉）
 	s.bus = sw.EventBus()
 
+	// 大地图：初始相机居中
+	if totalW := gm.PixelWidth() + gm.OffsetX*2; totalW > float64(game.ScreenWidth) {
+		s.camX = (totalW - float64(game.ScreenWidth)) / 2
+	}
+	if totalH := gm.PixelHeight() + gm.OffsetY*2; totalH > float64(game.ScreenHeight) {
+		s.camY = (totalH - float64(game.ScreenHeight)) / 2
+	}
+	s.clampCamera()
+
 	return s
 }
 
@@ -409,6 +428,11 @@ func (s *StageScene) MascotSnapshot() mascot.StageSnapshot {
 		ElapsedSecs: s.session.ElapsedTime,
 		IsBossWave:  s.spawner.IsBossWave(),
 		WaveActive:  s.spawner.WaveActive,
+
+		// Game state
+		Paused:  s.imode == modePaused,
+		Victory: s.state == stateVictory,
+		Defeat:  s.state == stateDefeat,
 
 		// Performance
 		FPS:        s.perfTracker.FPS,
@@ -463,6 +487,12 @@ func (s *StageScene) ExecuteMascotAction(action *mascot.MascotAction) bool {
 	if weakest == nil {
 		return false
 	}
+	// Start kill VFX at target position before killing.
+	s.mascotKillVFXActive = true
+	s.mascotKillVFXX = weakest.X
+	s.mascotKillVFXY = weakest.Y
+	s.mascotKillVFXTimer = 0
+	s.mascotKillVFXDuration = 0.5
 	s.enemies.Kill(weakest)
 	return true
 }
@@ -1965,12 +1995,17 @@ func (s *StageScene) updatePlaying() {
 		}
 	})
 
+	if s.regenTextCD > 0 {
+		s.regenTextCD -= gameDT
+	}
 	// Step 9: 敌人行为 tick（治疗/隐身/旗手光环/回血）
 	behaviorEvents := enemy.TickBehaviors(s.enemies, gameDT)
 	for _, heal := range behaviorEvents.Heals {
-		// 被治疗的怪物飘绿色回血数字（使用事件中的 Target 指针，避免遍历敌人池）
+		// 被治疗的怪物飘绿色回血数字（用全局浮字池，不会被伤害浮字覆盖）
 		if heal.Target != nil && heal.Target.Active {
-			heal.Target.SetFloatText(fmt.Sprintf("+%.0f", heal.Restored), 60, 220, 100)
+			render.SpawnText(heal.TargetX, heal.TargetY-float64(heal.Target.Radius),
+				fmt.Sprintf("+%.0f", heal.Restored),
+				color.RGBA{R: 60, G: 220, B: 100, A: 255}, 10, 0.8)
 		}
 	}
 	if len(behaviorEvents.Heals) > 0 {
@@ -1979,7 +2014,16 @@ func (s *StageScene) updatePlaying() {
 	for range behaviorEvents.Reveals {
 		s.audioMgr.PlaySafeAt(gameAudio.SFXStealthReveal, gameAudio.VolKill)
 	}
-	if behaviorEvents.Regens > 0 {
+	if len(behaviorEvents.Regens) > 0 {
+		// Regen 浮字：每 1 秒节流显示一次（避免每帧刷屏）
+		if s.regenTextCD <= 0 {
+			for _, rg := range behaviorEvents.Regens {
+				render.SpawnText(rg.X, rg.Y-20,
+					fmt.Sprintf("+%.0f", rg.Restored/gameDT), // 显示每秒回复速率
+					color.RGBA{R: 80, G: 200, B: 120, A: 200}, 9, 0.6)
+			}
+			s.regenTextCD = 1.0
+		}
 		s.audioMgr.PlayThrottledAt(gameAudio.SFXRegenTick, 2000, gameAudio.VolHit*0.5)
 	}
 	if behaviorEvents.Berserks > 0 {
@@ -2325,6 +2369,14 @@ func (s *StageScene) updatePlaying() {
 	// 前置安全网(step 2)只能处理上一帧残留，本帧新产生的 HP<=0 敌人需要在胜负判定前处理
 	pipeline.TickEnemyStatusEffects(s.enemies, 0, nil) // dt=0 不触发 DoT，仅做 HP<=0 检查
 
+	// Mascot kill VFX timer.
+	if s.mascotKillVFXActive {
+		s.mascotKillVFXTimer += gameDT
+		if s.mascotKillVFXTimer >= s.mascotKillVFXDuration {
+			s.mascotKillVFXActive = false
+		}
+	}
+
 	// Step 23: 胜负判定（委托给游戏模式）
 	ctx := s.buildModeCtx()
 	if s.session.TickEndConditions(ctx) && s.state == statePlaying {
@@ -2546,6 +2598,12 @@ func (s *StageScene) drawScene(screen *ebiten.Image) {
 	// 敌人（优先 SVG 渲染）
 	s.enemyRenderer.DrawEnemies(worldTarget, s.enemies, animTime)
 
+	// 萌妹击杀魔法阵 VFX
+	if s.mascotKillVFXActive {
+		vfx.DrawMascotKillMark(worldTarget, s.mascotKillVFXX, s.mascotKillVFXY,
+			s.mascotKillVFXTimer, s.mascotKillVFXDuration)
+	}
+
 	// 削强连接线
 	s.drawStrengthDrainLinks(worldTarget)
 	s.drawEnemyAbilityVFX(worldTarget)
@@ -2761,7 +2819,6 @@ func (s *StageScene) drawScene(screen *ebiten.Image) {
 	}
 }
 
-// buildBuildMenuData 构建建造菜单展示数据。
 func (s *StageScene) buildBuildMenuData() hud.BuildMenuData {
 	buildableCount := len(s.towerDefs)
 	cards := make([]hud.BuildCardVM, 0, buildableCount+10)
@@ -3065,6 +3122,12 @@ func convertArchetypesToSpawnConfigs(archetypes map[string]*config.EnemyArchetyp
 			}
 			applyEnemyAbilityToSpawnConfig(sc, def)
 			sc.AbilityIDs = append(sc.AbilityIDs, def.Type)
+			// 记录 potential 用于 spawn 时按波次叠加
+			if p := config.ResolveEffectivePotential(ref); p != 0 {
+				sc.AbilityPotentials = append(sc.AbilityPotentials, enemy.AbilityPotentialEntry{
+					Type: ref.Type, Potential: p,
+				})
+			}
 		}
 		result[key] = sc
 	}

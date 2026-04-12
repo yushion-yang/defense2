@@ -209,17 +209,17 @@ func TestVMWhenIdle(t *testing.T) {
 func TestPrioritySelection(t *testing.T) {
 	dialogs := []Dialog{
 		{
-			ID:      "low",
-			Scene:   "title",
-			Trigger: "scene_enter",
-			Lines:   []Line{{Text: "Low priority", Expression: "idle"}},
+			ID:       "low",
+			Scene:    "title",
+			Trigger:  "scene_enter",
+			Lines:    []Line{{Text: "Low priority", Expression: "idle"}},
 			Priority: 1,
 		},
 		{
-			ID:      "high",
-			Scene:   "title",
-			Trigger: "scene_enter",
-			Lines:   []Line{{Text: "High priority", Expression: "happy"}},
+			ID:       "high",
+			Scene:    "title",
+			Trigger:  "scene_enter",
+			Lines:    []Line{{Text: "High priority", Expression: "happy"}},
 			Priority: 10,
 		},
 	}
@@ -235,10 +235,10 @@ func TestPrioritySelection(t *testing.T) {
 func TestWildcardScene(t *testing.T) {
 	dialogs := []Dialog{
 		{
-			ID:      "global_hint",
-			Scene:   "*",
-			Trigger: "hint",
-			Lines:   []Line{{Text: "Global hint!", Expression: "talk"}},
+			ID:       "global_hint",
+			Scene:    "*",
+			Trigger:  "hint",
+			Lines:    []Line{{Text: "Global hint!", Expression: "talk"}},
 			Priority: 1,
 		},
 	}
@@ -269,10 +269,10 @@ func TestNoInterruptActiveDialog(t *testing.T) {
 			Priority: 1,
 		},
 		{
-			ID:      "second",
-			Scene:   "stage",
-			Trigger: "wave_start",
-			Lines:   []Line{{Text: "Should not appear", Expression: "idle"}},
+			ID:       "second",
+			Scene:    "stage",
+			Trigger:  "wave_start",
+			Lines:    []Line{{Text: "Should not appear", Expression: "idle"}},
 			Priority: 5,
 		},
 	}
@@ -348,7 +348,7 @@ func newConditionTestGuide() *Guide {
 		{
 			ID:      "low_health_tip",
 			Scene:   "stage",
-			Trigger: "lowHealth",
+			Trigger: "low_health",
 			Lines:   []Line{{Text: "Watch your health!", Expression: "surprised"}},
 		},
 		{
@@ -370,9 +370,15 @@ func newConditionTestGuide() *Guide {
 			Lines:   []Line{{Text: "Got one!", Expression: "happy", AutoAdvance: 2.0}},
 		},
 		{
+			ID:      "ability_hint_dialog",
+			Scene:   "stage",
+			Trigger: "mascot_ability_hint",
+			Lines:   []Line{{Text: "Click me to help!", Expression: "happy", AutoAdvance: 8.0}},
+		},
+		{
 			ID:      "boss_dialog",
 			Scene:   "stage",
-			Trigger: "bossIncoming",
+			Trigger: "boss_incoming",
 			Lines:   []Line{{Text: "Boss incoming!", Expression: "surprised"}},
 		},
 	}
@@ -399,8 +405,16 @@ func TestUpdateContextTriggersCondition(t *testing.T) {
 	}
 	g.UpdateContext(ctx)
 
-	// First update won't trigger because evalTimer starts at 0 and needs
-	// to count down. Let's tick past the interval.
+	// First tick triggers ability hint (ability is ready). Dismiss it.
+	g.Tick(0.016)
+	if g.IsAbilityHintActive() {
+		g.ClickAdvance()
+	}
+	// Use ability to put it on cooldown so hint doesn't interfere.
+	g.RequestHelp()
+	g.ClickAdvance() // dismiss help dialog
+
+	// Now tick past the eval interval so condition evaluates.
 	g.Tick(1.1)
 	ctx.SessionSecs = 101.1
 	g.UpdateContext(ctx)
@@ -527,16 +541,20 @@ func TestAbilityCooldown(t *testing.T) {
 		t.Fatalf("expected CooldownPct in (0, 1.0], got %f", vm.CooldownPct)
 	}
 
-	// Tick past cooldown.
+	// Tick past cooldown. Hint triggers and Tick returns early to keep it visible.
 	g.ClickAdvance() // dismiss not_ready dialog
-	g.Tick(31.0)
+	g.Tick(31.0)     // cooldown expires, hint auto-triggers
 
 	// Should be ready again.
 	if !g.AbilityReady() {
 		t.Fatal("expected ability ready after cooldown expires")
 	}
 
+	// After cooldown expires, Tick auto-triggers ability hint dialog.
 	vm = g.VM()
+	if !vm.AbilityHintShown {
+		t.Fatal("expected AbilityHintShown=true after cooldown expires")
+	}
 	if vm.CooldownPct != 0 {
 		t.Fatalf("expected CooldownPct=0 when ready, got %f", vm.CooldownPct)
 	}
@@ -581,6 +599,92 @@ func TestHasActiveDialog(t *testing.T) {
 	}
 }
 
+func TestAbilityHintAutoTrigger(t *testing.T) {
+	g := newConditionTestGuide()
+	g.InitConditions(nil)
+
+	ctx := GameContext{
+		SceneName:   "stage",
+		SessionSecs: 100,
+		InStage:     true,
+		StageSnapshot: StageSnapshot{
+			Lives:      10,
+			MaxLives:   20,
+			EnemyCount: 5,
+		},
+	}
+	g.UpdateContext(ctx)
+
+	// No hint yet — Tick hasn't been called.
+	if g.IsAbilityHintActive() {
+		t.Fatal("expected no hint before Tick")
+	}
+
+	// Tick triggers the hint dialog.
+	g.Tick(0.016)
+	if !g.IsAbilityHintActive() {
+		t.Fatal("expected hint active after Tick with ability ready")
+	}
+	vm := g.VM()
+	if !vm.AbilityHintShown {
+		t.Fatal("expected AbilityHintShown=true in VM")
+	}
+	if vm.Text != "Click me to help!" {
+		t.Fatalf("expected hint text, got %q", vm.Text)
+	}
+
+	// Second Tick should NOT re-trigger (abilityHinted=true).
+	g.ClickAdvance() // dismiss hint
+	if g.IsAbilityHintActive() {
+		t.Fatal("expected hint inactive after dismiss")
+	}
+	g.Tick(0.016) // should not re-trigger
+	if g.HasActiveDialog() {
+		t.Fatal("expected no re-trigger of hint in same cycle")
+	}
+}
+
+func TestAbilityHintClickTriggersAbility(t *testing.T) {
+	g := newConditionTestGuide()
+	g.InitConditions(nil)
+
+	ctx := GameContext{
+		SceneName:   "stage",
+		SessionSecs: 100,
+		InStage:     true,
+		StageSnapshot: StageSnapshot{
+			Lives:      10,
+			MaxLives:   20,
+			EnemyCount: 5,
+		},
+	}
+	g.UpdateContext(ctx)
+	g.Tick(0.016) // triggers hint
+
+	if !g.IsAbilityHintActive() {
+		t.Fatal("expected hint active")
+	}
+
+	// RequestHelp while hint is active should work.
+	action := g.RequestHelp()
+	if action == nil {
+		t.Fatal("expected action from RequestHelp during hint")
+	}
+	if action.Type != ActionKillWeakEnemy {
+		t.Fatalf("expected ActionKillWeakEnemy, got %q", action.Type)
+	}
+
+	// Hint should be cleared.
+	if g.IsAbilityHintActive() {
+		t.Fatal("expected hint cleared after RequestHelp")
+	}
+	// mascot_help dialog should be active instead.
+	vm := g.VM()
+	if vm.Text != "Leave it to me!" {
+		t.Fatalf("expected help dialog, got %q", vm.Text)
+	}
+}
+
 func TestVMAbilityFields(t *testing.T) {
 	g := newConditionTestGuide()
 	g.InitConditions(nil)
@@ -596,7 +700,7 @@ func TestVMAbilityFields(t *testing.T) {
 		t.Fatal("expected AbilityReady=false outside stage")
 	}
 
-	// In stage, ready.
+	// In stage, ready (hint dialog will auto-trigger on next Tick).
 	ctx = GameContext{
 		SceneName:   "stage",
 		SessionSecs: 100,
@@ -607,6 +711,7 @@ func TestVMAbilityFields(t *testing.T) {
 		},
 	}
 	g.UpdateContext(ctx)
+	// Before Tick, ability is ready but no hint yet.
 	vm = g.VM()
 	if !vm.AbilityReady {
 		t.Fatal("expected AbilityReady=true in stage with no cooldown")

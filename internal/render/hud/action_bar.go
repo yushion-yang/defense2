@@ -51,7 +51,7 @@ func DrawActionBar(screen *ebiten.Image, d ActionBarData) {
 	}
 	var btns []btnDef
 
-	// Build button
+	// Build button: active=green, default=secondary
 	buildClr := theme.ToneSecondary
 	if d.BuildActive {
 		buildClr = theme.TonePrimary

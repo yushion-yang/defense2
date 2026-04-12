@@ -91,8 +91,8 @@ func (a *ConfigAbility) OnHit(t *tower.Tower, p *projectile.Projectile, e *enemy
 		return nil
 
 	case tower.AbilityFlatDamage:
-		// scaleDim=damage, 无固定参数
-		return &tower.HitResult{BonusDamage: sv}
+		// scaleDim=damage, 独立二段伤害（对抗 damageCap）
+		return &tower.HitResult{SeparateDamage: sv}
 
 	case tower.AbilityDistanceDamage:
 		// scaleDim=maxBonus, 无固定参数

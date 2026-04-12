@@ -45,26 +45,23 @@ func SpawnAnimParams(spawnTimer, spawnDuration float64) (scale, alpha float64) {
 
 // DrawBossPulse 绘制 Boss 脉冲光环。
 func DrawBossPulse(screen *ebiten.Image, cx, cy, radius float32, animTime float64) {
-	// Glow aura underneath
-	glowA := uint8(clampF(30+15*math.Sin(animTime*2.5), 15, 50))
-	draw.Glow(screen, cx, cy, radius+4, radius+16, color.RGBA{R: 200, G: 60, B: 80, A: glowA})
-
-	// Inner ring (original, stronger alpha)
+	// Inner ring — breathing alpha
 	innerAlpha := uint8(clampF(float64(theme.EnemyBossInner.A)*(0.5+0.5*math.Sin(animTime*2.5)), 0, 255))
 	innerClr := color.RGBA{R: theme.EnemyBossInner.R, G: theme.EnemyBossInner.G, B: theme.EnemyBossInner.B, A: innerAlpha}
 	draw.CircleOutline(screen, cx, cy, radius+6, 2, innerClr)
 
-	// Outer ring (anti-phase for breathing feel)
+	// Outer ring — anti-phase for breathing feel
 	outerAlpha := uint8(clampF(float64(theme.EnemyBossOuter.A)*(0.5+0.5*math.Sin(animTime*2.5+math.Pi)), 0, 255))
 	outerClr := color.RGBA{R: theme.EnemyBossOuter.R, G: theme.EnemyBossOuter.G, B: theme.EnemyBossOuter.B, A: outerAlpha}
 	draw.CircleOutline(screen, cx, cy, radius+10, 1.5, outerClr)
 
-	// 4 orbiting energy dots
+	// 4 orbiting energy diamonds
 	for i := 0; i < 4; i++ {
 		angle := animTime*1.5 + float64(i)*math.Pi/2
 		dotX := cx + (radius+10)*float32(math.Cos(angle))
 		dotY := cy + (radius+10)*float32(math.Sin(angle))
-		draw.FilledCircle(screen, dotX, dotY, 1.5, color.RGBA{R: 255, G: 100, B: 120, A: 150})
+		twinkle := uint8(clampF(120+40*math.Sin(animTime*4+float64(i)*1.5), 80, 170))
+		draw.Diamond(screen, dotX, dotY, 2, 1, color.RGBA{R: 255, G: 100, B: 120, A: twinkle})
 	}
 }
 
@@ -193,8 +190,14 @@ func DrawPurgeGlow(screen *ebiten.Image, cx, cy, radius float32, animTime float6
 	outerAlpha := uint8(40 + 20*math.Sin(animTime*6+math.Pi))
 	draw.CircleOutline(screen, cx, cy, radius+6, 1, color.RGBA{R: 230, G: 240, B: 255, A: outerAlpha})
 
-	// Subtle glow underneath
-	draw.Glow(screen, cx, cy, radius, radius+5, color.RGBA{R: 200, G: 220, B: 255, A: uint8(15 + 10*math.Sin(animTime*4))})
+	// 4 small rotating cross marks for "cleansed" feel
+	crossAlpha := uint8(35 + 15*math.Sin(animTime*4))
+	for i := 0; i < 4; i++ {
+		a := animTime*1.5 + float64(i)*math.Pi/2
+		dx := cx + (radius+4)*float32(math.Cos(a))
+		dy := cy + (radius+4)*float32(math.Sin(a))
+		draw.Diamond(screen, dx, dy, 2, 0.8, color.RGBA{R: 220, G: 235, B: 255, A: crossAlpha})
+	}
 }
 
 // ── 减伤护盾 ────────────────────────────────────────
@@ -208,14 +211,7 @@ func DrawDamageReduceShield(screen *ebiten.Image, cx, cy, radius float32, animTi
 	// Breathing alpha for the shield
 	breathAlpha := clampF(50+25*math.Sin(animTime*2.5), 25, 80)
 
-	// Inner fill — very low alpha for "shield body" feel
-	fillAlpha := uint8(clampF(breathAlpha*0.4, 8, 35))
 	arcR := radius + 5
-	// Draw a filled semi-circle as shield body (approximate with glow)
-	draw.Glow(screen, cx+arcR*0.3*float32(math.Cos(float64(baseAngle))),
-		cy+arcR*0.3*float32(math.Sin(float64(baseAngle))),
-		radius*0.5, radius+4,
-		color.RGBA{R: 180, G: 185, B: 195, A: fillAlpha})
 
 	// Main shield arc — semi-circle facing forward, rotating
 	arcAlpha := uint8(breathAlpha)
@@ -244,11 +240,6 @@ func DrawDamageReduceShield(screen *ebiten.Image, cx, cy, radius float32, animTi
 
 // DrawBerserkFlare 绘制狂暴状态的红色脉冲光环 + 速度拖线。
 func DrawBerserkFlare(screen *ebiten.Image, cx, cy, radius float32, animTime float64) {
-	// Red-orange inner glow — high frequency pulse
-	glowAlpha := uint8(clampF(35+30*math.Sin(animTime*6), 10, 70))
-	draw.Glow(screen, cx, cy, radius*0.5, radius+6,
-		color.RGBA{R: 240, G: 60, B: 30, A: glowAlpha})
-
 	// Contracting/expanding thin red ring
 	ringPulse := float32(1.0 + 0.15*math.Sin(animTime*8))
 	ringR := (radius + 4) * ringPulse
@@ -259,7 +250,6 @@ func DrawBerserkFlare(screen *ebiten.Image, cx, cy, radius float32, animTime flo
 	// 4 rotating speed lines (short radial lines trailing outward)
 	for i := 0; i < 4; i++ {
 		angle := animTime*4 + float64(i)*math.Pi/2
-		// Line starts at ring edge and extends outward
 		innerR := radius + 3
 		outerR := radius + 10 + float32(3*math.Sin(animTime*6+float64(i)*1.5))
 		x1 := cx + float32(innerR)*float32(math.Cos(angle))
@@ -281,29 +271,21 @@ func DrawBerserkFlare(screen *ebiten.Image, cx, cy, radius float32, animTime flo
 
 // DrawRegenAura 绘制再生能力的绿色上浮光点 + 基底辉光。
 func DrawRegenAura(screen *ebiten.Image, cx, cy, radius float32, animTime float64) {
-	// Subtle green glow at the base
-	baseGlowAlpha := uint8(clampF(20+10*math.Sin(animTime*2), 10, 35))
-	draw.Glow(screen, cx, cy, radius*0.3, radius+3,
-		color.RGBA{R: 40, G: 200, B: 80, A: baseGlowAlpha})
-
-	// 5 floating green particles rising around the enemy
+	// 5 floating green diamonds rising around the enemy
 	for i := 0; i < 5; i++ {
-		// Each particle at a different phase, orbiting and rising
-		phase := float64(i) * 1.257 // 2*pi/5 ≈ 1.257
-		// Particle position: orbital X + rising Y
+		phase := float64(i) * 1.257 // 2*pi/5
 		orbAngle := animTime*1.2 + phase
 		orbR := float64(radius) * 0.8
 		px := float64(cx) + orbR*math.Cos(orbAngle)
 		// Rising motion: particles float up and loop back
 		risePhase := math.Mod(animTime*0.8+phase*0.5, 1.0) // 0→1 cycle
 		riseY := float64(cy) - float64(radius)*0.5 - risePhase*float64(radius)*1.5
-		// Wobble the X gently
 		px += 2 * math.Sin(animTime*2+phase)
-		// Fade as particle rises (full alpha at bottom, zero at top)
+		// Fade as particle rises
 		particleAlpha := uint8(clampF(180*(1-risePhase), 0, 180))
 		// Size shrinks as it rises
 		dotR := float32(clampF(2.5*(1-risePhase*0.5), 0.5, 2.5))
-		draw.FilledCircle(screen, float32(px), float32(riseY), dotR,
+		draw.Diamond(screen, float32(px), float32(riseY), dotR, 0.8,
 			color.RGBA{R: 80, G: 220, B: 100, A: particleAlpha})
 	}
 

@@ -19,5 +19,86 @@
     ],
     "once": false,
     "priority": 1
+  },
+  {
+    "id": "select_return_2",
+    "scene": "select",
+    "trigger": "scene_enter",
+    "lines": [
+      {"text": "又回来选图了~这次试试新地图？", "expression": "happy", "autoAdvance": 4}
+    ],
+    "once": false,
+    "priority": 1
+  },
+  {
+    "id": "select_return_3",
+    "scene": "select",
+    "trigger": "scene_enter",
+    "lines": [
+      {"text": "有没有还没打过的图？去探索一下！", "expression": "talk", "autoAdvance": 4}
+    ],
+    "once": false,
+    "priority": 1
+  },
+  {
+    "id": "select_return_4",
+    "scene": "select",
+    "trigger": "scene_enter",
+    "lines": [
+      {"text": "每张地图都有不同的挑战哦~", "expression": "talk", "autoAdvance": 4}
+    ],
+    "once": false,
+    "priority": 1
+  },
+  {
+    "id": "select_return_5",
+    "scene": "select",
+    "trigger": "scene_enter",
+    "lines": [
+      {"text": "看看哪张图还没拿满星？", "expression": "idle", "autoAdvance": 3}
+    ],
+    "once": false,
+    "priority": 1
+  },
+  {
+    "id": "select_idle_1",
+    "scene": "select",
+    "trigger": "idle_chatter",
+    "lines": [
+      {"text": "选地图也是种学问呢~", "expression": "idle", "autoAdvance": 3},
+      {"text": "不同地形需要不同策略。", "expression": "talk", "autoAdvance": 3}
+    ],
+    "once": false,
+    "priority": 2
+  },
+  {
+    "id": "select_idle_2",
+    "scene": "select",
+    "trigger": "idle_chatter",
+    "lines": [
+      {"text": "还在犹豫？随便选一个也行呀~", "expression": "happy", "autoAdvance": 3}
+    ],
+    "once": false,
+    "priority": 2
+  },
+  {
+    "id": "select_idle_3",
+    "scene": "select",
+    "trigger": "idle_chatter",
+    "lines": [
+      {"text": "后面的地图难度更高，奖励也更多！", "expression": "talk", "autoAdvance": 4}
+    ],
+    "once": false,
+    "priority": 2
+  },
+  {
+    "id": "select_idle_4",
+    "scene": "select",
+    "trigger": "idle_chatter",
+    "lines": [
+      {"text": "想好了就点进去！我在里面等你。", "expression": "happy", "autoAdvance": 4}
+    ],
+    "once": false,
+    "priority": 2
   }
 ]

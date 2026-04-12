@@ -14,8 +14,16 @@ type Config struct {
 	SellRefundRatio float64 // 卖塔返还比例
 }
 
-// DefaultConfig 返回默认经济配置（从 balance.json 读取）。
+// DefaultConfig 返回默认经济配置（从 economy.json 读取）。
 func DefaultConfig() Config {
+	spec := config.GlobalEconomySpec()
+	if spec != nil && spec.Global.KillReward > 0 {
+		return Config{
+			KillReward:      spec.Global.KillReward,
+			SellRefundRatio: spec.Global.SellRefundRatio,
+		}
+	}
+	// fallback: balance.json
 	bal := config.GlobalBalance()
 	return Config{
 		KillReward:      int(bal.Economy.KillReward),

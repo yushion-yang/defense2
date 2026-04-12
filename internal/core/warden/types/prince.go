@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"math"
 
+	"defense2/internal/core/combat"
 	"defense2/internal/core/enemy"
 	"defense2/internal/core/warden"
 )
@@ -265,14 +266,19 @@ func tickFireballs(s *PrinceState, ctx *warden.TickContext) {
 				}
 				warden.ApplyDamage(ctx, e, dmg, false)
 				fb.HitSet[e] = true
+				// 弹幕盾：阻止火球继续穿透
+				if combat.ShouldShieldBlock(e, "fireball") {
+					fb.Progress = 1.0
+					e.BlockFlash = 0.25
+				}
 			}
 		})
 
 		if fb.Progress >= 1.0 {
-			// 到达终点：留下火焰痕迹
+			// 到达终点（或被弹幕盾拦截）：在当前位置留下火焰痕迹
 			s.Trails = append(s.Trails, FireTrail{
-				X:       fb.EndX,
-				Y:       fb.EndY,
+				X:       fb.X,
+				Y:       fb.Y,
 				Life:    s.TrailDuration,
 				MaxLife: s.TrailDuration,
 				Radius:  fb.Radius,

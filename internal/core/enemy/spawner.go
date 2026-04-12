@@ -69,6 +69,7 @@ type Spawner struct {
 	BossEveryWave     bool                    // true 时每波末尾都出 Boss（bossRush 模式用）
 	bossQueued        bool                    // 本波是否需要在末尾追加 Boss
 	EntranceDelay     float64                 // Boss 波入场延迟（秒），>0 时暂停出怪
+	squadMembers      []string                // 本波小队成员（startWave 时选定，按索引出完后转随机）
 }
 
 // NewSpawner 创建出怪管理器。
@@ -150,18 +151,29 @@ func (s *Spawner) Tick(pool *Pool, dt float64) {
 			var cfg *SpawnConfig
 
 			if s.bossQueued && s.SpawnIndex == total-1 {
-				// 波末 Boss：使用 tank 原型 + Boss 标记 + 额外倍率
-				archetype = "tank"
+				// 波末 Boss：随机原型 + Boss 标记 + 额外倍率 + 必带净化
+				archetype = s.pickRandomArchetype()
 				cfg = s.getConfig(archetype)
 				if cfg != nil {
-					// 复制一份避免修改原始配置
 					bossCfg := *cfg
 					bossCfg.Boss = true
-					bossCfg.HpScale *= sc.Boss.HpMultBase + float64(s.Wave) // Boss HP 随波次增长
-					bossCfg.Radius *= sc.Boss.RadiusScale                   // Boss 体型更大
+					bossCfg.HpScale *= sc.Boss.HpMultBase
+					bossCfg.Radius *= sc.Boss.RadiusScale
+					// Boss 必带净化能力（每 4 秒清除负面效果，免疫 2 秒）
+					if bossCfg.PurgeInterval <= 0 {
+						bossCfg.PurgeInterval = 4.0
+						bossCfg.PurgeImmuneDur = 2.0
+					}
+					if !containsStr(bossCfg.AbilityIDs, "purge") {
+						bossCfg.AbilityIDs = append(append([]string{}, bossCfg.AbilityIDs...), "purge")
+					}
 					cfg = &bossCfg
 					tel.T.Record("boss", archetype)
 				}
+			} else if s.SpawnIndex < len(s.squadMembers) {
+				// 小队成员优先出场
+				archetype = s.squadMembers[s.SpawnIndex]
+				cfg = s.getConfig(archetype)
 			} else {
 				archetype = s.pickArchetype()
 				cfg = s.getConfig(archetype)
@@ -170,7 +182,8 @@ func (s *Spawner) Tick(pool *Pool, dt float64) {
 			e := pool.Spawn(spawn.X, spawn.Y, baseHP, baseSpeed, 1, archetype, cfg)
 			if e != nil {
 				e.Path = path
-				// TODO: Boss 行为将通过能力系统装配
+				// 能力 potential 按波次叠加
+				ApplyAbilityPotentials(e, cfg, s.Wave)
 				// 波次 buff 自动注入
 				s.applyWaveBuffs(e)
 			}
@@ -230,6 +243,8 @@ func (s *Spawner) startWave() {
 	} else {
 		s.EntranceDelay = 0
 	}
+	// 选小队模板
+	s.squadMembers = s.pickSquad()
 }
 
 // WavePreviewEntry 下一波预览中的一种敌人。
@@ -473,6 +488,73 @@ func (s *Spawner) getConfig(archetype string) *SpawnConfig {
 	return cfg
 }
 
+// pickSquad 根据当前波次，从可用小队模板中随机选取一个，返回成员列表。
+// 仅选择 minWave <= 当前波次 且 成员原型在 Archetypes 中都存在的模板。
+// 若无可用模板或小队系统未启用，返回 nil（全部走随机）。
+func (s *Spawner) pickSquad() []string {
+	sc := config.GlobalSpawnerConfig()
+	if !sc.Squads.Enabled || len(sc.Squads.Templates) == 0 {
+		return nil
+	}
+
+	var candidates []config.SquadTemplate
+	for _, t := range sc.Squads.Templates {
+		if t.MinWave > s.Wave {
+			continue
+		}
+		// 检查所有成员原型是否可用
+		valid := true
+		for _, m := range t.Members {
+			if s.getConfig(m) == nil {
+				valid = false
+				break
+			}
+		}
+		if valid {
+			candidates = append(candidates, t)
+		}
+	}
+	if len(candidates) == 0 {
+		return nil
+	}
+	chosen := candidates[rand.Intn(len(candidates))]
+	tel.T.Record("squad", chosen.ID)
+	// 复制一份成员列表避免修改原始配置
+	members := make([]string, len(chosen.Members))
+	copy(members, chosen.Members)
+	return members
+}
+
+// pickRandomArchetype 从所有可用原型中随机选取一个（用于 Boss）。
+// 排除 dummy 原型。若无可用原型则回退到 "normal"。
+func (s *Spawner) pickRandomArchetype() string {
+	if s.Archetypes == nil {
+		return "normal"
+	}
+	var candidates []string
+	for name := range s.Archetypes {
+		if name == "dummy" {
+			continue
+		}
+		candidates = append(candidates, name)
+	}
+	if len(candidates) == 0 {
+		return "normal"
+	}
+	sort.Strings(candidates) // 保证稳定顺序
+	return candidates[rand.Intn(len(candidates))]
+}
+
+// containsStr 检查切片中是否包含指定字符串。
+func containsStr(ss []string, s string) bool {
+	for _, v := range ss {
+		if v == s {
+			return true
+		}
+	}
+	return false
+}
+
 // ── 波次 buff 自动注入 ──
 // 按波次段从 buff 模板池中随机注入 0~2 个 buff。
 // 1-5 波：无 buff
@@ -512,12 +594,13 @@ func (s *Spawner) applyWaveBuffs(e *Enemy) {
 	}
 	perm := rand.Perm(len(buffPool))
 	for i := 0; i < count; i++ {
-		applyWaveBuff(e, buffPool[perm[i]])
+		applyWaveBuff(e, buffPool[perm[i]], s.Wave)
 	}
 }
 
 // applyWaveBuff 根据 buffID 从 enemies/abilities.json 读取能力参数，注入对应 buff。
-func applyWaveBuff(e *Enemy, buffID string) {
+// wave 用于应用 potential 缩放：effectiveBase = base + potential * wave。
+func applyWaveBuff(e *Enemy, buffID string, wave int) {
 	tel.T.Record("enemy_template", buffID)
 	table := config.GlobalEnemyAbilityTable()
 	if table == nil {
@@ -527,25 +610,30 @@ func applyWaveBuff(e *Enemy, buffID string) {
 	if def == nil {
 		return
 	}
+	// 计算波次缩放后的 effectiveBase
+	effectiveBase := def.Base
+	if wave > 0 && def.Potential != 0 {
+		effectiveBase += def.Potential * float64(wave)
+	}
 	switch buffID {
 	case "berserk":
 		// base=threshold(0.5), param=speedScale(1.5)
 		e.Buffs.Add(buff.Buff{
 			ID: buff.IDBerserk, Category: buff.CatBehavior, Source: "wave_buff",
-			Value: def.Param, Value2: def.Base,
+			Value: def.Param, Value2: effectiveBase,
 			Duration: -1, Remaining: -1,
 		})
 	case "regen":
 		// base=hpRatio(0.02)
 		e.Buffs.Add(buff.Buff{
 			ID: buff.IDRegen, Category: buff.CatBehavior, Source: "wave_buff",
-			Value: e.MaxHP * def.Base, Duration: -1, Remaining: -1,
+			Value: e.MaxHP * effectiveBase, Duration: -1, Remaining: -1,
 		})
 	case "healAura":
 		// base=healPercent(0.05), param=radius(80)
 		e.Buffs.Add(buff.Buff{
 			ID: buff.IDHealAura, Category: buff.CatBehavior, Source: "wave_buff",
-			Value: def.Base, Value2: def.Param,
+			Value: effectiveBase, Value2: def.Param,
 			Duration: -1, Remaining: -1,
 		})
 		e.HealInterval = 3 // 固定3s（与 applyEnemyAbilityToSpawnConfig 一致）
@@ -554,19 +642,19 @@ func applyWaveBuff(e *Enemy, buffID string) {
 		// base=bonus(0.2), param=radius(80)
 		e.Buffs.Add(buff.Buff{
 			ID: buff.IDBufferAura, Category: buff.CatBehavior, Source: "wave_buff",
-			Value: def.Base, Value2: def.Param,
+			Value: effectiveBase, Value2: def.Param,
 			Duration: -1, Remaining: -1,
 		})
 	case "damageReduce":
 		// base=ratio(0.3)
 		e.Buffs.Add(buff.Buff{
 			ID: buff.IDDamageReduce, Category: buff.CatDefense, Source: "wave_buff",
-			Value: def.Base, Duration: -1, Remaining: -1,
+			Value: effectiveBase, Duration: -1, Remaining: -1,
 		})
 	case "deathSplit":
 		// base=count(2), param=hpRatio(0.3)
 		if e.SplitCount <= 0 {
-			e.SplitCount = int(def.Base)
+			e.SplitCount = int(effectiveBase)
 		}
 		if e.SplitHPRatio <= 0 {
 			e.SplitHPRatio = def.Param
@@ -574,6 +662,67 @@ func applyWaveBuff(e *Enemy, buffID string) {
 		if e.SplitSpeedScale <= 0 {
 			e.SplitSpeedScale = 1.4
 		}
+	}
+}
+
+// ApplyAbilityPotentials 根据波次为原型能力叠加 potential 增量。
+// delta = potential * wave，叠加到 spawn 时已设置的 base 值之上。
+func ApplyAbilityPotentials(e *Enemy, cfg *SpawnConfig, wave int) {
+	if wave <= 0 || len(cfg.AbilityPotentials) == 0 {
+		return
+	}
+	for _, ap := range cfg.AbilityPotentials {
+		delta := ap.Potential * float64(wave)
+		switch ap.Type {
+		case "armorPlating":
+			e.ArmorFlat += delta
+		case "damageCap":
+			e.DamageCap += delta
+		case "damageCapPercent":
+			e.DamageCapPercent += delta
+		case "evasion":
+			e.EvasionChance += delta
+			if e.EvasionChance > 1 {
+				e.EvasionChance = 1
+			}
+		case "projectileBlock":
+			e.ProjectileBlockChance += delta
+			if e.ProjectileBlockChance > 1 {
+				e.ProjectileBlockChance = 1
+			}
+		case "strengthDrain":
+			e.StrDrainRatio += delta
+			if e.StrDrainRatio > 1 {
+				e.StrDrainRatio = 1
+			}
+		case "regen":
+			// regen base=hpRatio，叠加到 regen buff 的 Value（= MaxHP * ratio）
+			if b := e.Buffs.GetPtr(buff.IDRegen); b != nil {
+				b.Value += e.MaxHP * delta
+			}
+		case "healAura":
+			if b := e.Buffs.GetPtr(buff.IDHealAura); b != nil {
+				b.Value += delta
+			}
+		case "speedAura":
+			if b := e.Buffs.GetPtr(buff.IDBufferAura); b != nil {
+				b.Value += delta
+			}
+		case "damageReduce":
+			if b := e.Buffs.GetPtr(buff.IDDamageReduce); b != nil {
+				b.Value += delta
+				if b.Value > 1 {
+					b.Value = 1
+				}
+			}
+		case "dashOnHit":
+			e.DashSpeedBoost += delta
+		case "berserk":
+			if b := e.Buffs.GetPtr(buff.IDBerserk); b != nil {
+				b.Value2 += delta // Value2=threshold
+			}
+		}
+		// phaseShift/purge/ccImmune/slowImmune/deathSplit/deathSpawn: 不缩放
 	}
 }
 

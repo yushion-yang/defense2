@@ -158,8 +158,8 @@ func TickProjectileHits(projectiles *projectile.Pool, enemies *enemy.Pool, tower
 
 			if p.Penetrate {
 				p.PenHitIDs = append(p.PenHitIDs, e.ID)
-				// 弹幕盾：阻止穿透弹继续飞行
-				if e.ProjectileBlockChance > 0 && !e.AbilitySilenced {
+				// 弹幕盾：阻止穿透弹继续飞行（通过 ApplyHit 返回的统一标记）
+				if out.ProjectileBlocked {
 					projectiles.Release(p)
 				}
 			} else {

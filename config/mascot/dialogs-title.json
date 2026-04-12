@@ -9,5 +9,45 @@
     ],
     "once": false,
     "priority": 10
+  },
+  {
+    "id": "title_welcome_2",
+    "scene": "title",
+    "trigger": "scene_enter",
+    "lines": [
+      {"text": "你来啦！我等你好久了~", "expression": "happy", "autoAdvance": 4}
+    ],
+    "once": false,
+    "priority": 10
+  },
+  {
+    "id": "title_welcome_3",
+    "scene": "title",
+    "trigger": "scene_enter",
+    "lines": [
+      {"text": "指挥官！今天要打哪张图？", "expression": "talk", "autoAdvance": 4}
+    ],
+    "once": false,
+    "priority": 10
+  },
+  {
+    "id": "title_welcome_4",
+    "scene": "title",
+    "trigger": "scene_enter",
+    "lines": [
+      {"text": "又见面了！准备好大杀四方了吗？", "expression": "happy", "autoAdvance": 4}
+    ],
+    "once": false,
+    "priority": 10
+  },
+  {
+    "id": "title_welcome_5",
+    "scene": "title",
+    "trigger": "scene_enter",
+    "lines": [
+      {"text": "欢迎回来~战场已经为你准备好了！", "expression": "talk", "autoAdvance": 4}
+    ],
+    "once": false,
+    "priority": 10
   }
 ]

@@ -373,7 +373,7 @@ func ComputeClusterCenter(enemies *enemy.Pool) (cx, cy float64, count int) {
 
 	var alive []*enemy.Enemy
 	enemies.Each(func(e *enemy.Enemy) {
-		if !e.IsDying() {
+		if !e.IsDying() && !e.IsSpawning() {
 			alive = append(alive, e)
 		}
 	})

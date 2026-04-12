@@ -2,7 +2,7 @@
   "_description": "经济系统规格 — 波次奖金、完美奖金、评分公式、全局参数",
 
   "global": {
-    "killReward": 15,
+    "killReward": 12,
     "sellRefundRatio": 0.7,
     "description": "击杀奖励和卖塔退款比例（也在 balance.json 中定义，代码读取 balance.json）"
   },
@@ -10,7 +10,7 @@
   "modes": {
     "campaign": {
       "waveBonus": {"base": 12, "perWave": 4},
-      "perfectBonus": {"base": 8, "perWave": 2},
+      "perfectBonus": {"base": 2, "perWave": 2},
       "score": {"formula": "wavesCleared*100 + kills*10 - leaked*50", "description": "战役评分：波次×100 + 击杀×10 - 泄漏×50"},
       "description": "标准战役模式：固定波次，通关即胜"
     },

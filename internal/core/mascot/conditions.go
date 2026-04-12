@@ -15,6 +15,17 @@ type ConditionState struct {
 	PrevInteractMode int                // for detecting UI mode changes
 	PrevQuality      int                // for detecting quality downgrades (-1 = uninitialized)
 	LowFPSFrames     int                // consecutive eval cycles with FPS < 30
+
+	// Meta condition tracking
+	PrevGold      int     // previous gold for spike detection
+	PrevGoldInit  bool    // true after first gold reading
+	PrevLives     int     // previous lives for anomaly detection
+	PrevLivesInit bool    // true after first lives reading
+	PrevKills     int     // previous kills (to correlate with gold changes)
+	PauseAccum    float64 // accumulated pause time in seconds
+	StageDefeats  int     // consecutive defeats in this session
+	PrevVictory   bool    // previous Victory flag
+	PrevDefeat    bool    // previous Defeat flag
 }
 
 // NewConditionState creates a zero-value condition state ready for use.
@@ -41,8 +52,8 @@ func (cs *ConditionState) markFired(trigger string, sessionSecs float64) {
 	cs.LastFireTime[trigger] = sessionSecs
 }
 
-// DefaultConditions returns all 20 built-in condition functions.
-// Order determines priority: UI context first, then performance, diagnostics, then original conditions.
+// DefaultConditions returns all built-in condition functions.
+// Order determines priority: UI context first, then performance, diagnostics, meta, then original conditions.
 func DefaultConditions() []ConditionFunc {
 	return []ConditionFunc{
 		// UI context (highest priority — respond to user actions immediately)
@@ -58,6 +69,14 @@ func DefaultConditions() []ConditionFunc {
 		// Diagnostics
 		condDiagQualityDowngrade(),
 		condDiagEnemySwarmCritical(),
+		// Meta (fourth-wall / anomaly detection)
+		condMetaGoldSpike(),
+		condMetaLivesUp(),
+		condMetaPerfectClear(),
+		condMetaSpeedrun(),
+		condMetaRepeatedLoss(),
+		condMetaLongPause(),
+		condMetaNoTowers(),
 		// Original conditions
 		condBossIncoming(),
 		condLowHealth(),
@@ -84,7 +103,7 @@ func condBossIncoming() ConditionFunc {
 		if ctx.Wave == state.PrevWave {
 			return ""
 		}
-		return "bossIncoming"
+		return "boss_incoming"
 	}
 }
 
@@ -101,22 +120,23 @@ func condLowHealth() ConditionFunc {
 		if ctx.Lives > threshold {
 			return ""
 		}
-		if !state.cooldownOK("lowHealth", ctx.SessionSecs, 60) {
+		if !state.cooldownOK("low_health", ctx.SessionSecs, 60) {
 			return ""
 		}
-		return "lowHealth"
+		return "low_health"
 	}
 }
 
 // condSessionDuration fires at 30min, 60min, 90min thresholds. One-shot each.
 func condSessionDuration() ConditionFunc {
 	thresholds := []struct {
-		secs float64
-		key  string
+		secs    float64
+		key     string
+		trigger string
 	}{
-		{1800, "session_30m"},
-		{3600, "session_60m"},
-		{5400, "session_90m"},
+		{1800, "session_30m", "session_30min"},
+		{3600, "session_60m", "session_60min"},
+		{5400, "session_90m", "session_90min"},
 	}
 	return func(ctx *GameContext, state *ConditionState) string {
 		for _, th := range thresholds {
@@ -125,7 +145,7 @@ func condSessionDuration() ConditionFunc {
 			}
 			if ctx.SessionSecs >= th.secs {
 				state.TriggeredOnce[th.key] = true
-				return "sessionDuration"
+				return th.trigger
 			}
 		}
 		return ""
@@ -135,13 +155,14 @@ func condSessionDuration() ConditionFunc {
 // condTimeGreeting fires once per time-of-day band change.
 // Bands: morning(6-11)=0, afternoon(12-17)=1, evening(18-22)=2, latenight(23||0-5)=3.
 func condTimeGreeting() ConditionFunc {
+	bandTriggers := []string{"greet_morning", "greet_afternoon", "greet_evening", "greet_latenight"}
 	return func(ctx *GameContext, state *ConditionState) string {
 		band := hourBand(ctx.HourOfDay)
 		if band == state.LastGreetingBand {
 			return ""
 		}
 		state.LastGreetingBand = band
-		return "timeGreeting"
+		return bandTriggers[band]
 	}
 }
 
@@ -171,7 +192,7 @@ func condWaveComplete() ConditionFunc {
 		if ctx.Wave <= state.PrevWave {
 			return ""
 		}
-		return "waveComplete"
+		return "wave_complete"
 	}
 }
 
@@ -184,10 +205,10 @@ func condKillStreak() ConditionFunc {
 		if ctx.MultiKill < 5 {
 			return ""
 		}
-		if !state.cooldownOK("killStreak", ctx.SessionSecs, 30) {
+		if !state.cooldownOK("kill_streak", ctx.SessionSecs, 30) {
 			return ""
 		}
-		return "killStreak"
+		return "kill_streak"
 	}
 }
 
@@ -200,10 +221,10 @@ func condGoldShortage() ConditionFunc {
 		if ctx.Gold >= 20 || ctx.TowerCount <= 0 {
 			return ""
 		}
-		if !state.cooldownOK("goldShortage", ctx.SessionSecs, 60) {
+		if !state.cooldownOK("gold_shortage", ctx.SessionSecs, 60) {
 			return ""
 		}
-		return "goldShortage"
+		return "gold_shortage"
 	}
 }
 
@@ -216,10 +237,10 @@ func condEnemySwarm() ConditionFunc {
 		if ctx.EnemyCount <= 15 {
 			return ""
 		}
-		if !state.cooldownOK("enemySwarm", ctx.SessionSecs, 45) {
+		if !state.cooldownOK("enemy_swarm", ctx.SessionSecs, 45) {
 			return ""
 		}
-		return "enemySwarm"
+		return "enemy_swarm"
 	}
 }
 
@@ -237,7 +258,7 @@ func condProgressMilestone() ConditionFunc {
 			}
 			if ctx.TotalWins >= m {
 				state.TriggeredOnce[key] = true
-				return "progressMilestone"
+				return fmt.Sprintf("milestone_wins_%d", m)
 			}
 		}
 		for _, m := range killMilestones {
@@ -247,31 +268,21 @@ func condProgressMilestone() ConditionFunc {
 			}
 			if ctx.TotalKills >= m {
 				state.TriggeredOnce[key] = true
-				return "progressMilestone"
+				return fmt.Sprintf("milestone_kills_%d", m)
 			}
 		}
 		return ""
 	}
 }
 
-// condIdleChatter fires when no trigger has fired for 30s. 30s cooldown.
+// condIdleChatter fires as a fallback when no other condition triggered.
+// Short cooldown ensures continuous idle dialog rotation with brief pauses.
 func condIdleChatter() ConditionFunc {
 	return func(ctx *GameContext, state *ConditionState) string {
-		if !state.cooldownOK("idleChatter", ctx.SessionSecs, 30) {
+		if !state.cooldownOK("idle_chatter", ctx.SessionSecs, 2) {
 			return ""
 		}
-		// Find the most recent fire time across all triggers.
-		var maxFireTime float64
-		for _, t := range state.LastFireTime {
-			if t > maxFireTime {
-				maxFireTime = t
-			}
-		}
-		// If nothing has ever fired, use 0 as baseline.
-		if ctx.SessionSecs-maxFireTime < 30 {
-			return ""
-		}
-		return "idleChatter"
+		return "idle_chatter"
 	}
 }
 
@@ -441,5 +452,131 @@ func condDiagEnemySwarmCritical() ConditionFunc {
 			return ""
 		}
 		return "diag_enemy_swarm_critical"
+	}
+}
+
+// --- Meta / fourth-wall conditions ---
+
+// condMetaGoldSpike fires when gold increases by > 500 in one eval cycle
+// without a corresponding kill increase. One-shot per session.
+func condMetaGoldSpike() ConditionFunc {
+	return func(ctx *GameContext, state *ConditionState) string {
+		if !ctx.InStage || !state.PrevGoldInit {
+			return ""
+		}
+		if state.TriggeredOnce["meta_gold_spike"] {
+			return ""
+		}
+		goldDelta := ctx.Gold - state.PrevGold
+		killDelta := ctx.Kills - state.PrevKills
+		// Suspicious: gold jumped by >500 with fewer than 5 kills in the same period.
+		if goldDelta > 500 && killDelta < 5 {
+			state.TriggeredOnce["meta_gold_spike"] = true
+			return "meta_gold_spike"
+		}
+		return ""
+	}
+}
+
+// condMetaLivesUp fires when lives increase (no healing mechanic exists). One-shot.
+func condMetaLivesUp() ConditionFunc {
+	return func(ctx *GameContext, state *ConditionState) string {
+		if !ctx.InStage || !state.PrevLivesInit {
+			return ""
+		}
+		if state.TriggeredOnce["meta_lives_up"] {
+			return ""
+		}
+		if ctx.Lives > state.PrevLives {
+			state.TriggeredOnce["meta_lives_up"] = true
+			return "meta_lives_up"
+		}
+		return ""
+	}
+}
+
+// condMetaPerfectClear fires on victory with zero lives lost. One-shot per session.
+func condMetaPerfectClear() ConditionFunc {
+	return func(ctx *GameContext, state *ConditionState) string {
+		if !ctx.InStage {
+			return ""
+		}
+		if state.TriggeredOnce["meta_perfect_clear"] {
+			return ""
+		}
+		// Detect transition into victory state.
+		if ctx.Victory && !state.PrevVictory && ctx.Lives == ctx.MaxLives {
+			state.TriggeredOnce["meta_perfect_clear"] = true
+			return "meta_perfect_clear"
+		}
+		return ""
+	}
+}
+
+// condMetaSpeedrun fires on victory within 3 minutes. One-shot per session.
+func condMetaSpeedrun() ConditionFunc {
+	return func(ctx *GameContext, state *ConditionState) string {
+		if !ctx.InStage {
+			return ""
+		}
+		if state.TriggeredOnce["meta_speedrun"] {
+			return ""
+		}
+		if ctx.Victory && !state.PrevVictory && ctx.ElapsedSecs < 180 {
+			state.TriggeredOnce["meta_speedrun"] = true
+			return "meta_speedrun"
+		}
+		return ""
+	}
+}
+
+// condMetaRepeatedLoss fires after 3+ consecutive defeats in this session. One-shot.
+func condMetaRepeatedLoss() ConditionFunc {
+	return func(ctx *GameContext, state *ConditionState) string {
+		if !ctx.InStage {
+			return ""
+		}
+		if state.TriggeredOnce["meta_repeated_loss"] {
+			return ""
+		}
+		// StageDefeats is incremented in UpdateContext when Defeat transitions true.
+		if state.StageDefeats >= 3 {
+			state.TriggeredOnce["meta_repeated_loss"] = true
+			return "meta_repeated_loss"
+		}
+		return ""
+	}
+}
+
+// condMetaLongPause fires when the game has been paused for > 120s. 120s cooldown.
+func condMetaLongPause() ConditionFunc {
+	return func(ctx *GameContext, state *ConditionState) string {
+		if !ctx.InStage || !ctx.Paused {
+			return ""
+		}
+		if state.PauseAccum < 120 {
+			return ""
+		}
+		if !state.cooldownOK("meta_long_pause", ctx.SessionSecs, 120) {
+			return ""
+		}
+		return "meta_long_pause"
+	}
+}
+
+// condMetaNoTowers fires when a wave is active but no towers have been built. One-shot.
+func condMetaNoTowers() ConditionFunc {
+	return func(ctx *GameContext, state *ConditionState) string {
+		if !ctx.InStage {
+			return ""
+		}
+		if state.TriggeredOnce["meta_no_towers"] {
+			return ""
+		}
+		if ctx.WaveActive && ctx.TowerCount == 0 && ctx.Wave > 1 {
+			state.TriggeredOnce["meta_no_towers"] = true
+			return "meta_no_towers"
+		}
+		return ""
 	}
 }

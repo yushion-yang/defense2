@@ -495,7 +495,7 @@ func (s *StageScene) handleInput() {
 				}
 				pt := path[bestIdx]
 				// baseHP/baseSpd 传原始基准值，Spawn 内部会乘 cfg 的 Scale
-				baseHP := 100.0
+				baseHP := 1000.0
 				baseSpd := 50.0
 				e := s.enemies.Spawn(pt.X, pt.Y, baseHP, baseSpd, bestIdx+1, s.spawnType, cfg)
 				if e != nil {
@@ -504,7 +504,7 @@ func (s *StageScene) handleInput() {
 				hud.ShowToast("动怪: " + label + "  (ESC退出)")
 			} else {
 				// 造静怪：标记为木桩怪，不移动
-				e := s.enemies.Spawn(wtx, wty, 100, 0, 0, s.spawnType, cfg)
+				e := s.enemies.Spawn(wtx, wty, 1000, 0, 0, s.spawnType, cfg)
 				if e != nil {
 					e.IsDummy = true
 				}
@@ -520,6 +520,8 @@ func (s *StageScene) handleInput() {
 			s.tryUnlockAbilitySlot()
 		} else if hud.InfoPanelUpgradeHitTest(ftx, fty, s.selectedTower != nil) {
 			s.tryUpgradeTower()
+		} else if hud.InfoPanelBulkUpgradeHitTest(ftx, fty, s.selectedTower != nil) {
+			s.tryBulkUpgradeTower()
 		} else if hud.InfoPanelSellHitTest(ftx, fty, s.selectedTower != nil) {
 			s.trySellTower(s.selectedTower.X, s.selectedTower.Y)
 			s.imode = modeIdle
@@ -613,6 +615,26 @@ func (s *StageScene) tryUpgradeTower() {
 	s.showNotify(fmt.Sprintf("强度+10 (-$%d)", spent))
 }
 
+// tryBulkUpgradeTower 为选中的塔一次性购买 50 点永久强度（花费 5 倍单次费用）。
+func (s *StageScene) tryBulkUpgradeTower() {
+	t := s.selectedTower
+	if t == nil {
+		return
+	}
+	cost := tower.StrengthBuyCost() * 5
+	if s.gold < cost {
+		return
+	}
+	// 5 次购买合并
+	for i := 0; i < 5; i++ {
+		t.BuyStrength()
+	}
+	s.gold -= cost
+	s.gameStats.GoldSpent += cost
+	s.bus.Emit(event.EvtTowerUpgraded, event.TowerUpgradedPayload{TowerKey: t.Key, Spent: cost})
+	s.showNotify(fmt.Sprintf("强度+50 (-$%d)", cost))
+}
+
 // tryUnlockAbilitySlot 花钱解锁选中塔的下一个能力槽位并 roll 候选选项。
 func (s *StageScene) tryUnlockAbilitySlot() {
 	t := s.selectedTower
@@ -633,8 +655,8 @@ func (s *StageScene) tryUnlockAbilitySlot() {
 	}
 	s.gold -= cost
 	s.gameStats.GoldSpent += cost
-	t.Cost += cost        // 累计到塔总投资（影响卖出退款）
-	t.PaidUnlocks++       // 记录付费解锁次数（影响下次费用）
+	t.Cost += cost  // 累计到塔总投资（影响卖出退款）
+	t.PaidUnlocks++ // 记录付费解锁次数（影响下次费用）
 	catName := tower.CategoryName(cat)
 	hud.ShowToast(fmt.Sprintf("解锁: %s (-$%d)", catName, cost))
 	s.audioMgr.PlayAt(gameAudio.SFXUIOpen, gameAudio.VolUI)

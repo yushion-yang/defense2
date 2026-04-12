@@ -6,7 +6,9 @@ package scene
 import (
 	"encoding/json"
 	"fmt"
+	"image"
 	"image/color"
+	"math"
 	"os"
 	"path/filepath"
 	"strconv"
@@ -25,13 +27,13 @@ import (
 // ── Layout constants ────────────────────────────────
 
 const (
-	meTopBarH    = 44.0  // top bar height (map selector)
-	meCtrlH      = 44.0  // bottom control bar height
-	meTabW       = 110.0 // map tab width
-	meTabH       = 26.0  // map tab height
-	meTabGap     = 6.0   // gap between map tabs
-	meGridLineW  = 0.5   // grid line width
-	meCellBorder = 1.5   // hover cell border width
+	meCtrlH      = 44.0 // bottom control bar height
+	meGridLineW  = 0.5  // grid line width
+	meCellBorder = 1.5  // hover cell border width
+	meCamStep    = 30.0 // camera step per arrow key press
+	meCamScroll  = 3.0  // scroll wheel multiplier
+	meArrowBtnW  = 28.0 // map prev/next arrow button width
+	meArrowBtnH  = 28.0 // map prev/next arrow button height
 )
 
 // ── MapEditorScene ──────────────────────────────────
@@ -43,7 +45,6 @@ type MapEditorScene struct {
 	// Map data
 	maps        []config.LevelEntry // available map list
 	selectedIdx int                 // current map index
-	hoverTab    int                 // hovered map tab index
 	cfg         *config.MapConfig   // current map config (mutable)
 	gm          *gamemap.GameMap    // runtime map for coordinate conversion
 
@@ -51,8 +52,14 @@ type MapEditorScene struct {
 	hoverRow int // hovered grid cell (-1 = none)
 	hoverCol int
 
-	// Scroll for map tabs
-	tabScrollX float64
+	// Camera (2D pan)
+	camX          float64 // camera X offset
+	camY          float64 // camera Y offset (0 = grid top-left at screen top-left)
+	camDragging   bool    // right-click drag active
+	camDragStartX float64 // screen X at drag start
+	camDragStartY float64 // screen Y at drag start
+	camDragCamX   float64 // camX at drag start
+	camDragCamY   float64 // camY at drag start
 
 	// Edit state
 	dirty bool // unsaved changes
@@ -60,13 +67,21 @@ type MapEditorScene struct {
 	// Toast feedback
 	toast      string
 	toastTimer float64
+
+	// HUD hover state
+	hoverBack bool // hovering back button
+	hoverPrev bool // hovering prev-map arrow
+	hoverNext bool // hovering next-map arrow
+	hoverSave bool // hovering save button
+
+	// D-pad hover/press state (floating overlay)
+	dpadHover int // 0=none, 1=up, 2=down, 3=left, 4=right
 }
 
 // NewMapEditorScene creates a map editor scene.
 func NewMapEditorScene(sw Switcher) *MapEditorScene {
 	s := &MapEditorScene{
 		switcher: sw,
-		hoverTab: -1,
 		hoverRow: -1,
 		hoverCol: -1,
 	}
@@ -92,6 +107,8 @@ func (s *MapEditorScene) loadMap(idx int) {
 	s.dirty = false
 	s.hoverRow = -1
 	s.hoverCol = -1
+	s.camX = 0
+	s.camY = 0
 }
 
 // ── Update ──────────────────────────────────────────
@@ -102,6 +119,7 @@ func (s *MapEditorScene) Update() error {
 	}
 
 	mx, my := draw.CursorPos()
+	sh := float64(game.ScreenHeight)
 
 	// ── Keyboard shortcuts ──
 	if inpututil.IsKeyJustPressed(ebiten.KeyEscape) {
@@ -115,42 +133,130 @@ func (s *MapEditorScene) Update() error {
 		s.saveMap()
 		return nil
 	}
-	// Left/Right arrow to switch maps
-	if inpututil.IsKeyJustPressed(ebiten.KeyLeft) && s.selectedIdx > 0 {
-		s.loadMap(s.selectedIdx - 1)
-		playUIClick(s.switcher)
+	// Arrow keys for camera pan (held = continuous)
+	if ebiten.IsKeyPressed(ebiten.KeyUp) {
+		s.camY -= meCamStep * 0.5
+		s.clampCamera()
 	}
-	if inpututil.IsKeyJustPressed(ebiten.KeyRight) && s.selectedIdx < len(s.maps)-1 {
-		s.loadMap(s.selectedIdx + 1)
-		playUIClick(s.switcher)
+	if ebiten.IsKeyPressed(ebiten.KeyDown) {
+		s.camY += meCamStep * 0.5
+		s.clampCamera()
+	}
+	if ebiten.IsKeyPressed(ebiten.KeyLeft) {
+		s.camX -= meCamStep * 0.5
+		s.clampCamera()
+	}
+	if ebiten.IsKeyPressed(ebiten.KeyRight) {
+		s.camX += meCamStep * 0.5
+		s.clampCamera()
 	}
 
-	// ── Hover detection ──
-	s.hoverTab = s.hitTestMapTabs(mx, my)
-	s.updateHoverCell(mx, my)
+	// ── Scroll wheel for camera ──
+	wx, wy := ebiten.Wheel()
+	if wy != 0 {
+		s.camY -= wy * meCamScroll
+		s.clampCamera()
+	}
+	if wx != 0 {
+		s.camX -= wx * meCamScroll
+		s.clampCamera()
+	}
+
+	// ── Right-click / middle-click drag for camera ──
+	if inpututil.IsMouseButtonJustPressed(ebiten.MouseButtonRight) ||
+		inpututil.IsMouseButtonJustPressed(ebiten.MouseButtonMiddle) {
+		s.camDragging = true
+		s.camDragStartX = mx
+		s.camDragStartY = my
+		s.camDragCamX = s.camX
+		s.camDragCamY = s.camY
+	}
+	if s.camDragging {
+		if ebiten.IsMouseButtonPressed(ebiten.MouseButtonRight) ||
+			ebiten.IsMouseButtonPressed(ebiten.MouseButtonMiddle) {
+			dx := mx - s.camDragStartX
+			dy := my - s.camDragStartY
+			s.camX = s.camDragCamX - dx
+			s.camY = s.camDragCamY - dy
+			s.clampCamera()
+		} else {
+			s.camDragging = false
+		}
+	}
+
+	// ── D-pad hover detection (floating above HUD) ──
+	s.dpadHover = s.hitTestDpad(mx, my)
+
+	// ── HUD hover detection ──
+	inHUD := my >= sh-meCtrlH
+	onDpad := s.dpadHover > 0
+	s.hoverBack = false
+	s.hoverPrev = false
+	s.hoverNext = false
+	s.hoverSave = false
+	if inHUD {
+		s.hoverBack = s.hitTestBackBtn(mx, my)
+		s.hoverPrev = s.hitTestPrevBtn(mx, my)
+		s.hoverNext = s.hitTestNextBtn(mx, my)
+		s.hoverSave = s.hitTestSaveBtn(mx, my)
+	}
+
+	// ── Grid hover (only above HUD and not on D-pad) ──
+	if inHUD || onDpad {
+		s.hoverRow = -1
+		s.hoverCol = -1
+	} else {
+		s.updateHoverCell(mx, my)
+	}
+
+	// ── D-pad click (held = continuous pan) ──
+	if ebiten.IsMouseButtonPressed(ebiten.MouseButtonLeft) && onDpad {
+		switch s.dpadHover {
+		case 1: // up
+			s.camY -= meCamStep * 0.4
+		case 2: // down
+			s.camY += meCamStep * 0.4
+		case 3: // left
+			s.camX -= meCamStep * 0.4
+		case 4: // right
+			s.camX += meCamStep * 0.4
+		}
+		s.clampCamera()
+	}
 
 	// ── Click handling ──
 	if isTapJustPressed() {
-		// Back button
-		if mx >= 10 && mx <= 70 && my >= 10 && my <= 34 {
-			playUIClick(s.switcher)
-			s.switcher.SwitchScene(NewTestSelectScene(s.switcher))
-			return nil
-		}
-		// Map tab click
-		if idx := s.hitTestMapTabs(mx, my); idx >= 0 && idx != s.selectedIdx {
-			s.loadMap(idx)
-			playUIClick(s.switcher)
-			return nil
-		}
-		// Save button
-		if s.hitTestSaveBtn(mx, my) {
-			s.saveMap()
-			return nil
-		}
-		// Grid cell toggle
-		if s.hoverRow >= 0 && s.cfg != nil {
-			s.toggleCell(s.hoverRow, s.hoverCol)
+		if onDpad {
+			// D-pad consumed the tap, don't propagate
+		} else if inHUD {
+			// Back button
+			if s.hitTestBackBtn(mx, my) {
+				playUIClick(s.switcher)
+				s.switcher.SwitchScene(NewTestSelectScene(s.switcher))
+				return nil
+			}
+			// Prev map
+			if s.hitTestPrevBtn(mx, my) && s.selectedIdx > 0 {
+				s.loadMap(s.selectedIdx - 1)
+				playUIClick(s.switcher)
+				return nil
+			}
+			// Next map
+			if s.hitTestNextBtn(mx, my) && s.selectedIdx < len(s.maps)-1 {
+				s.loadMap(s.selectedIdx + 1)
+				playUIClick(s.switcher)
+				return nil
+			}
+			// Save button
+			if s.hitTestSaveBtn(mx, my) {
+				s.saveMap()
+				return nil
+			}
+		} else {
+			// Grid cell toggle
+			if s.hoverRow >= 0 && s.cfg != nil {
+				s.toggleCell(s.hoverRow, s.hoverCol)
+			}
 		}
 	}
 
@@ -202,32 +308,148 @@ func (s *MapEditorScene) saveMap() {
 	playUIClick(s.switcher)
 }
 
+// ── Camera ──────────────────────────────────────────
+
+// clampCamera constrains camX/camY within valid range.
+func (s *MapEditorScene) clampCamera() {
+	mxX := s.maxCamX()
+	mxY := s.maxCamY()
+	if s.camX < 0 {
+		s.camX = 0
+	}
+	if s.camX > mxX {
+		s.camX = mxX
+	}
+	if s.camY < 0 {
+		s.camY = 0
+	}
+	if s.camY > mxY {
+		s.camY = mxY
+	}
+}
+
+// maxCamX returns the maximum camera X offset.
+func (s *MapEditorScene) maxCamX() float64 {
+	if s.cfg == nil {
+		return 0
+	}
+	gridW := float64(s.cfg.Cols * s.cfg.CellSize)
+	visibleW := float64(game.ScreenWidth)
+	return math.Max(0, gridW-visibleW)
+}
+
+// maxCamY returns the maximum camera Y offset.
+func (s *MapEditorScene) maxCamY() float64 {
+	if s.cfg == nil {
+		return 0
+	}
+	gridH := float64(s.cfg.Rows * s.cfg.CellSize)
+	visibleH := float64(game.ScreenHeight) - meCtrlH
+	return math.Max(0, gridH-visibleH)
+}
+
+// needsCamera returns true if the grid is larger than the visible area.
+func (s *MapEditorScene) needsCamera() bool {
+	return s.maxCamX() > 0 || s.maxCamY() > 0
+}
+
 // ── Hit testing ─────────────────────────────────────
 
-func (s *MapEditorScene) hitTestMapTabs(mx, my float64) int {
-	sw := float64(game.ScreenWidth)
-	n := len(s.maps)
-	totalW := float64(n)*meTabW + float64(n-1)*meTabGap
-	startX := (sw - totalW) / 2
-	if totalW > sw-120 {
-		startX = 60 - s.tabScrollX
-	}
+// Bottom HUD layout (left to right):
+// [10] [Back 60x28] [20gap] [< 28x28] [8gap] [mapName ~120] [8gap] [> 28x28] [20gap] [Slots text] ... [dirty center] ... [Save 100x28] [10]
 
-	for i := range s.maps {
-		x := startX + float64(i)*(meTabW+meTabGap)
-		if mx >= x && mx <= x+meTabW && my >= 8 && my <= 8+meTabH {
-			return i
-		}
-	}
-	return -1
+const (
+	meBackBtnX = 10.0
+	meBackBtnW = 60.0
+	meBackBtnH = 28.0
+	mePrevBtnX = 90.0  // 10 + 60 + 20
+	meMapNameX = 126.0 // 90 + 28 + 8
+	meMapNameW = 120.0
+	meNextBtnX = 254.0 // 126 + 120 + 8
+	meSlotsX   = 300.0 // 254 + 28 + 18
+)
+
+func (s *MapEditorScene) hitTestBackBtn(mx, my float64) bool {
+	sh := float64(game.ScreenHeight)
+	by := sh - meCtrlH + (meCtrlH-meBackBtnH)/2
+	return mx >= meBackBtnX && mx <= meBackBtnX+meBackBtnW && my >= by && my <= by+meBackBtnH
+}
+
+func (s *MapEditorScene) hitTestPrevBtn(mx, my float64) bool {
+	sh := float64(game.ScreenHeight)
+	by := sh - meCtrlH + (meCtrlH-meArrowBtnH)/2
+	return mx >= mePrevBtnX && mx <= mePrevBtnX+meArrowBtnW && my >= by && my <= by+meArrowBtnH
+}
+
+func (s *MapEditorScene) hitTestNextBtn(mx, my float64) bool {
+	sh := float64(game.ScreenHeight)
+	by := sh - meCtrlH + (meCtrlH-meArrowBtnH)/2
+	return mx >= meNextBtnX && mx <= meNextBtnX+meArrowBtnW && my >= by && my <= by+meArrowBtnH
 }
 
 func (s *MapEditorScene) hitTestSaveBtn(mx, my float64) bool {
 	sw := float64(game.ScreenWidth)
 	sh := float64(game.ScreenHeight)
-	bx := sw - 120
-	by := sh - meCtrlH + 8
+	bx := sw - 110
+	by := sh - meCtrlH + (meCtrlH-28)/2
 	return mx >= bx && mx <= bx+100 && my >= by && my <= by+28
+}
+
+// D-pad layout: floating in bottom-right corner, above HUD.
+// 3x3 grid of 24x24 buttons with 2px gaps:
+//
+//	[  Up  ]
+//
+// [Left] [    ] [Right]
+//
+//	[ Down ]
+const (
+	meDpadBtnSize = 24.0
+	meDpadGap     = 2.0
+	meDpadMarginR = 120.0 // right margin (save btn is at sw-110)
+	meDpadMarginB = 8.0   // margin above HUD bar
+)
+
+// dpadOrigin returns the top-left of the 3x3 D-pad grid.
+func (s *MapEditorScene) dpadOrigin() (float64, float64) {
+	sw := float64(game.ScreenWidth)
+	sh := float64(game.ScreenHeight)
+	totalW := meDpadBtnSize*3 + meDpadGap*2
+	totalH := meDpadBtnSize*3 + meDpadGap*2
+	x := sw - meDpadMarginR - totalW
+	y := sh - meCtrlH - meDpadMarginB - totalH
+	return x, y
+}
+
+// hitTestDpad returns which D-pad button the cursor is on (0=none, 1=up, 2=down, 3=left, 4=right).
+func (s *MapEditorScene) hitTestDpad(mx, my float64) int {
+	if !s.needsCamera() {
+		return 0
+	}
+	ox, oy := s.dpadOrigin()
+	step := meDpadBtnSize + meDpadGap
+
+	// Up: row 0, col 1
+	if s.inBtn(mx, my, ox+step, oy, meDpadBtnSize, meDpadBtnSize) {
+		return 1
+	}
+	// Down: row 2, col 1
+	if s.inBtn(mx, my, ox+step, oy+step*2, meDpadBtnSize, meDpadBtnSize) {
+		return 2
+	}
+	// Left: row 1, col 0
+	if s.inBtn(mx, my, ox, oy+step, meDpadBtnSize, meDpadBtnSize) {
+		return 3
+	}
+	// Right: row 1, col 2
+	if s.inBtn(mx, my, ox+step*2, oy+step, meDpadBtnSize, meDpadBtnSize) {
+		return 4
+	}
+	return 0
+}
+
+func (s *MapEditorScene) inBtn(mx, my, bx, by, bw, bh float64) bool {
+	return mx >= bx && mx <= bx+bw && my >= by && my <= by+bh
 }
 
 func (s *MapEditorScene) updateHoverCell(mx, my float64) {
@@ -247,33 +469,18 @@ func (s *MapEditorScene) updateHoverCell(mx, my float64) {
 	}
 }
 
-// gridOffset returns the top-left pixel offset for centering the grid.
+// gridOffset returns the top-left pixel offset for the grid.
+// Grid starts at screen top-left, shifted by camera offset.
+// When grid fits horizontally, it is centered; otherwise shifted by camX.
 func (s *MapEditorScene) gridOffset() (float64, float64) {
 	sw := float64(game.ScreenWidth)
-	sh := float64(game.ScreenHeight)
 	gridW := float64(s.cfg.Cols * s.cfg.CellSize)
-	gridH := float64(s.cfg.Rows * s.cfg.CellSize)
-
-	// Available area: below top bar, above control bar
-	areaW := sw
-	areaH := sh - meTopBarH - meCtrlH
-	areaY := meTopBarH
-
-	// Scale down if grid doesn't fit
-	scale := 1.0
-	if gridW > areaW || gridH > areaH {
-		sx := areaW / gridW
-		sy := areaH / gridH
-		if sx < sy {
-			scale = sx
-		} else {
-			scale = sy
-		}
+	ox := -s.camX
+	if gridW <= sw {
+		// Center the grid horizontally when it fits
+		ox = (sw - gridW) / 2
 	}
-	_ = scale // for now we use 1:1; maps are designed to fit
-
-	ox := (areaW - gridW) / 2
-	oy := areaY + (areaH-gridH)/2
+	oy := -s.camY
 	return ox, oy
 }
 
@@ -292,15 +499,20 @@ func (s *MapEditorScene) Draw(screen *ebiten.Image) {
 	sw := float64(game.ScreenWidth)
 	sh := float64(game.ScreenHeight)
 
-	// ── Top bar: back button + map tabs ──
-	s.drawTopBar(screen, fm, sw)
-
-	// ── Grid ──
+	// ── Grid (clipped to area above HUD) ──
 	if s.cfg != nil {
-		s.drawGrid(screen, fm)
+		clipH := int(sh - meCtrlH)
+		clipRect := image.Rect(0, 0, int(sw*draw.Scale), int(float64(clipH)*draw.Scale))
+		clipped := screen.SubImage(clipRect).(*ebiten.Image)
+		s.drawGrid(clipped, fm)
 	}
 
-	// ── Bottom control bar ──
+	// ── D-pad overlay (above HUD, only if camera is needed) ──
+	if s.needsCamera() {
+		s.drawDpad(screen, fm)
+	}
+
+	// ── Bottom control bar (drawn on full screen, above grid) ──
 	s.drawControlBar(screen, fm, sw, sh)
 
 	// ── Toast ──
@@ -317,51 +529,6 @@ func (s *MapEditorScene) Draw(screen *ebiten.Image) {
 		draw.RoundRect(screen, float32(tx), float32(ty), float32(tw), 30, 10, bg)
 		txtClr := color.RGBA{R: 241, G: 245, B: 249, A: a}
 		fm.DrawCenteredText(screen, s.toast, sw/2, ty+7, theme.FontMD, txtClr)
-	}
-}
-
-func (s *MapEditorScene) drawTopBar(screen *ebiten.Image, fm *render.FontManager, sw float64) {
-	// Background strip
-	draw.FilledRect(screen, 0, 0, float32(sw), float32(meTopBarH), theme.PanelBg, false)
-
-	// Back button
-	draw.RoundRect(screen, 10, 8, 60, 26, 10, theme.BtnSecondary)
-	fm.DrawCenteredText(screen, "< Back", 40, 14, theme.FontSM, theme.TextBody)
-
-	// Map tabs
-	n := len(s.maps)
-	if n == 0 {
-		return
-	}
-	totalW := float64(n)*meTabW + float64(n-1)*meTabGap
-	startX := (sw - totalW) / 2
-	if totalW > sw-140 {
-		startX = 80 - s.tabScrollX
-	}
-
-	for i, m := range s.maps {
-		x := float32(startX + float64(i)*(meTabW+meTabGap))
-		y := float32(8)
-		active := i == s.selectedIdx
-		hovered := i == s.hoverTab
-
-		bg := theme.BtnMuted
-		if active {
-			bg = theme.BtnPrimary
-		} else if hovered {
-			bg = theme.BtnSecondary
-		}
-		draw.RoundRect(screen, x, y, float32(meTabW), float32(meTabH), 8, bg)
-
-		txtClr := theme.TextMuted
-		if active {
-			txtClr = theme.TextTitle
-		}
-		label := m.Name
-		if len(label) > 10 {
-			label = label[:10]
-		}
-		fm.DrawCenteredText(screen, label, float64(x)+meTabW/2, float64(y)+6, 11, txtClr)
 	}
 }
 
@@ -463,41 +630,154 @@ func (s *MapEditorScene) drawGrid(screen *ebiten.Image, fm *render.FontManager) 
 	}
 }
 
-func (s *MapEditorScene) drawControlBar(screen *ebiten.Image, fm *render.FontManager, sw, sh float64) {
-	// Background strip
-	barY := sh - meCtrlH
-	draw.FilledRect(screen, 0, float32(barY), float32(sw), float32(meCtrlH), theme.PanelBg, false)
+func (s *MapEditorScene) drawDpad(screen *ebiten.Image, fm *render.FontManager) {
+	ox, oy := s.dpadOrigin()
+	step := meDpadBtnSize + meDpadGap
+	sz := float32(meDpadBtnSize)
 
-	// Map info (left side)
-	if s.cfg != nil {
-		info := s.cfg.ID + "  " + strconv.Itoa(s.cfg.Cols) + "x" + strconv.Itoa(s.cfg.Rows)
-		fm.DrawText(screen, info, 14, barY+14, theme.FontSM, theme.TextMuted)
+	bgNorm := color.RGBA{R: 30, G: 40, B: 60, A: 160}
+	bgHover := color.RGBA{R: 60, G: 80, B: 120, A: 200}
+	txtNorm := color.RGBA{R: 180, G: 190, B: 210, A: 200}
+	txtHover := color.RGBA{R: 240, G: 245, B: 255, A: 255}
 
-		// Slot count
-		slots := s.countSlots()
-		slotText := "Slots: " + strconv.Itoa(slots)
-		fm.DrawText(screen, slotText, 180, barY+14, theme.FontSM, theme.TextBody)
+	type dpadBtn struct {
+		col, row int
+		label    string
+		id       int // matches dpadHover values
+	}
+	btns := []dpadBtn{
+		{1, 0, "^", 1}, // up
+		{1, 2, "v", 2}, // down
+		{0, 1, "<", 3}, // left
+		{2, 1, ">", 4}, // right
 	}
 
-	// Dirty indicator (center)
+	for _, b := range btns {
+		bx := float32(ox + float64(b.col)*step)
+		by := float32(oy + float64(b.row)*step)
+		bg := bgNorm
+		tc := txtNorm
+		if s.dpadHover == b.id {
+			bg = bgHover
+			tc = txtHover
+		}
+		draw.RoundRect(screen, bx, by, sz, sz, 6, bg)
+		fm.DrawCenteredText(screen, b.label, float64(bx)+float64(sz)/2, float64(by)+6, 11, tc)
+	}
+}
+
+func (s *MapEditorScene) drawControlBar(screen *ebiten.Image, fm *render.FontManager, sw, sh float64) {
+	barY := sh - meCtrlH
+	btnCenterY := barY + meCtrlH/2
+
+	// Background strip
+	draw.FilledRect(screen, 0, float32(barY), float32(sw), float32(meCtrlH), theme.PanelBg, false)
+
+	// ── Back button (left) ──
+	{
+		bx := float32(meBackBtnX)
+		by := float32(btnCenterY - meBackBtnH/2)
+		bg := theme.BtnSecondary
+		if s.hoverBack {
+			bg = theme.BtnPrimary
+		}
+		draw.RoundRect(screen, bx, by, float32(meBackBtnW), float32(meBackBtnH), 10, bg)
+		fm.DrawCenteredText(screen, "< Back", float64(bx)+meBackBtnW/2, float64(by)+7, theme.FontSM, theme.TextBody)
+	}
+
+	// ── Map prev arrow ──
+	{
+		bx := float32(mePrevBtnX)
+		by := float32(btnCenterY - meArrowBtnH/2)
+		canPrev := s.selectedIdx > 0
+		bg := theme.BtnMuted
+		txtClr := theme.TextMuted
+		if canPrev {
+			bg = theme.BtnSecondary
+			txtClr = theme.TextBody
+			if s.hoverPrev {
+				bg = theme.BtnPrimary
+				txtClr = theme.TextTitle
+			}
+		}
+		draw.RoundRect(screen, bx, by, float32(meArrowBtnW), float32(meArrowBtnH), 8, bg)
+		fm.DrawCenteredText(screen, "<", float64(bx)+meArrowBtnW/2, float64(by)+7, theme.FontSM, txtClr)
+	}
+
+	// ── Map name (center label) ──
+	{
+		name := ""
+		if s.cfg != nil {
+			name = s.cfg.ID
+		}
+		fm.DrawCenteredText(screen, name, meMapNameX+meMapNameW/2, barY+14, theme.FontMD, theme.TextTitle)
+	}
+
+	// ── Map next arrow ──
+	{
+		bx := float32(meNextBtnX)
+		by := float32(btnCenterY - meArrowBtnH/2)
+		canNext := s.selectedIdx < len(s.maps)-1
+		bg := theme.BtnMuted
+		txtClr := theme.TextMuted
+		if canNext {
+			bg = theme.BtnSecondary
+			txtClr = theme.TextBody
+			if s.hoverNext {
+				bg = theme.BtnPrimary
+				txtClr = theme.TextTitle
+			}
+		}
+		draw.RoundRect(screen, bx, by, float32(meArrowBtnW), float32(meArrowBtnH), 8, bg)
+		fm.DrawCenteredText(screen, ">", float64(bx)+meArrowBtnW/2, float64(by)+7, theme.FontSM, txtClr)
+	}
+
+	// ── Slots count ──
+	if s.cfg != nil {
+		slotText := "Slots: " + strconv.Itoa(s.countSlots())
+		fm.DrawText(screen, slotText, meSlotsX, barY+14, theme.FontSM, theme.TextBody)
+	}
+
+	// ── Dirty indicator (center) ──
 	if s.dirty {
 		fm.DrawCenteredText(screen, "* unsaved", sw/2, barY+14, theme.FontSM,
 			color.RGBA{R: 251, G: 191, B: 36, A: 220})
 	}
 
-	// Save button (right side)
-	bx := float32(sw - 120)
-	by := float32(barY + 8)
-	btnClr := theme.BtnMuted
-	if s.dirty {
-		btnClr = theme.TonePrimary
+	// ── Save button (right side) ──
+	{
+		bx := float32(sw - 110)
+		by := float32(btnCenterY - 14)
+		btnClr := theme.BtnMuted
+		txtClr := theme.TextMuted
+		if s.dirty {
+			btnClr = theme.TonePrimary
+			txtClr = theme.TextTitle
+			if s.hoverSave {
+				btnClr = theme.BtnPrimary
+			}
+		} else if s.hoverSave {
+			btnClr = theme.BtnSecondary
+			txtClr = theme.TextBody
+		}
+		draw.RoundRect(screen, bx, by, 100, 28, 10, btnClr)
+		fm.DrawCenteredText(screen, "Save ^S", float64(bx)+50, float64(by)+7, theme.FontSM, txtClr)
 	}
-	draw.RoundRect(screen, bx, by, 100, 28, 10, btnClr)
-	txtClr := theme.TextMuted
-	if s.dirty {
-		txtClr = theme.TextTitle
+
+	// ── Scroll indicator (right of slots, if scrollable) ──
+	if s.needsCamera() {
+		parts := ""
+		if s.maxCamX() > 0 {
+			parts += fmt.Sprintf("X:%.0f%%", s.camX/s.maxCamX()*100)
+		}
+		if s.maxCamY() > 0 {
+			if parts != "" {
+				parts += " "
+			}
+			parts += fmt.Sprintf("Y:%.0f%%", s.camY/s.maxCamY()*100)
+		}
+		fm.DrawText(screen, parts, meSlotsX+80, barY+14, theme.FontSM, theme.TextMuted)
 	}
-	fm.DrawCenteredText(screen, "Save (^S)", float64(bx)+50, float64(by)+7, theme.FontSM, txtClr)
 }
 
 // countSlots counts CellBuildable cells in the current map.

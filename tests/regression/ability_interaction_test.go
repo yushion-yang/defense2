@@ -157,6 +157,55 @@ func TestRegression_ProjectileBlock_NoBlockForSplash(t *testing.T) {
 	}
 }
 
+// Verify: ShouldShieldBlock returns correct result for each attack style.
+func TestRegression_ShouldShieldBlock_StyleSet(t *testing.T) {
+	cases := []struct {
+		name     string
+		chance   float64
+		silenced bool
+		style    string
+		want     bool
+	}{
+		{"bounce-blocked", 1.0, false, "bounce", true},
+		{"scatter-blocked", 1.0, false, "scatter", true},
+		{"radial-blocked", 1.0, false, "radial", true},
+		{"fireball-blocked", 1.0, false, "fireball", true},
+		{"splash-not-blocked", 1.0, false, "splash", false},
+		{"projectile-not-blocked", 1.0, false, "projectile", false},
+		{"empty-not-blocked", 1.0, false, "", false},
+		{"silenced-no-block", 1.0, true, "bounce", false},
+		{"no-chance-no-block", 0, false, "bounce", false},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			e := makeEnemy(100, 100)
+			e.ProjectileBlockChance = tc.chance
+			e.AbilitySilenced = tc.silenced
+			got := combat.ShouldShieldBlock(e, tc.style)
+			if got != tc.want {
+				t.Fatalf("ShouldShieldBlock(chance=%.1f, silenced=%v, style=%q) = %v, want %v",
+					tc.chance, tc.silenced, tc.style, got, tc.want)
+			}
+		})
+	}
+}
+
+// Verify: ProjectileBlocked=true for fireball style against shielded enemy.
+func TestRegression_ProjectileBlock_FireballBlocked(t *testing.T) {
+	e := makeEnemy(100, 100)
+	e.ProjectileBlockChance = 1.0
+
+	tw := makeTower(20)
+	out := combat.ApplyHit(hitInput(tw, e, 20, "fireball"), nil)
+
+	if !out.ProjectileBlocked {
+		t.Fatal("ProjectileBlocked should be true for fireball style")
+	}
+	if out.TotalDamage == 0 {
+		t.Fatal("projectile block should not zero damage for fireball")
+	}
+}
+
 // ── DashOnHit ──
 
 // BUG: DashOnHit trigger was not activating on hit.

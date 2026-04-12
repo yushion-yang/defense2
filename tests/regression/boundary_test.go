@@ -62,7 +62,7 @@ func TestBoundary_EmptyPool_TickBehaviors(t *testing.T) {
 	pool := enemy.NewPool(16)
 	// 空池调用 TickBehaviors — 不应 panic
 	events := enemy.TickBehaviors(pool, 1.0/60.0)
-	if events.Berserks != 0 || events.Regens != 0 {
+	if events.Berserks != 0 || len(events.Regens) != 0 {
 		t.Error("空池不应产生任何事件")
 	}
 }

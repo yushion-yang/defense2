@@ -235,11 +235,13 @@ func applyDmg(e *enemy.Enemy, dmg float64, ctx *warden.TickContext) {
 	warden.ApplyDamage(ctx, e, dmg, false)
 }
 
-// collectAlive 收集所有存活敌人。
+// collectAlive 收集所有可被攻击的敌人（排除正在出生/死亡的）。
 func collectAlive(pool *enemy.Pool) []*enemy.Enemy {
 	var result []*enemy.Enemy
 	pool.Each(func(e *enemy.Enemy) {
-		result = append(result, e)
+		if !e.IsDying() && !e.IsSpawning() {
+			result = append(result, e)
+		}
 	})
 	return result
 }

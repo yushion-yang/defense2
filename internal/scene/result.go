@@ -48,19 +48,19 @@ const (
 
 // ResultData 结算数据。
 type ResultData struct {
-	MapID        string  // 关卡 ID
-	MapName      string  // 关卡名称
-	Won          bool    // 是否胜利
-	Kills        int     // 击杀数
-	Waves        int     // 通过波次数
-	MaxWaves     int     // 总波次数
-	Gold         int     // 剩余金币
-	Towers       int     // 放置的塔数
-	WardenType   string  // 使用的战灵类型
-	ModeID       string  // 游戏模式 ID（用于重玩）
-	DifficultyID string  // 难度 ID（用于重玩）
-	Score        int     // 分数
-	ElapsedSecs  float64 // 游戏用时（秒）
+	MapID        string    // 关卡 ID
+	MapName      string    // 关卡名称
+	Won          bool      // 是否胜利
+	Kills        int       // 击杀数
+	Waves        int       // 通过波次数
+	MaxWaves     int       // 总波次数
+	Gold         int       // 剩余金币
+	Towers       int       // 放置的塔数
+	WardenType   string    // 使用的战灵类型
+	ModeID       string    // 游戏模式 ID（用于重玩）
+	DifficultyID string    // 难度 ID（用于重玩）
+	Score        int       // 分数
+	ElapsedSecs  float64   // 游戏用时（秒）
 	Stats        GameStats // 详细游戏统计
 }
 
@@ -160,8 +160,8 @@ func (s *ResultScene) Update() error {
 		if s.hitReplayButton(mx, my) {
 			playUIClick(s.switcher)
 			s.switcher.SwitchScene(NewStageSceneWithOpts(s.switcher, StageOptions{
-				MapID:        s.data.MapID,
-				WardenType:   s.data.WardenType,
+				MapID: s.data.MapID,
+
 				ModeID:       s.data.ModeID,
 				DifficultyID: s.data.DifficultyID,
 			}))
@@ -483,9 +483,9 @@ func (s *ResultScene) drawStats(screen *ebiten.Image, fm *render.FontManager, cx
 
 func (s *ResultScene) drawDetailedStats(screen *ebiten.Image, fm *render.FontManager, baseX, baseY, totalW, panelAlpha float64, d ResultData) {
 	const (
-		detailRowH = 20.0  // compact row height
-		detailCols = 2     // two columns
-		fontSize   = 12.0  // FontBody
+		detailRowH = 20.0 // compact row height
+		detailCols = 2    // two columns
+		fontSize   = 12.0 // FontBody
 	)
 
 	gs := d.Stats

@@ -4,13 +4,14 @@ import "math/rand"
 
 // MascotVM is the view-model snapshot for rendering.
 type MascotVM struct {
-	Visible      bool
-	HasDialog    bool
-	Text         string
-	Expression   string
-	CanClick     bool    // true = click to advance
-	AbilityReady bool
-	CooldownPct  float64 // 0.0 = ready, 1.0 = full cooldown
+	Visible          bool
+	HasDialog        bool
+	Text             string
+	Expression       string
+	CanClick         bool // true = click to advance
+	AbilityReady     bool
+	AbilityHintShown bool    // true when ability-hint bubble is visible (click = use ability)
+	CooldownPct      float64 // 0.0 = ready, 1.0 = full cooldown
 }
 
 // Guide is the mascot state machine that drives dialog playback.
@@ -35,6 +36,8 @@ type Guide struct {
 	abilityCooldown    float64 // remaining seconds (0 = ready)
 	abilityCooldownMax float64 // default 30.0
 	pendingAction      *MascotAction
+	abilityHinted      bool // true after hint dialog was shown this cooldown cycle
+	abilityHintActive  bool // true while the hint dialog is being displayed
 }
 
 // NewGuide creates a Guide preloaded with dialogs.
@@ -73,6 +76,15 @@ func (g *Guide) Tick(dt float64) {
 		}
 	}
 
+	// Auto-show ability hint when ready and idle.
+	// Skip auto-advance this frame so the hint is visible for at least one tick.
+	if g.AbilityReady() && !g.abilityHinted && g.active == nil {
+		g.abilityHinted = true
+		g.abilityHintActive = true
+		g.ForceTrigger("mascot_ability_hint")
+		return
+	}
+
 	// Decrement condition eval timer.
 	if g.condFuncs != nil {
 		g.evalTimer -= dt
@@ -103,8 +115,9 @@ func (g *Guide) ClickAdvance() {
 // VM returns a snapshot of the current mascot state for rendering.
 func (g *Guide) VM() MascotVM {
 	vm := MascotVM{
-		Visible:      true,
-		AbilityReady: g.AbilityReady(),
+		Visible:          true,
+		AbilityReady:     g.AbilityReady(),
+		AbilityHintShown: g.abilityHintActive,
 	}
 	if g.abilityCooldownMax > 0 && g.abilityCooldown > 0 {
 		vm.CooldownPct = g.abilityCooldown / g.abilityCooldownMax
@@ -173,6 +186,29 @@ func (g *Guide) UpdateContext(ctx GameContext) {
 	g.condState.PrevInStage = ctx.InStage
 	g.condState.PrevInteractMode = ctx.InteractMode
 	g.condState.PrevQuality = ctx.QualityLevel
+
+	// Meta tracking: gold/lives/kills for anomaly detection.
+	if ctx.InStage {
+		g.condState.PrevGold = ctx.Gold
+		g.condState.PrevGoldInit = true
+		g.condState.PrevLives = ctx.Lives
+		g.condState.PrevLivesInit = true
+		g.condState.PrevKills = ctx.Kills
+	}
+
+	// Meta tracking: pause accumulation (evalInterval is the tick period).
+	if ctx.InStage && ctx.Paused {
+		g.condState.PauseAccum += g.evalInterval
+	} else {
+		g.condState.PauseAccum = 0
+	}
+
+	// Meta tracking: defeat counting.
+	if ctx.Defeat && !g.condState.PrevDefeat {
+		g.condState.StageDefeats++
+	}
+	g.condState.PrevVictory = ctx.Victory
+	g.condState.PrevDefeat = ctx.Defeat
 }
 
 // HasActiveDialog returns true if a dialog is currently being displayed.
@@ -183,6 +219,12 @@ func (g *Guide) HasActiveDialog() bool {
 // AbilityReady returns true if the mascot ability can be used.
 func (g *Guide) AbilityReady() bool {
 	return g.abilityCooldown <= 0 && g.lastCtx != nil && g.lastCtx.InStage
+}
+
+// IsAbilityHintActive returns true if the ability-hint dialog is currently showing.
+// When true, clicking the mascot should trigger the ability instead of advancing dialog.
+func (g *Guide) IsAbilityHintActive() bool {
+	return g.abilityHintActive
 }
 
 // RequestHelp requests the mascot to perform its battle assistance ability.
@@ -196,6 +238,8 @@ func (g *Guide) RequestHelp() *MascotAction {
 	action := &MascotAction{Type: ActionKillWeakEnemy}
 	g.pendingAction = action
 	g.abilityCooldown = g.abilityCooldownMax
+	g.abilityHinted = false
+	g.abilityHintActive = false
 	g.ForceTrigger("mascot_help")
 	return action
 }
@@ -240,11 +284,13 @@ func (g *Guide) ForceTrigger(event string) {
 
 // tryTrigger finds the best matching dialog for the given event and starts it.
 // Does nothing if a dialog is already active.
+// When multiple dialogs share the highest priority, one is chosen at random.
 func (g *Guide) tryTrigger(event string) {
 	if g.active != nil {
 		return
 	}
-	var best *Dialog
+	var candidates []*Dialog
+	bestPri := -1
 	for i := range g.dialogs {
 		d := &g.dialogs[i]
 		if d.Trigger != event {
@@ -256,12 +302,17 @@ func (g *Guide) tryTrigger(event string) {
 		if d.Once && g.shownIDs[d.ID] {
 			continue
 		}
-		if best == nil || d.Priority > best.Priority {
-			best = d
+		if d.Priority > bestPri {
+			bestPri = d.Priority
+			candidates = candidates[:0]
+			candidates = append(candidates, d)
+		} else if d.Priority == bestPri {
+			candidates = append(candidates, d)
 		}
 	}
-	if best != nil {
-		g.startDialog(best)
+	if len(candidates) > 0 {
+		pick := candidates[rand.Intn(len(candidates))]
+		g.startDialog(pick)
 	}
 }
 
@@ -285,6 +336,9 @@ func (g *Guide) advance() {
 func (g *Guide) finishDialog() {
 	if g.active.Once {
 		g.shownIDs[g.active.ID] = true
+	}
+	if g.active.Trigger == "mascot_ability_hint" {
+		g.abilityHintActive = false
 	}
 	g.active = nil
 	g.lineIdx = 0

@@ -1,85 +1,201 @@
 {
   "_meta": {
     "description": "出怪系统完整配置——敌人数值、波次组成、Boss规则、波次Buff",
-    "version": "1.0"
+    "version": "1.1"
   },
 
   "scaling": {
-    "hpBase": 52,                    "_hpBase": "敌人基础生命值（第1波）",
-    "hpPerWave": 21,                 "_hpPerWave": "每波生命值递增量",
-    "speedBase": 58,                 "_speedBase": "敌人基础移动速度（像素/秒）",
+    "hpBase": 80,                    "_hpBase": "敌人基础生命值（第1波）",
+    "hpPerWave": 60,                 "_hpPerWave": "每波生命值递增量",
+    "speedBase": 50,                 "_speedBase": "敌人基础移动速度（像素/秒）",
     "speedPerWave": 0,               "_speedPerWave": "每波移动速度递增量（0=不增长）",
-    "enemiesPerWave": 5,             "_enemiesPerWave": "每波基础敌人数（实际=base+wave）",
-    "spawnInterval": 0.6,            "_spawnInterval": "同波敌人之间的出生间隔（秒）",
-    "spawnBaseInterval": 0.92,       "_spawnBaseInterval": "出怪间隔基础值（逐波衰减）",
-    "spawnMinInterval": 0.18,        "_spawnMinInterval": "出怪间隔最小值（衰减下限）",
-    "spawnDecayPerWave": 0.03,       "_spawnDecayPerWave": "每波出怪间隔衰减量"
+    "enemiesPerWave": 5,             "_enemiesPerWave": "每波基础敌人数（实际数量=base+wave）",
+    "spawnInterval": 0.6,            "_spawnInterval": "固定出怪间隔（秒）——仅当 spawnBaseInterval=0 时生效，作为兜底值；正常情况被下方衰减系统取代",
+    "spawnBaseInterval": 0.92,       "_spawnBaseInterval": "出怪间隔基础值（第1波的间隔）",
+    "spawnMinInterval": 0.18,        "_spawnMinInterval": "出怪间隔最小值（衰减下限，不会比这更快）",
+    "spawnDecayPerWave": 0.03,       "_spawnDecayPerWave": "每波出怪间隔衰减量（interval = base - wave*decay，最低=min）"
   },
 
   "timing": {
-    "waveInterval": 10,              "_waveInterval": "波次间歇时间（秒）",
-    "firstWaveInterval": 20,         "_firstWaveInterval": "第1波开始前的准备时间（秒）"
+    "waveInterval": 10,              "_waveInterval": "波次间歇时间（秒）——上一波出完到下一波开始的等待",
+    "firstWaveInterval": 20,         "_firstWaveInterval": "第1波开始前的准备时间（秒）——给玩家布置初始防御"
   },
 
   "boss": {
-    "everyNWaves": 4,                "_everyNWaves": "每隔N波出现一次Boss",
-    "hpMultBase": 8,                 "_hpMultBase": "Boss生命值倍率（基于普通敌人）",
-    "radiusScale": 1.5,              "_radiusScale": "Boss体型缩放倍率",
-    "entranceDelay": 3.0,            "_entranceDelay": "Boss出场前的延迟（秒）",
-    "rewardMultiplier": 5,           "_rewardMultiplier": "Boss击杀奖励倍率",
-    "percentHpCap": 0.05,            "_percentHpCap": "Boss百分比生命伤害上限（每次最多5%最大生命）",
-    "dyingDuration": 0.5,            "_dyingDuration": "Boss死亡动画时长（秒）"
+    "_desc": "Boss规则：每N波出现一个Boss，从所有原型中随机选取，必带净化(purge)能力",
+    "everyNWaves": 4,                "_everyNWaves": "每隔N波出现一次Boss（第4/8/12/16...波）",
+    "hpMultBase": 3,                 "_hpMultBase": "Boss HP固定倍率（Boss血量 = 普通怪HP × 6，不随波次增长）",
+    "radiusScale": 1.5,              "_radiusScale": "Boss体型缩放（1.5=比普通大50%）",
+    "entranceDelay": 3.0,            "_entranceDelay": "Boss波开始前额外延迟（秒）——给玩家准备时间",
+    "rewardMultiplier": 5,           "_rewardMultiplier": "Boss击杀金币奖励倍率（普通奖励×5）",
+    "percentHpCap": 0.05,            "_percentHpCap": "Boss百分比生命伤害上限（单次最多扣5%最大HP，防止被秒杀）",
+    "dyingDuration": 0.5,            "_dyingDuration": "Boss死亡动画时长（秒）——比普通怪更长的倒下动画"
   },
 
+  "_compositionsGuide": {
+    "_说明": "波次组合表——控制每个阶段出现哪些敌人及其权重（越大越常见）",
+    "_maxWave": "该阶段最高波数（0=无上限，即后期一直用这个配置）",
+    "_原型中文对照": {
+      "normal":    "普通兵——无特殊能力的基础敌人",
+      "runner":    "跑者——速度快，血量低",
+      "tank":      "坦克——血量高，速度慢，有百分比伤害上限",
+      "armored":   "装甲——有固定护甲值，减免固定伤害",
+      "swarm":     "虫群——大量低血小怪",
+      "shielder":  "盾卫——弹幕盾，可格挡弹射物",
+      "phantom":   "幻影——有闪避几率，可躲避攻击",
+      "steadfast": "稳行者——免疫减速效果",
+      "healer":    "治疗者——周期性治疗附近友军",
+      "buffer":    "增益者——给附近友军加速",
+      "ironwill":  "铁意——免疫所有控制效果(眩晕/减速)",
+      "colossus":  "巨像——超高血量+百分比伤害上限的大型敌人",
+      "splitter":  "分裂体——死亡时分裂成多个小怪",
+      "phaser":    "相位者——可短暂进入无敌状态",
+      "drainer":   "削弱者——削减塔的力量值(strength)",
+      "summoner":  "召唤者——死亡时召唤新敌人",
+      "purifier":  "净化者——定期清除自身负面效果并短暂免疫"
+    }
+  },
   "compositions": [
     {
-      "maxWave": 3,
-      "_desc": "早期：纯普通兵",
+      "maxWave": 2,
+      "_desc": "第1~2波（开局）：纯普通兵，让玩家熟悉基础操作",
       "enemies": { "normal": 100 }
     },
     {
-      "maxWave": 6,
-      "_desc": "前期：加入跑者和虫群",
-      "enemies": { "normal": 60, "runner": 20, "swarm": 20 }
+      "maxWave": 4,
+      "_desc": "第3~4波（前期）：加入跑者和虫群，第4波迎来首个Boss",
+      "enemies": { "normal": 55, "runner": 25, "swarm": 20 }
     },
     {
-      "maxWave": 9,
-      "_desc": "中前期：8种原型混合",
+      "maxWave": 6,
+      "_desc": "第5~6波（中前期）：8种原型，加入坦克/装甲/盾卫等需要策略应对的敌人",
       "enemies": {
-        "normal": 40, "runner": 15, "tank": 10, "armored": 10,
-        "swarm": 10, "shielder": 5, "phantom": 5, "steadfast": 5
+        "normal": 35, "runner": 15, "tank": 12, "armored": 10,
+        "swarm": 10, "shielder": 6, "phantom": 6, "steadfast": 6
       }
     },
     {
-      "maxWave": 14,
-      "_desc": "中期：14种原型，加入行为型敌人",
+      "maxWave": 9,
+      "_desc": "第7~9波（中期）：14种原型，加入行为型敌人（治疗/加速/分裂/相位），难度跃升",
       "enemies": {
-        "normal": 25, "runner": 10, "tank": 8, "armored": 8,
-        "swarm": 8, "shielder": 5, "phantom": 5, "steadfast": 5,
-        "healer": 5, "buffer": 5, "ironwill": 5, "colossus": 3,
-        "splitter": 4, "phaser": 4
+        "normal": 20, "runner": 10, "tank": 8, "armored": 8,
+        "swarm": 8, "shielder": 6, "phantom": 6, "steadfast": 5,
+        "healer": 6, "buffer": 5, "ironwill": 5, "colossus": 3,
+        "splitter": 5, "phaser": 5
       }
     },
     {
       "maxWave": 0,
-      "_desc": "后期(15+)：全部17种原型",
+      "_desc": "第10波+（后期）：全部17种原型登场，包括削弱者/召唤者/净化者等高威胁敌人",
       "enemies": {
-        "normal": 15, "runner": 8, "tank": 7, "armored": 7,
+        "normal": 12, "runner": 8, "tank": 7, "armored": 7,
         "swarm": 6, "shielder": 5, "phantom": 5, "steadfast": 4,
-        "healer": 5, "buffer": 5, "ironwill": 5, "colossus": 4,
-        "splitter": 4, "phaser": 4, "drainer": 4, "summoner": 4, "purifier": 2
+        "healer": 6, "buffer": 5, "ironwill": 5, "colossus": 5,
+        "splitter": 5, "phaser": 5, "drainer": 5, "summoner": 5, "purifier": 5
       }
     }
   ],
 
+  "squads": {
+    "_desc": "战术小队系统——每波开始时随机选一个小队模板，小队成员优先出场，剩余名额随机填充",
+    "enabled": true,
+    "_设计原则": "每个小队是一组有战术配合的敌人组合，迫使玩家做出针对性应对",
+    "templates": [
+      {
+        "id": "rushPack", "minWave": 3,
+        "_desc": "速攻组——5个跑者密集冲锋，考验早期火力密度",
+        "members": ["runner", "runner", "runner", "runner", "runner"]
+      },
+      {
+        "id": "swarmFlood", "minWave": 3,
+        "_desc": "虫潮组——6个虫群铺天盖地，数量碾压",
+        "members": ["swarm", "swarm", "swarm", "swarm", "swarm", "swarm"]
+      },
+      {
+        "id": "tankHealer", "minWave": 5,
+        "_desc": "坦克治疗组——2坦克+2治疗者，互相回血极难击破，必须先集火治疗",
+        "members": ["tank", "tank", "healer", "healer"]
+      },
+      {
+        "id": "armorWall", "minWave": 5,
+        "_desc": "铁壁组——3装甲+2盾卫+稳行者，厚甲方阵，需要穿甲或法术伤害",
+        "members": ["armored", "armored", "armored", "shielder", "shielder", "steadfast"]
+      },
+      {
+        "id": "ghostFlank", "minWave": 5,
+        "_desc": "幽灵侧翼组——3幻影+2跑者，高闪避高速度，命中率极低",
+        "members": ["phantom", "phantom", "phantom", "runner", "runner"]
+      },
+      {
+        "id": "buffRush", "minWave": 7,
+        "_desc": "加速冲锋组——2增益者给3跑者+2虫群全体加速，极速冲过防线",
+        "members": ["buffer", "buffer", "runner", "runner", "runner", "swarm", "swarm"]
+      },
+      {
+        "id": "ironVanguard", "minWave": 7,
+        "_desc": "钢铁先锋组——2铁意+2坦克+2治疗者，免控重甲持续推进，控制技能完全无效",
+        "members": ["ironwill", "ironwill", "tank", "tank", "healer", "healer"]
+      },
+      {
+        "id": "splitSwarm", "minWave": 7,
+        "_desc": "分裂潮组——3分裂体+2治疗者，治疗拖延分裂体存活时间，死后爆发大量小怪",
+        "members": ["splitter", "splitter", "splitter", "healer", "healer"]
+      },
+      {
+        "id": "phaseStrike", "minWave": 7,
+        "_desc": "相位突袭组——3相位者+2增益者，集体无敌穿越+加速，防线形同虚设",
+        "members": ["phaser", "phaser", "phaser", "buffer", "buffer"]
+      },
+      {
+        "id": "drainSiege", "minWave": 10,
+        "_desc": "削弱攻城组——2削弱者+2坦克+2装甲，先削塔力量再用重甲碾压",
+        "members": ["drainer", "drainer", "tank", "tank", "armored", "armored"]
+      },
+      {
+        "id": "deathWave", "minWave": 10,
+        "_desc": "亡潮组——2召唤者+3分裂体，死后大量繁殖新敌人，越杀越多",
+        "members": ["summoner", "summoner", "splitter", "splitter", "splitter"]
+      },
+      {
+        "id": "purgeElite", "minWave": 10,
+        "_desc": "净化精英组——2净化者+2铁意+2坦克，净化一切debuff+免控+高血量，几乎无解",
+        "members": ["purifier", "purifier", "ironwill", "ironwill", "tank", "tank"]
+      },
+      {
+        "id": "colossusGuard", "minWave": 10,
+        "_desc": "巨像护卫组——2巨像+2治疗者+2增益者，双巨像被治疗和加速，移动堡垒",
+        "members": ["colossus", "colossus", "healer", "healer", "buffer", "buffer"]
+      }
+    ]
+  },
+
   "waveBuffs": {
-    "_desc": "波次自动注入buff——达到指定波次后，非Boss敌人有概率携带buff",
-    "chance": 0.3,                   "_chance": "携带buff的概率（30%）",
-    "_note": "各buff具体参数从 config/enemies/abilities.json 读取",
+    "_desc": "波次自动注入buff——达到指定波次后，非Boss普通敌人有概率额外携带buff，增加后期难度",
+    "chance": 0.3,                   "_chance": "每个敌人携带buff的概率（30%）",
+    "_buffPool中文对照": {
+      "berserk":      "狂暴——低血量时攻击加速",
+      "regen":        "再生——持续回复生命值",
+      "healAura":     "治愈光环——治疗周围友军",
+      "speedAura":    "加速光环——提升周围友军移速",
+      "damageReduce": "减伤——受到的伤害降低",
+      "deathSplit":   "死亡分裂——死亡时分裂为小怪"
+    },
     "tiers": [
-      { "minWave": 6,  "maxBuffs": 1, "pool": ["berserk", "regen", "healAura", "speedAura"] },
-      { "minWave": 16, "maxBuffs": 1, "pool": ["berserk", "regen", "healAura", "speedAura", "damageReduce"] },
-      { "minWave": 26, "maxBuffs": 2, "pool": ["berserk", "regen", "healAura", "speedAura", "damageReduce", "deathSplit"] }
+      {
+        "minWave": 6, "maxBuffs": 1,
+        "_desc": "第6波起：最多1个buff，从4种基础buff中随机",
+        "pool": ["berserk", "regen", "healAura", "speedAura"]
+      },
+      {
+        "minWave": 16, "maxBuffs": 1,
+        "_desc": "第16波起：最多1个buff，增加减伤buff",
+        "pool": ["berserk", "regen", "healAura", "speedAura", "damageReduce"]
+      },
+      {
+        "minWave": 26, "maxBuffs": 2,
+        "_desc": "第26波起：最多2个buff，增加死亡分裂，组合更致命",
+        "pool": ["berserk", "regen", "healAura", "speedAura", "damageReduce", "deathSplit"]
+      }
     ]
   }
 }
