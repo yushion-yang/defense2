@@ -145,4 +145,5 @@ func init() {
 	Register(NewChallengeMode())
 	Register(NewTestMode())
 	Register(NewAutoPlayMode())
+	Register(NewSimulationMode())
 }

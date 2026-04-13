@@ -185,6 +185,8 @@ type StageScene struct {
 	// 性能优化：空间网格索引 + 实体位置缓冲
 	collisionGrid *physics.SpatialGrid
 	entityPosBuf  []physics.EntityPos
+	// autoplay 地图信息缓存（首帧构建后复用）
+	cachedMapInfo *AutoPlayMapInfo
 }
 
 // NewStageSceneWithOpts 创建游戏主场景，接受完整配置选项。
@@ -3431,6 +3433,39 @@ func (s *StageScene) buildAutoPlaySnapshot() AutoPlaySnapshot {
 		}
 	}
 
+	// 地图静态数据（仅首帧填充）
+	if s.cachedMapInfo == nil {
+		gm := s.gameMap
+		mi := &AutoPlayMapInfo{
+			CellSize:  gm.CellSize,
+			Rows:      gm.Config.Rows,
+			Cols:      gm.Config.Cols,
+			MultiPath: gm.MultiPath,
+		}
+		// 复制 grid
+		mi.Grid = make([][]int, len(gm.Config.Grid))
+		for i, row := range gm.Config.Grid {
+			mi.Grid[i] = make([]int, len(row))
+			copy(mi.Grid[i], row)
+		}
+		// 默认路径
+		mi.Waypoints = make([]AutoPlayPoint, len(gm.Waypoints))
+		for i, p := range gm.Waypoints {
+			mi.Waypoints[i] = AutoPlayPoint{X: p.X, Y: p.Y}
+		}
+		// 多路径
+		for _, pe := range gm.Paths {
+			ap := AutoPlayPath{ID: pe.ID, Weight: pe.Weight}
+			ap.Waypoints = make([]AutoPlayPoint, len(pe.Waypoints))
+			for i, p := range pe.Waypoints {
+				ap.Waypoints[i] = AutoPlayPoint{X: p.X, Y: p.Y}
+			}
+			mi.Paths = append(mi.Paths, ap)
+		}
+		s.cachedMapInfo = mi
+	}
+	snap.MapInfo = s.cachedMapInfo
+
 	// 敌人快照
 	s.enemies.Each(func(e *enemy.Enemy) {
 		snap.Enemies = append(snap.Enemies, AutoPlayEnemy{
@@ -3448,6 +3483,7 @@ func (s *StageScene) buildAutoPlaySnapshot() AutoPlaySnapshot {
 			DamageCap: e.DamageCap, DamageCapPct: e.DamageCapPercent,
 			HealRadius: e.GetHealRadius(), BuffRadius: e.GetBufferRadius(),
 			SplitCount: e.SplitCount, AbilityIDs: e.AbilityIDs,
+			PathIndex: e.PathIndex, PathTotal: len(e.Path),
 		})
 	})
 
@@ -3465,6 +3501,7 @@ func (s *StageScene) buildAutoPlaySnapshot() AutoPlaySnapshot {
 			AttackStyle: string(t.AttackStyleID),
 			HasTarget:   t.Target != nil,
 			AttackSpeed: t.AttackSpeed, BaseDamage: t.BaseDamage,
+			Kills: t.Kills,
 		})
 	})
 

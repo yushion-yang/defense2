@@ -38,13 +38,14 @@ type Controller struct {
 	sessionID string
 	seed      int64
 
-	prevWave    int
-	prevLives   int
-	prevKills   int // 上一帧累计击杀数（用于增量检测）
-	gameStarted bool
-	done        bool
-	resultDrawn bool // 结果画面已绘制
-	startTime   time.Time
+	prevWave      int
+	prevLives     int
+	prevKills     int // 上一帧累计击杀数（用于增量检测）
+	gameStarted   bool
+	done          bool
+	resultDrawn   bool     // 结果画面已绘制
+	startTime     time.Time
+	cachedMapInfo *MapInfo // 地图静态数据缓存（首帧后复用）
 }
 
 // NewController 创建自动对局控制器。
@@ -77,6 +78,14 @@ const maxSessionTicks = 30000 // ~8 分钟 @60TPS
 // OnUpdate 每帧调用，返回要执行的操作。实现 scene.AutoPlayer。
 func (c *Controller) OnUpdate(snap scene.AutoPlaySnapshot) []scene.AutoPlayAction {
 	state := snapshotToGameState(snap)
+
+	// 缓存地图静态数据（首帧后注入到每帧 state）
+	if state.MapInfo != nil && c.cachedMapInfo == nil {
+		c.cachedMapInfo = state.MapInfo
+	}
+	if c.cachedMapInfo != nil {
+		state.MapInfo = c.cachedMapInfo
+	}
 
 	// 安全超时: 防止游戏逻辑 bug 导致永不结束
 	if state.Tick > maxSessionTicks && !c.done {
@@ -264,6 +273,7 @@ func snapshotToGameState(snap scene.AutoPlaySnapshot) *GameState {
 			DamageCap: e.DamageCap, DamageCapPct: e.DamageCapPct,
 			HealRadius: e.HealRadius, BuffRadius: e.BuffRadius,
 			SplitCount: e.SplitCount, AbilityIDs: e.AbilityIDs,
+			PathIndex: e.PathIndex, PathTotal: e.PathTotal,
 		})
 	}
 
@@ -276,6 +286,7 @@ func snapshotToGameState(snap scene.AutoPlaySnapshot) *GameState {
 			AttackStyle: t.AttackStyle,
 			HasTarget:   t.HasTarget,
 			AttackSpeed: t.AttackSpeed, BaseDamage: t.BaseDamage,
+			Kills: t.Kills,
 		})
 	}
 
@@ -290,6 +301,30 @@ func snapshotToGameState(snap scene.AutoPlaySnapshot) *GameState {
 			Key: d.Key, Cost: d.Cost, Range: d.Range,
 			Damage: d.Damage, Index: d.Index,
 		})
+	}
+
+	// 地图静态数据（仅首帧有值）
+	if snap.MapInfo != nil {
+		mi := &MapInfo{
+			CellSize:  snap.MapInfo.CellSize,
+			Rows:      snap.MapInfo.Rows,
+			Cols:      snap.MapInfo.Cols,
+			MultiPath: snap.MapInfo.MultiPath,
+		}
+		mi.Grid = snap.MapInfo.Grid // 共享引用（只读）
+		mi.Waypoints = make([]PathPoint, len(snap.MapInfo.Waypoints))
+		for i, p := range snap.MapInfo.Waypoints {
+			mi.Waypoints[i] = PathPoint{X: p.X, Y: p.Y}
+		}
+		for _, sp := range snap.MapInfo.Paths {
+			pi := PathInfo{ID: sp.ID, Weight: sp.Weight}
+			pi.Waypoints = make([]PathPoint, len(sp.Waypoints))
+			for i, p := range sp.Waypoints {
+				pi.Waypoints[i] = PathPoint{X: p.X, Y: p.Y}
+			}
+			mi.Paths = append(mi.Paths, pi)
+		}
+		state.MapInfo = mi
 	}
 
 	return state

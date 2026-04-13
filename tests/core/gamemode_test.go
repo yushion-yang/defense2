@@ -362,8 +362,9 @@ func TestModeRegistry(t *testing.T) {
 		"timed":     true,
 		"bossRush":  true,
 		"challenge": true,
-		"test":      true,
-		"autoplay":  true,
+		"test":       true,
+		"autoplay":   true,
+		"simulation": true,
 	}
 	for _, id := range modes {
 		if !expected[id] {
