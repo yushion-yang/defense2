@@ -1,7 +1,31 @@
-// pool.go — 敌人对象池。
-// Fixed-size array pool (256 slots). Linear scan for spawn/each.
-// Chosen for: stable pointers (enemies referenced by combat/render systems),
-// no GC pressure from allocations, and simple slot reuse via Active flag.
+// pool.go — 敌人对象池：生成、击杀、遍历。
+//
+// 固定大小数组池（256 槽位），不做 GC 分配。设计选型理由：
+//   - 稳定指针：combat/render 系统持有 *Enemy 引用，不能因 slice 扩容失效
+//   - 零 GC 压力：预分配所有槽位，Spawn 仅清零+赋值
+//   - 简单复用：Active 标记控制槽位可用性
+//
+// 性能优化 — ActiveList：
+//
+//	activeIdx 维护当前活跃（含 dying）敌人的 slot 索引列表。
+//	EachActive 只遍历此列表，跳过空槽位。在 256 槽中仅有 20 个活跃时，
+//	性能从 O(256) 降至 O(20)。注意 Each() 仍然全量扫描，保留兼容旧代码。
+//
+// 生命周期状态机：
+//
+//	Spawn → Active(存活) → Kill(dying动画) → FinishDying(回收)
+//	                     → KillImmediate(直接回收，用于泄漏/非战斗移除)
+//
+// Kill vs KillImmediate vs FinishDying：
+//   - Kill：启动死亡动画，Count 立即减少（gameplay 视角已"死"），但槽位保持 Active 供渲染
+//   - KillImmediate：立即回收槽位（泄漏到基地时使用），无死亡动画
+//   - FinishDying：死亡动画播完后由 pipeline 调用，真正回收槽位
+//
+// 关联文件：
+//   - enemy.go: Enemy struct 定义
+//   - spawner.go: 波次控制器，调用 Spawn 生成敌人
+//   - spawn_config.go: SpawnConfig 原型参数
+//   - lifecycle.go: 死亡/出生事件回调
 package enemy
 
 import (
@@ -47,6 +71,18 @@ func DefaultPool() *Pool {
 // cfg 为 nil 时使用默认配置（hpScale=1, speedScale=1, radius=8）。
 // pathIndex 通常为 1（敌人从 waypoint[0] 出生，朝 waypoint[1] 移动）。
 // 池满时返回 nil。
+//
+// 初始化阶段（按顺序）：
+//  1. 查找空闲槽位（Active==false），清零所有字段
+//  2. 基础属性：ID/位置/HP/速度/半径/路径索引
+//  3. 外观：SpriteDir（优先 cfg.Sprite，回退到 archetype）
+//  4. 经济/Boss/分裂/传送 配置
+//  5. 行为 buff 注入：stealth/healAura/bufferAura/damageReduce/berserk/regen
+//     （通过 BuffList.Add 写入，Duration=-1 表示永久）
+//  6. 能力系统字段：damageCap/armor/evasion/dash/phase/strDrain/purge 等
+//  7. 免疫标记：CCImmune/SlowImmune
+//  8. 出生动画：Boss 0.5s / 普通 0.3s
+//  9. 加入 activeIdx + Count++
 func (p *Pool) Spawn(x, y, baseHP, baseSpeed float64, pathIndex int, archetype string, cfg *SpawnConfig) *Enemy {
 	if cfg == nil {
 		cfg = DefaultSpawnConfig()
@@ -55,13 +91,14 @@ func (p *Pool) Spawn(x, y, baseHP, baseSpeed float64, pathIndex int, archetype s
 	hp := baseHP * cfg.HpScale
 	speed := baseSpeed * cfg.SpeedScale
 
+	// 线性扫描找空闲槽位（典型负载 <30 个活跃，扫描很快）
 	for i := range p.enemies {
 		if !p.enemies[i].Active {
 			e := &p.enemies[i]
-			*e = Enemy{} // 清零所有字段，防止复用残留
+			*e = Enemy{} // 清零所有字段，防止复用残留（关键：避免上一个敌人的 buff/状态遗留）
 			p.nextID++
 
-			// 基础属性
+			// ── 阶段 1：基础属性 ──
 			e.ID = p.nextID
 			e.X = x
 			e.Y = y
@@ -76,13 +113,13 @@ func (p *Pool) Spawn(x, y, baseHP, baseSpeed float64, pathIndex int, archetype s
 			e.Archetype = archetype
 			e.Buffs = buff.NewDefaultBuffList() // 初始化 BuffList
 
-			// 外观
+			// ── 阶段 2：外观 ──
 			e.SpriteDir = cfg.Sprite
 			if e.SpriteDir == "" {
 				e.SpriteDir = archetype
 			}
 
-			// 基础配置
+			// ── 阶段 3：基础配置 ──
 			e.Boss = cfg.Boss
 			e.RewardScale = cfg.RewardScale
 			if e.RewardScale <= 0 {
@@ -98,7 +135,9 @@ func (p *Pool) Spawn(x, y, baseHP, baseSpeed float64, pathIndex int, archetype s
 			e.TeleportSkip = cfg.TeleportSkip
 			e.TeleportTimer = cfg.TeleportInterval // 首次传送需等满间隔
 
-			// 应用行为配置
+			// ── 阶段 4：行为 buff 注入 ──
+			// 行为参数通过 BuffList.Add 写入，Duration=-1 表示永久 buff。
+			// 原型可同时拥有多个行为 buff（如 tank 同时有 damageReduce + berserk）。
 			e.Behavior = cfg.Behavior
 			if cfg.StealthDuration > 0 {
 				e.Buffs.Add(buff.Buff{
@@ -134,7 +173,7 @@ func (p *Pool) Spawn(x, y, baseHP, baseSpeed float64, pathIndex int, archetype s
 				})
 			}
 
-			// 行为 buff（原型级）
+			// ── 阶段 4b：原型级行为 buff（与上面的行为配置分开，因为这些不依赖特定 Behavior 字段）──
 			if cfg.DamageReduceRatio > 0 {
 				e.Buffs.Add(buff.Buff{
 					ID: buff.IDDamageReduce, Category: buff.CatDefense, Source: "archetype",
@@ -155,7 +194,8 @@ func (p *Pool) Spawn(x, y, baseHP, baseSpeed float64, pathIndex int, archetype s
 				})
 			}
 
-			// 能力系统字段
+			// ── 阶段 5：能力系统字段 ──
+			// 直接从 SpawnConfig 拷贝到 Enemy 字段，后续 ApplyAbilityPotentials 会叠加波次增量
 			e.DamageCap = cfg.DamageCap
 			e.DamageCapPercent = cfg.DamageCapPercent
 			e.ProjectileBlockChance = cfg.ProjectileBlockChance
@@ -191,7 +231,8 @@ func (p *Pool) Spawn(x, y, baseHP, baseSpeed float64, pathIndex int, archetype s
 				e.IsSlowImmune = true
 			}
 
-			// 出生动画
+			// ── 阶段 6：出生动画 ──
+			// 出生动画期间敌人 Active 但不可被选中/伤害（IsSpawning()=true）
 			if cfg.Boss {
 				e.SpawnTimer = bossSpawnAnimDuration
 			} else {
@@ -207,10 +248,15 @@ func (p *Pool) Spawn(x, y, baseHP, baseSpeed float64, pathIndex int, archetype s
 	return nil
 }
 
-// Kill starts the dying animation for an enemy. Count drops immediately so
-// gameplay systems see the enemy as "gone", but the enemy stays Active for
-// rendering until FinishDying is called.
-// If the enemy is a splitter, children are spawned at the same position.
+// Kill 启动死亡动画。Count 立即减少（gameplay 视角已"死"），但 Active 保持为 true，
+// 供渲染层继续绘制死亡动画，直到 FinishDying 被调用。
+//
+// 执行顺序：
+//  1. 分裂体检查：SplitCount>0 时在当前位置生成子体（必须在 dying 标记前，否则子体无法获取父体路径）
+//  2. 死亡召唤：DeathSpawnCount>0 时在当前位置生成指定原型的小怪
+//  3. 设置死亡动画计时器（Boss 用 spawner.json 配置，普通用 balance.json）
+//  4. 清除隐身 buff（死亡动画需全不透明渲染）
+//  5. Count-- （此后 pool.Count 不再计入此敌人）
 func (p *Pool) Kill(e *Enemy) {
 	if e.Active && e.DyingTimer <= 0 {
 		// TODO: 复活能力将通过能力系统实现
@@ -261,8 +307,9 @@ func (p *Pool) Kill(e *Enemy) {
 	}
 }
 
-// KillImmediate deactivates an enemy instantly without a dying animation.
-// Used for enemies that reach the base (leaked) or other non-combat removal.
+// KillImmediate 立即回收槽位，无死亡动画。
+// 用于泄漏到基地的敌人或其他非战斗移除场景。
+// 注意：如果敌人已在 dying 状态（Kill 已调用），不重复减 Count。
 func (p *Pool) KillImmediate(e *Enemy) {
 	if e.Active {
 		if e.DyingTimer <= 0 {
@@ -281,7 +328,9 @@ func (p *Pool) FinishDying(e *Enemy) {
 	p.removeFromActive(p.slotIndexOf(e))
 }
 
-// removeFromActive 从 activeIdx 中移除指定 slot 索引（swap-remove，O(n) worst case）。
+// removeFromActive 从 activeIdx 中移除指定 slot 索引。
+// 使用 swap-remove：将末尾元素覆盖到被删位置，O(n) 扫描 + O(1) 删除。
+// 不保证顺序，但 EachActive 不依赖遍历顺序。
 func (p *Pool) removeFromActive(slotIdx int) {
 	for i, idx := range p.activeIdx {
 		if idx == slotIdx {
@@ -309,7 +358,8 @@ func (p *Pool) Len() int { return len(p.enemies) }
 // ByIndex 返回指定索引的敌人指针（不检查 Active 状态）。
 func (p *Pool) ByIndex(i int) *Enemy { return &p.enemies[i] }
 
-// Each 遍历所有存活敌人并执行回调（全量扫描，兼容旧代码）。
+// Each 遍历所有存活敌人并执行回调。
+// 全量扫描 256 槽位（O(cap)），兼容旧代码。新代码优先用 EachActive。
 func (p *Pool) Each(fn func(e *Enemy)) {
 	for i := range p.enemies {
 		if p.enemies[i].Active {

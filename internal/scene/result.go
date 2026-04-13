@@ -1,6 +1,15 @@
-// result.go — 结算场景。
-// 游戏结束（胜利/失败）后显示统计信息，提供重玩或返回选关的选项。
-// 包含分阶段动画：标题→星级→统计→按钮依次揭示。
+// result.go — 结算场景（游戏结束后的统计与评价画面）。
+//
+// 职责：
+//   - 分阶段揭示动画：标题(弹跳/震动) → 星级(逐颗弹出) → 统计(数字滚动) → 按钮(上滑)
+//   - 胜利：标题缩放弹跳 + 星级评定(1~3星) + 完整统计
+//   - 失败：标题震动 + 跳过星级 + 快速统计 + 偏红背景
+//   - 两个操作按钮：重玩（同配置重新创建 Stage）和返回选关
+//
+// 动画状态机：
+//
+//	resultTitlePhase(0.5s) → resultStarsPhase(~0.6s) → resultStatsPhase(~1.8s) → resultButtonsPhase(0.3s) → resultDone
+//	失败时跳过 resultStarsPhase。所有阶段完成后才允许交互（interactive=true）。
 package scene
 
 import (
@@ -91,11 +100,11 @@ func NewResultScene(sw Switcher, data ResultData) *ResultScene {
 	}
 }
 
-// calcStars determines star rating based on performance.
-// 3 stars = won + all waves cleared
-// 2 stars = won + ≥80% waves cleared
-// 1 star  = won
-// 0 stars = defeat
+// calcStars 根据胜负和波次完成率计算星级。
+// 3星 = 胜利且清完所有波次（满星）
+// 2星 = 胜利且清完 ≥80% 波次
+// 1星 = 胜利但波次完成率不足 80%
+// 0星 = 失败（不显示星级）
 func calcStars(d ResultData) int {
 	if !d.Won {
 		return 0
@@ -113,6 +122,8 @@ func calcStars(d ResultData) int {
 // Update — advance animation state machine
 // ---------------------------------------------------------------------------
 
+// Update 推进动画状态机，阶段完成后切换到下一阶段。
+// 所有动画完成（resultDone）后才响应点击事件（重玩/返回菜单）。
 func (s *ResultScene) Update() error {
 	const dt = 1.0 / 60.0
 	s.totalTimer += dt
@@ -205,8 +216,11 @@ func (s *ResultScene) hitMenuButton(mx, my float64) bool {
 // Draw — animated phased reveal
 // ---------------------------------------------------------------------------
 
+// Draw 按当前动画阶段分层绘制结算画面。
+// 每个阶段只在达到该阶段后才绘制，实现"依次揭示"效果。
+// 渲染顺序：背景(胜利=标准/失败=偏红) → 标题 → 星级 → 统计面板 → 操作按钮。
 func (s *ResultScene) Draw(screen *ebiten.Image) {
-	// Defeat: slightly redder background
+	// 失败时背景略偏红色
 	if !s.data.Won {
 		screen.Fill(colorLerp(theme.ResultBg, color.RGBA{R: 30, G: 15, B: 20, A: 0xff}, 0.3))
 	} else {
@@ -244,6 +258,9 @@ func (s *ResultScene) Draw(screen *ebiten.Image) {
 // drawTitle — victory: scale bounce; defeat: shake + fade
 // ---------------------------------------------------------------------------
 
+// drawTitle 绘制标题动画。
+// 胜利：缩放弹跳(0.5→1.1→1.0) + 副标题淡入。
+// 失败：水平震动(快速衰减) + 副标题淡入。
 func (s *ResultScene) drawTitle(screen *ebiten.Image, fm *render.FontManager, cx float64, d ResultData) {
 	titleY := 60.0
 	subY := titleY + 50
@@ -313,6 +330,8 @@ func victoryTitleScale(t float64) float64 {
 // drawStars — pop-in stars below title
 // ---------------------------------------------------------------------------
 
+// drawStars 绘制星级弹出动画（仅胜利时调用）。
+// 每颗星间隔 0.2 秒依次弹出，缩放曲线 0→1.2→1.0。
 func (s *ResultScene) drawStars(screen *ebiten.Image, fm *render.FontManager, cx float64) {
 	starY := 118.0
 	starSize := 32.0
@@ -374,6 +393,10 @@ func (s *ResultScene) statsPanelBottom() float64 {
 
 const resultPanelH = float32(250) // 统计面板总高度
 
+// drawStats 绘制统计面板，分两区域：
+// 区域1: 6 个核心指标（大数字，3列2行网格）— 波次/击杀/分数/金币/塔数/时间，交错滚动计数。
+// 区域2: 8 个详细统计（紧凑双列键值对）— 金流/建卖/Boss/泄漏/道具/连杀/最强塔/时间。
+// 失败时跳过交错延迟，统一快速滚动。
 func (s *ResultScene) drawStats(screen *ebiten.Image, fm *render.FontManager, cx float64, d ResultData) {
 	const (
 		panelW = float32(500)
@@ -567,6 +590,7 @@ func formatTime(secs int) string {
 // drawButtons — slide up from bottom
 // ---------------------------------------------------------------------------
 
+// drawButtons 绘制操作按钮（重玩+返回菜单），带上滑淡入动画。
 func (s *ResultScene) drawButtons(screen *ebiten.Image, fm *render.FontManager, cx float64) {
 	btnBaseY := s.statsPanelBottom() + 16
 

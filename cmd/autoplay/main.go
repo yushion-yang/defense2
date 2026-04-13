@@ -1,9 +1,29 @@
-// main.go — AutoPlay 自动对局入口。
-// 支持两种运行模式：
-//   - 单局模式 (--session-json): 运行单个 TestCase，由父进程调度
-//   - 编排模式 (默认): 生成测试计划，为每局 fork 子进程
+// main.go — AutoPlay 自动对局工具入口（无头模式批量跑关卡）。
 //
-// Ebitengine 的 RunGame() 只能调用一次，因此多局必须用子进程隔离。
+// 用途：自动化测试游戏平衡性、能力覆盖率、回归验证，无需人工操作。
+// 典型用法：
+//
+//	go run cmd/autoplay/main.go --scenario attack-style-coverage   // 快速验证（1局,30秒）
+//	go run cmd/autoplay/main.go --sweep --json-dir docs/autotest   // 全量回归（68局,~3分钟）
+//	go run cmd/autoplay/main.go --marathon --games 100             // 随机压测
+//
+// 架构设计：
+//   - 编排模式（默认）：生成测试计划（TestCase 列表），逐个在当前进程内运行
+//   - 单局模式（--session-json）：接收序列化 JSON 配置，运行单个 TestCase（子进程入口）
+//   - Ebitengine 的 RunGame() 只能调用一次，但 headless 模式下直接循环 Update() 绕过此限制
+//   - 首局用 NewGame() 完整初始化，后续用 NewGameLite() 复用全局资源（避免重复加载配置/资源）
+//
+// 测试模式一览：
+//
+//	--sweep:          全量 pairwise 组合（地图×难度×战灵×策略）
+//	--ability-sweep:  逐个能力的专项测试
+//	--balance-sweep:  26 个预定义平衡场景
+//	--sim-sweep:      仿真平衡扫描（mortal 模式,~68 例）
+//	--marathon:       N 局随机组合压测（附带堆内存泄漏检测）
+//	--scenario <name>: 指定单个场景
+//
+// 策略系统：每个 TestCase 绑定一个 Strategy 接口实现，控制建塔/升级/道具决策。
+// 可用策略：random / greedy / balance_greedy / competent / champion_* / focus_* / scenario_* / llm
 package main
 
 import (
@@ -60,7 +80,8 @@ func main() {
 
 // ─── 编排模式 ───
 
-// sessionConfig 传给子进程的序列化配置。
+// sessionConfig 传给子进程的序列化配置（也用于进程内模式的参数传递）。
+// 所有字段都是 JSON 可序列化的基础类型，不包含接口或函数引用。
 type sessionConfig struct {
 	ID          string `json:"id"`
 	MapID       string `json:"map_id"`
@@ -77,6 +98,16 @@ type sessionConfig struct {
 	Seed        int64  `json:"seed"`
 }
 
+// orchestrate 编排模式主函数：生成测试计划 → 逐个运行 → 汇总报告。
+//
+// 流程概览：
+//  1. 初始化 dataFS（需要读取配置生成测试计划）
+//  2. 创建输出目录（splitMode 下 JSON 和日志分离）
+//  3. 根据运行模式（sweep/marathon/scenario 等）生成 TestCase 列表
+//  4. 确定主种子（0=随机不可复现，非0=确定性可复现）
+//  5. 逐个调用 runSessionInProcess() 运行测试
+//  6. marathon 模式下每 10 局打印堆内存统计（检测内存泄漏）
+//  7. 生成汇总报告（coverage_summary.json 等）
 func orchestrate(runs int, strategies, mapID, difficulty, warden, output, jsonDir string, sweep, abilitySweep, balanceSweep, simSweep bool, scenarioName string, masterSeed int64, marathon bool, games int, heapStats bool, modelPath, vocabPath string) {
 	// 分离模式: --json-dir 由调用方管理目录结构
 	// 初始化 dataFS（父进程需要读取 ability_tests.json 生成测试计划）
@@ -240,6 +271,8 @@ func orchestrate(runs int, strategies, mapID, difficulty, warden, output, jsonDi
 }
 
 // generateMarathonCases 生成 N 个随机测试用例（随机地图/难度/战灵/策略）。
+// 用于长时间压力测试：验证不同组合下是否存在崩溃、内存泄漏或异常行为。
+// 每个用例的随机种子 = masterSeed + 序号，保证同一 masterSeed 下结果可复现。
 func generateMarathonCases(n int, seed int64) []autoplay.TestCase {
 	rng := rand.New(rand.NewSource(seed))
 	maps := autoplay.Maps
@@ -275,6 +308,9 @@ func generateMarathonCases(n int, seed int64) []autoplay.TestCase {
 
 // ─── 单局模式 ───
 
+// runSingleSession 单局模式入口（子进程调用）。
+// 从 JSON 配置反序列化 → 初始化游戏 → 纯 CPU 循环直到游戏结束。
+// 纯无头模式：不启动 Ebitengine 窗口/GPU，直接循环 Update()。
 func runSingleSession(cfgJSON string) {
 	var cfg sessionConfig
 	if err := json.Unmarshal([]byte(cfgJSON), &cfg); err != nil {
@@ -335,10 +371,13 @@ func runSingleSession(cfgJSON string) {
 	}
 }
 
-// initOnce 只初始化一次 Game 全局资源。
+// gameInitDone 标记是否已完成首次 Game 初始化。
+// 首局用 NewGame()（加载所有配置/字体/音频），后续用 NewGameLite()（跳过重复初始化）。
 var gameInitDone bool
 
 // runSessionInProcess 在当前进程内运行单个测试场景（无子进程开销）。
+// 这是编排模式下的核心执行函数，比 fork 子进程快 10x 以上。
+// 关键设计：HeadlessMode=true 使 Ebitengine 跳过 GPU 初始化，Update() 纯 CPU 执行。
 func runSessionInProcess(cfg sessionConfig, extraAssertions []autoplay.Assertion) {
 	autoplay.SeedAll(cfg.Seed)
 	scene.HeadlessMode = true
@@ -399,6 +438,10 @@ func runSessionInProcess(cfg sessionConfig, extraAssertions []autoplay.Assertion
 }
 
 // restoreStrategy 从序列化配置还原策略实例。
+// 策略名称是字符串（可序列化），但 Strategy 是接口（不可序列化），
+// 因此需要此函数根据名称重建具体实现。
+// champion_* 和 focus_* 是前缀匹配（如 "champion_elite" → ChampionStrategy{StyleElite}）。
+// scenario_* 从注册表查找工厂函数，找不到时回退到默认 BuildFlowScenario。
 func restoreStrategy(cfg sessionConfig) autoplay.Strategy {
 	name := cfg.Strategy
 	switch {

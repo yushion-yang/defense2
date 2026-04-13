@@ -1,5 +1,14 @@
 // campaign_select.go — 战役模式关卡选择场景。
-// 显示 8 张地图卡片（2 行 × 4 列）、关卡描述、难度选择和开始按钮。
+//
+// 职责：
+//   - 展示 8 张地图卡片（2 行 × 4 列），逐步解锁（通关前一关解锁下一关）
+//   - 锁定关卡显示解锁条件，已解锁关卡显示编号/名称/波数/难度/星级/最高分
+//   - 星级评定按当前选中难度读取历史成绩（3星=全通/2星≥80%/1星=胜利）
+//   - 难度选择（4档）和开始按钮，选中锁定关卡时按钮灰显
+//   - 左上角返回按钮回到模式选择 (SelectScene)
+//
+// 解锁机制：由 persistence.ProgressManager.IsMapUnlocked() 驱动，
+// map_01 默认可玩，后续关卡需通关前置关卡才解锁。
 package scene
 
 import (
@@ -21,13 +30,14 @@ import (
 )
 
 // ── 布局常量 ────────────────────────────────────
+// 以 "cs" 前缀区分 campaign_select 专属常量，避免与 select.go 冲突。
 
 const (
-	csCardW   = 160.0
-	csCardH   = 110.0
-	csCardGap = 16.0
-	csCols    = 4
-	csCardY0  = 70.0 // 第一行卡片 Y
+	csCardW   = 160.0 // 地图卡片宽度
+	csCardH   = 110.0 // 地图卡片高度
+	csCardGap = 16.0  // 卡片间距
+	csCols    = 4     // 每行列数
+	csCardY0  = 70.0  // 第一行卡片 Y
 
 	csDescY   = 330.0 // 描述区 Y
 	csDiffY   = 390.0 // 难度按钮 Y
@@ -99,6 +109,9 @@ func NewCampaignSelectScene(sw Switcher) *CampaignSelectScene {
 
 // ── Update ──────────────────────────────────────
 
+// Update 每帧更新：环境粒子 → 悬停检测 → 点击响应。
+// 点击优先级：返回按钮 > 地图卡片 > 难度按钮 > 开始按钮。
+// 点击锁定关卡时显示 Toast 提示解锁条件，不会选中。
 func (s *CampaignSelectScene) Update() error {
 	const dt = 1.0 / 60.0
 
@@ -160,6 +173,8 @@ func (s *CampaignSelectScene) Update() error {
 	return nil
 }
 
+// startGame 创建 StageScene 进入战斗，传递选中的地图 ID 和难度 ID。
+// 战灵选择在 Stage 内第一波倒计时结束时触发。
 func (s *CampaignSelectScene) startGame() {
 	if s.selectedMap < 0 || s.selectedMap >= len(s.levels) {
 		return
@@ -217,6 +232,10 @@ func (s *CampaignSelectScene) hitTestStartBtn(mx, my float64) bool {
 
 // ── Draw ────────────────────────────────────────
 
+// Draw 绘制关卡选择场景。
+// 渲染顺序：渐变背景 → 粒子 → 返回按钮 → 标题 → 地图卡片(2行4列)
+//
+//	→ 选中关卡描述 → 难度区域 → 开始按钮 → 底部提示。
 func (s *CampaignSelectScene) Draw(screen *ebiten.Image) {
 	s.bgGrad.Draw(screen, 0, 0)
 
@@ -288,6 +307,9 @@ func (s *CampaignSelectScene) Draw(screen *ebiten.Image) {
 	fm.DrawCenteredText(screen, "v0.1.0", sw/2, sh-12, 9, color.RGBA{R: 60, G: 65, B: 80, A: 255})
 }
 
+// drawMapCards 绘制地图卡片网格。
+// 锁定卡片：暗色背景 + 锁图标 + 解锁条件文字。
+// 已解锁卡片：编号(左上) + 星级(右上) + 名称(居中) + 波数+难度(底部) + 最高分(右下)。
 func (s *CampaignSelectScene) drawMapCards(screen *ebiten.Image, fm *render.FontManager) {
 	sw := float64(game.ScreenWidth)
 	cols := csCols
@@ -428,8 +450,9 @@ func (s *CampaignSelectScene) drawDiffBtns(screen *ebiten.Image, fm *render.Font
 	}
 }
 
-// ── 辅助 ────────────────────────────────────────
+// ── 辅助函数 ──────────────────────────────────────
 
+// diffLabel 根据难度 ID 返回 i18n 翻译后的显示名称。
 func diffLabel(id string) string {
 	key := "scene.select.diff." + id
 	label := i18n.T(key)
@@ -439,6 +462,7 @@ func diffLabel(id string) string {
 	return label
 }
 
+// diffLabelColor 返回难度对应的颜色（easy=绿 normal=白 hard=橙 extreme=红）。
 func diffLabelColor(id string) color.RGBA {
 	if c, ok := diffColors[id]; ok {
 		return c

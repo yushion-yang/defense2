@@ -1,6 +1,26 @@
-// draw_beam.go — 光束渲染。
-// 渲染 wideBeam 的视觉效果：多层辉光 + 电弧抖动 + 能量流节点 + 边缘火花 + 端点冲击。
-// Quality-tiered: High=full, Medium=skip nodes+sparks, Low=core+impact only.
+// draw_beam.go — 光束渲染模块。
+//
+// 渲染 wideBeam 攻击方式的视觉效果，采用多层叠加策略模拟高能光束：
+//
+// 层次结构（从外到内，按画质分级）：
+//
+//	High + Medium:
+//	  Layer 1: 超宽大气辉光（alpha 20%，宽度 6x，营造环境光散射）
+//	  Layer 2: 外层辉光 + 闪烁（alpha 40% * flicker，宽度 3.5x）
+//	  Layer 3: 电弧抖动（2 条沿法线偏移的细线，模拟不稳定放电）
+//	All qualities:
+//	  Layer 4: 核心光束（alpha 95%，宽度 1.2x，主体可见部分）
+//	  Layer 5: 白热中心线（alpha 90%，宽度 0.4x，最亮的"灯芯"）
+//	High only:
+//	  Layer 6: 能量流节点（5 个沿光束移动的脉冲亮点 + 辉光光环）
+//	  Layer 7: 边缘火花（4 个沿光束两侧跳跃的小亮点）
+//	High + Medium:
+//	  源端发射口光晕 + 目标端冲击环（内外两层扩散环）
+//	All qualities:
+//	  目标端冲击点 Glow + 白色亮点
+//
+// draw call 数量：High≈25 / Medium≈12 / Low≈5
+// 宽度动态脉冲：发射瞬间 widthMul 达 1.5x，之后指数衰减回 1.0x。
 package render
 
 import (
@@ -15,10 +35,14 @@ import (
 	"github.com/hajimehoshi/ebiten/v2"
 )
 
-// beamAnimClock monotonically increasing timer for beam energy flow animation.
+// beamAnimClock 单调递增的时间计数器，驱动光束内部的能量流动/闪烁/火花动画。
+// 不用全局 animTime 是因为光束需要连续时间（暂停恢复后不跳帧）。
 var beamAnimClock float64
 
-// DrawBeams 渲染所有存活光束。animDT 用于推进能量流动动画。
+// DrawBeams 渲染所有存活光束。
+// animDT 是帧间隔时间（秒），用于推进 beamAnimClock。
+// 每条光束的 Alpha() 从 1.0（发射瞬间）线性衰减到 0.0（消失），
+// progress（= 1-alpha）驱动宽度脉冲衰减和冲击环扩散。
 func DrawBeams(screen *ebiten.Image, beams *combat.BeamPool, animDT float64) {
 	beamAnimClock += animDT
 	if beams == nil {

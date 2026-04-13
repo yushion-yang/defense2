@@ -1,6 +1,19 @@
-// draw_tower.go — tower rendering.
-// Uses PNG sprites (64px), fallback to geometric shapes. Themed selection ring,
-// range indicator, name label, and buff dots for the selected tower.
+// draw_tower.go — 塔渲染模块。
+//
+// 负责将 core 层的 tower.Tower 转为屏幕绘制，包括：
+// - 精灵本体（64px PNG + 帧动画），加载失败回退为几何图形（圆形底座+矩形炮管）
+// - 建造/出售动画（缩放+淡入淡出）
+// - 选中塔的视觉反馈（选中环 + 射程指示圈）
+// - 力量溢出光晕（Strength overflow 强度外溢时脚下发光）
+// - 攻击方式特有 VFX（spin_aoe 旋转刀刃弧）
+// - Buff 指示点 + 名称标签
+// - 光环/区域能力的视觉效果（通过 auraRegistry 注册制分发）
+//
+// 性能关键设计：
+//   - 所有塔 VFX 的线段绘制被 BeginLineBatch/FlushLineBatch 包裹，
+//     将 Diamond/Arc/DashedCircle/ThickLine 合并为一次 DrawTriangles 调用
+//   - vfxRadius() 钳制极端射程（>400px），防止 VFX 视觉爆炸
+//   - 视口裁剪跳过屏幕外塔（选中塔例外，始终绘制以保持 UI 一致性）
 package render
 
 import (
@@ -18,11 +31,13 @@ import (
 	"github.com/hajimehoshi/ebiten/v2"
 )
 
-// TowerRenderer manages tower PNG sprite rendering with optional frame animation.
+// TowerRenderer 管理塔的 PNG 精灵渲染与帧动画。
+// animators 按 "instanceKey:spriteKey" 索引，确保同一塔选择能力后
+// SpriteKey 变更（如 basic→sentinel）时重新加载对应动画资源。
 type TowerRenderer struct {
 	cache     *sprite.Cache
 	assetFS   AssetReader
-	animators map[string]*anim.Animator // per tower key, lazy initialized
+	animators map[string]*anim.Animator // 每塔实例惰性加载的动画器
 }
 
 // AssetReader reads embedded asset files.
@@ -39,10 +54,10 @@ func NewTowerRenderer(assetFS AssetReader) *TowerRenderer {
 	}
 }
 
-const towerSpriteSize = 64 // display size in pixels, matching theme.TowerBaseSize
+const towerSpriteSize = 64 // 塔精灵逻辑显示尺寸（像素），与 theme.TowerBaseSize 匹配
 
-// vfxRadius 将游戏 Range 钳制到视觉安全范围，防止极端强度下 VFX 爆炸。
-// 游戏逻辑仍用原始 Range（索敌/碰撞），仅渲染用钳制值。
+// vfxRadius 将游戏 Range 钳制到视觉安全范围，防止极端 Strength 下
+// 射程膨胀导致 VFX 圈占满整个屏幕。游戏逻辑（索敌/碰撞）仍用原始 Range。
 const maxVFXRadius = 400
 
 func vfxRadius(r float64) float32 {
@@ -52,8 +67,9 @@ func vfxRadius(r float64) float32 {
 	return float32(r)
 }
 
-// towerAnimScaleAlpha computes the scale multiplier and alpha for build/sell animations.
-// Returns (scaleMul, alpha) where scaleMul=1 and alpha=1 mean no animation active.
+// towerAnimScaleAlpha 计算建造/出售动画的缩放系数和透明度。
+// 返回 (scaleMul, alpha)，无动画时均为 1.0。
+// 建造动画：从小变大+淡入；出售动画：从大变小+淡出。
 func towerAnimScaleAlpha(t *tower.Tower) (float64, float64) {
 	if t.Selling && t.SellAnim > 0 {
 		return vfx.SellAnimParams(t.SellAnim)
@@ -61,9 +77,19 @@ func towerAnimScaleAlpha(t *tower.Tower) (float64, float64) {
 	return vfx.BuildAnimParams(t.BuildAnim)
 }
 
-// DrawTowers renders all placed towers.
+// DrawTowers 渲染所有已放置的塔。
+//
+// 流程概览：
+//  1. BeginLineBatch 开启线段批量收集模式
+//  2. 遍历塔池，逐塔绘制：建造涟漪 → 选中环/射程 → 脚底光晕/光环 → 精灵本体
+//     → spin_aoe 旋转弧 → buff 点 → 名称标签
+//  3. FlushLineBatch 将所有 VFX 线段合并为一次 DrawTriangles
+//
+// 线段批量化是关键优化：一局游戏 6 塔，每塔可能有 DashedCircle（64段）+ Diamond
+// + 光环圈等，不批量化则每帧数百次 draw call。
 func (tr *TowerRenderer) DrawTowers(screen *ebiten.Image, pool *tower.Pool, selectedTower *tower.Tower, animTime float64) {
-	// 批量化所有塔 VFX 的线段绘制（Diamond/Arc/DashedCircle/ThickLine → 1 次 DrawTriangles）
+	// 开启线段批量模式：后续所有 draw.Diamond/Arc/DashedCircle/ThickLine
+	// 调用被拦截并收集到顶点缓冲，FlushLineBatch 时一次性提交 GPU
 	draw.BeginLineBatch(screen)
 	defer draw.FlushLineBatch()
 
@@ -100,8 +126,9 @@ func (tr *TowerRenderer) DrawTowers(screen *ebiten.Image, pool *tower.Pool, sele
 			drawTowerAuras(screen, t, cx, cy, animTime)
 		}
 
-		// --- Tower body (animated or static, rotated toward target) ---
-		// spin_aoe 不旋转朝向目标
+		// --- 塔本体（帧动画或静态精灵，朝向目标旋转） ---
+		// spin_aoe（旋风攻击）是 360° 旋转攻击，不跟踪目标朝向
+		// 其他攻击方式的 Angle 是炮管指向目标的弧度，+π/2 是因为精灵默认朝上
 		rotation := t.Angle + math.Pi/2
 		if t.AttackStyleID == tower.StyleSpinAoE {
 			rotation = 0
@@ -166,8 +193,10 @@ func (tr *TowerRenderer) DrawTowers(screen *ebiten.Image, pool *tower.Pool, sele
 	})
 }
 
-// loadTowerImage loads a tower's PNG sprite.
-// Convention: assets/towers/{key}/tower-{key}.png
+// loadTowerImage 加载塔的 PNG 精灵。
+// 命名约定：assets/towers/{key}/tower-{key}.png
+// SpriteKey 优先于 Key：选择攻击能力后 SpriteKey 会变（如 basic→sentinel），
+// 此时加载新的精灵资源。
 func (tr *TowerRenderer) loadTowerImage(t *tower.Tower) *ebiten.Image {
 	if tr.assetFS == nil {
 		return nil
@@ -192,8 +221,8 @@ func (tr *TowerRenderer) loadTowerImage(t *tower.Tower) *ebiten.Image {
 	return img
 }
 
-// GetSprite returns the tower sprite by key for icon/thumbnail use.
-// Prefers idle-0 animation frame (matches in-game rendering), falls back to static PNG.
+// GetSprite 按 key 获取塔精灵，用于图标/缩略图（如建塔菜单）。
+// 优先取 idle-0 帧（与游戏中渲染一致），回退到静态 PNG。
 func (tr *TowerRenderer) GetSprite(key string) *ebiten.Image {
 	if tr.assetFS == nil {
 		return nil
@@ -222,9 +251,10 @@ func (tr *TowerRenderer) loadPNG(path string) *ebiten.Image {
 	return img
 }
 
-// getTowerFrame returns the current animation frame for a tower, falling back to static sprite.
+// getTowerFrame 返回塔当前的动画帧，无帧动画时回退到静态精灵。
+// 动画器按 "instanceKey:spriteKey" 惰性加载，SpriteKey 变更时自动加载新动画。
 func (tr *TowerRenderer) getTowerFrame(t *tower.Tower, dt float64) *ebiten.Image {
-	// Lazy-load animator (keyed by SpriteKey for visual swap)
+	// 惰性加载动画器（按 SpriteKey 索引以支持能力选择后视觉切换）
 	sprKey := t.SpriteKey
 	if sprKey == "" {
 		sprKey = t.Key
@@ -256,7 +286,8 @@ func (tr *TowerRenderer) getTowerFrame(t *tower.Tower, dt float64) *ebiten.Image
 	return tr.loadTowerImage(t)
 }
 
-// DrawTowerRangePreview draws a placement preview (range circle + tower shadow).
+// DrawTowerRangePreview 绘制建塔放置预览（射程圈 + 合法性颜色指示）。
+// valid=true 时绿色圈表示可放置，false 时红色圈表示无效位置。
 func DrawTowerRangePreview(screen *ebiten.Image, cx, cy float32, r float64, valid bool) {
 	fr := float32(r)
 
@@ -280,8 +311,14 @@ type auraEntry struct {
 	UseTowerRange bool         // true: 用塔射程, false: 用 ability param
 }
 
-// auraRegistry buff/zone 能力 → 自定义渲染。
-// 新增 buff 视觉效果：1) 在 vfx 包中写 DrawXxx 函数  2) 在此注册。
+// auraRegistry 将 buff/zone 能力名映射到对应的 VFX 渲染函数。
+// 注册制设计：新增光环视觉只需两步——
+//  1. 在 vfx 包中实现 DrawXxx(screen, cx, cy, radius, animTime) 函数
+//  2. 在此 map 中注册能力名 → DrawFunc
+//
+// 两种半径来源：
+//   - buff 类光环（UseTowerRange=false）：半径从 ability 配置的 Param 读取
+//   - zone 类效果（UseTowerRange=true）：半径等于塔的射程（已经过 vfxRadius 钳制）
 var auraRegistry = map[string]auraEntry{
 	// 增益光环（buff 类，param=半径）
 	"damageUpAura":    {DrawFunc: vfx.DrawDamageAura},
@@ -297,6 +334,8 @@ var auraRegistry = map[string]auraEntry{
 }
 
 // drawTowerAuras 渲染塔上所有 buff/zone 能力的视觉效果。
+// 遍历塔的能力列表，查找 auraRegistry 中有注册视觉的能力，
+// 根据 UseTowerRange 决定半径来源后委托给对应的 VFX 函数。
 func drawTowerAuras(screen *ebiten.Image, t *tower.Tower, cx, cy float32, animTime float64) {
 	table := config.GlobalAbilityTable()
 	if table == nil {

@@ -1,5 +1,25 @@
-// enemy.go — 敌人实体定义。
-// 定义敌人的核心属性（位置、血量、速度、状态效果、类型等）及状态效果处理逻辑。
+// enemy.go — 敌人实体定义与状态效果处理。
+//
+// 本文件是敌人子系统的核心数据结构定义，包含：
+//   - Enemy struct：单个敌人实体，通过嵌入拆分为 5 个逻辑子结构体
+//   - StatusEffects：CC/DoT/debuff 之外的状态标记与免疫属性
+//   - VisualState：渲染层需要的闪光、飘字、血条拖尾等视觉状态
+//   - AbilityFields：18 种原型能力的运行时字段（防御/移动/攻击/死亡/净化）
+//   - TickStatusEffects：每帧驱动 BuffList 倒计时 + 同步遗留字段 + 衰减视觉特效
+//
+// 设计要点：
+//   - 所有 CC/DoT/debuff 通过 BuffList 统一管理，Enemy 上的 Is*() 方法只是查询快捷方式
+//   - VisualState 纯输出，仅由 pipeline 或 combat 层写入，render 层只读
+//   - AbilityFields 中的计时器（DashCooldownT/PhaseTimer/StrDrainTimer 等）
+//     由 behaviors.go 的 TickBehaviors 驱动，不在本文件处理
+//
+// 关联文件：
+//   - pool.go: 对象池管理、Spawn/Kill 生命周期
+//   - behaviors.go: 行为系统每帧 tick（狂暴/治疗/隐身/旗手/净化等）
+//   - movement.go: 路径跟随移动
+//   - lifecycle.go: 死亡/出生/受伤事件回调
+//   - spawn_config.go: SpawnConfig 原型配置参数
+//   - buff/bufflist.go: BuffList 统一状态效果管理
 package enemy
 
 import (
@@ -38,22 +58,31 @@ func CheckThresholds(e *Enemy) []Threshold {
 	return triggered
 }
 
-// StatusEffects 敌人身上的状态效果。
-// CC/DoT/debuff 由 BuffList 管理，此结构体保留 pipeline 输出、zone 计时和原型属性。
+// StatusEffects 敌人身上的状态效果（BuffList 之外的补充字段）。
+//
+// CC/DoT/debuff 的核心管理由 BuffList 负责，本结构体保留三类信息：
+//  1. DoT pipeline 的输出缓冲（LastDotDmg/ZoneDmgAccum）— 供 pipeline 弹浮字
+//  2. 运行时状态标记（Silenced/Invincible 等）— 由能力系统或战斗管线临时设置
+//  3. 原型级免疫属性（Tenacity/IsControlImmune 等）— Spawn 时从配置读取，运行时不变
+//
+// Zone 伤害（curseZone/poisonZone）不走 BuffList，因为它是持续区域效果而非单次施加的 buff，
+// 需要独立的累积+结算计时器。
 type StatusEffects struct {
-	// DoT pipeline 输出
+	// ── DoT pipeline 输出 ──
 	LastDotDmg   float64 // 上次 DoT tick 的伤害量（>0 时由 pipeline 弹浮字后清零）
 	ZoneDmgAccum float64 // 区域能力（curseZone/poisonZone）每帧累积伤害，DotTick 时结算
 	ZoneDotTimer float64 // 区域伤害 DoT tick 计时器（与 BuffList.dotTimer 独立）
 
-	// 状态标记
-	Silenced        bool // 是否被沉默（沉默时 DamageCap 失效）
-	AbilitySilenced bool // 当前帧是否被沉默（每帧重置）
+	// ── 运行时状态标记 ──
+	Silenced        bool // 是否被沉默（沉默时 DamageCap 失效，由 silence 能力设置）
+	AbilitySilenced bool // 当前帧是否被能力沉默（每帧由 tick_ability.go 重置再设置）
 	IsInvincible    bool // 无敌状态（pure 伤害可穿透）
-	IsDamageImmune  bool // 伤害免疫（pure 伤害可穿透）
-	IsUntargetable  bool // 不可选中
+	IsDamageImmune  bool // 伤害免疫（phaseShift 激活时设置，pure 伤害可穿透）
+	IsUntargetable  bool // 不可选中（targeting.go 跳过此敌人）
 
-	// 控制减免（原型属性，Spawn 时设置，不由 BuffList 管理）
+	// ── 控制减免（原型属性，Spawn 时设置） ──
+	// 注意：净化（purge）后会临时设置 IsControlImmune/IsStunImmune/IsSlowImmune，
+	// 由 BuffList 中的 controlImmune buff 到期后在 TickStatusEffects 中清除。
 	Tenacity        float64 // 韧性（0~1，减少控制效果持续时间）
 	IsControlImmune bool    // 控制免疫
 	IsStunImmune    bool    // 眩晕免疫
@@ -80,8 +109,13 @@ type VisualState struct {
 	FloatTextB     uint8
 }
 
-// AbilityFields 敌人能力系统字段（防御/移动/攻击/死亡/净化等）。
+// AbilityFields 敌人能力系统运行时字段（防御/移动/攻击/死亡/净化）。
 // 嵌入 Enemy 中，外部代码通过 e.DamageCap 等直接访问。
+//
+// 初始值由 pool.go Spawn() 从 SpawnConfig 拷贝，部分字段（如 ArmorFlat/DamageCap）
+// 还会在 ApplyAbilityPotentials() 中按波次叠加 potential 增量。
+// 运行时计时器（DashCooldownT/PhaseTimer/StrDrainTimer/PurgeTimer）
+// 由 behaviors.go TickBehaviors() 每帧驱动。
 type AbilityFields struct {
 	// defense
 	DamageCap             float64 // 单次伤害上限（0=无上限，如铁甲怪 60）
@@ -121,6 +155,13 @@ type AbilityFields struct {
 }
 
 // Enemy 单个敌人实体。
+//
+// 设计：采用扁平 struct + 嵌入子结构体模式，而非面向对象继承。
+// 对象池（pool.go）预分配 256 个 Enemy，通过 Active 标记复用槽位。
+// Spawn 时 *e = Enemy{} 清零全部字段后逐一赋值，避免残留数据。
+//
+// 字段按逻辑分组：身份 → 核心属性 → 经济 → 时间/动画 → 生命周期 → Buff → 行为 → 能力。
+// 嵌入的 StatusEffects/VisualState/AbilityFields 在 Enemy 上直接访问（e.DamageCap 等）。
 type Enemy struct {
 	// ── 身份 ──
 	ID        int    // 唯一标识（用于穿透弹已命中检查）
@@ -227,7 +268,9 @@ func (e *Enemy) SetFloatText(text string, r, g, b uint8) {
 	e.FloatTextB = b
 }
 
-// ── BuffList 查询方法 ──
+// ── BuffList 查询方法（CC 类） ──
+// 以下方法是 e.Buffs.Has(buff.IDXxx) 的快捷方式，兼顾 nil 安全。
+// 调用方无需了解 BuffList 内部结构，直接 e.IsStunned() 即可。
 
 // IsStunned returns true if the enemy has an active stun buff.
 func (e *Enemy) IsStunned() bool { return e.Buffs != nil && e.Buffs.Has(buff.IDStun) }
@@ -291,7 +334,9 @@ func (e *Enemy) GetWeakenAmplify() float64 {
 	return b.Value
 }
 
-// ── Phase 2 behavior buff helpers ──
+// ── 行为 buff 查询方法（Phase 2 迁移） ──
+// 这些 buff 的参数（如速度倍率、治疗量）编码在 Buff.Value/Value2 中，
+// 通过 Get*Params() 方法获取。Has*() 仅判断是否存在。
 
 // HasBerserk returns true if the enemy has an active berserk buff.
 func (e *Enemy) HasBerserk() bool { return e.Buffs != nil && e.Buffs.Has(buff.IDBerserk) }
@@ -381,8 +426,16 @@ func (e *Enemy) GetSpeedUp() float64 {
 func DotTickInterval() float64 { return config.GlobalBalance().Combat.DotTickInterval }
 
 // TickStatusEffects 处理敌人身上的状态效果。
-// BuffList.Tick 统一处理 CC/DoT/debuff 的倒计时和过期清理。
-// Legacy 字段从 BuffList 同步，保证下游 render/stage/autoplay 代码向后兼容。
+// 由 pipeline orchestrator 每帧调用，在 movement 之前、behaviors 之后执行。
+//
+// 整体流程：
+//  1. Age 累加（用于出生保护期判断）
+//  2. BuffList.TickDoT — 结算 DoT 伤害（必须在 Tick 之前，否则到期 DoT 最后一跳会丢失）
+//  3. Zone 伤害独立计时器结算（curseZone/poisonZone 不走 BuffList）
+//  4. BuffList.Tick — 所有 buff 倒计时 + 过期清理
+//  5. 后处理：slow 到期恢复速度、controlImmune 到期清除临时免疫
+//  6. 视觉特效计时器衰减（闪白/格挡/闪避/装甲/净化/飘字）
+//  7. DisplayHP 血条拖尾衰减（受伤缓动、治疗瞬跟）
 func TickStatusEffects(e *Enemy, dt float64) {
 	bal := config.GlobalBalance()
 	e.Age += dt

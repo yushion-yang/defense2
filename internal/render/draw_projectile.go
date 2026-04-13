@@ -1,8 +1,19 @@
-// draw_projectile.go — projectile rendering.
-// Both trails AND bodies are batch-rendered via DrawTriangles for maximum throughput.
-// Trail: circle texture quads for dots + line quads for connectors (trail_batch.go).
-// Body: circle texture quads for velocity tails, body dots, and glow halos.
-// Only wind-type projectiles (with arcs) fall back to individual vector calls.
+// draw_projectile.go — 弹道体渲染模块。
+//
+// 弹道渲染是本游戏 draw call 最密集的部分（高攻速时同屏 100+ 弹丸），
+// 因此采用全量批量化策略，通过 DrawTriangles 一次性提交 GPU：
+//
+//	尾迹（trail）: 圆形纹理四边形（点）+ 白像素线段四边形（连接线），见 trail_batch.go
+//	弹体（body）:  速度尾线（tailVs）+ 弹体圆点（bodyVs）+ 辉光光环（glowVs，画到 GlowTarget）
+//
+// 唯一例外：wind 类弹丸的弧线效果难以批量化，延迟到最后逐个渲染（通常仅 1-2 塔）。
+//
+// 渲染顺序（由远到近）：
+//
+//	flushTrailBatch: 尾迹线 → 尾迹点
+//	flushBodyBatch:  速度尾线 → 弹体圆 → 辉光（到 GlowTarget 做加法混合）→ wind 弧线
+//
+// 单次 pool.Each 遍历同时收集 trail + body 几何数据，最终仅 3-5 次 DrawTriangles。
 package render
 
 import (
@@ -17,8 +28,8 @@ import (
 	"github.com/hajimehoshi/ebiten/v2"
 )
 
-// DrawProjectiles renders all alive projectiles with fully batched rendering.
-// Single pool.Each pass collects trail + body geometry, then flushes in 3-5 DrawTriangles.
+// DrawProjectiles 渲染所有存活弹丸，采用全批量化策略。
+// 单次 pool.Each 遍历同时收集尾迹和弹体几何数据，最终以 3-5 次 DrawTriangles 完成。
 func DrawProjectiles(screen *ebiten.Image, pool *projectile.Pool) {
 	beginTrailBatch()
 	beginBodyBatch()
@@ -39,20 +50,21 @@ func DrawProjectiles(screen *ebiten.Image, pool *projectile.Pool) {
 	flushBodyBatch(screen)
 }
 
-// ── Body batch buffers ──────────────────────────────────────────────
+// ── 弹体批量缓冲区 ────────────────────────────────────────────────
+// 三个独立顶点缓冲区分别绘制到不同目标：
+// - tailVs/tailIs: 速度尾线 → 画到 screen（白像素纹理）
+// - bodyVs/bodyIs: 弹体圆点 → 画到 screen（圆形纹理）
+// - glowVs/glowIs: 辉光外圈 → 画到 GlowTarget（加法混合，叠加发光效果）
+// - deferred:      wind 弧线 → 最后逐个渲染（无法批量化）
 
 var bodyBuf struct {
-	// Velocity tails (line quads, drawn to screen)
-	tailVs []ebiten.Vertex
-	tailIs []uint16
-	// Body circles (drawn to screen)
-	bodyVs []ebiten.Vertex
-	bodyIs []uint16
-	// Glow outer circles (drawn to glow target for additive blending)
-	glowVs []ebiten.Vertex
-	glowIs []uint16
-	// Individual renders deferred (wind type with arcs)
-	deferred []deferredBody
+	tailVs   []ebiten.Vertex // 速度尾线顶点（线段四边形）
+	tailIs   []uint16        // 速度尾线索引
+	bodyVs   []ebiten.Vertex // 弹体圆点顶点（圆形纹理四边形）
+	bodyIs   []uint16        // 弹体圆点索引
+	glowVs   []ebiten.Vertex // 辉光外圈顶点（画到 GlowTarget）
+	glowIs   []uint16        // 辉光外圈索引
+	deferred []deferredBody  // 延迟渲染的特殊弹丸（wind 弧线）
 }
 
 type deferredBody struct {
@@ -61,6 +73,8 @@ type deferredBody struct {
 	style  string
 }
 
+// init 预分配弹体缓冲区，每种 1024 弹丸容量（4 顶点/弹 + 6 索引/弹）。
+// 预分配避免运行时 append 触发频繁扩容和 GC。
 func init() {
 	const cap = 1024
 	bodyBuf.tailVs = make([]ebiten.Vertex, 0, cap*4)
@@ -82,7 +96,13 @@ func beginBodyBatch() {
 	bodyBuf.deferred = bodyBuf.deferred[:0]
 }
 
-// collectBody adds one projectile's body to batch buffers.
+// collectBody 将单个弹丸的弹体几何数据加入批量缓冲区。
+// 所有弹丸共有速度尾线（白色半透明线段），之后按类型分支：
+//   - Penetrate（穿透弹）: 紫色辉光 + 白芯双层，辉光画到 GlowTarget
+//   - ScatterVisual（散射弹）: 蓝色小圆 + 短尾线
+//   - sniper/rapid/freeze: 各有专属颜色和形状（冰弹为旋转菱形）
+//   - wind: 弹体批量化 + 弧线延迟到 deferred 逐个渲染
+//   - default: 通用辉光 + 小圆
 func collectBody(p *projectile.Projectile) {
 	cx := float32(p.X)
 	cy := float32(p.Y)
@@ -138,10 +158,15 @@ func collectBody(p *projectile.Projectile) {
 	}
 }
 
+// flushBodyBatch 提交所有弹体几何数据到 GPU，按 4 层顺序绘制：
+//  1. 速度尾线（白像素纹理，画到 screen）
+//  2. 弹体圆点（圆形纹理，画到 screen）
+//  3. 辉光外圈（圆形纹理，画到 GlowTarget 做加法混合；无 GlowTarget 时降级到 BlendLighter）
+//  4. 延迟渲染（wind 弧线，逐个 vector 绘制）
 func flushBodyBatch(screen *ebiten.Image) {
-	wp := trailWhitePixel()
-	ct := trailCircleTex()
-	noAA := &ebiten.DrawTrianglesOptions{}
+	wp := trailWhitePixel()                // 3x3 白像素纹理，用于线段渲染
+	ct := trailCircleTex()                 // 32x32 软边圆形纹理，用于圆点渲染
+	noAA := &ebiten.DrawTrianglesOptions{} // 无需 AA：圆形纹理自带软边
 
 	// 1. Velocity tails (line quads on screen)
 	if len(bodyBuf.tailVs) > 0 {
@@ -170,8 +195,12 @@ func flushBodyBatch(screen *ebiten.Image) {
 	}
 }
 
-// ── Batch helpers ───────────────────────────────────────────────────
+// ── 批量辅助函数 ─────────────────────────────────────────────────
+// 以下函数将单个几何图元（圆/线/菱形）转为 4 顶点 + 6 索引的四边形，
+// 追加到对应的缓冲区。draw.S32() 将逻辑坐标转为物理像素坐标。
+// premulColor() 将 RGBA 转为预乘 alpha 格式（GPU 混合必须）。
 
+// addBodyCircle 向弹体缓冲区追加一个圆形四边形（采样圆形纹理）。
 func addBodyCircle(cx, cy, radius float32, clr color.RGBA) {
 	if clr.A == 0 {
 		return
@@ -190,6 +219,8 @@ func addBodyCircle(cx, cy, radius float32, clr color.RGBA) {
 	bodyBuf.bodyIs = append(bodyBuf.bodyIs, idx, idx+1, idx+2, idx, idx+2, idx+3)
 }
 
+// addGlowCircle 向辉光缓冲区追加一个圆形四边形。
+// alpha 自动降至 1/4 产生柔和光晕效果，最终画到 GlowTarget 做加法混合。
 func addGlowCircle(cx, cy, radius float32, clr color.RGBA) {
 	if clr.A == 0 {
 		return
@@ -213,6 +244,7 @@ func addGlowCircle(cx, cy, radius float32, clr color.RGBA) {
 	bodyBuf.glowIs = append(bodyBuf.glowIs, idx, idx+1, idx+2, idx, idx+2, idx+3)
 }
 
+// addBodyLine 向尾线缓冲区追加一个线段四边形（沿法线方向扩展宽度）。
 func addBodyLine(x1, y1, x2, y2, width float32, clr color.RGBA) {
 	if clr.A == 0 {
 		return
@@ -238,6 +270,8 @@ func addBodyLine(x1, y1, x2, y2, width float32, clr color.RGBA) {
 	bodyBuf.tailIs = append(bodyBuf.tailIs, idx, idx+1, idx+2, idx, idx+2, idx+3)
 }
 
+// addBodyDiamond 向弹体缓冲区追加一个菱形四边形（冰弹专用）。
+// 通过旋转 4 个顶点实现菱形，采样圆形纹理的边缘区域产生锐利菱形轮廓。
 func addBodyDiamond(cx, cy, size, angle float32, clr color.RGBA) {
 	sx := draw.S32(cx)
 	sy := draw.S32(cy)
@@ -256,17 +290,25 @@ func addBodyDiamond(cx, cy, size, angle float32, clr color.RGBA) {
 	bodyBuf.bodyIs = append(bodyBuf.bodyIs, idx, idx+1, idx+2, idx, idx+2, idx+3)
 }
 
+// premulColor 将 RGBA 颜色转为预乘 alpha 格式（Ebitengine DrawTriangles 要求）。
 func premulColor(clr color.RGBA) (float32, float32, float32, float32) {
 	a := float32(clr.A) / 255
 	return float32(clr.R) / 255 * a, float32(clr.G) / 255 * a, float32(clr.B) / 255 * a, a
 }
 
-// ── Style matchers (avoid strings.Contains per projectile per frame) ──
+// ── 塔类型匹配器（避免每弹丸每帧调用 strings.Contains 产生分配） ──
+// 先尝试前缀快速匹配，失败时回退到手写子串搜索（零分配）。
 
-func isSniper(key string) bool  { return len(key) >= 6 && key[:6] == "sniper" || containsStr(key, "sniper") }
-func isRapid(key string) bool   { return len(key) >= 5 && key[:5] == "rapid" || containsStr(key, "rapid") }
-func isFreeze(key string) bool  { return len(key) >= 6 && key[:6] == "freeze" || containsStr(key, "freeze") }
-func isWind(key string) bool    { return len(key) >= 4 && key[:4] == "wind" || containsStr(key, "wind") }
+func isSniper(key string) bool {
+	return len(key) >= 6 && key[:6] == "sniper" || containsStr(key, "sniper")
+}
+func isRapid(key string) bool {
+	return len(key) >= 5 && key[:5] == "rapid" || containsStr(key, "rapid")
+}
+func isFreeze(key string) bool {
+	return len(key) >= 6 && key[:6] == "freeze" || containsStr(key, "freeze")
+}
+func isWind(key string) bool { return len(key) >= 4 && key[:4] == "wind" || containsStr(key, "wind") }
 
 func containsStr(s, sub string) bool {
 	if len(sub) > len(s) {

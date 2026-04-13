@@ -1,5 +1,33 @@
-// pipeline.go — post-processing pipeline with bloom effect.
-// Manages offscreen buffers and applies GPU shader passes.
+// pipeline.go — GPU 后处理管线。
+//
+// 管理离屏缓冲区和 Kage shader pass 链，将世界空间渲染的场景图像
+// 经过一系列全屏 GPU 特效后输出到最终画面。
+//
+// 管线架构：
+//
+//	SceneBuffer (世界渲染目标)
+//	  │
+//	  ├─ Bloom [当前禁用: Ebitengine v2.9.9 DrawRectShader crash]
+//	  │   Extract(亮度提取, 1/4 分辨率) → Blur(乒乓高斯模糊 N 轮) → Combine(合成)
+//	  │
+//	  ├─ Lighting (动态点光源, 最多 4 盏, 画质可配上限)
+//	  ├─ Vignette (边缘暗角, 常驻)
+//	  ├─ Ripple (冰塔命中波纹扭曲, 最多 4 个并发)
+//	  ├─ Color Grade (受击红闪 + 昼夜色调)
+//	  ├─ Desaturate (暂停/失败灰度化 + 色调覆盖)
+//	  └─ Radial Blur (径向模糊, 爆炸冲击反馈)
+//	      │
+//	      ▼
+//	    dst (最终屏幕)
+//
+// 性能关键设计：
+//   - 所有 uniform map 和 DrawRectShaderOptions 在 NewPipeline 时预分配，
+//     Apply() 中仅更新值，零每帧堆分配
+//   - Bloom 缓冲区为场景的 1/4 分辨率（半宽×半高），降低 GPU 开销
+//   - 效果 pass 之间通过 fxPingPong/bloomUpscaled 交替作为 src/dst，
+//     避免 source==destination 问题，最后一个 pass 直接写入 dst
+//   - 画质设置（PostProcessing=false 或 Low）跳过 vignette/lighting/radialBlur，
+//     但保留 hitFlash（重要的游戏性反馈）
 package postprocess
 
 import (
@@ -9,31 +37,30 @@ import (
 	"github.com/hajimehoshi/ebiten/v2"
 )
 
-// Pipeline manages all post-processing effects.
+// Pipeline 管理所有后处理效果的离屏缓冲区和 shader pass。
 type Pipeline struct {
-	sceneBuffer    *ebiten.Image // full resolution scene render target
-	bloomExtracted *ebiten.Image // 1/4 resolution bright pixels
-	bloomBlurA     *ebiten.Image // 1/4 resolution ping buffer
-	bloomBlurB     *ebiten.Image // 1/4 resolution pong buffer
-	bloomUpscaled  *ebiten.Image // full resolution upscaled bloom (for combine)
-	fxPingPong     *ebiten.Image // full resolution temp buffer for effect pass chaining
+	// ── 离屏缓冲区 ──
+	sceneBuffer    *ebiten.Image // 全分辨率场景渲染目标（世界空间内容画到这里）
+	bloomExtracted *ebiten.Image // 1/4 分辨率亮度提取缓冲
+	bloomBlurA     *ebiten.Image // 1/4 分辨率乒乓模糊 A 缓冲
+	bloomBlurB     *ebiten.Image // 1/4 分辨率乒乓模糊 B 缓冲
+	bloomUpscaled  *ebiten.Image // 全分辨率上采样 bloom（也复用为效果链中间缓冲）
+	fxPingPong     *ebiten.Image // 全分辨率临时缓冲（效果 pass 间交替使用）
 
-	// Current scene buffer dimensions (physical pixels).
+	// 当前场景缓冲区尺寸（物理像素）。窗口缩放时自动重建所有缓冲区。
 	sceneW, sceneH int
 
-	// Bloom configuration.
-	BloomEnabled   bool
-	BloomThreshold float64
-	BloomIntensity float64
-	BloomPasses    int
+	// ── Bloom 配置 ──
+	BloomEnabled   bool    // 当前禁用：Ebitengine v2.9.9 DrawRectShader 运行时 crash
+	BloomThreshold float64 // 亮度提取阈值
+	BloomIntensity float64 // 合成强度
+	BloomPasses    int     // 高斯模糊轮数
 
-	// Screen-level effects (vignette, hit flash, radial blur, hit-stop).
-	Effects *Effects
+	// ── 屏幕级效果状态 ──
+	Effects  *Effects       // 暗角/受击闪/径向模糊/波纹/灰度化
+	Lighting *LightingState // 动态点光源（最多 4 盏）
 
-	// Dynamic point lighting.
-	Lighting *LightingState
-
-	// Pre-allocated uniform maps (reused each frame, values updated in-place).
+	// ── 预分配的 uniform map（每帧原地更新值，零分配） ──
 	uBloomExt   map[string]any
 	uBlurH      map[string]any
 	uBlurV      map[string]any
@@ -45,7 +72,7 @@ type Pipeline struct {
 	uRipple     map[string]any
 	uDesat      map[string]any
 
-	// Pre-allocated shader options (avoids per-frame heap allocation).
+	// ── 预分配的 shader 选项（避免每帧堆分配 DrawRectShaderOptions） ──
 	opBloomExt  ebiten.DrawRectShaderOptions
 	opBlurH     ebiten.DrawRectShaderOptions
 	opBlurV     ebiten.DrawRectShaderOptions
@@ -58,7 +85,9 @@ type Pipeline struct {
 	opDesat     ebiten.DrawRectShaderOptions
 }
 
-// NewPipeline creates a pipeline with default bloom settings.
+// NewPipeline 创建后处理管线（含默认 Bloom 配置）。
+// 所有 uniform map 和 shader options 在此一次性预分配，
+// 后续 Apply() 调用只更新值不分配内存。
 func NewPipeline() *Pipeline {
 	p := &Pipeline{
 		BloomEnabled:   false, // 暂禁: DrawRectShader v2.9.9 runtime crash
@@ -101,8 +130,10 @@ func NewPipeline() *Pipeline {
 	return p
 }
 
-// SceneBuffer returns the offscreen image for world rendering.
-// It auto-resizes if the physical dimensions change.
+// SceneBuffer 返回用于世界渲染的离屏图像。
+// 物理尺寸变化时自动重建所有缓冲区（场景+bloom+乒乓），
+// 旧 GPU 纹理通过 Deallocate() 显式释放以避免 GPU 内存泄漏。
+// 每帧调用开头会 Clear() 场景缓冲区。
 func (p *Pipeline) SceneBuffer(physW, physH int) *ebiten.Image {
 	if physW <= 0 || physH <= 0 {
 		physW, physH = 1, 1
@@ -139,9 +170,20 @@ func (p *Pipeline) SceneBuffer(physW, physH int) *ebiten.Image {
 	return p.sceneBuffer
 }
 
-// Apply runs the post-processing chain and draws the result to dst.
-// Chain order: Bloom -> Vignette -> Color Grade -> Radial Blur.
-// If shaders are not compiled, it blits the scene directly.
+// Apply 执行后处理链并将结果绘制到 dst。
+//
+// 流程概览：
+//  1. 检查 shader 是否就绪（首帧可能未编译完成），否则直接 blit 场景
+//  2. 判断各效果是否需要激活（尊重画质设置 + 效果状态）
+//  3. 若无任何效果需要，快速 blit 跳过所有 GPU pass
+//  4. Bloom pass（当前禁用）：Extract → Blur × N → Upscale → Combine
+//  5. 效果 pass 链：Lighting → Vignette → Ripple → ColorGrade → Desaturate → RadialBlur
+//
+// pass 链的缓冲区管理：
+//   - fxSrc: 指向当前持有结果的缓冲区
+//   - fxTarget(): 返回下一个 pass 的输出缓冲区
+//   - 最后一个 pass 直接写入 dst（避免多余的全屏 copy）
+//   - 中间 pass 在 fxPingPong 和 bloomUpscaled 之间交替，确保 src != dst
 func (p *Pipeline) Apply(dst *ebiten.Image) {
 	if p.sceneBuffer == nil {
 		return
@@ -152,9 +194,9 @@ func (p *Pipeline) Apply(dst *ebiten.Image) {
 		return
 	}
 
-	// Determine which effect passes are needed.
-	// Respect quality settings: vignette/lighting/radialBlur are skipped on Low,
-	// but hit flash (color grade) is always kept as important gameplay feedback.
+	// 判断各效果 pass 是否需要激活。
+	// 画质策略：PostProcessing=false（Low 画质）时跳过 vignette/lighting/radialBlur/ripple，
+	// 但 hitFlash（受击红闪）和 desaturate（暂停灰度）始终保留——它们是重要的游戏反馈。
 	qs := game.Settings()
 	fx := p.Effects
 	ls := p.Lighting
@@ -227,8 +269,8 @@ func (p *Pipeline) Apply(dst *ebiten.Image) {
 		fxSrc = p.sceneBuffer
 	}
 
-	// --- Effect pass chaining ---
-	// Count remaining passes to know when to write directly to dst.
+	// --- 效果 pass 链 ---
+	// 计算剩余 pass 数量，最后一个 pass 直接写入 dst，中间 pass 写入乒乓缓冲。
 	remaining := 0
 	if needLighting {
 		remaining++
@@ -249,11 +291,11 @@ func (p *Pipeline) Apply(dst *ebiten.Image) {
 		remaining++
 	}
 
-	// fxTarget picks the correct output for each pass.
-	// The last pass writes to dst; intermediate passes ping-pong between
-	// fxPingPong and bloomUpscaled to avoid source==destination.
-	// When fxSrc=sceneBuffer (no bloom), first intermediate goes to fxPingPong.
-	// When fxSrc=fxPingPong (bloom), first intermediate goes to bloomUpscaled.
+	// fxTarget 为每个 pass 选择正确的输出缓冲区。
+	// 规则：最后一个 pass 写入 dst；中间 pass 在 fxPingPong 和 bloomUpscaled 之间交替。
+	// 当 fxSrc=sceneBuffer（无 bloom）时，第一个中间缓冲用 fxPingPong；
+	// 当 fxSrc=fxPingPong（有 bloom）时，第一个中间缓冲用 bloomUpscaled。
+	// 这确保了 source 和 destination 永远不是同一个缓冲区。
 	usePingPong := fxSrc != p.fxPingPong // first target is fxPingPong if src is sceneBuffer
 	fxTarget := func() *ebiten.Image {
 		remaining--
@@ -270,7 +312,8 @@ func (p *Pipeline) Apply(dst *ebiten.Image) {
 		return p.bloomUpscaled
 	}
 
-	// Lighting (dynamic point lights).
+	// 动态点光源（最多 4 盏，画质可配上限）。
+	// 光源位置和半径需从逻辑坐标转为物理像素（draw.S()）。
 	if needLighting {
 		target := fxTarget()
 		p.opLighting.Uniforms = p.buildLightingUniforms()
@@ -279,7 +322,7 @@ func (p *Pipeline) Apply(dst *ebiten.Image) {
 		fxSrc = target
 	}
 
-	// Vignette (always-on edge darkening).
+	// 暗角效果（常驻的边缘暗化，Strength 由 Effects 控制）。
 	if needVignette {
 		target := fxTarget()
 		p.uVignette["Strength"] = float32(fx.VignetteStrength)
@@ -289,7 +332,8 @@ func (p *Pipeline) Apply(dst *ebiten.Image) {
 		fxSrc = target
 	}
 
-	// Ripple distortion (ice tower hits).
+	// 波纹扭曲效果（冰塔命中时触发，最多 4 个并发波纹）。
+	// 每个波纹有独立的中心点(X,Y)、时间(T)和振幅(A)。
 	if needRipple {
 		scale := draw.Scale
 		for i := 0; i < MaxRipples; i++ {
@@ -309,7 +353,8 @@ func (p *Pipeline) Apply(dst *ebiten.Image) {
 		fxSrc = target
 	}
 
-	// Color grade (hit flash + day/night ambient tint).
+	// 色彩调整（受击红闪 + 昼夜环境色调）。
+	// hitFlash 峰值 alpha 上限为 40%（tintA * 0.4），避免全屏被色调覆盖。
 	if needColorGrade {
 		tintA := 0.0
 		if fx.HitFlash.Active && fx.HitFlash.Duration > 0 {
@@ -333,7 +378,7 @@ func (p *Pipeline) Apply(dst *ebiten.Image) {
 		fxSrc = target
 	}
 
-	// Desaturation (pause/defeat grayscale + tint).
+	// 灰度化（暂停/战败时画面去色 + 色调叠加）。
 	if needDesat {
 		p.uDesat["Strength"] = float32(fx.DesatStrength)
 		p.uDesat["TintR"] = float32(fx.DesatTintR)
@@ -346,7 +391,7 @@ func (p *Pipeline) Apply(dst *ebiten.Image) {
 		fxSrc = target
 	}
 
-	// Radial blur (strength decays over duration).
+	// 径向模糊（爆炸/boss 死亡等冲击反馈，强度随时间衰减）。
 	if needRadialBlur {
 		t := fx.RadialBlur.Timer / fx.RadialBlur.Duration
 		if t < 0 {
@@ -371,7 +416,9 @@ func hasActiveRipples(fx *Effects) bool {
 	return false
 }
 
-// lightKeys 预计算 uniform 键名，避免每帧字符串拼接（28 alloc/frame → 0）。
+// lightKeys 预计算 4 盏灯的 uniform 键名字符串。
+// 避免 buildLightingUniforms 中每帧拼接 "LightX0"/"LightY0" 等字符串
+// （原先每帧 28 次 fmt.Sprintf 分配，现在 0 分配）。
 var lightKeys = [MaxLights]struct{ X, Y, R, G, B, Radius, Intensity string }{
 	{"LightX0", "LightY0", "LightR0", "LightG0", "LightB0", "LightRadius0", "LightIntensity0"},
 	{"LightX1", "LightY1", "LightR1", "LightG1", "LightB1", "LightRadius1", "LightIntensity1"},
@@ -379,8 +426,10 @@ var lightKeys = [MaxLights]struct{ X, Y, R, G, B, Radius, Intensity string }{
 	{"LightX3", "LightY3", "LightR3", "LightG3", "LightB3", "LightRadius3", "LightIntensity3"},
 }
 
-// buildLightingUniforms updates p.uLighting in-place and returns it.
-// Positions and radii are converted to physical pixels via draw.S().
+// buildLightingUniforms 原地更新 p.uLighting 并返回。
+// 光源位置和半径通过 draw.S() 从逻辑坐标转为物理像素（shader 在物理空间工作）。
+// 活跃光源数量受画质设置的 MaxLights 上限约束。
+// 非活跃槽位清零（Intensity=0）以避免 shader 残留。
 func (p *Pipeline) buildLightingUniforms() map[string]any {
 	ls := p.Lighting
 	// Cap active light count at the quality-level maximum.

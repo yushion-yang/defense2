@@ -1,10 +1,17 @@
-// draw_map.go — 地图渲染。
-// 绘制渐变背景、点阵网格、路径连线（粗线+虚线）、塔槽位圆圈、入口/基地标签。
+// draw_map.go — 地图渲染模块。
 //
-// The full map is cached to an offscreen image and only re-rendered when
-// buildMode changes or InvalidateMapCache() is called (e.g. on map load).
-// Animated elements (slot pulse) use a fixed animTime=0 in the cache;
-// the visual impact is negligible and avoids per-frame re-draws (~80 calls).
+// 负责绘制完整地图：渐变背景 → 路径连线 → 地形装饰 → 塔槽位 → 出生/基地标记 → 标签。
+// 全部内容缓存到离屏图像（mapCache），每帧仅需一次 DrawImage 即可复用。
+//
+// 缓存失效条件（重新绘制 ~80 次 draw call）：
+//  1. mapCacheDirty 标记（地图加载/切换时由 InvalidateMapCache() 设置）
+//  2. buildMode 状态变化（建塔模式切换时槽位样式不同）
+//  3. 画布尺寸变化（窗口缩放）
+//
+// 设计取舍：缓存使用固定 animTime=0，放弃了建塔模式空槽位的脉冲动画。
+// 此动画仅是微弱的 alpha 波动，肉眼几乎不可见，换取了每帧零重绘的巨大收益。
+//
+// 另有 DrawParallaxBG() 是每帧渲染的缓慢漂移星空，不受缓存影响。
 package render
 
 import (
@@ -20,19 +27,19 @@ import (
 )
 
 // ---------------------------------------------------------------------------
-// Cached background (gradient + dot grid) — created once, reused every frame.
+// 渐变背景缓存 — 首次创建后每帧复用，尺寸或颜色变化时重建。
 // ---------------------------------------------------------------------------
 
 var (
-	cachedBg    *draw.CachedGradient
-	cachedBgW   int
-	cachedBgH   int
-	cachedBgTop color.RGBA
-	cachedBgBot color.RGBA
+	cachedBg    *draw.CachedGradient // 渐变离屏图像
+	cachedBgW   int                  // 缓存宽度（检测尺寸变化）
+	cachedBgH   int                  // 缓存高度
+	cachedBgTop color.RGBA           // 缓存顶部颜色（检测主题变化）
+	cachedBgBot color.RGBA           // 缓存底部颜色
 )
 
-// ensureBg lazily initializes the cached background gradient sized to cover
-// the full map (which may be larger than one screen).
+// ensureBg 惰性初始化渐变背景，尺寸覆盖整个地图（可能大于单屏）。
+// 仅在尺寸或颜色发生变化时重建，否则直接返回缓存。
 func ensureBg(w, h int, top, bot color.RGBA) *draw.CachedGradient {
 	if cachedBg != nil && cachedBgW == w && cachedBgH == h &&
 		cachedBgTop == top && cachedBgBot == bot {
@@ -47,13 +54,13 @@ func ensureBg(w, h int, top, bot color.RGBA) *draw.CachedGradient {
 }
 
 // ---------------------------------------------------------------------------
-// Map cache — full map rendered to offscreen image, invalidated on demand.
+// 地图离屏缓存 — 完整地图渲染到离屏图像，按需失效重绘。
 // ---------------------------------------------------------------------------
 
 var (
-	mapCache          *ebiten.Image
-	mapCacheDirty     = true
-	mapCacheLastBuild bool // tracks the buildMode used to render the cache
+	mapCache          *ebiten.Image // 离屏缓存图像（与 screen 同尺寸）
+	mapCacheDirty     = true        // 脏标记，true 时下一帧重绘
+	mapCacheLastBuild bool          // 上次缓存时的 buildMode，用于检测模式切换
 )
 
 // InvalidateMapCache forces the map to be re-rendered on the next DrawMap call.
@@ -114,7 +121,14 @@ func DrawMap(
 	screen.DrawImage(mapCache, nil)
 }
 
-// drawMapFull renders the entire map to the given target image.
+// drawMapFull 渲染完整地图到指定的离屏图像。
+// 绘制顺序（从下到上）：
+//  1. 渐变背景（覆盖整个地图区域，尺寸取 max(地图, 画布)）
+//  2. 路径粗线 + 虚线中心线（阴影→底线→虚线三层）
+//  3. 地形装饰（空格子上的确定性散点：小点/十字/圆环）
+//  4. 塔槽位（凹陷圆 + 建塔模式高亮）
+//  5. 出生/基地微弱标记（低 alpha 红/蓝圆）
+//  6. "入口"/"基地" 文字标签
 func drawMapFull(
 	screen *ebiten.Image,
 	gm *gamemap.GameMap,
@@ -170,7 +184,10 @@ func drawPaths(screen *ebiten.Image, gm *gamemap.GameMap, pathClr color.RGBA) {
 	}
 }
 
-// drawWaypointPath draws thick stroke + dashed center for a single waypoint sequence.
+// drawWaypointPath 绘制单条路径序列的三层视觉效果：
+//  1. 阴影层（下偏 2px、加宽 1px、深色）— 提供立体深度感
+//  2. 底色粗线（主题路径色）— 路径主体
+//  3. 中心虚线（路径色微暗变体）— 增加视觉层次
 func drawWaypointPath(screen *ebiten.Image, waypoints []gamemap.Point, pathClr color.RGBA) {
 	if len(waypoints) < 2 {
 		return
@@ -208,8 +225,11 @@ func drawWaypointPath(screen *ebiten.Image, waypoints []gamemap.Point, pathClr c
 // Tower slots
 // ---------------------------------------------------------------------------
 
-// drawSlots draws semi-transparent circles for each buildable cell.
-// In build mode, empty slots are highlighted with an outline ring and "+" sign.
+// drawSlots 绘制每个可建造格子的塔槽位。
+// 三种状态：
+//   - 已占用（occupied）：不绘制底色，塔精灵自行覆盖
+//   - 建塔模式空槽：凹陷底色 + 内圈 + 金色轮廓 + 脉冲环 + "+" 号
+//   - 常规模式空槽：凹陷底色 + 内圈 + 暗色轮廓
 func drawSlots(screen *ebiten.Image, gm *gamemap.GameMap, fm *FontManager, towerAt func(row, col int) bool, buildMode bool, animTime float64) {
 	cfg := gm.Config
 
@@ -326,8 +346,10 @@ func drawPathLabels(screen *ebiten.Image, gm *gamemap.GameMap, fm *FontManager) 
 // Terrain decorations
 // ---------------------------------------------------------------------------
 
-// drawTerrainDecorations scatters subtle decorative elements on empty cells.
-// Uses a deterministic hash based on cell position — no rand, fully reproducible.
+// drawTerrainDecorations 在空格子上散布微弱的装饰元素。
+// 使用基于行列位置的确定性哈希（row*7919 + col*104729），无随机数，完全可重现。
+// ~30% 的空格子获得装饰，4 种变体：小圆点 / 十字 / 圆环 / 空（自然留白）。
+// 装饰 alpha 极低（theme.MapDecoAlpha*），仅在仔细观察时可见，避免喧宾夺主。
 func drawTerrainDecorations(screen *ebiten.Image, gm *gamemap.GameMap, dotClr color.RGBA) {
 	cfg := gm.Config
 
@@ -369,15 +391,17 @@ func drawTerrainDecorations(screen *ebiten.Image, gm *gamemap.GameMap, dotClr co
 }
 
 // ---------------------------------------------------------------------------
-// Parallax background — slow-drifting star field drawn every frame.
+// 视差星空背景 — 每帧绘制的缓慢漂移星点（不缓存，因为位置持续变化）。
 // ---------------------------------------------------------------------------
 
 var (
-	parallaxStars [][3]float64
-	parallaxW     float64
-	parallaxH     float64
+	parallaxStars [][3]float64 // [x, y, radius] 40 颗星的初始位置和大小
+	parallaxW     float64      // 缓存的地图宽度（尺寸变化时重新生成星点位置）
+	parallaxH     float64      // 缓存的地图高度
 )
 
+// initParallaxStars 确定性生成 40 颗星的初始位置（使用黄金比例分布避免聚集）。
+// 不使用 math/rand，利用黄金比例 0.618... 的低差异序列产生均匀分布。
 func initParallaxStars(w, h float64) {
 	if len(parallaxStars) > 0 && parallaxW == w && parallaxH == h {
 		return
@@ -396,8 +420,9 @@ func initParallaxStars(w, h float64) {
 	}
 }
 
-// DrawParallaxBG renders slow-moving background stars. Called every frame (not cached).
-// worldW/worldH are the logical pixel dimensions of the full map.
+// DrawParallaxBG 渲染缓慢移动的星空背景，每帧调用（不可缓存因为位置在变化）。
+// 每颗星沿 X 轴以不同速度漂移（2~5 px/s），到达右边界后环绕回左侧。
+// alpha 极低（15~35），仅营造微弱的空间感。
 func DrawParallaxBG(screen *ebiten.Image, animTime, worldW, worldH float64) {
 	if worldW <= 0 {
 		worldW = float64(theme.CanvasW)

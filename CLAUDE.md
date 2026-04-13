@@ -104,6 +104,60 @@ tx, ty := draw.TouchPos(touchID)     // 返回逻辑坐标，不要用 ebiten.To
 - Tests: table-driven, `-race` flag always
 - Ability registration: `init()` + blank import pattern
 
+## 代码注释规范（强制）
+
+### 语言与详细度
+
+- **语言**: 中文
+- **详细度**: 中级 — 解释本项目特有的设计决策和非显而易见的逻辑，不解释通用编程模式（如"什么是 for 循环"）
+
+### 必须添加注释的位置
+
+| 位置 | 内容 |
+|------|------|
+| 文件头部 | 说明文件在系统中的角色、与其他文件的关系 |
+| 大型函数开头(>50行) | 流程概览注释（编号步骤列表） |
+| 复杂 struct(>10字段) | 按逻辑分组添加分隔注释 |
+| 关键分支/算法 | 说明"为什么"而非"做了什么" |
+| 非显而易见的设计决策 | 说明选型理由、替代方案、权衡取舍 |
+
+### 不需要注释的位置
+
+- 通用编程模式（error handling、for loop、type assertion）
+- 单行显而易见的赋值/return
+- 已有良好命名的短函数(<20行)
+- godoc 格式的英文导出注释（本项目不需要）
+
+### 风格示例
+
+```go
+// spawner.go — 波次出怪管理器。
+//
+// 职责：管理波次推进、敌人原型选择、Boss 注入、wave buff 施加。
+// 关联：由 pipeline/sys_spawn.go 每帧调用 Tick()，
+//       从 config/spawner_config.go 读取波次配置。
+
+// ApplyHit 处理一次命中的完整流程：
+//   1. 闪避判定（evasion check）
+//   2. 护甲减免
+//   3. 触发 OnHit 能力（弹射/溅射/流血/灼烧/减速/眩晕）
+//   4. 暴击判定
+//   5. 调用 ApplyDamage 进入 8 步伤害管线
+//   6. 处理击杀和死亡爆炸
+func ApplyHit(...) {
+
+// ── 身份标识 ──────────────────────────
+Key       string  // 塔类型键名，如 "basic"
+Row, Col  int     // 网格位置
+
+// ── 战斗属性 ──────────────────────────
+Damage    float64 // 最终伤害 = Base + Potential * (Strength/100)
+
+// 用环形缓冲区而非 slice：弹道生命周期极短（<2秒），
+// FIFO 覆盖比 GC 回收更高效，且保证零分配。
+type Pool struct {
+```
+
 ## Development Workflow（强制）
 
 ### 新功能实现流程

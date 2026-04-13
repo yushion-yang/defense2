@@ -1,5 +1,13 @@
-// base.go — Mode 接口的默认空实现。
-// 各具体模式 embed baseMode 减少样板代码，只需覆写关注的方法。
+// base.go — Mode 接口的默认空实现（Null Object 模式）。
+//
+// baseMode 提供所有接口方法的合理默认行为：
+//   - 胜利条件：波次打完且无存活敌人
+//   - 失败条件：生命值归零
+//   - 波间休息：从 balance.json spawner.waveInterval 读取（默认 10 秒）
+//   - 经济奖励：从 economy.json 读取对应模式配置，无则回退 campaign
+//
+// 具体模式（如 CampaignMode）通过 embed baseMode 继承默认行为，
+// 只需覆写差异化方法，符合"组合优于继承"原则。
 package gamemode
 
 import (
@@ -32,8 +40,9 @@ func (b *baseMode) GetScore(_ *Context) int        { return 0 }
 func (b *baseMode) VictoryWaveTarget() int         { return -1 }
 func (b *baseMode) EnableEvents() bool             { return false }
 
-// OnWaveCleared returns wave-clear rewards. PerfectBonus is 0 by default;
-// modes that support perfect-wave bonuses (e.g. campaign) should override.
+// OnWaveCleared 返回波次通关奖励。
+// 默认不发放完美波次奖励（PerfectBonus=0），需要此功能的模式应覆写。
+// 奖励公式来自 economy.json 的 waveBonus 配置。
 func (b *baseMode) OnWaveCleared(wave int, _ *Context) WaveClearResult {
 	econ := modeEcon(b.id)
 	bonus := econ.WaveBonus.Calc(wave)
@@ -43,7 +52,9 @@ func (b *baseMode) OnWaveCleared(wave int, _ *Context) WaveClearResult {
 	}
 }
 
-// modeEcon 返回指定模式的经济配置，回退到 campaign。
+// modeEcon 返回指定模式的经济配置。
+// 查找优先级：指定模式 → campaign → 硬编码默认值。
+// 这样新增模式时即使忘记配置也有合理的奖励。
 func modeEcon(modeID string) config.ModeEconomy {
 	spec := config.GlobalEconomySpec()
 	if spec == nil || spec.Modes == nil {

@@ -1,3 +1,10 @@
+// dashed.go — 虚线绘制，与 line_batch 批量化集成。
+//
+// 提供虚线段和虚线圆两种图元，用于塔射程指示、区域边界等 VFX 效果。
+// 当 lineBatch 激活时自动走批量路径，对调用方透明。
+//
+// 性能防护：DashedCircle 有 64 段硬上限(maxDashes)，防止极端半径导致
+// 线段数爆炸。配合 vfxRadius(400) 视觉半径钳制，双重保障。
 package draw
 
 import (
@@ -8,9 +15,11 @@ import (
 	"github.com/hajimehoshi/ebiten/v2/vector"
 )
 
-// DashedLine draws a dashed line from (x1,y1) to (x2,y2).
-// Each visible segment has length dashLen, followed by a gap of gapLen.
+// DashedLine 绘制从 (x1,y1) 到 (x2,y2) 的虚线。
+// dashLen 为可见段长度，gapLen 为间隔长度，均为逻辑像素。
+// 内部自动处理 HiDPI 缩放和 lineBatch 批量化。
 func DashedLine(screen *ebiten.Image, x1, y1, x2, y2, width, dashLen, gapLen float32, clr color.Color) {
+	// 所有参数一次性缩放到物理像素，后续计算无需再缩放
 	x1, y1, x2, y2 = S32(x1), S32(y1), S32(x2), S32(y2)
 	width, dashLen, gapLen = S32(width), S32(dashLen), S32(gapLen)
 	dx := x2 - x1
@@ -20,18 +29,18 @@ func DashedLine(screen *ebiten.Image, x1, y1, x2, y2, width, dashLen, gapLen flo
 		return
 	}
 
-	// Unit direction vector.
+	// 单位方向向量，用于沿线段方向步进
 	ux := dx / totalLen
 	uy := dy / totalLen
 
 	var dist float32
-	drawing := true // Start with a dash.
+	drawing := true // 从可见段开始交替：dash → gap → dash → ...
 
 	for dist < totalLen {
 		if drawing {
 			segEnd := dist + dashLen
 			if segEnd > totalLen {
-				segEnd = totalLen
+				segEnd = totalLen // 最后一段可能不足完整 dashLen
 			}
 			sx := x1 + ux*dist
 			sy := y1 + uy*dist
@@ -50,8 +59,9 @@ func DashedLine(screen *ebiten.Image, x1, y1, x2, y2, width, dashLen, gapLen flo
 	}
 }
 
-// DashedCircle draws a dashed circle outline centered at (cx, cy) with radius r.
-// dashLen and gapLen are arc lengths along the circumference.
+// DashedCircle 绘制以 (cx,cy) 为圆心、半径 r 的虚线圆。
+// dashLen 和 gapLen 是沿圆周的弧长（非角度），单位为逻辑像素。
+// 每段 dash 用直线近似弧线（段数足够时视觉上无差异）。
 func DashedCircle(screen *ebiten.Image, cx, cy, r, width, dashLen, gapLen float32, clr color.Color) {
 	cx, cy, r = S32(cx), S32(cy), S32(r)
 	width, dashLen, gapLen = S32(width), S32(dashLen), S32(gapLen)
@@ -69,7 +79,7 @@ func DashedCircle(screen *ebiten.Image, cx, cy, r, width, dashLen, gapLen float3
 	var dist float64
 	drawing := true
 	draws := 0
-	const maxDashes = 64
+	const maxDashes = 64 // 硬上限：防止极端 Range 导致线段爆炸（性能防护）
 
 	for dist < circumference && draws < maxDashes {
 		if drawing {
@@ -78,9 +88,11 @@ func DashedCircle(screen *ebiten.Image, cx, cy, r, width, dashLen, gapLen float3
 				segEnd = circumference
 			}
 
+			// 弧长 → 角度：angle = arcLength / radius
 			startAngle := dist / float64(r)
 			endAngle := segEnd / float64(r)
 
+			// 圆上两端点坐标
 			sx := float32(float64(cx) + float64(r)*math.Cos(startAngle))
 			sy := float32(float64(cy) + float64(r)*math.Sin(startAngle))
 			ex := float32(float64(cx) + float64(r)*math.Cos(endAngle))

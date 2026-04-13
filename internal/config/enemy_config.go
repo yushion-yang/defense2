@@ -1,5 +1,19 @@
-// enemy_config.go — 敌人配置数据结构与加载。
-// 支持目录模式（config/enemies/defs/{key}.json）和单文件模式（enemies-core.json）。
+// enemy_config.go — 敌人原型配置与能力系统的加载层。
+//
+// 数据来源：
+//   - 原型定义：config/enemies/defs/{key}.json（目录模式）或 enemies-core.json（单文件模式）
+//   - 能力定义：config/enemies/abilities.json（全局能力表，怪物原型通过引用装配）
+//
+// 双模式加载设计：
+//   - 目录模式优先（每个原型一个文件，便于版本管理和 diff）
+//   - 单文件模式作为回退（数组格式保留定义顺序，用于 UI 展示排序）
+//   - 两种模式互斥，不会混合加载
+//
+// 能力装配机制：
+//   - 原型 JSON 的 "abilities" 字段支持混合写法：字符串（用默认参数）或对象（覆盖参数）
+//   - 例: ["stealth", {"type":"healAura","base":0.24,"param":105}]
+//   - ResolveEnemyAbilityAtWave() 在运行时合并默认参数+覆盖参数+波次缩放
+//   - 波次缩放公式：effectiveBase = base + potential * wave（让能力随波次增强）
 package config
 
 import (
@@ -10,6 +24,8 @@ import (
 )
 
 // EnemyArchetype 敌人原型模板（JSON 配置）。
+// 每种原型定义一套基础属性倍率，运行时与波次缩放参数相乘得到实际属性。
+// 18 种原型覆盖不同战术定位：normal(标准)、tank(肉盾)、fast(速攻)、healer(治疗)等。
 type EnemyArchetype struct {
 	ID          string  `json:"id"`          // 原型标识
 	Label       string  `json:"label"`       // 显示名称
@@ -49,7 +65,7 @@ type EnemyAbilityDef struct {
 	ParamDim    string  `json:"paramDim"`
 	Param2      float64 `json:"param2"`
 	Param2Dim   string  `json:"param2Dim"`
-	SpawnArch   string  `json:"spawnArch"`   // deathSpawn 子体原型（默认 "normal"）
+	SpawnArch   string  `json:"spawnArch"` // deathSpawn 子体原型（默认 "normal"）
 	Description string  `json:"description"`
 	Visual      string  `json:"visual"`      // 视觉效果描述
 	Silenceable bool    `json:"silenceable"` // 是否可被沉默禁用
@@ -57,6 +73,12 @@ type EnemyAbilityDef struct {
 
 // LoadEnemyArchetypes 加载所有敌人原型。
 // 优先从目录模式加载（config/enemies/defs/），不存在时回退到单文件模式。
+//
+// 加载流程：
+//  1. 尝试读取 config/enemies/defs/ 目录 → 逐文件解析（跳过 _ 前缀）
+//  2. 若目录不存在或为空 → 从 enemies-core.json 读取数组格式（保留定义顺序）
+//  3. 每个原型调用 applyEnemyDefaults() 填充缺省值 + 解析能力引用
+//  4. 结果写入 globalEnemyArchetypes 全局缓存
 func LoadEnemyArchetypes() (map[string]*EnemyArchetype, error) {
 	if dataFS == nil {
 		return nil, fmt.Errorf("load enemies: dataFS not initialized")
@@ -171,7 +193,10 @@ func EnemyArchetypeOrder() []string { return enemyArchetypeOrder }
 // enemyAbilityTable 全局怪物能力配置表。
 var enemyAbilityTable map[string]*EnemyAbilityDef
 
-// LoadEnemyAbilities 加载怪物能力配置表。
+// LoadEnemyAbilities 加载怪物能力配置表（config/enemies/abilities.json）。
+// 能力表是全局共享的——多个原型可以引用同一种能力，通过 EnemyAbilityRef 覆盖参数。
+// 文件不存在时返回 nil（无能力），不视为错误（兼容旧版配置）。
+// _ 前缀的 key 被视为注释/禁用条目，跳过不加载。
 func LoadEnemyAbilities() (map[string]*EnemyAbilityDef, error) {
 	if dataFS == nil {
 		return nil, fmt.Errorf("load enemy abilities: dataFS not initialized")
@@ -218,7 +243,10 @@ func ResolveEnemyAbility(ref EnemyAbilityRef) *EnemyAbilityDef {
 }
 
 // ResolveEnemyAbilityAtWave 解析能力引用并应用波次缩放。
-// effectiveBase = base + potential * wave。potential 优先取 ref 覆盖值，回退到 def 默认值。
+//
+// 合并优先级：ref 覆盖值 > abilities.json 默认值。
+// 缩放公式：effectiveBase = base + potential * wave（wave=0 时不缩放）。
+// 返回值是 def 的浅拷贝，修改不影响全局能力表。
 func ResolveEnemyAbilityAtWave(ref EnemyAbilityRef, wave int) *EnemyAbilityDef {
 	table := GlobalEnemyAbilityTable()
 	if table == nil {

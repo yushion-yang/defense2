@@ -1,10 +1,14 @@
-// trail_batch.go — batched projectile trail renderer.
-// Collects all trail dots and connector lines into vertex buffers,
-// then renders everything in 1-2 DrawTriangles calls instead of
-// 12,000+ individual draw.FilledCircle/ThickLine calls.
+// trail_batch.go — 弹道尾迹批量渲染器。
 //
-// Uses a pre-rendered circle texture (soft-edge radial gradient) so trail
-// dots render as smooth circles, not squares. No AntiAlias flag needed.
+// 将所有弹丸的尾迹点和连接线收集到顶点缓冲区，最终以 1-2 次 DrawTriangles
+// 完成渲染，替代原先 12,000+ 次逐个 draw.FilledCircle/ThickLine 调用。
+//
+// 核心纹理资源（懒初始化，全局唯一）：
+//   - circTexImage: 32x32 软边圆形纹理（径向渐变），用于尾迹点的圆形渲染
+//     纹理自带边缘 1.5px 淡出过渡，无需开启 AntiAlias 标志即可获得平滑边缘
+//   - trailWhiteImage: 3x3 纯白像素纹理，用于线段四边形的颜色采样
+//
+// 这两个纹理也被 draw_projectile.go 的弹体渲染复用（circU0/V0/U1/V1 是共享 UV 坐标）。
 package render
 
 import (
@@ -20,7 +24,9 @@ import (
 	"github.com/hajimehoshi/ebiten/v2"
 )
 
-// trailBatch collects trail geometry for batch rendering.
+// trailBatch 收集尾迹几何数据供批量渲染。
+// circVs/circIs: 圆形点的顶点/索引（使用圆形纹理）
+// lineVs/lineIs: 连接线的顶点/索引（使用白像素纹理）
 var trailBatch struct {
 	circVs []ebiten.Vertex
 	circIs []uint16
@@ -28,9 +34,12 @@ var trailBatch struct {
 	lineIs []uint16
 }
 
-// ── Circle texture (soft-edge radial gradient) ───────────────────────
+// ── 圆形纹理（软边径向渐变）──────────────────────────────────────
+// 在 GPU 上用纹理采样模拟圆形，比 vector 绘制圆快一个数量级。
+// 纹理中心为实心白色，边缘 1.5px 线性淡出到透明，实现天然抗锯齿。
+// 预乘 alpha 格式：R=G=B=A（白色 * alpha），通过 ColorScale 着色。
 
-const circTexSize = 32 // 32x32 pre-rendered circle with soft edge
+const circTexSize = 32 // 32x32 预渲染圆形纹理（含软边过渡）
 
 var (
 	circTexOnce  sync.Once
@@ -80,7 +89,9 @@ func trailCircleTex() *ebiten.Image {
 	return circTexImage
 }
 
-// ── White pixel for line segments ────────────────────────────────────
+// ── 白像素纹理（用于线段渲染）─────────────────────────────────────
+// 3x3 全白纹理（非 1x1，避免 GPU 采样边缘问题），线段四边形从中采样纯白色，
+// 实际颜色通过顶点 ColorR/G/B/A 着色。
 
 var (
 	trailWhiteOnce  sync.Once
@@ -99,8 +110,12 @@ func trailWhitePixel() *ebiten.Image {
 	return trailWhiteImage
 }
 
-// ── Init ─────────────────────────────────────────────────────────────
+// ── 初始化 ───────────────────────────────────────────────────────────
 
+// init 预分配尾迹缓冲区。
+// maxDots=7168: 按最大 1024 弹丸、每弹 7 个尾迹点估算
+// maxLines=5120: 每弹 5 条连接线段估算
+// 每个图元占 4 顶点 + 6 索引，预分配后运行时几乎不触发扩容。
 func init() {
 	const maxDots = 1024 * 7
 	const maxLines = 1024 * 5
@@ -119,7 +134,8 @@ func beginTrailBatch() {
 	trailBatch.lineIs = trailBatch.lineIs[:0]
 }
 
-// addTrailDot adds a soft circle to the batch using the circle texture.
+// addTrailDot 向批量缓冲区追加一个软边圆点（采样圆形纹理）。
+// 颜色预乘 alpha 处理后设置到四个顶点的 ColorR/G/B/A 上。
 func addTrailDot(cx, cy, radius float32, clr color.RGBA) {
 	if clr.A == 0 || radius <= 0 {
 		return
@@ -143,7 +159,8 @@ func addTrailDot(cx, cy, radius float32, clr color.RGBA) {
 	trailBatch.circIs = append(trailBatch.circIs, idx, idx+1, idx+2, idx, idx+2, idx+3)
 }
 
-// addTrailLine adds a thick line segment as a rotated quad.
+// addTrailLine 向批量缓冲区追加一条粗线段（扩展为旋转矩形四边形）。
+// 计算线段法线方向并沿法线扩展半宽度，生成 4 个顶点构成矩形。
 func addTrailLine(x1, y1, x2, y2, width float32, clr color.RGBA) {
 	if clr.A == 0 || width <= 0 {
 		return
@@ -178,7 +195,11 @@ func addTrailLine(x1, y1, x2, y2, width float32, clr color.RGBA) {
 	trailBatch.lineIs = append(trailBatch.lineIs, idx, idx+1, idx+2, idx, idx+2, idx+3)
 }
 
-// collectTrail adds one projectile's trail to the batch.
+// collectTrail 将单个弹丸的尾迹数据加入批量缓冲区。
+// 尾迹是固定长度的环形缓冲区（TrailLen 个点），从最旧到最新遍历。
+// 每个点绘制一个圆点，相邻活跃点之间绘制一条连接线。
+// alpha 和半径随 frac（0→1 从旧到新）递增，产生渐隐拖尾效果。
+// 最新点额外叠加一个 1.5x 大小的半透明光晕作为弹头标记。
 func collectTrail(p *projectile.Projectile) {
 	baseClr := vfx.ProjectileTrailColor(p.SourceTowerKey)
 	n := projectile.TrailLen
@@ -229,8 +250,10 @@ func collectTrail(p *projectile.Projectile) {
 	}
 }
 
-// flushTrailBatch renders all collected trail geometry.
-// No AntiAlias — the circle texture already has soft edges.
+// flushTrailBatch 提交所有收集到的尾迹几何数据到 GPU。
+// 渲染顺序：先连接线（白像素纹理），再圆点（圆形纹理）。
+// 线在下、点在上，确保尾迹点不被连接线遮挡。
+// 无需 AntiAlias 标志——圆形纹理的软边已提供天然抗锯齿。
 func flushTrailBatch(screen *ebiten.Image) {
 	// Lines: use white pixel, no AA needed for thin connectors
 	if len(trailBatch.lineVs) > 0 {

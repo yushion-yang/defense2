@@ -1,5 +1,14 @@
 // mode.go — 游戏模式框架。
-// 定义游戏模式接口、运行时上下文和注册表。
+//
+// 游戏模式系统是本游戏的核心扩展点之一。通过 Mode 接口定义了
+// 七种不同的游戏玩法（战役、无尽、限时、Boss 竞速、挑战、测试、自动化）。
+//
+// 设计决策：
+//   - 接口而非继承：Go 无类继承，采用组合模式（embed baseMode）减少样板
+//   - Context 注入：回调时传入快照+修改器，避免模式直接依赖 Stage
+//   - 全局注册表：init() 自动注册，Get(id) 获取，支持运行时扩展
+//
+// 当前状态：仅战役模式(campaign)可正常游玩，其他模式显示"敬请期待"。
 package gamemode
 
 // Mode 游戏模式接口。
@@ -104,6 +113,8 @@ type EndData struct {
 }
 
 // ── 全局模式注册表 ───────────────────────────────────
+// 采用 init() 自注册模式，各模式文件在 init 中调用 Register()。
+// 这样新增模式只需添加文件，无需修改已有代码。
 
 var registry = map[string]Mode{}
 
@@ -118,6 +129,8 @@ func Get(id string) Mode {
 }
 
 // GetOrDefault 获取指定 ID 的模式，未找到返回 campaign。
+// 三级回退保证始终返回有效模式：指定ID → campaign 实例 → 临时 baseMode。
+// 最后一级是防御性代码——正常情况下 init() 已注册 campaign。
 func GetOrDefault(id string) Mode {
 	if m := registry[id]; m != nil {
 		return m
@@ -137,6 +150,9 @@ func List() []string {
 	return names
 }
 
+// init 注册所有内置模式。
+// campaign 是当前唯一可正常游玩的模式，其余处于"敬请期待"状态。
+// test/autoPlay/simulation 为开发和自动化测试用。
 func init() {
 	Register(NewCampaignMode())
 	Register(NewEndlessMode())

@@ -1,6 +1,56 @@
-// spawner.go — 波次出怪管理器。
-// 控制敌人按波次间隔生成，支持单路径和多路径地图。
-// 每波敌人数量和属性随波次递增，原型按波次阶段加权随机选取。
+// spawner.go — 波次出怪管理器（753 行，本项目最复杂的单文件）。
+//
+// ═══════════════════════════════════════════════════════════════════
+// 架构概览
+// ═══════════════════════════════════════════════════════════════════
+//
+// Spawner 是敌人生成的唯一控制器，管理以下子系统：
+//
+//  1. 【波次状态机】
+//     idle(波间等待) → waitingForClear(等待清场) → waveActive(出怪中) → idle...
+//     - 等待清场：上波敌人全灭后才开始倒计时（60s 保底超时）
+//     - 倒计时到 0 后自动开波（ManualWave 模式需外部调用 StartNextWave）
+//     - AllDone=true 表示所有波次出完
+//
+// 2. 【原型选择】
+//   - 波次组合表(wave-compositions.json)：按波次段配置各原型权重
+//   - 小队模板(spawner.json squads)：每波开始时随机选一个小队，前 N 个敌人按模板出
+//   - EnemyFilter：测试/调试用，限制只出特定类型
+//   - 原型排序：所有随机选择前先排序，消除 map 迭代不确定性
+//
+// 3. 【Boss 注入】
+//   - 每 N 波（Boss.EveryNWaves）末尾追加一个 Boss
+//   - Boss = 随机原型 + HpMultBase 倍率 + RadiusScale 倍率 + 强制净化能力
+//   - Boss 波有入场延迟（EntranceDelay），给玩家准备时间
+//
+// 4. 【数值缩放】
+//   - baseHP = HpBase + wave * HpPerWave（线性增长）
+//   - baseSpeed = SpeedBase + wave * SpeedPerWave
+//   - 出怪间隔逐波衰减：EffectiveSpawnInterval(wave)
+//   - 每波敌人数 = EnemiesPerWave + wave
+//   - HPScale/SpeedScale 是难度倍率（外部注入）
+//
+// 5. 【Wave Buff 注入】
+//   - 按波次段从 buff 模板池中随机注入 0~2 个 buff
+//   - 1-5 波无 buff → 6-15 波最多 1 个 → 16-25 波最多 2 个 → 26+ 波最多 2 个
+//   - Boss 不注入波次 buff
+//   - buff 参数从 abilities.json 读取，支持 potential 波次缩放
+//
+// 6. 【能力 Potential 缩放】
+//   - ApplyAbilityPotentials: delta = potential * wave，叠加到 spawn 时的 base 值
+//   - 部分能力不缩放（phaseShift/purge/ccImmune 等）
+//
+// 配置文件依赖：
+//   - config/enemies/spawner.json: 数值缩放/时机/Boss/小队/waveBuff 配置
+//   - config/enemies/wave-compositions.json: 波次原型权重表
+//   - config/enemies/abilities.json: 敌人能力参数（含 potential）
+//   - config/enemies/enemies-core.json: 原型定义（由 stage 层加载后注入 Archetypes）
+//
+// 关联文件：
+//   - pool.go: Spawn() 实际创建敌人
+//   - spawn_config.go: SpawnConfig 参数定义
+//   - ability_type_ids.go: 能力 ID 常量（AbilBerserk 等）
+//   - stage.go: 创建 Spawner 并注入 Archetypes/GameMap
 package enemy
 
 import (
@@ -15,12 +65,15 @@ import (
 )
 
 // waveEntry 波次组合中一种原型的权重配置。
+// 从 wave-compositions.json 加载，用于加权随机选取原型。
 type waveEntry struct {
-	archetype string
-	weight    int
+	archetype string // 原型标识（如 "normal"、"runner"、"tank"）
+	weight    int    // 权重值（越大越可能被选中）
 }
 
 // getComposition 根据波次号从配置中获取对应的原型权重表。
+// wave-compositions.json 按 MaxWave 分段，找到第一个 MaxWave>=wave 的段（MaxWave=0 表示无上限）。
+// 返回值排序后可稳定用于加权随机（消除 map 迭代不确定性）。
 func getComposition(wave int) []waveEntry {
 	comps := config.GlobalWaveCompositions()
 	var enemies map[string]int
@@ -48,31 +101,48 @@ func getComposition(wave int) []waveEntry {
 }
 
 // Spawner 波次出怪控制器。
+//
+// 由 stage.go 在关卡开始时创建，通过 Tick() 每帧驱动。
+// 外部需注入 Archetypes（原型配置表）和 GameMap（提供路径信息）。
 type Spawner struct {
-	Wave              int                     // 当前波次号（从 1 开始）
-	MaxWaves          int                     // 总波次数
-	SpawnTimer        float64                 // 单波内两个敌人之间的倒计时（秒）
-	SpawnIndex        int                     // 当前波已出第几个敌人
-	EnemiesPerWave    int                     // 每波基础敌人数
-	SpawnInterval     float64                 // 同波内敌人生成间隔（秒）
-	WaveInterval      float64                 // 两波之间的间隔（秒）
-	WaveTimer         float64                 // 波间等待倒计时（秒）
-	FirstWaveInterval float64                 // 第一波等待时间（秒），默认 20
-	WaveActive        bool                    // 当前波是否正在出怪
-	AllDone           bool                    // 是否所有波次已出完
-	GameMap           *gamemap.GameMap        // 运行时地图（用于获取路径）
-	Archetypes        map[string]*SpawnConfig // 原型名 → 生成配置（由外部注入）
-	EnemyFilter       string                  // 敌人过滤器（ground-only/flying-only/elite-only/boss-only/dummy/stress/none/mixed/""）
-	HPScale           float64                 // 难度 HP 倍率（默认 1.0）
-	SpeedScale        float64                 // 难度速度倍率（默认 1.0）
-	ManualWave        bool                    // 手动开波模式：波间到 0 不自动开波，需外部调用 StartNextWave
-	FixedCount        int                     // >0 时每波固定该数量（不随波次递增）
-	BossEveryWave     bool                    // true 时每波末尾都出 Boss（bossRush 模式用）
-	bossQueued        bool                    // 本波是否需要在末尾追加 Boss
-	EntranceDelay     float64                 // Boss 波入场延迟（秒），>0 时暂停出怪
-	squadMembers      []string                // 本波小队成员（startWave 时选定，按索引出完后转随机）
-	WaitingForClear   bool                    // 出怪完毕，等待场上敌人全灭后才开始倒计时
-	clearWaitElapsed  float64                 // 等待清场已过秒数（保底 60s 超时）
+	// ── 波次进度 ──
+	Wave     int  // 当前波次号（从 1 开始，startWave 时递增）
+	MaxWaves int  // 总波次数（由关卡配置决定）
+	AllDone  bool // 是否所有波次已出完（Wave >= MaxWaves 且最后一波出完）
+
+	// ── 波内出怪控制 ──
+	SpawnTimer     float64 // 单波内两个敌人之间的倒计时（秒，到 0 生成下一个）
+	SpawnIndex     int     // 当前波已出第几个敌人（0-based）
+	EnemiesPerWave int     // 每波基础敌人数（实际数 = EnemiesPerWave + Wave）
+	SpawnInterval  float64 // 同波内敌人生成间隔（秒，逐波衰减）
+	WaveActive     bool    // 当前波是否正在出怪
+
+	// ── 波间等待 ──
+	WaveInterval      float64 // 两波之间的间隔（秒，从 spawner.json 读取）
+	WaveTimer         float64 // 波间等待倒计时（秒，UI 显示用，到 0 自动开波）
+	FirstWaveInterval float64 // 第一波等待时间（秒），默认 20
+	WaitingForClear   bool    // 出怪完毕，等待场上敌人全灭后才开始倒计时
+	clearWaitElapsed  float64 // 等待清场已过秒数（保底 60s 超时防卡死）
+
+	// ── 地图与原型 ──
+	GameMap    *gamemap.GameMap        // 运行时地图（PickPath() 获取路径）
+	Archetypes map[string]*SpawnConfig // 原型名 → 生成配置（由 stage 层从 enemies-core.json 加载后注入）
+
+	// ── 难度与模式 ──
+	EnemyFilter   string  // 敌人过滤器（ground-only/boss-only/dummy/stress/none/mixed/""）
+	HPScale       float64 // 难度 HP 倍率（默认 1.0，由 gamemode 设置）
+	SpeedScale    float64 // 难度速度倍率（默认 1.0）
+	ManualWave    bool    // 手动开波模式：倒计时到 0 不自动开波，需外部调用 StartNextWave
+	FixedCount    int     // >0 时每波固定该数量（不随波次递增，测试模式用）
+	BossEveryWave bool    // true 时每波末尾都出 Boss（bossRush 模式用）
+
+	// ── Boss 控制 ──
+	bossQueued    bool    // 本波是否需要在末尾追加 Boss（startWave 时计算）
+	EntranceDelay float64 // Boss 波入场延迟（秒），>0 时暂停出怪给玩家准备
+
+	// ── 小队系统 ──
+	squadMembers []string // 本波小队成员原型列表（startWave 时从模板池随机选取）
+	// 出怪逻辑：SpawnIndex < len(squadMembers) 时按列表顺序出，之后转加权随机
 }
 
 // NewSpawner 创建出怪管理器。
@@ -90,7 +160,19 @@ func NewSpawner(gm *gamemap.GameMap, maxWaves int) *Spawner {
 	}
 }
 
-// Tick 每帧调用，驱动波次计时和敌人生成。
+// Tick 每帧调用，驱动波次状态机。
+//
+// 状态机流程：
+//  1. AllDone / FilterNone → 直接返回
+//  2. 波间等待 (!WaveActive):
+//     a. WaitingForClear → 等敌人全灭或超时 60s → 进入倒计时
+//     b. 倒计时递减 → 到 0 → startWave()（ManualWave 模式除外）
+//  3. Boss 入场延迟：EntranceDelay > 0 → 倒计时后再出怪
+//  4. 波内出怪：SpawnTimer 递减 → 到 0 → 生成一个敌人
+//     a. Boss 波末尾追加 Boss（随机原型 + 倍率 + 净化）
+//     b. 前 N 个按小队模板出，之后加权随机
+//     c. 生成后应用 AbilityPotentials + WaveBuffs
+//  5. 当前波出完 → WaveActive=false, 进入 WaitingForClear
 func (s *Spawner) Tick(pool *Pool, dt float64) {
 	if s.AllDone {
 		return
@@ -138,11 +220,12 @@ func (s *Spawner) Tick(pool *Pool, dt float64) {
 		return
 	}
 
-	// 波内出怪
+	// ── 波内出怪循环 ──
+	// SpawnTimer 控制生成节奏，每到 0 生成一个敌人
 	s.SpawnTimer -= dt
 	total := s.enemyCount()
 	if s.bossQueued {
-		total++ // Boss 额外一个名额
+		total++ // Boss 额外占一个名额，排在最后
 	}
 	if s.SpawnTimer <= 0 && s.SpawnIndex < total {
 		path := s.GameMap.PickPath()
@@ -160,6 +243,10 @@ func (s *Spawner) Tick(pool *Pool, dt float64) {
 			baseHP := (sc.Scaling.HpBase + float64(s.Wave)*sc.Scaling.HpPerWave) * hpScale
 			baseSpeed := (sc.Scaling.SpeedBase + float64(s.Wave)*sc.Scaling.SpeedPerWave) * spdScale
 
+			// ── 原型选择：三层优先级 ──
+			// 1) Boss：本波最后一个，随机原型 + Boss 增强
+			// 2) 小队：SpawnIndex < len(squadMembers)，按模板顺序
+			// 3) 随机：加权随机从波次组合表选取
 			var archetype string
 			var cfg *SpawnConfig
 
@@ -249,6 +336,7 @@ func (s *Spawner) StartNextWave() {
 }
 
 // startWave 内部开始下一波。
+// 递增 Wave → 重置出怪索引 → 计算本波出怪间隔 → 决定是否 Boss 波 → 选小队模板。
 func (s *Spawner) startWave() {
 	s.Wave++
 	s.SpawnIndex = 0
@@ -621,6 +709,14 @@ func (s *Spawner) applyWaveBuffs(e *Enemy) {
 
 // applyWaveBuff 根据 buffID 从 enemies/abilities.json 读取能力参数，注入对应 buff。
 // wave 用于应用 potential 缩放：effectiveBase = base + potential * wave。
+//
+// 各 buff 类型的参数映射：
+//   - berserk: Value=speedScale(Param), Value2=threshold(effectiveBase)
+//   - regen: Value=MaxHP*effectiveBase（绝对回血量/秒）
+//   - healAura: Value=effectiveBase(治疗力), Value2=Param(范围)
+//   - speedAura: Value=effectiveBase(速度加成), Value2=Param(范围)
+//   - damageReduce: Value=effectiveBase(减伤比例)
+//   - deathSplit: 直接设置 SplitCount/SplitHPRatio/SplitSpeedScale
 func applyWaveBuff(e *Enemy, buffID string, wave int) {
 	tel.T.Record("enemy_template", buffID)
 	table := config.GlobalEnemyAbilityTable()
@@ -688,6 +784,12 @@ func applyWaveBuff(e *Enemy, buffID string, wave int) {
 
 // ApplyAbilityPotentials 根据波次为原型能力叠加 potential 增量。
 // delta = potential * wave，叠加到 spawn 时已设置的 base 值之上。
+//
+// 这是敌人越来越强的核心机制之一：随波次推进，能力数值线性增长。
+// 例如 armorPlating potential=0.5，第 20 波时 ArmorFlat 额外增加 10。
+//
+// 部分能力有上限钳制（evasion/projectileBlock/strDrain ≤ 1.0, damageReduce ≤ 1.0）。
+// phaseShift/purge/ccImmune/slowImmune/deathSplit/deathSpawn 不参与缩放。
 func ApplyAbilityPotentials(e *Enemy, cfg *SpawnConfig, wave int) {
 	if cfg == nil || wave <= 0 || len(cfg.AbilityPotentials) == 0 {
 		return

@@ -1,5 +1,30 @@
-// behaviors.go — 敌人行为系统。
-// 实现狂暴、治疗光环、自然回血、隐身、分裂、旗手光环等敌人主动行为。
+// behaviors.go — 敌人行为系统：每帧驱动的主动行为与能力计时器。
+//
+// 本文件实现敌人的 8 种主动行为和能力 tick，由 TickBehaviors() 统一入口调用。
+// TickBehaviors 在 pipeline 中的位置：movement 之后、tower 索敌射击之前。
+//
+// ═══════════════════════════════════════════════════════════════════
+// 行为执行顺序及其原因
+// ═══════════════════════════════════════════════════════════════════
+//
+//  1. Berserk（狂暴）  — 最先检查，因为狂暴会修改 BaseSpeed，影响后续移速计算
+//  2. Regen（自然回血）— 在治疗光环前，确保自回血和光环治疗独立结算
+//  3. HealAura（治疗光环）— 需要遍历范围内友军，开销较大，放在 regen 后
+//  4. BufferAura（旗手加速光环）— 每帧给范围内友军施加短时 speedUp buff
+//  5. Stealth（隐身）— 检查是否被攻击破隐，或自然到期
+//  6. 能力计时器（dashOnHit/phaseShift/strDrain/purge）— 独立于行为，所有敌人都检查
+//
+// 注意：
+//   - splitter/deathSpawn 在死亡时触发（pool.go Kill()），不在此处 tick
+//   - AbilitySilenced 标记会禁用 healAura/bufferAura/phaseShift/strDrain 的主动效果
+//   - 行为 buff 参数存储在 BuffList 中（healAura→Value=power,Value2=radius 等）
+//   - HealInterval/HealCooldown 是 Enemy 上的运行时字段（非 buff）
+//
+// 关联文件：
+//   - enemy.go: Enemy struct 定义及 BuffList 查询 helpers
+//   - pool.go: Kill() 中触发 splitter/deathSpawn
+//   - movement.go: 移速受 berserk/speedUp/dash 影响
+//   - tick_ability.go: AbilitySilenced 每帧重置+设置
 package enemy
 
 import (
@@ -30,13 +55,14 @@ type RegenEvent struct {
 	Restored float64 // 本帧实际回复量
 }
 
-// BehaviorEvents 一帧内行为系统产生的事件（供外部播放音效/VFX）。
+// BehaviorEvents 一帧内行为系统产生的所有事件（供 stage.go 播放音效/VFX）。
+// 每帧创建一个新实例，TickBehaviors 填充后返回，调用方消费后丢弃。
 type BehaviorEvents struct {
-	Heals     []HealEvent   // 治疗事件
-	Reveals   []RevealEvent // 隐身破解事件
-	Regens    []RegenEvent  // 回血事件（含坐标和回复量）
-	Berserks  int           // 本帧刚触发狂暴的敌人数
-	HasBuffer bool          // 本帧是否有活跃的旗手 buffer
+	Heals     []HealEvent   // 治疗事件（含治疗者/目标/回复量/坐标）
+	Reveals   []RevealEvent // 隐身破解事件（含坐标，用于播放破隐特效）
+	Regens    []RegenEvent  // 回血事件（含坐标和回复量，用于浮字）
+	Berserks  int           // 本帧刚触发狂暴的敌人数（用于播放狂暴音效）
+	HasBuffer bool          // 本帧是否有活跃的旗手 buffer（用于渲染光环 VFX）
 }
 
 // RevealEvent 隐身破解事件。
@@ -50,7 +76,8 @@ type RevealEvent struct {
 func TickBehaviors(pool *Pool, dt float64) BehaviorEvents {
 	var events BehaviorEvents
 
-	// 执行各行为（speedUp buff has short duration; BuffList.Tick handles expiry）
+	// 遍历所有存活敌人，逐个执行行为逻辑。
+	// 注意：用 Each 而非 EachActive，因为行为系统需要已在 dying/spawning 中的敌人也被检查跳过。
 	pool.Each(func(e *Enemy) {
 		if e.IsDying() || e.IsSpawning() {
 			return
@@ -87,9 +114,9 @@ func TickBehaviors(pool *Pool, dt float64) BehaviorEvents {
 		}
 		// splitter/deathSpawn 在死亡时触发，不在此处 tick
 
-		// ── 能力系统 tick ──
+		// ── 能力系统 tick（所有敌人，不限于特定 Behavior 类型）──
 
-		// 受击冲刺计时器衰减
+		// 受击冲刺计时器衰减（触发在 apply_hit.go 中，此处仅做倒计时）
 		if e.DashActiveT > 0 {
 			e.DashActiveT -= dt
 			if e.DashActiveT <= 0 {
@@ -100,7 +127,9 @@ func TickBehaviors(pool *Pool, dt float64) BehaviorEvents {
 			e.DashCooldownT -= dt
 		}
 
-		// 相位偏移（duration=Value, cooldown=Value2 from BuffList）
+		// 相位偏移状态机（参数从 BuffList 读取：Value=免伤时长, Value2=冷却时间）
+		// 冷却→免伤→冷却 循环。免伤期间 IsDamageImmune=true，可被选中但不受伤。
+		// 沉默时强制结束免伤并重置冷却。
 		if pb, ok := e.Buffs.Get(buff.IDPhaseShift); ok {
 			if e.AbilitySilenced {
 				// 沉默时强制结束免伤相位
@@ -125,7 +154,9 @@ func TickBehaviors(pool *Pool, dt float64) BehaviorEvents {
 			}
 		}
 
-		// 削强：维护连接计时（实际找塔+施加/移除在 stage.go 中执行）
+		// 削强（strengthDrain）：本文件只维护连接计时器状态机，
+		// 实际找最近塔 + 施加 debuff + 渲染连接线在 stage.go tick_strDrain 中执行。
+		// 状态机：冷却→标记需连接(StrDrainActiveT>0)→stage 找塔→连接中→到期→冷却
 		if e.StrDrainRatio > 0 {
 			if e.AbilitySilenced {
 				// 被沉默时断开连接
@@ -150,7 +181,8 @@ func TickBehaviors(pool *Pool, dt float64) BehaviorEvents {
 			}
 		}
 
-		// 净化
+		// 净化（purge）：周期性清除所有负面效果并短暂免疫。
+		// Boss 必带净化（spawner.go 中强制注入）。这是塔防中对抗 CC 堆叠的核心机制。
 		if e.PurgeInterval > 0 {
 			e.PurgeTimer -= dt
 			if e.PurgeTimer <= 0 {
@@ -181,7 +213,9 @@ func TickBehaviors(pool *Pool, dt float64) BehaviorEvents {
 }
 
 // tickHealer 治疗兵行为：周期性治疗范围内友军。
-// Reads power/radius from healAura buff; HealInterval/HealCooldown are runtime state on Enemy.
+// 参数来源：power/radius 从 BuffList healAura buff 读取；HealInterval/HealCooldown 是 Enemy 运行时字段。
+// HealPower 作为比例（如 0.05=5%），按目标 MaxHP 计算治疗量，确保治疗量与目标血量成正比。
+// 被沉默(AbilitySilenced)时跳过。
 func tickHealer(e *Enemy, pool *Pool, dt float64, events *BehaviorEvents) {
 	b, ok := e.Buffs.Get(buff.IDHealAura)
 	if !ok || e.AbilitySilenced {
@@ -245,8 +279,10 @@ func tickStealth(e *Enemy, dt float64, events *BehaviorEvents) {
 	}
 }
 
-// tickBuffer 旗手行为：每帧对范围内友军施加移速加成。
-// Reads radius/amount from bufferAura buff; writes short-lived speedUp buff to targets.
+// tickBuffer 旗手行为：每帧对范围内友军施加短时移速 buff。
+// 参数来源：radius/amount 从 BuffList bufferAura buff 读取。
+// 实现方式：每帧给范围内友军 Add 一个 0.1s 的 speedUp buff（Strongest 模式保留最大值）。
+// 如果旗手死亡或被沉默，speedUp 自然过期（0.1s 后消失）。
 func tickBuffer(e *Enemy, pool *Pool) {
 	b, ok := e.Buffs.Get(buff.IDBufferAura)
 	if !ok || e.AbilitySilenced {
@@ -311,10 +347,11 @@ func OnSplitterDeath(e *Enemy, pool *Pool) []*Enemy {
 	return children
 }
 
-// TickBerserk 检查并触发狂暴状态。
-// 当血量比例降到阈值以下时，永久提升移动速度。
-// Berserk params (speedScale=Value, threshold=Value2) are stored in BuffList.
-// 返回 true 表示本次刚触发狂暴。
+// TickBerserk 检查并触发狂暴状态（一次性，不可逆）。
+// 当血量比例降到阈值以下时，永久提升 BaseSpeed。
+// 参数从 BuffList 读取：Value=speedScale（如 1.5=加速 50%），Value2=threshold（如 0.5=50% HP）。
+// BerserkTriggered 标记确保只触发一次。
+// 触发后如果当前被减速，按 slow factor 重新计算 Speed。
 func TickBerserk(e *Enemy) bool {
 	// 已触发过
 	if e.BerserkTriggered {
@@ -368,8 +405,9 @@ func TickRegeneration(e *Enemy, regenPerSec, dt float64) float64 {
 	return healed
 }
 
-// TickTeleport 处理传送兵定时跳跃。
-// 返回 true 表示本帧发生了传送。
+// TickTeleport 处理传送兵定时跳跃：每隔 TeleportInterval 秒跳过 TeleportSkip 个路径段。
+// 传送后直接更新 X/Y 到新路径点（瞬移，无过渡动画）。
+// 返回 true 表示本帧发生了传送（供 stage 播放传送特效）。
 func TickTeleport(e *Enemy, dt float64) bool {
 	if e.TeleportInterval <= 0 || e.Path == nil {
 		return false

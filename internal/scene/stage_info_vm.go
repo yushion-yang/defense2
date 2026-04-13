@@ -1,7 +1,26 @@
-// stage_info_vm.go — Builds InfoPanelVM from tower + strength data.
-// All data computation that was previously inside hud/info_panel.go
-// (fmtAttr, scaledColor, attackStyleLabel, strengthBreakdown, ability template parsing)
-// now lives here, keeping the HUD layer purely rendering.
+// stage_info_vm.go — 塔信息面板的 ViewModel 构建器。
+//
+// 设计模式: ViewModel（视图模型）
+//
+// 本文件是 scene 层与 hud 渲染层之间的数据桥梁。核心思路：
+//   - hud 包只负责渲染（零 core 依赖），接收纯值 struct（InfoPanelVM）画面板
+//   - 本文件负责从 core 游戏对象（Tower/Strength/Buff）提取数据，计算显示值，
+//     格式化文本，最终组装成 InfoPanelVM 交给 hud 渲染
+//
+// 职责划分：
+//
+//	scene 层(本文件)          hud 层(info_panel.go)
+//	──────────────           ─────────────────
+//	读取 Tower 属性            接收 InfoPanelVM
+//	计算 base+scaled→total    按 Segment 着色渲染
+//	格式化 Strength 分解文本   绘制文字和按钮
+//	解析能力模板 {s%}/{p}     布局排版
+//	聚合光环 buff 摘要        处理 hitTest
+//
+// 这样做的好处：
+//  1. hud 包可独立预览/测试（不需要真实的 Tower 对象）
+//  2. 所有数据转换逻辑集中在一处，避免渲染代码中掺杂业务逻辑
+//  3. 修改显示格式只需改本文件，不影响渲染层
 package scene
 
 import (
@@ -20,9 +39,22 @@ import (
 	"defense2/internal/render/theme"
 )
 
-// BuildInfoPanelVM constructs an InfoPanelVM from a tower and sell value.
-// If t is nil, returns a VM with Visible=false.
-// gold and upgradeCosts are used for campaign mode unlock button display.
+// BuildInfoPanelVM 从塔实例构建完整的信息面板 ViewModel。
+//
+// 这是本文件的主入口函数，由 StageScene 每帧（modeTowerSel 时）调用。
+// 构建流程：
+//  1. 计算有效强度（effStr）并生成强度分解文本（如 "↑(永+50 链+20)"）
+//  2. 构建三大属性段（伤害/攻速/射程），每段包含 base+scaled→total+光环加成
+//  3. 生成攻击方式标签（如 "攻击方式: 散射"）
+//  4. 构建已选能力槽位列表（图标+标签+待选标记）
+//  5. 构建已获取能力的详细描述（含分段着色的数值模板）
+//  6. 聚合光环 buff 摘要（同 ID 的多来源 buff 合并显示）
+//  7. 设置升级/卖出按钮的文本和可用状态
+//
+// 参数说明：
+//   - t: 选中的塔（nil 时返回 Visible=false 的空 VM）
+//   - sellValue: 卖出退款金额（由调用方根据经济规则计算）
+//   - gold/upgradeCosts: 用于战役模式解锁槽位按钮的费用判断
 func BuildInfoPanelVM(t *tower.Tower, sellValue int, wavesCleared int, testMode bool, gold int, upgradeCosts []int) hud.InfoPanelVM {
 	if t == nil {
 		return hud.InfoPanelVM{Visible: false}
@@ -39,7 +71,8 @@ func BuildInfoPanelVM(t *tower.Tower, sellValue int, wavesCleared int, testMode 
 		Label:   t.Label,
 	}
 
-	// Strength title
+	// 强度标题行：颜色 + 数值 + 分解文本
+	// 强度 > 100 显示绿色（增益），< 100 显示红色（减益），= 100 显示默认色
 	if sd != nil {
 		vm.StrengthColor = strengthColor(effStr)
 		strTxt := i18n.TF("game.tower.strength_val", effStr)
@@ -53,7 +86,10 @@ func BuildInfoPanelVM(t *tower.Tower, sellValue int, wavesCleared int, testMode 
 	// Specialty
 	vm.Specialty = t.Specialty
 
-	// Attribute segments (colored base + scaled + total + aura bonus from BuffList)
+	// ── 三大属性段构建 ──
+	// 属性公式: 最终值 = (Base + Potential × Str/100) × (1 + pctMod) + flatMod
+	// 显示格式: "8+(12)→20+3" = base+(scaled)→baseTotal+auraBonus
+	// 颜色规则: base=白, scaled=绿(>potential)/红(<)/白(=), total=白, aura=绿
 	var pctDamage, pctSpeed, flatRange float64
 	if t.Buffs != nil {
 		pctDamage = t.Buffs.SumByID("aura:damageAmp")
@@ -71,7 +107,9 @@ func BuildInfoPanelVM(t *tower.Tower, sellValue int, wavesCleared int, testMode 
 	}
 	vm.AttackStyleText = i18n.T("game.tower.attack_prefix") + attackStyleLabel(style)
 
-	// Slot display — 只显示已选能力和待选的槽位，未解锁/空闲的不占位
+	// ── 能力槽位显示 ──
+	// 只显示已选能力和有待选项的槽位，未解锁/空闲的不占位。
+	// UnlockOrder 决定了槽位的显示顺序（按解锁先后，非固定类别顺序）。
 	abTable := config.GlobalAbilityTable()
 	for i := 0; i < len(t.UnlockOrder); i++ {
 		cat := t.UnlockOrder[i]
@@ -96,12 +134,17 @@ func BuildInfoPanelVM(t *tower.Tower, sellValue int, wavesCleared int, testMode 
 		vm.Slots = append(vm.Slots, slot)
 	}
 
-	// Abilities (已获取的能力详细描述)
+	// ── 已获取能力的详细描述 ──
+	// 每个能力生成 AbilityVM，包含图标、标签和分段着色的数值描述。
+	// 数值随 effStr 动态变化（如 "30%+(20%)→50%"），让玩家看到强度的实际影响。
 	for _, abType := range t.Abilities {
 		vm.Abilities = append(vm.Abilities, buildAbilityVM(abType, abTable, effStr))
 	}
 
-	// Buffs — aggregate aura buffs by ID (they refresh each frame, so show merged summary)
+	// ── Buff 显示 ──
+	// 光环 buff 每帧刷新（0.3s 短 buff），同 ID 的多来源 buff 聚合显示。
+	// 例如 3 座塔的 damageAmp 光环合并为 "伤害提升 +45%（光环 ×3）"。
+	// 非光环 buff（CC/DoT/行为等）直接列出，显示来源和剩余时间。
 	type auraAgg struct {
 		totalValue  float64
 		sourceCount int
@@ -181,11 +224,12 @@ func BuildInfoPanelVM(t *tower.Tower, sellValue int, wavesCleared int, testMode 
 	return vm
 }
 
-// ---------------------------------------------------------------------------
-// Data computation helpers (moved from hud/info_panel.go)
-// ---------------------------------------------------------------------------
+// ─── 数据计算辅助函数 ────────────────────────────────────────────────
+// 从 hud/info_panel.go 迁移至此，保持 hud 层零业务逻辑。
 
-// strengthColor returns the color for the strength display value.
+// strengthColor 根据有效强度值返回显示颜色。
+// > 100 = 绿色（有增益），< 100 = 红色（有减益），≈ 100 = 默认色。
+// 使用 ±0.5 的阈值避免浮点精度导致的颜色跳变。
 func strengthColor(effStr float64) color.Color {
 	if effStr > 100.5 {
 		return theme.StatusStrUp
@@ -196,7 +240,9 @@ func strengthColor(effStr float64) color.Color {
 	return theme.StatusStrNorm
 }
 
-// strengthBreakdown generates the breakdown text, e.g. "↑(永+50 链+20)".
+// strengthBreakdown 生成强度分解文本，如 "↑(永+50 链+20)"。
+// 展示永久强度（来自金币购买）和临时强度（来自战灵连锁等）的明细，
+// 帮助玩家理解强度数值的组成来源。
 func strengthBreakdown(sd *strength.StrengthData) string {
 	if sd == nil {
 		return ""
@@ -228,7 +274,16 @@ func strengthBreakdown(sd *strength.StrengthData) string {
 	return result
 }
 
-// buildAttrSegsWithMods builds attribute display with pct/flat modifier bonus.
+// buildAttrSegsWithMods 构建带光环加成的属性显示段。
+//
+// 输出格式示例: "8+(12)→20+3" 含义为:
+//
+//	"8"   = base（基础值，白色）
+//	"(12)" = scaled（潜力 × 强度/100，颜色随强度变化）
+//	"→20" = baseTotal（base + scaled，白色）
+//	"+3"  = auraBonus（来自光环的额外加成，绿色）
+//
+// 当 potential=0 且无光环时，简化为只显示 base 值。
 func buildAttrSegsWithMods(numFmt string, base, potential, effStr, pctMod, flatMod float64) []hud.AbilitySegment {
 	hasMods := pctMod > 0.001 || pctMod < -0.001 || flatMod > 0.005 || flatMod < -0.005
 	if potential == 0 && !hasMods {
@@ -257,7 +312,9 @@ func buildAttrSegsWithMods(numFmt string, base, potential, effStr, pctMod, flatM
 	return segs
 }
 
-// attackStyleLabel returns the Chinese label for an attack style ID.
+// attackStyleLabel 通过 i18n 将攻击方式 ID 转为玩家可读的标签。
+// 如 "scatter" → "散射"，"spin_aoe" → "旋转AOE"。
+// 若 i18n key 不存在（返回原 key），则 fallback 到原始 ID。
 func attackStyleLabel(style string) string {
 	key := "game.attack_style." + style
 	label := i18n.T(key)
@@ -267,29 +324,30 @@ func attackStyleLabel(style string) string {
 	return label
 }
 
-// buffLabelKeys maps raw buff IDs to i18n keys.
+// buffLabelKeys 将 buff 的内部 ID 映射到 i18n 翻译 key。
+// 按 buff 类别分组：光环(CatAura) / CC / DoT / 防御 / 减益 / 行为。
 var buffLabelKeys = map[string]string{
-	// Tower auras (CatAura)
+	// ── 塔光环 buff (CatAura) ──
 	"aura:damageAmp": "game.buff.damage_up",
 	"aura:pctDamage": "game.buff.pct_damage",
 	"aura:pctSpeed":  "game.buff.atk_speed",
 	"aura:flatRange": "game.buff.range",
 	"aura:crit":      "game.buff.crit",
 	"towerStrength":  "game.buff.str_boost",
-	// CC (CatCC)
+	// ── CC 控制效果 (CatCC) ──
 	"stun": "game.buff.stun",
 	"slow": "game.buff.slow",
 	"root": "game.buff.root",
-	// DoT (CatDoT)
+	// ── 持续伤害 (CatDoT) ──
 	"bleed":  "game.buff.bleed",
 	"burn":   "game.buff.burn",
 	"poison": "game.buff.poison",
-	// Defense (CatDefense)
+	// ── 防御 (CatDefense) ──
 	"controlImmune": "game.buff.control_immune",
 	"damageReduce":  "game.buff.damage_reduce",
-	// Debuff (CatDebuff)
+	// ── 减益 (CatDebuff) ──
 	"weaken": "game.buff.weaken",
-	// Behavior (CatBehavior)
+	// ── 行为 buff (CatBehavior) ──
 	"stealth":    "game.buff.stealth",
 	"berserk":    "game.buff.berserk",
 	"regen":      "game.buff.regen",
@@ -299,7 +357,8 @@ var buffLabelKeys = map[string]string{
 	"phaseShift": "game.buff.phase_shift",
 }
 
-// buffLabel returns a player-friendly label for a buff ID.
+// buffLabel 将 buff ID 转为玩家可读的标签。
+// 支持三种来源：静态映射表 → 动态前缀匹配（战灵 buff）→ 原始 ID（兜底）。
 func buffLabel(id string) string {
 	if key, ok := buffLabelKeys[id]; ok {
 		return i18n.T(key)
@@ -314,7 +373,8 @@ func buffLabel(id string) string {
 	return id // fallback to raw ID
 }
 
-// isPercentBuff returns true if the buff value represents a percentage (0-1 → 0%-100%).
+// isPercentBuff 判断 buff 值是否为百分比语义（内部 0-1，显示为 0%-100%）。
+// 百分比 buff 聚合后以 "+45%" 格式显示，非百分比 buff 以 "+30" 格式显示。
 func isPercentBuff(id string) bool {
 	switch id {
 	case "aura:damageAmp", "aura:pctDamage", "aura:pctSpeed", "aura:crit":
@@ -323,7 +383,9 @@ func isPercentBuff(id string) bool {
 	return false
 }
 
-// scaledColor returns the color based on comparison of scaled value vs potential.
+// scaledColor 根据实际缩放值与潜力值的比较返回显示颜色。
+// scaled > potential（强度 > 100）= 绿色，< potential = 红色，≈ potential = 默认。
+// 这让玩家直观看到当前强度对属性的正面/负面影响。
 func scaledColor(scaled, potential float64) color.Color {
 	const eps = 0.01
 	diff := scaled - potential
@@ -355,11 +417,23 @@ func isPercentCapped(scaleDim string) bool {
 	return scaleDim == "chance" || scaleDim == "factor"
 }
 
-// ---------------------------------------------------------------------------
-// Ability VM builder
-// ---------------------------------------------------------------------------
+// ─── 能力 VM 构建器 ─────────────────────────────────────────────────
+// 将 AbilityDef（配置层数据）转为 AbilityVM（渲染层数据），核心是解析 Display 模板。
+//
+// Display 模板语法（定义在 abilities.json 每个能力的 display 字段）：
+//   {s}   = base + potential×(str/100)，绝对值格式
+//   {s%}  = 同上，百分比格式
+//   {si}  = 同上，取整（向下）
+//   {sh%} = total/2 的百分比（用于"增强"类减半效果）
+//   {p}   = Param 参数值
+//   {p%}  = Param 百分比格式
+//   {p2}  = Param2 参数值
+//   {p2%} = Param2 百分比格式
+//
+// 模板被解析为 AbilitySegment 切片，每段有 Kind（text/base/scaled/total/aura）和可选颜色，
+// 由 hud 层按 Kind 着色渲染——base 白色、scaled 动态色、total 白色。
 
-// fallback maps for abilities not in AbilityTable.
+// fallback 映射：用于不在 AbilityTable 中的遗留能力（multishot/pulse）。
 var (
 	fallbackIconMap = map[string]string{
 		"multishot": "multishot",
@@ -375,7 +449,8 @@ var (
 	}
 )
 
-// buildAbilityVM builds an AbilityVM for one ability type.
+// buildAbilityVM 为单个能力类型构建 AbilityVM。
+// 优先从 AbilityTable 取定义（图标/标签/Display模板），不存在则走 fallback 映射。
 func buildAbilityVM(abilityType string, abTable config.AbilityTable, effStr float64) hud.AbilityVM {
 	def := abTable[abilityType]
 
@@ -413,8 +488,9 @@ func buildAbilityVM(abilityType string, abTable config.AbilityTable, effStr floa
 	return vm
 }
 
-// FormatAbilityDisplay replaces template placeholders with actual values for plain text display.
-// Used by the choice panel to show player-friendly descriptions (total values only, no base+scaled breakdown).
+// FormatAbilityDisplay 将 Display 模板解析为纯文本字符串（不含分段着色）。
+// 用于 ChoicePanel（3选1面板）的简化描述——只显示最终值，不展示 base+scaled 分解。
+// 例如 "造成{s%}暴击率" → "造成50%暴击率"。
 func FormatAbilityDisplay(def *config.AbilityDef, effStr float64) string {
 	tpl := def.Display
 	if tpl == "" {
@@ -460,17 +536,25 @@ func FormatAbilityDisplay(def *config.AbilityDef, effStr float64) string {
 	return b.String()
 }
 
-// buildAbilitySegments parses a Display template and produces rendering segments.
-// Template placeholders: {s}, {s%}, {si}, {sh%}, {p}, {p%}
+// buildAbilitySegments 解析 Display 模板并生成分段着色的渲染段。
+//
+// 与 FormatAbilityDisplay 不同，此函数生成 AbilitySegment 切片用于信息面板的富文本渲染：
+//   - 纯文本部分 → Kind="text"（白色）
+//   - {s%} 展开为最多 3 段: base(白) + scaled(动态色) + total(白)
+//   - 当 base=0 时只显示 scaled（无 base+total 分解）
+//   - 当 potential=0 时只显示 base（无成长的固定值）
+//
+// 这种设计让玩家在信息面板上直观看到能力数值的组成，
+// 理解 "升级强度" 具体会提升多少。
 func buildAbilitySegments(def *config.AbilityDef, effStr float64) []hud.AbilitySegment {
 	tpl := def.Display
 	if tpl == "" {
 		return nil
 	}
 
-	scaled := def.Potential * (effStr / 100.0)
-	total := def.Base + scaled
-	// 概率/减速类展示 clamp 到 100%
+	scaled := def.Potential * (effStr / 100.0) // 潜力按强度比例缩放
+	total := def.Base + scaled                 // 最终数值 = 基础 + 缩放
+	// 概率/减速类展示值 clamp 到 100%（显示层限制，实际运行时由各 Apply 函数自行处理上限）
 	displayTotal := total
 	if isPercentCapped(def.ScaleDim) && displayTotal > 1 {
 		displayTotal = 1
@@ -547,7 +631,7 @@ func buildAbilitySegments(def *config.AbilityDef, effStr float64) []hud.AbilityS
 				)
 			}
 		case "sh%":
-			// {sh%} = 缩放值减半的百分比（用于 enhance 射程减半提升）
+			// {sh%} = total 减半后的百分比（用于 enhance 类效果："射程提升一半"的描述）
 			half := total / 2
 			segs = append(segs, hud.AbilitySegment{Text: fmt.Sprintf("%.0f%%", half*100), Kind: "base"})
 		case "p":

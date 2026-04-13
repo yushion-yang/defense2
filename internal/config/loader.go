@@ -1,5 +1,15 @@
-// loader.go — 配置加载器。
-// 从嵌入式文件系统读取 JSON 配置并反序列化为 Go 结构体。
+// loader.go — 配置加载核心，是整个配置系统的基础层。
+//
+// 职责：
+//  1. 管理两个 embed.FS 引用（dataFS=JSON 配置, assetFS=SVG/音频/字体等资源）
+//  2. 提供地图配置（MapConfig）的加载与网格常量定义
+//  3. 提供关卡列表（LevelEntry）的动态扫描
+//
+// 设计决策：
+//   - 使用全局变量 + Set/Get 函数而非构造器注入，因为 embed.FS 在 main 包中声明，
+//     而 config 包被 20+ 个包依赖，构造器注入会导致依赖穿透过深
+//   - dataFS 和 assetFS 分离是因为 WASM 构建时资源文件可能走不同的加载路径
+//   - 所有 Load* 函数都要求 SetDataFS() 已被调用，否则返回明确错误
 package config
 
 import (
@@ -45,7 +55,9 @@ type LevelEntry struct {
 
 // LoadLevelList 从 config/levels/ 目录扫描所有正式地图构建关卡列表。
 // 只包含 map_01~map_99 格式的文件，跳过 map_test/map_dummy 等测试地图。
-// 按 ID 字母序排列。
+// 按 ID 字母序排列（embed.FS.ReadDir 保证排序，无需额外 sort）。
+//
+// 过滤流程：文件名长度检查 → "map_"前缀检查 → ".json"后缀检查 → 数字编号检查 → 加载验证
 func LoadLevelList() ([]LevelEntry, error) {
 	if dataFS == nil {
 		return nil, fmt.Errorf("load level list: dataFS not initialized")
@@ -120,12 +132,14 @@ type MapEntry struct {
 }
 
 // 网格单元格类型常量。
+// 这些值与 JSON 地图文件的 grid[][] 数值一一对应，修改需同步更新所有地图文件。
+// 注意：值 3 未使用（历史遗留，JS 版本中为装饰物）。
 const (
 	CellEmpty     = 0 // 空地（不可通行、不可建造）
 	CellPath      = 1 // 敌人行进路径
 	CellBuildable = 2 // 可建造塔的位置
-	CellSpawn     = 4 // 出怪点
-	CellBase      = 5 // 基地（敌人终点）
+	CellSpawn     = 4 // 出怪点（敌人从此格进入）
+	CellBase      = 5 // 基地（敌人到达此格扣血）
 )
 
 // LoadMap 按地图 ID（如 "map_01"）加载地图配置。

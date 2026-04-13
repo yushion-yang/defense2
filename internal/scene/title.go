@@ -1,5 +1,12 @@
-// title.go — 标题场景。
-// 游戏启动首屏，显示标题和脉冲提示文本。
+// title.go — 标题场景（游戏启动首屏）。
+//
+// 职责：
+//   - 显示游戏标题和"点击开始"脉冲提示文本
+//   - 点击/触摸后切换到模式选择场景 (SelectScene)
+//   - 右下角提供图鉴入口 (BestiaryScene)
+//   - 提供全局共享的输入辅助函数 (isTapJustPressed / playUIClick)
+//
+// 渲染层次：深蓝背景 → 几何装饰线 → 标题文字 → 脉冲提示 → 图鉴按钮 → 版本号
 package scene
 
 import (
@@ -17,8 +24,9 @@ import (
 	"github.com/hajimehoshi/ebiten/v2/inpututil"
 )
 
-// isTapJustPressed 检测本帧是否有鼠标左键或触摸点击。
-// 长按悬浮释放不算点击。
+// isTapJustPressed 检测本帧是否有"新点击"（鼠标左键 JustPressed 或新触摸点）。
+// 长按悬浮释放不算点击（draw.LongPressConsumed 过滤）。
+// 此函数被所有场景共享，是统一的"点击"判定入口。
 func isTapJustPressed() bool {
 	if draw.LongPressConsumed() {
 		return false
@@ -29,7 +37,7 @@ func isTapJustPressed() bool {
 	return len(inpututil.JustPressedTouchIDs()) > 0
 }
 
-// playUIClick 播放 UI 点击音效（各场景共用）。
+// playUIClick 播放 UI 点击音效（各场景共用的安全调用封装）。
 func playUIClick(sw Switcher) {
 	if am := sw.AudioManager(); am != nil {
 		am.PlaySafe(gameAudio.SFXUIClick)
@@ -62,12 +70,14 @@ func titleBestiaryGeom() (float32, float32, float32, float32) {
 	return x, y, titleBestiaryW, titleBestiaryH
 }
 
+// Update 处理标题场景的帧更新逻辑。
+// 优先检测图鉴按钮点击，然后检测全屏任意点击进入选关。
 func (s *TitleScene) Update() error {
 	s.pulseTime += 1.0 / 60.0
 
 	mx, my := draw.CursorPos()
 
-	// 图鉴按钮
+	// 图鉴按钮（右下角，优先于全屏点击检测）
 	if isTapJustPressed() {
 		bx, by, bw, bh := titleBestiaryGeom()
 		if mx >= float64(bx) && mx <= float64(bx+bw) && my >= float64(by) && my <= float64(by+bh) {
@@ -86,6 +96,8 @@ func (s *TitleScene) Update() error {
 	return nil
 }
 
+// Draw 绘制标题场景。
+// 渲染顺序：背景色 → 几何装饰 → 标题文字 → 脉冲提示 → 图鉴按钮 → 版本号。
 func (s *TitleScene) Draw(screen *ebiten.Image) {
 	screen.Fill(bgColor) // 深蓝背景
 
@@ -123,6 +135,7 @@ func (s *TitleScene) Draw(screen *ebiten.Image) {
 }
 
 // drawTitleDecorations 绘制标题画面的几何装饰。
+// 上下两条水平线 + 四角菱形点缀，营造简约科技感。
 func drawTitleDecorations(screen *ebiten.Image, sw, sh float64) {
 	// 上下渐变线
 	lineClr := color.RGBA{R: 50, G: 60, B: 90, A: 100}

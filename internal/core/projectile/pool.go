@@ -1,18 +1,50 @@
-// pool.go — 弹射物对象池。
-// Ring buffer pool (1024 slots). Chosen for: high churn rate (projectiles
-// created/destroyed rapidly), FIFO ordering ensures oldest slots are
-// reclaimed first, and cursor-based insertion avoids linear scan overhead.
+// pool.go — 弹射物环形缓冲区对象池：发射、追踪、回收。
 //
-// ── 弹射物生命周期（塔防模型） ──
+// ═══════════════════════════════════════════════════════════════════
+// 为什么用环形缓冲区而不是线性数组池？
+// ═══════════════════════════════════════════════════════════════════
 //
-// 本游戏是塔防，不是弹幕射击。弹射物行为遵循塔防惯例：
+// 弹射物有极高的创建/销毁频率（gatling 塔每秒 12 发），特点：
+//   - 生命周期短（2-3 秒）
+//   - FIFO 特性强（先发射的先命中/消失）
+//   - 不需要稳定指针（弹射物不被外部系统长期引用）
 //
-//  1. 发射时锁定目标（Target != nil），每帧追踪目标飞行
+// 环形缓冲区优势：
+//   - cursor 直接写入下一槽位，O(1) 发射（vs 线性扫描 O(n) 找空位）
+//   - FIFO 回收：cursor 总是覆盖最旧的槽位
+//   - 池满时自动覆盖最旧的弹射物（优雅降级，不丢帧）
+//
+// ═══════════════════════════════════════════════════════════════════
+// ABA 问题防护
+// ═══════════════════════════════════════════════════════════════════
+//
+// 当弹射物 A 锁定敌人 E1，E1 被杀后槽位复用给 E2，弹射物 A 可能误追踪 E2。
+// 防护机制：发射时记录 TargetID（敌人递增 ID），每帧检查：
+//
+//	Target.Active && Target.ID == TargetID → 继续追踪
+//	否则 → 弹射物立即消失
+//
+// ═══════════════════════════════════════════════════════════════════
+// 弹射物生命周期（塔防模型）
+// ═══════════════════════════════════════════════════════════════════
+//
+// 本游戏是塔防，弹射物行为遵循塔防惯例：
+//
+//  1. 发射时锁定目标（Target != nil），每帧重算朝向完美追踪
 //  2. 碰撞检测只对锁定目标生效，穿过其他敌人（见 tick_combat.go）
 //  3. 命中目标 → 触发能力 + 伤害 → 回收
 //  4. 目标被其他弹先杀死 → 本弹直接消失（不继续飞行）
 //
-// 例外：穿透弹（Penetrate=true）对路径上所有敌人做碰撞检测。
+// 三种弹射物类型：
+//   - 普通弹(Fire)：追踪目标，命中后回收，MaxLife=3s
+//   - 弹射弹(FireBounce)：命中后弹向下一目标，携带已命中 ID 列表避免重复，MaxLife=2s
+//   - 穿透弹(FirePenetrate)：直线飞行无追踪，对路径上所有敌人做碰撞检测，
+//     MaxLife=飞行距离/速度*1.1
+//
+// 关联文件：
+//   - projectile.go: Projectile struct 定义
+//   - tick_combat.go: 碰撞检测与命中处理
+//   - physics/grid.go: 穿透弹用空间网格加速碰撞检测
 package projectile
 
 import (
@@ -31,9 +63,11 @@ const (
 )
 
 // Pool 环形缓冲区弹射物对象池。
+// cursor 指向下一个写入位置，每次 Fire 后 cursor = (cursor+1) % cap。
+// Count 跟踪存活数量（Active=true），用于 HUD 显示和性能监控。
 type Pool struct {
-	projectiles []Projectile // 预分配的弹射物槽位数组
-	cursor      int          // 下一个写入位置（环形）
+	projectiles []Projectile // 预分配的弹射物槽位数组（默认 1024）
+	cursor      int          // 下一个写入位置（环形递增，到末尾回绕到 0）
 	Count       int          // 当前存活弹射物数量
 }
 
@@ -49,9 +83,12 @@ func DefaultPool() *Pool {
 	return NewPool(game.MaxProjectiles)
 }
 
-// Fire 从 (sx,sy) 向 (tx,ty) 发射一颗弹射物。
-// target 非 nil 时启用追踪（每帧重新计算朝向），否则直线飞行。
-// towerKey 用于碰撞时查找来源塔触发能力。
+// Fire 从 (sx,sy) 向 (tx,ty) 发射一颗普通追踪弹射物。
+// target 非 nil 时启用追踪（每帧重新计算朝向），否则按初始方向直线飞行。
+// towerKey 用于碰撞时查找来源塔触发能力（格式 "key_row_col"）。
+//
+// 实现细节：cursor 位置如果已有活跃弹射物，会被覆盖（Count--），
+// 这是环形缓冲区的优雅降级——极端情况下最旧的弹射物被牺牲。
 func (p *Pool) Fire(sx, sy, tx, ty, damage, speed, radius float64, target *enemy.Enemy, towerKey string) {
 	proj := &p.projectiles[p.cursor]
 	if proj.Active {
@@ -87,6 +124,8 @@ func (p *Pool) Fire(sx, sy, tx, ty, damage, speed, radius float64, target *enemy
 }
 
 // FireBounce 发射一颗弹射子弹（从前一次命中位置飞向新目标）。
+// bounceCount 记录已弹射次数（用于弹射次数上限检查），
+// hitIDs 记录已命中的敌人 ID 列表（避免同一敌人被同一链弹射重复命中）。
 func (p *Pool) FireBounce(sx, sy float64, target *enemy.Enemy, damage, speed, radius float64, towerKey string, bounceCount int, hitIDs []int) {
 	proj := &p.projectiles[p.cursor]
 	if proj.Active {
@@ -123,7 +162,14 @@ func (p *Pool) FireBounce(sx, sy float64, target *enemy.Enemy, damage, speed, ra
 	p.cursor = (p.cursor + 1) % len(p.projectiles)
 }
 
-// Tick 每帧调用，追踪目标 → 移动 → 回收超时/越界弹射物。
+// Tick 每帧调用，处理所有弹射物的移动和生命周期。
+//
+// 每个活跃弹射物的处理流程：
+//  1. 追踪：有目标 → 检查 ABA（Active && ID 匹配）→ 重算朝向 / 目标失效 → 消失
+//  2. 记录拖尾位置（移动前的坐标存入 Trail 环形缓冲）
+//  3. 移动：X += VX*dt, Y += VY*dt
+//  4. 散射弹飞行距离限制：超过 MaxRange 则回收
+//  5. 超时(Life<=0)或飞出屏幕边界(50px margin) → 回收
 func (p *Pool) Tick(dt float64) {
 	for i := range p.projectiles {
 		proj := &p.projectiles[i]
@@ -131,9 +177,11 @@ func (p *Pool) Tick(dt float64) {
 			continue
 		}
 
-		// 追踪：所有有目标的弹（普通弹/弹射弹/蓄力弹）统一行为：
-		//   - 目标存活且 ID 匹配 → 每帧重算朝向，完美追踪
-		//   - 目标死亡或 ID 不匹配（槽位被复用 ABA 问题）→ 弹射物立即消失
+		// ── 追踪与 ABA 校验 ──
+		// 所有有目标的弹（普通弹/弹射弹/蓄力弹）统一行为：
+		//   - 目标存活且 ID 匹配 → 每帧重算朝向，完美追踪（塔防惯例：弹必中）
+		//   - 目标死亡或 ID 不匹配（槽位被复用 = ABA 问题）→ 弹射物立即消失
+		// 注意：穿透弹 Target=nil，不走此分支
 		if proj.Target != nil {
 			if proj.Target.Active && proj.Target.ID == proj.TargetID {
 				dx := proj.Target.X - proj.X
@@ -198,7 +246,12 @@ func (p *Pool) Release(proj *Projectile) {
 	}
 }
 
-// FirePenetrate 发射一颗直线穿透弹（穿过所有敌人，不追踪，不衰减）。
+// FirePenetrate 发射一颗直线穿透弹。
+// 与普通弹的关键区别：
+//   - Target=nil，按初始方向直线飞行，不追踪
+//   - Penetrate=true，tick_combat.go 对路径上所有敌人做碰撞检测（用空间网格加速）
+//   - MaxRange=发射距离，MaxLife=距离/速度*1.1（到终点后稍微多飞一点余量）
+//   - 固定碰撞半径 4px（小于普通弹，因为穿透弹命中范围由 MaxRange 控制）
 func (p *Pool) FirePenetrate(sx, sy, tx, ty, damage, speed float64, towerKey string) {
 	proj := &p.projectiles[p.cursor]
 	if proj.Active {

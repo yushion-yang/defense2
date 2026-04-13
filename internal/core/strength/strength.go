@@ -1,5 +1,23 @@
-// strength.go — 战力数据系统。
-// 三层结构：基础 + 永久加成 + 临时加成，外加敌人减益层。
+// strength.go — 塔的战力(Strength)数据系统。
+//
+// 战力是本游戏属性计算的核心变量。每座塔的最终属性由战力驱动：
+//
+//	attr = Base + Potential × (Strength / 100)
+//
+// 战力自身分三层：
+//  1. Base（固定 100）— 每座塔的起始战力
+//  2. Permanent（永久加成）— 战灵、全局事件等持久效果
+//  3. Temp（临时加成，按 sourceID 索引）— 链式加成、光环 buff 等，波结束清除
+//
+// 敌人端还有两种减益层叠加在上面：
+//   - EnemyMul（乘法减益）— drainer 等敌人行为造成的百分比削弱
+//   - EnemySub（减法减益）— 固定值削减
+//
+// 设计决策：
+//   - map[string]float64 按 sourceID 索引而非按类型累加，
+//     这样移除特定来源时不影响其他来源（如链断开不影响光环）
+//   - ClearTransient 用内置 clear() 复用 map 内存，避免每波重分配
+//   - Strength 保持线性（不加收益递减），通过敌人端克制做平衡
 package strength
 
 // StrengthData 实体战力数据（三层结构）。

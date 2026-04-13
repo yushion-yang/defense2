@@ -1,5 +1,13 @@
-// select.go — 选关场景（卡片式 UI）。
-// 提供游戏模式选择、难度选择和开始按钮。
+// select.go — 模式选择场景（卡片式 UI）。
+//
+// 职责：
+//   - 展示 5 种游戏模式卡片（战役/无尽/限时/首领/挑战），其中仅战役可玩，其余显示"敬请期待"
+//   - 4 档难度选择（简单/普通/困难/极难），默认普通
+//   - 根据选中模式分发：campaign→CampaignSelect, test→TestSelect, 其他→直接进 Stage
+//   - 右下角设置按钮入口
+//   - DevMode 下额外追加 test 模式卡片
+//
+// UI 布局：标题(呼吸脉冲) → 模式卡片行 → 开始按钮 → 难度标签+按钮行 → 地图名 → 设置按钮 → 底部提示
 package scene
 
 import (
@@ -22,14 +30,15 @@ import (
 )
 
 // ── 游戏模式定义 ────────────────────────────────
+// 模式列表在 initGameModes() 中延迟初始化（依赖 i18n 翻译加载完毕）。
 
 type gameModeUI struct {
 	ID          string
 	Name        string
-	Icon        string // 图标字符
+	Icon        string // 图标字符（SVG id 或 Unicode 符号）
 	Description string
 	DefaultMap  string
-	ComingSoon  bool   // true = 显示"敬请期待"，不可选
+	ComingSoon  bool // true = 显示"敬请期待"锁定卡片，不可选
 }
 
 var gameModes []gameModeUI
@@ -47,6 +56,7 @@ func initGameModes() {
 	}
 }
 
+// init 在 DevMode 下追加测试模式入口（编译期注入，非生产可见）。
 func init() {
 	if game.DevMode {
 		gameModes = append(gameModes, gameModeUI{
@@ -79,12 +89,13 @@ func initDefaultDifficulties() {
 }
 
 // ── 布局常量 ────────────────────────────────────
+// 所有 UI 元素按逻辑坐标(1200×540)定位，draw 包内部自动处理 HiDPI 缩放。
 
 const (
 	scW = float64(game.ScreenWidth)
 	scH = float64(game.ScreenHeight)
 
-	// 模式卡片
+	// 模式卡片（一行 5 张，居中排列）
 	cardW   = 140.0
 	cardH   = 110.0
 	cardGap = 16.0
@@ -103,7 +114,7 @@ const (
 	diffBtnY   = 300.0
 )
 
-// 计算居中行起始 X
+// rowStartX 计算一行等宽元素居中排列时的起始 X 坐标。
 func rowStartX(itemW, gap float64, count int) float64 {
 	totalW := float64(count)*itemW + float64(count-1)*gap
 	return (scW - totalW) / 2
@@ -178,6 +189,8 @@ func NewSelectScene(sw Switcher) *SelectScene {
 	}
 }
 
+// loadDifficulties 从 settings.json difficulty.modes 加载难度配置。
+// 按 easy→normal→hard→extreme 固定顺序构建 UI 列表，加载失败时回退到硬编码默认值。
 func loadDifficulties() []difficultyUI {
 	initDefaultDifficulties()
 	modes, _, err := config.LoadDifficultyModes()
@@ -206,11 +219,13 @@ func loadDifficulties() []difficultyUI {
 
 // ── Update ──────────────────────────────────────
 
+// Update 每帧更新：环境粒子 → 悬停检测 → 点击响应。
+// 点击优先级：模式卡片 > 难度按钮 > 开始按钮 > 设置按钮。
 func (s *SelectScene) Update() error {
 	s.frame++
 	const dt = 1.0 / 60.0
 
-	// Ambient particles (denser than stage: every 0.5s)
+	// 环境装饰粒子（比 Stage 密集：每 0.5 秒发射一批）
 	s.ambientTimer += dt
 	if s.ambientTimer >= 0.5 {
 		s.ambientTimer -= 0.5
@@ -256,6 +271,10 @@ func (s *SelectScene) Update() error {
 	return nil
 }
 
+// startGame 根据选中的模式执行跳转：
+//   - campaign → CampaignSelectScene（关卡选择）
+//   - test → TestSelectScene（测试场景选择器）
+//   - 其他模式 → 直接创建 StageScene（战灵在 Stage 内第一波倒计时时选择）
 func (s *SelectScene) startGame() {
 	mode := gameModes[s.selectedMode]
 	diff := s.difficulties[s.selectedDiff]
@@ -277,8 +296,9 @@ func (s *SelectScene) startGame() {
 	}))
 }
 
-// ── 碰撞检测 ────────────────────────────────────
+// ── 碰撞检测（UI 元素矩形命中判定）────────────────
 
+// hitTestModeCards 返回鼠标所在的模式卡片索引，无命中返回 -1。
 func (s *SelectScene) hitTestModeCards(mx, my float64) int {
 	startX := rowStartX(cardW, cardGap, len(gameModes))
 	for i := range gameModes {
@@ -336,6 +356,8 @@ var (
 	textDim       = color.RGBA{R: 90, G: 95, B: 110, A: 255}
 )
 
+// Draw 绘制模式选择场景。
+// 渲染顺序：渐变背景 → 粒子 → 标题(呼吸缩放) → 模式卡片 → 开始按钮 → 难度区域 → 设置按钮 → 版本号。
 func (s *SelectScene) Draw(screen *ebiten.Image) {
 	s.bgGrad.Draw(screen, 0, 0)
 

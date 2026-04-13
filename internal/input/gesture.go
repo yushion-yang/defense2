@@ -1,21 +1,28 @@
-// gesture.go — 统一手势识别器。
-// 封装鼠标/触摸输入，区分 Tap（点击）和 Drag（拖拽）。
+// gesture.go — 统一手势识别器（按→拖→放 三态状态机）。
 //
-// 业界标准流程（同 iOS/Android/Web 触摸事件模型）：
+// 在塔防游戏中，同一块屏幕区域需要同时处理「点击选塔」和「拖拽平移地图」，
+// 此文件封装鼠标/触摸输入，通过 5px 位移阈值区分 Tap（点击）和 Drag（拖拽）。
 //
-//	Press:
-//	  记录起点 + 判定区域（UI or 游戏区）
-//	Hold + Move:
-//	  游戏区：距离 > 阈值 → Drag（实时平移相机）
-//	  UI 区：不启动拖拽（手指可以滑走取消）
-//	Release:
-//	  未拖拽 → Tap（在松开位置触发操作）
-//	  已拖拽 → 结束拖拽，不触发 Tap
+// 状态机流程（同 iOS/Android/Web 触摸事件模型）：
+//
+//	Press（按下）:
+//	  记录起点坐标 + 判定起点区域（UI 还是游戏区）
+//	Hold + Move（按住移动）:
+//	  游戏区：累计位移 > 5px → 切换为 Drag 模式（实时平移相机）
+//	  UI 区：永不启动拖拽（手指可以滑走，松开时取消操作）
+//	Release（松开）:
+//	  未拖拽 → 触发 Tap（在松开位置执行点击操作）
+//	  已拖拽 → 结束拖拽，不触发 Tap（避免平移结束时误选塔）
 //
 // 防误触机制：
-//   - 所有操作在松开时触发，不在按下时触发
+//   - 所有操作在松开时触发，不在按下时触发（与 JustTapped 行为一致）
 //   - UI 区域按下后滑开 → 松开时不触发（和 iOS 按钮行为一致）
-//   - 游戏区小幅移动（< 阈值）仍判定为 Tap
+//   - 游戏区小幅移动（< 5px 阈值）仍判定为 Tap，容忍手指抖动
+//   - 长按悬浮（draw.LongPressConsumed）会消费释放事件，不再触发 Tap
+//
+// 外部控制点：
+//   - DragEnabled: 由场景状态机控制，某些 mode 下禁用拖拽（如建塔放置模式）
+//   - IsOnUI: 回调函数，判断坐标是否在 HUD/按钮区域，UI 区内不启动拖拽
 package input
 
 import (
@@ -60,7 +67,9 @@ func NewGesture() *Gesture {
 	return &Gesture{DragThreshold: 5}
 }
 
-// Update 每帧调用。
+// Update 每帧调用，驱动手势状态机。
+// 三态转换：非追踪+按下→追踪中 / 追踪中+按住→判定拖拽 / 追踪中+松开→输出Tap或结束Drag。
+// 每帧开头清零所有输出字段，确保只反映当前帧的事件。
 func (g *Gesture) Update() {
 	// 重置帧输出
 	g.tapped = false
@@ -131,17 +140,19 @@ func (g *Gesture) Update() {
 	}
 }
 
-// ── 查询接口 ──
+// ── 查询接口（每帧 Update 后读取，只反映当前帧状态） ──
 
-func (g *Gesture) JustTapped() bool                { return g.tapped }
-func (g *Gesture) TapPos() (float64, float64)      { return g.tapX, g.tapY }
-func (g *Gesture) IsDragging() bool                { return g.dragging }
-func (g *Gesture) DragDelta() (float64, float64)   { return g.dragDX, g.dragDY }
-func (g *Gesture) ScrollDelta() (float64, float64) { return g.scrollDX, g.scrollDY }
-func (g *Gesture) CursorPos() (float64, float64)   { return g.cursorX, g.cursorY }
+func (g *Gesture) JustTapped() bool                { return g.tapped }               // 本帧是否触发了点击（松开时判定）
+func (g *Gesture) TapPos() (float64, float64)      { return g.tapX, g.tapY }         // 点击位置（逻辑坐标）
+func (g *Gesture) IsDragging() bool                { return g.dragging }             // 是否正在拖拽中
+func (g *Gesture) DragDelta() (float64, float64)   { return g.dragDX, g.dragDY }     // 本帧拖拽增量（逻辑像素）
+func (g *Gesture) ScrollDelta() (float64, float64) { return g.scrollDX, g.scrollDY } // 本帧滚轮增量
+func (g *Gesture) CursorPos() (float64, float64)   { return g.cursorX, g.cursorY }   // 当前指针位置（逻辑坐标）
 
-// ── 底层指针 ──
+// ── 底层指针抽象（统一鼠标和触摸为单一指针） ──
 
+// logicalPos 返回当前指针的逻辑坐标。
+// 先取原生坐标（触摸优先于鼠标），再通过 ToLogical 回调转换为 1200x540 逻辑坐标。
 func (g *Gesture) logicalPos() (float64, float64) {
 	rx, ry := g.rawPos()
 	if g.ToLogical != nil {
@@ -150,9 +161,12 @@ func (g *Gesture) logicalPos() (float64, float64) {
 	return rx, ry
 }
 
-// Pre-allocated touch ID buffers (single-threaded Ebitengine model).
+// gTouchBuf 预分配的触摸 ID 缓冲区。
+// Ebitengine 是单线程模型，无需加锁。容量 8 足够覆盖多点触控场景。
 var gTouchBuf [8]ebiten.TouchID
 
+// rawPos 返回原生像素坐标（触摸优先于鼠标）。
+// 多指触摸时只取第一个手指（塔防不需要多点操作）。
 func (g *Gesture) rawPos() (float64, float64) {
 	if ids := ebiten.AppendTouchIDs(gTouchBuf[:0]); len(ids) > 0 {
 		tx, ty := ebiten.TouchPosition(ids[0])
@@ -162,10 +176,12 @@ func (g *Gesture) rawPos() (float64, float64) {
 	return float64(mx), float64(my)
 }
 
+// isDown 判断是否有指针按住（鼠标左键或任意触摸点）。
 func (g *Gesture) isDown() bool {
 	return ebiten.IsMouseButtonPressed(ebiten.MouseButtonLeft) || len(ebiten.AppendTouchIDs(gTouchBuf[:0])) > 0
 }
 
+// isJustDown 判断本帧是否刚按下（JustPressed，只在按下的第一帧返回 true）。
 func (g *Gesture) isJustDown() bool {
 	return inpututil.IsMouseButtonJustPressed(ebiten.MouseButtonLeft) || len(inpututil.AppendJustPressedTouchIDs(gTouchBuf[:0])) > 0
 }

@@ -1,5 +1,15 @@
 // font.go — 字体管理与文本渲染工具。
-// 基于 Ebitengine text/v2 提供双字体渲染：JetBrains Mono（英文/数字）+ Noto Sans SC（中文回退）。
+//
+// 基于 Ebitengine text/v2 提供双字体渲染：
+//   - Primary: JetBrains Mono（英文/数字优先，等宽，适合数值显示）
+//   - Fallback: Noto Sans SC（中文回退，覆盖所有简体中文字符）
+//
+// 核心设计：
+// - 通过 MultiFace 实现自动字体回退：英文字符用 Primary，中文字符自动切换 Fallback
+// - 字体尺寸按 draw.Scale（设备缩放比）缩放，所有 API 接受逻辑坐标
+// - 像素对齐：坐标 math.Round 到整数物理像素，避免子像素模糊（尤其小字号）
+// - 粗体模拟：通过 1px 原生像素偏移双重渲染实现（无需额外字体文件）
+// - 全局单例模式（sync.Once），在 Game 初始化时调用一次 InitGlobalDualFont
 package render
 
 import (
@@ -17,10 +27,12 @@ import (
 
 // FontManager 管理双字体源并缓存不同尺寸的 MultiFace。
 // 单线程使用（Ebitengine Update/Draw 同一 goroutine），不需要 mutex。
+// faces map 以物理像素尺寸（size * scale）为 key 缓存 Face 对象，
+// 避免每帧重建字体度量数据。
 type FontManager struct {
 	primary  *text.GoTextFaceSource // JetBrains Mono（英文/数字优先）
 	fallback *text.GoTextFaceSource // Noto Sans SC（中文回退）
-	faces    map[float64]text.Face
+	faces    map[float64]text.Face  // 尺寸→Face 缓存
 }
 
 // NewFontManager 从 TTF 字节数据创建字体管理器（单字体）。
@@ -106,7 +118,9 @@ func (fm *FontManager) DrawRightText(screen *ebiten.Image, s string, rightX, y, 
 	fm.DrawText(screen, s, rightX-w, y, size, clr)
 }
 
-// ── Bold variants (simulated via multi-pass offset rendering) ──
+// ── 粗体变体（通过多次偏移渲染模拟） ──
+// 技术选择：不使用 Bold 字重的 TTF（额外 ~2MB 体积），而是在原生像素级别
+// 偏移 1px 渲染两次来模拟加粗。在小字号（10-14px）下视觉效果与真粗体接近。
 
 // DrawBoldText 绘制粗体文本（通过单像素偏移渲染模拟）。
 // 在原生像素级别偏移 1px，确保清晰不模糊。
@@ -172,7 +186,9 @@ func (fm *FontManager) DrawCenteredVBoldText(screen *ebiten.Image, s string, cx,
 	fm.DrawBoldText(screen, s, cx-w/2, cy-h/2, size, clr)
 }
 
-// ── Global singleton ──
+// ── 全局单例 ──
+// 字体管理器在整个应用生命周期中只需一份实例。
+// sync.Once 确保即使多处调用 Init 也只初始化一次。
 
 var (
 	globalFM   *FontManager

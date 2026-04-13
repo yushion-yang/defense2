@@ -1,6 +1,17 @@
-// draw_enemy.go — enemy rendering.
-// Uses PNG sprites with fallback circles. Themed HP bar, boss pulsing rings,
-// runner/tank/flying visuals, and status effect dots.
+// draw_enemy.go — 敌人渲染模块。
+//
+// 本文件是渲染层中最复杂的绘制器，采用 3-pass 渲染策略将敌人按视觉层次分离：
+//
+//	Pass 1: 死亡动画（dying）— 先画，位于最底层，不会遮挡存活敌人
+//	Pass 2: 存活敌人（active）— 精灵本体 + 行为 VFX + 状态特效 + 能力图标
+//	Pass 3: HP 血条（deferred）— 收集后统一绘制，经过 Y 轴斥力避免重叠
+//
+// 设计决策：
+// - 精灵优先 PNG，加载失败时回退到纯色圆形（theme.EnemyFallback*）
+// - 帧动画通过 AnimLib 共享帧数据、Enemy 独立维护播放状态（AnimCur/AnimFrame/AnimTimer）
+// - 路径缓存（spritePathCache）避免每帧 fmt.Sprintf 产生 GC 压力
+// - HP 条采集-排序-斥力三步走，解决密集敌群血条重叠的可读性问题
+// - 视口裁剪（IsInView）跳过屏幕外实体，大地图场景下显著降低 draw call
 package render
 
 import (
@@ -18,11 +29,13 @@ import (
 	"github.com/hajimehoshi/ebiten/v2"
 )
 
-// EnemyRenderer manages enemy PNG sprite rendering with optional frame animation.
+// EnemyRenderer 管理敌人 PNG 精灵渲染，支持可选的帧动画。
+// cache: 精灵图片缓存，按路径+尺寸去重
+// animLibs: 按原型名共享的动画库（多个同原型敌人共用帧数据，各自维护播放进度）
 type EnemyRenderer struct {
 	cache    *sprite.Cache
 	assetFS  AssetReader
-	animLibs map[string]*anim.AnimLib // per archetype shared frame data
+	animLibs map[string]*anim.AnimLib // 每原型共享帧数据，惰性加载
 }
 
 // NewEnemyRenderer creates an enemy renderer.
@@ -34,10 +47,11 @@ func NewEnemyRenderer(assetFS AssetReader) *EnemyRenderer {
 	}
 }
 
-const enemySpriteSize = 32
+const enemySpriteSize = 32 // 敌人精灵的逻辑显示尺寸（像素），与资源 PNG 无关
 
-// hpBarEntry holds data for deferred HP bar rendering (Pass 3).
-// Collected during Pass 2, then sorted and repulsed to avoid overlap.
+// hpBarEntry 是 HP 血条的延迟渲染数据（Pass 3 使用）。
+// 在 Pass 2 遍历存活敌人时收集，之后按 Y 坐标排序并施加斥力以避免重叠。
+// 使用固定数组 [256] 在栈上分配，避免每帧堆分配。
 type hpBarEntry struct {
 	cx, cy     float32 // enemy center
 	barW, barH float32
@@ -50,7 +64,8 @@ type hpBarEntry struct {
 	slowed, stunned, rooted, bleeding, burning, poisoned, weakened bool
 }
 
-// spritePathCache caches fmt.Sprintf results to avoid per-frame allocations.
+// spritePathCache 缓存精灵路径字符串，避免每帧 fmt.Sprintf 分配。
+// 敌人种类有限（~75 种精灵变体），此 map 增长有界。
 var spritePathCache = map[string]string{}
 
 func cachedEnemySpritePath(dir string) string {
@@ -72,10 +87,22 @@ func cachedShieldPath(name string) string {
 	return p
 }
 
-// DrawEnemies renders all alive enemies.
-// Two-pass rendering: dying enemies first (behind), then active enemies on top.
+// DrawEnemies 渲染所有存活敌人，采用 3-pass 策略：
+//
+// 流程概览：
+//
+//	Pass 1: 遍历池中所有敌人，仅绘制 dying 状态的（缩小+淡出动画），位于最底层
+//	Pass 2: 遍历池中所有敌人，绘制非 dying 的存活敌人，包括：
+//	        - Boss 脉冲环 / Runner 速度环 / Root 地面效果 / Buffer 光环（精灵之下）
+//	        - 精灵本体（含行走摆动、Boss 呼吸缩放、出生动画、隐身/相位透明度）
+//	        - 行为 VFX（减伤盾/狂暴/再生，被沉默时隐藏）
+//	        - 状态特效（减速冰霜/燃烧/中毒叠加、眩晕星星、受击闪白）
+//	        - 能力常驻视觉（免疫脚环/盾牌图标/净化微光）
+//	        - 飘字（伤害数字、免疫提示等）
+//	        - 收集 HP 条数据到 hpBars 数组
+//	Pass 3: 对收集到的 HP 条施加 Y 轴斥力后统一绘制（背景+橙色伤害轨迹+彩色填充+状态点）
 func (er *EnemyRenderer) DrawEnemies(screen *ebiten.Image, pool *enemy.Pool, animTime float64) {
-	// Pass 1: dying enemies (rendered behind active ones)
+	// Pass 1: dying 敌人（先画，位于存活敌人之下）
 	pool.Each(func(e *enemy.Enemy) {
 		if !e.IsDying() {
 			return
@@ -110,11 +137,12 @@ func (er *EnemyRenderer) DrawEnemies(screen *ebiten.Image, pool *enemy.Pool, ani
 		}
 	})
 
-	// HP bar entries collected during Pass 2, drawn in Pass 3 with repulsion.
+	// HP 条数据收集缓冲区：栈上分配 256 容量，避免堆分配。
+	// 256 远超单屏可见敌人数（通常 30-50），溢出时 append 会自动堆逃逸。
 	var hpBarsArr [256]hpBarEntry
 	hpBars := hpBarsArr[:0]
 
-	// Pass 2: active (non-dying) enemies
+	// Pass 2: 存活（非 dying）敌人
 	pool.Each(func(e *enemy.Enemy) {
 		if e.IsDying() {
 			return
@@ -160,13 +188,15 @@ func (er *EnemyRenderer) DrawEnemies(screen *ebiten.Image, pool *enemy.Pool, ani
 			spawnScale, spawnAlpha = vfx.SpawnAnimParams(e.SpawnTimer, e.SpawnDuration)
 		}
 
-		// --- Enemy body (animated or static) ---
+		// --- 敌人本体渲染（帧动画优先，静态精灵兜底） ---
 		img := er.getEnemyFrame(e, 1.0/60.0)
 		if img != nil {
-			// 行走摆动：用 X 位置作为相位，产生微小的上下浮动和旋转
+			// 行走摆动：X 位置 + 时间混合作为相位，让每个敌人有独立的摆动节奏。
+			// wobbleY: ±1.5px 上下浮动；wobbleRot: ±0.05rad (~3°) 左右摇摆。
+			// 眩晕/定身时禁用摆动（视觉上表示无法移动）。
 			wobblePhase := e.X*0.05 + animTime*4
 			wobbleY := math.Sin(wobblePhase) * 1.5
-			wobbleRot := math.Sin(wobblePhase) * 0.05 // ~3 degrees
+			wobbleRot := math.Sin(wobblePhase) * 0.05
 			if e.IsStunned() || e.IsRooted() {
 				wobbleY = 0
 				wobbleRot = 0
@@ -253,8 +283,9 @@ func (er *EnemyRenderer) DrawEnemies(screen *ebiten.Image, pool *enemy.Pool, ani
 			return
 		}
 
-		// Collect HP bar entries for Pass 3 (deferred drawing with repulsion).
-		// Skip full-HP enemies unless they have status effects (C: hide-when-full).
+		// 收集 HP 条数据用于 Pass 3 延迟绘制（带斥力算法避免重叠）。
+		// 优化：满血且无状态效果的敌人不显示血条（减少视觉噪声）。
+		// Boss 始终显示（玩家需要实时掌握 Boss 血量）。
 		hasStatus := e.IsSlowed() || e.IsStunned() || e.IsRooted() || e.IsBleeding() || e.IsBurning() || e.IsPoisoned() || e.IsWeakened()
 		if e.HP < e.MaxHP || e.Boss || hasStatus {
 			var barW, barH, barOffY float32
@@ -329,15 +360,16 @@ func (er *EnemyRenderer) DrawEnemies(screen *ebiten.Image, pool *enemy.Pool, ani
 		}
 	})
 
-	// Pass 3: draw HP bars with Y-axis repulsion to reduce overlap.
+	// Pass 3: 统一绘制所有 HP 条，先施加 Y 轴斥力再渲染。
 	if len(hpBars) > 0 {
 		repulseHPBars(hpBars)
 		drawHPBars(screen, hpBars, animTime)
 	}
 }
 
-// repulseHPBars applies simple Y-axis repulsion so overlapping HP bars spread apart.
-// Sort by bar-center Y, then push overlapping bars upward.
+// repulseHPBars 对 HP 条施加简易 Y 轴斥力，使重叠的血条上下分散。
+// 算法：先按血条屏幕 Y 排序，再线性扫描相邻对，发现 Y 重叠时将两者各推移一半。
+// 仅在 X 方向有重叠时才计算斥力（远距离的血条互不干扰），复杂度 O(n log n + n)。
 func repulseHPBars(bars []hpBarEntry) {
 	if len(bars) < 2 {
 		return
@@ -387,7 +419,14 @@ func repulseHPBars(bars []hpBarEntry) {
 	}
 }
 
-// drawHPBars renders all collected HP bar entries.
+// drawHPBars 渲染所有收集到的 HP 条。
+// 每个血条由四层组成：
+//  1. 黑色背景（1px 伪边框）
+//  2. 橙色伤害轨迹（displayHP > hp 时可见，平滑追赶实际 HP 产生"掉血"视觉）
+//  3. 彩色 HP 填充（>60% 绿 / >30% 黄 / ≤30% 红）
+//  4. Boss 专用分段线（每 20% 一道分割线，便于估读血量）
+//
+// 血条上方绘制状态效果圆点（减速/眩晕/定身/流血/燃烧/中毒/削弱）。
 func drawHPBars(screen *ebiten.Image, bars []hpBarEntry, animTime float64) {
 	for i := range bars {
 		b := &bars[i]
@@ -497,8 +536,9 @@ func (er *EnemyRenderer) loadShield(name string) *ebiten.Image {
 	return img
 }
 
-// loadEnemyImage loads an enemy's PNG sprite.
-// Convention: assets/enemies/sprites/{spriteDir}/{spriteDir}.png
+// loadEnemyImage 加载敌人 PNG 精灵。
+// 命名约定：assets/enemies/sprites/{spriteDir}/{spriteDir}.png
+// SpriteDir 字段允许同一原型使用不同精灵变体（如 tank 原型的 tank_elite 变体）。
 func (er *EnemyRenderer) loadEnemyImage(e *enemy.Enemy) *ebiten.Image {
 	spriteDir := e.SpriteDir
 	if spriteDir == "" {
@@ -540,8 +580,12 @@ func (er *EnemyRenderer) GetSprite(archetype string) *ebiten.Image {
 	return img
 }
 
-// getEnemyFrame returns the current animation frame for an enemy, falling back to static sprite.
-// Uses per-enemy animation state (AnimCur/AnimFrame/AnimTimer/AnimDone) with shared AnimLib.
+// getEnemyFrame 返回敌人当前动画帧，无帧动画时回退到静态精灵。
+// 动画状态分离设计：
+//   - AnimLib: 按原型共享（同种敌人共享帧图片数据，节省内存）
+//   - AnimCur/AnimFrame/AnimTimer/AnimDone: 每个 Enemy 独立维护（各自播放进度独立）
+//
+// 动画选择逻辑：受击时播放 "hit" 动画（如果存在），否则默认 "walk"。
 func (er *EnemyRenderer) getEnemyFrame(e *enemy.Enemy, dt float64) *ebiten.Image {
 	if e.Archetype == "" {
 		return nil
