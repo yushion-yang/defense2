@@ -102,6 +102,54 @@
       ],
       "mood": "紧迫、史诗",
       "status": "sf2-generated"
+    },
+    {
+      "file": "bgm-menu-b.wav",
+      "key": "bgm-menu-b",
+      "name": "[备选菜单B] Sunset Cantina",
+      "description": "Bossa Nova 轻爵士，致敬重装机兵酒吧音乐",
+      "mood": "慵懒、温暖",
+      "status": "sf2-generated-candidate"
+    },
+    {
+      "file": "bgm-menu-c.wav",
+      "key": "bgm-menu-c",
+      "name": "[备选菜单C] Dust Horizon",
+      "description": "西部口琴风，致敬重装机兵荒野探索",
+      "mood": "辽阔、孤独",
+      "status": "sf2-generated-candidate"
+    },
+    {
+      "file": "bgm-battle-b.wav",
+      "key": "bgm-battle-b",
+      "name": "[备选战斗B] Steel Thunder",
+      "description": "Hard Rock 驱动，致敬重装机兵坦克战",
+      "mood": "热血、力量",
+      "status": "sf2-generated-candidate"
+    },
+    {
+      "file": "bgm-battle-c.wav",
+      "key": "bgm-battle-c",
+      "name": "[备选战斗C] Groove Assault",
+      "description": "Funk/Groove 风格，致敬重装机兵普通战斗",
+      "mood": "律动、痛快",
+      "status": "sf2-generated-candidate"
+    },
+    {
+      "file": "bgm-boss-b.wav",
+      "key": "bgm-boss-b",
+      "name": "[备选BossB] Nemesis Protocol",
+      "description": "交响+金属，致敬重装机兵最终Boss",
+      "mood": "绝望、壮烈",
+      "status": "sf2-generated-candidate"
+    },
+    {
+      "file": "bgm-boss-c.wav",
+      "key": "bgm-boss-c",
+      "name": "[备选BossC] Dead Heat",
+      "description": "紧张追逐，致敬重装机兵赏金猎人",
+      "mood": "追逐、紧迫",
+      "status": "sf2-generated-candidate"
     }
   ],
   "transitionRules": {
