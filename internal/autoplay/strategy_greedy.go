@@ -65,13 +65,15 @@ func (s *GreedyStrategy) Decide(state *GameState) []Action {
 		actions = append(actions, Action{Type: ActionStartWave})
 	}
 
+	// 每帧只做 Build 或 Upgrade 之一，避免同帧金币竞争导致 build_silent_fail
 	switch s.phase {
 	case 0: // 早期：建塔
 		actions = append(actions, s.decideBuild(state)...)
 	case 1: // 中期：升级为主，偶尔建塔
-		actions = append(actions, s.decideUpgrade(state)...)
 		if state.Tick-s.lastBuild > 300 { // 5 秒没建塔则补建
 			actions = append(actions, s.decideBuild(state)...)
+		} else {
+			actions = append(actions, s.decideUpgrade(state)...)
 		}
 	case 2: // 后期：全力升级
 		actions = append(actions, s.decideUpgrade(state)...)
