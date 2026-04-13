@@ -32,7 +32,6 @@ import (
 	"defense2/internal/core/event"
 	"defense2/internal/core/game"
 	"defense2/internal/core/gamemap"
-	"defense2/internal/i18n"
 	"defense2/internal/core/gamemode"
 	"defense2/internal/core/item"
 	"defense2/internal/core/mascot"
@@ -45,6 +44,7 @@ import (
 	"defense2/internal/core/tower"
 	"defense2/internal/core/tutorial"
 	"defense2/internal/core/warden"
+	"defense2/internal/i18n"
 	"defense2/internal/input"
 	"defense2/internal/loader"
 	"defense2/internal/render"
@@ -135,6 +135,9 @@ type StageScene struct {
 	itemHoverIdx      int                   // 道具面板鼠标悬停索引
 	gesture           *input.Gesture        // 统一手势识别器
 	waveLivesSnapshot int                   // 波开始时的生命快照（用于完美波次检测）
+	// 图鉴数据收集
+	killsByArchetype map[string]int // 本局各原型击杀统计
+	abilitiesPicked  []string       // 本局选择的能力列表
 	// 相机（大地图拖拽）
 	camX, camY    float64 // 相机偏移（世界坐标）
 	dragging      bool    // 是否正在拖拽
@@ -286,41 +289,42 @@ func NewStageSceneWithOpts(sw Switcher, opts StageOptions) *StageScene {
 	}
 
 	s := &StageScene{
-		switcher:        sw,
-		session:         session,
-		modeID:          modeID,
-		diffID:          opts.DifficultyID,
-		gameMap:         gm,
-		enemies:         enemy.DefaultPool(),
-		spawner:         spawner,
-		towers:          tower.DefaultPool(),
-		projectiles:     projectile.DefaultPool(),
-		beams:           combat.NewBeamPool(),
-		econ:            econ,
-		towerRenderer:   render.NewTowerRenderer(config.GetAssetFS()),
-		enemyRenderer:   render.NewEnemyRenderer(config.GetAssetFS()),
-		wardenRenderer:  render.NewWardenRenderer(config.GetAssetFS()),
-		audioMgr:        sw.AudioManager(),
-		wardenUnit:      wardenUnit,
-		wardenOverlay:   hud.NewWardenSelectOverlay(),
-		wardenReady:     wardenReady,
-		tutorial:        tut,
-		progressMgr:     pm,
-		lives:           diff.StartingLives,
-		maxLives:        diff.StartingLives,
-		gold:            startGold,
-		towerDefs:       filterUnlockedTowers(loadTowerDefsOrFallback(), pm),
-		selectedDef:     0,
-		wardenType:      opts.WardenType,
-		wardenCfg:       wardenCfg,
-		gameSpeed:       1,
-		timeScale:       timescale.New(),
-		gesture:         newStageGesture(),
-		wavePanelOpen:   true,
-		wardenPanelOpen: false,
-		achieveTracker:  achTracker,
-		collisionGrid:   physics.NewSpatialGrid(float64(gm.PixelWidth()), float64(gm.PixelHeight())),
-		entityPosBuf:    make([]physics.EntityPos, 0, game.MaxEnemies),
+		switcher:         sw,
+		session:          session,
+		modeID:           modeID,
+		diffID:           opts.DifficultyID,
+		gameMap:          gm,
+		enemies:          enemy.DefaultPool(),
+		spawner:          spawner,
+		towers:           tower.DefaultPool(),
+		projectiles:      projectile.DefaultPool(),
+		beams:            combat.NewBeamPool(),
+		econ:             econ,
+		towerRenderer:    render.NewTowerRenderer(config.GetAssetFS()),
+		enemyRenderer:    render.NewEnemyRenderer(config.GetAssetFS()),
+		wardenRenderer:   render.NewWardenRenderer(config.GetAssetFS()),
+		audioMgr:         sw.AudioManager(),
+		wardenUnit:       wardenUnit,
+		wardenOverlay:    hud.NewWardenSelectOverlay(),
+		wardenReady:      wardenReady,
+		tutorial:         tut,
+		progressMgr:      pm,
+		lives:            diff.StartingLives,
+		maxLives:         diff.StartingLives,
+		gold:             startGold,
+		towerDefs:        filterUnlockedTowers(loadTowerDefsOrFallback(), pm),
+		selectedDef:      0,
+		wardenType:       opts.WardenType,
+		wardenCfg:        wardenCfg,
+		gameSpeed:        1,
+		timeScale:        timescale.New(),
+		gesture:          newStageGesture(),
+		wavePanelOpen:    true,
+		wardenPanelOpen:  false,
+		achieveTracker:   achTracker,
+		collisionGrid:    physics.NewSpatialGrid(float64(gm.PixelWidth()), float64(gm.PixelHeight())),
+		entityPosBuf:     make([]physics.EntityPos, 0, game.MaxEnemies),
+		killsByArchetype: make(map[string]int),
 	}
 
 	// 初始化模式上下文闭包（只设一次，避免每帧分配）
@@ -603,6 +607,9 @@ func (s *StageScene) subscribeBus() {
 		s.kills++
 		s.gold += p.GoldValue
 		s.gameStats.GoldEarned += p.GoldValue
+		if p.Archetype != "" {
+			s.killsByArchetype[p.Archetype]++
+		}
 		s.audioMgr.PlayThrottledAt(gameAudio.SFXGoldEarn, 100, gameAudio.VolUI*0.5)
 		s.session.OnEnemyKilled(p.IsBoss, s.buildModeCtx())
 		s.tutorial.OnEvent("enemyKilled")
@@ -635,7 +642,7 @@ func (s *StageScene) unlockAchievement(id, name string) {
 
 // emitKill 统一发出击杀事件（弹射物/战灵/技能共用）。
 // rewardScale 为敌人原型奖励倍率（如 tank=1.35, runner=0.72），0 或 1 表示无缩放。
-func (s *StageScene) emitKill(isBoss bool, killerID string, rewardScale float64) {
+func (s *StageScene) emitKill(isBoss bool, killerID string, rewardScale float64, archetype string) {
 	gold := s.econ.KillGold()
 	if rewardScale > 0 && rewardScale != 1 {
 		gold = int(float64(gold) * rewardScale)
@@ -644,6 +651,7 @@ func (s *StageScene) emitKill(isBoss bool, killerID string, rewardScale float64)
 		IsBoss:    isBoss,
 		KillerID:  killerID,
 		GoldValue: gold,
+		Archetype: archetype,
 	})
 }
 
@@ -755,17 +763,22 @@ func (s *StageScene) drawItemDropsFly(screen *ebiten.Image) {
 }
 
 // checkVictoryAchievements checks and unlocks all victory-related achievements.
-func (s *StageScene) checkVictoryAchievements() {
-	// first_win — any victory
-	s.unlockAchievement("first_win", i18n.T("game.achieve.first_win"))
-
-	// Star rating (same logic as result.go calcStars)
+// calcVictoryStars 计算胜利星级（同 result.go calcStars 逻辑）。
+func (s *StageScene) calcVictoryStars() int {
 	stars := 1
 	if s.spawner.MaxWaves > 0 && s.spawner.Wave >= s.spawner.MaxWaves {
 		stars = 3
 	} else if s.spawner.MaxWaves > 0 && float64(s.spawner.Wave) >= float64(s.spawner.MaxWaves)*config.GlobalBalance().Gameplay.StarRatingThreshold {
 		stars = 2
 	}
+	return stars
+}
+
+func (s *StageScene) checkVictoryAchievements() {
+	// first_win — any victory
+	s.unlockAchievement("first_win", i18n.T("game.achieve.first_win"))
+
+	stars := s.calcVictoryStars()
 
 	// perfect_star — any map 3 stars
 	if stars == 3 {
@@ -2102,7 +2115,7 @@ func (s *StageScene) updatePlaying() {
 			DT:          gameDT,
 			OnKill: func(e *enemy.Enemy) {
 				s.audioMgr.PlaySafeAt(gameAudio.SFXEnemyDeath, gameAudio.VolKill)
-				s.emitKill(e.Boss, "warden", e.RewardScale)
+				s.emitKill(e.Boss, "warden", e.RewardScale, e.Archetype)
 				s.tryItemDrop(e.X, e.Y)
 			},
 			OnFire: func() {
@@ -2339,7 +2352,7 @@ func (s *StageScene) updatePlaying() {
 			} else {
 				s.audioMgr.PlayThrottledAt(gameAudio.SFXEnemyDeath, 50, gameAudio.VolKill)
 			}
-			s.emitKill(e.Boss, "projectile", e.RewardScale) // 统一击杀事件：kills/gold/session/tutorial/warden
+			s.emitKill(e.Boss, "projectile", e.RewardScale, e.Archetype) // 统一击杀事件：kills/gold/session/tutorial/warden
 			s.tryItemDrop(e.X, e.Y)
 		} else {
 			// 命中音效：per-sound 节流，优先按敌人状态区分
@@ -2417,7 +2430,19 @@ func (s *StageScene) updatePlaying() {
 			s.state = stateVictory
 			s.audioMgr.StopBGM()
 			s.audioMgr.PlaySafeAt(gameAudio.SFXVictory, gameAudio.VolWave)
-			newUnlocks := s.progressMgr.RecordGameResult(s.modeID, s.gameMap.Config.ID, s.kills, true)
+			newUnlocks := s.progressMgr.RecordGameResultFull(persistence.GameResultParams{
+				ModeID:       s.modeID,
+				MapID:        s.gameMap.Config.ID,
+				DifficultyID: s.diffID,
+				WardenKey:    s.wardenType,
+				Kills:        s.kills,
+				Score:        s.session.Mode.GetScore(s.buildModeCtx()),
+				Stars:        s.calcVictoryStars(),
+				Won:          true,
+				ElapsedSecs:  s.session.ElapsedTime,
+				EnemyKills:   s.killsByArchetype,
+				AbilityPicks: s.abilitiesPicked,
+			})
 			if s.tutorial.IsComplete() {
 				s.progressMgr.SetTutorialDone()
 			}
@@ -2430,7 +2455,17 @@ func (s *StageScene) updatePlaying() {
 			s.state = stateDefeat
 			s.audioMgr.StopBGM()
 			s.audioMgr.PlaySafeAt(gameAudio.SFXDefeat, gameAudio.VolWave)
-			s.progressMgr.RecordGameResult(s.modeID, s.gameMap.Config.ID, s.kills, false)
+			s.progressMgr.RecordGameResultFull(persistence.GameResultParams{
+				ModeID:       s.modeID,
+				MapID:        s.gameMap.Config.ID,
+				DifficultyID: s.diffID,
+				WardenKey:    s.wardenType,
+				Kills:        s.kills,
+				Won:          false,
+				ElapsedSecs:  s.session.ElapsedTime,
+				EnemyKills:   s.killsByArchetype,
+				AbilityPicks: s.abilitiesPicked,
+			})
 			s.postPipeline.Effects.SetDesaturation(0.8, 1.5, 0.8, 0.2, 0.2)
 		}
 		// 清除覆盖层状态，防止 ChoicePanel/暂停菜单遮挡结算画面

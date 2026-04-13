@@ -349,8 +349,23 @@ func (s *CampaignSelectScene) drawMapCards(screen *ebiten.Image, fm *render.Font
 			}
 			fm.DrawBoldText(screen, numStr, float64(x)+10, float64(y)+8, 12, theme.TextMuted)
 
-			// 星级占位（右上）
-			fm.DrawText(screen, "\u2606\u2606\u2606", float64(x)+float64(w)-50, float64(y)+8, 11, theme.TextLocked)
+			// 星级（右上）— 从持久化读取当前难度下的星级
+			diffID := s.difficulties[s.selectedDiff].ID
+			starStr := "\u2606\u2606\u2606" // 默认三空星
+			starClr := theme.TextLocked
+			if rec := s.progressMgr.GetMapRecord(diffID, level.ID); rec != nil && rec.Stars > 0 {
+				filled := rec.Stars
+				starStr = ""
+				for si := 0; si < 3; si++ {
+					if si < filled {
+						starStr += "\u2605" // ★
+					} else {
+						starStr += "\u2606" // ☆
+					}
+				}
+				starClr = theme.ToneGold
+			}
+			fm.DrawText(screen, starStr, float64(x)+float64(w)-50, float64(y)+8, 11, starClr)
 
 			// 名称（居中）
 			fm.DrawCenteredBoldText(screen, level.Name, cx, float64(y)+42, 14, theme.TextTitle)

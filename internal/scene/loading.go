@@ -12,6 +12,7 @@ import (
 	"defense2/internal/config"
 	"defense2/internal/core/game"
 	"defense2/internal/core/mascot"
+	"defense2/internal/core/persistence"
 	"defense2/internal/core/tower/abilities"
 	"defense2/internal/i18n"
 	"defense2/internal/render"
@@ -168,7 +169,14 @@ func (s *LoadingScene) Update() error {
 	case phaseDone:
 		s.holdFrames++
 		if s.holdFrames >= loadingHoldFrames {
-			s.g.SwitchScene(NewTitleScene(s.g))
+			// 首次运行：先选语言，否则直接进标题
+			storage, _ := persistence.DefaultStorage()
+			pm := persistence.NewProgressManager(storage)
+			if !pm.IsFirstRunDone() {
+				s.g.SwitchScene(NewLangSelectScene(s.g))
+			} else {
+				s.g.SwitchScene(NewTitleScene(s.g))
+			}
 		}
 	}
 

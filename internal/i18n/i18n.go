@@ -92,6 +92,16 @@ func Locale() string {
 	return currentLoc
 }
 
+// TFromLocale 从指定 locale 查询翻译（不改变当前语言）。
+func TFromLocale(locale, key string) string {
+	if table, ok := locales[locale]; ok {
+		if v, found := table[key]; found {
+			return v
+		}
+	}
+	return T(key)
+}
+
 // SetLocale 切换活跃语言。locale 不存在时回退到 zh。
 func SetLocale(locale string) error {
 	if table, ok := locales[locale]; ok {

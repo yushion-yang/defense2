@@ -56,7 +56,7 @@ func LoadSettings() SettingsData {
 	return s
 }
 
-// SaveSettings 将设置写入磁盘。
+// SaveSettings 将设置写入磁盘（原子写入：先写临时文件再 rename）。
 func SaveSettings(d SettingsData) {
 	p := settingsPath()
 	dir := filepath.Dir(p)
@@ -69,7 +69,12 @@ func SaveSettings(d SettingsData) {
 		log.Printf("序列化设置失败: %v", err)
 		return
 	}
-	if err := os.WriteFile(p, data, 0o644); err != nil {
-		log.Printf("写入设置失败: %v", err)
+	tmp := p + ".tmp"
+	if err := os.WriteFile(tmp, data, 0o644); err != nil {
+		log.Printf("写入临时设置文件失败: %v", err)
+		return
+	}
+	if err := os.Rename(tmp, p); err != nil {
+		log.Printf("重命名设置文件失败: %v", err)
 	}
 }

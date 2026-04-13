@@ -32,4 +32,4 @@ const (
 // DevMode 开发/测试模式开关。
 // 开启后：Select 界面显示"测试"入口，可进入 TestSelect 场景。
 // 发布时设为 false 隐藏测试功能。
-var DevMode = true
+var DevMode = false

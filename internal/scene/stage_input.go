@@ -790,6 +790,7 @@ func (s *StageScene) openAbilityChoicePanel() {
 			tower.ClearPendingChoice(t, nextCat)
 			hud.ShowToast(i18n.TF("game.ability.gained", opt.Label))
 			s.bus.Emit(event.EvtTowerUpgraded, event.TowerUpgradedPayload{TowerKey: t.Key})
+			s.abilitiesPicked = append(s.abilitiesPicked, abilType)
 		}
 	})
 	s.imode = modeUpgrade

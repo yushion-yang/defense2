@@ -144,6 +144,7 @@ type EnemyKilledPayload struct {
 	IsBoss    bool   // 是否 Boss
 	KillerID  string // 击杀来源（"projectile"/"warden"）
 	GoldValue int    // 击杀金币（预计算）
+	Archetype string // 敌人原型 ID（图鉴统计用）
 }
 
 // EnemyLeakedPayload 敌人泄漏事件载荷。

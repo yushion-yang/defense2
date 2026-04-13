@@ -23,7 +23,7 @@ import (
 
 const (
 	settingsPanelW = float32(420)
-	settingsPanelH = float32(320)
+	settingsPanelH = float32(380)
 	settingsRadius = float32(14)
 
 	sliderBarW = float32(200) // 滑块条宽度
@@ -33,6 +33,10 @@ const (
 	qualityBtnW   = float32(60)
 	qualityBtnH   = float32(30)
 	qualityBtnGap = float32(12)
+
+	langBtnW   = float32(100)
+	langBtnH   = float32(30)
+	langBtnGap = float32(16)
 
 	settingsBackW = float32(140)
 	settingsBackH = float32(38)
@@ -112,6 +116,16 @@ func qualityBtnGeom(i int) (float32, float32, float32, float32) {
 	return x, y, qualityBtnW, qualityBtnH
 }
 
+// langBtnGeom 返回第 i 个语言按钮的 (x, y, w, h)。
+func langBtnGeom(i, count int) (float32, float32, float32, float32) {
+	px, py := panelOrigin()
+	totalW := float32(count)*langBtnW + float32(count-1)*langBtnGap
+	startX := px + (settingsPanelW-totalW)/2
+	x := startX + float32(i)*(langBtnW+langBtnGap)
+	y := py + 270
+	return x, y, langBtnW, langBtnH
+}
+
 // backBtnGeom 返回返回按钮的 (x, y, w, h)。
 func backBtnGeom() (float32, float32, float32, float32) {
 	px, py := panelOrigin()
@@ -142,6 +156,18 @@ func (s *SettingsScene) Update() error {
 				if s.quality != i {
 					s.quality = i
 					game.CurrentQuality = game.QualityLevel(i)
+					playUIClick(s.switcher)
+					s.persist()
+				}
+			}
+		}
+		// 语言按钮
+		locales := i18n.Available()
+		for idx, code := range locales {
+			lx, ly, lw, lh := langBtnGeom(idx, len(locales))
+			if mx >= float64(lx) && mx <= float64(lx+lw) && my >= float64(ly) && my <= float64(ly+lh) {
+				if code != i18n.Locale() {
+					i18n.SetLocale(code)
 					playUIClick(s.switcher)
 					s.persist()
 				}
@@ -209,6 +235,7 @@ func (s *SettingsScene) persist() {
 		SFXVolume:  s.sfxVol,
 		BGMVolume:  s.bgmVol,
 		Quality:    s.quality,
+		Locale:     i18n.Locale(),
 	})
 }
 
@@ -257,6 +284,28 @@ func (s *SettingsScene) Draw(screen *ebiten.Image) {
 			FontSize:  theme.FontBody,
 			Radius:    8,
 			Bold:      i == s.quality,
+		})
+	}
+
+	// ── 语言选择 ──
+	langLabelY := float64(py) + 255
+	fm.DrawCenteredText(screen, i18n.T("settings.language"), cx, langLabelY, theme.FontBody, theme.TextMuted)
+
+	locales := i18n.Available()
+	curLocale := i18n.Locale()
+	for idx, code := range locales {
+		lx, ly, lw, lh := langBtnGeom(idx, len(locales))
+		btnClr := theme.ToneSecondary
+		if code == curLocale {
+			btnClr = theme.TonePrimary
+		}
+		displayName := i18n.TFromLocale(code, "_meta.name")
+		ui.Button(screen, lx, ly, lw, lh, displayName, ui.ButtonStyle{
+			BgColor:   btnClr,
+			TextColor: color.White,
+			FontSize:  theme.FontBody,
+			Radius:    8,
+			Bold:      code == curLocale,
 		})
 	}
 

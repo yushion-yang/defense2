@@ -72,6 +72,21 @@ func UnlockRequirement(prefix, key string) string {
 	return ""
 }
 
+// MapRecord 每地图每难度的成绩记录。
+type MapRecord struct {
+	Stars     int  `json:"stars"`     // 0-3
+	BestScore int  `json:"bestScore"` // Mode.GetScore()
+	BestKills int  `json:"bestKills"` // 击杀数
+	Cleared   bool `json:"cleared"`   // 是否通关过
+}
+
+// BestiaryData 图鉴统计数据。
+type BestiaryData struct {
+	EnemyKills   map[string]int `json:"enemyKills"`   // archetypeID -> 总击杀数
+	AbilityPicks map[string]int `json:"abilityPicks"` // abilityType -> 选择次数
+	WardenGames  map[string]int `json:"wardenGames"`  // wardenKey -> 使用局数
+}
+
 // Progress 玩家进度数据（序列化到存储中）。
 type Progress struct {
 	HighScores   map[string]int  `json:"highScores"`   // 各关卡最高击杀数（mapID → kills）
@@ -82,6 +97,12 @@ type Progress struct {
 	TutorialDone bool            `json:"tutorialDone"` // 教程是否已完成
 	Unlocks      UnlockData      `json:"unlocks"`      // 解锁进度
 	MascotShown  map[string]bool `json:"mascotShown"`  // 吉祥物 Once 对话已展示 ID 集合
+
+	// ── V1.0 新增 ──
+	MapRecords    map[string]*MapRecord `json:"mapRecords"`    // "diffID_mapID" -> 成绩
+	Bestiary      BestiaryData          `json:"bestiary"`      // 图鉴统计
+	FirstRunDone  bool                  `json:"firstRunDone"`  // 首次语言选择完成
+	TotalPlayTime float64               `json:"totalPlayTime"` // 总游玩时长(秒)
 }
 
 // NewProgress 创建初始进度（默认解锁 map_01）。
@@ -91,6 +112,12 @@ func NewProgress() *Progress {
 		UnlockedMaps: []string{"map_01"},
 		Unlocks:      NewUnlockData(),
 		MascotShown:  make(map[string]bool),
+		MapRecords:   make(map[string]*MapRecord),
+		Bestiary: BestiaryData{
+			EnemyKills:   make(map[string]int),
+			AbilityPicks: make(map[string]int),
+			WardenGames:  make(map[string]int),
+		},
 	}
 }
 
@@ -129,6 +156,19 @@ func (pm *ProgressManager) migrateUnlocks() {
 	}
 	if p.Unlocks.Wardens == nil {
 		p.Unlocks.Wardens = map[string]bool{"prince": true}
+	}
+	// 确保 V1.0 新增 map 字段非 nil（旧存档兼容）
+	if p.MapRecords == nil {
+		p.MapRecords = make(map[string]*MapRecord)
+	}
+	if p.Bestiary.EnemyKills == nil {
+		p.Bestiary.EnemyKills = make(map[string]int)
+	}
+	if p.Bestiary.AbilityPicks == nil {
+		p.Bestiary.AbilityPicks = make(map[string]int)
+	}
+	if p.Bestiary.WardenGames == nil {
+		p.Bestiary.WardenGames = make(map[string]int)
 	}
 	// 同步旧版 UnlockedMaps 到新版
 	for _, mapID := range p.UnlockedMaps {
@@ -193,25 +233,83 @@ func (pm *ProgressManager) Progress() *Progress {
 	return pm.progress
 }
 
+// GameResultParams 游戏结算参数。
+type GameResultParams struct {
+	ModeID       string
+	MapID        string
+	DifficultyID string
+	WardenKey    string
+	Kills        int
+	Score        int
+	Stars        int
+	Won          bool
+	ElapsedSecs  float64
+	EnemyKills   map[string]int // archetypeID -> kills this game
+	AbilityPicks []string       // abilities picked this game
+}
+
 // RecordGameResult 记录一场游戏结果。
 // modeID + mapID 组合键存储高分，兼容旧版纯 mapID 键。
 // 返回本次解锁的新内容列表（用于 UI 提示）。
 func (pm *ProgressManager) RecordGameResult(modeID, mapID string, kills int, won bool) []string {
+	return pm.RecordGameResultFull(GameResultParams{
+		ModeID: modeID,
+		MapID:  mapID,
+		Kills:  kills,
+		Won:    won,
+	})
+}
+
+// RecordGameResultFull 记录完整游戏结果（含星级、分数、图鉴数据）。
+func (pm *ProgressManager) RecordGameResultFull(params GameResultParams) []string {
 	p := pm.progress
 	p.TotalGames++
-	p.TotalKills += kills
+	p.TotalKills += params.Kills
+	p.TotalPlayTime += params.ElapsedSecs
+
+	// 图鉴: 敌人击杀
+	for archID, count := range params.EnemyKills {
+		p.Bestiary.EnemyKills[archID] += count
+	}
+	// 图鉴: 能力选择
+	for _, abilityType := range params.AbilityPicks {
+		p.Bestiary.AbilityPicks[abilityType]++
+	}
+	// 图鉴: 战灵使用
+	if params.WardenKey != "" && params.WardenKey != "none" {
+		p.Bestiary.WardenGames[params.WardenKey]++
+	}
+
 	var newUnlocks []string
-	if won {
+	if params.Won {
 		p.TotalWins++
-		// 使用 modeID_mapID 复合键存储高分
-		scoreKey := modeID + "_" + mapID
-		if kills > p.HighScores[scoreKey] {
-			p.HighScores[scoreKey] = kills
+		// 旧版高分（向后兼容）
+		scoreKey := params.ModeID + "_" + params.MapID
+		if params.Kills > p.HighScores[scoreKey] {
+			p.HighScores[scoreKey] = params.Kills
 		}
-		// 解锁下一关（旧逻辑保持兼容）
-		pm.unlockNext(mapID)
-		// 应用解锁规则
-		newUnlocks = pm.applyUnlockRules(mapID)
+		// 新版 MapRecord
+		if params.DifficultyID != "" {
+			recordKey := params.DifficultyID + "_" + params.MapID
+			rec := p.MapRecords[recordKey]
+			if rec == nil {
+				rec = &MapRecord{}
+				p.MapRecords[recordKey] = rec
+			}
+			rec.Cleared = true
+			if params.Stars > rec.Stars {
+				rec.Stars = params.Stars
+			}
+			if params.Score > rec.BestScore {
+				rec.BestScore = params.Score
+			}
+			if params.Kills > rec.BestKills {
+				rec.BestKills = params.Kills
+			}
+		}
+		// 解锁
+		pm.unlockNext(params.MapID)
+		newUnlocks = pm.applyUnlockRules(params.MapID)
 	}
 	pm.save()
 	return newUnlocks
@@ -361,6 +459,27 @@ func (pm *ProgressManager) unlockNext(mapID string) {
 	}
 	pm.progress.UnlockedMaps = append(pm.progress.UnlockedMaps, next)
 	pm.progress.Unlocks.Maps[next] = true
+}
+
+// GetMapRecord 获取指定难度+地图的成绩记录，无记录时返回 nil。
+func (pm *ProgressManager) GetMapRecord(diffID, mapID string) *MapRecord {
+	return pm.progress.MapRecords[diffID+"_"+mapID]
+}
+
+// GetBestiary 返回图鉴统计数据的只读副本。
+func (pm *ProgressManager) GetBestiary() BestiaryData {
+	return pm.progress.Bestiary
+}
+
+// SetFirstRunDone 标记首次运行（语言选择）已完成。
+func (pm *ProgressManager) SetFirstRunDone() {
+	pm.progress.FirstRunDone = true
+	pm.save()
+}
+
+// IsFirstRunDone 检查首次运行是否已完成。
+func (pm *ProgressManager) IsFirstRunDone() bool {
+	return pm.progress.FirstRunDone
 }
 
 func (pm *ProgressManager) save() {
