@@ -131,6 +131,40 @@ func TestI18nKeyCoverage(t *testing.T) {
 	}
 }
 
+// reChinese 匹配中文字符（CJK 统一汉字区）。
+var reChineseChar = regexp.MustCompile(`[\x{4e00}-\x{9fff}]`)
+
+// TestEnJsonNoChinese 确保 en.json 中所有 value 都是英文，不包含中文字符。
+// 防止新增 key 时复制 zh.json 的中文值到 en.json 后忘记翻译。
+func TestEnJsonNoChinese(t *testing.T) {
+	root := findProjectRoot(t)
+
+	enPath := filepath.Join(root, "config", "i18n", "en.json")
+	enData, err := os.ReadFile(enPath)
+	if err != nil {
+		t.Fatalf("read en.json: %v", err)
+	}
+	var enMap map[string]string
+	if err := json.Unmarshal(enData, &enMap); err != nil {
+		t.Fatalf("parse en.json: %v", err)
+	}
+
+	violations := 0
+	for key, val := range enMap {
+		// 跳过 _meta 开头的 key
+		if strings.HasPrefix(key, "_") {
+			continue
+		}
+		if reChineseChar.MatchString(val) {
+			t.Errorf("en.json key %q contains Chinese: %q", key, val)
+			violations++
+		}
+	}
+	if violations > 0 {
+		t.Logf("%d key(s) in en.json still contain Chinese. Please translate them to English.", violations)
+	}
+}
+
 func itoa(n int) string {
 	if n < 10 {
 		return string(rune('0' + n))

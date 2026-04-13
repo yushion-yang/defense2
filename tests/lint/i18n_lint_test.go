@@ -26,6 +26,7 @@ var i18nAllowedPaths = []string{
 	filepath.Join("internal", "scene", "vfx_preview.go"),  // 开发工具
 	filepath.Join("internal", "scene", "wave_preview.go"), // 开发工具
 	filepath.Join("internal", "scene", "test_select.go"),  // 测试模式选择器（开发工具）
+	filepath.Join("internal", "scene", "lang_select.go"),  // 首次运行语言选择（故意双语）
 	filepath.Join("cmd"),                         // CLI 入口
 }
 
