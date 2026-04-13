@@ -119,13 +119,10 @@ func (s *ChampionStrategy) Decide(state *GameState) []Action {
 		progress = float64(state.Wave) / float64(state.MaxWaves)
 	}
 
+	// 每帧只做 Build 或 Upgrade 之一，避免同帧金币竞争
 	if s.builtCount < s.targetTowers {
-		// 建塔阶段：达到目标数量前持续建
 		actions = append(actions, s.decideBuild(state)...)
-	}
-
-	// 升级：建完塔后全力升级；建塔中期也穿插升级
-	if s.builtCount >= s.targetTowers || (progress > 0.2 && s.builtCount >= 2) {
+	} else if s.builtCount >= s.targetTowers || (progress > 0.2 && s.builtCount >= 2) {
 		actions = append(actions, s.decideUpgrade(state)...)
 	}
 

@@ -101,21 +101,22 @@ func (s *BalanceGreedyStrategy) Decide(state *GameState) []Action {
 		actions = append(actions, s.assignAbilities(state)...)
 	}
 
+	// 每帧只做 Build 或 Upgrade 之一，避免同帧金币竞争
 	if s.upgradeFirst {
-		// 优先升级
-		actions = append(actions, s.decideUpgrade(state)...)
-		if s.phase < 2 {
+		if s.phase < 2 && s.builtCount < s.maxTowers && state.Tick-s.lastBuild > 120 {
 			actions = append(actions, s.decideBuild(state)...)
+		} else {
+			actions = append(actions, s.decideUpgrade(state)...)
 		}
 	} else {
-		// 默认：按阶段决策
 		switch s.phase {
 		case 0:
 			actions = append(actions, s.decideBuild(state)...)
 		case 1:
-			actions = append(actions, s.decideUpgrade(state)...)
 			if state.Tick-s.lastBuild > 300 {
 				actions = append(actions, s.decideBuild(state)...)
+			} else {
+				actions = append(actions, s.decideUpgrade(state)...)
 			}
 		case 2:
 			actions = append(actions, s.decideUpgrade(state)...)
