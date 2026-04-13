@@ -50,7 +50,7 @@ func initGameModes() {
 func init() {
 	if game.DevMode {
 		gameModes = append(gameModes, gameModeUI{
-			ID: "test", Name: "测试", Icon: "⚙", Description: "开发测试场景",
+			ID: "test", Name: i18n.T("mode.test.name"), Icon: "⚙", Description: i18n.T("scene.test.title"),
 			DefaultMap: "map_01", ComingSoon: false,
 		})
 	}
@@ -386,7 +386,7 @@ func (s *SelectScene) Draw(screen *ebiten.Image) {
 			})
 			// 右上角锁定标记
 			lockClr := color.RGBA{R: 80, G: 85, B: 100, A: 180}
-			fm.DrawText(screen, "[锁]", float64(x+w)-30, float64(y)+4, theme.FontXS, lockClr)
+			fm.DrawText(screen, i18n.T("scene.campaign.locked_tag"), float64(x+w)-30, float64(y)+4, theme.FontXS, lockClr)
 		} else {
 			bg := cardBg
 			if hovered && !selected {
