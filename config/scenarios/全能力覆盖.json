@@ -1,0 +1,68 @@
+{
+  "id": "全能力覆盖",
+  "name": "13种未覆盖能力测试",
+  "description": "专门测试从未在autoplay中触发的13种能力: chargeShot/deathMark/distanceDamage/executionBonus/multiTarget/percentHpDamage/percentHpMinor/splash/stackDamage/onHitSlow/stun/soloBoost/goldPassive",
+  "mapID": "map_test_large",
+  "gold": 99999,
+  "lives": 999,
+  "waves": 20,
+  "enemyFilter": "",
+  "manualWave": false,
+  "towers": [
+    {
+      "row": 2, "col": 2, "key": "basic",
+      "abilitySlots": ["splash", "distanceDamage", "", "", "", ""],
+      "damageTier": "S", "speedTier": "B", "rangeTier": "S",
+      "baseDamage": 15, "potentialDamage": 12,
+      "baseSpeed": 0.6, "potentialSpeed": 0.04,
+      "baseRange": 200, "potentialRange": 40,
+      "strength": 150
+    },
+    {
+      "row": 2, "col": 6, "key": "basic",
+      "abilitySlots": ["multiTarget", "executionBonus", "", "", "", ""],
+      "damageTier": "S", "speedTier": "B", "rangeTier": "B",
+      "baseDamage": 15, "potentialDamage": 12,
+      "baseSpeed": 0.6, "potentialSpeed": 0.04,
+      "baseRange": 150, "potentialRange": 20,
+      "strength": 150
+    },
+    {
+      "row": 2, "col": 10, "key": "basic",
+      "abilitySlots": ["percentHpDamage", "stackDamage", "", "", "", ""],
+      "damageTier": "S", "speedTier": "S", "rangeTier": "B",
+      "baseDamage": 15, "potentialDamage": 12,
+      "baseSpeed": 0.8, "potentialSpeed": 0.05,
+      "baseRange": 150, "potentialRange": 20,
+      "strength": 150
+    },
+    {
+      "row": 4, "col": 2, "key": "basic",
+      "abilitySlots": ["onHitSlow", "stun", "", "", "", ""],
+      "damageTier": "B", "speedTier": "S", "rangeTier": "B",
+      "baseDamage": 10, "potentialDamage": 8,
+      "baseSpeed": 0.8, "potentialSpeed": 0.05,
+      "baseRange": 150, "potentialRange": 20,
+      "strength": 150
+    },
+    {
+      "row": 4, "col": 6, "key": "basic",
+      "abilitySlots": ["soloBoost", "goldPassive", "", "", "", ""],
+      "damageTier": "S", "speedTier": "B", "rangeTier": "B",
+      "baseDamage": 15, "potentialDamage": 12,
+      "baseSpeed": 0.6, "potentialSpeed": 0.04,
+      "baseRange": 150, "potentialRange": 20,
+      "strength": 150
+    },
+    {
+      "row": 4, "col": 10, "key": "basic",
+      "abilitySlots": ["flatDamage", "crit", "", "", "", ""],
+      "damageTier": "S", "speedTier": "B", "rangeTier": "B",
+      "baseDamage": 15, "potentialDamage": 12,
+      "baseSpeed": 0.6, "potentialSpeed": 0.04,
+      "baseRange": 150, "potentialRange": 20,
+      "strength": 150
+    }
+  ],
+  "enemies": []
+}

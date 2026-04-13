@@ -1,0 +1,13 @@
+{
+  "id": "真实战役_map04_hard",
+  "name": "真实战役 Map04 Hard",
+  "description": "模拟真实玩家在map_04(59格)hard难度的游戏流程，测试经济紧张和大地图",
+  "mapID": "map_04",
+  "gold": 100,
+  "lives": 15,
+  "waves": 20,
+  "enemyFilter": "",
+  "manualWave": false,
+  "towers": [],
+  "enemies": []
+}

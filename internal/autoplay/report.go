@@ -120,16 +120,26 @@ func GenerateReport(records []*SessionRecord) *CoverageReport {
 	r.CoverageGaps["towers"] = findGaps(TowerKeys, towersSeen)
 	r.CoverageGaps["archetypes"] = findGaps(EnemyArchetypes, archetypesSeen)
 
-	allAttackStyles := []string{"projectile", "wideBeam", "scatter", "spin_aoe", "radial"}
+	allAttackStyles := []string{"projectile", "wideBeam", "scatter", "spin_aoe", "radial", "barrage"}
 	r.CoverageGaps["attack_styles"] = findGaps(allAttackStyles, attackStylesSeen)
 
+	// 与 tower/ability_ids.go 保持同步的完整能力列表（排除已禁用的 elementSwitch/periodicCast）
 	allAbilities := []string{
-		"bounce", "chargeShot", "crit", "deathMark", "distanceDamage", "executionBonus",
-		"flatDamage", "multiTarget", "percentHpDamage", "percentHpMinor", "splash", "stackDamage",
-		"bleedDot", "burn", "onHitSlow", "stun",
-		"attackSpeedAura", "critAura", "damageUpAura", "rangeAura", "soloBoost",
-		"curseZone", "poisonZone", "silenceZone",
+		// 攻击类
+		"splash", "crit", "bounce", "momentum", "executionBonus",
+		"flatDamage", "distanceDamage", "multiTarget", "deathMark", "enhance",
+		// CC 类
+		"slowPower", "slowDuration", "stun", "stunChance", "stunDuration",
+		// DoT 类
+		"bleedDot", "burn", "poison", "weaken",
+		// 光环类
+		"damageUpAura", "attackSpeedAura", "rangeAura", "critAura", "soloBoost",
+		// 区域类
+		"poisonZone", "silenceZone", "curseZone", "weakenZone",
+		// 经济/被动类
 		"goldPassive",
+		// 攻击方式覆盖类
+		"scatter", "wideBeam", "spinAoe", "radial", "barrage",
 	}
 	r.CoverageGaps["abilities"] = findGaps(allAbilities, abilitiesSeen)
 

@@ -1,0 +1,41 @@
+{
+  "id": "radial攻击测试",
+  "name": "Radial 攻击方式覆盖",
+  "description": "专门测试从未触发的radial攻击方式，搭配多种能力",
+  "mapID": "map_test_large",
+  "gold": 99999,
+  "lives": 999,
+  "waves": 15,
+  "enemyFilter": "",
+  "manualWave": false,
+  "towers": [
+    {
+      "row": 4, "col": 6, "key": "basic",
+      "abilitySlots": ["radial", "crit", "", "", "", ""],
+      "damageTier": "S", "speedTier": "S", "rangeTier": "S",
+      "baseDamage": 20, "potentialDamage": 15,
+      "baseSpeed": 0.8, "potentialSpeed": 0.05,
+      "baseRange": 200, "potentialRange": 40,
+      "strength": 200
+    },
+    {
+      "row": 6, "col": 6, "key": "basic",
+      "abilitySlots": ["radial", "burn", "", "", "", ""],
+      "damageTier": "S", "speedTier": "B", "rangeTier": "S",
+      "baseDamage": 15, "potentialDamage": 12,
+      "baseSpeed": 0.6, "potentialSpeed": 0.04,
+      "baseRange": 200, "potentialRange": 40,
+      "strength": 200
+    },
+    {
+      "row": 4, "col": 10, "key": "basic",
+      "abilitySlots": ["radial", "slowPower", "", "", "", ""],
+      "damageTier": "B", "speedTier": "S", "rangeTier": "S",
+      "baseDamage": 10, "potentialDamage": 8,
+      "baseSpeed": 0.8, "potentialSpeed": 0.05,
+      "baseRange": 200, "potentialRange": 40,
+      "strength": 200
+    }
+  ],
+  "enemies": []
+}

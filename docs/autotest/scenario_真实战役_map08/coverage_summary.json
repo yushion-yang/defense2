@@ -1,0 +1,128 @@
+{
+  "total_sessions": 1,
+  "victories": 1,
+  "defeats": 0,
+  "timeouts": 0,
+  "coverage_gaps": {
+    "abilities": [
+      "bounce",
+      "chargeShot",
+      "crit",
+      "deathMark",
+      "distanceDamage",
+      "executionBonus",
+      "flatDamage",
+      "multiTarget",
+      "percentHpDamage",
+      "percentHpMinor",
+      "splash",
+      "stackDamage",
+      "bleedDot",
+      "burn",
+      "onHitSlow",
+      "stun",
+      "attackSpeedAura",
+      "critAura",
+      "damageUpAura",
+      "rangeAura",
+      "soloBoost",
+      "curseZone",
+      "poisonZone",
+      "silenceZone",
+      "goldPassive"
+    ],
+    "archetypes": [
+      "drainer",
+      "dummy"
+    ],
+    "attack_styles": [
+      "projectile",
+      "wideBeam",
+      "scatter",
+      "spin_aoe",
+      "radial"
+    ],
+    "buff_stack_modes": [
+      "strongest",
+      "additive",
+      "multiplicative",
+      "override",
+      "independent",
+      "independentPerSource"
+    ],
+    "buff_types": [
+      "slow",
+      "stun",
+      "knockup",
+      "silence",
+      "disarm",
+      "speedUp",
+      "damageUp",
+      "damageDown",
+      "fireRateUp",
+      "invincible",
+      "damageImmune",
+      "controlImmune",
+      "slowImmune",
+      "stunImmune",
+      "untargetable",
+      "dot",
+      "tenacity"
+    ],
+    "cc_types": [
+      "slow",
+      "stun"
+    ],
+    "damage_types": [
+      "magic",
+      "true",
+      "pure"
+    ],
+    "enemy_templates": [
+      "damageReduce",
+      "empBurst",
+      "blink",
+      "deathSplit",
+      "deathSlow",
+      "reflect",
+      "timewarp",
+      "revive",
+      "spawnMinions"
+    ],
+    "interaction_modes": [
+      "buildMenu",
+      "buildPlace",
+      "towerSel",
+      "spawnMenu",
+      "spawnPlace",
+      "paused",
+      "wardenSelect"
+    ],
+    "pipeline_steps": null,
+    "towers": [
+      "basic"
+    ]
+  },
+  "anomaly_summary": {
+    "warden_range_limited_x": 1
+  },
+  "tower_usage": {},
+  "archetypes_seen": {
+    "armored": 1,
+    "buffer": 1,
+    "colossus": 1,
+    "healer": 1,
+    "ironwill": 1,
+    "normal": 1,
+    "phantom": 1,
+    "phaser": 1,
+    "purifier": 1,
+    "runner": 1,
+    "shielder": 1,
+    "splitter": 1,
+    "steadfast": 1,
+    "summoner": 1,
+    "swarm": 1,
+    "tank": 1
+  }
+}

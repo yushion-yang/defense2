@@ -668,27 +668,30 @@ func (d *AnomalyDetector) checkWardenCoverage(state *GameState) []Anomaly {
 	visitedW := d.wardenMaxX - d.wardenMinX
 	visitedH := d.wardenMaxY - d.wardenMinY
 
-	// 地图比一屏宽，但战灵水平活动范围 < 一屏宽的 80%
-	if mapExtendsX && visitedW < screenW*0.8 {
+	// 地图比一屏宽，但战灵水平活动范围 < 地图宽度的 50%
+	// 注意：路径通常只占地图中央 60-70%，战灵跟随敌群是正常行为，
+	// 所以阈值用地图宽度的 50% 而非一屏宽度。
+	if mapExtendsX && visitedW < state.MapPixelW*0.5 {
 		found = append(found, Anomaly{
 			Tick: state.Tick,
 			Type: "warden_range_limited_x",
 			Detail: fmt.Sprintf(
-				"map width=%.0f (>%.0f) but warden X range=[%.0f,%.0f] (span=%.0f), never reached beyond first screen",
-				state.MapPixelW, screenW, d.wardenMinX, d.wardenMaxX, visitedW),
-			Severity: SeverityHigh,
+				"map width=%.0f but warden X range=[%.0f,%.0f] (span=%.0f, %.0f%% of map)",
+				state.MapPixelW, d.wardenMinX, d.wardenMaxX, visitedW, visitedW/state.MapPixelW*100),
+			Severity: SeverityMedium,
 		})
 	}
 
-	// 地图比一屏高，但战灵垂直活动范围 < 一屏高的 80%
-	if mapExtendsY && visitedH < screenH*0.8 {
+	// 地图比一屏高，但战灵垂直活动范围 < 地图高度的 40%
+	// 路径垂直范围通常更窄（只占中间 3-5 行），所以用更宽松的 40%
+	if mapExtendsY && visitedH < state.MapPixelH*0.4 {
 		found = append(found, Anomaly{
 			Tick: state.Tick,
 			Type: "warden_range_limited_y",
 			Detail: fmt.Sprintf(
-				"map height=%.0f (>%.0f) but warden Y range=[%.0f,%.0f] (span=%.0f), never reached beyond first screen",
-				state.MapPixelH, screenH, d.wardenMinY, d.wardenMaxY, visitedH),
-			Severity: SeverityHigh,
+				"map height=%.0f but warden Y range=[%.0f,%.0f] (span=%.0f, %.0f%% of map)",
+				state.MapPixelH, d.wardenMinY, d.wardenMaxY, visitedH, visitedH/state.MapPixelH*100),
+			Severity: SeverityMedium,
 		})
 	}
 
@@ -876,8 +879,9 @@ func (d *AnomalyDetector) checkEnemyHPUniform(state *GameState) []Anomaly {
 		}
 	}
 
-	// 需要 >=5 个敌人且 >=2 种原型才有意义
-	if len(pairs) < 5 || len(archSet) < 2 {
+	// 需要 >=5 个敌人且 >=3 种原型才有意义
+	// （2 种原型可能合法共享相同 hpScale，如 phaser/buffer 都是 0.9）
+	if len(pairs) < 5 || len(archSet) < 3 {
 		return nil
 	}
 

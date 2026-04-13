@@ -1,0 +1,59 @@
+{
+  "id": "DoT叠加压力",
+  "name": "DoT 叠加压力测试",
+  "description": "大量DoT+weaken叠加，测试buff堆叠模式、伤害管线和性能",
+  "mapID": "map_test_large",
+  "gold": 99999,
+  "lives": 999,
+  "waves": 20,
+  "enemyFilter": "",
+  "manualWave": false,
+  "towers": [
+    {
+      "row": 2, "col": 4, "key": "basic",
+      "abilitySlots": ["burn", "weaken", "", "", "", ""],
+      "damageTier": "B", "speedTier": "S", "rangeTier": "B",
+      "baseDamage": 10, "potentialDamage": 8,
+      "baseSpeed": 0.8, "potentialSpeed": 0.05,
+      "baseRange": 150, "potentialRange": 20,
+      "strength": 150
+    },
+    {
+      "row": 4, "col": 4, "key": "basic",
+      "abilitySlots": ["bleedDot", "poison", "", "", "", ""],
+      "damageTier": "B", "speedTier": "S", "rangeTier": "B",
+      "baseDamage": 10, "potentialDamage": 8,
+      "baseSpeed": 0.8, "potentialSpeed": 0.05,
+      "baseRange": 150, "potentialRange": 20,
+      "strength": 150
+    },
+    {
+      "row": 6, "col": 4, "key": "basic",
+      "abilitySlots": ["burn", "bleedDot", "", "", "", ""],
+      "damageTier": "B", "speedTier": "S", "rangeTier": "B",
+      "baseDamage": 10, "potentialDamage": 8,
+      "baseSpeed": 0.8, "potentialSpeed": 0.05,
+      "baseRange": 150, "potentialRange": 20,
+      "strength": 150
+    },
+    {
+      "row": 2, "col": 8, "key": "basic",
+      "abilitySlots": ["poisonZone", "curseZone", "", "", "", ""],
+      "damageTier": "B", "speedTier": "B", "rangeTier": "S",
+      "baseDamage": 10, "potentialDamage": 8,
+      "baseSpeed": 0.6, "potentialSpeed": 0.04,
+      "baseRange": 200, "potentialRange": 40,
+      "strength": 150
+    },
+    {
+      "row": 4, "col": 8, "key": "basic",
+      "abilitySlots": ["weakenZone", "silenceZone", "", "", "", ""],
+      "damageTier": "B", "speedTier": "B", "rangeTier": "S",
+      "baseDamage": 10, "potentialDamage": 8,
+      "baseSpeed": 0.6, "potentialSpeed": 0.04,
+      "baseRange": 200, "potentialRange": 40,
+      "strength": 150
+    }
+  ],
+  "enemies": []
+}
