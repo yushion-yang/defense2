@@ -101,18 +101,27 @@ func TickBehaviors(pool *Pool, dt float64) BehaviorEvents {
 		}
 
 		// 相位偏移（duration=Value, cooldown=Value2 from BuffList）
-		if pb, ok := e.Buffs.Get(buff.IDPhaseShift); ok && !e.AbilitySilenced {
-			e.PhaseTimer -= dt
-			if e.PhaseTimer <= 0 && !e.PhaseActive {
-				// 进入免伤相位（可被选中/命中，但免疫伤害）
-				e.PhaseActive = true
-				e.IsDamageImmune = true
-				e.PhaseTimer = pb.Value // phaseDuration
-			} else if e.PhaseActive && e.PhaseTimer <= 0 {
-				// 相位结束
-				e.PhaseActive = false
-				e.IsDamageImmune = false
-				e.PhaseTimer = pb.Value2 // phaseCooldown
+		if pb, ok := e.Buffs.Get(buff.IDPhaseShift); ok {
+			if e.AbilitySilenced {
+				// 沉默时强制结束免伤相位
+				if e.PhaseActive {
+					e.PhaseActive = false
+					e.IsDamageImmune = false
+					e.PhaseTimer = pb.Value2 // 重置为冷却时间
+				}
+			} else {
+				e.PhaseTimer -= dt
+				if e.PhaseTimer <= 0 && !e.PhaseActive {
+					// 进入免伤相位（可被选中/命中，但免疫伤害）
+					e.PhaseActive = true
+					e.IsDamageImmune = true
+					e.PhaseTimer = pb.Value // phaseDuration
+				} else if e.PhaseActive && e.PhaseTimer <= 0 {
+					// 相位结束
+					e.PhaseActive = false
+					e.IsDamageImmune = false
+					e.PhaseTimer = pb.Value2 // phaseCooldown
+				}
 			}
 		}
 

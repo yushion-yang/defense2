@@ -198,6 +198,17 @@ type StageScene struct {
 
 // NewStageSceneWithOpts 创建游戏主场景，接受完整配置选项。
 func NewStageSceneWithOpts(sw Switcher, opts StageOptions) *StageScene {
+	// ── 清理上一局残留的全局状态 ──
+	render.ClearFloatTexts()
+	render.ClearImpactVFX()
+	render.ClearSplashVFX()
+	render.ResetShake()
+	render.SetShakeEnabled(true)
+	render.ResetViewport()
+	hud.ClearToast()
+	draw.ResetHover()
+	tel.T.Reset()
+
 	cfg, err := config.LoadMap(opts.MapID)
 	if err != nil {
 		log.Printf("地图加载失败: %v", err)
@@ -1032,7 +1043,13 @@ func (s *StageScene) tryPlaceTower(px, py float64) bool {
 		return false // 池满，不扣金
 	}
 	placed.BuildAnim = 0.3
-	tower.RollAndCachePendingChoices(placed, s.wavesCleared)
+	// 战役模式：建塔只解锁攻击模式(第1个)，后续通过付费解锁
+	// 测试模式：按已过波次数自动解锁多个
+	if s.testMode {
+		tower.RollAndCachePendingChoices(placed, s.wavesCleared)
+	} else {
+		tower.RollAndCachePendingChoices(placed, 0)
+	}
 	s.gold -= cost
 	s.gameStats.GoldSpent += cost
 	s.gameStats.TowersBuilt++

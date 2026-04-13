@@ -25,6 +25,9 @@ type Toast struct {
 
 var activeToast *Toast
 
+// ClearToast 清除当前活跃的 toast 通知。
+func ClearToast() { activeToast = nil }
+
 // ShowToast displays a new toast message, replacing any existing one.
 func ShowToast(msg string) {
 	activeToast = &Toast{

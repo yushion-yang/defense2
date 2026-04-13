@@ -41,6 +41,14 @@ var (
 	hvJPBuf    [8]ebiten.TouchID
 )
 
+// ResetHover 清除长按悬浮追踪器的残留状态（局间清理用）。
+func ResetHover() {
+	hvPhase = hvIdle
+	hvFrames = 0
+	hvConsumed = false
+	hvTracking = false
+}
+
 // TickHover updates the long-press tracker. Must be called once per frame
 // at the top of Game.Update(), BEFORE any scene Update.
 func TickHover() {

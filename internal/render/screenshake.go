@@ -16,6 +16,9 @@ var (
 	shakeEnabled bool // 震动开关，false=关闭
 )
 
+// ResetShake 清除残留的屏幕震动状态。
+func ResetShake() { shake = ScreenShake{} }
+
 // SetShakeEnabled 设置屏幕震动开关。
 func SetShakeEnabled(enabled bool) { shakeEnabled = enabled }
 

@@ -183,7 +183,7 @@ func (er *EnemyRenderer) DrawEnemies(screen *ebiten.Image, pool *enemy.Pool, ani
 			bodyAlpha := 1.0
 			if e.IsStealthed() {
 				bodyAlpha = 0.15
-			} else if e.PhaseActive {
+			} else if e.PhaseActive && !e.AbilitySilenced {
 				bodyAlpha = 0.35
 			}
 			// Apply spawn alpha
@@ -203,7 +203,7 @@ func (er *EnemyRenderer) DrawEnemies(screen *ebiten.Image, pool *enemy.Pool, ani
 			}
 			if e.IsStealthed() {
 				bodyColor.A = 38
-			} else if e.PhaseActive {
+			} else if e.PhaseActive && !e.AbilitySilenced {
 				bodyColor.A = 90
 			}
 			// Apply spawn alpha to fallback circle
@@ -211,15 +211,17 @@ func (er *EnemyRenderer) DrawEnemies(screen *ebiten.Image, pool *enemy.Pool, ani
 			draw.FilledCircle(screen, cx, cy, r*float32(spawnScale), bodyColor)
 		}
 
-		// --- Buff behavior VFX (drawn over body) ---
-		if e.GetDamageReduce() > 0 {
-			vfx.DrawDamageReduceShield(screen, cx, cy, float32(e.Radius), animTime)
-		}
-		if e.HasBerserk() && e.BerserkTriggered {
-			vfx.DrawBerserkFlare(screen, cx, cy, float32(e.Radius), animTime)
-		}
-		if e.HasRegen() {
-			vfx.DrawRegenAura(screen, cx, cy, float32(e.Radius), animTime)
+		// --- Buff behavior VFX (drawn over body, hidden when silenced) ---
+		if !e.AbilitySilenced {
+			if e.GetDamageReduce() > 0 {
+				vfx.DrawDamageReduceShield(screen, cx, cy, float32(e.Radius), animTime)
+			}
+			if e.HasBerserk() && e.BerserkTriggered {
+				vfx.DrawBerserkFlare(screen, cx, cy, float32(e.Radius), animTime)
+			}
+			if e.HasRegen() {
+				vfx.DrawRegenAura(screen, cx, cy, float32(e.Radius), animTime)
+			}
 		}
 
 		// --- Status effect body overlays (subtle, sprite-sized) ---

@@ -161,8 +161,7 @@ func (s *ResultScene) Update() error {
 		if s.hitReplayButton(mx, my) {
 			playUIClick(s.switcher)
 			s.switcher.SwitchScene(NewStageSceneWithOpts(s.switcher, StageOptions{
-				MapID: s.data.MapID,
-
+				MapID:        s.data.MapID,
 				ModeID:       s.data.ModeID,
 				DifficultyID: s.data.DifficultyID,
 			}))

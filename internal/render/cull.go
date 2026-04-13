@@ -14,6 +14,9 @@ var viewport struct {
 	active     bool // true when the map needs camera scrolling
 }
 
+// ResetViewport 清除视口裁剪状态（局间清理用）。
+func ResetViewport() { SetViewport(0, 0, false) }
+
 // SetViewport updates the current camera position for viewport culling.
 // Call this once per frame before drawing world entities.
 // When camActive is false (map fits on screen), all entities are considered in-view.
