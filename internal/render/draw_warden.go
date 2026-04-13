@@ -206,7 +206,10 @@ func drawChainEffects(screen *ebiten.Image, s *wardenTypes.ChainState, animTime 
 	for i, l := range s.ChainLinks {
 		links[i] = [4]float64{l.X1, l.Y1, l.X2, l.Y2}
 	}
+	// 批量化链接线段（ThickLine + FilledCircle 走 batch）
+	draw.BeginLineBatch(screen)
 	vfx.DrawChainLinks(screen, links, animTime)
+	draw.FlushLineBatch()
 
 	vfx.DrawShootFlash(screen, float32(s.X), float32(s.Y), s.ShootTimer,
 		theme.WardenChain)

@@ -37,7 +37,11 @@ func DashedLine(screen *ebiten.Image, x1, y1, x2, y2, width, dashLen, gapLen flo
 			sy := y1 + uy*dist
 			ex := x1 + ux*segEnd
 			ey := y1 + uy*segEnd
-			vector.StrokeLine(screen, sx, sy, ex, ey, width, clr, AA())
+			if lineBatch.active {
+				batchStrokeLine(sx, sy, ex, ey, width, clr)
+			} else {
+				vector.StrokeLine(screen, sx, sy, ex, ey, width, clr, AA())
+			}
 			dist = segEnd
 		} else {
 			dist += gapLen
@@ -60,10 +64,12 @@ func DashedCircle(screen *ebiten.Image, cx, cy, r, width, dashLen, gapLen float3
 		return
 	}
 
+	batch := lineBatch.active
+	aa := AA()
 	var dist float64
 	drawing := true
 	draws := 0
-	const maxDashes = 64 // 防止极大半径导致数千次 StrokeLine
+	const maxDashes = 64
 
 	for dist < circumference && draws < maxDashes {
 		if drawing {
@@ -80,7 +86,11 @@ func DashedCircle(screen *ebiten.Image, cx, cy, r, width, dashLen, gapLen float3
 			ex := float32(float64(cx) + float64(r)*math.Cos(endAngle))
 			ey := float32(float64(cy) + float64(r)*math.Sin(endAngle))
 
-			vector.StrokeLine(screen, sx, sy, ex, ey, width, clr, AA())
+			if batch {
+				batchStrokeLine(sx, sy, ex, ey, width, clr)
+			} else {
+				vector.StrokeLine(screen, sx, sy, ex, ey, width, clr, aa)
+			}
 			draws++
 			dist = segEnd
 		} else {

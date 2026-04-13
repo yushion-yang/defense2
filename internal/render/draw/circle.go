@@ -54,6 +54,13 @@ func Diamond(screen *ebiten.Image, cx, cy, r, width float32, clr color.Color) {
 	bottom := [2]float32{scx, scy + sr}
 	left := [2]float32{scx - sr, scy}
 
+	if lineBatch.active {
+		batchStrokeLine(top[0], top[1], right[0], right[1], sw, clr)
+		batchStrokeLine(right[0], right[1], bottom[0], bottom[1], sw, clr)
+		batchStrokeLine(bottom[0], bottom[1], left[0], left[1], sw, clr)
+		batchStrokeLine(left[0], left[1], top[0], top[1], sw, clr)
+		return
+	}
 	aa := AA()
 	vector.StrokeLine(screen, top[0], top[1], right[0], right[1], sw, clr, aa)
 	vector.StrokeLine(screen, right[0], right[1], bottom[0], bottom[1], sw, clr, aa)
@@ -79,6 +86,13 @@ func DiamondRotated(screen *ebiten.Image, cx, cy, r, width float32, angle float6
 		pts[i][1] = scy + o[0]*sin + o[1]*cos
 	}
 
+	if lineBatch.active {
+		batchStrokeLine(pts[0][0], pts[0][1], pts[1][0], pts[1][1], sw, clr)
+		batchStrokeLine(pts[1][0], pts[1][1], pts[2][0], pts[2][1], sw, clr)
+		batchStrokeLine(pts[2][0], pts[2][1], pts[3][0], pts[3][1], sw, clr)
+		batchStrokeLine(pts[3][0], pts[3][1], pts[0][0], pts[0][1], sw, clr)
+		return
+	}
 	aa := AA()
 	vector.StrokeLine(screen, pts[0][0], pts[0][1], pts[1][0], pts[1][1], sw, clr, aa)
 	vector.StrokeLine(screen, pts[1][0], pts[1][1], pts[2][0], pts[2][1], sw, clr, aa)
@@ -88,6 +102,10 @@ func DiamondRotated(screen *ebiten.Image, cx, cy, r, width float32, angle float6
 
 // ThickLine draws a thick line with round caps from (x1,y1) to (x2,y2).
 func ThickLine(screen *ebiten.Image, x1, y1, x2, y2, width float32, clr color.Color) {
+	if lineBatch.active {
+		batchStrokeLine(S32(x1), S32(y1), S32(x2), S32(y2), S32(width), clr)
+		return
+	}
 	var path vector.Path
 	path.MoveTo(S32(x1), S32(y1))
 	path.LineTo(S32(x2), S32(y2))
@@ -209,13 +227,19 @@ func Arc(screen *ebiten.Image, cx, cy, r, startAngle, endAngle, width float32, c
 		segments = 4
 	}
 	step := float64(span) / float64(segments)
+	batch := lineBatch.active
+	aa := AA()
 	var prevX, prevY float32
 	for i := 0; i <= segments; i++ {
 		angle := float64(startAngle) + float64(i)*step
 		x := scx + sr*float32(math.Cos(angle))
 		y := scy + sr*float32(math.Sin(angle))
 		if i > 0 {
-			vector.StrokeLine(screen, prevX, prevY, x, y, sw, clr, AA())
+			if batch {
+				batchStrokeLine(prevX, prevY, x, y, sw, clr)
+			} else {
+				vector.StrokeLine(screen, prevX, prevY, x, y, sw, clr, aa)
+			}
 		}
 		prevX = x
 		prevY = y

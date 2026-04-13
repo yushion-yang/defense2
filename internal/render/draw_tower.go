@@ -63,6 +63,10 @@ func towerAnimScaleAlpha(t *tower.Tower) (float64, float64) {
 
 // DrawTowers renders all placed towers.
 func (tr *TowerRenderer) DrawTowers(screen *ebiten.Image, pool *tower.Pool, selectedTower *tower.Tower, animTime float64) {
+	// 批量化所有塔 VFX 的线段绘制（Diamond/Arc/DashedCircle/ThickLine → 1 次 DrawTriangles）
+	draw.BeginLineBatch(screen)
+	defer draw.FlushLineBatch()
+
 	pool.Each(func(t *tower.Tower) {
 		// Viewport culling: skip off-screen towers (selected tower always rendered)
 		selected := selectedTower != nil && t == selectedTower
