@@ -10,6 +10,29 @@ import (
 	"defense2/internal/core/telemetry"
 )
 
+// PathPoint 路径像素坐标点（纯值类型，避免 import gamemap）。
+type PathPoint struct {
+	X, Y float64
+}
+
+// PathInfo 多路径入口信息。
+type PathInfo struct {
+	ID        string
+	Waypoints []PathPoint
+	Weight    float64
+}
+
+// MapInfo 地图静态信息（首帧填充，不逐帧重建）。
+type MapInfo struct {
+	Grid      [][]int     // 0=empty, 1=path, 2=buildable, 4=spawn, 5=base
+	CellSize  int         // 单元格像素边长（通常 60）
+	Rows      int         // 行数
+	Cols      int         // 列数
+	Waypoints []PathPoint // 默认路径点序列（像素坐标）
+	Paths     []PathInfo  // 多路径入口列表
+	MultiPath bool        // 是否多路径地图
+}
+
 // GameState 游戏状态快照，由 Controller 每帧构建。
 type GameState struct {
 	Tick         int
@@ -40,6 +63,7 @@ type GameState struct {
 	MapPixelH       float64
 	GameSpeed       int
 	Telemetry       telemetry.TelemetrySnapshot
+	MapInfo         *MapInfo // 地图静态数据（首帧填充，后续复用）
 }
 
 // EnemyInfo 敌人快照。
@@ -70,6 +94,8 @@ type EnemyInfo struct {
 	BuffRadius      float64
 	SplitCount      int
 	AbilityIDs      []string
+	PathIndex       int // 当前路径点索引（0=刚出生）
+	PathTotal       int // 路径总点数
 }
 
 // TowerInfo 已建塔快照。
@@ -86,6 +112,7 @@ type TowerInfo struct {
 	HasTarget   bool
 	AttackSpeed float64
 	BaseDamage  float64
+	Kills       int // 累计击杀数
 }
 
 // TowerDefInfo 可用塔类型定义。

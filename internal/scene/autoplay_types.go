@@ -47,6 +47,32 @@ type AutoPlaySnapshot struct {
 
 	// 遥测数据快照
 	Telemetry telemetry.TelemetrySnapshot
+
+	// 地图静态数据（仅首帧填充，后续为 nil）
+	MapInfo *AutoPlayMapInfo
+}
+
+// AutoPlayMapInfo 地图静态信息（路径、网格等）。
+type AutoPlayMapInfo struct {
+	Grid      [][]int          // 0=empty, 1=path, 2=buildable, 4=spawn, 5=base
+	CellSize  int              // 单元格像素边长
+	Rows      int              // 行数
+	Cols      int              // 列数
+	Waypoints []AutoPlayPoint  // 默认路径点序列
+	Paths     []AutoPlayPath   // 多路径入口列表
+	MultiPath bool             // 是否多路径地图
+}
+
+// AutoPlayPoint 像素坐标点。
+type AutoPlayPoint struct {
+	X, Y float64
+}
+
+// AutoPlayPath 多路径入口信息。
+type AutoPlayPath struct {
+	ID        string
+	Waypoints []AutoPlayPoint
+	Weight    float64
 }
 
 // AutoPlayEnemy 敌人快照。
@@ -79,6 +105,8 @@ type AutoPlayEnemy struct {
 	BuffRadius      float64
 	SplitCount      int
 	AbilityIDs      []string
+	PathIndex       int // 当前路径点索引
+	PathTotal       int // 路径总点数
 }
 
 // AutoPlayTower 已建塔快照。
@@ -95,6 +123,7 @@ type AutoPlayTower struct {
 	HasTarget   bool     // 是否正在锁定目标（视觉目录用）
 	AttackSpeed float64
 	BaseDamage  float64
+	Kills       int // 累计击杀数
 }
 
 // AutoPlayCell 可建造位置。

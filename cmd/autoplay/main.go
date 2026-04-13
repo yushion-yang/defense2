@@ -42,6 +42,7 @@ func main() {
 	seed := flag.Int64("seed", 0, "master random seed (0=use timestamp, same seed = reproducible results)")
 	abilitySweep := flag.Bool("ability-sweep", false, "run all ability-level test scenarios")
 	balanceSweep := flag.Bool("balance-sweep", false, "run all balance test scenarios (26 cases)")
+	simSweep := flag.Bool("sim-sweep", false, "run simulation balance sweep (mortal mode, ~68 cases)")
 	marathon := flag.Bool("marathon", false, "run N random games with random map/difficulty/warden/strategy")
 	games := flag.Int("games", 100, "number of games in marathon mode")
 	heapStats := flag.Bool("heap-stats", false, "print heap statistics every 10 games in marathon mode")
@@ -54,7 +55,7 @@ func main() {
 		return
 	}
 
-	orchestrate(*runs, *strategies, *mapID, *difficulty, *warden, *output, *jsonDir, *sweep, *abilitySweep, *balanceSweep, *scenarioName, *seed, *marathon, *games, *heapStats, *modelPath, *vocabPath)
+	orchestrate(*runs, *strategies, *mapID, *difficulty, *warden, *output, *jsonDir, *sweep, *abilitySweep, *balanceSweep, *simSweep, *scenarioName, *seed, *marathon, *games, *heapStats, *modelPath, *vocabPath)
 }
 
 // ─── 编排模式 ───
@@ -76,7 +77,7 @@ type sessionConfig struct {
 	Seed        int64  `json:"seed"`
 }
 
-func orchestrate(runs int, strategies, mapID, difficulty, warden, output, jsonDir string, sweep, abilitySweep, balanceSweep bool, scenarioName string, masterSeed int64, marathon bool, games int, heapStats bool, modelPath, vocabPath string) {
+func orchestrate(runs int, strategies, mapID, difficulty, warden, output, jsonDir string, sweep, abilitySweep, balanceSweep, simSweep bool, scenarioName string, masterSeed int64, marathon bool, games int, heapStats bool, modelPath, vocabPath string) {
 	// 分离模式: --json-dir 由调用方管理目录结构
 	// 初始化 dataFS（父进程需要读取 ability_tests.json 生成测试计划）
 	config.SetDataFS(&defense2.DataFS)
@@ -118,6 +119,11 @@ func orchestrate(runs int, strategies, mapID, difficulty, warden, output, jsonDi
 			})
 		}
 		log.Printf("Balance sweep mode: %d test cases", len(cases))
+	case simSweep:
+		for _, ss := range autoplay.AllSimScenarios() {
+			cases = append(cases, ss.ToTestCase())
+		}
+		log.Printf("Simulation sweep mode: %d test cases", len(cases))
 	case abilitySweep:
 		for _, name := range autoplay.AbilityScenarioNames() {
 			tc := autoplay.ScenarioCase(name, mapID)
@@ -218,6 +224,19 @@ func orchestrate(runs int, strategies, mapID, difficulty, warden, output, jsonDi
 		reportDir = jsonDir
 	}
 	autoplay.GenerateSummaryReport(reportDir)
+
+	// 仿真专用报告
+	if simSweep {
+		simReport, err := autoplay.GenerateSimReport(reportDir)
+		if err != nil {
+			log.Printf("sim report error: %v", err)
+		} else if err := autoplay.WriteSimReport(simReport, reportDir); err != nil {
+			log.Printf("sim report write error: %v", err)
+		} else {
+			log.Printf("Simulation report: %s/sim_report.json", reportDir)
+			log.Printf("Simulation summary: %s/sim_summary.txt", reportDir)
+		}
+	}
 }
 
 // generateMarathonCases 生成 N 个随机测试用例（随机地图/难度/战灵/策略）。
@@ -389,6 +408,8 @@ func restoreStrategy(cfg sessionConfig) autoplay.Strategy {
 		return autoplay.NewGreedyStrategy()
 	case name == "balance_greedy":
 		return autoplay.NewBalanceGreedyStrategy()
+	case name == "competent":
+		return autoplay.NewCompetentStrategy(autoplay.WithCompetentSeed(cfg.Seed))
 	case name == "visual_catalog":
 		return autoplay.NewVisualCatalogStrategy()
 	case name == "llm":
