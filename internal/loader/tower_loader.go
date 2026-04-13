@@ -4,6 +4,8 @@
 package loader
 
 import (
+	"cmp"
+	"slices"
 	"sort"
 	"strings"
 
@@ -79,8 +81,8 @@ func LoadTowerDefs() ([]tower.TowerDef, error) {
 	}
 
 	// 稳定排序按费用升序（费用相同时保持 key 字典序）
-	sort.SliceStable(defs, func(i, j int) bool {
-		return defs[i].Cost < defs[j].Cost
+	slices.SortStableFunc(defs, func(a, b tower.TowerDef) int {
+		return cmp.Compare(a.Cost, b.Cost)
 	})
 	return defs, nil
 }

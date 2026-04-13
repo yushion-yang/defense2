@@ -49,7 +49,8 @@ func DrawActionBar(screen *ebiten.Image, d ActionBarData) {
 		label string
 		clr   color.RGBA
 	}
-	var btns []btnDef
+	var btnsBuf [4]btnDef
+	btns := btnsBuf[:0]
 
 	// Build button: active=green, default=secondary
 	buildClr := theme.ToneSecondary
@@ -83,8 +84,10 @@ func DrawActionBar(screen *ebiten.Image, d ActionBarData) {
 	hoverIdx := ui.HitTestButtonRow(lastActionBarBtnRects, float64(mx), float64(my))
 
 	const btnPadX float32 = 16
-	items := make([]ui.ButtonRowItem, len(btns))
-	names := make([]string, len(btns))
+	var itemBuf [4]ui.ButtonRowItem
+	var nameBuf [4]string
+	items := itemBuf[:len(btns)]
+	names := nameBuf[:len(btns)]
 	totalBtnW := float32(0)
 	for i, b := range btns {
 		items[i] = ui.ButtonRowItem{Label: b.label, Color: b.clr, State: btnStates[b.name], Hovered: i == hoverIdx}

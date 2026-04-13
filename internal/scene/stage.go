@@ -3,6 +3,7 @@
 package scene
 
 import (
+	"cmp"
 	"encoding/json"
 	"fmt"
 	"image"
@@ -13,6 +14,7 @@ import (
 	"math/rand"
 	"os"
 	"path/filepath"
+	"slices"
 	"sort"
 	"strconv"
 	"strings"
@@ -1597,7 +1599,7 @@ func (s *StageScene) saveScenario(name string) {
 	}
 
 	hud.ShowToast(fmt.Sprintf("已保存: %s", path))
-	fmt.Printf("Scenario saved: %s\n", path)
+	log.Printf("Scenario saved: %s", path)
 }
 
 // restoreScenario places towers from a saved scenario snapshot.
@@ -1789,13 +1791,13 @@ func (s *StageScene) restoreScenario(sd *config.ScenarioData) {
 	for _, snap := range sd.Towers {
 		def, ok := defMap[snap.Key]
 		if !ok {
-			fmt.Printf("restoreScenario: unknown tower key %q, skip\n", snap.Key)
+			log.Printf("restoreScenario: unknown tower key %q, skip", snap.Key)
 			continue
 		}
 		center := s.gameMap.CellCenter(snap.Row, snap.Col)
 		t := s.towers.PlaceFromSnapshot(snap.Row, snap.Col, center.X, center.Y, def, snap)
 		if t == nil {
-			fmt.Printf("restoreScenario: pool full, cannot place %s at (%d,%d)\n", snap.Key, snap.Row, snap.Col)
+			log.Printf("restoreScenario: pool full, cannot place %s at (%d,%d)", snap.Key, snap.Row, snap.Col)
 			continue
 		}
 		// Restore abilities (order matters: attack mode first changes style/sprite)
@@ -1816,7 +1818,7 @@ func (s *StageScene) restoreScenario(sd *config.ScenarioData) {
 	for _, snap := range sd.Enemies {
 		cfg, ok := s.spawner.Archetypes[snap.Archetype]
 		if !ok {
-			fmt.Printf("restoreScenario: unknown enemy archetype %q, skip\n", snap.Archetype)
+			log.Printf("restoreScenario: unknown enemy archetype %q, skip", snap.Archetype)
 			continue
 		}
 		// Use snapshot HP as base (bypass wave scaling), scale=1
@@ -1829,7 +1831,7 @@ func (s *StageScene) restoreScenario(sd *config.ScenarioData) {
 		unitCfg.SpeedScale = 1 // use archetype base speed directly
 		e := s.enemies.Spawn(snap.X, snap.Y, baseHP, 50*cfg.SpeedScale, snap.PathIndex, snap.Archetype, &unitCfg)
 		if e == nil {
-			fmt.Printf("restoreScenario: enemy pool full, cannot spawn %s\n", snap.Archetype)
+			log.Printf("restoreScenario: enemy pool full, cannot spawn %s", snap.Archetype)
 			continue
 		}
 		// Override HP if snapshot captured partial health
@@ -2728,11 +2730,15 @@ func (s *StageScene) drawScene(screen *ebiten.Image) {
 	// 道具掉落物飞行动画（屏幕空间）
 	s.drawItemDropsFly(screen)
 
-	// HUD：底部建塔菜单
-	hud.DrawBuildMenu(screen, s.buildBuildMenuData())
+	// HUD：底部建塔菜单（仅菜单打开时构建数据，避免无用分配）
+	if s.imode == modeBuildMenu {
+		hud.DrawBuildMenu(screen, s.buildBuildMenuData())
+	}
 
-	// HUD：道具面板
-	hud.DrawItemPanel(screen, s.buildItemPanelData())
+	// HUD：道具面板（仅面板打开时构建数据）
+	if s.imode == modeItemPanel || s.imode == modeItemDrag {
+		hud.DrawItemPanel(screen, s.buildItemPanelData())
+	}
 
 	// HUD：底部中央面板（塔信息 和 战灵信息 互斥）
 	if s.selectedTower != nil {
@@ -2864,8 +2870,8 @@ func (s *StageScene) buildBuildMenuData() hud.BuildMenuData {
 
 	// Attack style variant cards (display only)
 	attackAbils := tower.AbilitiesForCategory(config.AbilityCatAttack)
-	sort.Slice(attackAbils, func(i, j int) bool {
-		return attackAbils[i].Type < attackAbils[j].Type
+	slices.SortFunc(attackAbils, func(a, b *config.AbilityDef) int {
+		return cmp.Compare(a.Type, b.Type)
 	})
 	for _, ab := range attackAbils {
 		sprKey := tower.AbilitySpriteKey(ab.Type)
@@ -2918,22 +2924,21 @@ func (s *StageScene) buildItemPanelCards() []hud.ItemCardVM {
 	return cards
 }
 
+// attackStyleDescMap 攻击方式纯功能描述（不含数值），包级变量避免每帧重建。
+var attackStyleDescMap = map[string]string{
+	"enhance":     "一次性全面提升基础属性",
+	"scatter":     "发射多颗弹丸，锥形散布",
+	"wideBeam":    "宽光束穿透所有敌人",
+	"spinAoe":     "旋转范围伤害，内圈额外加伤",
+	"bounce":      "弹射多个敌人",
+	"splash":      "命中后对周围敌人造成溅射伤害",
+	"multiTarget": "同时攻击多个目标",
+	"radial":      "360度发射穿透弹，1.2倍射程",
+}
+
 // attackStyleDesc 返回攻击方式的纯功能描述（不含数值）。
 func attackStyleDesc(abilType string) string {
-	m := map[string]string{
-		"enhance":     "一次性全面提升基础属性",
-		"scatter":     "发射多颗弹丸，锥形散布",
-		"wideBeam":    "宽光束穿透所有敌人",
-		"spinAoe":     "旋转范围伤害，内圈额外加伤",
-		"bounce":      "弹射多个敌人",
-		"splash":      "命中后对周围敌人造成溅射伤害",
-		"multiTarget": "同时攻击多个目标",
-		"radial":      "360度发射穿透弹，1.2倍射程",
-	}
-	if d, ok := m[abilType]; ok {
-		return d
-	}
-	return ""
+	return attackStyleDescMap[abilType]
 }
 
 // towerRoleTags 返回塔的角色标签和颜色。
@@ -3143,7 +3148,7 @@ func convertArchetypesToSpawnConfigs(archetypes map[string]*config.EnemyArchetyp
 		for _, ref := range a.Abilities {
 			def := config.ResolveEnemyAbility(ref)
 			if def == nil {
-				fmt.Printf("convertArchetypes: unknown enemy ability %q for %s\n", ref.Type, key)
+				log.Printf("convertArchetypes: unknown enemy ability %q for %s", ref.Type, key)
 				continue
 			}
 			applyEnemyAbilityToSpawnConfig(sc, def)

@@ -13,15 +13,15 @@ type WaveComposition struct {
 
 // SortedEnemies 返回按原型名字母序排列的 (archetype, weight) 列表。
 // 用于确定性迭代（map 遍历顺序不稳定）。
-func (wc *WaveComposition) SortedEnemies() [][2]interface{} {
+func (wc *WaveComposition) SortedEnemies() [][2]any {
 	keys := make([]string, 0, len(wc.Enemies))
 	for k := range wc.Enemies {
 		keys = append(keys, k)
 	}
 	sort.Strings(keys)
-	result := make([][2]interface{}, len(keys))
+	result := make([][2]any, len(keys))
 	for i, k := range keys {
-		result[i] = [2]interface{}{k, wc.Enemies[k]}
+		result[i] = [2]any{k, wc.Enemies[k]}
 	}
 	return result
 }

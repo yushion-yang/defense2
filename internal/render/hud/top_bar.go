@@ -132,7 +132,8 @@ func DrawTopBar(screen *ebiten.Image, d TopBarData) {
 		label string
 		clr   color.RGBA
 	}
-	var btns []btnDef
+	var btnsBuf [8]btnDef
+	btns := btnsBuf[:0]
 
 	// 测试模式：造怪 + 调试按钮
 	if d.TestMode {
@@ -166,8 +167,10 @@ func DrawTopBar(screen *ebiten.Image, d TopBarData) {
 	mx, my := draw.CursorPos()
 	tbHoverIdx := ui.HitTestButtonRow(lastTopBarBtnRects, float64(mx), float64(my))
 
-	items := make([]ui.ButtonRowItem, len(btns))
-	names := make([]string, len(btns))
+	var itemBuf [8]ui.ButtonRowItem
+	var nameBuf [8]string
+	items := itemBuf[:len(btns)]
+	names := nameBuf[:len(btns)]
 	for i, b := range btns {
 		items[i] = ui.ButtonRowItem{Label: b.label, Color: b.clr, Hovered: i == tbHoverIdx}
 		names[i] = b.name

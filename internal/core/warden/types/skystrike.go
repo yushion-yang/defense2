@@ -4,8 +4,9 @@
 package types
 
 import (
+	"cmp"
 	"fmt"
-	"sort"
+	"slices"
 
 	"defense2/internal/core/enemy"
 	"defense2/internal/core/warden"
@@ -71,7 +72,7 @@ func (b *SkystrikeBehavior) Type() string { return "skystrike" }
 //
 //	specialInterval=1, multiTargets=3, multiDmgRatio=2.0,
 //	burstHits=5, burstDmgRatio=1.0, hpTargets=3, hpPercent=0.10
-func (b *SkystrikeBehavior) Init(w *warden.Warden) interface{} {
+func (b *SkystrikeBehavior) Init(w *warden.Warden) any {
 	p := w.Params
 	return &SkystrikeState{
 		WardenState: warden.WardenState{
@@ -251,10 +252,10 @@ func pickNearest(list []*enemy.Enemy, n int, sx, sy float64) []*enemy.Enemy {
 	if n >= len(list) {
 		return list
 	}
-	sort.Slice(list, func(i, j int) bool {
-		di := (list[i].X-sx)*(list[i].X-sx) + (list[i].Y-sy)*(list[i].Y-sy)
-		dj := (list[j].X-sx)*(list[j].X-sx) + (list[j].Y-sy)*(list[j].Y-sy)
-		return di < dj
+	slices.SortFunc(list, func(a, b *enemy.Enemy) int {
+		da := (a.X-sx)*(a.X-sx) + (a.Y-sy)*(a.Y-sy)
+		db := (b.X-sx)*(b.X-sx) + (b.Y-sy)*(b.Y-sy)
+		return cmp.Compare(da, db)
 	})
 	return list[:n]
 }

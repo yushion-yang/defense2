@@ -7,7 +7,7 @@ import "fmt"
 // LifecycleHandler 单个生命周期回调处理器。
 type LifecycleHandler struct {
 	ID    string                                      // 处理器唯一标识（用于去重和移除）
-	Apply func(e *Enemy, ctx interface{}) interface{} // 回调函数
+	Apply func(e *Enemy, ctx any) any // 回调函数
 }
 
 // LifecycleHandlers 敌人生命周期回调集合。
@@ -71,7 +71,7 @@ func RemoveHandler(e *Enemy, event string, handlerID string) {
 
 // EmitEvent 触发指定事件的所有回调，返回各回调的结果。
 // 单个回调 panic 不会影响后续回调执行。
-func EmitEvent(e *Enemy, event string, ctx interface{}) []interface{} {
+func EmitEvent(e *Enemy, event string, ctx any) []any {
 	if e.Lifecycle == nil {
 		return nil
 	}
@@ -81,7 +81,7 @@ func EmitEvent(e *Enemy, event string, ctx interface{}) []interface{} {
 		return nil
 	}
 
-	results := make([]interface{}, 0, len(*handlers))
+	results := make([]any, 0, len(*handlers))
 	for _, h := range *handlers {
 		result := safeApply(h, e, ctx)
 		results = append(results, result)
@@ -104,7 +104,7 @@ func getHandlers(e *Enemy, event string) *[]LifecycleHandler {
 }
 
 // safeApply 安全执行回调，捕获 panic 防止崩溃。
-func safeApply(h LifecycleHandler, e *Enemy, ctx interface{}) (result interface{}) {
+func safeApply(h LifecycleHandler, e *Enemy, ctx any) (result any) {
 	defer func() {
 		if r := recover(); r != nil {
 			result = fmt.Errorf("lifecycle handler %q panicked: %v", h.ID, r)

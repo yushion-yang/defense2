@@ -4,9 +4,10 @@
 package types
 
 import (
+	"cmp"
 	"fmt"
 	"math"
-	"sort"
+	"slices"
 
 	"defense2/internal/core/buff"
 	"defense2/internal/core/strength"
@@ -45,7 +46,7 @@ func (b *ChainBehavior) Type() string { return "chain" }
 // Init initializes chain warden behavior.
 // NOTE: Stats are currently hardcoded. See config/wardens/wardens.json for planned externalization.
 // Hardcoded: damage=12, attackInterval=1.2, range=150, moveSpeed=300, chainRange=150, bonusPerTower=10
-func (b *ChainBehavior) Init(w *warden.Warden) interface{} {
+func (b *ChainBehavior) Init(w *warden.Warden) any {
 	p := w.Params
 	return &ChainState{
 		WardenState: warden.WardenState{
@@ -131,8 +132,8 @@ func chainTowerBuff(w *warden.Warden, s *ChainState, ctx *warden.TickContext) {
 			}
 		}
 	}
-	sort.Slice(edges, func(a, b int) bool {
-		return edges[a].dist < edges[b].dist
+	slices.SortFunc(edges, func(a, b towerEdge) int {
+		return cmp.Compare(a.dist, b.dist)
 	})
 
 	// Kruskal MST：按距离从小到大合并，只保留合并成功的边（即 MST 边）

@@ -4,8 +4,9 @@
 package scene
 
 import (
+	"cmp"
 	"image/color"
-	"sort"
+	"slices"
 	"strconv"
 
 	"defense2/internal/config"
@@ -111,8 +112,8 @@ func (s *WavePreviewScene) computeWaves() {
 	for w := 1; w <= m.Waves; w++ {
 		entries, total, isBoss := enemy.PreviewWave(w, m.Waves, sc.Scaling.EnemiesPerWave, s.archetypes)
 		// Sort entries by weight (count) descending for readability.
-		sort.Slice(entries, func(i, j int) bool {
-			return entries[i].Count > entries[j].Count
+		slices.SortFunc(entries, func(a, b enemy.WavePreviewEntry) int {
+			return cmp.Compare(b.Count, a.Count)
 		})
 		s.waves = append(s.waves, wavePreviewRow{
 			Wave:    w,

@@ -49,7 +49,7 @@ func (b *EnvoyBehavior) Type() string { return "envoy" }
 // Hardcoded: damage=12, attackInterval=1.2, range=140, moveSpeed=320,
 //
 //	buffInterval=10, buffDuration=6, buffThreshold=100, permGrant=5
-func (b *EnvoyBehavior) Init(w *warden.Warden) interface{} {
+func (b *EnvoyBehavior) Init(w *warden.Warden) any {
 	p := w.Params
 	return &EnvoyState{
 		WardenState: warden.WardenState{

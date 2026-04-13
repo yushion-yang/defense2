@@ -4,8 +4,9 @@
 package tower
 
 import (
+	"cmp"
 	"math/rand"
-	"sort"
+	"slices"
 
 	"defense2/internal/config"
 )
@@ -284,8 +285,8 @@ func AbilitiesForCategory(category int) []*config.AbilityDef {
 			result = append(result, def)
 		}
 	}
-	sort.Slice(result, func(i, j int) bool {
-		return result[i].Type < result[j].Type
+	slices.SortFunc(result, func(a, b *config.AbilityDef) int {
+		return cmp.Compare(a.Type, b.Type)
 	})
 	return result
 }

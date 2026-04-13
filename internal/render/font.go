@@ -16,10 +16,10 @@ import (
 )
 
 // FontManager 管理双字体源并缓存不同尺寸的 MultiFace。
+// 单线程使用（Ebitengine Update/Draw 同一 goroutine），不需要 mutex。
 type FontManager struct {
 	primary  *text.GoTextFaceSource // JetBrains Mono（英文/数字优先）
 	fallback *text.GoTextFaceSource // Noto Sans SC（中文回退）
-	mu       sync.Mutex
 	faces    map[float64]text.Face
 }
 
@@ -55,8 +55,6 @@ func NewDualFontManager(primaryTTF, fallbackTTF []byte) (*FontManager, error) {
 // Face 返回指定尺寸的字体（缓存复用）。
 // 有双字体时返回 MultiFace，否则返回单 GoTextFace。
 func (fm *FontManager) Face(size float64) text.Face {
-	fm.mu.Lock()
-	defer fm.mu.Unlock()
 	if f, ok := fm.faces[size]; ok {
 		return f
 	}

@@ -30,7 +30,7 @@ func cmpInt(actual int, op string, expected int) bool {
 	return cmp(float64(actual), op, float64(expected))
 }
 
-func failMsg(t *testing.T, label string, actual interface{}, op string, expected interface{}) {
+func failMsg(t *testing.T, label string, actual any, op string, expected any) {
 	t.Helper()
 	t.Fatalf("%s: got %v, expected %s %v", label, actual, op, expected)
 }

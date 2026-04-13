@@ -6,7 +6,7 @@ package render
 import (
 	"image/color"
 	"math"
-	"sort"
+	"slices"
 
 	"defense2/internal/core/enemy"
 	"defense2/internal/render/anim"
@@ -341,8 +341,16 @@ func repulseHPBars(bars []hpBarEntry) {
 		return
 	}
 	// Sort by the bar's screen Y position (enemy cy - barOffY).
-	sort.Slice(bars, func(i, j int) bool {
-		return (bars[i].cy - bars[i].barOffY) < (bars[j].cy - bars[j].barOffY)
+	slices.SortFunc(bars, func(a, b hpBarEntry) int {
+		ay := a.cy - a.barOffY
+		by := b.cy - b.barOffY
+		if ay < by {
+			return -1
+		}
+		if ay > by {
+			return 1
+		}
+		return 0
 	})
 
 	const minGap float32 = 2 // minimum vertical gap between bars

@@ -14,8 +14,8 @@ import (
 
 // Storage 持久化存储接口。
 type Storage interface {
-	Get(key string, target interface{}) error  // 读取并反序列化
-	Set(key string, value interface{}) error   // 序列化并写入
+	Get(key string, target any) error  // 读取并反序列化
+	Set(key string, value any) error   // 序列化并写入
 	Has(key string) bool                       // 键是否存在
 	Delete(key string) error                   // 删除
 }
@@ -49,7 +49,7 @@ func (s *FileStorage) path(key string) string {
 }
 
 // Get 读取并反序列化键值。
-func (s *FileStorage) Get(key string, target interface{}) error {
+func (s *FileStorage) Get(key string, target any) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	data, err := os.ReadFile(s.path(key))
@@ -60,7 +60,7 @@ func (s *FileStorage) Get(key string, target interface{}) error {
 }
 
 // Set 序列化并原子写入键值（write-to-temp-then-rename 防崩溃丢数据）。
-func (s *FileStorage) Set(key string, value interface{}) error {
+func (s *FileStorage) Set(key string, value any) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	data, err := json.MarshalIndent(value, "", "  ")
@@ -102,7 +102,7 @@ func NewMemoryStorage() *MemoryStorage {
 }
 
 // Get 从内存读取。
-func (s *MemoryStorage) Get(key string, target interface{}) error {
+func (s *MemoryStorage) Get(key string, target any) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	data, ok := s.data[key]
@@ -113,7 +113,7 @@ func (s *MemoryStorage) Get(key string, target interface{}) error {
 }
 
 // Set 写入内存。
-func (s *MemoryStorage) Set(key string, value interface{}) error {
+func (s *MemoryStorage) Set(key string, value any) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	data, err := json.Marshal(value)

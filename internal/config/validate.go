@@ -8,7 +8,7 @@ import "fmt"
 // ValidationError 配置校验错误。
 type ValidationError struct {
 	Field   string      // 字段路径
-	Value   interface{} // 实际值
+	Value   any // 实际值
 	Message string      // 错误描述
 }
 

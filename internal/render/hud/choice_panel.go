@@ -23,7 +23,7 @@ type ChoiceOption struct {
 	Segments    []AbilitySegment // 带颜色的分段描述（优先于 Description）
 	Tier        string           // 品质（normal/rare/epic）
 	Icon        string           // 图标 key（对应 assets/icons/abilities/{icon}.png）
-	Data        interface{}      // 携带数据（调用方自行断言）
+	Data        any      // 携带数据（调用方自行断言）
 }
 
 // IconReader 图标资源读取接口。

@@ -41,9 +41,9 @@ func (o *DebugOverlay) Toggle() {
 }
 
 // DrawWorld 绘制世界空间调试信息（射程圈、瞄准线等）。
-// towers/enemies 使用 interface{} 避免 render 包导入 core 包。
+// towers/enemies 使用 any 避免 render 包导入 core 包。
 // 调用方应传入切片长度，具体的范围/瞄准渲染由调用方在 stage 层处理。
-func (o *DebugOverlay) DrawWorld(screen *ebiten.Image, towers, enemies interface{}) {
+func (o *DebugOverlay) DrawWorld(screen *ebiten.Image, towers, enemies any) {
 	if !o.Enabled {
 		return
 	}
@@ -134,7 +134,7 @@ func (o *DebugOverlay) DrawPerf(screen *ebiten.Image, pt PerfVM) {
 }
 
 // countSlice 尝试获取切片长度（辅助函数）。
-func countSlice(v interface{}) int {
+func countSlice(v any) int {
 	if v == nil {
 		return 0
 	}
