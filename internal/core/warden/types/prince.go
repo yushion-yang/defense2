@@ -89,7 +89,7 @@ func (b *princeBehavior) Type() string { return "prince" }
 //
 //	fireballInterval=4, fireballDmgRatio=2.0, fireballSpeed=500,
 //	fireballRadius=20, trailDpsRatio=0.5, trailDuration=2.0
-func (b *princeBehavior) Init(w *warden.Warden) interface{} {
+func (b *princeBehavior) Init(w *warden.Warden) any {
 	p := w.Params
 	return &PrinceState{
 		WardenState: warden.WardenState{

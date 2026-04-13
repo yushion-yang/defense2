@@ -4,8 +4,9 @@
 package enemy
 
 import (
+	"cmp"
 	"math/rand"
-	"sort"
+	"slices"
 
 	"defense2/internal/config"
 	"defense2/internal/core/buff"
@@ -40,8 +41,8 @@ func getComposition(wave int) []waveEntry {
 		entries = append(entries, waveEntry{archetype: arch, weight: w})
 	}
 	// 按原型名排序，确保 map 迭代的不确定顺序不影响后续计算
-	sort.Slice(entries, func(i, j int) bool {
-		return entries[i].archetype < entries[j].archetype
+	slices.SortFunc(entries, func(a, b waveEntry) int {
+		return cmp.Compare(a.archetype, b.archetype)
 	})
 	return entries
 }
@@ -370,8 +371,8 @@ func (s *Spawner) NextWavePreview() (entries []WavePreviewEntry, totalCount int,
 		})
 	}
 	// 按原型名排序，保证每帧渲染顺序一致（map 迭代无序）
-	sort.Slice(entries, func(i, j int) bool {
-		return entries[i].Archetype < entries[j].Archetype
+	slices.SortFunc(entries, func(a, b WavePreviewEntry) int {
+		return cmp.Compare(a.Archetype, b.Archetype)
 	})
 	return entries, totalCount, isBoss
 }
@@ -556,7 +557,7 @@ func (s *Spawner) pickRandomArchetype() string {
 	if len(candidates) == 0 {
 		return "normal"
 	}
-	sort.Strings(candidates) // 保证稳定顺序
+	slices.Sort(candidates) // 保证稳定顺序
 	return candidates[rand.Intn(len(candidates))]
 }
 

@@ -176,18 +176,20 @@ func wardenShootColor(typ string) color.RGBA {
 // ── 火灵特效：火球飞行 + 地面燃烧区 ──
 
 func drawPrinceEffects(screen *ebiten.Image, s *wardenTypes.PrinceState, animTime float64) {
-	trails := make([]vfx.FireTrailVFX, len(s.Trails))
-	for i, t := range s.Trails {
-		trails[i] = vfx.FireTrailVFX{X: t.X, Y: t.Y, Life: t.Life, MaxLife: t.MaxLife, Radius: t.Radius}
+	var trailBuf [32]vfx.FireTrailVFX
+	trails := trailBuf[:0]
+	for _, t := range s.Trails {
+		trails = append(trails, vfx.FireTrailVFX{X: t.X, Y: t.Y, Life: t.Life, MaxLife: t.MaxLife, Radius: t.Radius})
 	}
 	vfx.DrawFireTrails(screen, trails, animTime)
 
-	fireballs := make([]vfx.FireballVFX, len(s.Fireballs))
-	for i, fb := range s.Fireballs {
-		fireballs[i] = vfx.FireballVFX{
+	var fbBuf [16]vfx.FireballVFX
+	fireballs := fbBuf[:0]
+	for _, fb := range s.Fireballs {
+		fireballs = append(fireballs, vfx.FireballVFX{
 			X: fb.X, Y: fb.Y, Radius: fb.Radius, Progress: fb.Progress,
 			StartX: fb.StartX, StartY: fb.StartY, EndX: fb.EndX, EndY: fb.EndY,
-		}
+		})
 	}
 	vfx.DrawFireballs(screen, fireballs, animTime)
 }
@@ -202,9 +204,10 @@ func drawCoreEffects(screen *ebiten.Image, s *warden.WardenState) {
 // ── 聚能特效：串联电弧 ──
 
 func drawChainEffects(screen *ebiten.Image, s *wardenTypes.ChainState, animTime float64) {
-	links := make([][4]float64, len(s.ChainLinks))
-	for i, l := range s.ChainLinks {
-		links[i] = [4]float64{l.X1, l.Y1, l.X2, l.Y2}
+	var linkBuf [16][4]float64
+	links := linkBuf[:0]
+	for _, l := range s.ChainLinks {
+		links = append(links, [4]float64{l.X1, l.Y1, l.X2, l.Y2})
 	}
 	// 批量化链接线段（ThickLine + FilledCircle 走 batch）
 	draw.BeginLineBatch(screen)

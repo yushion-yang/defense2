@@ -1,9 +1,10 @@
 package engine
 
 import (
+	"cmp"
 	"math"
 	"math/rand"
-	"sort"
+	"slices"
 )
 
 // SampleConfig controls token sampling behavior.
@@ -69,6 +70,6 @@ func argmax(v []float32) int {
 func topKThreshold(logits []float32, k int) float32 {
 	sorted := make([]float32, len(logits))
 	copy(sorted, logits)
-	sort.Slice(sorted, func(i, j int) bool { return sorted[i] > sorted[j] })
+	slices.SortFunc(sorted, func(a, b float32) int { return cmp.Compare(b, a) })
 	return sorted[k-1]
 }

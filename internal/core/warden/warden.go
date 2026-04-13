@@ -24,7 +24,7 @@ type Warden struct {
 	GrowthOnWaveClear float64            // 每次通波增加的强度（从配置读取）
 	Params            map[string]float64 // 类型专属参数（从 JSON config 加载）
 	// 类型特定状态由 Behavior.Tick 内部管理
-	State interface{} // 类型特定内部状态（由行为实现持有）
+	State any // 类型特定内部状态（由行为实现持有）
 }
 
 // TickContext 战灵 tick 时传入的上下文。
@@ -44,7 +44,7 @@ type Behavior interface {
 	// Type 返回行为类型标识。
 	Type() string
 	// Init 初始化类型特定状态，返回 State 对象。
-	Init(w *Warden) interface{}
+	Init(w *Warden) any
 	// Tick 每帧逻辑更新。
 	Tick(w *Warden, ctx *TickContext)
 }

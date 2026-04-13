@@ -3,8 +3,9 @@
 package autoplay
 
 import (
+	"cmp"
 	"math"
-	"sort"
+	"slices"
 )
 
 // GreedyStrategy 贪心策略。
@@ -103,7 +104,7 @@ func (s *GreedyStrategy) decideBuild(state *GameState) []Action {
 	if len(defs) == 0 {
 		return nil
 	}
-	sort.Slice(defs, func(i, j int) bool { return defs[i].score > defs[j].score })
+	slices.SortFunc(defs, func(a, b scored) int { return cmp.Compare(b.score, a.score) })
 	best := defs[0].def
 
 	// 选最佳位置（优先靠近地图中心，因为路径通常经过中心）

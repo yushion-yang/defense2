@@ -8,7 +8,7 @@ import (
 	"fmt"
 	"image/color"
 	"math"
-	"sort"
+	"slices"
 	"strings"
 
 	"defense2/internal/config"
@@ -130,7 +130,7 @@ func BuildInfoPanelVM(t *tower.Tower, sellValue int, wavesCleared int, testMode 
 	for id := range auraMap {
 		auraIDs = append(auraIDs, id)
 	}
-	sort.Strings(auraIDs)
+	slices.Sort(auraIDs)
 	for _, id := range auraIDs {
 		agg := auraMap[id]
 		desc := buffLabel(agg.id)

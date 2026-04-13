@@ -1,9 +1,10 @@
 // bus.go — 全局事件总线。
 // 发布/订阅模式，用于游戏系统间的松耦合通信。
 // 任何系统可以 Emit 事件，其他系统通过 On 订阅。
+//
+// 注意：Bus 设计为单线程使用（Ebitengine 的 Update/Draw 同一 goroutine），
+// 不使用 mutex。如果需要跨 goroutine 使用，需外部加锁。
 package event
-
-import "sync"
 
 // 预定义事件名称常量
 const (
@@ -17,11 +18,10 @@ const (
 )
 
 // BusHandler 事件总线处理函数类型（区别于 handler.go 中的事件效果 Handler）。
-type BusHandler func(args ...interface{})
+type BusHandler func(args ...any)
 
-// Bus 事件总线，线程安全的发布/订阅中心。
+// Bus 事件总线，单线程发布/订阅中心。
 type Bus struct {
-	mu        sync.RWMutex          // 读写锁保护 listeners
 	listeners map[string][]busEntry // 事件名 → 处理器列表
 	nextID    int                   // 处理器 ID 自增器
 }
@@ -42,11 +42,9 @@ func NewBus() *Bus {
 // On 订阅指定事件，返回取消订阅函数。
 // 同一处理器可多次订阅，每次返回独立的取消函数。
 func (b *Bus) On(event string, fn BusHandler) func() {
-	b.mu.Lock()
 	b.nextID++
 	id := b.nextID
 	b.listeners[event] = append(b.listeners[event], busEntry{id: id, fn: fn})
-	b.mu.Unlock()
 
 	// 返回取消函数（闭包捕获 id）
 	return func() {
@@ -56,24 +54,26 @@ func (b *Bus) On(event string, fn BusHandler) func() {
 
 // Off 移除指定事件的所有处理器。
 func (b *Bus) Off(event string) {
-	b.mu.Lock()
 	delete(b.listeners, event)
-	b.mu.Unlock()
 }
 
 // Emit 触发指定事件，按注册顺序调用所有处理器。
-// 内部复制一份处理器列表后再遍历，防止回调中修改订阅导致死锁。
-func (b *Bus) Emit(event string, args ...interface{}) {
-	b.mu.RLock()
+// 内部复制一份处理器列表后再遍历，防止回调中修改订阅导致迭代错乱。
+func (b *Bus) Emit(event string, args ...any) {
 	entries := b.listeners[event]
-	if len(entries) == 0 {
-		b.mu.RUnlock()
+	n := len(entries)
+	if n == 0 {
 		return
 	}
-	// 复制一份避免并发修改
-	snapshot := make([]busEntry, len(entries))
+	// 栈数组避免堆分配（最多 16 个处理器走快速路径）
+	var buf [16]busEntry
+	var snapshot []busEntry
+	if n <= len(buf) {
+		snapshot = buf[:n]
+	} else {
+		snapshot = make([]busEntry, n)
+	}
 	copy(snapshot, entries)
-	b.mu.RUnlock()
 
 	for _, entry := range snapshot {
 		entry.fn(args...)
@@ -82,22 +82,16 @@ func (b *Bus) Emit(event string, args ...interface{}) {
 
 // Clear 清除所有事件的所有处理器。
 func (b *Bus) Clear() {
-	b.mu.Lock()
-	b.listeners = make(map[string][]busEntry)
-	b.mu.Unlock()
+	clear(b.listeners)
 }
 
 // ListenerCount 返回指定事件的订阅者数量（调试用）。
 func (b *Bus) ListenerCount(event string) int {
-	b.mu.RLock()
-	defer b.mu.RUnlock()
 	return len(b.listeners[event])
 }
 
 // removeByID 按 ID 移除特定处理器。
 func (b *Bus) removeByID(event string, id int) {
-	b.mu.Lock()
-	defer b.mu.Unlock()
 	entries := b.listeners[event]
 	for i, e := range entries {
 		if e.id == id {
@@ -110,7 +104,7 @@ func (b *Bus) removeByID(event string, id int) {
 // OnTyped 订阅类型化事件，返回取消函数。
 // 当 payload 类型不匹配时静默跳过（不 panic）。
 func OnTyped[T any](b *Bus, evt string, fn func(T)) func() {
-	return b.On(evt, func(args ...interface{}) {
+	return b.On(evt, func(args ...any) {
 		if len(args) > 0 {
 			if payload, ok := args[0].(T); ok {
 				fn(payload)

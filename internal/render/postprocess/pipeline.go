@@ -371,6 +371,14 @@ func hasActiveRipples(fx *Effects) bool {
 	return false
 }
 
+// lightKeys 预计算 uniform 键名，避免每帧字符串拼接（28 alloc/frame → 0）。
+var lightKeys = [MaxLights]struct{ X, Y, R, G, B, Radius, Intensity string }{
+	{"LightX0", "LightY0", "LightR0", "LightG0", "LightB0", "LightRadius0", "LightIntensity0"},
+	{"LightX1", "LightY1", "LightR1", "LightG1", "LightB1", "LightRadius1", "LightIntensity1"},
+	{"LightX2", "LightY2", "LightR2", "LightG2", "LightB2", "LightRadius2", "LightIntensity2"},
+	{"LightX3", "LightY3", "LightR3", "LightG3", "LightB3", "LightRadius3", "LightIntensity3"},
+}
+
 // buildLightingUniforms updates p.uLighting in-place and returns it.
 // Positions and radii are converted to physical pixels via draw.S().
 func (p *Pipeline) buildLightingUniforms() map[string]any {
@@ -384,24 +392,24 @@ func (p *Pipeline) buildLightingUniforms() map[string]any {
 	p.uLighting["Ambient"] = float32(ls.Ambient)
 	p.uLighting["LightCount"] = float32(count)
 	for i := 0; i < MaxLights; i++ {
-		suffix := [4]string{"0", "1", "2", "3"}[i]
+		k := &lightKeys[i]
 		if i < count {
 			l := &ls.Lights[i]
-			p.uLighting["LightX"+suffix] = float32(draw.S(l.X))
-			p.uLighting["LightY"+suffix] = float32(draw.S(l.Y))
-			p.uLighting["LightR"+suffix] = float32(l.Color.R) / 255
-			p.uLighting["LightG"+suffix] = float32(l.Color.G) / 255
-			p.uLighting["LightB"+suffix] = float32(l.Color.B) / 255
-			p.uLighting["LightRadius"+suffix] = float32(draw.S(l.Radius))
-			p.uLighting["LightIntensity"+suffix] = float32(l.Intensity)
+			p.uLighting[k.X] = float32(draw.S(l.X))
+			p.uLighting[k.Y] = float32(draw.S(l.Y))
+			p.uLighting[k.R] = float32(l.Color.R) / 255
+			p.uLighting[k.G] = float32(l.Color.G) / 255
+			p.uLighting[k.B] = float32(l.Color.B) / 255
+			p.uLighting[k.Radius] = float32(draw.S(l.Radius))
+			p.uLighting[k.Intensity] = float32(l.Intensity)
 		} else {
-			p.uLighting["LightX"+suffix] = float32(0)
-			p.uLighting["LightY"+suffix] = float32(0)
-			p.uLighting["LightR"+suffix] = float32(0)
-			p.uLighting["LightG"+suffix] = float32(0)
-			p.uLighting["LightB"+suffix] = float32(0)
-			p.uLighting["LightRadius"+suffix] = float32(1)
-			p.uLighting["LightIntensity"+suffix] = float32(0)
+			p.uLighting[k.X] = float32(0)
+			p.uLighting[k.Y] = float32(0)
+			p.uLighting[k.R] = float32(0)
+			p.uLighting[k.G] = float32(0)
+			p.uLighting[k.B] = float32(0)
+			p.uLighting[k.Radius] = float32(1)
+			p.uLighting[k.Intensity] = float32(0)
 		}
 	}
 	return p.uLighting

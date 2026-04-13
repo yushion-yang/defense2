@@ -6,7 +6,7 @@ package debug
 
 import (
 	"runtime"
-	"sort"
+	"slices"
 	"time"
 )
 
@@ -153,7 +153,7 @@ func Percentile(vals []float64, pct int) float64 {
 	}
 	cp := make([]float64, n)
 	copy(cp, vals)
-	sort.Float64s(cp)
+	slices.Sort(cp)
 	idx := (pct * n) / 100
 	if idx >= n {
 		idx = n - 1

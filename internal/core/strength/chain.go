@@ -32,17 +32,25 @@ type ChainInfo struct {
 // O(n²) 距离检查 + Union-Find（路径压缩 + 按秩合并）。
 // 对 2+ 成员的链组，bonus = groupSize * ChainStrengthPerTower。
 // 如果塔有 StrengthData，自动调用 SetTemp("chain", bonus)。
+// 栈数组缓冲区，避免每帧堆分配（塔池最大 64）。
+var (
+	chainParentBuf [64]int
+	chainRankBuf   [64]int
+	chainGroupBuf  [64]int // groupSize indexed by tower index (after path compression, root ∈ [0,n))
+)
+
 func RebuildChainNetwork(towers []ChainTower) map[int]ChainInfo {
 	n := len(towers)
 	if n == 0 {
-		return make(map[int]ChainInfo)
+		return nil
 	}
 
-	// 初始化 Union-Find
-	parent := make([]int, n)
-	rank := make([]int, n)
+	// 初始化 Union-Find（栈数组，零堆分配）
+	parent := chainParentBuf[:n]
+	rank := chainRankBuf[:n]
 	for i := 0; i < n; i++ {
 		parent[i] = i
+		rank[i] = 0
 	}
 
 	// O(n²) 距离检查，距离 <= ChainDistance 的塔合并
@@ -58,22 +66,26 @@ func RebuildChainNetwork(towers []ChainTower) map[int]ChainInfo {
 		}
 	}
 
-	// 统计每个链组的大小
-	groupSize := make(map[int]int)
+	// 统计每个链组的大小（栈数组替代 map）
+	gs := chainGroupBuf[:n]
+	for i := range gs {
+		gs[i] = 0
+	}
 	for i := 0; i < n; i++ {
 		root := UFFind(parent, i)
-		groupSize[root]++
+		gs[root]++
 	}
 
 	// 构建结果
 	result := make(map[int]ChainInfo, n)
+	perTower := ChainStrengthPerTower()
 	for i := 0; i < n; i++ {
 		root := UFFind(parent, i)
-		size := groupSize[root]
+		size := gs[root]
 
 		var bonus float64
 		if size >= 2 {
-			bonus = float64(size) * ChainStrengthPerTower()
+			bonus = float64(size) * perTower
 		}
 
 		result[towers[i].Index] = ChainInfo{

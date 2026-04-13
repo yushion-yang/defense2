@@ -4,7 +4,7 @@ package config
 
 import (
 	"encoding/json"
-	"fmt"
+	"log"
 	"sync"
 )
 
@@ -57,11 +57,11 @@ func loadEconomySpec() *EconomySpec {
 	}
 	data, err := dataFS.ReadFile("config/systems/economy.json")
 	if err != nil {
-		fmt.Printf("[economy_spec] load error: %v\n", err)
+		log.Printf("[economy_spec] load error: %v", err)
 		return spec
 	}
 	if err := json.Unmarshal(data, spec); err != nil {
-		fmt.Printf("[economy_spec] parse error: %v\n", err)
+		log.Printf("[economy_spec] parse error: %v", err)
 	}
 	return spec
 }

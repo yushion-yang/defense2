@@ -4,9 +4,9 @@
 package scene
 
 import (
-	"fmt"
 	"image/color"
 	"math"
+	"strconv"
 
 	"defense2/internal/core/game"
 	"defense2/internal/i18n"
@@ -348,7 +348,7 @@ func (s *SettingsScene) drawSlider(screen *ebiten.Image, fm *render.FontManager,
 
 	// 百分比文字（右侧）
 	pct := int(math.Round(value * 100))
-	pctText := fmt.Sprintf("%d%%", pct)
+	pctText := strconv.Itoa(pct) + "%"
 	pctX := float64(barX) + float64(barW) + 16
 	pctY := labelY
 	fm.DrawText(screen, pctText, pctX, pctY, theme.FontBody, theme.TextBody)
