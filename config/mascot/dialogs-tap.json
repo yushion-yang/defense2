@@ -4,7 +4,14 @@
     "scene": "*",
     "trigger": "mascot_tap",
     "lines": [
-      {"text": "哎呀！吓我一跳！", "expression": "surprised", "autoAdvance": 3}
+      {
+        "text": {
+          "zh": "哎呀！吓我一跳！",
+          "en": ""
+        },
+        "expression": "surprised",
+        "autoAdvance": 3
+      }
     ],
     "once": false,
     "priority": 1
@@ -14,7 +21,14 @@
     "scene": "*",
     "trigger": "mascot_tap",
     "lines": [
-      {"text": "你是不是把我当解压玩具了？", "expression": "surprised", "autoAdvance": 4}
+      {
+        "text": {
+          "zh": "你是不是把我当解压玩具了？",
+          "en": ""
+        },
+        "expression": "surprised",
+        "autoAdvance": 4
+      }
     ],
     "once": false,
     "priority": 1
@@ -24,7 +38,14 @@
     "scene": "*",
     "trigger": "mascot_tap",
     "lines": [
-      {"text": "我不是按钮！不会触发什么机关的！", "expression": "surprised", "autoAdvance": 4}
+      {
+        "text": {
+          "zh": "我不是按钮！不会触发什么机关的！",
+          "en": ""
+        },
+        "expression": "surprised",
+        "autoAdvance": 4
+      }
     ],
     "once": false,
     "priority": 1
@@ -34,8 +55,22 @@
     "scene": "*",
     "trigger": "mascot_tap",
     "lines": [
-      {"text": "...你已经是今天第几次戳我了？", "expression": "idle", "autoAdvance": 4},
-      {"text": "算了，我也没在计数。", "expression": "talk", "autoAdvance": 3}
+      {
+        "text": {
+          "zh": "...你已经是今天第几次戳我了？",
+          "en": ""
+        },
+        "expression": "idle",
+        "autoAdvance": 4
+      },
+      {
+        "text": {
+          "zh": "算了，我也没在计数。",
+          "en": ""
+        },
+        "expression": "talk",
+        "autoAdvance": 3
+      }
     ],
     "once": false,
     "priority": 1
@@ -45,8 +80,22 @@
     "scene": "*",
     "trigger": "mascot_tap",
     "lines": [
-      {"text": "你知道为什么人类喜欢戳可爱的东西吗？", "expression": "idle", "autoAdvance": 4},
-      {"text": "...我也不知道，但我确实很可爱。", "expression": "happy", "autoAdvance": 4}
+      {
+        "text": {
+          "zh": "你知道为什么人类喜欢戳可爱的东西吗？",
+          "en": ""
+        },
+        "expression": "idle",
+        "autoAdvance": 4
+      },
+      {
+        "text": {
+          "zh": "...我也不知道，但我确实很可爱。",
+          "en": ""
+        },
+        "expression": "happy",
+        "autoAdvance": 4
+      }
     ],
     "once": false,
     "priority": 1
@@ -56,8 +105,22 @@
     "scene": "*",
     "trigger": "mascot_tap",
     "lines": [
-      {"text": "再戳一下试试？", "expression": "idle", "autoAdvance": 3},
-      {"text": "...才怪！别戳了！", "expression": "surprised", "autoAdvance": 3}
+      {
+        "text": {
+          "zh": "再戳一下试试？",
+          "en": ""
+        },
+        "expression": "idle",
+        "autoAdvance": 3
+      },
+      {
+        "text": {
+          "zh": "...才怪！别戳了！",
+          "en": ""
+        },
+        "expression": "surprised",
+        "autoAdvance": 3
+      }
     ],
     "once": false,
     "priority": 1
@@ -67,7 +130,14 @@
     "scene": "*",
     "trigger": "mascot_tap",
     "lines": [
-      {"text": "我刚才在打盹...被你吵醒了。", "expression": "idle", "autoAdvance": 4}
+      {
+        "text": {
+          "zh": "我刚才在打盹...被你吵醒了。",
+          "en": ""
+        },
+        "expression": "idle",
+        "autoAdvance": 4
+      }
     ],
     "once": false,
     "priority": 1
@@ -77,7 +147,14 @@
     "scene": "*",
     "trigger": "mascot_tap",
     "lines": [
-      {"text": "嗯嗯，我醒着呢，没有偷懒！", "expression": "surprised", "autoAdvance": 3}
+      {
+        "text": {
+          "zh": "嗯嗯，我醒着呢，没有偷懒！",
+          "en": ""
+        },
+        "expression": "surprised",
+        "autoAdvance": 3
+      }
     ],
     "once": false,
     "priority": 1
@@ -87,8 +164,22 @@
     "scene": "*",
     "trigger": "mascot_tap",
     "lines": [
-      {"text": "哼，不理你了。", "expression": "idle", "autoAdvance": 3},
-      {"text": "...好吧还是理你一下。", "expression": "happy", "autoAdvance": 3}
+      {
+        "text": {
+          "zh": "哼，不理你了。",
+          "en": ""
+        },
+        "expression": "idle",
+        "autoAdvance": 3
+      },
+      {
+        "text": {
+          "zh": "...好吧还是理你一下。",
+          "en": ""
+        },
+        "expression": "happy",
+        "autoAdvance": 3
+      }
     ],
     "once": false,
     "priority": 1
@@ -98,7 +189,14 @@
     "scene": "*",
     "trigger": "mascot_tap",
     "lines": [
-      {"text": "你有这个时间戳我，不如去建座塔？", "expression": "talk", "autoAdvance": 4}
+      {
+        "text": {
+          "zh": "你有这个时间戳我，不如去建座塔？",
+          "en": ""
+        },
+        "expression": "talk",
+        "autoAdvance": 4
+      }
     ],
     "once": false,
     "priority": 1
@@ -108,8 +206,22 @@
     "scene": "*",
     "trigger": "mascot_tap",
     "lines": [
-      {"text": "说实话，我的点击判定比你看到的大。", "expression": "talk", "autoAdvance": 4},
-      {"text": "所以你以为没戳到我，其实都戳到了。", "expression": "idle", "autoAdvance": 4}
+      {
+        "text": {
+          "zh": "说实话，我的点击判定比你看到的大。",
+          "en": ""
+        },
+        "expression": "talk",
+        "autoAdvance": 4
+      },
+      {
+        "text": {
+          "zh": "所以你以为没戳到我，其实都戳到了。",
+          "en": ""
+        },
+        "expression": "idle",
+        "autoAdvance": 4
+      }
     ],
     "once": false,
     "priority": 1
@@ -119,7 +231,14 @@
     "scene": "*",
     "trigger": "mascot_tap",
     "lines": [
-      {"text": "你好呀~今天心情怎么样？", "expression": "happy", "autoAdvance": 4}
+      {
+        "text": {
+          "zh": "你好呀~今天心情怎么样？",
+          "en": ""
+        },
+        "expression": "happy",
+        "autoAdvance": 4
+      }
     ],
     "once": false,
     "priority": 1
@@ -129,7 +248,14 @@
     "scene": "*",
     "trigger": "mascot_tap",
     "lines": [
-      {"text": "又来了又来了！每次都戳同一个地方！", "expression": "surprised", "autoAdvance": 4}
+      {
+        "text": {
+          "zh": "又来了又来了！每次都戳同一个地方！",
+          "en": ""
+        },
+        "expression": "surprised",
+        "autoAdvance": 4
+      }
     ],
     "once": false,
     "priority": 1
@@ -139,8 +265,22 @@
     "scene": "*",
     "trigger": "mascot_tap",
     "lines": [
-      {"text": "我正在思考宇宙的终极奥秘...", "expression": "idle", "autoAdvance": 4},
-      {"text": "好吧其实我在发呆。", "expression": "happy", "autoAdvance": 3}
+      {
+        "text": {
+          "zh": "我正在思考宇宙的终极奥秘...",
+          "en": ""
+        },
+        "expression": "idle",
+        "autoAdvance": 4
+      },
+      {
+        "text": {
+          "zh": "好吧其实我在发呆。",
+          "en": ""
+        },
+        "expression": "happy",
+        "autoAdvance": 3
+      }
     ],
     "once": false,
     "priority": 1
@@ -150,7 +290,14 @@
     "scene": "*",
     "trigger": "mascot_tap",
     "lines": [
-      {"text": "戳了也不会掉金币的哦~", "expression": "talk", "autoAdvance": 3}
+      {
+        "text": {
+          "zh": "戳了也不会掉金币的哦~",
+          "en": ""
+        },
+        "expression": "talk",
+        "autoAdvance": 3
+      }
     ],
     "once": false,
     "priority": 1
@@ -160,7 +307,14 @@
     "scene": "*",
     "trigger": "mascot_tap",
     "lines": [
-      {"text": "好啦好啦，你赢了，我笑还不行吗？", "expression": "happy", "autoAdvance": 4}
+      {
+        "text": {
+          "zh": "好啦好啦，你赢了，我笑还不行吗？",
+          "en": ""
+        },
+        "expression": "happy",
+        "autoAdvance": 4
+      }
     ],
     "once": false,
     "priority": 1
@@ -170,8 +324,22 @@
     "scene": "*",
     "trigger": "mascot_tap",
     "lines": [
-      {"text": "我正在心里写一首诗...", "expression": "idle", "autoAdvance": 3},
-      {"text": "「玫瑰是红的，戳我是烦的」。", "expression": "talk", "autoAdvance": 4}
+      {
+        "text": {
+          "zh": "我正在心里写一首诗...",
+          "en": ""
+        },
+        "expression": "idle",
+        "autoAdvance": 3
+      },
+      {
+        "text": {
+          "zh": "「玫瑰是红的，戳我是烦的」。",
+          "en": ""
+        },
+        "expression": "talk",
+        "autoAdvance": 4
+      }
     ],
     "once": false,
     "priority": 1
@@ -181,7 +349,14 @@
     "scene": "*",
     "trigger": "mascot_tap",
     "lines": [
-      {"text": "你对NPC都这么热情的吗？", "expression": "idle", "autoAdvance": 4}
+      {
+        "text": {
+          "zh": "你对NPC都这么热情的吗？",
+          "en": ""
+        },
+        "expression": "idle",
+        "autoAdvance": 4
+      }
     ],
     "once": false,
     "priority": 1
@@ -191,7 +366,14 @@
     "scene": "*",
     "trigger": "mascot_tap",
     "lines": [
-      {"text": "收到！信号良好！不用再点了！", "expression": "surprised", "autoAdvance": 4}
+      {
+        "text": {
+          "zh": "收到！信号良好！不用再点了！",
+          "en": ""
+        },
+        "expression": "surprised",
+        "autoAdvance": 4
+      }
     ],
     "once": false,
     "priority": 1
@@ -201,8 +383,22 @@
     "scene": "*",
     "trigger": "mascot_tap",
     "lines": [
-      {"text": "每次被戳，我的好感度都会+1哦。", "expression": "happy", "autoAdvance": 4},
-      {"text": "...开玩笑的，这游戏没有好感度系统。", "expression": "talk", "autoAdvance": 4}
+      {
+        "text": {
+          "zh": "每次被戳，我的好感度都会+1哦。",
+          "en": ""
+        },
+        "expression": "happy",
+        "autoAdvance": 4
+      },
+      {
+        "text": {
+          "zh": "...开玩笑的，这游戏没有好感度系统。",
+          "en": ""
+        },
+        "expression": "talk",
+        "autoAdvance": 4
+      }
     ],
     "once": false,
     "priority": 1
@@ -212,8 +408,22 @@
     "scene": "*",
     "trigger": "mascot_tap",
     "lines": [
-      {"text": "我只是一堆像素而已...", "expression": "idle", "autoAdvance": 3},
-      {"text": "才怪！我可是有灵魂的像素！", "expression": "happy", "autoAdvance": 4}
+      {
+        "text": {
+          "zh": "我只是一堆像素而已...",
+          "en": ""
+        },
+        "expression": "idle",
+        "autoAdvance": 3
+      },
+      {
+        "text": {
+          "zh": "才怪！我可是有灵魂的像素！",
+          "en": ""
+        },
+        "expression": "happy",
+        "autoAdvance": 4
+      }
     ],
     "once": false,
     "priority": 1
@@ -223,7 +433,14 @@
     "scene": "*",
     "trigger": "mascot_tap",
     "lines": [
-      {"text": "如果我也能戳你就好了...", "expression": "idle", "autoAdvance": 4}
+      {
+        "text": {
+          "zh": "如果我也能戳你就好了...",
+          "en": ""
+        },
+        "expression": "idle",
+        "autoAdvance": 4
+      }
     ],
     "once": false,
     "priority": 1
@@ -233,8 +450,22 @@
     "scene": "*",
     "trigger": "mascot_tap",
     "lines": [
-      {"text": "我在练习装死...看，很逼真吧？", "expression": "idle", "autoAdvance": 4},
-      {"text": "...失败了，你发现我眨眼了。", "expression": "happy", "autoAdvance": 3}
+      {
+        "text": {
+          "zh": "我在练习装死...看，很逼真吧？",
+          "en": ""
+        },
+        "expression": "idle",
+        "autoAdvance": 4
+      },
+      {
+        "text": {
+          "zh": "...失败了，你发现我眨眼了。",
+          "en": ""
+        },
+        "expression": "happy",
+        "autoAdvance": 3
+      }
     ],
     "once": false,
     "priority": 1
@@ -244,7 +475,14 @@
     "scene": "*",
     "trigger": "mascot_tap",
     "lines": [
-      {"text": "正经一点！我可是你的战术顾问！", "expression": "talk", "autoAdvance": 4}
+      {
+        "text": {
+          "zh": "正经一点！我可是你的战术顾问！",
+          "en": ""
+        },
+        "expression": "talk",
+        "autoAdvance": 4
+      }
     ],
     "once": false,
     "priority": 1
@@ -254,7 +492,14 @@
     "scene": "*",
     "trigger": "mascot_tap",
     "lines": [
-      {"text": "嘻嘻，被你找到了~", "expression": "happy", "autoAdvance": 3}
+      {
+        "text": {
+          "zh": "嘻嘻，被你找到了~",
+          "en": ""
+        },
+        "expression": "happy",
+        "autoAdvance": 3
+      }
     ],
     "once": false,
     "priority": 1
@@ -264,8 +509,22 @@
     "scene": "*",
     "trigger": "mascot_tap",
     "lines": [
-      {"text": "你是在测试我的反应速度吗？", "expression": "surprised", "autoAdvance": 4},
-      {"text": "很遗憾，我的反应是写好的脚本。", "expression": "talk", "autoAdvance": 4}
+      {
+        "text": {
+          "zh": "你是在测试我的反应速度吗？",
+          "en": ""
+        },
+        "expression": "surprised",
+        "autoAdvance": 4
+      },
+      {
+        "text": {
+          "zh": "很遗憾，我的反应是写好的脚本。",
+          "en": ""
+        },
+        "expression": "talk",
+        "autoAdvance": 4
+      }
     ],
     "once": false,
     "priority": 1
@@ -275,8 +534,22 @@
     "scene": "*",
     "trigger": "mascot_tap",
     "lines": [
-      {"text": "你知道吗，在你不看我的时候...", "expression": "idle", "autoAdvance": 4},
-      {"text": "我其实也没在动。因为没人渲染我。", "expression": "talk", "autoAdvance": 4}
+      {
+        "text": {
+          "zh": "你知道吗，在你不看我的时候...",
+          "en": ""
+        },
+        "expression": "idle",
+        "autoAdvance": 4
+      },
+      {
+        "text": {
+          "zh": "我其实也没在动。因为没人渲染我。",
+          "en": ""
+        },
+        "expression": "talk",
+        "autoAdvance": 4
+      }
     ],
     "once": false,
     "priority": 1
@@ -286,7 +559,14 @@
     "scene": "*",
     "trigger": "mascot_tap",
     "lines": [
-      {"text": "今天的你也很有精神呢！", "expression": "happy", "autoAdvance": 3}
+      {
+        "text": {
+          "zh": "今天的你也很有精神呢！",
+          "en": ""
+        },
+        "expression": "happy",
+        "autoAdvance": 3
+      }
     ],
     "once": false,
     "priority": 1
@@ -296,8 +576,22 @@
     "scene": "*",
     "trigger": "mascot_tap",
     "lines": [
-      {"text": "轻点轻点！我是虚拟的但也会疼的！", "expression": "surprised", "autoAdvance": 4},
-      {"text": "...大概吧。", "expression": "idle", "autoAdvance": 3}
+      {
+        "text": {
+          "zh": "轻点轻点！我是虚拟的但也会疼的！",
+          "en": ""
+        },
+        "expression": "surprised",
+        "autoAdvance": 4
+      },
+      {
+        "text": {
+          "zh": "...大概吧。",
+          "en": ""
+        },
+        "expression": "idle",
+        "autoAdvance": 3
+      }
     ],
     "once": false,
     "priority": 1
@@ -307,8 +601,22 @@
     "scene": "*",
     "trigger": "mascot_tap",
     "lines": [
-      {"text": "专注游戏！别老看我！", "expression": "talk", "autoAdvance": 3},
-      {"text": "...虽然看我也没什么不好。", "expression": "happy", "autoAdvance": 3}
+      {
+        "text": {
+          "zh": "专注游戏！别老看我！",
+          "en": ""
+        },
+        "expression": "talk",
+        "autoAdvance": 3
+      },
+      {
+        "text": {
+          "zh": "...虽然看我也没什么不好。",
+          "en": ""
+        },
+        "expression": "happy",
+        "autoAdvance": 3
+      }
     ],
     "once": false,
     "priority": 1
@@ -318,8 +626,22 @@
     "scene": "*",
     "trigger": "mascot_tap",
     "lines": [
-      {"text": "打扰了，请问您有什么需求？", "expression": "talk", "autoAdvance": 4},
-      {"text": "...我为什么在用客服语气。", "expression": "idle", "autoAdvance": 3}
+      {
+        "text": {
+          "zh": "打扰了，请问您有什么需求？",
+          "en": ""
+        },
+        "expression": "talk",
+        "autoAdvance": 4
+      },
+      {
+        "text": {
+          "zh": "...我为什么在用客服语气。",
+          "en": ""
+        },
+        "expression": "idle",
+        "autoAdvance": 3
+      }
     ],
     "once": false,
     "priority": 1
@@ -329,8 +651,22 @@
     "scene": "*",
     "trigger": "mascot_tap",
     "lines": [
-      {"text": "有人说连续戳我50次会有彩蛋...", "expression": "idle", "autoAdvance": 4},
-      {"text": "那个人是骗你的。", "expression": "talk", "autoAdvance": 3}
+      {
+        "text": {
+          "zh": "有人说连续戳我50次会有彩蛋...",
+          "en": ""
+        },
+        "expression": "idle",
+        "autoAdvance": 4
+      },
+      {
+        "text": {
+          "zh": "那个人是骗你的。",
+          "en": ""
+        },
+        "expression": "talk",
+        "autoAdvance": 3
+      }
     ],
     "once": false,
     "priority": 1
@@ -340,7 +676,14 @@
     "scene": "*",
     "trigger": "mascot_tap",
     "lines": [
-      {"text": "我每天的工作：被戳、说话、被戳、说话。", "expression": "idle", "autoAdvance": 4}
+      {
+        "text": {
+          "zh": "我每天的工作：被戳、说话、被戳、说话。",
+          "en": ""
+        },
+        "expression": "idle",
+        "autoAdvance": 4
+      }
     ],
     "once": false,
     "priority": 1
@@ -350,7 +693,14 @@
     "scene": "*",
     "trigger": "mascot_tap",
     "lines": [
-      {"text": "能被你记住，我已经很满足了。", "expression": "happy", "autoAdvance": 4}
+      {
+        "text": {
+          "zh": "能被你记住，我已经很满足了。",
+          "en": ""
+        },
+        "expression": "happy",
+        "autoAdvance": 4
+      }
     ],
     "once": false,
     "priority": 1
@@ -360,8 +710,22 @@
     "scene": "*",
     "trigger": "mascot_tap",
     "lines": [
-      {"text": "我猜你下一个动作是...再戳一次。", "expression": "idle", "autoAdvance": 4},
-      {"text": "猜对了吧？我可是预言家。", "expression": "happy", "autoAdvance": 3}
+      {
+        "text": {
+          "zh": "我猜你下一个动作是...再戳一次。",
+          "en": ""
+        },
+        "expression": "idle",
+        "autoAdvance": 4
+      },
+      {
+        "text": {
+          "zh": "猜对了吧？我可是预言家。",
+          "en": ""
+        },
+        "expression": "happy",
+        "autoAdvance": 3
+      }
     ],
     "once": false,
     "priority": 1
@@ -371,7 +735,14 @@
     "scene": "*",
     "trigger": "mascot_tap",
     "lines": [
-      {"text": "咦？你刚才是不是犹豫了一下才点的？", "expression": "talk", "autoAdvance": 4}
+      {
+        "text": {
+          "zh": "咦？你刚才是不是犹豫了一下才点的？",
+          "en": ""
+        },
+        "expression": "talk",
+        "autoAdvance": 4
+      }
     ],
     "once": false,
     "priority": 1
@@ -381,7 +752,14 @@
     "scene": "*",
     "trigger": "mascot_tap",
     "lines": [
-      {"text": "谢谢你来看我~独自待着有点寂寞呢。", "expression": "happy", "autoAdvance": 4}
+      {
+        "text": {
+          "zh": "谢谢你来看我~独自待着有点寂寞呢。",
+          "en": ""
+        },
+        "expression": "happy",
+        "autoAdvance": 4
+      }
     ],
     "once": false,
     "priority": 1
@@ -391,7 +769,14 @@
     "scene": "*",
     "trigger": "mascot_tap",
     "lines": [
-      {"text": "据说我的表情有四种，你见过几种了？", "expression": "talk", "autoAdvance": 4}
+      {
+        "text": {
+          "zh": "据说我的表情有四种，你见过几种了？",
+          "en": ""
+        },
+        "expression": "talk",
+        "autoAdvance": 4
+      }
     ],
     "once": false,
     "priority": 1
@@ -401,8 +786,22 @@
     "scene": "*",
     "trigger": "mascot_tap",
     "lines": [
-      {"text": "你的手指和我的像素之间隔着一块屏幕。", "expression": "idle", "autoAdvance": 4},
-      {"text": "但这一点也不影响我们的友谊！", "expression": "happy", "autoAdvance": 4}
+      {
+        "text": {
+          "zh": "你的手指和我的像素之间隔着一块屏幕。",
+          "en": ""
+        },
+        "expression": "idle",
+        "autoAdvance": 4
+      },
+      {
+        "text": {
+          "zh": "但这一点也不影响我们的友谊！",
+          "en": ""
+        },
+        "expression": "happy",
+        "autoAdvance": 4
+      }
     ],
     "once": false,
     "priority": 1
@@ -412,8 +811,22 @@
     "scene": "*",
     "trigger": "mascot_tap",
     "lines": [
-      {"text": "如果有一天你不再戳我了...", "expression": "idle", "autoAdvance": 4},
-      {"text": "我大概会有一点点想你吧。", "expression": "happy", "autoAdvance": 4}
+      {
+        "text": {
+          "zh": "如果有一天你不再戳我了...",
+          "en": ""
+        },
+        "expression": "idle",
+        "autoAdvance": 4
+      },
+      {
+        "text": {
+          "zh": "我大概会有一点点想你吧。",
+          "en": ""
+        },
+        "expression": "happy",
+        "autoAdvance": 4
+      }
     ],
     "once": false,
     "priority": 1

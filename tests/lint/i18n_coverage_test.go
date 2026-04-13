@@ -165,6 +165,80 @@ func TestEnJsonNoChinese(t *testing.T) {
 	}
 }
 
+// mascotDialogFiles 列出所有萌妹对话 JSON（与 loader.go 中保持同步）。
+var mascotDialogFiles = []string{
+	"config/mascot/dialogs-title.json",
+	"config/mascot/dialogs-stage.json",
+	"config/mascot/dialogs-select.json",
+	"config/mascot/dialogs-common.json",
+	"config/mascot/dialogs-idle.json",
+	"config/mascot/dialogs-idle-2.json",
+	"config/mascot/dialogs-idle-3.json",
+	"config/mascot/dialogs-tap.json",
+	"config/mascot/dialogs-meta.json",
+}
+
+// mascotLine 用于解析萌妹对话 JSON 中的 line 结构。
+type mascotLine struct {
+	Text map[string]string `json:"text"`
+}
+
+type mascotDialog struct {
+	ID    string       `json:"id"`
+	Lines []mascotLine `json:"lines"`
+}
+
+// TestMascotDialogsBilingual 确保所有萌妹对话 JSON 的 text 字段都有 zh 和 en key。
+// en 为空字符串时仅警告（翻译分批进行），但缺少 key 直接 fail。
+func TestMascotDialogsBilingual(t *testing.T) {
+	root := findProjectRoot(t)
+
+	missingKey := 0
+	emptyEN := 0
+	totalLines := 0
+
+	for _, file := range mascotDialogFiles {
+		path := filepath.Join(root, file)
+		data, err := os.ReadFile(path)
+		if err != nil {
+			t.Logf("skip %s: %v", file, err)
+			continue
+		}
+		var dialogs []mascotDialog
+		if err := json.Unmarshal(data, &dialogs); err != nil {
+			t.Errorf("parse %s: %v", file, err)
+			continue
+		}
+		for _, d := range dialogs {
+			for lineIdx, line := range d.Lines {
+				totalLines++
+				if line.Text == nil {
+					t.Errorf("%s: dialog %q line %d: text is null", file, d.ID, lineIdx)
+					missingKey++
+					continue
+				}
+				if _, ok := line.Text["zh"]; !ok {
+					t.Errorf("%s: dialog %q line %d: missing 'zh' key", file, d.ID, lineIdx)
+					missingKey++
+				}
+				if en, ok := line.Text["en"]; !ok {
+					t.Errorf("%s: dialog %q line %d: missing 'en' key", file, d.ID, lineIdx)
+					missingKey++
+				} else if en == "" {
+					emptyEN++
+				}
+			}
+		}
+	}
+
+	if emptyEN > 0 {
+		t.Logf("%d/%d mascot dialog lines have empty English translations (pending batch translation).", emptyEN, totalLines)
+	}
+	if missingKey > 0 {
+		t.Logf("%d mascot dialog lines are missing required locale keys.", missingKey)
+	}
+}
+
 func itoa(n int) string {
 	if n < 10 {
 		return string(rune('0' + n))

@@ -147,6 +147,8 @@ func (s *LoadingScene) Update() error {
 			log.Printf("[mascot] dialog load error: %v", err)
 		}
 		s.g.mascot = mascot.NewGuide(mascotDialogs, nil)
+		s.g.mascot.SetLocale(i18n.Locale())
+		i18n.OnChange(func() { s.g.mascot.SetLocale(i18n.Locale()) })
 		s.g.mascot.InitConditions(mascot.DefaultConditions())
 		s.g.mascotAnim = render.LoadMascotSprites(config.GetAssetFS())
 		s.progress = 0.90

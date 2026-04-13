@@ -4,8 +4,22 @@
     "scene": "title",
     "trigger": "scene_enter",
     "lines": [
-      {"text": "欢迎回来，指挥官！", "expression": "happy", "autoAdvance": 4},
-      {"text": "准备好迎接新的挑战了吗？", "expression": "talk", "autoAdvance": 3}
+      {
+        "text": {
+          "zh": "欢迎回来，指挥官！",
+          "en": "Welcome back, Commander!"
+        },
+        "expression": "happy",
+        "autoAdvance": 4
+      },
+      {
+        "text": {
+          "zh": "准备好迎接新的挑战了吗？",
+          "en": "Ready for a new challenge?"
+        },
+        "expression": "talk",
+        "autoAdvance": 3
+      }
     ],
     "once": false,
     "priority": 10
@@ -15,7 +29,14 @@
     "scene": "title",
     "trigger": "scene_enter",
     "lines": [
-      {"text": "你来啦！我等你好久了~", "expression": "happy", "autoAdvance": 4}
+      {
+        "text": {
+          "zh": "你来啦！我等你好久了~",
+          "en": "There you are! I have been waiting for you~"
+        },
+        "expression": "happy",
+        "autoAdvance": 4
+      }
     ],
     "once": false,
     "priority": 10
@@ -25,7 +46,14 @@
     "scene": "title",
     "trigger": "scene_enter",
     "lines": [
-      {"text": "指挥官！今天要打哪张图？", "expression": "talk", "autoAdvance": 4}
+      {
+        "text": {
+          "zh": "指挥官！今天要打哪张图？",
+          "en": "Commander! Which map shall we tackle today?"
+        },
+        "expression": "talk",
+        "autoAdvance": 4
+      }
     ],
     "once": false,
     "priority": 10
@@ -35,7 +63,14 @@
     "scene": "title",
     "trigger": "scene_enter",
     "lines": [
-      {"text": "又见面了！准备好大杀四方了吗？", "expression": "happy", "autoAdvance": 4}
+      {
+        "text": {
+          "zh": "又见面了！准备好大杀四方了吗？",
+          "en": "Good to see you again! Ready to dominate?"
+        },
+        "expression": "happy",
+        "autoAdvance": 4
+      }
     ],
     "once": false,
     "priority": 10
@@ -45,7 +80,14 @@
     "scene": "title",
     "trigger": "scene_enter",
     "lines": [
-      {"text": "欢迎回来~战场已经为你准备好了！", "expression": "talk", "autoAdvance": 4}
+      {
+        "text": {
+          "zh": "欢迎回来~战场已经为你准备好了！",
+          "en": "Welcome back~ The battlefield is all set for you!"
+        },
+        "expression": "talk",
+        "autoAdvance": 4
+      }
     ],
     "once": false,
     "priority": 10
