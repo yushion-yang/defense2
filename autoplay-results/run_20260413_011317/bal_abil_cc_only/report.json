@@ -1,0 +1,359 @@
+{
+  "session_id": "bal_abil_cc_only",
+  "strategy": "balance_greedy",
+  "map_id": "map_01",
+  "difficulty": "normal",
+  "warden": "prince",
+  "seed": 1776013997018227171,
+  "result": "victory",
+  "waves_survived": 12,
+  "total_waves": 12,
+  "final_gold": 6,
+  "final_lives": 0,
+  "total_kills": 0,
+  "duration_ticks": 7689,
+  "towers_built": [
+    {
+      "key": "basic",
+      "count": 3,
+      "total_cost": 510,
+      "total_dps": 76
+    }
+  ],
+  "wave_log": [
+    {
+      "wave": 1,
+      "enemies": 1,
+      "leaked": 0,
+      "gold_earned": 16,
+      "gold_spent": 50
+    },
+    {
+      "wave": 2,
+      "enemies": 7,
+      "leaked": 0,
+      "gold_earned": 20,
+      "gold_spent": 0
+    },
+    {
+      "wave": 3,
+      "enemies": 14,
+      "leaked": 0,
+      "gold_earned": 24,
+      "gold_spent": 50
+    },
+    {
+      "wave": 4,
+      "enemies": 21,
+      "leaked": 5,
+      "gold_earned": 28,
+      "gold_spent": 30
+    },
+    {
+      "wave": 5,
+      "enemies": 27,
+      "leaked": 15,
+      "gold_earned": 32,
+      "gold_spent": 20
+    },
+    {
+      "wave": 6,
+      "enemies": 22,
+      "leaked": 0,
+      "gold_earned": 36,
+      "gold_spent": 40
+    },
+    {
+      "wave": 7,
+      "enemies": 25,
+      "leaked": 0,
+      "gold_earned": 40,
+      "gold_spent": 30
+    },
+    {
+      "wave": 8,
+      "enemies": 34,
+      "leaked": 0,
+      "gold_earned": 44,
+      "gold_spent": 40
+    },
+    {
+      "wave": 9,
+      "enemies": 26,
+      "leaked": 0,
+      "gold_earned": 48,
+      "gold_spent": 50
+    },
+    {
+      "wave": 10,
+      "enemies": 32,
+      "leaked": 0,
+      "gold_earned": 52,
+      "gold_spent": 40
+    },
+    {
+      "wave": 11,
+      "enemies": 35,
+      "leaked": 0,
+      "gold_earned": 56,
+      "gold_spent": 60
+    },
+    {
+      "wave": 12,
+      "enemies": 31,
+      "leaked": 0,
+      "gold_earned": 0,
+      "gold_spent": 50
+    }
+  ],
+  "anomalies": [
+    {
+      "tick": 1786,
+      "type": "economy_stall",
+      "detail": "wave=5 gold=8 \u003c minCost=50 for 20s (economy may be too tight)",
+      "severity": 1
+    }
+  ],
+  "coverage": {
+    "towers_used": [
+      "basic"
+    ],
+    "attack_styles_fired": [
+      "projectile"
+    ],
+    "enemy_archetypes_seen": [
+      "steadfast",
+      "colossus",
+      "drainer",
+      "phaser",
+      "summoner",
+      "splitter",
+      "normal",
+      "swarm",
+      "purifier",
+      "phantom",
+      "buffer",
+      "runner",
+      "armored",
+      "tank",
+      "ironwill",
+      "healer",
+      "shielder"
+    ]
+  },
+  "dps_snapshots": [
+    614.9999999999992,
+    899.9999999999987,
+    899.9999999999987,
+    899.9999999999987,
+    899.9999999999987,
+    899.9999999999987,
+    899.9999999999987,
+    1249.9999999999984,
+    2399.999999999997,
+    2651.9999999999964,
+    3479.9999999999955,
+    3479.9999999999955,
+    3479.9999999999955,
+    3479.9999999999955,
+    3479.9999999999955,
+    3512.9999999999955,
+    3569.9999999999955,
+    3569.9999999999955,
+    3569.9999999999955,
+    3569.9999999999955,
+    3569.9999999999955,
+    3569.9999999999955,
+    3569.9999999999955,
+    3569.9999999999955,
+    3569.9999999999955,
+    3578.4999999999955,
+    3629.999999999995,
+    3629.999999999995,
+    3629.999999999995,
+    3629.999999999995,
+    3629.999999999995,
+    3629.999999999995,
+    3636.999999999995,
+    3749.999999999995,
+    3749.999999999995,
+    3749.999999999995,
+    3749.999999999995,
+    3749.999999999995,
+    3749.999999999995,
+    3749.999999999995,
+    3799.499999999995,
+    3839.999999999995,
+    3839.999999999995,
+    3839.999999999995,
+    3839.999999999995,
+    3839.999999999995,
+    3839.999999999995,
+    3839.999999999995,
+    3916.999999999995,
+    3959.9999999999945,
+    3959.9999999999945,
+    3959.9999999999945,
+    3959.9999999999945,
+    3959.9999999999945,
+    3959.9999999999945,
+    3959.9999999999945,
+    3959.9999999999945,
+    3959.9999999999945,
+    3959.9999999999945,
+    3959.9999999999945,
+    4067.4999999999945,
+    4109.9999999999945,
+    4109.9999999999945,
+    4109.9999999999945,
+    4109.9999999999945,
+    4109.9999999999945,
+    4109.9999999999945,
+    4109.9999999999945,
+    4140.9999999999945,
+    4229.9999999999945,
+    4229.9999999999945,
+    4229.9999999999945,
+    4229.9999999999945,
+    4229.9999999999945,
+    4229.9999999999945,
+    4229.9999999999945,
+    4229.9999999999945,
+    4294.4999999999945,
+    4409.9999999999945,
+    4409.9999999999945,
+    4409.9999999999945,
+    4409.9999999999945,
+    4409.9999999999945,
+    4409.9999999999945,
+    4409.9999999999945,
+    4409.9999999999945,
+    4462.499999999994,
+    4559.999999999994,
+    4559.999999999994,
+    4559.999999999994,
+    4559.999999999994,
+    4559.999999999994,
+    4559.999999999994,
+    4559.999999999994,
+    4191.9999999999945,
+    3869.999999999995,
+    3869.999999999995,
+    3869.999999999995,
+    3869.999999999995,
+    3869.999999999995,
+    4226.4999999999945,
+    4559.999999999994,
+    4559.999999999994,
+    3884.999999999995,
+    3659.999999999995,
+    3659.999999999995,
+    3047.999999999996,
+    2579.9999999999964,
+    2579.9999999999964,
+    2579.9999999999964,
+    2579.9999999999964,
+    2579.9999999999964,
+    2579.9999999999964,
+    300.9999999999996,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  "boss_stats": [
+    {
+      "archetype": "purifier",
+      "wave": 4,
+      "spawn_tick": 1550,
+      "death_tick": 3640,
+      "alive_seconds": 34.833333333333336,
+      "verdict": "ok"
+    },
+    {
+      "archetype": "buffer",
+      "wave": 8,
+      "spawn_tick": 3614,
+      "death_tick": 4995,
+      "alive_seconds": 23.016666666666666,
+      "verdict": "ok"
+    },
+    {
+      "archetype": "phaser",
+      "wave": 12,
+      "spawn_tick": 5956,
+      "death_tick": 7178,
+      "alive_seconds": 20.366666666666667,
+      "verdict": "ok"
+    }
+  ],
+  "pace_stats": {
+    "total_idle_ticks": 1744,
+    "total_combat_ticks": 5943,
+    "idle_combat_ratio": 0.2934544842672051,
+    "verdict": "too_intense"
+  },
+  "economy_alerts": [
+    "wave=4 tick=1486: 连续 15s 金币(0)不够最便宜的塔(50)",
+    "wave=10 tick=4515: 连续 15s 金币(8)不够最便宜的塔(50)",
+    "wave=12 tick=6097: 连续 15s 金币(6)不够最便宜的塔(50)"
+  ],
+  "experience_stats": {
+    "early_leak_wave": 4,
+    "early_leak_count": 0,
+    "late_zero_leak_waves": 3,
+    "difficulty_verdict": "ok"
+  },
+  "assertions": [
+    {
+      "name": "cconly_victory",
+      "passed": true,
+      "tick": 7688
+    },
+    {
+      "name": "cconly_kills_gte_40",
+      "passed": false,
+      "tick": 7689,
+      "detail": "assertion 'cconly_kills_gte_40' (type=total_kills_gte) never passed within 7689 ticks"
+    }
+  ],
+  "pipeline_steps": [
+    "immunity_block_immune",
+    "attacker_buff",
+    "hp_deduct",
+    "immunity_check",
+    "boss_hp_cap",
+    "target_debuff",
+    "damage_amplify",
+    "damage_cap",
+    "threshold",
+    "death_check"
+  ],
+  "damage_types": [
+    "physical"
+  ],
+  "enemy_buff_templates": [
+    "regen",
+    "healAura",
+    "berserk",
+    "speedAura"
+  ],
+  "boss_spawned": [
+    "purifier",
+    "buffer",
+    "phaser"
+  ],
+  "interaction_modes": [
+    "idle"
+  ]
+}

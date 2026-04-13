@@ -1,0 +1,389 @@
+{
+  "session_id": "scenario_attack-style-coverage",
+  "strategy": "scenario_attack-style-coverage",
+  "map_id": "map_01",
+  "difficulty": "normal",
+  "warden": "prince",
+  "seed": 1776045713756265000,
+  "result": "victory",
+  "waves_survived": 12,
+  "total_waves": 12,
+  "final_gold": 584,
+  "final_lives": 0,
+  "total_kills": 17,
+  "duration_ticks": 8147,
+  "towers_built": [
+    {
+      "key": "basic",
+      "count": 4,
+      "total_cost": 200,
+      "total_dps": 92
+    }
+  ],
+  "wave_log": [
+    {
+      "wave": 1,
+      "enemies": 1,
+      "leaked": 0,
+      "gold_earned": 16,
+      "gold_spent": 0
+    },
+    {
+      "wave": 2,
+      "enemies": 7,
+      "leaked": 0,
+      "gold_earned": 20,
+      "gold_spent": 0
+    },
+    {
+      "wave": 3,
+      "enemies": 14,
+      "leaked": 0,
+      "gold_earned": 24,
+      "gold_spent": 50
+    },
+    {
+      "wave": 4,
+      "enemies": 21,
+      "leaked": 5,
+      "gold_earned": 37,
+      "gold_spent": 0
+    },
+    {
+      "wave": 5,
+      "enemies": 26,
+      "leaked": 12,
+      "gold_earned": 52,
+      "gold_spent": 50
+    },
+    {
+      "wave": 6,
+      "enemies": 22,
+      "leaked": 3,
+      "gold_earned": 54,
+      "gold_spent": 0
+    },
+    {
+      "wave": 7,
+      "enemies": 21,
+      "leaked": 0,
+      "gold_earned": 65,
+      "gold_spent": 0
+    },
+    {
+      "wave": 8,
+      "enemies": 29,
+      "leaked": 0,
+      "gold_earned": 135,
+      "gold_spent": 0
+    },
+    {
+      "wave": 9,
+      "enemies": 23,
+      "leaked": 0,
+      "gold_earned": 86,
+      "gold_spent": 0
+    },
+    {
+      "wave": 10,
+      "enemies": 31,
+      "leaked": 0,
+      "gold_earned": 62,
+      "gold_spent": 0
+    },
+    {
+      "wave": 11,
+      "enemies": 32,
+      "leaked": 0,
+      "gold_earned": 56,
+      "gold_spent": 0
+    },
+    {
+      "wave": 12,
+      "enemies": 37,
+      "leaked": 0,
+      "gold_earned": 57,
+      "gold_spent": 0
+    }
+  ],
+  "anomalies": [
+    {
+      "tick": 1630,
+      "type": "ability_silent",
+      "detail": "ability 'stunDuration' declared on towers but never seen in telemetry (wave=5)",
+      "severity": 2
+    },
+    {
+      "tick": 1630,
+      "type": "ability_silent",
+      "detail": "ability 'stunChance' declared on towers but never seen in telemetry (wave=5)",
+      "severity": 2
+    }
+  ],
+  "coverage": {
+    "towers_used": [
+      "basic"
+    ],
+    "abilities_triggered": [
+      "bounce",
+      "weakenZone",
+      "damageUpAura",
+      "slowDuration",
+      "flatDamage",
+      "rangeAura",
+      "poison",
+      "scatter",
+      "slowPower",
+      "stunChance",
+      "bleedDot",
+      "stunDuration",
+      "critAura",
+      "burn",
+      "poisonZone",
+      "wideBeam",
+      "attackSpeedAura",
+      "silenceZone",
+      "curseZone",
+      "weaken",
+      "crit",
+      "spinAoe"
+    ],
+    "attack_styles_fired": [
+      "projectile",
+      "scatter",
+      "wideBeam",
+      "spin_aoe"
+    ],
+    "enemy_archetypes_seen": [
+      "runner",
+      "armored",
+      "phantom",
+      "steadfast",
+      "purifier",
+      "normal",
+      "swarm",
+      "drainer",
+      "phaser",
+      "buffer",
+      "ironwill",
+      "splitter",
+      "colossus",
+      "tank",
+      "healer",
+      "shielder",
+      "summoner"
+    ]
+  },
+  "dps_snapshots": [
+    949.9999999999987,
+    1499.999999999998,
+    1499.999999999998,
+    1499.999999999998,
+    1499.999999999998,
+    1499.999999999998,
+    1499.999999999998,
+    1499.999999999998,
+    2849.9999999999964,
+    3164.999999999996,
+    3899.999999999995,
+    3899.999999999995,
+    3899.999999999995,
+    3899.999999999995,
+    3899.999999999995,
+    3899.999999999995,
+    3899.999999999995,
+    3899.999999999995,
+    3899.999999999995,
+    3899.999999999995,
+    3899.999999999995,
+    3899.999999999995,
+    3099.999999999996,
+    3899.999999999995,
+    3899.999999999995,
+    4061.9999999999945,
+    5519.999999999993,
+    5519.999999999993,
+    5519.999999999993,
+    5519.999999999993,
+    5519.999999999993,
+    5519.999999999993,
+    5519.999999999993,
+    5519.999999999993,
+    5519.999999999993,
+    5519.999999999993,
+    5519.999999999993,
+    5519.999999999993,
+    5519.999999999993,
+    5519.999999999993,
+    5482.499999999993,
+    5369.999999999993,
+    5369.999999999993,
+    5369.999999999993,
+    5369.999999999993,
+    5369.999999999993,
+    4874.999999999994,
+    5319.999999999993,
+    5519.999999999993,
+    5519.999999999993,
+    5519.999999999993,
+    5519.999999999993,
+    5519.999999999993,
+    5519.999999999993,
+    5519.999999999993,
+    5519.999999999993,
+    5519.999999999993,
+    5519.999999999993,
+    5519.999999999993,
+    5519.999999999993,
+    5519.999999999993,
+    5519.999999999993,
+    5519.999999999993,
+    5519.999999999993,
+    5519.999999999993,
+    5519.999999999993,
+    5519.999999999993,
+    5519.999999999993,
+    5519.999999999993,
+    5519.999999999993,
+    5519.999999999993,
+    5519.999999999993,
+    5519.999999999993,
+    5519.999999999993,
+    5517.499999999993,
+    5369.999999999993,
+    5369.999999999993,
+    5369.999999999993,
+    5369.999999999993,
+    5369.999999999993,
+    5369.999999999993,
+    5519.999999999993,
+    5519.999999999993,
+    5519.999999999993,
+    5519.999999999993,
+    5519.999999999993,
+    5519.999999999993,
+    5519.999999999993,
+    5519.999999999993,
+    5519.999999999993,
+    5519.999999999993,
+    5519.999999999993,
+    5519.999999999993,
+    5519.999999999993,
+    5519.999999999993,
+    5519.999999999993,
+    5519.999999999993,
+    5519.999999999993,
+    5519.999999999993,
+    5519.999999999993,
+    5389.999999999993,
+    5369.999999999993,
+    5369.999999999993,
+    5369.999999999993,
+    5369.999999999993,
+    5369.999999999993,
+    5347.499999999993,
+    4019.9999999999945,
+    4019.9999999999945,
+    4019.9999999999945,
+    4019.9999999999945,
+    4019.9999999999945,
+    4019.9999999999945,
+    4019.9999999999945,
+    3452.9999999999955,
+    2399.999999999997,
+    2399.999999999997,
+    2399.999999999997,
+    2399.999999999997,
+    1874.9999999999975,
+    899.9999999999987,
+    899.9999999999987,
+    899.9999999999987,
+    899.9999999999987,
+    899.9999999999987,
+    899.9999999999987,
+    899.9999999999987,
+    899.9999999999987,
+    899.9999999999987,
+    899.9999999999987,
+    899.9999999999987,
+    899.9999999999987,
+    899.9999999999987,
+    899.9999999999987,
+    899.9999999999987
+  ],
+  "boss_stats": [
+    {
+      "archetype": "drainer",
+      "wave": 4,
+      "spawn_tick": 1553,
+      "death_tick": 2951,
+      "alive_seconds": 23.3,
+      "verdict": "ok"
+    },
+    {
+      "archetype": "drainer",
+      "wave": 8,
+      "spawn_tick": 3617,
+      "death_tick": 4943,
+      "alive_seconds": 22.1,
+      "verdict": "ok"
+    },
+    {
+      "archetype": "swarm",
+      "wave": 12,
+      "spawn_tick": 5959,
+      "death_tick": 6884,
+      "alive_seconds": 15.416666666666666,
+      "verdict": "ok"
+    }
+  ],
+  "pace_stats": {
+    "total_idle_ticks": 2199,
+    "total_combat_ticks": 5943,
+    "idle_combat_ratio": 0.37001514386673395,
+    "verdict": "ok"
+  },
+  "economy_alerts": [
+    "wave=4 tick=1489: 连续 15s 金币(39)不够最便宜的塔(50)"
+  ],
+  "experience_stats": {
+    "early_leak_wave": 4,
+    "early_leak_count": 0,
+    "late_zero_leak_waves": 3,
+    "difficulty_verdict": "ok"
+  },
+  "pipeline_steps": [
+    "damage_amplify",
+    "threshold",
+    "death",
+    "immunity_block_immune",
+    "immunity_check",
+    "target_debuff",
+    "damage_cap",
+    "boss_hp_cap",
+    "attacker_buff",
+    "hp_deduct",
+    "death_check"
+  ],
+  "damage_types": [
+    "physical",
+    "magic"
+  ],
+  "enemy_buff_templates": [
+    "speedAura",
+    "healAura",
+    "regen",
+    "berserk"
+  ],
+  "boss_spawned": [
+    "drainer",
+    "swarm"
+  ],
+  "interaction_modes": [
+    "idle"
+  ],
+  "cc_applied": [
+    "stun",
+    "slow"
+  ]
+}

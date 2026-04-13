@@ -1,0 +1,553 @@
+{
+  "total_sessions": 197,
+  "victories": 192,
+  "defeats": 5,
+  "timeouts": 0,
+  "coverage_gaps": {
+    "abilities": [
+      "chargeShot",
+      "deathMark",
+      "percentHpDamage",
+      "percentHpMinor",
+      "stackDamage",
+      "onHitSlow",
+      "stun"
+    ],
+    "archetypes": [
+      "dummy"
+    ],
+    "attack_styles": null,
+    "buff_stack_modes": [
+      "strongest",
+      "additive",
+      "multiplicative",
+      "override",
+      "independent",
+      "independentPerSource"
+    ],
+    "buff_types": [
+      "slow",
+      "stun",
+      "knockup",
+      "silence",
+      "disarm",
+      "speedUp",
+      "damageUp",
+      "damageDown",
+      "fireRateUp",
+      "invincible",
+      "damageImmune",
+      "controlImmune",
+      "slowImmune",
+      "stunImmune",
+      "untargetable",
+      "dot",
+      "tenacity"
+    ],
+    "cc_types": null,
+    "damage_types": [
+      "true",
+      "pure"
+    ],
+    "enemy_templates": [
+      "empBurst",
+      "blink",
+      "deathSplit",
+      "deathSlow",
+      "reflect",
+      "timewarp",
+      "revive",
+      "spawnMinions"
+    ],
+    "interaction_modes": [
+      "buildMenu",
+      "buildPlace",
+      "towerSel",
+      "spawnMenu",
+      "spawnPlace",
+      "paused",
+      "wardenSelect"
+    ],
+    "pipeline_steps": null,
+    "towers": null
+  },
+  "anomaly_summary": {
+    "build_silent_fail": 48,
+    "economy_stall": 102,
+    "enemy_hp_uniform": 40,
+    "pool_high_usage": 3,
+    "warden_range_limited_x": 47,
+    "warden_range_limited_y": 24
+  },
+  "tower_usage": {
+    "basic": 184
+  },
+  "archetypes_seen": {
+    "armored": 193,
+    "buffer": 186,
+    "colossus": 169,
+    "drainer": 164,
+    "healer": 193,
+    "ironwill": 183,
+    "normal": 197,
+    "phantom": 188,
+    "phaser": 179,
+    "purifier": 166,
+    "runner": 197,
+    "shielder": 185,
+    "splitter": 185,
+    "steadfast": 187,
+    "summoner": 160,
+    "swarm": 196,
+    "tank": 195
+  },
+  "balance_summary": {
+    "total": 26,
+    "passed": 10,
+    "failed": 16,
+    "details": [
+      {
+        "id": "bal_abil_attack_only",
+        "passed": false,
+        "assertions": [
+          {
+            "name": "atkonly_survive_12",
+            "passed": true,
+            "tick": 5197
+          },
+          {
+            "name": "atkonly_kills_gte_40",
+            "passed": false,
+            "tick": 7455,
+            "detail": "assertion 'atkonly_kills_gte_40' (type=total_kills_gte) never passed within 7455 ticks"
+          }
+        ]
+      },
+      {
+        "id": "bal_abil_buff_only",
+        "passed": false,
+        "assertions": [
+          {
+            "name": "buffonly_survive_10",
+            "passed": true,
+            "tick": 4123
+          },
+          {
+            "name": "buffonly_dps_growth",
+            "passed": false,
+            "tick": 7808,
+            "detail": "assertion 'buffonly_dps_growth' (type=dps_growth) never passed within 7808 ticks"
+          }
+        ]
+      },
+      {
+        "id": "bal_abil_cc_only",
+        "passed": false,
+        "assertions": [
+          {
+            "name": "cconly_victory",
+            "passed": true,
+            "tick": 7688
+          },
+          {
+            "name": "cconly_kills_gte_40",
+            "passed": false,
+            "tick": 7689,
+            "detail": "assertion 'cconly_kills_gte_40' (type=total_kills_gte) never passed within 7689 ticks"
+          }
+        ]
+      },
+      {
+        "id": "bal_abil_damage_only",
+        "passed": false,
+        "assertions": [
+          {
+            "name": "dmgonly_survive_12",
+            "passed": true,
+            "tick": 5197
+          },
+          {
+            "name": "dmgonly_kills_gte_40",
+            "passed": false,
+            "tick": 7702,
+            "detail": "assertion 'dmgonly_kills_gte_40' (type=total_kills_gte) never passed within 7702 ticks"
+          }
+        ]
+      },
+      {
+        "id": "bal_abil_dot_only",
+        "passed": false,
+        "assertions": [
+          {
+            "name": "dotonly_victory",
+            "passed": true,
+            "tick": 7647
+          },
+          {
+            "name": "dotonly_kills_gte_40",
+            "passed": false,
+            "tick": 7648,
+            "detail": "assertion 'dotonly_kills_gte_40' (type=total_kills_gte) never passed within 7648 ticks"
+          }
+        ]
+      },
+      {
+        "id": "bal_abil_zone_only",
+        "passed": false,
+        "assertions": [
+          {
+            "name": "zoneonly_has_effect",
+            "passed": true,
+            "tick": 23
+          },
+          {
+            "name": "zoneonly_kills_gte_15",
+            "passed": false,
+            "tick": 7704,
+            "detail": "assertion 'zoneonly_kills_gte_15' (type=total_kills_gte) never passed within 7704 ticks"
+          }
+        ]
+      },
+      {
+        "id": "bal_boss_easy",
+        "passed": true,
+        "assertions": [
+          {
+            "name": "boss_easy_alive_5",
+            "passed": true,
+            "tick": 8165
+          },
+          {
+            "name": "boss_easy_alive_lte_45",
+            "passed": true,
+            "tick": 8165
+          }
+        ]
+      },
+      {
+        "id": "bal_boss_extreme",
+        "passed": true,
+        "assertions": [
+          {
+            "name": "boss_extreme_alive_10",
+            "passed": true,
+            "tick": 7311
+          }
+        ]
+      },
+      {
+        "id": "bal_boss_normal",
+        "passed": true,
+        "assertions": [
+          {
+            "name": "boss_normal_alive_5",
+            "passed": true,
+            "tick": 7644
+          },
+          {
+            "name": "boss_normal_alive_lte_60",
+            "passed": true,
+            "tick": 7644
+          }
+        ]
+      },
+      {
+        "id": "bal_easy_winnable",
+        "passed": false,
+        "assertions": [
+          {
+            "name": "easy_victory",
+            "passed": true,
+            "tick": 8120
+          },
+          {
+            "name": "easy_lives_gte_15",
+            "passed": false,
+            "tick": 8121,
+            "detail": "assertion 'easy_lives_gte_15' (type=final_lives_gte) never passed within 8121 ticks"
+          },
+          {
+            "name": "easy_pace_ok",
+            "passed": true,
+            "tick": 8121
+          }
+        ]
+      },
+      {
+        "id": "bal_econ_build_heavy",
+        "passed": true,
+        "assertions": [
+          {
+            "name": "build_victory",
+            "passed": true,
+            "tick": 8046
+          },
+          {
+            "name": "build_no_stall",
+            "passed": true,
+            "tick": 8047
+          }
+        ]
+      },
+      {
+        "id": "bal_econ_no_sell",
+        "passed": true,
+        "assertions": [
+          {
+            "name": "nosell_survive_8",
+            "passed": true,
+            "tick": 2900
+          },
+          {
+            "name": "nosell_gold_ok",
+            "passed": true,
+            "tick": 11920
+          }
+        ]
+      },
+      {
+        "id": "bal_econ_sell_rebuy",
+        "passed": false,
+        "assertions": [
+          {
+            "name": "sellrebuy_gold_ok",
+            "passed": true,
+            "tick": 7687
+          },
+          {
+            "name": "sellrebuy_has_kills",
+            "passed": false,
+            "tick": 7687,
+            "detail": "assertion 'sellrebuy_has_kills' (type=total_kills_gte) never passed within 7687 ticks"
+          }
+        ]
+      },
+      {
+        "id": "bal_econ_upgrade_heavy",
+        "passed": false,
+        "assertions": [
+          {
+            "name": "upgrade_survive_10",
+            "passed": true,
+            "tick": 4123
+          },
+          {
+            "name": "upgrade_dps_growth",
+            "passed": false,
+            "tick": 7752,
+            "detail": "assertion 'upgrade_dps_growth' (type=dps_growth) never passed within 7752 ticks"
+          }
+        ]
+      },
+      {
+        "id": "bal_enemy_armor",
+        "passed": false,
+        "assertions": [
+          {
+            "name": "armor_has_armor",
+            "passed": true,
+            "tick": 1786
+          },
+          {
+            "name": "armor_still_killable",
+            "passed": false,
+            "tick": 7667,
+            "detail": "assertion 'armor_still_killable' (type=total_kills_gte) never passed within 7667 ticks"
+          }
+        ]
+      },
+      {
+        "id": "bal_enemy_evasion",
+        "passed": false,
+        "assertions": [
+          {
+            "name": "evasion_has_evasion",
+            "passed": true,
+            "tick": 1786
+          },
+          {
+            "name": "evasion_still_killable",
+            "passed": false,
+            "tick": 7097,
+            "detail": "assertion 'evasion_still_killable' (type=total_kills_gte) never passed within 7097 ticks"
+          }
+        ]
+      },
+      {
+        "id": "bal_enemy_healer",
+        "passed": true,
+        "assertions": [
+          {
+            "name": "healer_survive_5",
+            "passed": true,
+            "tick": 1551
+          },
+          {
+            "name": "healer_has_aura",
+            "passed": true,
+            "tick": 2555
+          }
+        ]
+      },
+      {
+        "id": "bal_enemy_splitter",
+        "passed": true,
+        "assertions": [
+          {
+            "name": "split_count_inc",
+            "passed": true,
+            "tick": 1461
+          },
+          {
+            "name": "split_survive_5",
+            "passed": true,
+            "tick": 1551
+          }
+        ]
+      },
+      {
+        "id": "bal_enemy_stealth",
+        "passed": true,
+        "assertions": [
+          {
+            "name": "stealth_survive_5",
+            "passed": true,
+            "tick": 1551
+          },
+          {
+            "name": "stealth_evasion_active",
+            "passed": true,
+            "tick": 1786
+          }
+        ]
+      },
+      {
+        "id": "bal_enemy_tank",
+        "passed": true,
+        "assertions": [
+          {
+            "name": "tank_survive_5",
+            "passed": true,
+            "tick": 1551
+          },
+          {
+            "name": "tank_has_cap",
+            "passed": true,
+            "tick": 1833
+          }
+        ]
+      },
+      {
+        "id": "bal_extreme_punishing",
+        "passed": false,
+        "assertions": [
+          {
+            "name": "extreme_heavy_damage",
+            "passed": true,
+            "tick": 7586
+          },
+          {
+            "name": "extreme_has_kills",
+            "passed": false,
+            "tick": 7587,
+            "detail": "assertion 'extreme_has_kills' (type=total_kills_gte) never passed within 7587 ticks"
+          }
+        ]
+      },
+      {
+        "id": "bal_hard_challenging",
+        "passed": false,
+        "assertions": [
+          {
+            "name": "hard_victory",
+            "passed": true,
+            "tick": 7206
+          },
+          {
+            "name": "hard_takes_damage",
+            "passed": true,
+            "tick": 7206
+          },
+          {
+            "name": "hard_kills_gte_20",
+            "passed": false,
+            "tick": 7207,
+            "detail": "assertion 'hard_kills_gte_20' (type=total_kills_gte) never passed within 7207 ticks"
+          }
+        ]
+      },
+      {
+        "id": "bal_normal_balanced",
+        "passed": false,
+        "assertions": [
+          {
+            "name": "normal_victory",
+            "passed": true,
+            "tick": 7728
+          },
+          {
+            "name": "normal_lives_lte_20",
+            "passed": true,
+            "tick": 7728
+          },
+          {
+            "name": "normal_dps_growth",
+            "passed": false,
+            "tick": 7729,
+            "detail": "assertion 'normal_dps_growth' (type=dps_growth) never passed within 7729 ticks"
+          }
+        ]
+      },
+      {
+        "id": "bal_tower_overpower",
+        "passed": true,
+        "assertions": [
+          {
+            "name": "overpower_victory",
+            "passed": true,
+            "tick": 8086
+          },
+          {
+            "name": "overpower_low_leak",
+            "passed": true,
+            "tick": 8087
+          }
+        ]
+      },
+      {
+        "id": "bal_tower_underpower",
+        "passed": false,
+        "assertions": [
+          {
+            "name": "underpower_heavy_leak",
+            "passed": true,
+            "tick": 7472
+          },
+          {
+            "name": "underpower_has_kills",
+            "passed": false,
+            "tick": 7473,
+            "detail": "assertion 'underpower_has_kills' (type=total_kills_gte) never passed within 7473 ticks"
+          }
+        ]
+      },
+      {
+        "id": "bal_warden_solo",
+        "passed": false,
+        "assertions": [
+          {
+            "name": "solo_survive_3",
+            "passed": true,
+            "tick": 586
+          },
+          {
+            "name": "solo_has_kills",
+            "passed": false,
+            "tick": 7335,
+            "detail": "assertion 'solo_has_kills' (type=total_kills_gte) never passed within 7335 ticks"
+          }
+        ]
+      }
+    ]
+  }
+}

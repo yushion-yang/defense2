@@ -1,0 +1,383 @@
+{
+  "session_id": "scenario_attack-style-coverage",
+  "strategy": "scenario_attack-style-coverage",
+  "map_id": "map_01",
+  "difficulty": "normal",
+  "warden": "prince",
+  "seed": 1776045358621791000,
+  "result": "victory",
+  "waves_survived": 12,
+  "total_waves": 12,
+  "final_gold": 666,
+  "final_lives": 0,
+  "total_kills": 28,
+  "duration_ticks": 8096,
+  "towers_built": [
+    {
+      "key": "basic",
+      "count": 4,
+      "total_cost": 200,
+      "total_dps": 87
+    }
+  ],
+  "wave_log": [
+    {
+      "wave": 1,
+      "enemies": 1,
+      "leaked": 0,
+      "gold_earned": 16,
+      "gold_spent": 0
+    },
+    {
+      "wave": 2,
+      "enemies": 7,
+      "leaked": 0,
+      "gold_earned": 20,
+      "gold_spent": 0
+    },
+    {
+      "wave": 3,
+      "enemies": 14,
+      "leaked": 0,
+      "gold_earned": 24,
+      "gold_spent": 50
+    },
+    {
+      "wave": 4,
+      "enemies": 21,
+      "leaked": 4,
+      "gold_earned": 55,
+      "gold_spent": 50
+    },
+    {
+      "wave": 5,
+      "enemies": 25,
+      "leaked": 15,
+      "gold_earned": 50,
+      "gold_spent": 0
+    },
+    {
+      "wave": 6,
+      "enemies": 16,
+      "leaked": 1,
+      "gold_earned": 65,
+      "gold_spent": 0
+    },
+    {
+      "wave": 7,
+      "enemies": 20,
+      "leaked": 0,
+      "gold_earned": 136,
+      "gold_spent": 0
+    },
+    {
+      "wave": 8,
+      "enemies": 23,
+      "leaked": 0,
+      "gold_earned": 83,
+      "gold_spent": 0
+    },
+    {
+      "wave": 9,
+      "enemies": 22,
+      "leaked": 0,
+      "gold_earned": 113,
+      "gold_spent": 0
+    },
+    {
+      "wave": 10,
+      "enemies": 23,
+      "leaked": 0,
+      "gold_earned": 52,
+      "gold_spent": 0
+    },
+    {
+      "wave": 11,
+      "enemies": 33,
+      "leaked": 0,
+      "gold_earned": 66,
+      "gold_spent": 0
+    },
+    {
+      "wave": 12,
+      "enemies": 41,
+      "leaked": 0,
+      "gold_earned": 66,
+      "gold_spent": 0
+    }
+  ],
+  "anomalies": [
+    {
+      "tick": 1554,
+      "type": "ability_silent",
+      "detail": "ability 'stunChance' declared on towers but never seen in telemetry (wave=5)",
+      "severity": 2
+    },
+    {
+      "tick": 1554,
+      "type": "ability_silent",
+      "detail": "ability 'stunDuration' declared on towers but never seen in telemetry (wave=5)",
+      "severity": 2
+    }
+  ],
+  "coverage": {
+    "towers_used": [
+      "basic"
+    ],
+    "abilities_triggered": [
+      "weakenZone",
+      "slowPower",
+      "crit",
+      "rangeAura",
+      "poison",
+      "stunDuration",
+      "damageUpAura",
+      "wideBeam",
+      "stunChance",
+      "silenceZone",
+      "bounce",
+      "critAura",
+      "weaken",
+      "scatter",
+      "burn",
+      "poisonZone",
+      "attackSpeedAura",
+      "bleedDot",
+      "slowDuration",
+      "spinAoe",
+      "flatDamage",
+      "curseZone"
+    ],
+    "attack_styles_fired": [
+      "projectile",
+      "scatter",
+      "wideBeam",
+      "spin_aoe"
+    ],
+    "enemy_archetypes_seen": [
+      "tank",
+      "steadfast",
+      "colossus",
+      "summoner",
+      "healer",
+      "shielder",
+      "buffer",
+      "purifier",
+      "normal",
+      "swarm",
+      "phantom",
+      "armored",
+      "splitter",
+      "runner",
+      "ironwill",
+      "drainer"
+    ]
+  },
+  "dps_snapshots": [
+    1025.9999999999986,
+    1619.999999999998,
+    1619.999999999998,
+    1619.999999999998,
+    1619.999999999998,
+    1619.999999999998,
+    1619.999999999998,
+    1619.999999999998,
+    2894.9999999999964,
+    3339.9999999999955,
+    4319.9999999999945,
+    4319.9999999999945,
+    4319.9999999999945,
+    4319.9999999999945,
+    4319.9999999999945,
+    4319.9999999999945,
+    4319.9999999999945,
+    4319.9999999999945,
+    4157.9999999999945,
+    4319.9999999999945,
+    4319.9999999999945,
+    4319.9999999999945,
+    4319.9999999999945,
+    4044.9999999999945,
+    4919.999999999994,
+    5219.999999999993,
+    5219.999999999993,
+    5219.999999999993,
+    5219.999999999993,
+    5094.999999999994,
+    3719.999999999995,
+    3719.999999999995,
+    3794.999999999995,
+    5219.999999999993,
+    5219.999999999993,
+    5219.999999999993,
+    5219.999999999993,
+    5219.999999999993,
+    5219.999999999993,
+    5219.999999999993,
+    5219.999999999993,
+    5219.999999999993,
+    5219.999999999993,
+    5219.999999999993,
+    5219.999999999993,
+    5219.999999999993,
+    5219.999999999993,
+    5219.999999999993,
+    5219.999999999993,
+    5219.999999999993,
+    5219.999999999993,
+    5219.999999999993,
+    5219.999999999993,
+    5219.999999999993,
+    5219.999999999993,
+    5219.999999999993,
+    5219.999999999993,
+    5219.999999999993,
+    5219.999999999993,
+    5219.999999999993,
+    5219.999999999993,
+    5219.999999999993,
+    5219.999999999993,
+    4094.9999999999945,
+    4219.9999999999945,
+    5219.999999999993,
+    5219.999999999993,
+    5219.999999999993,
+    5219.999999999993,
+    5219.999999999993,
+    5219.999999999993,
+    5219.999999999993,
+    5219.999999999993,
+    5219.999999999993,
+    5219.999999999993,
+    5219.999999999993,
+    5219.999999999993,
+    5219.999999999993,
+    5219.999999999993,
+    5219.999999999993,
+    5219.999999999993,
+    5219.999999999993,
+    5219.999999999993,
+    5219.999999999993,
+    5219.999999999993,
+    5219.999999999993,
+    5219.999999999993,
+    5219.999999999993,
+    5219.999999999993,
+    5219.999999999993,
+    5219.999999999993,
+    5219.999999999993,
+    5219.999999999993,
+    5219.999999999993,
+    5219.999999999993,
+    5219.999999999993,
+    5219.999999999993,
+    5219.999999999993,
+    5219.999999999993,
+    5219.999999999993,
+    5219.999999999993,
+    5219.999999999993,
+    5219.999999999993,
+    5219.999999999993,
+    5219.999999999993,
+    5219.999999999993,
+    3653.999999999995,
+    3599.999999999995,
+    3599.999999999995,
+    3599.999999999995,
+    3599.999999999995,
+    3599.999999999995,
+    3599.999999999995,
+    3599.999999999995,
+    3284.9999999999955,
+    2699.9999999999964,
+    2699.9999999999964,
+    2699.9999999999964,
+    1824.9999999999975,
+    1199.9999999999984,
+    1199.9999999999984,
+    1199.9999999999984,
+    1199.9999999999984,
+    1199.9999999999984,
+    1199.9999999999984,
+    1199.9999999999984,
+    1199.9999999999984,
+    1199.9999999999984,
+    1199.9999999999984,
+    1199.9999999999984,
+    1199.9999999999984,
+    1199.9999999999984,
+    1199.9999999999984,
+    1199.9999999999984
+  ],
+  "boss_stats": [
+    {
+      "archetype": "healer",
+      "wave": 4,
+      "spawn_tick": 1553,
+      "death_tick": 3115,
+      "alive_seconds": 26.033333333333335,
+      "verdict": "ok"
+    },
+    {
+      "archetype": "colossus",
+      "wave": 8,
+      "spawn_tick": 3617,
+      "death_tick": 5773,
+      "alive_seconds": 35.93333333333333,
+      "verdict": "ok"
+    },
+    {
+      "archetype": "healer",
+      "wave": 12,
+      "spawn_tick": 5959,
+      "death_tick": 7392,
+      "alive_seconds": 23.883333333333333,
+      "verdict": "ok"
+    }
+  ],
+  "pace_stats": {
+    "total_idle_ticks": 2148,
+    "total_combat_ticks": 5943,
+    "idle_combat_ratio": 0.3614336193841494,
+    "verdict": "ok"
+  },
+  "experience_stats": {
+    "early_leak_wave": 4,
+    "early_leak_count": 0,
+    "late_zero_leak_waves": 3,
+    "difficulty_verdict": "ok"
+  },
+  "pipeline_steps": [
+    "damage_cap",
+    "hp_deduct",
+    "damage_amplify",
+    "threshold",
+    "death",
+    "attacker_buff",
+    "target_debuff",
+    "death_check",
+    "boss_hp_cap",
+    "immunity_check"
+  ],
+  "damage_types": [
+    "magic",
+    "physical"
+  ],
+  "enemy_buff_templates": [
+    "berserk",
+    "healAura",
+    "regen",
+    "speedAura"
+  ],
+  "boss_spawned": [
+    "healer",
+    "colossus"
+  ],
+  "interaction_modes": [
+    "idle"
+  ],
+  "cc_applied": [
+    "slow",
+    "stun"
+  ]
+}

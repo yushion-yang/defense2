@@ -1,0 +1,168 @@
+{
+  "session_id": "mode_endless",
+  "strategy": "greedy",
+  "map_id": "map_02",
+  "difficulty": "normal",
+  "warden": "prince",
+  "seed": 1776013924903808037,
+  "result": "defeat",
+  "waves_survived": 6,
+  "total_waves": 9999,
+  "final_gold": 2,
+  "final_lives": 0,
+  "total_kills": 2,
+  "duration_ticks": 2017,
+  "towers_built": [
+    {
+      "key": "basic",
+      "count": 7,
+      "total_cost": 350,
+      "total_dps": 124
+    }
+  ],
+  "wave_log": [
+    {
+      "wave": 1,
+      "enemies": 1,
+      "leaked": 0,
+      "gold_earned": 34,
+      "gold_spent": 50
+    },
+    {
+      "wave": 2,
+      "enemies": 7,
+      "leaked": 0,
+      "gold_earned": 43,
+      "gold_spent": 50
+    },
+    {
+      "wave": 3,
+      "enemies": 14,
+      "leaked": 0,
+      "gold_earned": 52,
+      "gold_spent": 0
+    },
+    {
+      "wave": 4,
+      "enemies": 21,
+      "leaked": 7,
+      "gold_earned": 48,
+      "gold_spent": 100
+    },
+    {
+      "wave": 5,
+      "enemies": 24,
+      "leaked": 12,
+      "gold_earned": 55,
+      "gold_spent": 50
+    },
+    {
+      "wave": 6,
+      "enemies": 21,
+      "leaked": 1,
+      "gold_earned": 0,
+      "gold_spent": 50
+    }
+  ],
+  "anomalies": [
+    {
+      "tick": 1801,
+      "type": "warden_range_limited_y",
+      "detail": "map height=780 (\u003e540) but warden Y range=[291,670] (span=379), never reached beyond first screen",
+      "severity": 2
+    }
+  ],
+  "coverage": {
+    "towers_used": [
+      "basic"
+    ],
+    "attack_styles_fired": [
+      "projectile"
+    ],
+    "enemy_archetypes_seen": [
+      "swarm",
+      "runner",
+      "armored",
+      "phantom",
+      "normal"
+    ]
+  },
+  "dps_snapshots": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    449.9999999999994,
+    899.9999999999987,
+    1154.9999999999984,
+    1799.9999999999975,
+    1799.9999999999975,
+    2549.999999999997,
+    2699.9999999999964,
+    2699.9999999999964,
+    2699.9999999999964,
+    3113.999999999996,
+    3779.999999999995,
+    3779.999999999995,
+    3599.999999999995,
+    2309.999999999997,
+    2343.999999999997,
+    2594.9999999999964,
+    1859.9999999999975,
+    1073.9999999999986,
+    2099.9999999999973,
+    2099.9999999999973,
+    2954.999999999996,
+    3779.999999999995,
+    4863.999999999994,
+    4324.9999999999945,
+    4256.9999999999945,
+    5759.999999999993,
+    5954.999999999992
+  ],
+  "boss_stats": [
+    {
+      "archetype": "armored",
+      "wave": 4,
+      "spawn_tick": 1550,
+      "death_tick": 0,
+      "alive_seconds": 7.783333333333333,
+      "verdict": "survived"
+    }
+  ],
+  "pace_stats": {
+    "total_idle_ticks": 5,
+    "total_combat_ticks": 2010,
+    "idle_combat_ratio": 0.0024875621890547263,
+    "verdict": "too_intense"
+  },
+  "experience_stats": {
+    "early_leak_wave": 4,
+    "early_leak_count": 0,
+    "late_zero_leak_waves": 0,
+    "difficulty_verdict": "ok"
+  },
+  "pipeline_steps": [
+    "attacker_buff",
+    "death_check",
+    "damage_amplify",
+    "threshold",
+    "boss_hp_cap",
+    "damage_cap",
+    "hp_deduct",
+    "target_debuff",
+    "death",
+    "immunity_check"
+  ],
+  "damage_types": [
+    "physical"
+  ],
+  "boss_spawned": [
+    "armored"
+  ],
+  "interaction_modes": [
+    "idle"
+  ]
+}

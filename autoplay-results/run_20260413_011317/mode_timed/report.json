@@ -1,0 +1,195 @@
+{
+  "session_id": "mode_timed",
+  "strategy": "greedy",
+  "map_id": "map_03",
+  "difficulty": "normal",
+  "warden": "prince",
+  "seed": 1776013997018227038,
+  "result": "defeat",
+  "waves_survived": 7,
+  "total_waves": 9999,
+  "final_gold": 25,
+  "final_lives": 0,
+  "total_kills": 0,
+  "duration_ticks": 2440,
+  "towers_built": [
+    {
+      "key": "basic",
+      "count": 5,
+      "total_cost": 250,
+      "total_dps": 98
+    }
+  ],
+  "wave_log": [
+    {
+      "wave": 1,
+      "enemies": 1,
+      "leaked": 0,
+      "gold_earned": 19,
+      "gold_spent": 50
+    },
+    {
+      "wave": 2,
+      "enemies": 7,
+      "leaked": 0,
+      "gold_earned": 24,
+      "gold_spent": 0
+    },
+    {
+      "wave": 3,
+      "enemies": 14,
+      "leaked": 0,
+      "gold_earned": 29,
+      "gold_spent": 50
+    },
+    {
+      "wave": 4,
+      "enemies": 21,
+      "leaked": 0,
+      "gold_earned": 34,
+      "gold_spent": 0
+    },
+    {
+      "wave": 5,
+      "enemies": 32,
+      "leaked": 6,
+      "gold_earned": 23,
+      "gold_spent": 50
+    },
+    {
+      "wave": 6,
+      "enemies": 36,
+      "leaked": 13,
+      "gold_earned": 26,
+      "gold_spent": 0
+    },
+    {
+      "wave": 7,
+      "enemies": 34,
+      "leaked": 1,
+      "gold_earned": 0,
+      "gold_spent": 50
+    }
+  ],
+  "anomalies": [
+    {
+      "tick": 1801,
+      "type": "warden_range_limited_x",
+      "detail": "map width=1440 (\u003e1200) but warden X range=[171,1019] (span=848), never reached beyond first screen",
+      "severity": 2
+    },
+    {
+      "tick": 1801,
+      "type": "warden_range_limited_y",
+      "detail": "map height=780 (\u003e540) but warden Y range=[170,585] (span=415), never reached beyond first screen",
+      "severity": 2
+    }
+  ],
+  "coverage": {
+    "towers_used": [
+      "basic"
+    ],
+    "attack_styles_fired": [
+      "projectile"
+    ],
+    "enemy_archetypes_seen": [
+      "normal",
+      "runner",
+      "shielder",
+      "armored",
+      "steadfast",
+      "swarm"
+    ]
+  },
+  "dps_snapshots": [
+    0,
+    0,
+    0,
+    0,
+    35.99999999999995,
+    1079.9999999999986,
+    2082.9999999999973,
+    2099.9999999999973,
+    2099.9999999999973,
+    2351.999999999997,
+    3179.999999999996,
+    3179.999999999996,
+    3179.999999999996,
+    3179.999999999996,
+    3179.999999999996,
+    3179.999999999996,
+    3179.999999999996,
+    3179.999999999996,
+    3179.999999999996,
+    3179.999999999996,
+    3179.999999999996,
+    3179.999999999996,
+    3179.999999999996,
+    3179.999999999996,
+    3179.999999999996,
+    3404.9999999999955,
+    4679.999999999994,
+    4679.999999999994,
+    4679.999999999994,
+    4679.999999999994,
+    4679.999999999994,
+    4679.999999999994,
+    4679.999999999994,
+    4679.999999999994,
+    4679.999999999994,
+    4679.999999999994,
+    4679.999999999994,
+    4679.999999999994,
+    4679.999999999994,
+    4679.999999999994
+  ],
+  "boss_stats": [
+    {
+      "archetype": "shielder",
+      "wave": 4,
+      "spawn_tick": 1550,
+      "death_tick": 0,
+      "alive_seconds": 14.833333333333334,
+      "verdict": "survived"
+    }
+  ],
+  "pace_stats": {
+    "total_idle_ticks": 6,
+    "total_combat_ticks": 2432,
+    "idle_combat_ratio": 0.0024671052631578946,
+    "verdict": "too_intense"
+  },
+  "economy_alerts": [
+    "wave=4 tick=1486: 连续 15s 金币(42)不够最便宜的塔(50)"
+  ],
+  "experience_stats": {
+    "early_leak_wave": 5,
+    "early_leak_count": 0,
+    "late_zero_leak_waves": 0,
+    "difficulty_verdict": "ok"
+  },
+  "pipeline_steps": [
+    "death_check",
+    "target_debuff",
+    "hp_deduct",
+    "threshold",
+    "damage_amplify",
+    "boss_hp_cap",
+    "damage_cap",
+    "immunity_check",
+    "attacker_buff"
+  ],
+  "damage_types": [
+    "physical"
+  ],
+  "enemy_buff_templates": [
+    "berserk",
+    "regen"
+  ],
+  "boss_spawned": [
+    "shielder"
+  ],
+  "interaction_modes": [
+    "idle"
+  ]
+}

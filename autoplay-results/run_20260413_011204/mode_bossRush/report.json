@@ -1,0 +1,298 @@
+{
+  "session_id": "mode_bossRush",
+  "strategy": "greedy",
+  "map_id": "map_04",
+  "difficulty": "normal",
+  "warden": "prince",
+  "seed": 1776013924903808039,
+  "result": "defeat",
+  "waves_survived": 5,
+  "total_waves": 5,
+  "final_gold": 0,
+  "final_lives": 0,
+  "total_kills": 26,
+  "duration_ticks": 6969,
+  "towers_built": [
+    {
+      "key": "basic",
+      "count": 4,
+      "total_cost": 720,
+      "total_dps": 121.4
+    }
+  ],
+  "wave_log": [
+    {
+      "wave": 1,
+      "enemies": 0,
+      "leaked": 0,
+      "gold_earned": 50,
+      "gold_spent": 50
+    },
+    {
+      "wave": 2,
+      "enemies": 7,
+      "leaked": 0,
+      "gold_earned": 65,
+      "gold_spent": 70
+    },
+    {
+      "wave": 3,
+      "enemies": 15,
+      "leaked": 0,
+      "gold_earned": 92,
+      "gold_spent": 70
+    },
+    {
+      "wave": 4,
+      "enemies": 23,
+      "leaked": 0,
+      "gold_earned": 105,
+      "gold_spent": 90
+    },
+    {
+      "wave": 5,
+      "enemies": 32,
+      "leaked": 20,
+      "gold_earned": 288,
+      "gold_spent": 390
+    }
+  ],
+  "anomalies": [
+    {
+      "tick": 1801,
+      "type": "warden_range_limited_x",
+      "detail": "map width=1440 (\u003e1200) but warden X range=[180,1056] (span=875), never reached beyond first screen",
+      "severity": 2
+    },
+    {
+      "tick": 1801,
+      "type": "warden_range_limited_y",
+      "detail": "map height=780 (\u003e540) but warden Y range=[170,389] (span=219), never reached beyond first screen",
+      "severity": 2
+    },
+    {
+      "tick": 3455,
+      "type": "economy_stall",
+      "detail": "wave=5 gold=2 \u003c minCost=50 for 20s (economy may be too tight)",
+      "severity": 1
+    }
+  ],
+  "coverage": {
+    "towers_used": [
+      "basic"
+    ],
+    "attack_styles_fired": [
+      "projectile"
+    ],
+    "enemy_archetypes_seen": [
+      "normal",
+      "shielder",
+      "runner",
+      "swarm",
+      "buffer",
+      "tank",
+      "drainer",
+      "colossus",
+      "armored"
+    ]
+  },
+  "dps_snapshots": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    1052.9999999999986,
+    1619.999999999998,
+    1664.0999999999997,
+    3153.999999999999,
+    3203.9999999999995,
+    3761.9999999999986,
+    4283.999999999997,
+    4283.999999999997,
+    4283.999999999997,
+    4283.999999999997,
+    4283.999999999997,
+    4692.199999999996,
+    5225.9999999999945,
+    5253.299999999998,
+    5267.999999999999,
+    5267.999999999999,
+    5267.999999999999,
+    5267.999999999999,
+    5267.999999999999,
+    5267.999999999999,
+    5267.999999999999,
+    5494.799999999988,
+    5367.999999999991,
+    5363.999999999991,
+    5363.999999999991,
+    5363.999999999991,
+    5363.999999999991,
+    4859.999999999994,
+    5567.999999999989,
+    5626.399999999999,
+    5645.999999999995,
+    5824.499999999995,
+    6065.999999999996,
+    6152.099999999983,
+    6233.999999999987,
+    6233.999999999987,
+    6233.999999999987,
+    6334.7999999999865,
+    6169.999999999985,
+    6161.999999999985,
+    6161.999999999985,
+    6196.999999999997,
+    6245.999999999996,
+    6245.999999999996,
+    6473.999999999997,
+    6495.799999999994,
+    6537.099999999995,
+    6569.999999999991,
+    6569.999999999991,
+    6618.299999999982,
+    6682.699999999999,
+    6695.999999999997,
+    6695.999999999997,
+    6153.699999999991,
+    5879.999999999992,
+    6179.999999999992,
+    6816.399999999983,
+    6749.699999999997,
+    6047.999999999998,
+    6092.999999999998,
+    6689.799999999993,
+    6614.999999999991,
+    5039.999999999994,
+    5048.999999999994,
+    1079.9999999999986,
+    2154.9999999999973,
+    5446.499999999993,
+    6089.999999999992,
+    6089.999999999992,
+    6089.999999999992,
+    6929.999999999991,
+    6215.999999999992,
+    5940.099999999985,
+    5546.4,
+    6215.999999999996,
+    5065.999999999994,
+    6395.999999999996,
+    6557.999999999997,
+    6035.999999999996,
+    5105.999999999995,
+    3980.999999999991,
+    4805.999999999993,
+    5070.599999999993,
+    1619.999999999998,
+    1791.9999999999977,
+    3742.199999999992,
+    3445.4999999999945,
+    2367.999999999997,
+    1079.9999999999986,
+    1104.9999999999986,
+    2075.9999999999973,
+    5268.699999999991,
+    2279.999999999997,
+    1079.9999999999986,
+    1529.999999999998,
+    3213.999999999997,
+    5663.999999999989,
+    5303.999999999991,
+    5303.999999999991,
+    4178.999999999998,
+    3803.9999999999986,
+    4223.999999999997,
+    4703.9999999999945,
+    4703.9999999999945,
+    2732.3999999999983,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  "boss_stats": [
+    {
+      "archetype": "shielder",
+      "wave": 1,
+      "spawn_tick": 507,
+      "death_tick": 2635,
+      "alive_seconds": 35.46666666666667,
+      "verdict": "ok"
+    },
+    {
+      "archetype": "drainer",
+      "wave": 2,
+      "spawn_tick": 1053,
+      "death_tick": 3600,
+      "alive_seconds": 42.45,
+      "verdict": "ok"
+    },
+    {
+      "archetype": "buffer",
+      "wave": 4,
+      "spawn_tick": 2249,
+      "death_tick": 4778,
+      "alive_seconds": 42.15,
+      "verdict": "ok"
+    },
+    {
+      "archetype": "colossus",
+      "wave": 3,
+      "spawn_tick": 1635,
+      "death_tick": 5484,
+      "alive_seconds": 64.15,
+      "verdict": "too_strong"
+    },
+    {
+      "archetype": "colossus",
+      "wave": 5,
+      "spawn_tick": 2901,
+      "death_tick": 6968,
+      "alive_seconds": 67.78333333333333,
+      "verdict": "too_strong"
+    }
+  ],
+  "pace_stats": {
+    "total_idle_ticks": 4067,
+    "total_combat_ticks": 2895,
+    "idle_combat_ratio": 1.4048359240069084,
+    "verdict": "ok"
+  },
+  "economy_alerts": [
+    "wave=5 tick=3155: 连续 15s 金币(5)不够最便宜的塔(50)"
+  ],
+  "experience_stats": {
+    "early_leak_wave": 5,
+    "early_leak_count": 0,
+    "late_zero_leak_waves": 2,
+    "difficulty_verdict": "ok"
+  },
+  "pipeline_steps": [
+    "death_check",
+    "attacker_buff",
+    "damage_cap",
+    "boss_hp_cap",
+    "death",
+    "immunity_check",
+    "target_debuff",
+    "damage_amplify",
+    "hp_deduct",
+    "threshold"
+  ],
+  "damage_types": [
+    "physical"
+  ],
+  "boss_spawned": [
+    "buffer",
+    "shielder",
+    "drainer",
+    "colossus"
+  ],
+  "interaction_modes": [
+    "idle"
+  ]
+}
