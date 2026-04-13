@@ -4,7 +4,14 @@
     "scene": "stage",
     "trigger": "scene_enter",
     "lines": [
-      {"text": "战场准备就绪！先建一座防御塔吧。", "expression": "talk", "autoAdvance": 5}
+      {
+        "text": {
+          "zh": "战场准备就绪！先建一座防御塔吧。",
+          "en": "Battlefield ready! Start by building a tower."
+        },
+        "expression": "talk",
+        "autoAdvance": 5
+      }
     ],
     "once": true,
     "priority": 10
@@ -14,7 +21,14 @@
     "scene": "stage",
     "trigger": "wave_start",
     "lines": [
-      {"text": "敌人来了！注意防线！", "expression": "surprised", "autoAdvance": 3}
+      {
+        "text": {
+          "zh": "敌人来了！注意防线！",
+          "en": "Enemies incoming! Watch the line!"
+        },
+        "expression": "surprised",
+        "autoAdvance": 3
+      }
     ],
     "once": true,
     "priority": 5
@@ -24,7 +38,14 @@
     "scene": "stage",
     "trigger": "upgrade",
     "lines": [
-      {"text": "升级成功！塔变强了呢~", "expression": "happy", "autoAdvance": 3}
+      {
+        "text": {
+          "zh": "升级成功！塔变强了呢~",
+          "en": "Upgrade complete! The tower is stronger now~"
+        },
+        "expression": "happy",
+        "autoAdvance": 3
+      }
     ],
     "once": true,
     "priority": 5
@@ -34,7 +55,14 @@
     "scene": "stage",
     "trigger": "item_use",
     "lines": [
-      {"text": "道具用得好！合理使用道具是胜利的关键。", "expression": "happy", "autoAdvance": 4}
+      {
+        "text": {
+          "zh": "道具用得好！合理使用道具是胜利的关键。",
+          "en": "Great item use! Using items wisely is key to victory."
+        },
+        "expression": "happy",
+        "autoAdvance": 4
+      }
     ],
     "once": true,
     "priority": 5
@@ -44,7 +72,14 @@
     "scene": "stage",
     "trigger": "low_health",
     "lines": [
-      {"text": "生命值很低了！小心防守！", "expression": "surprised", "autoAdvance": 4}
+      {
+        "text": {
+          "zh": "生命值很低了！小心防守！",
+          "en": "Health is very low! Defend carefully!"
+        },
+        "expression": "surprised",
+        "autoAdvance": 4
+      }
     ],
     "once": false,
     "priority": 8
@@ -54,7 +89,14 @@
     "scene": "stage",
     "trigger": "enemy_swarm",
     "lines": [
-      {"text": "好多敌人涌过来了！集中火力！", "expression": "surprised", "autoAdvance": 3}
+      {
+        "text": {
+          "zh": "好多敌人涌过来了！集中火力！",
+          "en": "So many enemies rushing in! Focus fire!"
+        },
+        "expression": "surprised",
+        "autoAdvance": 3
+      }
     ],
     "once": false,
     "priority": 6
@@ -64,7 +106,14 @@
     "scene": "stage",
     "trigger": "gold_shortage",
     "lines": [
-      {"text": "金币不够了...要精打细算哦。", "expression": "talk", "autoAdvance": 4}
+      {
+        "text": {
+          "zh": "金币不够了...要精打细算哦。",
+          "en": "Running low on gold... better spend wisely."
+        },
+        "expression": "talk",
+        "autoAdvance": 4
+      }
     ],
     "once": false,
     "priority": 4
@@ -74,8 +123,22 @@
     "scene": "stage",
     "trigger": "boss_incoming",
     "lines": [
-      {"text": "Boss来了！做好准备！", "expression": "surprised", "autoAdvance": 3},
-      {"text": "沉住气，你可以的！", "expression": "talk", "autoAdvance": 3}
+      {
+        "text": {
+          "zh": "Boss来了！做好准备！",
+          "en": "Boss incoming! Get ready!"
+        },
+        "expression": "surprised",
+        "autoAdvance": 3
+      },
+      {
+        "text": {
+          "zh": "沉住气，你可以的！",
+          "en": "Stay calm, you got this!"
+        },
+        "expression": "talk",
+        "autoAdvance": 3
+      }
     ],
     "once": false,
     "priority": 9
@@ -85,7 +148,14 @@
     "scene": "stage",
     "trigger": "wave_complete",
     "lines": [
-      {"text": "干得漂亮！", "expression": "happy", "autoAdvance": 3}
+      {
+        "text": {
+          "zh": "干得漂亮！",
+          "en": "Nicely done!"
+        },
+        "expression": "happy",
+        "autoAdvance": 3
+      }
     ],
     "once": false,
     "priority": 5
@@ -95,7 +165,14 @@
     "scene": "stage",
     "trigger": "kill_streak",
     "lines": [
-      {"text": "连杀！你太强了！", "expression": "happy", "autoAdvance": 3}
+      {
+        "text": {
+          "zh": "连杀！你太强了！",
+          "en": "Kill streak! You're amazing!"
+        },
+        "expression": "happy",
+        "autoAdvance": 3
+      }
     ],
     "once": false,
     "priority": 6
@@ -105,7 +182,14 @@
     "scene": "stage",
     "trigger": "mascot_help",
     "lines": [
-      {"text": "交给我吧！看我的~", "expression": "happy", "autoAdvance": 3}
+      {
+        "text": {
+          "zh": "交给我吧！看我的~",
+          "en": "Leave it to me! Watch this~"
+        },
+        "expression": "happy",
+        "autoAdvance": 3
+      }
     ],
     "once": false,
     "priority": 7
@@ -115,7 +199,14 @@
     "scene": "stage",
     "trigger": "mascot_help",
     "lines": [
-      {"text": "让我来帮忙！", "expression": "happy", "autoAdvance": 3}
+      {
+        "text": {
+          "zh": "让我来帮忙！",
+          "en": "Let me help out!"
+        },
+        "expression": "happy",
+        "autoAdvance": 3
+      }
     ],
     "once": false,
     "priority": 7
@@ -125,7 +216,14 @@
     "scene": "stage",
     "trigger": "mascot_kill_success",
     "lines": [
-      {"text": "搞定！小意思啦~", "expression": "happy", "autoAdvance": 3}
+      {
+        "text": {
+          "zh": "搞定！小意思啦~",
+          "en": "Done! Piece of cake~"
+        },
+        "expression": "happy",
+        "autoAdvance": 3
+      }
     ],
     "once": false,
     "priority": 7
@@ -135,7 +233,14 @@
     "scene": "stage",
     "trigger": "mascot_kill_success",
     "lines": [
-      {"text": "帮你解决了一个！", "expression": "happy", "autoAdvance": 3}
+      {
+        "text": {
+          "zh": "帮你解决了一个！",
+          "en": "Got one for you!"
+        },
+        "expression": "happy",
+        "autoAdvance": 3
+      }
     ],
     "once": false,
     "priority": 7
@@ -145,7 +250,14 @@
     "scene": "stage",
     "trigger": "mascot_not_ready",
     "lines": [
-      {"text": "再等一下下，我还在蓄力中...", "expression": "talk", "autoAdvance": 3}
+      {
+        "text": {
+          "zh": "再等一下下，我还在蓄力中...",
+          "en": "Just a sec, I'm still charging up..."
+        },
+        "expression": "talk",
+        "autoAdvance": 3
+      }
     ],
     "once": false,
     "priority": 6
@@ -155,7 +267,14 @@
     "scene": "stage",
     "trigger": "mascot_ability_hint",
     "lines": [
-      {"text": "点击我，帮你消灭一个小怪！", "expression": "happy", "autoAdvance": 8}
+      {
+        "text": {
+          "zh": "点击我，帮你消灭一个小怪！",
+          "en": "Tap me to take out an enemy!"
+        },
+        "expression": "happy",
+        "autoAdvance": 8
+      }
     ],
     "once": false,
     "priority": 7
@@ -165,7 +284,14 @@
     "scene": "stage",
     "trigger": "mascot_ability_hint",
     "lines": [
-      {"text": "我准备好了！点我帮忙~", "expression": "happy", "autoAdvance": 8}
+      {
+        "text": {
+          "zh": "我准备好了！点我帮忙~",
+          "en": "I'm ready! Tap me for help~"
+        },
+        "expression": "happy",
+        "autoAdvance": 8
+      }
     ],
     "once": false,
     "priority": 7
@@ -175,7 +301,14 @@
     "scene": "stage",
     "trigger": "mascot_ability_hint",
     "lines": [
-      {"text": "嘿嘿，蓄力完了！要帮忙就点我哦~", "expression": "happy", "autoAdvance": 8}
+      {
+        "text": {
+          "zh": "嘿嘿，蓄力完了！要帮忙就点我哦~",
+          "en": "Hehe, fully charged! Tap me if you need help~"
+        },
+        "expression": "happy",
+        "autoAdvance": 8
+      }
     ],
     "once": false,
     "priority": 7
@@ -185,7 +318,14 @@
     "scene": "stage",
     "trigger": "perf_fps_low",
     "lines": [
-      {"text": "画面好像有点卡...这优化还得再加把劲啊。", "expression": "talk", "autoAdvance": 4}
+      {
+        "text": {
+          "zh": "画面好像有点卡...这优化还得再加把劲啊。",
+          "en": "Seems a bit laggy... optimization needs more work."
+        },
+        "expression": "talk",
+        "autoAdvance": 4
+      }
     ],
     "once": false,
     "priority": 6
@@ -195,7 +335,14 @@
     "scene": "stage",
     "trigger": "perf_fps_great",
     "lines": [
-      {"text": "帧率超稳！你的设备性能真不错~", "expression": "happy", "autoAdvance": 4}
+      {
+        "text": {
+          "zh": "帧率超稳！你的设备性能真不错~",
+          "en": "Frame rate is rock solid! Nice device you got~"
+        },
+        "expression": "happy",
+        "autoAdvance": 4
+      }
     ],
     "once": false,
     "priority": 3
@@ -205,7 +352,14 @@
     "scene": "stage",
     "trigger": "perf_gc_heavy",
     "lines": [
-      {"text": "内存回收有点频繁...是不是哪里泄漏了？", "expression": "surprised", "autoAdvance": 4}
+      {
+        "text": {
+          "zh": "内存回收有点频繁...是不是哪里泄漏了？",
+          "en": "GC is running a lot... is there a leak somewhere?"
+        },
+        "expression": "surprised",
+        "autoAdvance": 4
+      }
     ],
     "once": false,
     "priority": 5
@@ -215,7 +369,14 @@
     "scene": "stage",
     "trigger": "ui_tower_selected",
     "lines": [
-      {"text": "看看这座塔的数据，强度越高伤害越大哦。", "expression": "talk", "autoAdvance": 4}
+      {
+        "text": {
+          "zh": "看看这座塔的数据，强度越高伤害越大哦。",
+          "en": "Check this tower's stats — higher Strength means more damage."
+        },
+        "expression": "talk",
+        "autoAdvance": 4
+      }
     ],
     "once": false,
     "priority": 7
@@ -225,7 +386,14 @@
     "scene": "stage",
     "trigger": "ui_ability_choice",
     "lines": [
-      {"text": "选能力要看品质！紫色史诗最强，但绿色普通也很实用。", "expression": "talk", "autoAdvance": 5}
+      {
+        "text": {
+          "zh": "选能力要看品质！紫色史诗最强，但绿色普通也很实用。",
+          "en": "Check the rarity! Purple epics are strongest, but green commons are handy too."
+        },
+        "expression": "talk",
+        "autoAdvance": 5
+      }
     ],
     "once": false,
     "priority": 8
@@ -235,7 +403,14 @@
     "scene": "stage",
     "trigger": "ui_warden_select",
     "lines": [
-      {"text": "每个战灵有不同的战斗风格，选适合你打法的！", "expression": "talk", "autoAdvance": 5}
+      {
+        "text": {
+          "zh": "每个战灵有不同的战斗风格，选适合你打法的！",
+          "en": "Each Warden has a different style — pick one that suits your play!"
+        },
+        "expression": "talk",
+        "autoAdvance": 5
+      }
     ],
     "once": false,
     "priority": 8
@@ -245,7 +420,14 @@
     "scene": "stage",
     "trigger": "ui_build_menu",
     "lines": [
-      {"text": "塔的位置很重要！尽量放在路径拐弯处。", "expression": "talk", "autoAdvance": 4}
+      {
+        "text": {
+          "zh": "塔的位置很重要！尽量放在路径拐弯处。",
+          "en": "Tower placement matters! Try placing them at path corners."
+        },
+        "expression": "talk",
+        "autoAdvance": 4
+      }
     ],
     "once": false,
     "priority": 6
@@ -255,7 +437,14 @@
     "scene": "stage",
     "trigger": "ui_item_panel",
     "lines": [
-      {"text": "道具可以直接拖到塔上使用哦~", "expression": "talk", "autoAdvance": 4}
+      {
+        "text": {
+          "zh": "道具可以直接拖到塔上使用哦~",
+          "en": "You can drag items directly onto a tower to use them~"
+        },
+        "expression": "talk",
+        "autoAdvance": 4
+      }
     ],
     "once": false,
     "priority": 6
@@ -265,8 +454,22 @@
     "scene": "stage",
     "trigger": "diag_quality_downgrade",
     "lines": [
-      {"text": "画质自动降低了...设备有点吃力呢。", "expression": "talk", "autoAdvance": 4},
-      {"text": "不过游戏体验不会受影响的！", "expression": "happy", "autoAdvance": 3}
+      {
+        "text": {
+          "zh": "画质自动降低了...设备有点吃力呢。",
+          "en": "Quality auto-lowered... your device is struggling a bit."
+        },
+        "expression": "talk",
+        "autoAdvance": 4
+      },
+      {
+        "text": {
+          "zh": "不过游戏体验不会受影响的！",
+          "en": "But it won't affect the gameplay experience!"
+        },
+        "expression": "happy",
+        "autoAdvance": 3
+      }
     ],
     "once": true,
     "priority": 7
@@ -276,19 +479,39 @@
     "scene": "stage",
     "trigger": "diag_enemy_swarm_critical",
     "lines": [
-      {"text": "太多敌人了！防线快要崩溃了！", "expression": "surprised", "autoAdvance": 3}
+      {
+        "text": {
+          "zh": "太多敌人了！防线快要崩溃了！",
+          "en": "Too many enemies! The defense is about to collapse!"
+        },
+        "expression": "surprised",
+        "autoAdvance": 3
+      }
     ],
     "once": false,
     "priority": 9
   },
-
   {
     "id": "meta_gold_spike_1",
     "scene": "stage",
     "trigger": "meta_gold_spike",
     "lines": [
-      {"text": "这些金币...是从哪里冒出来的？", "expression": "surprised", "autoAdvance": 4},
-      {"text": "你该不会找到了什么秘密通道吧。", "expression": "talk", "autoAdvance": 4}
+      {
+        "text": {
+          "zh": "这些金币...是从哪里冒出来的？",
+          "en": "All this gold... where did it come from?"
+        },
+        "expression": "surprised",
+        "autoAdvance": 4
+      },
+      {
+        "text": {
+          "zh": "你该不会找到了什么秘密通道吧。",
+          "en": "Did you find some secret passage or something?"
+        },
+        "expression": "talk",
+        "autoAdvance": 4
+      }
     ],
     "once": true,
     "priority": 10
@@ -298,20 +521,47 @@
     "scene": "stage",
     "trigger": "meta_gold_spike",
     "lines": [
-      {"text": "金币突然这么多...我什么都没看到哦。", "expression": "idle", "autoAdvance": 4},
-      {"text": "（但我全都知道）", "expression": "happy", "autoAdvance": 3}
+      {
+        "text": {
+          "zh": "金币突然这么多...我什么都没看到哦。",
+          "en": "So much gold all of a sudden... I didn't see anything."
+        },
+        "expression": "idle",
+        "autoAdvance": 4
+      },
+      {
+        "text": {
+          "zh": "（但我全都知道）",
+          "en": "(But I know everything.)"
+        },
+        "expression": "happy",
+        "autoAdvance": 3
+      }
     ],
     "once": true,
     "priority": 10
   },
-
   {
     "id": "meta_lives_up_1",
     "scene": "stage",
     "trigger": "meta_lives_up",
     "lines": [
-      {"text": "诶？生命值怎么变多了？", "expression": "surprised", "autoAdvance": 4},
-      {"text": "这游戏可没有回血机制的吧...", "expression": "talk", "autoAdvance": 4}
+      {
+        "text": {
+          "zh": "诶？生命值怎么变多了？",
+          "en": "Huh? How did our health go up?"
+        },
+        "expression": "surprised",
+        "autoAdvance": 4
+      },
+      {
+        "text": {
+          "zh": "这游戏可没有回血机制的吧...",
+          "en": "This game doesn't have a healing mechanic though..."
+        },
+        "expression": "talk",
+        "autoAdvance": 4
+      }
     ],
     "once": true,
     "priority": 10
@@ -321,20 +571,47 @@
     "scene": "stage",
     "trigger": "meta_lives_up",
     "lines": [
-      {"text": "无敌的感觉...是不是有点无聊呢？", "expression": "idle", "autoAdvance": 4},
-      {"text": "偶尔感受一下紧张感也很棒的哦~", "expression": "talk", "autoAdvance": 4}
+      {
+        "text": {
+          "zh": "无敌的感觉...是不是有点无聊呢？",
+          "en": "Feeling invincible... isn't that a bit boring?"
+        },
+        "expression": "idle",
+        "autoAdvance": 4
+      },
+      {
+        "text": {
+          "zh": "偶尔感受一下紧张感也很棒的哦~",
+          "en": "A little tension now and then is pretty fun too~"
+        },
+        "expression": "talk",
+        "autoAdvance": 4
+      }
     ],
     "once": true,
     "priority": 10
   },
-
   {
     "id": "meta_repeated_loss_1",
     "scene": "stage",
     "trigger": "meta_repeated_loss",
     "lines": [
-      {"text": "已经第三次了...但你还在坚持，对吧？", "expression": "talk", "autoAdvance": 5},
-      {"text": "光是这份不服输，就已经很了不起了。", "expression": "happy", "autoAdvance": 4}
+      {
+        "text": {
+          "zh": "已经第三次了...但你还在坚持，对吧？",
+          "en": "Third time now... but you're still going, right?"
+        },
+        "expression": "talk",
+        "autoAdvance": 5
+      },
+      {
+        "text": {
+          "zh": "光是这份不服输，就已经很了不起了。",
+          "en": "Just that fighting spirit alone is already impressive."
+        },
+        "expression": "happy",
+        "autoAdvance": 4
+      }
     ],
     "once": false,
     "priority": 8
@@ -344,8 +621,22 @@
     "scene": "stage",
     "trigger": "meta_repeated_loss",
     "lines": [
-      {"text": "失败不可怕。可怕的是...", "expression": "idle", "autoAdvance": 3},
-      {"text": "算了，没什么可怕的。再来一把！", "expression": "happy", "autoAdvance": 4}
+      {
+        "text": {
+          "zh": "失败不可怕。可怕的是...",
+          "en": "Losing isn't scary. What's scary is..."
+        },
+        "expression": "idle",
+        "autoAdvance": 3
+      },
+      {
+        "text": {
+          "zh": "算了，没什么可怕的。再来一把！",
+          "en": "Nah, nothing's scary. Let's go again!"
+        },
+        "expression": "happy",
+        "autoAdvance": 4
+      }
     ],
     "once": false,
     "priority": 8
@@ -355,20 +646,47 @@
     "scene": "stage",
     "trigger": "meta_repeated_loss",
     "lines": [
-      {"text": "连开发者测试的时候也经常翻车的。", "expression": "talk", "autoAdvance": 4},
-      {"text": "你已经比他强了，别灰心！", "expression": "happy", "autoAdvance": 4}
+      {
+        "text": {
+          "zh": "连开发者测试的时候也经常翻车的。",
+          "en": "Even the developer fails a lot during testing."
+        },
+        "expression": "talk",
+        "autoAdvance": 4
+      },
+      {
+        "text": {
+          "zh": "你已经比他强了，别灰心！",
+          "en": "You're already better than him — don't give up!"
+        },
+        "expression": "happy",
+        "autoAdvance": 4
+      }
     ],
     "once": false,
     "priority": 8
   },
-
   {
     "id": "meta_perfect_clear_1",
     "scene": "stage",
     "trigger": "meta_perfect_clear",
     "lines": [
-      {"text": "零损失通关！？你确定没有开挂？", "expression": "surprised", "autoAdvance": 4},
-      {"text": "...不是？那你比开发者强太多了。", "expression": "happy", "autoAdvance": 4}
+      {
+        "text": {
+          "zh": "零损失通关！？你确定没有开挂？",
+          "en": "Zero losses?! Are you sure you're not cheating?"
+        },
+        "expression": "surprised",
+        "autoAdvance": 4
+      },
+      {
+        "text": {
+          "zh": "...不是？那你比开发者强太多了。",
+          "en": "...You're not? Then you're way better than the developer."
+        },
+        "expression": "happy",
+        "autoAdvance": 4
+      }
     ],
     "once": true,
     "priority": 10
@@ -378,31 +696,64 @@
     "scene": "stage",
     "trigger": "meta_perfect_clear",
     "lines": [
-      {"text": "一条命都没丢...完美防守！", "expression": "happy", "autoAdvance": 4},
-      {"text": "你应该去教开发者怎么打这游戏。", "expression": "talk", "autoAdvance": 4}
+      {
+        "text": {
+          "zh": "一条命都没丢...完美防守！",
+          "en": "Not a single life lost... perfect defense!"
+        },
+        "expression": "happy",
+        "autoAdvance": 4
+      },
+      {
+        "text": {
+          "zh": "你应该去教开发者怎么打这游戏。",
+          "en": "You should teach the developer how to play this game."
+        },
+        "expression": "talk",
+        "autoAdvance": 4
+      }
     ],
     "once": true,
     "priority": 10
   },
-
   {
     "id": "meta_speedrun_1",
     "scene": "stage",
     "trigger": "meta_speedrun",
     "lines": [
-      {"text": "才三分钟就打完了？！这速度...", "expression": "surprised", "autoAdvance": 4},
-      {"text": "世界纪录保持者就是你了（大概）。", "expression": "happy", "autoAdvance": 4}
+      {
+        "text": {
+          "zh": "才三分钟就打完了？！这速度...",
+          "en": "Finished in just three minutes?! That speed..."
+        },
+        "expression": "surprised",
+        "autoAdvance": 4
+      },
+      {
+        "text": {
+          "zh": "世界纪录保持者就是你了（大概）。",
+          "en": "World record holder right here (probably)."
+        },
+        "expression": "happy",
+        "autoAdvance": 4
+      }
     ],
     "once": true,
     "priority": 10
   },
-
   {
     "id": "meta_long_pause_1",
     "scene": "stage",
     "trigger": "meta_long_pause",
     "lines": [
-      {"text": "去吃饭了？给我也带一份~", "expression": "happy", "autoAdvance": 4}
+      {
+        "text": {
+          "zh": "去吃饭了？给我也带一份~",
+          "en": "Gone for food? Bring me some too~"
+        },
+        "expression": "happy",
+        "autoAdvance": 4
+      }
     ],
     "once": false,
     "priority": 3
@@ -412,8 +763,22 @@
     "scene": "stage",
     "trigger": "meta_long_pause",
     "lines": [
-      {"text": "...你还在吗？", "expression": "idle", "autoAdvance": 3},
-      {"text": "我都快睡着了...", "expression": "talk", "autoAdvance": 3}
+      {
+        "text": {
+          "zh": "...你还在吗？",
+          "en": "...Are you still there?"
+        },
+        "expression": "idle",
+        "autoAdvance": 3
+      },
+      {
+        "text": {
+          "zh": "我都快睡着了...",
+          "en": "I'm about to fall asleep..."
+        },
+        "expression": "talk",
+        "autoAdvance": 3
+      }
     ],
     "once": false,
     "priority": 3
@@ -423,20 +788,47 @@
     "scene": "stage",
     "trigger": "meta_long_pause",
     "lines": [
-      {"text": "暂停这么久，是在思考人生吗？", "expression": "idle", "autoAdvance": 4},
-      {"text": "想好了就回来，敌人还等着呢。", "expression": "talk", "autoAdvance": 4}
+      {
+        "text": {
+          "zh": "暂停这么久，是在思考人生吗？",
+          "en": "Paused this long — contemplating life?"
+        },
+        "expression": "idle",
+        "autoAdvance": 4
+      },
+      {
+        "text": {
+          "zh": "想好了就回来，敌人还等着呢。",
+          "en": "Come back when you're ready — the enemies are waiting."
+        },
+        "expression": "talk",
+        "autoAdvance": 4
+      }
     ],
     "once": false,
     "priority": 3
   },
-
   {
     "id": "meta_no_towers_1",
     "scene": "stage",
     "trigger": "meta_no_towers",
     "lines": [
-      {"text": "你...是故意不建塔的吗？", "expression": "surprised", "autoAdvance": 4},
-      {"text": "这是什么新玩法？无塔挑战？！", "expression": "talk", "autoAdvance": 4}
+      {
+        "text": {
+          "zh": "你...是故意不建塔的吗？",
+          "en": "Are you... not building towers on purpose?"
+        },
+        "expression": "surprised",
+        "autoAdvance": 4
+      },
+      {
+        "text": {
+          "zh": "这是什么新玩法？无塔挑战？！",
+          "en": "Is this some new strat? A no-tower challenge?!"
+        },
+        "expression": "talk",
+        "autoAdvance": 4
+      }
     ],
     "once": true,
     "priority": 8
@@ -446,19 +838,39 @@
     "scene": "stage",
     "trigger": "meta_no_towers",
     "lines": [
-      {"text": "裸奔通关...我连想都不敢想。", "expression": "surprised", "autoAdvance": 4},
-      {"text": "如果你真做到了，开发者会哭的。", "expression": "happy", "autoAdvance": 4}
+      {
+        "text": {
+          "zh": "裸奔通关...我连想都不敢想。",
+          "en": "Clearing with nothing... I can't even imagine."
+        },
+        "expression": "surprised",
+        "autoAdvance": 4
+      },
+      {
+        "text": {
+          "zh": "如果你真做到了，开发者会哭的。",
+          "en": "If you actually pull it off, the developer will cry."
+        },
+        "expression": "happy",
+        "autoAdvance": 4
+      }
     ],
     "once": true,
     "priority": 8
   },
-
   {
     "id": "stage_wave_complete_2",
     "scene": "stage",
     "trigger": "wave_complete",
     "lines": [
-      {"text": "又过了一波！继续保持！", "expression": "happy", "autoAdvance": 3}
+      {
+        "text": {
+          "zh": "又过了一波！继续保持！",
+          "en": "Another wave down! Keep it up!"
+        },
+        "expression": "happy",
+        "autoAdvance": 3
+      }
     ],
     "once": false,
     "priority": 5
@@ -468,7 +880,14 @@
     "scene": "stage",
     "trigger": "wave_complete",
     "lines": [
-      {"text": "Nice！防线稳如磐石！", "expression": "happy", "autoAdvance": 3}
+      {
+        "text": {
+          "zh": "Nice！防线稳如磐石！",
+          "en": "Nice! Defense is rock solid!"
+        },
+        "expression": "happy",
+        "autoAdvance": 3
+      }
     ],
     "once": false,
     "priority": 5
@@ -478,7 +897,14 @@
     "scene": "stage",
     "trigger": "wave_complete",
     "lines": [
-      {"text": "一波搞定，趁间隙调整一下布局吧。", "expression": "talk", "autoAdvance": 4}
+      {
+        "text": {
+          "zh": "一波搞定，趁间隙调整一下布局吧。",
+          "en": "Wave cleared — tweak your layout during the break."
+        },
+        "expression": "talk",
+        "autoAdvance": 4
+      }
     ],
     "once": false,
     "priority": 5
@@ -488,7 +914,14 @@
     "scene": "stage",
     "trigger": "wave_complete",
     "lines": [
-      {"text": "敌人被打退了！你太棒了~", "expression": "happy", "autoAdvance": 3}
+      {
+        "text": {
+          "zh": "敌人被打退了！你太棒了~",
+          "en": "Enemies pushed back! You're awesome~"
+        },
+        "expression": "happy",
+        "autoAdvance": 3
+      }
     ],
     "once": false,
     "priority": 5
@@ -498,18 +931,31 @@
     "scene": "stage",
     "trigger": "wave_complete",
     "lines": [
-      {"text": "轻松拿下！下一波还远吗？", "expression": "idle", "autoAdvance": 3}
+      {
+        "text": {
+          "zh": "轻松拿下！下一波还远吗？",
+          "en": "Easy win! Is the next wave far off?"
+        },
+        "expression": "idle",
+        "autoAdvance": 3
+      }
     ],
     "once": false,
     "priority": 5
   },
-
   {
     "id": "stage_boss_2",
     "scene": "stage",
     "trigger": "boss_incoming",
     "lines": [
-      {"text": "注意！Boss波！全力输出！", "expression": "surprised", "autoAdvance": 3}
+      {
+        "text": {
+          "zh": "注意！Boss波！全力输出！",
+          "en": "Heads up! Boss wave! Go all out!"
+        },
+        "expression": "surprised",
+        "autoAdvance": 3
+      }
     ],
     "once": false,
     "priority": 9
@@ -519,7 +965,14 @@
     "scene": "stage",
     "trigger": "boss_incoming",
     "lines": [
-      {"text": "大家伙来了！所有火力集中！", "expression": "surprised", "autoAdvance": 3}
+      {
+        "text": {
+          "zh": "大家伙来了！所有火力集中！",
+          "en": "Here comes the big one! All firepower, now!"
+        },
+        "expression": "surprised",
+        "autoAdvance": 3
+      }
     ],
     "once": false,
     "priority": 9
@@ -529,7 +982,14 @@
     "scene": "stage",
     "trigger": "boss_incoming",
     "lines": [
-      {"text": "Boss出场了...深呼吸，你行的！", "expression": "talk", "autoAdvance": 4}
+      {
+        "text": {
+          "zh": "Boss出场了...深呼吸，你行的！",
+          "en": "Boss is here... deep breath, you can do this!"
+        },
+        "expression": "talk",
+        "autoAdvance": 4
+      }
     ],
     "once": false,
     "priority": 9
@@ -539,19 +999,39 @@
     "scene": "stage",
     "trigger": "boss_incoming",
     "lines": [
-      {"text": "好强的压迫感...这就是Boss吗！", "expression": "surprised", "autoAdvance": 3},
-      {"text": "道具和战灵技能别忘了用！", "expression": "talk", "autoAdvance": 3}
+      {
+        "text": {
+          "zh": "好强的压迫感...这就是Boss吗！",
+          "en": "Such overwhelming pressure... so this is the Boss!"
+        },
+        "expression": "surprised",
+        "autoAdvance": 3
+      },
+      {
+        "text": {
+          "zh": "道具和战灵技能别忘了用！",
+          "en": "Don't forget to use items and Warden skills!"
+        },
+        "expression": "talk",
+        "autoAdvance": 3
+      }
     ],
     "once": false,
     "priority": 9
   },
-
   {
     "id": "stage_low_health_2",
     "scene": "stage",
     "trigger": "low_health",
     "lines": [
-      {"text": "不好了！生命值快见底了！", "expression": "surprised", "autoAdvance": 3}
+      {
+        "text": {
+          "zh": "不好了！生命值快见底了！",
+          "en": "Oh no! Health is almost gone!"
+        },
+        "expression": "surprised",
+        "autoAdvance": 3
+      }
     ],
     "once": false,
     "priority": 8
@@ -561,7 +1041,14 @@
     "scene": "stage",
     "trigger": "low_health",
     "lines": [
-      {"text": "再漏一个就危险了...撑住！", "expression": "surprised", "autoAdvance": 3}
+      {
+        "text": {
+          "zh": "再漏一个就危险了...撑住！",
+          "en": "One more leak and it's over... hold on!"
+        },
+        "expression": "surprised",
+        "autoAdvance": 3
+      }
     ],
     "once": false,
     "priority": 8
@@ -571,7 +1058,14 @@
     "scene": "stage",
     "trigger": "low_health",
     "lines": [
-      {"text": "心脏快跳出来了...一条都不能再丢！", "expression": "surprised", "autoAdvance": 4}
+      {
+        "text": {
+          "zh": "心脏快跳出来了...一条都不能再丢！",
+          "en": "My heart is pounding... can't lose a single one more!"
+        },
+        "expression": "surprised",
+        "autoAdvance": 4
+      }
     ],
     "once": false,
     "priority": 8
@@ -581,19 +1075,39 @@
     "scene": "stage",
     "trigger": "low_health",
     "lines": [
-      {"text": "生命值告急！用道具补救一下吧！", "expression": "surprised", "autoAdvance": 3},
-      {"text": "还能扛住的...我相信你！", "expression": "talk", "autoAdvance": 3}
+      {
+        "text": {
+          "zh": "生命值告急！用道具补救一下吧！",
+          "en": "Health critical! Try using some items to recover!"
+        },
+        "expression": "surprised",
+        "autoAdvance": 3
+      },
+      {
+        "text": {
+          "zh": "还能扛住的...我相信你！",
+          "en": "We can still hold... I believe in you!"
+        },
+        "expression": "talk",
+        "autoAdvance": 3
+      }
     ],
     "once": false,
     "priority": 8
   },
-
   {
     "id": "stage_swarm_2",
     "scene": "stage",
     "trigger": "enemy_swarm",
     "lines": [
-      {"text": "敌人也太多了吧！密密麻麻的！", "expression": "surprised", "autoAdvance": 3}
+      {
+        "text": {
+          "zh": "敌人也太多了吧！密密麻麻的！",
+          "en": "Way too many enemies! They're everywhere!"
+        },
+        "expression": "surprised",
+        "autoAdvance": 3
+      }
     ],
     "once": false,
     "priority": 6
@@ -603,7 +1117,14 @@
     "scene": "stage",
     "trigger": "enemy_swarm",
     "lines": [
-      {"text": "蜂群来袭！范围攻击该上场了！", "expression": "talk", "autoAdvance": 3}
+      {
+        "text": {
+          "zh": "蜂群来袭！范围攻击该上场了！",
+          "en": "Swarm incoming! Time for AoE attacks!"
+        },
+        "expression": "talk",
+        "autoAdvance": 3
+      }
     ],
     "once": false,
     "priority": 6
@@ -613,7 +1134,14 @@
     "scene": "stage",
     "trigger": "enemy_swarm",
     "lines": [
-      {"text": "看这阵仗...散射和旋转塔快用上！", "expression": "surprised", "autoAdvance": 4}
+      {
+        "text": {
+          "zh": "看这阵仗...散射和旋转塔快用上！",
+          "en": "Look at that horde... get those scatter and spin towers going!"
+        },
+        "expression": "surprised",
+        "autoAdvance": 4
+      }
     ],
     "once": false,
     "priority": 6
@@ -623,18 +1151,31 @@
     "scene": "stage",
     "trigger": "enemy_swarm",
     "lines": [
-      {"text": "来了好大一群！别慌，逐个击破！", "expression": "talk", "autoAdvance": 3}
+      {
+        "text": {
+          "zh": "来了好大一群！别慌，逐个击破！",
+          "en": "Huge wave incoming! Don't panic, pick them off one by one!"
+        },
+        "expression": "talk",
+        "autoAdvance": 3
+      }
     ],
     "once": false,
     "priority": 6
   },
-
   {
     "id": "stage_gold_2",
     "scene": "stage",
     "trigger": "gold_shortage",
     "lines": [
-      {"text": "钱包空了...先忍忍吧。", "expression": "idle", "autoAdvance": 3}
+      {
+        "text": {
+          "zh": "钱包空了...先忍忍吧。",
+          "en": "Wallet's empty... just hang in there."
+        },
+        "expression": "idle",
+        "autoAdvance": 3
+      }
     ],
     "once": false,
     "priority": 4
@@ -644,7 +1185,14 @@
     "scene": "stage",
     "trigger": "gold_shortage",
     "lines": [
-      {"text": "金币告急！先升级现有塔吧。", "expression": "talk", "autoAdvance": 3}
+      {
+        "text": {
+          "zh": "金币告急！先升级现有塔吧。",
+          "en": "Gold is low! Focus on upgrading existing towers."
+        },
+        "expression": "talk",
+        "autoAdvance": 3
+      }
     ],
     "once": false,
     "priority": 4
@@ -654,8 +1202,22 @@
     "scene": "stage",
     "trigger": "gold_shortage",
     "lines": [
-      {"text": "穷...但穷也有穷的打法！", "expression": "talk", "autoAdvance": 3},
-      {"text": "多击杀就有收入了，加油！", "expression": "happy", "autoAdvance": 3}
+      {
+        "text": {
+          "zh": "穷...但穷也有穷的打法！",
+          "en": "Broke... but there's always a way to play broke!"
+        },
+        "expression": "talk",
+        "autoAdvance": 3
+      },
+      {
+        "text": {
+          "zh": "多击杀就有收入了，加油！",
+          "en": "More kills means more income — keep going!"
+        },
+        "expression": "happy",
+        "autoAdvance": 3
+      }
     ],
     "once": false,
     "priority": 4
@@ -665,18 +1227,31 @@
     "scene": "stage",
     "trigger": "gold_shortage",
     "lines": [
-      {"text": "没钱了...要不咱省着点花？", "expression": "idle", "autoAdvance": 3}
+      {
+        "text": {
+          "zh": "没钱了...要不咱省着点花？",
+          "en": "Out of gold... maybe spend a little more carefully?"
+        },
+        "expression": "idle",
+        "autoAdvance": 3
+      }
     ],
     "once": false,
     "priority": 4
   },
-
   {
     "id": "stage_streak_2",
     "scene": "stage",
     "trigger": "kill_streak",
     "lines": [
-      {"text": "连杀中！势不可挡！", "expression": "happy", "autoAdvance": 3}
+      {
+        "text": {
+          "zh": "连杀中！势不可挡！",
+          "en": "On a streak! Unstoppable!"
+        },
+        "expression": "happy",
+        "autoAdvance": 3
+      }
     ],
     "once": false,
     "priority": 6
@@ -686,7 +1261,14 @@
     "scene": "stage",
     "trigger": "kill_streak",
     "lines": [
-      {"text": "哇！一个接一个倒下了！", "expression": "surprised", "autoAdvance": 3}
+      {
+        "text": {
+          "zh": "哇！一个接一个倒下了！",
+          "en": "Wow! They're dropping one after another!"
+        },
+        "expression": "surprised",
+        "autoAdvance": 3
+      }
     ],
     "once": false,
     "priority": 6
@@ -696,7 +1278,14 @@
     "scene": "stage",
     "trigger": "kill_streak",
     "lines": [
-      {"text": "杀疯了！这伤害也太猛了！", "expression": "happy", "autoAdvance": 3}
+      {
+        "text": {
+          "zh": "杀疯了！这伤害也太猛了！",
+          "en": "Going wild! That damage is insane!"
+        },
+        "expression": "happy",
+        "autoAdvance": 3
+      }
     ],
     "once": false,
     "priority": 6
@@ -706,7 +1295,14 @@
     "scene": "stage",
     "trigger": "kill_streak",
     "lines": [
-      {"text": "连杀连杀！继续保持这个节奏！", "expression": "happy", "autoAdvance": 3}
+      {
+        "text": {
+          "zh": "连杀连杀！继续保持这个节奏！",
+          "en": "Streak after streak! Keep up that rhythm!"
+        },
+        "expression": "happy",
+        "autoAdvance": 3
+      }
     ],
     "once": false,
     "priority": 6
@@ -716,18 +1312,31 @@
     "scene": "stage",
     "trigger": "kill_streak",
     "lines": [
-      {"text": "敌人排着队送人头！太爽了！", "expression": "happy", "autoAdvance": 3}
+      {
+        "text": {
+          "zh": "敌人排着队送人头！太爽了！",
+          "en": "Enemies lining up to get wrecked! So satisfying!"
+        },
+        "expression": "happy",
+        "autoAdvance": 3
+      }
     ],
     "once": false,
     "priority": 6
   },
-
   {
     "id": "stage_help_3",
     "scene": "stage",
     "trigger": "mascot_help",
     "lines": [
-      {"text": "看我大显身手！", "expression": "happy", "autoAdvance": 3}
+      {
+        "text": {
+          "zh": "看我大显身手！",
+          "en": "Watch me show off!"
+        },
+        "expression": "happy",
+        "autoAdvance": 3
+      }
     ],
     "once": false,
     "priority": 7
@@ -737,7 +1346,14 @@
     "scene": "stage",
     "trigger": "mascot_help",
     "lines": [
-      {"text": "出击！这次交给我解决！", "expression": "happy", "autoAdvance": 3}
+      {
+        "text": {
+          "zh": "出击！这次交给我解决！",
+          "en": "Charge! I'll handle this one!"
+        },
+        "expression": "happy",
+        "autoAdvance": 3
+      }
     ],
     "once": false,
     "priority": 7
@@ -747,7 +1363,14 @@
     "scene": "stage",
     "trigger": "mascot_help",
     "lines": [
-      {"text": "蓄力完毕，发射——！", "expression": "surprised", "autoAdvance": 3}
+      {
+        "text": {
+          "zh": "蓄力完毕，发射——！",
+          "en": "Fully charged — fire!!"
+        },
+        "expression": "surprised",
+        "autoAdvance": 3
+      }
     ],
     "once": false,
     "priority": 7
@@ -757,18 +1380,31 @@
     "scene": "stage",
     "trigger": "mascot_help",
     "lines": [
-      {"text": "我上了！保护好防线哦~", "expression": "happy", "autoAdvance": 3}
+      {
+        "text": {
+          "zh": "我上了！保护好防线哦~",
+          "en": "Here I go! Guard the line for me~"
+        },
+        "expression": "happy",
+        "autoAdvance": 3
+      }
     ],
     "once": false,
     "priority": 7
   },
-
   {
     "id": "stage_kill_done_3",
     "scene": "stage",
     "trigger": "mascot_kill_success",
     "lines": [
-      {"text": "解决了！看我厉害吧~", "expression": "happy", "autoAdvance": 3}
+      {
+        "text": {
+          "zh": "解决了！看我厉害吧~",
+          "en": "Got 'em! Pretty cool, right~"
+        },
+        "expression": "happy",
+        "autoAdvance": 3
+      }
     ],
     "once": false,
     "priority": 7
@@ -778,7 +1414,14 @@
     "scene": "stage",
     "trigger": "mascot_kill_success",
     "lines": [
-      {"text": "干掉了！轻轻松松~", "expression": "happy", "autoAdvance": 3}
+      {
+        "text": {
+          "zh": "干掉了！轻轻松松~",
+          "en": "Taken out! Easy peasy~"
+        },
+        "expression": "happy",
+        "autoAdvance": 3
+      }
     ],
     "once": false,
     "priority": 7
@@ -788,7 +1431,14 @@
     "scene": "stage",
     "trigger": "mascot_kill_success",
     "lines": [
-      {"text": "又消灭了一个！夸我夸我！", "expression": "happy", "autoAdvance": 3}
+      {
+        "text": {
+          "zh": "又消灭了一个！夸我夸我！",
+          "en": "Got another one! Praise me, praise me!"
+        },
+        "expression": "happy",
+        "autoAdvance": 3
+      }
     ],
     "once": false,
     "priority": 7
@@ -798,18 +1448,31 @@
     "scene": "stage",
     "trigger": "mascot_kill_success",
     "lines": [
-      {"text": "拿下！我可不是花瓶哦~", "expression": "happy", "autoAdvance": 3}
+      {
+        "text": {
+          "zh": "拿下！我可不是花瓶哦~",
+          "en": "Down! I'm not just for show, you know~"
+        },
+        "expression": "happy",
+        "autoAdvance": 3
+      }
     ],
     "once": false,
     "priority": 7
   },
-
   {
     "id": "stage_not_ready_2",
     "scene": "stage",
     "trigger": "mascot_not_ready",
     "lines": [
-      {"text": "还在冷却中...等我一下~", "expression": "talk", "autoAdvance": 3}
+      {
+        "text": {
+          "zh": "还在冷却中...等我一下~",
+          "en": "Still on cooldown... wait for me~"
+        },
+        "expression": "talk",
+        "autoAdvance": 3
+      }
     ],
     "once": false,
     "priority": 6
@@ -819,7 +1482,14 @@
     "scene": "stage",
     "trigger": "mascot_not_ready",
     "lines": [
-      {"text": "能量不够啦，马上就好！", "expression": "idle", "autoAdvance": 3}
+      {
+        "text": {
+          "zh": "能量不够啦，马上就好！",
+          "en": "Not enough energy yet — almost there!"
+        },
+        "expression": "idle",
+        "autoAdvance": 3
+      }
     ],
     "once": false,
     "priority": 6
@@ -829,19 +1499,39 @@
     "scene": "stage",
     "trigger": "mascot_not_ready",
     "lines": [
-      {"text": "急也没用...CD就是CD嘛。", "expression": "talk", "autoAdvance": 3}
+      {
+        "text": {
+          "zh": "急也没用...CD就是CD嘛。",
+          "en": "No rushing it... cooldown is cooldown."
+        },
+        "expression": "talk",
+        "autoAdvance": 3
+      }
     ],
     "once": false,
     "priority": 6
   },
-
   {
     "id": "stage_pause_4",
     "scene": "stage",
     "trigger": "meta_long_pause",
     "lines": [
-      {"text": "该不会睡着了吧？", "expression": "idle", "autoAdvance": 3},
-      {"text": "喂——醒醒——！", "expression": "surprised", "autoAdvance": 3}
+      {
+        "text": {
+          "zh": "该不会睡着了吧？",
+          "en": "Did you fall asleep?"
+        },
+        "expression": "idle",
+        "autoAdvance": 3
+      },
+      {
+        "text": {
+          "zh": "喂——醒醒——！",
+          "en": "Hey—— wake up——!"
+        },
+        "expression": "surprised",
+        "autoAdvance": 3
+      }
     ],
     "once": false,
     "priority": 3
@@ -851,7 +1541,14 @@
     "scene": "stage",
     "trigger": "meta_long_pause",
     "lines": [
-      {"text": "等你好久了...我开始数像素了。", "expression": "idle", "autoAdvance": 4}
+      {
+        "text": {
+          "zh": "等你好久了...我开始数像素了。",
+          "en": "Been waiting forever... I started counting pixels."
+        },
+        "expression": "idle",
+        "autoAdvance": 4
+      }
     ],
     "once": false,
     "priority": 3
@@ -861,8 +1558,22 @@
     "scene": "stage",
     "trigger": "meta_long_pause",
     "lines": [
-      {"text": "暂停一年我也会在这里等你的。", "expression": "talk", "autoAdvance": 4},
-      {"text": "...当然，最好别那么久。", "expression": "happy", "autoAdvance": 3}
+      {
+        "text": {
+          "zh": "暂停一年我也会在这里等你的。",
+          "en": "Even if you pause for a year, I'll be here waiting."
+        },
+        "expression": "talk",
+        "autoAdvance": 4
+      },
+      {
+        "text": {
+          "zh": "...当然，最好别那么久。",
+          "en": "...But please don't take that long."
+        },
+        "expression": "happy",
+        "autoAdvance": 3
+      }
     ],
     "once": false,
     "priority": 3
@@ -872,7 +1583,14 @@
     "scene": "stage",
     "trigger": "meta_long_pause",
     "lines": [
-      {"text": "是去接电话了？还是被猫打断了？", "expression": "idle", "autoAdvance": 4}
+      {
+        "text": {
+          "zh": "是去接电话了？还是被猫打断了？",
+          "en": "Phone call? Or did a cat interrupt you?"
+        },
+        "expression": "idle",
+        "autoAdvance": 4
+      }
     ],
     "once": false,
     "priority": 3
@@ -882,19 +1600,39 @@
     "scene": "stage",
     "trigger": "meta_long_pause",
     "lines": [
-      {"text": "暂停这么久，我都练完广播体操了。", "expression": "happy", "autoAdvance": 4}
+      {
+        "text": {
+          "zh": "暂停这么久，我都练完广播体操了。",
+          "en": "Paused so long, I finished a whole workout."
+        },
+        "expression": "happy",
+        "autoAdvance": 4
+      }
     ],
     "once": false,
     "priority": 3
   },
-
   {
     "id": "stage_notower_3",
     "scene": "stage",
     "trigger": "meta_no_towers",
     "lines": [
-      {"text": "一座塔都没有...这也行？", "expression": "surprised", "autoAdvance": 4},
-      {"text": "要不是亲眼看到，我不信有人这么玩。", "expression": "talk", "autoAdvance": 4}
+      {
+        "text": {
+          "zh": "一座塔都没有...这也行？",
+          "en": "Not a single tower... is that even possible?"
+        },
+        "expression": "surprised",
+        "autoAdvance": 4
+      },
+      {
+        "text": {
+          "zh": "要不是亲眼看到，我不信有人这么玩。",
+          "en": "If I hadn't seen it myself, I'd never believe it."
+        },
+        "expression": "talk",
+        "autoAdvance": 4
+      }
     ],
     "once": true,
     "priority": 8
@@ -904,7 +1642,14 @@
     "scene": "stage",
     "trigger": "meta_no_towers",
     "lines": [
-      {"text": "不建塔...这是传说中的苦行僧模式吗？", "expression": "surprised", "autoAdvance": 4}
+      {
+        "text": {
+          "zh": "不建塔...这是传说中的苦行僧模式吗？",
+          "en": "No towers... is this the legendary monk mode?"
+        },
+        "expression": "surprised",
+        "autoAdvance": 4
+      }
     ],
     "once": true,
     "priority": 8
@@ -914,18 +1659,31 @@
     "scene": "stage",
     "trigger": "meta_no_towers",
     "lines": [
-      {"text": "空空的战场...你确定这不是在欺负自己？", "expression": "idle", "autoAdvance": 4}
+      {
+        "text": {
+          "zh": "空空的战场...你确定这不是在欺负自己？",
+          "en": "Empty battlefield... are you sure you're not punishing yourself?"
+        },
+        "expression": "idle",
+        "autoAdvance": 4
+      }
     ],
     "once": true,
     "priority": 8
   },
-
   {
     "id": "stage_ui_tower_2",
     "scene": "stage",
     "trigger": "ui_tower_selected",
     "lines": [
-      {"text": "选中了！看看它的属性怎么样。", "expression": "talk", "autoAdvance": 3}
+      {
+        "text": {
+          "zh": "选中了！看看它的属性怎么样。",
+          "en": "Selected! Let's check its stats."
+        },
+        "expression": "talk",
+        "autoAdvance": 3
+      }
     ],
     "once": false,
     "priority": 7
@@ -935,7 +1693,14 @@
     "scene": "stage",
     "trigger": "ui_tower_selected",
     "lines": [
-      {"text": "这座塔的攻击方式挺独特的呢。", "expression": "talk", "autoAdvance": 4}
+      {
+        "text": {
+          "zh": "这座塔的攻击方式挺独特的呢。",
+          "en": "This tower has a pretty unique attack style."
+        },
+        "expression": "talk",
+        "autoAdvance": 4
+      }
     ],
     "once": false,
     "priority": 7
@@ -945,19 +1710,39 @@
     "scene": "stage",
     "trigger": "ui_tower_selected",
     "lines": [
-      {"text": "想升级它？还是只是看看？", "expression": "idle", "autoAdvance": 3}
+      {
+        "text": {
+          "zh": "想升级它？还是只是看看？",
+          "en": "Wanna upgrade it? Or just browsing?"
+        },
+        "expression": "idle",
+        "autoAdvance": 3
+      }
     ],
     "once": false,
     "priority": 7
   },
-
   {
     "id": "stage_ui_ability_2",
     "scene": "stage",
     "trigger": "ui_ability_choice",
     "lines": [
-      {"text": "三个能力...选择困难症犯了！", "expression": "surprised", "autoAdvance": 3},
-      {"text": "看品质和搭配来决定吧~", "expression": "talk", "autoAdvance": 3}
+      {
+        "text": {
+          "zh": "三个能力...选择困难症犯了！",
+          "en": "Three abilities... decision paralysis is real!"
+        },
+        "expression": "surprised",
+        "autoAdvance": 3
+      },
+      {
+        "text": {
+          "zh": "看品质和搭配来决定吧~",
+          "en": "Go by rarity and synergy~"
+        },
+        "expression": "talk",
+        "autoAdvance": 3
+      }
     ],
     "once": false,
     "priority": 8
@@ -967,7 +1752,14 @@
     "scene": "stage",
     "trigger": "ui_ability_choice",
     "lines": [
-      {"text": "新能力！仔细看看效果再选哦。", "expression": "talk", "autoAdvance": 4}
+      {
+        "text": {
+          "zh": "新能力！仔细看看效果再选哦。",
+          "en": "New ability! Read the effects carefully before picking."
+        },
+        "expression": "talk",
+        "autoAdvance": 4
+      }
     ],
     "once": false,
     "priority": 8
@@ -977,18 +1769,31 @@
     "scene": "stage",
     "trigger": "ui_ability_choice",
     "lines": [
-      {"text": "选能力的瞬间最让人兴奋了！", "expression": "happy", "autoAdvance": 3}
+      {
+        "text": {
+          "zh": "选能力的瞬间最让人兴奋了！",
+          "en": "Picking abilities is the most exciting part!"
+        },
+        "expression": "happy",
+        "autoAdvance": 3
+      }
     ],
     "once": false,
     "priority": 8
   },
-
   {
     "id": "stage_ui_warden_2",
     "scene": "stage",
     "trigger": "ui_warden_select",
     "lines": [
-      {"text": "挑一个战灵搭档吧！每个都很厉害。", "expression": "talk", "autoAdvance": 4}
+      {
+        "text": {
+          "zh": "挑一个战灵搭档吧！每个都很厉害。",
+          "en": "Pick a Warden partner! They're all great."
+        },
+        "expression": "talk",
+        "autoAdvance": 4
+      }
     ],
     "once": false,
     "priority": 8
@@ -998,7 +1803,14 @@
     "scene": "stage",
     "trigger": "ui_warden_select",
     "lines": [
-      {"text": "战灵选好了就不能换了，想清楚哦~", "expression": "talk", "autoAdvance": 4}
+      {
+        "text": {
+          "zh": "战灵选好了就不能换了，想清楚哦~",
+          "en": "Once you pick a Warden, there's no switching — choose wisely~"
+        },
+        "expression": "talk",
+        "autoAdvance": 4
+      }
     ],
     "once": false,
     "priority": 8
@@ -1008,18 +1820,31 @@
     "scene": "stage",
     "trigger": "ui_warden_select",
     "lines": [
-      {"text": "试试没用过的战灵？说不定有惊喜！", "expression": "happy", "autoAdvance": 4}
+      {
+        "text": {
+          "zh": "试试没用过的战灵？说不定有惊喜！",
+          "en": "Try a Warden you haven't used? Might be a nice surprise!"
+        },
+        "expression": "happy",
+        "autoAdvance": 4
+      }
     ],
     "once": false,
     "priority": 8
   },
-
   {
     "id": "stage_ui_build_2",
     "scene": "stage",
     "trigger": "ui_build_menu",
     "lines": [
-      {"text": "要造新塔了吗？选好位置再放哦。", "expression": "talk", "autoAdvance": 4}
+      {
+        "text": {
+          "zh": "要造新塔了吗？选好位置再放哦。",
+          "en": "Building a new tower? Pick the right spot first."
+        },
+        "expression": "talk",
+        "autoAdvance": 4
+      }
     ],
     "once": false,
     "priority": 6
@@ -1029,7 +1854,14 @@
     "scene": "stage",
     "trigger": "ui_build_menu",
     "lines": [
-      {"text": "建塔时机很重要，金币够再出手！", "expression": "talk", "autoAdvance": 4}
+      {
+        "text": {
+          "zh": "建塔时机很重要，金币够再出手！",
+          "en": "Timing matters — only build when you can afford it!"
+        },
+        "expression": "talk",
+        "autoAdvance": 4
+      }
     ],
     "once": false,
     "priority": 6
@@ -1039,18 +1871,31 @@
     "scene": "stage",
     "trigger": "ui_build_menu",
     "lines": [
-      {"text": "少而精比多而弱好，想好再建~", "expression": "idle", "autoAdvance": 4}
+      {
+        "text": {
+          "zh": "少而精比多而弱好，想好再建~",
+          "en": "Few and strong beats many and weak — think it through~"
+        },
+        "expression": "idle",
+        "autoAdvance": 4
+      }
     ],
     "once": false,
     "priority": 6
   },
-
   {
     "id": "stage_ui_item_2",
     "scene": "stage",
     "trigger": "ui_item_panel",
     "lines": [
-      {"text": "看看有什么好道具可以用~", "expression": "talk", "autoAdvance": 3}
+      {
+        "text": {
+          "zh": "看看有什么好道具可以用~",
+          "en": "Let's see what good items we've got~"
+        },
+        "expression": "talk",
+        "autoAdvance": 3
+      }
     ],
     "once": false,
     "priority": 6
@@ -1060,7 +1905,14 @@
     "scene": "stage",
     "trigger": "ui_item_panel",
     "lines": [
-      {"text": "道具用在核心塔上效果最好哦。", "expression": "talk", "autoAdvance": 4}
+      {
+        "text": {
+          "zh": "道具用在核心塔上效果最好哦。",
+          "en": "Items work best on your core towers."
+        },
+        "expression": "talk",
+        "autoAdvance": 4
+      }
     ],
     "once": false,
     "priority": 6
@@ -1070,18 +1922,31 @@
     "scene": "stage",
     "trigger": "ui_item_panel",
     "lines": [
-      {"text": "别攒太多，关键时刻记得用！", "expression": "talk", "autoAdvance": 3}
+      {
+        "text": {
+          "zh": "别攒太多，关键时刻记得用！",
+          "en": "Don't hoard them — use them when it counts!"
+        },
+        "expression": "talk",
+        "autoAdvance": 3
+      }
     ],
     "once": false,
     "priority": 6
   },
-
   {
     "id": "perf_fps_low_2",
     "scene": "stage",
     "trigger": "perf_fps_low",
     "lines": [
-      {"text": "帧率掉了...敌人太多还是特效太猛？", "expression": "talk", "autoAdvance": 4}
+      {
+        "text": {
+          "zh": "帧率掉了...敌人太多还是特效太猛？",
+          "en": "FPS dropped... too many enemies or too many effects?"
+        },
+        "expression": "talk",
+        "autoAdvance": 4
+      }
     ],
     "once": false,
     "priority": 6
@@ -1091,18 +1956,31 @@
     "scene": "stage",
     "trigger": "perf_fps_low",
     "lines": [
-      {"text": "画面有点卡顿...降低画质试试？", "expression": "idle", "autoAdvance": 4}
+      {
+        "text": {
+          "zh": "画面有点卡顿...降低画质试试？",
+          "en": "A bit choppy... maybe try lowering the quality?"
+        },
+        "expression": "idle",
+        "autoAdvance": 4
+      }
     ],
     "once": false,
     "priority": 6
   },
-
   {
     "id": "perf_fps_great_2",
     "scene": "stage",
     "trigger": "perf_fps_great",
     "lines": [
-      {"text": "丝滑流畅！打起来真舒服~", "expression": "happy", "autoAdvance": 3}
+      {
+        "text": {
+          "zh": "丝滑流畅！打起来真舒服~",
+          "en": "Silky smooth! Feels great to play~"
+        },
+        "expression": "happy",
+        "autoAdvance": 3
+      }
     ],
     "once": false,
     "priority": 3
@@ -1112,18 +1990,31 @@
     "scene": "stage",
     "trigger": "perf_fps_great",
     "lines": [
-      {"text": "帧率满格！完美体验！", "expression": "happy", "autoAdvance": 3}
+      {
+        "text": {
+          "zh": "帧率满格！完美体验！",
+          "en": "Max frame rate! Perfect experience!"
+        },
+        "expression": "happy",
+        "autoAdvance": 3
+      }
     ],
     "once": false,
     "priority": 3
   },
-
   {
     "id": "perf_gc_heavy_2",
     "scene": "stage",
     "trigger": "perf_gc_heavy",
     "lines": [
-      {"text": "GC又在忙了...程序员的日常。", "expression": "idle", "autoAdvance": 4}
+      {
+        "text": {
+          "zh": "GC又在忙了...程序员的日常。",
+          "en": "GC is busy again... just programmer things."
+        },
+        "expression": "idle",
+        "autoAdvance": 4
+      }
     ],
     "once": false,
     "priority": 5
@@ -1133,18 +2024,31 @@
     "scene": "stage",
     "trigger": "perf_gc_heavy",
     "lines": [
-      {"text": "内存有点紧张...不过还扛得住！", "expression": "talk", "autoAdvance": 4}
+      {
+        "text": {
+          "zh": "内存有点紧张...不过还扛得住！",
+          "en": "Memory's a bit tight... but we can handle it!"
+        },
+        "expression": "talk",
+        "autoAdvance": 4
+      }
     ],
     "once": false,
     "priority": 5
   },
-
   {
     "id": "diag_swarm_critical_2",
     "scene": "stage",
     "trigger": "diag_enemy_swarm_critical",
     "lines": [
-      {"text": "敌人密度爆表了！防线要撑不住了！", "expression": "surprised", "autoAdvance": 3}
+      {
+        "text": {
+          "zh": "敌人密度爆表了！防线要撑不住了！",
+          "en": "Enemy density off the charts! The line can't hold much longer!"
+        },
+        "expression": "surprised",
+        "autoAdvance": 3
+      }
     ],
     "once": false,
     "priority": 9
@@ -1154,8 +2058,22 @@
     "scene": "stage",
     "trigger": "diag_enemy_swarm_critical",
     "lines": [
-      {"text": "警告！敌群超载！赶紧集火！", "expression": "surprised", "autoAdvance": 3},
-      {"text": "战灵技能能用就用上！", "expression": "talk", "autoAdvance": 3}
+      {
+        "text": {
+          "zh": "警告！敌群超载！赶紧集火！",
+          "en": "Warning! Enemy overload! Focus fire now!"
+        },
+        "expression": "surprised",
+        "autoAdvance": 3
+      },
+      {
+        "text": {
+          "zh": "战灵技能能用就用上！",
+          "en": "Use Warden skills if they're up!"
+        },
+        "expression": "talk",
+        "autoAdvance": 3
+      }
     ],
     "once": false,
     "priority": 9

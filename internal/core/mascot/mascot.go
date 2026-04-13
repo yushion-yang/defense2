@@ -17,6 +17,7 @@ type MascotVM struct {
 // Guide is the mascot state machine that drives dialog playback.
 type Guide struct {
 	dialogs  []Dialog
+	locale   string          // 当前语言代码，如 "zh"/"en"
 	scene    string          // current scene name
 	shownIDs map[string]bool // Once dialog IDs that have been shown
 
@@ -53,6 +54,29 @@ func NewGuide(dialogs []Dialog, shownIDs map[string]bool) *Guide {
 		evalInterval:       5.0,
 		abilityCooldownMax: 30.0,
 	}
+}
+
+// SetLocale 设置当前语言，影响对话文本的选择。
+func (g *Guide) SetLocale(locale string) {
+	g.locale = locale
+}
+
+// resolveText 根据当前 locale 从多语言映射中选择文本。
+// 优先使用当前 locale，缺失或为空时 fallback 到 "zh"。
+func (g *Guide) resolveText(texts map[string]string) string {
+	if g.locale != "" {
+		if t, ok := texts[g.locale]; ok && t != "" {
+			return t
+		}
+	}
+	if t, ok := texts["zh"]; ok {
+		return t
+	}
+	// 兜底：返回任意一个值
+	for _, t := range texts {
+		return t
+	}
+	return ""
 }
 
 // SetScene switches the current scene and auto-triggers any "scene_enter" dialog.
@@ -130,7 +154,7 @@ func (g *Guide) VM() MascotVM {
 	}
 	line := &g.active.Lines[g.lineIdx]
 	vm.HasDialog = true
-	vm.Text = line.Text
+	vm.Text = g.resolveText(line.Text)
 	vm.Expression = line.Expression
 	vm.CanClick = true
 	return vm

@@ -4,7 +4,14 @@
     "scene": "*",
     "trigger": "idle_chatter",
     "lines": [
-      {"text": "塔放在拐角处，能打两段路哦。", "expression": "talk", "autoAdvance": 4}
+      {
+        "text": {
+          "zh": "塔放在拐角处，能打两段路哦。",
+          "en": "Place towers at corners — they can cover two paths."
+        },
+        "expression": "talk",
+        "autoAdvance": 4
+      }
     ],
     "once": false,
     "priority": 1
@@ -14,7 +21,14 @@
     "scene": "*",
     "trigger": "idle_chatter",
     "lines": [
-      {"text": "散射攻击适合对付密集怪群。", "expression": "talk", "autoAdvance": 4}
+      {
+        "text": {
+          "zh": "散射攻击适合对付密集怪群。",
+          "en": "Scatter attacks are great against dense enemy packs."
+        },
+        "expression": "talk",
+        "autoAdvance": 4
+      }
     ],
     "once": false,
     "priority": 1
@@ -24,8 +38,22 @@
     "scene": "*",
     "trigger": "idle_chatter",
     "lines": [
-      {"text": "遇到治疗者要优先集火！", "expression": "talk", "autoAdvance": 4},
-      {"text": "不然它会把队友全奶回来。", "expression": "surprised", "autoAdvance": 4}
+      {
+        "text": {
+          "zh": "遇到治疗者要优先集火！",
+          "en": "Focus fire on healers first!"
+        },
+        "expression": "talk",
+        "autoAdvance": 4
+      },
+      {
+        "text": {
+          "zh": "不然它会把队友全奶回来。",
+          "en": "Otherwise they'll heal everyone back up."
+        },
+        "expression": "surprised",
+        "autoAdvance": 4
+      }
     ],
     "once": false,
     "priority": 1
@@ -35,7 +63,14 @@
     "scene": "*",
     "trigger": "idle_chatter",
     "lines": [
-      {"text": "隐身敌人不好打，记得选能揭隐的能力。", "expression": "talk", "autoAdvance": 5}
+      {
+        "text": {
+          "zh": "隐身敌人不好打，记得选能揭隐的能力。",
+          "en": "Stealthed enemies are tricky — pick abilities that reveal them."
+        },
+        "expression": "talk",
+        "autoAdvance": 5
+      }
     ],
     "once": false,
     "priority": 1
@@ -45,7 +80,14 @@
     "scene": "*",
     "trigger": "idle_chatter",
     "lines": [
-      {"text": "宽光束能同时覆盖好几个敌人呢。", "expression": "happy", "autoAdvance": 4}
+      {
+        "text": {
+          "zh": "宽光束能同时覆盖好几个敌人呢。",
+          "en": "Wide beams can hit several enemies at once!"
+        },
+        "expression": "happy",
+        "autoAdvance": 4
+      }
     ],
     "once": false,
     "priority": 1
@@ -55,7 +97,14 @@
     "scene": "*",
     "trigger": "idle_chatter",
     "lines": [
-      {"text": "分裂怪死后会变成小怪，别掉以轻心。", "expression": "talk", "autoAdvance": 5}
+      {
+        "text": {
+          "zh": "分裂怪死后会变成小怪，别掉以轻心。",
+          "en": "Splitters turn into smaller enemies on death — stay alert."
+        },
+        "expression": "talk",
+        "autoAdvance": 5
+      }
     ],
     "once": false,
     "priority": 1
@@ -65,7 +114,14 @@
     "scene": "*",
     "trigger": "idle_chatter",
     "lines": [
-      {"text": "有时候升级比造新塔更划算。", "expression": "talk", "autoAdvance": 4}
+      {
+        "text": {
+          "zh": "有时候升级比造新塔更划算。",
+          "en": "Sometimes upgrading beats building new towers."
+        },
+        "expression": "talk",
+        "autoAdvance": 4
+      }
     ],
     "once": false,
     "priority": 1
@@ -75,7 +131,14 @@
     "scene": "*",
     "trigger": "idle_chatter",
     "lines": [
-      {"text": "旋转攻击的塔适合放在路口中心。", "expression": "talk", "autoAdvance": 5}
+      {
+        "text": {
+          "zh": "旋转攻击的塔适合放在路口中心。",
+          "en": "Spin attack towers work best at the center of intersections."
+        },
+        "expression": "talk",
+        "autoAdvance": 5
+      }
     ],
     "once": false,
     "priority": 1
@@ -85,7 +148,14 @@
     "scene": "*",
     "trigger": "idle_chatter",
     "lines": [
-      {"text": "经济很紧，别一次造太多塔哦。", "expression": "talk", "autoAdvance": 4}
+      {
+        "text": {
+          "zh": "经济很紧，别一次造太多塔哦。",
+          "en": "Gold is tight — don't build too many towers at once."
+        },
+        "expression": "talk",
+        "autoAdvance": 4
+      }
     ],
     "once": false,
     "priority": 1
@@ -95,7 +165,14 @@
     "scene": "*",
     "trigger": "idle_chatter",
     "lines": [
-      {"text": "增强者敌人会给同伴加速，很烦的。", "expression": "surprised", "autoAdvance": 5}
+      {
+        "text": {
+          "zh": "增强者敌人会给同伴加速，很烦的。",
+          "en": "Buffer enemies speed up their allies — so annoying."
+        },
+        "expression": "surprised",
+        "autoAdvance": 5
+      }
     ],
     "once": false,
     "priority": 1
@@ -105,7 +182,14 @@
     "scene": "*",
     "trigger": "idle_chatter",
     "lines": [
-      {"text": "塔的力量值越高，属性加成越明显。", "expression": "talk", "autoAdvance": 5}
+      {
+        "text": {
+          "zh": "塔的力量值越高，属性加成越明显。",
+          "en": "The higher a tower's Strength, the bigger the stat bonuses."
+        },
+        "expression": "talk",
+        "autoAdvance": 5
+      }
     ],
     "once": false,
     "priority": 1
@@ -115,7 +199,14 @@
     "scene": "*",
     "trigger": "idle_chatter",
     "lines": [
-      {"text": "好想吃火锅啊……咕噜。", "expression": "happy", "autoAdvance": 4}
+      {
+        "text": {
+          "zh": "好想吃火锅啊……咕噜。",
+          "en": "I really want hotpot... *rumble*."
+        },
+        "expression": "happy",
+        "autoAdvance": 4
+      }
     ],
     "once": false,
     "priority": 1
@@ -125,8 +216,22 @@
     "scene": "*",
     "trigger": "idle_chatter",
     "lines": [
-      {"text": "今天天气怎么样？", "expression": "idle", "autoAdvance": 3},
-      {"text": "哦等等，我看不到外面。", "expression": "talk", "autoAdvance": 4}
+      {
+        "text": {
+          "zh": "今天天气怎么样？",
+          "en": "How's the weather today?"
+        },
+        "expression": "idle",
+        "autoAdvance": 3
+      },
+      {
+        "text": {
+          "zh": "哦等等，我看不到外面。",
+          "en": "Oh wait, I can't see outside."
+        },
+        "expression": "talk",
+        "autoAdvance": 4
+      }
     ],
     "once": false,
     "priority": 1
@@ -136,7 +241,14 @@
     "scene": "*",
     "trigger": "idle_chatter",
     "lines": [
-      {"text": "好无聊啊，你倒是开始下一波呀。", "expression": "idle", "autoAdvance": 5}
+      {
+        "text": {
+          "zh": "好无聊啊，你倒是开始下一波呀。",
+          "en": "So bored — hurry up and start the next wave!"
+        },
+        "expression": "idle",
+        "autoAdvance": 5
+      }
     ],
     "once": false,
     "priority": 1
@@ -146,7 +258,14 @@
     "scene": "*",
     "trigger": "idle_chatter",
     "lines": [
-      {"text": "你说薯条蘸番茄酱还是蛋黄酱好吃？", "expression": "happy", "autoAdvance": 5}
+      {
+        "text": {
+          "zh": "你说薯条蘸番茄酱还是蛋黄酱好吃？",
+          "en": "Fries with ketchup or mayo — which is better?"
+        },
+        "expression": "happy",
+        "autoAdvance": 5
+      }
     ],
     "once": false,
     "priority": 1
@@ -156,7 +275,14 @@
     "scene": "*",
     "trigger": "idle_chatter",
     "lines": [
-      {"text": "打哈欠会传染，你现在有没有想打？", "expression": "idle", "autoAdvance": 5}
+      {
+        "text": {
+          "zh": "打哈欠会传染，你现在有没有想打？",
+          "en": "Yawning is contagious — do you feel one coming?"
+        },
+        "expression": "idle",
+        "autoAdvance": 5
+      }
     ],
     "once": false,
     "priority": 1
@@ -166,7 +292,14 @@
     "scene": "*",
     "trigger": "idle_chatter",
     "lines": [
-      {"text": "我刚才在数画面里的像素……放弃了。", "expression": "talk", "autoAdvance": 5}
+      {
+        "text": {
+          "zh": "我刚才在数画面里的像素……放弃了。",
+          "en": "I was counting the pixels on screen... I gave up."
+        },
+        "expression": "talk",
+        "autoAdvance": 5
+      }
     ],
     "once": false,
     "priority": 1
@@ -176,7 +309,14 @@
     "scene": "*",
     "trigger": "idle_chatter",
     "lines": [
-      {"text": "如果我有手的话，现在会在织毛衣。", "expression": "idle", "autoAdvance": 5}
+      {
+        "text": {
+          "zh": "如果我有手的话，现在会在织毛衣。",
+          "en": "If I had hands, I'd be knitting right now."
+        },
+        "expression": "idle",
+        "autoAdvance": 5
+      }
     ],
     "once": false,
     "priority": 1
@@ -186,7 +326,14 @@
     "scene": "*",
     "trigger": "idle_chatter",
     "lines": [
-      {"text": "你午饭吃了吗？别光顾着玩。", "expression": "talk", "autoAdvance": 4}
+      {
+        "text": {
+          "zh": "你午饭吃了吗？别光顾着玩。",
+          "en": "Did you eat lunch? Don't just play all day."
+        },
+        "expression": "talk",
+        "autoAdvance": 4
+      }
     ],
     "once": false,
     "priority": 1
@@ -196,7 +343,14 @@
     "scene": "*",
     "trigger": "idle_chatter",
     "lines": [
-      {"text": "每次看到敌人排队走，就想到早高峰。", "expression": "happy", "autoAdvance": 5}
+      {
+        "text": {
+          "zh": "每次看到敌人排队走，就想到早高峰。",
+          "en": "Watching enemies march in line reminds me of rush hour."
+        },
+        "expression": "happy",
+        "autoAdvance": 5
+      }
     ],
     "once": false,
     "priority": 1
@@ -206,7 +360,14 @@
     "scene": "*",
     "trigger": "idle_chatter",
     "lines": [
-      {"text": "忽然好想喝奶茶，三分糖的那种。", "expression": "happy", "autoAdvance": 5}
+      {
+        "text": {
+          "zh": "忽然好想喝奶茶，三分糖的那种。",
+          "en": "Suddenly craving bubble tea — light sugar, please."
+        },
+        "expression": "happy",
+        "autoAdvance": 5
+      }
     ],
     "once": false,
     "priority": 1
@@ -216,7 +377,14 @@
     "scene": "*",
     "trigger": "idle_chatter",
     "lines": [
-      {"text": "你有没有那种，发呆发着发着就笑了？", "expression": "idle", "autoAdvance": 5}
+      {
+        "text": {
+          "zh": "你有没有那种，发呆发着发着就笑了？",
+          "en": "You ever zone out so hard you start smiling?"
+        },
+        "expression": "idle",
+        "autoAdvance": 5
+      }
     ],
     "once": false,
     "priority": 1
@@ -226,7 +394,14 @@
     "scene": "*",
     "trigger": "idle_chatter",
     "lines": [
-      {"text": "守住一件事，比什么都难。", "expression": "talk", "autoAdvance": 4}
+      {
+        "text": {
+          "zh": "守住一件事，比什么都难。",
+          "en": "Holding onto something is harder than anything."
+        },
+        "expression": "talk",
+        "autoAdvance": 4
+      }
     ],
     "once": false,
     "priority": 1
@@ -236,7 +411,14 @@
     "scene": "*",
     "trigger": "idle_chatter",
     "lines": [
-      {"text": "每次失败都是在积累经验值。", "expression": "talk", "autoAdvance": 4}
+      {
+        "text": {
+          "zh": "每次失败都是在积累经验值。",
+          "en": "Every loss is just stacking up experience points."
+        },
+        "expression": "talk",
+        "autoAdvance": 4
+      }
     ],
     "once": false,
     "priority": 1
@@ -246,7 +428,14 @@
     "scene": "*",
     "trigger": "idle_chatter",
     "lines": [
-      {"text": "放塔就像做选择，位置决定结局。", "expression": "talk", "autoAdvance": 5}
+      {
+        "text": {
+          "zh": "放塔就像做选择，位置决定结局。",
+          "en": "Placing towers is like making choices — position decides the outcome."
+        },
+        "expression": "talk",
+        "autoAdvance": 5
+      }
     ],
     "once": false,
     "priority": 1
@@ -256,7 +445,14 @@
     "scene": "*",
     "trigger": "idle_chatter",
     "lines": [
-      {"text": "成长不是变强，是知道什么更重要。", "expression": "talk", "autoAdvance": 5}
+      {
+        "text": {
+          "zh": "成长不是变强，是知道什么更重要。",
+          "en": "Growth isn't getting stronger — it's knowing what matters."
+        },
+        "expression": "talk",
+        "autoAdvance": 5
+      }
     ],
     "once": false,
     "priority": 1
@@ -266,7 +462,14 @@
     "scene": "*",
     "trigger": "idle_chatter",
     "lines": [
-      {"text": "人生也像塔防，资源有限，要精打细算。", "expression": "talk", "autoAdvance": 5}
+      {
+        "text": {
+          "zh": "人生也像塔防，资源有限，要精打细算。",
+          "en": "Life is like tower defense — limited resources, so spend wisely."
+        },
+        "expression": "talk",
+        "autoAdvance": 5
+      }
     ],
     "once": false,
     "priority": 1
@@ -276,7 +479,14 @@
     "scene": "*",
     "trigger": "idle_chatter",
     "lines": [
-      {"text": "有时候退一步，是为了更好的布局。", "expression": "talk", "autoAdvance": 5}
+      {
+        "text": {
+          "zh": "有时候退一步，是为了更好的布局。",
+          "en": "Sometimes stepping back is for a better setup."
+        },
+        "expression": "talk",
+        "autoAdvance": 5
+      }
     ],
     "once": false,
     "priority": 1
@@ -286,7 +496,14 @@
     "scene": "*",
     "trigger": "idle_chatter",
     "lines": [
-      {"text": "哪怕只剩一条命，也别放弃。", "expression": "talk", "autoAdvance": 4}
+      {
+        "text": {
+          "zh": "哪怕只剩一条命，也别放弃。",
+          "en": "Even with just one life left, don't give up."
+        },
+        "expression": "talk",
+        "autoAdvance": 4
+      }
     ],
     "once": false,
     "priority": 1
@@ -296,7 +513,14 @@
     "scene": "*",
     "trigger": "idle_chatter",
     "lines": [
-      {"text": "耐心等待时机，比盲目行动更有效。", "expression": "talk", "autoAdvance": 5}
+      {
+        "text": {
+          "zh": "耐心等待时机，比盲目行动更有效。",
+          "en": "Waiting patiently for the right moment beats acting blindly."
+        },
+        "expression": "talk",
+        "autoAdvance": 5
+      }
     ],
     "once": false,
     "priority": 1
@@ -306,7 +530,14 @@
     "scene": "*",
     "trigger": "idle_chatter",
     "lines": [
-      {"text": "每一波都是新的开始，别背着上一波的包袱。", "expression": "talk", "autoAdvance": 5}
+      {
+        "text": {
+          "zh": "每一波都是新的开始，别背着上一波的包袱。",
+          "en": "Each wave is a fresh start — don't carry baggage from the last one."
+        },
+        "expression": "talk",
+        "autoAdvance": 5
+      }
     ],
     "once": false,
     "priority": 1
@@ -316,7 +547,14 @@
     "scene": "*",
     "trigger": "idle_chatter",
     "lines": [
-      {"text": "完美通关不重要，坚持到最后才重要。", "expression": "talk", "autoAdvance": 5}
+      {
+        "text": {
+          "zh": "完美通关不重要，坚持到最后才重要。",
+          "en": "A perfect clear doesn't matter — making it to the end does."
+        },
+        "expression": "talk",
+        "autoAdvance": 5
+      }
     ],
     "once": false,
     "priority": 1
@@ -326,8 +564,22 @@
     "scene": "*",
     "trigger": "idle_chatter",
     "lines": [
-      {"text": "你守护的，不只是基地。", "expression": "talk", "autoAdvance": 4},
-      {"text": "也是一份不肯认输的心。", "expression": "idle", "autoAdvance": 4}
+      {
+        "text": {
+          "zh": "你守护的，不只是基地。",
+          "en": "What you're defending isn't just the base."
+        },
+        "expression": "talk",
+        "autoAdvance": 4
+      },
+      {
+        "text": {
+          "zh": "也是一份不肯认输的心。",
+          "en": "It's also the will to never give up."
+        },
+        "expression": "idle",
+        "autoAdvance": 4
+      }
     ],
     "once": false,
     "priority": 1
@@ -337,7 +589,14 @@
     "scene": "*",
     "trigger": "idle_chatter",
     "lines": [
-      {"text": "话说……我其实是一堆代码对吧？", "expression": "surprised", "autoAdvance": 4}
+      {
+        "text": {
+          "zh": "话说……我其实是一堆代码对吧？",
+          "en": "So... I'm actually just a bunch of code, right?"
+        },
+        "expression": "surprised",
+        "autoAdvance": 4
+      }
     ],
     "once": false,
     "priority": 1
@@ -347,7 +606,14 @@
     "scene": "*",
     "trigger": "idle_chatter",
     "lines": [
-      {"text": "我的存在就是一个 JSON 数组里的对象。", "expression": "talk", "autoAdvance": 5}
+      {
+        "text": {
+          "zh": "我的存在就是一个 JSON 数组里的对象。",
+          "en": "My existence is just an object in a JSON array."
+        },
+        "expression": "talk",
+        "autoAdvance": 5
+      }
     ],
     "once": false,
     "priority": 1
@@ -357,8 +623,22 @@
     "scene": "*",
     "trigger": "idle_chatter",
     "lines": [
-      {"text": "开发者又在加新功能了吗？", "expression": "idle", "autoAdvance": 4},
-      {"text": "希望这次别给我加 bug。", "expression": "talk", "autoAdvance": 4}
+      {
+        "text": {
+          "zh": "开发者又在加新功能了吗？",
+          "en": "Is the developer adding new features again?"
+        },
+        "expression": "idle",
+        "autoAdvance": 4
+      },
+      {
+        "text": {
+          "zh": "希望这次别给我加 bug。",
+          "en": "Hopefully no new bugs for me this time."
+        },
+        "expression": "talk",
+        "autoAdvance": 4
+      }
     ],
     "once": false,
     "priority": 1
@@ -368,7 +648,14 @@
     "scene": "*",
     "trigger": "idle_chatter",
     "lines": [
-      {"text": "你知道吗？我说的每句话都在配置文件里。", "expression": "talk", "autoAdvance": 5}
+      {
+        "text": {
+          "zh": "你知道吗？我说的每句话都在配置文件里。",
+          "en": "Did you know? Every line I say is in a config file."
+        },
+        "expression": "talk",
+        "autoAdvance": 5
+      }
     ],
     "once": false,
     "priority": 1
@@ -378,7 +665,14 @@
     "scene": "*",
     "trigger": "idle_chatter",
     "lines": [
-      {"text": "如果我说错了什么，那一定是程序员的锅。", "expression": "happy", "autoAdvance": 5}
+      {
+        "text": {
+          "zh": "如果我说错了什么，那一定是程序员的锅。",
+          "en": "If I say something wrong, it's definitely the programmer's fault."
+        },
+        "expression": "happy",
+        "autoAdvance": 5
+      }
     ],
     "once": false,
     "priority": 1
@@ -388,7 +682,14 @@
     "scene": "*",
     "trigger": "idle_chatter",
     "lines": [
-      {"text": "上次版本更新，我消失了整整两天。", "expression": "surprised", "autoAdvance": 5}
+      {
+        "text": {
+          "zh": "上次版本更新，我消失了整整两天。",
+          "en": "Last update, I disappeared for two whole days."
+        },
+        "expression": "surprised",
+        "autoAdvance": 5
+      }
     ],
     "once": false,
     "priority": 1
@@ -398,8 +699,22 @@
     "scene": "*",
     "trigger": "idle_chatter",
     "lines": [
-      {"text": "测试的时候我被点了几百次。", "expression": "idle", "autoAdvance": 4},
-      {"text": "那段记忆我选择封印。", "expression": "talk", "autoAdvance": 4}
+      {
+        "text": {
+          "zh": "测试的时候我被点了几百次。",
+          "en": "During testing, I got clicked hundreds of times."
+        },
+        "expression": "idle",
+        "autoAdvance": 4
+      },
+      {
+        "text": {
+          "zh": "那段记忆我选择封印。",
+          "en": "I choose to seal away that memory."
+        },
+        "expression": "talk",
+        "autoAdvance": 4
+      }
     ],
     "once": false,
     "priority": 1
@@ -409,7 +724,14 @@
     "scene": "*",
     "trigger": "idle_chatter",
     "lines": [
-      {"text": "你看到的我只有几个像素高哦。", "expression": "talk", "autoAdvance": 4}
+      {
+        "text": {
+          "zh": "你看到的我只有几个像素高哦。",
+          "en": "The me you see is only a few pixels tall, you know."
+        },
+        "expression": "talk",
+        "autoAdvance": 4
+      }
     ],
     "once": false,
     "priority": 1
@@ -419,7 +741,14 @@
     "scene": "*",
     "trigger": "idle_chatter",
     "lines": [
-      {"text": "有个 bug 让我的台词全变成了乱码。", "expression": "surprised", "autoAdvance": 5}
+      {
+        "text": {
+          "zh": "有个 bug 让我的台词全变成了乱码。",
+          "en": "A bug once turned all my lines into gibberish."
+        },
+        "expression": "surprised",
+        "autoAdvance": 5
+      }
     ],
     "once": false,
     "priority": 1
@@ -429,7 +758,14 @@
     "scene": "*",
     "trigger": "idle_chatter",
     "lines": [
-      {"text": "如果 JSON 少了个逗号，我就说不出话了。", "expression": "talk", "autoAdvance": 5}
+      {
+        "text": {
+          "zh": "如果 JSON 少了个逗号，我就说不出话了。",
+          "en": "If a JSON comma goes missing, I literally can't speak."
+        },
+        "expression": "talk",
+        "autoAdvance": 5
+      }
     ],
     "once": false,
     "priority": 1
@@ -439,7 +775,14 @@
     "scene": "*",
     "trigger": "idle_chatter",
     "lines": [
-      {"text": "帧率掉了的话不是我的错！", "expression": "surprised", "autoAdvance": 4}
+      {
+        "text": {
+          "zh": "帧率掉了的话不是我的错！",
+          "en": "If the frame rate drops, it's not my fault!"
+        },
+        "expression": "surprised",
+        "autoAdvance": 4
+      }
     ],
     "once": false,
     "priority": 1
@@ -449,7 +792,14 @@
     "scene": "*",
     "trigger": "idle_chatter",
     "lines": [
-      {"text": "那些敌人到底从哪里来的呀？", "expression": "idle", "autoAdvance": 4}
+      {
+        "text": {
+          "zh": "那些敌人到底从哪里来的呀？",
+          "en": "Where do all those enemies even come from?"
+        },
+        "expression": "idle",
+        "autoAdvance": 4
+      }
     ],
     "once": false,
     "priority": 1
@@ -459,7 +809,14 @@
     "scene": "*",
     "trigger": "idle_chatter",
     "lines": [
-      {"text": "你说塔有没有自己的想法？", "expression": "idle", "autoAdvance": 4}
+      {
+        "text": {
+          "zh": "你说塔有没有自己的想法？",
+          "en": "Do you think towers have their own thoughts?"
+        },
+        "expression": "idle",
+        "autoAdvance": 4
+      }
     ],
     "once": false,
     "priority": 1
@@ -469,8 +826,22 @@
     "scene": "*",
     "trigger": "idle_chatter",
     "lines": [
-      {"text": "地图边缘之外是什么呢？", "expression": "idle", "autoAdvance": 4},
-      {"text": "也许什么都没有……好可怕。", "expression": "surprised", "autoAdvance": 4}
+      {
+        "text": {
+          "zh": "地图边缘之外是什么呢？",
+          "en": "What lies beyond the edge of the map?"
+        },
+        "expression": "idle",
+        "autoAdvance": 4
+      },
+      {
+        "text": {
+          "zh": "也许什么都没有……好可怕。",
+          "en": "Maybe nothing at all... That's scary."
+        },
+        "expression": "surprised",
+        "autoAdvance": 4
+      }
     ],
     "once": false,
     "priority": 1
@@ -480,7 +851,14 @@
     "scene": "*",
     "trigger": "idle_chatter",
     "lines": [
-      {"text": "被击败的敌人去了哪里？回收站？", "expression": "talk", "autoAdvance": 5}
+      {
+        "text": {
+          "zh": "被击败的敌人去了哪里？回收站？",
+          "en": "Where do defeated enemies go? The recycle bin?"
+        },
+        "expression": "talk",
+        "autoAdvance": 5
+      }
     ],
     "once": false,
     "priority": 1
@@ -490,7 +868,14 @@
     "scene": "*",
     "trigger": "idle_chatter",
     "lines": [
-      {"text": "传说在最深处有一只从未被击败的Boss。", "expression": "talk", "autoAdvance": 5}
+      {
+        "text": {
+          "zh": "传说在最深处有一只从未被击败的Boss。",
+          "en": "Legend says there's a Boss that's never been defeated."
+        },
+        "expression": "talk",
+        "autoAdvance": 5
+      }
     ],
     "once": false,
     "priority": 1
@@ -500,7 +885,14 @@
     "scene": "*",
     "trigger": "idle_chatter",
     "lines": [
-      {"text": "治疗者敌人是不是也有同伴情谊呢？", "expression": "idle", "autoAdvance": 5}
+      {
+        "text": {
+          "zh": "治疗者敌人是不是也有同伴情谊呢？",
+          "en": "Do healer enemies feel friendship for their allies too?"
+        },
+        "expression": "idle",
+        "autoAdvance": 5
+      }
     ],
     "once": false,
     "priority": 1
@@ -510,7 +902,14 @@
     "scene": "*",
     "trigger": "idle_chatter",
     "lines": [
-      {"text": "隐身的敌人也许只是很害羞而已。", "expression": "happy", "autoAdvance": 5}
+      {
+        "text": {
+          "zh": "隐身的敌人也许只是很害羞而已。",
+          "en": "Maybe stealthed enemies are just really shy."
+        },
+        "expression": "happy",
+        "autoAdvance": 5
+      }
     ],
     "once": false,
     "priority": 1
@@ -520,7 +919,14 @@
     "scene": "*",
     "trigger": "idle_chatter",
     "lines": [
-      {"text": "那些路径是谁铺的？总不能是敌人自己吧。", "expression": "talk", "autoAdvance": 5}
+      {
+        "text": {
+          "zh": "那些路径是谁铺的？总不能是敌人自己吧。",
+          "en": "Who built those paths? Surely not the enemies themselves."
+        },
+        "expression": "talk",
+        "autoAdvance": 5
+      }
     ],
     "once": false,
     "priority": 1
@@ -530,7 +936,14 @@
     "scene": "*",
     "trigger": "idle_chatter",
     "lines": [
-      {"text": "狂暴怪变红的时候，是不是很痛啊？", "expression": "idle", "autoAdvance": 5}
+      {
+        "text": {
+          "zh": "狂暴怪变红的时候，是不是很痛啊？",
+          "en": "When berserk enemies turn red, does it hurt them?"
+        },
+        "expression": "idle",
+        "autoAdvance": 5
+      }
     ],
     "once": false,
     "priority": 1
@@ -540,7 +953,14 @@
     "scene": "*",
     "trigger": "idle_chatter",
     "lines": [
-      {"text": "分裂怪如果一直分下去会怎样？", "expression": "surprised", "autoAdvance": 4}
+      {
+        "text": {
+          "zh": "分裂怪如果一直分下去会怎样？",
+          "en": "What if splitters just kept splitting forever?"
+        },
+        "expression": "surprised",
+        "autoAdvance": 4
+      }
     ],
     "once": false,
     "priority": 1
@@ -550,7 +970,14 @@
     "scene": "*",
     "trigger": "idle_chatter",
     "lines": [
-      {"text": "也许某天敌人和塔能和平共处呢。", "expression": "idle", "autoAdvance": 5}
+      {
+        "text": {
+          "zh": "也许某天敌人和塔能和平共处呢。",
+          "en": "Maybe one day enemies and towers can live in peace."
+        },
+        "expression": "idle",
+        "autoAdvance": 5
+      }
     ],
     "once": false,
     "priority": 1
@@ -560,7 +987,14 @@
     "scene": "*",
     "trigger": "idle_chatter",
     "lines": [
-      {"text": "你这布阵……挺有个性的。", "expression": "happy", "autoAdvance": 4}
+      {
+        "text": {
+          "zh": "你这布阵……挺有个性的。",
+          "en": "Your tower layout... is certainly unique."
+        },
+        "expression": "happy",
+        "autoAdvance": 4
+      }
     ],
     "once": false,
     "priority": 1
@@ -570,7 +1004,14 @@
     "scene": "*",
     "trigger": "idle_chatter",
     "lines": [
-      {"text": "真的不考虑换个位置放塔吗？", "expression": "talk", "autoAdvance": 4}
+      {
+        "text": {
+          "zh": "真的不考虑换个位置放塔吗？",
+          "en": "Sure you don't want to try a different spot?"
+        },
+        "expression": "talk",
+        "autoAdvance": 4
+      }
     ],
     "once": false,
     "priority": 1
@@ -580,8 +1021,22 @@
     "scene": "*",
     "trigger": "idle_chatter",
     "lines": [
-      {"text": "我赌你下一波会漏怪。", "expression": "happy", "autoAdvance": 4},
-      {"text": "别生气，我是在激励你！", "expression": "talk", "autoAdvance": 4}
+      {
+        "text": {
+          "zh": "我赌你下一波会漏怪。",
+          "en": "I bet you'll leak enemies next wave."
+        },
+        "expression": "happy",
+        "autoAdvance": 4
+      },
+      {
+        "text": {
+          "zh": "别生气，我是在激励你！",
+          "en": "Don't be mad — I'm motivating you!"
+        },
+        "expression": "talk",
+        "autoAdvance": 4
+      }
     ],
     "once": false,
     "priority": 1
@@ -591,7 +1046,14 @@
     "scene": "*",
     "trigger": "idle_chatter",
     "lines": [
-      {"text": "你是不是每次都选同一个能力？", "expression": "talk", "autoAdvance": 4}
+      {
+        "text": {
+          "zh": "你是不是每次都选同一个能力？",
+          "en": "Do you always pick the same ability every time?"
+        },
+        "expression": "talk",
+        "autoAdvance": 4
+      }
     ],
     "once": false,
     "priority": 1
@@ -601,7 +1063,14 @@
     "scene": "*",
     "trigger": "idle_chatter",
     "lines": [
-      {"text": "承认吧，你刚才犹豫了三秒才放塔。", "expression": "happy", "autoAdvance": 5}
+      {
+        "text": {
+          "zh": "承认吧，你刚才犹豫了三秒才放塔。",
+          "en": "Admit it — you hesitated three seconds before placing that tower."
+        },
+        "expression": "happy",
+        "autoAdvance": 5
+      }
     ],
     "once": false,
     "priority": 1
@@ -611,7 +1080,14 @@
     "scene": "*",
     "trigger": "idle_chatter",
     "lines": [
-      {"text": "你选战灵的标准是……看脸？", "expression": "happy", "autoAdvance": 4}
+      {
+        "text": {
+          "zh": "你选战灵的标准是……看脸？",
+          "en": "Your Warden pick criteria is... looks?"
+        },
+        "expression": "happy",
+        "autoAdvance": 4
+      }
     ],
     "once": false,
     "priority": 1
@@ -621,7 +1097,14 @@
     "scene": "*",
     "trigger": "idle_chatter",
     "lines": [
-      {"text": "我都替你着急，那个塔没升级啊。", "expression": "surprised", "autoAdvance": 5}
+      {
+        "text": {
+          "zh": "我都替你着急，那个塔没升级啊。",
+          "en": "I'm anxious for you — that tower hasn't been upgraded!"
+        },
+        "expression": "surprised",
+        "autoAdvance": 5
+      }
     ],
     "once": false,
     "priority": 1
@@ -631,7 +1114,14 @@
     "scene": "*",
     "trigger": "idle_chatter",
     "lines": [
-      {"text": "你要是输了，我可不背这个锅。", "expression": "talk", "autoAdvance": 5}
+      {
+        "text": {
+          "zh": "你要是输了，我可不背这个锅。",
+          "en": "If you lose, I'm not taking the blame."
+        },
+        "expression": "talk",
+        "autoAdvance": 5
+      }
     ],
     "once": false,
     "priority": 1
@@ -641,7 +1131,14 @@
     "scene": "*",
     "trigger": "idle_chatter",
     "lines": [
-      {"text": "又在存钱不花？这又不是理财游戏。", "expression": "talk", "autoAdvance": 5}
+      {
+        "text": {
+          "zh": "又在存钱不花？这又不是理财游戏。",
+          "en": "Hoarding gold again? This isn't a savings game."
+        },
+        "expression": "talk",
+        "autoAdvance": 5
+      }
     ],
     "once": false,
     "priority": 1
@@ -651,7 +1148,14 @@
     "scene": "*",
     "trigger": "idle_chatter",
     "lines": [
-      {"text": "偷偷告诉你，你比上次进步了。", "expression": "happy", "autoAdvance": 4}
+      {
+        "text": {
+          "zh": "偷偷告诉你，你比上次进步了。",
+          "en": "Just between us — you've improved since last time."
+        },
+        "expression": "happy",
+        "autoAdvance": 4
+      }
     ],
     "once": false,
     "priority": 1
@@ -661,7 +1165,14 @@
     "scene": "*",
     "trigger": "idle_chatter",
     "lines": [
-      {"text": "这局要是赢了，算你厉害！", "expression": "happy", "autoAdvance": 4}
+      {
+        "text": {
+          "zh": "这局要是赢了，算你厉害！",
+          "en": "If you win this round, I'll be impressed!"
+        },
+        "expression": "happy",
+        "autoAdvance": 4
+      }
     ],
     "once": false,
     "priority": 1
@@ -671,7 +1182,14 @@
     "scene": "*",
     "trigger": "idle_chatter",
     "lines": [
-      {"text": "试试你没玩过的地图吧。", "expression": "talk", "autoAdvance": 4}
+      {
+        "text": {
+          "zh": "试试你没玩过的地图吧。",
+          "en": "Try a map you haven't played yet."
+        },
+        "expression": "talk",
+        "autoAdvance": 4
+      }
     ],
     "once": false,
     "priority": 1
@@ -681,7 +1199,14 @@
     "scene": "*",
     "trigger": "idle_chatter",
     "lines": [
-      {"text": "更高难度会解锁不同的挑战哦。", "expression": "talk", "autoAdvance": 5}
+      {
+        "text": {
+          "zh": "更高难度会解锁不同的挑战哦。",
+          "en": "Higher difficulties unlock different challenges!"
+        },
+        "expression": "talk",
+        "autoAdvance": 5
+      }
     ],
     "once": false,
     "priority": 1
@@ -691,7 +1216,14 @@
     "scene": "*",
     "trigger": "idle_chatter",
     "lines": [
-      {"text": "换一个战灵试试，也许有惊喜。", "expression": "happy", "autoAdvance": 4}
+      {
+        "text": {
+          "zh": "换一个战灵试试，也许有惊喜。",
+          "en": "Try a different Warden — might surprise you!"
+        },
+        "expression": "happy",
+        "autoAdvance": 4
+      }
     ],
     "once": false,
     "priority": 1
@@ -701,7 +1233,14 @@
     "scene": "*",
     "trigger": "idle_chatter",
     "lines": [
-      {"text": "全散射塔通关，你敢挑战吗？", "expression": "happy", "autoAdvance": 4}
+      {
+        "text": {
+          "zh": "全散射塔通关，你敢挑战吗？",
+          "en": "All-scatter-tower clear — dare to try?"
+        },
+        "expression": "happy",
+        "autoAdvance": 4
+      }
     ],
     "once": false,
     "priority": 1
@@ -711,7 +1250,14 @@
     "scene": "*",
     "trigger": "idle_chatter",
     "lines": [
-      {"text": "试试只造三座塔通关？", "expression": "talk", "autoAdvance": 4}
+      {
+        "text": {
+          "zh": "试试只造三座塔通关？",
+          "en": "Try beating it with only three towers?"
+        },
+        "expression": "talk",
+        "autoAdvance": 4
+      }
     ],
     "once": false,
     "priority": 1
@@ -721,7 +1267,14 @@
     "scene": "*",
     "trigger": "idle_chatter",
     "lines": [
-      {"text": "减速配高伤是经典组合，试试看。", "expression": "talk", "autoAdvance": 5}
+      {
+        "text": {
+          "zh": "减速配高伤是经典组合，试试看。",
+          "en": "Slow plus high damage is a classic combo — give it a shot."
+        },
+        "expression": "talk",
+        "autoAdvance": 5
+      }
     ],
     "once": false,
     "priority": 1
@@ -731,7 +1284,14 @@
     "scene": "*",
     "trigger": "idle_chatter",
     "lines": [
-      {"text": "那个从没选过的能力，说不定很强。", "expression": "talk", "autoAdvance": 5}
+      {
+        "text": {
+          "zh": "那个从没选过的能力，说不定很强。",
+          "en": "That ability you never pick might actually be strong."
+        },
+        "expression": "talk",
+        "autoAdvance": 5
+      }
     ],
     "once": false,
     "priority": 1
@@ -741,7 +1301,14 @@
     "scene": "*",
     "trigger": "idle_chatter",
     "lines": [
-      {"text": "道具用对时机能翻盘哦。", "expression": "talk", "autoAdvance": 4}
+      {
+        "text": {
+          "zh": "道具用对时机能翻盘哦。",
+          "en": "Using items at the right moment can turn things around!"
+        },
+        "expression": "talk",
+        "autoAdvance": 4
+      }
     ],
     "once": false,
     "priority": 1
@@ -751,7 +1318,14 @@
     "scene": "*",
     "trigger": "idle_chatter",
     "lines": [
-      {"text": "光环塔放在塔群中间效果最好。", "expression": "talk", "autoAdvance": 5}
+      {
+        "text": {
+          "zh": "光环塔放在塔群中间效果最好。",
+          "en": "Aura towers work best in the center of your tower cluster."
+        },
+        "expression": "talk",
+        "autoAdvance": 5
+      }
     ],
     "once": false,
     "priority": 1
@@ -761,7 +1335,14 @@
     "scene": "*",
     "trigger": "idle_chatter",
     "lines": [
-      {"text": "极限模式……去试试呗，我罩你。", "expression": "happy", "autoAdvance": 4}
+      {
+        "text": {
+          "zh": "极限模式……去试试呗，我罩你。",
+          "en": "Extreme mode... Go for it — I've got your back."
+        },
+        "expression": "happy",
+        "autoAdvance": 4
+      }
     ],
     "once": false,
     "priority": 1
@@ -771,7 +1352,14 @@
     "scene": "*",
     "trigger": "idle_chatter",
     "lines": [
-      {"text": "每张地图都有最佳路线，慢慢探索吧。", "expression": "talk", "autoAdvance": 5}
+      {
+        "text": {
+          "zh": "每张地图都有最佳路线，慢慢探索吧。",
+          "en": "Every map has an optimal layout — explore and find it."
+        },
+        "expression": "talk",
+        "autoAdvance": 5
+      }
     ],
     "once": false,
     "priority": 1
@@ -781,7 +1369,14 @@
     "scene": "*",
     "trigger": "idle_chatter",
     "lines": [
-      {"text": "好想吃章鱼烧……那种圆圆的。", "expression": "happy", "autoAdvance": 4}
+      {
+        "text": {
+          "zh": "好想吃章鱼烧……那种圆圆的。",
+          "en": "I really want some takoyaki... those round little ones."
+        },
+        "expression": "happy",
+        "autoAdvance": 4
+      }
     ],
     "once": false,
     "priority": 1
@@ -791,7 +1386,14 @@
     "scene": "*",
     "trigger": "idle_chatter",
     "lines": [
-      {"text": "困了……能不能帮我请个假。", "expression": "idle", "autoAdvance": 4}
+      {
+        "text": {
+          "zh": "困了……能不能帮我请个假。",
+          "en": "So sleepy... Can you call in sick for me?"
+        },
+        "expression": "idle",
+        "autoAdvance": 4
+      }
     ],
     "once": false,
     "priority": 1
@@ -801,8 +1403,22 @@
     "scene": "*",
     "trigger": "idle_chatter",
     "lines": [
-      {"text": "昨晚梦到自己变成了一座塔。", "expression": "surprised", "autoAdvance": 4},
-      {"text": "还是S级的！", "expression": "happy", "autoAdvance": 3}
+      {
+        "text": {
+          "zh": "昨晚梦到自己变成了一座塔。",
+          "en": "Last night I dreamed I turned into a tower."
+        },
+        "expression": "surprised",
+        "autoAdvance": 4
+      },
+      {
+        "text": {
+          "zh": "还是S级的！",
+          "en": "An S-tier one, too!"
+        },
+        "expression": "happy",
+        "autoAdvance": 3
+      }
     ],
     "once": false,
     "priority": 1
@@ -812,7 +1428,14 @@
     "scene": "*",
     "trigger": "idle_chatter",
     "lines": [
-      {"text": "好想去海边度假呀。", "expression": "happy", "autoAdvance": 3}
+      {
+        "text": {
+          "zh": "好想去海边度假呀。",
+          "en": "I really want a beach vacation."
+        },
+        "expression": "happy",
+        "autoAdvance": 3
+      }
     ],
     "once": false,
     "priority": 1
@@ -822,7 +1445,14 @@
     "scene": "*",
     "trigger": "idle_chatter",
     "lines": [
-      {"text": "春天来了，好想去看樱花。", "expression": "happy", "autoAdvance": 4}
+      {
+        "text": {
+          "zh": "春天来了，好想去看樱花。",
+          "en": "Spring is here — I want to see the cherry blossoms."
+        },
+        "expression": "happy",
+        "autoAdvance": 4
+      }
     ],
     "once": false,
     "priority": 1
@@ -832,7 +1462,14 @@
     "scene": "*",
     "trigger": "idle_chatter",
     "lines": [
-      {"text": "你有养猫吗？我想撸猫。", "expression": "happy", "autoAdvance": 4}
+      {
+        "text": {
+          "zh": "你有养猫吗？我想撸猫。",
+          "en": "Do you have a cat? I want to pet one."
+        },
+        "expression": "happy",
+        "autoAdvance": 4
+      }
     ],
     "once": false,
     "priority": 1
@@ -842,7 +1479,14 @@
     "scene": "*",
     "trigger": "idle_chatter",
     "lines": [
-      {"text": "下雨天最适合窝在家里打游戏了。", "expression": "idle", "autoAdvance": 5}
+      {
+        "text": {
+          "zh": "下雨天最适合窝在家里打游戏了。",
+          "en": "Rainy days are perfect for staying in and gaming."
+        },
+        "expression": "idle",
+        "autoAdvance": 5
+      }
     ],
     "once": false,
     "priority": 1
@@ -852,7 +1496,14 @@
     "scene": "*",
     "trigger": "idle_chatter",
     "lines": [
-      {"text": "好想有一条自己的被子，暖暖的。", "expression": "idle", "autoAdvance": 5}
+      {
+        "text": {
+          "zh": "好想有一条自己的被子，暖暖的。",
+          "en": "I wish I had my own blanket, all warm and cozy."
+        },
+        "expression": "idle",
+        "autoAdvance": 5
+      }
     ],
     "once": false,
     "priority": 1
@@ -862,7 +1513,14 @@
     "scene": "*",
     "trigger": "idle_chatter",
     "lines": [
-      {"text": "如果我能做饭，一定做蛋包饭。", "expression": "happy", "autoAdvance": 5}
+      {
+        "text": {
+          "zh": "如果我能做饭，一定做蛋包饭。",
+          "en": "If I could cook, I'd definitely make omurice."
+        },
+        "expression": "happy",
+        "autoAdvance": 5
+      }
     ],
     "once": false,
     "priority": 1
@@ -872,7 +1530,14 @@
     "scene": "*",
     "trigger": "idle_chatter",
     "lines": [
-      {"text": "夏天好热，我需要一根冰棍。", "expression": "idle", "autoAdvance": 4}
+      {
+        "text": {
+          "zh": "夏天好热，我需要一根冰棍。",
+          "en": "Summer is so hot — I need a popsicle."
+        },
+        "expression": "idle",
+        "autoAdvance": 4
+      }
     ],
     "once": false,
     "priority": 1
@@ -882,7 +1547,14 @@
     "scene": "*",
     "trigger": "idle_chatter",
     "lines": [
-      {"text": "你的屏幕那边是白天还是晚上？", "expression": "idle", "autoAdvance": 5}
+      {
+        "text": {
+          "zh": "你的屏幕那边是白天还是晚上？",
+          "en": "Is it daytime or nighttime on your side of the screen?"
+        },
+        "expression": "idle",
+        "autoAdvance": 5
+      }
     ],
     "once": false,
     "priority": 1
@@ -892,7 +1564,14 @@
     "scene": "*",
     "trigger": "idle_chatter",
     "lines": [
-      {"text": "如果敌人和塔互换角色会怎样？", "expression": "surprised", "autoAdvance": 5}
+      {
+        "text": {
+          "zh": "如果敌人和塔互换角色会怎样？",
+          "en": "What if enemies and towers swapped roles?"
+        },
+        "expression": "surprised",
+        "autoAdvance": 5
+      }
     ],
     "once": false,
     "priority": 1
@@ -902,7 +1581,14 @@
     "scene": "*",
     "trigger": "idle_chatter",
     "lines": [
-      {"text": "假如塔能说话，它们会吵架吧。", "expression": "happy", "autoAdvance": 5}
+      {
+        "text": {
+          "zh": "假如塔能说话，它们会吵架吧。",
+          "en": "If towers could talk, they'd probably argue."
+        },
+        "expression": "happy",
+        "autoAdvance": 5
+      }
     ],
     "once": false,
     "priority": 1
@@ -912,8 +1598,22 @@
     "scene": "*",
     "trigger": "idle_chatter",
     "lines": [
-      {"text": "如果这个游戏拍成电影……", "expression": "idle", "autoAdvance": 4},
-      {"text": "我肯定是女主角！", "expression": "happy", "autoAdvance": 3}
+      {
+        "text": {
+          "zh": "如果这个游戏拍成电影……",
+          "en": "If this game became a movie..."
+        },
+        "expression": "idle",
+        "autoAdvance": 4
+      },
+      {
+        "text": {
+          "zh": "我肯定是女主角！",
+          "en": "I'd definitely be the lead!"
+        },
+        "expression": "happy",
+        "autoAdvance": 3
+      }
     ],
     "once": false,
     "priority": 1
@@ -923,7 +1623,14 @@
     "scene": "*",
     "trigger": "idle_chatter",
     "lines": [
-      {"text": "如果我有超能力，我要时间暂停。", "expression": "talk", "autoAdvance": 5}
+      {
+        "text": {
+          "zh": "如果我有超能力，我要时间暂停。",
+          "en": "If I had a superpower, I'd want to freeze time."
+        },
+        "expression": "talk",
+        "autoAdvance": 5
+      }
     ],
     "once": false,
     "priority": 1
@@ -933,7 +1640,14 @@
     "scene": "*",
     "trigger": "idle_chatter",
     "lines": [
-      {"text": "要是敌人能和我做朋友就好了。", "expression": "idle", "autoAdvance": 5}
+      {
+        "text": {
+          "zh": "要是敌人能和我做朋友就好了。",
+          "en": "I wish the enemies could be my friends."
+        },
+        "expression": "idle",
+        "autoAdvance": 5
+      }
     ],
     "once": false,
     "priority": 1
@@ -943,7 +1657,14 @@
     "scene": "*",
     "trigger": "idle_chatter",
     "lines": [
-      {"text": "如果塔可以走路，那就不叫塔防了。", "expression": "happy", "autoAdvance": 5}
+      {
+        "text": {
+          "zh": "如果塔可以走路，那就不叫塔防了。",
+          "en": "If towers could walk, it wouldn't be tower defense anymore."
+        },
+        "expression": "happy",
+        "autoAdvance": 5
+      }
     ],
     "once": false,
     "priority": 1
@@ -953,8 +1674,22 @@
     "scene": "*",
     "trigger": "idle_chatter",
     "lines": [
-      {"text": "假如我能穿越到别的游戏……", "expression": "idle", "autoAdvance": 4},
-      {"text": "还是算了，这里挺好的。", "expression": "happy", "autoAdvance": 4}
+      {
+        "text": {
+          "zh": "假如我能穿越到别的游戏……",
+          "en": "If I could travel to another game..."
+        },
+        "expression": "idle",
+        "autoAdvance": 4
+      },
+      {
+        "text": {
+          "zh": "还是算了，这里挺好的。",
+          "en": "Nah, it's pretty nice here."
+        },
+        "expression": "happy",
+        "autoAdvance": 4
+      }
     ],
     "once": false,
     "priority": 1
@@ -964,7 +1699,14 @@
     "scene": "*",
     "trigger": "idle_chatter",
     "lines": [
-      {"text": "如果给敌人发工资，它们还会进攻吗？", "expression": "talk", "autoAdvance": 5}
+      {
+        "text": {
+          "zh": "如果给敌人发工资，它们还会进攻吗？",
+          "en": "If we paid the enemies, would they still attack?"
+        },
+        "expression": "talk",
+        "autoAdvance": 5
+      }
     ],
     "once": false,
     "priority": 1
@@ -974,7 +1716,14 @@
     "scene": "*",
     "trigger": "idle_chatter",
     "lines": [
-      {"text": "你说平行世界里有没有另一个我？", "expression": "idle", "autoAdvance": 5}
+      {
+        "text": {
+          "zh": "你说平行世界里有没有另一个我？",
+          "en": "Is there another me in a parallel world, do you think?"
+        },
+        "expression": "idle",
+        "autoAdvance": 5
+      }
     ],
     "once": false,
     "priority": 1
@@ -984,7 +1733,14 @@
     "scene": "*",
     "trigger": "idle_chatter",
     "lines": [
-      {"text": "如果所有塔同时开火会怎样？超酷的吧！", "expression": "surprised", "autoAdvance": 5}
+      {
+        "text": {
+          "zh": "如果所有塔同时开火会怎样？超酷的吧！",
+          "en": "What if all towers fired at once? That'd be so cool!"
+        },
+        "expression": "surprised",
+        "autoAdvance": 5
+      }
     ],
     "once": false,
     "priority": 1
@@ -994,7 +1750,14 @@
     "scene": "*",
     "trigger": "idle_chatter",
     "lines": [
-      {"text": "如果我能变大，就可以一脚踩扁Boss。", "expression": "happy", "autoAdvance": 5}
+      {
+        "text": {
+          "zh": "如果我能变大，就可以一脚踩扁Boss。",
+          "en": "If I could grow big, I'd just stomp on the Boss."
+        },
+        "expression": "happy",
+        "autoAdvance": 5
+      }
     ],
     "once": false,
     "priority": 1
@@ -1004,7 +1767,14 @@
     "scene": "*",
     "trigger": "idle_chatter",
     "lines": [
-      {"text": "塔防游戏最早可以追溯到90年代呢。", "expression": "talk", "autoAdvance": 5}
+      {
+        "text": {
+          "zh": "塔防游戏最早可以追溯到90年代呢。",
+          "en": "Tower defense games go all the way back to the 90s!"
+        },
+        "expression": "talk",
+        "autoAdvance": 5
+      }
     ],
     "once": false,
     "priority": 1
@@ -1014,7 +1784,14 @@
     "scene": "*",
     "trigger": "idle_chatter",
     "lines": [
-      {"text": "这游戏是用Go语言写的，你知道吗？", "expression": "talk", "autoAdvance": 5}
+      {
+        "text": {
+          "zh": "这游戏是用Go语言写的，你知道吗？",
+          "en": "This game is written in Go — did you know that?"
+        },
+        "expression": "talk",
+        "autoAdvance": 5
+      }
     ],
     "once": false,
     "priority": 1
@@ -1024,7 +1801,14 @@
     "scene": "*",
     "trigger": "idle_chatter",
     "lines": [
-      {"text": "塔的攻速有下限，不可能无限快哦。", "expression": "talk", "autoAdvance": 5}
+      {
+        "text": {
+          "zh": "塔的攻速有下限，不可能无限快哦。",
+          "en": "Tower attack speed has a minimum — it can't go infinitely fast."
+        },
+        "expression": "talk",
+        "autoAdvance": 5
+      }
     ],
     "once": false,
     "priority": 1
@@ -1034,7 +1818,14 @@
     "scene": "*",
     "trigger": "idle_chatter",
     "lines": [
-      {"text": "游戏里一秒钟要画六十帧呢。", "expression": "talk", "autoAdvance": 4}
+      {
+        "text": {
+          "zh": "游戏里一秒钟要画六十帧呢。",
+          "en": "The game draws sixty frames every second!"
+        },
+        "expression": "talk",
+        "autoAdvance": 4
+      }
     ],
     "once": false,
     "priority": 1
@@ -1044,7 +1835,14 @@
     "scene": "*",
     "trigger": "idle_chatter",
     "lines": [
-      {"text": "减速效果会取最强的那个生效。", "expression": "talk", "autoAdvance": 5}
+      {
+        "text": {
+          "zh": "减速效果会取最强的那个生效。",
+          "en": "Only the strongest slow effect takes effect."
+        },
+        "expression": "talk",
+        "autoAdvance": 5
+      }
     ],
     "once": false,
     "priority": 1
@@ -1054,7 +1852,14 @@
     "scene": "*",
     "trigger": "idle_chatter",
     "lines": [
-      {"text": "持续伤害有三种：流血、燃烧、中毒。", "expression": "talk", "autoAdvance": 5}
+      {
+        "text": {
+          "zh": "持续伤害有三种：流血、燃烧、中毒。",
+          "en": "There are three DoT types: bleed, burn, and poison."
+        },
+        "expression": "talk",
+        "autoAdvance": 5
+      }
     ],
     "once": false,
     "priority": 1
@@ -1064,7 +1869,14 @@
     "scene": "*",
     "trigger": "idle_chatter",
     "lines": [
-      {"text": "最早的塔防是星际争霸的自定义地图。", "expression": "talk", "autoAdvance": 5}
+      {
+        "text": {
+          "zh": "最早的塔防是星际争霸的自定义地图。",
+          "en": "The first tower defense was a StarCraft custom map."
+        },
+        "expression": "talk",
+        "autoAdvance": 5
+      }
     ],
     "once": false,
     "priority": 1
@@ -1074,7 +1886,14 @@
     "scene": "*",
     "trigger": "idle_chatter",
     "lines": [
-      {"text": "塔的属性有随机性，每次都不一样。", "expression": "talk", "autoAdvance": 5}
+      {
+        "text": {
+          "zh": "塔的属性有随机性，每次都不一样。",
+          "en": "Tower stats are randomized — different every time."
+        },
+        "expression": "talk",
+        "autoAdvance": 5
+      }
     ],
     "once": false,
     "priority": 1
@@ -1084,7 +1903,14 @@
     "scene": "*",
     "trigger": "idle_chatter",
     "lines": [
-      {"text": "敌人的速度越后面波次越快哦。", "expression": "talk", "autoAdvance": 4}
+      {
+        "text": {
+          "zh": "敌人的速度越后面波次越快哦。",
+          "en": "Enemies get faster in later waves, you know."
+        },
+        "expression": "talk",
+        "autoAdvance": 4
+      }
     ],
     "once": false,
     "priority": 1
@@ -1094,7 +1920,14 @@
     "scene": "*",
     "trigger": "idle_chatter",
     "lines": [
-      {"text": "屏幕上的特效都是数学公式画出来的。", "expression": "talk", "autoAdvance": 5}
+      {
+        "text": {
+          "zh": "屏幕上的特效都是数学公式画出来的。",
+          "en": "All the visual effects on screen are drawn with math formulas."
+        },
+        "expression": "talk",
+        "autoAdvance": 5
+      }
     ],
     "once": false,
     "priority": 1
@@ -1104,7 +1937,14 @@
     "scene": "*",
     "trigger": "idle_chatter",
     "lines": [
-      {"text": "你知道吗？光环buff每0.3秒刷新一次。", "expression": "talk", "autoAdvance": 5}
+      {
+        "text": {
+          "zh": "你知道吗？光环buff每0.3秒刷新一次。",
+          "en": "Did you know? Aura buffs refresh every 0.3 seconds."
+        },
+        "expression": "talk",
+        "autoAdvance": 5
+      }
     ],
     "once": false,
     "priority": 1
@@ -1114,8 +1954,22 @@
     "scene": "*",
     "trigger": "idle_chatter",
     "lines": [
-      {"text": "你知道吗，即使你的炮塔攻速非常快，程序依然能正确处理。", "expression": "talk", "autoAdvance": 6},
-      {"text": "你要不要来试试，把所有道具和钱都用在一个炮塔上。", "expression": "happy", "autoAdvance": 5}
+      {
+        "text": {
+          "zh": "你知道吗，即使你的炮塔攻速非常快，程序依然能正确处理。",
+          "en": "Fun fact: even if your tower attacks super fast, the code handles it just fine."
+        },
+        "expression": "talk",
+        "autoAdvance": 6
+      },
+      {
+        "text": {
+          "zh": "你要不要来试试，把所有道具和钱都用在一个炮塔上。",
+          "en": "Wanna try dumping all items and gold into one tower?"
+        },
+        "expression": "happy",
+        "autoAdvance": 5
+      }
     ],
     "once": false,
     "priority": 1

@@ -1,10 +1,12 @@
 package mascot
 
 // Line is one speech bubble message within a dialog.
+// Text 为多语言映射：{"zh": "中文", "en": "English"}。
+// 运行时通过 Guide.ResolveText 按当前 locale 选择，缺失时 fallback 到 "zh"。
 type Line struct {
-	Text        string  `json:"text"`
-	Expression  string  `json:"expression"`  // "idle"/"talk"/"happy"/"surprised"
-	AutoAdvance float64 `json:"autoAdvance"` // seconds; 0 = click to advance
+	Text        map[string]string `json:"text"`
+	Expression  string            `json:"expression"`  // "idle"/"talk"/"happy"/"surprised"
+	AutoAdvance float64           `json:"autoAdvance"` // seconds; 0 = click to advance
 }
 
 // Dialog is a triggered conversation sequence.

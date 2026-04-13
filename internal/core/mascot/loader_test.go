@@ -12,8 +12,8 @@ func TestParseDialogs(t *testing.T) {
 			"scene": "title",
 			"trigger": "scene_enter",
 			"lines": [
-				{"text": "Hello!", "expression": "happy", "autoAdvance": 0},
-				{"text": "Bye!", "expression": "idle", "autoAdvance": 2.5}
+				{"text": {"zh": "你好！", "en": "Hello!"}, "expression": "happy", "autoAdvance": 0},
+				{"text": {"zh": "再见！", "en": "Bye!"}, "expression": "idle", "autoAdvance": 2.5}
 			],
 			"once": true,
 			"priority": 5
@@ -39,8 +39,8 @@ func TestParseDialogs(t *testing.T) {
 	if len(d.Lines) != 2 {
 		t.Fatalf("expected 2 lines, got %d", len(d.Lines))
 	}
-	if d.Lines[0].Text != "Hello!" {
-		t.Errorf("Lines[0].Text = %q, want \"Hello!\"", d.Lines[0].Text)
+	if d.Lines[0].Text["en"] != "Hello!" {
+		t.Errorf("Lines[0].Text[\"en\"] = %q, want \"Hello!\"", d.Lines[0].Text["en"])
 	}
 	if d.Lines[0].Expression != "happy" {
 		t.Errorf("Lines[0].Expression = %q, want \"happy\"", d.Lines[0].Expression)
@@ -90,11 +90,11 @@ func TestLoadAllDialogsMergesFiles(t *testing.T) {
 	fs := &mockFS{files: map[string][]byte{
 		"config/mascot/dialogs-title.json": []byte(`[
 			{"id": "d1", "scene": "title", "trigger": "scene_enter",
-			 "lines": [{"text": "A", "expression": "idle"}]}
+			 "lines": [{"text": {"zh": "A", "en": "A"}, "expression": "idle"}]}
 		]`),
 		"config/mascot/dialogs-stage.json": []byte(`[
 			{"id": "d2", "scene": "stage", "trigger": "wave_start",
-			 "lines": [{"text": "B", "expression": "talk"}]}
+			 "lines": [{"text": {"zh": "B", "en": "B"}, "expression": "talk"}]}
 		]`),
 	}}
 	dialogs, err := LoadAllDialogs(fs)

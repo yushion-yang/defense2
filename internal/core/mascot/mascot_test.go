@@ -12,8 +12,8 @@ func newTestGuide() *Guide {
 			Scene:   "title",
 			Trigger: "scene_enter",
 			Lines: []Line{
-				{Text: "Welcome!", Expression: "happy", AutoAdvance: 0},
-				{Text: "Click to start.", Expression: "idle", AutoAdvance: 0},
+				{Text: map[string]string{"en": "Welcome!"}, Expression: "happy", AutoAdvance: 0},
+				{Text: map[string]string{"en": "Click to start."}, Expression: "idle", AutoAdvance: 0},
 			},
 			Once:     false,
 			Priority: 1,
@@ -23,7 +23,7 @@ func newTestGuide() *Guide {
 			Scene:   "stage",
 			Trigger: "wave_start",
 			Lines: []Line{
-				{Text: "Enemies incoming!", Expression: "surprised", AutoAdvance: 2.0},
+				{Text: map[string]string{"en": "Enemies incoming!"}, Expression: "surprised", AutoAdvance: 2.0},
 			},
 			Once:     false,
 			Priority: 1,
@@ -100,8 +100,8 @@ func TestAutoAdvance(t *testing.T) {
 			Scene:   "stage",
 			Trigger: "scene_enter",
 			Lines: []Line{
-				{Text: "Line A", Expression: "talk", AutoAdvance: 1.0},
-				{Text: "Line B", Expression: "idle", AutoAdvance: 0.5},
+				{Text: map[string]string{"en": "Line A"}, Expression: "talk", AutoAdvance: 1.0},
+				{Text: map[string]string{"en": "Line B"}, Expression: "idle", AutoAdvance: 0.5},
 			},
 		},
 	}
@@ -138,7 +138,7 @@ func TestOnceDialogNotRepeated(t *testing.T) {
 			Scene:   "title",
 			Trigger: "scene_enter",
 			Lines: []Line{
-				{Text: "First time!", Expression: "happy"},
+				{Text: map[string]string{"en": "First time!"}, Expression: "happy"},
 			},
 			Once:     true,
 			Priority: 1,
@@ -174,7 +174,7 @@ func TestOnceDialogPreloaded(t *testing.T) {
 			Scene:   "title",
 			Trigger: "scene_enter",
 			Lines: []Line{
-				{Text: "You won't see this.", Expression: "idle"},
+				{Text: map[string]string{"en": "You won't see this."}, Expression: "idle"},
 			},
 			Once:     true,
 			Priority: 1,
@@ -212,14 +212,14 @@ func TestPrioritySelection(t *testing.T) {
 			ID:       "low",
 			Scene:    "title",
 			Trigger:  "scene_enter",
-			Lines:    []Line{{Text: "Low priority", Expression: "idle"}},
+			Lines:    []Line{{Text: map[string]string{"en": "Low priority"}, Expression: "idle"}},
 			Priority: 1,
 		},
 		{
 			ID:       "high",
 			Scene:    "title",
 			Trigger:  "scene_enter",
-			Lines:    []Line{{Text: "High priority", Expression: "happy"}},
+			Lines:    []Line{{Text: map[string]string{"en": "High priority"}, Expression: "happy"}},
 			Priority: 10,
 		},
 	}
@@ -238,7 +238,7 @@ func TestWildcardScene(t *testing.T) {
 			ID:       "global_hint",
 			Scene:    "*",
 			Trigger:  "hint",
-			Lines:    []Line{{Text: "Global hint!", Expression: "talk"}},
+			Lines:    []Line{{Text: map[string]string{"en": "Global hint!"}, Expression: "talk"}},
 			Priority: 1,
 		},
 	}
@@ -263,8 +263,8 @@ func TestNoInterruptActiveDialog(t *testing.T) {
 			Scene:   "stage",
 			Trigger: "scene_enter",
 			Lines: []Line{
-				{Text: "Line 1", Expression: "idle"},
-				{Text: "Line 2", Expression: "idle"},
+				{Text: map[string]string{"en": "Line 1"}, Expression: "idle"},
+				{Text: map[string]string{"en": "Line 2"}, Expression: "idle"},
 			},
 			Priority: 1,
 		},
@@ -272,7 +272,7 @@ func TestNoInterruptActiveDialog(t *testing.T) {
 			ID:       "second",
 			Scene:    "stage",
 			Trigger:  "wave_start",
-			Lines:    []Line{{Text: "Should not appear", Expression: "idle"}},
+			Lines:    []Line{{Text: map[string]string{"en": "Should not appear"}, Expression: "idle"}},
 			Priority: 5,
 		},
 	}
@@ -295,8 +295,8 @@ func TestClickAdvanceOnAutoAdvanceLine(t *testing.T) {
 			Scene:   "stage",
 			Trigger: "scene_enter",
 			Lines: []Line{
-				{Text: "Auto line", Expression: "talk", AutoAdvance: 5.0},
-				{Text: "Done", Expression: "idle"},
+				{Text: map[string]string{"en": "Auto line"}, Expression: "talk", AutoAdvance: 5.0},
+				{Text: map[string]string{"en": "Done"}, Expression: "idle"},
 			},
 		},
 	}
@@ -318,7 +318,7 @@ func TestVMCanClick(t *testing.T) {
 			Scene:   "title",
 			Trigger: "scene_enter",
 			Lines: []Line{
-				{Text: "Click me", Expression: "idle", AutoAdvance: 0},
+				{Text: map[string]string{"en": "Click me"}, Expression: "idle", AutoAdvance: 0},
 			},
 		},
 	}
@@ -349,37 +349,37 @@ func newConditionTestGuide() *Guide {
 			ID:      "low_health_tip",
 			Scene:   "stage",
 			Trigger: "low_health",
-			Lines:   []Line{{Text: "Watch your health!", Expression: "surprised"}},
+			Lines:   []Line{{Text: map[string]string{"en": "Watch your health!"}, Expression: "surprised"}},
 		},
 		{
 			ID:      "help_dialog",
 			Scene:   "stage",
 			Trigger: "mascot_help",
-			Lines:   []Line{{Text: "Leave it to me!", Expression: "happy", AutoAdvance: 2.0}},
+			Lines:   []Line{{Text: map[string]string{"en": "Leave it to me!"}, Expression: "happy", AutoAdvance: 2.0}},
 		},
 		{
 			ID:      "not_ready_dialog",
 			Scene:   "stage",
 			Trigger: "mascot_not_ready",
-			Lines:   []Line{{Text: "I'm not ready yet...", Expression: "idle", AutoAdvance: 2.0}},
+			Lines:   []Line{{Text: map[string]string{"en": "I'm not ready yet..."}, Expression: "idle", AutoAdvance: 2.0}},
 		},
 		{
 			ID:      "kill_success_dialog",
 			Scene:   "*",
 			Trigger: "mascot_kill_success",
-			Lines:   []Line{{Text: "Got one!", Expression: "happy", AutoAdvance: 2.0}},
+			Lines:   []Line{{Text: map[string]string{"en": "Got one!"}, Expression: "happy", AutoAdvance: 2.0}},
 		},
 		{
 			ID:      "ability_hint_dialog",
 			Scene:   "stage",
 			Trigger: "mascot_ability_hint",
-			Lines:   []Line{{Text: "Click me to help!", Expression: "happy", AutoAdvance: 8.0}},
+			Lines:   []Line{{Text: map[string]string{"en": "Click me to help!"}, Expression: "happy", AutoAdvance: 8.0}},
 		},
 		{
 			ID:      "boss_dialog",
 			Scene:   "stage",
 			Trigger: "boss_incoming",
-			Lines:   []Line{{Text: "Boss incoming!", Expression: "surprised"}},
+			Lines:   []Line{{Text: map[string]string{"en": "Boss incoming!"}, Expression: "surprised"}},
 		},
 	}
 	g := NewGuide(dialogs, nil)
