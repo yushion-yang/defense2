@@ -11,12 +11,6 @@ const (
 	ScreenHeight = 540
 )
 
-// 设计分辨率（用于缩放参考）
-const (
-	DesignWidth  = 1200
-	DesignHeight = 540
-)
-
 // 对象池容量上限
 const (
 	MaxTowers      = 64   // 最大塔数

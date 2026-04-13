@@ -149,6 +149,14 @@ type Tower struct {
 	StatsDirty bool
 }
 
+// EffectiveStrength 返回塔的有效强度值。无 Strength 时返回默认 100。
+func (t *Tower) EffectiveStrength() float64 {
+	if t.Strength != nil {
+		return t.Strength.Effective()
+	}
+	return 100.0
+}
+
 // BuyStrength 花费金币购买永久强度。返回实际花费。
 func (t *Tower) BuyStrength() int {
 	bal := config.GlobalBalance()

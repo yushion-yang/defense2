@@ -20,15 +20,15 @@ package combat
 import (
 	"math"
 
-	"defense2/internal/config"
 	"defense2/internal/core/enemy"
 	"defense2/internal/core/tower"
 )
 
-// wideBeam 默认视觉参数
+// wideBeam 默认参数
 const (
-	wideBeamDuration = 0.15 // 光束显示时长（秒）
-	wideBeamWidth    = 6.0  // 光束宽度（像素）
+	wideBeamDuration        = 0.15 // 光束显示时长（秒）
+	wideBeamWidth           = 6.0  // 光束宽度（像素）
+	wideBeamDefaultRangeMul = 3.0  // 射程倍率 fallback（abilities.json 未加载时使用）
 )
 
 var wideBeamColor = [3]uint8{147, 197, 253} // #93c5fd 蓝
@@ -52,11 +52,9 @@ func (h *WideBeamHandler) Fire(t *tower.Tower, target *enemy.Enemy, ctx *AttackC
 	// 从 abilities.json 读取射程倍率（唯一真相源）。
 	// rangeMult 让光束射程远于塔的索敌范围，体现"贯穿"特性——
 	// 塔只需看到第一个敌人，光束就能打到身后更远处的敌人。
-	rangeMult := 3.0 // safety fallback
-	if abTable := config.GlobalAbilityTable(); abTable != nil {
-		if def := abTable[tower.AbilityWideBeam]; def != nil && def.Param > 0 {
-			rangeMult = def.Param
-		}
+	rangeMult := wideBeamDefaultRangeMul
+	if def := getAbilityDef(tower.AbilityWideBeam); def != nil && def.Param > 0 {
+		rangeMult = def.Param
 	}
 	beamLen := t.Range * rangeMult
 	endX := t.X + dirX*beamLen

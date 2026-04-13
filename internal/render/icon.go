@@ -4,6 +4,7 @@ package render
 
 import (
 	"fmt"
+	"log"
 	"sync"
 
 	"defense2/internal/render/sprite"
@@ -33,7 +34,10 @@ func (im *IconManager) Get(name string) *ebiten.Image {
 	if err != nil {
 		return nil
 	}
-	img, _ := im.cache.GetOrParse(path, data, iconSourceSize, iconSourceSize)
+	img, err := im.cache.GetOrParse(path, data, iconSourceSize, iconSourceSize)
+	if err != nil {
+		log.Printf("[render] sprite parse failed: %v", err)
+	}
 	return img
 }
 

@@ -122,16 +122,11 @@ func (h *BarrageHandler) Tick(t *tower.Tower, ctx *AttackContext) {
 	// 计算弹丸数：从 abilities.json 读取，由 CalcScale(str) 根据力量动态计算。
 	// 力量越高弹数越多（str=100→2弹，str=200→3弹...），这是 barrage 的核心成长曲线。
 	bullets := barrageDefaultBullets
-	if abTable := config.GlobalAbilityTable(); abTable != nil {
-		if def := abTable[tower.AbilityBarrage]; def != nil {
-			str := 100.0
-			if t.Strength != nil {
-				str = t.Strength.Effective()
-			}
-			bullets = int(math.Floor(def.CalcScale(str)))
-			if bullets < 1 {
-				bullets = 1
-			}
+	if def := getAbilityDef(tower.AbilityBarrage); def != nil {
+		str := t.EffectiveStrength()
+		bullets = int(math.Floor(def.CalcScale(str)))
+		if bullets < 1 {
+			bullets = 1
 		}
 	}
 
@@ -184,14 +179,12 @@ func (h *BarrageHandler) Tick(t *tower.Tower, ctx *AttackContext) {
 func barrageParams() (damageRatio, burstDelay float64) {
 	damageRatio = barrageDefaultDmgRatio
 	burstDelay = barrageDefaultBurstDelay
-	if abTable := config.GlobalAbilityTable(); abTable != nil {
-		if def := abTable[tower.AbilityBarrage]; def != nil {
-			if def.Param > 0 {
-				damageRatio = def.Param
-			}
-			if def.Param2 > 0 {
-				burstDelay = def.Param2
-			}
+	if def := getAbilityDef(tower.AbilityBarrage); def != nil {
+		if def.Param > 0 {
+			damageRatio = def.Param
+		}
+		if def.Param2 > 0 {
+			burstDelay = def.Param2
 		}
 	}
 	return

@@ -6,6 +6,7 @@ package render
 import (
 	"fmt"
 	"image/color"
+	"log"
 	"math"
 
 	"defense2/internal/core/warden"
@@ -51,7 +52,10 @@ func (wr *WardenRenderer) loadSprite(typ string) *ebiten.Image {
 	if err != nil {
 		return nil
 	}
-	img, _ := wr.cache.GetOrParse(path, data, wardenSpriteSize, wardenSpriteSize)
+	img, err := wr.cache.GetOrParse(path, data, wardenSpriteSize, wardenSpriteSize)
+	if err != nil {
+		log.Printf("[render] sprite parse failed: %v", err)
+	}
 	return img
 }
 

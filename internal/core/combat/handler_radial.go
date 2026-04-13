@@ -26,6 +26,12 @@ import (
 	"defense2/internal/core/tower"
 )
 
+// radial 默认 fallback 参数（abilities.json 未加载时使用）
+const (
+	radialDefaultShots    = 4
+	radialDefaultRangeMul = 1.2
+)
+
 // RadialHandler 环射。
 type RadialHandler struct{}
 
@@ -33,21 +39,16 @@ type RadialHandler struct{}
 // 流程：读取弹数和射程倍率 → 计算基准角（朝向目标）→ 等角间隔发射 FirePenetrate
 func (h *RadialHandler) Fire(t *tower.Tower, target *enemy.Enemy, ctx *AttackContext) {
 	// 从 abilities.json 读取发射数和射程倍率（唯一真相源）
-	totalShots := 4
-	rangeMult := 1.2
-	if abTable := config.GlobalAbilityTable(); abTable != nil {
-		if def, ok := abTable[tower.AbilityRadial]; ok {
-			str := 100.0
-			if t.Strength != nil {
-				str = t.Strength.Effective()
-			}
-			totalShots = int(math.Floor(def.CalcScale(str)))
-			if totalShots < 3 {
-				totalShots = 3
-			}
-			if def.Param > 0 {
-				rangeMult = def.Param
-			}
+	totalShots := radialDefaultShots
+	rangeMult := radialDefaultRangeMul
+	if def := getAbilityDef(tower.AbilityRadial); def != nil {
+		str := t.EffectiveStrength()
+		totalShots = int(math.Floor(def.CalcScale(str)))
+		if totalShots < 3 {
+			totalShots = 3
+		}
+		if def.Param > 0 {
+			rangeMult = def.Param
 		}
 	}
 	shotRange := t.Range * rangeMult

@@ -105,13 +105,10 @@ func DrawPauseMenu(screen *ebiten.Image) {
 func PauseMenuHitTest(px, py float32) int {
 	sw := float32(game.ScreenWidth)
 	sh := float32(game.ScreenHeight)
-	panelX := (sw - pausePanelW) / 2
 	panelY := (sh - pausePanelH) / 2
 
 	btnX := (sw - pauseBtnW) / 2
 	btnY := panelY + 80
-
-	_ = panelX
 
 	for i := 0; i < 4; i++ {
 		by := btnY + float32(i)*(pauseBtnH+pauseBtnGap)

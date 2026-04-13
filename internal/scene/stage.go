@@ -1888,8 +1888,7 @@ func (s *StageScene) drawEnemyAbilityVFX(screen *ebiten.Image) {
 		}
 
 		// 治疗光环范围圈（绿色虚线圈）
-		if hp, hr, ok := e.GetHealAuraParams(); ok && hp > 0 && !e.IsDying() {
-			_ = hp
+		if _, hr, ok := e.GetHealAuraParams(); ok && !e.IsDying() {
 			vfx.DrawHealerAura(screen, ex, ey, float32(hr), animTime)
 			if e.HealCooldown > e.HealInterval-0.4 {
 				progress := (e.HealInterval - e.HealCooldown) / 0.4
@@ -3177,7 +3176,7 @@ func towerTypeIcon(key string) string {
 // drawUpgradeIndicators 在有待选能力的塔上方绘制脉冲金色菱形指示器。
 func (s *StageScene) drawUpgradeIndicators(target *ebiten.Image, animTime float64) {
 	s.towers.Each(func(t *tower.Tower) {
-		if t.HasPendingUpgrade(s.wavesCleared) {
+		if t.HasPendingUpgrade() {
 			vfx.DrawUpgradeDiamond(target, float32(t.X), float32(t.Y), animTime)
 		}
 	})

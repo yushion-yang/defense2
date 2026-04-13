@@ -109,8 +109,6 @@ func NewVFXPreviewScene(sw Switcher) *VFXPreviewScene {
 func (s *VFXPreviewScene) vfxTriggerRegistry() map[string]func(s *VFXPreviewScene) {
 	cx, cy := s.previewCenter()
 	sw, sh := float64(game.ScreenWidth), float64(game.ScreenHeight)
-	_ = sw
-	_ = sh
 
 	return map[string]func(s *VFXPreviewScene){
 		// Particles

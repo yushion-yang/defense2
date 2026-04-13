@@ -78,8 +78,7 @@ func (s *LangSelectScene) Update() error {
 					Locale:     code,
 				})
 				// 标记首次运行完成
-				storage, _ := persistence.DefaultStorage()
-				pm := persistence.NewProgressManager(storage)
+				pm := persistence.DefaultProgressManager()
 				pm.SetFirstRunDone()
 				// 进入标题场景
 				playUIClick(s.switcher)

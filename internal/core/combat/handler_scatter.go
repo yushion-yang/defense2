@@ -23,6 +23,12 @@ import (
 	"defense2/internal/core/tower"
 )
 
+// scatter 默认 fallback 参数（abilities.json 未加载时使用）
+const (
+	scatterDefaultPellets   = 3
+	scatterDefaultSpreadDeg = 60.0
+)
+
 // ScatterHandler 锥形散射。
 type ScatterHandler struct{}
 
@@ -36,21 +42,16 @@ func (h *ScatterHandler) Fire(t *tower.Tower, target *enemy.Enemy, ctx *AttackCo
 	}
 
 	// 从 abilities.json 读取弹丸数和散布角度（唯一真相源）
-	pellets := 3 // safety fallback
-	spreadDeg := 60.0
-	if abTable := config.GlobalAbilityTable(); abTable != nil {
-		if def := abTable[tower.AbilityScatter]; def != nil {
-			str := 100.0
-			if t.Strength != nil {
-				str = t.Strength.Effective()
-			}
-			pellets = int(math.Floor(def.CalcScale(str)))
-			if pellets < 2 {
-				pellets = 2
-			}
-			if def.Param > 0 {
-				spreadDeg = def.Param
-			}
+	pellets := scatterDefaultPellets
+	spreadDeg := scatterDefaultSpreadDeg
+	if def := getAbilityDef(tower.AbilityScatter); def != nil {
+		str := t.EffectiveStrength()
+		pellets = int(math.Floor(def.CalcScale(str)))
+		if pellets < 2 {
+			pellets = 2
+		}
+		if def.Param > 0 {
+			spreadDeg = def.Param
 		}
 	}
 	halfSpread := spreadDeg / 2 * math.Pi / 180

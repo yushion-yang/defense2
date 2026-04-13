@@ -259,7 +259,6 @@ func (p *Pool) Spawn(x, y, baseHP, baseSpeed float64, pathIndex int, archetype s
 //  5. Count-- （此后 pool.Count 不再计入此敌人）
 func (p *Pool) Kill(e *Enemy) {
 	if e.Active && e.DyingTimer <= 0 {
-		// TODO: 复活能力将通过能力系统实现
 		// 分裂体死亡时生成子体（必须在 dying 标记前执行，否则子体无法获取父体路径）
 		if e.SplitCount > 0 {
 			children := OnSplitterDeath(e, p)
