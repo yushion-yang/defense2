@@ -35,6 +35,9 @@ android/*.keystore
 android/*.jks
 android/app/build/
 
+# AutoPlay test results
+autoplay-results/
+
 # OS
 .DS_Store
 Thumbs.db
