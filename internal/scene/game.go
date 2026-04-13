@@ -378,6 +378,8 @@ func (g *Game) currentSceneName() string {
 		return "warden_select"
 	case *LangSelectScene:
 		return "lang_select"
+	case *BestiaryScene:
+		return "bestiary"
 	default:
 		return "other"
 	}
