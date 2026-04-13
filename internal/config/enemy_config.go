@@ -47,6 +47,9 @@ type EnemyAbilityDef struct {
 	Potential   float64 `json:"potential"`
 	Param       float64 `json:"param"`
 	ParamDim    string  `json:"paramDim"`
+	Param2      float64 `json:"param2"`
+	Param2Dim   string  `json:"param2Dim"`
+	SpawnArch   string  `json:"spawnArch"`   // deathSpawn 子体原型（默认 "normal"）
 	Description string  `json:"description"`
 	Visual      string  `json:"visual"`      // 视觉效果描述
 	Silenceable bool    `json:"silenceable"` // 是否可被沉默禁用
@@ -199,6 +202,14 @@ func LoadEnemyAbilities() (map[string]*EnemyAbilityDef, error) {
 // GlobalEnemyAbilityTable 返回全局怪物能力表。
 func GlobalEnemyAbilityTable() map[string]*EnemyAbilityDef {
 	return enemyAbilityTable
+}
+
+// GlobalEnemyAbilityDef 返回指定类型的怪物能力定义，不存在返回 nil。
+func GlobalEnemyAbilityDef(abilType string) *EnemyAbilityDef {
+	if enemyAbilityTable == nil {
+		return nil
+	}
+	return enemyAbilityTable[abilType]
 }
 
 // ResolveEnemyAbility 解析能力引用，合并默认参数和覆盖参数（wave=0，不应用 potential）。
