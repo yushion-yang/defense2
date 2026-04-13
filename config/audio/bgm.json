@@ -29,7 +29,7 @@
         }
       ],
       "mood": "轻松、期待",
-      "status": "placeholder",
+      "status": "sf2-generated",
       "note": "WAV 文件存在但可能尚无实际音乐内容"
     },
     {
@@ -69,7 +69,7 @@
         }
       ],
       "mood": "紧张、节奏感",
-      "status": "placeholder"
+      "status": "sf2-generated"
     },
     {
       "file": "bgm-boss.wav",
@@ -101,7 +101,7 @@
         }
       ],
       "mood": "紧迫、史诗",
-      "status": "placeholder"
+      "status": "sf2-generated"
     }
   ],
   "transitionRules": {

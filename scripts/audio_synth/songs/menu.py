@@ -1,274 +1,314 @@
-"""Menu BGM — "Awaiting Command"
-
-Calm, anticipatory music for the menu/selection screen.
-Key: C major | BPM: 104 | ~72 seconds (32 bars)
-Structure: A(8) -> B(8) -> A'(8) -> C(8)
-"""
+# menu.py — "Echoes of Command"（指挥回响）
+#
+# 塔防主菜单/选关 BGM。温暖从容，钢琴主导，弦乐铺底。
+# 调性: D major → Bm | BPM: 92 | ~80s (36 bars) | 4/4 拍
+# 结构: Intro(8) → A(8) → B(8) → A'(8) → Outro(4)
+#
+# 乐器: Piano / String Pad / Synth Pad / Celesta / 轻鼓组
 
 import sys
 import os
 
-# Ensure the audio_synth package is importable
 _synth_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 _scripts_dir = os.path.dirname(_synth_dir)
 if _scripts_dir not in sys.path:
     sys.path.insert(0, _scripts_dir)
 
-from audio_synth.composer import Song, Track, DrumPattern
-from audio_synth.instruments import (
-    ARP_SPARKLE,
-    BASS_THICK,
-    HIHAT_CLOSED,
-    KICK,
-    LEAD_SOFT,
-    PAD_WARM,
+from audio_synth.composer import Track
+from audio_synth.midi_renderer import SF2Song
+from audio_synth.instruments_sf2 import (
+    PIANO_WARM, CELESTA_SPARKLE, STRINGS_ENSEMBLE,
+    SYNTH_PAD_WARM, DRUMS_SOFT, HARP_GENTLE,
+    DRUM_KICK, DRUM_SNARE, DRUM_HIHAT_CLOSED, DRUM_RIDE,
 )
 
-# ---------------------------------------------------------------------------
-# Constants
-# ---------------------------------------------------------------------------
+# ── 常量 ──────────────────────────────────────────────
+BPM = 92
+BAR = 4  # beats per bar
 
-BPM = 104
-BEATS_PER_BAR = 4
+# 段落起始拍
+INTRO = 0           # bar 0-7
+SEC_A = 8 * BAR     # bar 8-15
+SEC_B = 16 * BAR    # bar 16-23
+SEC_A2 = 24 * BAR   # bar 24-31
+OUTRO = 32 * BAR    # bar 32-35
 
-# Bar offsets for each section
-SEC_A = 0       # bars 0-7
-SEC_B = 32      # bars 8-15  (beat 32)
-SEC_A2 = 64     # bars 16-23 (beat 64)
-SEC_C = 96      # bars 24-31 (beat 96)
+# 音符时值
+S = 0.5   # 八分音符
+Q = 1.0   # 四分音符
+H = 2.0   # 二分音符
+W = 4.0   # 全音符
+DH = 3.0  # 附点二分音符
 
-# Chord definitions: (root, notes for arpeggio, notes for pad, bass note)
-CHORDS = {
-    'C':  {'arp': ['C4', 'E4', 'G4', 'C5'], 'pad': ['C3', 'E3', 'G3'], 'bass': 'C2'},
-    'Am': {'arp': ['A3', 'C4', 'E4', 'A4'], 'pad': ['A2', 'C3', 'E3'], 'bass': 'A1'},
-    'F':  {'arp': ['F3', 'A3', 'C4', 'F4'], 'pad': ['F2', 'A2', 'C3'], 'bass': 'F1'},
-    'G':  {'arp': ['G3', 'B3', 'D4', 'G4'], 'pad': ['G2', 'B2', 'D3'], 'bass': 'G1'},
-    'Em': {'arp': ['E3', 'G3', 'B3', 'E4'], 'pad': ['E2', 'G2', 'B2'], 'bass': 'E1'},
-}
+# ── 和弦进行 ──────────────────────────────────────────
+# A 段 (D major): D - A/C# - Bm - G - D/F# - Em - A - D
+PROG_A = [
+    ('D3', ['D3', 'F#3', 'A3']),
+    ('C#3', ['C#3', 'E3', 'A3']),
+    ('B2', ['B2', 'D3', 'F#3']),
+    ('G2', ['G2', 'B2', 'D3']),
+    ('F#2', ['F#2', 'A2', 'D3']),
+    ('E2', ['E2', 'G2', 'B2']),
+    ('A2', ['A2', 'C#3', 'E3']),
+    ('D2', ['D2', 'F#2', 'A2']),
+]
 
-# Chord progressions for each section (each chord lasts 1 bar = 4 beats)
-PROG_A  = ['C', 'Am', 'F', 'G',  'C', 'Am', 'F', 'G']
-PROG_B  = ['C', 'Em', 'Am', 'G', 'C', 'Em', 'Am', 'G']
-PROG_A2 = ['C', 'Am', 'F', 'G',  'C', 'Am', 'F', 'G']
-PROG_C  = ['F', 'G', 'Em', 'Am', 'F', 'G', 'Em', 'Am']
-
-ALL_SECTIONS = [
-    (SEC_A,  PROG_A),
-    (SEC_B,  PROG_B),
-    (SEC_A2, PROG_A2),
-    (SEC_C,  PROG_C),
+# B 段 (Bm): Bm - F#m - G - D - Em - Bm - A - A
+PROG_B = [
+    ('B2', ['B2', 'D3', 'F#3']),
+    ('F#2', ['F#2', 'A2', 'C#3']),
+    ('G2', ['G2', 'B2', 'D3']),
+    ('D2', ['D2', 'F#2', 'A2']),
+    ('E2', ['E2', 'G2', 'B2']),
+    ('B2', ['B2', 'D3', 'F#3']),
+    ('A2', ['A2', 'C#3', 'E3']),
+    ('A2', ['A2', 'C#3', 'E3']),
 ]
 
 
-# ---------------------------------------------------------------------------
-# Arpeggio track — quarter notes instead of 8th notes (relaxed feel)
-# ---------------------------------------------------------------------------
+def build_piano(song: SF2Song) -> None:
+    """钢琴——主旋律琶音 + 偶尔旋律片段。"""
+    track = Track(instrument={'type': 'sf2'}, volume=0.75)
 
-def build_arpeggio(song: Song) -> None:
-    """Gentle quarter-note arpeggio, all 32 bars. Slower than before."""
-    track = song.add_track(Track(ARP_SPARKLE, volume=0.30))
-    Q = 1.0  # quarter note duration
+    # ── Intro: 钢琴独奏琶音（D major 展开）──
+    # 每小节 4 个八分音符琶音 + 留白
+    arp_patterns = [
+        ['D4', 'F#4', 'A4', 'D5'],
+        ['C#4', 'E4', 'A4', 'C#5'],
+        ['B3', 'D4', 'F#4', 'B4'],
+        ['G3', 'B3', 'D4', 'G4'],
+        ['D4', 'F#4', 'A4', 'D5'],
+        ['E4', 'G4', 'B4', 'E5'],
+        ['A3', 'C#4', 'E4', 'A4'],
+        ['D4', 'F#4', 'A4', 'D5'],
+    ]
+    for bar_idx, arp in enumerate(arp_patterns):
+        b = INTRO + bar_idx * BAR
+        for i, note in enumerate(arp):
+            track.note(b + i * S, note, S * 0.9)
 
-    for section_beat, progression in ALL_SECTIONS:
-        for bar_idx, chord_name in enumerate(progression):
-            bar_beat = section_beat + bar_idx * BEATS_PER_BAR
-            notes = CHORDS[chord_name]['arp']
-            # 4 quarter notes per bar: root 3rd 5th oct (simple ascending)
-            arp_seq = [notes[0], notes[1], notes[2], notes[3]]
-            track.pattern(bar_beat, arp_seq, note_duration=Q)
-
-
-# ---------------------------------------------------------------------------
-# Lead melody — slower phrasing with rests
-# ---------------------------------------------------------------------------
-
-def build_lead(song: Song) -> None:
-    """Simple, singable melody with half/whole notes and breathing room."""
-    track = song.add_track(Track(LEAD_SOFT, volume=0.45))
-
-    Q = 1.0
-    H = 2.0
-    W = 4.0
-
-    # --- A section melody (bars 0-7, enters at bar 2 = beat 8) ---
-    # Bars 2-3: over F -> G (relaxed phrases with rests)
-    b = SEC_A + 2 * BEATS_PER_BAR  # beat 8
-    track.note(b, 'F4', H)
-    track.note(b + 2, 'G4', H)
-    b += BEATS_PER_BAR  # bar 3 (G chord)
-    track.note(b, 'G4', H)
-    track.note(b + 2, 'A4', H)
-
-    # Bars 4-7: repeat of C Am F G with melody (more sustained)
-    b = SEC_A + 4 * BEATS_PER_BAR  # beat 16
-    # Bar 4 (C): E4 held, then G4 held
-    track.note(b, 'E4', H)
-    track.note(b + 2, 'G4', H)
-    # Bar 5 (Am): A4 whole note (let it breathe)
-    b += BEATS_PER_BAR
-    track.note(b, 'A4', W)
-    # Bar 6 (F): F4 then A4 (half notes)
-    b += BEATS_PER_BAR
-    track.note(b, 'F4', H)
-    track.note(b + 2, 'A4', H)
-    # Bar 7 (G): G4 whole (resolve)
-    b += BEATS_PER_BAR
-    track.note(b, 'G4', W)
-
-    # --- B section melody (bars 8-15) ---
-    b = SEC_B
-    # Bar 0 (C): C5 whole
-    track.note(b, 'C5', W)
-    # Bar 1 (Em): G4 whole (rest after)
-    b += BEATS_PER_BAR
-    track.note(b, 'G4', W)
-    # Bar 2 (Am): A4 half, rest, B4 half
-    b += BEATS_PER_BAR
-    track.note(b, 'A4', H)
-    track.note(b + 2, 'B4', H)
-    # Bar 3 (G): G4 whole
-    b += BEATS_PER_BAR
-    track.note(b, 'G4', W)
-    # Bars 4-7: variation (still relaxed)
-    b += BEATS_PER_BAR
-    # Bar 4 (C): E4 half, C5 half
-    track.note(b, 'E4', H)
-    track.note(b + 2, 'C5', H)
-    # Bar 5 (Em): B4 whole
-    b += BEATS_PER_BAR
-    track.note(b, 'B4', W)
-    # Bar 6 (Am): A4 half, G4 half
-    b += BEATS_PER_BAR
-    track.note(b, 'A4', H)
-    track.note(b + 2, 'G4', H)
-    # Bar 7 (G): G4 whole (resolve)
-    b += BEATS_PER_BAR
-    track.note(b, 'G4', W)
-
-    # --- A' section melody (bars 16-23): same shape as A, slightly varied ---
-    b = SEC_A2 + 2 * BEATS_PER_BAR
-    track.note(b, 'F4', H)
-    track.note(b + 2, 'A4', H)
-    b += BEATS_PER_BAR
-    track.note(b, 'G4', H)
-    track.note(b + 2, 'B4', H)
-
-    b = SEC_A2 + 4 * BEATS_PER_BAR
-    track.note(b, 'E4', H)
-    track.note(b + 2, 'G4', H)
-    b += BEATS_PER_BAR
-    track.note(b, 'A4', W)
-    b += BEATS_PER_BAR
-    track.note(b, 'F4', H)
-    track.note(b + 2, 'G4', H)
-    b += BEATS_PER_BAR
-    track.note(b, 'C4', W)  # resolve on C4
-
-
-def build_lead_harmony(song: Song) -> None:
-    """Harmony track for A' section — a third above the melody (half notes)."""
-    track = song.add_track(Track(LEAD_SOFT, volume=0.25))
-
-    H = 2.0
-    W = 4.0
-
-    # A' harmony: third above the main melody (bars 18-23, half/whole notes)
-    b = SEC_A2 + 2 * BEATS_PER_BAR
-    track.note(b, 'A4', H)
-    track.note(b + 2, 'C5', H)
-    b += BEATS_PER_BAR
-    track.note(b, 'B4', H)
+    # ── A 段: 右手旋律（悠扬主题）──
+    b = SEC_A
+    # bar 0-1: D - A/C# 上行
+    track.note(b, 'F#4', Q)
+    track.note(b + 1, 'A4', Q)
     track.note(b + 2, 'D5', H)
-
-    b = SEC_A2 + 4 * BEATS_PER_BAR
-    track.note(b, 'G4', H)
-    track.note(b + 2, 'B4', H)
-    b += BEATS_PER_BAR
-    track.note(b, 'C5', W)
-    b += BEATS_PER_BAR
+    b += BAR
+    track.note(b, 'C#5', Q)
+    track.note(b + 1, 'E5', Q)
+    track.note(b + 2, 'D5', H)
+    # bar 2-3: Bm - G 下行回旋
+    b += BAR
+    track.note(b, 'B4', H)
+    track.note(b + 2, 'A4', Q)
+    track.note(b + 3, 'F#4', Q)
+    b += BAR
+    track.note(b, 'G4', DH)
+    track.note(b + 3, 'A4', Q)
+    # bar 4-5: D/F# - Em 变化
+    b += BAR
+    track.note(b, 'A4', Q)
+    track.note(b + 1, 'D5', Q)
+    track.note(b + 2, 'C#5', H)
+    b += BAR
+    track.note(b, 'B4', H)
+    track.note(b + 2, 'G4', H)
+    # bar 6-7: A - D 归结
+    b += BAR
     track.note(b, 'A4', H)
-    track.note(b + 2, 'B4', H)
-    b += BEATS_PER_BAR
-    track.note(b, 'E4', W)
+    track.note(b + 2, 'C#5', H)
+    b += BAR
+    track.note(b, 'D5', W)
+
+    # ── B 段: 转 Bm，旋律更忧郁 ──
+    b = SEC_B
+    track.note(b, 'D5', Q)
+    track.note(b + 1, 'B4', Q)
+    track.note(b + 2, 'F#4', H)
+    b += BAR
+    track.note(b, 'F#4', H)
+    track.note(b + 2, 'A4', H)
+    b += BAR
+    track.note(b, 'G4', Q)
+    track.note(b + 1, 'B4', Q)
+    track.note(b + 2, 'D5', H)
+    b += BAR
+    track.note(b, 'A4', DH)
+    track.note(b + 3, 'F#4', Q)
+    # bar 4-7
+    b += BAR
+    track.note(b, 'G4', H)
+    track.note(b + 2, 'E4', H)
+    b += BAR
+    track.note(b, 'F#4', H)
+    track.note(b + 2, 'D4', H)
+    b += BAR
+    track.note(b, 'E4', Q)
+    track.note(b + 1, 'C#4', Q)
+    track.note(b + 2, 'A3', H)
+    b += BAR
+    track.note(b, 'A3', Q)
+    track.note(b + 1, 'C#4', Q)
+    track.note(b + 2, 'E4', H)
+
+    # ── A' 段: 回 D major，旋律变奏 ──
+    b = SEC_A2
+    track.note(b, 'A4', Q)
+    track.note(b + 1, 'D5', Q)
+    track.note(b + 2, 'F#5', H)
+    b += BAR
+    track.note(b, 'E5', H)
+    track.note(b + 2, 'D5', H)
+    b += BAR
+    track.note(b, 'B4', DH)
+    track.note(b + 3, 'A4', Q)
+    b += BAR
+    track.note(b, 'G4', W)
+    b += BAR
+    track.note(b, 'A4', Q)
+    track.note(b + 1, 'D5', Q)
+    track.note(b + 2, 'C#5', H)
+    b += BAR
+    track.note(b, 'B4', H)
+    track.note(b + 2, 'G4', H)
+    b += BAR
+    track.note(b, 'E4', H)
+    track.note(b + 2, 'A4', H)
+    b += BAR
+    track.note(b, 'D4', W)
+
+    # ── Outro: 渐弱琶音 ──
+    for bar_idx in range(4):
+        b = OUTRO + bar_idx * BAR
+        vol_mult = 1.0 - bar_idx * 0.2
+        arp = arp_patterns[bar_idx]
+        for i, note in enumerate(arp):
+            track.note(b + i * S, note, S * 0.9)
+
+    song.add_track(track, PIANO_WARM)
 
 
-# ---------------------------------------------------------------------------
-# Bass — enters at B section
-# ---------------------------------------------------------------------------
+def build_strings(song: SF2Song) -> None:
+    """弦乐 Pad——长音铺底，从 A 段开始。"""
+    track = Track(instrument={'type': 'sf2'}, volume=0.45)
 
-def build_bass(song: Song) -> None:
-    """Root notes on beats 1 and 3 (half notes), from B section onward."""
-    track = song.add_track(Track(BASS_THICK, volume=0.55))
-    H = 2.0
+    # A 段弦乐和弦
+    for bar_idx, (bass, chord) in enumerate(PROG_A):
+        b = SEC_A + bar_idx * BAR
+        track.chord(b, chord, W)
 
-    for section_beat, progression in ALL_SECTIONS:
-        # Skip A section (bass enters at B)
-        if section_beat < SEC_B:
-            continue
+    # B 段
+    for bar_idx, (bass, chord) in enumerate(PROG_B):
+        b = SEC_B + bar_idx * BAR
+        track.chord(b, chord, W)
 
-        for bar_idx, chord_name in enumerate(progression):
-            bar_beat = section_beat + bar_idx * BEATS_PER_BAR
-            bass_note = CHORDS[chord_name]['bass']
-            # Beat 1 (half note)
-            track.note(bar_beat, bass_note, H)
-            # Beat 3 (half note)
-            track.note(bar_beat + 2, bass_note, H)
+    # A' 段
+    for bar_idx, (bass, chord) in enumerate(PROG_A):
+        b = SEC_A2 + bar_idx * BAR
+        track.chord(b, chord, W)
 
+    # Outro 渐弱
+    for bar_idx in range(3):
+        b = OUTRO + bar_idx * BAR
+        track.chord(b, PROG_A[bar_idx][1], W)
 
-# ---------------------------------------------------------------------------
-# Pad — enters at B section
-# ---------------------------------------------------------------------------
-
-def build_pad(song: Song) -> None:
-    """Warm pad playing whole-note chords from B section onward."""
-    track = song.add_track(Track(PAD_WARM, volume=0.30))
-    W = 4.0
-
-    for section_beat, progression in ALL_SECTIONS:
-        if section_beat < SEC_B:
-            continue
-
-        for bar_idx, chord_name in enumerate(progression):
-            bar_beat = section_beat + bar_idx * BEATS_PER_BAR
-            pad_notes = CHORDS[chord_name]['pad']
-            track.chord(bar_beat, pad_notes, W)
+    song.add_track(track, STRINGS_ENSEMBLE)
 
 
-# ---------------------------------------------------------------------------
-# Drums — very light
-# ---------------------------------------------------------------------------
+def build_synth_pad(song: SF2Song) -> None:
+    """Synth Pad——层叠氛围，B 段以后加入。"""
+    track = Track(instrument={'type': 'sf2'}, volume=0.3)
 
-def build_drums(song: Song) -> None:
-    """Light percussion: hihat on beats 2 & 4, kick on beat 1 from B onward."""
-    hihat_track = song.add_track(Track(HIHAT_CLOSED, volume=0.18))
-    kick_track = song.add_track(Track(KICK, volume=0.30))
+    # B 段 pad
+    for bar_idx, (bass, chord) in enumerate(PROG_B):
+        b = SEC_B + bar_idx * BAR
+        # pad 音高比弦乐高一个八度
+        high_chord = [n.replace('2', '3').replace('3', '4') for n in chord]
+        track.chord(b, high_chord, W)
 
-    for section_beat, progression in ALL_SECTIONS:
-        for bar_idx in range(len(progression)):
-            bar_beat = section_beat + bar_idx * BEATS_PER_BAR
+    # A' 段
+    for bar_idx, (bass, chord) in enumerate(PROG_A):
+        b = SEC_A2 + bar_idx * BAR
+        high_chord = [n.replace('2', '3').replace('3', '4') for n in chord]
+        track.chord(b, high_chord, W)
 
-            # Hihat on beats 2 and 4 (all sections)
-            hihat_track.note(bar_beat + 1, 'C3', 0.5)
-            hihat_track.note(bar_beat + 3, 'C3', 0.5)
-
-            # Kick on beat 1 (B section and beyond only)
-            if section_beat >= SEC_B:
-                kick_track.note(bar_beat, 'C3', 0.5)
+    song.add_track(track, SYNTH_PAD_WARM)
 
 
-# ---------------------------------------------------------------------------
-# Song assembly
-# ---------------------------------------------------------------------------
+def build_celesta(song: SF2Song) -> None:
+    """Celesta——装饰音点缀，A段和A'段的呼应。"""
+    track = Track(instrument={'type': 'sf2'}, volume=0.35)
 
-def create_menu_bgm() -> Song:
-    """Build the complete menu BGM."""
-    song = Song(bpm=BPM, beats_per_bar=BEATS_PER_BAR)
+    # A 段: 每隔 2 小节点缀一个高音
+    sparkle_notes = ['D6', 'A5', 'F#5', 'G5']
+    for i, note in enumerate(sparkle_notes):
+        b = SEC_A + (i * 2 + 1) * BAR + 3  # 每 2 小节后半
+        track.note(b, note, S)
+        track.note(b + S, note.replace('5', '4').replace('6', '5'), S)
 
-    build_arpeggio(song)
-    build_lead(song)
-    build_lead_harmony(song)
+    # A' 段: 类似但变化
+    sparkle2 = ['F#6', 'E5', 'D5', 'A5']
+    for i, note in enumerate(sparkle2):
+        b = SEC_A2 + (i * 2 + 1) * BAR + 3
+        track.note(b, note, S)
+
+    song.add_track(track, CELESTA_SPARKLE)
+
+
+def build_bass(song: SF2Song) -> None:
+    """低音——B段开始，根音长音。"""
+    track = Track(instrument={'type': 'sf2'}, volume=0.5)
+
+    # B 段
+    for bar_idx, (bass, _chord) in enumerate(PROG_B):
+        b = SEC_B + bar_idx * BAR
+        track.note(b, bass, H)
+        track.note(b + 2, bass, H)
+
+    # A' 段
+    for bar_idx, (bass, _chord) in enumerate(PROG_A):
+        b = SEC_A2 + bar_idx * BAR
+        track.note(b, bass, H)
+        track.note(b + 2, bass, H)
+
+    song.add_track(track, HARP_GENTLE)  # 用竖琴做低音，更柔和
+
+
+def build_drums(song: SF2Song) -> None:
+    """轻打击——刷子鼓，B段开始。"""
+    track = Track(instrument={'type': 'sf2_drum'}, volume=0.35)
+
+    for section in [SEC_B, SEC_A2]:
+        for bar_idx in range(8):
+            b = section + bar_idx * BAR
+            # Ride 轻击: 每拍
+            for beat in range(4):
+                track.note(b + beat, str(DRUM_RIDE), S)
+            # Kick: beat 1
+            track.note(b, str(DRUM_KICK), Q)
+            # Snare (ghost): beat 3
+            track.note(b + 2, str(DRUM_SNARE), S)
+
+    # Outro: 只有 ride
+    for bar_idx in range(3):
+        b = OUTRO + bar_idx * BAR
+        for beat in range(4):
+            track.note(b + beat, str(DRUM_RIDE), S)
+
+    song.add_track(track, DRUMS_SOFT)
+
+
+# ── Song 组装 ──────────────────────────────────────────
+
+def create_menu_bgm() -> SF2Song:
+    """构建完整的 Menu BGM。"""
+    song = SF2Song(bpm=BPM, beats_per_bar=BAR)
+
+    build_piano(song)
+    build_strings(song)
+    build_synth_pad(song)
+    build_celesta(song)
     build_bass(song)
-    build_pad(song)
     build_drums(song)
 
     return song
@@ -281,12 +321,3 @@ if __name__ == '__main__':
     )
     out = os.path.normpath(out)
     song.save(out)
-
-    # Report duration
-    from audio_synth.synth import SAMPLE_RATE
-    signal = song.render()
-    duration = len(signal) / SAMPLE_RATE
-    print(f"Saved menu BGM to {out}")
-    print(f"Duration: {duration:.1f}s ({duration / 60:.1f}m)")
-    file_size = os.path.getsize(out)
-    print(f"File size: {file_size / 1024:.0f} KB")

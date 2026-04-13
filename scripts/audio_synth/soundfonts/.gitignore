@@ -1,0 +1,4 @@
+*.sf2
+*.sf3
+!.gitignore
+!README.md
