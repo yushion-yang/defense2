@@ -110,13 +110,13 @@ func DrawWardenPanel(screen *ebiten.Image, d WardenPanelData) {
 
 	// Row 4: Attack description (自适应多行).
 	if d.AttackDesc != "" {
-		lines := wrapText(fm, d.AttackDesc, float64(wardenPanelW)-float64(wardenPanelPad)*2, theme.FontXS)
+		lines := ui.WrapText(fm, d.AttackDesc, float64(wardenPanelW)-float64(wardenPanelPad)*2, theme.FontXS)
 		addDescLines(p, fm, lines, theme.TextBody)
 	}
 
 	// Row 5: Special ability (自适应多行).
 	if d.SpecialDesc != "" {
-		lines := wrapText(fm, d.SpecialDesc, float64(wardenPanelW)-float64(wardenPanelPad)*2, theme.FontXS)
+		lines := ui.WrapText(fm, d.SpecialDesc, float64(wardenPanelW)-float64(wardenPanelPad)*2, theme.FontXS)
 		addDescLines(p, fm, lines, theme.StatusStrUp)
 	}
 
@@ -145,29 +145,6 @@ func addDescLines(p *ui.FlexPanel, fm *render.FontManager, lines []string, clr c
 	}
 }
 
-// wrapText 按像素宽度拆行（逐字符，对中英文混排友好）。
-func wrapText(fm *render.FontManager, text string, maxW float64, fontSize float64) []string {
-	if fm == nil || text == "" {
-		return nil
-	}
-	runes := []rune(text)
-	var lines []string
-	start := 0
-	for start < len(runes) {
-		end := start
-		for end < len(runes) {
-			w := fm.MeasureText(string(runes[start:end+1]), fontSize)
-			if w > maxW && end > start {
-				break
-			}
-			end++
-		}
-		lines = append(lines, string(runes[start:end]))
-		start = end
-	}
-	return lines
-}
-
 // estimateWardenPanelHeight pre-calculates the total panel height.
 func estimateWardenPanelHeight(d WardenPanelData) float32 {
 	fm := render.GlobalFont()
@@ -177,14 +154,14 @@ func estimateWardenPanelHeight(d WardenPanelData) float32 {
 		h += float32(theme.DetailGap) + float32(theme.DetailAttrH)
 	}
 	if d.AttackDesc != "" {
-		n := len(wrapText(fm, d.AttackDesc, contentW, theme.FontXS))
+		n := len(ui.WrapText(fm, d.AttackDesc, contentW, theme.FontXS))
 		if n < 1 {
 			n = 1
 		}
 		h += float32(theme.DetailGap) + float32(n)*14
 	}
 	if d.SpecialDesc != "" {
-		n := len(wrapText(fm, d.SpecialDesc, contentW, theme.FontXS))
+		n := len(ui.WrapText(fm, d.SpecialDesc, contentW, theme.FontXS))
 		if n < 1 {
 			n = 1
 		}

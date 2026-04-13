@@ -8,6 +8,7 @@ import (
 	"defense2/internal/render"
 	"defense2/internal/render/draw"
 	"defense2/internal/render/theme"
+	"defense2/internal/render/ui"
 
 	"github.com/hajimehoshi/ebiten/v2"
 )
@@ -54,7 +55,7 @@ func DrawSpeechBubble(screen *ebiten.Image, vm SpeechBubbleVM) {
 
 	// Wrap text to fit within bubble.
 	contentW := float64(maxW - bubblePadH*2)
-	lines := wrapTextForBubble(fm, vm.Text, contentW, theme.FontBody)
+	lines := ui.WrapText(fm, vm.Text, contentW, theme.FontBody)
 	if len(lines) == 0 {
 		return
 	}
@@ -107,25 +108,3 @@ func DrawSpeechBubble(screen *ebiten.Image, vm SpeechBubbleVM) {
 	}
 }
 
-// wrapTextForBubble wraps text by pixel width (character-by-character, CJK-friendly).
-func wrapTextForBubble(fm *render.FontManager, text string, maxW float64, fontSize float64) []string {
-	if fm == nil || text == "" {
-		return nil
-	}
-	runes := []rune(text)
-	var lines []string
-	start := 0
-	for start < len(runes) {
-		end := start
-		for end < len(runes) {
-			w := fm.MeasureText(string(runes[start:end+1]), fontSize)
-			if w > maxW && end > start {
-				break
-			}
-			end++
-		}
-		lines = append(lines, string(runes[start:end]))
-		start = end
-	}
-	return lines
-}

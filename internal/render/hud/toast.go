@@ -8,6 +8,7 @@ import (
 	"defense2/internal/render"
 	"defense2/internal/render/draw"
 	"defense2/internal/render/theme"
+	"defense2/internal/render/ui"
 
 	"github.com/hajimehoshi/ebiten/v2"
 )
@@ -81,10 +82,11 @@ func DrawToast(screen *ebiten.Image) {
 	bg.A = uint8(float64(bg.A) * activeToast.alpha)
 	draw.RoundRect(screen, toastX, toastY, toastW, toastH, toastR, bg)
 
-	// Text with faded alpha.
+	// Text with faded alpha (shrink font if message too wide).
+	msgSize := ui.ShrinkFontSize(fm, activeToast.message, 480, theme.FontMD, theme.FontSM)
 	textAlpha := uint8(255 * activeToast.alpha)
 	textClr := color.RGBA{R: 255, G: 255, B: 255, A: textAlpha}
 	cx := float64(toastX) + float64(toastW)/2
 	cy := float64(toastY) + float64(toastH)/2 - 6
-	fm.DrawCenteredText(screen, activeToast.message, cx, cy, theme.FontMD, textClr)
+	fm.DrawCenteredText(screen, activeToast.message, cx, cy, msgSize, textClr)
 }

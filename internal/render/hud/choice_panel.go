@@ -13,6 +13,7 @@ import (
 	"defense2/internal/render"
 	"defense2/internal/render/draw"
 	"defense2/internal/render/theme"
+	"defense2/internal/render/ui"
 
 	"github.com/hajimehoshi/ebiten/v2"
 )
@@ -280,11 +281,11 @@ func (p *ChoicePanel) Draw(screen *ebiten.Image) {
 		descY := labelY + 18
 		if len(opt.Segments) > 0 {
 			// 带颜色的分段描述（与炮塔 HUD 一致）
-			drawSegmentsWrapped(screen, fm, opt.Segments,
+			ui.DrawSegmentsWrapped(screen, fm, abilitySegsToTextSegs(opt.Segments),
 				float64(cx)+float64(lay.pad), descY, float64(lay.cardW-lay.pad*2), lay.descSize)
 		} else {
 			maxW := float64(lay.cardW - lay.pad*2)
-			drawWrappedText(screen, fm, opt.Description,
+			ui.DrawWrappedText(screen, fm, opt.Description,
 				float64(cx)+float64(lay.pad), descY, maxW, lay.descSize, theme.TextBody)
 		}
 	}
@@ -306,21 +307,11 @@ func tierColor(tier string) color.RGBA {
 	return tierColors["normal"]
 }
 
-// drawSegmentsWrapped 渲染带颜色的 AbilitySegment 列表，自动换行。
-// 与 info_panel.go drawAbilityRowVM 的渲染风格一致。
-func drawSegmentsWrapped(screen *ebiten.Image, fm *render.FontManager, segs []AbilitySegment, x, y, maxW, fontSize float64) {
-	lineH := fontSize + 3
-	curX := x
-	curY := y
-
-	for _, seg := range segs {
-		segW := fm.MeasureText(seg.Text, fontSize)
-		// 换行检测
-		if curX+segW > x+maxW && curX > x {
-			curX = x
-			curY += lineH
-		}
-
+// abilitySegsToTextSegs converts AbilitySegment slice to ui.TextSegment slice,
+// mapping Kind to the appropriate theme color.
+func abilitySegsToTextSegs(segs []AbilitySegment) []ui.TextSegment {
+	out := make([]ui.TextSegment, len(segs))
+	for i, seg := range segs {
 		var clr color.Color
 		switch seg.Kind {
 		case "text":
@@ -335,32 +326,7 @@ func drawSegmentsWrapped(screen *ebiten.Image, fm *render.FontManager, segs []Ab
 		default:
 			clr = theme.TextBody
 		}
-
-		fm.DrawText(screen, seg.Text, curX, curY, fontSize, clr)
-		curX += segW
+		out[i] = ui.TextSegment{Text: seg.Text, Color: clr}
 	}
-}
-
-// drawWrappedText 在指定宽度内自动换行绘制文本。
-// 逐字符测量宽度，超出 maxW 时换行。中文不需要空格分词。
-func drawWrappedText(screen *ebiten.Image, fm *render.FontManager, s string, x, y, maxW, fontSize float64, clr color.Color) {
-	lineH := fontSize + 3
-	runes := []rune(s)
-	lineStart := 0
-	curY := y
-	for i := 0; i <= len(runes); i++ {
-		seg := string(runes[lineStart:i])
-		w := fm.MeasureText(seg, fontSize)
-		if w > maxW || i == len(runes) {
-			// 超宽时回退一个字符作为断行点（除非只有一个字符）
-			end := i
-			if w > maxW && i > lineStart+1 {
-				end = i - 1
-			}
-			line := string(runes[lineStart:end])
-			fm.DrawText(screen, line, x, curY, fontSize, clr)
-			curY += lineH
-			lineStart = end
-		}
-	}
+	return out
 }

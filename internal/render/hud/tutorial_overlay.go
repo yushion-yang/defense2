@@ -12,6 +12,7 @@ import (
 	"defense2/internal/render"
 	"defense2/internal/render/draw"
 	"defense2/internal/render/theme"
+	"defense2/internal/render/ui"
 
 	"github.com/hajimehoshi/ebiten/v2"
 )
@@ -51,10 +52,11 @@ func DrawTutorialOverlay(screen *ebiten.Image, vm TutorialVM) {
 	draw.StrokeRoundRect(screen, boxX, boxY, boxW, boxH, borderR, 1,
 		color.RGBA{R: 100, G: 150, B: 255, A: 100})
 
-	// Message text (centered in box).
-	msgY := float64(boxY) + float64(boxH)/2 - float64(theme.FontH2)/2
+	// Message text (centered in box, shrink font if too wide).
+	msgSize := ui.ShrinkFontSize(fm, vm.Message, 460, theme.FontH2, theme.FontSM)
+	msgY := float64(boxY) + float64(boxH)/2 - msgSize/2
 	fm.DrawCenteredText(screen, vm.Message,
-		float64(game.ScreenWidth)/2, msgY, theme.FontH2, color.White)
+		float64(game.ScreenWidth)/2, msgY, msgSize, color.White)
 
 	// Step indicator: "2/8" at bottom-right of box.
 	stepTxt := strconv.Itoa(vm.Step) + "/" + strconv.Itoa(vm.Total)

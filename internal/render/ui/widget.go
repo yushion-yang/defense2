@@ -80,7 +80,7 @@ func Card(screen *ebiten.Image, x, y, w, h float32, style CardStyle) {
 
 // ButtonStyle 按钮样式。
 // 自适应：文字自动垂直居中；Radius=0 时自动 Pill 形状（h/2）。
-// 限制：文字不自动缩放，超出按钮宽度时会溢出。
+// 文字超出按钮宽度时自动缩小字号（最多缩 4px，下限 10px）。
 type ButtonStyle struct {
 	BgColor   color.Color // 背景色
 	TextColor color.Color // 文字颜色（默认白色）
@@ -109,6 +109,13 @@ func Button(screen *ebiten.Image, x, y, w, h float32, label string, style Button
 	if fontSize <= 0 {
 		fontSize = 14
 	}
+	// 自动缩小字号适应按钮宽度（最多缩 4px，下限 10px）
+	avail := float64(w) - 12 // 6px padding each side
+	minFS := fontSize - 4
+	if minFS < 10 {
+		minFS = 10
+	}
+	fontSize = ShrinkFontSize(fm, label, avail, fontSize, minFS)
 	cx := float64(x) + float64(w)/2
 	cy := float64(y) + float64(h)/2
 	if style.Bold {
@@ -385,7 +392,7 @@ func IconCard(screen *ebiten.Image, x, y, w, h float32, icon, name, desc string,
 		fm.DrawCenteredText(screen, icon, cx, float64(y)+18, iconSize, iconClr)
 	}
 
-	// 名称
+	// 名称（超宽时截断）
 	nameSize := style.NameSize
 	if nameSize <= 0 {
 		nameSize = 14
@@ -394,13 +401,15 @@ func IconCard(screen *ebiten.Image, x, y, w, h float32, icon, name, desc string,
 	if nameClr == nil {
 		nameClr = color.White
 	}
+	nameMaxW := float64(w) - 16 // 8px padding each side
+	displayName := TruncateText(fm, name, nameMaxW, nameSize)
 	if style.NameBold {
-		fm.DrawCenteredBoldText(screen, name, cx, float64(y)+55, nameSize, nameClr)
+		fm.DrawCenteredBoldText(screen, displayName, cx, float64(y)+55, nameSize, nameClr)
 	} else {
-		fm.DrawCenteredText(screen, name, cx, float64(y)+55, nameSize, nameClr)
+		fm.DrawCenteredText(screen, displayName, cx, float64(y)+55, nameSize, nameClr)
 	}
 
-	// 描述
+	// 描述（超宽时截断）
 	if desc != "" {
 		descSize := style.DescSize
 		if descSize <= 0 {
@@ -410,6 +419,7 @@ func IconCard(screen *ebiten.Image, x, y, w, h float32, icon, name, desc string,
 		if descClr == nil {
 			descClr = color.RGBA{R: 140, G: 145, B: 160, A: 255}
 		}
-		fm.DrawCenteredText(screen, desc, cx, float64(y)+78, descSize, descClr)
+		displayDesc := TruncateText(fm, desc, nameMaxW, descSize)
+		fm.DrawCenteredText(screen, displayDesc, cx, float64(y)+78, descSize, descClr)
 	}
 }

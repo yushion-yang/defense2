@@ -400,12 +400,13 @@ func drawSlotRow(screen *ebiten.Image, fm *render.FontManager, slot SlotVM, x, y
 	}
 
 	if slot.AbilityLabel != "" {
-		// Filled slot: icon + ability name
+		// Filled slot: icon + ability name (truncated to prevent overflow)
 		if slot.AbilityIcon != "" {
 			drawStatIcon(screen, im, slot.AbilityIcon, x, y, 14)
 		}
-		fm.DrawBoldText(screen, slot.AbilityLabel, x+19, y, theme.FontSM, theme.TextBody)
-		fm.DrawText(screen, " ("+slot.CategoryName+")", x+19+fm.MeasureText(slot.AbilityLabel, theme.FontSM), y, theme.FontXS, theme.TextMuted)
+		slotLabel := ui.TruncateText(fm, slot.AbilityLabel, 120, theme.FontSM)
+		fm.DrawBoldText(screen, slotLabel, x+19, y, theme.FontSM, theme.TextBody)
+		fm.DrawText(screen, " ("+slot.CategoryName+")", x+19+fm.MeasureText(slotLabel, theme.FontSM), y, theme.FontXS, theme.TextMuted)
 		return
 	}
 
@@ -430,9 +431,10 @@ func drawAbilityRowVM(screen *ebiten.Image, fm *render.FontManager, ab AbilityVM
 	}
 	abX := x + 19.0
 
-	// Label (bold)
-	fm.DrawBoldText(screen, ab.Label, abX, y, theme.FontSM, theme.TextBody)
-	abX += fm.MeasureText(ab.Label, theme.FontSM) + 6
+	// Label (bold, truncated to prevent overflow)
+	displayLabel := ui.TruncateText(fm, ab.Label, 120, theme.FontSM)
+	fm.DrawBoldText(screen, displayLabel, abX, y, theme.FontSM, theme.TextBody)
+	abX += fm.MeasureText(displayLabel, theme.FontSM) + 6
 
 	// Segments or fallback
 	if len(ab.Segments) == 0 {

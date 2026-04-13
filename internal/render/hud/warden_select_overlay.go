@@ -10,6 +10,7 @@ import (
 	"defense2/internal/render"
 	"defense2/internal/render/draw"
 	"defense2/internal/render/theme"
+	"defense2/internal/render/ui"
 
 	"github.com/hajimehoshi/ebiten/v2"
 )
@@ -215,11 +216,12 @@ func (o *WardenSelectOverlay) Draw(screen *ebiten.Image) {
 			nameClr = color.RGBA{R: 255, G: 255, B: 255, A: 255}
 		}
 
+		displayName := ui.TruncateText(fm, opt.Name, 150, theme.FontLG)
 		if locked {
-			fm.DrawBoldText(screen, opt.Name, float64(x)+12, float64(y)+8, theme.FontLG, nameClr)
+			fm.DrawBoldText(screen, displayName, float64(x)+12, float64(y)+8, theme.FontLG, nameClr)
 			fm.DrawText(screen, i18n.T("hud.wardensel.locked"), float64(x)+12, float64(y)+26, theme.FontXS, theme.TextLocked)
 		} else {
-			fm.DrawBoldText(screen, opt.Name, float64(x)+12, float64(y)+8, theme.FontLG, nameClr)
+			fm.DrawBoldText(screen, displayName, float64(x)+12, float64(y)+8, theme.FontLG, nameClr)
 			if opt.Category != "-" {
 				catClr := theme.TextMuted
 				if opt.Category == i18n.T("hud.wardensel.cat_mobile") {
@@ -296,7 +298,7 @@ func (o *WardenSelectOverlay) drawDetail(screen *ebiten.Image, fm *render.FontMa
 	py += 24
 
 	contentW := float64(w) - 40 - 80 // 留出右侧精灵预览空间
-	for _, line := range wrapText(fm, opt.Description, contentW, theme.FontMD) {
+	for _, line := range ui.WrapText(fm, opt.Description, contentW, theme.FontMD) {
 		fm.DrawText(screen, line, px, py, theme.FontMD, theme.TextBody)
 		py += 16
 	}
@@ -309,7 +311,7 @@ func (o *WardenSelectOverlay) drawDetail(screen *ebiten.Image, fm *render.FontMa
 	if opt.AttackName != "" {
 		fm.DrawBoldText(screen, ">> "+opt.AttackName, px, py, theme.FontMD, theme.TextTitle)
 		py += 16
-		for _, line := range wrapText(fm, opt.AttackDesc, descW, theme.FontSM) {
+		for _, line := range ui.WrapText(fm, opt.AttackDesc, descW, theme.FontSM) {
 			fm.DrawText(screen, line, px+16, py, theme.FontSM, theme.TextBody)
 			py += 14
 		}
@@ -319,7 +321,7 @@ func (o *WardenSelectOverlay) drawDetail(screen *ebiten.Image, fm *render.FontMa
 	if opt.SpecialName != "" {
 		fm.DrawBoldText(screen, ">> "+opt.SpecialName, px, py, theme.FontMD, color.RGBA{R: 255, G: 180, B: 60, A: 255})
 		py += 16
-		for _, line := range wrapText(fm, opt.SpecialDesc, descW, theme.FontSM) {
+		for _, line := range ui.WrapText(fm, opt.SpecialDesc, descW, theme.FontSM) {
 			fm.DrawText(screen, line, px+16, py, theme.FontSM, theme.TextBody)
 			py += 14
 		}
@@ -366,7 +368,8 @@ func (o *WardenSelectOverlay) drawDetail(screen *ebiten.Image, fm *render.FontMa
 			}
 		}
 		fm.DrawText(screen, a.label, ax+14, ay, theme.FontSM, attrClr)
-		fm.DrawBoldText(screen, a.value, ax+44, ay, theme.FontSM, valClr)
+		truncVal := ui.TruncateText(fm, a.value, 100, theme.FontSM)
+		fm.DrawBoldText(screen, truncVal, ax+44, ay, theme.FontSM, valClr)
 	}
 
 	py += 40

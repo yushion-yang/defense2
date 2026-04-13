@@ -10,6 +10,7 @@ import (
 	"defense2/internal/render"
 	"defense2/internal/render/draw"
 	"defense2/internal/render/theme"
+	"defense2/internal/render/ui"
 
 	"github.com/hajimehoshi/ebiten/v2"
 )
@@ -153,7 +154,7 @@ func drawBuildableCard(screen *ebiten.Image, fm *render.FontManager, card BuildC
 
 	nameX := float64(cx) + 8
 	nameY := float64(cy) + 6
-	fm.DrawBoldText(screen, card.Label, nameX, nameY, theme.FontMD, color.White)
+	fm.DrawBoldText(screen, ui.TruncateText(fm, card.Label, 60, theme.FontMD), nameX, nameY, theme.FontMD, color.White)
 
 	costTxt := strconv.Itoa(card.Cost) + "G"
 	costClr := theme.BuildCostColor
@@ -174,7 +175,7 @@ func drawBuildableCard(screen *ebiten.Image, fm *render.FontManager, card BuildC
 	}
 
 	// Role tag
-	fm.DrawText(screen, card.RoleTag, nameX, float64(cy)+float64(bpCardH)-16, theme.FontXS, card.RoleColor)
+	fm.DrawText(screen, ui.TruncateText(fm, card.RoleTag, 60, theme.FontXS), nameX, float64(cy)+float64(bpCardH)-16, theme.FontXS, card.RoleColor)
 
 	// Sprite preview
 	if card.Sprite != nil {
@@ -200,7 +201,7 @@ func drawVariantCard(screen *ebiten.Image, fm *render.FontManager, card BuildCar
 	nameY := float64(cy) + 6
 
 	// Tower name (bold)
-	fm.DrawBoldText(screen, card.Label, nameX, nameY, theme.FontMD,
+	fm.DrawBoldText(screen, ui.TruncateText(fm, card.Label, 60, theme.FontMD), nameX, nameY, theme.FontMD,
 		color.RGBA{R: 180, G: 200, B: 230, A: 220})
 
 	// Ability type label (short, e.g. "弹射", "散射")
@@ -239,7 +240,7 @@ func drawBuildCardTooltip(screen *ebiten.Image, fm *render.FontManager, card Bui
 	tx := float64(tipX) + 12
 	ty := float64(tipY) + 8
 
-	fm.DrawBoldText(screen, card.Label, tx, ty, theme.FontLG, theme.TextTitle)
+	fm.DrawBoldText(screen, ui.TruncateText(fm, card.Label, 200, theme.FontLG), tx, ty, theme.FontLG, theme.TextTitle)
 	fm.DrawText(screen, card.RoleTag+" · "+strconv.Itoa(card.Cost)+"G", tx, ty+18, theme.FontSM, card.RoleColor)
 
 	ty += 38
@@ -288,7 +289,7 @@ func drawVariantTooltip(screen *ebiten.Image, fm *render.FontManager, card Build
 	tx := float64(tipX) + float64(tipPad)
 	ty := float64(tipY) + 8
 
-	fm.DrawBoldText(screen, card.Label, tx, ty, theme.FontLG, theme.TextTitle)
+	fm.DrawBoldText(screen, ui.TruncateText(fm, card.Label, 200, theme.FontLG), tx, ty, theme.FontLG, theme.TextTitle)
 	fm.DrawText(screen, card.AbilityDesc, tx, ty+20, theme.FontXS, theme.TextMuted)
 }
 

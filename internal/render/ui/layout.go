@@ -159,10 +159,13 @@ func DrawButtonRow(screen *ebiten.Image, area Rect, items []ButtonRowItem, style
 		if fm != nil {
 			cx := float64(bx) + float64(btnW)/2
 			cy := float64(by) + float64(btnH)/2
+			// 自动缩小字号适应按钮宽度
+			avail := float64(btnW) - 12
+			fs := ShrinkFontSize(fm, item.Label, avail, fontSize, fontSize-3)
 			if item.Bold {
-				fm.DrawCenteredVBoldText(screen, item.Label, cx, cy, fontSize, color.White)
+				fm.DrawCenteredVBoldText(screen, item.Label, cx, cy, fs, color.White)
 			} else {
-				fm.DrawCenteredVText(screen, item.Label, cx, cy, fontSize, color.White)
+				fm.DrawCenteredVText(screen, item.Label, cx, cy, fs, color.White)
 			}
 		}
 	}
@@ -298,7 +301,11 @@ func DrawStatLine(screen *ebiten.Image, x, y float64, totalW float64, items []St
 		if valClr == nil {
 			valClr = color.White
 		}
-		fm.DrawText(screen, item.Value, cx+fm.MeasureText(item.Label, labelSize)+4, y, valueSize, valClr)
+		labelW := fm.MeasureText(item.Label, labelSize)
+		valX := cx + labelW + 4
+		valMaxW := colW - labelW - 4
+		displayVal := TruncateText(fm, item.Value, valMaxW, valueSize)
+		fm.DrawText(screen, displayVal, valX, y, valueSize, valClr)
 	}
 }
 

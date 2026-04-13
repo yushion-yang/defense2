@@ -9,6 +9,7 @@ import (
 	"defense2/internal/render"
 	"defense2/internal/render/draw"
 	"defense2/internal/render/theme"
+	"defense2/internal/render/ui"
 
 	"github.com/hajimehoshi/ebiten/v2"
 )
@@ -167,7 +168,8 @@ func drawItemCard(screen *ebiten.Image, fm *render.FontManager, card ItemCardVM,
 	if !available {
 		nameClr = theme.TextLocked
 	}
-	fm.DrawText(screen, card.Name, textX, textY, theme.FontSM, nameClr)
+	truncName := ui.TruncateText(fm, card.Name, 58, theme.FontSM)
+	fm.DrawText(screen, truncName, textX, textY, theme.FontSM, nameClr)
 
 	// Count text "xN"
 	countTxt := "x" + strconv.Itoa(card.Count)
@@ -175,7 +177,7 @@ func drawItemCard(screen *ebiten.Image, fm *render.FontManager, card ItemCardVM,
 	if !available {
 		countClr = theme.TextLocked
 	}
-	fm.DrawText(screen, countTxt, textX+float64(fm.MeasureText(card.Name, theme.FontSM))+4, textY, theme.FontXS, countClr)
+	fm.DrawText(screen, countTxt, textX+float64(fm.MeasureText(truncName, theme.FontSM))+4, textY, theme.FontXS, countClr)
 
 	// Description text
 	if card.Desc != "" {
@@ -183,7 +185,7 @@ func drawItemCard(screen *ebiten.Image, fm *render.FontManager, card ItemCardVM,
 		if !available {
 			descClr = theme.TextLocked
 		}
-		fm.DrawText(screen, card.Desc, textX, textY+16, theme.FontXS, descClr)
+		fm.DrawText(screen, ui.TruncateText(fm, card.Desc, 72, theme.FontXS), textX, textY+16, theme.FontXS, descClr)
 	}
 }
 

@@ -10,6 +10,7 @@ import (
 	"defense2/internal/render"
 	"defense2/internal/render/draw"
 	"defense2/internal/render/theme"
+	"defense2/internal/render/ui"
 
 	"github.com/hajimehoshi/ebiten/v2"
 )
@@ -113,7 +114,7 @@ func DrawSpawnMenu(screen *ebiten.Image, d SpawnMenuData) {
 		if entry.Label != "" {
 			displayName = entry.Label
 		}
-		fm.DrawBoldText(screen, displayName, nameX, nameY, theme.FontSM, color.White)
+		fm.DrawBoldText(screen, ui.TruncateText(fm, displayName, 72, theme.FontSM), nameX, nameY, theme.FontSM, color.White)
 
 		// 简略属性
 		if entry.Boss {
@@ -147,7 +148,7 @@ func drawSpawnTooltip(screen *ebiten.Image, fm *render.FontManager, e SpawnEntry
 	if e.Label != "" {
 		displayName = e.Label
 	}
-	fm.DrawBoldText(screen, displayName, tx, ty, theme.FontMD, color.White)
+	fm.DrawBoldText(screen, ui.TruncateText(fm, displayName, 220, theme.FontMD), tx, ty, theme.FontMD, color.White)
 	if e.Boss {
 		fm.DrawText(screen, i18n.T("hud.spawn.boss"), tx+100, ty+2, theme.FontSM, color.RGBA{R: 239, G: 68, B: 68, A: 255})
 	}
