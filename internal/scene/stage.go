@@ -3337,10 +3337,10 @@ func convertArchetypesToSpawnConfigs(archetypes map[string]*config.EnemyArchetyp
 			Radius:      a.Radius,
 			Boss:        a.Boss,
 			RewardScale: a.RewardScale,
-			// 分裂默认值（被 deathSplit 能力覆盖时使用）
-			SplitScale:      0.3,
-			SplitHPRatio:    0.3,
-			SplitSpeedScale: 1.4,
+			// 分裂默认值（被 deathSplit 能力覆盖）。从 balance.json 读取。
+			SplitScale:      config.GlobalBalance().Split.HpRatio,
+			SplitHPRatio:    config.GlobalBalance().Split.HpRatio,
+			SplitSpeedScale: config.GlobalBalance().Split.SpeedScale,
 		}
 		// 从能力配置装配行为
 		for _, ref := range a.Abilities {

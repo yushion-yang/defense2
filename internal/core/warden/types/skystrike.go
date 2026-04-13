@@ -66,28 +66,24 @@ type SkystrikeBehavior struct{}
 
 func (b *SkystrikeBehavior) Type() string { return "skystrike" }
 
-// Init initializes skystrike warden behavior.
-// NOTE: Stats are currently hardcoded. See config/wardens/wardens.json for planned externalization.
-// Hardcoded: damage=10, attackInterval=1.5, range=140, moveSpeed=320,
-//
-//	specialInterval=1, multiTargets=3, multiDmgRatio=2.0,
-//	burstHits=5, burstDmgRatio=1.0, hpTargets=3, hpPercent=0.10
+// Init 初始化水灵战灵。
+// 硬编码值作为 fallback，与 wardens.json 中 skystrike 的配置保持一致。
 func (b *SkystrikeBehavior) Init(w *warden.Warden) any {
 	p := w.Params
 	return &SkystrikeState{
 		WardenState: warden.WardenState{
-			Damage:         10,
-			AttackInterval: 1.5,
+			Damage:         12,
+			AttackInterval: 1.2,
 			Range:          140,
 			MoveSpeed:      320,
 		},
-		SpecialInterval: warden.ParamOr(p, "specialInterval", 1.0),
+		SpecialInterval: warden.ParamOr(p, "specialInterval", 2.5),
 		MultiTargets:    warden.ParamOrInt(p, "multiTargets", 3),
 		MultiDmgRatio:   warden.ParamOr(p, "multiDmgRatio", 2.0), // 200% 攻击力
 		BurstHits:       warden.ParamOrInt(p, "burstHits", 5),
 		BurstDmgRatio:   warden.ParamOr(p, "burstDmgRatio", 1.0), // 100% 攻击力 x 5 段
 		HpTargets:       warden.ParamOrInt(p, "hpTargets", 3),
-		HpPercent:       warden.ParamOr(p, "hpPercent", 0.10), // 10% 最大生命值
+		HpPercent:       warden.ParamOr(p, "hpPercent", 0.05), // 5% 最大生命值
 		OrbitDist:       warden.ParamOr(p, "orbitDist", 120.0),
 	}
 }

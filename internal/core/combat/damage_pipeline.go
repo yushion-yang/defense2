@@ -144,7 +144,8 @@ func ApplyDamage(input DamageInput) DamageResult {
 
 	// ── 步骤4.1: 减伤比例（damageReduce via BuffList） ──
 	// 来自 buff 模板系统（如 berserk 的减伤效果），与步骤 4 的外部 debuff 独立乘算。
-	if dr := e.GetDamageReduce(); !IgnoresReduction(dmgType) && dr > 0 {
+	// 沉默时失效（与 evasion/armorPlating 保持一致，abilities.json silenceable=true）。
+	if dr := e.GetDamageReduce(); !IgnoresReduction(dmgType) && !e.AbilitySilenced && dr > 0 {
 		damage *= (1 - dr)
 	}
 

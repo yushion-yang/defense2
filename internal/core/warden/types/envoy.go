@@ -44,16 +44,13 @@ type EnvoyBehavior struct{}
 
 func (b *EnvoyBehavior) Type() string { return "envoy" }
 
-// Init initializes envoy warden behavior.
-// NOTE: Stats are currently hardcoded. See config/wardens/wardens.json for planned externalization.
-// Hardcoded: damage=12, attackInterval=1.2, range=140, moveSpeed=320,
-//
-//	buffInterval=10, buffDuration=6, buffThreshold=100, permGrant=5
+// Init 初始化金灵战灵。
+// 硬编码值作为 fallback，与 wardens.json 中 envoy 的配置保持一致。
 func (b *EnvoyBehavior) Init(w *warden.Warden) any {
 	p := w.Params
 	return &EnvoyState{
 		WardenState: warden.WardenState{
-			Damage:         12,
+			Damage:         10,
 			AttackInterval: 1.2,
 			Range:          140,
 			MoveSpeed:      320,

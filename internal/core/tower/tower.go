@@ -125,10 +125,6 @@ type Tower struct {
 	Target              *enemy.Enemy // 当前锁定目标（粘性瞄准：有效时不切换，详见 targeting.go）
 	LastPercentHpTarget int          // 上次触发 percentHpDamage 的敌人 ID（防止对同一目标重复触发首击效果）
 
-	// stackDamage 能力运行时：连续命中同一目标时伤害递增
-	StackTarget int // 当前叠伤目标的敌人 ID（切换目标时重置）
-	StackCount  int // 当前叠伤层数（每次命中 +1，切换目标归零）
-
 	// ── 能力选项缓存 ──
 	// key=类别索引(0-5), value=3 个候选 AbilityDef。
 	// 生命周期：建塔时 RollAndCachePendingChoices 一次性 roll 所有已解锁位 →

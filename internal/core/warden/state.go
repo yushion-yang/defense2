@@ -6,6 +6,7 @@ import (
 	"math"
 	"math/rand"
 
+	"defense2/internal/config"
 	"defense2/internal/core/combat"
 	"defense2/internal/core/enemy"
 )
@@ -313,7 +314,10 @@ func (s *WardenState) BasicAttack(ctx *TickContext) *enemy.Enemy {
 
 	speed := s.ProjectileSpeed
 	if speed <= 0 {
-		speed = 350
+		speed = config.GlobalBalance().Combat.WardenProjectileSpeed
+	}
+	if speed <= 0 {
+		speed = 350 // ultimate fallback
 	}
 
 	// 通过弹射物池发射（伤害/碰撞/渲染由弹射物系统处理）

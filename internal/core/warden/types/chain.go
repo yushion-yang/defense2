@@ -43,14 +43,13 @@ type ChainBehavior struct{}
 
 func (b *ChainBehavior) Type() string { return "chain" }
 
-// Init initializes chain warden behavior.
-// NOTE: Stats are currently hardcoded. See config/wardens/wardens.json for planned externalization.
-// Hardcoded: damage=12, attackInterval=1.2, range=150, moveSpeed=300, chainRange=150, bonusPerTower=10
+// Init 初始化聚能战灵。
+// 硬编码值作为 fallback，与 wardens.json 中 chain 的配置保持一致。
 func (b *ChainBehavior) Init(w *warden.Warden) any {
 	p := w.Params
 	return &ChainState{
 		WardenState: warden.WardenState{
-			Damage:         12,
+			Damage:         10,
 			AttackInterval: 1.2,
 			Range:          150,
 			MoveSpeed:      300,

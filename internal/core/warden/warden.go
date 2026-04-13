@@ -93,12 +93,9 @@ func NewWarden(id int, name, typ string) *Warden {
 				base.MoveSpeed = wc.MoveSpeed
 			}
 		}
-		if wc.GrowthOnKill > 0 {
-			w.GrowthOnKill = wc.GrowthOnKill
-		}
-		if wc.GrowthOnWaveClear > 0 {
-			w.GrowthOnWaveClear = wc.GrowthOnWaveClear
-		}
+		// 始终用配置值覆盖（允许零值：间接型战灵 growthOnKill=0 表示不靠击杀成长）
+		w.GrowthOnKill = wc.GrowthOnKill
+		w.GrowthOnWaveClear = wc.GrowthOnWaveClear
 	}
 	return w
 }

@@ -774,9 +774,9 @@ func applyWaveBuff(e *Enemy, buffID string, wave int) {
 			e.SplitHPRatio = def.Param
 		}
 		if e.SplitSpeedScale <= 0 {
-			e.SplitSpeedScale = def.Param2 // param2=子体速度倍率(1.4)
+			e.SplitSpeedScale = def.Param2 // param2=子体速度倍率
 			if e.SplitSpeedScale <= 0 {
-				e.SplitSpeedScale = 1.4
+				e.SplitSpeedScale = config.GlobalBalance().Split.SpeedScale
 			}
 		}
 	}
