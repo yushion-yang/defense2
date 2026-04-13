@@ -11,6 +11,7 @@ import (
 	"defense2/internal/i18n"
 	"defense2/internal/render"
 	"defense2/internal/render/draw"
+	"defense2/internal/render/ui"
 
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/hajimehoshi/ebiten/v2/inpututil"
@@ -50,8 +51,31 @@ func NewTitleScene(sw Switcher) *TitleScene {
 	}
 }
 
+const (
+	titleBestiaryW = float32(100)
+	titleBestiaryH = float32(32)
+)
+
+func titleBestiaryGeom() (float32, float32, float32, float32) {
+	x := float32(game.ScreenWidth) - titleBestiaryW - 20
+	y := float32(game.ScreenHeight) - titleBestiaryH - 16
+	return x, y, titleBestiaryW, titleBestiaryH
+}
+
 func (s *TitleScene) Update() error {
 	s.pulseTime += 1.0 / 60.0
+
+	mx, my := draw.CursorPos()
+
+	// 图鉴按钮
+	if isTapJustPressed() {
+		bx, by, bw, bh := titleBestiaryGeom()
+		if mx >= float64(bx) && mx <= float64(bx+bw) && my >= float64(by) && my <= float64(by+bh) {
+			playUIClick(s.switcher)
+			s.switcher.SwitchScene(NewBestiaryScene(s.switcher))
+			return nil
+		}
+	}
 
 	// 点击/触摸进入选关
 	if isTapJustPressed() {
@@ -84,6 +108,15 @@ func (s *TitleScene) Draw(screen *ebiten.Image) {
 	alpha := uint8(100 + 155*pulse)
 	pulseClr := color.RGBA{R: 200, G: 210, B: 220, A: alpha}
 	fm.DrawCenteredText(screen, i18n.T("scene.title.tap_to_start"), sw/2, sh/2+40, 14, pulseClr)
+
+	// 图鉴按钮（右下角）
+	bx, by, bw, bh := titleBestiaryGeom()
+	ui.Button(screen, bx, by, bw, bh, i18n.T("scene.title.bestiary"), ui.ButtonStyle{
+		BgColor:   color.RGBA{R: 30, G: 40, B: 60, A: 200},
+		TextColor: color.RGBA{R: 180, G: 190, B: 210, A: 255},
+		FontSize:  12,
+		Radius:    8,
+	})
 
 	// 版本
 	fm.DrawCenteredText(screen, game.Version, sw/2, sh-20, 10, textDim)

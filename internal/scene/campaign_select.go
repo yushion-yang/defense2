@@ -351,9 +351,10 @@ func (s *CampaignSelectScene) drawMapCards(screen *ebiten.Image, fm *render.Font
 
 			// 星级（右上）— 从持久化读取当前难度下的星级
 			diffID := s.difficulties[s.selectedDiff].ID
+			rec := s.progressMgr.GetMapRecord(diffID, level.ID)
 			starStr := "\u2606\u2606\u2606" // 默认三空星
 			starClr := theme.TextLocked
-			if rec := s.progressMgr.GetMapRecord(diffID, level.ID); rec != nil && rec.Stars > 0 {
+			if rec != nil && rec.Stars > 0 {
 				filled := rec.Stars
 				starStr = ""
 				for si := 0; si < 3; si++ {
@@ -380,6 +381,12 @@ func (s *CampaignSelectScene) drawMapCards(screen *ebiten.Image, fm *render.Font
 			infoX := cx - fm.MeasureText(infoTxt, 11)/2
 			fm.DrawText(screen, waveTxt+"  ", infoX, float64(y)+float64(h)-24, 11, theme.TextBody)
 			fm.DrawText(screen, diffTxt, infoX+waveW, float64(y)+float64(h)-24, 11, diffClr)
+
+			// 最高分（底部右下角）
+			if rec != nil && rec.BestScore > 0 {
+				scoreStr := strconv.Itoa(rec.BestScore)
+				fm.DrawRightText(screen, scoreStr, float64(x)+float64(w)-8, float64(y)+float64(h)-24, 10, theme.ToneGold)
+			}
 		}
 	}
 }
