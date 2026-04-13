@@ -2845,7 +2845,7 @@ func (s *StageScene) drawScene(screen *ebiten.Image) {
 			} else {
 				fm.DrawCenteredText(screen, "失败!", float64(game.ScreenWidth)/2, float64(game.ScreenHeight)/2-20, 52, theme.HUDDefeatColor)
 			}
-			fm.DrawCenteredText(screen, fmt.Sprintf("击杀: %d  点击继续", s.kills), float64(game.ScreenWidth)/2, float64(game.ScreenHeight)/2+30, theme.FontH2, theme.TextMuted)
+			fm.DrawCenteredText(screen, "击杀: "+strconv.Itoa(s.kills)+"  点击继续", float64(game.ScreenWidth)/2, float64(game.ScreenHeight)/2+30, theme.FontH2, theme.TextMuted)
 		}
 	}
 }

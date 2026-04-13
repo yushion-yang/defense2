@@ -556,7 +556,11 @@ func formatTime(secs int) string {
 	}
 	m := secs / 60
 	s := secs % 60
-	return strconv.Itoa(m) + ":" + fmt.Sprintf("%02d", s)
+	sec := strconv.Itoa(s)
+	if s < 10 {
+		sec = "0" + sec
+	}
+	return strconv.Itoa(m) + ":" + sec
 }
 
 // ---------------------------------------------------------------------------

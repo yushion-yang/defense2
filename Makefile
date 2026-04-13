@@ -1,8 +1,13 @@
-.PHONY: run test test-cover lint check-all build-wasm android android-aar clean arch generate-wardens generate-assets
+.PHONY: run build test test-cover vet lint check-all build-wasm android android-aar autoplay autoplay-quick clean arch generate-wardens generate-assets
 
 # Desktop development
 run:
 	go run ./cmd/game/
+
+# Desktop binary build
+build:
+	go build -o dist/defense2 ./cmd/game/
+	@echo "Built: dist/defense2"
 
 # Tests
 test:
@@ -13,12 +18,16 @@ test-cover:
 	go test -race -cover -coverprofile=coverage.out ./...
 	go tool cover -func=coverage.out
 
+# Static analysis
+vet:
+	go vet ./...
+
 # Lint
 lint:
 	golangci-lint run ./...
 
 # Full CI check
-check-all: lint test
+check-all: vet lint test
 	@echo "All checks passed."
 
 # WASM build
@@ -53,6 +62,14 @@ arch:
 preview:
 	@echo "Config viewer: http://localhost:8080/web/config-viewer/"
 	python3 -m http.server 8080
+
+# Autoplay: full regression sweep (68 games, ~3min)
+autoplay:
+	go run cmd/autoplay/main.go --sweep --json-dir docs/autotest/M1 --png-dir docs/autotest/M2
+
+# Autoplay: quick smoke test (1 game, ~30s)
+autoplay-quick:
+	go run cmd/autoplay/main.go --scenario attack-style-coverage
 
 # Clean
 clean:

@@ -7,6 +7,7 @@ import (
 	"image/color"
 	"log"
 	"math"
+	"strconv"
 
 	gameAudio "defense2/internal/audio"
 	"defense2/internal/config"
@@ -243,7 +244,7 @@ func (s *LoadingScene) Draw(screen *ebiten.Image) {
 	if pct > 100 {
 		pct = 100
 	}
-	pctText := fmt.Sprintf("%d%%", pct)
+	pctText := strconv.Itoa(pct) + "%"
 	fm.DrawText(screen, pctText, float64(barX+loadBarWidth+8), float64(barY+loadBarHeight/2+2), 10, loadingTextSub)
 
 	// 状态文字
