@@ -172,13 +172,18 @@ func (s *Spawner) Tick(pool *Pool, dt float64) {
 					bossCfg.Boss = true
 					bossCfg.HpScale *= sc.Boss.HpMultBase
 					bossCfg.Radius *= sc.Boss.RadiusScale
-					// Boss 必带净化能力（每 4 秒清除负面效果，免疫 2 秒）
+					// Boss 必带净化能力（参数从 abilities.json purge 条目读取）
 					if bossCfg.PurgeInterval <= 0 {
-						bossCfg.PurgeInterval = 4.0
-						bossCfg.PurgeImmuneDur = 2.0
+						if aDef := config.GlobalEnemyAbilityDef(AbilPurge); aDef != nil {
+							bossCfg.PurgeInterval = aDef.Base
+							bossCfg.PurgeImmuneDur = aDef.Param
+						} else {
+							bossCfg.PurgeInterval = 4.0
+							bossCfg.PurgeImmuneDur = 2.0
+						}
 					}
-					if !containsStr(bossCfg.AbilityIDs, "purge") {
-						bossCfg.AbilityIDs = append(append([]string{}, bossCfg.AbilityIDs...), "purge")
+					if !containsStr(bossCfg.AbilityIDs, AbilPurge) {
+						bossCfg.AbilityIDs = append(append([]string{}, bossCfg.AbilityIDs...), AbilPurge)
 					}
 					cfg = &bossCfg
 					tel.T.Record("boss", archetype)
@@ -632,43 +637,40 @@ func applyWaveBuff(e *Enemy, buffID string, wave int) {
 		effectiveBase += def.Potential * float64(wave)
 	}
 	switch buffID {
-	case "berserk":
-		// base=threshold(0.5), param=speedScale(1.5)
+	case AbilBerserk:
 		e.Buffs.Add(buff.Buff{
 			ID: buff.IDBerserk, Category: buff.CatBehavior, Source: "wave_buff",
 			Value: def.Param, Value2: effectiveBase,
 			Duration: -1, Remaining: -1,
 		})
-	case "regen":
-		// base=hpRatio(0.02)
+	case AbilRegen:
 		e.Buffs.Add(buff.Buff{
 			ID: buff.IDRegen, Category: buff.CatBehavior, Source: "wave_buff",
 			Value: e.MaxHP * effectiveBase, Duration: -1, Remaining: -1,
 		})
-	case "healAura":
-		// base=healPercent(0.05), param=radius(80)
+	case AbilHealAura:
 		e.Buffs.Add(buff.Buff{
 			ID: buff.IDHealAura, Category: buff.CatBehavior, Source: "wave_buff",
 			Value: effectiveBase, Value2: def.Param,
 			Duration: -1, Remaining: -1,
 		})
-		e.HealInterval = 3 // 固定3s（与 applyEnemyAbilityToSpawnConfig 一致）
+		e.HealInterval = def.Param2 // param2=治疗间隔(3s)
+		if e.HealInterval <= 0 {
+			e.HealInterval = 3
+		}
 		e.HealCooldown = 0
-	case "speedAura":
-		// base=bonus(0.2), param=radius(80)
+	case AbilSpeedAura:
 		e.Buffs.Add(buff.Buff{
 			ID: buff.IDBufferAura, Category: buff.CatBehavior, Source: "wave_buff",
 			Value: effectiveBase, Value2: def.Param,
 			Duration: -1, Remaining: -1,
 		})
-	case "damageReduce":
-		// base=ratio(0.3)
+	case AbilDamageReduce:
 		e.Buffs.Add(buff.Buff{
 			ID: buff.IDDamageReduce, Category: buff.CatDefense, Source: "wave_buff",
 			Value: effectiveBase, Duration: -1, Remaining: -1,
 		})
-	case "deathSplit":
-		// base=count(2), param=hpRatio(0.3)
+	case AbilDeathSplit:
 		if e.SplitCount <= 0 {
 			e.SplitCount = int(effectiveBase)
 		}
@@ -676,7 +678,10 @@ func applyWaveBuff(e *Enemy, buffID string, wave int) {
 			e.SplitHPRatio = def.Param
 		}
 		if e.SplitSpeedScale <= 0 {
-			e.SplitSpeedScale = 1.4
+			e.SplitSpeedScale = def.Param2 // param2=子体速度倍率(1.4)
+			if e.SplitSpeedScale <= 0 {
+				e.SplitSpeedScale = 1.4
+			}
 		}
 	}
 }

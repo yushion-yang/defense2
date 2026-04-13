@@ -284,9 +284,9 @@ func (er *EnemyRenderer) DrawEnemies(screen *ebiten.Image, pool *enemy.Pool, ani
 		if !e.AbilitySilenced {
 			// 免疫脚环（只显示天生能力，净化临时免疫用白色微光）
 			footR := float32(e.Radius) + 2
-			if hasAbility(e, "ccImmune") {
+			if hasAbility(e, enemy.AbilCCImmune) {
 				vfx.DrawImmunityRing(screen, cx, cy, footR, theme.EnemyImmuneCC, animTime)
-			} else if hasAbility(e, "slowImmune") {
+			} else if hasAbility(e, enemy.AbilSlowImmune) {
 				vfx.DrawImmunityRing(screen, cx, cy, footR, theme.EnemyImmuneSlow, animTime)
 			}
 

@@ -3209,19 +3209,19 @@ func convertArchetypesToSpawnConfigs(archetypes map[string]*config.EnemyArchetyp
 // abilityRuntimeValue 返回敌人某个能力的运行时实际值（用于测试模式 info panel）。
 func abilityRuntimeValue(e *enemy.Enemy, abilityID string) string {
 	switch abilityID {
-	case "armorPlating":
+	case enemy.AbilArmorPlating:
 		return fmt.Sprintf("减免=%.1f", e.ArmorFlat)
-	case "damageCap":
+	case enemy.AbilDamageCap:
 		return fmt.Sprintf("上限=%.1f", e.DamageCap)
-	case "damageCapPercent":
+	case enemy.AbilDamageCapPct:
 		return fmt.Sprintf("上限=%.2f%%HP", e.DamageCapPercent*100)
-	case "evasion":
+	case enemy.AbilEvasion:
 		return fmt.Sprintf("闪避=%.0f%%", e.EvasionChance*100)
-	case "projectileBlock":
+	case enemy.AbilProjectileBlock:
 		return fmt.Sprintf("格挡=%.0f%%", e.ProjectileBlockChance*100)
-	case "strengthDrain":
+	case enemy.AbilStrengthDrain:
 		return fmt.Sprintf("削弱=%.0f%%", e.StrDrainRatio*100)
-	case "dashOnHit":
+	case enemy.AbilDashOnHit:
 		return fmt.Sprintf("冲刺+%.0f%%", e.DashSpeedBoost*100)
 	default:
 		return ""
@@ -3232,75 +3232,79 @@ func abilityRuntimeValue(e *enemy.Enemy, abilityID string) string {
 func applyEnemyAbilityToSpawnConfig(sc *enemy.SpawnConfig, def *config.EnemyAbilityDef) {
 	switch def.Type {
 	// ── defense ──
-	case "projectileBlock":
+	case enemy.AbilProjectileBlock:
 		sc.ProjectileBlockChance = def.Base
-	case "armorPlating":
+	case enemy.AbilArmorPlating:
 		sc.ArmorFlat = def.Base
-	case "evasion":
+	case enemy.AbilEvasion:
 		sc.EvasionChance = def.Base
-	case "damageCap":
+	case enemy.AbilDamageCap:
 		sc.DamageCap = def.Base
-	case "damageCapPercent":
+	case enemy.AbilDamageCapPct:
 		sc.DamageCapPercent = def.Base
 
 	// ── resist ──
-	case "ccImmune":
+	case enemy.AbilCCImmune:
 		sc.CCImmune = true
-	case "slowImmune":
+	case enemy.AbilSlowImmune:
 		sc.SlowImmune = true
-	case "purge":
+	case enemy.AbilPurge:
 		sc.PurgeInterval = def.Base   // base=间隔秒数
 		sc.PurgeImmuneDur = def.Param // param=免疫时间
 
 	// ── movement ──
-	case "stealth":
+	case enemy.AbilStealth:
 		sc.StealthDuration = def.Base
 		sc.Behavior = "stealth"
-	case "dashOnHit":
-		sc.DashSpeedBoost = def.Base // base=速度提升比例
-		sc.DashDuration = def.Param  // param=持续时间
-		sc.DashCooldown = 5          // 固定冷却5s
-	case "phaseShift":
+	case enemy.AbilDashOnHit:
+		sc.DashSpeedBoost = def.Base  // base=速度提升比例
+		sc.DashDuration = def.Param   // param=持续时间
+		sc.DashCooldown = def.Param2  // param2=冷却(5s)
+	case enemy.AbilPhaseShift:
 		sc.PhaseDuration = def.Base  // base=免伤时间
 		sc.PhaseCooldown = def.Param // param=冷却时间
-	case "teleport":
-		sc.TeleportInterval = def.Base
-		sc.TeleportSkip = int(def.Param)
+	case enemy.AbilTeleport:
+		sc.TeleportInterval = def.Param // param=传送间隔
+		sc.TeleportSkip = int(def.Base) // base=跳过段数
 
 	// ── offense ──
-	case "strengthDrain":
-		sc.StrDrainRatio = def.Base     // base=减益比例
-		sc.StrDrainInterval = def.Param // param=间隔
-		sc.StrDrainDuration = 6         // 固定6s
+	case enemy.AbilStrengthDrain:
+		sc.StrDrainRatio = def.Base      // base=减益比例
+		sc.StrDrainInterval = def.Param  // param=间隔
+		sc.StrDrainDuration = def.Param2 // param2=持续时间(6s)
 
 	// ── support ──
-	case "healAura":
+	case enemy.AbilHealAura:
 		sc.HealScale = def.Base
 		sc.HealRadius = def.Param
-		sc.HealInterval = 3 // 固定3s
+		sc.HealInterval = def.Param2 // param2=治疗间隔(3s)
 		sc.Behavior = "healer"
-	case "speedAura":
+	case enemy.AbilSpeedAura:
 		sc.AuraSpeedUp = def.Base
 		sc.AuraRange = def.Param
 		sc.Behavior = "buffer"
 
 	// ── behavior buff ──
-	case "damageReduce":
-		sc.DamageReduceRatio = def.Base // base=减伤比例(0.3)
-	case "berserk":
-		sc.BerserkThreshold = def.Base   // base=血线阈值(0.5)
-		sc.BerserkSpeedScale = def.Param // param=速度倍率(1.5)
-	case "regen":
-		sc.RegenRatio = def.Base // base=回血占比(0.02)
+	case enemy.AbilDamageReduce:
+		sc.DamageReduceRatio = def.Base
+	case enemy.AbilBerserk:
+		sc.BerserkThreshold = def.Base
+		sc.BerserkSpeedScale = def.Param
+	case enemy.AbilRegen:
+		sc.RegenRatio = def.Base
 
 	// ── death ──
-	case "deathSplit":
+	case enemy.AbilDeathSplit:
 		sc.SplitCount = int(def.Base)
 		sc.SplitHPRatio = def.Param
+		sc.SplitSpeedScale = def.Param2 // param2=子体速度倍率(1.4)
 		sc.Behavior = "splitter"
-	case "deathSpawn":
+	case enemy.AbilDeathSpawn:
 		sc.DeathSpawnCount = int(def.Base)
-		sc.DeathSpawnArch = "normal"
+		sc.DeathSpawnArch = def.SpawnArch
+		if sc.DeathSpawnArch == "" {
+			sc.DeathSpawnArch = "normal"
+		}
 	}
 }
 
