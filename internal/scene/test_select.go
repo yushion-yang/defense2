@@ -329,9 +329,9 @@ func (s *TestSelectScene) Draw(screen *ebiten.Image) {
 	sh := float64(game.ScreenHeight)
 
 	// ── 返回按钮 ──
-	backX, backY := float32(20), float32(16)
-	draw.RoundRect(screen, backX, backY, 70, 28, 12, theme.BtnSecondary)
-	fm.DrawCenteredText(screen, i18n.T("scene.common.back"), float64(backX)+35, float64(backY)+6, theme.FontMD, theme.TextBody)
+	backX, backY := float32(20), float32(8)
+	draw.RoundRect(screen, backX, backY, 70, 44, 12, theme.BtnSecondary)
+	fm.DrawCenteredText(screen, i18n.T("scene.common.back"), float64(backX)+35, float64(backY)+14, theme.FontMD, theme.TextBody)
 
 	// ── 标题 ──
 	fm.DrawCenteredText(screen, i18n.T("scene.test.title"), sw/2, 20, 22, theme.TextTitle)

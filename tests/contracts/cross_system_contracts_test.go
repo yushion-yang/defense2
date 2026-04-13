@@ -3,7 +3,6 @@
 package contracts_test
 
 import (
-	"math"
 	"testing"
 
 	"defense2/internal/config"
@@ -40,16 +39,16 @@ func TestEconomyKillRewardPositive(t *testing.T) {
 	}
 }
 
-// TestBalanceAndEconomySellRatioConsistent 验证 balance.json 和 economy.json 的卖回比例一致。
-func TestBalanceAndEconomySellRatioConsistent(t *testing.T) {
-	bal := config.GlobalBalance()
+// TestEconomySellRefundRatioValid 验证 economy.json 的卖回比例在合理范围内。
+// 注：balance.json 已移除 economy 区段，不再做两者一致性检查。
+func TestEconomySellRefundRatioValid(t *testing.T) {
 	spec := config.GlobalEconomySpec()
 	if spec == nil || spec.Global.SellRefundRatio == 0 {
 		t.Skip("economy spec 未加载或 sellRefundRatio=0")
 	}
-	if math.Abs(bal.Economy.SellRefundRatio-spec.Global.SellRefundRatio) > 1e-9 {
-		t.Errorf("balance SellRefundRatio=%.2f != economy spec SellRefundRatio=%.2f",
-			bal.Economy.SellRefundRatio, spec.Global.SellRefundRatio)
+	if spec.Global.SellRefundRatio <= 0 || spec.Global.SellRefundRatio >= 1 {
+		t.Errorf("economy spec SellRefundRatio=%.2f, should be in (0, 1)",
+			spec.Global.SellRefundRatio)
 	}
 }
 

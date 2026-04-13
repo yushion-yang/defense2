@@ -172,7 +172,7 @@ func (s *WardenSelectScene) Draw(screen *ebiten.Image) {
 	fm.DrawCenteredText(screen, i18n.T("scene.warden.subtitle"), sw/2, 50, 11, theme.TextMuted)
 
 	// ── 返回按钮 ──
-	draw.RoundRect(screen, 20, 16, 70, 28, 12, theme.BtnSecondary)
+	draw.RoundRect(screen, 20, 8, 70, 44, 12, theme.BtnSecondary)
 	fm.DrawCenteredText(screen, i18n.T("scene.common.back"), 55, 22, 12, theme.TextBody)
 
 	// ── 左侧列表 ──

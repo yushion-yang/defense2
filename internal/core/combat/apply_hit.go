@@ -322,9 +322,7 @@ func applyHitEffectsUnified(r *tower.HitResult, target *enemy.Enemy, p *projecti
 					Projectile:  p,
 					OnCC:        onCC,
 				}, onHit)
-				if e.HitFlash < 0.06 && e.Age > 0.1 {
-					e.HitFlash = 0.08
-				}
+				e.TriggerHitFlash()
 				if splashResult.Killed {
 					enemies.Kill(e)
 				}

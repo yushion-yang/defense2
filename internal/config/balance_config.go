@@ -1,15 +1,18 @@
 // balance_config.go — 中央平衡配置（config/balance.json）的 Go 映射。
 //
-// balance.json 是全局数值调优的唯一入口，涵盖 11 个子系统：
+// balance.json 是全局数值调优的唯一入口，涵盖 10 个子系统：
 //
-//	经济(economy) / 战斗(combat) / 塔(tower) / 连锁(chain) / 道具(items) /
+//	战斗(combat) / 塔(tower) / 连锁(chain) / 道具(items) /
 //	分裂(split) / 死亡召唤(deathSpawn) / 死亡动画(dying) / 战灵(warden) /
 //	游戏性(gameplay) / 道具掉落(itemDrop)
 //
+// 已迁移的子系统：
+//   - 经济(economy) → config/systems/economy.json，通过 GlobalEconomySpec() 访问
+//   - 出怪(spawner) → config/systems/spawner.json，通过 GlobalSpawnerConfig() 访问
+//
 // 设计决策：
-//   - 每个子系统一个独立 struct，方便按模块传递（如 EconomyBalance 只给经济模块）
+//   - 每个子系统一个独立 struct，方便按模块传递
 //   - defaultBalance() 提供完整的硬编码默认值，确保 JSON 缺字段时不会零值崩溃
-//   - 出怪参数（spawner/buffs）已迁移至 spawner_config.go，避免单文件过大
 //   - globalBalance 全局缓存 + GlobalBalance() 访问器模式，与 spawner/enemy 配置一致
 package config
 
@@ -18,30 +21,21 @@ import (
 	"fmt"
 )
 
-// EconomyBalance 经济相关平衡参数。
-// 经济设计偏紧是刻意的——建塔后现金流归零，需要击杀回血。
-type EconomyBalance struct {
-	KillReward      float64 `json:"killReward"`      // 击杀基础奖励（实际奖励 = KillReward * 敌人 RewardScale）
-	SellRefundRatio float64 `json:"sellRefundRatio"` // 卖塔退款比例（0.7 = 退回 70% 建造费）
-}
-
 // CombatBalance 战斗相关平衡参数。
-// 涵盖减速下限、DoT 节奏、暴击、弹道和各攻击方式的基础参数。
+// 涵盖减速下限、DoT 节奏、暴击、弹道参数。
+//
+// 已清理的死字段（仅保留在 JSON 中作文档，加 _ 前缀）：
+//   - scatterBasePellets/scatterSpreadAngle/radialBaseShots/radialRangeMult/wideBeamRangeMult
+//     → 实际从 abilities.json 读取
+//   - bossPercentHpCap → 已迁移至 spawner.json percentHpCap
+//   - wardenProjectileSpeed/wardenFireballSpeed → 代码硬编码或用 ParamOr
 type CombatBalance struct {
 	MinSpeedRatio             float64 `json:"minSpeedRatio"`             // 减速下限（0.2 = 最多减速到原速的 20%）
 	DotTickInterval           float64 `json:"dotTickInterval"`           // DoT 伤害跳间隔（秒），各 DoT 类型可在 dotTickIntervals 中覆盖
-	BossPercentHpCap          float64 `json:"bossPercentHpCap"`          // Boss %HP 伤害上限（0.05 = 单次最多打 5% 血）
 	CritMultiplier            float64 `json:"critMultiplier"`            // 暴击伤害倍率
 	DefaultProjectileSpeed    float64 `json:"defaultProjectileSpeed"`    // 默认弹速（像素/秒）
 	DefaultProjectileRadius   float64 `json:"defaultProjectileRadius"`   // 默认弹体半径（像素，用于碰撞检测）
-	ScatterBasePellets        int     `json:"scatterBasePellets"`        // 散射(scatter)基础弹丸数
-	ScatterSpreadAngle        float64 `json:"scatterSpreadAngle"`        // 散射扇形角度（度）
-	RadialBaseShots           int     `json:"radialBaseShots"`           // 环射(radial)基础弹数
-	RadialRangeMult           float64 `json:"radialRangeMult"`           // 环射射程倍率（相对塔基础射程）
-	WideBeamRangeMult         float64 `json:"wideBeamRangeMult"`         // 宽光束射程倍率
-	WardenProjectileSpeed     float64 `json:"wardenProjectileSpeed"`     // 战灵默认弹速
 	WardenMechProjectileSpeed float64 `json:"wardenMechProjectileSpeed"` // 机甲战灵弹速（更快）
-	WardenFireballSpeed       float64 `json:"wardenFireballSpeed"`       // 火灵火球速度（较慢但高伤）
 }
 
 // TowerBalance 塔相关平衡参数。
@@ -118,10 +112,8 @@ type GameplayBalance struct {
 }
 
 // BalanceConfig 游戏平衡参数总配置。
-// 出怪相关参数（spawner/buffs）已迁移至 config/systems/spawner.json，
-// 通过 spawner_config.go 的 GlobalSpawnerConfig() 访问。
+// 已迁移：economy → economy.json, spawner → spawner.json。
 type BalanceConfig struct {
-	Economy    EconomyBalance    `json:"economy"`
 	Combat     CombatBalance     `json:"combat"`
 	Tower      TowerBalance      `json:"tower"`
 	Chain      ChainBalance      `json:"chain"`
@@ -168,12 +160,10 @@ func LoadBalance() (*BalanceConfig, error) {
 // 而是回退到合理的游戏默认值。这在配置迭代中避免了"新增字段忘更新 JSON"的问题。
 func defaultBalance() *BalanceConfig {
 	return &BalanceConfig{
-		Economy: EconomyBalance{KillReward: 15, SellRefundRatio: 0.7},
 		Combat: CombatBalance{
-			MinSpeedRatio: 0.2, DotTickInterval: 0.5, BossPercentHpCap: 0.05,
+			MinSpeedRatio: 0.2, DotTickInterval: 0.5,
 			CritMultiplier: 2, DefaultProjectileSpeed: 300, DefaultProjectileRadius: 4,
-			ScatterBasePellets: 3, ScatterSpreadAngle: 60,
-			RadialBaseShots: 4, RadialRangeMult: 1.2, WideBeamRangeMult: 3,
+			WardenMechProjectileSpeed: 400,
 		},
 		Tower: TowerBalance{
 			StrengthBuyCost: 10, StrengthBuyAmount: 10,

@@ -46,7 +46,7 @@ const (
 	csBtnW    = 220.0
 	csBtnH    = 42.0
 	csDiffW   = 80.0
-	csDiffH   = 28.0
+	csDiffH   = 40.0
 	csDiffGap = 12.0
 )
 
@@ -269,7 +269,7 @@ func (s *CampaignSelectScene) Draw(screen *ebiten.Image) {
 	if s.hoverBack {
 		backBg = theme.BtnMuted
 	}
-	draw.RoundRect(screen, 20, 16, 70, 28, 12, backBg)
+	draw.RoundRect(screen, 20, 8, 70, 44, 12, backBg)
 	fm.DrawCenteredText(screen, i18n.T("scene.common.back"), 55, 22, theme.FontMD, theme.TextBody)
 
 	// ── 标题 ──
@@ -461,7 +461,7 @@ func (s *CampaignSelectScene) drawDiffBtns(screen *ebiten.Image, fm *render.Font
 			txtClr = textWhite
 		}
 		cx := float64(dx) + float64(dw)/2
-		fm.DrawCenteredText(screen, diff.Name, cx, float64(dy)+6, 12, txtClr)
+		fm.DrawCenteredText(screen, diff.Name, cx, float64(dy)+12, 12, txtClr)
 	}
 }
 

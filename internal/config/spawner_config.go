@@ -160,6 +160,7 @@ func defaultSpawnerConfig() *SpawnerConfig {
 		Boss: SpawnerBoss{
 			EveryNWaves: 4, HpMultBase: 3, RadiusScale: 1.5,
 			EntranceDelay: 3.0, RewardMultiplier: 5,
+			PercentHpCap: 0.05, DyingDuration: 0.5,
 		},
 		Compositions: []WaveComposition{
 			{MaxWave: 3, Enemies: map[string]int{"normal": 100}},
