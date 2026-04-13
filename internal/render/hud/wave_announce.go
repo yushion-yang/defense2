@@ -5,9 +5,9 @@ package hud
 
 import (
 	"image/color"
-	"strconv"
 
 	"defense2/internal/core/game"
+	"defense2/internal/i18n"
 	"defense2/internal/render"
 	"defense2/internal/render/draw"
 	"defense2/internal/render/easing"
@@ -164,15 +164,15 @@ func (wa *WaveAnnounce) Draw(screen *ebiten.Image) {
 
 	switch {
 	case wa.isFinal:
-		text = "最终波"
+		text = i18n.T("hud.wave.final")
 		textClr = color.RGBA{R: 255, G: 215, B: 0, A: 255} // gold
 		fontSize = 32
 	case wa.isBoss:
-		text = "第 " + strconv.Itoa(wa.wave) + " 波"
+		text = i18n.TF("hud.wave.wave_n", wa.wave)
 		textClr = color.RGBA{R: 255, G: 80, B: 60, A: 255} // red-orange
 		fontSize = 32
 	default:
-		text = "第 " + strconv.Itoa(wa.wave) + " 波"
+		text = i18n.TF("hud.wave.wave_n", wa.wave)
 		textClr = color.RGBA{R: 255, G: 255, B: 255, A: 230}
 	}
 

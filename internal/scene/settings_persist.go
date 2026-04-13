@@ -14,7 +14,8 @@ type SettingsData struct {
 	SFXEnabled bool    `json:"sfxEnabled"`
 	SFXVolume  float64 `json:"sfxVolume"`
 	BGMVolume  float64 `json:"bgmVolume"`
-	Quality    int     `json:"quality"` // 0=High, 1=Medium, 2=Low
+	Quality    int     `json:"quality"`          // 0=High, 1=Medium, 2=Low
+	Locale     string  `json:"locale,omitempty"` // "zh" (default), "en"
 }
 
 // DefaultSettings 返回默认设置。

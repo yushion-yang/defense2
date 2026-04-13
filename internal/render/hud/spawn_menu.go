@@ -3,10 +3,10 @@
 package hud
 
 import (
-	"fmt"
 	"image/color"
 
 	"defense2/internal/core/game"
+	"defense2/internal/i18n"
 	"defense2/internal/render"
 	"defense2/internal/render/draw"
 	"defense2/internal/render/theme"
@@ -77,10 +77,10 @@ func DrawSpawnMenu(screen *ebiten.Image, d SpawnMenuData) {
 	draw.StrokeRoundRect(screen, panelX, panelY, panelW, panelH, 12, 1, color.RGBA{R: 60, G: 80, B: 120, A: 200})
 
 	// 标题
-	fm.DrawCenteredBoldText(screen, "选择敌人类型", float64(panelX)+float64(panelW)/2, float64(panelY)+float64(spawnPad), theme.FontLG, color.White)
+	fm.DrawCenteredBoldText(screen, i18n.T("hud.spawn.title"), float64(panelX)+float64(panelW)/2, float64(panelY)+float64(spawnPad), theme.FontLG, color.White)
 
 	// 右上角关闭提示
-	fm.DrawRightText(screen, "按Esc关闭", float64(panelX)+float64(panelW)-float64(spawnPad), float64(panelY)+float64(spawnPad)+2, theme.FontXS, color.RGBA{R: 160, G: 175, B: 200, A: 220})
+	fm.DrawRightText(screen, i18n.T("hud.spawn.esc_close"), float64(panelX)+float64(panelW)-float64(spawnPad), float64(panelY)+float64(spawnPad)+2, theme.FontXS, color.RGBA{R: 160, G: 175, B: 200, A: 220})
 
 	// 卡片网格
 	cardNormal := color.RGBA{R: 25, G: 35, B: 58, A: 240}
@@ -117,9 +117,9 @@ func DrawSpawnMenu(screen *ebiten.Image, d SpawnMenuData) {
 
 		// 简略属性
 		if entry.Boss {
-			fm.DrawText(screen, "首领", nameX, nameY+14, theme.FontXS, color.RGBA{R: 250, G: 190, B: 80, A: 240})
+			fm.DrawText(screen, i18n.T("hud.spawn.boss"), nameX, nameY+14, theme.FontXS, color.RGBA{R: 250, G: 190, B: 80, A: 240})
 		}
-		hpTxt := fmt.Sprintf("血量:%.0f", entry.HpScale*100)
+		hpTxt := i18n.TF("hud.spawn.hp", entry.HpScale*100)
 		fm.DrawText(screen, hpTxt, nameX+40, nameY+14, theme.FontXS, color.RGBA{R: 200, G: 200, B: 210, A: 230})
 	}
 
@@ -149,7 +149,7 @@ func drawSpawnTooltip(screen *ebiten.Image, fm *render.FontManager, e SpawnEntry
 	}
 	fm.DrawBoldText(screen, displayName, tx, ty, theme.FontMD, color.White)
 	if e.Boss {
-		fm.DrawText(screen, "首领", tx+100, ty+2, theme.FontSM, color.RGBA{R: 239, G: 68, B: 68, A: 255})
+		fm.DrawText(screen, i18n.T("hud.spawn.boss"), tx+100, ty+2, theme.FontSM, color.RGBA{R: 239, G: 68, B: 68, A: 255})
 	}
 	ty += 18
 
@@ -163,7 +163,7 @@ func drawSpawnTooltip(screen *ebiten.Image, fm *render.FontManager, e SpawnEntry
 			attrX += 14
 		}
 	}
-	fm.DrawText(screen, fmt.Sprintf("血量:%.0f", e.HpScale*100), attrX, ty, theme.FontSM, color.RGBA{R: 239, G: 68, B: 68, A: 255})
+	fm.DrawText(screen, i18n.TF("hud.spawn.hp", e.HpScale*100), attrX, ty, theme.FontSM, color.RGBA{R: 239, G: 68, B: 68, A: 255})
 	attrX += 60
 
 	if im != nil {
@@ -172,10 +172,10 @@ func drawSpawnTooltip(screen *ebiten.Image, fm *render.FontManager, e SpawnEntry
 			attrX += 14
 		}
 	}
-	fm.DrawText(screen, fmt.Sprintf("速度:%.1f", e.SpeedScale), attrX, ty, theme.FontSM, color.RGBA{R: 74, G: 222, B: 128, A: 255})
+	fm.DrawText(screen, i18n.TF("hud.spawn.speed", e.SpeedScale), attrX, ty, theme.FontSM, color.RGBA{R: 74, G: 222, B: 128, A: 255})
 	attrX += 60
 
-	fm.DrawText(screen, fmt.Sprintf("半径:%.0f", e.Radius), attrX, ty, theme.FontSM, color.RGBA{R: 160, G: 160, B: 180, A: 200})
+	fm.DrawText(screen, i18n.TF("hud.spawn.radius", e.Radius), attrX, ty, theme.FontSM, color.RGBA{R: 160, G: 160, B: 180, A: 200})
 }
 
 // SpawnMenuHitTest 检测点击了哪个敌人卡片，返回索引或 -1。

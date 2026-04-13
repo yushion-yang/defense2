@@ -3,6 +3,8 @@
 // 完成后通过持久化标记不再重复显示。
 package tutorial
 
+import "defense2/internal/i18n"
+
 // Step 单个教程步骤。
 type Step struct {
 	Message     string  // 显示给玩家的提示文本
@@ -23,14 +25,14 @@ type Tutorial struct {
 func DefaultTutorial() *Tutorial {
 	return &Tutorial{
 		Steps: []Step{
-			{Message: "欢迎！点击任意位置继续"},
-			{Message: "点击「造塔」建造第一座防御塔", Event: "build"},
-			{Message: "选择塔型，点击空位放置", Event: "tower_placed"},
-			{Message: "点击「开波」开始战斗！", Event: "wave_start"},
-			{Message: "干得好！点击已建的塔查看详情", Event: "tower_select", AutoAdvance: 8},
-			{Message: "点击「升级」提升战力", Event: "upgrade", AutoAdvance: 8},
-			{Message: "打开「道具」拖拽道具到塔上强化", Event: "item_use", AutoAdvance: 10},
-			{Message: "教程完成！祝你好运！", AutoAdvance: 3},
+			{Message: i18n.T("tutorial.step_1")},
+			{Message: i18n.T("tutorial.step_2"), Event: "build"},
+			{Message: i18n.T("tutorial.step_3"), Event: "tower_placed"},
+			{Message: i18n.T("tutorial.step_4"), Event: "wave_start"},
+			{Message: i18n.T("tutorial.step_5"), Event: "tower_select", AutoAdvance: 8},
+			{Message: i18n.T("tutorial.step_6"), Event: "upgrade", AutoAdvance: 8},
+			{Message: i18n.T("tutorial.step_7"), Event: "item_use", AutoAdvance: 10},
+			{Message: i18n.T("tutorial.step_8"), AutoAdvance: 3},
 		},
 		Active: true,
 	}

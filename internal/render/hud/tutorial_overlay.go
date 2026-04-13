@@ -8,6 +8,7 @@ import (
 	"strconv"
 
 	"defense2/internal/core/game"
+	"defense2/internal/i18n"
 	"defense2/internal/render"
 	"defense2/internal/render/draw"
 	"defense2/internal/render/theme"
@@ -63,7 +64,7 @@ func DrawTutorialOverlay(screen *ebiten.Image, vm TutorialVM) {
 	// "点击继续" hint for click-to-advance steps.
 	if vm.ClickToAdvance {
 		hintY := float64(boxY+boxH) + 4
-		fm.DrawCenteredText(screen, "点击继续",
+		fm.DrawCenteredText(screen, i18n.T("hud.tutorial.click_continue"),
 			float64(game.ScreenWidth)/2, hintY, theme.FontCaption, theme.TextMuted)
 	}
 }

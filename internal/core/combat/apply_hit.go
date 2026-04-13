@@ -12,6 +12,7 @@ import (
 	"defense2/internal/core/projectile"
 	tel "defense2/internal/core/telemetry"
 	"defense2/internal/core/tower"
+	"defense2/internal/i18n"
 )
 
 const (
@@ -70,7 +71,7 @@ func ApplyHit(input HitInput, onHit HitCallback) HitOutput {
 	if e.EvasionChance > 0 && !e.AbilitySilenced {
 		if rand.Float64() < e.EvasionChance {
 			e.DodgeFlash = dodgeFlashDuration
-			e.SetFloatText("闪避", 255, 255, 255)
+			e.SetFloatText(i18n.T("combat.dodge"), 255, 255, 255)
 			if input.OnCC != nil {
 				input.OnCC(e.X, e.Y, CCDodge)
 			}
@@ -233,7 +234,7 @@ func applyHitEffectsUnified(r *tower.HitResult, target *enemy.Enemy, p *projecti
 			Remaining: r.Bleed.Duration,
 		})
 		if !wasBleeding {
-			target.SetFloatText("流血", 220, 60, 60)
+			target.SetFloatText(i18n.T("combat.bleed"), 220, 60, 60)
 		}
 		tel.T.Record("ability", "bleed")
 	}
@@ -248,7 +249,7 @@ func applyHitEffectsUnified(r *tower.HitResult, target *enemy.Enemy, p *projecti
 			Remaining: r.Burn.Duration,
 		})
 		if !wasBurning {
-			target.SetFloatText("灼烧", 255, 140, 40)
+			target.SetFloatText(i18n.T("combat.burn"), 255, 140, 40)
 		}
 		tel.T.Record("ability", "burn")
 		if !wasBurning && onCC != nil {

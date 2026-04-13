@@ -11,6 +11,7 @@ import (
 	"math"
 	"strconv"
 
+	"defense2/internal/i18n"
 	"defense2/internal/render"
 	"defense2/internal/render/draw"
 	"defense2/internal/render/theme"
@@ -140,27 +141,27 @@ func DrawTopBar(screen *ebiten.Image, d TopBarData) {
 		if d.SpawnMode {
 			spawnClr = theme.BtnDanger // 红色表示激活
 		}
-		btns = append(btns, btnDef{"spawn", "造怪", spawnClr})
+		btns = append(btns, btnDef{"spawn", i18n.T("hud.topbar.spawn"), spawnClr})
 	}
 
-	startLabel := "开波"
+	startLabel := i18n.T("hud.topbar.start_wave")
 	if d.WaveCountdown > 0 {
-		startLabel = "开波(" + strconv.Itoa(int(math.Ceil(d.WaveCountdown))) + "s)"
+		startLabel = i18n.TF("hud.topbar.start_wave_countdown", int(math.Ceil(d.WaveCountdown)))
 	}
 	btns = append(btns, btnDef{"start", startLabel, theme.TonePrimary})
 	btns = append(btns, btnDef{"speed", speedLabel, theme.ToneAccent})
-	btns = append(btns, btnDef{"menu", "菜单", theme.ToneSecondary})
+	btns = append(btns, btnDef{"menu", i18n.T("hud.topbar.menu"), theme.ToneSecondary})
 
 	if d.TestMode {
 		debugClr := theme.ToneSecondary
 		if d.DebugOpen {
 			debugClr = theme.ToneAccent
 		}
-		btns = append(btns, btnDef{"debug", "调试", debugClr})
+		btns = append(btns, btnDef{"debug", i18n.T("hud.topbar.debug"), debugClr})
 	}
 
 	// 截图按钮（所有模式可用）
-	btns = append(btns, btnDef{"screenshot", "截图", theme.ToneSecondary})
+	btns = append(btns, btnDef{"screenshot", i18n.T("hud.topbar.screenshot"), theme.ToneSecondary})
 
 	// Hover detection using last frame's rects
 	mx, my := draw.CursorPos()

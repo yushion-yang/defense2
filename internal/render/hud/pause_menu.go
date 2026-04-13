@@ -6,6 +6,7 @@ import (
 	"image/color"
 
 	"defense2/internal/core/game"
+	"defense2/internal/i18n"
 	"defense2/internal/render"
 	"defense2/internal/render/draw"
 	"defense2/internal/render/theme"
@@ -54,7 +55,7 @@ func DrawPauseMenu(screen *ebiten.Image) {
 	// 标题
 	cx := float64(sw) / 2
 	titleY := float64(py) + 20
-	fm.DrawCenteredBoldText(screen, "游戏暂停", cx, titleY, 24, color.White)
+	fm.DrawCenteredBoldText(screen, i18n.T("hud.pause.title"), cx, titleY, 24, color.White)
 
 	// 四个按钮
 	btnX := (sw - pauseBtnW) / 2
@@ -64,10 +65,10 @@ func DrawPauseMenu(screen *ebiten.Image) {
 		label string
 		clr   color.RGBA
 	}{
-		{"继续游戏", theme.TonePrimary},
-		{"设置", theme.BtnSecondary},
-		{"重新开始", color.RGBA{R: 220, G: 160, B: 50, A: 255}},
-		{"返回主菜单", theme.BtnDanger},
+		{i18n.T("hud.pause.resume"), theme.TonePrimary},
+		{i18n.T("hud.pause.settings"), theme.BtnSecondary},
+		{i18n.T("hud.pause.restart"), color.RGBA{R: 220, G: 160, B: 50, A: 255}},
+		{i18n.T("hud.pause.quit"), theme.BtnDanger},
 	}
 
 	// Hover detection
@@ -97,7 +98,7 @@ func DrawPauseMenu(screen *ebiten.Image) {
 
 	// 底部快捷键提示
 	hintY := float64(py) + float64(pausePanelH) - 16
-	fm.DrawCenteredText(screen, "空格/Esc 继续 · S 开波 · B 建造 · 1/2/3 倍速 · Del 卖塔", cx, hintY, 11, color.RGBA{R: 120, G: 140, B: 170, A: 200})
+	fm.DrawCenteredText(screen, i18n.T("hud.pause.hint"), cx, hintY, 11, color.RGBA{R: 120, G: 140, B: 170, A: 200})
 }
 
 // PauseMenuHitTest 检测暂停菜单点击，返回 PauseResume/PauseRestart/PauseQuit 或 PauseNone。

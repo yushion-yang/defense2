@@ -3,9 +3,8 @@
 package gamemode
 
 import (
-	"fmt"
-
 	"defense2/internal/config"
+	"defense2/internal/i18n"
 )
 
 // baseMode 提供 Mode 接口的零值默认实现。
@@ -40,7 +39,7 @@ func (b *baseMode) OnWaveCleared(wave int, _ *Context) WaveClearResult {
 	bonus := econ.WaveBonus.Calc(wave)
 	return WaveClearResult{
 		BonusGold: bonus,
-		Message:   fmt.Sprintf("第%d波通关! +$%d", wave, bonus),
+		Message:   i18n.TF("mode.wave_clear", wave, bonus),
 	}
 }
 

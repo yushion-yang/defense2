@@ -12,6 +12,7 @@ import (
 	"defense2/internal/core/enemy"
 	"defense2/internal/core/projectile"
 	"defense2/internal/core/tower"
+	"defense2/internal/i18n"
 )
 
 // InitConfigAbilities 加载能力配置表并注册所有数据驱动的能力。
@@ -165,7 +166,7 @@ func (a *ConfigAbility) OnHit(t *tower.Tower, p *projectile.Projectile, e *enemy
 			Remaining: pm,
 		})
 		if !wasPoisoned {
-			e.SetFloatText("中毒", 100, 200, 60)
+			e.SetFloatText(i18n.T("combat.poison"), 100, 200, 60)
 		}
 		return nil
 
@@ -181,7 +182,7 @@ func (a *ConfigAbility) OnHit(t *tower.Tower, p *projectile.Projectile, e *enemy
 			Remaining: pm,
 		})
 		if !wasWeakened {
-			e.SetFloatText("虚弱", 180, 100, 220)
+			e.SetFloatText(i18n.T("combat.weaken"), 180, 100, 220)
 		}
 		return nil
 

@@ -13,6 +13,7 @@ import (
 	"defense2/internal/core/game"
 	"defense2/internal/core/mascot"
 	"defense2/internal/core/tower/abilities"
+	"defense2/internal/i18n"
 	"defense2/internal/render"
 	"defense2/internal/render/draw"
 	"defense2/internal/render/postprocess"
@@ -73,6 +74,11 @@ func (s *LoadingScene) Update() error {
 	switch s.phase {
 	case phaseConfigs:
 		s.statusText = "Loading configs..."
+		// i18n 必须在其他配置之前初始化
+		locale := LoadSettings().Locale
+		if err := i18n.Init(config.GetDataFS(), locale); err != nil {
+			log.Printf("i18n init: %v (continuing with fallback)", err)
+		}
 		render.InitGlobalIcons(config.GetAssetFS())
 		abilities.InitConfigAbilities()
 		config.LoadBalance()
@@ -80,6 +86,8 @@ func (s *LoadingScene) Update() error {
 		config.LoadAndCacheWardenConfigs()
 		config.LoadBuffRules()
 		config.LoadSpawnerConfig()
+		// 配置全部加载后，用 i18n 覆盖所有显示文本字段
+		config.ResolveConfigLabels()
 		s.progress = 0.10
 		s.phase = phaseShaders
 
@@ -221,7 +229,7 @@ func (s *LoadingScene) Draw(screen *ebiten.Image) {
 	// 标题
 	fm.DrawCenteredBoldText(screen, "Mini Tower Defense", sw/2, sh/2-50, 28, loadingTextMain)
 	// 副标题
-	fm.DrawCenteredText(screen, "迷你塔防", sw/2, sh/2-18, 14, loadingTextSub)
+	fm.DrawCenteredText(screen, i18n.T("scene.loading.subtitle"), sw/2, sh/2-18, 14, loadingTextSub)
 
 	// --- 进度条 ---
 	barX := cx - loadBarWidth/2

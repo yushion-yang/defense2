@@ -184,7 +184,7 @@ func applyEnvoyBuff(w *warden.Warden, s *EnvoyState, ctx *warden.TickContext) {
 	best.Buffs.Add(buff.Buff{
 		ID:        key,
 		Category:  buff.CatAura,
-		Source:    "金灵战灵",
+		Source:    "envoy_warden",
 		Value:     tempBonus,
 		Duration:  s.BuffDuration,
 		Remaining: s.BuffDuration,

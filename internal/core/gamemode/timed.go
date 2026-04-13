@@ -3,8 +3,9 @@
 package gamemode
 
 import (
-	"fmt"
 	"math"
+
+	"defense2/internal/i18n"
 )
 
 const defaultTargetSeconds = 300.0 // 5 分钟
@@ -54,7 +55,7 @@ func (m *TimedMode) OnWaveCleared(wave int, _ *Context) WaveClearResult {
 	return WaveClearResult{
 		BonusGold:    bonus,
 		PerfectBonus: perfect,
-		Message:      fmt.Sprintf("第%d波通关! +$%d", wave, bonus),
+		Message:      i18n.TF("mode.wave_clear", wave, bonus),
 	}
 }
 
@@ -72,7 +73,7 @@ func (m *TimedMode) GetHUDConfig(_ *Context) HUDConfig {
 func (m *TimedMode) GetEndData(ctx *Context) EndData {
 	survived := m.targetSeconds - math.Max(0, m.remainingTime)
 	return EndData{
-		ModeName: "限时防守",
+		ModeName: i18n.T("mode.timed.name"),
 		Score:    m.GetScore(ctx),
 		Extra: map[string]any{
 			"survivedSeconds": math.Round(survived),

@@ -3,11 +3,11 @@
 package scene
 
 import (
-	"fmt"
 	"image/color"
 
 	"defense2/internal/config"
 	"defense2/internal/core/game"
+	"defense2/internal/i18n"
 	"defense2/internal/render"
 	"defense2/internal/render/draw"
 	"defense2/internal/render/hud"
@@ -155,12 +155,12 @@ func (s *WardenSelectScene) Draw(screen *ebiten.Image) {
 	sw := float64(game.ScreenWidth)
 
 	// ── 标题 ──
-	fm.DrawCenteredBoldText(screen, "选择你的战灵", sw/2, 20, 22, theme.TextTitle)
-	fm.DrawCenteredText(screen, "观察敌情，选择最适合的战灵 — 或不选，挑战纯塔模式", sw/2, 50, 11, theme.TextMuted)
+	fm.DrawCenteredBoldText(screen, i18n.T("scene.warden.title"), sw/2, 20, 22, theme.TextTitle)
+	fm.DrawCenteredText(screen, i18n.T("scene.warden.subtitle"), sw/2, 50, 11, theme.TextMuted)
 
 	// ── 返回按钮 ──
 	draw.RoundRect(screen, 20, 16, 70, 28, 12, theme.BtnSecondary)
-	fm.DrawCenteredText(screen, "<- 返回", 55, 22, 12, theme.TextBody)
+	fm.DrawCenteredText(screen, i18n.T("scene.common.back"), 55, 22, 12, theme.TextBody)
 
 	// ── 左侧列表 ──
 	for i, opt := range wardenOptions() {
@@ -194,7 +194,7 @@ func (s *WardenSelectScene) Draw(screen *ebiten.Image) {
 		// 类别
 		if opt.Category != "-" {
 			catClr := theme.TextMuted
-			if opt.Category == "移动型" {
+			if opt.Category == i18n.T("game.warden.cat.mobile") {
 				catClr = color.RGBA{R: 100, G: 200, B: 130, A: 200}
 			} else {
 				catClr = color.RGBA{R: 200, G: 160, B: 100, A: 200}
@@ -217,7 +217,7 @@ func (s *WardenSelectScene) Draw(screen *ebiten.Image) {
 		confirmClr = color.RGBA{R: 60, G: 180, B: 100, A: 255}
 	}
 	draw.RoundRect(screen, float32(btnStartX), float32(wBtnY), float32(wBtnW), float32(wBtnH), 14, confirmClr)
-	confirmLabel := fmt.Sprintf("选择 %s", opt.Name)
+	confirmLabel := i18n.TF("scene.warden.confirm", opt.Name)
 	fm.DrawCenteredBoldText(screen, confirmLabel, btnStartX+wBtnW/2, wBtnY+9, theme.FontLG, theme.TextTitle)
 
 	// 跳过按钮
@@ -227,7 +227,7 @@ func (s *WardenSelectScene) Draw(screen *ebiten.Image) {
 	}
 	skipX := btnStartX + wBtnW + wBtnGap
 	draw.RoundRect(screen, float32(skipX), float32(wBtnY), float32(wBtnW), float32(wBtnH), 14, skipClr)
-	fm.DrawCenteredText(screen, "不选（纯塔挑战）", skipX+wBtnW/2, wBtnY+10, theme.FontMD, theme.TextMuted)
+	fm.DrawCenteredText(screen, i18n.T("scene.warden.skip"), skipX+wBtnW/2, wBtnY+10, theme.FontMD, theme.TextMuted)
 }
 
 func (s *WardenSelectScene) drawDetail(screen *ebiten.Image, fm *render.FontManager, opt hud.WardenOption) {
@@ -241,7 +241,7 @@ func (s *WardenSelectScene) drawDetail(screen *ebiten.Image, fm *render.FontMana
 	draw.StrokeRoundRect(screen, x, y, w, h, 12, 1, theme.PanelBorder)
 
 	if opt.Key == "none" {
-		fm.DrawCenteredText(screen, "不使用战灵，纯塔防御模式", float64(x)+float64(w)/2, float64(y)+float64(h)/2-10, theme.FontLG, theme.TextMuted)
+		fm.DrawCenteredText(screen, i18n.T("scene.warden.none_desc"), float64(x)+float64(w)/2, float64(y)+float64(h)/2-10, theme.FontLG, theme.TextMuted)
 		return
 	}
 
@@ -258,7 +258,7 @@ func (s *WardenSelectScene) drawDetail(screen *ebiten.Image, fm *render.FontMana
 	}
 
 	// 标题行
-	fm.DrawBoldText(screen, fmt.Sprintf("战灵 · %s", opt.Name), px, py, 18, theme.TextTitle)
+	fm.DrawBoldText(screen, i18n.TF("scene.warden.detail_title", opt.Name), px, py, 18, theme.TextTitle)
 	py += 24
 
 	// 描述
@@ -296,7 +296,7 @@ func (s *WardenSelectScene) drawDetail(screen *ebiten.Image, fm *render.FontMana
 	py += 12
 
 	// Lv.1 属性网格 (2行3列)
-	fm.DrawBoldText(screen, "1级 属性", px, py, theme.FontMD, theme.TextTitle)
+	fm.DrawBoldText(screen, i18n.T("scene.warden.lv1_stats"), px, py, theme.FontMD, theme.TextTitle)
 	py += 20
 
 	attrClr := theme.TextBody
@@ -304,12 +304,12 @@ func (s *WardenSelectScene) drawDetail(screen *ebiten.Image, fm *render.FontMana
 	colW := 150.0
 
 	attrs := []struct{ iconName, label, value string }{
-		{"stat-damage", "伤害", opt.Damage},
-		{"stat-atkspd", "间隔", opt.Interval},
-		{"stat-movspd", "速度", opt.Speed},
-		{"stat-splash", "范围", opt.AoE},
-		{"stat-atkspd", "持续", opt.Duration},
-		{"burn", "持伤", opt.DoT},
+		{"stat-damage", i18n.T("game.attr.damage"), opt.Damage},
+		{"stat-atkspd", i18n.T("game.attr.interval"), opt.Interval},
+		{"stat-movspd", i18n.T("game.attr.speed"), opt.Speed},
+		{"stat-splash", i18n.T("game.attr.range"), opt.AoE},
+		{"stat-atkspd", i18n.T("game.attr.duration"), opt.Duration},
+		{"burn", i18n.T("game.attr.dot"), opt.DoT},
 	}
 
 	im := render.GlobalIcons()
@@ -333,18 +333,18 @@ func (s *WardenSelectScene) drawDetail(screen *ebiten.Image, fm *render.FontMana
 
 	// 成长
 	py += 40
-	fm.DrawBoldText(screen, "成长", px, py, theme.FontMD, theme.TextTitle)
+	fm.DrawBoldText(screen, i18n.T("scene.warden.growth"), px, py, theme.FontMD, theme.TextTitle)
 	py += 18
 	growthClr := color.RGBA{R: 76, G: 175, B: 80, A: 255}
 	growthText := ""
 	if opt.GrowthKill != "-" && opt.GrowthKill != "" {
-		growthText += fmt.Sprintf("击杀 %s", opt.GrowthKill)
+		growthText += i18n.TF("scene.warden.growth_kill", opt.GrowthKill)
 	}
 	if opt.GrowthWave != "-" && opt.GrowthWave != "" {
 		if growthText != "" {
 			growthText += "    "
 		}
-		growthText += fmt.Sprintf("通波 %s", opt.GrowthWave)
+		growthText += i18n.TF("scene.warden.growth_wave", opt.GrowthWave)
 	}
 	if growthText != "" {
 		fm.DrawText(screen, growthText, px, py, theme.FontSM, growthClr)

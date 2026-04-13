@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"log"
 	"strings"
+
+	"defense2/internal/i18n"
 )
 
 // UnlockData 解锁进度数据。
@@ -40,29 +42,32 @@ var unlockRules = []unlockRule{
 
 // unlockRequirementText 返回锁定项的解锁条件文本。
 // 查找 unlockRules 中哪条规则包含该项，返回需要通关的地图名。
-var unlockRequirementText = map[string]string{
-	"map:map_02":       "通关 蜿蜒峡谷 解锁",
-	"tower:shotgun":    "通关 蜿蜒峡谷 解锁",
-	"map:map_03":       "通关 林间双道 解锁",
-	"map:map_04":       "通关 林间双道 解锁",
-	"warden:core":      "通关 林间双道 解锁",
-	"tower:prism":      "通关 林间双道 解锁",
-	"map:map_05":       "通关 回旋堡垒 解锁",
-	"map:map_06":       "通关 回旋堡垒 解锁",
-	"warden:chain":     "通关 回旋堡垒 解锁",
-	"tower:cyclone":    "通关 回旋堡垒 解锁",
-	"map:map_07":       "通关 迷宫回廊 解锁",
-	"map:map_08":       "通关 迷宫回廊 解锁",
-	"warden:skystrike": "通关 迷宫回廊 解锁",
-	"warden:envoy":     "通关 迷宫回廊 解锁",
+// unlockRequirementMap maps locked items to their required map IDs.
+// The display text is resolved at runtime via i18n.
+var unlockRequirementMap = map[string]string{
+	"map:map_02":       "map_01",
+	"tower:shotgun":    "map_01",
+	"map:map_03":       "map_02",
+	"map:map_04":       "map_02",
+	"warden:core":      "map_02",
+	"tower:prism":      "map_02",
+	"map:map_05":       "map_04",
+	"map:map_06":       "map_04",
+	"warden:chain":     "map_04",
+	"tower:cyclone":    "map_04",
+	"map:map_07":       "map_06",
+	"map:map_08":       "map_06",
+	"warden:skystrike": "map_06",
+	"warden:envoy":     "map_06",
 }
 
 // UnlockRequirement 返回指定项的解锁条件描述。
 // prefix 为 "map"/"tower"/"warden"，key 为具体 ID。
 func UnlockRequirement(prefix, key string) string {
 	full := prefix + ":" + key
-	if text, ok := unlockRequirementText[full]; ok {
-		return text
+	if reqMap, ok := unlockRequirementMap[full]; ok {
+		mapName := i18n.T("progress.map." + reqMap + ".name")
+		return i18n.TF("progress.unlock_requirement", mapName)
 	}
 	return ""
 }
@@ -250,25 +255,18 @@ func (pm *ProgressManager) isAlreadyUnlocked(item string) bool {
 
 // unlockDisplayName 将解锁项 ID 转为显示名。
 func unlockDisplayName(item string) string {
-	names := map[string]string{
-		"map:map_02":    "关卡: 林间双道",
-		"map:map_03":    "关卡: 铁壁防线",
-		"map:map_04":    "关卡: 回旋堡垒",
-		"map:map_05":    "关卡: 双线战场",
-		"map:map_06":    "关卡: 迷宫回廊",
-		"map:map_07":    "关卡: 极限窄道",
-		"map:map_08":    "关卡: 竞技场",
-		"tower:shotgun": "塔: 霰弹塔",
-		"tower:prism":   "塔: 棱镜塔",
-		"tower:cyclone": "塔: 旋风塔",
-
-		"warden:core":      "战灵: 机甲",
-		"warden:chain":     "战灵: 聚能",
-		"warden:skystrike": "战灵: 水灵",
-		"warden:envoy":     "战灵: 金灵",
+	parts := strings.SplitN(item, ":", 2)
+	if len(parts) != 2 {
+		return item
 	}
-	if name, ok := names[item]; ok {
-		return name
+	prefix, key := parts[0], parts[1]
+	switch prefix {
+	case "map":
+		return i18n.TF("progress.unlock.map", i18n.T("progress.map."+key+".name"))
+	case "tower":
+		return i18n.TF("progress.unlock.tower", i18n.T("progress.tower."+key+".name"))
+	case "warden":
+		return i18n.TF("progress.unlock.warden", i18n.T("progress.warden."+key+".name"))
 	}
 	return item
 }

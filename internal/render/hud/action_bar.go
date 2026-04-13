@@ -8,8 +8,8 @@ package hud
 
 import (
 	"image/color"
-	"strconv"
 
+	"defense2/internal/i18n"
 	"defense2/internal/render"
 	"defense2/internal/render/draw"
 	"defense2/internal/render/theme"
@@ -56,7 +56,7 @@ func DrawActionBar(screen *ebiten.Image, d ActionBarData) {
 	if d.BuildActive {
 		buildClr = theme.TonePrimary
 	}
-	btns = append(btns, btnDef{"build", "造塔", buildClr})
+	btns = append(btns, btnDef{"build", i18n.T("hud.actionbar.build"), buildClr})
 
 	// Items button
 	itemClr := theme.ToneSecondary
@@ -65,9 +65,9 @@ func DrawActionBar(screen *ebiten.Image, d ActionBarData) {
 	} else if d.ItemTotal == 0 {
 		itemClr = theme.ToneDisabled
 	}
-	itemLabel := "道具"
+	itemLabel := i18n.T("hud.actionbar.items")
 	if d.ItemTotal > 0 {
-		itemLabel = "道具(" + strconv.Itoa(d.ItemTotal) + ")"
+		itemLabel = i18n.TF("hud.actionbar.items_n", d.ItemTotal)
 	}
 	btns = append(btns, btnDef{"items", itemLabel, itemClr})
 

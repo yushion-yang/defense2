@@ -3,9 +3,8 @@
 package gamemode
 
 import (
-	"fmt"
-
 	"defense2/internal/config"
+	"defense2/internal/i18n"
 )
 
 // EndlessMode 无尽模式。
@@ -40,10 +39,10 @@ func (m *EndlessMode) OnWaveCleared(wave int, ctx *Context) WaveClearResult {
 	econ := modeEcon("endless")
 	bonus := econ.WaveBonus.Calc(wave)
 	perfect := econ.PerfectBonus.Calc(wave)
-	msg := fmt.Sprintf("第%d波通关! +$%d", wave, bonus)
+	msg := i18n.TF("mode.wave_clear", wave, bonus)
 	bossN := config.GlobalSpawnerConfig().Boss.EveryNWaves
 	if bossN > 0 && wave%bossN == 0 {
-		msg = fmt.Sprintf("第%d波通关! 首领波! +$%d", wave, bonus)
+		msg = i18n.TF("mode.wave_clear_boss", wave, bonus)
 	}
 	return WaveClearResult{
 		BonusGold:    bonus,
@@ -54,7 +53,7 @@ func (m *EndlessMode) OnWaveCleared(wave int, ctx *Context) WaveClearResult {
 
 func (m *EndlessMode) GetEndData(ctx *Context) EndData {
 	return EndData{
-		ModeName: "无尽模式",
+		ModeName: i18n.T("mode.endless.name"),
 		Score:    m.GetScore(ctx),
 		Extra: map[string]any{
 			"wavesReached": ctx.Wave,

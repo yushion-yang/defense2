@@ -109,6 +109,7 @@ func LoadEnemyArchetypes() (map[string]*EnemyArchetype, error) {
 		result[a.ID] = &a
 		enemyArchetypeOrder = append(enemyArchetypeOrder, a.ID)
 	}
+	globalEnemyArchetypes = result
 	return result, nil
 }
 
@@ -148,6 +149,14 @@ func parseAbilityRef(raw json.RawMessage) EnemyAbilityRef {
 		return EnemyAbilityRef{Type: obj.Type, Base: obj.Base, Potential: obj.Potential, Param: obj.Param}
 	}
 	return EnemyAbilityRef{}
+}
+
+// globalEnemyArchetypes 全局敌人原型缓存（由 spawner 首次加载时填充）。
+var globalEnemyArchetypes map[string]*EnemyArchetype
+
+// GlobalEnemyArchetypes 返回全局缓存的敌人原型表。
+func GlobalEnemyArchetypes() map[string]*EnemyArchetype {
+	return globalEnemyArchetypes
 }
 
 // enemyArchetypeOrder JSON 中的原型 key 顺序。

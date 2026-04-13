@@ -15,6 +15,7 @@ import (
 	"defense2/internal/core/buff"
 	"defense2/internal/core/strength"
 	"defense2/internal/core/tower"
+	"defense2/internal/i18n"
 	"defense2/internal/render/hud"
 	"defense2/internal/render/theme"
 )
@@ -41,7 +42,7 @@ func BuildInfoPanelVM(t *tower.Tower, sellValue int, wavesCleared int, testMode 
 	// Strength title
 	if sd != nil {
 		vm.StrengthColor = strengthColor(effStr)
-		strTxt := fmt.Sprintf("强度%.0f", effStr)
+		strTxt := i18n.TF("game.tower.strength_val", effStr)
 		breakdown := strengthBreakdown(sd)
 		if breakdown != "" {
 			strTxt += " " + breakdown
@@ -68,7 +69,7 @@ func BuildInfoPanelVM(t *tower.Tower, sellValue int, wavesCleared int, testMode 
 	if style == "" {
 		style = "projectile"
 	}
-	vm.AttackStyleText = "攻击: " + attackStyleLabel(style)
+	vm.AttackStyleText = i18n.T("game.tower.attack_prefix") + attackStyleLabel(style)
 
 	// Slot display — 只显示已选能力和待选的槽位，未解锁/空闲的不占位
 	abTable := config.GlobalAbilityTable()
@@ -138,9 +139,9 @@ func BuildInfoPanelVM(t *tower.Tower, sellValue int, wavesCleared int, testMode 
 		} else {
 			desc += fmt.Sprintf(" +%s", fmtNum(agg.totalValue))
 		}
-		src := "光环"
+		src := i18n.T("game.buff.aura")
 		if agg.sourceCount > 1 {
-			src = fmt.Sprintf("光环×%d", agg.sourceCount)
+			src = i18n.TF("game.buff.aura_multi", agg.sourceCount)
 		}
 		vm.Buffs = append(vm.Buffs, hud.BuffVM{
 			Source:    src,
@@ -171,9 +172,9 @@ func BuildInfoPanelVM(t *tower.Tower, sellValue int, wavesCleared int, testMode 
 
 	// Buttons
 	upgCost := tower.StrengthBuyCost()
-	vm.UpgradeButtonText = fmt.Sprintf("强度+10 $%d", upgCost)
-	vm.BulkUpgradeButtonText = fmt.Sprintf("强度+50 $%d", upgCost*5)
-	vm.SellButtonText = fmt.Sprintf("卖%d", sellValue)
+	vm.UpgradeButtonText = i18n.TF("game.tower.btn_upgrade", upgCost)
+	vm.BulkUpgradeButtonText = i18n.TF("game.tower.btn_bulk_upgrade", upgCost*5)
+	vm.SellButtonText = i18n.TF("game.tower.btn_sell", sellValue)
 	vm.CanAffordUpgrade = gold >= upgCost
 	vm.CanAffordBulkUpgrade = gold >= upgCost*5
 
@@ -202,10 +203,10 @@ func strengthBreakdown(sd *strength.StrengthData) string {
 	}
 	var parts []string
 	if sd.Permanent > 0 {
-		parts = append(parts, fmt.Sprintf("永+%.0f", sd.Permanent))
+		parts = append(parts, fmt.Sprintf("%s+%.0f", i18n.T("game.str.perm"), sd.Permanent))
 	}
 	if chain, ok := sd.Temp["chain"]; ok && chain > 0 {
-		parts = append(parts, fmt.Sprintf("链+%.0f", chain))
+		parts = append(parts, fmt.Sprintf("%s+%.0f", i18n.T("game.str.chain"), chain))
 	}
 	for key, val := range sd.Temp {
 		if key == "chain" || val <= 0 {
@@ -258,62 +259,57 @@ func buildAttrSegsWithMods(numFmt string, base, potential, effStr, pctMod, flatM
 
 // attackStyleLabel returns the Chinese label for an attack style ID.
 func attackStyleLabel(style string) string {
-	labels := map[string]string{
-		"projectile": "投射物",
-		"wideBeam":   "宽光束",
-		"scatter":    "散射",
-		"spin_aoe":   "旋转范围",
-		"radial":     "环射",
+	key := "game.attack_style." + style
+	label := i18n.T(key)
+	if label == key {
+		return style
 	}
-	if l, ok := labels[style]; ok {
-		return l
-	}
-	return style
+	return label
 }
 
-// buffLabels maps raw buff IDs to player-friendly Chinese labels.
-var buffLabels = map[string]string{
+// buffLabelKeys maps raw buff IDs to i18n keys.
+var buffLabelKeys = map[string]string{
 	// Tower auras (CatAura)
-	"aura:damageAmp": "增伤",
-	"aura:pctDamage": "百分比伤害",
-	"aura:pctSpeed":  "攻速",
-	"aura:flatRange": "射程",
-	"aura:crit":      "暴击",
-	"towerStrength":  "强度增益",
+	"aura:damageAmp": "game.buff.damage_up",
+	"aura:pctDamage": "game.buff.pct_damage",
+	"aura:pctSpeed":  "game.buff.atk_speed",
+	"aura:flatRange": "game.buff.range",
+	"aura:crit":      "game.buff.crit",
+	"towerStrength":  "game.buff.str_boost",
 	// CC (CatCC)
-	"stun": "眩晕",
-	"slow": "减速",
-	"root": "禁锢",
+	"stun": "game.buff.stun",
+	"slow": "game.buff.slow",
+	"root": "game.buff.root",
 	// DoT (CatDoT)
-	"bleed":  "流血",
-	"burn":   "燃烧",
-	"poison": "中毒",
+	"bleed":  "game.buff.bleed",
+	"burn":   "game.buff.burn",
+	"poison": "game.buff.poison",
 	// Defense (CatDefense)
-	"controlImmune": "控制免疫",
-	"damageReduce":  "减伤",
+	"controlImmune": "game.buff.control_immune",
+	"damageReduce":  "game.buff.damage_reduce",
 	// Debuff (CatDebuff)
-	"weaken": "易伤",
+	"weaken": "game.buff.weaken",
 	// Behavior (CatBehavior)
-	"stealth":    "隐身",
-	"berserk":    "狂暴",
-	"regen":      "再生",
-	"healAura":   "治疗光环",
-	"bufferAura": "加速光环",
-	"speedUp":    "加速",
-	"phaseShift": "相位转移",
+	"stealth":    "game.buff.stealth",
+	"berserk":    "game.buff.berserk",
+	"regen":      "game.buff.regen",
+	"healAura":   "game.buff.heal_aura",
+	"bufferAura": "game.buff.speed_aura",
+	"speedUp":    "game.buff.speed_up",
+	"phaseShift": "game.buff.phase_shift",
 }
 
 // buffLabel returns a player-friendly label for a buff ID.
 func buffLabel(id string) string {
-	if label, ok := buffLabels[id]; ok {
-		return label
+	if key, ok := buffLabelKeys[id]; ok {
+		return i18n.T(key)
 	}
 	// Dynamic warden buff IDs: "chain_warden_<N>", "envoy_buff_<N>"
 	if strings.HasPrefix(id, "chain_warden_") {
-		return "聚能链接"
+		return i18n.T("game.buff.chain_link")
 	}
 	if strings.HasPrefix(id, "envoy_buff_") {
-		return "金灵强化"
+		return i18n.T("game.buff.envoy_boost")
 	}
 	return id // fallback to raw ID
 }
@@ -369,13 +365,13 @@ var (
 		"multishot": "multishot",
 		"pulse":     "pulse",
 	}
-	fallbackLabelMap = map[string]string{
-		"multishot": "多重射击",
-		"pulse":     "脉冲",
+	fallbackLabelKeys = map[string]string{
+		"multishot": "game.ability.multishot",
+		"pulse":     "game.ability.pulse",
 	}
-	fallbackDescMap = map[string]string{
-		"multishot": "多重射击",
-		"pulse":     "脉冲",
+	fallbackDescKeys = map[string]string{
+		"multishot": "game.ability.multishot",
+		"pulse":     "game.ability.pulse",
 	}
 )
 
@@ -395,8 +391,8 @@ func buildAbilityVM(abilityType string, abTable config.AbilityTable, effStr floa
 	label := abilityType
 	if def != nil {
 		label = def.Label
-	} else if l, ok := fallbackLabelMap[abilityType]; ok {
-		label = l
+	} else if key, ok := fallbackLabelKeys[abilityType]; ok {
+		label = i18n.T(key)
 	}
 
 	vm := hud.AbilityVM{
@@ -406,8 +402,8 @@ func buildAbilityVM(abilityType string, abTable config.AbilityTable, effStr floa
 
 	// No AbilityDef → use fallback description
 	if def == nil {
-		if desc, ok := fallbackDescMap[abilityType]; ok {
-			vm.Fallback = desc
+		if key, ok := fallbackDescKeys[abilityType]; ok {
+			vm.Fallback = i18n.T(key)
 		}
 		return vm
 	}

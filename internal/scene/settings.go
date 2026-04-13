@@ -9,6 +9,7 @@ import (
 	"math"
 
 	"defense2/internal/core/game"
+	"defense2/internal/i18n"
 	"defense2/internal/render"
 	"defense2/internal/render/draw"
 	"defense2/internal/render/theme"
@@ -231,19 +232,19 @@ func (s *SettingsScene) Draw(screen *ebiten.Image) {
 	// 标题
 	cx := float64(px) + float64(settingsPanelW)/2
 	titleY := float64(py) + 24
-	fm.DrawCenteredBoldText(screen, "设    置", cx, titleY, 24, theme.TextTitle)
+	fm.DrawCenteredBoldText(screen, i18n.T("settings.title"), cx, titleY, 24, theme.TextTitle)
 
 	// ── 音效音量滑块 ──
-	s.drawSlider(screen, fm, 0, "音效音量", s.sfxVol)
+	s.drawSlider(screen, fm, 0, i18n.T("settings.sfx_volume"), s.sfxVol)
 
 	// ── 音乐音量滑块 ──
-	s.drawSlider(screen, fm, 1, "音乐音量", s.bgmVol)
+	s.drawSlider(screen, fm, 1, i18n.T("settings.bgm_volume"), s.bgmVol)
 
 	// ── 画质选择 ──
 	labelY := float64(py) + 195
-	fm.DrawCenteredText(screen, "画    质", cx, labelY, theme.FontBody, theme.TextMuted)
+	fm.DrawCenteredText(screen, i18n.T("settings.quality"), cx, labelY, theme.FontBody, theme.TextMuted)
 
-	qualityLabels := [3]string{"高", "中", "低"}
+	qualityLabels := [3]string{i18n.T("settings.quality.high"), i18n.T("settings.quality.medium"), i18n.T("settings.quality.low")}
 	for i := 0; i < 3; i++ {
 		qx, qy, qw, qh := qualityBtnGeom(i)
 		btnClr := theme.ToneSecondary
@@ -261,7 +262,7 @@ func (s *SettingsScene) Draw(screen *ebiten.Image) {
 
 	// ── 返回按钮 ──
 	bkx, bky, bkw, bkh := backBtnGeom()
-	ui.Button(screen, bkx, bky, bkw, bkh, "返回", ui.ButtonStyle{
+	ui.Button(screen, bkx, bky, bkw, bkh, i18n.T("settings.back"), ui.ButtonStyle{
 		BgColor:   theme.BtnSecondary,
 		TextColor: color.White,
 		FontSize:  theme.FontH1,

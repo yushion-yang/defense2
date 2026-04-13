@@ -107,8 +107,8 @@ func TestBarrage_SpriteKey(t *testing.T) {
 		t.Errorf("expected gatling sprite key, got %q", key)
 	}
 	label := tower.SpriteLabelFor(key)
-	if label != "加特林" {
-		t.Errorf("expected 加特林 label, got %q", label)
+	if label != "tower.sprite.gatling" { // without i18n.Init, T() returns the key itself
+		t.Errorf("expected tower.sprite.gatling key, got %q", label)
 	}
 }
 

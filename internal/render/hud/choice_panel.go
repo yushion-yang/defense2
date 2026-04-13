@@ -9,6 +9,7 @@ import (
 	"image/color"
 	"image/png"
 
+	"defense2/internal/i18n"
 	"defense2/internal/render"
 	"defense2/internal/render/draw"
 	"defense2/internal/render/theme"
@@ -51,10 +52,11 @@ var tierColors = map[string]color.RGBA{
 }
 
 // 品质中文名映射。
-var tierLabels = map[string]string{
-	"normal": "普通",
-	"rare":   "稀有",
-	"epic":   "史诗",
+// tierLabelKeys maps tier names to i18n keys.
+var tierLabelKeys = map[string]string{
+	"normal": "hud.tier.normal",
+	"rare":   "hud.tier.rare",
+	"epic":   "hud.tier.epic",
 }
 
 // cardLayout 描述卡片布局参数（根据选项数量动态计算）。
@@ -265,8 +267,8 @@ func (p *ChoicePanel) Draw(screen *ebiten.Image) {
 		// 品质标签（图标下方）
 		tierLabelY := iconY + float64(iconSize) + 4
 		tierText := opt.Tier
-		if cn, ok := tierLabels[opt.Tier]; ok {
-			tierText = cn
+		if key, ok := tierLabelKeys[opt.Tier]; ok {
+			tierText = i18n.T(key)
 		}
 		fm.DrawCenteredText(screen, tierText, centerX, tierLabelY, lay.tierSize, tierClr)
 

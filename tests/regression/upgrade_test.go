@@ -93,9 +93,9 @@ func TestRegression_Upgrade_ResolveStyle(t *testing.T) {
 	}
 }
 
-// Verify CategoryName returns Chinese names.
+// Verify CategoryName returns i18n keys (without i18n.Init, T() returns the key itself).
 func TestRegression_Upgrade_CategoryNames(t *testing.T) {
-	names := []string{"攻击模式", "控制效果", "命中加伤", "增益光环", "持续伤害", "范围效果"}
+	names := []string{"tower.category.attack", "tower.category.cc", "tower.category.damage", "tower.category.buff", "tower.category.dot", "tower.category.zone"}
 	for i, expected := range names {
 		got := tower.CategoryName(i)
 		if got != expected {

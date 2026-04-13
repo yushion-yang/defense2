@@ -5,9 +5,9 @@
 package hud
 
 import (
-	"fmt"
 	"image/color"
 
+	"defense2/internal/i18n"
 	"defense2/internal/render"
 	"defense2/internal/render/draw"
 	"defense2/internal/render/theme"
@@ -69,19 +69,19 @@ func DrawWardenPanel(screen *ebiten.Image, d WardenPanelData) {
 			draw.Sprite(screen, d.Icon, x+iconSize/2, y+iconSize/2, iconSize)
 			textX += iconSize + 4
 		}
-		titleTxt := fmt.Sprintf("战灵·%s", d.Name)
+		titleTxt := i18n.TF("hud.warden.title", d.Name)
 		fm.DrawBoldText(screen, titleTxt, textX, y, theme.FontLG, theme.TextTitle)
 
-		strIndicator := fmt.Sprintf("强度%.0f", d.Strength)
+		strIndicator := i18n.TF("hud.warden.strength_short", d.Strength)
 		fm.DrawRightText(screen, strIndicator, x+w, y+2, theme.FontSM, theme.TextBody)
 	})
 
 	// Row 2: Strength — "强度 X" (left) + "最高 X" (right).
 	p.AddRow(float32(theme.DetailAttrH), func(screen *ebiten.Image, x, y float64, w float64) {
-		strTxt := fmt.Sprintf("强度 %.0f", d.Strength)
+		strTxt := i18n.TF("hud.warden.strength", d.Strength)
 		fm.DrawText(screen, strTxt, x, y, theme.FontSM, theme.TextBody)
 
-		peakTxt := fmt.Sprintf("最高 %.0f", d.PeakStrength)
+		peakTxt := i18n.TF("hud.warden.peak_strength", d.PeakStrength)
 		fm.DrawRightText(screen, peakTxt, x+w, y, theme.FontSM, theme.TextMuted)
 	})
 

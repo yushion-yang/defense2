@@ -9,6 +9,7 @@ import (
 	"defense2/internal/config"
 	"defense2/internal/core/game"
 	"defense2/internal/core/persistence"
+	"defense2/internal/i18n"
 	"defense2/internal/render"
 	"defense2/internal/render/draw"
 	"defense2/internal/render/hud"
@@ -17,7 +18,6 @@ import (
 	"defense2/internal/render/ui"
 
 	"github.com/hajimehoshi/ebiten/v2"
-	"github.com/hajimehoshi/ebiten/v2/inpututil"
 )
 
 // ── 布局常量 ────────────────────────────────────
@@ -122,13 +122,6 @@ func (s *CampaignSelectScene) Update() error {
 		s.hoverBack = false
 	}
 
-	// Esc 返回
-	if inpututil.IsKeyJustPressed(ebiten.KeyEscape) {
-		playUIClick(s.switcher)
-		s.switcher.SwitchScene(NewSelectScene(s.switcher))
-		return nil
-	}
-
 	mx, my := draw.CursorPos()
 	if isTapJustPressed() {
 		// 返回
@@ -147,7 +140,7 @@ func (s *CampaignSelectScene) Update() error {
 				if req != "" {
 					hud.ShowToast(req)
 				} else {
-					hud.ShowToast("该关卡尚未解锁")
+					hud.ShowToast(i18n.T("scene.campaign.locked"))
 				}
 			}
 		}
@@ -243,10 +236,10 @@ func (s *CampaignSelectScene) Draw(screen *ebiten.Image) {
 		backBg = theme.BtnMuted
 	}
 	draw.RoundRect(screen, 20, 16, 70, 28, 12, backBg)
-	fm.DrawCenteredText(screen, "<- 返回", 55, 22, theme.FontMD, theme.TextBody)
+	fm.DrawCenteredText(screen, i18n.T("scene.common.back"), 55, 22, theme.FontMD, theme.TextBody)
 
 	// ── 标题 ──
-	fm.DrawCenteredText(screen, "战役模式 — 选择关卡", sw/2, 20, 22, theme.TextTitle)
+	fm.DrawCenteredText(screen, i18n.T("scene.campaign.title"), sw/2, 20, 22, theme.TextTitle)
 
 	// ── 地图卡片 ──
 	s.drawMapCards(screen, fm)
@@ -261,14 +254,14 @@ func (s *CampaignSelectScene) Draw(screen *ebiten.Image) {
 		} else {
 			req := persistence.UnlockRequirement("map", level.ID)
 			if req == "" {
-				req = "该关卡尚未解锁"
+				req = i18n.T("scene.campaign.locked")
 			}
 			fm.DrawCenteredText(screen, req, sw/2, csDescY, 12, theme.TextLocked)
 		}
 	}
 
 	// ── 难度标签 ──
-	fm.DrawCenteredText(screen, "难度", sw/2, csDiffY-18, 12, theme.TextMuted)
+	fm.DrawCenteredText(screen, i18n.T("scene.select.difficulty"), sw/2, csDiffY-18, 12, theme.TextMuted)
 
 	// ── 难度按钮 ──
 	s.drawDiffBtns(screen, fm)
@@ -283,7 +276,7 @@ func (s *CampaignSelectScene) Draw(screen *ebiten.Image) {
 	} else if s.hoverStart {
 		btnClr = greenBtnHover
 	}
-	ui.Button(screen, bx, by, float32(csBtnW), float32(csBtnH), "开始游戏", ui.ButtonStyle{
+	ui.Button(screen, bx, by, float32(csBtnW), float32(csBtnH), i18n.T("scene.select.start_game"), ui.ButtonStyle{
 		BgColor:  btnClr,
 		FontSize: 18,
 		Radius:   20,
@@ -291,8 +284,8 @@ func (s *CampaignSelectScene) Draw(screen *ebiten.Image) {
 	})
 
 	// ── 底部提示 ──
-	fm.DrawCenteredText(screen, "点击卡片选择关卡", sw/2, sh-30, 10, textDim)
-	fm.DrawCenteredText(screen, game.Version, sw/2, sh-12, 9, color.RGBA{R: 60, G: 65, B: 80, A: 255})
+	fm.DrawCenteredText(screen, i18n.T("scene.campaign.hint"), sw/2, sh-30, 10, textDim)
+	fm.DrawCenteredText(screen, "v0.1.0", sw/2, sh-12, 9, color.RGBA{R: 60, G: 65, B: 80, A: 255})
 }
 
 func (s *CampaignSelectScene) drawMapCards(screen *ebiten.Image, fm *render.FontManager) {
@@ -343,7 +336,7 @@ func (s *CampaignSelectScene) drawMapCards(screen *ebiten.Image, fm *render.Font
 		if locked {
 			// 锁定状态：显示锁图标和解锁条件
 			fm.DrawCenteredBoldText(screen, level.Name, cx, float64(y)+28, 13, theme.TextLocked)
-			fm.DrawCenteredText(screen, "[ 锁定 ]", cx, float64(y)+52, 14, theme.TextLocked)
+			fm.DrawCenteredText(screen, i18n.T("scene.campaign.locked_tag"), cx, float64(y)+52, 14, theme.TextLocked)
 			req := persistence.UnlockRequirement("map", level.ID)
 			if req != "" {
 				fm.DrawCenteredText(screen, req, cx, float64(y)+74, 10, theme.TextLocked)
@@ -363,7 +356,7 @@ func (s *CampaignSelectScene) drawMapCards(screen *ebiten.Image, fm *render.Font
 			fm.DrawCenteredBoldText(screen, level.Name, cx, float64(y)+42, 14, theme.TextTitle)
 
 			// 波数 + 难度标签（底部）
-			waveTxt := strconv.Itoa(level.Waves) + "波"
+			waveTxt := i18n.TF("scene.campaign.waves", level.Waves)
 			diffTxt := diffLabel(level.Difficulty)
 			infoTxt := waveTxt + "  " + diffTxt
 			diffClr := diffLabelColor(level.Difficulty)
@@ -416,18 +409,12 @@ func (s *CampaignSelectScene) drawDiffBtns(screen *ebiten.Image, fm *render.Font
 // ── 辅助 ────────────────────────────────────────
 
 func diffLabel(id string) string {
-	switch id {
-	case "easy":
-		return "简单"
-	case "normal":
-		return "普通"
-	case "hard":
-		return "困难"
-	case "extreme":
-		return "极限"
-	default:
+	key := "scene.select.diff." + id
+	label := i18n.T(key)
+	if label == key {
 		return id
 	}
+	return label
 }
 
 func diffLabelColor(id string) color.RGBA {

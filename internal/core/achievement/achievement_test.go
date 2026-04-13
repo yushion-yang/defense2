@@ -86,12 +86,13 @@ func TestIncrTowersBuilt(t *testing.T) {
 }
 
 func TestNameByID(t *testing.T) {
+	// Without i18n init, T(key) returns the key itself.
 	tests := []struct {
 		id   string
 		want string
 	}{
-		{"first_win", "初次胜利"},
-		{"centurion", "百杀"},
+		{"first_win", "achievement.first_win.name"},
+		{"centurion", "achievement.centurion.name"},
 		{"nonexistent", ""},
 	}
 	for _, tc := range tests {
@@ -104,7 +105,7 @@ func TestNameByID(t *testing.T) {
 
 func TestAllAchievementsHaveUniqueIDs(t *testing.T) {
 	seen := make(map[string]bool)
-	for _, a := range All {
+	for _, a := range All() {
 		if seen[a.ID] {
 			t.Errorf("duplicate achievement ID: %s", a.ID)
 		}

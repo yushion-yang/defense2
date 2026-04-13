@@ -2,7 +2,11 @@
 // 在特殊规则约束下完成战役目标。分数有额外乘数。
 package gamemode
 
-import "math"
+import (
+	"math"
+
+	"defense2/internal/i18n"
+)
 
 // ChallengeMode 挑战模式，基于战役扩展。
 type ChallengeMode struct {
@@ -35,12 +39,12 @@ func (m *ChallengeMode) GetScore(ctx *Context) int {
 }
 
 func (m *ChallengeMode) GetHUDConfig(ctx *Context) HUDConfig {
-	rules := "挑战规则"
+	rules := i18n.T("mode.challenge.rules")
 	if m.GoldMultiplier < 1 {
-		rules += " | 金币限制"
+		rules += " | " + i18n.T("mode.challenge.gold_limit")
 	}
 	if m.AllowedTowers != nil {
-		rules += " | 限塔"
+		rules += " | " + i18n.T("mode.challenge.tower_limit")
 	}
 	_ = ctx
 	return HUDConfig{
@@ -51,7 +55,7 @@ func (m *ChallengeMode) GetHUDConfig(ctx *Context) HUDConfig {
 
 func (m *ChallengeMode) GetEndData(ctx *Context) EndData {
 	data := m.CampaignMode.GetEndData(ctx)
-	data.ModeName = "挑战模式"
+	data.ModeName = i18n.T("mode.challenge.name")
 	data.Score = m.GetScore(ctx)
 	data.Extra["goldMultiplier"] = m.GoldMultiplier
 	return data
