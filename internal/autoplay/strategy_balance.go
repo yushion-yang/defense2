@@ -2,6 +2,41 @@
 // 可配置的贪心策略 + 26 个预定义平衡测试场景，覆盖难度/经济/能力/敌人/Boss/强弱对比。
 package autoplay
 
+import (
+	"defense2/internal/config"
+	"sort"
+)
+
+// categoryNameToIndex 将类别字符串名映射到 abilities.json 的 category 索引。
+var categoryNameToIndex = map[string]int{
+	"attack": config.AbilityCatAttack,
+	"cc":     config.AbilityCatCC,
+	"damage": config.AbilityCatDamage,
+	"buff":   config.AbilityCatBuff,
+	"dot":    config.AbilityCatDoT,
+	"zone":   config.AbilityCatZone,
+}
+
+// abilitiesForCategoryName 从 abilities.json 获取指定类别的所有能力 ID。
+func abilitiesForCategoryName(catName string) []string {
+	catIdx, ok := categoryNameToIndex[catName]
+	if !ok {
+		return nil
+	}
+	abTable := config.GlobalAbilityTable()
+	if abTable == nil {
+		return nil
+	}
+	var result []string
+	for key, def := range abTable {
+		if def.CategoryIndex() == catIdx {
+			result = append(result, key)
+		}
+	}
+	sort.Strings(result) // 确保确定性顺序
+	return result
+}
+
 // BalanceGreedyStrategy 可配置的平衡测试贪心策略。
 type BalanceGreedyStrategy struct {
 	wardenKey       string
@@ -159,19 +194,10 @@ func (s *BalanceGreedyStrategy) decideUpgrade(state *GameState) []Action {
 }
 
 // assignAbilities 为还没分配偏好能力的塔分配能力。
+// 能力列表从 abilities.json 派生（唯一真相源），不再硬编码。
 func (s *BalanceGreedyStrategy) assignAbilities(state *GameState) []Action {
-	// 每种类别的代表能力
-	abilityMap := map[string][]string{
-		"attack": {"scatter", "wideBeam", "spinAoe", "bounce", "splash", "multiTarget"},
-		"cc":     {"slowPower", "slowDuration", "stunChance", "stunDuration"},
-		"damage": {"crit", "distanceDamage", "executionBonus", "flatDamage", "momentum"},
-		"dot":    {"burn", "bleedDot", "poison", "weaken"},
-		"buff":   {"damageUpAura", "attackSpeedAura", "rangeAura", "critAura", "soloBoost"},
-		"zone":   {"poisonZone", "silenceZone", "curseZone", "weakenZone"},
-	}
-
-	abils, ok := abilityMap[s.abilityPref]
-	if !ok {
+	abils := abilitiesForCategoryName(s.abilityPref)
+	if len(abils) == 0 {
 		return nil
 	}
 

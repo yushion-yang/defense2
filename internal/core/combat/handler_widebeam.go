@@ -31,8 +31,14 @@ func (h *WideBeamHandler) Fire(t *tower.Tower, target *enemy.Enemy, ctx *AttackC
 	dirX := dx / dist
 	dirY := dy / dist
 
-	// 射线延伸 N 倍射程
-	beamLen := t.Range * config.GlobalBalance().Combat.WideBeamRangeMult
+	// 从 abilities.json 读取射程倍率（唯一真相源）
+	rangeMult := 3.0 // safety fallback
+	if abTable := config.GlobalAbilityTable(); abTable != nil {
+		if def := abTable[tower.AbilityWideBeam]; def != nil && def.Param > 0 {
+			rangeMult = def.Param
+		}
+	}
+	beamLen := t.Range * rangeMult
 	endX := t.X + dirX*beamLen
 	endY := t.Y + dirY*beamLen
 	halfW := wideBeamWidth / 2

@@ -14,16 +14,15 @@ import (
 type ScatterHandler struct{}
 
 func (h *ScatterHandler) Fire(t *tower.Tower, target *enemy.Enemy, ctx *AttackContext) {
-	bal := config.GlobalBalance()
 	baseAngle := math.Atan2(target.Y-t.Y, target.X-t.X)
 	speed := t.ProjectileSpeed
 	if speed <= 0 {
 		speed = config.GlobalBalance().Combat.DefaultProjectileSpeed
 	}
 
-	// 从能力配置读取总弹丸数和散布角度（与 bounce 同模式：CalcScale = 总数）
-	pellets := bal.Combat.ScatterBasePellets // fallback
-	spreadDeg := bal.Combat.ScatterSpreadAngle
+	// 从 abilities.json 读取弹丸数和散布角度（唯一真相源）
+	pellets := 3   // safety fallback
+	spreadDeg := 60.0
 	if abTable := config.GlobalAbilityTable(); abTable != nil {
 		if def := abTable[tower.AbilityScatter]; def != nil {
 			str := 100.0

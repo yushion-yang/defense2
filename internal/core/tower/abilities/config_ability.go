@@ -120,7 +120,7 @@ func (a *ConfigAbility) OnHit(t *tower.Tower, p *projectile.Projectile, e *enemy
 			Slow: &tower.SlowEffect{Factor: 1 - pm, Duration: sv},
 		}
 
-	case tower.AbilityStun, tower.AbilityStunChance:
+	case tower.AbilityStunChance:
 		// scaleDim=chance(强度提升概率), param=duration(固定时长)
 		if rand.Float64() < sv {
 			return &tower.HitResult{
@@ -185,6 +185,34 @@ func (a *ConfigAbility) OnHit(t *tower.Tower, p *projectile.Projectile, e *enemy
 			e.SetFloatText(i18n.T("combat.weaken"), 180, 100, 220)
 		}
 		return nil
+
+	case tower.AbilityStackDamage:
+		// scaleDim=bonusPerStack, param=maxStacks — 连续命中同一目标叠加伤害
+		stacks := e.HitStacks[t.InstanceKey]
+		if stacks >= int(pm) {
+			stacks = int(pm)
+		}
+		bonus := p.Damage * sv * float64(stacks)
+		e.IncHitStack(t.InstanceKey, int(pm))
+		return &tower.HitResult{BonusDamage: bonus}
+
+	case tower.AbilityPercentHp:
+		// scaleDim=hpPercent — 命中时额外造成目标百分比生命的伤害，Boss 减半
+		dmg := e.MaxHP * sv
+		if e.Boss {
+			dmg *= 0.5
+		}
+		return &tower.HitResult{BonusDamage: dmg}
+
+	case tower.AbilityPercentHpMinor:
+		// scaleDim=hpPercent — 微量百分比生命伤害（无 Boss 减免）
+		return &tower.HitResult{BonusDamage: e.MaxHP * sv}
+
+	case tower.AbilityOnHitSlow:
+		// scaleDim=factor, param=duration — 命中减速（不占 CC 槽位，归类 damage）
+		return &tower.HitResult{
+			Slow: &tower.SlowEffect{Factor: 1 - sv, Duration: pm},
+		}
 
 	case tower.AbilityDeathMark:
 		// 不在 OnHit 中处理 — 击杀时由 pipeline 检查 srcTower 是否有此能力
