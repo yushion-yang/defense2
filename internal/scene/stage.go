@@ -3143,8 +3143,6 @@ func attackStyleDesc(abilType string) string {
 func towerRoleTags(def tower.TowerDef) (string, color.RGBA) {
 	for _, ab := range def.Abilities {
 		switch ab {
-		case "onHitSlow":
-			return i18n.T("game.role.control_slow"), color.RGBA{R: 80, G: 180, B: 220, A: 255}
 		case "stun":
 			return i18n.T("game.role.output_stun"), color.RGBA{R: 180, G: 120, B: 220, A: 255}
 		case "bounce":
@@ -3153,7 +3151,7 @@ func towerRoleTags(def tower.TowerDef) (string, color.RGBA) {
 			return i18n.T("game.role.output_splash"), color.RGBA{R: 220, G: 120, B: 80, A: 255}
 		case "bleedDot", "burn":
 			return i18n.T("game.role.output_dot"), color.RGBA{R: 220, G: 80, B: 80, A: 255}
-		case "executionBonus", "percentHpDamage":
+		case "executionBonus":
 			return i18n.T("game.role.output_execute"), color.RGBA{R: 180, G: 60, B: 60, A: 255}
 		case "damageUpAura", "attackSpeedAura":
 			return i18n.T("game.role.support_aura"), color.RGBA{R: 80, G: 200, B: 120, A: 255}

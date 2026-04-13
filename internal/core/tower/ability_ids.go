@@ -12,12 +12,7 @@ const (
 	AbilityFlatDamage     = "flatDamage"
 	AbilityDistanceDamage = "distanceDamage"
 	AbilityMultiTarget    = "multiTarget"
-	AbilityDeathMark      = "deathMark"
 	AbilityEnhance        = "enhance"
-	AbilityStackDamage    = "stackDamage"
-	AbilityPercentHp      = "percentHpDamage"
-	AbilityPercentHpMinor = "percentHpMinor"
-	AbilityOnHitSlow      = "onHitSlow"
 )
 
 // CC 类能力

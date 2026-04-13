@@ -67,7 +67,6 @@ type HitOutput struct {
 	IsCrit            bool
 	Killed            bool
 	Dodged            bool // 目标闪避了攻击
-	ExtraKills        int  // deathMark 等额外击杀
 	ProjectileBlocked bool // 弹幕盾：阻止弹射物继续传播（弹射/穿透停止）
 }
 
@@ -214,12 +213,9 @@ func ApplyHit(input HitInput, onHit HitCallback) HitOutput {
 	}
 
 	// 击杀处理
-	extraKills := 0
 	if killed && input.Tower != nil {
 		input.Tower.Kills++
 		if input.Enemies != nil {
-			extraKills = applyDeathExplosionUnified(input.Tower, input.Target, input.Enemies, onHit)
-			input.Tower.Kills += extraKills
 			input.Enemies.Kill(input.Target)
 		}
 	}
@@ -233,7 +229,6 @@ func ApplyHit(input HitInput, onHit HitCallback) HitOutput {
 		TotalDamage:       finalDmg,
 		IsCrit:            isCrit,
 		Killed:            killed,
-		ExtraKills:        extraKills,
 		ProjectileBlocked: shieldBlocked,
 	}
 }
@@ -374,71 +369,3 @@ func applyHitEffectsUnified(r *tower.HitResult, target *enemy.Enemy, p *projecti
 	}
 }
 
-// applyDeathExplosionUnified 击杀后检查 deathMark 能力并触发 AoE 爆炸。
-// deathMark 是"标记→击杀→爆炸"的二段伤害设计，让高攻速塔有群清能力。
-func applyDeathExplosionUnified(t *tower.Tower, killed *enemy.Enemy, enemies *enemy.Pool, onHit HitCallback) int {
-	if enemies == nil {
-		return 0
-	}
-	for _, aName := range t.Abilities {
-		if aName != tower.AbilityDeathMark {
-			continue
-		}
-		ab, ok := tower.Lookup(aName)
-		if !ok {
-			return 0
-		}
-		// 通过能力的 OnHit 获取爆炸参数（deathMark OnHit 返回 nil，但我们需要读取配置）
-		_ = ab
-		// 直接从配置读取
-		return deathExplosion(t, killed, enemies, onHit)
-	}
-	return 0
-}
-
-// deathExplosion 执行死亡爆炸 AoE。参数从 abilities.json deathMark 条目读取。
-// 爆炸伤害由 CalcScale(str) 根据塔力量动态计算，力量越高爆炸越强。
-// 爆炸走 ApplyDamage 管线，受免疫/减免等机制约束（不是无视一切的纯伤害）。
-func deathExplosion(t *tower.Tower, killed *enemy.Enemy, enemies *enemy.Pool, onHit HitCallback) int {
-	str := 100.0
-	if t.Strength != nil {
-		str = t.Strength.Effective()
-	}
-	// 从 abilities.json 读取爆炸伤害和半径（唯一真相源）
-	explodeDmg := 15.0 // safety fallback (matches abilities.json base)
-	explodeR := 60.0   // safety fallback (matches abilities.json param)
-	if abTable := config.GlobalAbilityTable(); abTable != nil {
-		if def := abTable[tower.AbilityDeathMark]; def != nil {
-			explodeDmg = def.CalcScale(str)
-			if def.Param > 0 {
-				explodeR = def.Param
-			}
-		}
-	}
-
-	extraKills := 0
-	enemies.Each(func(e2 *enemy.Enemy) {
-		if e2 == killed || e2.IsDying() || e2.IsSpawning() {
-			return
-		}
-		if math.Hypot(e2.X-killed.X, e2.Y-killed.Y) <= explodeR {
-			er := ApplyDamage(DamageInput{
-				Target:     e2,
-				RawDamage:  explodeDmg,
-				DamageType: DmgPhysical,
-			})
-			finalDmg := er.FinalDamage
-			if er.Blocked {
-				finalDmg = 0
-			}
-			if onHit != nil {
-				onHit(e2, finalDmg, er.Killed, "explosion", false)
-			}
-			if er.Killed {
-				enemies.Kill(e2)
-				extraKills++
-			}
-		}
-	})
-	return extraKills
-}

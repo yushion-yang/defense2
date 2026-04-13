@@ -76,7 +76,7 @@ func NewChampionStrategy(style ChampionStyle, warden string) *ChampionStrategy {
 		s.targetTowers = 3
 		s.abilityPlan = [][]string{
 			{"crit", "flatDamage", "executionBonus", "splash"},     // 塔1: 爆发
-			{"scatter", "momentum", "distanceDamage", "stackDamage"}, // 塔2: 持续
+			{"scatter", "momentum", "distanceDamage", "flatDamage"}, // 塔2: 持续
 			{"damageUpAura", "attackSpeedAura", "critAura", "burn"},  // 塔3: 光环+灼烧
 		}
 	}

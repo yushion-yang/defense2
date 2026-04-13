@@ -127,9 +127,9 @@ func GenerateReport(records []*SessionRecord) *CoverageReport {
 	allAbilities := []string{
 		// 攻击类
 		"splash", "crit", "bounce", "momentum", "executionBonus",
-		"flatDamage", "distanceDamage", "multiTarget", "deathMark", "enhance",
+		"flatDamage", "distanceDamage", "multiTarget", "enhance",
 		// CC 类
-		"slowPower", "slowDuration", "stun", "stunChance", "stunDuration",
+		"slowPower", "slowDuration", "stunChance", "stunDuration",
 		// DoT 类
 		"bleedDot", "burn", "poison", "weaken",
 		// 光环类

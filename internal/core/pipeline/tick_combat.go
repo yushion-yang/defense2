@@ -223,7 +223,7 @@ func processHit(p *projectile.Projectile, e *enemy.Enemy, towers *tower.Pool, en
 
 	killed := 0
 	if out.Killed {
-		killed = 1 + out.ExtraKills
+		killed = 1
 	}
 
 	// 穿透弹：记录命中 ID 后继续飞行，除非被能力阻断（如 damageCap 挡住）

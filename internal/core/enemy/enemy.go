@@ -228,25 +228,10 @@ type Enemy struct {
 
 	// (旗手光环参数已迁移至 BuffList "bufferAura"/"speedUp" buff)
 
-	// ── 叠伤（stackDamage 能力用） ──
-	HitStacks map[string]int // towerInstanceKey → 连续命中叠加数
-
 	// ── 嵌入子结构体 ──
 	StatusEffects
 	VisualState
 	AbilityFields
-}
-
-// IncHitStack increments the hit stack counter for a tower (stackDamage ability).
-func (e *Enemy) IncHitStack(towerKey string, maxStacks int) {
-	if e.HitStacks == nil {
-		e.HitStacks = make(map[string]int)
-	}
-	v := e.HitStacks[towerKey] + 1
-	if v > maxStacks {
-		v = maxStacks
-	}
-	e.HitStacks[towerKey] = v
 }
 
 // IsSpawning returns true if the enemy is playing its spawn-in animation.
