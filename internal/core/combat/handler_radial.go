@@ -14,10 +14,9 @@ import (
 type RadialHandler struct{}
 
 func (h *RadialHandler) Fire(t *tower.Tower, target *enemy.Enemy, ctx *AttackContext) {
-	bal := config.GlobalBalance()
-	// 从能力配置读取总发射数和射程倍率（与 bounce 同模式：CalcScale = 总数）
-	totalShots := bal.Combat.RadialBaseShots // fallback
-	rangeMult := bal.Combat.RadialRangeMult
+	// 从 abilities.json 读取发射数和射程倍率（唯一真相源）
+	totalShots := 4
+	rangeMult := 1.2
 	if abTable := config.GlobalAbilityTable(); abTable != nil {
 		if def, ok := abTable[tower.AbilityRadial]; ok {
 			str := 100.0

@@ -14,13 +14,16 @@ const (
 	AbilityMultiTarget    = "multiTarget"
 	AbilityDeathMark      = "deathMark"
 	AbilityEnhance        = "enhance"
+	AbilityStackDamage    = "stackDamage"
+	AbilityPercentHp      = "percentHpDamage"
+	AbilityPercentHpMinor = "percentHpMinor"
+	AbilityOnHitSlow      = "onHitSlow"
 )
 
 // CC 类能力
 const (
 	AbilitySlowPower    = "slowPower"
 	AbilitySlowDuration = "slowDuration"
-	AbilityStun         = "stun"
 	AbilityStunChance   = "stunChance"
 	AbilityStunDuration = "stunDuration"
 )

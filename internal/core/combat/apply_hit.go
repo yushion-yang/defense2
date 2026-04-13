@@ -19,11 +19,7 @@ const (
 	dodgeFlashDuration  = 0.3   // 闪避残影时长(秒)
 	armorSparkDuration  = 0.15  // 装甲火花时长(秒)
 	blockFlashDuration  = 0.25  // 弹幕盾脉冲时长(秒)
-	freezeSlowThreshold = 0.4   // 减速达此值时触发冻结CC回调
-	defaultDeathExpStr  = 100.0 // 死亡爆炸默认强度
-	defaultDeathExpDmg  = 10.0  // 死亡爆炸基础伤害
-	defaultDeathExpCoef = 15.0  // 死亡爆炸强度系数
-	defaultDeathExpR    = 50.0  // 死亡爆炸默认半径
+	freezeSlowThreshold = 0.4 // 减速达此值时触发冻结CC回调
 )
 
 // blockableStyles 定义弹幕盾可拦截的攻击方式。
@@ -344,15 +340,15 @@ func applyDeathExplosionUnified(t *tower.Tower, killed *enemy.Enemy, enemies *en
 	return 0
 }
 
-// deathExplosion 执行死亡爆炸 AoE。
+// deathExplosion 执行死亡爆炸 AoE。参数从 abilities.json deathMark 条目读取。
 func deathExplosion(t *tower.Tower, killed *enemy.Enemy, enemies *enemy.Pool, onHit HitCallback) int {
-	// 从全局能力表读取 deathMark 参数
-	str := defaultDeathExpStr
+	str := 100.0
 	if t.Strength != nil {
 		str = t.Strength.Effective()
 	}
-	explodeDmg := defaultDeathExpDmg + defaultDeathExpCoef*(str/defaultDeathExpStr)
-	explodeR := defaultDeathExpR
+	// 从 abilities.json 读取爆炸伤害和半径（唯一真相源）
+	explodeDmg := 15.0 // safety fallback (matches abilities.json base)
+	explodeR := 60.0    // safety fallback (matches abilities.json param)
 	if abTable := config.GlobalAbilityTable(); abTable != nil {
 		if def := abTable[tower.AbilityDeathMark]; def != nil {
 			explodeDmg = def.CalcScale(str)
