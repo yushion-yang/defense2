@@ -231,6 +231,9 @@ func loadDifficulties() []difficultyUI {
 // Update 每帧更新：环境粒子 → 悬停检测 → 点击响应。
 // 点击优先级：模式卡片 > 难度按钮 > 开始按钮 > 设置按钮。
 func (s *SelectScene) Update() error {
+	// 语言切换后 gameModes 被清空，确保重建（Settings 返回复用旧实例）
+	initGameModes()
+
 	s.frame++
 	const dt = 1.0 / 60.0
 

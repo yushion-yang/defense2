@@ -1,0 +1,7 @@
+{
+  "_comment": "Web 发布配置 — 无战灵辅助，降低敌人强度让玩家体验完整流程",
+  "enemyHPScale": 0.55,
+  "enemySpeedScale": 0.9,
+  "enemyArmorScale": 0.5,
+  "enemyDamageCapScale": 0.6
+}

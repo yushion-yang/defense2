@@ -85,6 +85,7 @@ func (s *LoadingScene) Update() error {
 		render.InitGlobalIcons(config.GetAssetFS())
 		abilities.InitConfigAbilities()
 		config.LoadBalance()
+		config.LoadPlatform()
 		config.LoadTierPresets()
 		config.LoadAndCacheWardenConfigs()
 		config.LoadBuffRules()

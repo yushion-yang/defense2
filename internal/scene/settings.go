@@ -24,7 +24,7 @@ import (
 
 const (
 	settingsPanelW = float32(420)
-	settingsPanelH = float32(380)
+	settingsPanelH = float32(410)
 	settingsRadius = float32(14)
 
 	sliderBarW = float32(200) // 滑块条宽度
@@ -348,6 +348,10 @@ func (s *SettingsScene) Draw(screen *ebiten.Image) {
 		Radius:    theme.ButtonRadius,
 		Bold:      true,
 	})
+
+	// ── 作者联系方式（面板底部） ──
+	contactY := float64(bky) + float64(bkh) + 12
+	fm.DrawCenteredText(screen, i18n.T("settings.contact")+": 892544825@qq.com", cx, contactY, 10, theme.TextMuted)
 }
 
 // drawSlider 绘制一个音量滑块行（标签 + 滑块条 + 百分比文字）。

@@ -193,7 +193,7 @@ func (s *BestiaryScene) Update() error {
 		bx, by, bw, bh := bsBackGeom()
 		if mx >= float64(bx) && mx <= float64(bx+bw) && my >= float64(by) && my <= float64(by+bh) {
 			playUIClick(s.switcher)
-			s.switcher.SwitchScene(NewTitleScene(s.switcher))
+			s.switcher.SwitchScene(NewSelectScene(s.switcher))
 			return nil
 		}
 
@@ -224,7 +224,7 @@ func (s *BestiaryScene) Update() error {
 
 	// Esc 返回
 	if inpututil.IsKeyJustPressed(ebiten.KeyEscape) {
-		s.switcher.SwitchScene(NewTitleScene(s.switcher))
+		s.switcher.SwitchScene(NewSelectScene(s.switcher))
 	}
 
 	return nil

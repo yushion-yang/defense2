@@ -1,0 +1,7 @@
+{
+  "_comment": "默认平台配置（桌面端），所有缩放系数 1.0 = 无修改",
+  "enemyHPScale": 1.0,
+  "enemySpeedScale": 1.0,
+  "enemyArmorScale": 1.0,
+  "enemyDamageCapScale": 1.0
+}

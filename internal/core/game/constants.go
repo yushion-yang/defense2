@@ -29,7 +29,15 @@ const (
 	TargetTPS = 60 // 目标每秒逻辑帧数
 )
 
+// devModeStr 通过 ldflags 注入：go build -ldflags="-X 'defense2/internal/core/game.devModeStr=false'"
+// 默认 "true"，release 构建设为 "false"。
+var devModeStr = "true"
+
 // DevMode 开发/测试模式开关。
 // 开启后：Select 界面显示"测试"入口，可进入 TestSelect 场景。
-// 发布时设为 false 隐藏测试功能。
+// 发布时通过 ldflags 设为 false 隐藏测试功能。
 var DevMode = true
+
+func init() {
+	DevMode = devModeStr != "false"
+}

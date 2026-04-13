@@ -88,8 +88,10 @@ func (p *Pool) Spawn(x, y, baseHP, baseSpeed float64, pathIndex int, archetype s
 		cfg = DefaultSpawnConfig()
 	}
 
-	hp := baseHP * cfg.HpScale
-	speed := baseSpeed * cfg.SpeedScale
+	// 平台缩放（Web 端降低敌人强度，桌面端 1.0 无影响）
+	plat := config.GlobalPlatform()
+	hp := baseHP * cfg.HpScale * plat.EnemyHPScale
+	speed := baseSpeed * cfg.SpeedScale * plat.EnemySpeedScale
 
 	// 线性扫描找空闲槽位（典型负载 <30 个活跃，扫描很快）
 	for i := range p.enemies {
@@ -196,10 +198,10 @@ func (p *Pool) Spawn(x, y, baseHP, baseSpeed float64, pathIndex int, archetype s
 
 			// ── 阶段 5：能力系统字段 ──
 			// 直接从 SpawnConfig 拷贝到 Enemy 字段，后续 ApplyAbilityPotentials 会叠加波次增量
-			e.DamageCap = cfg.DamageCap
+			e.DamageCap = cfg.DamageCap * plat.EnemyDamageCapScale
 			e.DamageCapPercent = cfg.DamageCapPercent
 			e.ProjectileBlockChance = cfg.ProjectileBlockChance
-			e.ArmorFlat = cfg.ArmorFlat
+			e.ArmorFlat = cfg.ArmorFlat * plat.EnemyArmorScale
 			e.EvasionChance = cfg.EvasionChance
 			e.DashSpeedBoost = cfg.DashSpeedBoost
 			e.DashDuration = cfg.DashDuration
