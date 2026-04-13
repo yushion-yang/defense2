@@ -90,7 +90,7 @@ func TickTowerAbilities(towers *tower.Pool, enemies *enemy.Pool, dt float64, cha
 	// 不走 BuffList（因为是布尔开关而非有时效的 buff）。
 	// 每帧先清零，Phase 2 中的沉默区域能力会对范围内敌人重新标记。
 	// 虚弱（Weaken）已迁入 BuffList，用 0.2s 短 buff 实现，无需手动重置。
-	enemies.Each(func(e *enemy.Enemy) {
+	enemies.EachActive(func(e *enemy.Enemy) {
 		e.Silenced = false
 		e.AbilitySilenced = false
 	})

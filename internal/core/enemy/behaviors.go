@@ -77,8 +77,8 @@ func TickBehaviors(pool *Pool, dt float64) BehaviorEvents {
 	var events BehaviorEvents
 
 	// 遍历所有存活敌人，逐个执行行为逻辑。
-	// 注意：用 Each 而非 EachActive，因为行为系统需要已在 dying/spawning 中的敌人也被检查跳过。
-	pool.Each(func(e *Enemy) {
+	// EachActive 只遍历活跃敌人（含 dying），跳过空槽位，性能更优。
+	pool.EachActive(func(e *Enemy) {
 		if e.IsDying() || e.IsSpawning() {
 			return
 		}
@@ -234,7 +234,7 @@ func tickHealer(e *Enemy, pool *Pool, dt float64, events *BehaviorEvents) {
 	e.HealCooldown = e.HealInterval
 
 	r2 := healRadius * healRadius
-	pool.Each(func(other *Enemy) {
+	pool.EachActive(func(other *Enemy) {
 		if !other.Active || other.IsDying() || other.IsSpawning() {
 			return
 		}
@@ -294,7 +294,7 @@ func tickBuffer(e *Enemy, pool *Pool) {
 		return
 	}
 	r2 := radius * radius
-	pool.Each(func(other *Enemy) {
+	pool.EachActive(func(other *Enemy) {
 		if other == e || !other.Active || other.IsDying() || other.IsSpawning() {
 			return
 		}

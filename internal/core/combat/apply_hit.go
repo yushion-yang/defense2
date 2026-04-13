@@ -306,7 +306,7 @@ func applyHitEffectsUnified(r *tower.HitResult, target *enemy.Enemy, p *projecti
 		}
 		splashDamage := p.Damage * r.Splash.Ratio
 		splashTower := srcTower
-		enemies.Each(func(e *enemy.Enemy) {
+		enemies.EachActive(func(e *enemy.Enemy) {
 			if e == target || e.IsDying() || e.IsSpawning() {
 				return
 			}
@@ -345,7 +345,7 @@ func applyHitEffectsUnified(r *tower.HitResult, target *enemy.Enemy, p *projecti
 		var best *enemy.Enemy
 		bestDist := r.Bounce.Range
 		if enemies != nil {
-			enemies.Each(func(e2 *enemy.Enemy) {
+			enemies.EachActive(func(e2 *enemy.Enemy) {
 				if e2.IsDying() || e2.IsSpawning() {
 					return
 				}

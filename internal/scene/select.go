@@ -274,6 +274,10 @@ func (s *SelectScene) Update() error {
 				playUIClick(s.switcher)
 			}
 		}
+		if idx := s.hitTestDiffButtons(mxf, myf); idx >= 0 {
+			s.selectedDiff = idx
+			playUIClick(s.switcher)
+		}
 		if s.hitTestStartButton(mxf, myf) {
 			playUIClick(s.switcher)
 			s.startGame()

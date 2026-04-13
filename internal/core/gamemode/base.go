@@ -60,7 +60,7 @@ func modeEcon(modeID string) config.ModeEconomy {
 	if spec == nil || spec.Modes == nil {
 		return config.ModeEconomy{
 			WaveBonus:    config.BonusFormula{Base: 12, PerWave: 4},
-			PerfectBonus: config.BonusFormula{Base: 8, PerWave: 2},
+			PerfectBonus: config.BonusFormula{Base: 2, PerWave: 2},
 		}
 	}
 	if m, ok := spec.Modes[modeID]; ok {

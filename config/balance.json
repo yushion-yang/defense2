@@ -12,9 +12,9 @@
     "radialBaseShots": 4,                  "_radialBaseShots": "环射攻击基础弹丸数（与 abilities.json radial.base 一致）",
     "radialRangeMult": 1.2,                "_radialRangeMult": "环射弹丸射程倍率",
     "wideBeamRangeMult": 3,                "_wideBeamRangeMult": "贯穿光束射程倍率",
-    "wardenProjectileSpeed": 350,          "_wardenProjectileSpeed": "战灵默认弹射物速度（像素/秒）",
+    "_wardenProjectileSpeed": 350,         "__wardenProjectileSpeed": "死配置：代码 state.go 硬编码 350，未读取此字段",
     "wardenMechProjectileSpeed": 400,      "_wardenMechProjectileSpeed": "机甲战灵弹射物速度（像素/秒）",
-    "wardenFireballSpeed": 350,            "_wardenFireballSpeed": "火灵火球飞行速度（像素/秒）"
+    "_wardenFireballSpeed": 350,           "__wardenFireballSpeed": "死配置：代码 prince.go 用 ParamOr 默认 500，未读取此字段"
   },
   "tower": {
     "strengthBuyCost": 10,                 "_strengthBuyCost": "购买强度的金币费用（每次+10强度）",
