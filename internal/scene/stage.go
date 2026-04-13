@@ -2972,6 +2972,18 @@ func (s *StageScene) buildItemPanelCards() []hud.ItemCardVM {
 	return cards
 }
 
+// attackStyleDescMap 攻击方式纯功能描述（不含数值），包级变量避免每帧重建。
+var attackStyleDescMap = map[string]string{
+	"enhance":     "一次性全面提升基础属性",
+	"scatter":     "发射多颗弹丸，锥形散布",
+	"wideBeam":    "宽光束穿透所有敌人",
+	"spinAoe":     "旋转范围伤害，内圈额外加伤",
+	"bounce":      "弹射多个敌人",
+	"splash":      "命中后对周围敌人造成溅射伤害",
+	"multiTarget": "同时攻击多个目标",
+	"radial":      "360度发射穿透弹，1.2倍射程",
+}
+
 // attackStyleDesc 返回攻击方式的纯功能描述（不含数值）。
 func attackStyleDesc(abilType string) string {
 	key := "game.attack_desc." + abilType
