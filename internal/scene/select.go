@@ -27,6 +27,7 @@ import (
 	"defense2/internal/render/ui"
 
 	"github.com/hajimehoshi/ebiten/v2"
+	"github.com/hajimehoshi/ebiten/v2/inpututil"
 )
 
 // ── 游戏模式定义 ────────────────────────────────
@@ -42,9 +43,10 @@ type gameModeUI struct {
 }
 
 var gameModes []gameModeUI
+var gameModesLocale string // 缓存构建时的语言，语言变化时重建
 
 func initGameModes() {
-	if len(gameModes) > 0 {
+	if len(gameModes) > 0 && gameModesLocale == i18n.Locale() {
 		return
 	}
 	gameModes = []gameModeUI{
@@ -54,16 +56,13 @@ func initGameModes() {
 		{"bossRush", i18n.T("scene.select.mode.boss"), "execute", i18n.T("scene.select.mode.boss_desc"), "map_03", true},
 		{"challenge", i18n.T("scene.select.mode.challenge"), "★", i18n.T("scene.select.mode.challenge_desc"), "map_04", true},
 	}
-}
-
-// init 在 DevMode 下追加测试模式入口（编译期注入，非生产可见）。
-func init() {
 	if game.DevMode {
 		gameModes = append(gameModes, gameModeUI{
 			ID: "test", Name: i18n.T("mode.test.name"), Icon: "⚙", Description: i18n.T("scene.test.title"),
 			DefaultMap: "map_01", ComingSoon: false,
 		})
 	}
+	gameModesLocale = i18n.Locale()
 }
 
 // ── 难度定义 ────────────────────────────────────
@@ -75,9 +74,10 @@ type difficultyUI struct {
 }
 
 var defaultDifficulties []difficultyUI
+var defaultDiffLocale string
 
 func initDefaultDifficulties() {
-	if len(defaultDifficulties) > 0 {
+	if len(defaultDifficulties) > 0 && defaultDiffLocale == i18n.Locale() {
 		return
 	}
 	defaultDifficulties = []difficultyUI{
@@ -86,6 +86,15 @@ func initDefaultDifficulties() {
 		{"hard", i18n.T("scene.select.diff.hard"), i18n.T("scene.select.diff.hard_desc")},
 		{"extreme", i18n.T("scene.select.diff.extreme"), i18n.T("scene.select.diff.extreme_desc")},
 	}
+	defaultDiffLocale = i18n.Locale()
+}
+
+// ResetLocaleCache 语言切换时清空缓存，下次访问自动重建。
+func ResetLocaleCache() {
+	gameModes = nil
+	gameModesLocale = ""
+	defaultDifficulties = nil
+	defaultDiffLocale = ""
 }
 
 // ── 布局常量 ────────────────────────────────────
@@ -241,6 +250,18 @@ func (s *SelectScene) Update() error {
 	} else {
 		s.hoverMode, s.hoverDiff = -1, -1
 		s.hoverStart = false
+	}
+
+	// 键盘快捷键
+	if inpututil.IsKeyJustPressed(ebiten.KeyEscape) {
+		playUIClick(s.switcher)
+		s.switcher.SwitchScene(NewTitleScene(s.switcher))
+		return nil
+	}
+	if inpututil.IsKeyJustPressed(ebiten.KeyEnter) || inpututil.IsKeyJustPressed(ebiten.KeySpace) {
+		playUIClick(s.switcher)
+		s.startGame()
+		return nil
 	}
 
 	// 鼠标/触摸点击

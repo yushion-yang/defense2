@@ -7,6 +7,8 @@
 // game loop (Update/Draw are serialized). Not safe for concurrent goroutine access.
 package game
 
+import "runtime"
+
 // QualityLevel represents a visual quality tier.
 type QualityLevel int
 
@@ -27,13 +29,22 @@ type QualitySettings struct {
 
 // Presets defines the three quality levels.
 var Presets = [3]QualitySettings{
-	{true, 2048, 4, 6, 60},  // High
-	{true, 1024, 2, 3, 60},  // Medium
-	{false, 512, 0, 1, 30},  // Low
+	{true, 2048, 4, 6, 60}, // High
+	{true, 1024, 2, 3, 60}, // Medium
+	{false, 512, 0, 1, 30}, // Low
 }
 
 // CurrentQuality is the active quality level (global, mutable by adaptive ticker).
-var CurrentQuality QualityLevel = QualityHigh
+// WASM/WebGL 下强制 Low：lighting shader 的 30 个 uniform 超出 WebGL 限制，
+// 触发 Uniform1fv sigpanic。Low 画质跳过 PostProcessing 避免此问题。
+var CurrentQuality = defaultQuality()
+
+func defaultQuality() QualityLevel {
+	if runtime.GOOS == "js" {
+		return QualityLow
+	}
+	return QualityHigh
+}
 
 // Settings returns the QualitySettings for the current quality level.
 func Settings() QualitySettings {
@@ -96,7 +107,12 @@ func (q *QualityAdaptive) Tick(frameMs float64) {
 	}
 
 	// Upgrade after sustained fast frames.
-	if q.fastFrames > upgradeAfter && CurrentQuality > QualityHigh {
+	// WASM 下不升级到 High/Medium：WebGL uniform 限制导致 shader crash
+	minQuality := QualityHigh
+	if runtime.GOOS == "js" {
+		minQuality = QualityLow
+	}
+	if q.fastFrames > upgradeAfter && CurrentQuality > minQuality {
 		CurrentQuality--
 		q.fastFrames = 0
 	}

@@ -1,9 +1,12 @@
 // shaders.go — embeds and compiles Kage shaders for the post-processing pipeline.
+// WASM/WebGL 下跳过编译：部分 shader（lighting 30 个 uniform）超出
+// WebGL MAX_FRAGMENT_UNIFORM_VECTORS 限制，触发 Uniform1fv nil panic。
 package postprocess
 
 import (
 	_ "embed"
 	"fmt"
+	"runtime"
 
 	"github.com/hajimehoshi/ebiten/v2"
 )
@@ -55,7 +58,14 @@ var (
 
 // InitShaders compiles all Kage shaders. Call once at startup.
 // Returns an error if any shader fails to compile.
+// WASM 环境直接跳过，避免 WebGL uniform 限制导致 crash。
 func InitShaders() error {
+	if runtime.GOOS == "js" {
+		// WebGL uniform 数量限制，跳过所有后处理 shader
+		shadersReady = false
+		return nil
+	}
+
 	var err error
 
 	shaderBloomExtract, err = ebiten.NewShader(bloomExtractSrc)

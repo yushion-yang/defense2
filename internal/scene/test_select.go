@@ -209,7 +209,7 @@ func (s *TestSelectScene) Update() error {
 	mxf, myf := draw.CursorPos()
 	if isTapJustPressed() {
 		// 返回按钮
-		if mxf >= 20 && mxf <= 90 && myf >= 16 && myf <= 44 {
+		if hitTestNavBackBtn(mxf, myf) {
 			playUIClick(s.switcher)
 			s.switcher.SwitchScene(NewSelectScene(s.switcher))
 			return nil

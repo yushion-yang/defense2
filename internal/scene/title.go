@@ -24,10 +24,24 @@ import (
 	"github.com/hajimehoshi/ebiten/v2/inpututil"
 )
 
+// tapConsumed 标记本帧的点击事件是否已被上层（如吉祥物覆盖层）消费。
+// 每帧开头由 game.go 的 Update() 重置为 false。
+var tapConsumed bool
+
+// resetTapConsumed 每帧开头调用，重置点击消费标记。
+func resetTapConsumed() { tapConsumed = false }
+
+// consumeTap 标记本帧的点击已被消费，后续 isTapJustPressed 将返回 false。
+func consumeTap() { tapConsumed = true }
+
 // isTapJustPressed 检测本帧是否有"新点击"（鼠标左键 JustPressed 或新触摸点）。
 // 长按悬浮释放不算点击（draw.LongPressConsumed 过滤）。
+// 如果点击已被上层消费（tapConsumed），直接返回 false。
 // 此函数被所有场景共享，是统一的"点击"判定入口。
 func isTapJustPressed() bool {
+	if tapConsumed {
+		return false
+	}
 	if draw.LongPressConsumed() {
 		return false
 	}
@@ -35,6 +49,12 @@ func isTapJustPressed() bool {
 		return true
 	}
 	return len(inpututil.JustPressedTouchIDs()) > 0
+}
+
+// hitTestNavBackBtn 检查点击是否命中导航返回按钮（左上角 ← 箭头）。
+// 所有有返回按钮的场景共用此函数，避免硬编码重复。
+func hitTestNavBackBtn(mx, my float64) bool {
+	return mx >= 20 && mx <= 90 && my >= 16 && my <= 44
 }
 
 // playUIClick 播放 UI 点击音效（各场景共用的安全调用封装）。

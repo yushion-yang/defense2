@@ -184,7 +184,12 @@ func SpawnMenuHitTest(px, py float32, count int) int {
 	if count == 0 {
 		return -1
 	}
-	panelX, _, _, _, startY := spawnPanelGeom(count)
+	panelX, panelY, panelW, panelH, startY := spawnPanelGeom(count)
+
+	// 快速排除：不在面板区域内直接返回
+	if px < panelX || px > panelX+panelW || py < panelY || py > panelY+panelH {
+		return -1
+	}
 
 	for i := 0; i < count; i++ {
 		cx, cy := spawnCardPos(i, panelX, startY)

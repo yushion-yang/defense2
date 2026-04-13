@@ -1,4 +1,4 @@
-.PHONY: run build test test-cover vet lint check-all build-wasm android android-aar autoplay autoplay-quick clean arch generate-wardens generate-assets
+.PHONY: run build test test-cover vet lint check-all build-wasm serve-web android android-aar autoplay autoplay-quick clean arch generate-wardens generate-assets
 
 # Desktop development
 run:
@@ -36,7 +36,12 @@ build-wasm:
 	GOOS=js GOARCH=wasm go build -o dist/web/game.wasm ./cmd/game/
 	cp "$$(go env GOROOT)/lib/wasm/wasm_exec.js" dist/web/
 	cp web/index.html dist/web/
-	@echo "WASM build done. Serve dist/web/"
+	@echo "WASM build done (dist/web/). Run 'make serve-web' to test."
+
+# Serve WASM build locally
+serve-web: build-wasm
+	@echo "http://localhost:8080"
+	cd dist/web && python3 -m http.server 8080
 
 # Android: build .aar from Go code, then assemble APK via Gradle
 android-aar:

@@ -33,7 +33,6 @@ import (
 	"defense2/internal/render/theme"
 
 	"github.com/hajimehoshi/ebiten/v2"
-	"github.com/hajimehoshi/ebiten/v2/inpututil"
 )
 
 // ─── 场景过渡系统 ───────────────────────────────────────────────────
@@ -221,6 +220,9 @@ func (g *Game) Update() error {
 		return nil
 	}
 
+	// 每帧重置点击消费标记（供 tapConsumed 机制使用）
+	resetTapConsumed()
+
 	// 更新全局长按悬浮追踪器（触摸设备上长按=悬浮）
 	draw.TickHover()
 
@@ -250,6 +252,22 @@ func (g *Game) Update() error {
 		if g.transAlpha <= 0 {
 			g.transAlpha = 0
 			g.transState = transIdle // 过渡完成，恢复正常
+		}
+	}
+
+	// ── 吉祥物点击检测（必须在 safeSceneUpdate 之前，防止点击穿透到场景） ──
+	if g.mascot != nil && isTapJustPressed() {
+		mx, my := draw.CursorPos()
+		if hud.MascotHitTest(mx, my) {
+			if g.mascot.IsAbilityHintActive() {
+				// Hint 气泡显示时点击 → 触发技能
+				g.mascot.RequestHelp()
+			} else if g.mascot.HasActiveDialog() {
+				g.mascot.ClickAdvance()
+			} else {
+				g.mascot.Trigger("mascot_tap")
+			}
+			consumeTap() // 标记点击已消费，场景的 isTapJustPressed 将返回 false
 		}
 	}
 
@@ -291,21 +309,6 @@ func (g *Game) Update() error {
 			if executor, ok := g.current.(MascotActionExecutor); ok {
 				if executor.ExecuteMascotAction(action) {
 					g.mascot.NotifyActionComplete(action.Type)
-				}
-			}
-		}
-
-		// 处理吉祥物点击（JustPressed 单次触发，适合 click-to-advance）
-		if inpututil.IsMouseButtonJustPressed(ebiten.MouseButtonLeft) {
-			mx, my := draw.CursorPos()
-			if hud.MascotHitTest(mx, my) {
-				if g.mascot.IsAbilityHintActive() {
-					// Hint 气泡显示时点击 → 触发技能
-					g.mascot.RequestHelp()
-				} else if g.mascot.HasActiveDialog() {
-					g.mascot.ClickAdvance()
-				} else {
-					g.mascot.Trigger("mascot_tap")
 				}
 			}
 		}

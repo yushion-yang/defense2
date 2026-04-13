@@ -1,10 +1,11 @@
-# menu.py — "Echoes of Command"（指挥回响）
+# menu.py — "Drifter's Rest"（流浪者的憩所）
 #
-# 塔防主菜单/选关 BGM。温暖从容，钢琴主导，弦乐铺底。
-# 调性: D major → Bm | BPM: 92 | ~80s (36 bars) | 4/4 拍
-# 结构: Intro(8) → A(8) → B(8) → A'(8) → Outro(4)
+# 致敬重装机兵酒吧/自贩机音乐的慵懒 jazz 感。
+# 强旋律 hook，4 小节记住，8 小节变奏一次就循环。
+# 调性: C major (jazz voicing) | BPM: 96 | ~32s (16 bars) | 4/4 拍
+# 结构: A(8 bar 主题) → A'(8 bar 变奏)
 #
-# 乐器: Piano / String Pad / Synth Pad / Celesta / 轻鼓组
+# 乐器: Piano(旋律) / E.Piano(comping) / Fretless Bass / Brush Drums
 
 import sys
 import os
@@ -17,300 +18,270 @@ if _scripts_dir not in sys.path:
 from audio_synth.composer import Track
 from audio_synth.midi_renderer import SF2Song
 from audio_synth.instruments_sf2 import (
-    PIANO_WARM, CELESTA_SPARKLE, STRINGS_ENSEMBLE,
-    SYNTH_PAD_WARM, DRUMS_SOFT, HARP_GENTLE,
+    PIANO_WARM, EPIANO_SOFT, FRETLESS_SMOOTH, DRUMS_SOFT,
     DRUM_KICK, DRUM_SNARE, DRUM_HIHAT_CLOSED, DRUM_RIDE,
+    DRUM_SIDE_STICK,
 )
 
-# ── 常量 ──────────────────────────────────────────────
-BPM = 92
-BAR = 4  # beats per bar
+BPM = 96
+BAR = 4
+S = 0.5
+Q = 1.0
+H = 2.0
+W = 4.0
+DQ = 1.5  # 附点四分
 
-# 段落起始拍
-INTRO = 0           # bar 0-7
-SEC_A = 8 * BAR     # bar 8-15
-SEC_B = 16 * BAR    # bar 16-23
-SEC_A2 = 24 * BAR   # bar 24-31
-OUTRO = 32 * BAR    # bar 32-35
-
-# 音符时值
-S = 0.5   # 八分音符
-Q = 1.0   # 四分音符
-H = 2.0   # 二分音符
-W = 4.0   # 全音符
-DH = 3.0  # 附点二分音符
-
-# ── 和弦进行 ──────────────────────────────────────────
-# A 段 (D major): D - A/C# - Bm - G - D/F# - Em - A - D
-PROG_A = [
-    ('D3', ['D3', 'F#3', 'A3']),
-    ('C#3', ['C#3', 'E3', 'A3']),
-    ('B2', ['B2', 'D3', 'F#3']),
-    ('G2', ['G2', 'B2', 'D3']),
-    ('F#2', ['F#2', 'A2', 'D3']),
-    ('E2', ['E2', 'G2', 'B2']),
-    ('A2', ['A2', 'C#3', 'E3']),
-    ('D2', ['D2', 'F#2', 'A2']),
+# Jazz 和弦进行（每小节一个和弦）:
+# | Cmaj7 | Am7 | Dm9 | G7 | Em7 | A7 | Dm7 | G7sus4 |
+CHORDS_A = [
+    ['C3', 'E3', 'G3', 'B3'],     # Cmaj7
+    ['A2', 'C3', 'E3', 'G3'],     # Am7
+    ['D3', 'F3', 'A3', 'C4'],     # Dm9 (简化)
+    ['G2', 'B2', 'D3', 'F3'],     # G7
+    ['E3', 'G3', 'B3', 'D4'],     # Em7
+    ['A2', 'C#3', 'E3', 'G3'],    # A7
+    ['D3', 'F3', 'A3', 'C4'],     # Dm7
+    ['G2', 'C3', 'D3', 'F3'],     # G7sus4
 ]
 
-# B 段 (Bm): Bm - F#m - G - D - Em - Bm - A - A
-PROG_B = [
-    ('B2', ['B2', 'D3', 'F#3']),
-    ('F#2', ['F#2', 'A2', 'C#3']),
-    ('G2', ['G2', 'B2', 'D3']),
-    ('D2', ['D2', 'F#2', 'A2']),
-    ('E2', ['E2', 'G2', 'B2']),
-    ('B2', ['B2', 'D3', 'F#3']),
-    ('A2', ['A2', 'C#3', 'E3']),
-    ('A2', ['A2', 'C#3', 'E3']),
+# A' 段变化和弦:
+# | Cmaj7 | Am9 | Fmaj7 | G7 | Em7 | Eb°7 | Dm7 | G7b9 |
+CHORDS_A2 = [
+    ['C3', 'E3', 'G3', 'B3'],     # Cmaj7
+    ['A2', 'C3', 'E3', 'G3'],     # Am9 (简化)
+    ['F2', 'A2', 'C3', 'E3'],     # Fmaj7
+    ['G2', 'B2', 'D3', 'F3'],     # G7
+    ['E3', 'G3', 'B3', 'D4'],     # Em7
+    ['Eb3', 'Gb3', 'A3', 'C4'],   # Eb°7 (diminished 过渡)
+    ['D3', 'F3', 'A3', 'C4'],     # Dm7
+    ['G2', 'B2', 'D3', 'F3'],     # G7b9
 ]
 
 
-def build_piano(song: SF2Song) -> None:
-    """钢琴——主旋律琶音 + 偶尔旋律片段。"""
+def build_piano_melody(song: SF2Song) -> None:
+    """钢琴主旋律——4 小节 hook + 变奏。
+
+    重装机兵式的关键：旋律必须"能哼"，
+    每个乐句有明确的上行→解决，音程跳跃制造记忆点。
+    """
     track = Track(instrument={'type': 'sf2'}, volume=0.75)
 
-    # ── Intro: 钢琴独奏琶音（D major 展开）──
-    # 每小节 4 个八分音符琶音 + 留白
-    arp_patterns = [
-        ['D4', 'F#4', 'A4', 'D5'],
-        ['C#4', 'E4', 'A4', 'C#5'],
-        ['B3', 'D4', 'F#4', 'B4'],
-        ['G3', 'B3', 'D4', 'G4'],
-        ['D4', 'F#4', 'A4', 'D5'],
-        ['E4', 'G4', 'B4', 'E5'],
-        ['A3', 'C#4', 'E4', 'A4'],
-        ['D4', 'F#4', 'A4', 'D5'],
-    ]
-    for bar_idx, arp in enumerate(arp_patterns):
-        b = INTRO + bar_idx * BAR
-        for i, note in enumerate(arp):
-            track.note(b + i * S, note, S * 0.9)
-
-    # ── A 段: 右手旋律（悠扬主题）──
-    b = SEC_A
-    # bar 0-1: D - A/C# 上行
-    track.note(b, 'F#4', Q)
-    track.note(b + 1, 'A4', Q)
-    track.note(b + 2, 'D5', H)
-    b += BAR
-    track.note(b, 'C#5', Q)
-    track.note(b + 1, 'E5', Q)
-    track.note(b + 2, 'D5', H)
-    # bar 2-3: Bm - G 下行回旋
-    b += BAR
-    track.note(b, 'B4', H)
-    track.note(b + 2, 'A4', Q)
-    track.note(b + 3, 'F#4', Q)
-    b += BAR
-    track.note(b, 'G4', DH)
-    track.note(b + 3, 'A4', Q)
-    # bar 4-5: D/F# - Em 变化
+    # ── A 段 Hook（bar 0-7）──
+    # 乐句 1 (bar 0-1): 上行 hook — 跳跃 + 级进的经典组合
+    b = 0
+    track.note(b, 'E4', Q)        # pickup
+    track.note(b + 1, 'G4', S)
+    track.note(b + 1.5, 'A4', S)
+    track.note(b + 2, 'C5', DQ)   # 高点，长音（记忆锚点）
+    track.note(b + 3.5, 'B4', S)  # 过渡
     b += BAR
     track.note(b, 'A4', Q)
-    track.note(b + 1, 'D5', Q)
-    track.note(b + 2, 'C#5', H)
-    b += BAR
-    track.note(b, 'B4', H)
-    track.note(b + 2, 'G4', H)
-    # bar 6-7: A - D 归结
-    b += BAR
-    track.note(b, 'A4', H)
-    track.note(b + 2, 'C#5', H)
-    b += BAR
-    track.note(b, 'D5', W)
+    track.note(b + 1, 'G4', S)
+    track.note(b + 1.5, 'E4', S)
+    track.note(b + 2, 'D4', H)    # 解决到下方
 
-    # ── B 段: 转 Bm，旋律更忧郁 ──
-    b = SEC_B
-    track.note(b, 'D5', Q)
-    track.note(b + 1, 'B4', Q)
-    track.note(b + 2, 'F#4', H)
-    b += BAR
-    track.note(b, 'F#4', H)
-    track.note(b + 2, 'A4', H)
+    # 乐句 2 (bar 2-3): 呼应——类似轮廓但结尾不同
+    b = 2 * BAR
+    track.note(b, 'D4', Q)
+    track.note(b + 1, 'F4', S)
+    track.note(b + 1.5, 'A4', S)
+    track.note(b + 2, 'B4', DQ)
+    track.note(b + 3.5, 'A4', S)
     b += BAR
     track.note(b, 'G4', Q)
-    track.note(b + 1, 'B4', Q)
-    track.note(b + 2, 'D5', H)
+    track.note(b + 1, 'F4', S)
+    track.note(b + 1.5, 'D4', S)
+    track.note(b + 2, 'E4', H)    # 解决到 Em7 的根音
+
+    # 乐句 3 (bar 4-5): 发展——更高，更开
+    b = 4 * BAR
+    track.note(b, 'G4', S)
+    track.note(b + 0.5, 'B4', S)
+    track.note(b + 1, 'D5', Q)
+    track.note(b + 2, 'E5', DQ)   # 全曲最高点
+    track.note(b + 3.5, 'D5', S)
     b += BAR
-    track.note(b, 'A4', DH)
-    track.note(b + 3, 'F#4', Q)
-    # bar 4-7
-    b += BAR
-    track.note(b, 'G4', H)
-    track.note(b + 2, 'E4', H)
-    b += BAR
-    track.note(b, 'F#4', H)
-    track.note(b + 2, 'D4', H)
+    track.note(b, 'C#5', Q)       # A7 的三音（色彩音）
+    track.note(b + 1, 'A4', Q)
+    track.note(b + 2, 'B4', H)
+
+    # 乐句 4 (bar 6-7): 收束——回到起点的 hook 动机
+    b = 6 * BAR
+    track.note(b, 'A4', Q)
+    track.note(b + 1, 'F4', S)
+    track.note(b + 1.5, 'D4', S)
+    track.note(b + 2, 'C4', DQ)
+    track.note(b + 3.5, 'D4', S)
     b += BAR
     track.note(b, 'E4', Q)
-    track.note(b + 1, 'C#4', Q)
-    track.note(b + 2, 'A3', H)
-    b += BAR
-    track.note(b, 'A3', Q)
-    track.note(b + 1, 'C#4', Q)
-    track.note(b + 2, 'E4', H)
+    track.note(b + 1, 'D4', S)
+    track.note(b + 1.5, 'C4', S)
+    track.note(b + 2, 'D4', H)    # 半解决→循环回 Cmaj7
 
-    # ── A' 段: 回 D major，旋律变奏 ──
-    b = SEC_A2
-    track.note(b, 'A4', Q)
-    track.note(b + 1, 'D5', Q)
-    track.note(b + 2, 'F#5', H)
+    # ── A' 段变奏（bar 8-15）──
+    # 乐句 1 变奏: 相同轮廓，高一个八度装饰音
+    b = 8 * BAR
+    track.note(b, 'E4', S)
+    track.note(b + 0.5, 'G4', S)
+    track.note(b + 1, 'A4', S)
+    track.note(b + 1.5, 'B4', S)
+    track.note(b + 2, 'C5', Q)
+    track.note(b + 3, 'E5', Q)    # 高八度装饰
     b += BAR
-    track.note(b, 'E5', H)
-    track.note(b + 2, 'D5', H)
-    b += BAR
-    track.note(b, 'B4', DH)
-    track.note(b + 3, 'A4', Q)
-    b += BAR
-    track.note(b, 'G4', W)
-    b += BAR
-    track.note(b, 'A4', Q)
-    track.note(b + 1, 'D5', Q)
-    track.note(b + 2, 'C#5', H)
-    b += BAR
-    track.note(b, 'B4', H)
+    track.note(b, 'D5', Q)
+    track.note(b + 1, 'C5', S)
+    track.note(b + 1.5, 'A4', S)
     track.note(b + 2, 'G4', H)
-    b += BAR
-    track.note(b, 'E4', H)
-    track.note(b + 2, 'A4', H)
-    b += BAR
-    track.note(b, 'D4', W)
 
-    # ── Outro: 渐弱琶音 ──
-    for bar_idx in range(4):
-        b = OUTRO + bar_idx * BAR
-        vol_mult = 1.0 - bar_idx * 0.2
-        arp = arp_patterns[bar_idx]
-        for i, note in enumerate(arp):
-            track.note(b + i * S, note, S * 0.9)
+    # 乐句 2 变奏: Fmaj7 色彩
+    b = 10 * BAR
+    track.note(b, 'A4', Q)
+    track.note(b + 1, 'C5', S)
+    track.note(b + 1.5, 'E5', S)
+    track.note(b + 2, 'F5', DQ)   # Fmaj7 色彩高点
+    track.note(b + 3.5, 'E5', S)
+    b += BAR
+    track.note(b, 'D5', Q)
+    track.note(b + 1, 'B4', Q)
+    track.note(b + 2, 'G4', H)
+
+    # 乐句 3 变奏: diminished 过渡的色彩
+    b = 12 * BAR
+    track.note(b, 'B4', Q)
+    track.note(b + 1, 'D5', Q)
+    track.note(b + 2, 'E5', Q)
+    track.note(b + 3, 'G5', Q)    # 最高
+    b += BAR
+    track.note(b, 'Eb5', Q)       # diminished 色彩音！
+    track.note(b + 1, 'C5', Q)
+    track.note(b + 2, 'A4', H)
+
+    # 乐句 4 收束变奏: 回到原 hook 结尾
+    b = 14 * BAR
+    track.note(b, 'F4', Q)
+    track.note(b + 1, 'A4', S)
+    track.note(b + 1.5, 'C5', S)
+    track.note(b + 2, 'D5', Q)
+    track.note(b + 3, 'C5', Q)
+    b += BAR
+    track.note(b, 'B4', Q)
+    track.note(b + 1, 'G4', S)
+    track.note(b + 1.5, 'E4', S)
+    track.note(b + 2, 'C4', H)    # 回到 C，完美循环
 
     song.add_track(track, PIANO_WARM)
 
 
-def build_strings(song: SF2Song) -> None:
-    """弦乐 Pad——长音铺底，从 A 段开始。"""
-    track = Track(instrument={'type': 'sf2'}, volume=0.45)
-
-    # A 段弦乐和弦
-    for bar_idx, (bass, chord) in enumerate(PROG_A):
-        b = SEC_A + bar_idx * BAR
-        track.chord(b, chord, W)
-
-    # B 段
-    for bar_idx, (bass, chord) in enumerate(PROG_B):
-        b = SEC_B + bar_idx * BAR
-        track.chord(b, chord, W)
-
-    # A' 段
-    for bar_idx, (bass, chord) in enumerate(PROG_A):
-        b = SEC_A2 + bar_idx * BAR
-        track.chord(b, chord, W)
-
-    # Outro 渐弱
-    for bar_idx in range(3):
-        b = OUTRO + bar_idx * BAR
-        track.chord(b, PROG_A[bar_idx][1], W)
-
-    song.add_track(track, STRINGS_ENSEMBLE)
-
-
-def build_synth_pad(song: SF2Song) -> None:
-    """Synth Pad——层叠氛围，B 段以后加入。"""
-    track = Track(instrument={'type': 'sf2'}, volume=0.3)
-
-    # B 段 pad
-    for bar_idx, (bass, chord) in enumerate(PROG_B):
-        b = SEC_B + bar_idx * BAR
-        # pad 音高比弦乐高一个八度
-        high_chord = [n.replace('2', '3').replace('3', '4') for n in chord]
-        track.chord(b, high_chord, W)
-
-    # A' 段
-    for bar_idx, (bass, chord) in enumerate(PROG_A):
-        b = SEC_A2 + bar_idx * BAR
-        high_chord = [n.replace('2', '3').replace('3', '4') for n in chord]
-        track.chord(b, high_chord, W)
-
-    song.add_track(track, SYNTH_PAD_WARM)
-
-
-def build_celesta(song: SF2Song) -> None:
-    """Celesta——装饰音点缀，A段和A'段的呼应。"""
+def build_epiano_comping(song: SF2Song) -> None:
+    """电钢琴 comping——jazz 和弦铺底，节奏留白。"""
     track = Track(instrument={'type': 'sf2'}, volume=0.35)
 
-    # A 段: 每隔 2 小节点缀一个高音
-    sparkle_notes = ['D6', 'A5', 'F#5', 'G5']
-    for i, note in enumerate(sparkle_notes):
-        b = SEC_A + (i * 2 + 1) * BAR + 3  # 每 2 小节后半
-        track.note(b, note, S)
-        track.note(b + S, note.replace('5', '4').replace('6', '5'), S)
+    for section_offset, chords in [(0, CHORDS_A), (8 * BAR, CHORDS_A2)]:
+        for bar_idx, chord in enumerate(chords):
+            b = section_offset + bar_idx * BAR
+            # Jazz comping: 不在 beat 1，在 "and" 位置
+            track.chord(b + 0.5, chord, S)
+            track.chord(b + 2, chord, Q)
+            # 每隔一小节加一个额外的 push
+            if bar_idx % 2 == 1:
+                track.chord(b + 3.5, chord, S)
 
-    # A' 段: 类似但变化
-    sparkle2 = ['F#6', 'E5', 'D5', 'A5']
-    for i, note in enumerate(sparkle2):
-        b = SEC_A2 + (i * 2 + 1) * BAR + 3
-        track.note(b, note, S)
-
-    song.add_track(track, CELESTA_SPARKLE)
+    song.add_track(track, EPIANO_SOFT)
 
 
 def build_bass(song: SF2Song) -> None:
-    """低音——B段开始，根音长音。"""
-    track = Track(instrument={'type': 'sf2'}, volume=0.5)
+    """Fretless Bass——walking bass line。
 
-    # B 段
-    for bar_idx, (bass, _chord) in enumerate(PROG_B):
-        b = SEC_B + bar_idx * BAR
-        track.note(b, bass, H)
-        track.note(b + 2, bass, H)
+    重装机兵 bass 的关键：不只是弹根音，
+    用经过音（chromatic approach）连接和弦根音。
+    """
+    track = Track(instrument={'type': 'sf2'}, volume=0.55)
 
-    # A' 段
-    for bar_idx, (bass, _chord) in enumerate(PROG_A):
-        b = SEC_A2 + bar_idx * BAR
-        track.note(b, bass, H)
-        track.note(b + 2, bass, H)
+    # A 段 walking bass
+    bass_a = [
+        # bar 0 (Cmaj7): C→E→G→A（上行到 Am 根音）
+        [('C2', Q), ('E2', Q), ('G2', Q), ('A2', Q)],
+        # bar 1 (Am7): A→G→E→D（下行到 Dm 根音）
+        [('A2', Q), ('G2', Q), ('E2', Q), ('D2', Q)],
+        # bar 2 (Dm9): D→F→A→Ab（半音 approach 到 G）
+        [('D2', Q), ('F2', Q), ('A2', Q), ('Ab2', Q)],
+        # bar 3 (G7): G→B→D→Eb（半音 approach 到 E）
+        [('G2', Q), ('B2', Q), ('D3', Q), ('Eb3', Q)],
+        # bar 4 (Em7): E→G→B→Bb（半音 approach 到 A）
+        [('E2', Q), ('G2', Q), ('B2', Q), ('Bb2', Q)],
+        # bar 5 (A7): A→C#→E→Eb（半音 approach 到 D）
+        [('A2', Q), ('C#3', Q), ('E3', Q), ('Eb3', Q)],
+        # bar 6 (Dm7): D→F→A→Ab（approach G）
+        [('D2', Q), ('F2', Q), ('A2', Q), ('Ab2', Q)],
+        # bar 7 (G7sus4): G→C→D→B（回到 C）
+        [('G2', Q), ('C3', Q), ('D3', Q), ('B2', Q)],
+    ]
 
-    song.add_track(track, HARP_GENTLE)  # 用竖琴做低音，更柔和
+    for bar_idx, notes in enumerate(bass_a):
+        b = bar_idx * BAR
+        for i, (note, dur) in enumerate(notes):
+            track.note(b + i * Q, note, dur * 0.9)
+
+    # A' 段: 类似但更活跃
+    bass_a2 = [
+        [('C2', Q), ('E2', S), ('F2', S), ('G2', Q), ('A2', Q)],
+        [('A2', Q), ('G2', Q), ('E2', Q), ('D2', Q)],
+        [('F2', Q), ('A2', Q), ('C3', Q), ('B2', Q)],
+        [('G2', Q), ('B2', S), ('C3', S), ('D3', Q), ('Eb3', Q)],
+        [('E2', Q), ('G2', Q), ('B2', Q), ('Bb2', Q)],
+        [('Eb2', Q), ('Gb2', Q), ('A2', Q), ('C3', Q)],
+        [('D2', Q), ('F2', Q), ('A2', S), ('G2', S), ('Ab2', Q)],
+        [('G2', Q), ('B2', Q), ('D3', Q), ('C3', Q)],
+    ]
+
+    for bar_idx, notes in enumerate(bass_a2):
+        b = 8 * BAR + bar_idx * BAR
+        beat = 0
+        for note, dur in notes:
+            track.note(b + beat, note, dur * 0.9)
+            beat += dur
+
+    song.add_track(track, FRETLESS_SMOOTH)
 
 
 def build_drums(song: SF2Song) -> None:
-    """轻打击——刷子鼓，B段开始。"""
-    track = Track(instrument={'type': 'sf2_drum'}, volume=0.35)
+    """Brush Drums——jazz 刷子感。
 
-    for section in [SEC_B, SEC_A2]:
-        for bar_idx in range(8):
-            b = section + bar_idx * BAR
-            # Ride 轻击: 每拍
-            for beat in range(4):
-                track.note(b + beat, str(DRUM_RIDE), S)
-            # Kick: beat 1
-            track.note(b, str(DRUM_KICK), Q)
-            # Snare (ghost): beat 3
-            track.note(b + 2, str(DRUM_SNARE), S)
+    重装机兵式: side stick 代替 snare，ride 代替 hihat，留白多。
+    """
+    track = Track(instrument={'type': 'sf2_drum'}, volume=0.4)
 
-    # Outro: 只有 ride
-    for bar_idx in range(3):
-        b = OUTRO + bar_idx * BAR
+    for bar_idx in range(16):
+        b = bar_idx * BAR
+
+        # Ride: 四分音符 swing feel (beat 1, 2, 3, 4)
         for beat in range(4):
-            track.note(b + beat, str(DRUM_RIDE), S)
+            track.note(b + beat, str(DRUM_RIDE), Q)
+
+        # Side stick: beat 2 和 4（不用 snare，更 jazz）
+        track.note(b + 1, str(DRUM_SIDE_STICK), S)
+        track.note(b + 3, str(DRUM_SIDE_STICK), S)
+
+        # Kick: 只在 beat 1（轻踩）
+        track.note(b, str(DRUM_KICK), Q)
+
+        # A' 段加点变化: 偶尔在 "and of 4" 加 kick
+        if bar_idx >= 8 and bar_idx % 2 == 1:
+            track.note(b + 3.5, str(DRUM_KICK), S)
+
+        # 每 4 小节结尾: hihat 轻点
+        if bar_idx % 4 == 3:
+            track.note(b + 3.5, str(DRUM_HIHAT_CLOSED), S)
 
     song.add_track(track, DRUMS_SOFT)
 
 
-# ── Song 组装 ──────────────────────────────────────────
-
 def create_menu_bgm() -> SF2Song:
-    """构建完整的 Menu BGM。"""
     song = SF2Song(bpm=BPM, beats_per_bar=BAR)
-
-    build_piano(song)
-    build_strings(song)
-    build_synth_pad(song)
-    build_celesta(song)
+    build_piano_melody(song)
+    build_epiano_comping(song)
     build_bass(song)
     build_drums(song)
-
     return song
 
 
@@ -319,5 +290,4 @@ if __name__ == '__main__':
     out = os.path.join(
         os.path.dirname(__file__), '..', '..', '..', 'assets', 'audio', 'bgm-menu.wav',
     )
-    out = os.path.normpath(out)
-    song.save(out)
+    song.save(os.path.normpath(out))

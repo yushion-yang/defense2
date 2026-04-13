@@ -6,6 +6,7 @@ package scene
 import (
 	"image/color"
 	"math"
+	"runtime"
 	"strconv"
 
 	"defense2/internal/core/game"
@@ -56,7 +57,18 @@ type SettingsScene struct {
 	draggingSFX bool // 正在拖动音效滑块
 	draggingBGM bool // 正在拖动音乐滑块
 
+	touchID  ebiten.TouchID // 当前触摸 ID（拖动期间追踪）
+	hasTouch bool           // 是否正在通过触摸拖动
+
 	bgGrad *draw.CachedGradient // 背景渐变缓存
+}
+
+// pointerPos 返回当前指针的逻辑坐标（触摸优先，否则鼠标）。
+func (s *SettingsScene) pointerPos() (float64, float64) {
+	if s.hasTouch {
+		return draw.TouchPos(s.touchID)
+	}
+	return draw.CursorPos()
 }
 
 // NewSettingsScene 创建设置场景。
@@ -137,10 +149,17 @@ func backBtnGeom() (float32, float32, float32, float32) {
 // ── Update ────────────────────────────────────────
 
 func (s *SettingsScene) Update() error {
-	mx, my := draw.CursorPos()
+	mx, my := s.pointerPos()
 
-	// 鼠标按下：开始拖动
-	if inpututil.IsMouseButtonJustPressed(ebiten.MouseButtonLeft) {
+	// 按下检测：鼠标或触摸（通过 isTapJustPressed 统一判定）
+	if isTapJustPressed() {
+		// 捕获触摸 ID（拖动期间持续追踪同一触点）
+		if tids := inpututil.JustPressedTouchIDs(); len(tids) > 0 {
+			s.touchID = tids[0]
+			s.hasTouch = true
+			mx, my = draw.TouchPos(s.touchID) // 用触摸坐标覆盖
+		}
+
 		// 音效滑块
 		if bx, by, bw, bh := sliderGeom(0); s.hitSlider(mx, my, bx, by, bw, bh) {
 			s.draggingSFX = true
@@ -153,9 +172,14 @@ func (s *SettingsScene) Update() error {
 		for i := 0; i < 3; i++ {
 			qx, qy, qw, qh := qualityBtnGeom(i)
 			if mx >= float64(qx) && mx <= float64(qx+qw) && my >= float64(qy) && my <= float64(qy+qh) {
-				if s.quality != i {
-					s.quality = i
-					game.CurrentQuality = game.QualityLevel(i)
+				q := game.QualityLevel(i)
+				// WASM 下强制 Low：WebGL uniform 限制
+				if runtime.GOOS == "js" && q < game.QualityLow {
+					q = game.QualityLow
+				}
+				if s.quality != int(q) {
+					s.quality = int(q)
+					game.CurrentQuality = q
 					playUIClick(s.switcher)
 					s.persist()
 				}
@@ -182,16 +206,22 @@ func (s *SettingsScene) Update() error {
 		}
 	}
 
-	// 鼠标释放：结束拖动 + 保存设置（防抖：拖动中不写盘，松开时写一次）
-	if !ebiten.IsMouseButtonPressed(ebiten.MouseButtonLeft) {
+	// 释放检测：鼠标释放 OR 触摸结束 → 结束拖动 + 保存设置
+	mouseReleased := !ebiten.IsMouseButtonPressed(ebiten.MouseButtonLeft) && !s.hasTouch
+	touchReleased := s.hasTouch && inpututil.IsTouchJustReleased(s.touchID)
+	if mouseReleased || touchReleased {
 		if s.draggingSFX || s.draggingBGM {
 			s.persist()
 		}
 		s.draggingSFX = false
 		s.draggingBGM = false
+		if touchReleased {
+			s.hasTouch = false
+		}
 	}
 
-	// 拖动更新
+	// 拖动更新（用 pointerPos 获取当前位置，触摸优先）
+	mx, my = s.pointerPos()
 	if s.draggingSFX {
 		bx, _, bw, _ := sliderGeom(0)
 		v := sliderValue(mx, bx, bw)

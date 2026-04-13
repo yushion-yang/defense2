@@ -24,6 +24,14 @@ var fallback map[string]string
 // currentLoc 当前语言代码。
 var currentLoc string
 
+// onChangeCallbacks 语言切换后的回调列表。
+var onChangeCallbacks []func()
+
+// OnChange 注册语言切换回调（切换后立即执行）。
+func OnChange(fn func()) {
+	onChangeCallbacks = append(onChangeCallbacks, fn)
+}
+
 // Init 从嵌入 FS 加载所有 config/i18n/*.json 并设置活跃语言。
 // locale 为空时默认 "zh"。
 func Init(dataFS fs.FS, locale string) error {
@@ -103,21 +111,25 @@ func TFromLocale(locale, key string) string {
 }
 
 // SetLocale 切换活跃语言。locale 不存在时回退到 zh。
+// 切换成功后触发所有 OnChange 回调。
 func SetLocale(locale string) error {
+	prev := currentLoc
 	if table, ok := locales[locale]; ok {
 		active = table
 		currentLoc = locale
-		return nil
-	}
-	// 不存在则回退 zh
-	if table, ok := locales["zh"]; ok {
+	} else if table, ok := locales["zh"]; ok {
 		active = table
 		currentLoc = "zh"
-		return nil
+	} else {
+		active = map[string]string{}
+		currentLoc = locale
 	}
-	// 无任何语言可用
-	active = map[string]string{}
-	currentLoc = locale
+	// 语言实际变化时触发回调
+	if currentLoc != prev {
+		for _, fn := range onChangeCallbacks {
+			fn()
+		}
+	}
 	return nil
 }
 

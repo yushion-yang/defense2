@@ -676,6 +676,7 @@ func (s *StageScene) tryUpgradeTower() {
 	}
 	cost := tower.StrengthBuyCost()
 	if s.gold < cost {
+		hud.ShowToast(i18n.T("game.tower.gold_short"))
 		return
 	}
 	spent := t.BuyStrength() // 内部已调用 AddPermanent + RecalcStats
@@ -694,6 +695,7 @@ func (s *StageScene) tryBulkUpgradeTower() {
 	}
 	cost := tower.StrengthBuyCost() * 5
 	if s.gold < cost {
+		hud.ShowToast(i18n.T("game.tower.gold_short"))
 		return
 	}
 	// 5 次购买合并
@@ -721,6 +723,7 @@ func (s *StageScene) tryUnlockAbilitySlot() {
 	def := s.findTowerDef(t)
 	cost := tower.NextUpgradeCost(t, def)
 	if s.gold < cost {
+		hud.ShowToast(i18n.T("game.tower.gold_short"))
 		return
 	}
 	cat := tower.UnlockNextSlot(t)
@@ -763,14 +766,15 @@ func newStageGesture() *input.Gesture {
 		if hud.ToggleButtonHitTest(fx, fy, false) {
 			return true
 		}
-		if y > float64(game.ScreenHeight)-120 {
-			return true
-		}
-		// ActionBar 区域
+		// ActionBar 区域（精确矩形检测）
 		if abx, aby, abw, abh := hud.ActionBarRect(); abw > 0 {
 			if fx >= abx && fx <= abx+abw && fy >= aby && fy <= aby+abh {
 				return true
 			}
+		}
+		// ActionBar 上方留 6px 余量，避免紧贴边缘误触发拖拽
+		if y > float64(game.ScreenHeight)-60 {
+			return true
 		}
 		return false
 	}

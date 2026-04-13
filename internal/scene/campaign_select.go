@@ -27,6 +27,7 @@ import (
 	"defense2/internal/render/ui"
 
 	"github.com/hajimehoshi/ebiten/v2"
+	"github.com/hajimehoshi/ebiten/v2/inpututil"
 )
 
 // ── 布局常量 ────────────────────────────────────
@@ -128,17 +129,31 @@ func (s *CampaignSelectScene) Update() error {
 		s.hoverMap = s.hitTestMapCards(hx, hy)
 		s.hoverDiff = s.hitTestDiffBtns(hx, hy)
 		s.hoverStart = s.hitTestStartBtn(hx, hy)
-		s.hoverBack = hx >= 20 && hx <= 90 && hy >= 16 && hy <= 44
+		s.hoverBack = hitTestNavBackBtn(hx, hy)
 	} else {
 		s.hoverMap, s.hoverDiff = -1, -1
 		s.hoverStart = false
 		s.hoverBack = false
 	}
 
+	// 键盘快捷键
+	if inpututil.IsKeyJustPressed(ebiten.KeyEscape) {
+		playUIClick(s.switcher)
+		s.switcher.SwitchScene(NewSelectScene(s.switcher))
+		return nil
+	}
+	if inpututil.IsKeyJustPressed(ebiten.KeyEnter) || inpututil.IsKeyJustPressed(ebiten.KeySpace) {
+		if len(s.levels) > 0 && s.selectedMap < len(s.levels) && s.progressMgr.IsMapUnlocked(s.levels[s.selectedMap].ID) {
+			playUIClick(s.switcher)
+			s.startGame()
+			return nil
+		}
+	}
+
 	mx, my := draw.CursorPos()
 	if isTapJustPressed() {
 		// 返回
-		if mx >= 20 && mx <= 90 && my >= 16 && my <= 44 {
+		if hitTestNavBackBtn(mx, my) {
 			playUIClick(s.switcher)
 			s.switcher.SwitchScene(NewSelectScene(s.switcher))
 			return nil

@@ -23,7 +23,7 @@
 //	--scenario <name>: 指定单个场景
 //
 // 策略系统：每个 TestCase 绑定一个 Strategy 接口实现，控制建塔/升级/道具决策。
-// 可用策略：random / greedy / balance_greedy / competent / champion_* / focus_* / scenario_* / llm
+// 可用策略：random / greedy / balance_greedy / competent / champion_* / focus_* / scenario_*
 package main
 
 import (
@@ -66,8 +66,6 @@ func main() {
 	marathon := flag.Bool("marathon", false, "run N random games with random map/difficulty/warden/strategy")
 	games := flag.Int("games", 100, "number of games in marathon mode")
 	heapStats := flag.Bool("heap-stats", false, "print heap statistics every 10 games in marathon mode")
-	modelPath := flag.String("model-path", "", "path to LLM .bin weight file (for llm strategy)")
-	vocabPath := flag.String("vocab-path", "config/llm/vocab.json", "path to LLM vocab.json (for llm strategy)")
 	flag.Parse()
 
 	if *sessionJSON != "" {
@@ -75,7 +73,7 @@ func main() {
 		return
 	}
 
-	orchestrate(*runs, *strategies, *mapID, *difficulty, *warden, *output, *jsonDir, *sweep, *abilitySweep, *balanceSweep, *simSweep, *scenarioName, *seed, *marathon, *games, *heapStats, *modelPath, *vocabPath)
+	orchestrate(*runs, *strategies, *mapID, *difficulty, *warden, *output, *jsonDir, *sweep, *abilitySweep, *balanceSweep, *simSweep, *scenarioName, *seed, *marathon, *games, *heapStats)
 }
 
 // ─── 编排模式 ───
@@ -91,8 +89,6 @@ type sessionConfig struct {
 	EnemyFilter string `json:"enemy_filter"`
 	Strategy    string `json:"strategy"`
 	TowerKey    string `json:"tower_key,omitempty"`
-	ModelPath   string `json:"model_path,omitempty"`
-	VocabPath   string `json:"vocab_path,omitempty"`
 	OutputDir   string `json:"output_dir"`
 	JSONDir     string `json:"json_dir,omitempty"` // 纯 JSON 输出 (空=混合到 OutputDir)
 	Seed        int64  `json:"seed"`
@@ -108,7 +104,7 @@ type sessionConfig struct {
 //  5. 逐个调用 runSessionInProcess() 运行测试
 //  6. marathon 模式下每 10 局打印堆内存统计（检测内存泄漏）
 //  7. 生成汇总报告（coverage_summary.json 等）
-func orchestrate(runs int, strategies, mapID, difficulty, warden, output, jsonDir string, sweep, abilitySweep, balanceSweep, simSweep bool, scenarioName string, masterSeed int64, marathon bool, games int, heapStats bool, modelPath, vocabPath string) {
+func orchestrate(runs int, strategies, mapID, difficulty, warden, output, jsonDir string, sweep, abilitySweep, balanceSweep, simSweep bool, scenarioName string, masterSeed int64, marathon bool, games int, heapStats bool) {
 	// 分离模式: --json-dir 由调用方管理目录结构
 	// 初始化 dataFS（父进程需要读取 ability_tests.json 生成测试计划）
 	config.SetDataFS(&defense2.DataFS)
@@ -209,8 +205,6 @@ func orchestrate(runs int, strategies, mapID, difficulty, warden, output, jsonDi
 			ModeID:      tc.EffectiveModeID(),
 			EnemyFilter: tc.EnemyFilter,
 			Strategy:    tc.Strategy.Name(),
-			ModelPath:   modelPath,
-			VocabPath:   vocabPath,
 			OutputDir:   runDir,
 			JSONDir:     jsonDir,
 			Seed:        sessionSeed,
@@ -455,12 +449,6 @@ func restoreStrategy(cfg sessionConfig) autoplay.Strategy {
 		return autoplay.NewCompetentStrategy(autoplay.WithCompetentSeed(cfg.Seed))
 	case name == "visual_catalog":
 		return autoplay.NewVisualCatalogStrategy()
-	case name == "llm":
-		s, err := autoplay.NewLLMStrategy(cfg.ModelPath, cfg.VocabPath)
-		if err != nil {
-			log.Fatalf("create LLM strategy: %v", err)
-		}
-		return s
 	case len(name) > 9 && name[:9] == "champion_":
 		styleMap := map[string]autoplay.ChampionStyle{
 			"champion_balanced": autoplay.StyleBalanced,

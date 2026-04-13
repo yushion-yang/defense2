@@ -7,6 +7,7 @@ import (
 	"image/color"
 	"log"
 	"math"
+	"runtime"
 	"strconv"
 
 	gameAudio "defense2/internal/audio"
@@ -90,6 +91,9 @@ func (s *LoadingScene) Update() error {
 		config.LoadSpawnerConfig()
 		// 配置全部加载后，用 i18n 覆盖所有显示文本字段
 		config.ResolveConfigLabels()
+		// 注册语言切换回调：重新烘焙配置标签 + 重置场景缓存
+		i18n.OnChange(config.ResolveConfigLabels)
+		i18n.OnChange(ResetLocaleCache)
 		s.progress = 0.10
 		s.phase = phaseShaders
 
@@ -156,7 +160,12 @@ func (s *LoadingScene) Update() error {
 		s.g.audioMgr.SetVolume(sd.SFXVolume)
 		s.g.audioMgr.SetBGMVolume(sd.BGMVolume)
 		if sd.Quality >= 0 && sd.Quality <= 2 {
-			game.CurrentQuality = game.QualityLevel(sd.Quality)
+			q := game.QualityLevel(sd.Quality)
+			// WASM 下强制 Low：WebGL uniform 限制导致 shader crash
+			if runtime.GOOS == "js" && q < game.QualityLow {
+				q = game.QualityLow
+			}
+			game.CurrentQuality = q
 		}
 		s.progress = 0.95
 		s.phase = phaseFinalize

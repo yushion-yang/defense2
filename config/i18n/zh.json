@@ -262,6 +262,7 @@
   "game.tower.btn_bulk_upgrade": "强化×5 ($%d)",
   "game.tower.btn_sell": "出售 ($%d)",
   "game.tower.btn_upgrade": "强化 ($%d)",
+  "game.tower.gold_short": "金币不足",
   "game.tower.sold": "出售获得 $%d",
   "game.tower.str_up_10": "强化 -$%d",
   "game.tower.str_up_50": "强化×5 -$%d",

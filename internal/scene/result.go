@@ -26,6 +26,7 @@ import (
 	"defense2/internal/render/theme"
 
 	"github.com/hajimehoshi/ebiten/v2"
+	"github.com/hajimehoshi/ebiten/v2/inpututil"
 )
 
 // ---------------------------------------------------------------------------
@@ -166,10 +167,15 @@ func (s *ResultScene) Update() error {
 		// nothing
 	}
 
-	// Only allow tap after animations complete
-	if s.interactive && isTapJustPressed() {
-		mx, my := draw.CursorPos()
-		if s.hitReplayButton(mx, my) {
+	// Only allow interaction after animations complete
+	if s.interactive {
+		// 键盘快捷键
+		if inpututil.IsKeyJustPressed(ebiten.KeyEscape) {
+			playUIClick(s.switcher)
+			s.switcher.SwitchScene(NewSelectScene(s.switcher))
+			return nil
+		}
+		if inpututil.IsKeyJustPressed(ebiten.KeyEnter) || inpututil.IsKeyJustPressed(ebiten.KeySpace) || inpututil.IsKeyJustPressed(ebiten.KeyR) {
 			playUIClick(s.switcher)
 			s.switcher.SwitchScene(NewStageSceneWithOpts(s.switcher, StageOptions{
 				MapID:        s.data.MapID,
@@ -178,10 +184,23 @@ func (s *ResultScene) Update() error {
 			}))
 			return nil
 		}
-		if s.hitMenuButton(mx, my) {
-			playUIClick(s.switcher)
-			s.switcher.SwitchScene(NewSelectScene(s.switcher))
-			return nil
+
+		if isTapJustPressed() {
+			mx, my := draw.CursorPos()
+			if s.hitReplayButton(mx, my) {
+				playUIClick(s.switcher)
+				s.switcher.SwitchScene(NewStageSceneWithOpts(s.switcher, StageOptions{
+					MapID:        s.data.MapID,
+					ModeID:       s.data.ModeID,
+					DifficultyID: s.data.DifficultyID,
+				}))
+				return nil
+			}
+			if s.hitMenuButton(mx, my) {
+				playUIClick(s.switcher)
+				s.switcher.SwitchScene(NewSelectScene(s.switcher))
+				return nil
+			}
 		}
 	}
 	return nil

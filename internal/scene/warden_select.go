@@ -14,6 +14,7 @@ import (
 	"defense2/internal/render/theme"
 
 	"github.com/hajimehoshi/ebiten/v2"
+	"github.com/hajimehoshi/ebiten/v2/inpututil"
 )
 
 // wardenOptions 从配置加载战灵选项列表（懒加载缓存在 stage_warden_vm.go）。
@@ -82,10 +83,22 @@ func (s *WardenSelectScene) Update() error {
 		s.hoverSkip = false
 	}
 
+	// 键盘快捷键
+	if inpututil.IsKeyJustPressed(ebiten.KeyEscape) {
+		playUIClick(s.switcher)
+		s.switcher.SwitchScene(NewSelectScene(s.switcher))
+		return nil
+	}
+	if inpututil.IsKeyJustPressed(ebiten.KeyEnter) || inpututil.IsKeyJustPressed(ebiten.KeySpace) {
+		playUIClick(s.switcher)
+		s.confirm()
+		return nil
+	}
+
 	mx, my := draw.CursorPos()
 	if isTapJustPressed() {
 		// 返回
-		if mx >= 20 && mx <= 90 && my >= 16 && my <= 44 {
+		if hitTestNavBackBtn(mx, my) {
 			playUIClick(s.switcher)
 			s.switcher.SwitchScene(NewSelectScene(s.switcher))
 			return nil
