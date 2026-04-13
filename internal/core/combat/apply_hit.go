@@ -292,8 +292,11 @@ func applyHitEffectsUnified(r *tower.HitResult, target *enemy.Enemy, p *projecti
 	}
 	// 弹幕盾阻止弹射继续链接
 	if r.Bounce != nil && p.BounceCount < r.Bounce.MaxBounces && projectiles != nil && !ShouldShieldBlock(target, tower.AbilityBounce) {
-		hitIDs := append([]int{}, p.BounceHitIDs...)
-		hitIDs = append(hitIDs, target.ID)
+		// 栈数组避免堆分配（MaxBounces 通常 <= 5）
+		var hitBuf [8]int
+		n := copy(hitBuf[:], p.BounceHitIDs)
+		hitBuf[n] = target.ID
+		hitIDs := hitBuf[:n+1]
 
 		var best *enemy.Enemy
 		bestDist := r.Bounce.Range

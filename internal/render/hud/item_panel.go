@@ -2,8 +2,8 @@
 package hud
 
 import (
-	"fmt"
 	"image/color"
+	"strconv"
 
 	"defense2/internal/render"
 	"defense2/internal/render/draw"
@@ -169,7 +169,7 @@ func drawItemCard(screen *ebiten.Image, fm *render.FontManager, card ItemCardVM,
 	fm.DrawText(screen, card.Name, textX, textY, theme.FontSM, nameClr)
 
 	// Count text "xN"
-	countTxt := fmt.Sprintf("x%d", card.Count)
+	countTxt := "x" + strconv.Itoa(card.Count)
 	countClr := color.RGBA{R: 180, G: 200, B: 230, A: 200}
 	if !available {
 		countClr = theme.TextLocked

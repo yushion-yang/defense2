@@ -3,7 +3,7 @@
 // 本文件保留 WaveComposition 类型和辅助工具，以及向后兼容的访问函数。
 package config
 
-import "sort"
+import "slices"
 
 // WaveComposition 波次阶段出怪配置。
 type WaveComposition struct {
@@ -18,7 +18,7 @@ func (wc *WaveComposition) SortedEnemies() [][2]any {
 	for k := range wc.Enemies {
 		keys = append(keys, k)
 	}
-	sort.Strings(keys)
+	slices.Sort(keys)
 	result := make([][2]any, len(keys))
 	for i, k := range keys {
 		result[i] = [2]any{k, wc.Enemies[k]}
@@ -48,6 +48,6 @@ func WaveCompositionArchetypes() []string {
 			}
 		}
 	}
-	sort.Strings(result)
+	slices.Sort(result)
 	return result
 }

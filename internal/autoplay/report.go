@@ -8,7 +8,7 @@ import (
 	"io"
 	"os"
 	"path/filepath"
-	"sort"
+	"slices"
 )
 
 // BalanceTestResult 单个平衡测试结果。
@@ -302,7 +302,7 @@ func (r *CoverageReport) WriteText(w io.Writer) {
 		for t := range r.AnomalySummary {
 			types = append(types, t)
 		}
-		sort.Strings(types)
+		slices.Sort(types)
 		for _, t := range types {
 			fmt.Fprintf(w, "  %s: %d\n", t, r.AnomalySummary[t])
 		}

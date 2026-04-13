@@ -3,7 +3,6 @@
 package hud
 
 import (
-	"fmt"
 	"strconv"
 
 	"defense2/internal/core/game"
@@ -40,25 +39,6 @@ func (o *DebugOverlay) Toggle() {
 	o.Enabled = !o.Enabled
 }
 
-// DrawWorld 绘制世界空间调试信息（射程圈、瞄准线等）。
-// towers/enemies 使用 any 避免 render 包导入 core 包。
-// 调用方应传入切片长度，具体的范围/瞄准渲染由调用方在 stage 层处理。
-func (o *DebugOverlay) DrawWorld(screen *ebiten.Image, towers, enemies any) {
-	if !o.Enabled {
-		return
-	}
-	// 占位实现：绘制实体数量提示文本
-	// 实际射程圈和瞄准线应由 stage 层使用 draw.CircleOutline 等绘制
-	fm := render.GlobalFont()
-	if fm == nil {
-		return
-	}
-	towerCount := countSlice(towers)
-	enemyCount := countSlice(enemies)
-	text := fmt.Sprintf("调试: %d塔 / %d敌", towerCount, enemyCount)
-	fm.DrawText(screen, text, 10, float64(game.ScreenHeight)-30, theme.FontCaption, theme.DebugTextClr)
-}
-
 // DrawHUD 绘制 HUD 空间调试统计栏（屏幕顶部）。
 func (o *DebugOverlay) DrawHUD(screen *ebiten.Image, towerCount, enemyCount, beamCount, projCount int) {
 	if !o.Enabled {
@@ -75,8 +55,18 @@ func (o *DebugOverlay) DrawHUD(screen *ebiten.Image, towerCount, enemyCount, bea
 	bgClr := theme.OverlayHeavy
 	draw.FilledRect(screen, 0, barY, float32(game.ScreenWidth), barH, bgClr, false)
 
-	// 统计文本
-	stats := fmt.Sprintf("塔:%d  敌:%d  光束:%d  弹:%d", towerCount, enemyCount, beamCount, projCount)
+	// 统计文本（strconv + stack buffer 避免 fmt.Sprintf 分配）
+	var buf [64]byte
+	b := buf[:0]
+	b = append(b, "塔:"...)
+	b = strconv.AppendInt(b, int64(towerCount), 10)
+	b = append(b, "  敌:"...)
+	b = strconv.AppendInt(b, int64(enemyCount), 10)
+	b = append(b, "  光束:"...)
+	b = strconv.AppendInt(b, int64(beamCount), 10)
+	b = append(b, "  弹:"...)
+	b = strconv.AppendInt(b, int64(projCount), 10)
+	stats := string(b)
 	textClr := theme.DebugStatsClr
 	fm.DrawCenteredText(screen, stats, float64(game.ScreenWidth)/2, float64(barY)+2, theme.FontCaption, textClr)
 }
@@ -133,17 +123,3 @@ func (o *DebugOverlay) DrawPerf(screen *ebiten.Image, pt PerfVM) {
 	fm.DrawCenteredText(screen, text, float64(game.ScreenWidth)/2, float64(barY)+2, theme.FontCaption, theme.DebugStatsClr)
 }
 
-// countSlice 尝试获取切片长度（辅助函数）。
-func countSlice(v any) int {
-	if v == nil {
-		return 0
-	}
-	// 尝试常见的切片接口
-	type hasLen interface {
-		Len() int
-	}
-	if s, ok := v.(hasLen); ok {
-		return s.Len()
-	}
-	return 0
-}

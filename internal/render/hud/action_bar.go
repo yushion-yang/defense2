@@ -72,12 +72,6 @@ func DrawActionBar(screen *ebiten.Image, d ActionBarData) {
 	}
 	btns = append(btns, btnDef{"items", itemLabel, itemClr})
 
-	// Map button names to their interactive states
-	btnStates := map[string]*ui.ButtonState{
-		"build": d.BuildBtnState,
-		"items": d.ItemBtnState,
-	}
-
 	// ── Measure total button width ──
 	// Hover detection using last frame's rects
 	mx, my := draw.CursorPos()
@@ -90,7 +84,15 @@ func DrawActionBar(screen *ebiten.Image, d ActionBarData) {
 	names := nameBuf[:len(btns)]
 	totalBtnW := float32(0)
 	for i, b := range btns {
-		items[i] = ui.ButtonRowItem{Label: b.label, Color: b.clr, State: btnStates[b.name], Hovered: i == hoverIdx}
+		// 直接查找按钮状态，避免 per-frame map 分配
+		var st *ui.ButtonState
+		switch b.name {
+		case "build":
+			st = d.BuildBtnState
+		case "items":
+			st = d.ItemBtnState
+		}
+		items[i] = ui.ButtonRowItem{Label: b.label, Color: b.clr, State: st, Hovered: i == hoverIdx}
 		names[i] = b.name
 		tw := float32(fm.MeasureText(b.label, theme.FontH2))
 		w := tw + btnPadX*2

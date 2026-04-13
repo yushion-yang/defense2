@@ -15,7 +15,6 @@ import (
 	"os"
 	"path/filepath"
 	"slices"
-	"sort"
 	"strconv"
 	"strings"
 	"sync"
@@ -842,7 +841,7 @@ func (s *StageScene) spawnAllStatic() {
 	for name := range archetypes {
 		names = append(names, name)
 	}
-	sort.Strings(names)
+	slices.Sort(names)
 
 	// Grid layout: 8 columns
 	cols := 8

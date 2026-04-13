@@ -6,7 +6,6 @@ package loader
 import (
 	"cmp"
 	"slices"
-	"sort"
 	"strings"
 
 	"defense2/internal/config"
@@ -73,7 +72,7 @@ func LoadTowerDefs() ([]tower.TowerDef, error) {
 	for key := range all {
 		keys = append(keys, key)
 	}
-	sort.Strings(keys)
+	slices.Sort(keys)
 
 	defs := make([]tower.TowerDef, 0, len(all))
 	for _, key := range keys {
