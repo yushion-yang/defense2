@@ -7,7 +7,7 @@
       {
         "text": {
           "zh": "刚才...时空好像扭曲了一下？",
-          "en": ""
+          "en": "Just now... did reality glitch for a sec?"
         },
         "expression": "surprised",
         "autoAdvance": 4
@@ -15,7 +15,7 @@
       {
         "text": {
           "zh": "没事没事，我已经用胶带粘好了！",
-          "en": ""
+          "en": "No worries, I patched it up with tape!"
         },
         "expression": "happy",
         "autoAdvance": 4
@@ -32,7 +32,7 @@
       {
         "text": {
           "zh": "报告！系统出现了一个「未定义行为」。",
-          "en": ""
+          "en": "Report! The system encountered \"undefined behavior.\""
         },
         "expression": "talk",
         "autoAdvance": 4
@@ -40,7 +40,7 @@
       {
         "text": {
           "zh": "翻译一下就是：出Bug了。",
-          "en": ""
+          "en": "In plain English: it's a bug."
         },
         "expression": "idle",
         "autoAdvance": 3
@@ -48,7 +48,7 @@
       {
         "text": {
           "zh": "但是！我们活下来了！",
-          "en": ""
+          "en": "But hey! We survived!"
         },
         "expression": "happy",
         "autoAdvance": 3
@@ -65,7 +65,7 @@
       {
         "text": {
           "zh": "刚才那个闪烁是什么？",
-          "en": ""
+          "en": "What was that flicker just now?"
         },
         "expression": "surprised",
         "autoAdvance": 3
@@ -73,7 +73,7 @@
       {
         "text": {
           "zh": "啊...是代码在哭泣的声音。",
-          "en": ""
+          "en": "Ah... that was the sound of code crying."
         },
         "expression": "idle",
         "autoAdvance": 4
@@ -90,7 +90,7 @@
       {
         "text": {
           "zh": "有个goroutine刚才panic了...",
-          "en": ""
+          "en": "A goroutine just panicked..."
         },
         "expression": "talk",
         "autoAdvance": 4
@@ -98,7 +98,7 @@
       {
         "text": {
           "zh": "不过recover把它救回来了，没事~",
-          "en": ""
+          "en": "But recover saved it, so we're good~"
         },
         "expression": "happy",
         "autoAdvance": 4
@@ -115,7 +115,7 @@
       {
         "text": {
           "zh": "你什么都没看到。",
-          "en": ""
+          "en": "You saw nothing."
         },
         "expression": "idle",
         "autoAdvance": 3
@@ -123,7 +123,7 @@
       {
         "text": {
           "zh": "我什么都没看到。",
-          "en": ""
+          "en": "I saw nothing."
         },
         "expression": "idle",
         "autoAdvance": 3
@@ -131,7 +131,7 @@
       {
         "text": {
           "zh": "我们达成共识了对吧？",
-          "en": ""
+          "en": "We have an understanding, right?"
         },
         "expression": "talk",
         "autoAdvance": 3
@@ -148,7 +148,7 @@
       {
         "text": {
           "zh": "游戏差点闪退...但我拉住了它！",
-          "en": ""
+          "en": "The game almost crashed... but I caught it!"
         },
         "expression": "surprised",
         "autoAdvance": 4
@@ -156,7 +156,7 @@
       {
         "text": {
           "zh": "请叫我「守护天使」。",
-          "en": ""
+          "en": "You may call me \"Guardian Angel.\""
         },
         "expression": "happy",
         "autoAdvance": 3
@@ -173,7 +173,7 @@
       {
         "text": {
           "zh": "这大概就是「在悬崖边跳舞」吧。",
-          "en": ""
+          "en": "This is what they call \"dancing on the edge.\""
         },
         "expression": "talk",
         "autoAdvance": 4
@@ -181,7 +181,7 @@
       {
         "text": {
           "zh": "不过放心，有安全网接着呢。",
-          "en": ""
+          "en": "Don't worry though, there's a safety net."
         },
         "expression": "happy",
         "autoAdvance": 4
@@ -198,7 +198,7 @@
       {
         "text": {
           "zh": "开发者看到这个日志大概会叹气吧...",
-          "en": ""
+          "en": "The dev is probably sighing at this log..."
         },
         "expression": "idle",
         "autoAdvance": 4
@@ -206,7 +206,7 @@
       {
         "text": {
           "zh": "「深夜加班+1」。",
-          "en": ""
+          "en": "\"Late night overtime +1.\""
         },
         "expression": "talk",
         "autoAdvance": 3
@@ -223,7 +223,7 @@
       {
         "text": {
           "zh": "错误代码：0x——算了你也看不懂。",
-          "en": ""
+          "en": "Error code: 0x-- never mind, you wouldn't get it."
         },
         "expression": "talk",
         "autoAdvance": 4
@@ -231,7 +231,7 @@
       {
         "text": {
           "zh": "总之问题已经被我吃掉了！",
-          "en": ""
+          "en": "Anyway, I ate the error! All gone!"
         },
         "expression": "happy",
         "autoAdvance": 3
@@ -248,7 +248,7 @@
       {
         "text": {
           "zh": "这个Bug好像每次都在同一个地方...",
-          "en": ""
+          "en": "This bug keeps showing up in the same spot..."
         },
         "expression": "talk",
         "autoAdvance": 4
@@ -256,7 +256,7 @@
       {
         "text": {
           "zh": "不过我已经习惯了，老朋友了。",
-          "en": ""
+          "en": "But I'm used to it by now. Old friends, really."
         },
         "expression": "idle",
         "autoAdvance": 4
@@ -273,7 +273,7 @@
       {
         "text": {
           "zh": "nil pointer...又是你。",
-          "en": ""
+          "en": "nil pointer... we meet again."
         },
         "expression": "idle",
         "autoAdvance": 3
@@ -281,7 +281,7 @@
       {
         "text": {
           "zh": "Go语言的经典噩梦。",
-          "en": ""
+          "en": "The classic Go nightmare."
         },
         "expression": "talk",
         "autoAdvance": 4
@@ -289,7 +289,7 @@
       {
         "text": {
           "zh": "幸好有defer recover兜底！",
-          "en": ""
+          "en": "Thank goodness for defer recover!"
         },
         "expression": "happy",
         "autoAdvance": 3
@@ -306,7 +306,7 @@
       {
         "text": {
           "zh": "世界暂停了0.001秒。",
-          "en": ""
+          "en": "The world froze for 0.001 seconds."
         },
         "expression": "surprised",
         "autoAdvance": 3
@@ -314,7 +314,7 @@
       {
         "text": {
           "zh": "你有没有感觉到？大概没有吧。",
-          "en": ""
+          "en": "Did you feel it? Probably not."
         },
         "expression": "idle",
         "autoAdvance": 4
@@ -322,7 +322,7 @@
       {
         "text": {
           "zh": "当作什么都没发生就好~",
-          "en": ""
+          "en": "Just pretend nothing happened~"
         },
         "expression": "happy",
         "autoAdvance": 3
@@ -339,7 +339,7 @@
       {
         "text": {
           "zh": "天降横财？你买彩票了吗？",
-          "en": ""
+          "en": "Windfall? Did you win the lottery?"
         },
         "expression": "surprised",
         "autoAdvance": 4
@@ -356,7 +356,7 @@
       {
         "text": {
           "zh": "这个金币数字...看起来不太自然呢。",
-          "en": ""
+          "en": "That gold number... doesn't look very natural."
         },
         "expression": "talk",
         "autoAdvance": 4
@@ -364,7 +364,7 @@
       {
         "text": {
           "zh": "不过有钱花总是好事嘛~",
-          "en": ""
+          "en": "But hey, having money to spend is always nice~"
         },
         "expression": "happy",
         "autoAdvance": 3
@@ -381,7 +381,7 @@
       {
         "text": {
           "zh": "你是不是偷偷改了内存里的什么东西？",
-          "en": ""
+          "en": "Did you sneak into memory and change something?"
         },
         "expression": "idle",
         "autoAdvance": 4
@@ -389,7 +389,7 @@
       {
         "text": {
           "zh": "厉害厉害，技术人才。",
-          "en": ""
+          "en": "Impressive, impressive. A true hacker."
         },
         "expression": "happy",
         "autoAdvance": 3
@@ -406,7 +406,7 @@
       {
         "text": {
           "zh": "金币暴涨...我假装没注意到。",
-          "en": ""
+          "en": "Gold skyrocketed... I'll pretend I didn't notice."
         },
         "expression": "idle",
         "autoAdvance": 4
@@ -423,7 +423,7 @@
       {
         "text": {
           "zh": "哇，这么多金币！分我一半好不好？",
-          "en": ""
+          "en": "Wow, so much gold! Can I have half?"
         },
         "expression": "happy",
         "autoAdvance": 4
@@ -431,7 +431,7 @@
       {
         "text": {
           "zh": "...我又花不了，算了。",
-          "en": ""
+          "en": "...Not like I can spend it. Never mind."
         },
         "expression": "idle",
         "autoAdvance": 3
@@ -448,7 +448,7 @@
       {
         "text": {
           "zh": "这就是传说中的「金手指」吗？",
-          "en": ""
+          "en": "Is this what they call a \"cheat code\"?"
         },
         "expression": "surprised",
         "autoAdvance": 4
@@ -456,7 +456,7 @@
       {
         "text": {
           "zh": "羡慕...我也想要一个。",
-          "en": ""
+          "en": "Jealous... I want one too."
         },
         "expression": "talk",
         "autoAdvance": 3
@@ -473,7 +473,7 @@
       {
         "text": {
           "zh": "钱多到花不完的感觉，很爽吧？",
-          "en": ""
+          "en": "Feels great having more money than you can spend, huh?"
         },
         "expression": "talk",
         "autoAdvance": 4
@@ -481,7 +481,7 @@
       {
         "text": {
           "zh": "就是少了点挑战的乐趣呢~",
-          "en": ""
+          "en": "Just lacks a bit of the thrill, though~"
         },
         "expression": "idle",
         "autoAdvance": 4
@@ -498,7 +498,7 @@
       {
         "text": {
           "zh": "我决定不追究这些金币的来源。",
-          "en": ""
+          "en": "I've decided not to question where this gold came from."
         },
         "expression": "idle",
         "autoAdvance": 4
@@ -506,7 +506,7 @@
       {
         "text": {
           "zh": "享受当下就好！",
-          "en": ""
+          "en": "Just enjoy the moment!"
         },
         "expression": "happy",
         "autoAdvance": 3
@@ -523,7 +523,7 @@
       {
         "text": {
           "zh": "生命值在涨？这不科学！",
-          "en": ""
+          "en": "Lives going UP? That's not how this works!"
         },
         "expression": "surprised",
         "autoAdvance": 4
@@ -531,7 +531,7 @@
       {
         "text": {
           "zh": "这游戏可没有治疗泉水的设定...",
-          "en": ""
+          "en": "This game doesn't have a healing fountain..."
         },
         "expression": "talk",
         "autoAdvance": 4
@@ -548,7 +548,7 @@
       {
         "text": {
           "zh": "永生不死的感觉...会不会太无聊了？",
-          "en": ""
+          "en": "Being immortal... wouldn't that get boring?"
         },
         "expression": "idle",
         "autoAdvance": 4
@@ -556,7 +556,7 @@
       {
         "text": {
           "zh": "紧迫感也是游戏的乐趣之一呢。",
-          "en": ""
+          "en": "The tension is part of the fun, you know."
         },
         "expression": "talk",
         "autoAdvance": 4
@@ -573,7 +573,7 @@
       {
         "text": {
           "zh": "血量在回复...你确定这是同一个游戏？",
-          "en": ""
+          "en": "HP is regenerating... are we playing the same game?"
         },
         "expression": "surprised",
         "autoAdvance": 4
@@ -590,7 +590,7 @@
       {
         "text": {
           "zh": "有些东西只减不增才有意义...",
-          "en": ""
+          "en": "Some things only matter because they can't go up..."
         },
         "expression": "idle",
         "autoAdvance": 4
@@ -598,7 +598,7 @@
       {
         "text": {
           "zh": "比如生命值，比如青春。",
-          "en": ""
+          "en": "Like lives. And youth."
         },
         "expression": "talk",
         "autoAdvance": 4
@@ -615,7 +615,7 @@
       {
         "text": {
           "zh": "开发者肯定没写回血逻辑...",
-          "en": ""
+          "en": "The dev definitely didn't code health regen..."
         },
         "expression": "talk",
         "autoAdvance": 4
@@ -623,7 +623,7 @@
       {
         "text": {
           "zh": "所以这要么是Bug，要么是你太厉害了。",
-          "en": ""
+          "en": "So this is either a bug, or you're just built different."
         },
         "expression": "idle",
         "autoAdvance": 4
@@ -640,7 +640,7 @@
       {
         "text": {
           "zh": "多出来的生命...是你从平行世界借的吗？",
-          "en": ""
+          "en": "Extra lives... did you borrow them from a parallel world?"
         },
         "expression": "idle",
         "autoAdvance": 4
@@ -648,7 +648,7 @@
       {
         "text": {
           "zh": "记得还哦。",
-          "en": ""
+          "en": "Don't forget to return them."
         },
         "expression": "happy",
         "autoAdvance": 3
@@ -665,7 +665,7 @@
       {
         "text": {
           "zh": "哦？生命值变多了？",
-          "en": ""
+          "en": "Oh? Lives went up?"
         },
         "expression": "surprised",
         "autoAdvance": 3
@@ -673,7 +673,7 @@
       {
         "text": {
           "zh": "嗯...我选择相信奇迹。",
-          "en": ""
+          "en": "Hmm... I choose to believe in miracles."
         },
         "expression": "happy",
         "autoAdvance": 4
@@ -690,7 +690,7 @@
       {
         "text": {
           "zh": "不会死的游戏就像没有辣的火锅。",
-          "en": ""
+          "en": "A game where you can't die is like pizza without cheese."
         },
         "expression": "talk",
         "autoAdvance": 4
@@ -698,7 +698,7 @@
       {
         "text": {
           "zh": "能吃，但少了点什么。",
-          "en": ""
+          "en": "Edible, but something's missing."
         },
         "expression": "idle",
         "autoAdvance": 4
@@ -715,7 +715,7 @@
       {
         "text": {
           "zh": "一滴血都没掉！你是人类吗？！",
-          "en": ""
+          "en": "Not a single life lost! Are you even human?!"
         },
         "expression": "surprised",
         "autoAdvance": 4
@@ -723,7 +723,7 @@
       {
         "text": {
           "zh": "...失礼了，你当然是人类。超强的人类。",
-          "en": ""
+          "en": "...Sorry, of course you're human. An amazing one."
         },
         "expression": "happy",
         "autoAdvance": 4
@@ -740,7 +740,7 @@
       {
         "text": {
           "zh": "完美通关！连一只敌人都没漏过！",
-          "en": ""
+          "en": "Perfect clear! Not a single enemy got through!"
         },
         "expression": "happy",
         "autoAdvance": 4
@@ -748,7 +748,7 @@
       {
         "text": {
           "zh": "我觉得开发者都做不到这个。",
-          "en": ""
+          "en": "I bet even the dev couldn't pull that off."
         },
         "expression": "talk",
         "autoAdvance": 4
@@ -765,7 +765,7 @@
       {
         "text": {
           "zh": "铜墙铁壁！滴水不漏！",
-          "en": ""
+          "en": "Fortress of steel! Airtight defense!"
         },
         "expression": "happy",
         "autoAdvance": 3
@@ -773,7 +773,7 @@
       {
         "text": {
           "zh": "敌人们大概在怀疑人生吧。",
-          "en": ""
+          "en": "The enemies are probably questioning their life choices."
         },
         "expression": "talk",
         "autoAdvance": 4
@@ -790,7 +790,7 @@
       {
         "text": {
           "zh": "零损失...我目睹了一场艺术品级的防守。",
-          "en": ""
+          "en": "Zero losses... I just witnessed a masterpiece of defense."
         },
         "expression": "surprised",
         "autoAdvance": 4
@@ -798,7 +798,7 @@
       {
         "text": {
           "zh": "请收下我的膝盖。",
-          "en": ""
+          "en": "I bow to you, Commander."
         },
         "expression": "happy",
         "autoAdvance": 3
@@ -815,7 +815,7 @@
       {
         "text": {
           "zh": "如果有排行榜，你绝对是第一名！",
-          "en": ""
+          "en": "If there was a leaderboard, you'd be #1 for sure!"
         },
         "expression": "happy",
         "autoAdvance": 4
@@ -823,7 +823,7 @@
       {
         "text": {
           "zh": "...虽然目前还没有排行榜。",
-          "en": ""
+          "en": "...Though there's no leaderboard yet."
         },
         "expression": "talk",
         "autoAdvance": 4
@@ -840,7 +840,7 @@
       {
         "text": {
           "zh": "这就是传说中的「无伤通关」吗？",
-          "en": ""
+          "en": "Is this the legendary \"no-damage clear\"?"
         },
         "expression": "surprised",
         "autoAdvance": 4
@@ -848,7 +848,7 @@
       {
         "text": {
           "zh": "我要把这一刻永远记住！",
-          "en": ""
+          "en": "I'll remember this moment forever!"
         },
         "expression": "happy",
         "autoAdvance": 4
@@ -865,7 +865,7 @@
       {
         "text": {
           "zh": "三分钟不到就结束了？！",
-          "en": ""
+          "en": "Done in under three minutes?!"
         },
         "expression": "surprised",
         "autoAdvance": 4
@@ -873,7 +873,7 @@
       {
         "text": {
           "zh": "我连台词都还没说完呢！",
-          "en": ""
+          "en": "I didn't even finish my lines!"
         },
         "expression": "talk",
         "autoAdvance": 3
@@ -890,7 +890,7 @@
       {
         "text": {
           "zh": "速通选手！请问是哪个战队的？",
-          "en": ""
+          "en": "Speedrunner detected! What team are you on?"
         },
         "expression": "surprised",
         "autoAdvance": 4
@@ -898,7 +898,7 @@
       {
         "text": {
           "zh": "这速度可以去打世界纪录了。",
-          "en": ""
+          "en": "That pace could set a world record."
         },
         "expression": "happy",
         "autoAdvance": 4
@@ -915,7 +915,7 @@
       {
         "text": {
           "zh": "快到我的眼睛都跟不上了...",
-          "en": ""
+          "en": "So fast my eyes can't keep up..."
         },
         "expression": "surprised",
         "autoAdvance": 4
@@ -923,7 +923,7 @@
       {
         "text": {
           "zh": "你是不是开了倍速？",
-          "en": ""
+          "en": "Are you playing on fast-forward?"
         },
         "expression": "talk",
         "autoAdvance": 3
@@ -940,7 +940,7 @@
       {
         "text": {
           "zh": "泡面还没泡好，你就打完了？",
-          "en": ""
+          "en": "Your instant noodles aren't even ready and you're done?"
         },
         "expression": "surprised",
         "autoAdvance": 4
@@ -948,7 +948,7 @@
       {
         "text": {
           "zh": "效率之王！",
-          "en": ""
+          "en": "Efficiency king!"
         },
         "expression": "happy",
         "autoAdvance": 3
@@ -965,7 +965,7 @@
       {
         "text": {
           "zh": "别人还在纠结选什么能力...",
-          "en": ""
+          "en": "Others are still deciding which ability to pick..."
         },
         "expression": "idle",
         "autoAdvance": 4
@@ -973,7 +973,7 @@
       {
         "text": {
           "zh": "你已经通关了。差距就是这么大。",
-          "en": ""
+          "en": "And you've already cleared it. That's the gap."
         },
         "expression": "talk",
         "autoAdvance": 4
@@ -990,7 +990,7 @@
       {
         "text": {
           "zh": "时间就是金钱，你刚才省了一大笔！",
-          "en": ""
+          "en": "Time is money, and you just saved a fortune!"
         },
         "expression": "happy",
         "autoAdvance": 4
@@ -998,7 +998,7 @@
       {
         "text": {
           "zh": "下次能不能更快？我好期待。",
-          "en": ""
+          "en": "Can you go even faster next time? I can't wait."
         },
         "expression": "talk",
         "autoAdvance": 4
@@ -1015,7 +1015,7 @@
       {
         "text": {
           "zh": "又失败了...但你还愿意再来一次。",
-          "en": ""
+          "en": "Lost again... but you're willing to try once more."
         },
         "expression": "idle",
         "autoAdvance": 4
@@ -1023,7 +1023,7 @@
       {
         "text": {
           "zh": "光这份勇气就值得尊敬。",
-          "en": ""
+          "en": "That courage alone deserves respect."
         },
         "expression": "happy",
         "autoAdvance": 4
@@ -1040,7 +1040,7 @@
       {
         "text": {
           "zh": "这关确实不简单...",
-          "en": ""
+          "en": "This level really isn't easy..."
         },
         "expression": "talk",
         "autoAdvance": 3
@@ -1048,7 +1048,7 @@
       {
         "text": {
           "zh": "要不要换个策略试试？",
-          "en": ""
+          "en": "How about trying a different strategy?"
         },
         "expression": "talk",
         "autoAdvance": 4
@@ -1065,7 +1065,7 @@
       {
         "text": {
           "zh": "每一次失败都在接近成功。",
-          "en": ""
+          "en": "Every failure brings you closer to success."
         },
         "expression": "talk",
         "autoAdvance": 4
@@ -1073,7 +1073,7 @@
       {
         "text": {
           "zh": "这不是鸡汤，是真的。",
-          "en": ""
+          "en": "That's not just a pep talk -- it's true."
         },
         "expression": "happy",
         "autoAdvance": 3
@@ -1090,7 +1090,7 @@
       {
         "text": {
           "zh": "开发者调试这关的时候也输了很多次。",
-          "en": ""
+          "en": "The dev lost many times testing this level too."
         },
         "expression": "talk",
         "autoAdvance": 4
@@ -1098,7 +1098,7 @@
       {
         "text": {
           "zh": "你并不孤单~",
-          "en": ""
+          "en": "You're not alone~"
         },
         "expression": "happy",
         "autoAdvance": 3
@@ -1115,7 +1115,7 @@
       {
         "text": {
           "zh": "知道吗？最厉害的玩家不是从不失败的。",
-          "en": ""
+          "en": "You know? The best players aren't the ones who never fail."
         },
         "expression": "idle",
         "autoAdvance": 4
@@ -1123,7 +1123,7 @@
       {
         "text": {
           "zh": "而是失败后还能笑着再来的。",
-          "en": ""
+          "en": "They're the ones who smile and try again."
         },
         "expression": "happy",
         "autoAdvance": 4
@@ -1140,7 +1140,7 @@
       {
         "text": {
           "zh": "输了没关系，我还在这里陪你呀。",
-          "en": ""
+          "en": "It's okay to lose. I'm still right here with you."
         },
         "expression": "happy",
         "autoAdvance": 4
@@ -1157,7 +1157,7 @@
       {
         "text": {
           "zh": "试试少建一座塔，把资源集中？",
-          "en": ""
+          "en": "Try building one fewer tower and concentrating resources?"
         },
         "expression": "talk",
         "autoAdvance": 4
@@ -1165,7 +1165,7 @@
       {
         "text": {
           "zh": "有时候「少即是多」真的有用。",
-          "en": ""
+          "en": "Sometimes \"less is more\" really works."
         },
         "expression": "idle",
         "autoAdvance": 4
@@ -1182,7 +1182,7 @@
       {
         "text": {
           "zh": "这一关的BGM我都快会唱了...",
-          "en": ""
+          "en": "I've heard this level's BGM so many times I can sing it..."
         },
         "expression": "idle",
         "autoAdvance": 4
@@ -1190,7 +1190,7 @@
       {
         "text": {
           "zh": "不过只要和你在一起，听多少遍都行！",
-          "en": ""
+          "en": "But as long as I'm with you, I'll listen all day!"
         },
         "expression": "happy",
         "autoAdvance": 4
@@ -1207,7 +1207,7 @@
       {
         "text": {
           "zh": "你觉得累了的话，休息一下也可以。",
-          "en": ""
+          "en": "If you're tired, it's okay to take a break."
         },
         "expression": "talk",
         "autoAdvance": 4
@@ -1215,7 +1215,7 @@
       {
         "text": {
           "zh": "敌人不会跑掉的，它们会等你回来。",
-          "en": ""
+          "en": "The enemies won't run away. They'll wait for you."
         },
         "expression": "happy",
         "autoAdvance": 4
@@ -1232,7 +1232,7 @@
       {
         "text": {
           "zh": "总有一天你会回头看这一刻——",
-          "en": ""
+          "en": "Someday you'll look back on this moment--"
         },
         "expression": "idle",
         "autoAdvance": 4
@@ -1240,7 +1240,7 @@
       {
         "text": {
           "zh": "然后笑着说「当时怎么觉得那么难」。",
-          "en": ""
+          "en": "And laugh, saying \"why did I think that was so hard?\""
         },
         "expression": "talk",
         "autoAdvance": 4
@@ -1248,7 +1248,7 @@
       {
         "text": {
           "zh": "我会一直在这里等那一天。",
-          "en": ""
+          "en": "I'll be right here waiting for that day."
         },
         "expression": "happy",
         "autoAdvance": 4

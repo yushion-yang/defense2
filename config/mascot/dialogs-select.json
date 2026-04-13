@@ -7,7 +7,7 @@
       {
         "text": {
           "zh": "选择一张地图开始战斗吧！",
-          "en": ""
+          "en": "Pick a map and let's get started!"
         },
         "expression": "talk",
         "autoAdvance": 4
@@ -15,7 +15,7 @@
       {
         "text": {
           "zh": "建议先从左边的简单地图开始哦~",
-          "en": ""
+          "en": "I'd suggest starting with the easier maps on the left~"
         },
         "expression": "happy",
         "autoAdvance": 4
@@ -32,7 +32,7 @@
       {
         "text": {
           "zh": "想挑战哪张地图呢？",
-          "en": ""
+          "en": "Which map are you feeling today?"
         },
         "expression": "idle",
         "autoAdvance": 3
@@ -49,7 +49,7 @@
       {
         "text": {
           "zh": "又回来选图了~这次试试新地图？",
-          "en": ""
+          "en": "Back to map select~ Try a new one this time?"
         },
         "expression": "happy",
         "autoAdvance": 4
@@ -66,7 +66,7 @@
       {
         "text": {
           "zh": "有没有还没打过的图？去探索一下！",
-          "en": ""
+          "en": "Any maps you haven't tried yet? Go explore!"
         },
         "expression": "talk",
         "autoAdvance": 4
@@ -83,7 +83,7 @@
       {
         "text": {
           "zh": "每张地图都有不同的挑战哦~",
-          "en": ""
+          "en": "Every map has its own unique challenge~"
         },
         "expression": "talk",
         "autoAdvance": 4
@@ -100,7 +100,7 @@
       {
         "text": {
           "zh": "看看哪张图还没拿满星？",
-          "en": ""
+          "en": "Any maps still missing full stars?"
         },
         "expression": "idle",
         "autoAdvance": 3
@@ -117,7 +117,7 @@
       {
         "text": {
           "zh": "选地图也是种学问呢~",
-          "en": ""
+          "en": "Picking a map is an art form, you know~"
         },
         "expression": "idle",
         "autoAdvance": 3
@@ -125,7 +125,7 @@
       {
         "text": {
           "zh": "不同地形需要不同策略。",
-          "en": ""
+          "en": "Different terrain needs different strategies."
         },
         "expression": "talk",
         "autoAdvance": 3
@@ -142,7 +142,7 @@
       {
         "text": {
           "zh": "还在犹豫？随便选一个也行呀~",
-          "en": ""
+          "en": "Still deciding? Just pick one, it'll be fine~"
         },
         "expression": "happy",
         "autoAdvance": 3
@@ -159,7 +159,7 @@
       {
         "text": {
           "zh": "后面的地图难度更高，奖励也更多！",
-          "en": ""
+          "en": "Later maps are harder, but the rewards are bigger!"
         },
         "expression": "talk",
         "autoAdvance": 4
@@ -176,7 +176,7 @@
       {
         "text": {
           "zh": "想好了就点进去！我在里面等你。",
-          "en": ""
+          "en": "Made up your mind? Jump in! I'll be waiting inside."
         },
         "expression": "happy",
         "autoAdvance": 4

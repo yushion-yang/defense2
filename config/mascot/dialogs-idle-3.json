@@ -7,7 +7,7 @@
       {
         "text": {
           "zh": "逆风局别慌，卖掉前排塔换后排输出！",
-          "en": ""
+          "en": "Losing? Don't panic -- sell front towers and boost the back line!"
         },
         "expression": "talk",
         "autoAdvance": 4
@@ -24,7 +24,7 @@
       {
         "text": {
           "zh": "资源卡住了？故意漏几只小怪攒钱也行。",
-          "en": ""
+          "en": "Resources stuck? Letting a few small ones through to save gold works too."
         },
         "expression": "talk",
         "autoAdvance": 4
@@ -41,7 +41,7 @@
       {
         "text": {
           "zh": "散射对付密集波，光束专打Boss。",
-          "en": ""
+          "en": "Scatter for dense waves, beam for Bosses."
         },
         "expression": "idle",
         "autoAdvance": 4
@@ -58,7 +58,7 @@
       {
         "text": {
           "zh": "有时候不升级，留钱造新塔更赚。",
-          "en": ""
+          "en": "Sometimes skipping upgrades and building a new tower pays off more."
         },
         "expression": "talk",
         "autoAdvance": 4
@@ -75,7 +75,7 @@
       {
         "text": {
           "zh": "减速能力被低估了，试试全减速阵容？",
-          "en": ""
+          "en": "Slow is underrated -- ever tried an all-slow lineup?"
         },
         "expression": "surprised",
         "autoAdvance": 4
@@ -92,7 +92,7 @@
       {
         "text": {
           "zh": "旋转攻击克隐身怪，记住这个搭配！",
-          "en": ""
+          "en": "Spin AoE counters stealth enemies. Remember that combo!"
         },
         "expression": "talk",
         "autoAdvance": 4
@@ -109,7 +109,7 @@
       {
         "text": {
           "zh": "翻盘秘诀：把塔卖了重新布阵。",
-          "en": ""
+          "en": "Comeback secret: sell everything and rebuild from scratch."
         },
         "expression": "happy",
         "autoAdvance": 4
@@ -126,7 +126,7 @@
       {
         "text": {
           "zh": "溅射对分裂怪简直是天敌呢。",
-          "en": ""
+          "en": "Splash is the natural enemy of splitter enemies."
         },
         "expression": "talk",
         "autoAdvance": 3
@@ -143,7 +143,7 @@
       {
         "text": {
           "zh": "弹射能力在窄路地图价值翻倍！",
-          "en": ""
+          "en": "Bounce ability doubles its value on narrow maps!"
         },
         "expression": "talk",
         "autoAdvance": 4
@@ -160,7 +160,7 @@
       {
         "text": {
           "zh": "选能力时，控制优先于纯伤害。",
-          "en": ""
+          "en": "When picking abilities, crowd control beats pure damage."
         },
         "expression": "idle",
         "autoAdvance": 4
@@ -177,7 +177,7 @@
       {
         "text": {
           "zh": "极限翻盘：只留一座塔，全力养它。",
-          "en": ""
+          "en": "Ultimate comeback: keep one tower, pour everything into it."
         },
         "expression": "surprised",
         "autoAdvance": 4
@@ -194,7 +194,7 @@
       {
         "text": {
           "zh": "嗯嗯~♪ 刚才在哼什么来着？",
-          "en": ""
+          "en": "Hmm hmm~♪ What was I humming just now?"
         },
         "expression": "happy",
         "autoAdvance": 4
@@ -211,7 +211,7 @@
       {
         "text": {
           "zh": "我在地上画了只小猫，你看到了吗？",
-          "en": ""
+          "en": "I drew a little cat on the ground. Did you see it?"
         },
         "expression": "happy",
         "autoAdvance": 4
@@ -228,7 +228,7 @@
       {
         "text": {
           "zh": "手指好无聊，一直在转笔……",
-          "en": ""
+          "en": "My fingers are bored, been spinning a pen nonstop..."
         },
         "expression": "idle",
         "autoAdvance": 3
@@ -245,7 +245,7 @@
       {
         "text": {
           "zh": "昨晚梦见自己变成了一座塔。",
-          "en": ""
+          "en": "Last night I dreamed I turned into a tower."
         },
         "expression": "surprised",
         "autoAdvance": 4
@@ -262,7 +262,7 @@
       {
         "text": {
           "zh": "小时候最爱玩跳房子，你呢？",
-          "en": ""
+          "en": "I loved hopscotch as a kid. How about you?"
         },
         "expression": "talk",
         "autoAdvance": 4
@@ -279,7 +279,7 @@
       {
         "text": {
           "zh": "零食排名第一：芝士薯片！不接受反驳。",
-          "en": ""
+          "en": "Best snack ever: cheese chips! No debate allowed."
         },
         "expression": "happy",
         "autoAdvance": 4
@@ -296,7 +296,7 @@
       {
         "text": {
           "zh": "你的操作好流畅，看着好舒服~",
-          "en": ""
+          "en": "Your moves are so smooth, it's satisfying to watch~"
         },
         "expression": "happy",
         "autoAdvance": 4
@@ -313,7 +313,7 @@
       {
         "text": {
           "zh": "啦啦啦~等待也是一种享受嘛。",
-          "en": ""
+          "en": "La la la~ Waiting can be fun too!"
         },
         "expression": "happy",
         "autoAdvance": 3
@@ -330,7 +330,7 @@
       {
         "text": {
           "zh": "刚才在数屏幕上的像素点……",
-          "en": ""
+          "en": "I was just counting pixels on the screen..."
         },
         "expression": "idle",
         "autoAdvance": 4
@@ -347,7 +347,7 @@
       {
         "text": {
           "zh": "你闻到了吗？好像有烤红薯的味道。",
-          "en": ""
+          "en": "Do you smell that? Smells like roasted sweet potatoes."
         },
         "expression": "surprised",
         "autoAdvance": 4
@@ -364,7 +364,7 @@
       {
         "text": {
           "zh": "今天你的眼神特别有光，真好看。",
-          "en": ""
+          "en": "Your eyes have a special sparkle today. Looks great."
         },
         "expression": "happy",
         "autoAdvance": 4
@@ -381,7 +381,7 @@
       {
         "text": {
           "zh": "最简单的方法，往往最有效。",
-          "en": ""
+          "en": "The simplest approach is often the most effective."
         },
         "expression": "talk",
         "autoAdvance": 4
@@ -398,7 +398,7 @@
       {
         "text": {
           "zh": "重来不是失败，是带着经验再出发。",
-          "en": ""
+          "en": "Starting over isn't failure -- it's a fresh start with experience."
         },
         "expression": "talk",
         "autoAdvance": 4
@@ -415,7 +415,7 @@
       {
         "text": {
           "zh": "不完美也没关系，完成比完美重要。",
-          "en": ""
+          "en": "Imperfect is fine. Done beats perfect."
         },
         "expression": "idle",
         "autoAdvance": 4
@@ -432,7 +432,7 @@
       {
         "text": {
           "zh": "习惯的力量很可怕，好的坏的都是。",
-          "en": ""
+          "en": "Habits are powerful -- good ones and bad ones alike."
         },
         "expression": "talk",
         "autoAdvance": 4
@@ -449,7 +449,7 @@
       {
         "text": {
           "zh": "成长总是伴随着一点点不舒服呢。",
-          "en": ""
+          "en": "Growth always comes with a little discomfort."
         },
         "expression": "idle",
         "autoAdvance": 4
@@ -466,7 +466,7 @@
       {
         "text": {
           "zh": "「家」不是地方，是让你放松的感觉。",
-          "en": ""
+          "en": "\"Home\" isn't a place -- it's the feeling of being at ease."
         },
         "expression": "talk",
         "autoAdvance": 5
@@ -483,7 +483,7 @@
       {
         "text": {
           "zh": "复杂不代表强大，简洁才是真功夫。",
-          "en": ""
+          "en": "Complex doesn't mean powerful. Simplicity is true mastery."
         },
         "expression": "talk",
         "autoAdvance": 4
@@ -500,7 +500,7 @@
       {
         "text": {
           "zh": "迷路的时候，停下来也是一种前进。",
-          "en": ""
+          "en": "When you're lost, stopping is also a way forward."
         },
         "expression": "idle",
         "autoAdvance": 4
@@ -517,7 +517,7 @@
       {
         "text": {
           "zh": "每个选择都在塑造未来的你哦。",
-          "en": ""
+          "en": "Every choice shapes who you'll become."
         },
         "expression": "talk",
         "autoAdvance": 4
@@ -534,7 +534,7 @@
       {
         "text": {
           "zh": "慢一点没关系，方向对就好。",
-          "en": ""
+          "en": "It's okay to go slow, as long as you're heading the right way."
         },
         "expression": "idle",
         "autoAdvance": 3
@@ -551,7 +551,7 @@
       {
         "text": {
           "zh": "失去才明白拥有的珍贵，老话但是真的。",
-          "en": ""
+          "en": "You don't know what you have till it's gone. Cliche but true."
         },
         "expression": "talk",
         "autoAdvance": 5
@@ -568,7 +568,7 @@
       {
         "text": {
           "zh": "开发者凌晨三点改Bug，心态崩了。",
-          "en": ""
+          "en": "The dev was fixing bugs at 3 AM. Mental state: shattered."
         },
         "expression": "talk",
         "autoAdvance": 4
@@ -585,7 +585,7 @@
       {
         "text": {
           "zh": "据说有个功能被砍了五次才放弃。",
-          "en": ""
+          "en": "Apparently one feature got scrapped five times before they gave up."
         },
         "expression": "surprised",
         "autoAdvance": 4
@@ -602,7 +602,7 @@
       {
         "text": {
           "zh": "给变量取名花了半小时，代码两分钟。",
-          "en": ""
+          "en": "Spent 30 min naming a variable, 2 min writing the code."
         },
         "expression": "talk",
         "autoAdvance": 4
@@ -619,7 +619,7 @@
       {
         "text": {
           "zh": "代码里到处写着TODO，像许愿墙。",
-          "en": ""
+          "en": "TODOs everywhere in the code, like a wishing wall."
         },
         "expression": "happy",
         "autoAdvance": 4
@@ -636,7 +636,7 @@
       {
         "text": {
           "zh": "Git冲突是开发者的噩梦，真的。",
-          "en": ""
+          "en": "Git merge conflicts are a developer's nightmare. Truly."
         },
         "expression": "surprised",
         "autoAdvance": 4
@@ -653,7 +653,7 @@
       {
         "text": {
           "zh": "每次发布前，开发者手都在抖。",
-          "en": ""
+          "en": "The dev's hands shake before every release."
         },
         "expression": "talk",
         "autoAdvance": 4
@@ -670,7 +670,7 @@
       {
         "text": {
           "zh": "代码审查时被指出低级错误，社死了。",
-          "en": ""
+          "en": "Getting called out for a silly mistake in code review... pure embarrassment."
         },
         "expression": "surprised",
         "autoAdvance": 5
@@ -687,7 +687,7 @@
       {
         "text": {
           "zh": "「这个Bug不可能」——名言，每次都打脸。",
-          "en": ""
+          "en": "\"This bug is impossible\" -- famous last words, proven wrong every time."
         },
         "expression": "talk",
         "autoAdvance": 5
@@ -704,7 +704,7 @@
       {
         "text": {
           "zh": "听说注释里藏着开发者的怨念。",
-          "en": ""
+          "en": "They say the code comments hide the developer's frustrations."
         },
         "expression": "happy",
         "autoAdvance": 4
@@ -721,7 +721,7 @@
       {
         "text": {
           "zh": "改一行代码，崩了三个功能，经典。",
-          "en": ""
+          "en": "Changed one line of code, broke three features. Classic."
         },
         "expression": "surprised",
         "autoAdvance": 4
@@ -738,7 +738,7 @@
       {
         "text": {
           "zh": "开发者说最满意的代码是删掉的那些。",
-          "en": ""
+          "en": "The dev says the code they're proudest of is the code they deleted."
         },
         "expression": "talk",
         "autoAdvance": 4
@@ -755,7 +755,7 @@
       {
         "text": {
           "zh": "地图边界外面，其实还有一片森林哦。",
-          "en": ""
+          "en": "Beyond the map border, there's actually a forest."
         },
         "expression": "talk",
         "autoAdvance": 4
@@ -772,7 +772,7 @@
       {
         "text": {
           "zh": "退役的塔会去哪里？听说有个养老院。",
-          "en": ""
+          "en": "Where do retired towers go? I heard there's a retirement home."
         },
         "expression": "happy",
         "autoAdvance": 4
@@ -789,7 +789,7 @@
       {
         "text": {
           "zh": "小怪们其实有自己的幼儿园呢。",
-          "en": ""
+          "en": "The little minions actually have their own kindergarten."
         },
         "expression": "happy",
         "autoAdvance": 4
@@ -806,7 +806,7 @@
       {
         "text": {
           "zh": "这个世界也有春节，塔上会挂灯笼。",
-          "en": ""
+          "en": "This world has holidays too -- towers get lanterns for the festival."
         },
         "expression": "happy",
         "autoAdvance": 4
@@ -823,7 +823,7 @@
       {
         "text": {
           "zh": "你关掉游戏后，我会在这里等你回来。",
-          "en": ""
+          "en": "After you close the game, I'll be here waiting for you."
         },
         "expression": "idle",
         "autoAdvance": 4
@@ -840,7 +840,7 @@
       {
         "text": {
           "zh": "平行世界里，也许怪物在守塔防人类。",
-          "en": ""
+          "en": "In a parallel world, maybe monsters defend towers against humans."
         },
         "expression": "surprised",
         "autoAdvance": 5
@@ -857,7 +857,7 @@
       {
         "text": {
           "zh": "Boss下班后会去泡温泉，我偷看到的。",
-          "en": ""
+          "en": "The Boss hits the hot springs after work. I peeked."
         },
         "expression": "happy",
         "autoAdvance": 5
@@ -874,7 +874,7 @@
       {
         "text": {
           "zh": "地图下面藏着古代遗迹，没人挖过。",
-          "en": ""
+          "en": "Ancient ruins are hidden beneath the map. Nobody's dug them up."
         },
         "expression": "talk",
         "autoAdvance": 4
@@ -891,7 +891,7 @@
       {
         "text": {
           "zh": "怪物们有工会，加班要付加班费的。",
-          "en": ""
+          "en": "Monsters have a union -- overtime requires overtime pay."
         },
         "expression": "happy",
         "autoAdvance": 4
@@ -908,7 +908,7 @@
       {
         "text": {
           "zh": "游戏关闭时，所有角色会一起看星星。",
-          "en": ""
+          "en": "When the game shuts down, all the characters stargaze together."
         },
         "expression": "idle",
         "autoAdvance": 4
@@ -925,7 +925,7 @@
       {
         "text": {
           "zh": "听说第九张地图在云端，还没造好。",
-          "en": ""
+          "en": "I heard the ninth map is in the clouds -- still under construction."
         },
         "expression": "talk",
         "autoAdvance": 4
@@ -942,7 +942,7 @@
       {
         "text": {
           "zh": "敢不敢挑战极限难度？我赌你过不了。",
-          "en": ""
+          "en": "Dare to try Extreme difficulty? Bet you can't beat it."
         },
         "expression": "talk",
         "autoAdvance": 4
@@ -959,7 +959,7 @@
       {
         "text": {
           "zh": "我赌五毛钱你下一波要漏怪。",
-          "en": ""
+          "en": "I bet you'll leak enemies next wave."
         },
         "expression": "happy",
         "autoAdvance": 4
@@ -976,7 +976,7 @@
       {
         "text": {
           "zh": "选手正在思考！观众们屏住了呼吸！",
-          "en": ""
+          "en": "The player is thinking! The crowd holds its breath!"
         },
         "expression": "surprised",
         "autoAdvance": 4
@@ -993,7 +993,7 @@
       {
         "text": {
           "zh": "本局评分：犹豫度S，果断度D。",
-          "en": ""
+          "en": "Match rating: Hesitation S, Decisiveness D."
         },
         "expression": "talk",
         "autoAdvance": 4
@@ -1010,7 +1010,7 @@
       {
         "text": {
           "zh": "你的决策速度……嗯，需要加速。",
-          "en": ""
+          "en": "Your decision speed... hmm, needs a boost."
         },
         "expression": "talk",
         "autoAdvance": 4
@@ -1027,7 +1027,7 @@
       {
         "text": {
           "zh": "来嘛来嘛，试试只造两座塔通关！",
-          "en": ""
+          "en": "Come on, come on, try clearing with just two towers!"
         },
         "expression": "happy",
         "autoAdvance": 4
@@ -1044,7 +1044,7 @@
       {
         "text": {
           "zh": "漂亮！这波操作我给9.5分！",
-          "en": ""
+          "en": "Beautiful! I give that play a 9.5 out of 10!"
         },
         "expression": "happy",
         "autoAdvance": 3
@@ -1061,7 +1061,7 @@
       {
         "text": {
           "zh": "选手陷入了沉思……裁判要计时了哦。",
-          "en": ""
+          "en": "The player is deep in thought... the clock is ticking!"
         },
         "expression": "talk",
         "autoAdvance": 4
@@ -1078,7 +1078,7 @@
       {
         "text": {
           "zh": "不敢赌？那我就默认你怕了~",
-          "en": ""
+          "en": "Too scared to bet? I'll take that as a yes~"
         },
         "expression": "happy",
         "autoAdvance": 3
@@ -1095,7 +1095,7 @@
       {
         "text": {
           "zh": "零漏怪通关？做到了我叫你大佬！",
-          "en": ""
+          "en": "Zero leaks clear? Pull it off and I'll call you boss!"
         },
         "expression": "surprised",
         "autoAdvance": 4
@@ -1112,7 +1112,7 @@
       {
         "text": {
           "zh": "最后一条命了还这么淡定，佩服佩服。",
-          "en": ""
+          "en": "Down to the last life and still cool as ice. Respect."
         },
         "expression": "surprised",
         "autoAdvance": 4
@@ -1129,7 +1129,7 @@
       {
         "text": {
           "zh": "新手别怕犯错，每一局都是学习~",
-          "en": ""
+          "en": "Beginners, don't fear mistakes -- every game is a lesson~"
         },
         "expression": "talk",
         "autoAdvance": 4
@@ -1146,7 +1146,7 @@
       {
         "text": {
           "zh": "第一次玩？先随便造塔感受一下！",
-          "en": ""
+          "en": "First time playing? Just build towers and feel it out!"
         },
         "expression": "happy",
         "autoAdvance": 4
@@ -1163,7 +1163,7 @@
       {
         "text": {
           "zh": "新手常见错误：塔铺太多，每座都弱。",
-          "en": ""
+          "en": "Common rookie mistake: too many towers, each one weak."
         },
         "expression": "talk",
         "autoAdvance": 4
@@ -1180,7 +1180,7 @@
       {
         "text": {
           "zh": "少造几座塔，集中养强更好用哦。",
-          "en": ""
+          "en": "Build fewer towers and invest in making them stronger!"
         },
         "expression": "talk",
         "autoAdvance": 4
@@ -1197,7 +1197,7 @@
       {
         "text": {
           "zh": "输了也别灰心，换个布局再来！",
-          "en": ""
+          "en": "Lost? Don't give up! Try a new layout!"
         },
         "expression": "happy",
         "autoAdvance": 4
@@ -1214,7 +1214,7 @@
       {
         "text": {
           "zh": "路口交汇处放塔，覆盖面最大。",
-          "en": ""
+          "en": "Place towers at path intersections for maximum coverage."
         },
         "expression": "talk",
         "autoAdvance": 4
@@ -1231,7 +1231,7 @@
       {
         "text": {
           "zh": "多试试不同能力组合，会有惊喜的。",
-          "en": ""
+          "en": "Try different ability combos -- you might be surprised!"
         },
         "expression": "happy",
         "autoAdvance": 4
@@ -1248,7 +1248,7 @@
       {
         "text": {
           "zh": "注意看怪物类型，对症下药很重要。",
-          "en": ""
+          "en": "Watch the enemy types -- matching counters is key."
         },
         "expression": "talk",
         "autoAdvance": 4
@@ -1265,7 +1265,7 @@
       {
         "text": {
           "zh": "留点钱应急，别一次花光所有金币。",
-          "en": ""
+          "en": "Keep some gold in reserve. Don't spend it all at once."
         },
         "expression": "talk",
         "autoAdvance": 4
@@ -1282,7 +1282,7 @@
       {
         "text": {
           "zh": "失败是正常的，我第一次也没过关呢。",
-          "en": ""
+          "en": "Losing is normal. I didn't clear it my first time either."
         },
         "expression": "idle",
         "autoAdvance": 4
@@ -1299,7 +1299,7 @@
       {
         "text": {
           "zh": "大胆实验！最坏不过重来一局嘛。",
-          "en": ""
+          "en": "Be bold! Worst case, you just restart."
         },
         "expression": "happy",
         "autoAdvance": 3
@@ -1316,7 +1316,7 @@
       {
         "text": {
           "zh": "谢谢你来玩，真的很开心。",
-          "en": ""
+          "en": "Thanks for playing. It really makes me happy."
         },
         "expression": "happy",
         "autoAdvance": 4
@@ -1333,7 +1333,7 @@
       {
         "text": {
           "zh": "有你在，我就不是一个人了。",
-          "en": ""
+          "en": "With you here, I'm not alone anymore."
         },
         "expression": "idle",
         "autoAdvance": 4
@@ -1350,7 +1350,7 @@
       {
         "text": {
           "zh": "晚了就早点休息，游戏明天还在。",
-          "en": ""
+          "en": "If it's late, get some rest. The game will be here tomorrow."
         },
         "expression": "talk",
         "autoAdvance": 4
@@ -1367,7 +1367,7 @@
       {
         "text": {
           "zh": "节日快乐呀，不管今天是不是节日。",
-          "en": ""
+          "en": "Happy holidays -- even if today isn't one."
         },
         "expression": "happy",
         "autoAdvance": 4
@@ -1384,7 +1384,7 @@
       {
         "text": {
           "zh": "你在这里，就是最好的事情。",
-          "en": ""
+          "en": "You being here is the best thing."
         },
         "expression": "happy",
         "autoAdvance": 4
@@ -1401,7 +1401,7 @@
       {
         "text": {
           "zh": "今天辛苦了，在这里放松一下吧。",
-          "en": ""
+          "en": "You worked hard today. Take a moment to relax."
         },
         "expression": "idle",
         "autoAdvance": 4
@@ -1418,7 +1418,7 @@
       {
         "text": {
           "zh": "下雨天适合窝在家里打游戏呢。",
-          "en": ""
+          "en": "Rainy days are perfect for gaming at home."
         },
         "expression": "happy",
         "autoAdvance": 4
@@ -1435,7 +1435,7 @@
       {
         "text": {
           "zh": "不管打得好不好，陪着你就够了。",
-          "en": ""
+          "en": "Win or lose, just being with you is enough."
         },
         "expression": "idle",
         "autoAdvance": 4
@@ -1452,7 +1452,7 @@
       {
         "text": {
           "zh": "希望你今晚做个好梦~",
-          "en": ""
+          "en": "Hope you have sweet dreams tonight~"
         },
         "expression": "happy",
         "autoAdvance": 3
@@ -1469,7 +1469,7 @@
       {
         "text": {
           "zh": "累了就歇一会儿，我哪儿也不去。",
-          "en": ""
+          "en": "If you're tired, take a break. I'm not going anywhere."
         },
         "expression": "idle",
         "autoAdvance": 4
@@ -1486,7 +1486,7 @@
       {
         "text": {
           "zh": "你知道吗，你笑起来特别好看。",
-          "en": ""
+          "en": "You know, you have a really nice smile."
         },
         "expression": "happy",
         "autoAdvance": 4
@@ -1503,7 +1503,7 @@
       {
         "text": {
           "zh": "如果这是RPG，我就是你的队友了。",
-          "en": ""
+          "en": "If this were an RPG, I'd be your party member."
         },
         "expression": "happy",
         "autoAdvance": 4
@@ -1520,7 +1520,7 @@
       {
         "text": {
           "zh": "要是FPS视角，站在塔顶往下看好刺激！",
-          "en": ""
+          "en": "In FPS mode, looking down from a tower top would be thrilling!"
         },
         "expression": "surprised",
         "autoAdvance": 5
@@ -1537,7 +1537,7 @@
       {
         "text": {
           "zh": "益智版：把怪物推进方块里消除！",
-          "en": ""
+          "en": "Puzzle version: push monsters into blocks to clear them!"
         },
         "expression": "happy",
         "autoAdvance": 4
@@ -1554,7 +1554,7 @@
       {
         "text": {
           "zh": "音游版：踩着节拍放技能，想想就燃！",
-          "en": ""
+          "en": "Rhythm version: cast abilities on the beat -- just imagine!"
         },
         "expression": "happy",
         "autoAdvance": 4
@@ -1571,7 +1571,7 @@
       {
         "text": {
           "zh": "改编动画的话，Boss篇肯定最好看。",
-          "en": ""
+          "en": "If this became an anime, the Boss arc would be peak."
         },
         "expression": "talk",
         "autoAdvance": 4
@@ -1588,7 +1588,7 @@
       {
         "text": {
           "zh": "真人电影版，Boss得请巨石强森演。",
-          "en": ""
+          "en": "Live-action movie? The Boss should be played by The Rock."
         },
         "expression": "happy",
         "autoAdvance": 4
@@ -1605,7 +1605,7 @@
       {
         "text": {
           "zh": "小怪发朋友圈：「又加班冲塔了」。",
-          "en": ""
+          "en": "Minion posts online: \"Overtime tower-rushing again.\""
         },
         "expression": "happy",
         "autoAdvance": 4
@@ -1622,7 +1622,7 @@
       {
         "text": {
           "zh": "如果拿年度最佳，我的获奖感言都想好了！",
-          "en": ""
+          "en": "If we win Game of the Year, I've already got my speech ready!"
         },
         "expression": "happy",
         "autoAdvance": 5
@@ -1639,7 +1639,7 @@
       {
         "text": {
           "zh": "格斗版：塔和Boss一对一单挑！",
-          "en": ""
+          "en": "Fighting game version: tower vs. Boss, 1v1!"
         },
         "expression": "surprised",
         "autoAdvance": 4
@@ -1656,7 +1656,7 @@
       {
         "text": {
           "zh": "怪物微博热搜：#今天又被溅射了#",
-          "en": ""
+          "en": "Monster trending topic: #GotSplashedAgainToday"
         },
         "expression": "happy",
         "autoAdvance": 4
@@ -1673,7 +1673,7 @@
       {
         "text": {
           "zh": "经营版：开一家塔防主题咖啡店！",
-          "en": ""
+          "en": "Management sim: run a tower defense themed cafe!"
         },
         "expression": "happy",
         "autoAdvance": 4
@@ -1690,7 +1690,7 @@
       {
         "text": {
           "zh": "第七张地图的右下角，有个小秘密。",
-          "en": ""
+          "en": "Bottom-right of map seven -- there's a little secret."
         },
         "expression": "talk",
         "autoAdvance": 4
@@ -1707,7 +1707,7 @@
       {
         "text": {
           "zh": "2-7-1-9，记住这串数字，也许有用。",
-          "en": ""
+          "en": "2-7-1-9. Remember that number. Might come in handy."
         },
         "expression": "idle",
         "autoAdvance": 4
@@ -1724,7 +1724,7 @@
       {
         "text": {
           "zh": "万物的答案是42，这你肯定知道吧？",
-          "en": ""
+          "en": "The answer to everything is 42. You knew that, right?"
         },
         "expression": "talk",
         "autoAdvance": 4
@@ -1741,7 +1741,7 @@
       {
         "text": {
           "zh": "如果你能看到这段话，说明缘分到了。",
-          "en": ""
+          "en": "If you can see this message, it must be fate."
         },
         "expression": "idle",
         "autoAdvance": 4
@@ -1758,7 +1758,7 @@
       {
         "text": {
           "zh": "传说连点我五次会触发隐藏事件~",
-          "en": ""
+          "en": "Legend says tapping me five times triggers a hidden event~"
         },
         "expression": "happy",
         "autoAdvance": 4
@@ -1775,7 +1775,7 @@
       {
         "text": {
           "zh": "嘘……有些东西只在满月时出现。",
-          "en": ""
+          "en": "Shh... some things only appear during a full moon."
         },
         "expression": "talk",
         "autoAdvance": 4
@@ -1792,7 +1792,7 @@
       {
         "text": {
           "zh": "试试把所有塔排成一条直线？",
-          "en": ""
+          "en": "Try lining up all your towers in a straight row?"
         },
         "expression": "surprised",
         "autoAdvance": 4
@@ -1809,7 +1809,7 @@
       {
         "text": {
           "zh": "上上下下左右左右……啊，串台了。",
-          "en": ""
+          "en": "Up up down down left right left right... oops, wrong game."
         },
         "expression": "happy",
         "autoAdvance": 4
@@ -1826,7 +1826,7 @@
       {
         "text": {
           "zh": "注意看，第三波第三只怪走得不一样。",
-          "en": ""
+          "en": "Watch closely -- the third enemy in wave three walks differently."
         },
         "expression": "talk",
         "autoAdvance": 4
@@ -1843,7 +1843,7 @@
       {
         "text": {
           "zh": "这条消息会自毁……才怪，骗你的~",
-          "en": ""
+          "en": "This message will self-destruct... just kidding~"
         },
         "expression": "happy",
         "autoAdvance": 4
