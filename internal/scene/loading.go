@@ -141,14 +141,16 @@ func (s *LoadingScene) Update() error {
 		s.statusText = fmt.Sprintf("Loading audio... %d/%d", s.wavIndex, len(s.wavEntries))
 
 	case phaseMascot:
-		s.statusText = "Loading mascot..."
-		mascotDialogs, err := mascot.LoadAllDialogs(config.GetDataFS())
-		if err != nil {
-			log.Printf("[mascot] dialog load error: %v", err)
+		if MascotEnabled {
+			s.statusText = "Loading mascot..."
+			mascotDialogs, err := mascot.LoadAllDialogs(config.GetDataFS())
+			if err != nil {
+				log.Printf("[mascot] dialog load error: %v", err)
+			}
+			s.g.mascot = mascot.NewGuide(mascotDialogs, nil)
+			s.g.mascot.InitConditions(mascot.DefaultConditions())
+			s.g.mascotAnim = render.LoadMascotSprites(config.GetAssetFS())
 		}
-		s.g.mascot = mascot.NewGuide(mascotDialogs, nil)
-		s.g.mascot.InitConditions(mascot.DefaultConditions())
-		s.g.mascotAnim = render.LoadMascotSprites(config.GetAssetFS())
 		s.progress = 0.90
 		s.phase = phaseSettings
 

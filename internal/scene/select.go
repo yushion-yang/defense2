@@ -4,10 +4,10 @@
 //   - 展示 5 种游戏模式卡片（战役/无尽/限时/首领/挑战），其中仅战役可玩，其余显示"敬请期待"
 //   - 4 档难度选择（简单/普通/困难/极难），默认普通
 //   - 根据选中模式分发：campaign→CampaignSelect, test→TestSelect, 其他→直接进 Stage
-//   - 右下角设置按钮入口
+//   - 右上角设置按钮、右下角图鉴按钮
 //   - DevMode 下额外追加 test 模式卡片
 //
-// UI 布局：标题(呼吸脉冲) → 模式卡片行 → 开始按钮 → 难度标签+按钮行 → 地图名 → 设置按钮 → 底部提示
+// UI 布局：标题(呼吸脉冲) → 模式卡片行 → 开始按钮 → 难度标签+按钮行 → 地图名 → 设置(右上)/图鉴(右下) → 底部提示
 package scene
 
 import (
@@ -245,10 +245,9 @@ func (s *SelectScene) Update() error {
 	// 悬停检测（桌面=鼠标光标, 触摸=长按）
 	if hx, hy, hov := draw.HoverPos(); hov {
 		s.hoverMode = s.hitTestModeCards(hx, hy)
-		s.hoverDiff = s.hitTestDiffButtons(hx, hy)
 		s.hoverStart = s.hitTestStartButton(hx, hy)
 	} else {
-		s.hoverMode, s.hoverDiff = -1, -1
+		s.hoverMode = -1
 		s.hoverStart = false
 	}
 
@@ -275,10 +274,6 @@ func (s *SelectScene) Update() error {
 				playUIClick(s.switcher)
 			}
 		}
-		if idx := s.hitTestDiffButtons(mxf, myf); idx >= 0 {
-			s.selectedDiff = idx
-			playUIClick(s.switcher)
-		}
 		if s.hitTestStartButton(mxf, myf) {
 			playUIClick(s.switcher)
 			s.startGame()
@@ -286,6 +281,10 @@ func (s *SelectScene) Update() error {
 		if s.hitTestSettingsButton(mxf, myf) {
 			playUIClick(s.switcher)
 			s.switcher.SwitchScene(NewSettingsScene(s.switcher, s))
+		}
+		if s.hitTestBestiaryButton(mxf, myf) {
+			playUIClick(s.switcher)
+			s.switcher.SwitchScene(NewBestiaryScene(s.switcher))
 		}
 	}
 
@@ -347,17 +346,30 @@ func (s *SelectScene) hitTestStartButton(mx, my float64) bool {
 	return mx >= x && mx <= x+btnW && my >= btnY && my <= btnY+btnH
 }
 
-// settingsBtn 布局常量（右下角）。
+// settingsBtn 布局常量（右上角）。
 const (
 	settingsBtnW = 70.0
 	settingsBtnH = 28.0
 	settingsBtnX = scW - settingsBtnW - 16
-	settingsBtnY = scH - settingsBtnH - 16
+	settingsBtnY = 14.0
 )
 
 func (s *SelectScene) hitTestSettingsButton(mx, my float64) bool {
 	return mx >= settingsBtnX && mx <= settingsBtnX+settingsBtnW &&
 		my >= settingsBtnY && my <= settingsBtnY+settingsBtnH
+}
+
+// bestiaryBtn 布局常量（右下角）。
+const (
+	bestiaryBtnW = 70.0
+	bestiaryBtnH = 28.0
+	bestiaryBtnX = scW - bestiaryBtnW - 16
+	bestiaryBtnY = scH - bestiaryBtnH - 16
+)
+
+func (s *SelectScene) hitTestBestiaryButton(mx, my float64) bool {
+	return mx >= bestiaryBtnX && mx <= bestiaryBtnX+bestiaryBtnW &&
+		my >= bestiaryBtnY && my <= bestiaryBtnY+bestiaryBtnH
 }
 
 // ── Draw ────────────────────────────────────────
@@ -469,56 +481,16 @@ func (s *SelectScene) Draw(screen *ebiten.Image) {
 		Bold:     true,
 	})
 
-	// ── 难度标签 ──
-	fm.DrawCenteredText(screen, i18n.T("scene.select.difficulty"), scW/2, diffLabelY, 12, textGray)
-
-	// ── 难度按钮 ──
-	dStartX := rowStartX(diffBtnW, diffBtnGap, len(s.difficulties))
-	for i, diff := range s.difficulties {
-		dx := float32(dStartX + float64(i)*(diffBtnW+diffBtnGap))
-		dy := float32(diffBtnY)
-		dw := float32(diffBtnW)
-		dh := float32(diffBtnH)
-		selected := i == s.selectedDiff
-		hovered := i == s.hoverDiff
-
-		bg := diffBtnBg
-		if hovered && !selected {
-			bg = cardHoverBg
-		}
-		border := diffBtnBorder
-		if selected {
-			border = diffSelBorder
-		}
-		ui.Card(screen, dx, dy, dw, dh, ui.CardStyle{
-			BgColor:     bg,
-			BorderColor: border,
-			Radius:      8,
-			BorderWidth: 1.5,
-		})
-
-		txtClr := textGray
-		if selected {
-			txtClr = textWhite
-		}
-		cx := float64(dx) + float64(dw)/2
-		fm.DrawCenteredText(screen, diff.Name, cx, float64(dy)+6, 12, txtClr)
-	}
-
-	// ── 难度描述 + 地图名 ──
-	if s.selectedDiff < len(s.difficulties) {
-		desc := s.difficulties[s.selectedDiff].Description
-		fm.DrawCenteredText(screen, desc, scW/2, 340, 10, textGray)
-	}
-	mapID := gameModes[s.selectedMode].DefaultMap
-	mapName := s.mapNames[mapID]
-	if mapName == "" {
-		mapName = mapID
-	}
-	fm.DrawCenteredText(screen, i18n.TF("scene.select.map_name", mapName), scW/2, 358, 10, textGray)
-
-	// ── 设置按钮（右下角） ──
+	// ── 设置按钮（右上角） ──
 	ui.Button(screen, float32(settingsBtnX), float32(settingsBtnY), float32(settingsBtnW), float32(settingsBtnH), i18n.T("scene.select.settings"), ui.ButtonStyle{
+		BgColor:   theme.BtnSecondary,
+		TextColor: textGray,
+		FontSize:  12,
+		Radius:    8,
+	})
+
+	// ── 图鉴按钮（右下角） ──
+	ui.Button(screen, float32(bestiaryBtnX), float32(bestiaryBtnY), float32(bestiaryBtnW), float32(bestiaryBtnH), i18n.T("scene.title.bestiary"), ui.ButtonStyle{
 		BgColor:   theme.BtnSecondary,
 		TextColor: textGray,
 		FontSize:  12,

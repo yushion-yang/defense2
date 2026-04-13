@@ -14,10 +14,10 @@ import (
 
 // Storage 持久化存储接口。
 type Storage interface {
-	Get(key string, target any) error  // 读取并反序列化
-	Set(key string, value any) error   // 序列化并写入
-	Has(key string) bool                       // 键是否存在
-	Delete(key string) error                   // 删除
+	Get(key string, target any) error // 读取并反序列化
+	Set(key string, value any) error  // 序列化并写入
+	Has(key string) bool              // 键是否存在
+	Delete(key string) error          // 删除
 }
 
 // FileStorage 基于 JSON 文件的本地持久化存储。
@@ -34,8 +34,21 @@ func NewFileStorage(dir string) (*FileStorage, error) {
 	return &FileStorage{dir: dir}, nil
 }
 
-// DefaultStorage 创建默认位置（~/.defense2/）的存储。
+// defaultStorageOverride 由平台特定文件（storage_js.go）设置，
+// 提供平台优先的存储实现（如 WASM 下的 localStorage）。
+var defaultStorageOverride func() (Storage, error)
+
+// DefaultStorage 创建默认持久化存储。
+// WASM 环境优先使用浏览器 localStorage（刷新页面后进度保留），
+// 桌面环境使用 ~/.defense2/ 目录下的 JSON 文件。
 func DefaultStorage() (Storage, error) {
+	// 平台特定存储（WASM localStorage）
+	if defaultStorageOverride != nil {
+		if s, err := defaultStorageOverride(); err == nil {
+			return s, nil
+		}
+	}
+	// 桌面端文件存储
 	home, err := os.UserHomeDir()
 	if err != nil {
 		return &MemoryStorage{data: make(map[string][]byte)}, nil

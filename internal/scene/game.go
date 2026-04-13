@@ -91,6 +91,14 @@ type Game struct {
 //   - 跳过吉祥物、音效、悬浮追踪等仅 UI 相关的逻辑
 var HeadlessMode bool
 
+// ── 功能开关（默认关闭，发布前隐藏未完成/不想暴露的内容） ──
+
+// MascotEnabled 控制萌妹向导系统。关闭时不加载资源、不渲染、不响应交互。
+var MascotEnabled bool
+
+// WardenEnabled 控制战灵系统。关闭时跳过战灵选择，直接无战灵开波。
+var WardenEnabled bool
+
 // turboTicksPerFrame HeadlessMode 下每帧推进的 tick 数上限。
 // 5000 tick ≈ 83 秒游戏时间（@ 60 TPS），配合 Ebitengine 的帧循环可在数秒内跑完一局。
 const turboTicksPerFrame = 5000
@@ -256,7 +264,7 @@ func (g *Game) Update() error {
 	}
 
 	// ── 吉祥物点击检测（必须在 safeSceneUpdate 之前，防止点击穿透到场景） ──
-	if g.mascot != nil && isTapJustPressed() {
+	if MascotEnabled && g.mascot != nil && isTapJustPressed() {
 		mx, my := draw.CursorPos()
 		if hud.MascotHitTest(mx, my) {
 			if g.mascot.IsAbilityHintActive() {
@@ -276,7 +284,7 @@ func (g *Game) Update() error {
 	// ── 吉祥物向导更新 ──
 	// （HeadlessMode 已在上方 turbo 路径返回，此处必为正常模式）
 	// 吉祥物向导是全局 UI 覆盖层，独立于场景运行，但能感知当前场景状态。
-	if g.mascot != nil {
+	if MascotEnabled && g.mascot != nil {
 		const dt = 1.0 / 60.0 // 固定 60 TPS 的帧间隔
 		g.mascotTime += dt
 
@@ -328,7 +336,7 @@ func (g *Game) Draw(screen *ebiten.Image) {
 	g.safeSceneDraw(screen)
 
 	// 吉祥物覆盖层（场景之上、过渡遮罩之下）
-	if g.mascot != nil {
+	if MascotEnabled && g.mascot != nil {
 		coreVM := g.mascot.VM()
 		overlayVM := hud.MascotOverlayVM{
 			Visible:      coreVM.Visible,
@@ -398,7 +406,7 @@ func (g *Game) safeSceneUpdate() error {
 		defer func() {
 			if r := recover(); r != nil {
 				log.Printf("[panic-recover] scene Update panic: %v\n%s", r, debug.Stack())
-				if g.mascot != nil {
+				if MascotEnabled && g.mascot != nil {
 					g.mascot.ForceTrigger("panic_recover")
 				}
 			}
@@ -413,7 +421,7 @@ func (g *Game) safeSceneDraw(screen *ebiten.Image) {
 	defer func() {
 		if r := recover(); r != nil {
 			log.Printf("[panic-recover] scene Draw panic: %v\n%s", r, debug.Stack())
-			if g.mascot != nil {
+			if MascotEnabled && g.mascot != nil {
 				g.mascot.ForceTrigger("panic_recover")
 			}
 		}

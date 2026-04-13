@@ -97,14 +97,9 @@ func (t *Tower) PendingSlots(wavesCleared int) int {
 }
 
 // HasPendingUpgrade 返回塔是否有待选择的能力（用于 UI 显示升级提示图标）。
-// 两种来源都要检查：
-//  1. 波次解锁的空槽（PendingSlots > 0，但可能还没 roll 候选）
-//  2. 已 roll 候选但尚未选择的（PendingCount > 0，包含花钱解锁的）
+// 仅当 PendingChoices 中有实际候选时才返回 true。
+// 空槽但没有可选能力（该类别能力池耗尽）不显示提示。
 func (t *Tower) HasPendingUpgrade(wavesCleared int) bool {
-	if t.PendingSlots(wavesCleared) > 0 {
-		return true
-	}
-	// 花钱解锁的槽位不受 wavesCleared 限制，直接检查 PendingChoices 缓存
 	return PendingCount(t) > 0
 }
 

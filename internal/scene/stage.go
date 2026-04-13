@@ -3524,7 +3524,18 @@ func (s *StageScene) tryStartWave() {
 
 // showWardenSelect 弹出战灵选择覆盖层。
 // 覆盖层关闭后的回调：激活战灵 → 立即开第一波 → 发波次事件。
+// WardenEnabled=false 时跳过选择，直接无战灵开波。
 func (s *StageScene) showWardenSelect() {
+	if !WardenEnabled {
+		// 功能关闭：跳过战灵选择，直接无战灵开波
+		s.activateWarden("")
+		prevWave := s.spawner.Wave
+		s.spawner.StartNextWave()
+		if s.spawner.Wave > prevWave {
+			s.onWaveTransition(prevWave)
+		}
+		return
+	}
 	s.wardenOverlay.Show(GetWardenOptions(s.progressMgr), func(key string) {
 		s.activateWarden(key)
 		// 选完后立即开第一波
