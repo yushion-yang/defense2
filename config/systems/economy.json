@@ -4,7 +4,7 @@
   "global": {
     "killReward": 15,
     "sellRefundRatio": 0.7,
-    "description": "击杀奖励和卖塔退款比例（也在 balance.json 中定义，代码读取 balance.json）"
+    "_note": "此区段被 EconomySpec 加载用于契约测试。实际运行时经济参数从 balance.json 读取，两处值必须保持一致。"
   },
 
   "modes": {

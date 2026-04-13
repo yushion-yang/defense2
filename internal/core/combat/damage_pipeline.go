@@ -138,6 +138,9 @@ func ApplyDamage(input DamageInput) DamageResult {
 	tel.T.Record("pipeline", "damage_amplify")
 	amp := e.GetWeakenAmplify()
 	if amp > 0 {
+		if amp > 0.5 {
+			amp = 0.5 // cap at 50% as per damage-pipeline.json spec
+		}
 		damage *= 1 + amp
 	}
 

@@ -9,7 +9,7 @@
     "defaultProjectileRadius": 4,          "_defaultProjectileRadius": "弹射物默认碰撞半径（像素）",
     "scatterBasePellets": 3,               "_scatterBasePellets": "散射攻击基础弹丸数",
     "scatterSpreadAngle": 60,              "_scatterSpreadAngle": "散射攻击扇形角度（度）",
-    "radialBaseShots": 3,                  "_radialBaseShots": "环射攻击基础弹丸数",
+    "radialBaseShots": 4,                  "_radialBaseShots": "环射攻击基础弹丸数（与 abilities.json radial.base 一致）",
     "radialRangeMult": 1.2,                "_radialRangeMult": "环射弹丸射程倍率",
     "wideBeamRangeMult": 3,                "_wideBeamRangeMult": "贯穿光束射程倍率",
     "wardenProjectileSpeed": 350,          "_wardenProjectileSpeed": "战灵默认弹射物速度（像素/秒）",

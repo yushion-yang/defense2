@@ -130,7 +130,7 @@ func LoadSpawnerConfig() error {
 func defaultSpawnerConfig() *SpawnerConfig {
 	return &SpawnerConfig{
 		Scaling: SpawnerScaling{
-			HpBase: 52, HpPerWave: 21, SpeedBase: 58, SpeedPerWave: 5,
+			HpBase: 80, HpPerWave: 60, SpeedBase: 50, SpeedPerWave: 0,
 			EnemiesPerWave: 5, SpawnInterval: 0.6,
 			SpawnBaseInterval: 0.92, SpawnMinInterval: 0.18, SpawnDecayPerWave: 0.03,
 		},
@@ -138,7 +138,7 @@ func defaultSpawnerConfig() *SpawnerConfig {
 			WaveInterval: 10, FirstWaveInterval: 20,
 		},
 		Boss: SpawnerBoss{
-			EveryNWaves: 5, HpMultBase: 8, RadiusScale: 1.5,
+			EveryNWaves: 4, HpMultBase: 3, RadiusScale: 1.5,
 			EntranceDelay: 3.0, RewardMultiplier: 5,
 		},
 		Compositions: []WaveComposition{

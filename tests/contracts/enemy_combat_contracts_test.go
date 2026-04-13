@@ -145,17 +145,17 @@ func TestEnemyArchetype_BufferHasAbility(t *testing.T) {
 // 战斗系统契约
 // ═══════════════════════════════════════
 
-func TestDamagePipeline_WeakenAmplifyNoCap(t *testing.T) {
+func TestDamagePipeline_WeakenAmplifyCapped(t *testing.T) {
 	e := &enemy.Enemy{HP: 100, MaxHP: 100, Active: true}
 	e.Buffs = buff.NewDefaultBuffList()
+	// 0.8 amplify exceeds the 0.5 cap → capped to 0.5 → 10 * 1.5 = 15
 	e.Buffs.Add(buff.Buff{ID: "weaken", Category: buff.CatDebuff, Source: "test", Value: 0.8, Duration: 5, Remaining: 5})
 	r := combat.ApplyDamage(combat.DamageInput{
 		Target:    e,
 		RawDamage: 10,
 	})
-	// 虚弱无上限：0.8 增伤 → 10 * 1.8 = 18
-	if r.FinalDamage < 17.5 || r.FinalDamage > 18.5 {
-		t.Errorf("虚弱增伤应无上限，期望~18，实际 FinalDamage=%.1f", r.FinalDamage)
+	if r.FinalDamage < 14.5 || r.FinalDamage > 15.5 {
+		t.Errorf("虚弱增伤应上限50%%，期望~15，实际 FinalDamage=%.1f", r.FinalDamage)
 	}
 }
 
