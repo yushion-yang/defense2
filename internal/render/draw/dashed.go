@@ -37,7 +37,7 @@ func DashedLine(screen *ebiten.Image, x1, y1, x2, y2, width, dashLen, gapLen flo
 			sy := y1 + uy*dist
 			ex := x1 + ux*segEnd
 			ey := y1 + uy*segEnd
-			vector.StrokeLine(screen, sx, sy, ex, ey, width, clr, true)
+			vector.StrokeLine(screen, sx, sy, ex, ey, width, clr, AA())
 			dist = segEnd
 		} else {
 			dist += gapLen
@@ -80,7 +80,7 @@ func DashedCircle(screen *ebiten.Image, cx, cy, r, width, dashLen, gapLen float3
 			ex := float32(float64(cx) + float64(r)*math.Cos(endAngle))
 			ey := float32(float64(cy) + float64(r)*math.Sin(endAngle))
 
-			vector.StrokeLine(screen, sx, sy, ex, ey, width, clr, true)
+			vector.StrokeLine(screen, sx, sy, ex, ey, width, clr, AA())
 			draws++
 			dist = segEnd
 		} else {

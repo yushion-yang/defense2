@@ -65,7 +65,7 @@ func FillPath(screen *ebiten.Image, path *vector.Path, clr color.Color) {
 	}
 
 	screen.DrawTriangles(vs, is, whitePixel(), &ebiten.DrawTrianglesOptions{
-		AntiAlias: true,
+		AntiAlias: AA(),
 		FillRule:  ebiten.FillRuleNonZero,
 	})
 }
@@ -118,7 +118,7 @@ func StrokeRoundRect(screen *ebiten.Image, x, y, w, h, radius, strokeWidth float
 		Width:    S32(strokeWidth),
 		LineJoin: vector.LineJoinRound,
 	}, &vector.DrawPathOptions{
-		AntiAlias:  true,
+		AntiAlias:  AA(),
 		ColorScale: colorScale(clr),
 	})
 }
@@ -126,10 +126,11 @@ func StrokeRoundRect(screen *ebiten.Image, x, y, w, h, radius, strokeWidth float
 // StrokeRect draws a simple rectangle outline using StrokeLine.
 func StrokeRect(screen *ebiten.Image, x, y, w, h, width float32, clr color.Color) {
 	sx, sy, sw, sh, swidth := S32(x), S32(y), S32(w), S32(h), S32(width)
-	vector.StrokeLine(screen, sx, sy, sx+sw, sy, swidth, clr, true)
-	vector.StrokeLine(screen, sx+sw, sy, sx+sw, sy+sh, swidth, clr, true)
-	vector.StrokeLine(screen, sx+sw, sy+sh, sx, sy+sh, swidth, clr, true)
-	vector.StrokeLine(screen, sx, sy+sh, sx, sy, swidth, clr, true)
+	aa := AA()
+	vector.StrokeLine(screen, sx, sy, sx+sw, sy, swidth, clr, aa)
+	vector.StrokeLine(screen, sx+sw, sy, sx+sw, sy+sh, swidth, clr, aa)
+	vector.StrokeLine(screen, sx+sw, sy+sh, sx, sy+sh, swidth, clr, aa)
+	vector.StrokeLine(screen, sx, sy+sh, sx, sy, swidth, clr, aa)
 }
 
 // Pill draws a pill shape (a rounded rectangle where radius = h/2).

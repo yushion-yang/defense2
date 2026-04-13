@@ -15,12 +15,12 @@ func CircleOutline(screen *ebiten.Image, cx, cy, r, width float32, clr color.Col
 	if r <= 0 {
 		return
 	}
-	vector.StrokeCircle(screen, S32(cx), S32(cy), S32(r), S32(width), clr, true)
+	vector.StrokeCircle(screen, S32(cx), S32(cy), S32(r), S32(width), clr, AA())
 }
 
 // FilledCircle draws a filled circle with anti-aliasing enabled.
 func FilledCircle(screen *ebiten.Image, cx, cy, r float32, clr color.Color) {
-	vector.DrawFilledCircle(screen, S32(cx), S32(cy), S32(r), clr, true)
+	vector.DrawFilledCircle(screen, S32(cx), S32(cy), S32(r), clr, AA())
 }
 
 // Glow draws a soft glow effect: an outer transparent ring fading into an
@@ -39,10 +39,10 @@ func Glow(screen *ebiten.Image, cx, cy, innerR, outerR float32, clr color.RGBA) 
 
 	scx, scy := S32(cx), S32(cy)
 	outerClr := color.RGBA{R: clr.R, G: clr.G, B: clr.B, A: clr.A / 4}
-	vector.DrawFilledCircle(target, scx, scy, S32(outerR), outerClr, true)
+	vector.DrawFilledCircle(target, scx, scy, S32(outerR), outerClr, AA())
 
 	if innerR > 0 {
-		vector.DrawFilledCircle(target, scx, scy, S32(innerR), clr, true)
+		vector.DrawFilledCircle(target, scx, scy, S32(innerR), clr, AA())
 	}
 }
 
@@ -54,10 +54,11 @@ func Diamond(screen *ebiten.Image, cx, cy, r, width float32, clr color.Color) {
 	bottom := [2]float32{scx, scy + sr}
 	left := [2]float32{scx - sr, scy}
 
-	vector.StrokeLine(screen, top[0], top[1], right[0], right[1], sw, clr, true)
-	vector.StrokeLine(screen, right[0], right[1], bottom[0], bottom[1], sw, clr, true)
-	vector.StrokeLine(screen, bottom[0], bottom[1], left[0], left[1], sw, clr, true)
-	vector.StrokeLine(screen, left[0], left[1], top[0], top[1], sw, clr, true)
+	aa := AA()
+	vector.StrokeLine(screen, top[0], top[1], right[0], right[1], sw, clr, aa)
+	vector.StrokeLine(screen, right[0], right[1], bottom[0], bottom[1], sw, clr, aa)
+	vector.StrokeLine(screen, bottom[0], bottom[1], left[0], left[1], sw, clr, aa)
+	vector.StrokeLine(screen, left[0], left[1], top[0], top[1], sw, clr, aa)
 }
 
 // DiamondRotated draws a diamond outline rotated by angle (radians) around its center.
@@ -78,10 +79,11 @@ func DiamondRotated(screen *ebiten.Image, cx, cy, r, width float32, angle float6
 		pts[i][1] = scy + o[0]*sin + o[1]*cos
 	}
 
-	vector.StrokeLine(screen, pts[0][0], pts[0][1], pts[1][0], pts[1][1], sw, clr, true)
-	vector.StrokeLine(screen, pts[1][0], pts[1][1], pts[2][0], pts[2][1], sw, clr, true)
-	vector.StrokeLine(screen, pts[2][0], pts[2][1], pts[3][0], pts[3][1], sw, clr, true)
-	vector.StrokeLine(screen, pts[3][0], pts[3][1], pts[0][0], pts[0][1], sw, clr, true)
+	aa := AA()
+	vector.StrokeLine(screen, pts[0][0], pts[0][1], pts[1][0], pts[1][1], sw, clr, aa)
+	vector.StrokeLine(screen, pts[1][0], pts[1][1], pts[2][0], pts[2][1], sw, clr, aa)
+	vector.StrokeLine(screen, pts[2][0], pts[2][1], pts[3][0], pts[3][1], sw, clr, aa)
+	vector.StrokeLine(screen, pts[3][0], pts[3][1], pts[0][0], pts[0][1], sw, clr, aa)
 }
 
 // ThickLine draws a thick line with round caps from (x1,y1) to (x2,y2).
@@ -94,7 +96,7 @@ func ThickLine(screen *ebiten.Image, x1, y1, x2, y2, width float32, clr color.Co
 		Width:   S32(width),
 		LineCap: vector.LineCapRound,
 	}, &vector.DrawPathOptions{
-		AntiAlias:  true,
+		AntiAlias:  AA(),
 		ColorScale: colorScale(clr),
 	})
 }
@@ -213,7 +215,7 @@ func Arc(screen *ebiten.Image, cx, cy, r, startAngle, endAngle, width float32, c
 		x := scx + sr*float32(math.Cos(angle))
 		y := scy + sr*float32(math.Sin(angle))
 		if i > 0 {
-			vector.StrokeLine(screen, prevX, prevY, x, y, sw, clr, true)
+			vector.StrokeLine(screen, prevX, prevY, x, y, sw, clr, AA())
 		}
 		prevX = x
 		prevY = y

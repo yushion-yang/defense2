@@ -24,3 +24,8 @@ func TouchPos(id ebiten.TouchID) (float64, float64) {
 	x, y := ebiten.TouchPosition(id)
 	return float64(x) / Scale, float64(y) / Scale
 }
+
+// AA returns whether vector anti-aliasing should be enabled.
+// On HiDPI (Scale > 1), physical pixels are small enough that AA is imperceptible,
+// but the performance cost of vector AA is significant (~2x slower per call).
+func AA() bool { return Scale <= 1.0 }
