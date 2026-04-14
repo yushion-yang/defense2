@@ -223,20 +223,10 @@ func BuildInfoPanelVM(t *tower.Tower, sellValue int, def tower.TowerDef, gold in
 	atCap := maxBuys >= 0 && t.StrengthPurchases >= maxBuys
 	if atCap {
 		vm.UpgradeButtonText = i18n.T("game.tower.max_upgrade")
-		vm.BulkUpgradeButtonText = i18n.T("game.tower.max_upgrade")
 		vm.CanAffordUpgrade = false
-		vm.CanAffordBulkUpgrade = false
 	} else {
 		vm.UpgradeButtonText = i18n.TF("game.tower.btn_upgrade", upgCost)
-		remaining := 5
-		if maxBuys >= 0 {
-			if left := maxBuys - t.StrengthPurchases; left < remaining {
-				remaining = left
-			}
-		}
-		vm.BulkUpgradeButtonText = i18n.TF("game.tower.btn_bulk_upgrade", upgCost*remaining)
 		vm.CanAffordUpgrade = gold >= upgCost
-		vm.CanAffordBulkUpgrade = gold >= upgCost*remaining
 	}
 	vm.SellButtonText = i18n.TF("game.tower.btn_sell", sellValue)
 

@@ -82,10 +82,8 @@ type InfoPanelVM struct {
 
 	// Buttons
 	UpgradeButtonText     string // e.g. "强度+10 $10"
-	BulkUpgradeButtonText string // e.g. "强度+50 $50"
 	SellButtonText        string // e.g. "卖60"
 	CanAffordUpgrade      bool   // true if player can afford single upgrade
-	CanAffordBulkUpgrade  bool   // true if player can afford bulk upgrade
 }
 
 // SlotVM 能力槽展示数据。
@@ -104,7 +102,6 @@ type SlotVM struct {
 
 var (
 	lastUpgradeRect     ui.Rect
-	lastBulkUpgradeRect ui.Rect
 	lastSellRect        ui.Rect
 	lastAbilityBtnRect  ui.Rect // "选择能力(N)" 按钮
 	lastUnlockBtnRect   ui.Rect // "解锁能力 $XX" 按钮
@@ -343,7 +340,6 @@ func DrawInfoPanel(screen *ebiten.Image, vm InfoPanelVM) {
 	// 操作按钮：强度+10 / 卖出
 	panel.AddSpace(detailGap)
 	lastUpgradeRect = ui.Rect{}
-	lastBulkUpgradeRect = ui.Rect{}
 	lastSellRect = ui.Rect{}
 
 	panel.AddRow(btnH, func(screen *ebiten.Image, x, y float64, w float64) {
@@ -353,14 +349,9 @@ func DrawInfoPanel(screen *ebiten.Image, vm InfoPanelVM) {
 		if vm.CanAffordUpgrade {
 			upgradeClr = theme.TonePrimary
 		}
-		bulkClr := theme.ToneDisabled
-		if vm.CanAffordBulkUpgrade {
-			bulkClr = theme.TonePrimary
-		}
 
 		result := ui.DrawButtonRow(screen, area, []ui.ButtonRowItem{
 			{Label: vm.UpgradeButtonText, Color: upgradeClr},
-			{Label: vm.BulkUpgradeButtonText, Color: bulkClr},
 			{Label: vm.SellButtonText, Color: theme.BtnDanger},
 		}, ui.ButtonRowStyle{
 			Height:   btnH,
@@ -368,10 +359,9 @@ func DrawInfoPanel(screen *ebiten.Image, vm InfoPanelVM) {
 			Radius:   float32(theme.ButtonRadius),
 			FontSize: theme.FontSM,
 		})
-		if len(result.Rects) == 3 {
+		if len(result.Rects) == 2 {
 			lastUpgradeRect = result.Rects[0]
-			lastBulkUpgradeRect = result.Rects[1]
-			lastSellRect = result.Rects[2]
+			lastSellRect = result.Rects[1]
 		}
 	})
 
@@ -488,13 +478,7 @@ func InfoPanelUpgradeHitTest(px, py float32, visible bool) bool {
 	return lastUpgradeRect.Contains(float64(px), float64(py))
 }
 
-// InfoPanelBulkUpgradeHitTest 检查是否点击了大额购买强度按钮。
-func InfoPanelBulkUpgradeHitTest(px, py float32, visible bool) bool {
-	if !visible || !lastPanelVisible {
-		return false
-	}
-	return lastBulkUpgradeRect.Contains(float64(px), float64(py))
-}
+
 
 // InfoPanelSellHitTest 检查是否点击了卖出按钮。
 func InfoPanelSellHitTest(px, py float32, visible bool) bool {

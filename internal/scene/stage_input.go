@@ -584,8 +584,6 @@ func (s *StageScene) handleInput() {
 			s.tryUnlockAbilitySlot()
 		} else if hud.InfoPanelUpgradeHitTest(ftx, fty, s.selectedTower != nil) {
 			s.tryUpgradeTower()
-		} else if hud.InfoPanelBulkUpgradeHitTest(ftx, fty, s.selectedTower != nil) {
-			s.tryBulkUpgradeTower()
 		} else if hud.InfoPanelSellHitTest(ftx, fty, s.selectedTower != nil) {
 			s.trySellTower(s.selectedTower.X, s.selectedTower.Y)
 			s.imode = modeIdle
@@ -690,40 +688,6 @@ func (s *StageScene) tryUpgradeTower() {
 	s.gameStats.GoldSpent += spent
 	s.bus.Emit(event.EvtTowerUpgraded, event.TowerUpgradedPayload{TowerKey: t.Key, Spent: spent})
 	s.showNotify(i18n.TF("game.tower.str_up_10", spent))
-}
-
-// tryBulkUpgradeTower 为选中的塔一次性购买 50 点永久强度（5 次单次升级合并）。
-// 设计意图：减少高强度塔的点击次数，体验优化。花费 = 5 × StrengthBuyCost()。
-func (s *StageScene) tryBulkUpgradeTower() {
-	t := s.selectedTower
-	if t == nil {
-		return
-	}
-	// 计算实际可购买次数（从塔配置读取上限）
-	def := s.findTowerDef(t)
-	maxBuys := 5
-	if def.MaxStrengthBuys >= 0 {
-		remaining := def.MaxStrengthBuys - t.StrengthPurchases
-		if remaining <= 0 {
-			hud.ShowToast(i18n.T("game.tower.max_upgrade"))
-			return
-		}
-		if remaining < maxBuys {
-			maxBuys = remaining
-		}
-	}
-	cost := tower.StrengthBuyCost() * maxBuys
-	if s.gold < cost {
-		hud.ShowToast(i18n.T("game.tower.gold_short"))
-		return
-	}
-	for i := 0; i < maxBuys; i++ {
-		t.BuyStrength()
-	}
-	s.gold -= cost
-	s.gameStats.GoldSpent += cost
-	s.bus.Emit(event.EvtTowerUpgraded, event.TowerUpgradedPayload{TowerKey: t.Key, Spent: cost})
-	s.showNotify(i18n.TF("game.tower.str_up_50", cost))
 }
 
 // tryUnlockAbilitySlot 花钱解锁选中塔的下一个能力槽位。
