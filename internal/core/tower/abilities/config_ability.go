@@ -96,16 +96,15 @@ func (a *ConfigAbility) OnHit(t *tower.Tower, p *projectile.Projectile, e *enemy
 		return &tower.HitResult{SeparateDamage: sv}
 
 	case tower.AbilityDistanceDamage:
-		// scaleDim=maxBonus, 无固定参数
+		// scaleDim=bonus per step, param=每段距离(像素)
+		// 每 param 距离增加 sv 比例伤害，距离越远加成越高
 		dist := math.Hypot(e.X-t.X, e.Y-t.Y)
-		if t.Range <= 0 {
-			return nil
+		step := pm // param = 每段距离
+		if step <= 0 {
+			step = 150 // fallback
 		}
-		ratio := dist / t.Range
-		if ratio > 1 {
-			ratio = 1
-		}
-		bonus := p.Damage * ratio * sv
+		steps := dist / step
+		bonus := p.Damage * steps * sv
 		return &tower.HitResult{BonusDamage: bonus}
 
 	case tower.AbilitySlowPower:
