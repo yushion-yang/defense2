@@ -284,12 +284,12 @@ func (t *Tower) AddAbility(abilityType string) bool {
 // 不走解锁流程，直接把能力写入对应 slot，触发攻击方式变形和 enhance 效果。
 // 注入完成后，用 TowerDef.SpriteKeyOverride 修正精灵（防止 AddAbility 推断覆盖）。
 func ApplyPresetAbilities(t *Tower, abilities []string) {
+	savedLabel := t.Label // AddAbility 会改 Label（攻击能力触发精灵变形），需要恢复
 	for _, abil := range abilities {
 		t.AddAbility(abil)
 	}
-	// 经典模式的 SpriteKey 由配置决定，不依赖 AddAbility 的推断
-	// （如 cl_gatling 的 enhance 能力会把 SpriteKey 错误改为 fortress）
-	// Label 不覆盖：initTower 已从 TowerDef.Label 设置了正确的配置名称
+	// 恢复配置中的名称和精灵（AddAbility 推断的值不适用于经典预设塔）
+	t.Label = savedLabel
 	if t.SpriteKeyOverride != "" {
 		t.SpriteKey = t.SpriteKeyOverride
 	}
