@@ -112,9 +112,9 @@ type TextSegment struct {
 	Color color.Color
 }
 
-// DrawSegmentsWrapped 渲染多色 TextSegment 列表，自动换行。
+// DrawSegmentsWrapped 渲染多色 TextSegment 列表，自动换行。返回实际渲染高度。
 func DrawSegmentsWrapped(screen *ebiten.Image, fm *render.FontManager,
-	segs []TextSegment, x, y, maxW, fontSize float64) {
+	segs []TextSegment, x, y, maxW, fontSize float64) float64 {
 
 	lineH := fontSize + WrapLineHeight
 	curX := x
@@ -134,4 +134,26 @@ func DrawSegmentsWrapped(screen *ebiten.Image, fm *render.FontManager,
 		fm.DrawText(screen, seg.Text, curX, curY, fontSize, clr)
 		curX += segW
 	}
+	return curY - y + lineH
+}
+
+// MeasureSegmentsWrappedHeight 计算 DrawSegmentsWrapped 的实际高度（不渲染）。
+// 逻辑与 DrawSegmentsWrapped 完全一致。
+func MeasureSegmentsWrappedHeight(fm *render.FontManager, segs []TextSegment, maxW, fontSize float64) float64 {
+	if fm == nil || len(segs) == 0 {
+		return 0
+	}
+	lineH := fontSize + WrapLineHeight
+	curX := 0.0
+	lines := 1
+
+	for _, seg := range segs {
+		segW := fm.MeasureText(seg.Text, fontSize)
+		if curX+segW > maxW && curX > 0 {
+			curX = 0
+			lines++
+		}
+		curX += segW
+	}
+	return float64(lines) * lineH
 }

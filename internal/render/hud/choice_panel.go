@@ -326,26 +326,4 @@ func tierColor(tier string) color.RGBA {
 	return tierColors["normal"]
 }
 
-// abilitySegsToTextSegs converts AbilitySegment slice to ui.TextSegment slice,
-// mapping Kind to the appropriate theme color.
-func abilitySegsToTextSegs(segs []AbilitySegment) []ui.TextSegment {
-	out := make([]ui.TextSegment, len(segs))
-	for i, seg := range segs {
-		var clr color.Color
-		switch seg.Kind {
-		case "text":
-			clr = theme.TextMuted
-		case "base", "total":
-			clr = theme.TextBody
-		case "scaled":
-			clr = seg.Color
-			if clr == nil {
-				clr = theme.TextBody
-			}
-		default:
-			clr = theme.TextBody
-		}
-		out[i] = ui.TextSegment{Text: seg.Text, Color: clr}
-	}
-	return out
-}
+// abilitySegsToTextSegs 已移至 ability_helpers.go
