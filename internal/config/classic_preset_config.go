@@ -15,16 +15,14 @@ import (
 
 // ClassicPreset 经典模式单个预设塔的配置。
 type ClassicPreset struct {
-	Key             string            `json:"key"`             // 唯一标识（cl_sentinel 等）
-	Name            string            `json:"name"`            // 显示名称
-	Category        string            `json:"category"`        // 角色分类: dps / aoe / support
-	AttackStyle     string            `json:"attackStyle"`     // 攻击方式
-	Abilities       []string          `json:"abilities"`       // 预设能力列表（固定 2 个）
-	Tiers           map[string]string `json:"tiers"`           // 属性档位 {"damage":"S","range":"B","atkSpeed":"B"}
-	SpriteKey       string            `json:"spriteKey"`       // 精灵键名（复用现有精灵）
-	ProjectileSpeed float64           `json:"projectileSpeed"` // 弹速
-	BuildCost       int               `json:"buildCost"`       // 建造费用
-	Description     string            `json:"description"`     // 简短描述
+	Key         string            `json:"key"`         // 唯一标识（cl_sentinel 等）
+	Name        string            `json:"name"`        // 显示名称
+	Category    string            `json:"category"`    // 角色分类: dps / aoe / support
+	Abilities   []string          `json:"abilities"`   // 预设能力列表（第 1 个=攻击能力，决定攻击方式）
+	Tiers       map[string]string `json:"tiers"`       // 属性档位 {"damage":"S","range":"B","atkSpeed":"B"}
+	SpriteKey   string            `json:"spriteKey"`   // 精灵键名
+	BuildCost   int               `json:"buildCost"`   // 建造费用
+	Description string            `json:"description"` // 简短描述
 }
 
 // ClassicPresetsConfig 经典模式预设表。

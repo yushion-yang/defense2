@@ -3686,12 +3686,11 @@ func loadClassicTowerDefs() []tower.TowerDef {
 		rngTier := tp.Range.Tiers[p.Tiers["range"]]
 
 		def := tower.TowerDef{
-			Key:             p.Key,
-			Label:           p.Name,
-			Cost:            p.BuildCost,
-			Abilities:       p.Abilities,
-			AttackStyleID:   p.AttackStyle,
-			ProjectileSpeed: p.ProjectileSpeed,
+			Key:       p.Key,
+			Label:     p.Name,
+			Cost:      p.BuildCost,
+			Abilities: p.Abilities,
+			// AttackStyleID 和 ProjectileSpeed 由 ApplyPresetAbilities 中的攻击能力自动设置
 
 			// 从 tier 查表设置 Base/Potential
 			CfgBaseDamage:   dmgTier.Base,
