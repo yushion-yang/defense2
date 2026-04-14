@@ -111,10 +111,9 @@ func DrawBuildMenu(screen *ebiten.Image, d BuildMenuData) {
 		Font: theme.FontLG, Bold: true, Color: theme.TextTitle,
 	})
 
-	// Close hint (top-right)
-	closeX := float64(m.panelX) + float64(m.panelW) - float64(bpPadX) - 40
-	ui.Label(screen, i18n.T("hud.build.close"), closeX, titleY+2, 40, ui.LabelStyle{
-		Font: theme.FontMD, Color: theme.TextMuted,
+	// Close hint (top-right, 右对齐，与标题共享整行宽度)
+	ui.Label(screen, i18n.T("hud.build.close"), titleX, titleY+2, titleMaxW, ui.LabelStyle{
+		Font: theme.FontMD, Color: theme.TextMuted, Align: ui.AlignRight,
 	})
 
 	for i, card := range d.Cards {
@@ -262,16 +261,19 @@ func drawBuildCardTooltip(screen *ebiten.Image, card BuildCardVM, m buildPanelMe
 	const (
 		tipW       = float32(280)
 		tipBaseH   = float32(70) // 基础高度（名称+属性行）
-		tipAbilH   = float32(18) // 每行能力高度
 		tipAbilGap = float32(6)  // 能力区域上方间距
 		tipR       = float32(8)
 		tipPadX    = float32(12)
 	)
 
-	// 动态计算高度
+	// 动态计算高度：每个能力行用 measureAbilityRowHeight 获取实际换行高度
 	tipH := tipBaseH
+	contentW := float64(tipW) - float64(tipPadX)*2
 	if len(card.Abilities) > 0 {
-		tipH += tipAbilGap + float32(len(card.Abilities))*tipAbilH
+		tipH += tipAbilGap
+		for _, ab := range card.Abilities {
+			tipH += float32(measureAbilityRowHeight(fm, ab, contentW))
+		}
 	}
 
 	tipX := (float32(theme.CanvasW) - tipW) / 2
@@ -284,7 +286,6 @@ func drawBuildCardTooltip(screen *ebiten.Image, card BuildCardVM, m buildPanelMe
 
 	tx := float64(tipX) + float64(tipPadX)
 	ty := float64(tipY) + 8
-	contentW := float64(tipW) - float64(tipPadX)*2
 
 	// Tower name
 	ui.Label(screen, card.Label, tx, ty, 240, ui.LabelStyle{
@@ -317,12 +318,39 @@ func drawBuildCardTooltip(screen *ebiten.Image, card BuildCardVM, m buildPanelMe
 		Font: theme.FontSM, Color: theme.InfoAttrRange,
 	})
 
-	// 预设能力描述
+	// 预设能力描述（使用 DrawSegmentsWrapped 自动换行，防止溢出右边界）
 	if len(card.Abilities) > 0 {
 		ty += float64(tipAbilGap) + 14
 		for _, ab := range card.Abilities {
-			drawAbilityRowVM(screen, fm, ab, tx, ty, contentW)
-			ty += float64(tipAbilH)
+			// Icon
+			if ab.Icon != "" {
+				drawStatIcon(screen, im, ab.Icon, tx, ty, 14)
+			}
+			abX := tx + 19.0
+
+			// Label (bold)
+			displayLabel := ui.TruncateText(fm, ab.Label, 120, theme.FontSM)
+			ui.Label(screen, displayLabel, abX, ty, 0, ui.LabelStyle{
+				Font: theme.FontSM, Color: theme.TextBody, Bold: true,
+			})
+			labelW := fm.MeasureText(displayLabel, theme.FontSM) + 4
+			segX := abX + labelW
+
+			// Segments — 换行渲染
+			if len(ab.Segments) > 0 {
+				segs := abilitySegsToTextSegs(ab.Segments)
+				remainW := contentW - 19.0 - labelW
+				if remainW < 40 {
+					remainW = 40
+				}
+				ui.DrawSegmentsWrapped(screen, fm, segs, segX, ty, remainW, theme.FontSM)
+			} else if ab.Fallback != "" {
+				ui.Label(screen, ab.Fallback, segX, ty+1, 0, ui.LabelStyle{
+					Font: theme.FontSM, Color: theme.TextMuted,
+				})
+			}
+
+			ty += measureAbilityRowHeight(fm, ab, contentW)
 		}
 	}
 }

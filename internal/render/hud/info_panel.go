@@ -1,6 +1,11 @@
 // info_panel.go — Bottom-center tower detail panel.
 // Shows tower stats, current abilities, upgrade growth, and sell button when a tower is selected.
 // All data is provided via InfoPanelVM — no direct dependency on core/tower or core/strength.
+//
+// 布局分为两部分：
+//   - 固定头部（FlexPanel）：塔名 + 属性行 + 攻击方式
+//   - 可滚动区域（DrawScrollRegion）：能力详情 + buff 列表
+//   - 固定尾部（FlexPanel）：按钮区域
 package hud
 
 import (
@@ -108,6 +113,24 @@ var (
 	lastPanelRect       ui.Rect // entire info panel bounding box
 	lastPanelVisible    bool
 )
+
+// ---------------------------------------------------------------------------
+// Scroll state — 包级变量，跨帧保持滚动位置。
+// ---------------------------------------------------------------------------
+
+var infoPanelScroll ui.ScrollState
+
+// InfoPanelScroll 接收鼠标滚轮增量，更新能力/buff 区域的滚动偏移。
+// 由 stage_input.go 在 modeTowerSel 时调用。
+func InfoPanelScroll(deltaY float64) {
+	infoPanelScroll.Scroll(deltaY)
+}
+
+// ResetInfoPanelScroll 重置滚动到顶部。
+// 在塔选中变更时调用，防止新塔继承旧塔的滚动位置。
+func ResetInfoPanelScroll() {
+	infoPanelScroll.OffsetY = 0
+}
 
 // HitTestAbilityBtn 检测点击是否在"选择能力(N)"按钮上。
 func HitTestAbilityBtn(mx, my float32) bool {
@@ -229,82 +252,73 @@ func DrawInfoPanel(screen *ebiten.Image, vm InfoPanelVM) {
 		})
 	}
 
-	// Row 3: 攻击方式
+	// Row 5: 攻击方式
 	panel.AddRow(abilityH, func(screen *ebiten.Image, x, y float64, w float64) {
 		ui.Label(screen, vm.AttackStyleText, x, y, w, ui.LabelStyle{
 			Font: theme.FontSM, Color: theme.TextMuted,
 		})
 	})
 
-	// 高度预算：预估按钮区域高度，限制能力+buff 可用空间
+	// --- 计算可滚动区域高度预算 ---
+	// infoPanelMaxH 限制面板总高度，scrollViewH 是能力+buff 可用的可视高度
 	const infoPanelMaxH float32 = 420
-	fixedH := panel.Height() + detailGap + btnH + botPad // 当前高度 + 按钮 + 底部
-	budgetH := infoPanelMaxH - fixedH                    // 能力+buff 可用高度
 
-	// Row 4: 已获取能力详细描述（受高度预算限制）
-	var usedH float32
-	if len(vm.Abilities) > 0 {
-		panel.AddSpace(2)
-		usedH += 2
-		maxAbil := len(vm.Abilities)
-		for i, ab := range vm.Abilities {
-			if usedH+abilityH > budgetH-14 { // 预留一行给截断指示
-				remaining := maxAbil - i
-				if remaining > 0 {
-					panel.AddRow(abilityH, func(screen *ebiten.Image, x, y float64, w float64) {
-						ui.Label(screen, i18n.TF("hud.info.more_abilities", remaining), x, y, w, ui.LabelStyle{
-							Font: theme.FontXS, Color: theme.TextMuted,
-						})
-					})
-					usedH += abilityH
-				}
-				break
-			}
-			ab := ab
-			panel.AddRow(abilityH, func(screen *ebiten.Image, x, y float64, w float64) {
-				drawAbilityRowVM(screen, fm, ab, x, y, w)
-			})
-			usedH += abilityH
-		}
+	// 尾部固定高度：按钮组（含间距）
+	// tailH 包括：detailGap + 按钮们 + botPad
+	var tailH float32
+	tailH += detailGap + btnH // 强度/卖出按钮
+	tailH += botPad - innerPad
+	if vm.PendingCount > 0 {
+		tailH += detailGap + 32 // "选择能力(N)" 按钮
+	}
+	if vm.CanUnlockSlot {
+		tailH += detailGap + 32 // "解锁能力 $XX" 按钮
 	}
 
-	// Row 6: Buff 列表（受剩余高度预算限制）
-	if len(vm.Buffs) > 0 {
-		panel.AddSpace(2)
-		usedH += 2
-		const buffH float32 = 14
-		for i, b := range vm.Buffs {
-			if usedH+buffH > budgetH-14 {
-				remaining := len(vm.Buffs) - i
-				if remaining > 0 {
-					panel.AddRow(buffH, func(screen *ebiten.Image, x, y float64, w float64) {
-						ui.Label(screen, i18n.TF("hud.info.more_buffs", remaining), x, y, w, ui.LabelStyle{
-							Font: theme.FontXS, Color: theme.TextMuted,
-						})
-					})
-					usedH += buffH
-				}
-				break
-			}
-			b := b
-			panel.AddRow(buffH, func(screen *ebiten.Image, x, y float64, w float64) {
-				srcClr := color.RGBA{R: 180, G: 140, B: 255, A: 220}
-				ui.Label(screen, b.Source, x, y, 0, ui.LabelStyle{
-					Font: theme.FontXS, Color: srcClr,
-				})
-				srcW := fm.MeasureText(b.Source, theme.FontXS)
-				ui.Label(screen, b.Desc, x+srcW+6, y, 0, ui.LabelStyle{
-					Font: theme.FontXS, Color: theme.TextMuted,
-				})
-				if b.Remaining >= 0 {
-					timeStr := strconv.FormatFloat(b.Remaining, 'f', 0, 64) + "s"
-					ui.Label(screen, timeStr, x, y, w, ui.LabelStyle{
-						Font: theme.FontXS, Color: theme.TextMuted, Align: ui.AlignRight,
-					})
-				}
-			})
-			usedH += buffH
+	headerH := panel.Height() // 头部已用高度
+	scrollViewH := infoPanelMaxH - headerH - tailH
+	if scrollViewH < 40 {
+		scrollViewH = 40
+	}
+
+	// 内容区宽度（面板内边距内）
+	contentW := float64(panel.ContentWidth())
+
+	// --- 预算量能力+buff 内容总高度，判断是否需要滚动 ---
+	var scrollContentH float32
+	if len(vm.Abilities) > 0 {
+		scrollContentH += 2 // 顶部间距
+		for _, ab := range vm.Abilities {
+			h := measureAbilityRowHeight(fm, ab, contentW)
+			scrollContentH += float32(h)
 		}
+	}
+	if len(vm.Buffs) > 0 {
+		scrollContentH += 2 // 间距
+		scrollContentH += float32(len(vm.Buffs)) * 14
+	}
+
+	// 如果内容不需要滚动，缩小可视区域到内容高度，避免多余空白
+	actualViewH := scrollViewH
+	if scrollContentH < scrollViewH {
+		actualViewH = scrollContentH
+	}
+	if actualViewH < 0 {
+		actualViewH = 0
+	}
+
+	// 更新 ScrollState 的内容高度
+	infoPanelScroll.ContentH = scrollContentH
+
+	// Row 6: 可滚动的能力+buff 区域
+	if scrollContentH > 0 {
+		panel.AddRow(actualViewH, func(screen *ebiten.Image, x, y float64, w float64) {
+			ui.DrawScrollRegion(screen, float32(x), float32(y), float32(w), actualViewH,
+				&infoPanelScroll,
+				func(screen *ebiten.Image, cx, cy float64, cw float64) {
+					drawScrollableContent(screen, fm, vm, cx, cy, cw)
+				})
+		})
 	}
 
 	// "选择能力(N)" 按钮
@@ -407,6 +421,72 @@ func DrawInfoPanel(screen *ebiten.Image, vm InfoPanelVM) {
 	lastPanelVisible = true
 }
 
+// drawScrollableContent 渲染可滚动区域内的全部能力+buff 内容。
+// 由 DrawScrollRegion 的 renderContent 回调调用，y 已减去滚动偏移。
+// 渲染所有条目，不做截断（"还有N个..."已移除）。
+func drawScrollableContent(screen *ebiten.Image, fm *render.FontManager, vm InfoPanelVM, x, y, w float64) {
+	curY := y
+
+	// 能力详情列表
+	if len(vm.Abilities) > 0 {
+		curY += 2 // 顶部间距
+		for _, ab := range vm.Abilities {
+			drawAbilityRowVM(screen, fm, ab, x, curY, w)
+			curY += measureAbilityRowHeight(fm, ab, w)
+		}
+	}
+
+	// Buff 列表
+	if len(vm.Buffs) > 0 {
+		curY += 2 // 间距
+		const buffH = 14.0
+		for _, b := range vm.Buffs {
+			drawBuffRow(screen, fm, b, x, curY, w)
+			curY += buffH
+		}
+	}
+}
+
+// drawBuffRow 渲染单个 buff 行，正确计算 maxW 防止溢出。
+func drawBuffRow(screen *ebiten.Image, fm *render.FontManager, b BuffVM, x, y, w float64) {
+	srcClr := color.RGBA{R: 180, G: 140, B: 255, A: 220}
+
+	// 如果有剩余时间，预留右侧空间给时间文本
+	var timeW float64
+	var timeStr string
+	if b.Remaining >= 0 {
+		timeStr = strconv.FormatFloat(b.Remaining, 'f', 0, 64) + "s"
+		timeW = fm.MeasureText(timeStr, theme.FontXS) + 4
+	}
+
+	// Source 文本（带宽度约束）
+	srcMaxW := w * 0.4 // source 最多占 40% 宽度
+	ui.Label(screen, b.Source, x, y, srcMaxW, ui.LabelStyle{
+		Font: theme.FontXS, Color: srcClr,
+	})
+	srcW := fm.MeasureText(b.Source, theme.FontXS)
+	if srcW > srcMaxW {
+		srcW = srcMaxW
+	}
+
+	// Desc 文本（受 Source 和 Time 约束）
+	descX := x + srcW + 6
+	descMaxW := w - srcW - 6 - timeW
+	if descMaxW < 20 {
+		descMaxW = 20
+	}
+	ui.Label(screen, b.Desc, descX, y, descMaxW, ui.LabelStyle{
+		Font: theme.FontXS, Color: theme.TextMuted,
+	})
+
+	// 剩余时间（右对齐）
+	if timeStr != "" {
+		ui.Label(screen, timeStr, x, y, w, ui.LabelStyle{
+			Font: theme.FontXS, Color: theme.TextMuted, Align: ui.AlignRight,
+		})
+	}
+}
+
 // drawSlotRow renders one ability slot row.
 func drawSlotRow(screen *ebiten.Image, fm *render.FontManager, slot SlotVM, x, y, w float64) {
 	im := render.GlobalIcons()
@@ -420,17 +500,15 @@ func drawSlotRow(screen *ebiten.Image, fm *render.FontManager, slot SlotVM, x, y
 	}
 
 	if slot.AbilityLabel != "" {
-		// Filled slot: icon + ability name (truncated to prevent overflow)
+		// Filled slot: icon + ability name (Label 内置 ShrinkFontSize 自动缩放)
 		if slot.AbilityIcon != "" {
 			drawStatIcon(screen, im, slot.AbilityIcon, x, y, 14)
 		}
-		slotLabel := ui.TruncateText(fm, slot.AbilityLabel, 120, theme.FontSM)
-		ui.Label(screen, slotLabel, x+19, y, 0, ui.LabelStyle{
+		labelMaxW := w - 19 // 留出图标空间
+		catSuffix := " (" + slot.CategoryName + ")"
+		fullText := slot.AbilityLabel + catSuffix
+		ui.Label(screen, fullText, x+19, y, labelMaxW, ui.LabelStyle{
 			Font: theme.FontSM, Color: theme.TextBody, Bold: true,
-		})
-		catX := x + 19 + fm.MeasureText(slotLabel, theme.FontSM)
-		ui.Label(screen, " ("+slot.CategoryName+")", catX, y, 0, ui.LabelStyle{
-			Font: theme.FontXS, Color: theme.TextMuted,
 		})
 		return
 	}
@@ -449,7 +527,8 @@ func drawSlotRow(screen *ebiten.Image, fm *render.FontManager, slot SlotVM, x, y
 	})
 }
 
-// drawAbilityRowVM renders one ability row from pre-computed VM data.
+// drawAbilityRowVM 渲染一个能力行，支持段落自动换行。
+// 使用 abilitySegsToTextSegs + DrawSegmentsWrapped 替代单行内联渲染。
 func drawAbilityRowVM(screen *ebiten.Image, fm *render.FontManager, ab AbilityVM, x, y, w float64) {
 	im := render.GlobalIcons()
 
@@ -459,44 +538,34 @@ func drawAbilityRowVM(screen *ebiten.Image, fm *render.FontManager, ab AbilityVM
 	}
 	abX := x + 19.0
 
-	// Label (bold, truncated to prevent overflow)
-	displayLabel := ui.TruncateText(fm, ab.Label, 120, theme.FontSM)
-	ui.Label(screen, displayLabel, abX, y, 0, ui.LabelStyle{
+	// Label (bold, Label 内置 ShrinkFontSize 自动缩放)
+	labelMaxW := 120.0
+	ui.Label(screen, ab.Label, abX, y, labelMaxW, ui.LabelStyle{
 		Font: theme.FontSM, Color: theme.TextBody, Bold: true,
 	})
-	abX += fm.MeasureText(displayLabel, theme.FontSM) + 6
+	labelW := fm.MeasureText(ab.Label, theme.FontSM)
+	if labelW > labelMaxW {
+		labelW = labelMaxW
+	}
+	abX += labelW + 6
 
-	// Segments or fallback
+	// Segments（自动换行）or fallback（带宽度约束）
+	remainW := w - 19.0 - labelW - 6
+	if remainW < 40 {
+		remainW = 40
+	}
+
 	if len(ab.Segments) == 0 {
 		if ab.Fallback != "" {
-			ui.Label(screen, ab.Fallback, abX, y+1, 0, ui.LabelStyle{
+			ui.Label(screen, ab.Fallback, abX, y+1, remainW, ui.LabelStyle{
 				Font: theme.FontSM, Color: theme.TextMuted,
 			})
 		}
 		return
 	}
 
-	segX := abX
-	for _, seg := range ab.Segments {
-		var clr color.Color
-		switch seg.Kind {
-		case "text":
-			clr = theme.TextMuted
-		case "base", "total":
-			clr = theme.TextBody
-		case "scaled":
-			clr = seg.Color
-			if clr == nil {
-				clr = theme.TextBody
-			}
-		default:
-			continue
-		}
-		ui.Label(screen, seg.Text, segX, y+1, 0, ui.LabelStyle{
-			Font: theme.FontSM, Color: clr,
-		})
-		segX += fm.MeasureText(seg.Text, theme.FontSM)
-	}
+	segs := abilitySegsToTextSegs(ab.Segments)
+	ui.DrawSegmentsWrapped(screen, fm, segs, abX, y+1, remainW, theme.FontSM)
 }
 
 // drawStatIcon draws a stat icon at (x, y) with the given logical display size.

@@ -127,6 +127,8 @@ func (s *StageScene) handleInput() {
 	_, sy := g.ScrollDelta()
 	if sy != 0 && s.debugPanelOpen {
 		hud.DebugPanelScroll(sy)
+	} else if sy != 0 && s.imode == modeTowerSel {
+		hud.InfoPanelScroll(sy)
 	} else if sy != 0 && s.needsCamera() {
 		s.camY -= sy * 3
 		s.clampCamera()
@@ -485,6 +487,7 @@ func (s *StageScene) handleInput() {
 		if clicked != nil {
 			s.selectedTower = clicked
 			s.imode = modeTowerSel
+			hud.ResetInfoPanelScroll()
 			s.audioMgr.PlayAt(gameAudio.SFXUIOpen, gameAudio.VolUI)
 			s.tutorial.Trigger("tower_select")
 		} else if s.wardenPanelOpen {
