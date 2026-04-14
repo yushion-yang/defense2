@@ -4,7 +4,9 @@ package lint_test
 
 import (
 	"bufio"
+	"crypto/md5"
 	"encoding/json"
+	"fmt"
 	"os"
 	"path/filepath"
 	"regexp"
@@ -238,6 +240,96 @@ func TestMascotDialogsBilingual(t *testing.T) {
 	if missingKey > 0 {
 		t.Logf("%d mascot dialog lines are missing required locale keys.", missingKey)
 	}
+}
+
+// TestTranslationStaleness 检测中文原文是否被修改但英文翻译未同步更新。
+// 通过比较当前 zh 文本的 MD5 哈希与 translation-sync.json 中记录的哈希来判断。
+// 哈希不一致 → 中文改了但英文可能没跟着改 → fail。
+//
+// 修复方式：更新英文翻译后，运行 `make sync-translations` 重新生成哈希文件。
+func TestTranslationStaleness(t *testing.T) {
+	root := findProjectRoot(t)
+
+	// 加载 sync 文件
+	syncPath := filepath.Join(root, "config", "i18n", "translation-sync.json")
+	syncData, err := os.ReadFile(syncPath)
+	if err != nil {
+		t.Fatalf("read translation-sync.json: %v", err)
+	}
+	var syncMap map[string]string
+	if err := json.Unmarshal(syncData, &syncMap); err != nil {
+		t.Fatalf("parse translation-sync.json: %v", err)
+	}
+
+	stale := 0
+
+	// 1. 检查 i18n zh.json
+	zhPath := filepath.Join(root, "config", "i18n", "zh.json")
+	zhData, err := os.ReadFile(zhPath)
+	if err != nil {
+		t.Fatalf("read zh.json: %v", err)
+	}
+	var zhMap map[string]string
+	if err := json.Unmarshal(zhData, &zhMap); err != nil {
+		t.Fatalf("parse zh.json: %v", err)
+	}
+
+	for key, zhVal := range zhMap {
+		if strings.HasPrefix(key, "_") {
+			continue
+		}
+		currentHash := shortMD5(zhVal)
+		if savedHash, ok := syncMap[key]; ok {
+			if currentHash != savedHash {
+				t.Errorf("i18n key %q: zh text changed (hash %s→%s), en translation may be stale", key, savedHash, currentHash)
+				stale++
+			}
+		} else {
+			t.Errorf("i18n key %q: missing from translation-sync.json (new key? run make sync-translations)", key)
+			stale++
+		}
+	}
+
+	// 2. 检查 mascot dialogs
+	for _, file := range mascotDialogFiles {
+		path := filepath.Join(root, file)
+		data, err := os.ReadFile(path)
+		if err != nil {
+			continue
+		}
+		var dialogs []mascotDialog
+		if err := json.Unmarshal(data, &dialogs); err != nil {
+			continue
+		}
+		for _, d := range dialogs {
+			for i, line := range d.Lines {
+				zhText := line.Text["zh"]
+				syncKey := "mascot:" + d.ID + ":" + itoa(i)
+				currentHash := shortMD5(zhText)
+				if savedHash, ok := syncMap[syncKey]; ok {
+					if currentHash != savedHash {
+						t.Errorf("%s dialog %q line %d: zh text changed (hash %s→%s), en may be stale",
+							file, d.ID, i, savedHash, currentHash)
+						stale++
+					}
+				} else {
+					t.Errorf("%s dialog %q line %d: missing from translation-sync.json (new dialog? run make sync-translations)",
+						file, d.ID, i)
+					stale++
+				}
+			}
+		}
+	}
+
+	if stale > 0 {
+		t.Logf("%d translation(s) may be stale. Update en translations, then run: make sync-translations", stale)
+	}
+}
+
+// shortMD5 返回字符串的 8 字符 MD5 前缀（与生成脚本一致）。
+func shortMD5(s string) string {
+	h := md5.Sum([]byte(s))
+	return fmt.Sprintf("%x", h)[:8]
 }
 
 func itoa(n int) string {
