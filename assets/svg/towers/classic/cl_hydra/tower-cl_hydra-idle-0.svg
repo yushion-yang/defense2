@@ -1,0 +1,69 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128">
+  <defs>
+    <radialGradient id="hyd-core" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#d8b4fe"/>
+      <stop offset="60%" stop-color="#a855f7"/>
+      <stop offset="100%" stop-color="#6b21a8"/>
+    </radialGradient>
+    <linearGradient id="hyd-neck" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#7e22ce"/>
+      <stop offset="100%" stop-color="#581c87"/>
+    </linearGradient>
+    <linearGradient id="hyd-base" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#3b0764"/>
+      <stop offset="100%" stop-color="#1e1b4b"/>
+    </linearGradient>
+    <radialGradient id="hyd-glow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#a855f7" stop-opacity="0.5"/>
+      <stop offset="100%" stop-color="#a855f7" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="hyd-head" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#c084fc"/>
+      <stop offset="100%" stop-color="#7e22ce"/>
+    </radialGradient>
+  </defs>
+  <!-- Shadow -->
+  <ellipse cx="64" cy="112" rx="36" ry="8" fill="#000" opacity="0.3"/>
+  <!-- Hex base -->
+  <polygon points="64,78 94,93 94,107 64,114 34,107 34,93" fill="url(#hyd-base)" stroke="#7e22ce" stroke-width="1.5"/>
+  <!-- Crit aura sparkles ring -->
+  <circle cx="64" cy="100" r="26" fill="none" stroke="#a855f7" stroke-width="0.8" opacity="0.3" stroke-dasharray="2,4"/>
+  <!-- Circuit traces -->
+  <path d="M44,98 L54,94 M74,94 L84,98 M58,106 L70,106" stroke="#a855f7" stroke-width="0.8" fill="none" opacity="0.4"/>
+  <!-- Central body -->
+  <ellipse cx="64" cy="62" rx="16" ry="18" fill="#3b0764" stroke="#581c87" stroke-width="1.2"/>
+  <!-- Neck 1 (left, aiming upper-left) -->
+  <path d="M54,52 Q40,38 34,28" stroke="url(#hyd-neck)" stroke-width="5" fill="none" stroke-linecap="round"/>
+  <!-- Head 1 -->
+  <circle cx="32" cy="26" r="8" fill="url(#hyd-head)" stroke="#a855f7" stroke-width="1"/>
+  <circle cx="30" cy="24" r="2" fill="#d8b4fe" opacity="0.8"/>
+  <!-- Barrel 1 -->
+  <rect x="26" y="16" width="4" height="10" rx="1.5" fill="#581c87" stroke="#7e22ce" stroke-width="0.6"/>
+  <!-- Neck 2 (center, aiming up) -->
+  <path d="M64,48 Q64,34 64,22" stroke="url(#hyd-neck)" stroke-width="5" fill="none" stroke-linecap="round"/>
+  <!-- Head 2 -->
+  <circle cx="64" cy="18" r="8" fill="url(#hyd-head)" stroke="#a855f7" stroke-width="1"/>
+  <circle cx="62" cy="16" r="2" fill="#d8b4fe" opacity="0.8"/>
+  <!-- Barrel 2 -->
+  <rect x="62" y="4" width="4" height="10" rx="1.5" fill="#581c87" stroke="#7e22ce" stroke-width="0.6"/>
+  <!-- Neck 3 (right, aiming upper-right) -->
+  <path d="M74,52 Q88,38 94,28" stroke="url(#hyd-neck)" stroke-width="5" fill="none" stroke-linecap="round"/>
+  <!-- Head 3 -->
+  <circle cx="96" cy="26" r="8" fill="url(#hyd-head)" stroke="#a855f7" stroke-width="1"/>
+  <circle cx="98" cy="24" r="2" fill="#d8b4fe" opacity="0.8"/>
+  <!-- Barrel 3 -->
+  <rect x="98" y="16" width="4" height="10" rx="1.5" fill="#581c87" stroke="#7e22ce" stroke-width="0.6"/>
+  <!-- Crit aura sparkles -->
+  <circle cx="44" cy="44" r="1.5" fill="#d8b4fe" opacity="0.6"/>
+  <circle cx="84" cy="44" r="1.5" fill="#d8b4fe" opacity="0.6"/>
+  <circle cx="50" cy="20" r="1.2" fill="#e9d5ff" opacity="0.5"/>
+  <circle cx="78" cy="20" r="1.2" fill="#e9d5ff" opacity="0.5"/>
+  <circle cx="64" cy="36" r="1" fill="#d8b4fe" opacity="0.4"/>
+  <!-- Energy core -->
+  <circle cx="64" cy="74" r="8" fill="url(#hyd-core)"/>
+  <circle cx="64" cy="74" r="12" fill="url(#hyd-glow)"/>
+  <!-- LED dots -->
+  <circle cx="52" cy="68" r="2" fill="#a855f7" opacity="0.8"/>
+  <circle cx="76" cy="68" r="2" fill="#a855f7" opacity="0.8"/>
+  <circle cx="64" cy="82" r="1.5" fill="#d8b4fe" opacity="0.7"/>
+</svg>

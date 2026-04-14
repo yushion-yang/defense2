@@ -1,0 +1,52 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128">
+  <defs>
+    <radialGradient id="sen-core" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#93c5fd"/>
+      <stop offset="60%" stop-color="#3b82f6"/>
+      <stop offset="100%" stop-color="#1e40af"/>
+    </radialGradient>
+    <linearGradient id="sen-barrel" x1="0" y1="1" x2="0" y2="0">
+      <stop offset="0%" stop-color="#475569"/>
+      <stop offset="50%" stop-color="#94a3b8"/>
+      <stop offset="100%" stop-color="#64748b"/>
+    </linearGradient>
+    <linearGradient id="sen-base" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#334155"/>
+      <stop offset="100%" stop-color="#1e293b"/>
+    </linearGradient>
+    <radialGradient id="sen-glow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#3b82f6" stop-opacity="0.6"/>
+      <stop offset="100%" stop-color="#3b82f6" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <!-- Shadow -->
+  <ellipse cx="64" cy="112" rx="36" ry="8" fill="#000" opacity="0.3"/>
+  <!-- Hex base -->
+  <polygon points="64,78 94,93 94,107 64,114 34,107 34,93" fill="url(#sen-base)" stroke="#475569" stroke-width="1.5"/>
+  <!-- Circuit traces -->
+  <path d="M44,98 L54,98 L54,104 M74,98 L84,98 L84,104 M64,88 L64,94" stroke="#3b82f6" stroke-width="0.8" fill="none" opacity="0.5"/>
+  <!-- Turret body -->
+  <rect x="48" y="60" width="32" height="30" rx="4" fill="#334155" stroke="#475569" stroke-width="1"/>
+  <!-- Cannon barrel -->
+  <rect x="58" y="18" width="12" height="46" rx="2" fill="url(#sen-barrel)" stroke="#64748b" stroke-width="1"/>
+  <!-- Barrel tip -->
+  <rect x="56" y="14" width="16" height="8" rx="2" fill="#475569" stroke="#64748b" stroke-width="1"/>
+  <!-- Crosshair reticle -->
+  <circle cx="64" cy="12" r="8" fill="none" stroke="#3b82f6" stroke-width="1" opacity="0.7"/>
+  <line x1="64" y1="4" x2="64" y2="8" stroke="#3b82f6" stroke-width="1" opacity="0.7"/>
+  <line x1="64" y1="16" x2="64" y2="20" stroke="#3b82f6" stroke-width="1" opacity="0.7"/>
+  <line x1="56" y1="12" x2="60" y2="12" stroke="#3b82f6" stroke-width="1" opacity="0.7"/>
+  <line x1="68" y1="12" x2="72" y2="12" stroke="#3b82f6" stroke-width="1" opacity="0.7"/>
+  <!-- Energy core -->
+  <circle cx="64" cy="75" r="10" fill="url(#sen-core)"/>
+  <circle cx="64" cy="75" r="14" fill="url(#sen-glow)"/>
+  <!-- Crit sparks -->
+  <line x1="52" y1="68" x2="48" y2="64" stroke="#93c5fd" stroke-width="1.2" opacity="0.8"/>
+  <line x1="76" y1="68" x2="80" y2="64" stroke="#93c5fd" stroke-width="1.2" opacity="0.8"/>
+  <line x1="58" y1="82" x2="54" y2="86" stroke="#93c5fd" stroke-width="1" opacity="0.6"/>
+  <line x1="70" y1="82" x2="74" y2="86" stroke="#93c5fd" stroke-width="1" opacity="0.6"/>
+  <!-- LED dots -->
+  <circle cx="52" cy="65" r="2" fill="#3b82f6" opacity="0.9"/>
+  <circle cx="76" cy="65" r="2" fill="#3b82f6" opacity="0.9"/>
+  <circle cx="64" cy="58" r="1.5" fill="#93c5fd" opacity="0.8"/>
+</svg>

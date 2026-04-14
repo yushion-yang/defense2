@@ -1,0 +1,61 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128">
+  <defs>
+    <radialGradient id="ric-core" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#fde68a"/>
+      <stop offset="60%" stop-color="#f59e0b"/>
+      <stop offset="100%" stop-color="#b45309"/>
+    </radialGradient>
+    <linearGradient id="ric-barrel" x1="0" y1="1" x2="0" y2="0">
+      <stop offset="0%" stop-color="#57534e"/>
+      <stop offset="50%" stop-color="#a8a29e"/>
+      <stop offset="100%" stop-color="#78716c"/>
+    </linearGradient>
+    <linearGradient id="ric-base" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#451a03"/>
+      <stop offset="100%" stop-color="#292524"/>
+    </linearGradient>
+    <radialGradient id="ric-glow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#f59e0b" stop-opacity="0.5"/>
+      <stop offset="100%" stop-color="#f59e0b" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="ric-plate" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#a8a29e"/>
+      <stop offset="100%" stop-color="#78716c"/>
+    </linearGradient>
+  </defs>
+  <!-- Shadow -->
+  <ellipse cx="64" cy="112" rx="36" ry="8" fill="#000" opacity="0.3"/>
+  <!-- Hex base -->
+  <polygon points="64,78 94,93 94,107 64,114 34,107 34,93" fill="url(#ric-base)" stroke="#78716c" stroke-width="1.5"/>
+  <!-- Speed boost ring -->
+  <ellipse cx="64" cy="100" rx="28" ry="7" fill="none" stroke="#f59e0b" stroke-width="1.2" opacity="0.4"/>
+  <!-- Circuit traces -->
+  <path d="M44,96 L54,92 M74,92 L84,96 M56,106 L72,106" stroke="#f59e0b" stroke-width="0.8" fill="none" opacity="0.4"/>
+  <!-- Turret body -->
+  <rect x="48" y="48" width="32" height="34" rx="4" fill="#292524" stroke="#57534e" stroke-width="1"/>
+  <!-- Central barrel -->
+  <rect x="59" y="16" width="10" height="36" rx="2" fill="url(#ric-barrel)" stroke="#78716c" stroke-width="0.8"/>
+  <!-- Barrel tip -->
+  <rect x="57" y="12" width="14" height="8" rx="2" fill="#57534e" stroke="#78716c" stroke-width="0.8"/>
+  <!-- Angled deflector plate left -->
+  <polygon points="38,34 46,28 48,38 42,42" fill="url(#ric-plate)" stroke="#a8a29e" stroke-width="0.8"/>
+  <!-- Angled deflector plate right -->
+  <polygon points="90,34 82,28 80,38 86,42" fill="url(#ric-plate)" stroke="#a8a29e" stroke-width="0.8"/>
+  <!-- Top deflector -->
+  <polygon points="56,24 64,18 72,24 68,26 60,26" fill="url(#ric-plate)" stroke="#a8a29e" stroke-width="0.6" opacity="0.7"/>
+  <!-- Bounce trajectory lines (dotted) -->
+  <path d="M64,12 L42,6 L28,20" stroke="#f59e0b" stroke-width="1" fill="none" opacity="0.4" stroke-dasharray="3,3"/>
+  <path d="M64,12 L86,6 L100,20" stroke="#f59e0b" stroke-width="1" fill="none" opacity="0.4" stroke-dasharray="3,3"/>
+  <!-- Ricochet trail markers -->
+  <circle cx="42" cy="6" r="2.5" fill="#f59e0b" opacity="0.5"/>
+  <circle cx="86" cy="6" r="2.5" fill="#f59e0b" opacity="0.5"/>
+  <circle cx="28" cy="20" r="2" fill="#f59e0b" opacity="0.3"/>
+  <circle cx="100" cy="20" r="2" fill="#f59e0b" opacity="0.3"/>
+  <!-- Energy core -->
+  <circle cx="64" cy="72" r="8" fill="url(#ric-core)"/>
+  <circle cx="64" cy="72" r="12" fill="url(#ric-glow)"/>
+  <!-- LED dots -->
+  <circle cx="52" cy="52" r="2" fill="#f59e0b" opacity="0.9"/>
+  <circle cx="76" cy="52" r="2" fill="#f59e0b" opacity="0.9"/>
+  <circle cx="64" cy="44" r="1.5" fill="#fde68a" opacity="0.7"/>
+</svg>

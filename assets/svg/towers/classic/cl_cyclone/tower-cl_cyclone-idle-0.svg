@@ -1,0 +1,60 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128">
+  <defs>
+    <radialGradient id="cyc-core" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#5eead4"/>
+      <stop offset="60%" stop-color="#14b8a6"/>
+      <stop offset="100%" stop-color="#0f766e"/>
+    </radialGradient>
+    <linearGradient id="cyc-blade" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#5eead4"/>
+      <stop offset="100%" stop-color="#0f766e"/>
+    </linearGradient>
+    <linearGradient id="cyc-base" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#134e4a"/>
+      <stop offset="100%" stop-color="#1e293b"/>
+    </linearGradient>
+    <radialGradient id="cyc-glow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#14b8a6" stop-opacity="0.5"/>
+      <stop offset="100%" stop-color="#14b8a6" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="cyc-flame" cx="50%" cy="0%" r="80%">
+      <stop offset="0%" stop-color="#fb923c" stop-opacity="0.8"/>
+      <stop offset="100%" stop-color="#f97316" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <!-- Shadow -->
+  <ellipse cx="64" cy="112" rx="36" ry="8" fill="#000" opacity="0.3"/>
+  <!-- Hex base -->
+  <polygon points="64,78 94,93 94,107 64,114 34,107 34,93" fill="url(#cyc-base)" stroke="#0f766e" stroke-width="1.5"/>
+  <!-- Circuit traces -->
+  <path d="M44,96 Q54,90 64,96 Q74,90 84,96" stroke="#14b8a6" stroke-width="0.8" fill="none" opacity="0.4"/>
+  <path d="M54,104 L64,100 L74,104" stroke="#14b8a6" stroke-width="0.6" fill="none" opacity="0.3"/>
+  <!-- Central hub -->
+  <circle cx="64" cy="52" r="14" fill="#134e4a" stroke="#0f766e" stroke-width="1.5"/>
+  <!-- Blade 1 (top-right) -->
+  <path d="M72,44 Q92,30 86,18 Q80,22 72,44" fill="url(#cyc-blade)" opacity="0.85"/>
+  <!-- Flame wisp on blade 1 -->
+  <circle cx="86" cy="20" r="5" fill="url(#cyc-flame)"/>
+  <!-- Blade 2 (bottom-left) -->
+  <path d="M56,60 Q36,74 42,86 Q48,82 56,60" fill="url(#cyc-blade)" opacity="0.85"/>
+  <!-- Flame wisp on blade 2 -->
+  <circle cx="42" cy="84" r="5" fill="url(#cyc-flame)"/>
+  <!-- Blade 3 (left-top) -->
+  <path d="M56,44 Q40,28 32,36 Q38,42 56,44" fill="url(#cyc-blade)" opacity="0.85"/>
+  <!-- Flame wisp on blade 3 -->
+  <circle cx="34" cy="36" r="5" fill="url(#cyc-flame)"/>
+  <!-- Heat shimmer rings -->
+  <circle cx="64" cy="52" r="24" fill="none" stroke="#f97316" stroke-width="0.6" opacity="0.3" stroke-dasharray="4,3"/>
+  <circle cx="64" cy="52" r="30" fill="none" stroke="#f97316" stroke-width="0.4" opacity="0.2" stroke-dasharray="3,4"/>
+  <!-- Central hub inner ring -->
+  <circle cx="64" cy="52" r="8" fill="#0f766e" stroke="#5eead4" stroke-width="1"/>
+  <!-- Energy core -->
+  <circle cx="64" cy="75" r="8" fill="url(#cyc-core)"/>
+  <circle cx="64" cy="75" r="12" fill="url(#cyc-glow)"/>
+  <!-- Core dot -->
+  <circle cx="64" cy="52" r="3" fill="#5eead4" opacity="0.9"/>
+  <!-- LED dots -->
+  <circle cx="48" cy="90" r="2" fill="#14b8a6" opacity="0.8"/>
+  <circle cx="80" cy="90" r="2" fill="#14b8a6" opacity="0.8"/>
+  <circle cx="64" cy="84" r="1.5" fill="#5eead4" opacity="0.7"/>
+</svg>

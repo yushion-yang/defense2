@@ -1,0 +1,58 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128">
+  <defs>
+    <radialGradient id="gat-core" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#fdba74"/>
+      <stop offset="60%" stop-color="#f97316"/>
+      <stop offset="100%" stop-color="#c2410c"/>
+    </radialGradient>
+    <linearGradient id="gat-barrel" x1="0" y1="1" x2="0" y2="0">
+      <stop offset="0%" stop-color="#57534e"/>
+      <stop offset="50%" stop-color="#78716c"/>
+      <stop offset="100%" stop-color="#57534e"/>
+    </linearGradient>
+    <linearGradient id="gat-base" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#431407"/>
+      <stop offset="100%" stop-color="#292524"/>
+    </linearGradient>
+    <radialGradient id="gat-glow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#f97316" stop-opacity="0.5"/>
+      <stop offset="100%" stop-color="#f97316" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <!-- Shadow -->
+  <ellipse cx="64" cy="112" rx="36" ry="8" fill="#000" opacity="0.3"/>
+  <!-- Hex base -->
+  <polygon points="64,78 94,93 94,107 64,114 34,107 34,93" fill="url(#gat-base)" stroke="#78716c" stroke-width="1.5"/>
+  <!-- Circuit traces -->
+  <path d="M42,98 L52,95 M76,95 L86,98 M56,106 L72,106" stroke="#f97316" stroke-width="0.8" fill="none" opacity="0.4"/>
+  <!-- Turret body -->
+  <rect x="46" y="52" width="36" height="32" rx="5" fill="#292524" stroke="#57534e" stroke-width="1"/>
+  <!-- Barrel housing ring -->
+  <circle cx="64" cy="36" r="14" fill="#44403c" stroke="#57534e" stroke-width="1"/>
+  <!-- 6 barrels arranged in circle -->
+  <rect x="62" y="10" width="4" height="28" rx="1.5" fill="url(#gat-barrel)"/>
+  <rect x="52" y="16" width="4" height="22" rx="1.5" fill="url(#gat-barrel)" transform="rotate(-30 54 36)"/>
+  <rect x="72" y="16" width="4" height="22" rx="1.5" fill="url(#gat-barrel)" transform="rotate(30 74 36)"/>
+  <rect x="52" y="16" width="4" height="22" rx="1.5" fill="url(#gat-barrel)" transform="rotate(-60 54 36)"/>
+  <rect x="72" y="16" width="4" height="22" rx="1.5" fill="url(#gat-barrel)" transform="rotate(60 74 36)"/>
+  <rect x="62" y="28" width="4" height="22" rx="1.5" fill="url(#gat-barrel)" transform="rotate(180 64 36)"/>
+  <!-- Barrel center hub -->
+  <circle cx="64" cy="36" r="5" fill="#57534e" stroke="#78716c" stroke-width="1"/>
+  <!-- Ammo belt / magazine on right -->
+  <rect x="82" y="54" width="10" height="20" rx="2" fill="#44403c" stroke="#57534e" stroke-width="0.8"/>
+  <line x1="83" y1="58" x2="91" y2="58" stroke="#f97316" stroke-width="0.6" opacity="0.6"/>
+  <line x1="83" y1="62" x2="91" y2="62" stroke="#f97316" stroke-width="0.6" opacity="0.6"/>
+  <line x1="83" y1="66" x2="91" y2="66" stroke="#f97316" stroke-width="0.6" opacity="0.6"/>
+  <line x1="83" y1="70" x2="91" y2="70" stroke="#f97316" stroke-width="0.6" opacity="0.6"/>
+  <!-- Heat vents -->
+  <rect x="36" y="56" width="8" height="3" rx="1" fill="#292524" stroke="#78716c" stroke-width="0.5"/>
+  <rect x="36" y="62" width="8" height="3" rx="1" fill="#292524" stroke="#78716c" stroke-width="0.5"/>
+  <rect x="36" y="68" width="8" height="3" rx="1" fill="#292524" stroke="#78716c" stroke-width="0.5"/>
+  <!-- Energy core -->
+  <circle cx="64" cy="72" r="8" fill="url(#gat-core)"/>
+  <circle cx="64" cy="72" r="12" fill="url(#gat-glow)"/>
+  <!-- LED dots -->
+  <circle cx="50" cy="56" r="2" fill="#f97316" opacity="0.9"/>
+  <circle cx="78" cy="56" r="2" fill="#f97316" opacity="0.9"/>
+  <circle cx="64" cy="48" r="1.5" fill="#fdba74" opacity="0.7"/>
+</svg>

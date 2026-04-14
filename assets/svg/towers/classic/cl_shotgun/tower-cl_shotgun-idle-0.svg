@@ -1,0 +1,55 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128">
+  <defs>
+    <radialGradient id="sg-core" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#fca5a5"/>
+      <stop offset="60%" stop-color="#ef4444"/>
+      <stop offset="100%" stop-color="#991b1b"/>
+    </radialGradient>
+    <linearGradient id="sg-barrel" x1="0" y1="1" x2="0" y2="0">
+      <stop offset="0%" stop-color="#44403c"/>
+      <stop offset="50%" stop-color="#78716c"/>
+      <stop offset="100%" stop-color="#57534e"/>
+    </linearGradient>
+    <linearGradient id="sg-base" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#450a0a"/>
+      <stop offset="100%" stop-color="#292524"/>
+    </linearGradient>
+    <radialGradient id="sg-glow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#ef4444" stop-opacity="0.5"/>
+      <stop offset="100%" stop-color="#ef4444" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <!-- Shadow -->
+  <ellipse cx="64" cy="112" rx="36" ry="8" fill="#000" opacity="0.3"/>
+  <!-- Hex base -->
+  <polygon points="64,78 94,93 94,107 64,114 34,107 34,93" fill="url(#sg-base)" stroke="#78716c" stroke-width="1.5"/>
+  <!-- Circuit traces -->
+  <path d="M44,100 L54,96 L64,100 L74,96 L84,100" stroke="#ef4444" stroke-width="0.8" fill="none" opacity="0.4"/>
+  <!-- Turret body -->
+  <rect x="46" y="50" width="36" height="34" rx="4" fill="#292524" stroke="#57534e" stroke-width="1"/>
+  <!-- Double barrel left -->
+  <rect x="53" y="18" width="8" height="36" rx="3" fill="url(#sg-barrel)" stroke="#78716c" stroke-width="0.8"/>
+  <!-- Double barrel right -->
+  <rect x="67" y="18" width="8" height="36" rx="3" fill="url(#sg-barrel)" stroke="#78716c" stroke-width="0.8"/>
+  <!-- Barrel muzzle caps -->
+  <ellipse cx="57" cy="18" rx="4" ry="2" fill="#57534e" stroke="#78716c" stroke-width="0.6"/>
+  <ellipse cx="71" cy="18" rx="4" ry="2" fill="#57534e" stroke="#78716c" stroke-width="0.6"/>
+  <!-- Shell ejection port -->
+  <rect x="78" y="42" width="8" height="6" rx="1" fill="#44403c" stroke="#78716c" stroke-width="0.6"/>
+  <rect x="79" y="43" width="3" height="4" rx="0.5" fill="#f97316" opacity="0.5"/>
+  <!-- Spread indicator lines -->
+  <line x1="50" y1="20" x2="42" y2="8" stroke="#ef4444" stroke-width="0.8" opacity="0.4" stroke-dasharray="2,2"/>
+  <line x1="57" y1="18" x2="54" y2="6" stroke="#ef4444" stroke-width="0.8" opacity="0.5" stroke-dasharray="2,2"/>
+  <line x1="71" y1="18" x2="74" y2="6" stroke="#ef4444" stroke-width="0.8" opacity="0.5" stroke-dasharray="2,2"/>
+  <line x1="78" y1="20" x2="86" y2="8" stroke="#ef4444" stroke-width="0.8" opacity="0.4" stroke-dasharray="2,2"/>
+  <!-- Blood-red energy core -->
+  <circle cx="64" cy="72" r="9" fill="url(#sg-core)"/>
+  <circle cx="64" cy="72" r="13" fill="url(#sg-glow)"/>
+  <!-- Bleed drip accents -->
+  <path d="M60,80 Q59,84 60,86" stroke="#ef4444" stroke-width="1.2" fill="none" opacity="0.6"/>
+  <path d="M68,80 Q69,85 68,88" stroke="#ef4444" stroke-width="1" fill="none" opacity="0.5"/>
+  <!-- LED dots -->
+  <circle cx="50" cy="56" r="2" fill="#ef4444" opacity="0.9"/>
+  <circle cx="78" cy="56" r="2" fill="#ef4444" opacity="0.9"/>
+  <circle cx="64" cy="46" r="1.5" fill="#fca5a5" opacity="0.8"/>
+</svg>
