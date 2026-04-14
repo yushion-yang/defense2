@@ -27,18 +27,22 @@ func TestProgressManagerRecordWin(t *testing.T) {
 	s := newMemStorage()
 	pm := persistence.NewProgressManager(s)
 
-	pm.RecordGameResult("campaign", "map_01", 50, true)
+	pm.RecordGameResult("casual", "map_01", 50, true)
 	p := pm.Progress()
 
 	if p.TotalWins != 1 {
 		t.Fatalf("预期 1 胜，实际 %d", p.TotalWins)
 	}
-	if p.HighScores["campaign_map_01"] != 50 {
-		t.Fatalf("预期最高分 50，实际 %d", p.HighScores["campaign_map_01"])
+	if p.ModeScores["casual_map_01"] != 50 {
+		t.Fatalf("预期最高分 50，实际 %d", p.ModeScores["casual_map_01"])
 	}
-	// 通关 map_01 应解锁 map_02
-	if !pm.IsMapUnlocked("map_02") {
-		t.Fatal("通关 map_01 应解锁 map_02")
+	// 通关 map_01 应解锁 casual 的 map_02
+	if !pm.IsMapUnlocked("casual", "map_02") {
+		t.Fatal("通关 map_01 应解锁 casual 的 map_02")
+	}
+	// classic 模式不应受影响
+	if pm.IsMapUnlocked("classic", "map_02") {
+		t.Fatal("casual 通关不应解锁 classic 的 map_02")
 	}
 }
 
@@ -46,7 +50,7 @@ func TestProgressManagerRecordLoss(t *testing.T) {
 	s := newMemStorage()
 	pm := persistence.NewProgressManager(s)
 
-	pm.RecordGameResult("campaign", "map_01", 30, false)
+	pm.RecordGameResult("casual", "map_01", 30, false)
 	p := pm.Progress()
 
 	if p.TotalGames != 1 {
@@ -56,7 +60,7 @@ func TestProgressManagerRecordLoss(t *testing.T) {
 		t.Fatalf("失败不应计入胜场，实际 %d", p.TotalWins)
 	}
 	// 失败不解锁下一关
-	if pm.IsMapUnlocked("map_02") {
+	if pm.IsMapUnlocked("casual", "map_02") {
 		t.Fatal("失败不应解锁 map_02")
 	}
 }

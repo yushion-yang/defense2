@@ -106,7 +106,7 @@ type GameStats struct {
 type StageOptions struct {
 	MapID        string // 地图 ID（如 "map_01"），必填
 	WardenType   string // 战灵类型（如 "guardian"），空串=不使用战灵
-	ModeID       string // 游戏模式 ID（默认 "campaign"；可选 "endless"/"timed"/...）
+	ModeID       string // 游戏模式 ID（默认 "casual"；可选 "endless"/"timed"/...）
 	DifficultyID string // 难度 ID（默认 "normal"；可选 "easy"/"hard"/"extreme"）
 	Gold         int    // 初始金币，0 = 由难度配置决定
 	Lives        int    // 初始生命，0 = 由难度配置决定（easy=25/normal=20/hard=15/extreme=10）

@@ -8,7 +8,7 @@
   },
 
   "modes": {
-    "campaign": {
+    "casual": {
       "waveBonus": {"base": 12, "perWave": 4},
       "perfectBonus": {"base": 2, "perWave": 2},
       "score": {"formula": "wavesCleared*100 + kills*10 - leaked*50", "description": "战役评分：波次×100 + 击杀×10 - 泄漏×50"},

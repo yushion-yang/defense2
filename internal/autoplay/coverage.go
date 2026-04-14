@@ -33,7 +33,7 @@ var (
 	TowerKeys    = []string{"basic"} // 单塔系统：所有差异化来自能力选择
 
 	// GameModes 需要测试的游戏模式。
-	GameModes = []string{"campaign", "endless", "timed", "bossRush", "challenge", "test", "autoplay", "simulation"}
+	GameModes = []string{"casual", "endless", "timed", "bossRush", "challenge", "test", "autoplay", "simulation"}
 
 	// EnemyArchetypes 所有敌人原型（18 个）。
 	EnemyArchetypes = []string{

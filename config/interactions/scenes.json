@@ -33,9 +33,9 @@
           "area": "modeCards",
           "description": "点击游戏模式卡片",
           "action": "selectMode",
-          "actionDetail": "选中对应模式（campaign/endless/timed/bossRush/challenge/test），卡片高亮",
+          "actionDetail": "选中对应模式（casual/endless/timed/bossRush/challenge/test），卡片高亮",
           "targets": [
-            { "index": 0, "mode": "campaign", "label": "战役模式" },
+            { "index": 0, "mode": "casual", "label": "娱乐模式" },
             { "index": 1, "mode": "endless", "label": "无尽模式" },
             { "index": 2, "mode": "timedDefense", "label": "限时模式" },
             { "index": 3, "mode": "bossRush", "label": "Boss 突袭" },

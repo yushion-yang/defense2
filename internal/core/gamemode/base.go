@@ -67,7 +67,7 @@ func modeEcon(modeID string) config.ModeEconomy {
 	if m, ok := spec.Modes[modeID]; ok {
 		return m
 	}
-	if m, ok := spec.Modes["campaign"]; ok {
+	if m, ok := spec.Modes["casual"]; ok {
 		return m
 	}
 	return config.ModeEconomy{}

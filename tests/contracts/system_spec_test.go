@@ -18,7 +18,7 @@ func TestEconomySpec_ModesExist(t *testing.T) {
 	if spec == nil || spec.Modes == nil {
 		t.Fatal("经济规格加载失败")
 	}
-	required := []string{"campaign", "endless", "timed", "bossRush"}
+	required := []string{"casual", "endless", "timed", "bossRush"}
 	for _, m := range required {
 		if _, ok := spec.Modes[m]; !ok {
 			t.Errorf("缺少模式 %q 的经济配置", m)
@@ -28,25 +28,25 @@ func TestEconomySpec_ModesExist(t *testing.T) {
 
 func TestEconomySpec_CampaignBonus(t *testing.T) {
 	spec := config.GlobalEconomySpec()
-	c := spec.Modes["campaign"]
+	c := spec.Modes["casual"]
 	// 自洽验证：Calc(wave) == Base + PerWave * wave
 	expectedWave := c.WaveBonus.Base + c.WaveBonus.PerWave*5
 	if got := c.WaveBonus.Calc(5); got != expectedWave {
-		t.Errorf("campaign wave 5 bonus = %d, want %d (base=%d + perWave=%d * 5)", got, expectedWave, c.WaveBonus.Base, c.WaveBonus.PerWave)
+		t.Errorf("casual wave 5 bonus = %d, want %d (base=%d + perWave=%d * 5)", got, expectedWave, c.WaveBonus.Base, c.WaveBonus.PerWave)
 	}
 	expectedPerfect := c.PerfectBonus.Base + c.PerfectBonus.PerWave*5
 	if got := c.PerfectBonus.Calc(5); got != expectedPerfect {
-		t.Errorf("campaign wave 5 perfect = %d, want %d", got, expectedPerfect)
+		t.Errorf("casual wave 5 perfect = %d, want %d", got, expectedPerfect)
 	}
 }
 
-func TestEconomySpec_EndlessHigherThanCampaign(t *testing.T) {
+func TestEconomySpec_EndlessHigherThanCasual(t *testing.T) {
 	spec := config.GlobalEconomySpec()
-	c := spec.Modes["campaign"]
+	c := spec.Modes["casual"]
 	e := spec.Modes["endless"]
 	for _, wave := range []int{5, 10, 15, 20} {
 		if e.WaveBonus.Calc(wave) <= c.WaveBonus.Calc(wave) {
-			t.Errorf("wave %d: endless bonus (%d) should > campaign (%d)",
+			t.Errorf("wave %d: endless bonus (%d) should > casual (%d)",
 				wave, e.WaveBonus.Calc(wave), c.WaveBonus.Calc(wave))
 		}
 	}

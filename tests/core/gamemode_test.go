@@ -357,11 +357,12 @@ func TestLoadDifficultyFallback(t *testing.T) {
 func TestModeRegistry(t *testing.T) {
 	modes := gamemode.List()
 	expected := map[string]bool{
-		"campaign":  true,
-		"endless":   true,
-		"timed":     true,
-		"bossRush":  true,
-		"challenge": true,
+		"casual":     true,
+		"classic":    true,
+		"endless":    true,
+		"timed":      true,
+		"bossRush":   true,
+		"challenge":  true,
 		"test":       true,
 		"autoplay":   true,
 		"simulation": true,
@@ -379,8 +380,8 @@ func TestModeRegistry(t *testing.T) {
 
 func TestGetOrDefault(t *testing.T) {
 	m := gamemode.GetOrDefault("nonexistent")
-	if m.ID() != "campaign" {
-		t.Errorf("fallback ID = %s, want campaign", m.ID())
+	if m.ID() != "casual" {
+		t.Errorf("fallback ID = %s, want casual", m.ID())
 	}
 }
 

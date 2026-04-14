@@ -15,7 +15,7 @@ type CampaignMode struct {
 
 // NewCampaignMode 创建战役模式。
 func NewCampaignMode() *CampaignMode {
-	return &CampaignMode{baseMode: baseMode{id: "campaign"}}
+	return &CampaignMode{baseMode: baseMode{id: "casual"}}
 }
 
 // ShouldAutoStart 战役模式自动开始下一波，玩家无需手动触发。
@@ -39,7 +39,7 @@ func (m *CampaignMode) CheckDefeat(ctx *Context) bool {
 // 战役模式同时发放完美波次奖励（PerfectBonus），这是与 baseMode 的关键差异。
 // 实际是否发放完美奖励由 Stage 层判断（本波是否有泄漏），此处只提供金额。
 func (m *CampaignMode) OnWaveCleared(wave int, _ *Context) WaveClearResult {
-	econ := modeEcon("campaign")
+	econ := modeEcon("casual")
 	bonus := econ.WaveBonus.Calc(wave)
 	perfect := econ.PerfectBonus.Calc(wave)
 	return WaveClearResult{
@@ -63,7 +63,7 @@ func (m *CampaignMode) GetScore(ctx *Context) int {
 // GetEndData 返回结算屏幕所需的完整数据（用于 Result 场景渲染）。
 func (m *CampaignMode) GetEndData(ctx *Context) EndData {
 	return EndData{
-		ModeName: i18n.T("mode.campaign.name"),
+		ModeName: i18n.T("mode.casual.name"),
 		Score:    m.GetScore(ctx),
 		Extra: map[string]any{
 			"waves":      ctx.Wave,

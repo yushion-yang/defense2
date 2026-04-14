@@ -8,13 +8,13 @@
 //   - Context 注入：回调时传入快照+修改器，避免模式直接依赖 Stage
 //   - 全局注册表：init() 自动注册，Get(id) 获取，支持运行时扩展
 //
-// 当前状态：仅战役模式(campaign)可正常游玩，其他模式显示"敬请期待"。
+// 当前状态：仅娱乐模式(casual)可正常游玩，其他模式显示"敬请期待"。
 package gamemode
 
 // Mode 游戏模式接口。
 // 每种模式实现自己的胜负判定、经济规则、HUD 提示和分数计算。
 type Mode interface {
-	// ID 返回模式标识（"campaign", "endless", "timed", "bossRush", "challenge", "test"）。
+	// ID 返回模式标识（"casual", "endless", "timed", "bossRush", "challenge", "test"）。
 	ID() string
 
 	// OnInit 模式初始化（Session 创建后调用，可通过 ctx 修改初始状态）。
@@ -133,16 +133,16 @@ func Get(id string) Mode {
 }
 
 // GetOrDefault 获取指定 ID 的模式，未找到返回 campaign。
-// 三级回退保证始终返回有效模式：指定ID → campaign 实例 → 临时 baseMode。
-// 最后一级是防御性代码——正常情况下 init() 已注册 campaign。
+// 三级回退保证始终返回有效模式：指定ID → casual 实例 → 临时 baseMode。
+// 最后一级是防御性代码——正常情况下 init() 已注册 casual。
 func GetOrDefault(id string) Mode {
 	if m := registry[id]; m != nil {
 		return m
 	}
-	if m := registry["campaign"]; m != nil {
+	if m := registry["casual"]; m != nil {
 		return m
 	}
-	return &baseMode{id: "campaign"}
+	return &baseMode{id: "casual"}
 }
 
 // List 返回所有已注册模式的 ID。

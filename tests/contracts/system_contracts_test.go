@@ -152,7 +152,7 @@ func TestSellRefundPositive(t *testing.T) {
 
 // TestGameModeRegistered 验证所有预期模式已注册。
 func TestGameModeRegistered(t *testing.T) {
-	modes := []string{"campaign", "endless", "timed", "bossRush", "challenge", "test", "autoplay"}
+	modes := []string{"casual", "endless", "timed", "bossRush", "challenge", "test", "autoplay"}
 	for _, id := range modes {
 		if m := gamemode.Get(id); m == nil {
 			t.Errorf("游戏模式 %q 未注册", id)
@@ -160,27 +160,27 @@ func TestGameModeRegistered(t *testing.T) {
 	}
 }
 
-// TestCampaignDefeatOnZeroLives 验证 campaign 模式下 lives=0 判败。
+// TestCampaignDefeatOnZeroLives 验证 casual 模式下 lives=0 判败。
 func TestCampaignDefeatOnZeroLives(t *testing.T) {
-	m := gamemode.Get("campaign")
+	m := gamemode.Get("casual")
 	if m == nil {
-		t.Fatal("campaign 模式未注册")
+		t.Fatal("casual 模式未注册")
 	}
 	ctx := &gamemode.Context{Lives: 0}
 	if !m.CheckDefeat(ctx) {
-		t.Error("campaign: lives=0 应判败")
+		t.Error("casual: lives=0 应判败")
 	}
 }
 
-// TestCampaignVictoryOnAllWaves 验证 campaign 模式下全波清完判胜。
+// TestCampaignVictoryOnAllWaves 验证 casual 模式下全波清完判胜。
 func TestCampaignVictoryOnAllWaves(t *testing.T) {
-	m := gamemode.Get("campaign")
+	m := gamemode.Get("casual")
 	if m == nil {
-		t.Fatal("campaign 模式未注册")
+		t.Fatal("casual 模式未注册")
 	}
 	ctx := &gamemode.Context{Wave: 12, MaxWaves: 12, Spawning: false, Lives: 10}
 	if !m.CheckVictory(ctx) {
-		t.Error("campaign: 12/12 波清完应判胜")
+		t.Error("casual: 12/12 波清完应判胜")
 	}
 }
 
