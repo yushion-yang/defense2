@@ -39,6 +39,7 @@ func (b *baseMode) CheckDefeat(ctx *Context) bool  { return ctx.Lives <= 0 }
 func (b *baseMode) GetScore(_ *Context) int        { return 0 }
 func (b *baseMode) VictoryWaveTarget() int         { return -1 }
 func (b *baseMode) EnableEvents() bool             { return false }
+func (b *baseMode) Ruleset() TowerRuleset          { return CampaignRuleset{} }
 
 // OnWaveCleared 返回波次通关奖励。
 // 默认不发放完美波次奖励（PerfectBonus=0），需要此功能的模式应覆写。

@@ -42,6 +42,9 @@ func NewSession(mode Mode) *Session {
 	}
 }
 
+// Ruleset 返回当前模式的塔建造规则策略。
+func (s *Session) Ruleset() TowerRuleset { return s.Mode.Ruleset() }
+
 // Tick 每帧调用，累计时间并委托给 Mode.OnTick。
 // 注意：胜负判定在 TickEndConditions 中单独调用。
 func (s *Session) Tick(dt float64, ctx *Context) {

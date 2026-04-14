@@ -98,8 +98,9 @@ type StageScene struct {
 	switcher      Switcher           // 场景切换器引用（切换场景/获取 AudioMgr/EventBus）
 	bus           *event.Bus         // 事件总线（从 Switcher 获取，延迟订阅）
 	busSubscribed bool               // Bus 订阅是否已完成（延迟到首次 Update，避免被 bus.Clear 清掉）
-	session       *gamemode.Session  // 游戏模式会话（跟踪模式状态、胜负条件、计时器）
-	modeCtx       gamemode.Context   // 缓存的模式上下文（闭包 initModeCtx 设一次，每帧只更新值字段，零分配）
+	session       *gamemode.Session        // 游戏模式会话（跟踪模式状态、胜负条件、计时器）
+	ruleset       gamemode.TowerRuleset   // 塔建造规则策略（从 session.Ruleset() 缓存，避免每帧虚调用）
+	modeCtx       gamemode.Context        // 缓存的模式上下文（闭包 initModeCtx 设一次，每帧只更新值字段，零分配）
 	modeID        string             // 模式 ID（campaign/endless/test 等，用于重玩和持久化）
 	diffID        string             // 难度 ID（easy/normal/hard/extreme，用于重玩和持久化）
 	frame         int                // 当前帧计数（用于动画计时和周期性任务）
@@ -368,6 +369,7 @@ func NewStageSceneWithOpts(sw Switcher, opts StageOptions) *StageScene {
 	s := &StageScene{
 		switcher:         sw,
 		session:          session,
+		ruleset:          session.Ruleset(),
 		modeID:           modeID,
 		diffID:           opts.DifficultyID,
 		gameMap:          gm,
@@ -639,9 +641,8 @@ func (s *StageScene) subscribeBus() {
 		prevUnlocked := tower.UnlockedSlots(s.wavesCleared)
 		s.wavesCleared++
 		newUnlocked := tower.UnlockedSlots(s.wavesCleared)
-		// 战役模式：能力槽位需要花钱解锁，不自动按波次解锁
-		// 非战役模式（测试等）：保留波次自动解锁
-		if s.testMode {
+		// 按模式规则决定是否自动为所有塔 roll 新的待选能力
+		if s.ruleset.ShouldAutoRollOnWaveClear() {
 			newPending := 0
 			s.towers.Each(func(t *tower.Tower) {
 				before := tower.PendingCount(t)
@@ -741,11 +742,16 @@ func (s *StageScene) emitKill(isBoss bool, killerID string, rewardScale float64,
 // 概率由 DropChance 控制，周期末波若本周期无掉落则保底强制掉。
 // 测试模式下每次击杀必掉。
 func (s *StageScene) tryItemDrop(worldX, worldY float64) {
-	// 测试模式：每次击杀必掉
-	if s.testMode {
+	switch s.ruleset.ItemDropMode() {
+	case gamemode.ItemDropEveryKill:
 		s.spawnItemDrop(worldX, worldY)
 		return
+	case gamemode.ItemDropNone:
+		return
+	case gamemode.ItemDropByWave:
+		return // Phase 1: 经典模式每 N 波掉落（由 wave clear 回调处理）
 	}
+	// ItemDropProbability: 概率掉落 + 周期保底
 	cfg := config.GlobalBalance().ItemDrop
 	if cfg.CycleWaves <= 0 {
 		return
@@ -1119,13 +1125,8 @@ func (s *StageScene) tryPlaceTower(px, py float64) bool {
 		return false // 池满，不扣金
 	}
 	placed.BuildAnim = 0.3
-	// 战役模式：建塔只解锁攻击模式(第1个)，后续通过付费解锁
-	// 测试模式：按已过波次数自动解锁多个
-	if s.testMode {
-		tower.RollAndCachePendingChoices(placed, s.wavesCleared)
-	} else {
-		tower.RollAndCachePendingChoices(placed, 0)
-	}
+	// 按模式规则决定建塔时解锁多少个能力位
+	tower.RollAndCachePendingChoices(placed, s.ruleset.InitialUnlockWaves(s.wavesCleared))
 	s.gold -= cost
 	s.gameStats.GoldSpent += cost
 	s.gameStats.TowersBuilt++
@@ -2942,7 +2943,7 @@ func (s *StageScene) drawScene(screen *ebiten.Image) {
 	if s.selectedTower != nil {
 		// 塔选中时显示塔信息面板（底部中央）
 		sellValue := s.econ.SellRefund(s.selectedTower.Cost)
-		vm := BuildInfoPanelVM(s.selectedTower, sellValue, s.wavesCleared, s.testMode, s.gold, s.findTowerDef(s.selectedTower).UpgradeCosts)
+		vm := BuildInfoPanelVM(s.selectedTower, sellValue, s.ruleset, s.gold, s.findTowerDef(s.selectedTower).UpgradeCosts)
 		hud.DrawInfoPanel(screen, vm)
 		// Hover 在面板上时显示升级详情浮窗
 		mx, my := draw.CursorPos()

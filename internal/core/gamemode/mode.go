@@ -64,6 +64,10 @@ type Mode interface {
 
 	// EnableEvents 返回是否启用关卡事件系统（奖励波次弹出事件选择）。
 	EnableEvents() bool
+
+	// Ruleset 返回此模式的塔建造规则策略。
+	// 控制能力解锁方式、强度上限、道具掉落等塔相关行为。
+	Ruleset() TowerRuleset
 }
 
 // Context 模式回调时的游戏状态快照 + 状态修改器。

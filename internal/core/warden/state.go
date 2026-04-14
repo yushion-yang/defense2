@@ -314,7 +314,7 @@ func (s *WardenState) BasicAttack(ctx *TickContext) *enemy.Enemy {
 
 	speed := s.ProjectileSpeed
 	if speed <= 0 {
-		speed = config.GlobalBalance().Combat.WardenProjectileSpeed
+		speed = config.GlobalBalance().Combat.WardenMechProjectileSpeed
 	}
 	if speed <= 0 {
 		speed = 350 // ultimate fallback

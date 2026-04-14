@@ -32,6 +32,7 @@ import (
 
 	"defense2/internal/config"
 	"defense2/internal/core/buff"
+	"defense2/internal/core/gamemode"
 	"defense2/internal/core/strength"
 	"defense2/internal/core/tower"
 	"defense2/internal/i18n"
@@ -54,8 +55,9 @@ import (
 // 参数说明：
 //   - t: 选中的塔（nil 时返回 Visible=false 的空 VM）
 //   - sellValue: 卖出退款金额（由调用方根据经济规则计算）
+//   - ruleset: 当前模式的塔规则（决定 PendingCount 计算方式和解锁按钮可见性）
 //   - gold/upgradeCosts: 用于战役模式解锁槽位按钮的费用判断
-func BuildInfoPanelVM(t *tower.Tower, sellValue int, wavesCleared int, testMode bool, gold int, upgradeCosts []int) hud.InfoPanelVM {
+func BuildInfoPanelVM(t *tower.Tower, sellValue int, ruleset gamemode.TowerRuleset, gold int, upgradeCosts []int) hud.InfoPanelVM {
 	if t == nil {
 		return hud.InfoPanelVM{Visible: false}
 	}
@@ -194,8 +196,8 @@ func BuildInfoPanelVM(t *tower.Tower, sellValue int, wavesCleared int, testMode 
 	}
 
 	// Pending ability count
-	if testMode {
-		// 测试模式：显示空槽数（不依赖 PendingChoices 缓存）
+	if ruleset.AbilityMode() == gamemode.AbilityModeFreeByWave {
+		// 自动解锁模式：显示空槽数（不依赖 PendingChoices 缓存）
 		for _, a := range t.AbilitySlots {
 			if a == "" {
 				vm.PendingCount++
@@ -205,8 +207,8 @@ func BuildInfoPanelVM(t *tower.Tower, sellValue int, wavesCleared int, testMode 
 		vm.PendingCount = tower.PendingCount(t)
 	}
 
-	// 战役模式：解锁能力槽位按钮
-	if !testMode && tower.CanUnlockMore(t) {
+	// 付费解锁模式：显示解锁能力槽位按钮
+	if ruleset.ShowPaidUnlockButton() && tower.CanUnlockMore(t) {
 		tempDef := tower.TowerDef{UpgradeCosts: upgradeCosts}
 		vm.CanUnlockSlot = true
 		vm.UnlockCost = tower.NextUpgradeCost(t, tempDef)

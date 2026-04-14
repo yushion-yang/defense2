@@ -14,6 +14,7 @@ func NewTestMode() *TestMode {
 	return &TestMode{baseMode: baseMode{id: "test"}}
 }
 
+func (m *TestMode) Ruleset() TowerRuleset      { return TestRuleset{} }
 func (m *TestMode) IntermissionSecs() float64 { return 5 }
 func (m *TestMode) ShouldAutoStart() bool     { return true }
 func (m *TestMode) VictoryWaveTarget() int     { return -1 }

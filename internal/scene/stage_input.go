@@ -29,6 +29,7 @@ import (
 	"defense2/internal/core/enemy"
 	"defense2/internal/core/event"
 	"defense2/internal/core/game"
+	"defense2/internal/core/gamemode"
 	"defense2/internal/core/item"
 	"defense2/internal/core/tower"
 	"defense2/internal/i18n"
@@ -852,7 +853,7 @@ func (s *StageScene) openAbilityChoicePanel() {
 		return
 	}
 
-	if s.testMode {
+	if s.ruleset.AbilityMode() == gamemode.AbilityModeFreeByWave {
 		s.openTestAbilityChoicePanel(t)
 		return
 	}
