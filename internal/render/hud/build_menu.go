@@ -328,12 +328,14 @@ func drawBuildCardTooltip(screen *ebiten.Image, card BuildCardVM, m buildPanelMe
 			}
 			abX := tx + 19.0
 
-			// Label (bold)
-			displayLabel := ui.TruncateText(fm, ab.Label, 120, theme.FontSM)
-			ui.Label(screen, displayLabel, abX, ty, 0, ui.LabelStyle{
+			// Label (bold, 自动缩放)
+			ui.Label(screen, ab.Label, abX, ty, 120, ui.LabelStyle{
 				Font: theme.FontSM, Color: theme.TextBody, Bold: true,
 			})
-			labelW := fm.MeasureText(displayLabel, theme.FontSM) + 4
+			labelW := fm.MeasureText(ab.Label, theme.FontSM) + 4
+			if labelW > 124 {
+				labelW = 124
+			}
 			segX := abX + labelW
 
 			// Segments — 换行渲染

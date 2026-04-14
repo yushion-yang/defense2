@@ -31,6 +31,9 @@ var hudForbidden = []hudForbiddenPattern{
 	// 规则 4: 禁止 1200/540 字面量（应使用 theme.CanvasW/H）
 	{regexp.MustCompile(`\b1200\b`), "hud/ must not use literal 1200; use theme.CanvasW"},
 	{regexp.MustCompile(`\b540\b`), "hud/ must not use literal 540; use theme.CanvasH"},
+
+	// 规则 5: 禁止调用 TruncateText（文本不得截断，用 Label 自动缩放或 Paragraph 换行）
+	{regexp.MustCompile(`ui\.TruncateText\(`), "hud/ must not call ui.TruncateText; use ui.Label (auto-shrink) or ui.Paragraph (wrap)"},
 }
 
 // hudExemptFiles 尚未迁移的 hud 文件豁免清单。
