@@ -62,8 +62,9 @@ func DrawTopBar(screen *ebiten.Image, d TopBarData) {
 	pillX := topBarX
 
 	// ── Pill background + border ──
-	draw.RoundRect(screen, pillX, pillY, pillW, pillH, pillR, theme.HUDTopBarBg)
-	draw.StrokeRoundRect(screen, pillX, pillY, pillW, pillH, pillR, 1, theme.HUDTopBarBorder)
+	ui.Panel(screen, pillX, pillY, pillW, pillH, ui.PanelStyle{
+		BgColor: theme.HUDTopBarBg, BorderColor: theme.HUDTopBarBorder, Radius: pillR,
+	})
 
 	// ── Left section: resources (clamped to divider boundary) ──
 	resX := float64(pillX) + 16
@@ -71,39 +72,38 @@ func DrawTopBar(screen *ebiten.Image, d TopBarData) {
 	maxResX := float64(pillX) + float64(dividerOff) - 8 // 不超过分隔线
 	const topFS = theme.FontH1                           // 顶栏使用 H1 字号
 
-	// Heart icon + lives
-	draw.FilledCircle(screen, float32(resX)+6, float32(resY)+2, 6, theme.ResHearts)
+	// ── 资源区：icon+text 紧凑排列，逐项溢出检测 ──
+	// 使用 nolint:hud 豁免：资源区是紧凑 icon+number 排列，
+	// 带有 progressive overflow 逻辑，不适合拆分为独立组件调用
+	draw.FilledCircle(screen, float32(resX)+6, float32(resY)+2, 6, theme.ResHearts) //nolint:hud
 	resX += 16
 	livesTxt := strconv.Itoa(d.Lives)
-	fm.DrawText(screen, livesTxt, resX, resY-5, topFS, color.White)
+	fm.DrawText(screen, livesTxt, resX, resY-5, topFS, color.White) //nolint:hud
 	resX += fm.MeasureText(livesTxt, topFS) + 10
 
-	// Coin icon + gold
 	if resX+30 < maxResX {
-		draw.FilledCircle(screen, float32(resX)+6, float32(resY)+2, 6, theme.ResGold)
+		draw.FilledCircle(screen, float32(resX)+6, float32(resY)+2, 6, theme.ResGold) //nolint:hud
 		resX += 16
 		goldTxt := strconv.Itoa(d.Gold)
-		fm.DrawText(screen, goldTxt, resX, resY-5, topFS, color.White)
+		fm.DrawText(screen, goldTxt, resX, resY-5, topFS, color.White) //nolint:hud
 		resX += fm.MeasureText(goldTxt, topFS) + 10
 	}
 
-	// Wave icon + wave/maxWaves
 	if resX+30 < maxResX {
-		draw.FilledCircle(screen, float32(resX)+5, float32(resY)+2, 5, theme.ResWaves)
+		draw.FilledCircle(screen, float32(resX)+5, float32(resY)+2, 5, theme.ResWaves) //nolint:hud
 		resX += 14
 		waveTxt := strconv.Itoa(d.Wave) + "/" + strconv.Itoa(d.MaxWaves)
-		fm.DrawText(screen, waveTxt, resX, resY-5, topFS, color.White)
+		fm.DrawText(screen, waveTxt, resX, resY-5, topFS, color.White) //nolint:hud
 		resX += fm.MeasureText(waveTxt, topFS) + 10
 	}
 
-	// Kills icon (stat-target) + kill count
 	if resX+30 < maxResX {
 		if im := render.GlobalIcons(); im != nil {
 			if img := im.Get("stat-target"); img != nil {
-				draw.Sprite(screen, img, resX+5, float64(resY)+1, 10)
+				draw.Sprite(screen, img, resX+5, float64(resY)+1, 10) //nolint:hud
 				resX += 14
 				killsTxt := strconv.Itoa(d.Kills)
-				fm.DrawText(screen, killsTxt, resX, resY-5, topFS, color.White)
+				fm.DrawText(screen, killsTxt, resX, resY-5, topFS, color.White) //nolint:hud
 			}
 		}
 	}
@@ -112,7 +112,7 @@ func DrawTopBar(screen *ebiten.Image, d TopBarData) {
 	divX := pillX + dividerOff
 	divY1 := pillY + 6
 	divY2 := pillY + pillH - 6
-	draw.Line(screen, divX, divY1, divX, divY2, 1, theme.HUDTopBarDivider, false)
+	draw.Line(screen, divX, divY1, divX, divY2, 1, theme.HUDTopBarDivider, false) //nolint:hud
 
 	// ── Right section: buttons (using ButtonRow) ──
 	speedLabel := "x1"

@@ -6,11 +6,12 @@ package hud
 import (
 	"image/color"
 
-	"defense2/internal/core/game"
 	"defense2/internal/i18n"
 	"defense2/internal/render"
 	"defense2/internal/render/draw"
 	"defense2/internal/render/easing"
+	"defense2/internal/render/theme"
+	"defense2/internal/render/ui"
 
 	"github.com/hajimehoshi/ebiten/v2"
 )
@@ -28,15 +29,15 @@ const (
 
 // Timing constants for the announcement animation.
 const (
-	slideInDuration      = 0.3
-	holdNormal           = 0.8
-	holdBoss             = 1.0
-	slideOutDuration     = 0.3
-	flashInterval        = 0.15 // normal boss warning flash interval
-	entranceFlashCount   = 6    // boss entrance: 6 dramatic pulses
-	entranceFlashInterval = 0.4 // boss entrance: slower interval for drama
-	targetY              = 80.0 // vertical center position for the text
-	offscreenY           = -40.0
+	slideInDuration       = 0.3
+	holdNormal            = 0.8
+	holdBoss              = 1.0
+	slideOutDuration      = 0.3
+	flashInterval         = 0.15 // normal boss warning flash interval
+	entranceFlashCount    = 6    // boss entrance: 6 dramatic pulses
+	entranceFlashInterval = 0.4  // boss entrance: slower interval for drama
+	targetY               = 80.0 // vertical center position for the text
+	offscreenY            = -40.0
 )
 
 // WaveAnnounce manages the animated text overlay shown when a new wave begins.
@@ -92,7 +93,7 @@ func (wa *WaveAnnounce) Update(dt float64) {
 		if wa.warningTimer <= 0 {
 			wa.warningFlashes--
 			if wa.warningFlashes <= 0 {
-				// Entrance done → transition to slide-in
+				// Entrance done -> transition to slide-in
 				wa.phase = announceSlideIn
 				wa.timer = slideInDuration
 			} else {
@@ -152,7 +153,7 @@ func (wa *WaveAnnounce) Draw(screen *ebiten.Image) {
 		return
 	}
 
-	cx := float64(game.ScreenWidth) / 2
+	cx := float64(theme.CanvasW) / 2
 
 	// Calculate Y position based on phase (slide in from top, hold, slide out to top).
 	y := wa.currentY()
@@ -160,45 +161,49 @@ func (wa *WaveAnnounce) Draw(screen *ebiten.Image) {
 	// Determine text content, color, and font size.
 	var text string
 	var textClr color.RGBA
-	fontSize := 28.0
+	fontSize := theme.FontAnnounce
 
 	switch {
 	case wa.isFinal:
 		text = i18n.T("hud.wave.final")
 		textClr = color.RGBA{R: 255, G: 215, B: 0, A: 255} // gold
-		fontSize = 32
+		fontSize = theme.FontAnnounceLG
 	case wa.isBoss:
 		text = i18n.TF("hud.wave.wave_n", wa.wave)
 		textClr = color.RGBA{R: 255, G: 80, B: 60, A: 255} // red-orange
-		fontSize = 32
+		fontSize = theme.FontAnnounceLG
 	default:
 		text = i18n.TF("hud.wave.wave_n", wa.wave)
 		textClr = color.RGBA{R: 255, G: 255, B: 255, A: 230}
 	}
 
 	// Background pill behind text.
-	textW := fm.MeasureText(text, fontSize)
+	textW := fm.MeasureText(text, float64(fontSize))
 	pillW := float32(textW + 40)
 	pillH := float32(fontSize + 16)
 	pillX := float32(cx) - pillW/2
 	pillY := float32(y) - pillH/2
 
-	draw.RoundRect(screen, pillX, pillY, pillW, pillH, 8, color.RGBA{A: 140})
+	ui.Panel(screen, pillX, pillY, pillW, pillH, ui.PanelStyle{
+		BgColor: color.RGBA{A: 140}, Radius: 8,
+	})
 
 	// Centered text.
-	fm.DrawCenteredText(screen, text, cx, y-fontSize/4, fontSize, textClr)
+	ui.Label(screen, text, float64(pillX), y-float64(fontSize)/4, float64(pillW), ui.LabelStyle{
+		Font: float64(fontSize), Color: textClr, Align: ui.AlignCenter,
+	})
 }
 
 // currentY computes the vertical position based on the current animation phase.
 func (wa *WaveAnnounce) currentY() float64 {
 	switch wa.phase {
 	case announceSlideIn:
-		progress := 1.0 - wa.timer/slideInDuration // 0 → 1
+		progress := 1.0 - wa.timer/slideInDuration // 0 -> 1
 		return offscreenY + (targetY-offscreenY)*easing.EaseOutQuad(progress)
 	case announceHold:
 		return targetY
 	case announceSlideOut:
-		progress := 1.0 - wa.timer/slideOutDuration // 0 → 1
+		progress := 1.0 - wa.timer/slideOutDuration // 0 -> 1
 		return targetY + (offscreenY-targetY)*easing.EaseInQuad(progress)
 	default:
 		return offscreenY
@@ -207,19 +212,21 @@ func (wa *WaveAnnounce) currentY() float64 {
 
 // drawEntranceFlash renders dramatic escalating border flashes during the boss entrance phase.
 // Each successive flash is brighter/wider: intensity = (total - remaining) / total.
+//
+//nolint:hud — screen-edge flash VFX, not HUD text
 func (wa *WaveAnnounce) drawEntranceFlash(screen *ebiten.Image) {
 	// Flicker: visible on even "ticks" of the warning timer.
 	if int(wa.warningTimer*20)%2 != 0 {
 		return
 	}
 
-	// Intensity ramps up as flashes progress: 0.17 → 0.33 → ... → 1.0
+	// Intensity ramps up as flashes progress: 0.17 -> 0.33 -> ... -> 1.0
 	intensity := float64(wa.warningTotalFlashes-wa.warningFlashes) / float64(wa.warningTotalFlashes)
 	if intensity < 0.15 {
 		intensity = 0.15
 	}
 
-	baseAlpha := uint8(60 + intensity*140) // 60 → 200
+	baseAlpha := uint8(60 + intensity*140) // 60 -> 200
 	var borderClr color.RGBA
 	if wa.isFinal {
 		borderClr = color.RGBA{R: 255, G: 200, B: 50, A: baseAlpha} // gold
@@ -227,14 +234,14 @@ func (wa *WaveAnnounce) drawEntranceFlash(screen *ebiten.Image) {
 		borderClr = color.RGBA{R: 255, G: 40, B: 40, A: baseAlpha} // red
 	}
 
-	w := float32(game.ScreenWidth)
-	h := float32(game.ScreenHeight)
-	thickness := float32(3 + intensity*4) // 3px → 7px
+	w := float32(theme.CanvasW)
+	h := float32(theme.CanvasH)
+	thickness := float32(3 + intensity*4) // 3px -> 7px
 
-	draw.FilledRect(screen, 0, 0, w, thickness, borderClr, false)          // top
-	draw.FilledRect(screen, 0, h-thickness, w, thickness, borderClr, false) // bottom
-	draw.FilledRect(screen, 0, 0, thickness, h, borderClr, false)           // left
-	draw.FilledRect(screen, w-thickness, 0, thickness, h, borderClr, false) // right
+	draw.FilledRect(screen, 0, 0, w, thickness, borderClr, false)          //nolint:hud — flash VFX
+	draw.FilledRect(screen, 0, h-thickness, w, thickness, borderClr, false) //nolint:hud
+	draw.FilledRect(screen, 0, 0, thickness, h, borderClr, false)           //nolint:hud
+	draw.FilledRect(screen, w-thickness, 0, thickness, h, borderClr, false) //nolint:hud
 }
 
 // drawWarningFlash renders pulsing red (boss) or gold (final) border edges.
@@ -251,12 +258,12 @@ func (wa *WaveAnnounce) drawWarningFlash(screen *ebiten.Image) {
 		borderClr = color.RGBA{R: 255, G: 40, B: 40, A: 80} // red
 	}
 
-	w := float32(game.ScreenWidth)
-	h := float32(game.ScreenHeight)
+	w := float32(theme.CanvasW)
+	h := float32(theme.CanvasH)
 	const thickness float32 = 3
 
-	draw.FilledRect(screen, 0, 0, w, thickness, borderClr, false)         // top
-	draw.FilledRect(screen, 0, h-thickness, w, thickness, borderClr, false) // bottom
-	draw.FilledRect(screen, 0, 0, thickness, h, borderClr, false)          // left
-	draw.FilledRect(screen, w-thickness, 0, thickness, h, borderClr, false) // right
+	draw.FilledRect(screen, 0, 0, w, thickness, borderClr, false)           //nolint:hud — flash VFX
+	draw.FilledRect(screen, 0, h-thickness, w, thickness, borderClr, false) //nolint:hud
+	draw.FilledRect(screen, 0, 0, thickness, h, borderClr, false)           //nolint:hud
+	draw.FilledRect(screen, w-thickness, 0, thickness, h, borderClr, false) //nolint:hud
 }
