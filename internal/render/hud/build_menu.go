@@ -95,24 +95,27 @@ func DrawBuildMenu(screen *ebiten.Image, d BuildMenuData) {
 	if !d.Visible || len(d.Cards) == 0 {
 		return
 	}
-	fm := render.GlobalFont()
-	if fm == nil {
-		return
-	}
 
 	m := calcBuildPanelMetrics(len(d.Cards))
 
-	draw.RoundRect(screen, m.panelX, m.panelY, m.panelW, m.panelH,
-		float32(theme.CenterPanelRadius), theme.PanelBg)
-	draw.StrokeRoundRect(screen, m.panelX, m.panelY, m.panelW, m.panelH,
-		float32(theme.CenterPanelRadius), 1, theme.PanelBorder)
+	// Panel background + border
+	ui.Panel(screen, m.panelX, m.panelY, m.panelW, m.panelH, ui.PanelStyle{
+		BgColor: theme.PanelBg, BorderColor: theme.PanelBorder, Radius: float32(theme.CenterPanelRadius),
+	})
 
+	// Title
 	titleX := float64(m.panelX) + float64(bpPadX)
 	titleY := float64(m.panelY) + 8
-	fm.DrawBoldText(screen, i18n.T("hud.build.title"), titleX, titleY, theme.FontLG, theme.TextTitle)
+	titleMaxW := float64(m.panelW) - float64(bpPadX)*2
+	ui.Label(screen, i18n.T("hud.build.title"), titleX, titleY, titleMaxW, ui.LabelStyle{
+		Font: theme.FontLG, Bold: true, Color: theme.TextTitle,
+	})
 
+	// Close hint (top-right)
 	closeX := float64(m.panelX) + float64(m.panelW) - float64(bpPadX) - 40
-	fm.DrawText(screen, i18n.T("hud.build.close"), closeX, titleY+2, theme.FontMD, theme.TextMuted)
+	ui.Label(screen, i18n.T("hud.build.close"), closeX, titleY+2, 40, ui.LabelStyle{
+		Font: theme.FontMD, Color: theme.TextMuted,
+	})
 
 	for i, card := range d.Cards {
 		col := i % bpCols
@@ -122,20 +125,20 @@ func DrawBuildMenu(screen *ebiten.Image, d BuildMenuData) {
 		hovered := i == d.HoverIdx
 
 		if card.Buildable {
-			drawBuildableCard(screen, fm, card, d, i, cx, cy, hovered)
+			drawBuildableCard(screen, card, d, i, cx, cy, hovered)
 		} else {
-			drawVariantCard(screen, fm, card, cx, cy, hovered)
+			drawVariantCard(screen, card, cx, cy, hovered)
 		}
 	}
 
 	// Hover tooltip
 	if d.HoverIdx >= 0 && d.HoverIdx < len(d.Cards) {
-		drawBuildCardTooltip(screen, fm, d.Cards[d.HoverIdx], m)
+		drawBuildCardTooltip(screen, d.Cards[d.HoverIdx], m)
 	}
 }
 
 // drawBuildableCard renders a normal buildable tower card.
-func drawBuildableCard(screen *ebiten.Image, fm *render.FontManager, card BuildCardVM, d BuildMenuData, i int, cx, cy float32, hovered bool) {
+func drawBuildableCard(screen *ebiten.Image, card BuildCardVM, d BuildMenuData, i int, cx, cy float32, hovered bool) {
 	affordable := d.Gold >= card.Cost
 	selected := i == d.SelectedIdx
 
@@ -148,22 +151,37 @@ func drawBuildableCard(screen *ebiten.Image, fm *render.FontManager, card BuildC
 	if !affordable {
 		cardBg.A = cardBg.A / 2
 	}
-	draw.RoundRect(screen, cx, cy, bpCardW, bpCardH, bpCardR, cardBg)
 
+	// Card background
+	ui.Panel(screen, cx, cy, bpCardW, bpCardH, ui.PanelStyle{
+		BgColor: cardBg, Radius: bpCardR,
+	})
+
+	// Selected card border
 	if selected {
-		draw.StrokeRoundRect(screen, cx, cy, bpCardW, bpCardH, bpCardR, 2, theme.BuildCardSelBorder)
+		ui.Panel(screen, cx, cy, bpCardW, bpCardH, ui.PanelStyle{
+			BgColor: color.RGBA{A: 0}, BorderColor: theme.BuildCardSelBorder, Radius: bpCardR, BorderWidth: 2,
+		})
 	}
 
 	nameX := float64(cx) + 8
 	nameY := float64(cy) + 6
-	fm.DrawBoldText(screen, ui.TruncateText(fm, card.Label, 60, theme.FontMD), nameX, nameY, theme.FontMD, color.White)
+	nameMaxW := float64(bpCardW) - 16
 
+	// Tower name (bold)
+	ui.Label(screen, card.Label, nameX, nameY, 60, ui.LabelStyle{
+		Font: theme.FontMD, Bold: true,
+	})
+
+	// Cost
 	costTxt := strconv.Itoa(card.Cost) + "G"
 	costClr := theme.BuildCostColor
 	if !affordable {
 		costClr = color.RGBA{R: 200, G: 80, B: 80, A: 200}
 	}
-	fm.DrawText(screen, costTxt, nameX, nameY+16, theme.FontSM, costClr)
+	ui.Label(screen, costTxt, nameX, nameY+16, 60, ui.LabelStyle{
+		Font: theme.FontSM, Color: costClr,
+	})
 
 	// Tower-type icon badge
 	if card.TypeIcon != "" {
@@ -171,61 +189,73 @@ func drawBuildableCard(screen *ebiten.Image, fm *render.FontManager, card BuildC
 			if img := im.Get(card.TypeIcon); img != nil {
 				badgeX := float64(cx) + float64(bpCardW) - 16
 				badgeY := float64(cy) + 4
-				draw.Sprite(screen, img, badgeX, badgeY+6, 12)
+				draw.Sprite(screen, img, badgeX, badgeY+6, 12) //nolint:hud
 			}
 		}
 	}
 
 	// Role tag
-	fm.DrawText(screen, ui.TruncateText(fm, card.RoleTag, 60, theme.FontXS), nameX, float64(cy)+float64(bpCardH)-16, theme.FontXS, card.RoleColor)
+	ui.Label(screen, card.RoleTag, nameX, float64(cy)+float64(bpCardH)-16, nameMaxW, ui.LabelStyle{
+		Font: theme.FontXS, Color: card.RoleColor,
+	})
 
 	// Sprite preview
 	if card.Sprite != nil {
 		spriteX := float64(cx) + float64(bpCardW) - 26
 		spriteY := float64(cy) + float64(bpCardH)/2
-		draw.Sprite(screen, card.Sprite, spriteX, spriteY, 36)
+		draw.Sprite(screen, card.Sprite, spriteX, spriteY, 36) //nolint:hud
 	}
 }
 
 // drawVariantCard renders a display-only attack style variant card.
-func drawVariantCard(screen *ebiten.Image, fm *render.FontManager, card BuildCardVM, cx, cy float32, hovered bool) {
+func drawVariantCard(screen *ebiten.Image, card BuildCardVM, cx, cy float32, hovered bool) {
 	cardBg := theme.BuildCardVariant
 	if hovered {
 		cardBg = color.RGBA{R: 40, G: 55, B: 80, A: 160}
 	}
-	draw.RoundRect(screen, cx, cy, bpCardW, bpCardH, bpCardR, cardBg)
 
-	// Subtle border
-	draw.StrokeRoundRect(screen, cx, cy, bpCardW, bpCardH, bpCardR, 1,
-		color.RGBA{R: 100, G: 120, B: 160, A: 80})
+	// Card background + subtle border
+	ui.Panel(screen, cx, cy, bpCardW, bpCardH, ui.PanelStyle{
+		BgColor: cardBg, BorderColor: color.RGBA{R: 100, G: 120, B: 160, A: 80}, Radius: bpCardR,
+	})
 
 	nameX := float64(cx) + 8
 	nameY := float64(cy) + 6
+	nameMaxW := float64(bpCardW) - 16
 
 	// Tower name (bold)
-	fm.DrawBoldText(screen, ui.TruncateText(fm, card.Label, 60, theme.FontMD), nameX, nameY, theme.FontMD,
-		color.RGBA{R: 180, G: 200, B: 230, A: 220})
+	ui.Label(screen, card.Label, nameX, nameY, 60, ui.LabelStyle{
+		Font: theme.FontMD, Bold: true, Color: color.RGBA{R: 180, G: 200, B: 230, A: 220},
+	})
 
 	// Ability type label (short, e.g. "弹射", "散射")
-	fm.DrawText(screen, card.RoleTag, nameX, nameY+18, theme.FontXS, card.RoleColor)
+	ui.Label(screen, card.RoleTag, nameX, nameY+18, nameMaxW, ui.LabelStyle{
+		Font: theme.FontXS, Color: card.RoleColor,
+	})
 
 	// "选择能力后" tag at bottom-left
-	fm.DrawText(screen, i18n.T("hud.build.after_ability"), nameX, float64(cy)+float64(bpCardH)-16, theme.FontXS,
-		color.RGBA{R: 120, G: 140, B: 170, A: 140})
+	ui.Label(screen, i18n.T("hud.build.after_ability"), nameX, float64(cy)+float64(bpCardH)-16, nameMaxW, ui.LabelStyle{
+		Font: theme.FontXS, Color: color.RGBA{R: 120, G: 140, B: 170, A: 140},
+	})
 
 	// Sprite preview (right side, same as buildable cards)
 	if card.Sprite != nil {
 		spriteX := float64(cx) + float64(bpCardW) - 26
 		spriteY := float64(cy) + float64(bpCardH)/2
-		draw.Sprite(screen, card.Sprite, spriteX, spriteY, 36)
+		draw.Sprite(screen, card.Sprite, spriteX, spriteY, 36) //nolint:hud
 	}
 }
 
 // drawBuildCardTooltip renders a small stats tooltip above the build panel.
 // 有预设能力时动态增高，展示每个能力的图标+标签+数值描述。
-func drawBuildCardTooltip(screen *ebiten.Image, fm *render.FontManager, card BuildCardVM, m buildPanelMetrics) {
+func drawBuildCardTooltip(screen *ebiten.Image, card BuildCardVM, m buildPanelMetrics) {
 	if !card.Buildable {
-		drawVariantTooltip(screen, fm, card, m)
+		drawVariantTooltip(screen, card, m)
+		return
+	}
+
+	fm := render.GlobalFont()
+	if fm == nil {
 		return
 	}
 
@@ -247,41 +277,63 @@ func drawBuildCardTooltip(screen *ebiten.Image, fm *render.FontManager, card Bui
 	tipX := (float32(theme.CanvasW) - tipW) / 2
 	tipY := m.panelY - tipH - 6
 
-	draw.RoundRect(screen, tipX, tipY, tipW, tipH, tipR, theme.PanelBg)
-	draw.StrokeRoundRect(screen, tipX, tipY, tipW, tipH, tipR, 1, theme.PanelBorder)
+	// Tooltip background + border
+	ui.Panel(screen, tipX, tipY, tipW, tipH, ui.PanelStyle{
+		BgColor: theme.PanelBg, BorderColor: theme.PanelBorder, Radius: tipR,
+	})
 
 	tx := float64(tipX) + float64(tipPadX)
 	ty := float64(tipY) + 8
+	contentW := float64(tipW) - float64(tipPadX)*2
 
-	fm.DrawBoldText(screen, ui.TruncateText(fm, card.Label, 240, theme.FontLG), tx, ty, theme.FontLG, theme.TextTitle)
-	fm.DrawText(screen, card.RoleTag+" · "+strconv.Itoa(card.Cost)+"G", tx, ty+18, theme.FontSM, card.RoleColor)
+	// Tower name
+	ui.Label(screen, card.Label, tx, ty, 240, ui.LabelStyle{
+		Font: theme.FontLG, Bold: true, Color: theme.TextTitle,
+	})
+
+	// Role tag + cost
+	ui.Label(screen, card.RoleTag+" · "+strconv.Itoa(card.Cost)+"G", tx, ty+18, contentW, ui.LabelStyle{
+		Font: theme.FontSM, Color: card.RoleColor,
+	})
 
 	ty += 38
 	im := render.GlobalIcons()
 	const tipIconSz = 12.0
 	const tipIconGap = 4.0
 
+	// Stat icons + values
 	drawStatIcon(screen, im, "stat-damage", tx, ty, tipIconSz)
-	fm.DrawText(screen, strconv.FormatFloat(card.Damage, 'f', 0, 64), tx+tipIconSz+tipIconGap, ty, theme.FontSM, theme.InfoAttrDamage)
+	ui.Label(screen, strconv.FormatFloat(card.Damage, 'f', 0, 64), tx+tipIconSz+tipIconGap, ty, 40, ui.LabelStyle{
+		Font: theme.FontSM, Color: theme.InfoAttrDamage,
+	})
 
 	drawStatIcon(screen, im, "stat-atkspd", tx+60, ty, tipIconSz)
-	fm.DrawText(screen, strconv.FormatFloat(1.0/card.AttackSpeed, 'f', 2, 64)+"s", tx+60+tipIconSz+tipIconGap, ty, theme.FontSM, theme.InfoAttrAtkSpd)
+	ui.Label(screen, strconv.FormatFloat(1.0/card.AttackSpeed, 'f', 2, 64)+"s", tx+60+tipIconSz+tipIconGap, ty, 60, ui.LabelStyle{
+		Font: theme.FontSM, Color: theme.InfoAttrAtkSpd,
+	})
 
 	drawStatIcon(screen, im, "stat-range", tx+140, ty, tipIconSz)
-	fm.DrawText(screen, strconv.FormatFloat(card.Range, 'f', 0, 64), tx+140+tipIconSz+tipIconGap, ty, theme.FontSM, theme.InfoAttrRange)
+	ui.Label(screen, strconv.FormatFloat(card.Range, 'f', 0, 64), tx+140+tipIconSz+tipIconGap, ty, 40, ui.LabelStyle{
+		Font: theme.FontSM, Color: theme.InfoAttrRange,
+	})
 
 	// 预设能力描述
 	if len(card.Abilities) > 0 {
 		ty += float64(tipAbilGap) + 14
 		for _, ab := range card.Abilities {
-			drawAbilityRowVM(screen, fm, ab, tx, ty)
+			drawAbilityRowVM(screen, fm, ab, tx, ty, contentW)
 			ty += float64(tipAbilH)
 		}
 	}
 }
 
 // drawVariantTooltip renders a tooltip for display-only variant cards.
-func drawVariantTooltip(screen *ebiten.Image, fm *render.FontManager, card BuildCardVM, m buildPanelMetrics) {
+func drawVariantTooltip(screen *ebiten.Image, card BuildCardVM, m buildPanelMetrics) {
+	fm := render.GlobalFont()
+	if fm == nil {
+		return
+	}
+
 	const (
 		tipPad = float32(12)
 		tipR   = float32(8)
@@ -305,14 +357,24 @@ func drawVariantTooltip(screen *ebiten.Image, fm *render.FontManager, card Build
 	tipX := (float32(theme.CanvasW) - tipW) / 2
 	tipY := m.panelY - tipH - 6
 
-	draw.RoundRect(screen, tipX, tipY, tipW, tipH, tipR, theme.PanelBg)
-	draw.StrokeRoundRect(screen, tipX, tipY, tipW, tipH, tipR, 1, theme.PanelBorder)
+	// Tooltip background + border
+	ui.Panel(screen, tipX, tipY, tipW, tipH, ui.PanelStyle{
+		BgColor: theme.PanelBg, BorderColor: theme.PanelBorder, Radius: tipR,
+	})
 
 	tx := float64(tipX) + float64(tipPad)
 	ty := float64(tipY) + 8
+	maxW := float64(tipW) - float64(tipPad)*2
 
-	fm.DrawBoldText(screen, ui.TruncateText(fm, card.Label, 200, theme.FontLG), tx, ty, theme.FontLG, theme.TextTitle)
-	fm.DrawText(screen, card.AbilityDesc, tx, ty+20, theme.FontXS, theme.TextMuted)
+	// Title
+	ui.Label(screen, card.Label, tx, ty, 200, ui.LabelStyle{
+		Font: theme.FontLG, Bold: true, Color: theme.TextTitle,
+	})
+
+	// Description
+	ui.Label(screen, card.AbilityDesc, tx, ty+20, maxW, ui.LabelStyle{
+		Font: theme.FontXS, Color: theme.TextMuted,
+	})
 }
 
 // BuildMenuHitTest returns the buildable tower card index hit by (px, py).

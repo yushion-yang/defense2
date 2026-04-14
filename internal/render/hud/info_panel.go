@@ -160,9 +160,13 @@ func DrawInfoPanel(screen *ebiten.Image, vm InfoPanelVM) {
 
 	// Row 1: 塔名 + 战力显示
 	panel.AddRow(titleH, func(screen *ebiten.Image, x, y float64, w float64) {
-		fm.DrawBoldText(screen, vm.Label, x, y, theme.FontXL, theme.TextTitle)
+		ui.Label(screen, vm.Label, x, y, w, ui.LabelStyle{
+			Font: theme.FontXL, Color: theme.TextTitle, Bold: true,
+		})
 		if vm.StrengthText != "" {
-			fm.DrawRightText(screen, vm.StrengthText, x+w, y+4, theme.FontSM, vm.StrengthColor)
+			ui.Label(screen, vm.StrengthText, x, y+4, w, ui.LabelStyle{
+				Font: theme.FontSM, Color: vm.StrengthColor, Align: ui.AlignRight,
+			})
 		}
 	})
 
@@ -197,7 +201,9 @@ func DrawInfoPanel(screen *ebiten.Image, vm InfoPanelVM) {
 					prefix = "\u2605"                                    // ★
 					labelClr = color.RGBA{R: 255, G: 200, B: 50, A: 255} // gold
 				}
-				fm.DrawText(screen, prefix+ar.label, rx, ry, theme.FontSM, labelClr)
+				ui.Label(screen, prefix+ar.label, rx, ry, rw, ui.LabelStyle{
+					Font: theme.FontSM, Color: labelClr,
+				})
 			})
 			row.AddFill(func(screen *ebiten.Image, rx, ry, rw, rh float64) {
 				sx := rx
@@ -213,7 +219,9 @@ func DrawInfoPanel(screen *ebiten.Image, vm InfoPanelVM) {
 					if sx+segW > rx+rw {
 						break // 超出可用宽度则截断
 					}
-					fm.DrawText(screen, seg.Text, sx, ry, theme.FontLG, clr)
+					ui.Label(screen, seg.Text, sx, ry, 0, ui.LabelStyle{
+						Font: theme.FontLG, Color: clr,
+					})
 					sx += segW
 				}
 			})
@@ -222,8 +230,10 @@ func DrawInfoPanel(screen *ebiten.Image, vm InfoPanelVM) {
 	}
 
 	// Row 3: 攻击方式
-	panel.AddRow(abilityH, func(screen *ebiten.Image, x, y float64, _ float64) {
-		fm.DrawText(screen, vm.AttackStyleText, x, y, theme.FontSM, theme.TextMuted)
+	panel.AddRow(abilityH, func(screen *ebiten.Image, x, y float64, w float64) {
+		ui.Label(screen, vm.AttackStyleText, x, y, w, ui.LabelStyle{
+			Font: theme.FontSM, Color: theme.TextMuted,
+		})
 	})
 
 	// 高度预算：预估按钮区域高度，限制能力+buff 可用空间
@@ -241,8 +251,10 @@ func DrawInfoPanel(screen *ebiten.Image, vm InfoPanelVM) {
 			if usedH+abilityH > budgetH-14 { // 预留一行给截断指示
 				remaining := maxAbil - i
 				if remaining > 0 {
-					panel.AddRow(abilityH, func(screen *ebiten.Image, x, y float64, _ float64) {
-						fm.DrawText(screen, i18n.TF("hud.info.more_abilities", remaining), x, y, theme.FontXS, theme.TextMuted)
+					panel.AddRow(abilityH, func(screen *ebiten.Image, x, y float64, w float64) {
+						ui.Label(screen, i18n.TF("hud.info.more_abilities", remaining), x, y, w, ui.LabelStyle{
+							Font: theme.FontXS, Color: theme.TextMuted,
+						})
 					})
 					usedH += abilityH
 				}
@@ -250,7 +262,7 @@ func DrawInfoPanel(screen *ebiten.Image, vm InfoPanelVM) {
 			}
 			ab := ab
 			panel.AddRow(abilityH, func(screen *ebiten.Image, x, y float64, w float64) {
-				drawAbilityRowVM(screen, fm, ab, x, y)
+				drawAbilityRowVM(screen, fm, ab, x, y, w)
 			})
 			usedH += abilityH
 		}
@@ -265,8 +277,10 @@ func DrawInfoPanel(screen *ebiten.Image, vm InfoPanelVM) {
 			if usedH+buffH > budgetH-14 {
 				remaining := len(vm.Buffs) - i
 				if remaining > 0 {
-					panel.AddRow(buffH, func(screen *ebiten.Image, x, y float64, _ float64) {
-						fm.DrawText(screen, i18n.TF("hud.info.more_buffs", remaining), x, y, theme.FontXS, theme.TextMuted)
+					panel.AddRow(buffH, func(screen *ebiten.Image, x, y float64, w float64) {
+						ui.Label(screen, i18n.TF("hud.info.more_buffs", remaining), x, y, w, ui.LabelStyle{
+							Font: theme.FontXS, Color: theme.TextMuted,
+						})
 					})
 					usedH += buffH
 				}
@@ -275,12 +289,18 @@ func DrawInfoPanel(screen *ebiten.Image, vm InfoPanelVM) {
 			b := b
 			panel.AddRow(buffH, func(screen *ebiten.Image, x, y float64, w float64) {
 				srcClr := color.RGBA{R: 180, G: 140, B: 255, A: 220}
-				fm.DrawText(screen, b.Source, x, y, theme.FontXS, srcClr)
+				ui.Label(screen, b.Source, x, y, 0, ui.LabelStyle{
+					Font: theme.FontXS, Color: srcClr,
+				})
 				srcW := fm.MeasureText(b.Source, theme.FontXS)
-				fm.DrawText(screen, b.Desc, x+srcW+6, y, theme.FontXS, theme.TextMuted)
+				ui.Label(screen, b.Desc, x+srcW+6, y, 0, ui.LabelStyle{
+					Font: theme.FontXS, Color: theme.TextMuted,
+				})
 				if b.Remaining >= 0 {
 					timeStr := strconv.FormatFloat(b.Remaining, 'f', 0, 64) + "s"
-					fm.DrawRightText(screen, timeStr, x+w, y, theme.FontXS, theme.TextMuted)
+					ui.Label(screen, timeStr, x, y, w, ui.LabelStyle{
+						Font: theme.FontXS, Color: theme.TextMuted, Align: ui.AlignRight,
+					})
 				}
 			})
 			usedH += buffH
@@ -299,10 +319,14 @@ func DrawInfoPanel(screen *ebiten.Image, vm InfoPanelVM) {
 				float32(my) >= btnRect.Y && float32(my) <= btnRect.Y+btnRect.H {
 				btnClr = color.RGBA{R: 230, G: 190, B: 60, A: 255}
 			}
-			draw.RoundRect(screen, btnRect.X, btnRect.Y, btnRect.W, btnRect.H, 6, btnClr)
+			ui.Panel(screen, btnRect.X, btnRect.Y, btnRect.W, btnRect.H, ui.PanelStyle{
+				BgColor: btnClr, Radius: 6,
+			})
 			label := i18n.TF("hud.info.select_ability", vm.PendingCount)
-			fm.DrawCenteredBoldText(screen, label,
-				float64(btnRect.X)+float64(btnRect.W)/2, y+7, theme.FontSM, theme.TextTitle)
+			ui.LabelV(screen, label,
+				btnRect.CenterX(), btnRect.CenterY(), float64(btnRect.W)-12, ui.LabelStyle{
+					Font: theme.FontSM, Color: theme.TextTitle, Bold: true,
+				})
 			lastAbilityBtnRect = btnRect
 		})
 	}
@@ -325,14 +349,18 @@ func DrawInfoPanel(screen *ebiten.Image, vm InfoPanelVM) {
 			} else {
 				btnClr = color.RGBA{R: 80, G: 80, B: 80, A: 200} // gray
 			}
-			draw.RoundRect(screen, btnRect.X, btnRect.Y, btnRect.W, btnRect.H, 6, btnClr)
+			ui.Panel(screen, btnRect.X, btnRect.Y, btnRect.W, btnRect.H, ui.PanelStyle{
+				BgColor: btnClr, Radius: 6,
+			})
 			label := i18n.TF("hud.info.unlock_ability", vm.UnlockCost)
 			textClr := theme.TextTitle
 			if !affordable {
 				textClr = color.RGBA{R: 160, G: 160, B: 160, A: 255}
 			}
-			fm.DrawCenteredBoldText(screen, label,
-				float64(btnRect.X)+float64(btnRect.W)/2, y+7, theme.FontSM, textClr)
+			ui.LabelV(screen, label,
+				btnRect.CenterX(), btnRect.CenterY(), float64(btnRect.W)-12, ui.LabelStyle{
+					Font: theme.FontSM, Color: textClr, Bold: true,
+				})
 			lastUnlockBtnRect = btnRect
 		})
 	}
@@ -385,7 +413,9 @@ func drawSlotRow(screen *ebiten.Image, fm *render.FontManager, slot SlotVM, x, y
 
 	if !slot.Unlocked {
 		// Locked slot: grey text
-		fm.DrawText(screen, "🔒 "+slot.CategoryName, x, y, theme.FontXS, color.RGBA{R: 80, G: 90, B: 110, A: 140})
+		ui.Label(screen, "\U0001F512 "+slot.CategoryName, x, y, w, ui.LabelStyle{
+			Font: theme.FontXS, Color: color.RGBA{R: 80, G: 90, B: 110, A: 140},
+		})
 		return
 	}
 
@@ -395,24 +425,32 @@ func drawSlotRow(screen *ebiten.Image, fm *render.FontManager, slot SlotVM, x, y
 			drawStatIcon(screen, im, slot.AbilityIcon, x, y, 14)
 		}
 		slotLabel := ui.TruncateText(fm, slot.AbilityLabel, 120, theme.FontSM)
-		fm.DrawBoldText(screen, slotLabel, x+19, y, theme.FontSM, theme.TextBody)
-		fm.DrawText(screen, " ("+slot.CategoryName+")", x+19+fm.MeasureText(slotLabel, theme.FontSM), y, theme.FontXS, theme.TextMuted)
+		ui.Label(screen, slotLabel, x+19, y, 0, ui.LabelStyle{
+			Font: theme.FontSM, Color: theme.TextBody, Bold: true,
+		})
+		catX := x + 19 + fm.MeasureText(slotLabel, theme.FontSM)
+		ui.Label(screen, " ("+slot.CategoryName+")", catX, y, 0, ui.LabelStyle{
+			Font: theme.FontXS, Color: theme.TextMuted,
+		})
 		return
 	}
 
 	if slot.HasPending {
 		// Pending slot: gold flash
-		fm.DrawText(screen, "⚡ "+slot.CategoryName+" — "+i18n.T("hud.info.pending"), x, y, theme.FontSM,
-			color.RGBA{R: 250, G: 200, B: 50, A: 230})
+		ui.Label(screen, "\u26A1 "+slot.CategoryName+" \u2014 "+i18n.T("hud.info.pending"), x, y, w, ui.LabelStyle{
+			Font: theme.FontSM, Color: color.RGBA{R: 250, G: 200, B: 50, A: 230},
+		})
 		return
 	}
 
 	// Unlocked but not yet cached (shouldn't happen)
-	fm.DrawText(screen, slot.CategoryName, x, y, theme.FontXS, theme.TextMuted)
+	ui.Label(screen, slot.CategoryName, x, y, w, ui.LabelStyle{
+		Font: theme.FontXS, Color: theme.TextMuted,
+	})
 }
 
 // drawAbilityRowVM renders one ability row from pre-computed VM data.
-func drawAbilityRowVM(screen *ebiten.Image, fm *render.FontManager, ab AbilityVM, x, y float64) {
+func drawAbilityRowVM(screen *ebiten.Image, fm *render.FontManager, ab AbilityVM, x, y, w float64) {
 	im := render.GlobalIcons()
 
 	// Icon
@@ -423,34 +461,41 @@ func drawAbilityRowVM(screen *ebiten.Image, fm *render.FontManager, ab AbilityVM
 
 	// Label (bold, truncated to prevent overflow)
 	displayLabel := ui.TruncateText(fm, ab.Label, 120, theme.FontSM)
-	fm.DrawBoldText(screen, displayLabel, abX, y, theme.FontSM, theme.TextBody)
+	ui.Label(screen, displayLabel, abX, y, 0, ui.LabelStyle{
+		Font: theme.FontSM, Color: theme.TextBody, Bold: true,
+	})
 	abX += fm.MeasureText(displayLabel, theme.FontSM) + 6
 
 	// Segments or fallback
 	if len(ab.Segments) == 0 {
 		if ab.Fallback != "" {
-			fm.DrawText(screen, ab.Fallback, abX, y+1, theme.FontSM, theme.TextMuted)
+			ui.Label(screen, ab.Fallback, abX, y+1, 0, ui.LabelStyle{
+				Font: theme.FontSM, Color: theme.TextMuted,
+			})
 		}
 		return
 	}
 
 	segX := abX
 	for _, seg := range ab.Segments {
+		var clr color.Color
 		switch seg.Kind {
 		case "text":
-			fm.DrawText(screen, seg.Text, segX, y+1, theme.FontSM, theme.TextMuted)
-			segX += fm.MeasureText(seg.Text, theme.FontSM)
+			clr = theme.TextMuted
 		case "base", "total":
-			fm.DrawText(screen, seg.Text, segX, y+1, theme.FontSM, theme.TextBody)
-			segX += fm.MeasureText(seg.Text, theme.FontSM)
+			clr = theme.TextBody
 		case "scaled":
-			clr := seg.Color
+			clr = seg.Color
 			if clr == nil {
 				clr = theme.TextBody
 			}
-			fm.DrawText(screen, seg.Text, segX, y+1, theme.FontSM, clr)
-			segX += fm.MeasureText(seg.Text, theme.FontSM)
+		default:
+			continue
 		}
+		ui.Label(screen, seg.Text, segX, y+1, 0, ui.LabelStyle{
+			Font: theme.FontSM, Color: clr,
+		})
+		segX += fm.MeasureText(seg.Text, theme.FontSM)
 	}
 }
 
@@ -463,7 +508,7 @@ func drawStatIcon(screen *ebiten.Image, im *render.IconManager, name string, x, 
 	if img == nil {
 		return
 	}
-	draw.Sprite(screen, img, x+size/2, y+size/2, size)
+	draw.Sprite(screen, img, x+size/2, y+size/2, size) //nolint:hud
 }
 
 // DrawInfoPanelHoverTooltip 悬停面板时的提示（已无等级系统，保留接口兼容）。
@@ -477,8 +522,6 @@ func InfoPanelUpgradeHitTest(px, py float32, visible bool) bool {
 	}
 	return lastUpgradeRect.Contains(float64(px), float64(py))
 }
-
-
 
 // InfoPanelSellHitTest 检查是否点击了卖出按钮。
 func InfoPanelSellHitTest(px, py float32, visible bool) bool {

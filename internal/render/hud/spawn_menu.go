@@ -5,7 +5,6 @@ package hud
 import (
 	"image/color"
 
-	"defense2/internal/core/game"
 	"defense2/internal/i18n"
 	"defense2/internal/render"
 	"defense2/internal/render/draw"
@@ -33,9 +32,6 @@ type SpawnMenuData struct {
 }
 
 const (
-	spawnCols    = 5
-	spawnCardW   = float32(120)
-	spawnCardH   = float32(44)
 	spawnCardGap = float32(4)
 	spawnCardR   = float32(6)
 	spawnPad     = float32(12)
@@ -43,45 +39,51 @@ const (
 
 // spawnPanelGeom 计算面板几何参数。
 func spawnPanelGeom(count int) (panelX, panelY, panelW, panelH, startY float32) {
-	rows := (count + spawnCols - 1) / spawnCols
-	panelW = spawnPad*2 + float32(spawnCols)*spawnCardW + float32(spawnCols-1)*spawnCardGap
-	panelH = spawnPad*2 + float32(rows)*spawnCardH + float32(rows-1)*spawnCardGap + 28
-	panelX = (float32(game.ScreenWidth) - panelW) / 2
-	panelY = (float32(game.ScreenHeight) - panelH) / 2
+	rows := (count + theme.SpawnCols - 1) / theme.SpawnCols
+	panelW = spawnPad*2 + float32(theme.SpawnCols)*theme.SpawnCardW + float32(theme.SpawnCols-1)*spawnCardGap
+	panelH = spawnPad*2 + float32(rows)*theme.SpawnCardH + float32(rows-1)*spawnCardGap + 28
+	panelX = (float32(theme.CanvasW) - panelW) / 2
+	panelY = (float32(theme.CanvasH) - panelH) / 2
 	startY = panelY + spawnPad + 28
 	return
 }
 
 // spawnCardPos 返回第 i 个卡片的左上角坐标。
 func spawnCardPos(i int, panelX, startY float32) (cx, cy float32) {
-	col := i % spawnCols
-	row := i / spawnCols
-	cx = panelX + spawnPad + float32(col)*(spawnCardW+spawnCardGap)
-	cy = startY + float32(row)*(spawnCardH+spawnCardGap)
+	col := i % theme.SpawnCols
+	row := i / theme.SpawnCols
+	cx = panelX + spawnPad + float32(col)*(theme.SpawnCardW+spawnCardGap)
+	cy = startY + float32(row)*(theme.SpawnCardH+spawnCardGap)
 	return
 }
 
 // DrawSpawnMenu 渲染造怪选择菜单（居中弹出面板）。
 func DrawSpawnMenu(screen *ebiten.Image, d SpawnMenuData) {
-	fm := render.GlobalFont()
-	if fm == nil || len(d.Entries) == 0 {
+	if len(d.Entries) == 0 {
 		return
 	}
 
 	panelX, panelY, panelW, panelH, startY := spawnPanelGeom(len(d.Entries))
 
 	// 半透明遮罩
-	draw.RoundRect(screen, 0, 0, float32(game.ScreenWidth), float32(game.ScreenHeight), 0, color.RGBA{A: 100})
+	ui.Overlay(screen, 100)
 
 	// 面板背景
-	draw.RoundRect(screen, panelX, panelY, panelW, panelH, 12, color.RGBA{R: 15, G: 22, B: 40, A: 245})
-	draw.StrokeRoundRect(screen, panelX, panelY, panelW, panelH, 12, 1, color.RGBA{R: 60, G: 80, B: 120, A: 200})
+	ui.Panel(screen, panelX, panelY, panelW, panelH, ui.PanelStyle{
+		BgColor:     color.RGBA{R: 15, G: 22, B: 40, A: 245},
+		BorderColor: color.RGBA{R: 60, G: 80, B: 120, A: 200},
+		Radius:      12,
+	})
 
 	// 标题
-	fm.DrawCenteredBoldText(screen, i18n.T("hud.spawn.title"), float64(panelX)+float64(panelW)/2, float64(panelY)+float64(spawnPad), theme.FontLG, color.White)
+	ui.Label(screen, i18n.T("hud.spawn.title"),
+		float64(panelX), float64(panelY)+float64(spawnPad), float64(panelW),
+		ui.LabelStyle{Font: theme.FontLG, Bold: true, Align: ui.AlignCenter})
 
 	// 右上角关闭提示
-	fm.DrawRightText(screen, i18n.T("hud.spawn.esc_close"), float64(panelX)+float64(panelW)-float64(spawnPad), float64(panelY)+float64(spawnPad)+2, theme.FontXS, color.RGBA{R: 160, G: 175, B: 200, A: 220})
+	ui.Label(screen, i18n.T("hud.spawn.esc_close"),
+		float64(panelX)+float64(spawnPad), float64(panelY)+float64(spawnPad)+2, float64(panelW)-float64(spawnPad)*2,
+		ui.LabelStyle{Font: theme.FontXS, Color: color.RGBA{R: 160, G: 175, B: 200, A: 220}, Align: ui.AlignRight})
 
 	// 卡片网格
 	cardNormal := color.RGBA{R: 25, G: 35, B: 58, A: 240}
@@ -92,18 +94,21 @@ func DrawSpawnMenu(screen *ebiten.Image, d SpawnMenuData) {
 		cx, cy := spawnCardPos(i, panelX, startY)
 
 		bg := cardNormal
+		var border color.Color
 		if i == d.HoverIdx {
 			bg = cardHover
+			border = cardBorder
 		}
-		draw.RoundRect(screen, cx, cy, spawnCardW, spawnCardH, spawnCardR, bg)
-		if i == d.HoverIdx {
-			draw.StrokeRoundRect(screen, cx, cy, spawnCardW, spawnCardH, spawnCardR, 1, cardBorder)
-		}
+		ui.Panel(screen, cx, cy, theme.SpawnCardW, theme.SpawnCardH, ui.PanelStyle{
+			BgColor:     bg,
+			BorderColor: border,
+			Radius:      spawnCardR,
+		})
 
 		// 精灵图标
 		if d.SpriteFunc != nil {
 			if img := d.SpriteFunc(entry.Name); img != nil {
-				draw.Sprite(screen, img, float64(cx)+18, float64(cy)+float64(spawnCardH)/2, 28)
+				draw.Sprite(screen, img, float64(cx)+18, float64(cy)+float64(theme.SpawnCardH)/2, 28) //nolint:hud
 			}
 		}
 
@@ -114,31 +119,37 @@ func DrawSpawnMenu(screen *ebiten.Image, d SpawnMenuData) {
 		if entry.Label != "" {
 			displayName = entry.Label
 		}
-		fm.DrawBoldText(screen, ui.TruncateText(fm, displayName, 72, theme.FontSM), nameX, nameY, theme.FontSM, color.White)
+		ui.Label(screen, displayName, nameX, nameY, 72,
+			ui.LabelStyle{Font: theme.FontSM, Bold: true})
 
 		// 简略属性
 		if entry.Boss {
-			fm.DrawText(screen, i18n.T("hud.spawn.boss"), nameX, nameY+14, theme.FontXS, color.RGBA{R: 250, G: 190, B: 80, A: 240})
+			ui.Label(screen, i18n.T("hud.spawn.boss"), nameX, nameY+14, 40,
+				ui.LabelStyle{Font: theme.FontXS, Color: color.RGBA{R: 250, G: 190, B: 80, A: 240}})
 		}
 		hpTxt := i18n.TF("hud.spawn.hp", entry.HpScale*100)
-		fm.DrawText(screen, hpTxt, nameX+40, nameY+14, theme.FontXS, color.RGBA{R: 200, G: 200, B: 210, A: 230})
+		ui.Label(screen, hpTxt, nameX+40, nameY+14, 50,
+			ui.LabelStyle{Font: theme.FontXS, Color: color.RGBA{R: 200, G: 200, B: 210, A: 230}})
 	}
 
 	// Hover tooltip（在面板下方）
 	if d.HoverIdx >= 0 && d.HoverIdx < len(d.Entries) {
-		drawSpawnTooltip(screen, fm, d.Entries[d.HoverIdx], panelX, panelY+panelH+4, panelW)
+		drawSpawnTooltip(screen, d.Entries[d.HoverIdx], panelX, panelY+panelH+4, panelW)
 	}
 }
 
 // drawSpawnTooltip 渲染 hover 详情 tooltip。
-func drawSpawnTooltip(screen *ebiten.Image, fm *render.FontManager, e SpawnEntry, x, y, maxW float32) {
+func drawSpawnTooltip(screen *ebiten.Image, e SpawnEntry, x, y, maxW float32) {
 	tipW := float32(260)
 	tipH := float32(68)
 	tipX := x + (maxW-tipW)/2
 	tipY := y
 
-	draw.RoundRect(screen, tipX, tipY, tipW, tipH, 8, color.RGBA{R: 12, G: 18, B: 35, A: 245})
-	draw.StrokeRoundRect(screen, tipX, tipY, tipW, tipH, 8, 1, color.RGBA{R: 60, G: 80, B: 120, A: 180})
+	ui.Panel(screen, tipX, tipY, tipW, tipH, ui.PanelStyle{
+		BgColor:     color.RGBA{R: 12, G: 18, B: 35, A: 245},
+		BorderColor: color.RGBA{R: 60, G: 80, B: 120, A: 180},
+		Radius:      8,
+	})
 
 	tx := float64(tipX) + 10
 	ty := float64(tipY) + 8
@@ -148,9 +159,11 @@ func drawSpawnTooltip(screen *ebiten.Image, fm *render.FontManager, e SpawnEntry
 	if e.Label != "" {
 		displayName = e.Label
 	}
-	fm.DrawBoldText(screen, ui.TruncateText(fm, displayName, 220, theme.FontMD), tx, ty, theme.FontMD, color.White)
+	ui.Label(screen, displayName, tx, ty, 220,
+		ui.LabelStyle{Font: theme.FontMD, Bold: true})
 	if e.Boss {
-		fm.DrawText(screen, i18n.T("hud.spawn.boss"), tx+100, ty+2, theme.FontSM, color.RGBA{R: 239, G: 68, B: 68, A: 255})
+		ui.Label(screen, i18n.T("hud.spawn.boss"), tx+100, ty+2, 80,
+			ui.LabelStyle{Font: theme.FontSM, Color: color.RGBA{R: 239, G: 68, B: 68, A: 255}})
 	}
 	ty += 18
 
@@ -160,23 +173,26 @@ func drawSpawnTooltip(screen *ebiten.Image, fm *render.FontManager, e SpawnEntry
 
 	if im != nil {
 		if img := im.Get("stat-damage"); img != nil {
-			draw.Sprite(screen, img, attrX+5, ty+5, 10)
+			draw.Sprite(screen, img, attrX+5, ty+5, 10) //nolint:hud
 			attrX += 14
 		}
 	}
-	fm.DrawText(screen, i18n.TF("hud.spawn.hp", e.HpScale*100), attrX, ty, theme.FontSM, color.RGBA{R: 239, G: 68, B: 68, A: 255})
+	ui.Label(screen, i18n.TF("hud.spawn.hp", e.HpScale*100), attrX, ty, 60,
+		ui.LabelStyle{Font: theme.FontSM, Color: color.RGBA{R: 239, G: 68, B: 68, A: 255}})
 	attrX += 60
 
 	if im != nil {
 		if img := im.Get("stat-movspd"); img != nil {
-			draw.Sprite(screen, img, attrX+5, ty+5, 10)
+			draw.Sprite(screen, img, attrX+5, ty+5, 10) //nolint:hud
 			attrX += 14
 		}
 	}
-	fm.DrawText(screen, i18n.TF("hud.spawn.speed", e.SpeedScale), attrX, ty, theme.FontSM, color.RGBA{R: 74, G: 222, B: 128, A: 255})
+	ui.Label(screen, i18n.TF("hud.spawn.speed", e.SpeedScale), attrX, ty, 60,
+		ui.LabelStyle{Font: theme.FontSM, Color: color.RGBA{R: 74, G: 222, B: 128, A: 255}})
 	attrX += 60
 
-	fm.DrawText(screen, i18n.TF("hud.spawn.radius", e.Radius), attrX, ty, theme.FontSM, color.RGBA{R: 160, G: 160, B: 180, A: 200})
+	ui.Label(screen, i18n.TF("hud.spawn.radius", e.Radius), attrX, ty, 80,
+		ui.LabelStyle{Font: theme.FontSM, Color: color.RGBA{R: 160, G: 160, B: 180, A: 200}})
 }
 
 // SpawnMenuHitTest 检测点击了哪个敌人卡片，返回索引或 -1。
@@ -193,7 +209,7 @@ func SpawnMenuHitTest(px, py float32, count int) int {
 
 	for i := 0; i < count; i++ {
 		cx, cy := spawnCardPos(i, panelX, startY)
-		if px >= cx && px <= cx+spawnCardW && py >= cy && py <= cy+spawnCardH {
+		if px >= cx && px <= cx+theme.SpawnCardW && py >= cy && py <= cy+theme.SpawnCardH {
 			return i
 		}
 	}

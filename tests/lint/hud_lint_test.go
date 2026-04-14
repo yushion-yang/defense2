@@ -35,13 +35,7 @@ var hudForbidden = []hudForbiddenPattern{
 
 // hudExemptFiles 尚未迁移的 hud 文件豁免清单。
 // 每迁移一个文件就从此清单移除，最终清空。
-var hudExemptFiles = map[string]bool{
-	"choice_panel.go":          true,
-	"spawn_menu.go":            true,
-	"info_panel.go":            true,
-	"build_menu.go":            true,
-	"warden_select_overlay.go": true,
-}
+var hudExemptFiles = map[string]bool{}
 
 func TestHUDComponentCompliance(t *testing.T) {
 	root := findProjectRoot(t)
