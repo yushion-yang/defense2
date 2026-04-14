@@ -1,13 +1,13 @@
 {
   "_meta": {
-    "description": "经典模式预设炮塔表 — 11 种固定塔型，每塔 3 个能力（1攻击+2辅助），按角色分三大类",
-    "version": "2.0",
+    "description": "经典模式预设炮塔表 — 11 种固定塔型，每塔 2 个能力，按角色分三大类",
+    "version": "3.0",
     "categories": {
       "dps": "输出型 — 高伤害，无 CC/AOE，需要控制塔配合",
       "aoe": "范围型 — 有 CC/DoT，缺爆发，需要输出塔收割",
       "support": "辅助型 — 自身伤害低，提供光环增益，必须放在输出塔旁边"
     },
-    "abilities_note": "第 1 个能力必须是攻击类（决定攻击方式），第 2-3 个为非攻击辅助能力"
+    "abilities_note": "每塔 2 个能力，可以无攻击类能力（使用默认弹射物攻击）"
   },
   "towers": [
     {
@@ -15,7 +15,6 @@
       "name": "猎隼",
       "category": "dps",
       "abilities": [
-        "scatter",
         "crit",
         "momentum"
       ],
@@ -26,7 +25,7 @@
       },
       "spriteKey": "cl_sentinel",
       "buildCost": 50,
-      "description": "扇形扫射+暴击+动量叠加",
+      "description": "暴击+动量叠加",
       "abilityMode": "preset",
       "strength": {
         "cost": 50,
@@ -41,8 +40,7 @@
       "category": "dps",
       "abilities": [
         "wideBeam",
-        "distanceDamage",
-        "executionBonus"
+        "distanceDamage"
       ],
       "tiers": {
         "damage": "S",
@@ -51,7 +49,7 @@
       },
       "spriteKey": "cl_railgun",
       "buildCost": 50,
-      "description": "贯穿光束，距离加伤+低血斩杀",
+      "description": "贯穿光束+距离加伤",
       "abilityMode": "preset",
       "strength": {
         "cost": 50,
@@ -66,7 +64,6 @@
       "category": "dps",
       "abilities": [
         "barrage",
-        "flatDamage",
         "enhance"
       ],
       "tiers": {
@@ -76,7 +73,7 @@
       },
       "spriteKey": "cl_gatling",
       "buildCost": 50,
-      "description": "连射弹幕+固定加伤+永久强化",
+      "description": "连射弹幕+永久强化",
       "abilityMode": "preset",
       "strength": {
         "cost": 50,
@@ -90,7 +87,6 @@
       "name": "铁蜂",
       "category": "aoe",
       "abilities": [
-        "scatter",
         "bleedDot",
         "slowPower"
       ],
@@ -101,7 +97,7 @@
       },
       "spriteKey": "cl_shotgun",
       "buildCost": 50,
-      "description": "扇形散射+流血+减速",
+      "description": "流血+减速",
       "abilityMode": "preset",
       "strength": {
         "cost": 50,
@@ -116,7 +112,6 @@
       "category": "aoe",
       "abilities": [
         "spinAoe",
-        "burn",
         "weakenZone"
       ],
       "tiers": {
@@ -126,7 +121,7 @@
       },
       "spriteKey": "cl_cyclone",
       "buildCost": 50,
-      "description": "涡旋范围攻击+灼烧+削弱",
+      "description": "涡旋范围攻击+削弱",
       "abilityMode": "preset",
       "strength": {
         "cost": 50,
@@ -141,8 +136,7 @@
       "category": "aoe",
       "abilities": [
         "radial",
-        "stunChance",
-        "weaken"
+        "stunChance"
       ],
       "tiers": {
         "damage": "B",
@@ -151,7 +145,7 @@
       },
       "spriteKey": "cl_nova",
       "buildCost": 50,
-      "description": "全方位脉冲+眩晕+削弱增伤",
+      "description": "全方位脉冲+眩晕",
       "abilityMode": "preset",
       "strength": {
         "cost": 50,
@@ -165,7 +159,6 @@
       "name": "轰鸣",
       "category": "aoe",
       "abilities": [
-        "splash",
         "poison",
         "curseZone"
       ],
@@ -176,7 +169,7 @@
       },
       "spriteKey": "cl_mortar",
       "buildCost": 50,
-      "description": "溅射+中毒+诅咒区域",
+      "description": "中毒+诅咒区域",
       "abilityMode": "preset",
       "strength": {
         "cost": 50,
@@ -190,7 +183,6 @@
       "name": "三叉戟",
       "category": "support",
       "abilities": [
-        "multiTarget",
         "slowDuration",
         "damageUpAura"
       ],
@@ -201,7 +193,7 @@
       },
       "spriteKey": "cl_prism",
       "buildCost": 50,
-      "description": "多目标攻击+减速+增伤光环",
+      "description": "减速+增伤光环",
       "abilityMode": "preset",
       "strength": {
         "cost": 50,
@@ -215,7 +207,6 @@
       "name": "回响",
       "category": "support",
       "abilities": [
-        "bounce",
         "stunDuration",
         "rangeAura"
       ],
@@ -226,7 +217,7 @@
       },
       "spriteKey": "cl_fortress",
       "buildCost": 50,
-      "description": "弹射连锁+眩晕+增距光环",
+      "description": "眩晕+增距光环",
       "abilityMode": "preset",
       "strength": {
         "cost": 50,
@@ -240,7 +231,6 @@
       "name": "弹弓",
       "category": "support",
       "abilities": [
-        "bounce",
         "attackSpeedAura",
         "goldPassive"
       ],
@@ -251,7 +241,7 @@
       },
       "spriteKey": "cl_ricochet",
       "buildCost": 50,
-      "description": "弹射连锁+攻速光环+被动产金",
+      "description": "攻速光环+被动产金",
       "abilityMode": "preset",
       "strength": {
         "cost": 50,
@@ -265,7 +255,6 @@
       "name": "蜘蛛",
       "category": "support",
       "abilities": [
-        "multiTarget",
         "critAura",
         "flatDamage"
       ],
@@ -276,7 +265,7 @@
       },
       "spriteKey": "cl_hydra",
       "buildCost": 50,
-      "description": "多目标攻击+暴击光环+固定加伤",
+      "description": "暴击光环+固定加伤",
       "abilityMode": "preset",
       "strength": {
         "cost": 50,
