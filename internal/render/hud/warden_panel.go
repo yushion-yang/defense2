@@ -9,7 +9,7 @@ import (
 
 	"defense2/internal/i18n"
 	"defense2/internal/render"
-	"defense2/internal/render/draw"
+	"defense2/internal/render/draw" //nolint:hud — draw.Sprite for warden icon
 	"defense2/internal/render/theme"
 	"defense2/internal/render/ui"
 
@@ -66,23 +66,32 @@ func DrawWardenPanel(screen *ebiten.Image, d WardenPanelData) {
 		textX := x
 		if d.Icon != nil {
 			iconSize := float64(theme.DetailTitleH)
-			draw.Sprite(screen, d.Icon, x+iconSize/2, y+iconSize/2, iconSize)
+			draw.Sprite(screen, d.Icon, x+iconSize/2, y+iconSize/2, iconSize) //nolint:hud — sprite rendering
 			textX += iconSize + 4
 		}
 		titleTxt := i18n.TF("hud.warden.title", d.Name)
-		fm.DrawBoldText(screen, titleTxt, textX, y, theme.FontLG, theme.TextTitle)
+		titleMaxW := w - (textX - x)
+		ui.Label(screen, titleTxt, textX, y, titleMaxW, ui.LabelStyle{
+			Font: theme.FontLG, Bold: true, Color: theme.TextTitle,
+		})
 
 		strIndicator := i18n.TF("hud.warden.strength_short", d.Strength)
-		fm.DrawRightText(screen, strIndicator, x+w, y+2, theme.FontSM, theme.TextBody)
+		ui.Label(screen, strIndicator, x, y+2, w, ui.LabelStyle{
+			Font: theme.FontSM, Color: theme.TextBody, Align: ui.AlignRight,
+		})
 	})
 
 	// Row 2: Strength — "强度 X" (left) + "最高 X" (right).
 	p.AddRow(float32(theme.DetailAttrH), func(screen *ebiten.Image, x, y float64, w float64) {
 		strTxt := i18n.TF("hud.warden.strength", d.Strength)
-		fm.DrawText(screen, strTxt, x, y, theme.FontSM, theme.TextBody)
+		ui.Label(screen, strTxt, x, y, w, ui.LabelStyle{
+			Font: theme.FontSM, Color: theme.TextBody,
+		})
 
 		peakTxt := i18n.TF("hud.warden.peak_strength", d.PeakStrength)
-		fm.DrawRightText(screen, peakTxt, x+w, y, theme.FontSM, theme.TextMuted)
+		ui.Label(screen, peakTxt, x, y, w, ui.LabelStyle{
+			Font: theme.FontSM, Color: theme.TextMuted, Align: ui.AlignRight,
+		})
 	})
 
 	// Row 3: Stats — damage + interval using StatLine.
@@ -111,20 +120,22 @@ func DrawWardenPanel(screen *ebiten.Image, d WardenPanelData) {
 	// Row 4: Attack description (自适应多行).
 	if d.AttackDesc != "" {
 		lines := ui.WrapText(fm, d.AttackDesc, float64(wardenPanelW)-float64(wardenPanelPad)*2, theme.FontXS)
-		addDescLines(p, fm, lines, theme.TextBody)
+		addDescLines(p, lines, theme.TextBody)
 	}
 
 	// Row 5: Special ability (自适应多行).
 	if d.SpecialDesc != "" {
 		lines := ui.WrapText(fm, d.SpecialDesc, float64(wardenPanelW)-float64(wardenPanelPad)*2, theme.FontXS)
-		addDescLines(p, fm, lines, theme.StatusStrUp)
+		addDescLines(p, lines, theme.StatusStrUp)
 	}
 
 	// Row 6: Growth info.
 	if d.GrowthDesc != "" {
 		p.AddSpace(float32(theme.DetailGap))
 		p.AddRow(float32(theme.DetailRowH), func(screen *ebiten.Image, x, y float64, w float64) {
-			fm.DrawText(screen, d.GrowthDesc, x, y, theme.FontXS, theme.StatusGrowth)
+			ui.Label(screen, d.GrowthDesc, x, y, w, ui.LabelStyle{
+				Font: theme.FontXS, Color: theme.StatusGrowth,
+			})
 		})
 	}
 
@@ -132,7 +143,7 @@ func DrawWardenPanel(screen *ebiten.Image, d WardenPanelData) {
 }
 
 // addDescLines 添加多行描述文本到面板。
-func addDescLines(p *ui.FlexPanel, fm *render.FontManager, lines []string, clr color.RGBA) {
+func addDescLines(p *ui.FlexPanel, lines []string, clr color.RGBA) {
 	if len(lines) == 0 {
 		return
 	}
@@ -140,7 +151,9 @@ func addDescLines(p *ui.FlexPanel, fm *render.FontManager, lines []string, clr c
 	for _, line := range lines {
 		line := line
 		p.AddRow(14, func(screen *ebiten.Image, x, y float64, w float64) {
-			fm.DrawText(screen, line, x, y, theme.FontXS, clr)
+			ui.Label(screen, line, x, y, w, ui.LabelStyle{
+				Font: theme.FontXS, Color: clr,
+			})
 		})
 	}
 }

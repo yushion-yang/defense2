@@ -5,11 +5,10 @@ package hud
 import (
 	"strconv"
 
-	"defense2/internal/core/game"
 	"defense2/internal/i18n"
 	"defense2/internal/render"
-	"defense2/internal/render/draw"
 	"defense2/internal/render/theme"
+	"defense2/internal/render/ui"
 
 	"github.com/hajimehoshi/ebiten/v2"
 )
@@ -53,64 +52,55 @@ func (o *DebugOverlay) DrawHUD(screen *ebiten.Image, towerCount, enemyCount, bea
 	// 半透明背景条（紧贴 TopBar 下方）
 	barY := float32(theme.TopBarY+theme.TopBarH) + 2
 	barH := float32(18)
-	bgClr := theme.OverlayHeavy
-	draw.FilledRect(screen, 0, barY, float32(game.ScreenWidth), barH, bgClr, false)
+	ui.Panel(screen, 0, barY, float32(theme.CanvasW), barH, ui.PanelStyle{
+		BgColor: theme.OverlayHeavy, Radius: 0,
+	})
 
 	// 统计文本
 	stats := i18n.TF("hud.debug.stats", towerCount, enemyCount, beamCount, projCount)
-	textClr := theme.DebugStatsClr
-	fm.DrawCenteredText(screen, stats, float64(game.ScreenWidth)/2, float64(barY)+2, theme.FontCaption, textClr)
+	ui.Label(screen, stats, 0, float64(barY)+2, float64(theme.CanvasW), ui.LabelStyle{
+		Font: theme.FontCaption, Color: theme.DebugStatsClr, Align: ui.AlignCenter,
+	})
 }
 
 // DrawPerf 绘制性能统计栏（紧贴 DrawHUD 实体栏下方）。
 // 使用 strconv + stack buffer 避免 fmt.Sprintf 分配。
-// Format: "FPS:60 | U:2.1ms D:4.3ms | P99:3.2/6.1 | GC:2/s | Heap:12M"
 func (o *DebugOverlay) DrawPerf(screen *ebiten.Image, pt PerfVM) {
 	if !o.Enabled {
 		return
 	}
-	fm := render.GlobalFont()
-	if fm == nil {
-		return
-	}
 
 	// Position: second bar below entity stats bar
-	barY := float32(theme.TopBarY+theme.TopBarH) + 2 + 18 + 1 // entity bar height + gap
+	barY := float32(theme.TopBarY+theme.TopBarH) + 2 + 18 + 1
 	barH := float32(18)
-	draw.FilledRect(screen, 0, barY, float32(game.ScreenWidth), barH, theme.OverlayHeavy, false)
+	ui.Panel(screen, 0, barY, float32(theme.CanvasW), barH, ui.PanelStyle{
+		BgColor: theme.OverlayHeavy, Radius: 0,
+	})
 
 	// Build string with strconv (zero-alloc pattern using stack buffer)
 	var buf [256]byte
 	b := buf[:0]
 
-	// FPS:60
 	b = append(b, "FPS:"...)
 	b = strconv.AppendInt(b, int64(pt.FPS+0.5), 10)
-
-	// | U:2.1ms D:4.3ms
 	b = append(b, " | U:"...)
 	b = strconv.AppendFloat(b, pt.AvgUpdateMs, 'f', 1, 64)
 	b = append(b, "ms D:"...)
 	b = strconv.AppendFloat(b, pt.AvgDrawMs, 'f', 1, 64)
 	b = append(b, "ms"...)
-
-	// | P99:3.2/6.1
 	b = append(b, " | P99:"...)
 	b = strconv.AppendFloat(b, pt.P99UpdateMs, 'f', 1, 64)
 	b = append(b, '/')
 	b = strconv.AppendFloat(b, pt.P99DrawMs, 'f', 1, 64)
-
-	// | GC:2/s
 	b = append(b, " | GC:"...)
 	b = strconv.AppendUint(b, uint64(pt.GCCount), 10)
 	b = append(b, "/s"...)
-
-	// | Heap:12M
 	b = append(b, " | Heap:"...)
 	b = strconv.AppendInt(b, int64(pt.HeapMB+0.5), 10)
 	b = append(b, 'M')
 
-	text := string(b) // single allocation for the final string
-	fm.DrawCenteredText(screen, text, float64(game.ScreenWidth)/2, float64(barY)+2, theme.FontCaption, theme.DebugStatsClr)
+	text := string(b)
+	ui.Label(screen, text, 0, float64(barY)+2, float64(theme.CanvasW), ui.LabelStyle{
+		Font: theme.FontCaption, Color: theme.DebugStatsClr, Align: ui.AlignCenter,
+	})
 }
-

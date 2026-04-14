@@ -40,13 +40,22 @@ const (
 // ---------------------------------------------------------------------------
 
 const (
-	FontTopBar      = 17
-	FontMapLabel    = 16
-	FontTowerName   = 10
-	FontGameOver    = 52
-	FontResultTitle = 42
-	FontWardenTitle = 24
-	FontSubtitle    = 13
+	FontTopBar       = 17
+	FontMapLabel     = 16
+	FontTowerName    = 10
+	FontGameOver     = 52
+	FontResultTitle  = 42
+	FontWardenTitle  = 24
+	FontSubtitle     = 13
+	FontPauseTitle   = 24 // pause_menu 标题
+	FontPauseBtn     = 18 // pause_menu 按钮
+	FontAnnounce     = 28 // wave_announce 波次公告
+	FontAnnounceLG   = 32 // wave_announce 大号公告
+	FontOverlayTitle = 22 // warden_select_overlay 标题
+	FontOverlayName  = 20 // warden_select_overlay 角色名
+	FontDetailTitle  = 18 // warden_select_overlay 详情标题
+	FontToggleIcon   = 16 // toggle_btn 图标文字
+	FontDebugClose   = 11 // debug_panel 关闭按钮
 )
 
 // ---------------------------------------------------------------------------

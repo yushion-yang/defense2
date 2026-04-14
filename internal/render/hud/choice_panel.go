@@ -225,33 +225,41 @@ func (p *ChoicePanel) Draw(screen *ebiten.Image) {
 	lay := calcLayout(n)
 
 	// 半透明遮罩
-	draw.RoundRect(screen, 0, 0, float32(theme.CanvasW), float32(theme.CanvasH), 0, theme.HUDGameOverlay)
+	ui.Overlay(screen, 102) // theme.HUDGameOverlay alpha
 
 	// 标题
 	_, cardY := lay.cardPos(n, 0)
 	titleY := float64(cardY) - 32
-	fm.DrawCenteredBoldText(screen, p.Title,
-		float64(theme.CanvasW)/2, titleY, theme.FontXL, theme.TextTitle)
+	titleMaxW := float64(lay.cols)*float64(lay.cardW) + float64(lay.cols-1)*float64(lay.gap)
+	titleX := (float64(theme.CanvasW) - titleMaxW) / 2
+	ui.Label(screen, p.Title, titleX, titleY, titleMaxW, ui.LabelStyle{
+		Font:  theme.FontXL,
+		Color: theme.TextTitle,
+		Bold:  true,
+		Align: ui.AlignCenter,
+	})
 
 	// 选项卡片
 	for i, opt := range p.Options {
 		cx, cy := lay.cardPos(n, i)
 		hovered := i == p.hovered
 
-		// 卡片背景
+		// 卡片背景 + 品质描边（通过 ui.Card 统一绘制）
 		cardBg := theme.PanelBg
 		if hovered {
 			cardBg = theme.TonePrimary
 		}
-		draw.RoundRect(screen, cx, cy, lay.cardW, lay.cardH, lay.radius, cardBg)
-
-		// 品质描边
 		tierClr := tierColor(opt.Tier)
 		borderW := float32(1.5)
 		if hovered {
 			borderW = 2.5
 		}
-		draw.StrokeRoundRect(screen, cx, cy, lay.cardW, lay.cardH, lay.radius, borderW, tierClr)
+		ui.Card(screen, cx, cy, lay.cardW, lay.cardH, ui.CardStyle{
+			BgColor:     cardBg,
+			BorderColor: tierClr,
+			Radius:      lay.radius,
+			BorderWidth: borderW,
+		})
 
 		centerX := float64(cx) + float64(lay.cardW)/2
 
@@ -262,7 +270,7 @@ func (p *ChoicePanel) Draw(screen *ebiten.Image) {
 		}
 		iconY := float64(cy) + 8
 		if icon := p.loadIcon(opt.Icon); icon != nil {
-			draw.Sprite(screen, icon, centerX, iconY+float64(iconSize)/2, float64(iconSize))
+			draw.Sprite(screen, icon, centerX, iconY+float64(iconSize)/2, float64(iconSize)) //nolint:hud
 		}
 
 		// 品质标签（图标下方）
@@ -271,11 +279,22 @@ func (p *ChoicePanel) Draw(screen *ebiten.Image) {
 		if key, ok := tierLabelKeys[opt.Tier]; ok {
 			tierText = i18n.T(key)
 		}
-		fm.DrawCenteredText(screen, tierText, centerX, tierLabelY, lay.tierSize, tierClr)
+		cardMaxW := float64(lay.cardW - lay.pad*2)
+		tierLabelX := float64(cx) + float64(lay.pad)
+		ui.Label(screen, tierText, tierLabelX, tierLabelY, cardMaxW, ui.LabelStyle{
+			Font:  lay.tierSize,
+			Color: tierClr,
+			Align: ui.AlignCenter,
+		})
 
 		// 标签
 		labelY := tierLabelY + 14
-		fm.DrawCenteredBoldText(screen, opt.Label, centerX, labelY, lay.labelSize, theme.TextTitle)
+		ui.Label(screen, opt.Label, tierLabelX, labelY, cardMaxW, ui.LabelStyle{
+			Font:  lay.labelSize,
+			Color: theme.TextTitle,
+			Bold:  true,
+			Align: ui.AlignCenter,
+		})
 
 		// 描述（卡片下部）
 		descY := labelY + 18

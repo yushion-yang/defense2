@@ -9,6 +9,7 @@ import (
 
 	"defense2/internal/render"
 	"defense2/internal/render/draw"
+	"defense2/internal/render/theme"
 
 	"github.com/hajimehoshi/ebiten/v2"
 )
@@ -422,4 +423,27 @@ func IconCard(screen *ebiten.Image, x, y, w, h float32, icon, name, desc string,
 		displayDesc := TruncateText(fm, desc, nameMaxW, descSize)
 		fm.DrawCenteredText(screen, displayDesc, cx, float64(y)+78, descSize, descClr)
 	}
+}
+
+// ---------------------------------------------------------------------------
+// Overlay — 全屏半透明遮罩
+// ---------------------------------------------------------------------------
+
+// Overlay 绘制全屏半透明遮罩。用于 pause/choice/spawn/warden_select 等场景。
+func Overlay(screen *ebiten.Image, alpha uint8) {
+	sw := float32(theme.CanvasW)
+	sh := float32(theme.CanvasH)
+	draw.FilledRect(screen, 0, 0, sw, sh, color.RGBA{A: alpha}, false)
+}
+
+// ---------------------------------------------------------------------------
+// Divider — 水平分隔线
+// ---------------------------------------------------------------------------
+
+// Divider 在 (x,y) 处绘制一条宽 w 的水平分隔线。
+func Divider(screen *ebiten.Image, x, y, w float32, clr color.Color) {
+	if clr == nil {
+		clr = color.RGBA{R: 60, G: 70, B: 90, A: 180}
+	}
+	draw.Line(screen, x, y, x+w, y, 1, clr, false)
 }

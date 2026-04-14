@@ -33,10 +33,10 @@ type ItemPanelData struct {
 
 // Item panel layout constants
 const (
-	ipCols    = 2
-	ipRows    = 3
-	ipCardW   = float32(120)
-	ipCardH   = float32(58)
+	ipCols    = theme.ItemCols
+	ipRows    = theme.ItemRows
+	ipCardW   = float32(theme.ItemCardW)
+	ipCardH   = float32(theme.ItemCardH)
 	ipCardGap = float32(8)
 	ipCardR   = float32(8)
 	ipPadX    = float32(14)
@@ -85,15 +85,16 @@ func DrawItemPanel(screen *ebiten.Image, d ItemPanelData) {
 	m := calcItemPanelMetrics()
 
 	// Panel background
-	draw.RoundRect(screen, m.panelX, m.panelY, m.panelW, m.panelH,
-		float32(theme.PanelRadius), theme.PanelBg)
-	draw.StrokeRoundRect(screen, m.panelX, m.panelY, m.panelW, m.panelH,
-		float32(theme.PanelRadius), 1, theme.PanelBorder)
+	ui.Panel(screen, m.panelX, m.panelY, m.panelW, m.panelH, ui.PanelStyle{
+		BgColor: theme.PanelBg, BorderColor: theme.PanelBorder, Radius: float32(theme.PanelRadius),
+	})
 
 	// Title
 	titleX := float64(m.panelX) + float64(ipPadX)
 	titleY := float64(m.panelY) + 6
-	fm.DrawBoldText(screen, i18n.T("hud.item.title"), titleX, titleY, theme.FontLG, theme.TextTitle)
+	ui.Label(screen, i18n.T("hud.item.title"), titleX, titleY, float64(m.panelW)-float64(ipPadX)*2, ui.LabelStyle{
+		Font: theme.FontLG, Bold: true, Color: theme.TextTitle,
+	})
 
 	// Cards
 	for i, card := range d.Cards {
@@ -147,17 +148,19 @@ func drawItemCard(screen *ebiten.Image, fm *render.FontManager, card ItemCardVM,
 	} else if !available {
 		cardBg.A = 120
 	}
-	draw.RoundRect(screen, cx, cy, ipCardW, ipCardH, ipCardR, cardBg)
+	ui.Panel(screen, cx, cy, ipCardW, ipCardH, ui.PanelStyle{
+		BgColor: cardBg, Radius: ipCardR,
+	})
 
 	// Item icon (left side)
 	iconCX := cx + 18
 	iconCY := cy + ipCardH/2 - 2
 	if img := resolveItemIcon(card); img != nil {
 		if available {
-			draw.Sprite(screen, img, float64(iconCX), float64(iconCY), 28)
+			draw.Sprite(screen, img, float64(iconCX), float64(iconCY), 28) //nolint:hud
 		} else {
 			logScale := 28.0 / float64(img.Bounds().Dx())
-			draw.SpriteScaledRotatedAlpha(screen, img, float64(iconCX), float64(iconCY), logScale, 0, 0.35)
+			draw.SpriteScaledRotatedAlpha(screen, img, float64(iconCX), float64(iconCY), logScale, 0, 0.35) //nolint:hud
 		}
 	}
 
@@ -169,7 +172,9 @@ func drawItemCard(screen *ebiten.Image, fm *render.FontManager, card ItemCardVM,
 		nameClr = theme.TextLocked
 	}
 	truncName := ui.TruncateText(fm, card.Name, 58, theme.FontSM)
-	fm.DrawText(screen, truncName, textX, textY, theme.FontSM, nameClr)
+	ui.Label(screen, truncName, textX, textY, 58, ui.LabelStyle{
+		Font: theme.FontSM, Color: nameClr,
+	})
 
 	// Count text "xN"
 	countTxt := "x" + strconv.Itoa(card.Count)
@@ -177,7 +182,10 @@ func drawItemCard(screen *ebiten.Image, fm *render.FontManager, card ItemCardVM,
 	if !available {
 		countClr = theme.TextLocked
 	}
-	fm.DrawText(screen, countTxt, textX+float64(fm.MeasureText(truncName, theme.FontSM))+4, textY, theme.FontXS, countClr)
+	countX := textX + float64(fm.MeasureText(truncName, theme.FontSM)) + 4
+	ui.Label(screen, countTxt, countX, textY, 30, ui.LabelStyle{
+		Font: theme.FontXS, Color: countClr,
+	})
 
 	// Description text
 	if card.Desc != "" {
@@ -185,7 +193,9 @@ func drawItemCard(screen *ebiten.Image, fm *render.FontManager, card ItemCardVM,
 		if !available {
 			descClr = theme.TextLocked
 		}
-		fm.DrawText(screen, ui.TruncateText(fm, card.Desc, 72, theme.FontXS), textX, textY+16, theme.FontXS, descClr)
+		ui.Label(screen, card.Desc, textX, textY+16, 72, ui.LabelStyle{
+			Font: theme.FontXS, Color: descClr,
+		})
 	}
 }
 
@@ -257,20 +267,15 @@ func ItemPanelContains(px, py float32) bool {
 
 // DrawDragItem renders a floating item at cursor position during drag.
 func DrawDragItem(screen *ebiten.Image, x, y float32, clr color.RGBA, name string, kind int, icon string) {
-	fm := render.GlobalFont()
-
-	// Colored circle background
-	draw.FilledCircle(screen, x, y, 18, color.RGBA{R: clr.R, G: clr.G, B: clr.B, A: 150})
-	// White outline
-	draw.CircleOutline(screen, x, y, 18, 2, color.RGBA{R: 255, G: 255, B: 255, A: 220})
-	// Item icon on top
+	// 拖拽预览用直接绘图（非 HUD 面板，是交互反馈）
+	draw.FilledCircle(screen, x, y, 18, color.RGBA{R: clr.R, G: clr.G, B: clr.B, A: 150}) //nolint:hud
+	draw.CircleOutline(screen, x, y, 18, 2, color.RGBA{R: 255, G: 255, B: 255, A: 220})    //nolint:hud
 	vm := ItemCardVM{Icon: icon, Kind: kind}
 	if img := resolveItemIcon(vm); img != nil {
-		draw.Sprite(screen, img, float64(x), float64(y), 28)
+		draw.Sprite(screen, img, float64(x), float64(y), 28) //nolint:hud
 	}
 
-	// Name text below
-	if fm != nil {
-		fm.DrawCenteredText(screen, name, float64(x), float64(y)+22, theme.FontXS, color.White)
-	}
+	ui.Label(screen, name, float64(x)-30, float64(y)+22, 60, ui.LabelStyle{
+		Font: theme.FontXS, Align: ui.AlignCenter,
+	})
 }

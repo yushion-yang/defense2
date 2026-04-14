@@ -5,27 +5,26 @@ package hud
 import (
 	"image/color"
 
-	"defense2/internal/core/game"
-	"defense2/internal/render"
 	"defense2/internal/render/draw"
 	"defense2/internal/render/theme"
+	"defense2/internal/render/ui"
 
 	"github.com/hajimehoshi/ebiten/v2"
 )
 
 const (
-	toggleBtnSize   = float32(44)
+	toggleBtnSize   = float32(theme.ToggleBtnSize)
 	toggleBtnRadius = float32(10)
 	toggleBtnMargin = float32(12)
 )
 
 // toggleBtnRect 返回切换按钮的矩形。left=true 左下角，false=右下角。
 func toggleBtnRect(left bool) (x, y float32) {
-	y = float32(game.ScreenHeight) - toggleBtnSize - toggleBtnMargin
+	y = float32(theme.CanvasH) - toggleBtnSize - toggleBtnMargin
 	if left {
 		x = toggleBtnMargin
 	} else {
-		x = float32(game.ScreenWidth) - toggleBtnSize - toggleBtnMargin
+		x = float32(theme.CanvasW) - toggleBtnSize - toggleBtnMargin
 	}
 	return
 }
@@ -46,20 +45,23 @@ func DrawToggleButtonWithSprite(screen *ebiten.Image, left, expanded bool, icon 
 	if expanded {
 		bg = color.RGBA{R: 40, G: 55, B: 85, A: 220}
 	}
-	draw.RoundRect(screen, x, y, toggleBtnSize, toggleBtnSize, toggleBtnRadius, bg)
-	draw.StrokeRoundRect(screen, x, y, toggleBtnSize, toggleBtnSize, toggleBtnRadius, 1, theme.PanelBorder)
+	ui.Panel(screen, x, y, toggleBtnSize, toggleBtnSize, ui.PanelStyle{
+		BgColor: bg, Radius: toggleBtnRadius, BorderColor: theme.PanelBorder, BorderWidth: 1,
+	})
 
 	cx := float64(x) + float64(toggleBtnSize)/2
 	cy := float64(y) + float64(toggleBtnSize)/2
 
 	if sprite != nil {
-		draw.Sprite(screen, sprite, cx, cy, float64(toggleBtnSize-8))
-	} else if fm := render.GlobalFont(); fm != nil {
+		draw.Sprite(screen, sprite, cx, cy, float64(toggleBtnSize-8)) //nolint:hud
+	} else {
 		label := icon
 		if expanded && left {
 			label = "<"
 		}
-		fm.DrawCenteredVText(screen, label, cx, cy, 16, color.White)
+		ui.LabelV(screen, label, cx, cy, float64(toggleBtnSize)-8, ui.LabelStyle{
+			Font: theme.FontToggleIcon,
+		})
 	}
 }
 

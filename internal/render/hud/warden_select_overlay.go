@@ -5,7 +5,6 @@ package hud
 import (
 	"image/color"
 
-	"defense2/internal/core/game"
 	"defense2/internal/i18n"
 	"defense2/internal/render"
 	"defense2/internal/render/draw"
@@ -156,7 +155,7 @@ func (o *WardenSelectOverlay) hitTestList(mx, my float64) int {
 }
 
 func (o *WardenSelectOverlay) hitTestBtn(mx, my float64, btnIdx int) bool {
-	sw := float64(game.ScreenWidth)
+	sw := float64(theme.CanvasW)
 	totalW := woBtnW*2 + woBtnGap
 	startX := (sw - totalW) / 2
 	bx := startX + float64(btnIdx)*(woBtnW+woBtnGap)
@@ -170,19 +169,18 @@ func (o *WardenSelectOverlay) Draw(screen *ebiten.Image) {
 	if !o.Active {
 		return
 	}
-	fm := render.GlobalFont()
-	if fm == nil {
-		return
-	}
-	sw := float64(game.ScreenWidth)
-	sh := float64(game.ScreenHeight)
+	sw := float64(theme.CanvasW)
 
 	// 半透明遮罩
-	draw.FilledRect(screen, 0, 0, float32(sw), float32(sh), theme.HUDGameOverlay, false)
+	ui.Overlay(screen, theme.HUDGameOverlay.A)
 
 	// 标题
-	fm.DrawCenteredBoldText(screen, i18n.T("hud.wardensel.title"), sw/2, 20, 22, theme.TextTitle)
-	fm.DrawCenteredText(screen, i18n.T("hud.wardensel.subtitle"), sw/2, 50, 11, theme.TextMuted)
+	ui.Label(screen, i18n.T("hud.wardensel.title"), 0, 20, sw, ui.LabelStyle{
+		Font: theme.FontOverlayTitle, Color: theme.TextTitle, Bold: true, Align: ui.AlignCenter,
+	})
+	ui.Label(screen, i18n.T("hud.wardensel.subtitle"), 0, 50, sw, ui.LabelStyle{
+		Font: theme.FontCaption, Color: theme.TextMuted, Align: ui.AlignCenter,
+	})
 
 	// 左侧列表
 	for i, opt := range o.options {
@@ -203,81 +201,104 @@ func (o *WardenSelectOverlay) Draw(screen *ebiten.Image) {
 		} else if hovered {
 			bg = color.RGBA{R: 40, G: 50, B: 75, A: 230}
 		}
-		draw.RoundRect(screen, x, y, w, h, 8, bg)
 
+		// 列表项背景 + 选中边框
+		borderClr := color.Color(nil)
 		if selected && !locked {
-			draw.StrokeRoundRect(screen, x, y, w, h, 8, 2, opt.Color)
+			borderClr = opt.Color
 		}
+		ui.Panel(screen, x, y, w, h, ui.PanelStyle{
+			BgColor: bg, BorderColor: borderClr, Radius: 8, BorderWidth: 2,
+		})
 
-		nameClr := theme.TextBody
+		nameClr := color.Color(theme.TextBody)
 		if locked {
 			nameClr = theme.TextLocked
 		} else if selected {
 			nameClr = color.RGBA{R: 255, G: 255, B: 255, A: 255}
 		}
 
-		displayName := ui.TruncateText(fm, opt.Name, 150, theme.FontLG)
 		if locked {
-			fm.DrawBoldText(screen, displayName, float64(x)+12, float64(y)+8, theme.FontLG, nameClr)
-			fm.DrawText(screen, i18n.T("hud.wardensel.locked"), float64(x)+12, float64(y)+26, theme.FontXS, theme.TextLocked)
+			ui.Label(screen, opt.Name, float64(x)+12, float64(y)+8, 150, ui.LabelStyle{
+				Font: theme.FontLG, Color: nameClr, Bold: true,
+			})
+			ui.Label(screen, i18n.T("hud.wardensel.locked"), float64(x)+12, float64(y)+26, 150, ui.LabelStyle{
+				Font: theme.FontXS, Color: theme.TextLocked,
+			})
 		} else {
-			fm.DrawBoldText(screen, displayName, float64(x)+12, float64(y)+8, theme.FontLG, nameClr)
+			ui.Label(screen, opt.Name, float64(x)+12, float64(y)+8, 150, ui.LabelStyle{
+				Font: theme.FontLG, Color: nameClr, Bold: true,
+			})
 			if opt.Category != "-" {
-				catClr := theme.TextMuted
+				catClr := color.Color(theme.TextMuted)
 				if opt.Category == i18n.T("hud.wardensel.cat_mobile") {
 					catClr = color.RGBA{R: 100, G: 200, B: 130, A: 200}
 				} else {
 					catClr = color.RGBA{R: 200, G: 160, B: 100, A: 200}
 				}
-				fm.DrawText(screen, opt.Category, float64(x)+12, float64(y)+26, theme.FontXS, catClr)
+				ui.Label(screen, opt.Category, float64(x)+12, float64(y)+26, 150, ui.LabelStyle{
+					Font: theme.FontXS, Color: catClr,
+				})
 			}
 		}
 	}
 
 	// 右侧详情面板
 	opt := o.options[o.selectedIdx]
-	o.drawDetail(screen, fm, opt)
+	o.drawDetail(screen, opt)
 
 	// 底部按钮
 	totalBtnW := woBtnW*2 + woBtnGap
 	btnStartX := (sw - totalBtnW) / 2
 
-	confirmClr := theme.TonePrimary
+	confirmClr := color.Color(theme.TonePrimary)
 	if o.hoverConfirm {
 		confirmClr = color.RGBA{R: 60, G: 180, B: 100, A: 255}
 	}
-	draw.RoundRect(screen, float32(btnStartX), float32(woBtnY), float32(woBtnW), float32(woBtnH), 14, confirmClr)
 	confirmLabel := i18n.TF("hud.wardensel.confirm", opt.Name)
-	fm.DrawCenteredBoldText(screen, confirmLabel, btnStartX+woBtnW/2, woBtnY+13, theme.FontLG, theme.TextTitle)
+	ui.Button(screen, float32(btnStartX), float32(woBtnY), float32(woBtnW), float32(woBtnH), confirmLabel, ui.ButtonStyle{
+		BgColor: confirmClr, TextColor: theme.TextTitle, FontSize: theme.FontLG, Radius: 14, Bold: true,
+	})
 
-	skipClr := theme.BtnSecondary
+	skipClr := color.Color(theme.BtnSecondary)
 	if o.hoverSkip {
 		skipClr = theme.BtnMuted
 	}
 	skipX := btnStartX + woBtnW + woBtnGap
-	draw.RoundRect(screen, float32(skipX), float32(woBtnY), float32(woBtnW), float32(woBtnH), 14, skipClr)
-	fm.DrawCenteredText(screen, i18n.T("hud.wardensel.skip"), skipX+woBtnW/2, woBtnY+14, theme.FontMD, theme.TextMuted)
+	ui.Button(screen, float32(skipX), float32(woBtnY), float32(woBtnW), float32(woBtnH), i18n.T("hud.wardensel.skip"), ui.ButtonStyle{
+		BgColor: skipClr, TextColor: theme.TextMuted, FontSize: theme.FontMD, Radius: 14,
+	})
 }
 
-func (o *WardenSelectOverlay) drawDetail(screen *ebiten.Image, fm *render.FontManager, opt WardenOption) {
+func (o *WardenSelectOverlay) drawDetail(screen *ebiten.Image, opt WardenOption) {
 	x := float32(woDetailX)
 	y := float32(woDetailY)
 	w := float32(woDetailW)
 	h := float32(woDetailH)
 
-	draw.RoundRect(screen, x, y, w, h, 12, theme.PanelBg)
-	draw.StrokeRoundRect(screen, x, y, w, h, 12, 1, theme.PanelBorder)
+	// 详情面板背景+边框
+	ui.Panel(screen, x, y, w, h, ui.PanelStyle{
+		BgColor: theme.PanelBg, BorderColor: theme.PanelBorder, Radius: 12, BorderWidth: 1,
+	})
 
 	if opt.Key == "none" {
-		fm.DrawCenteredText(screen, i18n.T("hud.wardensel.none_desc"), float64(x)+float64(w)/2, float64(y)+float64(h)/2-10, theme.FontLG, theme.TextMuted)
+		ui.Label(screen, i18n.T("hud.wardensel.none_desc"), float64(x), float64(y)+float64(h)/2-10, float64(w), ui.LabelStyle{
+			Font: theme.FontLG, Color: theme.TextMuted, Align: ui.AlignCenter,
+		})
 		return
 	}
 
 	if opt.Locked {
-		fm.DrawCenteredBoldText(screen, opt.Name, float64(x)+float64(w)/2, float64(y)+float64(h)/2-20, 20, theme.TextLocked)
-		fm.DrawCenteredText(screen, i18n.T("hud.wardensel.locked"), float64(x)+float64(w)/2, float64(y)+float64(h)/2+10, theme.FontLG, theme.TextLocked)
+		ui.Label(screen, opt.Name, float64(x), float64(y)+float64(h)/2-20, float64(w), ui.LabelStyle{
+			Font: theme.FontOverlayName, Color: theme.TextLocked, Bold: true, Align: ui.AlignCenter,
+		})
+		ui.Label(screen, i18n.T("hud.wardensel.locked"), float64(x), float64(y)+float64(h)/2+10, float64(w), ui.LabelStyle{
+			Font: theme.FontLG, Color: theme.TextLocked, Align: ui.AlignCenter,
+		})
 		if opt.LockReason != "" {
-			fm.DrawCenteredText(screen, opt.LockReason, float64(x)+float64(w)/2, float64(y)+float64(h)/2+34, theme.FontMD, theme.TextLocked)
+			ui.Label(screen, opt.LockReason, float64(x), float64(y)+float64(h)/2+34, float64(w), ui.LabelStyle{
+				Font: theme.FontMD, Color: theme.TextLocked, Align: ui.AlignCenter,
+			})
 		}
 		return
 	}
@@ -290,54 +311,64 @@ func (o *WardenSelectOverlay) drawDetail(screen *ebiten.Image, fm *render.FontMa
 		if img := o.SpriteFunc(opt.Key); img != nil {
 			previewX := float64(x) + float64(w) - 84
 			previewY := float64(y) + 20
-			draw.Sprite(screen, img, previewX, previewY, 64)
+			draw.Sprite(screen, img, previewX, previewY, 64) //nolint:hud
 		}
 	}
 
-	fm.DrawBoldText(screen, i18n.TF("hud.wardensel.detail_title", opt.Name), px, py, 18, theme.TextTitle)
+	ui.Label(screen, i18n.TF("hud.wardensel.detail_title", opt.Name), px, py, float64(w)-40-80, ui.LabelStyle{
+		Font: theme.FontDetailTitle, Color: theme.TextTitle, Bold: true,
+	})
 	py += 24
 
 	contentW := float64(w) - 40 - 80 // 留出右侧精灵预览空间
-	for _, line := range ui.WrapText(fm, opt.Description, contentW, theme.FontMD) {
-		fm.DrawText(screen, line, px, py, theme.FontMD, theme.TextBody)
-		py += 16
-	}
+	nLines := ui.Paragraph(screen, opt.Description, px, py, contentW, ui.ParagraphStyle{
+		Font: theme.FontMD, Color: theme.TextBody, LineGap: 16 - theme.FontMD,
+	})
+	py += float64(nLines) * 16
 	py += 8
 
-	draw.Line(screen, float32(px), float32(py), float32(px)+w-40, float32(py), 1, theme.PanelBorder, false)
+	ui.Divider(screen, float32(px), float32(py), w-40, theme.PanelBorder)
 	py += 12
 
 	descW := float64(w) - 56 // 描述区可用宽度（留左右 padding）
 	if opt.AttackName != "" {
-		fm.DrawBoldText(screen, ">> "+opt.AttackName, px, py, theme.FontMD, theme.TextTitle)
+		ui.Label(screen, ">> "+opt.AttackName, px, py, descW, ui.LabelStyle{
+			Font: theme.FontMD, Color: theme.TextTitle, Bold: true,
+		})
 		py += 16
-		for _, line := range ui.WrapText(fm, opt.AttackDesc, descW, theme.FontSM) {
-			fm.DrawText(screen, line, px+16, py, theme.FontSM, theme.TextBody)
-			py += 14
-		}
+		nLines = ui.Paragraph(screen, opt.AttackDesc, px+16, py, descW, ui.ParagraphStyle{
+			Font: theme.FontSM, Color: theme.TextBody, LineGap: 14 - theme.FontSM,
+		})
+		py += float64(nLines) * 14
 		py += 4
 	}
 
 	if opt.SpecialName != "" {
-		fm.DrawBoldText(screen, ">> "+opt.SpecialName, px, py, theme.FontMD, color.RGBA{R: 255, G: 180, B: 60, A: 255})
+		ui.Label(screen, ">> "+opt.SpecialName, px, py, descW, ui.LabelStyle{
+			Font: theme.FontMD, Color: color.RGBA{R: 255, G: 180, B: 60, A: 255}, Bold: true,
+		})
 		py += 16
-		for _, line := range ui.WrapText(fm, opt.SpecialDesc, descW, theme.FontSM) {
-			fm.DrawText(screen, line, px+16, py, theme.FontSM, theme.TextBody)
-			py += 14
-		}
+		nLines = ui.Paragraph(screen, opt.SpecialDesc, px+16, py, descW, ui.ParagraphStyle{
+			Font: theme.FontSM, Color: theme.TextBody, LineGap: 14 - theme.FontSM,
+		})
+		py += float64(nLines) * 14
 		py += 4
 	}
 
 	for _, tip := range opt.Tips {
-		fm.DrawText(screen, tip, px+16, py, theme.FontXS, theme.TextMuted)
+		ui.Label(screen, tip, px+16, py, descW-16, ui.LabelStyle{
+			Font: theme.FontXS, Color: theme.TextMuted,
+		})
 		py += 14
 	}
 
 	py += 10
-	draw.Line(screen, float32(px), float32(py), float32(px)+w-40, float32(py), 1, theme.PanelBorder, false)
+	ui.Divider(screen, float32(px), float32(py), w-40, theme.PanelBorder)
 	py += 12
 
-	fm.DrawBoldText(screen, i18n.T("hud.wardensel.base_stats"), px, py, theme.FontMD, theme.TextTitle)
+	ui.Label(screen, i18n.T("hud.wardensel.base_stats"), px, py, descW, ui.LabelStyle{
+		Font: theme.FontMD, Color: theme.TextTitle, Bold: true,
+	})
 	py += 20
 
 	attrClr := theme.TextBody
@@ -364,16 +395,21 @@ func (o *WardenSelectOverlay) drawDetail(screen *ebiten.Image, fm *render.FontMa
 		ay := py + float64(row)*16
 		if im != nil {
 			if img := im.Get(a.iconName); img != nil {
-				draw.Sprite(screen, img, ax+5, ay+5, 10)
+				draw.Sprite(screen, img, ax+5, ay+5, 10) //nolint:hud
 			}
 		}
-		fm.DrawText(screen, a.label, ax+14, ay, theme.FontSM, attrClr)
-		truncVal := ui.TruncateText(fm, a.value, 100, theme.FontSM)
-		fm.DrawBoldText(screen, truncVal, ax+44, ay, theme.FontSM, valClr)
+		ui.Label(screen, a.label, ax+14, ay, 30, ui.LabelStyle{
+			Font: theme.FontSM, Color: attrClr,
+		})
+		ui.Label(screen, a.value, ax+44, ay, 100, ui.LabelStyle{
+			Font: theme.FontSM, Color: valClr, Bold: true,
+		})
 	}
 
 	py += 40
-	fm.DrawBoldText(screen, i18n.T("hud.wardensel.growth"), px, py, theme.FontMD, theme.TextTitle)
+	ui.Label(screen, i18n.T("hud.wardensel.growth"), px, py, descW, ui.LabelStyle{
+		Font: theme.FontMD, Color: theme.TextTitle, Bold: true,
+	})
 	py += 18
 	growthClr := color.RGBA{R: 76, G: 175, B: 80, A: 255}
 	growthText := ""
@@ -387,6 +423,8 @@ func (o *WardenSelectOverlay) drawDetail(screen *ebiten.Image, fm *render.FontMa
 		growthText += i18n.TF("hud.wardensel.growth_wave", opt.GrowthWave)
 	}
 	if growthText != "" {
-		fm.DrawText(screen, growthText, px, py, theme.FontSM, growthClr)
+		ui.Label(screen, growthText, px, py, descW, ui.LabelStyle{
+			Font: theme.FontSM, Color: growthClr,
+		})
 	}
 }

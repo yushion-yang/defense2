@@ -11,7 +11,7 @@ import (
 
 	"defense2/internal/i18n"
 	"defense2/internal/render"
-	"defense2/internal/render/draw"
+	"defense2/internal/render/draw" //nolint:hud — draw.CursorPos is input, not rendering
 	"defense2/internal/render/theme"
 	"defense2/internal/render/ui"
 
@@ -109,8 +109,9 @@ func DrawActionBar(screen *ebiten.Image, d ActionBarData) {
 	pillX := float32(theme.CanvasW)/2 - pillW/2
 
 	// ── Pill background + border ──
-	draw.RoundRect(screen, pillX, pillY, pillW, pillH, pillR, theme.ActionBarBg)
-	draw.StrokeRoundRect(screen, pillX, pillY, pillW, pillH, pillR, 1, theme.ActionBarBorder)
+	ui.Panel(screen, pillX, pillY, pillW, pillH, ui.PanelStyle{
+		BgColor: theme.ActionBarBg, BorderColor: theme.ActionBarBorder, Radius: pillR,
+	})
 
 	// ── Buttons (centered inside pill) ──
 	btnArea := ui.Rect{

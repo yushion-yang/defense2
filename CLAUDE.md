@@ -104,6 +104,27 @@ tx, ty := draw.TouchPos(touchID)     // 返回逻辑坐标，不要用 ebiten.To
 - Tests: table-driven, `-race` flag always
 - Ability registration: `init()` + blank import pattern
 
+## HUD 组件规范（强制）
+
+hud/ 包禁止直接调用底层渲染 API，必须通过 ui/ 组件模板：
+
+| 需求 | 组件 | 禁止 |
+|------|------|------|
+| 单行文本 | `ui.Label` / `ui.LabelV` | `fm.DrawText` 等 |
+| 多行文本 | `ui.Paragraph` | 手动 WrapText 循环 |
+| 图标+文本 | `ui.IconLabel` | 手动 Sprite+DrawText |
+| 面板背景 | `ui.Panel` / `ui.PanelBox` | `draw.RoundRect` |
+| 全屏遮罩 | `ui.Overlay` | `draw.FilledRect` 全屏 |
+| 浮动提示 | `ui.Tooltip` | 手动 RoundRect+StrokeRoundRect |
+| 卡片网格 | `ui.CardGrid` | 手动坐标计算 |
+| 垂直堆叠 | `ui.VStack` | 手动 Y 累加 |
+| 分隔线 | `ui.Divider` | `draw.Line` |
+
+- 精灵渲染（`draw.Sprite*`）和特殊图形（minimap 路径点、动画边框闪光）用 `//nolint:hud` 豁免
+- 字号必须用 `theme.Font*` 常量，禁止数字字面量
+- 屏幕尺寸必须用 `theme.CanvasW/H`，禁止 `game.ScreenWidth/Height`
+- `tests/lint/hud_lint_test.go` 自动检测违规，`make test` 拦截
+
 ## 代码注释规范（强制）
 
 ### 语言与详细度

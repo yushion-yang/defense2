@@ -1,13 +1,11 @@
 // pause_menu.go — 暂停菜单覆盖层。
-// 半透明遮罩 + 居中面板 + 继续/设置/重新开始/返回主菜单四个按钮。
+// 半透明遮罩 + 居中面板（PanelBox） + 继续/设置/重新开始/返回主菜单四个按钮。
 package hud
 
 import (
 	"image/color"
 
-	"defense2/internal/core/game"
 	"defense2/internal/i18n"
-	"defense2/internal/render"
 	"defense2/internal/render/draw"
 	"defense2/internal/render/theme"
 	"defense2/internal/render/ui"
@@ -24,42 +22,36 @@ const (
 	PauseQuit     = 4
 )
 
-const (
-	pausePanelW = float32(360)
-	pausePanelH = float32(360)
-	pauseBtnW   = float32(260)
-	pauseBtnH   = float32(46)
-	pauseBtnGap = float32(12)
-	pauseBtnR   = float32(12)
-)
+// pauseBtnAbsY 返回第一个按钮的绝对 Y 坐标。
+// 推导：PanelBox 内边距(14) + 标题高度(FontPauseTitle+14=38) = 52，
+// 再加 28px 间距使按钮组视觉居中 → 面板顶部偏移 80。
+func pauseBtnAbsY(panelY float32) float32 {
+	return panelY + theme.PanelInnerPad + theme.FontPauseTitle + theme.PanelInnerPad + 28
+}
 
 // DrawPauseMenu 渲染暂停菜单覆盖层。
 func DrawPauseMenu(screen *ebiten.Image) {
-	fm := render.GlobalFont()
-	if fm == nil {
-		return
-	}
-
-	sw := float32(game.ScreenWidth)
-	sh := float32(game.ScreenHeight)
-
 	// 半透明全屏遮罩
-	draw.RoundRect(screen, 0, 0, sw, sh, 0, color.RGBA{R: 0, G: 0, B: 0, A: 160})
+	ui.Overlay(screen, 160)
 
-	// 居中面板
-	px := (sw - pausePanelW) / 2
-	py := (sh - pausePanelH) / 2
-	draw.RoundRect(screen, px, py, pausePanelW, pausePanelH, 14, color.RGBA{R: 18, G: 24, B: 42, A: 245})
-	draw.StrokeRoundRect(screen, px, py, pausePanelW, pausePanelH, 14, 1, color.RGBA{R: 60, G: 80, B: 120, A: 200})
+	// 居中面板 + 标题
+	sw := float32(theme.CanvasW)
+	sh := float32(theme.CanvasH)
+	px := (sw - theme.PausePanelW) / 2
+	py := (sh - theme.PausePanelH) / 2
 
-	// 标题
-	cx := float64(sw) / 2
-	titleY := float64(py) + 20
-	fm.DrawCenteredBoldText(screen, i18n.T("hud.pause.title"), cx, titleY, 24, color.White)
+	content := ui.PanelBox(screen, px, py, ui.PanelBoxStyle{
+		W:         theme.PausePanelW,
+		H:         theme.PausePanelH,
+		BgColor:   color.RGBA{R: 18, G: 24, B: 42, A: 245},
+		Border:    color.RGBA{R: 60, G: 80, B: 120, A: 200},
+		Title:     i18n.T("hud.pause.title"),
+		TitleFont: theme.FontPauseTitle,
+	})
 
 	// 四个按钮
-	btnX := (sw - pauseBtnW) / 2
-	btnY := py + 80
+	btnX := (sw - theme.PauseBtnW) / 2
+	btnY := pauseBtnAbsY(py)
 
 	buttons := []struct {
 		label string
@@ -86,33 +78,38 @@ func DrawPauseMenu(screen *ebiten.Image) {
 				A: btn.clr.A,
 			}
 		}
-		ui.Button(screen, float32(btnX), float32(btnY), float32(pauseBtnW), float32(pauseBtnH), btn.label, ui.ButtonStyle{
+		ui.Button(screen, btnX, btnY, theme.PauseBtnW, theme.PauseBtnH, btn.label, ui.ButtonStyle{
 			BgColor:   bgClr,
 			TextColor: color.White,
-			FontSize:  18,
-			Radius:    pauseBtnR,
+			FontSize:  theme.FontPauseBtn,
+			Radius:    theme.PauseBtnR,
 			Bold:      true,
 		})
-		btnY += pauseBtnH + pauseBtnGap
+		btnY += theme.PauseBtnH + theme.PauseBtnGap
 	}
 
 	// 底部快捷键提示
-	hintY := float64(py) + float64(pausePanelH) - 16
-	fm.DrawCenteredText(screen, i18n.T("hud.pause.hint"), cx, hintY, 11, color.RGBA{R: 120, G: 140, B: 170, A: 200})
+	hintY := float64(content.Y + content.H - 4)
+	hintMaxW := float64(content.W)
+	ui.Label(screen, i18n.T("hud.pause.hint"), float64(content.X), hintY, hintMaxW, ui.LabelStyle{
+		Font:  theme.FontCaption,
+		Color: color.RGBA{R: 120, G: 140, B: 170, A: 200},
+		Align: ui.AlignCenter,
+	})
 }
 
 // PauseMenuHitTest 检测暂停菜单点击，返回 PauseResume/PauseRestart/PauseQuit 或 PauseNone。
 func PauseMenuHitTest(px, py float32) int {
-	sw := float32(game.ScreenWidth)
-	sh := float32(game.ScreenHeight)
-	panelY := (sh - pausePanelH) / 2
+	sw := float32(theme.CanvasW)
+	sh := float32(theme.CanvasH)
+	panelY := (sh - theme.PausePanelH) / 2
 
-	btnX := (sw - pauseBtnW) / 2
-	btnY := panelY + 80
+	btnX := (sw - theme.PauseBtnW) / 2
+	btnY := pauseBtnAbsY(panelY)
 
 	for i := 0; i < 4; i++ {
-		by := btnY + float32(i)*(pauseBtnH+pauseBtnGap)
-		if px >= btnX && px <= btnX+pauseBtnW && py >= by && py <= by+pauseBtnH {
+		by := btnY + float32(i)*(theme.PauseBtnH+theme.PauseBtnGap)
+		if px >= btnX && px <= btnX+theme.PauseBtnW && py >= by && py <= by+theme.PauseBtnH {
 			return i + 1 // PauseResume=1, PauseSettings=2, PauseRestart=3, PauseQuit=4
 		}
 	}

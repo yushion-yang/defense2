@@ -6,8 +6,9 @@ package hud
 import (
 	"math"
 
-	"defense2/internal/render/draw"
+	"defense2/internal/render/draw" //nolint:hud — draw.SpriteScaled/RoundRect for sprite rendering
 	"defense2/internal/render/theme"
+	"defense2/internal/render/ui"
 
 	"github.com/hajimehoshi/ebiten/v2"
 )
@@ -80,7 +81,7 @@ func DrawMascotOverlay(screen *ebiten.Image, vm MascotOverlayVM) {
 			if scaleH < scaleW {
 				scale = scaleH
 			}
-			draw.SpriteScaled(screen, vm.Sprite, spriteCX, spriteCY, scale)
+			draw.SpriteScaled(screen, vm.Sprite, spriteCX, spriteCY, scale) //nolint:hud
 		}
 	} else {
 		// Placeholder rounded rect.
@@ -88,7 +89,9 @@ func DrawMascotOverlay(screen *ebiten.Image, vm MascotOverlayVM) {
 		phH := mascotSpriteH * 0.7
 		phX := cx - phW/2
 		phY := float32(spriteCY) - phH/2
-		draw.RoundRect(screen, phX, phY, phW, phH, 12, mascotPlaceholderClr)
+		ui.Panel(screen, phX, phY, phW, phH, ui.PanelStyle{
+			BgColor: mascotPlaceholderClr, Radius: 12,
+		})
 	}
 
 	// Speech bubble above mascot.

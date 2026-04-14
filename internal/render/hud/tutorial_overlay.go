@@ -7,10 +7,8 @@ import (
 	"image/color"
 	"strconv"
 
-	"defense2/internal/core/game"
 	"defense2/internal/i18n"
 	"defense2/internal/render"
-	"defense2/internal/render/draw"
 	"defense2/internal/render/theme"
 	"defense2/internal/render/ui"
 
@@ -19,10 +17,10 @@ import (
 
 // TutorialVM is the view-model for the tutorial overlay.
 type TutorialVM struct {
-	Visible       bool
-	Message       string
-	Step          int  // 1-based current step
-	Total         int  // total steps
+	Visible        bool
+	Message        string
+	Step           int  // 1-based current step
+	Total          int  // total steps
 	ClickToAdvance bool // show "点击继续" hint
 }
 
@@ -42,31 +40,37 @@ func DrawTutorialOverlay(screen *ebiten.Image, vm TutorialVM) {
 		boxH    float32 = 52
 		borderR float32 = 12
 	)
-	boxX := (float32(game.ScreenWidth) - boxW) / 2
-	boxY := float32(game.ScreenHeight) - float32(theme.BottomMargin) - float32(theme.ActionBarH) - boxH - 12
+	boxX := (float32(theme.CanvasW) - boxW) / 2
+	boxY := float32(theme.CanvasH) - float32(theme.BottomMargin) - float32(theme.ActionBarH) - boxH - 12
 
-	// Semi-transparent dark background.
-	draw.RoundRect(screen, boxX, boxY, boxW, boxH, borderR,
-		color.RGBA{R: 10, G: 15, B: 30, A: 220})
-	// Subtle border.
-	draw.StrokeRoundRect(screen, boxX, boxY, boxW, boxH, borderR, 1,
-		color.RGBA{R: 100, G: 150, B: 255, A: 100})
+	// 面板背景 + 边框
+	ui.Panel(screen, boxX, boxY, boxW, boxH, ui.PanelStyle{
+		BgColor:     theme.OverlayHeavy,
+		BorderColor: color.RGBA{R: 100, G: 150, B: 255, A: 100},
+		Radius:      borderR,
+	})
 
 	// Message text (centered in box, shrink font if too wide).
 	msgSize := ui.ShrinkFontSize(fm, vm.Message, 460, theme.FontH2, theme.FontSM)
 	msgY := float64(boxY) + float64(boxH)/2 - msgSize/2
-	fm.DrawCenteredText(screen, vm.Message,
-		float64(game.ScreenWidth)/2, msgY, msgSize, color.White)
+	ui.Label(screen, vm.Message,
+		float64(boxX), msgY, float64(boxW), ui.LabelStyle{
+			Font: msgSize, Align: ui.AlignCenter,
+		})
 
 	// Step indicator: "2/8" at bottom-right of box.
 	stepTxt := strconv.Itoa(vm.Step) + "/" + strconv.Itoa(vm.Total)
-	fm.DrawText(screen, stepTxt,
-		float64(boxX+boxW)-36, float64(boxY+boxH)-14, theme.FontCaption, theme.TextMuted)
+	ui.Label(screen, stepTxt,
+		float64(boxX+boxW)-36, float64(boxY+boxH)-14, 36, ui.LabelStyle{
+			Font: theme.FontCaption, Color: theme.TextMuted,
+		})
 
 	// "点击继续" hint for click-to-advance steps.
 	if vm.ClickToAdvance {
 		hintY := float64(boxY+boxH) + 4
-		fm.DrawCenteredText(screen, i18n.T("hud.tutorial.click_continue"),
-			float64(game.ScreenWidth)/2, hintY, theme.FontCaption, theme.TextMuted)
+		ui.Label(screen, i18n.T("hud.tutorial.click_continue"),
+			float64(boxX), hintY, float64(boxW), ui.LabelStyle{
+				Font: theme.FontCaption, Color: theme.TextMuted, Align: ui.AlignCenter,
+			})
 	}
 }
