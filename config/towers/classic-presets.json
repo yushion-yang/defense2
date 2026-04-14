@@ -26,7 +26,13 @@
       },
       "spriteKey": "cl_sentinel",
       "buildCost": 50,
-      "description": "全方位爆发，暴击+动量叠加"
+      "description": "全方位爆发，暴击+动量叠加",
+      "abilityMode": "preset",
+      "strength": {
+        "cost": 50,
+        "amount": 50,
+        "maxPurchases": 4
+      }
     },
     {
       "key": "cl_railgun",
@@ -44,7 +50,13 @@
       },
       "spriteKey": "cl_railgun",
       "buildCost": 50,
-      "description": "贯穿光束，距离加伤+低血斩杀"
+      "description": "贯穿光束，距离加伤+低血斩杀",
+      "abilityMode": "preset",
+      "strength": {
+        "cost": 50,
+        "amount": 50,
+        "maxPurchases": 4
+      }
     },
     {
       "key": "cl_gatling",
@@ -62,7 +74,13 @@
       },
       "spriteKey": "cl_gatling",
       "buildCost": 50,
-      "description": "连射火力，固定加伤+永久强化"
+      "description": "连射火力，固定加伤+永久强化",
+      "abilityMode": "preset",
+      "strength": {
+        "cost": 50,
+        "amount": 50,
+        "maxPurchases": 4
+      }
     },
     {
       "key": "cl_shotgun",
@@ -80,7 +98,13 @@
       },
       "spriteKey": "cl_shotgun",
       "buildCost": 50,
-      "description": "扇形散射+流血+减速"
+      "description": "扇形散射+流血+减速",
+      "abilityMode": "preset",
+      "strength": {
+        "cost": 50,
+        "amount": 50,
+        "maxPurchases": 4
+      }
     },
     {
       "key": "cl_cyclone",
@@ -98,7 +122,13 @@
       },
       "spriteKey": "cl_cyclone",
       "buildCost": 50,
-      "description": "旋转范围攻击+灼烧+削弱"
+      "description": "旋转范围攻击+灼烧+削弱",
+      "abilityMode": "preset",
+      "strength": {
+        "cost": 50,
+        "amount": 50,
+        "maxPurchases": 4
+      }
     },
     {
       "key": "cl_nova",
@@ -116,7 +146,13 @@
       },
       "spriteKey": "cl_nova",
       "buildCost": 50,
-      "description": "全方位爆发+眩晕+削弱增伤"
+      "description": "全方位爆发+眩晕+削弱增伤",
+      "abilityMode": "preset",
+      "strength": {
+        "cost": 50,
+        "amount": 50,
+        "maxPurchases": 4
+      }
     },
     {
       "key": "cl_mortar",
@@ -134,7 +170,13 @@
       },
       "spriteKey": "cl_mortar",
       "buildCost": 50,
-      "description": "溅射+中毒+诅咒区域"
+      "description": "溅射+中毒+诅咒区域",
+      "abilityMode": "preset",
+      "strength": {
+        "cost": 50,
+        "amount": 50,
+        "maxPurchases": 4
+      }
     },
     {
       "key": "cl_prism",
@@ -152,7 +194,13 @@
       },
       "spriteKey": "cl_prism",
       "buildCost": 50,
-      "description": "光束贯穿+减速+增伤光环"
+      "description": "光束贯穿+减速+增伤光环",
+      "abilityMode": "preset",
+      "strength": {
+        "cost": 50,
+        "amount": 50,
+        "maxPurchases": 4
+      }
     },
     {
       "key": "cl_fortress",
@@ -170,7 +218,13 @@
       },
       "spriteKey": "cl_fortress",
       "buildCost": 50,
-      "description": "光束贯穿+眩晕+增距光环"
+      "description": "光束贯穿+眩晕+增距光环",
+      "abilityMode": "preset",
+      "strength": {
+        "cost": 50,
+        "amount": 50,
+        "maxPurchases": 4
+      }
     },
     {
       "key": "cl_ricochet",
@@ -188,7 +242,13 @@
       },
       "spriteKey": "cl_ricochet",
       "buildCost": 50,
-      "description": "弹射连锁+攻速光环+被动产金"
+      "description": "弹射连锁+攻速光环+被动产金",
+      "abilityMode": "preset",
+      "strength": {
+        "cost": 50,
+        "amount": 50,
+        "maxPurchases": 4
+      }
     },
     {
       "key": "cl_hydra",
@@ -206,7 +266,13 @@
       },
       "spriteKey": "cl_hydra",
       "buildCost": 50,
-      "description": "多目标攻击+暴击光环+固定加伤"
+      "description": "多目标攻击+暴击光环+固定加伤",
+      "abilityMode": "preset",
+      "strength": {
+        "cost": 50,
+        "amount": 50,
+        "maxPurchases": 4
+      }
     }
   ]
 }

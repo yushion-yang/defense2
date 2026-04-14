@@ -14,12 +14,21 @@ import (
 )
 
 // ClassicPreset 经典模式单个预设塔的配置。
+// StrengthConfig 强度升级配置。
+type StrengthConfig struct {
+	Cost         int     `json:"cost"`         // 单次购买费用
+	Amount       float64 `json:"amount"`       // 单次增加的强度值
+	MaxPurchases int     `json:"maxPurchases"` // 最大购买次数（-1=无限）
+}
+
 type ClassicPreset struct {
 	Key         string            `json:"key"`         // 唯一标识（cl_sentinel 等）
 	Name        string            `json:"name"`        // 显示名称
 	Category    string            `json:"category"`    // 角色分类: dps / aoe / support
-	Abilities   []string          `json:"abilities"`   // 预设能力列表（第 1 个=攻击能力，决定攻击方式）
-	Tiers       map[string]string `json:"tiers"`       // 属性档位 {"damage":"S","range":"B","atkSpeed":"B"}
+	Abilities   []string          `json:"abilities"`   // 预设能力列表（第 1 个=攻击能力）
+	AbilityMode string            `json:"abilityMode"` // 能力获取方式: preset/paid/byWave/allUnlocked
+	Tiers       map[string]string `json:"tiers"`       // 属性档位
+	Strength    StrengthConfig    `json:"strength"`    // 强度升级规则
 	SpriteKey   string            `json:"spriteKey"`   // 精灵键名
 	BuildCost   int               `json:"buildCost"`   // 建造费用
 	Description string            `json:"description"` // 简短描述

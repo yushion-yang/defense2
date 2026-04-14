@@ -52,6 +52,15 @@ func TowerJSONToDef(key string, t *config.TowerJSON) tower.TowerDef {
 	def.PotentialSpeed = t.PotentialAttackSpeed
 	def.PotentialRange = t.PotentialRange
 
+	// 行为规则
+	def.AbilityAcquireMode = t.AbilityMode
+	if def.AbilityAcquireMode == "" {
+		def.AbilityAcquireMode = "paid" // 默认娱乐模式
+	}
+	def.StrengthCost = t.Strength.Cost
+	def.StrengthAmount = t.Strength.Amount
+	def.MaxStrengthBuys = t.Strength.MaxPurchases
+
 	// 升级费用
 	if len(t.UpgradeCosts) > 0 {
 		def.UpgradeCosts = make([]int, len(t.UpgradeCosts))

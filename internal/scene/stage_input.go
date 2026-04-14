@@ -29,7 +29,6 @@ import (
 	"defense2/internal/core/enemy"
 	"defense2/internal/core/event"
 	"defense2/internal/core/game"
-	"defense2/internal/core/gamemode"
 	"defense2/internal/core/item"
 	"defense2/internal/core/tower"
 	"defense2/internal/i18n"
@@ -675,8 +674,9 @@ func (s *StageScene) tryUpgradeTower() {
 	if t == nil {
 		return
 	}
-	// 强度购买上限检查（经典模式限购 2 次）
-	if max := s.ruleset.MaxStrengthPurchases(); max >= 0 && t.StrengthPurchases >= max {
+	// 强度购买上限检查（从塔配置读取）
+	def := s.findTowerDef(t)
+	if def.MaxStrengthBuys >= 0 && t.StrengthPurchases >= def.MaxStrengthBuys {
 		hud.ShowToast(i18n.T("game.tower.max_upgrade"))
 		return
 	}
@@ -699,10 +699,11 @@ func (s *StageScene) tryBulkUpgradeTower() {
 	if t == nil {
 		return
 	}
-	// 计算实际可购买次数（受上限约束）
+	// 计算实际可购买次数（从塔配置读取上限）
+	def := s.findTowerDef(t)
 	maxBuys := 5
-	if cap := s.ruleset.MaxStrengthPurchases(); cap >= 0 {
-		remaining := cap - t.StrengthPurchases
+	if def.MaxStrengthBuys >= 0 {
+		remaining := def.MaxStrengthBuys - t.StrengthPurchases
 		if remaining <= 0 {
 			hud.ShowToast(i18n.T("game.tower.max_upgrade"))
 			return
@@ -869,7 +870,8 @@ func (s *StageScene) openAbilityChoicePanel() {
 		return
 	}
 
-	if s.ruleset.AbilityMode() == gamemode.AbilityModeFreeByWave {
+	def := s.findTowerDef(t)
+	if def.AbilityAcquireMode == "allUnlocked" || def.AbilityAcquireMode == "byWave" {
 		s.openTestAbilityChoicePanel(t)
 		return
 	}

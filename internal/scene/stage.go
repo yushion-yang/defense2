@@ -641,20 +641,21 @@ func (s *StageScene) subscribeBus() {
 		prevUnlocked := tower.UnlockedSlots(s.wavesCleared)
 		s.wavesCleared++
 		newUnlocked := tower.UnlockedSlots(s.wavesCleared)
-		// 按模式规则决定是否自动为所有塔 roll 新的待选能力
-		if s.ruleset.ShouldAutoRollOnWaveClear() {
-			newPending := 0
-			s.towers.Each(func(t *tower.Tower) {
+		// 按每塔自身的 abilityMode 决定是否自动 roll 新能力
+		newPending := 0
+		s.towers.Each(func(t *tower.Tower) {
+			def := s.findTowerDef(t)
+			if def.AbilityAcquireMode == "allUnlocked" || def.AbilityAcquireMode == "byWave" {
 				before := tower.PendingCount(t)
 				tower.RollAndCachePendingChoices(t, s.wavesCleared)
 				after := tower.PendingCount(t)
 				if after > before {
 					newPending++
 				}
-			})
-			if newUnlocked > prevUnlocked && newPending > 0 {
-				hud.ShowToast(i18n.TF("game.ability.new_slots", newPending))
 			}
+		})
+		if newUnlocked > prevUnlocked && newPending > 0 {
+			hud.ShowToast(i18n.TF("game.ability.new_slots", newPending))
 		}
 		if s.wardenReady && s.wardenUnit != nil {
 			s.wardenUnit.OnWaveClear()
@@ -1132,12 +1133,16 @@ func (s *StageScene) tryPlaceTower(px, py float64) bool {
 		return false // 池满，不扣金
 	}
 	placed.BuildAnim = 0.3
-	if def.FixedTiers && len(def.PresetAbilities) > 0 {
-		// 预设塔（经典模式/测试模式中的经典塔）：直接注入预设能力
+	// 按塔自身的 abilityMode 初始化能力
+	switch def.AbilityAcquireMode {
+	case "preset":
 		tower.ApplyPresetAbilities(placed, def.PresetAbilities)
-	} else {
-		// 标准塔：按波次规则 roll 待选能力
-		tower.RollAndCachePendingChoices(placed, s.ruleset.InitialUnlockWaves(s.wavesCleared))
+	case "allUnlocked":
+		tower.RollAndCachePendingChoices(placed, s.wavesCleared)
+	case "byWave":
+		tower.RollAndCachePendingChoices(placed, s.wavesCleared)
+	default: // "paid"
+		tower.RollAndCachePendingChoices(placed, 0)
 	}
 	s.gold -= cost
 	s.gameStats.GoldSpent += cost
@@ -2955,7 +2960,7 @@ func (s *StageScene) drawScene(screen *ebiten.Image) {
 	if s.selectedTower != nil {
 		// 塔选中时显示塔信息面板（底部中央）
 		sellValue := s.econ.SellRefund(s.selectedTower.Cost)
-		vm := BuildInfoPanelVM(s.selectedTower, sellValue, s.ruleset, s.gold, s.findTowerDef(s.selectedTower).UpgradeCosts)
+		vm := BuildInfoPanelVM(s.selectedTower, sellValue, s.findTowerDef(s.selectedTower), s.gold)
 		hud.DrawInfoPanel(screen, vm)
 		// Hover 在面板上时显示升级详情浮窗
 		mx, my := draw.CursorPos()
@@ -3663,6 +3668,10 @@ func loadTowerDefsForMode(ruleset gamemode.TowerRuleset, pm *persistence.Progres
 	}
 	defs := filterUnlockedTowers(loadTowerDefsOrFallback(), pm)
 	if ruleset.IncludePresetTowers() {
+		// 测试模式：标准塔覆盖为全解锁，并追加经典预设塔
+		for i := range defs {
+			defs[i].AbilityAcquireMode = "allUnlocked"
+		}
 		defs = append(defs, loadClassicTowerDefs()...)
 	}
 	return defs
@@ -3705,7 +3714,13 @@ func loadClassicTowerDefs() []tower.TowerDef {
 			CfgBaseRange:    rngTier.Base,
 			PotentialRange:  rngTier.Potential + tp.Range.BasePotential,
 
-			// 经典模式标记
+			// 行为规则（从配置读取）
+			AbilityAcquireMode: p.AbilityMode,
+			StrengthCost:       p.Strength.Cost,
+			StrengthAmount:     p.Strength.Amount,
+			MaxStrengthBuys:    p.Strength.MaxPurchases,
+
+			// 扩展标记
 			FixedTiers:        true,
 			PresetAbilities:   p.Abilities,
 			Category:          p.Category,

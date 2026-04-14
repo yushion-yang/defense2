@@ -32,7 +32,6 @@ import (
 
 	"defense2/internal/config"
 	"defense2/internal/core/buff"
-	"defense2/internal/core/gamemode"
 	"defense2/internal/core/strength"
 	"defense2/internal/core/tower"
 	"defense2/internal/i18n"
@@ -55,9 +54,9 @@ import (
 // 参数说明：
 //   - t: 选中的塔（nil 时返回 Visible=false 的空 VM）
 //   - sellValue: 卖出退款金额（由调用方根据经济规则计算）
-//   - ruleset: 当前模式的塔规则（决定 PendingCount 计算方式和解锁按钮可见性）
-//   - gold/upgradeCosts: 用于战役模式解锁槽位按钮的费用判断
-func BuildInfoPanelVM(t *tower.Tower, sellValue int, ruleset gamemode.TowerRuleset, gold int, upgradeCosts []int) hud.InfoPanelVM {
+//   - def: 塔类型定义（含行为规则：abilityMode/强度上限等）
+//   - gold: 当前金币（判断按钮是否可用）
+func BuildInfoPanelVM(t *tower.Tower, sellValue int, def tower.TowerDef, gold int) hud.InfoPanelVM {
 	if t == nil {
 		return hud.InfoPanelVM{Visible: false}
 	}
@@ -195,30 +194,33 @@ func BuildInfoPanelVM(t *tower.Tower, sellValue int, ruleset gamemode.TowerRules
 		})
 	}
 
-	// Pending ability count
-	if ruleset.AbilityMode() == gamemode.AbilityModeFreeByWave {
-		// 自动解锁模式：显示空槽数（不依赖 PendingChoices 缓存）
+	// Pending ability count（按塔自身的能力获取方式决定）
+	switch def.AbilityAcquireMode {
+	case "allUnlocked", "byWave":
+		// 自动/全解锁模式：显示空槽数
 		for _, a := range t.AbilitySlots {
 			if a == "" {
 				vm.PendingCount++
 			}
 		}
-	} else {
+	case "preset":
+		// 预设模式：无待选
+		vm.PendingCount = 0
+	default: // "paid"
 		vm.PendingCount = tower.PendingCount(t)
 	}
 
 	// 付费解锁模式：显示解锁能力槽位按钮
-	if ruleset.ShowPaidUnlockButton() && tower.CanUnlockMore(t) {
-		tempDef := tower.TowerDef{UpgradeCosts: upgradeCosts}
+	if def.AbilityAcquireMode == "paid" && tower.CanUnlockMore(t) {
 		vm.CanUnlockSlot = true
-		vm.UnlockCost = tower.NextUpgradeCost(t, tempDef)
+		vm.UnlockCost = tower.NextUpgradeCost(t, def)
 		vm.Gold = gold
 	}
 
-	// Buttons
+	// Buttons — 强度升级（从塔配置读取上限）
 	upgCost := tower.StrengthBuyCost()
-	maxPurchases := ruleset.MaxStrengthPurchases()
-	atCap := maxPurchases >= 0 && t.StrengthPurchases >= maxPurchases
+	maxBuys := def.MaxStrengthBuys
+	atCap := maxBuys >= 0 && t.StrengthPurchases >= maxBuys
 	if atCap {
 		vm.UpgradeButtonText = i18n.T("game.tower.max_upgrade")
 		vm.BulkUpgradeButtonText = i18n.T("game.tower.max_upgrade")
@@ -227,8 +229,8 @@ func BuildInfoPanelVM(t *tower.Tower, sellValue int, ruleset gamemode.TowerRules
 	} else {
 		vm.UpgradeButtonText = i18n.TF("game.tower.btn_upgrade", upgCost)
 		remaining := 5
-		if maxPurchases >= 0 {
-			if left := maxPurchases - t.StrengthPurchases; left < remaining {
+		if maxBuys >= 0 {
+			if left := maxBuys - t.StrengthPurchases; left < remaining {
 				remaining = left
 			}
 		}

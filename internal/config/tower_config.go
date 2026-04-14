@@ -32,6 +32,10 @@ type TowerJSON struct {
 	AttackStyle     string  `json:"attackStyle"`     // "projectile"/"wideBeam"/"scatter"/"spin_aoe"
 	ProjectileSpeed float64 `json:"projectileSpeed"` // 弹射物速度（px/s）
 
+	// 行为规则
+	AbilityMode string         `json:"abilityMode"` // 能力获取方式: preset/paid/byWave/allUnlocked
+	Strength    StrengthConfig `json:"strength"`     // 强度升级规则
+
 	// 升级系统
 	UpgradeCosts []int `json:"upgradeCosts"` // 每次升级费用（长度=最大升级次数）
 }

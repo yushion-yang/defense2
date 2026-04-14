@@ -266,11 +266,17 @@ type TowerDef struct {
 	// 升级费用
 	UpgradeCosts []int // 每次升级费用（索引0=第1次升级，索引5=第6次升级）
 
-	// ── 经典模式扩展字段 ──
-	FixedTiers       bool     // true=跳过 RollTowerStats，直接使用 CfgBase*/Potential* 值
-	PresetAbilities  []string // 预设能力列表（经典模式出厂即生效，不走解锁流程）
-	Category         string   // 角色分类（dps/aoe/support），用于建造菜单分组
-	SpriteKeyOverride string  // 经典模式：强制精灵键（覆盖 AddAbility 推断的结果）
+	// ── 行为规则（从配置读取，驱动建塔/升级/能力逻辑） ──
+	AbilityAcquireMode string  // "preset"/"paid"/"byWave"/"allUnlocked"
+	StrengthCost       int     // 单次强度购买费用（0=使用 balance.json 全局值）
+	StrengthAmount     float64 // 单次购买增加的强度值（0=使用全局值）
+	MaxStrengthBuys    int     // 最大购买次数（-1=无限，0=不可升级）
+
+	// ── 扩展字段 ──
+	FixedTiers        bool     // true=跳过 RollTowerStats，直接使用 CfgBase*/Potential* 值
+	PresetAbilities   []string // 预设能力列表（abilityMode=preset 时出厂即生效）
+	Category          string   // 角色分类（dps/aoe/support），用于建造菜单分组
+	SpriteKeyOverride string   // 强制精灵键（覆盖 AddAbility 推断的结果）
 }
 
 // spriteKeyForStyle 将攻击方式映射到初始精灵标识。
