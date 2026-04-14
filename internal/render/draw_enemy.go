@@ -299,39 +299,80 @@ func (er *EnemyRenderer) DrawEnemies(screen *ebiten.Image, pool *enemy.Pool, ani
 		}
 
 		// --- 能力常驻视觉：图标组件 ---
+		// 沿敌人右侧竖排排列，每个图标 10px，间距 2px。
+		// Boss 皇冠在头顶居中（不受沉默影响），其余能力图标被沉默时隐藏。
 
 		// Boss 皇冠（始终显示，不受沉默影响）
 		if e.Boss {
 			if crownImg := er.loadShield("crown"); crownImg != nil {
-				crownY := float64(cy) - float64(e.Radius) - 6
+				crownY := float64(cy) - float64(e.Radius) - 8
 				draw.Sprite(screen, crownImg, float64(cx), crownY, 14)
 			}
 		}
 
-		// Buffer 旗帜（被沉默时隐藏）
-		if e.Behavior == "buffer" && !e.AbilitySilenced {
-			if flagImg := er.loadShield("buff-flag"); flagImg != nil {
-				draw.Sprite(screen, flagImg, float64(cx+float32(e.Radius)*0.7), float64(cy)-float64(e.Radius)*0.3, 12)
+		// 收集能力图标（被沉默时全部跳过，purge 除外因为它不可沉默）
+		const iconSize = 10.0
+		const iconGap = 2.0
+		iconBaseX := float64(cx) + float64(e.Radius) + 3
+		iconBaseY := float64(cy) - float64(e.Radius)
+		iconIdx := 0
+
+		drawAbilIcon := func(name string) {
+			if img := er.loadShield(name); img != nil {
+				iy := iconBaseY + float64(iconIdx)*(iconSize+iconGap)
+				draw.Sprite(screen, img, iconBaseX, iy, iconSize)
+				iconIdx++
 			}
 		}
 
-		// 防御盾牌（被沉默时隐藏）
+		// 不可沉默的能力图标
+		if hasAbility(e, enemy.AbilPurge) {
+			drawAbilIcon("abil-cc-immune") // purge 自带免控，复用断链图标
+		}
+
+		// 可沉默的能力图标
 		if !e.AbilitySilenced {
-			shieldOffset := float32(e.Radius) * 0.6
+			// 防御类
 			if e.ProjectileBlockChance > 0 {
-				if img := er.loadShield("shield-white"); img != nil {
-					draw.Sprite(screen, img, float64(cx+shieldOffset), float64(cy), 14)
-				}
+				drawAbilIcon("shield-white")
 			}
 			if e.ArmorFlat > 0 {
-				if img := er.loadShield("shield-blue"); img != nil {
-					draw.Sprite(screen, img, float64(cx+shieldOffset), float64(cy), 14)
-				}
+				drawAbilIcon("shield-blue")
 			}
 			if e.DamageCap > 0 || e.DamageCapPercent > 0 {
-				if img := er.loadShield("shield-orange"); img != nil {
-					draw.Sprite(screen, img, float64(cx+shieldOffset), float64(cy), 14)
-				}
+				drawAbilIcon("shield-orange")
+			}
+			if hasAbility(e, enemy.AbilDamageReduce) {
+				drawAbilIcon("abil-damage-reduce")
+			}
+			// 抗性类
+			if hasAbility(e, enemy.AbilCCImmune) {
+				drawAbilIcon("abil-cc-immune")
+			}
+			if hasAbility(e, enemy.AbilSlowImmune) {
+				drawAbilIcon("abil-slow-immune")
+			}
+			// 被动类
+			if hasAbility(e, enemy.AbilEvasion) {
+				drawAbilIcon("abil-evasion")
+			}
+			// 移动类
+			if hasAbility(e, enemy.AbilDashOnHit) {
+				drawAbilIcon("abil-dash")
+			}
+			if hasAbility(e, enemy.AbilPhaseShift) {
+				drawAbilIcon("abil-phase")
+			}
+			// 攻击类
+			if hasAbility(e, enemy.AbilStrengthDrain) {
+				drawAbilIcon("abil-str-drain")
+			}
+			// 支援类
+			if hasAbility(e, enemy.AbilHealAura) {
+				drawAbilIcon("abil-heal")
+			}
+			if hasAbility(e, enemy.AbilSpeedAura) {
+				drawAbilIcon("buff-flag")
 			}
 		}
 
