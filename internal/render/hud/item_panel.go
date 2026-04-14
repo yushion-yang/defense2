@@ -171,8 +171,7 @@ func drawItemCard(screen *ebiten.Image, fm *render.FontManager, card ItemCardVM,
 	if !available {
 		nameClr = theme.TextLocked
 	}
-	truncName := ui.TruncateText(fm, card.Name, 58, theme.FontSM)
-	ui.Label(screen, truncName, textX, textY, 58, ui.LabelStyle{
+	ui.Label(screen, card.Name, textX, textY, 58, ui.LabelStyle{
 		Font: theme.FontSM, Color: nameClr,
 	})
 
@@ -182,7 +181,7 @@ func drawItemCard(screen *ebiten.Image, fm *render.FontManager, card ItemCardVM,
 	if !available {
 		countClr = theme.TextLocked
 	}
-	countX := textX + float64(fm.MeasureText(truncName, theme.FontSM)) + 4
+	countX := textX + float64(fm.MeasureText(card.Name, theme.FontSM)) + 4
 	ui.Label(screen, countTxt, countX, textY, 30, ui.LabelStyle{
 		Font: theme.FontXS, Color: countClr,
 	})
