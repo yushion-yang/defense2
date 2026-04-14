@@ -1939,10 +1939,16 @@ func (s *StageScene) restoreScenario(sd *config.ScenarioData) {
 			continue
 		}
 		// Restore abilities (order matters: attack mode first changes style/sprite)
+		savedLabel := t.Label
 		for _, abilityType := range snap.AbilitySlots {
 			if abilityType != "" {
 				t.AddAbility(abilityType)
 			}
+		}
+		// 恢复经典预设塔的 Label 和 SpriteKey（AddAbility 会覆盖）
+		if t.SpriteKeyOverride != "" {
+			t.Label = savedLabel
+			t.SpriteKey = t.SpriteKeyOverride
 		}
 		// Restore permanent strength
 		if snap.Strength != 0 && t.Strength != nil {
