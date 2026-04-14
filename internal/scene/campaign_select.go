@@ -63,7 +63,7 @@ var diffColors = map[string]color.RGBA{
 // CampaignSelectScene 战役关卡选择（campaign/classic 共用）。
 type CampaignSelectScene struct {
 	switcher     Switcher
-	modeID       string // 游戏模式 ID（"campaign" 或 "classic"）
+	modeID       string // 游戏模式 ID（"casual" 或 "classic"）
 	fontMgr      *render.FontManager
 	progressMgr  *persistence.ProgressManager
 	levels       []config.LevelEntry
@@ -82,9 +82,9 @@ type CampaignSelectScene struct {
 }
 
 // NewCampaignSelectScene 创建战役关卡选择场景。
-// modeID 可选：默认 "campaign"，传 "classic" 则进入经典模式。
+// modeID 可选：默认 "casual"，传 "classic" 则进入经典模式。
 func NewCampaignSelectScene(sw Switcher, modeIDs ...string) *CampaignSelectScene {
-	modeID := "campaign"
+	modeID := "casual"
 	if len(modeIDs) > 0 && modeIDs[0] != "" {
 		modeID = modeIDs[0]
 	}
@@ -151,7 +151,7 @@ func (s *CampaignSelectScene) Update() error {
 		return nil
 	}
 	if inpututil.IsKeyJustPressed(ebiten.KeyEnter) || inpututil.IsKeyJustPressed(ebiten.KeySpace) {
-		if len(s.levels) > 0 && s.selectedMap < len(s.levels) && s.progressMgr.IsMapUnlocked(s.levels[s.selectedMap].ID) {
+		if len(s.levels) > 0 && s.selectedMap < len(s.levels) && s.progressMgr.IsMapUnlocked(s.modeID,s.levels[s.selectedMap].ID) {
 			playUIClick(s.switcher)
 			s.startGame()
 			return nil
@@ -167,7 +167,7 @@ func (s *CampaignSelectScene) Update() error {
 			return nil
 		}
 		if idx := s.hitTestMapCards(mx, my); idx >= 0 {
-			if idx < len(s.levels) && s.progressMgr.IsMapUnlocked(s.levels[idx].ID) {
+			if idx < len(s.levels) && s.progressMgr.IsMapUnlocked(s.modeID,s.levels[idx].ID) {
 				s.selectedMap = idx
 				playUIClick(s.switcher)
 			} else if idx < len(s.levels) {
@@ -186,7 +186,7 @@ func (s *CampaignSelectScene) Update() error {
 		}
 		if s.hoverStart && len(s.levels) > 0 {
 			// 检查选中关卡是否已解锁
-			if s.selectedMap < len(s.levels) && s.progressMgr.IsMapUnlocked(s.levels[s.selectedMap].ID) {
+			if s.selectedMap < len(s.levels) && s.progressMgr.IsMapUnlocked(s.modeID,s.levels[s.selectedMap].ID) {
 				playUIClick(s.switcher)
 				s.startGame()
 			}
@@ -289,7 +289,7 @@ func (s *CampaignSelectScene) Draw(screen *ebiten.Image) {
 	// ── 选中关卡描述 ──
 	if s.selectedMap >= 0 && s.selectedMap < len(s.levels) {
 		level := s.levels[s.selectedMap]
-		if s.progressMgr.IsMapUnlocked(level.ID) {
+		if s.progressMgr.IsMapUnlocked(s.modeID,level.ID) {
 			if level.Description != "" {
 				fm.DrawCenteredText(screen, level.Description, sw/2, csDescY, 12, theme.TextMuted)
 			}
@@ -311,7 +311,7 @@ func (s *CampaignSelectScene) Draw(screen *ebiten.Image) {
 	// ── 开始按钮 ──
 	bx := float32((sw - csBtnW) / 2)
 	by := float32(csBtnY)
-	selectedLocked := s.selectedMap < len(s.levels) && !s.progressMgr.IsMapUnlocked(s.levels[s.selectedMap].ID)
+	selectedLocked := s.selectedMap < len(s.levels) && !s.progressMgr.IsMapUnlocked(s.modeID,s.levels[s.selectedMap].ID)
 	btnClr := greenAccent
 	if selectedLocked {
 		btnClr = color.RGBA{R: 60, G: 70, B: 85, A: 255} // 灰色禁用
@@ -327,7 +327,7 @@ func (s *CampaignSelectScene) Draw(screen *ebiten.Image) {
 
 	// ── 底部提示 ──
 	fm.DrawCenteredText(screen, i18n.T("scene.campaign.hint"), sw/2, sh-30, 10, textDim)
-	fm.DrawCenteredText(screen, "v0.1.0", sw/2, sh-12, 9, color.RGBA{R: 60, G: 65, B: 80, A: 255})
+	fm.DrawCenteredText(screen, game.Version, sw/2, sh-12, 9, color.RGBA{R: 60, G: 65, B: 80, A: 255})
 }
 
 // drawMapCards 绘制地图卡片网格。
@@ -351,7 +351,7 @@ func (s *CampaignSelectScene) drawMapCards(screen *ebiten.Image, fm *render.Font
 		h := float32(csCardH)
 		selected := i == s.selectedMap
 		hovered := i == s.hoverMap
-		locked := !s.progressMgr.IsMapUnlocked(level.ID)
+		locked := !s.progressMgr.IsMapUnlocked(s.modeID,level.ID)
 
 		// 卡片背景
 		bg := cardBg
@@ -396,7 +396,7 @@ func (s *CampaignSelectScene) drawMapCards(screen *ebiten.Image, fm *render.Font
 
 			// 星级（右上）— 从持久化读取当前难度下的星级
 			diffID := s.difficulties[s.selectedDiff].ID
-			rec := s.progressMgr.GetMapRecord(diffID, level.ID)
+			rec := s.progressMgr.GetMapRecord(s.modeID, diffID, level.ID)
 			starStr := "\u2606\u2606\u2606" // 默认三空星
 			starClr := theme.TextLocked
 			if rec != nil && rec.Stars > 0 {

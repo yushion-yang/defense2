@@ -381,7 +381,7 @@
       {
         "text": {
           "zh": "一个人走得快，一群塔守得远。",
-          "en": "One tower moves fast, but a team of towers holds the line."
+          "en": "One person goes fast, but a team of towers holds the line."
         },
         "expression": "talk",
         "autoAdvance": 4
@@ -1697,8 +1697,8 @@
     "lines": [
       {
         "text": {
-          "zh": "塔防游戏起源于2007年的Flash时代哦。",
-          "en": "Tower defense games trace back to the 2007 Flash era!"
+          "zh": "塔防游戏在2007年的Flash时代大火哦。",
+          "en": "Tower defense games blew up during the 2007 Flash era!"
         },
         "expression": "talk",
         "autoAdvance": 5

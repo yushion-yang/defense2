@@ -1078,7 +1078,7 @@
       {
         "text": {
           "zh": "生命值告急！用道具补救一下吧！",
-          "en": "Health critical! Try using some items to recover!"
+          "en": "Health critical! Use items to boost your towers!"
         },
         "expression": "surprised",
         "autoAdvance": 3

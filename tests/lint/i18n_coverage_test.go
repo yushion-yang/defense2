@@ -188,8 +188,8 @@ type mascotDialog struct {
 	Lines []mascotLine `json:"lines"`
 }
 
-// TestMascotDialogsBilingual 确保所有萌妹对话 JSON 的 text 字段都有 zh 和 en key。
-// en 为空字符串时仅警告（翻译分批进行），但缺少 key 直接 fail。
+// TestMascotDialogsBilingual 确保所有萌妹对话 JSON 的 text 字段都有 zh 和 en key，
+// 且 en 不为空。新增对话必须同时提供中英文，否则 lint 不通过。
 func TestMascotDialogsBilingual(t *testing.T) {
 	root := findProjectRoot(t)
 
@@ -225,6 +225,7 @@ func TestMascotDialogsBilingual(t *testing.T) {
 					t.Errorf("%s: dialog %q line %d: missing 'en' key", file, d.ID, lineIdx)
 					missingKey++
 				} else if en == "" {
+					t.Errorf("%s: dialog %q line %d: 'en' is empty (must provide English translation)", file, d.ID, lineIdx)
 					emptyEN++
 				}
 			}
@@ -232,7 +233,7 @@ func TestMascotDialogsBilingual(t *testing.T) {
 	}
 
 	if emptyEN > 0 {
-		t.Logf("%d/%d mascot dialog lines have empty English translations (pending batch translation).", emptyEN, totalLines)
+		t.Logf("%d/%d mascot dialog lines have empty English translations. Add translations to pass.", emptyEN, totalLines)
 	}
 	if missingKey > 0 {
 		t.Logf("%d mascot dialog lines are missing required locale keys.", missingKey)

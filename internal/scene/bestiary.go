@@ -318,7 +318,7 @@ func (s *BestiaryScene) drawEnemyCards(screen *ebiten.Image, fm *render.FontMana
 
 		// Boss 标记
 		if arch.Boss {
-			fm.DrawCenteredText(screen, "BOSS", cx, float64(y)+30, 9, theme.ToneGold)
+			fm.DrawCenteredText(screen, i18n.T("game.tag.boss"), cx, float64(y)+30, 9, theme.ToneGold)
 		}
 
 		// 击杀统计
@@ -422,7 +422,7 @@ func (s *BestiaryScene) drawDetailPanel(screen *ebiten.Image, fm *render.FontMan
 			arch := s.enemies[s.selected]
 			fm.DrawBoldText(screen, arch.Label, px, py, 16, theme.TextTitle)
 			if arch.Boss {
-				fm.DrawText(screen, " BOSS", px+fm.MeasureText(arch.Label, 16)+4, py, 12, theme.ToneGold)
+				fm.DrawText(screen, " "+i18n.T("game.tag.boss"), px+fm.MeasureText(arch.Label, 16)+4, py, 12, theme.ToneGold)
 			}
 			fm.DrawText(screen, i18n.TF("scene.bestiary.hp", arch.HPScale), px, py+24, 12, theme.TextBody)
 			fm.DrawText(screen, i18n.TF("scene.bestiary.speed", arch.SpeedScale), px+140, py+24, 12, theme.TextBody)

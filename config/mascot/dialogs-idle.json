@@ -184,7 +184,7 @@
     "lines": [
       {
         "text": {
-          "zh": "塔的力量值越高，属性加成越明显。",
+          "zh": "塔的强度越高，属性加成越明显。",
           "en": "The higher a tower's Strength, the bigger the stat bonuses."
         },
         "expression": "talk",
@@ -1804,7 +1804,7 @@
       {
         "text": {
           "zh": "塔的攻速有下限，不可能无限快哦。",
-          "en": "Tower attack speed has a minimum — it can't go infinitely fast."
+          "en": "Towers have a fire rate cap -- they can't shoot infinitely fast."
         },
         "expression": "talk",
         "autoAdvance": 5
@@ -1871,8 +1871,8 @@
     "lines": [
       {
         "text": {
-          "zh": "最早的塔防是星际争霸的自定义地图。",
-          "en": "The first tower defense was a StarCraft custom map."
+          "zh": "塔防通过星际争霸的自定义地图而闻名。",
+          "en": "Tower defense got famous through StarCraft custom maps."
         },
         "expression": "talk",
         "autoAdvance": 5
@@ -1950,7 +1950,7 @@
     "priority": 1
   },
   {
-    "id": "idle_ext_111",
+    "id": "idle_ext_111b",
     "scene": "*",
     "trigger": "idle_chatter",
     "lines": [

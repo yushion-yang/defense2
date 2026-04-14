@@ -351,7 +351,8 @@ func (s *SettingsScene) Draw(screen *ebiten.Image) {
 
 	// ── 作者联系方式（面板底部） ──
 	contactY := float64(bky) + float64(bkh) + 12
-	fm.DrawCenteredText(screen, i18n.T("settings.contact")+": 892544825@qq.com", cx, contactY, 10, theme.TextMuted)
+	contactAddr := "892544825@qq.com"
+	fm.DrawCenteredText(screen, i18n.TF("settings.contact_info", contactAddr), cx, contactY, 10, theme.TextMuted)
 }
 
 // drawSlider 绘制一个音量滑块行（标签 + 滑块条 + 百分比文字）。

@@ -20,6 +20,7 @@ import (
 
 	"defense2/internal/config"
 	"defense2/internal/core/gamemap"
+	"defense2/internal/i18n"
 	"defense2/internal/render/draw"
 	"defense2/internal/render/theme"
 
@@ -335,11 +336,11 @@ func drawPathLabels(screen *ebiten.Image, gm *gamemap.GameMap, fm *FontManager) 
 
 	// "入口" at first waypoint (centered above).
 	first := waypoints[0]
-	fm.DrawCenteredText(screen, "\u5165\u53e3", first.X, first.Y-float64(theme.MapSlotRadius)-labelSize, labelSize, clr)
+	fm.DrawCenteredText(screen, i18n.T("game.map.entrance"), first.X, first.Y-float64(theme.MapSlotRadius)-labelSize, labelSize, clr)
 
 	// "基地" at last waypoint (centered above).
 	last := waypoints[len(waypoints)-1]
-	fm.DrawCenteredText(screen, "\u57fa\u5730", last.X, last.Y-float64(theme.MapSlotRadius)-labelSize, labelSize, clr)
+	fm.DrawCenteredText(screen, i18n.T("game.map.base"), last.X, last.Y-float64(theme.MapSlotRadius)-labelSize, labelSize, clr)
 }
 
 // ---------------------------------------------------------------------------

@@ -1,6 +1,7 @@
-// i18n_lint_test.go — 禁止在 Go 源码中硬编码中文字符串。
+// i18n_lint_test.go — 强制文本国际化。
+// 1. TestNoHardcodedChineseStrings: 禁止 Go 源码硬编码中文字符串。
+// 2. TestNoRawStringInDrawCalls: 禁止文本渲染函数接收裸字符串字面量。
 // 所有用户可见文本必须通过 i18n.T() 或 i18n.TF() 获取。
-// 白名单：i18n 包本身、测试文件、config loader（JSON tag）、注释、log 语句。
 package lint_test
 
 import (
@@ -124,5 +125,113 @@ func TestNoHardcodedChineseStrings(t *testing.T) {
 
 	if violations > 0 {
 		t.Logf("\n%d hardcoded Chinese string(s) found. Wrap with i18n.T(\"key\") and add entries to config/i18n/*.json.", violations)
+	}
+}
+
+// ── TestNoRawStringInDrawCalls ─────────────────────────────────
+
+// reDrawCall 匹配文本渲染函数调用（FontManager.Draw*Text、ShowToast、SpawnText、ui.Button 等）。
+var reDrawCall = regexp.MustCompile(
+	`\.(Draw(?:Centered)?(?:V)?(?:Bold)?(?:Right)?Text|DrawWrappedText)\(` +
+		`|ShowToast\(` +
+		`|SpawnText\(` +
+		`|ui\.Button(?:WithState)?\(` +
+		`|ui\.Badge\(` +
+		`|ui\.IconCard\(`,
+)
+
+// reRawStringLiteral 匹配引号内的字符串字面量（非空）。
+var reRawStringLiteral = regexp.MustCompile(`"([^"]+)"`)
+
+// reI18nWrapped 匹配 i18n.T("...")/i18n.TF("...", ...) 中的 key 字符串。
+// 只剥离 i18n 调用中的引号 key 部分，保留其他裸字符串供后续检查。
+var reI18nWrapped = regexp.MustCompile(`i18n\.TF?\("[^"]*"`)
+
+// reExemptLiteral 匹配无需国际化的字符串：纯格式占位符、纯符号/装饰、单位后缀、数字格式。
+var reExemptLiteral = regexp.MustCompile(
+	`^(%[.\-\d]*[dfsegvx]|` + // fmt 格式占位符
+		`[^\p{L}]{0,4}|` + // ≤4 字符且不含字母（符号/装饰）
+		`.{1}|` + // 单字符全部豁免（单位符号如 G/s/x）
+		`%.+[dfseg])$`, // 数字格式串如 "%.0f", "%d/%d"
+)
+
+// TestNoRawStringInDrawCalls 确保文本渲染函数不接收裸字符串字面量。
+// 所有展示给用户的文本必须来自 i18n.T()/TF() 或已解析的变量，不允许硬编码。
+func TestNoRawStringInDrawCalls(t *testing.T) {
+	root := findProjectRoot(t)
+	violations := 0
+
+	err := filepath.Walk(root, func(path string, info os.FileInfo, err error) error {
+		if err != nil {
+			return err
+		}
+		if info.IsDir() || !strings.HasSuffix(path, ".go") {
+			return nil
+		}
+
+		rel, _ := filepath.Rel(root, path)
+
+		// 跳过测试文件
+		if strings.HasSuffix(rel, "_test.go") {
+			return nil
+		}
+		// 跳过 vendor/.claude
+		if strings.Contains(rel, "vendor") || strings.Contains(rel, ".claude") {
+			return nil
+		}
+		// 跳过白名单路径（dev tools 等）
+		for _, allowed := range i18nAllowedPaths {
+			if strings.Contains(rel, allowed) {
+				return nil
+			}
+		}
+
+		f, err := os.Open(path)
+		if err != nil {
+			return err
+		}
+		defer f.Close()
+
+		scanner := bufio.NewScanner(f)
+		lineNum := 0
+		for scanner.Scan() {
+			lineNum++
+			line := scanner.Text()
+
+			// 跳过注释行
+			trimmed := strings.TrimSpace(line)
+			if strings.HasPrefix(trimmed, "//") {
+				continue
+			}
+
+			// 必须是文本渲染函数调用
+			if !reDrawCall.MatchString(line) {
+				continue
+			}
+
+			// 剥离 i18n.T()/TF() 包裹的部分，只检查剩余裸字符串
+			stripped := reI18nWrapped.ReplaceAllString(line, "")
+
+			// 查找剩余的字符串字面量
+			matches := reRawStringLiteral.FindAllStringSubmatch(stripped, -1)
+			for _, m := range matches {
+				lit := m[1]
+				// 豁免：纯符号/装饰/格式串
+				if reExemptLiteral.MatchString(lit) {
+					continue
+				}
+				t.Errorf("%s:%d: raw string %q in Draw/Text call (use i18n.T())\n  > %s", rel, lineNum, lit, trimmed)
+				violations++
+			}
+		}
+		return scanner.Err()
+	})
+
+	if err != nil {
+		t.Fatalf("walk error: %v", err)
+	}
+
+	if violations > 0 {
+		t.Logf("\n%d raw string literal(s) in text rendering calls. Use i18n.T(\"key\") instead.", violations)
 	}
 }

@@ -341,7 +341,7 @@ func NewStageSceneWithOpts(sw Switcher, opts StageOptions) *StageScene {
 	// 创建游戏模式和会话
 	modeID := opts.ModeID
 	if modeID == "" {
-		modeID = "campaign"
+		modeID = "casual"
 	}
 	if opts.TestMode {
 		modeID = "test"
@@ -1426,7 +1426,7 @@ func (s *StageScene) drawSaveNaming(screen *ebiten.Image) {
 	draw.StrokeRoundRect(screen, boxX, boxY, boxW, boxH, 12, 1.5, color.RGBA{R: 80, G: 120, B: 200, A: 200})
 
 	// Title
-	fm.DrawCenteredText(screen, "Save Scenario", sw/2, float64(boxY)+16, 16, color.RGBA{R: 220, G: 230, B: 255, A: 255})
+	fm.DrawCenteredText(screen, i18n.T("game.debug.save_scenario"), sw/2, float64(boxY)+16, 16, color.RGBA{R: 220, G: 230, B: 255, A: 255})
 
 	// Input field background
 	fieldX := boxX + 20
@@ -1443,13 +1443,13 @@ func (s *StageScene) drawSaveNaming(screen *ebiten.Image) {
 	}
 	if display == "|" {
 		// Show placeholder when empty
-		fm.DrawText(screen, "Enter scenario name...", float64(fieldX)+8, float64(fieldY)+7, 13, color.RGBA{R: 80, G: 90, B: 110, A: 200})
+		fm.DrawText(screen, i18n.T("game.debug.enter_name"), float64(fieldX)+8, float64(fieldY)+7, 13, color.RGBA{R: 80, G: 90, B: 110, A: 200})
 	} else {
 		fm.DrawText(screen, display, float64(fieldX)+8, float64(fieldY)+7, 13, color.RGBA{R: 200, G: 210, B: 230, A: 255})
 	}
 
 	// Hint
-	fm.DrawCenteredText(screen, "Enter: Save  |  Esc: Cancel", sw/2, float64(boxY+boxH)-14, 10, color.RGBA{R: 100, G: 110, B: 140, A: 200})
+	fm.DrawCenteredText(screen, i18n.T("game.debug.save_hint"), sw/2, float64(boxY+boxH)-14, 10, color.RGBA{R: 100, G: 110, B: 140, A: 200})
 }
 
 // enemyTooltipLine 带颜色的 tooltip 行。
@@ -1650,10 +1650,26 @@ func (s *StageScene) drawEnemyInfoPanel(screen *ebiten.Image, e *enemy.Enemy) {
 // saveScenario exports the current tower layout + scene config to a JSON file.
 func (s *StageScene) saveScenario(name string) {
 	var towers []config.TowerSnapshot
+	// enhance 反算因子：快照存原始属性，加载时由 ApplyEnhanceIfPresent 重新 apply
+	enhBoost, enhRange := tower.EnhanceFactors()
 	s.towers.Each(func(t *tower.Tower) {
 		var permStr float64
 		if t.Strength != nil {
 			permStr = t.Strength.Permanent
+		}
+		bd, pd := t.BaseDamage, t.PotentialDamage
+		bs, ps := t.BaseSpeed, t.PotentialSpeed
+		br, pr := t.BaseRange, t.PotentialRange
+		// 如果塔有 enhance，反算出 enhance 前的原始属性
+		if tower.HasEnhance(t) && enhBoost > 0 {
+			dmgDiv := 1 + enhBoost
+			rngDiv := 1 + enhRange
+			bd /= dmgDiv
+			pd /= dmgDiv
+			bs /= dmgDiv
+			ps /= dmgDiv
+			br /= rngDiv
+			pr /= rngDiv
 		}
 		towers = append(towers, config.TowerSnapshot{
 			Row:             t.Row,
@@ -1663,12 +1679,12 @@ func (s *StageScene) saveScenario(name string) {
 			DamageTier:      t.DamageTier,
 			SpeedTier:       t.SpeedTier,
 			RangeTier:       t.RangeTier,
-			BaseDamage:      t.BaseDamage,
-			PotentialDamage: t.PotentialDamage,
-			BaseSpeed:       t.BaseSpeed,
-			PotentialSpeed:  t.PotentialSpeed,
-			BaseRange:       t.BaseRange,
-			PotentialRange:  t.PotentialRange,
+			BaseDamage:      bd,
+			PotentialDamage: pd,
+			BaseSpeed:       bs,
+			PotentialSpeed:  ps,
+			BaseRange:       br,
+			PotentialRange:  pr,
 			Specialty:       t.Specialty,
 			Strength:        permStr,
 		})
@@ -1941,7 +1957,7 @@ func (s *StageScene) restoreScenario(sd *config.ScenarioData) {
 		// Restore abilities (order matters: attack mode first changes style/sprite)
 		savedLabel := t.Label
 		for _, abilityType := range snap.AbilitySlots {
-			if abilityType != "" {
+			if abilityType != "" && abilityType != tower.AbilityEnhance {
 				t.AddAbility(abilityType)
 			}
 		}
@@ -1950,6 +1966,8 @@ func (s *StageScene) restoreScenario(sd *config.ScenarioData) {
 			t.Label = savedLabel
 			t.SpriteKey = t.SpriteKeyOverride
 		}
+		// enhance 属性加成统一入口（从快照原始属性重新 apply，避免多次加载复利叠加）
+		tower.ApplyEnhanceIfPresent(t)
 		// Restore permanent strength
 		if snap.Strength != 0 && t.Strength != nil {
 			t.Strength.AddPermanent(snap.Strength)
@@ -3081,6 +3099,7 @@ func (s *StageScene) buildBuildMenuData() hud.BuildMenuData {
 
 	// Buildable tower cards
 	isPreset := s.ruleset.UsePresetTowers()
+	abTable := config.GlobalAbilityTable()
 	for _, def := range s.towerDefs {
 		roleTag, roleClr := towerRoleTags(def)
 		// 经典模式用对应 spriteKey，娱乐模式统一用 sentinel
@@ -3088,7 +3107,7 @@ func (s *StageScene) buildBuildMenuData() hud.BuildMenuData {
 		if isPreset {
 			spriteKey = spriteKeyFromDef(def)
 		}
-		cards = append(cards, hud.BuildCardVM{
+		card := hud.BuildCardVM{
 			Key: def.Key, Label: def.Label, Cost: def.Cost,
 			Damage: def.Damage, AttackSpeed: def.AttackSpeed, Range: def.Range,
 			RoleTag: roleTag, RoleColor: roleClr,
@@ -3096,7 +3115,12 @@ func (s *StageScene) buildBuildMenuData() hud.BuildMenuData {
 			Sprite:    s.towerRenderer.GetSprite(spriteKey),
 			Buildable: true,
 			Category:  def.Category,
-		})
+		}
+		// 预设能力描述（经典模式 hover tooltip 用）
+		for _, abType := range def.PresetAbilities {
+			card.Abilities = append(card.Abilities, buildAbilityVM(abType, abTable, 100))
+		}
+		cards = append(cards, card)
 	}
 
 	// 非预设模式：追加攻击方式变体卡（展示用）
@@ -3960,6 +3984,7 @@ func (s *StageScene) executeAutoPlayAction(a AutoPlayAction) {
 		t := s.towers.At(a.Row, a.Col)
 		if t != nil {
 			t.AddAbility(a.AbilityName)
+			tower.ApplyEnhanceIfPresent(t)
 		}
 	}
 }
