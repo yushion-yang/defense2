@@ -6,9 +6,9 @@ package ui
 import (
 	"image/color"
 
-	"defense2/internal/core/game"
 	"defense2/internal/render"
 	"defense2/internal/render/draw"
+	"defense2/internal/render/theme"
 
 	"github.com/hajimehoshi/ebiten/v2"
 )
@@ -59,8 +59,8 @@ const (
 // 限制：不处理内容溢出（w/h 超过屏幕时不裁剪）。
 // margin 分别为 上/右/下/左（类似 CSS），未使用的方向传 0。
 func AnchoredRect(anchor Anchor, w, h float32, marginTop, marginRight, marginBottom, marginLeft float32) Rect {
-	sw := float32(game.ScreenWidth)
-	sh := float32(game.ScreenHeight)
+	sw := float32(theme.CanvasW)
+	sh := float32(theme.CanvasH)
 
 	var x, y float32
 	switch anchor {
@@ -457,4 +457,31 @@ func (r *FlexRow) Draw(screen *ebiten.Image, h float64) {
 		}
 		cx += w
 	}
+}
+
+// ---------------------------------------------------------------------------
+// VStack — 垂直堆叠布局
+// ---------------------------------------------------------------------------
+
+// VStackStyle 垂直堆叠样式。
+type VStackStyle struct {
+	Gap float32 // 元素间距，0 → 8
+}
+
+// VStack 从 (x,y) 起垂直排列 count 个等高元素，返回每个元素的 Rect。
+func VStack(x, y, w, itemH float32, count int, style VStackStyle) []Rect {
+	gap := style.Gap
+	if gap <= 0 {
+		gap = 8
+	}
+	rects := make([]Rect, count)
+	for i := 0; i < count; i++ {
+		rects[i] = Rect{
+			X: x,
+			Y: y + float32(i)*(itemH+gap),
+			W: w,
+			H: itemH,
+		}
+	}
+	return rects
 }
