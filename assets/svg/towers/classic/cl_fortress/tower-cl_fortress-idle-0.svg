@@ -1,58 +1,84 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128">
   <defs>
-    <radialGradient id="frt-core" cx="50%" cy="50%" r="50%">
-      <stop offset="0%" stop-color="#fde68a"/>
-      <stop offset="60%" stop-color="#fbbf24"/>
-      <stop offset="100%" stop-color="#b45309"/>
-    </radialGradient>
+    <linearGradient id="frt-hull" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#334155"/>
+      <stop offset="100%" stop-color="#1e293b"/>
+    </linearGradient>
     <linearGradient id="frt-wall" x1="0" y1="0" x2="0" y2="1">
       <stop offset="0%" stop-color="#cbd5e1"/>
       <stop offset="50%" stop-color="#94a3b8"/>
       <stop offset="100%" stop-color="#64748b"/>
-    </linearGradient>
-    <linearGradient id="frt-base" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0%" stop-color="#475569"/>
-      <stop offset="100%" stop-color="#1e293b"/>
     </linearGradient>
     <radialGradient id="frt-glow" cx="50%" cy="50%" r="50%">
       <stop offset="0%" stop-color="#fbbf24" stop-opacity="0.5"/>
       <stop offset="100%" stop-color="#fbbf24" stop-opacity="0"/>
     </radialGradient>
   </defs>
-  <!-- Shadow -->
-  <ellipse cx="64" cy="112" rx="38" ry="9" fill="#000" opacity="0.3"/>
-  <!-- Hex base -->
-  <polygon points="64,78 94,93 94,107 64,114 34,107 34,93" fill="url(#frt-base)" stroke="#64748b" stroke-width="1.5"/>
-  <!-- Circuit traces -->
-  <path d="M42,100 L56,96 M72,96 L86,100" stroke="#fbbf24" stroke-width="0.8" fill="none" opacity="0.4"/>
-  <!-- Thick armored walls -->
-  <rect x="38" y="36" width="52" height="44" rx="3" fill="url(#frt-wall)" stroke="#64748b" stroke-width="1.5"/>
-  <!-- Wall armor panels -->
-  <line x1="38" y1="52" x2="90" y2="52" stroke="#475569" stroke-width="0.8"/>
-  <line x1="38" y1="64" x2="90" y2="64" stroke="#475569" stroke-width="0.8"/>
+  <!-- Tank shadow -->
+  <ellipse cx="64" cy="100" rx="38" ry="8" fill="#000" opacity="0.25"/>
+  <!-- Left track -->
+  <rect x="22" y="42" width="12" height="56" rx="6" fill="#0f172a" stroke="#1e293b" stroke-width="0.8"/>
+  <line x1="24" y1="48" x2="32" y2="48" stroke="#1e293b" stroke-width="0.5" opacity="0.6"/>
+  <line x1="24" y1="54" x2="32" y2="54" stroke="#1e293b" stroke-width="0.5" opacity="0.6"/>
+  <line x1="24" y1="60" x2="32" y2="60" stroke="#1e293b" stroke-width="0.5" opacity="0.6"/>
+  <line x1="24" y1="66" x2="32" y2="66" stroke="#1e293b" stroke-width="0.5" opacity="0.6"/>
+  <line x1="24" y1="72" x2="32" y2="72" stroke="#1e293b" stroke-width="0.5" opacity="0.6"/>
+  <line x1="24" y1="78" x2="32" y2="78" stroke="#1e293b" stroke-width="0.5" opacity="0.6"/>
+  <line x1="24" y1="84" x2="32" y2="84" stroke="#1e293b" stroke-width="0.5" opacity="0.6"/>
+  <line x1="24" y1="90" x2="32" y2="90" stroke="#1e293b" stroke-width="0.5" opacity="0.6"/>
+  <!-- Right track -->
+  <rect x="94" y="42" width="12" height="56" rx="6" fill="#0f172a" stroke="#1e293b" stroke-width="0.8"/>
+  <line x1="96" y1="48" x2="104" y2="48" stroke="#1e293b" stroke-width="0.5" opacity="0.6"/>
+  <line x1="96" y1="54" x2="104" y2="54" stroke="#1e293b" stroke-width="0.5" opacity="0.6"/>
+  <line x1="96" y1="60" x2="104" y2="60" stroke="#1e293b" stroke-width="0.5" opacity="0.6"/>
+  <line x1="96" y1="66" x2="104" y2="66" stroke="#1e293b" stroke-width="0.5" opacity="0.6"/>
+  <line x1="96" y1="72" x2="104" y2="72" stroke="#1e293b" stroke-width="0.5" opacity="0.6"/>
+  <line x1="96" y1="78" x2="104" y2="78" stroke="#1e293b" stroke-width="0.5" opacity="0.6"/>
+  <line x1="96" y1="84" x2="104" y2="84" stroke="#1e293b" stroke-width="0.5" opacity="0.6"/>
+  <line x1="96" y1="90" x2="104" y2="90" stroke="#1e293b" stroke-width="0.5" opacity="0.6"/>
+  <!-- Hull body -->
+  <rect x="34" y="40" width="60" height="58" rx="5" fill="url(#frt-hull)" stroke="#475569" stroke-width="1"/>
+  <!-- Front direction indicator -->
+  <polygon points="58,40 64,34 70,40" fill="#475569" stroke="#64748b" stroke-width="0.5"/>
+  <!-- Engine grate (rear) -->
+  <line x1="42" y1="88" x2="86" y2="88" stroke="#0f172a" stroke-width="1" opacity="0.6"/>
+  <line x1="42" y1="91" x2="86" y2="91" stroke="#0f172a" stroke-width="1" opacity="0.6"/>
+  <line x1="42" y1="94" x2="86" y2="94" stroke="#0f172a" stroke-width="1" opacity="0.6"/>
+  <!-- Turret ring -->
+  <circle cx="64" cy="62" r="20" fill="#1e293b" stroke="#475569" stroke-width="1"/>
+  <!-- === FORTRESS TURRET: Wide beam emitter + battlements + radar === -->
+  <!-- Armored turret box -->
+  <rect x="44" y="42" width="40" height="30" rx="3" fill="url(#frt-wall)" stroke="#64748b" stroke-width="1"/>
+  <!-- Armor panel lines -->
+  <line x1="44" y1="52" x2="84" y2="52" stroke="#475569" stroke-width="0.6"/>
+  <line x1="44" y1="62" x2="84" y2="62" stroke="#475569" stroke-width="0.6"/>
   <!-- Battlements on top -->
-  <rect x="38" y="28" width="10" height="12" fill="#94a3b8" stroke="#64748b" stroke-width="0.8"/>
-  <rect x="54" y="28" width="10" height="12" fill="#94a3b8" stroke="#64748b" stroke-width="0.8"/>
-  <rect x="70" y="28" width="10" height="12" fill="#94a3b8" stroke="#64748b" stroke-width="0.8"/>
-  <rect x="86" y="28" width="4" height="12" fill="#94a3b8" stroke="#64748b" stroke-width="0.8"/>
+  <rect x="44" y="36" width="8" height="8" fill="#94a3b8" stroke="#64748b" stroke-width="0.6"/>
+  <rect x="56" y="36" width="8" height="8" fill="#94a3b8" stroke="#64748b" stroke-width="0.6"/>
+  <rect x="68" y="36" width="8" height="8" fill="#94a3b8" stroke="#64748b" stroke-width="0.6"/>
+  <rect x="80" y="36" width="4" height="8" fill="#94a3b8" stroke="#64748b" stroke-width="0.6"/>
   <!-- Battlement gaps -->
-  <rect x="48" y="28" width="6" height="8" fill="#334155"/>
-  <rect x="64" y="28" width="6" height="8" fill="#334155"/>
-  <rect x="80" y="28" width="6" height="8" fill="#334155"/>
-  <!-- Shield emblem on front -->
-  <path d="M56,46 L64,42 L72,46 L72,58 Q64,64 56,58 Z" fill="#475569" stroke="#fbbf24" stroke-width="1.2"/>
-  <path d="M60,48 L64,46 L68,48 L68,55 Q64,58 60,55 Z" fill="#fbbf24" opacity="0.6"/>
+  <rect x="52" y="36" width="4" height="5" fill="#334155"/>
+  <rect x="64" y="36" width="4" height="5" fill="#334155"/>
+  <rect x="76" y="36" width="4" height="5" fill="#334155"/>
+  <!-- Wide beam emitter (front) -->
+  <rect x="50" y="24" width="28" height="14" rx="2" fill="#475569" stroke="#94a3b8" stroke-width="0.8"/>
+  <rect x="53" y="26" width="22" height="3" rx="1" fill="#fbbf24" opacity="0.6"/>
+  <rect x="53" y="31" width="22" height="3" rx="1" fill="#fbbf24" opacity="0.4"/>
+  <!-- Shield emblem -->
+  <path d="M59,48 L64,45 L69,48 L69,55 Q64,58 59,55 Z" fill="#475569" stroke="#fbbf24" stroke-width="0.8"/>
+  <path d="M61,49 L64,47 L67,49 L67,53 Q64,55 61,53 Z" fill="#fbbf24" opacity="0.5"/>
   <!-- Radar dish on top -->
-  <ellipse cx="64" cy="22" rx="10" ry="4" fill="#94a3b8" stroke="#64748b" stroke-width="0.8"/>
-  <line x1="64" y1="22" x2="64" y2="28" stroke="#64748b" stroke-width="1.5"/>
-  <circle cx="64" cy="20" r="2" fill="#fbbf24" opacity="0.7"/>
-  <!-- Range aura indicator -->
-  <circle cx="64" cy="22" r="16" fill="none" stroke="#fbbf24" stroke-width="0.6" opacity="0.3" stroke-dasharray="3,3"/>
-  <!-- Energy core -->
-  <circle cx="64" cy="72" r="7" fill="url(#frt-core)"/>
-  <circle cx="64" cy="72" r="11" fill="url(#frt-glow)"/>
-  <!-- LED dots -->
-  <circle cx="42" cy="40" r="2" fill="#fbbf24" opacity="0.8"/>
-  <circle cx="86" cy="40" r="2" fill="#fbbf24" opacity="0.8"/>
-  <circle cx="64" cy="80" r="1.5" fill="#fde68a" opacity="0.7"/>
+  <ellipse cx="64" cy="20" rx="8" ry="3" fill="#94a3b8" stroke="#64748b" stroke-width="0.6"/>
+  <line x1="64" y1="20" x2="64" y2="24" stroke="#64748b" stroke-width="1.2"/>
+  <circle cx="64" cy="18" r="1.5" fill="#fbbf24" opacity="0.7"/>
+  <!-- Radar range circle -->
+  <circle cx="64" cy="20" r="14" fill="none" stroke="#fbbf24" stroke-width="0.5" opacity="0.3" stroke-dasharray="3,3"/>
+  <!-- Center glow -->
+  <circle cx="64" cy="62" r="5" fill="#1c1917"/>
+  <circle cx="64" cy="62" r="3" fill="#fbbf24" opacity="0.5"/>
+  <circle cx="64" cy="62" r="8" fill="url(#frt-glow)"/>
+  <!-- LED indicators -->
+  <circle cx="48" cy="46" r="1.5" fill="#fbbf24" opacity="0.7"/>
+  <circle cx="80" cy="46" r="1.5" fill="#fbbf24" opacity="0.7"/>
 </svg>

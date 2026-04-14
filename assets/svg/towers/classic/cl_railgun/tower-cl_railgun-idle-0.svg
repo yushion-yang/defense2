@@ -1,54 +1,75 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128">
   <defs>
-    <radialGradient id="rl-core" cx="50%" cy="50%" r="50%">
-      <stop offset="0%" stop-color="#c4b5fd"/>
-      <stop offset="60%" stop-color="#7c3aed"/>
-      <stop offset="100%" stop-color="#4c1d95"/>
-    </radialGradient>
+    <linearGradient id="rl-hull" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#334155"/>
+      <stop offset="100%" stop-color="#1e293b"/>
+    </linearGradient>
     <linearGradient id="rl-rail" x1="0" y1="1" x2="0" y2="0">
       <stop offset="0%" stop-color="#4c1d95"/>
-      <stop offset="50%" stop-color="#6d28d9"/>
-      <stop offset="100%" stop-color="#475569"/>
-    </linearGradient>
-    <linearGradient id="rl-base" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0%" stop-color="#2e1065"/>
-      <stop offset="100%" stop-color="#1e1b4b"/>
+      <stop offset="50%" stop-color="#7c3aed"/>
+      <stop offset="100%" stop-color="#5b21b6"/>
     </linearGradient>
     <radialGradient id="rl-glow" cx="50%" cy="50%" r="50%">
       <stop offset="0%" stop-color="#7c3aed" stop-opacity="0.6"/>
       <stop offset="100%" stop-color="#7c3aed" stop-opacity="0"/>
     </radialGradient>
   </defs>
-  <!-- Shadow -->
-  <ellipse cx="64" cy="112" rx="36" ry="8" fill="#000" opacity="0.3"/>
-  <!-- Hex base -->
-  <polygon points="64,78 94,93 94,107 64,114 34,107 34,93" fill="url(#rl-base)" stroke="#6d28d9" stroke-width="1.5"/>
-  <!-- Circuit traces -->
-  <path d="M40,100 L50,96 L60,100 M68,100 L78,96 L88,100 M64,85 L64,92" stroke="#7c3aed" stroke-width="0.8" fill="none" opacity="0.4"/>
-  <!-- Turret body -->
-  <rect x="50" y="55" width="28" height="28" rx="3" fill="#1e1b4b" stroke="#4c1d95" stroke-width="1"/>
+  <!-- Tank shadow -->
+  <ellipse cx="64" cy="100" rx="38" ry="8" fill="#000" opacity="0.25"/>
+  <!-- Left track -->
+  <rect x="22" y="42" width="12" height="56" rx="6" fill="#0f172a" stroke="#1e293b" stroke-width="0.8"/>
+  <line x1="24" y1="48" x2="32" y2="48" stroke="#1e293b" stroke-width="0.5" opacity="0.6"/>
+  <line x1="24" y1="54" x2="32" y2="54" stroke="#1e293b" stroke-width="0.5" opacity="0.6"/>
+  <line x1="24" y1="60" x2="32" y2="60" stroke="#1e293b" stroke-width="0.5" opacity="0.6"/>
+  <line x1="24" y1="66" x2="32" y2="66" stroke="#1e293b" stroke-width="0.5" opacity="0.6"/>
+  <line x1="24" y1="72" x2="32" y2="72" stroke="#1e293b" stroke-width="0.5" opacity="0.6"/>
+  <line x1="24" y1="78" x2="32" y2="78" stroke="#1e293b" stroke-width="0.5" opacity="0.6"/>
+  <line x1="24" y1="84" x2="32" y2="84" stroke="#1e293b" stroke-width="0.5" opacity="0.6"/>
+  <line x1="24" y1="90" x2="32" y2="90" stroke="#1e293b" stroke-width="0.5" opacity="0.6"/>
+  <!-- Right track -->
+  <rect x="94" y="42" width="12" height="56" rx="6" fill="#0f172a" stroke="#1e293b" stroke-width="0.8"/>
+  <line x1="96" y1="48" x2="104" y2="48" stroke="#1e293b" stroke-width="0.5" opacity="0.6"/>
+  <line x1="96" y1="54" x2="104" y2="54" stroke="#1e293b" stroke-width="0.5" opacity="0.6"/>
+  <line x1="96" y1="60" x2="104" y2="60" stroke="#1e293b" stroke-width="0.5" opacity="0.6"/>
+  <line x1="96" y1="66" x2="104" y2="66" stroke="#1e293b" stroke-width="0.5" opacity="0.6"/>
+  <line x1="96" y1="72" x2="104" y2="72" stroke="#1e293b" stroke-width="0.5" opacity="0.6"/>
+  <line x1="96" y1="78" x2="104" y2="78" stroke="#1e293b" stroke-width="0.5" opacity="0.6"/>
+  <line x1="96" y1="84" x2="104" y2="84" stroke="#1e293b" stroke-width="0.5" opacity="0.6"/>
+  <line x1="96" y1="90" x2="104" y2="90" stroke="#1e293b" stroke-width="0.5" opacity="0.6"/>
+  <!-- Hull body -->
+  <rect x="34" y="40" width="60" height="58" rx="5" fill="url(#rl-hull)" stroke="#475569" stroke-width="1"/>
+  <!-- Front direction indicator -->
+  <polygon points="58,40 64,34 70,40" fill="#475569" stroke="#64748b" stroke-width="0.5"/>
+  <!-- Engine grate (rear) -->
+  <line x1="42" y1="88" x2="86" y2="88" stroke="#0f172a" stroke-width="1" opacity="0.6"/>
+  <line x1="42" y1="91" x2="86" y2="91" stroke="#0f172a" stroke-width="1" opacity="0.6"/>
+  <line x1="42" y1="94" x2="86" y2="94" stroke="#0f172a" stroke-width="1" opacity="0.6"/>
+  <!-- Turret ring -->
+  <circle cx="64" cy="62" r="20" fill="#1e293b" stroke="#475569" stroke-width="1"/>
+  <!-- === RAILGUN TURRET: Dual rails + coil rings + scope === -->
+  <!-- Turret housing -->
+  <rect x="52" y="52" width="24" height="20" rx="4" fill="#334155" stroke="#7c3aed" stroke-width="0.8"/>
   <!-- Left rail -->
-  <rect x="54" y="10" width="4" height="50" rx="1" fill="url(#rl-rail)" stroke="#6d28d9" stroke-width="0.8"/>
+  <rect x="57" y="8" width="3" height="52" rx="1" fill="url(#rl-rail)" stroke="#5b21b6" stroke-width="0.5"/>
   <!-- Right rail -->
-  <rect x="70" y="10" width="4" height="50" rx="1" fill="url(#rl-rail)" stroke="#6d28d9" stroke-width="0.8"/>
-  <!-- Coil rings on rails -->
-  <ellipse cx="64" cy="20" rx="12" ry="3" fill="none" stroke="#a78bfa" stroke-width="1.2" opacity="0.7"/>
-  <ellipse cx="64" cy="30" rx="12" ry="3" fill="none" stroke="#a78bfa" stroke-width="1" opacity="0.5"/>
-  <ellipse cx="64" cy="40" rx="12" ry="3" fill="none" stroke="#a78bfa" stroke-width="1" opacity="0.4"/>
-  <!-- Energy arc between rails -->
-  <path d="M58,15 Q64,12 70,15" stroke="#c4b5fd" stroke-width="1.5" fill="none" opacity="0.8"/>
-  <path d="M58,25 Q64,22 70,25" stroke="#c4b5fd" stroke-width="1" fill="none" opacity="0.6"/>
-  <path d="M58,35 Q64,32 70,35" stroke="#c4b5fd" stroke-width="1" fill="none" opacity="0.5"/>
-  <!-- Scope lens -->
-  <circle cx="64" cy="8" r="5" fill="#1e1b4b" stroke="#a78bfa" stroke-width="1.2"/>
-  <circle cx="64" cy="8" r="2.5" fill="#7c3aed" opacity="0.8"/>
-  <!-- Energy core -->
-  <circle cx="64" cy="69" r="9" fill="url(#rl-core)"/>
-  <circle cx="64" cy="69" r="13" fill="url(#rl-glow)"/>
-  <!-- LED dots -->
-  <circle cx="54" cy="60" r="1.8" fill="#a78bfa" opacity="0.9"/>
-  <circle cx="74" cy="60" r="1.8" fill="#a78bfa" opacity="0.9"/>
-  <circle cx="64" cy="80" r="1.5" fill="#7c3aed" opacity="0.7"/>
-  <!-- Muzzle glow -->
-  <circle cx="64" cy="10" r="8" fill="#7c3aed" opacity="0.15"/>
+  <rect x="68" y="8" width="3" height="52" rx="1" fill="url(#rl-rail)" stroke="#5b21b6" stroke-width="0.5"/>
+  <!-- Coil rings along barrel -->
+  <rect x="55" y="18" width="18" height="3" rx="1" fill="#4c1d95" stroke="#7c3aed" stroke-width="0.5"/>
+  <rect x="55" y="26" width="18" height="3" rx="1" fill="#4c1d95" stroke="#7c3aed" stroke-width="0.5"/>
+  <rect x="55" y="34" width="18" height="3" rx="1" fill="#4c1d95" stroke="#7c3aed" stroke-width="0.5"/>
+  <rect x="55" y="42" width="18" height="3" rx="1" fill="#4c1d95" stroke="#7c3aed" stroke-width="0.5"/>
+  <!-- Rail tip energy -->
+  <line x1="58" y1="8" x2="69" y2="8" stroke="#a78bfa" stroke-width="1.5" opacity="0.8"/>
+  <circle cx="64" cy="8" r="3" fill="#7c3aed" opacity="0.4"/>
+  <!-- Scope (side mount) -->
+  <rect x="72" y="46" width="4" height="12" rx="1.5" fill="#475569" stroke="#7c3aed" stroke-width="0.5"/>
+  <circle cx="74" cy="44" r="2.5" fill="#1e1b4b" stroke="#7c3aed" stroke-width="0.5"/>
+  <circle cx="74" cy="44" r="1" fill="#a78bfa" opacity="0.7"/>
+  <!-- Turret center glow -->
+  <circle cx="64" cy="62" r="6" fill="#2e1065"/>
+  <circle cx="64" cy="62" r="3.5" fill="#7c3aed" opacity="0.6"/>
+  <circle cx="64" cy="62" r="8" fill="url(#rl-glow)"/>
+  <!-- Energy conduits on rails -->
+  <line x1="58" y1="12" x2="69" y2="12" stroke="#a78bfa" stroke-width="0.5" opacity="0.4"/>
+  <line x1="58" y1="22" x2="69" y2="22" stroke="#a78bfa" stroke-width="0.5" opacity="0.4"/>
 </svg>

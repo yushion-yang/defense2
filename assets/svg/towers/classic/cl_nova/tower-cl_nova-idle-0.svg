@@ -1,51 +1,74 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128">
   <defs>
-    <radialGradient id="nov-core" cx="50%" cy="50%" r="50%">
-      <stop offset="0%" stop-color="#fef9c3"/>
-      <stop offset="40%" stop-color="#fde047"/>
-      <stop offset="100%" stop-color="#eab308"/>
-    </radialGradient>
-    <radialGradient id="nov-flash" cx="50%" cy="50%" r="50%">
-      <stop offset="0%" stop-color="#fef9c3" stop-opacity="0.8"/>
-      <stop offset="50%" stop-color="#eab308" stop-opacity="0.3"/>
-      <stop offset="100%" stop-color="#eab308" stop-opacity="0"/>
-    </radialGradient>
-    <linearGradient id="nov-base" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0%" stop-color="#422006"/>
-      <stop offset="100%" stop-color="#292524"/>
+    <linearGradient id="nov-hull" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#334155"/>
+      <stop offset="100%" stop-color="#1e293b"/>
     </linearGradient>
     <radialGradient id="nov-orb" cx="50%" cy="50%" r="50%">
-      <stop offset="0%" stop-color="#fff"/>
-      <stop offset="30%" stop-color="#fef9c3"/>
-      <stop offset="100%" stop-color="#eab308"/>
+      <stop offset="0%" stop-color="#fef08a"/>
+      <stop offset="50%" stop-color="#eab308"/>
+      <stop offset="100%" stop-color="#a16207"/>
+    </radialGradient>
+    <radialGradient id="nov-glow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#eab308" stop-opacity="0.7"/>
+      <stop offset="100%" stop-color="#eab308" stop-opacity="0"/>
     </radialGradient>
   </defs>
-  <!-- Shadow -->
-  <ellipse cx="64" cy="112" rx="36" ry="8" fill="#000" opacity="0.3"/>
-  <!-- Hex base -->
-  <polygon points="64,78 94,93 94,107 64,114 34,107 34,93" fill="url(#nov-base)" stroke="#a16207" stroke-width="1.5"/>
-  <!-- Circuit traces -->
-  <path d="M42,98 L52,94 L64,98 L76,94 L86,98" stroke="#eab308" stroke-width="0.8" fill="none" opacity="0.4"/>
-  <!-- Pedestal -->
-  <rect x="52" y="56" width="24" height="26" rx="3" fill="#292524" stroke="#57534e" stroke-width="1"/>
-  <!-- Stun rings emanating -->
-  <circle cx="64" cy="38" r="32" fill="none" stroke="#eab308" stroke-width="0.8" opacity="0.2"/>
-  <circle cx="64" cy="38" r="26" fill="none" stroke="#eab308" stroke-width="1" opacity="0.3"/>
-  <circle cx="64" cy="38" r="20" fill="none" stroke="#fde047" stroke-width="1.2" opacity="0.4"/>
-  <!-- Star burst points (8 pointed) -->
-  <polygon points="64,10 67,30 82,18 70,34 90,38 70,42 82,58 67,46 64,66 61,46 46,58 58,42 38,38 58,34 46,18 61,30" fill="url(#nov-flash)" opacity="0.5"/>
+  <!-- Tank shadow -->
+  <ellipse cx="64" cy="100" rx="38" ry="8" fill="#000" opacity="0.25"/>
+  <!-- Left track -->
+  <rect x="22" y="42" width="12" height="56" rx="6" fill="#0f172a" stroke="#1e293b" stroke-width="0.8"/>
+  <line x1="24" y1="48" x2="32" y2="48" stroke="#1e293b" stroke-width="0.5" opacity="0.6"/>
+  <line x1="24" y1="54" x2="32" y2="54" stroke="#1e293b" stroke-width="0.5" opacity="0.6"/>
+  <line x1="24" y1="60" x2="32" y2="60" stroke="#1e293b" stroke-width="0.5" opacity="0.6"/>
+  <line x1="24" y1="66" x2="32" y2="66" stroke="#1e293b" stroke-width="0.5" opacity="0.6"/>
+  <line x1="24" y1="72" x2="32" y2="72" stroke="#1e293b" stroke-width="0.5" opacity="0.6"/>
+  <line x1="24" y1="78" x2="32" y2="78" stroke="#1e293b" stroke-width="0.5" opacity="0.6"/>
+  <line x1="24" y1="84" x2="32" y2="84" stroke="#1e293b" stroke-width="0.5" opacity="0.6"/>
+  <line x1="24" y1="90" x2="32" y2="90" stroke="#1e293b" stroke-width="0.5" opacity="0.6"/>
+  <!-- Right track -->
+  <rect x="94" y="42" width="12" height="56" rx="6" fill="#0f172a" stroke="#1e293b" stroke-width="0.8"/>
+  <line x1="96" y1="48" x2="104" y2="48" stroke="#1e293b" stroke-width="0.5" opacity="0.6"/>
+  <line x1="96" y1="54" x2="104" y2="54" stroke="#1e293b" stroke-width="0.5" opacity="0.6"/>
+  <line x1="96" y1="60" x2="104" y2="60" stroke="#1e293b" stroke-width="0.5" opacity="0.6"/>
+  <line x1="96" y1="66" x2="104" y2="66" stroke="#1e293b" stroke-width="0.5" opacity="0.6"/>
+  <line x1="96" y1="72" x2="104" y2="72" stroke="#1e293b" stroke-width="0.5" opacity="0.6"/>
+  <line x1="96" y1="78" x2="104" y2="78" stroke="#1e293b" stroke-width="0.5" opacity="0.6"/>
+  <line x1="96" y1="84" x2="104" y2="84" stroke="#1e293b" stroke-width="0.5" opacity="0.6"/>
+  <line x1="96" y1="90" x2="104" y2="90" stroke="#1e293b" stroke-width="0.5" opacity="0.6"/>
+  <!-- Hull body -->
+  <rect x="34" y="40" width="60" height="58" rx="5" fill="url(#nov-hull)" stroke="#475569" stroke-width="1"/>
+  <!-- Front direction indicator -->
+  <polygon points="58,40 64,34 70,40" fill="#475569" stroke="#64748b" stroke-width="0.5"/>
+  <!-- Engine grate (rear) -->
+  <line x1="42" y1="88" x2="86" y2="88" stroke="#0f172a" stroke-width="1" opacity="0.6"/>
+  <line x1="42" y1="91" x2="86" y2="91" stroke="#0f172a" stroke-width="1" opacity="0.6"/>
+  <line x1="42" y1="94" x2="86" y2="94" stroke="#0f172a" stroke-width="1" opacity="0.6"/>
+  <!-- Turret ring -->
+  <circle cx="64" cy="62" r="20" fill="#1e293b" stroke="#475569" stroke-width="1"/>
+  <!-- === NOVA TURRET: Central orb + starburst points === -->
+  <!-- Outer glow ring -->
+  <circle cx="64" cy="55" r="24" fill="url(#nov-glow)"/>
+  <!-- Star burst points (8 rays) -->
+  <line x1="64" y1="55" x2="64" y2="28" stroke="#eab308" stroke-width="2" opacity="0.7"/>
+  <line x1="64" y1="55" x2="64" y2="78" stroke="#eab308" stroke-width="1.5" opacity="0.5"/>
+  <line x1="64" y1="55" x2="40" y2="55" stroke="#eab308" stroke-width="1.5" opacity="0.5"/>
+  <line x1="64" y1="55" x2="88" y2="55" stroke="#eab308" stroke-width="1.5" opacity="0.5"/>
+  <line x1="64" y1="55" x2="47" y2="38" stroke="#eab308" stroke-width="1.2" opacity="0.4"/>
+  <line x1="64" y1="55" x2="81" y2="38" stroke="#eab308" stroke-width="1.2" opacity="0.4"/>
+  <line x1="64" y1="55" x2="47" y2="72" stroke="#eab308" stroke-width="1" opacity="0.3"/>
+  <line x1="64" y1="55" x2="81" y2="72" stroke="#eab308" stroke-width="1" opacity="0.3"/>
+  <!-- Star tips -->
+  <circle cx="64" cy="28" r="2.5" fill="#fef08a" opacity="0.8"/>
+  <circle cx="40" cy="55" r="2" fill="#fef08a" opacity="0.6"/>
+  <circle cx="88" cy="55" r="2" fill="#fef08a" opacity="0.6"/>
+  <circle cx="47" cy="38" r="1.5" fill="#fef08a" opacity="0.5"/>
+  <circle cx="81" cy="38" r="1.5" fill="#fef08a" opacity="0.5"/>
+  <!-- Turret platform -->
+  <circle cx="64" cy="55" r="12" fill="#334155" stroke="#eab308" stroke-width="1"/>
   <!-- Central orb -->
-  <circle cx="64" cy="38" r="12" fill="url(#nov-orb)"/>
-  <circle cx="64" cy="38" r="8" fill="url(#nov-core)"/>
-  <!-- Lightning bolt accents -->
-  <path d="M48,28 L54,34 L50,36 L56,44" stroke="#fde047" stroke-width="1.5" fill="none" opacity="0.7"/>
-  <path d="M80,28 L74,34 L78,36 L72,44" stroke="#fde047" stroke-width="1.5" fill="none" opacity="0.7"/>
-  <!-- Flash core bright dot -->
-  <circle cx="64" cy="38" r="4" fill="#fef9c3" opacity="0.9"/>
-  <!-- Energy core on base -->
-  <circle cx="64" cy="72" r="7" fill="url(#nov-core)"/>
-  <!-- LED dots -->
-  <circle cx="54" cy="60" r="2" fill="#eab308" opacity="0.9"/>
-  <circle cx="74" cy="60" r="2" fill="#eab308" opacity="0.9"/>
-  <circle cx="64" cy="80" r="1.5" fill="#fde047" opacity="0.7"/>
+  <circle cx="64" cy="55" r="8" fill="url(#nov-orb)"/>
+  <circle cx="64" cy="55" r="4" fill="#fef08a" opacity="0.8"/>
+  <!-- Inner orb highlight -->
+  <circle cx="62" cy="53" r="2" fill="#fff" opacity="0.3"/>
 </svg>
