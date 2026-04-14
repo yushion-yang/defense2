@@ -87,7 +87,7 @@
       "name": "铁蜂",
       "category": "aoe",
       "abilities": [
-        "bleedDot",
+        "scatter",
         "slowPower"
       ],
       "tiers": {
@@ -97,7 +97,7 @@
       },
       "spriteKey": "cl_shotgun",
       "buildCost": 50,
-      "description": "流血+减速",
+      "description": "扇形散射+减速",
       "abilityMode": "preset",
       "strength": {
         "cost": 50,
@@ -159,8 +159,8 @@
       "name": "轰鸣",
       "category": "aoe",
       "abilities": [
-        "poison",
-        "curseZone"
+        "splash",
+        "bleedDot"
       ],
       "tiers": {
         "damage": "B",
@@ -169,7 +169,7 @@
       },
       "spriteKey": "cl_mortar",
       "buildCost": 50,
-      "description": "中毒+诅咒区域",
+      "description": "溅射+流血",
       "abilityMode": "preset",
       "strength": {
         "cost": 50,
@@ -183,7 +183,7 @@
       "name": "三叉戟",
       "category": "support",
       "abilities": [
-        "slowDuration",
+        "multiTarget",
         "damageUpAura"
       ],
       "tiers": {
@@ -193,7 +193,7 @@
       },
       "spriteKey": "cl_prism",
       "buildCost": 50,
-      "description": "减速+增伤光环",
+      "description": "多目标攻击+增伤光环",
       "abilityMode": "preset",
       "strength": {
         "cost": 50,
@@ -207,17 +207,17 @@
       "name": "回响",
       "category": "support",
       "abilities": [
-        "stunDuration",
+        "bounce",
         "rangeAura"
       ],
       "tiers": {
         "damage": "D",
-        "range": "S",
-        "atkSpeed": "B"
+        "range": "B",
+        "atkSpeed": "S"
       },
       "spriteKey": "cl_fortress",
       "buildCost": 50,
-      "description": "眩晕+增距光环",
+      "description": "弹射连锁+眩晕",
       "abilityMode": "preset",
       "strength": {
         "cost": 50,
@@ -256,7 +256,7 @@
       "category": "support",
       "abilities": [
         "critAura",
-        "flatDamage"
+        "rangeAura"
       ],
       "tiers": {
         "damage": "D",
@@ -265,7 +265,7 @@
       },
       "spriteKey": "cl_hydra",
       "buildCost": 50,
-      "description": "暴击光环+固定加伤",
+      "description": "暴击光环+增距光环",
       "abilityMode": "preset",
       "strength": {
         "cost": 50,
