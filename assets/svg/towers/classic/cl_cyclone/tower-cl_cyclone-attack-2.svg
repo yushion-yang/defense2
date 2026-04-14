@@ -5,7 +5,7 @@
       <stop offset="100%" stop-color="#1e293b"/>
     </linearGradient>
     <radialGradient id="cyc-glow" cx="50%" cy="50%" r="50%">
-      <stop offset="0%" stop-color="#14b8a6" stop-opacity="0.6"/>
+      <stop offset="0%" stop-color="#14b8a6" stop-opacity="0.4"/>
       <stop offset="100%" stop-color="#14b8a6" stop-opacity="0"/>
     </radialGradient>
     <linearGradient id="cyc-blade" x1="0" y1="0" x2="1" y2="1">
@@ -27,38 +27,36 @@
   <line x1="80" y1="65" x2="90" y2="66" stroke="#1e293b" stroke-width="0.5" opacity="0.6"/>
   <line x1="80" y1="70" x2="90" y2="72" stroke="#1e293b" stroke-width="0.5" opacity="0.6"/>
   <line x1="80" y1="75" x2="90" y2="78" stroke="#1e293b" stroke-width="0.5" opacity="0.6"/>
-  <!-- Hull base plate (circular component under hull) -->
+  <!-- Hull base plate -->
   <circle cx="64" cy="64" r="22" fill="#1e293b" stroke="#334155" stroke-width="1" opacity="0.8"/>
   <circle cx="64" cy="64" r="18" fill="none" stroke="#475569" stroke-width="0.5" opacity="0.4"/>
   <!-- Hull body -->
   <rect x="49" y="49" width="30" height="30" rx="4" fill="url(#cyc-hull)" stroke="#475569" stroke-width="1"/>
   <!-- Front direction indicator -->
   <polygon points="57,49 64,43 71,49" fill="#475569" stroke="#64748b" stroke-width="0.5"/>
-  <!-- Engine grate (rear) -->
+  <!-- Engine grate -->
   <line x1="52" y1="73" x2="76" y2="73" stroke="#0f172a" stroke-width="1" opacity="0.6"/>
   <line x1="52" y1="76" x2="76" y2="76" stroke="#0f172a" stroke-width="1" opacity="0.6"/>
   <line x1="52" y1="79" x2="76" y2="79" stroke="#0f172a" stroke-width="1" opacity="0.6"/>
   <!-- Turret ring -->
   <circle cx="64" cy="62" r="20" fill="#1e293b" stroke="#475569" stroke-width="1"/>
-  <!-- === CYCLONE TURRET: 3 rotating blades (melee, no barrel) === -->
-  <!-- Spin track circle -->
-  <circle cx="64" cy="55" r="26" fill="none" stroke="#14b8a6" stroke-width="0.6" opacity="0.3" stroke-dasharray="3,3"/>
-  <!-- Blade 1 (pointing up) -->
-  <path d="M64,55 L60,30 Q64,24 68,30 Z" fill="url(#cyc-blade)" stroke="#14b8a6" stroke-width="0.8"/>
-  <!-- Blade 2 (pointing lower-left) -->
-  <path d="M64,55 L42,68 Q38,62 44,60 Z" fill="url(#cyc-blade)" stroke="#14b8a6" stroke-width="0.8"/>
-  <!-- Blade 3 (pointing lower-right) -->
-  <path d="M64,55 L86,68 Q90,62 84,60 Z" fill="url(#cyc-blade)" stroke="#14b8a6" stroke-width="0.8"/>
-  <!-- Blade edge highlights -->
-  <line x1="62" y1="34" x2="64" y2="55" stroke="#5eead4" stroke-width="0.5" opacity="0.5"/>
-  <line x1="46" y1="65" x2="64" y2="55" stroke="#5eead4" stroke-width="0.5" opacity="0.5"/>
-  <line x1="82" y1="65" x2="64" y2="55" stroke="#5eead4" stroke-width="0.5" opacity="0.5"/>
-  <!-- Center hub -->
-  <circle cx="64" cy="55" r="8" fill="#134e4a" stroke="#14b8a6" stroke-width="1"/>
-  <circle cx="64" cy="55" r="4" fill="#14b8a6" opacity="0.7"/>
+  <!-- Spin track circle (dimmed) -->
+  <circle cx="64" cy="55" r="26" fill="none" stroke="#14b8a6" stroke-width="0.5" opacity="0.2" stroke-dasharray="3,3"/>
+  <!-- Blades rotated 90 degrees (slowing down) -->
+  <g transform="rotate(90, 64, 55)">
+    <path d="M64,55 L60,30 Q64,24 68,30 Z" fill="url(#cyc-blade)" stroke="#14b8a6" stroke-width="0.6"/>
+    <path d="M64,55 L42,68 Q38,62 44,60 Z" fill="url(#cyc-blade)" stroke="#14b8a6" stroke-width="0.6"/>
+    <path d="M64,55 L86,68 Q90,62 84,60 Z" fill="url(#cyc-blade)" stroke="#14b8a6" stroke-width="0.6"/>
+    <line x1="62" y1="34" x2="64" y2="55" stroke="#5eead4" stroke-width="0.4" opacity="0.3"/>
+    <line x1="46" y1="65" x2="64" y2="55" stroke="#5eead4" stroke-width="0.4" opacity="0.3"/>
+    <line x1="82" y1="65" x2="64" y2="55" stroke="#5eead4" stroke-width="0.4" opacity="0.3"/>
+  </g>
+  <!-- Center hub (dimmed) -->
+  <circle cx="64" cy="55" r="8" fill="#134e4a" stroke="#14b8a6" stroke-width="0.8"/>
+  <circle cx="64" cy="55" r="4" fill="#14b8a6" opacity="0.4"/>
   <circle cx="64" cy="55" r="12" fill="url(#cyc-glow)"/>
-  <!-- Wind motion arcs -->
-  <path d="M40,42 Q50,38 56,44" fill="none" stroke="#5eead4" stroke-width="0.8" opacity="0.3"/>
-  <path d="M88,42 Q78,38 72,44" fill="none" stroke="#5eead4" stroke-width="0.8" opacity="0.3"/>
-  <path d="M64,80 Q58,76 58,70" fill="none" stroke="#5eead4" stroke-width="0.8" opacity="0.3"/>
+  <!-- Fading wind wisps -->
+  <path d="M40,42 Q50,38 56,44" fill="none" stroke="#5eead4" stroke-width="0.6" opacity="0.15"/>
+  <path d="M88,42 Q78,38 72,44" fill="none" stroke="#5eead4" stroke-width="0.6" opacity="0.15"/>
+  <path d="M64,80 Q58,76 58,70" fill="none" stroke="#5eead4" stroke-width="0.6" opacity="0.15"/>
 </svg>

@@ -10,7 +10,7 @@
       <stop offset="100%" stop-color="#64748b"/>
     </linearGradient>
     <radialGradient id="sg-glow" cx="50%" cy="50%" r="50%">
-      <stop offset="0%" stop-color="#ef4444" stop-opacity="0.6"/>
+      <stop offset="0%" stop-color="#ef4444" stop-opacity="0.4"/>
       <stop offset="100%" stop-color="#ef4444" stop-opacity="0"/>
     </radialGradient>
   </defs>
@@ -28,41 +28,45 @@
   <line x1="80" y1="65" x2="90" y2="66" stroke="#1e293b" stroke-width="0.5" opacity="0.6"/>
   <line x1="80" y1="70" x2="90" y2="72" stroke="#1e293b" stroke-width="0.5" opacity="0.6"/>
   <line x1="80" y1="75" x2="90" y2="78" stroke="#1e293b" stroke-width="0.5" opacity="0.6"/>
-  <!-- Hull base plate (circular component under hull) -->
+  <!-- Hull base plate -->
   <circle cx="64" cy="64" r="22" fill="#1e293b" stroke="#334155" stroke-width="1" opacity="0.8"/>
   <circle cx="64" cy="64" r="18" fill="none" stroke="#475569" stroke-width="0.5" opacity="0.4"/>
   <!-- Hull body -->
   <rect x="49" y="49" width="30" height="30" rx="4" fill="url(#sg-hull)" stroke="#475569" stroke-width="1"/>
   <!-- Front direction indicator -->
   <polygon points="57,49 64,43 71,49" fill="#475569" stroke="#64748b" stroke-width="0.5"/>
-  <!-- Engine grate (rear) -->
+  <!-- Engine grate -->
   <line x1="52" y1="73" x2="76" y2="73" stroke="#0f172a" stroke-width="1" opacity="0.6"/>
   <line x1="52" y1="76" x2="76" y2="76" stroke="#0f172a" stroke-width="1" opacity="0.6"/>
   <line x1="52" y1="79" x2="76" y2="79" stroke="#0f172a" stroke-width="1" opacity="0.6"/>
   <!-- Turret ring -->
   <circle cx="64" cy="62" r="15" fill="#1e293b" stroke="#475569" stroke-width="1"/>
-  <!-- === SHOTGUN TURRET: Wide double barrel + shell ports === -->
-  <!-- Turret housing (wider) -->
+  <!-- Turret housing -->
   <rect x="48" y="52" width="32" height="20" rx="5" fill="#334155" stroke="#ef4444" stroke-width="0.8"/>
-  <!-- Left barrel (wide) -->
+  <!-- Left barrel (normal) -->
   <rect x="52" y="18" width="8" height="38" rx="3" fill="url(#sg-barrel)" stroke="#64748b" stroke-width="0.8"/>
-  <!-- Right barrel (wide) -->
+  <!-- Right barrel (normal) -->
   <rect x="68" y="18" width="8" height="38" rx="3" fill="url(#sg-barrel)" stroke="#64748b" stroke-width="0.8"/>
   <!-- Barrel openings -->
   <ellipse cx="56" cy="18" rx="3.5" ry="1.5" fill="#0f172a"/>
   <ellipse cx="72" cy="18" rx="3.5" ry="1.5" fill="#0f172a"/>
+  <!-- Smoke wisps -->
+  <circle cx="54" cy="14" r="2" fill="#94a3b8" opacity="0.15"/>
+  <circle cx="58" cy="12" r="1.5" fill="#94a3b8" opacity="0.1"/>
+  <circle cx="70" cy="14" r="2" fill="#94a3b8" opacity="0.15"/>
+  <circle cx="74" cy="12" r="1.5" fill="#94a3b8" opacity="0.1"/>
   <!-- Barrel band -->
-  <rect x="50" y="30" width="28" height="3" rx="1" fill="#475569" stroke="#ef4444" stroke-width="0.5"/>
-  <!-- Shell ejection ports (side) -->
-  <rect x="78" y="54" width="5" height="3" rx="1" fill="#7f1d1d" stroke="#ef4444" stroke-width="0.4"/>
-  <rect x="78" y="60" width="5" height="3" rx="1" fill="#7f1d1d" stroke="#ef4444" stroke-width="0.4"/>
-  <rect x="45" y="54" width="5" height="3" rx="1" fill="#7f1d1d" stroke="#ef4444" stroke-width="0.4"/>
-  <rect x="45" y="60" width="5" height="3" rx="1" fill="#7f1d1d" stroke="#ef4444" stroke-width="0.4"/>
-  <!-- Spread indicator lines -->
-  <line x1="52" y1="18" x2="46" y2="10" stroke="#ef4444" stroke-width="0.6" opacity="0.4"/>
-  <line x1="76" y1="18" x2="82" y2="10" stroke="#ef4444" stroke-width="0.6" opacity="0.4"/>
-  <!-- Center glow -->
+  <rect x="50" y="30" width="28" height="3" rx="1" fill="#475569" stroke="#ef4444" stroke-width="0.4"/>
+  <!-- Shell ejection ports (dimmed) -->
+  <rect x="78" y="54" width="5" height="3" rx="1" fill="#7f1d1d" stroke="#ef4444" stroke-width="0.3" opacity="0.4"/>
+  <rect x="78" y="60" width="5" height="3" rx="1" fill="#7f1d1d" stroke="#ef4444" stroke-width="0.3" opacity="0.4"/>
+  <rect x="45" y="54" width="5" height="3" rx="1" fill="#7f1d1d" stroke="#ef4444" stroke-width="0.3" opacity="0.4"/>
+  <rect x="45" y="60" width="5" height="3" rx="1" fill="#7f1d1d" stroke="#ef4444" stroke-width="0.3" opacity="0.4"/>
+  <!-- Spread indicator lines (dim) -->
+  <line x1="52" y1="18" x2="46" y2="10" stroke="#ef4444" stroke-width="0.5" opacity="0.2"/>
+  <line x1="76" y1="18" x2="82" y2="10" stroke="#ef4444" stroke-width="0.5" opacity="0.2"/>
+  <!-- Center glow (dimmed) -->
   <circle cx="64" cy="62" r="5" fill="#450a0a"/>
-  <circle cx="64" cy="62" r="3" fill="#ef4444" opacity="0.6"/>
+  <circle cx="64" cy="62" r="3" fill="#ef4444" opacity="0.4"/>
   <circle cx="64" cy="62" r="8" fill="url(#sg-glow)"/>
 </svg>

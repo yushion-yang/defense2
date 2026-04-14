@@ -10,14 +10,9 @@
       <stop offset="100%" stop-color="#0e7490"/>
     </linearGradient>
     <radialGradient id="prm-glow" cx="50%" cy="50%" r="50%">
-      <stop offset="0%" stop-color="#06b6d4" stop-opacity="0.6"/>
+      <stop offset="0%" stop-color="#06b6d4" stop-opacity="0.4"/>
       <stop offset="100%" stop-color="#06b6d4" stop-opacity="0"/>
     </radialGradient>
-    <linearGradient id="prm-refract1" x1="0" y1="0" x2="1" y2="0">
-      <stop offset="0%" stop-color="#f87171" stop-opacity="0.6"/>
-      <stop offset="50%" stop-color="#fbbf24" stop-opacity="0.4"/>
-      <stop offset="100%" stop-color="#4ade80" stop-opacity="0.2"/>
-    </linearGradient>
   </defs>
   <!-- Left track -->
   <rect x="36" y="44" width="14" height="40" rx="6" fill="#0f172a" stroke="#1e293b" stroke-width="0.8"/>
@@ -33,40 +28,32 @@
   <line x1="80" y1="65" x2="90" y2="66" stroke="#1e293b" stroke-width="0.5" opacity="0.6"/>
   <line x1="80" y1="70" x2="90" y2="72" stroke="#1e293b" stroke-width="0.5" opacity="0.6"/>
   <line x1="80" y1="75" x2="90" y2="78" stroke="#1e293b" stroke-width="0.5" opacity="0.6"/>
-  <!-- Hull base plate (circular component under hull) -->
   <circle cx="64" cy="64" r="22" fill="#1e293b" stroke="#334155" stroke-width="1" opacity="0.8"/>
   <circle cx="64" cy="64" r="18" fill="none" stroke="#475569" stroke-width="0.5" opacity="0.4"/>
-  <!-- Hull body -->
   <rect x="49" y="49" width="30" height="30" rx="4" fill="url(#prm-hull)" stroke="#475569" stroke-width="1"/>
-  <!-- Front direction indicator -->
   <polygon points="57,49 64,43 71,49" fill="#475569" stroke="#64748b" stroke-width="0.5"/>
-  <!-- Engine grate (rear) -->
   <line x1="52" y1="73" x2="76" y2="73" stroke="#0f172a" stroke-width="1" opacity="0.6"/>
   <line x1="52" y1="76" x2="76" y2="76" stroke="#0f172a" stroke-width="1" opacity="0.6"/>
   <line x1="52" y1="79" x2="76" y2="79" stroke="#0f172a" stroke-width="1" opacity="0.6"/>
-  <!-- Turret ring -->
   <circle cx="64" cy="62" r="15" fill="#1e293b" stroke="#475569" stroke-width="1"/>
-  <!-- === PRISM TURRET: Triangular crystal + light refraction === -->
-  <!-- Turret platform -->
   <circle cx="64" cy="58" r="13" fill="#334155" stroke="#06b6d4" stroke-width="0.8"/>
-  <!-- Light refraction beams (behind crystal) -->
-  <line x1="64" y1="36" x2="44" y2="24" stroke="#f87171" stroke-width="1" opacity="0.35"/>
-  <line x1="64" y1="36" x2="56" y2="18" stroke="#fbbf24" stroke-width="1" opacity="0.35"/>
-  <line x1="64" y1="36" x2="72" y2="18" stroke="#4ade80" stroke-width="1" opacity="0.35"/>
-  <line x1="64" y1="36" x2="84" y2="24" stroke="#818cf8" stroke-width="1" opacity="0.35"/>
-  <!-- Rainbow refraction arc -->
-  <path d="M44,24 Q64,14 84,24" fill="none" stroke="url(#prm-refract1)" stroke-width="1.5"/>
-  <!-- Main triangular prism crystal -->
-  <polygon points="64,24 48,56 80,56" fill="url(#prm-crystal)" stroke="#06b6d4" stroke-width="1.2" opacity="0.9"/>
-  <!-- Crystal face highlight -->
-  <polygon points="64,28 52,52 64,52" fill="#67e8f9" opacity="0.25"/>
-  <!-- Crystal internal refraction line -->
-  <line x1="64" y1="30" x2="56" y2="52" stroke="#a5f3fc" stroke-width="0.6" opacity="0.5"/>
-  <line x1="64" y1="30" x2="72" y2="52" stroke="#a5f3fc" stroke-width="0.6" opacity="0.5"/>
-  <!-- Crystal tip glow -->
-  <circle cx="64" cy="24" r="3" fill="#06b6d4" opacity="0.4"/>
-  <!-- Center glow -->
+  <!-- Refraction beams (dimmed) -->
+  <line x1="64" y1="36" x2="44" y2="24" stroke="#f87171" stroke-width="0.8" opacity="0.2"/>
+  <line x1="64" y1="36" x2="56" y2="18" stroke="#fbbf24" stroke-width="0.8" opacity="0.2"/>
+  <line x1="64" y1="36" x2="72" y2="18" stroke="#4ade80" stroke-width="0.8" opacity="0.2"/>
+  <line x1="64" y1="36" x2="84" y2="24" stroke="#818cf8" stroke-width="0.8" opacity="0.2"/>
+  <!-- Crystal (dimmed) -->
+  <polygon points="64,24 48,56 80,56" fill="url(#prm-crystal)" stroke="#06b6d4" stroke-width="1" opacity="0.8"/>
+  <polygon points="64,28 52,52 64,52" fill="#67e8f9" opacity="0.15"/>
+  <line x1="64" y1="30" x2="56" y2="52" stroke="#a5f3fc" stroke-width="0.5" opacity="0.3"/>
+  <line x1="64" y1="30" x2="72" y2="52" stroke="#a5f3fc" stroke-width="0.5" opacity="0.3"/>
+  <!-- Crystal tip (dim) -->
+  <circle cx="64" cy="24" r="2.5" fill="#06b6d4" opacity="0.25"/>
+  <!-- Heat shimmer at tip -->
+  <circle cx="62" cy="22" r="1.5" fill="#94a3b8" opacity="0.1"/>
+  <circle cx="66" cy="20" r="1.2" fill="#94a3b8" opacity="0.08"/>
+  <!-- Center glow (dim) -->
   <circle cx="64" cy="58" r="5" fill="#083344"/>
-  <circle cx="64" cy="58" r="3" fill="#06b6d4" opacity="0.6"/>
+  <circle cx="64" cy="58" r="3" fill="#06b6d4" opacity="0.4"/>
   <circle cx="64" cy="58" r="8" fill="url(#prm-glow)"/>
 </svg>

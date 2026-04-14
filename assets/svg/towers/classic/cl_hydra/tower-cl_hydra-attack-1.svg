@@ -1,0 +1,86 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128">
+  <defs>
+    <linearGradient id="hyd-hull" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#334155"/>
+      <stop offset="100%" stop-color="#1e293b"/>
+    </linearGradient>
+    <linearGradient id="hyd-neck" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#7e22ce"/>
+      <stop offset="100%" stop-color="#581c87"/>
+    </linearGradient>
+    <radialGradient id="hyd-head" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#e9d5ff"/>
+      <stop offset="100%" stop-color="#c084fc"/>
+    </radialGradient>
+    <radialGradient id="hyd-glow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#d8b4fe" stop-opacity="1"/>
+      <stop offset="100%" stop-color="#d8b4fe" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="hyd-muzzle" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#ffffff" stop-opacity="1"/>
+      <stop offset="40%" stop-color="#e9d5ff" stop-opacity="0.8"/>
+      <stop offset="100%" stop-color="#a855f7" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <rect x="36" y="44" width="14" height="40" rx="6" fill="#0f172a" stroke="#1e293b" stroke-width="0.8"/>
+  <line x1="38" y1="50" x2="48" y2="48" stroke="#1e293b" stroke-width="0.5" opacity="0.6"/>
+  <line x1="38" y1="55" x2="48" y2="54" stroke="#1e293b" stroke-width="0.5" opacity="0.6"/>
+  <line x1="38" y1="65" x2="48" y2="66" stroke="#1e293b" stroke-width="0.5" opacity="0.6"/>
+  <line x1="38" y1="70" x2="48" y2="72" stroke="#1e293b" stroke-width="0.5" opacity="0.6"/>
+  <line x1="38" y1="75" x2="48" y2="78" stroke="#1e293b" stroke-width="0.5" opacity="0.6"/>
+  <rect x="78" y="44" width="14" height="40" rx="6" fill="#0f172a" stroke="#1e293b" stroke-width="0.8"/>
+  <line x1="80" y1="50" x2="90" y2="48" stroke="#1e293b" stroke-width="0.5" opacity="0.6"/>
+  <line x1="80" y1="55" x2="90" y2="54" stroke="#1e293b" stroke-width="0.5" opacity="0.6"/>
+  <line x1="80" y1="65" x2="90" y2="66" stroke="#1e293b" stroke-width="0.5" opacity="0.6"/>
+  <line x1="80" y1="70" x2="90" y2="72" stroke="#1e293b" stroke-width="0.5" opacity="0.6"/>
+  <line x1="80" y1="75" x2="90" y2="78" stroke="#1e293b" stroke-width="0.5" opacity="0.6"/>
+  <circle cx="64" cy="64" r="22" fill="#1e293b" stroke="#334155" stroke-width="1" opacity="0.8"/>
+  <circle cx="64" cy="64" r="18" fill="none" stroke="#475569" stroke-width="0.5" opacity="0.4"/>
+  <rect x="49" y="49" width="30" height="30" rx="4" fill="url(#hyd-hull)" stroke="#475569" stroke-width="1"/>
+  <polygon points="57,49 64,43 71,49" fill="#475569" stroke="#64748b" stroke-width="0.5"/>
+  <line x1="52" y1="73" x2="76" y2="73" stroke="#0f172a" stroke-width="1" opacity="0.6"/>
+  <line x1="52" y1="76" x2="76" y2="76" stroke="#0f172a" stroke-width="1" opacity="0.6"/>
+  <line x1="52" y1="79" x2="76" y2="79" stroke="#0f172a" stroke-width="1" opacity="0.6"/>
+  <circle cx="64" cy="62" r="20" fill="#1e293b" stroke="#475569" stroke-width="1"/>
+  <ellipse cx="64" cy="58" rx="12" ry="14" fill="#3b0764" stroke="#581c87" stroke-width="1"/>
+  <!-- All 3 heads converged and firing (recoil y+2 on barrels) -->
+  <!-- Neck 1 (converged more toward center) -->
+  <path d="M56,50 Q48,34 48,22" stroke="url(#hyd-neck)" stroke-width="4.5" fill="none" stroke-linecap="round"/>
+  <circle cx="46" cy="20" r="7" fill="url(#hyd-head)" stroke="#d8b4fe" stroke-width="1.2"/>
+  <circle cx="44" cy="18" r="1.8" fill="#ffffff" opacity="0.8"/>
+  <rect x="44" y="12" width="3" height="9" rx="1.2" fill="#581c87" stroke="#a855f7" stroke-width="0.5"/>
+  <!-- MUZZLE FLASH head 1 -->
+  <circle cx="45" cy="10" r="6" fill="url(#hyd-muzzle)"/>
+  <circle cx="45" cy="10" r="2" fill="#ffffff" opacity="0.9"/>
+  <line x1="45" y1="10" x2="38" y2="4" stroke="#e9d5ff" stroke-width="0.8" opacity="0.6"/>
+  <line x1="45" y1="10" x2="50" y2="4" stroke="#e9d5ff" stroke-width="0.8" opacity="0.6"/>
+  <!-- Neck 2 (center, recoil) -->
+  <path d="M64,46 Q64,34 64,22" stroke="url(#hyd-neck)" stroke-width="4.5" fill="none" stroke-linecap="round"/>
+  <circle cx="64" cy="20" r="7" fill="url(#hyd-head)" stroke="#d8b4fe" stroke-width="1.2"/>
+  <circle cx="62" cy="18" r="1.8" fill="#ffffff" opacity="0.8"/>
+  <rect x="62" y="10" width="3" height="9" rx="1.2" fill="#581c87" stroke="#a855f7" stroke-width="0.5"/>
+  <!-- MUZZLE FLASH head 2 -->
+  <circle cx="63" cy="8" r="7" fill="url(#hyd-muzzle)"/>
+  <circle cx="63" cy="8" r="2.5" fill="#ffffff" opacity="0.9"/>
+  <line x1="63" y1="8" x2="56" y2="1" stroke="#e9d5ff" stroke-width="0.8" opacity="0.6"/>
+  <line x1="63" y1="8" x2="70" y2="1" stroke="#e9d5ff" stroke-width="0.8" opacity="0.6"/>
+  <!-- Neck 3 (converged) -->
+  <path d="M72,50 Q80,34 80,22" stroke="url(#hyd-neck)" stroke-width="4.5" fill="none" stroke-linecap="round"/>
+  <circle cx="82" cy="20" r="7" fill="url(#hyd-head)" stroke="#d8b4fe" stroke-width="1.2"/>
+  <circle cx="84" cy="18" r="1.8" fill="#ffffff" opacity="0.8"/>
+  <rect x="81" y="12" width="3" height="9" rx="1.2" fill="#581c87" stroke="#a855f7" stroke-width="0.5"/>
+  <!-- MUZZLE FLASH head 3 -->
+  <circle cx="82" cy="10" r="6" fill="url(#hyd-muzzle)"/>
+  <circle cx="82" cy="10" r="2" fill="#ffffff" opacity="0.9"/>
+  <line x1="82" y1="10" x2="76" y2="4" stroke="#e9d5ff" stroke-width="0.8" opacity="0.6"/>
+  <line x1="82" y1="10" x2="88" y2="4" stroke="#e9d5ff" stroke-width="0.8" opacity="0.6"/>
+  <!-- Energy sparkles (max) -->
+  <circle cx="46" cy="42" r="1.5" fill="#e9d5ff" opacity="0.8"/>
+  <circle cx="82" cy="42" r="1.5" fill="#e9d5ff" opacity="0.8"/>
+  <circle cx="50" cy="22" r="1.2" fill="#ffffff" opacity="0.6"/>
+  <circle cx="78" cy="22" r="1.2" fill="#ffffff" opacity="0.6"/>
+  <!-- Center glow (max) -->
+  <circle cx="64" cy="58" r="5" fill="#2e1065"/>
+  <circle cx="64" cy="58" r="3" fill="#d8b4fe" opacity="1"/>
+  <circle cx="64" cy="58" r="8" fill="url(#hyd-glow)"/>
+</svg>
