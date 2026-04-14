@@ -51,7 +51,7 @@ func initGameModes() {
 	}
 	gameModes = []gameModeUI{
 		{"campaign", i18n.T("scene.select.mode.campaign"), "stat-damage", i18n.T("scene.select.mode.campaign_desc"), "map_01", false},
-		{"classic", i18n.T("scene.select.mode.classic"), "★", i18n.T("scene.select.mode.classic_desc"), "map_01", false},
+		{"classic", i18n.T("scene.select.mode.classic"), "★", i18n.T("scene.select.mode.classic_desc"), "map_01", true},
 		{"endless", i18n.T("scene.select.mode.endless"), "∞", i18n.T("scene.select.mode.endless_desc"), "map_01", true},
 		{"timedDefense", i18n.T("scene.select.mode.timed"), "stat-atkspd", i18n.T("scene.select.mode.timed_desc"), "map_02", true},
 		{"bossRush", i18n.T("scene.select.mode.boss"), "execute", i18n.T("scene.select.mode.boss_desc"), "map_03", true},
@@ -416,7 +416,7 @@ func (s *SelectScene) Draw(screen *ebiten.Image) {
 	animTime := float64(s.frame) / 60.0
 	pulse := 1.0 + 0.015*math.Sin(animTime*2) // scale oscillates 0.985 - 1.015
 	titleSize := 28.0 * pulse
-	fm.DrawCenteredBoldText(screen, "Mini Tower Defense", scW/2, 28, titleSize, textWhite)
+	fm.DrawCenteredBoldText(screen, i18n.T("scene.title.game_name"), scW/2, 28, titleSize, textWhite)
 	fm.DrawCenteredText(screen, i18n.T("scene.select.choose_mode"), scW/2, 60, 14, textGray)
 
 	// ── 模式卡片 ──
