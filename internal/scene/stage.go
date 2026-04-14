@@ -1856,50 +1856,35 @@ func (s *StageScene) drawStrengthDrainLinks(screen *ebiten.Image) {
 	})
 }
 
-// drawEnemyAbilityVFX 绘制怪物能力视觉特效（触发特效 + 范围/连接）。
+// drawEnemyAbilityVFX 绘制怪物能力视觉特效（仅保留瞬间触发反馈）。
+// 持续状态（berserk/regen/slow/burn 等）已通过精灵 ColorScale 染色表达，
+// 范围光环（healer/buffer）已移除以减少视觉噪声。
 func (s *StageScene) drawEnemyAbilityVFX(screen *ebiten.Image) {
-	animTime := float64(s.frame) / 60.0
 	s.enemies.Each(func(e *enemy.Enemy) {
 		if !e.Active {
 			return
 		}
 		ex, ey := float32(e.X), float32(e.Y)
 
-		// ── 触发特效 ──
+		// ── 瞬间触发特效（极短暂，提供战斗打击感）──
 
-		// 格挡闪光（蓝色盾形脉冲）
 		if e.BlockFlash > 0 {
 			vfx.DrawBlockFlash(screen, ex, ey, float32(e.Radius), e.BlockFlash)
 		}
-
-		// 闪避残影（白色偏移残影）
 		if e.DodgeFlash > 0 {
 			vfx.DrawDodgeFlash(screen, ex, ey, float32(e.Radius), e.DodgeFlash)
 		}
-
-		// 装甲火花（灰色小火花）
 		if e.ArmorSpark > 0 {
 			vfx.DrawArmorSpark(screen, ex, ey, float32(e.Radius), e.ArmorSpark)
 		}
-
-		// 坚韧触发脉冲（橙色扩散圈）
 		if e.DamageCapHit > 0 {
 			vfx.DrawDamageCapPulse(screen, ex, ey, float32(e.Radius), e.DamageCapHit)
 		}
-
-		// 净化脉冲（白色扩散圈）
 		if e.PurgeFlash > 0 {
 			vfx.DrawPurgeWave(screen, ex, ey, float32(e.Radius), e.PurgeFlash)
 		}
 
-		// ── 持续状态 ──
-
-		// 相位偏移：紫色脉冲光环（免伤中）
-		if e.PhaseActive {
-			vfx.DrawPhaseAura(screen, ex, ey, float32(e.Radius), animTime)
-		}
-
-		// 受击冲刺：速度拖尾线
+		// 受击冲刺尾迹（极短暂）
 		if e.DashActiveT > 0 {
 			dirX, dirY := -1.0, 0.0
 			if e.PathIndex < len(e.Path) {
@@ -1913,26 +1898,6 @@ func (s *StageScene) drawEnemyAbilityVFX(screen *ebiten.Image) {
 				}
 			}
 			vfx.DrawDashTrails(screen, ex, ey, dirX, dirY)
-		}
-
-		// ── 范围/光环 （不被沉默时显示）──
-
-		if e.AbilitySilenced {
-			return
-		}
-
-		// 治疗光环范围圈（绿色虚线圈）
-		if _, hr, ok := e.GetHealAuraParams(); ok && !e.IsDying() {
-			vfx.DrawHealerAura(screen, ex, ey, float32(hr), animTime)
-			if e.HealCooldown > e.HealInterval-0.4 {
-				progress := (e.HealInterval - e.HealCooldown) / 0.4
-				vfx.DrawHealPulse(screen, ex, ey, float32(e.Radius), float32(hr), progress)
-			}
-		}
-
-		// 加速光环范围圈（橙色虚线圈）
-		if su, ar, ok := e.GetBufferAuraParams(); ok && su > 0 && !e.IsDying() {
-			vfx.DrawSpeedAura(screen, ex, ey, ar, animTime)
 		}
 	})
 }

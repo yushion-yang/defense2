@@ -48,7 +48,7 @@ func NewEnemyRenderer(assetFS AssetReader) *EnemyRenderer {
 	}
 }
 
-const enemySpriteSize = 32 // 敌人精灵的逻辑显示尺寸（像素），与资源 PNG 无关
+const enemySpriteSize = 45 // 敌人精灵的逻辑显示尺寸（像素），与资源 PNG 无关（1.4x 放大）
 
 // hpBarEntry 是 HP 血条的延迟渲染数据（Pass 3 使用）。
 // 在 Pass 2 遍历存活敌人时收集，之后按 Y 坐标排序并施加斥力以避免重叠。
@@ -61,8 +61,6 @@ type hpBarEntry struct {
 	hp, maxHP  float64
 	displayHP  float64
 	boss       bool
-	// status dots
-	slowed, stunned, rooted, bleeding, burning, poisoned, weakened bool
 }
 
 // spritePathCache 缓存精灵路径字符串，避免每帧 fmt.Sprintf 分配。
@@ -159,29 +157,10 @@ func (er *EnemyRenderer) DrawEnemies(screen *ebiten.Image, pool *enemy.Pool, ani
 
 		r := float32(e.Radius)
 
-		// --- Boss pulsing rings ---
-		if e.Boss {
-			vfx.DrawBossPulse(screen, cx, cy, r, animTime)
-		}
-
-		// --- Runner pulsing ring ---
-		if e.Archetype == "runner" {
-			vfx.DrawRunnerRing(screen, cx, cy, r, animTime)
-		}
-
 		// --- Root ground effect (drawn UNDER enemy body) ---
 		if e.IsRooted() {
 			vfx.DrawRootGround(screen, cx, cy, r)
 		}
-
-		// --- Buffer aura ring (drawn UNDER body, hidden when silenced) ---
-		if e.Behavior == "buffer" && e.HasBufferAura() && !e.AbilitySilenced {
-			if ba, ok := e.Buffs.Get("bufferAura"); ok {
-				vfx.DrawBufferAura(screen, cx, cy, ba.Value2, animTime)
-			}
-		}
-
-		// (旧 healer aura ring 已移到能力 VFX 系统)
 
 		// --- Spawn animation modifiers ---
 		spawnScale, spawnAlpha := 1.0, 1.0
@@ -190,24 +169,36 @@ func (er *EnemyRenderer) DrawEnemies(screen *ebiten.Image, pool *enemy.Pool, ani
 		}
 
 		// --- 敌人本体渲染（帧动画优先，静态精灵兜底） ---
+		// 采用 ColorScale 染色表达状态/行为，替代额外的 VFX 覆盖圈：
+		//   状态: slow→蓝色调, burn→红橙, poison→绿, stun→灰白+抖动, hit→闪白
+		//   行为: berserk→红色调+微胀, regen→绿色调
 		img := er.getEnemyFrame(e, 1.0/60.0)
 		if img != nil {
-			// 行走摆动：X 位置 + 时间混合作为相位，让每个敌人有独立的摆动节奏。
-			// wobbleY: ±1.5px 上下浮动；wobbleRot: ±0.05rad (~3°) 左右摇摆。
-			// 眩晕/定身时禁用摆动（视觉上表示无法移动）。
+			// 行走摆动：X 位置 + 时间混合作为相位，让每个敌人有独立的摆动节奏
 			wobblePhase := e.X*0.05 + animTime*4
 			wobbleY := math.Sin(wobblePhase) * 1.5
 			wobbleRot := math.Sin(wobblePhase) * 0.05
-			if e.IsStunned() || e.IsRooted() {
+
+			// 眩晕：禁用摆动 + 快速抖动表示无法移动
+			if e.IsStunned() {
+				wobbleY = 0
+				wobbleRot = 0
+				// 高频小幅抖动（~15Hz, ±1px）
+				wobbleY = math.Sin(animTime*90) * 1.0
+			} else if e.IsRooted() {
 				wobbleY = 0
 				wobbleRot = 0
 			}
-			// Boss/Elite 呼吸缩放：体型周期性脉冲
+
+			// Boss/Elite 呼吸缩放
 			displaySize := float64(enemySpriteSize)
 			if e.Boss {
 				displaySize *= 1.0 + 0.04*math.Sin(animTime*1.8)
 			}
-			// Apply spawn scale
+			// 狂暴：体型微胀 8%（红色调在下面 ColorScale 处理）
+			if !e.AbilitySilenced && e.HasBerserk() && e.BerserkTriggered {
+				displaySize *= 1.08
+			}
 			displaySize *= spawnScale
 
 			// 计算 alpha（隐身/相位）
@@ -217,17 +208,56 @@ func (er *EnemyRenderer) DrawEnemies(screen *ebiten.Image, pool *enemy.Pool, ani
 			} else if e.PhaseActive && !e.AbilitySilenced {
 				bodyAlpha = 0.35
 			}
-			// Apply spawn alpha
 			bodyAlpha *= spawnAlpha
 
-			if bodyAlpha < 1.0 || spawnScale != 1.0 {
-				logicalScale := displaySize / float64(img.Bounds().Dx())
-				draw.SpriteScaledRotatedAlpha(screen, img, float64(cx), float64(cy)+wobbleY,
-					logicalScale, wobbleRot, bodyAlpha)
-			} else {
-				draw.SpriteRotated(screen, img, float64(cx), float64(cy), displaySize, wobbleRot, wobbleY)
+			// ── ColorScale 染色 ──────────────────────────
+			// 优先级从高到低：hit flash > stun > slow > burn > poison > berserk > regen
+			// 多状态时取最高优先级的染色，避免叠加失控
+			var tintR, tintG, tintB float32 = 1, 1, 1
+			switch {
+			case e.HitFlash > 0 && !e.IsDying():
+				// 受击闪白：强度随 HitFlash 衰减
+				boost := float32(1.0 + e.HitFlash*1.5)
+				tintR, tintG, tintB = boost, boost, boost
+			case e.IsStunned():
+				// 灰白色调 — 表示失去行动能力
+				tintR, tintG, tintB = 0.7, 0.7, 0.9
+			case e.IsSlowed():
+				// 蓝色调 — 冰冻感
+				tintR, tintG, tintB = 0.6, 0.75, 1.3
+			case e.IsBurning():
+				// 红橙色调 — 燃烧
+				t := float32(0.5 + 0.5*math.Sin(animTime*8)) // 微闪烁
+				tintR = 1.3 + 0.2*t
+				tintG = 0.55 + 0.1*t
+				tintB = 0.35
+			case e.Buffs != nil && e.Buffs.Has("poison"):
+				// 绿色调 — 中毒
+				tintR, tintG, tintB = 0.5, 1.2, 0.5
+			case !e.AbilitySilenced && e.HasBerserk() && e.BerserkTriggered:
+				// 红色调 — 狂暴
+				tintR, tintG, tintB = 1.4, 0.6, 0.5
+			case !e.AbilitySilenced && e.HasRegen():
+				// 淡绿色调 — 再生
+				tintR, tintG, tintB = 0.7, 1.15, 0.7
 			}
+
+			// 内联 DrawImage：需要同时控制 GeoM + ColorScale
+			w := float64(img.Bounds().Dx())
+			logicalScale := displaySize / w
+			s := logicalScale * draw.Scale
+			var op ebiten.DrawImageOptions
+			op.GeoM.Translate(-w/2, -w/2)
+			op.GeoM.Rotate(wobbleRot)
+			op.GeoM.Scale(s, s)
+			op.GeoM.Translate(float64(cx)*draw.Scale, (float64(cy)+wobbleY)*draw.Scale)
+			if bodyAlpha < 1.0 {
+				op.ColorScale.ScaleAlpha(float32(bodyAlpha))
+			}
+			op.ColorScale.Scale(tintR, tintG, tintB, 1)
+			screen.DrawImage(img, &op)
 		} else {
+			// 无精灵时的回退圆形
 			bodyColor := theme.EnemyFallback
 			if e.Boss {
 				bodyColor = theme.EnemyFallbackBoss
@@ -237,58 +267,19 @@ func (er *EnemyRenderer) DrawEnemies(screen *ebiten.Image, pool *enemy.Pool, ani
 			} else if e.PhaseActive && !e.AbilitySilenced {
 				bodyColor.A = 90
 			}
-			// Apply spawn alpha to fallback circle
 			bodyColor.A = uint8(float64(bodyColor.A) * spawnAlpha)
 			draw.FilledCircle(screen, cx, cy, r*float32(spawnScale), bodyColor)
 		}
 
-		// --- Buff behavior VFX (drawn over body, hidden when silenced) ---
-		if !e.AbilitySilenced {
-			if e.GetDamageReduce() > 0 {
-				vfx.DrawDamageReduceShield(screen, cx, cy, float32(e.Radius), animTime)
-			}
-			if e.HasBerserk() && e.BerserkTriggered {
-				vfx.DrawBerserkFlare(screen, cx, cy, float32(e.Radius), animTime)
-			}
-			if e.HasRegen() {
-				vfx.DrawRegenAura(screen, cx, cy, float32(e.Radius), animTime)
-			}
-		}
-
-		// --- Status effect body overlays (subtle, sprite-sized) ---
-		spriteR := float32(enemySpriteSize) / 2
-		if e.IsSlowed() {
-			vfx.DrawSlowOverlay(screen, cx, cy, spriteR, animTime)
-		}
-		if e.IsBurning() {
-			vfx.DrawBurnOverlay(screen, cx, cy, spriteR, animTime)
-		}
-		if e.Buffs != nil && e.Buffs.Has("poison") {
-			vfx.DrawPoisonOverlay(screen, cx, cy, spriteR, animTime)
-		}
-
-		// --- Stun rotating stars ---
-		if e.IsStunned() {
-			vfx.DrawStunStars(screen, cx, cy, r, animTime)
-		}
-
-		// --- Hit flash overlay ---
-		if e.HitFlash > 0 && !e.IsDying() {
-			vfx.DrawHitFlash(screen, cx, cy, spriteR, e.HitFlash)
-		}
-
-		// (tank overlay removed — was debug placeholder)
-
-		// Stealthed enemies: skip HP bar and status dots (nearly invisible)
+		// Stealthed enemies: skip HP bar (nearly invisible)
 		if e.IsStealthed() {
 			return
 		}
 
 		// 收集 HP 条数据用于 Pass 3 延迟绘制（带斥力算法避免重叠）。
-		// 优化：满血且无状态效果的敌人不显示血条（减少视觉噪声）。
+		// 优化：满血的敌人不显示血条（减少视觉噪声）。
 		// Boss 始终显示（玩家需要实时掌握 Boss 血量）。
-		hasStatus := e.IsSlowed() || e.IsStunned() || e.IsRooted() || e.IsBleeding() || e.IsBurning() || e.IsPoisoned() || e.IsWeakened()
-		if e.HP < e.MaxHP || e.Boss || hasStatus {
+		if e.HP < e.MaxHP || e.Boss {
 			var barW, barH, barOffY float32
 			if e.Boss {
 				barW = theme.EnemyBossHPBarW
@@ -303,28 +294,12 @@ func (er *EnemyRenderer) DrawEnemies(screen *ebiten.Image, pool *enemy.Pool, ani
 				cx: cx, cy: cy,
 				barW: barW, barH: barH, barOffY: barOffY,
 				hp: e.HP, maxHP: e.MaxHP, displayHP: e.DisplayHP,
-				boss:     e.Boss,
-				slowed:   e.IsSlowed(),
-				stunned:  e.IsStunned(),
-				rooted:   e.IsRooted(),
-				bleeding: e.IsBleeding(),
-				burning:  e.IsBurning(),
-				poisoned: e.IsPoisoned(),
-				weakened: e.IsWeakened(),
+				boss: e.Boss,
 			})
 		}
 
-		// --- 能力常驻视觉（被沉默时全部隐藏）---
+		// --- 能力常驻视觉：盾牌图标组件（被沉默时隐藏）---
 		if !e.AbilitySilenced {
-			// 免疫脚环（只显示天生能力，净化临时免疫用白色微光）
-			footR := float32(e.Radius) + 2
-			if hasAbility(e, enemy.AbilCCImmune) {
-				vfx.DrawImmunityRing(screen, cx, cy, footR, theme.EnemyImmuneCC, animTime)
-			} else if hasAbility(e, enemy.AbilSlowImmune) {
-				vfx.DrawImmunityRing(screen, cx, cy, footR, theme.EnemyImmuneSlow, animTime)
-			}
-
-			// 盾牌叠加（能力对应颜色盾牌）
 			shieldOffset := float32(e.Radius) * 0.6
 			if e.ProjectileBlockChance > 0 {
 				if img := er.loadShield("shield-white"); img != nil {
@@ -340,11 +315,6 @@ func (er *EnemyRenderer) DrawEnemies(screen *ebiten.Image, pool *enemy.Pool, ani
 				if img := er.loadShield("shield-orange"); img != nil {
 					draw.Sprite(screen, img, float64(cx+shieldOffset), float64(cy), 14)
 				}
-			}
-
-			// 净化免疫期白色微光
-			if e.PurgeInterval > 0 && e.HasControlImmunity() {
-				vfx.DrawPurgeGlow(screen, cx, cy, float32(e.Radius), animTime)
 			}
 		}
 
@@ -427,85 +397,53 @@ func repulseHPBars(bars []hpBarEntry) {
 //  3. 彩色 HP 填充（>60% 绿 / >30% 黄 / ≤30% 红）
 //  4. Boss 专用分段线（每 20% 一道分割线，便于估读血量）
 //
-// 血条上方绘制状态效果圆点（减速/眩晕/定身/流血/燃烧/中毒/削弱）。
-func drawHPBars(screen *ebiten.Image, bars []hpBarEntry, animTime float64) {
+// 状态效果已通过 ColorScale 染色表达在精灵本体上，血条只保留纯净的 HP 信息。
+func drawHPBars(screen *ebiten.Image, bars []hpBarEntry, _ float64) {
 	for i := range bars {
 		b := &bars[i]
 		barX := b.cx - b.barW/2
 		barY := b.cy - b.barOffY + b.adjustY
 
-		// Only draw HP bar if not full HP (status-only entries skip the bar).
-		if b.hp < b.maxHP {
-			// Background (1px pseudo-border)
-			draw.FilledRect(screen, barX-1, barY-1, b.barW+2, b.barH+2,
-				theme.EnemyHPBarBg, true)
+		// Background (1px pseudo-border)
+		draw.FilledRect(screen, barX-1, barY-1, b.barW+2, b.barH+2,
+			theme.EnemyHPBarBg, true)
 
-			// Damage trail (orange)
-			if b.displayHP > b.hp && b.displayHP > 0 {
-				trailRatio := float32(b.displayHP / b.maxHP)
-				if trailRatio > 1 {
-					trailRatio = 1
-				}
-				draw.FilledRect(screen, barX, barY, b.barW*trailRatio, b.barH,
-					theme.EnemyHPBarTrail, true)
+		// Damage trail (orange)
+		if b.displayHP > b.hp && b.displayHP > 0 {
+			trailRatio := float32(b.displayHP / b.maxHP)
+			if trailRatio > 1 {
+				trailRatio = 1
 			}
+			draw.FilledRect(screen, barX, barY, b.barW*trailRatio, b.barH,
+				theme.EnemyHPBarTrail, true)
+		}
 
-			// HP fill
-			ratio := float32(b.hp / b.maxHP)
-			if ratio < 0 {
-				ratio = 0
-			} else if ratio > 1 {
-				ratio = 1
+		// HP fill
+		ratio := float32(b.hp / b.maxHP)
+		if ratio < 0 {
+			ratio = 0
+		} else if ratio > 1 {
+			ratio = 1
+		}
+		fillW := b.barW * ratio
+
+		var fillClr color.RGBA
+		switch {
+		case ratio > 0.6:
+			fillClr = theme.EnemyHPFillHigh
+		case ratio > 0.3:
+			fillClr = theme.EnemyHPFillMid
+		default:
+			fillClr = theme.EnemyHPFillLow
+		}
+		draw.FilledRect(screen, barX, barY, fillW, b.barH, fillClr, true)
+
+		// Boss segment dividers
+		if b.boss {
+			for s := 1; s < 5; s++ {
+				divX := barX + b.barW*float32(s)*0.2
+				draw.FilledRect(screen, divX, barY, 1, b.barH, theme.EnemyHPSegDiv, true)
 			}
-			fillW := b.barW * ratio
-
-			var fillClr color.RGBA
-			switch {
-			case ratio > 0.6:
-				fillClr = theme.EnemyHPFillHigh
-			case ratio > 0.3:
-				fillClr = theme.EnemyHPFillMid
-			default:
-				fillClr = theme.EnemyHPFillLow
-			}
-			draw.FilledRect(screen, barX, barY, fillW, b.barH, fillClr, true)
-
-			// Boss segment dividers
-			if b.boss {
-				for s := 1; s < 5; s++ {
-					divX := barX + b.barW*float32(s)*0.2
-					draw.FilledRect(screen, divX, barY, 1, b.barH, theme.EnemyHPSegDiv, true)
-				}
-			}
-		}
-
-		// Status effect dots (above the bar)
-		dotY := barY - 4
-		var dotsArr [7]vfx.StatusDot
-		dots := dotsArr[:0]
-		if b.slowed {
-			dots = append(dots, vfx.StatusDot{Color: theme.EnemyDotSlowed})
-		}
-		if b.stunned {
-			dots = append(dots, vfx.StatusDot{Color: theme.EnemyDotStunned})
-		}
-		if b.rooted {
-			dots = append(dots, vfx.StatusDot{Color: theme.EnemyDotRooted})
-		}
-		if b.bleeding {
-			dots = append(dots, vfx.StatusDot{Color: theme.EnemyDotBleeding})
-		}
-		if b.burning {
-			dots = append(dots, vfx.StatusDot{Color: theme.EnemyDotBurning})
-		}
-		if b.poisoned {
-			dots = append(dots, vfx.StatusDot{Color: theme.EnemyDotPoison})
-		}
-		if b.weakened {
-			dots = append(dots, vfx.StatusDot{Color: theme.EnemyDotWeaken})
-		}
-		if len(dots) > 0 {
-			vfx.DrawStatusDots(screen, b.cx, dotY, dots, animTime)
 		}
 	}
 }
