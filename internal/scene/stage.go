@@ -659,8 +659,12 @@ func (s *StageScene) subscribeBus() {
 		if s.wardenReady && s.wardenUnit != nil {
 			s.wardenUnit.OnWaveClear()
 		}
-		// 道具掉落周期重置
-		if dc := config.GlobalBalance().ItemDrop; dc.CycleWaves > 0 && s.wavesCleared%dc.CycleWaves == 0 {
+		// 道具掉落：经典模式每 10 波掉一个，其他模式重置周期计数
+		if s.ruleset.ItemDropMode() == gamemode.ItemDropByWave {
+			if s.wavesCleared > 0 && s.wavesCleared%10 == 0 {
+				s.spawnItemDrop(float64(game.ScreenWidth)/2, float64(game.ScreenHeight)/2)
+			}
+		} else if dc := config.GlobalBalance().ItemDrop; dc.CycleWaves > 0 && s.wavesCleared%dc.CycleWaves == 0 {
 			s.dropCycleCount = 0
 		}
 		if p.Perfect {
@@ -3062,35 +3066,44 @@ func (s *StageScene) buildBuildMenuData() hud.BuildMenuData {
 	cards := make([]hud.BuildCardVM, 0, buildableCount+10)
 
 	// Buildable tower cards
+	isPreset := s.ruleset.UsePresetTowers()
 	for _, def := range s.towerDefs {
 		roleTag, roleClr := towerRoleTags(def)
+		// 经典模式用对应 spriteKey，娱乐模式统一用 sentinel
+		spriteKey := "sentinel"
+		if isPreset {
+			spriteKey = spriteKeyFromDef(def)
+		}
 		cards = append(cards, hud.BuildCardVM{
 			Key: def.Key, Label: def.Label, Cost: def.Cost,
 			Damage: def.Damage, AttackSpeed: def.AttackSpeed, Range: def.Range,
 			RoleTag: roleTag, RoleColor: roleClr,
 			TypeIcon:  towerTypeIcon(def.Key),
-			Sprite:    s.towerRenderer.GetSprite("sentinel"),
+			Sprite:    s.towerRenderer.GetSprite(spriteKey),
 			Buildable: true,
+			Category:  def.Category,
 		})
 	}
 
-	// Attack style variant cards (display only)
-	attackAbils := tower.AbilitiesForCategory(config.AbilityCatAttack)
-	slices.SortFunc(attackAbils, func(a, b *config.AbilityDef) int {
-		return cmp.Compare(a.Type, b.Type)
-	})
-	for _, ab := range attackAbils {
-		sprKey := tower.AbilitySpriteKey(ab.Type)
-		cards = append(cards, hud.BuildCardVM{
-			Key:         ab.Type,
-			Label:       tower.SpriteLabelFor(sprKey),
-			RoleTag:     ab.Label,
-			RoleColor:   color.RGBA{R: 140, G: 160, B: 200, A: 180},
-			TypeIcon:    ab.Icon,
-			Sprite:      s.towerRenderer.GetSprite(sprKey),
-			Buildable:   false,
-			AbilityDesc: attackStyleDesc(ab.Type),
+	// 非预设模式：追加攻击方式变体卡（展示用）
+	if !isPreset {
+		attackAbils := tower.AbilitiesForCategory(config.AbilityCatAttack)
+		slices.SortFunc(attackAbils, func(a, b *config.AbilityDef) int {
+			return cmp.Compare(a.Type, b.Type)
 		})
+		for _, ab := range attackAbils {
+			sprKey := tower.AbilitySpriteKey(ab.Type)
+			cards = append(cards, hud.BuildCardVM{
+				Key:         ab.Type,
+				Label:       tower.SpriteLabelFor(sprKey),
+				RoleTag:     ab.Label,
+				RoleColor:   color.RGBA{R: 140, G: 160, B: 200, A: 180},
+				TypeIcon:    ab.Icon,
+				Sprite:      s.towerRenderer.GetSprite(sprKey),
+				Buildable:   false,
+				AbilityDesc: attackStyleDesc(ab.Type),
+			})
+		}
 	}
 
 	return hud.BuildMenuData{
@@ -3140,8 +3153,45 @@ func attackStyleDesc(abilType string) string {
 	return label
 }
 
+// spriteKeyFromDef 从经典模式 TowerDef 推断精灵键名。
+// 优先使用 PresetAbilities 中的攻击能力对应精灵，否则用攻击方式默认映射。
+func spriteKeyFromDef(def tower.TowerDef) string {
+	// 检查预设能力中是否有攻击类能力（会决定精灵变形）
+	for _, abil := range def.PresetAbilities {
+		if sk := tower.AbilitySpriteKey(abil); sk != "" {
+			return sk
+		}
+	}
+	// 按攻击方式推断
+	switch def.AttackStyleID {
+	case tower.StyleWideBeam:
+		return "prism"
+	case tower.StyleScatter:
+		return "shotgun"
+	case tower.StyleSpinAoE:
+		return "cyclone"
+	case tower.StyleRadial:
+		return "nova"
+	case tower.StyleBarrage:
+		return "gatling"
+	default:
+		return "sentinel"
+	}
+}
+
 // towerRoleTags 返回塔的角色标签和颜色。
+// 经典模式优先使用 Category 分类，娱乐模式按能力推断。
 func towerRoleTags(def tower.TowerDef) (string, color.RGBA) {
+	// 经典模式：按分类直接映射
+	switch def.Category {
+	case "dps":
+		return i18n.T("game.role.dps"), color.RGBA{R: 220, G: 80, B: 80, A: 255}
+	case "aoe":
+		return i18n.T("game.role.aoe"), color.RGBA{R: 220, G: 180, B: 80, A: 255}
+	case "support":
+		return i18n.T("game.role.support"), color.RGBA{R: 80, G: 200, B: 120, A: 255}
+	}
+	// 娱乐模式：按能力推断
 	for _, ab := range def.Abilities {
 		switch ab {
 		case "stun":

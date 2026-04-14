@@ -29,6 +29,7 @@ type BuildCardVM struct {
 	Sprite      *ebiten.Image // 预加载的精灵图
 	Buildable   bool          // true=可建造, false=仅展示变体
 	AbilityDesc string        // 变体卡的能力描述文本
+	Category    string        // 角色分类（经典模式用：dps/aoe/support），空=不分组
 }
 
 // BuildMenuData holds the runtime data the build menu needs to render.
