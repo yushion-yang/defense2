@@ -116,6 +116,9 @@ func (h *BarrageHandler) Tick(t *tower.Tower, ctx *AttackContext) {
 	// 索敌
 	target := tower.AcquireTarget(t, ctx.Enemies)
 	if target == nil {
+		// 无目标时钳制 FireTimer 为 0，防止负值无限累积。
+		// 否则长时间无目标后首次攻击会触发"超高攻速追赶"批量发射。
+		t.FireTimer = 0
 		return
 	}
 

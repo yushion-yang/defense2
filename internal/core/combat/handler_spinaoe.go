@@ -106,6 +106,8 @@ func (h *SpinAoEHandler) Tick(t *tower.Tower, ctx *AttackContext) {
 		})
 
 		if !hasTarget {
+			// 无目标时钳制 FireTimer 为 0，防止负值无限累积
+			t.FireTimer = 0
 			break
 		}
 		t.FireTimer += shotInterval
