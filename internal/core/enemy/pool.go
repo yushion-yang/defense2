@@ -35,7 +35,7 @@ import (
 )
 
 const (
-	defaultHealInterval     = 2.5 // 默认治疗间隔(秒)
+	defaultHealInterval     = 3.0 // 默认治疗间隔(秒)，与 abilities.json healAura.param2 保持一致
 	bossSpawnAnimDuration   = 0.5 // Boss 出生动画时长(秒)
 	normalSpawnAnimDuration = 0.3 // 普通敌人出生动画时长(秒)
 )

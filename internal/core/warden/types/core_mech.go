@@ -34,22 +34,22 @@ type coreBehavior struct{}
 
 func (b *coreBehavior) Type() string { return "core" }
 
-// Init initializes core mech warden behavior.
-// NOTE: Stats are currently hardcoded. See config/wardens/wardens.json for planned externalization.
-// Hardcoded: damage=20, attackInterval=1.2, range=160, moveSpeed=360, aoeRadius=60
+// Init 初始化机甲战灵。
+// 硬编码值作为 fallback，与 wardens.json 中 core 的配置保持一致。
+// JSON 覆盖链：Init 设默认 → NewWarden 用 JSON 覆盖基础属性 → ParamOr 读配置参数。
 func (b *coreBehavior) Init(w *warden.Warden) any {
 	p := w.Params
 	return &CoreState{
 		WardenState: warden.WardenState{
-			Damage:         20,
-			AttackInterval: 1.2,
+			Damage:         15,
+			AttackInterval: 1.0,
 			Range:          160,
 			MoveSpeed:      360,
 			AoERadius:      warden.ParamOr(p, "aoeRadius", 60), // 范围攻击半径（4+敌人时触发）
 		},
 		OrbitDist:    warden.ParamOr(p, "orbitDist", 110.0),
 		AoeThreshold: warden.ParamOrInt(p, "aoeThreshold", 4),
-		ExecHpPct:    warden.ParamOr(p, "execHpPct", 0.20),
+		ExecHpPct:    warden.ParamOr(p, "execHpPct", 0.15),
 	}
 }
 

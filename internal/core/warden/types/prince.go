@@ -62,12 +62,6 @@ type Fireball struct {
 	HitSet   map[*enemy.Enemy]bool // 已命中的敌人
 }
 
-const fireballHpPct = 0.05    // 5% 最大生命值额外伤害
-const fireballLineLen = 400.0 // 火球穿透飞行距离
-
-// trailTickInterval 火焰痕迹伤害判定周期（秒）。
-const trailTickInterval = 0.5
-
 // FireTrail 火球到达后留下的火焰痕迹，持续灼烧范围内敌人。
 type FireTrail struct {
 	X, Y      float64 // 痕迹中心位置
@@ -83,8 +77,8 @@ type princeBehavior struct{}
 
 func (b *princeBehavior) Type() string { return "prince" }
 
-// Init 初始化火灵战灵行为。
-// 默认值见代码，可被 wardens.json 中的 Params 覆盖。
+// Init 初始化火灵战灵。
+// 硬编码值作为 fallback，与 wardens.json 中 prince 的配置保持一致。
 func (b *princeBehavior) Init(w *warden.Warden) any {
 	p := w.Params
 	return &PrinceState{

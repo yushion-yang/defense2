@@ -49,11 +49,16 @@ func TestWardenCalcStrength(t *testing.T) {
 
 func TestWardenOnKillAndWave(t *testing.T) {
 	w := warden.NewWarden(1, "测试", "envoy")
+	initial := w.SelfStrength
+	killGrowth := w.GrowthOnKill
+	waveGrowth := w.GrowthOnWaveClear
 	w.OnKill()
 	w.OnKill()
 	w.OnWaveClear()
-	if w.SelfStrength != 109 { // 100(初始) + 2*2 + 5
-		t.Fatalf("预期自身强度 109，实际 %.0f", w.SelfStrength)
+	expected := initial + killGrowth*2 + waveGrowth
+	if w.SelfStrength != expected {
+		t.Fatalf("预期自身强度 %.0f (%.0f+%.0f*2+%.0f)，实际 %.0f",
+			expected, initial, killGrowth, waveGrowth, w.SelfStrength)
 	}
 }
 

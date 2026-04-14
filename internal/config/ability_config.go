@@ -125,20 +125,3 @@ func (d *AbilityDef) HasParam2() bool {
 	return d != nil && d.Param2Dim != ""
 }
 
-// FormatScale 格式化缩放维度为 HUD 展示字符串。
-// base < 1 时用百分比格式，否则用绝对值格式。无缩放返回空。
-func (d *AbilityDef) FormatScale(strength float64) string {
-	if !d.HasScale() {
-		return ""
-	}
-	scaled := d.Potential * (strength / 100.0)
-	total := d.Base + scaled
-	if d.Base < 1 {
-		display := total
-		if (d.ScaleDim == "chance" || d.ScaleDim == "factor") && display > 1 {
-			display = 1
-		}
-		return fmt.Sprintf("%s %.0f%%+(%.0f%%)=%.0f%%", d.ScaleDim, d.Base*100, scaled*100, display*100)
-	}
-	return fmt.Sprintf("%s %.0f+(%.0f)=%.0f", d.ScaleDim, d.Base, scaled, total)
-}
