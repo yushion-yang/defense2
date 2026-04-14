@@ -84,7 +84,8 @@ func initTower(t *Tower, row, col int, cx, cy float64, def TowerDef) {
 	t.AttackStyleID = def.AttackStyleID
 	t.ProjectileSpeed = def.ProjectileSpeed
 	t.Level = 1
-	t.SpriteKey = spriteKeyForStyle(def.AttackStyleID) // 初始精灵（通常是 "sentinel"）
+	t.SpriteKey = spriteKeyForStyle(def.AttackStyleID)       // 初始精灵（通常是 "sentinel"）
+	t.SpriteKeyOverride = def.SpriteKeyOverride              // 经典模式精灵覆盖
 	t.UnlockOrder = RollUnlockOrder()                  // 随机生成 6 个能力类别的解锁顺序（[0] 始终是攻击模式）
 
 	// 战力系统初始化：Strength 基础值 100，BuffList 空容器
@@ -266,9 +267,10 @@ type TowerDef struct {
 	UpgradeCosts []int // 每次升级费用（索引0=第1次升级，索引5=第6次升级）
 
 	// ── 经典模式扩展字段 ──
-	FixedTiers      bool     // true=跳过 RollTowerStats，直接使用 CfgBase*/Potential* 值
-	PresetAbilities []string // 预设能力列表（经典模式出厂即生效，不走解锁流程）
-	Category        string   // 角色分类（dps/aoe/support），用于建造菜单分组
+	FixedTiers       bool     // true=跳过 RollTowerStats，直接使用 CfgBase*/Potential* 值
+	PresetAbilities  []string // 预设能力列表（经典模式出厂即生效，不走解锁流程）
+	Category         string   // 角色分类（dps/aoe/support），用于建造菜单分组
+	SpriteKeyOverride string  // 经典模式：强制精灵键（覆盖 AddAbility 推断的结果）
 }
 
 // spriteKeyForStyle 将攻击方式映射到初始精灵标识。

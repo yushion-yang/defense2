@@ -3116,8 +3116,12 @@ func (s *StageScene) buildBuildMenuData() hud.BuildMenuData {
 	}
 }
 
-// buildMenuTotalCards returns total card count (buildable + attack variants) for layout.
+// buildMenuTotalCards returns total card count for layout.
+// 经典模式只有可建造卡，娱乐模式还有攻击方式变体展示卡。
 func (s *StageScene) buildMenuTotalCards() int {
+	if s.ruleset.UsePresetTowers() {
+		return len(s.towerDefs)
+	}
 	return len(s.towerDefs) + len(tower.AbilitiesForCategory(config.AbilityCatAttack))
 }
 
@@ -3153,30 +3157,13 @@ func attackStyleDesc(abilType string) string {
 	return label
 }
 
-// spriteKeyFromDef 从经典模式 TowerDef 推断精灵键名。
-// 优先使用 PresetAbilities 中的攻击能力对应精灵，否则用攻击方式默认映射。
+// spriteKeyFromDef 返回经典模式 TowerDef 的精灵键名。
+// 直接使用配置中指定的 SpriteKeyOverride，避免推断错误。
 func spriteKeyFromDef(def tower.TowerDef) string {
-	// 检查预设能力中是否有攻击类能力（会决定精灵变形）
-	for _, abil := range def.PresetAbilities {
-		if sk := tower.AbilitySpriteKey(abil); sk != "" {
-			return sk
-		}
+	if def.SpriteKeyOverride != "" {
+		return def.SpriteKeyOverride
 	}
-	// 按攻击方式推断
-	switch def.AttackStyleID {
-	case tower.StyleWideBeam:
-		return "prism"
-	case tower.StyleScatter:
-		return "shotgun"
-	case tower.StyleSpinAoE:
-		return "cyclone"
-	case tower.StyleRadial:
-		return "nova"
-	case tower.StyleBarrage:
-		return "gatling"
-	default:
-		return "sentinel"
-	}
+	return "sentinel"
 }
 
 // towerRoleTags 返回塔的角色标签和颜色。
@@ -3712,9 +3699,10 @@ func loadClassicTowerDefs() []tower.TowerDef {
 			PotentialRange:  rngTier.Potential + tp.Range.BasePotential,
 
 			// 经典模式标记
-			FixedTiers:      true,
-			PresetAbilities: p.Abilities,
-			Category:        p.Category,
+			FixedTiers:        true,
+			PresetAbilities:   p.Abilities,
+			Category:          p.Category,
+			SpriteKeyOverride: p.SpriteKey,
 		}
 		defs = append(defs, def)
 	}

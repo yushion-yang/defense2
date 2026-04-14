@@ -282,9 +282,16 @@ func (t *Tower) AddAbility(abilityType string) bool {
 
 // ApplyPresetAbilities 批量注入预设能力（经典模式用）。
 // 不走解锁流程，直接把能力写入对应 slot，触发攻击方式变形和 enhance 效果。
+// 注入完成后，用 TowerDef.SpriteKeyOverride 修正精灵（防止 AddAbility 推断覆盖）。
 func ApplyPresetAbilities(t *Tower, abilities []string) {
 	for _, abil := range abilities {
 		t.AddAbility(abil)
+	}
+	// 经典模式的 SpriteKey 由配置决定，不依赖 AddAbility 的推断
+	// （如 cl_gatling 的 enhance 能力会把 SpriteKey 错误改为 fortress）
+	if t.SpriteKeyOverride != "" {
+		t.SpriteKey = t.SpriteKeyOverride
+		t.Label = SpriteLabelFor(t.SpriteKeyOverride)
 	}
 }
 

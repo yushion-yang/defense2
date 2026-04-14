@@ -52,7 +52,8 @@ type Tower struct {
 	Key         string   // 塔类型标识（如 "basic"，建造时从 TowerDef 复制）
 	InstanceKey string   // 实例唯一标识（格式 "key_row_col"，用于弹射物来源匹配和 ByInstanceKey 反查）
 	Label       string   // 显示名称（随攻击能力变化，如 "Sentinel" → "Fortress"）
-	SpriteKey   string   // 精灵资源标识（根据 AbilitySlots[0] 的攻击能力决定：sentinel/fortress/shotgun/...）
+	SpriteKey         string // 精灵资源标识（根据 AbilitySlots[0] 的攻击能力决定：sentinel/fortress/shotgun/...）
+	SpriteKeyOverride string // 经典模式：配置强制的精灵键（覆盖 AddAbility 推断）
 	Active      bool     // 是否存活（对象池复用标记，false 表示槽位空闲可回收）
 	Color       [3]uint8 // 显示颜色 RGB（建造时从 TowerDef 复制）
 
