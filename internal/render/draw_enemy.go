@@ -298,7 +298,24 @@ func (er *EnemyRenderer) DrawEnemies(screen *ebiten.Image, pool *enemy.Pool, ani
 			})
 		}
 
-		// --- 能力常驻视觉：盾牌图标组件（被沉默时隐藏）---
+		// --- 能力常驻视觉：图标组件 ---
+
+		// Boss 皇冠（始终显示，不受沉默影响）
+		if e.Boss {
+			if crownImg := er.loadShield("crown"); crownImg != nil {
+				crownY := float64(cy) - float64(e.Radius) - 6
+				draw.Sprite(screen, crownImg, float64(cx), crownY, 14)
+			}
+		}
+
+		// Buffer 旗帜（被沉默时隐藏）
+		if e.Behavior == "buffer" && !e.AbilitySilenced {
+			if flagImg := er.loadShield("buff-flag"); flagImg != nil {
+				draw.Sprite(screen, flagImg, float64(cx+float32(e.Radius)*0.7), float64(cy)-float64(e.Radius)*0.3, 12)
+			}
+		}
+
+		// 防御盾牌（被沉默时隐藏）
 		if !e.AbilitySilenced {
 			shieldOffset := float32(e.Radius) * 0.6
 			if e.ProjectileBlockChance > 0 {
