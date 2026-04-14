@@ -14,7 +14,7 @@ import (
 )
 
 const (
-	toggleBtnSize   = float32(36)
+	toggleBtnSize   = float32(44)
 	toggleBtnRadius = float32(10)
 	toggleBtnMargin = float32(12)
 )

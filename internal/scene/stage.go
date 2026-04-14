@@ -1888,8 +1888,7 @@ func (s *StageScene) drawEnemyAbilityVFX(screen *ebiten.Image) {
 		}
 
 		// 治疗光环范围圈（绿色虚线圈）
-		if hp, hr, ok := e.GetHealAuraParams(); ok && hp > 0 && !e.IsDying() {
-			_ = hp
+		if _, hr, ok := e.GetHealAuraParams(); ok && !e.IsDying() {
 			vfx.DrawHealerAura(screen, ex, ey, float32(hr), animTime)
 			if e.HealCooldown > e.HealInterval-0.4 {
 				progress := (e.HealInterval - e.HealCooldown) / 0.4
@@ -2375,9 +2374,7 @@ func (s *StageScene) updatePlaying() {
 		// 直接攻击方式（laser/beam/spin_aoe等）的伤害飘字+冲击特效
 		if damage > 0 {
 			render.SpawnDamageText(e.X, e.Y-15, damage, crit, e.Boss)
-			if e.HitFlash < 0.06 && e.Age > 0.1 {
-				e.HitFlash = 0.12
-			}
+			e.TriggerHitFlash()
 			render.SpawnTypedImpact(&e.X, &e.Y, attackStyle)
 		}
 		if crit {
@@ -2403,9 +2400,7 @@ func (s *StageScene) updatePlaying() {
 	pipeline.TickProjectileHits(s.projectiles, s.enemies, s.towers, s.collisionGrid, func(e *enemy.Enemy, damage float64, killed bool, attackStyle string, crit bool) {
 		if damage > 0 {
 			render.SpawnDamageText(e.X, e.Y-15, damage, crit, e.Boss)
-			if e.HitFlash < 0.06 && e.Age > 0.1 { // 出生 0.1s 内不闪白
-				e.HitFlash = 0.12
-			}
+			e.TriggerHitFlash()
 			// 元素类型化命中特效
 			render.SpawnTypedImpact(&e.X, &e.Y, attackStyle)
 			// 元素粒子
@@ -3181,7 +3176,7 @@ func towerTypeIcon(key string) string {
 // drawUpgradeIndicators 在有待选能力的塔上方绘制脉冲金色菱形指示器。
 func (s *StageScene) drawUpgradeIndicators(target *ebiten.Image, animTime float64) {
 	s.towers.Each(func(t *tower.Tower) {
-		if t.HasPendingUpgrade(s.wavesCleared) {
+		if t.HasPendingUpgrade() {
 			vfx.DrawUpgradeDiamond(target, float32(t.X), float32(t.Y), animTime)
 		}
 	})

@@ -211,9 +211,6 @@ func (s *WavePreviewScene) handleControlClick(mx float64) {
 
 	bx := (sw - btnW) / 2
 	if mx >= bx && mx <= bx+btnW {
-		my, _ := draw.CursorPos()
-		_ = my // just need x for button hit
-		// Check Y is within button.
 		_, cmy := draw.CursorPos()
 		if cmy >= baseY && cmy <= baseY+btnH {
 			playUIClick(s.switcher)

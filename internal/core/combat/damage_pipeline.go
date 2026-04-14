@@ -32,6 +32,7 @@ import (
 )
 
 const damageCapFlashDuration = 0.3 // 伤害上限触发视觉时长(秒)
+const weakenAmplifyMax = 0.5       // 虚弱增伤上限（防止多塔叠加导致倍率失控）
 
 // DamageInput 伤害管线输入参数。
 // 调用者负责填充攻击者/目标信息，管线本身不查询外部状态。
@@ -154,8 +155,8 @@ func ApplyDamage(input DamageInput) DamageResult {
 	tel.T.Record("pipeline", "damage_amplify")
 	amp := e.GetWeakenAmplify()
 	if amp > 0 {
-		if amp > 0.5 {
-			amp = 0.5
+		if amp > weakenAmplifyMax {
+			amp = weakenAmplifyMax
 		}
 		damage *= 1 + amp
 	}

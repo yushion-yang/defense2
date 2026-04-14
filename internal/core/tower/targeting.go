@@ -58,7 +58,7 @@ func FindNearestEnemy(t *Tower, pool *enemy.Pool) *enemy.Enemy {
 	var best *enemy.Enemy
 	bestDist := math.MaxFloat64
 
-	pool.Each(func(e *enemy.Enemy) {
+	pool.EachActive(func(e *enemy.Enemy) {
 		if e.IsDying() || e.IsSpawning() || e.IsStealthed() {
 			return
 		}
@@ -83,7 +83,7 @@ func FindExtraTargets(t *Tower, pool *enemy.Pool, count int, exclude *enemy.Enem
 		dist float64
 	}
 	var cands []candidate
-	pool.Each(func(e *enemy.Enemy) {
+	pool.EachActive(func(e *enemy.Enemy) {
 		if e == exclude || e.IsDying() || e.IsSpawning() || e.IsStealthed() {
 			return
 		}

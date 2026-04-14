@@ -93,7 +93,11 @@ func LoadTowerFile(path string) (*TowerFileData, error) {
 var globalTowerTable map[string]*TowerJSON
 
 // GlobalTowerTable 返回全局缓存的塔配置表。
+// 加载失败时返回空 map 而非 nil，避免调用方 nil panic。
 func GlobalTowerTable() map[string]*TowerJSON {
+	if globalTowerTable == nil {
+		return map[string]*TowerJSON{}
+	}
 	return globalTowerTable
 }
 

@@ -23,11 +23,10 @@ func DefaultConfig() Config {
 			SellRefundRatio: spec.Global.SellRefundRatio,
 		}
 	}
-	// fallback: balance.json
-	bal := config.GlobalBalance()
+	// fallback: 硬编码默认值（economy.json 未加载时）
 	return Config{
-		KillReward:      int(bal.Economy.KillReward),
-		SellRefundRatio: bal.Economy.SellRefundRatio,
+		KillReward:      15,
+		SellRefundRatio: 0.7,
 	}
 }
 

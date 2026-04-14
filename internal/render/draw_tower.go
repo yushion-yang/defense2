@@ -18,6 +18,7 @@ package render
 
 import (
 	"fmt"
+	"log"
 	"math"
 
 	"defense2/internal/config"
@@ -247,7 +248,10 @@ func (tr *TowerRenderer) loadPNG(path string) *ebiten.Image {
 	if err != nil {
 		return nil
 	}
-	img, _ := tr.cache.GetOrParse(path, data, towerSpriteSize, towerSpriteSize)
+	img, err := tr.cache.GetOrParse(path, data, towerSpriteSize, towerSpriteSize)
+	if err != nil {
+		log.Printf("[render] sprite parse failed: %v", err)
+	}
 	return img
 }
 

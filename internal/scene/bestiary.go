@@ -5,6 +5,7 @@ package scene
 
 import (
 	"image/color"
+	"log"
 	"sort"
 
 	"defense2/internal/config"
@@ -79,12 +80,14 @@ type wardenEntry struct {
 
 // NewBestiaryScene 创建图鉴场景。
 func NewBestiaryScene(sw Switcher) *BestiaryScene {
-	store, _ := persistence.DefaultStorage()
-	pm := persistence.NewProgressManager(store)
+	pm := persistence.DefaultProgressManager()
 	bestiary := pm.GetBestiary()
 
 	// 加载敌人列表（按 ID 排序）
-	archetypes, _ := config.LoadEnemyArchetypes()
+	archetypes, errArch := config.LoadEnemyArchetypes()
+	if errArch != nil {
+		log.Printf("[bestiary] load archetypes failed: %v", errArch)
+	}
 	enemies := make([]*config.EnemyArchetype, 0, len(archetypes))
 	for _, a := range archetypes {
 		enemies = append(enemies, a)

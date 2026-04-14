@@ -117,7 +117,7 @@ const (
 
 	// 难度按钮
 	diffBtnW   = 80.0
-	diffBtnH   = 28.0
+	diffBtnH   = 40.0
 	diffBtnGap = 12.0
 	diffLabelY = 280.0
 	diffBtnY   = 300.0
@@ -277,6 +277,10 @@ func (s *SelectScene) Update() error {
 				playUIClick(s.switcher)
 			}
 		}
+		if idx := s.hitTestDiffButtons(mxf, myf); idx >= 0 {
+			s.selectedDiff = idx
+			playUIClick(s.switcher)
+		}
 		if s.hitTestStartButton(mxf, myf) {
 			playUIClick(s.switcher)
 			s.startGame()
@@ -352,7 +356,7 @@ func (s *SelectScene) hitTestStartButton(mx, my float64) bool {
 // settingsBtn 布局常量（右上角）。
 const (
 	settingsBtnW = 70.0
-	settingsBtnH = 28.0
+	settingsBtnH = 40.0
 	settingsBtnX = scW - settingsBtnW - 16
 	settingsBtnY = 14.0
 )
@@ -365,7 +369,7 @@ func (s *SelectScene) hitTestSettingsButton(mx, my float64) bool {
 // bestiaryBtn 布局常量（右下角）。
 const (
 	bestiaryBtnW = 70.0
-	bestiaryBtnH = 28.0
+	bestiaryBtnH = 40.0
 	bestiaryBtnX = scW - bestiaryBtnW - 16
 	bestiaryBtnY = scH - bestiaryBtnH - 16
 )

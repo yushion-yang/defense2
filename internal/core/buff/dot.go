@@ -14,7 +14,7 @@ package buff
 //
 // 参数：
 //   - dt:          本帧经过的时间（秒）
-//   - dotInterval: DoT 跳伤间隔（秒），如 burn=0.5, poison=1.0（来自 balance.json combat.dotTickIntervals）
+//   - dotInterval: DoT 跳伤间隔（秒），如 burn=0.5, poison=1.0（来自 balance.json combat.dotTickInterval）
 //
 // 返回值：
 //   - 本帧应造成的总 DoT 伤害（0 表示本帧未触发跳伤）

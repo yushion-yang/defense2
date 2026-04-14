@@ -29,7 +29,7 @@ const (
 
 	sliderBarW = float32(200) // 滑块条宽度
 	sliderBarH = float32(8)   // 滑块条高度
-	sliderKnob = float32(14)  // 滑块手柄直径
+	sliderKnob = float32(24)  // 滑块手柄直径
 
 	qualityBtnW   = float32(60)
 	qualityBtnH   = float32(30)

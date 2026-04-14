@@ -4,7 +4,7 @@
   "global": {
     "killReward": 15,
     "sellRefundRatio": 0.7,
-    "_note": "此区段被 EconomySpec 加载用于契约测试。实际运行时经济参数从 balance.json 读取，两处值必须保持一致。"
+    "_note": "运行时经济参数从本文件加载（GlobalEconomySpec），此区段同时被契约测试引用。"
   },
 
   "modes": {

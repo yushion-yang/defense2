@@ -62,6 +62,14 @@ type HitCallback = func(e *enemy.Enemy, damage float64, killed bool, attackStyle
 // ccType: "slow", "freeze", "stun", "burn"
 type CCCallback = func(x, y float64, ccType string)
 
+// getAbilityDef 从全局能力表中获取指定能力的定义。未找到返回 nil。
+func getAbilityDef(abilType string) *config.AbilityDef {
+	if table := config.GlobalAbilityTable(); table != nil {
+		return table[abilType]
+	}
+	return nil
+}
+
 // ── 注册表 ──
 // 全局 map，init() 中注册所有 6 种攻击方式。
 // pipeline 通过 Get(style) 查表获取 handler，无需 switch-case。

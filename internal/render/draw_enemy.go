@@ -16,6 +16,7 @@ package render
 
 import (
 	"image/color"
+	"log"
 	"math"
 	"slices"
 
@@ -532,7 +533,10 @@ func (er *EnemyRenderer) loadShield(name string) *ebiten.Image {
 	if err != nil {
 		return nil
 	}
-	img, _ := er.cache.GetOrParse(path, data, 12, 16)
+	img, err := er.cache.GetOrParse(path, data, 12, 16)
+	if err != nil {
+		log.Printf("[render] sprite parse failed: %v", err)
+	}
 	return img
 }
 
@@ -576,7 +580,10 @@ func (er *EnemyRenderer) GetSprite(archetype string) *ebiten.Image {
 	if err != nil {
 		return nil
 	}
-	img, _ := er.cache.GetOrParse(path, data, enemySpriteSize, enemySpriteSize)
+	img, err := er.cache.GetOrParse(path, data, enemySpriteSize, enemySpriteSize)
+	if err != nil {
+		log.Printf("[render] sprite parse failed: %v", err)
+	}
 	return img
 }
 

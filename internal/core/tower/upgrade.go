@@ -99,7 +99,7 @@ func (t *Tower) PendingSlots(wavesCleared int) int {
 // HasPendingUpgrade 返回塔是否有待选择的能力（用于 UI 显示升级提示图标）。
 // 仅当 PendingChoices 中有实际候选时才返回 true。
 // 空槽但没有可选能力（该类别能力池耗尽）不显示提示。
-func (t *Tower) HasPendingUpgrade(wavesCleared int) bool {
+func (t *Tower) HasPendingUpgrade() bool {
 	return PendingCount(t) > 0
 }
 
@@ -335,7 +335,7 @@ func AllChoicesForCategory(cat int) []config.AbilityDef {
 // 这些能力的代码已写但效果不完整，玩家选择后无法正常工作。
 // 从候选池排除比删除代码更安全——后续只需从此 map 移除即可启用。
 var disabledAbilities = map[string]bool{
-	AbilityElementSwitch: true, // TODO: integrate element boosts via BuffList
+	AbilityElementSwitch: true, // 元素增强计划后续通过 BuffList 集成
 	AbilityPeriodicCast:  true, // case 2 (buffAoe) is a no-op; disable until all modes work
 }
 

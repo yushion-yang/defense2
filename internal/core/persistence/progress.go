@@ -129,6 +129,15 @@ type ProgressManager struct {
 	progress *Progress // 内存中的进度缓存
 }
 
+// DefaultProgressManager 返回使用默认存储的进度管理器（简化初始化模式）。
+func DefaultProgressManager() *ProgressManager {
+	store, err := DefaultStorage()
+	if err != nil {
+		log.Printf("[persistence] storage init failed: %v", err)
+	}
+	return NewProgressManager(store)
+}
+
 // NewProgressManager 创建进度管理器，从存储加载已有进度。
 func NewProgressManager(s Storage) *ProgressManager {
 	pm := &ProgressManager{
@@ -137,7 +146,9 @@ func NewProgressManager(s Storage) *ProgressManager {
 	}
 	// 尝试加载已有进度
 	if s.Has(progressKey) {
-		_ = s.Get(progressKey, pm.progress)
+		if err := s.Get(progressKey, pm.progress); err != nil {
+			log.Printf("[persistence] load progress failed: %v", err)
+		}
 	}
 	// 迁移旧数据：如果 Unlocks.Maps 为空但 UnlockedMaps 有值，则同步
 	pm.migrateUnlocks()
@@ -381,11 +392,6 @@ func (pm *ProgressManager) LoadBestScore(modeID, mapID string) int {
 		return score
 	}
 	return 0
-}
-
-// SaveGameResult 保存游戏结果（RecordGameResult 的别名，语义更清晰）。
-func (pm *ProgressManager) SaveGameResult(modeID, mapID string, kills int, won bool) []string {
-	return pm.RecordGameResult(modeID, mapID, kills, won)
 }
 
 // SetTutorialDone 标记教程完成。

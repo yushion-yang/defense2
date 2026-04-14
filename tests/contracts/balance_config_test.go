@@ -24,7 +24,6 @@ func TestBalanceFieldsNonZero(t *testing.T) {
 		msg   string
 	}{
 		{"Combat.MinSpeedRatio", func() bool { return bal.Combat.MinSpeedRatio > 0 && bal.Combat.MinSpeedRatio < 1 }, "should be in (0, 1)"},
-		{"Economy.KillReward", func() bool { return bal.Economy.KillReward > 0 }, "should be > 0"},
 		{"Chain.Distance", func() bool { return bal.Chain.Distance > 0 }, "should be > 0"},
 		{"Tower.WavesPerUnlock", func() bool { return bal.Tower.WavesPerUnlock > 0 }, "should be > 0"},
 	}
@@ -50,10 +49,6 @@ func TestBalanceLoadedFieldsValid(t *testing.T) {
 		check func() bool
 		msg   string
 	}{
-		// Economy
-		{"Economy.KillReward", func() bool { return bal.Economy.KillReward > 0 }, "should be > 0"},
-		{"Economy.SellRefundRatio", func() bool { return bal.Economy.SellRefundRatio > 0 && bal.Economy.SellRefundRatio < 1 }, "should be in (0, 1)"},
-
 		// Combat
 		{"Combat.CritMultiplier", func() bool { return bal.Combat.CritMultiplier > 1 }, "should be > 1"},
 		{"Combat.MinSpeedRatio", func() bool { return bal.Combat.MinSpeedRatio > 0 && bal.Combat.MinSpeedRatio < 1 }, "should be in (0, 1)"},

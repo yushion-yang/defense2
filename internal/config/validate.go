@@ -18,7 +18,7 @@ func (e ValidationError) Error() string {
 }
 
 // ValidateTowerDef 校验塔配置。
-// 检查项：label 非空、buildCost 10-200、baseRange 50-10000、baseDamage >=0、baseFireRate 0.18-99。
+// 检查项：label 非空、buildCost 10-200、baseRange 50-10000、baseDamage >=0、baseAttackSpeed 0.18-99。
 func ValidateTowerDef(t *TowerJSON) []ValidationError {
 	var errs []ValidationError
 

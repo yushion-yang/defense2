@@ -11,6 +11,8 @@ var T = New()
 
 // Telemetry 遥测数据收集器。
 type Telemetry struct {
+	// 开关：仅 autoplay 测试模式下开启，正常游戏保持关闭以跳过热路径 map 写入
+	Enabled bool
 
 	// 伤害管线步骤（8 步）
 	PipelineSteps map[string]int // "immunity_check", "boss_hp_cap", "attacker_buff", "target_debuff", "damage_cap", "shield_absorb", "hp_deduct", "death"
@@ -70,6 +72,9 @@ func (t *Telemetry) Reset() {
 
 // Record 记录一个维度的一次触发。
 func (t *Telemetry) Record(dimension string, key string) {
+	if !t.Enabled {
+		return
+	}
 	switch dimension {
 	case "pipeline":
 		t.PipelineSteps[key]++

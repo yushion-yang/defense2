@@ -83,12 +83,8 @@ type princeBehavior struct{}
 
 func (b *princeBehavior) Type() string { return "prince" }
 
-// Init initializes prince warden behavior.
-// NOTE: Stats are currently hardcoded. See config/wardens/wardens.json for planned externalization.
-// Hardcoded: damage=12, attackInterval=1.2, range=140, moveSpeed=350,
-//
-//	fireballInterval=4, fireballDmgRatio=2.0, fireballSpeed=500,
-//	fireballRadius=20, trailDpsRatio=0.5, trailDuration=2.0
+// Init 初始化火灵战灵行为。
+// 默认值见代码，可被 wardens.json 中的 Params 覆盖。
 func (b *princeBehavior) Init(w *warden.Warden) any {
 	p := w.Params
 	return &PrinceState{

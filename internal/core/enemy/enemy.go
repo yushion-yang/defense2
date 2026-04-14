@@ -407,6 +407,13 @@ func (e *Enemy) GetSpeedUp() float64 {
 	return b.Value
 }
 
+// TriggerHitFlash 设置命中闪白效果（仅在非出生宽限期、非已闪白时触发）。
+func (e *Enemy) TriggerHitFlash() {
+	if e.HitFlash < 0.06 && e.Age > 0.1 {
+		e.HitFlash = 0.08
+	}
+}
+
 // DotTickInterval 返回 DoT 伤害触发周期（从 balance.json 实时读取，不再冻结于 init 时刻）。
 func DotTickInterval() float64 { return config.GlobalBalance().Combat.DotTickInterval }
 

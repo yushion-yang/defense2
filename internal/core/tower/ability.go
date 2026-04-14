@@ -37,7 +37,7 @@ type HitResult struct {
 	Splash *SplashEffect // 范围溅射：以命中点为圆心，对半径内其他敌人造成比例伤害
 	Slow   *SlowEffect   // 减速：降低敌人移动速度
 	Stun   *StunEffect   // 眩晕：冻结敌人移动
-	Bleed  *BleedEffect  // 流血 DoT：持续物理伤害（tick 间隔由 balance.json combat.dotTickIntervals.bleed 控制）
+	Bleed  *BleedEffect  // 流血 DoT：持续物理伤害（tick 间隔由 balance.json combat.dotTickInterval.bleed 控制）
 	Burn   *BleedEffect  // 灼烧 DoT：持续火焰伤害（结构同 Bleed 但独立计时和 tick 间隔）
 	Bounce *BounceEffect // 弹射链：弹射物跳跃到附近敌人（每次跳跃伤害递减）
 }

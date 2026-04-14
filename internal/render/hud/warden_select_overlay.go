@@ -55,7 +55,7 @@ const (
 	woDetailH = 380.0
 	woBtnY    = 480.0
 	woBtnW    = 200.0
-	woBtnH    = 36.0
+	woBtnH    = 44.0
 	woBtnGap  = 20.0
 )
 
@@ -248,7 +248,7 @@ func (o *WardenSelectOverlay) Draw(screen *ebiten.Image) {
 	}
 	draw.RoundRect(screen, float32(btnStartX), float32(woBtnY), float32(woBtnW), float32(woBtnH), 14, confirmClr)
 	confirmLabel := i18n.TF("hud.wardensel.confirm", opt.Name)
-	fm.DrawCenteredBoldText(screen, confirmLabel, btnStartX+woBtnW/2, woBtnY+9, theme.FontLG, theme.TextTitle)
+	fm.DrawCenteredBoldText(screen, confirmLabel, btnStartX+woBtnW/2, woBtnY+13, theme.FontLG, theme.TextTitle)
 
 	skipClr := theme.BtnSecondary
 	if o.hoverSkip {
@@ -256,7 +256,7 @@ func (o *WardenSelectOverlay) Draw(screen *ebiten.Image) {
 	}
 	skipX := btnStartX + woBtnW + woBtnGap
 	draw.RoundRect(screen, float32(skipX), float32(woBtnY), float32(woBtnW), float32(woBtnH), 14, skipClr)
-	fm.DrawCenteredText(screen, i18n.T("hud.wardensel.skip"), skipX+woBtnW/2, woBtnY+10, theme.FontMD, theme.TextMuted)
+	fm.DrawCenteredText(screen, i18n.T("hud.wardensel.skip"), skipX+woBtnW/2, woBtnY+14, theme.FontMD, theme.TextMuted)
 }
 
 func (o *WardenSelectOverlay) drawDetail(screen *ebiten.Image, fm *render.FontManager, opt WardenOption) {

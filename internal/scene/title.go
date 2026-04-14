@@ -52,7 +52,7 @@ func isTapJustPressed() bool {
 // hitTestNavBackBtn 检查点击是否命中导航返回按钮（左上角 ← 箭头）。
 // 所有有返回按钮的场景共用此函数，避免硬编码重复。
 func hitTestNavBackBtn(mx, my float64) bool {
-	return mx >= 20 && mx <= 90 && my >= 16 && my <= 44
+	return mx >= 20 && mx <= 90 && my >= 8 && my <= 52
 }
 
 // playUIClick 播放 UI 点击音效（各场景共用的安全调用封装）。
