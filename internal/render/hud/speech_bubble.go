@@ -6,7 +6,6 @@ import (
 	"image/color"
 
 	"defense2/internal/render"
-	"defense2/internal/render/draw"
 	"defense2/internal/render/theme"
 	"defense2/internal/render/ui"
 
@@ -22,12 +21,12 @@ var (
 
 // Speech bubble layout constants.
 const (
-	bubblePadH  float32 = 14  // horizontal padding
-	bubblePadV  float32 = 10  // vertical padding
-	bubbleR     float32 = 10  // corner radius
-	bubbleGap   float32 = 6   // gap between bubble bottom and anchor
+	bubblePadH    float32 = 14  // horizontal padding
+	bubblePadV    float32 = 10  // vertical padding
+	bubbleR       float32 = 10  // corner radius
+	bubbleGap     float32 = 6   // gap between bubble bottom and anchor
 	bubbleStrokeW float32 = 1.2
-	bubbleMargin float32 = 4  // min distance from screen edge
+	bubbleMargin  float32 = 4   // min distance from screen edge
 )
 
 // SpeechBubbleVM holds data for rendering a speech bubble.
@@ -61,7 +60,7 @@ func DrawSpeechBubble(screen *ebiten.Image, vm SpeechBubbleVM) {
 	}
 
 	// Measure actual content dimensions.
-	lineH := float64(theme.FontBody) + 3 // line height with small leading
+	lineH := float64(theme.FontBody) + 3
 	textH := float32(lineH * float64(len(lines)))
 
 	// Find widest line to size the bubble tightly.
@@ -94,17 +93,14 @@ func DrawSpeechBubble(screen *ebiten.Image, vm SpeechBubbleVM) {
 		bubbleY = bubbleMargin
 	}
 
-	// Draw background.
-	draw.RoundRect(screen, bubbleX, bubbleY, bubbleW, bubbleH, bubbleR, bubbleBg)
-
-	// Draw border.
-	draw.StrokeRoundRect(screen, bubbleX, bubbleY, bubbleW, bubbleH, bubbleR, bubbleStrokeW, bubbleBorder)
+	// Draw background + border.
+	ui.Panel(screen, bubbleX, bubbleY, bubbleW, bubbleH, ui.PanelStyle{
+		BgColor: bubbleBg, BorderColor: bubbleBorder, Radius: bubbleR, BorderWidth: bubbleStrokeW,
+	})
 
 	// Draw text lines.
-	textX := float64(bubbleX + bubblePadH)
-	textY := float64(bubbleY + bubblePadV)
-	for i, line := range lines {
-		fm.DrawText(screen, line, textX, textY+float64(i)*lineH, theme.FontBody, bubbleText)
-	}
+	ui.Paragraph(screen, vm.Text, float64(bubbleX+bubblePadH), float64(bubbleY+bubblePadV),
+		contentW, ui.ParagraphStyle{
+			Font: theme.FontBody, Color: bubbleText, LineGap: 3,
+		})
 }
-

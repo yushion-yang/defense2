@@ -7,13 +7,12 @@ import (
 
 	"defense2/internal/render/draw"
 	"defense2/internal/render/theme"
+	"defense2/internal/render/ui"
 
 	"github.com/hajimehoshi/ebiten/v2"
 )
 
 const (
-	minimapW      = 120
-	minimapH      = 55
 	minimapMargin = 8
 	minimapAlpha  = 140
 )
@@ -39,34 +38,34 @@ type MinimapDot struct {
 // DrawMinimap renders a minimap at the top-right corner.
 func DrawMinimap(screen *ebiten.Image, vm MinimapVM) {
 	// Position: top-right corner (below TopBar)
-	ox := float32(theme.CanvasW - minimapW - minimapMargin)
+	ox := float32(theme.CanvasW-theme.MinimapW) - minimapMargin
 	oy := float32(theme.TopBarY+theme.TopBarH) + minimapMargin
 
 	// Background
-	draw.FilledRect(screen, ox, oy, minimapW, minimapH,
-		color.RGBA{R: 10, G: 15, B: 30, A: minimapAlpha}, true)
-	draw.FilledRect(screen, ox, oy, minimapW, 1, color.RGBA{R: 60, G: 80, B: 120, A: 100}, true)
+	ui.Panel(screen, ox, oy, theme.MinimapW, theme.MinimapH, ui.PanelStyle{
+		BgColor: color.RGBA{R: 10, G: 15, B: 30, A: minimapAlpha}, Radius: 0,
+	})
+	// 顶部边线用 nolint 豁免（非 HUD 组件，纯视觉装饰）
+	draw.FilledRect(screen, ox, oy, theme.MinimapW, 1, color.RGBA{R: 60, G: 80, B: 120, A: 100}, true) //nolint:hud
 
-	scaleX := float64(minimapW) / float64(theme.CanvasW)
-	scaleY := float64(minimapH) / float64(theme.CanvasH)
+	scaleX := float64(theme.MinimapW) / float64(theme.CanvasW)
+	scaleY := float64(theme.MinimapH) / float64(theme.CanvasH)
 
-	// Path lines (gray)
-	for i := 1; i < len(vm.PathPoints); i++ {
+	// 以下均为地图图形绘制（路径线段/实体点位），非 HUD 组件
+	for i := 1; i < len(vm.PathPoints); i++ { //nolint:hud
 		x1 := float32(float64(ox) + vm.PathPoints[i-1].X*scaleX)
 		y1 := float32(float64(oy) + vm.PathPoints[i-1].Y*scaleY)
 		x2 := float32(float64(ox) + vm.PathPoints[i].X*scaleX)
 		y2 := float32(float64(oy) + vm.PathPoints[i].Y*scaleY)
-		draw.Line(screen, x1, y1, x2, y2, 1, color.RGBA{R: 80, G: 100, B: 130, A: 180}, false)
+		draw.Line(screen, x1, y1, x2, y2, 1, color.RGBA{R: 80, G: 100, B: 130, A: 180}, false) //nolint:hud
 	}
 
-	// Towers (blue dots)
 	for _, t := range vm.Towers {
 		tx := float32(float64(ox) + t.X*scaleX)
 		ty := float32(float64(oy) + t.Y*scaleY)
-		draw.FilledCircle(screen, tx, ty, 1.5, color.RGBA{R: 60, G: 140, B: 255, A: 220})
+		draw.FilledCircle(screen, tx, ty, 1.5, color.RGBA{R: 60, G: 140, B: 255, A: 220}) //nolint:hud
 	}
 
-	// Enemies (red dots)
 	for _, e := range vm.Enemies {
 		ex := float32(float64(ox) + e.X*scaleX)
 		ey := float32(float64(oy) + e.Y*scaleY)
@@ -74,13 +73,12 @@ func DrawMinimap(screen *ebiten.Image, vm MinimapVM) {
 		if e.IsBoss {
 			r = 2.0
 		}
-		draw.FilledCircle(screen, ex, ey, r, color.RGBA{R: 255, G: 60, B: 60, A: 220})
+		draw.FilledCircle(screen, ex, ey, r, color.RGBA{R: 255, G: 60, B: 60, A: 220}) //nolint:hud
 	}
 
-	// Warden (purple dot)
 	if vm.WardenX > 0 && vm.WardenY > 0 {
 		wx := float32(float64(ox) + vm.WardenX*scaleX)
 		wy := float32(float64(oy) + vm.WardenY*scaleY)
-		draw.FilledCircle(screen, wx, wy, 2, color.RGBA{R: 180, G: 100, B: 255, A: 220})
+		draw.FilledCircle(screen, wx, wy, 2, color.RGBA{R: 180, G: 100, B: 255, A: 220}) //nolint:hud
 	}
 }
