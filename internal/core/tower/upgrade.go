@@ -280,6 +280,14 @@ func (t *Tower) AddAbility(abilityType string) bool {
 	return true
 }
 
+// ApplyPresetAbilities 批量注入预设能力（经典模式用）。
+// 不走解锁流程，直接把能力写入对应 slot，触发攻击方式变形和 enhance 效果。
+func ApplyPresetAbilities(t *Tower, abilities []string) {
+	for _, abil := range abilities {
+		t.AddAbility(abil)
+	}
+}
+
 // applyEnhance 强化能力：一次性永久提升塔的 Base 和 Potential 属性。
 // 使用 AbilityDef 的 Param/Param2 固定参数（不受强度影响），确保 UI 描述与实际效果一致。
 // 伤害和攻速使用 Param（如 0.2 = +20%），射程使用 Param2（如 0.1 = +10%）。

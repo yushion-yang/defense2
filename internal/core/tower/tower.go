@@ -71,7 +71,8 @@ type Tower struct {
 	AbilitySlots [6]string
 	UnlockOrder  [6]int // 能力类别解锁顺序（建塔时随机生成，[0] 始终是攻击模式）
 	Level        int    // 塔等级（1=基础，每选择一个能力 +1，最高 7 = 1基础 + 6能力）
-	PaidUnlocks  int    // 付费解锁能力槽位的累计次数（用于索引 TowerDef.UpgradeCosts 计算下次费用）
+	PaidUnlocks       int // 付费解锁能力槽位的累计次数（用于索引 TowerDef.UpgradeCosts 计算下次费用）
+	StrengthPurchases int // 强度购买累计次数（经典模式用于限购检查）
 
 	// ── 属性档位（展示用，randomize.go 建塔时设置）──
 	DamageTier string // "S"/"B"/"D" — 伤害属性档位
@@ -161,6 +162,7 @@ func (t *Tower) BuyStrength() int {
 	if t.Strength != nil {
 		t.Strength.AddPermanent(bal.Tower.StrengthBuyAmount)
 	}
+	t.StrengthPurchases++
 	t.RecalcStats()
 	return cost
 }

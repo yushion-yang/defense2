@@ -60,9 +60,10 @@ var diffColors = map[string]color.RGBA{
 
 // ── CampaignSelectScene ─────────────────────────
 
-// CampaignSelectScene 战役关卡选择。
+// CampaignSelectScene 战役关卡选择（campaign/classic 共用）。
 type CampaignSelectScene struct {
 	switcher     Switcher
+	modeID       string // 游戏模式 ID（"campaign" 或 "classic"）
 	fontMgr      *render.FontManager
 	progressMgr  *persistence.ProgressManager
 	levels       []config.LevelEntry
@@ -81,7 +82,13 @@ type CampaignSelectScene struct {
 }
 
 // NewCampaignSelectScene 创建战役关卡选择场景。
-func NewCampaignSelectScene(sw Switcher) *CampaignSelectScene {
+// modeID 可选：默认 "campaign"，传 "classic" 则进入经典模式。
+func NewCampaignSelectScene(sw Switcher, modeIDs ...string) *CampaignSelectScene {
+	modeID := "campaign"
+	if len(modeIDs) > 0 && modeIDs[0] != "" {
+		modeID = modeIDs[0]
+	}
+	_ = modeID // 下方赋值
 	levels, err := config.LoadLevelList()
 	if err != nil {
 		levels = nil
@@ -95,6 +102,7 @@ func NewCampaignSelectScene(sw Switcher) *CampaignSelectScene {
 
 	return &CampaignSelectScene{
 		switcher:     sw,
+		modeID:       modeID,
 		fontMgr:      render.GlobalFont(),
 		progressMgr:  pm,
 		levels:       levels,
@@ -198,7 +206,7 @@ func (s *CampaignSelectScene) startGame() {
 	diff := s.difficulties[s.selectedDiff]
 	s.switcher.SwitchScene(NewStageSceneWithOpts(s.switcher, StageOptions{
 		MapID:        level.ID,
-		ModeID:       "campaign",
+		ModeID:       s.modeID,
 		DifficultyID: diff.ID,
 	}))
 }

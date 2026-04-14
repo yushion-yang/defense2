@@ -1,0 +1,146 @@
+{
+  "_meta": {
+    "description": "经典模式预设炮塔表 — 11 种固定塔型，每塔 2 个预设能力，按角色分三大类",
+    "version": "1.0",
+    "categories": {
+      "dps": "输出型 — 高伤害，无 CC/AOE，需要控制塔配合",
+      "aoe": "范围型 — 有 CC/DoT，缺爆发，需要输出塔收割",
+      "support": "辅助型 — 自身伤害低，提供光环增益，必须放在输出塔旁边"
+    },
+    "tiers_note": "S/B/D 引用 tier-presets.json 的对应档位数值"
+  },
+  "towers": [
+    {
+      "key": "cl_sentinel",
+      "name": "哨兵",
+      "category": "dps",
+      "attackStyle": "projectile",
+      "abilities": ["crit", "momentum"],
+      "tiers": { "damage": "S", "range": "B", "atkSpeed": "B" },
+      "spriteKey": "sentinel",
+      "projectileSpeed": 400,
+      "buildCost": 50,
+      "description": "单体爆发输出，暴击+动量叠加"
+    },
+    {
+      "key": "cl_railgun",
+      "name": "磁轨炮",
+      "category": "dps",
+      "attackStyle": "projectile",
+      "abilities": ["distanceDamage", "executionBonus"],
+      "tiers": { "damage": "S", "range": "B", "atkSpeed": "B" },
+      "spriteKey": "railgun",
+      "projectileSpeed": 600,
+      "buildCost": 50,
+      "description": "远程狙杀，距离越远伤害越高，低血斩杀"
+    },
+    {
+      "key": "cl_gatling",
+      "name": "加特林",
+      "category": "dps",
+      "attackStyle": "barrage",
+      "abilities": ["flatDamage", "enhance"],
+      "tiers": { "damage": "S", "range": "B", "atkSpeed": "B" },
+      "spriteKey": "gatling",
+      "projectileSpeed": 400,
+      "buildCost": 50,
+      "description": "持续火力输出，固定加伤+永久强化"
+    },
+    {
+      "key": "cl_shotgun",
+      "name": "霰弹枪",
+      "category": "aoe",
+      "attackStyle": "scatter",
+      "abilities": ["bleedDot", "slowPower"],
+      "tiers": { "damage": "B", "range": "B", "atkSpeed": "S" },
+      "spriteKey": "shotgun",
+      "projectileSpeed": 350,
+      "buildCost": 50,
+      "description": "近距群伤+流血+减速，扇形覆盖"
+    },
+    {
+      "key": "cl_cyclone",
+      "name": "旋风",
+      "category": "aoe",
+      "attackStyle": "spin_aoe",
+      "abilities": ["burn", "weakenZone"],
+      "tiers": { "damage": "B", "range": "B", "atkSpeed": "S" },
+      "spriteKey": "cyclone",
+      "projectileSpeed": 0,
+      "buildCost": 50,
+      "description": "近战旋转攻击，灼烧+范围削弱"
+    },
+    {
+      "key": "cl_nova",
+      "name": "新星",
+      "category": "aoe",
+      "attackStyle": "radial",
+      "abilities": ["stunChance", "splash"],
+      "tiers": { "damage": "B", "range": "B", "atkSpeed": "S" },
+      "spriteKey": "nova",
+      "projectileSpeed": 300,
+      "buildCost": 50,
+      "description": "全方位爆发，眩晕+溅射"
+    },
+    {
+      "key": "cl_mortar",
+      "name": "迫击炮",
+      "category": "aoe",
+      "attackStyle": "projectile",
+      "abilities": ["splash", "poison"],
+      "tiers": { "damage": "B", "range": "B", "atkSpeed": "S" },
+      "spriteKey": "mortar",
+      "projectileSpeed": 250,
+      "buildCost": 50,
+      "description": "范围溅射+持续中毒，区域封锁"
+    },
+    {
+      "key": "cl_prism",
+      "name": "棱镜",
+      "category": "support",
+      "attackStyle": "wideBeam",
+      "abilities": ["slowDuration", "damageUpAura"],
+      "tiers": { "damage": "D", "range": "S", "atkSpeed": "B" },
+      "spriteKey": "prism",
+      "projectileSpeed": 0,
+      "buildCost": 50,
+      "description": "光束减速+增伤光环，核心辅助"
+    },
+    {
+      "key": "cl_fortress",
+      "name": "堡垒",
+      "category": "support",
+      "attackStyle": "wideBeam",
+      "abilities": ["stunDuration", "rangeAura"],
+      "tiers": { "damage": "D", "range": "S", "atkSpeed": "B" },
+      "spriteKey": "fortress",
+      "projectileSpeed": 0,
+      "buildCost": 50,
+      "description": "光束眩晕+增距光环，防线支柱"
+    },
+    {
+      "key": "cl_ricochet",
+      "name": "弹跳",
+      "category": "support",
+      "attackStyle": "projectile",
+      "abilities": ["bounce", "attackSpeedAura"],
+      "tiers": { "damage": "D", "range": "S", "atkSpeed": "B" },
+      "spriteKey": "ricochet",
+      "projectileSpeed": 400,
+      "buildCost": 50,
+      "description": "弹射多目标+攻速光环"
+    },
+    {
+      "key": "cl_hydra",
+      "name": "九头蛇",
+      "category": "support",
+      "attackStyle": "projectile",
+      "abilities": ["multiTarget", "critAura"],
+      "tiers": { "damage": "D", "range": "S", "atkSpeed": "B" },
+      "spriteKey": "hydra",
+      "projectileSpeed": 400,
+      "buildCost": 50,
+      "description": "多目标攻击+暴击光环"
+    }
+  ]
+}

@@ -112,12 +112,26 @@ func (p *Pool) Place(row, col int, cx, cy float64, def TowerDef) *Tower {
 			t := &p.towers[i]
 			initTower(t, row, col, cx, cy, def)
 
-			// 随机属性：独立 roll 三档(S/B/D) + 专精，然后应用到 Base/Potential 并触发 RecalcStats
-			stats := RollTowerStats()
-			ApplyRandomStats(t, stats)
-			t.DamageTier = stats.DamageTier
-			t.SpeedTier = stats.SpeedTier
-			t.RangeTier = stats.RangeTier
+			if def.FixedTiers {
+				// 经典模式：使用 TowerDef 中预设的 Base/Potential，不做随机 roll
+				t.BaseDamage = def.CfgBaseDamage
+				t.PotentialDamage = def.PotentialDamage
+				t.BaseSpeed = def.CfgBaseSpeed
+				t.PotentialSpeed = def.PotentialSpeed
+				t.BaseRange = def.CfgBaseRange
+				t.PotentialRange = def.PotentialRange
+				t.DamageTier = "B" // 显示用默认值
+				t.SpeedTier = "B"
+				t.RangeTier = "B"
+				t.RecalcStats()
+			} else {
+				// 娱乐模式：独立 roll 三档(S/B/D) + 专精
+				stats := RollTowerStats()
+				ApplyRandomStats(t, stats)
+				t.DamageTier = stats.DamageTier
+				t.SpeedTier = stats.SpeedTier
+				t.RangeTier = stats.RangeTier
+			}
 
 			return p.allocSlot(t, row, col)
 		}
@@ -250,6 +264,11 @@ type TowerDef struct {
 
 	// 升级费用
 	UpgradeCosts []int // 每次升级费用（索引0=第1次升级，索引5=第6次升级）
+
+	// ── 经典模式扩展字段 ──
+	FixedTiers      bool     // true=跳过 RollTowerStats，直接使用 CfgBase*/Potential* 值
+	PresetAbilities []string // 预设能力列表（经典模式出厂即生效，不走解锁流程）
+	Category        string   // 角色分类（dps/aoe/support），用于建造菜单分组
 }
 
 // spriteKeyForStyle 将攻击方式映射到初始精灵标识。

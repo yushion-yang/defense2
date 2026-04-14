@@ -391,7 +391,7 @@ func NewStageSceneWithOpts(sw Switcher, opts StageOptions) *StageScene {
 		lives:            diff.StartingLives,
 		maxLives:         diff.StartingLives,
 		gold:             startGold,
-		towerDefs:        filterUnlockedTowers(loadTowerDefsOrFallback(), pm),
+		towerDefs:        loadTowerDefsForMode(session.Ruleset(), pm),
 		selectedDef:      0,
 		wardenType:       opts.WardenType,
 		wardenCfg:        wardenCfg,
@@ -1125,8 +1125,13 @@ func (s *StageScene) tryPlaceTower(px, py float64) bool {
 		return false // 池满，不扣金
 	}
 	placed.BuildAnim = 0.3
-	// 按模式规则决定建塔时解锁多少个能力位
-	tower.RollAndCachePendingChoices(placed, s.ruleset.InitialUnlockWaves(s.wavesCleared))
+	if s.ruleset.AbilityMode() == gamemode.AbilityModePreset {
+		// 经典模式：直接注入预设能力，跳过解锁流程
+		tower.ApplyPresetAbilities(placed, def.PresetAbilities)
+	} else {
+		// 其他模式：按波次规则 roll 待选能力
+		tower.RollAndCachePendingChoices(placed, s.ruleset.InitialUnlockWaves(s.wavesCleared))
+	}
 	s.gold -= cost
 	s.gameStats.GoldSpent += cost
 	s.gameStats.TowersBuilt++
@@ -3606,6 +3611,64 @@ func filterUnlockedTowers(defs []tower.TowerDef, pm *persistence.ProgressManager
 		return defs[:1]
 	}
 	return result
+}
+
+// loadTowerDefsForMode 根据模式规则加载塔定义列表。
+// 经典模式从 classic-presets.json 构建完整的预设塔列表（含固定属性和能力），
+// 其他模式使用 towers.json + 解锁过滤。
+func loadTowerDefsForMode(ruleset gamemode.TowerRuleset, pm *persistence.ProgressManager) []tower.TowerDef {
+	if !ruleset.UsePresetTowers() {
+		return filterUnlockedTowers(loadTowerDefsOrFallback(), pm)
+	}
+	return loadClassicTowerDefs()
+}
+
+// loadClassicTowerDefs 从 classic-presets.json 构建经典模式塔定义。
+// 每种预设塔的属性根据 tiers 字段从 tier-presets.json 查表，
+// FixedTiers=true 使 Pool.Place 跳过随机 roll。
+func loadClassicTowerDefs() []tower.TowerDef {
+	presets := config.GlobalClassicPresets()
+	if presets == nil {
+		log.Printf("[classic] presets not loaded, fallback to standard towers")
+		return loadTowerDefsOrFallback()
+	}
+	tp := config.GlobalTierPresets()
+	if tp == nil {
+		log.Printf("[classic] tier-presets not loaded, fallback to standard towers")
+		return loadTowerDefsOrFallback()
+	}
+
+	defs := make([]tower.TowerDef, 0, len(presets.Towers))
+	for _, p := range presets.Towers {
+		// 从 tier-presets.json 查表获取 Base/Potential
+		dmgTier := tp.Damage.Tiers[p.Tiers["damage"]]
+		spdTier := tp.AttackSpeed.Tiers[p.Tiers["atkSpeed"]]
+		rngTier := tp.Range.Tiers[p.Tiers["range"]]
+
+		def := tower.TowerDef{
+			Key:             p.Key,
+			Label:           p.Name,
+			Cost:            p.BuildCost,
+			Abilities:       p.Abilities,
+			AttackStyleID:   p.AttackStyle,
+			ProjectileSpeed: p.ProjectileSpeed,
+
+			// 从 tier 查表设置 Base/Potential
+			CfgBaseDamage:   dmgTier.Base,
+			PotentialDamage: dmgTier.Potential + tp.Damage.BasePotential,
+			CfgBaseSpeed:    spdTier.Base,
+			PotentialSpeed:  spdTier.Potential + tp.AttackSpeed.BasePotential,
+			CfgBaseRange:    rngTier.Base,
+			PotentialRange:  rngTier.Potential + tp.Range.BasePotential,
+
+			// 经典模式标记
+			FixedTiers:      true,
+			PresetAbilities: p.Abilities,
+			Category:        p.Category,
+		}
+		defs = append(defs, def)
+	}
+	return defs
 }
 
 // towerLightColor maps a tower attack style to a light color for dynamic lighting.

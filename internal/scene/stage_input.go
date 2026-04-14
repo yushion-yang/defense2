@@ -675,6 +675,11 @@ func (s *StageScene) tryUpgradeTower() {
 	if t == nil {
 		return
 	}
+	// 强度购买上限检查（经典模式限购 2 次）
+	if max := s.ruleset.MaxStrengthPurchases(); max >= 0 && t.StrengthPurchases >= max {
+		hud.ShowToast(i18n.T("game.tower.max_upgrade"))
+		return
+	}
 	cost := tower.StrengthBuyCost()
 	if s.gold < cost {
 		hud.ShowToast(i18n.T("game.tower.gold_short"))
@@ -694,13 +699,24 @@ func (s *StageScene) tryBulkUpgradeTower() {
 	if t == nil {
 		return
 	}
-	cost := tower.StrengthBuyCost() * 5
+	// 计算实际可购买次数（受上限约束）
+	maxBuys := 5
+	if cap := s.ruleset.MaxStrengthPurchases(); cap >= 0 {
+		remaining := cap - t.StrengthPurchases
+		if remaining <= 0 {
+			hud.ShowToast(i18n.T("game.tower.max_upgrade"))
+			return
+		}
+		if remaining < maxBuys {
+			maxBuys = remaining
+		}
+	}
+	cost := tower.StrengthBuyCost() * maxBuys
 	if s.gold < cost {
 		hud.ShowToast(i18n.T("game.tower.gold_short"))
 		return
 	}
-	// 5 次购买合并
-	for i := 0; i < 5; i++ {
+	for i := 0; i < maxBuys; i++ {
 		t.BuyStrength()
 	}
 	s.gold -= cost

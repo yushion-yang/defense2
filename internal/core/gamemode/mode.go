@@ -159,6 +159,7 @@ func List() []string {
 // test/autoPlay/simulation 为开发和自动化测试用。
 func init() {
 	Register(NewCampaignMode())
+	Register(NewClassicMode())
 	Register(NewEndlessMode())
 	Register(NewTimedMode())
 	Register(NewBossRushMode())

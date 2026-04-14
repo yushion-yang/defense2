@@ -87,6 +87,7 @@ func (s *LoadingScene) Update() error {
 		config.LoadBalance()
 		config.LoadPlatform()
 		config.LoadTierPresets()
+		config.LoadClassicPresets()
 		config.LoadAndCacheWardenConfigs()
 		config.LoadBuffRules()
 		config.LoadSpawnerConfig()

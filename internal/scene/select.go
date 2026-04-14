@@ -51,6 +51,7 @@ func initGameModes() {
 	}
 	gameModes = []gameModeUI{
 		{"campaign", i18n.T("scene.select.mode.campaign"), "stat-damage", i18n.T("scene.select.mode.campaign_desc"), "map_01", false},
+		{"classic", i18n.T("scene.select.mode.classic"), "★", i18n.T("scene.select.mode.classic_desc"), "map_01", false},
 		{"endless", i18n.T("scene.select.mode.endless"), "∞", i18n.T("scene.select.mode.endless_desc"), "map_01", true},
 		{"timedDefense", i18n.T("scene.select.mode.timed"), "stat-atkspd", i18n.T("scene.select.mode.timed_desc"), "map_02", true},
 		{"bossRush", i18n.T("scene.select.mode.boss"), "execute", i18n.T("scene.select.mode.boss_desc"), "map_03", true},
@@ -305,9 +306,9 @@ func (s *SelectScene) Update() error {
 func (s *SelectScene) startGame() {
 	mode := gameModes[s.selectedMode]
 	diff := s.difficulties[s.selectedDiff]
-	// 战役模式进入关卡选择
-	if mode.ID == "campaign" {
-		s.switcher.SwitchScene(NewCampaignSelectScene(s.switcher))
+	// 战役/经典模式进入关卡选择
+	if mode.ID == "campaign" || mode.ID == "classic" {
+		s.switcher.SwitchScene(NewCampaignSelectScene(s.switcher, mode.ID))
 		return
 	}
 	// 测试模式进入测试场景选择器
