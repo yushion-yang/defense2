@@ -22,7 +22,7 @@ type IconLabelStyle struct {
 	Bold     bool
 }
 
-// IconLabel 绘制图标+单行文本。文本在剩余宽度内自动截断。
+// IconLabel 绘制图标+单行文本。文本超宽时自动缩小字号。
 // icon 为 nil 时用 fallbackColor 画实心圆作为占位图标。
 func IconLabel(screen *ebiten.Image, icon *ebiten.Image, fallbackColor color.Color,
 	text string, x, y, maxW float64, style IconLabelStyle) {
@@ -58,16 +58,20 @@ func IconLabel(screen *ebiten.Image, icon *ebiten.Image, fallbackColor color.Col
 		draw.FilledCircle(screen, float32(iconCX), float32(iconCY), float32(iconSize/2), fallbackColor)
 	}
 
-	// 绘制文本（在图标右侧，自动截断）
+	// 绘制文本（在图标右侧，超宽自动缩小字号）
 	textX := x + iconSize + gap
 	textMaxW := maxW - iconSize - gap
 	if textMaxW <= 0 {
 		return
 	}
-	display := TruncateText(fm, text, textMaxW, fontSize)
+	minFS := fontSize - 4
+	if minFS < labelMinFont {
+		minFS = labelMinFont
+	}
+	fontSize = ShrinkFontSize(fm, text, textMaxW, fontSize, minFS)
 	if style.Bold {
-		fm.DrawBoldText(screen, display, textX, y, fontSize, clr)
+		fm.DrawBoldText(screen, text, textX, y, fontSize, clr)
 	} else {
-		fm.DrawText(screen, display, textX, y, fontSize, clr)
+		fm.DrawText(screen, text, textX, y, fontSize, clr)
 	}
 }
