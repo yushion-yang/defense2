@@ -659,10 +659,13 @@ func (s *StageScene) subscribeBus() {
 		if s.wardenReady && s.wardenUnit != nil {
 			s.wardenUnit.OnWaveClear()
 		}
-		// 道具掉落：经典模式每 10 波掉一个，其他模式重置周期计数
+		// 道具掉落：经典模式第 6 波时每种道具各给一个，其他模式重置周期计数
 		if s.ruleset.ItemDropMode() == gamemode.ItemDropByWave {
-			if s.wavesCleared > 0 && s.wavesCleared%10 == 0 {
-				s.spawnItemDrop(float64(game.ScreenWidth)/2, float64(game.ScreenHeight)/2)
+			if s.wavesCleared == 6 {
+				for _, k := range item.AllKinds {
+					s.inventory.Add(k)
+				}
+				hud.ShowToast(i18n.T("game.item.wave_drop"))
 			}
 		} else if dc := config.GlobalBalance().ItemDrop; dc.CycleWaves > 0 && s.wavesCleared%dc.CycleWaves == 0 {
 			s.dropCycleCount = 0

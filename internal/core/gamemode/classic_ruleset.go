@@ -14,6 +14,6 @@ func (ClassicRuleset) UsePresetTowers() bool            { return true }
 func (ClassicRuleset) AbilityMode() AbilityMode        { return AbilityModePreset }
 func (ClassicRuleset) InitialUnlockWaves(_ int) int     { return 0 }
 func (ClassicRuleset) ShouldAutoRollOnWaveClear() bool  { return false }
-func (ClassicRuleset) MaxStrengthPurchases() int        { return 2 }
+func (ClassicRuleset) MaxStrengthPurchases() int        { return 4 }
 func (ClassicRuleset) ItemDropMode() ItemDropMode       { return ItemDropByWave }
 func (ClassicRuleset) ShowPaidUnlockButton() bool       { return false }

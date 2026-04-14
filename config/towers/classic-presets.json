@@ -17,7 +17,7 @@
       "attackStyle": "projectile",
       "abilities": ["crit", "momentum"],
       "tiers": { "damage": "S", "range": "B", "atkSpeed": "B" },
-      "spriteKey": "sentinel",
+      "spriteKey": "cl_sentinel",
       "projectileSpeed": 400,
       "buildCost": 50,
       "description": "单体爆发输出，暴击+动量叠加"
@@ -29,7 +29,7 @@
       "attackStyle": "projectile",
       "abilities": ["distanceDamage", "executionBonus"],
       "tiers": { "damage": "S", "range": "B", "atkSpeed": "B" },
-      "spriteKey": "railgun",
+      "spriteKey": "cl_railgun",
       "projectileSpeed": 600,
       "buildCost": 50,
       "description": "远程狙杀，距离越远伤害越高，低血斩杀"
@@ -41,7 +41,7 @@
       "attackStyle": "barrage",
       "abilities": ["flatDamage", "enhance"],
       "tiers": { "damage": "S", "range": "B", "atkSpeed": "B" },
-      "spriteKey": "gatling",
+      "spriteKey": "cl_gatling",
       "projectileSpeed": 400,
       "buildCost": 50,
       "description": "持续火力输出，固定加伤+永久强化"
@@ -53,7 +53,7 @@
       "attackStyle": "scatter",
       "abilities": ["bleedDot", "slowPower"],
       "tiers": { "damage": "B", "range": "B", "atkSpeed": "S" },
-      "spriteKey": "shotgun",
+      "spriteKey": "cl_shotgun",
       "projectileSpeed": 350,
       "buildCost": 50,
       "description": "近距群伤+流血+减速，扇形覆盖"
@@ -65,7 +65,7 @@
       "attackStyle": "spin_aoe",
       "abilities": ["burn", "weakenZone"],
       "tiers": { "damage": "B", "range": "B", "atkSpeed": "S" },
-      "spriteKey": "cyclone",
+      "spriteKey": "cl_cyclone",
       "projectileSpeed": 0,
       "buildCost": 50,
       "description": "近战旋转攻击，灼烧+范围削弱"
@@ -77,7 +77,7 @@
       "attackStyle": "radial",
       "abilities": ["stunChance", "splash"],
       "tiers": { "damage": "B", "range": "B", "atkSpeed": "S" },
-      "spriteKey": "nova",
+      "spriteKey": "cl_nova",
       "projectileSpeed": 300,
       "buildCost": 50,
       "description": "全方位爆发，眩晕+溅射"
@@ -89,7 +89,7 @@
       "attackStyle": "projectile",
       "abilities": ["splash", "poison"],
       "tiers": { "damage": "B", "range": "B", "atkSpeed": "S" },
-      "spriteKey": "mortar",
+      "spriteKey": "cl_mortar",
       "projectileSpeed": 250,
       "buildCost": 50,
       "description": "范围溅射+持续中毒，区域封锁"
@@ -101,7 +101,7 @@
       "attackStyle": "wideBeam",
       "abilities": ["slowDuration", "damageUpAura"],
       "tiers": { "damage": "D", "range": "S", "atkSpeed": "B" },
-      "spriteKey": "prism",
+      "spriteKey": "cl_prism",
       "projectileSpeed": 0,
       "buildCost": 50,
       "description": "光束减速+增伤光环，核心辅助"
@@ -113,7 +113,7 @@
       "attackStyle": "wideBeam",
       "abilities": ["stunDuration", "rangeAura"],
       "tiers": { "damage": "D", "range": "S", "atkSpeed": "B" },
-      "spriteKey": "fortress",
+      "spriteKey": "cl_fortress",
       "projectileSpeed": 0,
       "buildCost": 50,
       "description": "光束眩晕+增距光环，防线支柱"
@@ -125,7 +125,7 @@
       "attackStyle": "projectile",
       "abilities": ["bounce", "attackSpeedAura"],
       "tiers": { "damage": "D", "range": "S", "atkSpeed": "B" },
-      "spriteKey": "ricochet",
+      "spriteKey": "cl_ricochet",
       "projectileSpeed": 400,
       "buildCost": 50,
       "description": "弹射多目标+攻速光环"
@@ -137,7 +137,7 @@
       "attackStyle": "projectile",
       "abilities": ["multiTarget", "critAura"],
       "tiers": { "damage": "D", "range": "S", "atkSpeed": "B" },
-      "spriteKey": "hydra",
+      "spriteKey": "cl_hydra",
       "projectileSpeed": 400,
       "buildCost": 50,
       "description": "多目标攻击+暴击光环"

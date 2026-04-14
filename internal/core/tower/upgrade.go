@@ -289,9 +289,9 @@ func ApplyPresetAbilities(t *Tower, abilities []string) {
 	}
 	// 经典模式的 SpriteKey 由配置决定，不依赖 AddAbility 的推断
 	// （如 cl_gatling 的 enhance 能力会把 SpriteKey 错误改为 fortress）
+	// Label 不覆盖：initTower 已从 TowerDef.Label 设置了正确的配置名称
 	if t.SpriteKeyOverride != "" {
 		t.SpriteKey = t.SpriteKeyOverride
-		t.Label = SpriteLabelFor(t.SpriteKeyOverride)
 	}
 }
 

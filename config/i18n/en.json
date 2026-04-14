@@ -265,6 +265,7 @@
   "game.tower.btn_bulk_upgrade": "Upgrade x5 ($%d)",
   "game.tower.btn_sell": "Sell ($%d)",
   "game.tower.btn_upgrade": "Upgrade ($%d)",
+  "game.item.wave_drop": "Items received!",
   "game.tower.gold_short": "Not enough gold",
   "game.tower.max_upgrade": "Max upgrade reached",
   "game.tower.sold": "Sold for $%d",
