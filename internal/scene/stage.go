@@ -1132,11 +1132,11 @@ func (s *StageScene) tryPlaceTower(px, py float64) bool {
 		return false // 池满，不扣金
 	}
 	placed.BuildAnim = 0.3
-	if s.ruleset.AbilityMode() == gamemode.AbilityModePreset {
-		// 经典模式：直接注入预设能力，跳过解锁流程
+	if def.FixedTiers && len(def.PresetAbilities) > 0 {
+		// 预设塔（经典模式/测试模式中的经典塔）：直接注入预设能力
 		tower.ApplyPresetAbilities(placed, def.PresetAbilities)
 	} else {
-		// 其他模式：按波次规则 roll 待选能力
+		// 标准塔：按波次规则 roll 待选能力
 		tower.RollAndCachePendingChoices(placed, s.ruleset.InitialUnlockWaves(s.wavesCleared))
 	}
 	s.gold -= cost
@@ -3654,13 +3654,18 @@ func filterUnlockedTowers(defs []tower.TowerDef, pm *persistence.ProgressManager
 }
 
 // loadTowerDefsForMode 根据模式规则加载塔定义列表。
-// 经典模式从 classic-presets.json 构建完整的预设塔列表（含固定属性和能力），
-// 其他模式使用 towers.json + 解锁过滤。
+//   - 经典模式(UsePresetTowers=true)：仅经典预设塔
+//   - 测试模式(IncludePresetTowers=true)：标准塔 + 经典预设塔
+//   - 其他模式：标准塔 + 解锁过滤
 func loadTowerDefsForMode(ruleset gamemode.TowerRuleset, pm *persistence.ProgressManager) []tower.TowerDef {
-	if !ruleset.UsePresetTowers() {
-		return filterUnlockedTowers(loadTowerDefsOrFallback(), pm)
+	if ruleset.UsePresetTowers() {
+		return loadClassicTowerDefs()
 	}
-	return loadClassicTowerDefs()
+	defs := filterUnlockedTowers(loadTowerDefsOrFallback(), pm)
+	if ruleset.IncludePresetTowers() {
+		defs = append(defs, loadClassicTowerDefs()...)
+	}
+	return defs
 }
 
 // loadClassicTowerDefs 从 classic-presets.json 构建经典模式塔定义。

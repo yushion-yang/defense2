@@ -12,3 +12,4 @@ func (TestRuleset) InitialUnlockWaves(currentWavesCleared int) int { return curr
 func (TestRuleset) ShouldAutoRollOnWaveClear() bool            { return true }
 func (TestRuleset) ItemDropMode() ItemDropMode                 { return ItemDropEveryKill }
 func (TestRuleset) ShowPaidUnlockButton() bool                 { return false }
+func (TestRuleset) IncludePresetTowers() bool                  { return true }

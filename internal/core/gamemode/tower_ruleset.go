@@ -60,9 +60,13 @@ type TowerRuleset interface {
 	// ShowPaidUnlockButton 信息面板是否显示"花钱解锁能力槽位"按钮。
 	ShowPaidUnlockButton() bool
 
-	// UsePresetTowers 是否使用预设塔列表（经典模式从 classic-presets.json 加载）。
+	// UsePresetTowers 是否仅使用预设塔列表（经典模式从 classic-presets.json 加载）。
 	// false 时使用标准 towers.json + 随机 tier。
 	UsePresetTowers() bool
+
+	// IncludePresetTowers 是否在标准塔列表后追加预设塔（测试模式用）。
+	// 仅当 UsePresetTowers()=false 时生效，true 时同时包含标准塔和经典预设塔。
+	IncludePresetTowers() bool
 }
 
 // ── 默认实现 ─────────────────────────────────────────
@@ -72,6 +76,7 @@ type TowerRuleset interface {
 type baseTowerRuleset struct{}
 
 func (baseTowerRuleset) UsePresetTowers() bool                      { return false }
+func (baseTowerRuleset) IncludePresetTowers() bool                  { return false }
 func (baseTowerRuleset) AbilityMode() AbilityMode                   { return AbilityModePaidUnlock }
 func (baseTowerRuleset) InitialUnlockWaves(_ int) int               { return 0 }
 func (baseTowerRuleset) ShouldAutoRollOnWaveClear() bool            { return false }
