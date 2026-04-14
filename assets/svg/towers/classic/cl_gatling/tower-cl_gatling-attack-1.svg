@@ -1,21 +1,22 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128">
   <defs>
-    <linearGradient id="gat-hull" x1="0" y1="0" x2="0" y2="1">
+    <linearGradient id="hs-hull" x1="0" y1="0" x2="0" y2="1">
       <stop offset="0%" stop-color="#334155"/>
       <stop offset="100%" stop-color="#1e293b"/>
     </linearGradient>
-    <linearGradient id="gat-barrel" x1="0" y1="1" x2="0" y2="0">
+    <linearGradient id="hs-barrel" x1="0" y1="1" x2="0" y2="0">
       <stop offset="0%" stop-color="#475569"/>
       <stop offset="50%" stop-color="#94a3b8"/>
       <stop offset="100%" stop-color="#64748b"/>
     </linearGradient>
-    <radialGradient id="gat-glow" cx="50%" cy="50%" r="50%">
-      <stop offset="0%" stop-color="#fdba74" stop-opacity="1"/>
-      <stop offset="100%" stop-color="#fdba74" stop-opacity="0"/>
+    <radialGradient id="hs-glow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#fb923c" stop-opacity="1"/>
+      <stop offset="100%" stop-color="#fb923c" stop-opacity="0"/>
     </radialGradient>
-    <radialGradient id="gat-muzzle" cx="50%" cy="50%" r="50%">
+    <radialGradient id="hs-muzzle" cx="50%" cy="50%" r="50%">
       <stop offset="0%" stop-color="#ffffff" stop-opacity="1"/>
-      <stop offset="40%" stop-color="#fdba74" stop-opacity="0.8"/>
+      <stop offset="35%" stop-color="#fdba74" stop-opacity="0.9"/>
+      <stop offset="70%" stop-color="#f97316" stop-opacity="0.4"/>
       <stop offset="100%" stop-color="#f97316" stop-opacity="0"/>
     </radialGradient>
   </defs>
@@ -37,7 +38,7 @@
   <circle cx="64" cy="64" r="22" fill="#1e293b" stroke="#334155" stroke-width="1" opacity="0.8"/>
   <circle cx="64" cy="64" r="18" fill="none" stroke="#475569" stroke-width="0.5" opacity="0.4"/>
   <!-- Hull body -->
-  <rect x="49" y="49" width="30" height="30" rx="4" fill="url(#gat-hull)" stroke="#475569" stroke-width="1"/>
+  <rect x="49" y="49" width="30" height="30" rx="4" fill="url(#hs-hull)" stroke="#475569" stroke-width="1"/>
   <!-- Front direction indicator -->
   <polygon points="57,49 64,43 71,49" fill="#475569" stroke="#64748b" stroke-width="0.5"/>
   <!-- Engine grate -->
@@ -46,31 +47,39 @@
   <line x1="52" y1="79" x2="76" y2="79" stroke="#0f172a" stroke-width="1" opacity="0.6"/>
   <!-- Turret ring -->
   <circle cx="64" cy="62" r="20" fill="#1e293b" stroke="#475569" stroke-width="1"/>
-  <!-- Turret housing -->
-  <circle cx="64" cy="62" r="14" fill="#334155" stroke="#fdba74" stroke-width="1"/>
-  <!-- 6 barrels (recoil y+2) -->
-  <rect x="62" y="18" width="4" height="38" rx="1.5" fill="url(#gat-barrel)" stroke="#64748b" stroke-width="0.5"/>
-  <rect x="70" y="22" width="4" height="34" rx="1.5" fill="url(#gat-barrel)" stroke="#64748b" stroke-width="0.5" transform="rotate(12, 72, 56)"/>
-  <rect x="74" y="28" width="4" height="28" rx="1.5" fill="url(#gat-barrel)" stroke="#64748b" stroke-width="0.5" transform="rotate(24, 76, 56)"/>
-  <rect x="62" y="24" width="4" height="32" rx="1.5" fill="url(#gat-barrel)" stroke="#64748b" stroke-width="0.5" transform="rotate(-6, 64, 56)"/>
-  <rect x="54" y="22" width="4" height="34" rx="1.5" fill="url(#gat-barrel)" stroke="#64748b" stroke-width="0.5" transform="rotate(-12, 56, 56)"/>
-  <rect x="50" y="28" width="4" height="28" rx="1.5" fill="url(#gat-barrel)" stroke="#64748b" stroke-width="0.5" transform="rotate(-24, 52, 56)"/>
-  <!-- Barrel clamp ring -->
-  <circle cx="64" cy="44" r="12" fill="none" stroke="#fdba74" stroke-width="2" opacity="0.9"/>
-  <circle cx="64" cy="32" r="10" fill="none" stroke="#fdba74" stroke-width="1.2" opacity="0.6"/>
-  <!-- MUZZLE FLASH -->
-  <circle cx="64" cy="14" r="9" fill="url(#gat-muzzle)"/>
-  <circle cx="64" cy="14" r="3" fill="#ffffff" opacity="0.9"/>
-  <!-- Energy discharge lines -->
-  <line x1="64" y1="14" x2="54" y2="6" stroke="#fdba74" stroke-width="1" opacity="0.7"/>
-  <line x1="64" y1="14" x2="74" y2="6" stroke="#fdba74" stroke-width="1" opacity="0.7"/>
-  <line x1="64" y1="14" x2="58" y2="10" stroke="#fdba74" stroke-width="0.8" opacity="0.5"/>
-  <line x1="64" y1="14" x2="70" y2="10" stroke="#fdba74" stroke-width="0.8" opacity="0.5"/>
-  <!-- Center spindle (max) -->
+  <!-- === HAILSTORM TURRET: attack-1, full muzzle flash, ejecting shell, max brightness === -->
+  <!-- Turret housing (bright stroke) -->
+  <circle cx="64" cy="62" r="14" fill="#334155" stroke="#fb923c" stroke-width="1.2"/>
+  <!-- Main thick barrel -->
+  <rect x="58" y="14" width="12" height="48" rx="3" fill="url(#hs-barrel)" stroke="#64748b" stroke-width="0.8"/>
+  <!-- Barrel reinforcement ring (glowing) -->
+  <circle cx="64" cy="36" r="8" fill="none" stroke="#fb923c" stroke-width="1.5" opacity="0.8"/>
+  <!-- Muzzle brake -->
+  <rect x="56" y="10" width="16" height="8" rx="2" fill="#475569" stroke="#64748b" stroke-width="0.8"/>
+  <!-- Muzzle ports (glowing) -->
+  <line x1="57" y1="13" x2="71" y2="13" stroke="#fb923c" stroke-width="1" opacity="0.9"/>
+  <line x1="57" y1="16" x2="71" y2="16" stroke="#fb923c" stroke-width="1" opacity="0.9"/>
+  <!-- FULL MUZZLE FLASH -->
+  <circle cx="64" cy="8" r="10" fill="url(#hs-muzzle)"/>
+  <circle cx="64" cy="8" r="4" fill="#ffffff" opacity="0.9"/>
+  <!-- Flash discharge lines -->
+  <line x1="64" y1="8" x2="52" y2="1" stroke="#fdba74" stroke-width="1.2" opacity="0.7"/>
+  <line x1="64" y1="8" x2="76" y2="1" stroke="#fdba74" stroke-width="1.2" opacity="0.7"/>
+  <line x1="64" y1="8" x2="56" y2="4" stroke="#fdba74" stroke-width="0.8" opacity="0.5"/>
+  <line x1="64" y1="8" x2="72" y2="4" stroke="#fdba74" stroke-width="0.8" opacity="0.5"/>
+  <!-- Ammo belt on RIGHT side (feeding) -->
+  <line x1="74" y1="54" x2="74" y2="72" stroke="#78350f" stroke-width="0.6" opacity="0.6"/>
+  <rect x="72" y="54" width="3" height="4" rx="0.5" fill="#78350f" stroke="#fb923c" stroke-width="0.5" opacity="0.8"/>
+  <rect x="72" y="59" width="3" height="4" rx="0.5" fill="#78350f" stroke="#fb923c" stroke-width="0.5" opacity="0.8"/>
+  <rect x="72" y="64" width="3" height="4" rx="0.5" fill="#78350f" stroke="#fb923c" stroke-width="0.5" opacity="0.8"/>
+  <rect x="72" y="69" width="3" height="4" rx="0.5" fill="#78350f" stroke="#fb923c" stroke-width="0.5" opacity="0.8"/>
+  <!-- Shell ejection port on LEFT side -->
+  <rect x="52" y="56" width="5" height="3" rx="1" fill="#0f172a" stroke="#475569" stroke-width="0.4" opacity="0.8" transform="rotate(-15, 54, 57)"/>
+  <!-- Ejected shell flying out -->
+  <rect x="44" y="52" width="4" height="2" rx="0.5" fill="#fdba74" stroke="#f97316" stroke-width="0.3" opacity="0.9" transform="rotate(-30, 46, 53)"/>
+  <circle cx="43" cy="51" r="1.5" fill="#f97316" opacity="0.5"/>
+  <!-- Center glow (max brightness) -->
   <circle cx="64" cy="62" r="5" fill="#1c1917"/>
-  <circle cx="64" cy="62" r="3" fill="#fdba74" opacity="1"/>
-  <circle cx="64" cy="62" r="8" fill="url(#gat-glow)"/>
-  <!-- Ammo belts -->
-  <rect x="76" y="58" width="8" height="4" rx="1" fill="#78350f" stroke="#fdba74" stroke-width="0.5" opacity="1"/>
-  <rect x="44" y="58" width="8" height="4" rx="1" fill="#78350f" stroke="#fdba74" stroke-width="0.5" opacity="1"/>
+  <circle cx="64" cy="62" r="3" fill="#fb923c" opacity="1"/>
+  <circle cx="64" cy="62" r="10" fill="url(#hs-glow)"/>
 </svg>

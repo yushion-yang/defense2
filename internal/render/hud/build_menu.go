@@ -29,6 +29,7 @@ type BuildCardVM struct {
 	Sprite      *ebiten.Image // 预加载的精灵图
 	Buildable   bool          // true=可建造, false=仅展示变体
 	AbilityDesc string        // 变体卡的能力描述文本
+	Abilities   []AbilityVM   // 预设能力描述（经典模式 hover 时展示）
 	Category    string        // 角色分类（经典模式用：dps/aoe/support），空=不分组
 }
 
@@ -221,6 +222,7 @@ func drawVariantCard(screen *ebiten.Image, fm *render.FontManager, card BuildCar
 }
 
 // drawBuildCardTooltip renders a small stats tooltip above the build panel.
+// 有预设能力时动态增高，展示每个能力的图标+标签+数值描述。
 func drawBuildCardTooltip(screen *ebiten.Image, fm *render.FontManager, card BuildCardVM, m buildPanelMetrics) {
 	if !card.Buildable {
 		drawVariantTooltip(screen, fm, card, m)
@@ -228,20 +230,30 @@ func drawBuildCardTooltip(screen *ebiten.Image, fm *render.FontManager, card Bui
 	}
 
 	const (
-		tipW = float32(240)
-		tipH = float32(70)
-		tipR = float32(8)
+		tipW       = float32(280)
+		tipBaseH   = float32(70) // 基础高度（名称+属性行）
+		tipAbilH   = float32(18) // 每行能力高度
+		tipAbilGap = float32(6)  // 能力区域上方间距
+		tipR       = float32(8)
+		tipPadX    = float32(12)
 	)
+
+	// 动态计算高度
+	tipH := tipBaseH
+	if len(card.Abilities) > 0 {
+		tipH += tipAbilGap + float32(len(card.Abilities))*tipAbilH
+	}
+
 	tipX := (float32(theme.CanvasW) - tipW) / 2
 	tipY := m.panelY - tipH - 6
 
 	draw.RoundRect(screen, tipX, tipY, tipW, tipH, tipR, theme.PanelBg)
 	draw.StrokeRoundRect(screen, tipX, tipY, tipW, tipH, tipR, 1, theme.PanelBorder)
 
-	tx := float64(tipX) + 12
+	tx := float64(tipX) + float64(tipPadX)
 	ty := float64(tipY) + 8
 
-	fm.DrawBoldText(screen, ui.TruncateText(fm, card.Label, 200, theme.FontLG), tx, ty, theme.FontLG, theme.TextTitle)
+	fm.DrawBoldText(screen, ui.TruncateText(fm, card.Label, 240, theme.FontLG), tx, ty, theme.FontLG, theme.TextTitle)
 	fm.DrawText(screen, card.RoleTag+" · "+strconv.Itoa(card.Cost)+"G", tx, ty+18, theme.FontSM, card.RoleColor)
 
 	ty += 38
@@ -257,6 +269,15 @@ func drawBuildCardTooltip(screen *ebiten.Image, fm *render.FontManager, card Bui
 
 	drawStatIcon(screen, im, "stat-range", tx+140, ty, tipIconSz)
 	fm.DrawText(screen, strconv.FormatFloat(card.Range, 'f', 0, 64), tx+140+tipIconSz+tipIconGap, ty, theme.FontSM, theme.InfoAttrRange)
+
+	// 预设能力描述
+	if len(card.Abilities) > 0 {
+		ty += float64(tipAbilGap) + 14
+		for _, ab := range card.Abilities {
+			drawAbilityRowVM(screen, fm, ab, tx, ty)
+			ty += float64(tipAbilH)
+		}
+	}
 }
 
 // drawVariantTooltip renders a tooltip for display-only variant cards.

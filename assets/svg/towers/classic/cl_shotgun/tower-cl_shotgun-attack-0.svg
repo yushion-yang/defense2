@@ -1,15 +1,15 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128">
   <defs>
-    <linearGradient id="sg-hull" x1="0" y1="0" x2="0" y2="1">
+    <linearGradient id="iw-hull" x1="0" y1="0" x2="0" y2="1">
       <stop offset="0%" stop-color="#334155"/>
       <stop offset="100%" stop-color="#1e293b"/>
     </linearGradient>
-    <linearGradient id="sg-barrel" x1="0" y1="1" x2="0" y2="0">
+    <linearGradient id="iw-barrel" x1="0" y1="1" x2="0" y2="0">
       <stop offset="0%" stop-color="#475569"/>
       <stop offset="50%" stop-color="#94a3b8"/>
       <stop offset="100%" stop-color="#64748b"/>
     </linearGradient>
-    <radialGradient id="sg-glow" cx="50%" cy="50%" r="50%">
+    <radialGradient id="iw-glow" cx="50%" cy="50%" r="50%">
       <stop offset="0%" stop-color="#f87171" stop-opacity="0.8"/>
       <stop offset="100%" stop-color="#f87171" stop-opacity="0"/>
     </radialGradient>
@@ -32,7 +32,7 @@
   <circle cx="64" cy="64" r="22" fill="#1e293b" stroke="#334155" stroke-width="1" opacity="0.8"/>
   <circle cx="64" cy="64" r="18" fill="none" stroke="#475569" stroke-width="0.5" opacity="0.4"/>
   <!-- Hull body -->
-  <rect x="49" y="49" width="30" height="30" rx="4" fill="url(#sg-hull)" stroke="#475569" stroke-width="1"/>
+  <rect x="49" y="49" width="30" height="30" rx="4" fill="url(#iw-hull)" stroke="#475569" stroke-width="1"/>
   <!-- Front direction indicator -->
   <polygon points="57,49 64,43 71,49" fill="#475569" stroke="#64748b" stroke-width="0.5"/>
   <!-- Engine grate -->
@@ -40,31 +40,26 @@
   <line x1="52" y1="76" x2="76" y2="76" stroke="#0f172a" stroke-width="1" opacity="0.6"/>
   <line x1="52" y1="79" x2="76" y2="79" stroke="#0f172a" stroke-width="1" opacity="0.6"/>
   <!-- Turret ring -->
-  <circle cx="64" cy="62" r="15" fill="#1e293b" stroke="#475569" stroke-width="1"/>
+  <circle cx="64" cy="62" r="20" fill="#1e293b" stroke="#475569" stroke-width="1"/>
   <!-- Turret housing -->
-  <rect x="48" y="52" width="32" height="20" rx="5" fill="#334155" stroke="#f87171" stroke-width="1"/>
-  <!-- Left barrel -->
-  <rect x="52" y="18" width="8" height="38" rx="3" fill="url(#sg-barrel)" stroke="#64748b" stroke-width="0.8"/>
-  <!-- Right barrel -->
-  <rect x="68" y="18" width="8" height="38" rx="3" fill="url(#sg-barrel)" stroke="#64748b" stroke-width="0.8"/>
-  <!-- Barrel openings (glowing) -->
-  <ellipse cx="56" cy="18" rx="3.5" ry="1.5" fill="#0f172a"/>
-  <ellipse cx="72" cy="18" rx="3.5" ry="1.5" fill="#0f172a"/>
-  <!-- Charge buildup at each barrel -->
-  <circle cx="56" cy="16" r="4" fill="#f87171" opacity="0.3"/>
-  <circle cx="72" cy="16" r="4" fill="#f87171" opacity="0.3"/>
-  <!-- Barrel band (bright) -->
-  <rect x="50" y="30" width="28" height="3" rx="1" fill="#475569" stroke="#f87171" stroke-width="0.7"/>
-  <!-- Shell ejection ports -->
-  <rect x="78" y="54" width="5" height="3" rx="1" fill="#7f1d1d" stroke="#f87171" stroke-width="0.5"/>
-  <rect x="78" y="60" width="5" height="3" rx="1" fill="#7f1d1d" stroke="#f87171" stroke-width="0.5"/>
-  <rect x="45" y="54" width="5" height="3" rx="1" fill="#7f1d1d" stroke="#f87171" stroke-width="0.5"/>
-  <rect x="45" y="60" width="5" height="3" rx="1" fill="#7f1d1d" stroke="#f87171" stroke-width="0.5"/>
-  <!-- Spread indicator lines (brighter) -->
-  <line x1="52" y1="18" x2="46" y2="10" stroke="#f87171" stroke-width="0.8" opacity="0.6"/>
-  <line x1="76" y1="18" x2="82" y2="10" stroke="#f87171" stroke-width="0.8" opacity="0.6"/>
-  <!-- Center glow (very bright) -->
-  <circle cx="64" cy="62" r="5" fill="#450a0a"/>
+  <circle cx="64" cy="62" r="14" fill="#334155" stroke="#f87171" stroke-width="1"/>
+  <!-- 6 barrels (spinning) -->
+  <rect x="62" y="16" width="4" height="38" rx="1.5" fill="url(#iw-barrel)" stroke="#64748b" stroke-width="0.5"/>
+  <rect x="70" y="20" width="4" height="34" rx="1.5" fill="url(#iw-barrel)" stroke="#64748b" stroke-width="0.5" transform="rotate(12, 72, 54)"/>
+  <rect x="74" y="26" width="4" height="28" rx="1.5" fill="url(#iw-barrel)" stroke="#64748b" stroke-width="0.5" transform="rotate(24, 76, 54)"/>
+  <rect x="62" y="22" width="4" height="32" rx="1.5" fill="url(#iw-barrel)" stroke="#64748b" stroke-width="0.5" transform="rotate(-6, 64, 54)"/>
+  <rect x="54" y="20" width="4" height="34" rx="1.5" fill="url(#iw-barrel)" stroke="#64748b" stroke-width="0.5" transform="rotate(-12, 56, 54)"/>
+  <rect x="50" y="26" width="4" height="28" rx="1.5" fill="url(#iw-barrel)" stroke="#64748b" stroke-width="0.5" transform="rotate(-24, 52, 54)"/>
+  <!-- Barrel clamp ring (brighter) -->
+  <circle cx="64" cy="42" r="12" fill="none" stroke="#f87171" stroke-width="1.8" opacity="0.8"/>
+  <circle cx="64" cy="30" r="10" fill="none" stroke="#f87171" stroke-width="1.2" opacity="0.6"/>
+  <!-- Charge glow at muzzle area -->
+  <circle cx="64" cy="16" r="5" fill="#f87171" opacity="0.3"/>
+  <!-- Center spindle (very bright) -->
+  <circle cx="64" cy="62" r="5" fill="#1c1917"/>
   <circle cx="64" cy="62" r="3" fill="#f87171" opacity="0.9"/>
-  <circle cx="64" cy="62" r="8" fill="url(#sg-glow)"/>
+  <circle cx="64" cy="62" r="8" fill="url(#iw-glow)"/>
+  <!-- Ammo belts -->
+  <rect x="76" y="58" width="8" height="4" rx="1" fill="#7f1d1d" stroke="#f87171" stroke-width="0.5" opacity="0.8"/>
+  <rect x="44" y="58" width="8" height="4" rx="1" fill="#7f1d1d" stroke="#f87171" stroke-width="0.5" opacity="0.8"/>
 </svg>

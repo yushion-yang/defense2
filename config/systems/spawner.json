@@ -5,8 +5,8 @@
   },
 
   "scaling": {
-    "hpBase": 80,                    "_hpBase": "敌人基础生命值（第1波）",
-    "hpPerWave": 60,                 "_hpPerWave": "每波生命值递增量",
+    "hpBase": 60,                    "_hpBase": "敌人基础生命值（第1波）",
+    "hpPerWave": 40,                 "_hpPerWave": "每波生命值递增量",
     "speedBase": 50,                 "_speedBase": "敌人基础移动速度（像素/秒）",
     "speedPerWave": 0,               "_speedPerWave": "每波移动速度递增量（0=不增长）",
     "enemiesPerWave": 5,             "_enemiesPerWave": "每波基础敌人数（实际数量=base+wave）",

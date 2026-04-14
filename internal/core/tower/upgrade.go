@@ -272,20 +272,30 @@ func (t *Tower) AddAbility(abilityType string) bool {
 		t.Label = SpriteLabelFor(t.SpriteKey)
 	}
 
-	// enhance 是特殊的非攻击能力：一次性永久提升塔的 Base 和 Potential 属性
-	if abilityType == AbilityEnhance {
-		applyEnhance(t, def)
-	}
+	// enhance 写入 slot[0] 但不在此处 apply 属性加成。
+	// 属性加成由 ApplyEnhanceIfPresent 统一处理，确保：
+	// - 经典模式建塔时：ApplyPresetAbilities 末尾调用
+	// - 战役模式选能力时：stage_input 调用
+	// - 快照恢复时：restoreScenario 调用
+	// 这样快照只存原始属性，加载时重新 apply，避免多次重进导致复利叠加。
 
 	return true
 }
 
 // ApplyPresetAbilities 批量注入预设能力（经典模式用）。
-// 不走解锁流程，直接把能力写入对应 slot，触发攻击方式变形和 enhance 效果。
+// 不走解锁流程，直接把能力写入对应 slot，触发攻击方式变形。
 // 注入完成后，用 TowerDef.SpriteKeyOverride 修正精灵（防止 AddAbility 推断覆盖）。
+//
+// enhance 特殊处理：enhance 属于 attack 类别但在经典模式中与真正的攻击能力共存，
+// 当 slot[0] 已被攻击能力占用时跳过 AddAbility（会被 slot 冲突拒绝），
+// enhance 的属性加成由末尾 ApplyEnhanceIfPresent 统一处理。
 func ApplyPresetAbilities(t *Tower, abilities []string) {
 	savedLabel := t.Label // AddAbility 会改 Label（攻击能力触发精灵变形），需要恢复
 	for _, abil := range abilities {
+		if abil == AbilityEnhance && t.AbilitySlots[config.AbilityCatAttack] != "" {
+			// enhance 与攻击能力同槽冲突，跳过 AddAbility；属性加成由末尾统一处理
+			continue
+		}
 		t.AddAbility(abil)
 	}
 	// 恢复配置中的名称和精灵（AddAbility 推断的值不适用于经典预设塔）
@@ -293,6 +303,78 @@ func ApplyPresetAbilities(t *Tower, abilities []string) {
 	if t.SpriteKeyOverride != "" {
 		t.SpriteKey = t.SpriteKeyOverride
 	}
+	// 统一 apply enhance 属性加成（无论 enhance 是否占了 slot）
+	ApplyEnhanceIfPresent(t)
+}
+
+// ApplyEnhanceIfPresent 检查塔的能力列表或预设能力中是否含 enhance，
+// 如果有则 apply 属性加成。此方法是 enhance 属性加成的唯一入口，
+// 确保建塔、选能力、快照恢复三条路径行为一致。
+func ApplyEnhanceIfPresent(t *Tower) {
+	// 检查 AbilitySlots（战役模式选了 enhance 会在 slot[0]）
+	hasEnhance := false
+	for _, a := range t.AbilitySlots {
+		if a == AbilityEnhance {
+			hasEnhance = true
+			break
+		}
+	}
+	// 检查 Abilities 列表（经典模式 enhance 可能不在 slot 中但在预设列表）
+	if !hasEnhance {
+		for _, a := range t.Abilities {
+			if a == AbilityEnhance {
+				hasEnhance = true
+				break
+			}
+		}
+	}
+	if !hasEnhance {
+		return
+	}
+	table := config.GlobalAbilityTable()
+	if table == nil {
+		return
+	}
+	def, ok := table[AbilityEnhance]
+	if !ok {
+		return
+	}
+	applyEnhance(t, def)
+}
+
+// HasEnhance 检查塔是否拥有 enhance 能力（slot 或 Abilities 列表中任一）。
+func HasEnhance(t *Tower) bool {
+	for _, a := range t.AbilitySlots {
+		if a == AbilityEnhance {
+			return true
+		}
+	}
+	for _, a := range t.Abilities {
+		if a == AbilityEnhance {
+			return true
+		}
+	}
+	return false
+}
+
+// EnhanceFactors 返回 enhance 的乘数 (boost, rangeBoost)。
+// 快照保存时用于反算原始属性：originalBase = currentBase / (1 + boost)。
+// 如果塔没有 enhance 或能力表不可用，返回 (0, 0)。
+func EnhanceFactors() (boost, rangeBoost float64) {
+	table := config.GlobalAbilityTable()
+	if table == nil {
+		return 0, 0
+	}
+	def, ok := table[AbilityEnhance]
+	if !ok {
+		return 0, 0
+	}
+	boost = def.Param
+	rangeBoost = def.Param2
+	if rangeBoost <= 0 {
+		rangeBoost = boost / 2
+	}
+	return boost, rangeBoost
 }
 
 // applyEnhance 强化能力：一次性永久提升塔的 Base 和 Potential 属性。

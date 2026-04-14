@@ -94,10 +94,10 @@ var HeadlessMode bool
 // ── 功能开关（默认关闭，发布前隐藏未完成/不想暴露的内容） ──
 
 // MascotEnabled 控制萌妹向导系统。关闭时不加载资源、不渲染、不响应交互。
-var MascotEnabled bool
+var MascotEnabled = true
 
 // WardenEnabled 控制战灵系统。关闭时跳过战灵选择，直接无战灵开波。
-var WardenEnabled bool
+var WardenEnabled = true
 
 // turboTicksPerFrame HeadlessMode 下每帧推进的 tick 数上限。
 // 5000 tick ≈ 83 秒游戏时间（@ 60 TPS），配合 Ebitengine 的帧循环可在数秒内跑完一局。

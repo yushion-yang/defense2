@@ -1,17 +1,23 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128">
   <defs>
-    <linearGradient id="prm-hull" x1="0" y1="0" x2="0" y2="1">
+    <linearGradient id="tri-hull" x1="0" y1="0" x2="0" y2="1">
       <stop offset="0%" stop-color="#334155"/>
       <stop offset="100%" stop-color="#1e293b"/>
     </linearGradient>
-    <linearGradient id="prm-crystal" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0%" stop-color="#cffafe"/>
-      <stop offset="40%" stop-color="#67e8f9"/>
-      <stop offset="100%" stop-color="#22d3ee"/>
+    <linearGradient id="tri-barrel" x1="0" y1="1" x2="0" y2="0">
+      <stop offset="0%" stop-color="#475569"/>
+      <stop offset="50%" stop-color="#94a3b8"/>
+      <stop offset="100%" stop-color="#64748b"/>
     </linearGradient>
-    <radialGradient id="prm-glow" cx="50%" cy="50%" r="50%">
+    <radialGradient id="tri-glow" cx="50%" cy="50%" r="50%">
       <stop offset="0%" stop-color="#a5f3fc" stop-opacity="1"/>
       <stop offset="100%" stop-color="#a5f3fc" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="tri-flash" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#ffffff" stop-opacity="1"/>
+      <stop offset="35%" stop-color="#a5f3fc" stop-opacity="0.8"/>
+      <stop offset="70%" stop-color="#06b6d4" stop-opacity="0.3"/>
+      <stop offset="100%" stop-color="#06b6d4" stop-opacity="0"/>
     </radialGradient>
   </defs>
   <!-- Left track -->
@@ -28,35 +34,54 @@
   <line x1="80" y1="65" x2="90" y2="66" stroke="#1e293b" stroke-width="0.5" opacity="0.6"/>
   <line x1="80" y1="70" x2="90" y2="72" stroke="#1e293b" stroke-width="0.5" opacity="0.6"/>
   <line x1="80" y1="75" x2="90" y2="78" stroke="#1e293b" stroke-width="0.5" opacity="0.6"/>
+  <!-- Hull base plate -->
   <circle cx="64" cy="64" r="22" fill="#1e293b" stroke="#334155" stroke-width="1" opacity="0.8"/>
   <circle cx="64" cy="64" r="18" fill="none" stroke="#475569" stroke-width="0.5" opacity="0.4"/>
-  <rect x="49" y="49" width="30" height="30" rx="4" fill="url(#prm-hull)" stroke="#475569" stroke-width="1"/>
+  <!-- Hull body -->
+  <rect x="49" y="49" width="30" height="30" rx="4" fill="url(#tri-hull)" stroke="#475569" stroke-width="1"/>
+  <!-- Front direction indicator -->
   <polygon points="57,49 64,43 71,49" fill="#475569" stroke="#64748b" stroke-width="0.5"/>
+  <!-- Engine grate -->
   <line x1="52" y1="73" x2="76" y2="73" stroke="#0f172a" stroke-width="1" opacity="0.6"/>
   <line x1="52" y1="76" x2="76" y2="76" stroke="#0f172a" stroke-width="1" opacity="0.6"/>
   <line x1="52" y1="79" x2="76" y2="79" stroke="#0f172a" stroke-width="1" opacity="0.6"/>
-  <circle cx="64" cy="62" r="15" fill="#1e293b" stroke="#475569" stroke-width="1"/>
+  <!-- Turret ring -->
+  <circle cx="64" cy="58" r="15" fill="#1e293b" stroke="#475569" stroke-width="1"/>
+  <!-- === TRIDENT TURRET: attack-1, energy discharge, max brightness, center hub bright === -->
+  <!-- Turret housing (max brightness stroke) -->
   <circle cx="64" cy="58" r="13" fill="#334155" stroke="#a5f3fc" stroke-width="1.2"/>
-  <!-- Refraction beams (SOLID BRIGHT) -->
-  <line x1="64" y1="34" x2="40" y2="20" stroke="#f87171" stroke-width="2.5" opacity="0.85"/>
-  <line x1="64" y1="34" x2="54" y2="14" stroke="#fbbf24" stroke-width="2.5" opacity="0.85"/>
-  <line x1="64" y1="34" x2="74" y2="14" stroke="#4ade80" stroke-width="2.5" opacity="0.85"/>
-  <line x1="64" y1="34" x2="88" y2="20" stroke="#818cf8" stroke-width="2.5" opacity="0.85"/>
-  <!-- Beam tip glow dots -->
-  <circle cx="40" cy="20" r="3" fill="#f87171" opacity="0.7"/>
-  <circle cx="54" cy="14" r="3" fill="#fbbf24" opacity="0.7"/>
-  <circle cx="74" cy="14" r="3" fill="#4ade80" opacity="0.7"/>
-  <circle cx="88" cy="20" r="3" fill="#818cf8" opacity="0.7"/>
-  <!-- Crystal (MAX GLOW, shifted lighter) -->
-  <polygon points="64,24 48,56 80,56" fill="url(#prm-crystal)" stroke="#cffafe" stroke-width="2"/>
-  <polygon points="64,28 52,52 64,52" fill="#cffafe" opacity="0.4"/>
-  <line x1="64" y1="28" x2="56" y2="52" stroke="#ffffff" stroke-width="1" opacity="0.6"/>
-  <line x1="64" y1="28" x2="72" y2="52" stroke="#ffffff" stroke-width="1" opacity="0.6"/>
-  <!-- Crystal tip flash -->
-  <circle cx="64" cy="24" r="6" fill="#a5f3fc" opacity="0.6"/>
-  <circle cx="64" cy="24" r="3" fill="#ffffff" opacity="0.8"/>
-  <!-- Center glow (max) -->
-  <circle cx="64" cy="58" r="5" fill="#083344"/>
-  <circle cx="64" cy="58" r="3" fill="#a5f3fc" opacity="1"/>
-  <circle cx="64" cy="58" r="8" fill="url(#prm-glow)"/>
+  <!-- Tracking ring (bright) -->
+  <circle cx="64" cy="58" r="18" fill="none" stroke="#22d3ee" stroke-width="0.7" opacity="0.45" stroke-dasharray="3,3"/>
+  <!-- Barrel 1 (up) -->
+  <rect x="61" y="18" width="6" height="32" rx="2" fill="url(#tri-barrel)" stroke="#64748b" stroke-width="0.6"/>
+  <!-- Barrel 2 (down-left) -->
+  <rect x="61" y="18" width="6" height="32" rx="2" fill="url(#tri-barrel)" stroke="#64748b" stroke-width="0.6" transform="rotate(120, 64, 58)"/>
+  <!-- Barrel 3 (down-right) -->
+  <rect x="61" y="18" width="6" height="32" rx="2" fill="url(#tri-barrel)" stroke="#64748b" stroke-width="0.6" transform="rotate(240, 64, 58)"/>
+  <!-- Tip flashes -->
+  <circle cx="64" cy="20" r="6" fill="url(#tri-flash)"/>
+  <circle cx="64" cy="20" r="2.5" fill="#ffffff" opacity="0.8"/>
+  <circle cx="31" cy="77" r="6" fill="url(#tri-flash)"/>
+  <circle cx="31" cy="77" r="2.5" fill="#ffffff" opacity="0.8"/>
+  <circle cx="97" cy="77" r="6" fill="url(#tri-flash)"/>
+  <circle cx="97" cy="77" r="2.5" fill="#ffffff" opacity="0.8"/>
+  <!-- Energy discharge lines from each tip outward -->
+  <!-- Tip 1 (up) discharge -->
+  <line x1="64" y1="20" x2="64" y2="6" stroke="#a5f3fc" stroke-width="1.5" opacity="0.7"/>
+  <line x1="64" y1="20" x2="56" y2="10" stroke="#a5f3fc" stroke-width="1" opacity="0.5"/>
+  <line x1="64" y1="20" x2="72" y2="10" stroke="#a5f3fc" stroke-width="1" opacity="0.5"/>
+  <!-- Tip 2 (down-left) discharge -->
+  <line x1="31" y1="77" x2="20" y2="86" stroke="#a5f3fc" stroke-width="1.5" opacity="0.7"/>
+  <line x1="31" y1="77" x2="22" y2="72" stroke="#a5f3fc" stroke-width="1" opacity="0.5"/>
+  <line x1="31" y1="77" x2="26" y2="88" stroke="#a5f3fc" stroke-width="1" opacity="0.5"/>
+  <!-- Tip 3 (down-right) discharge -->
+  <line x1="97" y1="77" x2="108" y2="86" stroke="#a5f3fc" stroke-width="1.5" opacity="0.7"/>
+  <line x1="97" y1="77" x2="106" y2="72" stroke="#a5f3fc" stroke-width="1" opacity="0.5"/>
+  <line x1="97" y1="77" x2="102" y2="88" stroke="#a5f3fc" stroke-width="1" opacity="0.5"/>
+  <!-- Center hub (max bright) -->
+  <circle cx="64" cy="58" r="6" fill="#1e293b" stroke="#a5f3fc" stroke-width="1.2"/>
+  <!-- Center glow (max brightness) -->
+  <circle cx="64" cy="58" r="4" fill="#083344"/>
+  <circle cx="64" cy="58" r="2.5" fill="#a5f3fc" opacity="1"/>
+  <circle cx="64" cy="58" r="9" fill="url(#tri-glow)"/>
 </svg>

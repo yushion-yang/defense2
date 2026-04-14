@@ -1,19 +1,19 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128">
   <defs>
-    <linearGradient id="sen-hull" x1="0" y1="0" x2="0" y2="1">
+    <linearGradient id="fal-hull" x1="0" y1="0" x2="0" y2="1">
       <stop offset="0%" stop-color="#334155"/>
       <stop offset="100%" stop-color="#1e293b"/>
     </linearGradient>
-    <linearGradient id="sen-barrel" x1="0" y1="1" x2="0" y2="0">
+    <linearGradient id="fal-barrel" x1="0" y1="1" x2="0" y2="0">
       <stop offset="0%" stop-color="#475569"/>
       <stop offset="50%" stop-color="#94a3b8"/>
       <stop offset="100%" stop-color="#64748b"/>
     </linearGradient>
-    <radialGradient id="sen-glow" cx="50%" cy="50%" r="50%">
+    <radialGradient id="fal-glow" cx="50%" cy="50%" r="50%">
       <stop offset="0%" stop-color="#93c5fd" stop-opacity="1"/>
       <stop offset="100%" stop-color="#93c5fd" stop-opacity="0"/>
     </radialGradient>
-    <radialGradient id="sen-muzzle" cx="50%" cy="50%" r="50%">
+    <radialGradient id="fal-muzzle" cx="50%" cy="50%" r="50%">
       <stop offset="0%" stop-color="#ffffff" stop-opacity="1"/>
       <stop offset="40%" stop-color="#93c5fd" stop-opacity="0.8"/>
       <stop offset="100%" stop-color="#3b82f6" stop-opacity="0"/>
@@ -37,7 +37,7 @@
   <circle cx="64" cy="64" r="22" fill="#1e293b" stroke="#334155" stroke-width="1" opacity="0.8"/>
   <circle cx="64" cy="64" r="18" fill="none" stroke="#475569" stroke-width="0.5" opacity="0.4"/>
   <!-- Hull body -->
-  <rect x="49" y="49" width="30" height="30" rx="4" fill="url(#sen-hull)" stroke="#475569" stroke-width="1"/>
+  <rect x="49" y="49" width="30" height="30" rx="4" fill="url(#fal-hull)" stroke="#475569" stroke-width="1"/>
   <!-- Front direction indicator -->
   <polygon points="57,49 64,43 71,49" fill="#475569" stroke="#64748b" stroke-width="0.5"/>
   <!-- Engine grate -->
@@ -47,25 +47,32 @@
   <!-- Turret ring -->
   <circle cx="64" cy="62" r="15" fill="#1e293b" stroke="#475569" stroke-width="1"/>
   <!-- Turret housing -->
-  <circle cx="64" cy="62" r="14" fill="#334155" stroke="#93c5fd" stroke-width="1"/>
-  <!-- Cannon barrel (recoil: y+2) -->
-  <rect x="60" y="18" width="8" height="46" rx="2" fill="url(#sen-barrel)" stroke="#64748b" stroke-width="0.8"/>
-  <!-- Barrel tip / muzzle brake (recoil: y+2) -->
-  <rect x="58" y="14" width="12" height="7" rx="2" fill="#475569" stroke="#64748b" stroke-width="0.8"/>
-  <line x1="59" y1="17" x2="69" y2="17" stroke="#93c5fd" stroke-width="0.8" opacity="1"/>
-  <!-- MUZZLE FLASH -->
-  <circle cx="64" cy="10" r="8" fill="url(#sen-muzzle)"/>
-  <circle cx="64" cy="10" r="3" fill="#ffffff" opacity="0.9"/>
-  <!-- Energy discharge lines from muzzle -->
-  <line x1="64" y1="10" x2="54" y2="2" stroke="#93c5fd" stroke-width="1" opacity="0.7"/>
-  <line x1="64" y1="10" x2="74" y2="2" stroke="#93c5fd" stroke-width="1" opacity="0.7"/>
-  <line x1="64" y1="10" x2="56" y2="8" stroke="#93c5fd" stroke-width="0.8" opacity="0.5"/>
-  <line x1="64" y1="10" x2="72" y2="8" stroke="#93c5fd" stroke-width="0.8" opacity="0.5"/>
-  <!-- Turret center glow (max brightness) -->
-  <circle cx="64" cy="62" r="6" fill="#1e3a5f"/>
-  <circle cx="64" cy="62" r="4" fill="#93c5fd" opacity="1"/>
-  <circle cx="64" cy="62" r="8" fill="url(#sen-glow)"/>
-  <!-- Side detail bolts -->
-  <circle cx="52" cy="62" r="1.5" fill="#93c5fd" opacity="1"/>
-  <circle cx="76" cy="62" r="1.5" fill="#93c5fd" opacity="1"/>
+  <circle cx="64" cy="62" r="14" fill="#334155" stroke="#93c5fd" stroke-width="1.2"/>
+  <!-- Left wide barrel (recoil y+2) -->
+  <rect x="52" y="26" width="8" height="28" rx="3" fill="url(#fal-barrel)" stroke="#64748b" stroke-width="0.8"/>
+  <!-- Right wide barrel (recoil y+2) -->
+  <rect x="68" y="26" width="8" height="28" rx="3" fill="url(#fal-barrel)" stroke="#64748b" stroke-width="0.8"/>
+  <!-- Barrel band (connecting) -->
+  <rect x="50" y="38" width="28" height="3" rx="1" fill="#475569" stroke="#93c5fd" stroke-width="0.8"/>
+  <!-- Barrel openings -->
+  <ellipse cx="56" cy="26" rx="3.5" ry="1.5" fill="#0f172a"/>
+  <ellipse cx="72" cy="26" rx="3.5" ry="1.5" fill="#0f172a"/>
+  <!-- MUZZLE FLASH on left barrel -->
+  <circle cx="56" cy="22" r="7" fill="url(#fal-muzzle)"/>
+  <circle cx="56" cy="22" r="2.5" fill="#ffffff" opacity="0.9"/>
+  <!-- MUZZLE FLASH on right barrel -->
+  <circle cx="72" cy="22" r="7" fill="url(#fal-muzzle)"/>
+  <circle cx="72" cy="22" r="2.5" fill="#ffffff" opacity="0.9"/>
+  <!-- Energy discharge lines (max spread pattern) -->
+  <line x1="56" y1="22" x2="44" y2="10" stroke="#93c5fd" stroke-width="1" opacity="0.7"/>
+  <line x1="56" y1="22" x2="50" y2="8" stroke="#93c5fd" stroke-width="0.8" opacity="0.5"/>
+  <line x1="72" y1="22" x2="84" y2="10" stroke="#93c5fd" stroke-width="1" opacity="0.7"/>
+  <line x1="72" y1="22" x2="78" y2="8" stroke="#93c5fd" stroke-width="0.8" opacity="0.5"/>
+  <!-- Side ammo drums -->
+  <rect x="44" y="56" width="6" height="8" rx="2" fill="#1e3a5f" stroke="#93c5fd" stroke-width="0.5" opacity="1"/>
+  <rect x="78" y="56" width="6" height="8" rx="2" fill="#1e3a5f" stroke="#93c5fd" stroke-width="0.5" opacity="1"/>
+  <!-- Center glow (max) -->
+  <circle cx="64" cy="62" r="5" fill="#1e3a5f"/>
+  <circle cx="64" cy="62" r="3" fill="#93c5fd" opacity="1"/>
+  <circle cx="64" cy="62" r="8" fill="url(#fal-glow)"/>
 </svg>

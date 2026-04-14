@@ -1,79 +1,90 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128">
   <defs>
-    <linearGradient id="frt-hull" x1="0" y1="0" x2="0" y2="1">
+    <linearGradient id="ec-hull" x1="0" y1="0" x2="0" y2="1">
       <stop offset="0%" stop-color="#334155"/>
       <stop offset="100%" stop-color="#1e293b"/>
     </linearGradient>
-    <linearGradient id="frt-wall" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0%" stop-color="#cbd5e1"/>
-      <stop offset="50%" stop-color="#94a3b8"/>
-      <stop offset="100%" stop-color="#64748b"/>
+    <linearGradient id="ec-reflector-fire" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#f1f5f9"/>
+      <stop offset="40%" stop-color="#e2e8f0"/>
+      <stop offset="100%" stop-color="#cbd5e1"/>
     </linearGradient>
-    <radialGradient id="frt-glow" cx="50%" cy="50%" r="50%">
-      <stop offset="0%" stop-color="#fef08a" stop-opacity="1"/>
-      <stop offset="100%" stop-color="#fef08a" stop-opacity="0"/>
+    <radialGradient id="ec-glow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#fbbf24" stop-opacity="0.6"/>
+      <stop offset="100%" stop-color="#fbbf24" stop-opacity="0"/>
     </radialGradient>
-    <radialGradient id="frt-beam" cx="50%" cy="50%" r="50%">
-      <stop offset="0%" stop-color="#ffffff" stop-opacity="1"/>
-      <stop offset="40%" stop-color="#fef08a" stop-opacity="0.8"/>
+    <radialGradient id="ec-tip-flash" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#ffffff" stop-opacity="0.9"/>
+      <stop offset="30%" stop-color="#fde68a" stop-opacity="0.7"/>
+      <stop offset="70%" stop-color="#fbbf24" stop-opacity="0.3"/>
+      <stop offset="100%" stop-color="#f59e0b" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="ec-core-fire" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#ffffff" stop-opacity="0.9"/>
+      <stop offset="40%" stop-color="#fde68a" stop-opacity="0.7"/>
       <stop offset="100%" stop-color="#fbbf24" stop-opacity="0"/>
     </radialGradient>
   </defs>
-  <!-- Base -->
+  <!-- Left track -->
   <rect x="36" y="44" width="14" height="40" rx="6" fill="#0f172a" stroke="#1e293b" stroke-width="0.8"/>
   <line x1="38" y1="50" x2="48" y2="48" stroke="#1e293b" stroke-width="0.5" opacity="0.6"/>
   <line x1="38" y1="55" x2="48" y2="54" stroke="#1e293b" stroke-width="0.5" opacity="0.6"/>
   <line x1="38" y1="65" x2="48" y2="66" stroke="#1e293b" stroke-width="0.5" opacity="0.6"/>
   <line x1="38" y1="70" x2="48" y2="72" stroke="#1e293b" stroke-width="0.5" opacity="0.6"/>
   <line x1="38" y1="75" x2="48" y2="78" stroke="#1e293b" stroke-width="0.5" opacity="0.6"/>
+  <!-- Right track -->
   <rect x="78" y="44" width="14" height="40" rx="6" fill="#0f172a" stroke="#1e293b" stroke-width="0.8"/>
   <line x1="80" y1="50" x2="90" y2="48" stroke="#1e293b" stroke-width="0.5" opacity="0.6"/>
   <line x1="80" y1="55" x2="90" y2="54" stroke="#1e293b" stroke-width="0.5" opacity="0.6"/>
   <line x1="80" y1="65" x2="90" y2="66" stroke="#1e293b" stroke-width="0.5" opacity="0.6"/>
   <line x1="80" y1="70" x2="90" y2="72" stroke="#1e293b" stroke-width="0.5" opacity="0.6"/>
   <line x1="80" y1="75" x2="90" y2="78" stroke="#1e293b" stroke-width="0.5" opacity="0.6"/>
+  <!-- Hull base plate -->
   <circle cx="64" cy="64" r="22" fill="#1e293b" stroke="#334155" stroke-width="1" opacity="0.8"/>
   <circle cx="64" cy="64" r="18" fill="none" stroke="#475569" stroke-width="0.5" opacity="0.4"/>
-  <rect x="49" y="49" width="30" height="30" rx="4" fill="url(#frt-hull)" stroke="#475569" stroke-width="1"/>
+  <!-- Hull body -->
+  <rect x="49" y="49" width="30" height="30" rx="4" fill="url(#ec-hull)" stroke="#475569" stroke-width="1"/>
+  <!-- Front direction indicator -->
   <polygon points="57,49 64,43 71,49" fill="#475569" stroke="#64748b" stroke-width="0.5"/>
+  <!-- Engine grate -->
   <line x1="52" y1="73" x2="76" y2="73" stroke="#0f172a" stroke-width="1" opacity="0.6"/>
   <line x1="52" y1="76" x2="76" y2="76" stroke="#0f172a" stroke-width="1" opacity="0.6"/>
   <line x1="52" y1="79" x2="76" y2="79" stroke="#0f172a" stroke-width="1" opacity="0.6"/>
-  <circle cx="64" cy="62" r="20" fill="#1e293b" stroke="#475569" stroke-width="1"/>
-  <rect x="44" y="42" width="40" height="30" rx="3" fill="url(#frt-wall)" stroke="#64748b" stroke-width="1"/>
-  <line x1="44" y1="52" x2="84" y2="52" stroke="#475569" stroke-width="0.6"/>
-  <line x1="44" y1="62" x2="84" y2="62" stroke="#475569" stroke-width="0.6"/>
-  <!-- Battlements (energy glow) -->
-  <rect x="44" y="36" width="8" height="8" fill="#94a3b8" stroke="#fef08a" stroke-width="1"/>
-  <rect x="56" y="36" width="8" height="8" fill="#94a3b8" stroke="#fef08a" stroke-width="1"/>
-  <rect x="68" y="36" width="8" height="8" fill="#94a3b8" stroke="#fef08a" stroke-width="1"/>
-  <rect x="80" y="36" width="4" height="8" fill="#94a3b8" stroke="#fef08a" stroke-width="1"/>
-  <rect x="52" y="36" width="4" height="5" fill="#334155"/>
-  <rect x="64" y="36" width="4" height="5" fill="#334155"/>
-  <rect x="76" y="36" width="4" height="5" fill="#334155"/>
-  <!-- Beam emitter (FLASH, recoil y+2) -->
-  <rect x="50" y="26" width="28" height="14" rx="2" fill="#475569" stroke="#fef08a" stroke-width="1.5"/>
-  <rect x="53" y="28" width="22" height="3" rx="1" fill="#fef08a" opacity="1"/>
-  <rect x="53" y="33" width="22" height="3" rx="1" fill="#fef08a" opacity="0.9"/>
-  <!-- BEAM FLASH -->
-  <circle cx="64" cy="22" r="10" fill="url(#frt-beam)"/>
-  <circle cx="64" cy="22" r="3" fill="#ffffff" opacity="0.9"/>
-  <!-- Discharge lines -->
-  <line x1="64" y1="22" x2="52" y2="12" stroke="#fef08a" stroke-width="1" opacity="0.7"/>
-  <line x1="64" y1="22" x2="76" y2="12" stroke="#fef08a" stroke-width="1" opacity="0.7"/>
-  <line x1="64" y1="22" x2="56" y2="16" stroke="#fef08a" stroke-width="0.8" opacity="0.5"/>
-  <line x1="64" y1="22" x2="72" y2="16" stroke="#fef08a" stroke-width="0.8" opacity="0.5"/>
-  <!-- Shield emblem -->
-  <path d="M59,48 L64,45 L69,48 L69,55 Q64,58 59,55 Z" fill="#475569" stroke="#fef08a" stroke-width="1"/>
-  <path d="M61,49 L64,47 L67,49 L67,53 Q64,55 61,53 Z" fill="#fef08a" opacity="0.7"/>
-  <!-- Radar -->
-  <ellipse cx="64" cy="20" rx="8" ry="3" fill="#94a3b8" stroke="#64748b" stroke-width="0.6"/>
-  <line x1="64" y1="20" x2="64" y2="26" stroke="#64748b" stroke-width="1.2"/>
-  <circle cx="64" cy="18" r="1.5" fill="#ffffff" opacity="0.9"/>
-  <!-- Center glow (max) -->
+  <!-- Turret ring -->
+  <circle cx="64" cy="62" r="18" fill="#1e293b" stroke="#475569" stroke-width="1"/>
+  <!-- Turret housing -->
+  <circle cx="64" cy="62" r="14" fill="#334155" stroke="#fbbf24" stroke-width="1.2"/>
+  <!-- Diamond reflector dish (brightest, firing) -->
+  <polygon points="64,22 80,48 64,58 48,48" fill="url(#ec-reflector-fire)" stroke="#fbbf24" stroke-width="1.5"/>
+  <!-- Reflector facets (bright gold) -->
+  <line x1="64" y1="22" x2="56" y2="48" stroke="#fbbf24" stroke-width="1" opacity="0.7"/>
+  <line x1="64" y1="22" x2="72" y2="48" stroke="#fbbf24" stroke-width="1" opacity="0.7"/>
+  <line x1="56" y1="48" x2="64" y2="58" stroke="#fbbf24" stroke-width="0.6" opacity="0.5"/>
+  <line x1="72" y1="48" x2="64" y2="58" stroke="#fbbf24" stroke-width="0.6" opacity="0.5"/>
+  <!-- Bright flash at reflector tip -->
+  <circle cx="64" cy="22" r="8" fill="url(#ec-tip-flash)"/>
+  <circle cx="64" cy="22" r="3" fill="#ffffff" opacity="0.8"/>
+  <!-- Bounce trajectory indicators (fully lit) -->
+  <polyline points="64,22 52,10 58,4" fill="none" stroke="#fbbf24" stroke-width="1.2" opacity="0.7"/>
+  <polyline points="64,22 76,10 70,4" fill="none" stroke="#fbbf24" stroke-width="1.2" opacity="0.7"/>
+  <!-- Bounce arrowheads -->
+  <polygon points="58,4 55,9 61,7" fill="#fbbf24" opacity="0.6"/>
+  <polygon points="70,4 67,9 73,7" fill="#fbbf24" opacity="0.6"/>
+  <!-- Extra bounce energy sparks -->
+  <circle cx="52" cy="10" r="2" fill="#fbbf24" opacity="0.4"/>
+  <circle cx="76" cy="10" r="2" fill="#fbbf24" opacity="0.4"/>
+  <!-- Energy core at diamond center (blazing) -->
+  <circle cx="64" cy="42" r="7" fill="url(#ec-core-fire)"/>
+  <circle cx="64" cy="42" r="3.5" fill="#fde68a" opacity="0.9"/>
+  <circle cx="64" cy="42" r="1.5" fill="#ffffff" opacity="0.7"/>
+  <!-- Side deflector fins (lit) -->
+  <rect x="42" y="50" width="8" height="3" rx="1" fill="#94a3b8" stroke="#fbbf24" stroke-width="0.6" transform="rotate(-15,46,51.5)"/>
+  <rect x="78" y="50" width="8" height="3" rx="1" fill="#94a3b8" stroke="#fbbf24" stroke-width="0.6" transform="rotate(15,82,51.5)"/>
+  <!-- Center glow (intensified) -->
   <circle cx="64" cy="62" r="5" fill="#1c1917"/>
-  <circle cx="64" cy="62" r="3" fill="#fef08a" opacity="1"/>
-  <circle cx="64" cy="62" r="8" fill="url(#frt-glow)"/>
-  <circle cx="48" cy="46" r="1.5" fill="#fef08a" opacity="1"/>
-  <circle cx="80" cy="46" r="1.5" fill="#fef08a" opacity="1"/>
+  <circle cx="64" cy="62" r="3.5" fill="#fbbf24" opacity="0.7"/>
+  <circle cx="64" cy="62" r="10" fill="url(#ec-glow)"/>
+  <!-- LED indicators (max brightness) -->
+  <circle cx="50" cy="62" r="2" fill="#fbbf24" opacity="1"/>
+  <circle cx="78" cy="62" r="2" fill="#fbbf24" opacity="1"/>
 </svg>

@@ -300,8 +300,8 @@ func drawAuraMarkers(screen *ebiten.Image, cx, cy, r float32, n int, animTime fl
 
 // DrawAuraPulse 通用光环脉冲圈（preview 用）。
 func DrawAuraPulse(screen *ebiten.Image, cx, cy float32, radius float64, clr color.RGBA, animTime float64) {
-	a := auraBreathAlpha(animTime, 1.5, 15, 40)
-	draw.DashedCircle(screen, cx, cy, float32(radius), 0.8, 6, 4, color.RGBA{clr.R, clr.G, clr.B, a})
+	a := auraBreathAlpha(animTime, 1.5, 25, 60)
+	draw.DashedCircle(screen, cx, cy, float32(radius), 1.4, 18, 10, color.RGBA{clr.R, clr.G, clr.B, a})
 }
 
 // ── Buff 光环（4 种，半径来自配置 param=150） ────────────
@@ -309,69 +309,69 @@ func DrawAuraPulse(screen *ebiten.Image, cx, cy float32, radius float64, clr col
 // DrawDamageAura 增伤光环 — 橙色单圈 + 3 菱形标记。
 func DrawDamageAura(screen *ebiten.Image, cx, cy float32, radius float64, animTime float64) {
 	r32 := float32(radius)
-	a := auraBreathAlpha(animTime, 1.5, 12, 35)
+	a := auraBreathAlpha(animTime, 1.5, 25, 60)
 	clr := color.RGBA{R: 255, G: 160, B: 60, A: a}
-	draw.DashedCircle(screen, cx, cy, r32, 0.8, 6, 4, clr)
+	draw.DashedCircle(screen, cx, cy, r32, 1.4, 18, 10, clr)
 	// 3 菱形标记
 	drawAuraMarkers(screen, cx, cy, r32, 3, animTime, 0.3, func(s *ebiten.Image, mx, my float32, ma uint8) {
-		draw.Diamond(s, mx, my, 3, 0.8, color.RGBA{R: 255, G: 180, B: 80, A: ma})
+		draw.Diamond(s, mx, my, 3, 1.2, color.RGBA{R: 255, G: 180, B: 80, A: ma})
 	})
 }
 
 // DrawSpeedAuraRing 攻速光环 — 绿色单圈 + 3 短箭头。
 func DrawSpeedAuraRing(screen *ebiten.Image, cx, cy float32, radius float64, animTime float64) {
 	r32 := float32(radius)
-	a := auraBreathAlpha(animTime, 1.8, 12, 35)
+	a := auraBreathAlpha(animTime, 1.8, 25, 60)
 	clr := color.RGBA{R: 100, G: 220, B: 100, A: a}
-	draw.DashedCircle(screen, cx, cy, r32, 0.8, 4, 3, clr)
+	draw.DashedCircle(screen, cx, cy, r32, 1.4, 16, 8, clr)
 	// 3 径向短箭头（从圈内往圈外的短线，表示"加速"）
 	baseRot := animTime * 0.4
 	for i := 0; i < 3; i++ {
 		angle := baseRot + float64(i)*2*math.Pi/3
-		ma := auraBreathAlpha(animTime, 1.8, 35, 80)
+		ma := auraBreathAlpha(animTime, 1.8, 50, 100)
 		x1 := cx + r32*0.88*float32(math.Cos(angle))
 		y1 := cy + r32*0.88*float32(math.Sin(angle))
 		x2 := cx + r32*1.0*float32(math.Cos(angle))
 		y2 := cy + r32*1.0*float32(math.Sin(angle))
-		draw.Line(screen, x1, y1, x2, y2, 1.0, color.RGBA{R: 100, G: 220, B: 100, A: ma}, true)
+		draw.Line(screen, x1, y1, x2, y2, 1.2, color.RGBA{R: 100, G: 220, B: 100, A: ma}, true)
 	}
 }
 
 // DrawRangeAura 射程光环 — 蓝色单圈 + 4 十字标记。
 func DrawRangeAura(screen *ebiten.Image, cx, cy float32, radius float64, animTime float64) {
 	r32 := float32(radius)
-	a := auraBreathAlpha(animTime, 1.3, 12, 35)
+	a := auraBreathAlpha(animTime, 1.3, 25, 60)
 	clr := color.RGBA{R: 100, G: 160, B: 255, A: a}
-	draw.DashedCircle(screen, cx, cy, r32, 0.8, 6, 4, clr)
+	draw.DashedCircle(screen, cx, cy, r32, 1.4, 18, 10, clr)
 	// 4 十字标记（NSEW）
 	drawAuraMarkers(screen, cx, cy, r32, 4, animTime, 0.0, func(s *ebiten.Image, mx, my float32, ma uint8) {
 		c := color.RGBA{R: 100, G: 160, B: 255, A: ma}
-		draw.Line(s, mx-3, my, mx+3, my, 0.8, c, false)
-		draw.Line(s, mx, my-3, mx, my+3, 0.8, c, false)
+		draw.Line(s, mx-3, my, mx+3, my, 1.0, c, false)
+		draw.Line(s, mx, my-3, mx, my+3, 1.0, c, false)
 	})
 }
 
 // DrawCritAura 暴击光环 — 金色单圈 + 3 菱形旋转（比 Damage 稍快辨别）。
 func DrawCritAura(screen *ebiten.Image, cx, cy float32, radius float64, animTime float64) {
 	r32 := float32(radius)
-	a := auraBreathAlpha(animTime, 2.0, 12, 35)
+	a := auraBreathAlpha(animTime, 2.0, 25, 60)
 	clr := color.RGBA{R: 255, G: 220, B: 60, A: a}
-	draw.DashedCircle(screen, cx, cy, r32, 0.8, 3, 5, clr)
+	draw.DashedCircle(screen, cx, cy, r32, 1.4, 14, 12, clr)
 	// 3 旋转小菱形（旋转自身角度，与 DamageAura 固定菱形区分）
 	baseRot := animTime * 0.5
 	for i := 0; i < 3; i++ {
 		angle := baseRot + float64(i)*2*math.Pi/3
 		mx := cx + r32*float32(math.Cos(angle))
 		my := cy + r32*float32(math.Sin(angle))
-		ma := auraBreathAlpha(animTime, 2.0, 40, 90)
-		draw.DiamondRotated(screen, mx, my, 3, 0.8, animTime*2, color.RGBA{R: 255, G: 240, B: 100, A: ma})
+		ma := auraBreathAlpha(animTime, 2.0, 55, 110)
+		draw.DiamondRotated(screen, mx, my, 3, 1.2, animTime*2, color.RGBA{R: 255, G: 240, B: 100, A: ma})
 	}
 }
 
-// DrawSoloAura 独行加成 — 紫色极淡虚线圈（无标记，最内敛）。
+// DrawSoloAura 独行加成 — 紫色虚线圈（无标记，较内敛）。
 func DrawSoloAura(screen *ebiten.Image, cx, cy float32, radius float64, animTime float64) {
-	a := auraBreathAlpha(animTime, 1.2, 8, 25)
-	draw.DashedCircle(screen, cx, cy, float32(radius), 0.8, 8, 6, color.RGBA{R: 200, G: 120, B: 255, A: a})
+	a := auraBreathAlpha(animTime, 1.2, 20, 50)
+	draw.DashedCircle(screen, cx, cy, float32(radius), 1.4, 20, 14, color.RGBA{R: 200, G: 120, B: 255, A: a})
 }
 
 // ── Zone 效果（4 种，半径=塔射程）─────────────────────

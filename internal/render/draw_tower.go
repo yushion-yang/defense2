@@ -57,14 +57,10 @@ func NewTowerRenderer(assetFS AssetReader) *TowerRenderer {
 
 const towerSpriteSize = 64 // 塔精灵逻辑显示尺寸（像素），与 theme.TowerBaseSize 匹配
 
-// vfxRadius 将游戏 Range 钳制到视觉安全范围，防止极端 Strength 下
-// 射程膨胀导致 VFX 圈占满整个屏幕。游戏逻辑（索敌/碰撞）仍用原始 Range。
-const maxVFXRadius = 400
-
+// vfxRadius 将游戏 Range 转为 VFX 绘制半径。
+// DashedCircle 已内置自适应（大圆自动放大 dash 间距保证段数不爆炸），
+// 因此此处不再钳制上限，VFX 圈与实际射程一致。
 func vfxRadius(r float64) float32 {
-	if r > maxVFXRadius {
-		return maxVFXRadius
-	}
 	return float32(r)
 }
 

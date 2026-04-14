@@ -62,6 +62,8 @@ func DashedLine(screen *ebiten.Image, x1, y1, x2, y2, width, dashLen, gapLen flo
 // DashedCircle 绘制以 (cx,cy) 为圆心、半径 r 的虚线圆。
 // dashLen 和 gapLen 是沿圆周的弧长（非角度），单位为逻辑像素。
 // 每段 dash 用直线近似弧线（段数足够时视觉上无差异）。
+// 自适应：当圆周过大导致段数超过 maxDashes 时，自动等比放大 dashLen/gapLen，
+// 保证始终画完整圈且段数不爆炸。
 func DashedCircle(screen *ebiten.Image, cx, cy, r, width, dashLen, gapLen float32, clr color.Color) {
 	cx, cy, r = S32(cx), S32(cy), S32(r)
 	width, dashLen, gapLen = S32(width), S32(dashLen), S32(gapLen)
@@ -74,12 +76,23 @@ func DashedCircle(screen *ebiten.Image, cx, cy, r, width, dashLen, gapLen float3
 		return
 	}
 
+	// 自适应：预估 dash 段数，超过上限时等比放大 dashLen/gapLen
+	const maxDashes = 64
+	period := float64(dashLen + gapLen)
+	if period > 0 {
+		estDashes := circumference / period
+		if estDashes > maxDashes {
+			scale := float32(estDashes / maxDashes)
+			dashLen *= scale
+			gapLen *= scale
+		}
+	}
+
 	batch := lineBatch.active
 	aa := AA()
 	var dist float64
 	drawing := true
 	draws := 0
-	const maxDashes = 64 // 硬上限：防止极端 Range 导致线段爆炸（性能防护）
 
 	for dist < circumference && draws < maxDashes {
 		if drawing {

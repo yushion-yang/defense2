@@ -251,7 +251,7 @@ func (s *LoadingScene) Draw(screen *ebiten.Image) {
 	}
 
 	// 标题
-	fm.DrawCenteredBoldText(screen, "Mini Tower Defense", sw/2, sh/2-50, 28, loadingTextMain)
+	fm.DrawCenteredBoldText(screen, i18n.T("scene.title.game_name"), sw/2, sh/2-50, 28, loadingTextMain)
 	// 副标题
 	fm.DrawCenteredText(screen, i18n.T("scene.loading.subtitle"), sw/2, sh/2-18, 14, loadingTextSub)
 

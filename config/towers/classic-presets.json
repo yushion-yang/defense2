@@ -12,10 +12,10 @@
   "towers": [
     {
       "key": "cl_sentinel",
-      "name": "哨兵",
+      "name": "猎隼",
       "category": "dps",
       "abilities": [
-        "radial",
+        "scatter",
         "crit",
         "momentum"
       ],
@@ -26,7 +26,7 @@
       },
       "spriteKey": "cl_sentinel",
       "buildCost": 50,
-      "description": "全方位爆发，暴击+动量叠加",
+      "description": "扇形扫射+暴击+动量叠加",
       "abilityMode": "preset",
       "strength": {
         "cost": 50,
@@ -37,7 +37,7 @@
     },
     {
       "key": "cl_railgun",
-      "name": "磁轨炮",
+      "name": "穿甲者",
       "category": "dps",
       "abilities": [
         "wideBeam",
@@ -62,7 +62,7 @@
     },
     {
       "key": "cl_gatling",
-      "name": "加特林",
+      "name": "弹雨",
       "category": "dps",
       "abilities": [
         "barrage",
@@ -76,7 +76,7 @@
       },
       "spriteKey": "cl_gatling",
       "buildCost": 50,
-      "description": "连射火力，固定加伤+永久强化",
+      "description": "连射弹幕+固定加伤+永久强化",
       "abilityMode": "preset",
       "strength": {
         "cost": 50,
@@ -87,7 +87,7 @@
     },
     {
       "key": "cl_shotgun",
-      "name": "霰弹枪",
+      "name": "铁蜂",
       "category": "aoe",
       "abilities": [
         "scatter",
@@ -112,7 +112,7 @@
     },
     {
       "key": "cl_cyclone",
-      "name": "旋风",
+      "name": "涡轮",
       "category": "aoe",
       "abilities": [
         "spinAoe",
@@ -126,7 +126,7 @@
       },
       "spriteKey": "cl_cyclone",
       "buildCost": 50,
-      "description": "旋转范围攻击+灼烧+削弱",
+      "description": "涡旋范围攻击+灼烧+削弱",
       "abilityMode": "preset",
       "strength": {
         "cost": 50,
@@ -137,7 +137,7 @@
     },
     {
       "key": "cl_nova",
-      "name": "新星",
+      "name": "脉冲",
       "category": "aoe",
       "abilities": [
         "radial",
@@ -151,7 +151,7 @@
       },
       "spriteKey": "cl_nova",
       "buildCost": 50,
-      "description": "全方位爆发+眩晕+削弱增伤",
+      "description": "全方位脉冲+眩晕+削弱增伤",
       "abilityMode": "preset",
       "strength": {
         "cost": 50,
@@ -162,7 +162,7 @@
     },
     {
       "key": "cl_mortar",
-      "name": "迫击炮",
+      "name": "轰鸣",
       "category": "aoe",
       "abilities": [
         "splash",
@@ -187,10 +187,10 @@
     },
     {
       "key": "cl_prism",
-      "name": "棱镜",
+      "name": "三叉戟",
       "category": "support",
       "abilities": [
-        "wideBeam",
+        "multiTarget",
         "slowDuration",
         "damageUpAura"
       ],
@@ -201,7 +201,7 @@
       },
       "spriteKey": "cl_prism",
       "buildCost": 50,
-      "description": "光束贯穿+减速+增伤光环",
+      "description": "多目标攻击+减速+增伤光环",
       "abilityMode": "preset",
       "strength": {
         "cost": 50,
@@ -212,10 +212,10 @@
     },
     {
       "key": "cl_fortress",
-      "name": "堡垒",
+      "name": "回响",
       "category": "support",
       "abilities": [
-        "wideBeam",
+        "bounce",
         "stunDuration",
         "rangeAura"
       ],
@@ -226,7 +226,7 @@
       },
       "spriteKey": "cl_fortress",
       "buildCost": 50,
-      "description": "光束贯穿+眩晕+增距光环",
+      "description": "弹射连锁+眩晕+增距光环",
       "abilityMode": "preset",
       "strength": {
         "cost": 50,
@@ -237,7 +237,7 @@
     },
     {
       "key": "cl_ricochet",
-      "name": "弹跳",
+      "name": "弹弓",
       "category": "support",
       "abilities": [
         "bounce",
@@ -262,7 +262,7 @@
     },
     {
       "key": "cl_hydra",
-      "name": "九头蛇",
+      "name": "蜘蛛",
       "category": "support",
       "abilities": [
         "multiTarget",

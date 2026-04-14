@@ -870,6 +870,7 @@ func (s *StageScene) openAbilityChoicePanel() {
 	s.choicePanel.Show(i18n.TF("game.ability.choose_cat", catName), opts, func(idx int, opt hud.ChoiceOption) {
 		abilType, _ := opt.Data.(string)
 		if abilType != "" && t.AddAbility(abilType) {
+			tower.ApplyEnhanceIfPresent(t) // enhance 属性加成统一入口
 			tower.ClearPendingChoice(t, nextCat)
 			hud.ShowToast(i18n.TF("game.ability.gained", opt.Label))
 			s.bus.Emit(event.EvtTowerUpgraded, event.TowerUpgradedPayload{TowerKey: t.Key})
@@ -948,6 +949,7 @@ func (s *StageScene) openTestCategoryAbilities(t *tower.Tower, cat int) {
 	s.choicePanel.Show(i18n.TF("game.ability.test_cat", catName), opts, func(idx int, opt hud.ChoiceOption) {
 		abilType, _ := opt.Data.(string)
 		if abilType != "" && t.AddAbility(abilType) {
+			tower.ApplyEnhanceIfPresent(t) // enhance 属性加成统一入口
 			tower.ClearPendingChoice(t, cat)
 			hud.ShowToast(i18n.TF("game.ability.gained", opt.Label))
 			s.bus.Emit(event.EvtTowerUpgraded, event.TowerUpgradedPayload{TowerKey: t.Key})

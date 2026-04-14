@@ -1,5 +1,6 @@
 // progress.go — 玩家进度管理。
 // 管理高分记录、关卡解锁、通关成就等持久化数据。
+// 所有解锁/星级/高分按 modeID 隔离，各模式独立进度。
 package persistence
 
 import (
@@ -40,10 +41,7 @@ var unlockRules = []unlockRule{
 	{"map_06", []string{"map:map_07", "map:map_08", "warden:skystrike", "warden:envoy"}},
 }
 
-// unlockRequirementText 返回锁定项的解锁条件文本。
-// 查找 unlockRules 中哪条规则包含该项，返回需要通关的地图名。
-// unlockRequirementMap maps locked items to their required map IDs.
-// The display text is resolved at runtime via i18n.
+// unlockRequirementMap 锁定项 → 需要通关的地图 ID。
 var unlockRequirementMap = map[string]string{
 	"map:map_02":       "map_01",
 	"tower:shotgun":    "map_01",
@@ -62,7 +60,6 @@ var unlockRequirementMap = map[string]string{
 }
 
 // UnlockRequirement 返回指定项的解锁条件描述。
-// prefix 为 "map"/"tower"/"warden"，key 为具体 ID。
 func UnlockRequirement(prefix, key string) string {
 	full := prefix + ":" + key
 	if reqMap, ok := unlockRequirementMap[full]; ok {
@@ -88,31 +85,41 @@ type BestiaryData struct {
 }
 
 // Progress 玩家进度数据（序列化到存储中）。
+// 解锁/星级/高分按 modeID 隔离，全局统计(击杀/胜场/图鉴)跨模式共享。
 type Progress struct {
-	HighScores   map[string]int  `json:"highScores"`   // 各关卡最高击杀数（mapID → kills）
-	UnlockedMaps []string        `json:"unlockedMaps"` // 已解锁关卡 ID 列表（向后兼容）
-	TotalKills   int             `json:"totalKills"`   // 累计击杀总数
-	TotalWins    int             `json:"totalWins"`    // 累计胜利次数
-	TotalGames   int             `json:"totalGames"`   // 累计游戏场次
-	TutorialDone bool            `json:"tutorialDone"` // 教程是否已完成
-	Unlocks      UnlockData      `json:"unlocks"`      // 解锁进度
-	MascotShown  map[string]bool `json:"mascotShown"`  // 吉祥物 Once 对话已展示 ID 集合
+	// ── 按模式隔离的进度 ──
+	ModeUnlocks map[string]*UnlockData `json:"modeUnlocks"` // modeID -> 独立解锁
+	ModeRecords map[string]*MapRecord  `json:"modeRecords"` // "modeID_diffID_mapID" -> 成绩
+	ModeScores  map[string]int         `json:"modeScores"`  // "modeID_mapID" -> 最高击杀
 
-	// ── V1.0 新增 ──
-	MapRecords    map[string]*MapRecord `json:"mapRecords"`    // "diffID_mapID" -> 成绩
-	Bestiary      BestiaryData          `json:"bestiary"`      // 图鉴统计
-	FirstRunDone  bool                  `json:"firstRunDone"`  // 首次语言选择完成
-	TotalPlayTime float64               `json:"totalPlayTime"` // 总游玩时长(秒)
+	// ── 全局统计（跨模式共享）──
+	TotalKills    int             `json:"totalKills"`
+	TotalWins     int             `json:"totalWins"`
+	TotalGames    int             `json:"totalGames"`
+	TotalPlayTime float64         `json:"totalPlayTime"`
+	TutorialDone  bool            `json:"tutorialDone"`
+	MascotShown   map[string]bool `json:"mascotShown"`
+	Bestiary      BestiaryData    `json:"bestiary"`
+	FirstRunDone  bool            `json:"firstRunDone"`
+
+	// ── 旧字段（迁移兼容，不再主动写入）──
+	HighScores   map[string]int        `json:"highScores"`
+	UnlockedMaps []string              `json:"unlockedMaps"`
+	Unlocks      UnlockData            `json:"unlocks"`
+	MapRecords   map[string]*MapRecord `json:"mapRecords"`
 }
 
-// NewProgress 创建初始进度（默认解锁 map_01）。
+// NewProgress 创建初始进度。
 func NewProgress() *Progress {
 	return &Progress{
+		ModeUnlocks:  make(map[string]*UnlockData),
+		ModeRecords:  make(map[string]*MapRecord),
+		ModeScores:   make(map[string]int),
 		HighScores:   make(map[string]int),
 		UnlockedMaps: []string{"map_01"},
 		Unlocks:      NewUnlockData(),
-		MascotShown:  make(map[string]bool),
 		MapRecords:   make(map[string]*MapRecord),
+		MascotShown:  make(map[string]bool),
 		Bestiary: BestiaryData{
 			EnemyKills:   make(map[string]int),
 			AbilityPicks: make(map[string]int),
@@ -125,11 +132,11 @@ const progressKey = "progress"
 
 // ProgressManager 进度管理器，封装存储读写。
 type ProgressManager struct {
-	storage  Storage   // 底层存储
-	progress *Progress // 内存中的进度缓存
+	storage  Storage
+	progress *Progress
 }
 
-// DefaultProgressManager 返回使用默认存储的进度管理器（简化初始化模式）。
+// DefaultProgressManager 返回使用默认存储的进度管理器。
 func DefaultProgressManager() *ProgressManager {
 	store, err := DefaultStorage()
 	if err != nil {
@@ -144,33 +151,56 @@ func NewProgressManager(s Storage) *ProgressManager {
 		storage:  s,
 		progress: NewProgress(),
 	}
-	// 尝试加载已有进度
 	if s.Has(progressKey) {
 		if err := s.Get(progressKey, pm.progress); err != nil {
 			log.Printf("[persistence] load progress failed: %v", err)
 		}
 	}
-	// 迁移旧数据：如果 Unlocks.Maps 为空但 UnlockedMaps 有值，则同步
 	pm.migrateUnlocks()
 	return pm
 }
 
-// migrateUnlocks 将旧版 UnlockedMaps 列表迁移到新版 Unlocks 结构。
+// modeUnlockData 返回指定模式的解锁数据，不存在则创建默认值。
+func (pm *ProgressManager) modeUnlockData(modeID string) *UnlockData {
+	if pm.progress.ModeUnlocks == nil {
+		pm.progress.ModeUnlocks = make(map[string]*UnlockData)
+	}
+	ud, ok := pm.progress.ModeUnlocks[modeID]
+	if !ok {
+		d := NewUnlockData()
+		ud = &d
+		pm.progress.ModeUnlocks[modeID] = ud
+	}
+	// 保证子 map 非 nil
+	if ud.Maps == nil {
+		ud.Maps = map[string]bool{"map_01": true}
+	}
+	if ud.Towers == nil {
+		ud.Towers = map[string]bool{"basic": true}
+	}
+	if ud.Wardens == nil {
+		ud.Wardens = map[string]bool{"prince": true}
+	}
+	return ud
+}
+
+// migrateUnlocks 将旧版数据迁移到按模式隔离的新结构。
+// 旧 Unlocks/HighScores/MapRecords 全部归入 "casual" 模式。
 func (pm *ProgressManager) migrateUnlocks() {
 	p := pm.progress
-	// 确保 Unlocks maps 已初始化
-	if p.Unlocks.Maps == nil {
-		p.Unlocks.Maps = map[string]bool{"map_01": true}
+
+	// 确保新字段非 nil
+	if p.ModeUnlocks == nil {
+		p.ModeUnlocks = make(map[string]*UnlockData)
 	}
-	if p.Unlocks.Towers == nil {
-		p.Unlocks.Towers = map[string]bool{"basic": true}
+	if p.ModeRecords == nil {
+		p.ModeRecords = make(map[string]*MapRecord)
 	}
-	if p.Unlocks.Wardens == nil {
-		p.Unlocks.Wardens = map[string]bool{"prince": true}
+	if p.ModeScores == nil {
+		p.ModeScores = make(map[string]int)
 	}
-	// 确保 V1.0 新增 map 字段非 nil（旧存档兼容）
-	if p.MapRecords == nil {
-		p.MapRecords = make(map[string]*MapRecord)
+	if p.MascotShown == nil {
+		p.MascotShown = make(map[string]bool)
 	}
 	if p.Bestiary.EnemyKills == nil {
 		p.Bestiary.EnemyKills = make(map[string]int)
@@ -181,68 +211,83 @@ func (pm *ProgressManager) migrateUnlocks() {
 	if p.Bestiary.WardenGames == nil {
 		p.Bestiary.WardenGames = make(map[string]int)
 	}
-	// 同步旧版 UnlockedMaps 到新版
-	for _, mapID := range p.UnlockedMaps {
-		p.Unlocks.Maps[mapID] = true
+
+	// ── 迁移旧 Unlocks → ModeUnlocks["casual"] ──
+	campUnlock := pm.modeUnlockData("casual")
+
+	// 旧 Unlocks.Maps
+	if p.Unlocks.Maps != nil {
+		for k, v := range p.Unlocks.Maps {
+			if v {
+				campUnlock.Maps[k] = true
+			}
+		}
 	}
-	// 确保默认解锁项始终存在
-	p.Unlocks.Maps["map_01"] = true
-	p.Unlocks.Towers["basic"] = true
-	p.Unlocks.Wardens["prince"] = true
+	// 旧 UnlockedMaps 列表
+	for _, mapID := range p.UnlockedMaps {
+		campUnlock.Maps[mapID] = true
+	}
+	// 旧 Unlocks.Towers / Wardens
+	if p.Unlocks.Towers != nil {
+		for k, v := range p.Unlocks.Towers {
+			if v {
+				campUnlock.Towers[k] = true
+			}
+		}
+	}
+	if p.Unlocks.Wardens != nil {
+		for k, v := range p.Unlocks.Wardens {
+			if v {
+				campUnlock.Wardens[k] = true
+			}
+		}
+	}
+
+	// ── 迁移旧 HighScores → ModeScores ──
+	if p.HighScores != nil {
+		for key, score := range p.HighScores {
+			// 旧 key 格式: "modeID_mapID" 或纯 "mapID"
+			if _, exists := p.ModeScores[key]; !exists {
+				if strings.Contains(key, "_") {
+					// 已有 modeID 前缀，直接迁移
+					p.ModeScores[key] = score
+				} else {
+					// 纯 mapID，归入 campaign
+					p.ModeScores["campaign_"+key] = score
+				}
+			}
+		}
+	}
+
+	// ── 迁移旧 MapRecords → ModeRecords ──
+	if p.MapRecords != nil {
+		for key, rec := range p.MapRecords {
+			// 旧 key 格式: "diffID_mapID"，归入 campaign
+			newKey := "campaign_" + key
+			if _, exists := p.ModeRecords[newKey]; !exists {
+				p.ModeRecords[newKey] = rec
+			}
+		}
+	}
+
+	// 确保默认项
+	campUnlock.Maps["map_01"] = true
+	campUnlock.Towers["basic"] = true
+	campUnlock.Wardens["prince"] = true
 
 	// 基于已通关地图重新应用解锁规则（恢复可能缺失的 tower/warden 解锁）
-	for _, rule := range unlockRules {
-		if pm.isMapCleared(rule.Requires) {
-			for _, item := range rule.Unlocks {
-				pm.applyUnlock(item)
+	for _, mode := range []string{"casual", "classic"} {
+		for _, rule := range unlockRules {
+			if pm.isMapCleared(mode, rule.Requires) {
+				for _, item := range rule.Unlocks {
+					pm.applyUnlockToMode(mode, item)
+				}
 			}
 		}
 	}
 }
 
-// isMapCleared 检查某地图是否曾通关（在 HighScores 中有任意 mode 的记录）。
-func (pm *ProgressManager) isMapCleared(mapID string) bool {
-	for key := range pm.progress.HighScores {
-		// key 格式: "modeID_mapID"，也可能是旧版纯 "mapID"
-		if key == mapID || strings.HasSuffix(key, "_"+mapID) {
-			return true
-		}
-	}
-	return false
-}
-
-// applyUnlock 应用单个解锁项（如 "map:map_02", "tower:shotgun"）。
-func (pm *ProgressManager) applyUnlock(item string) {
-	parts := strings.SplitN(item, ":", 2)
-	if len(parts) != 2 {
-		return
-	}
-	prefix, key := parts[0], parts[1]
-	switch prefix {
-	case "map":
-		pm.progress.Unlocks.Maps[key] = true
-		// 同步到旧版列表
-		found := false
-		for _, id := range pm.progress.UnlockedMaps {
-			if id == key {
-				found = true
-				break
-			}
-		}
-		if !found {
-			pm.progress.UnlockedMaps = append(pm.progress.UnlockedMaps, key)
-		}
-	case "tower":
-		pm.progress.Unlocks.Towers[key] = true
-	case "warden":
-		pm.progress.Unlocks.Wardens[key] = true
-	}
-}
-
-// Progress 返回当前进度快照。
-func (pm *ProgressManager) Progress() *Progress {
-	return pm.progress
-}
+// ── 公开 API ──
 
 // GameResultParams 游戏结算参数。
 type GameResultParams struct {
@@ -259,9 +304,7 @@ type GameResultParams struct {
 	AbilityPicks []string       // abilities picked this game
 }
 
-// RecordGameResult 记录一场游戏结果。
-// modeID + mapID 组合键存储高分，兼容旧版纯 mapID 键。
-// 返回本次解锁的新内容列表（用于 UI 提示）。
+// RecordGameResult 记录一场游戏结果（简化接口）。
 func (pm *ProgressManager) RecordGameResult(modeID, mapID string, kills int, won bool) []string {
 	return pm.RecordGameResultFull(GameResultParams{
 		ModeID: modeID,
@@ -271,22 +314,21 @@ func (pm *ProgressManager) RecordGameResult(modeID, mapID string, kills int, won
 	})
 }
 
-// RecordGameResultFull 记录完整游戏结果（含星级、分数、图鉴数据）。
+// RecordGameResultFull 记录完整游戏结果。
+// 解锁/高分/星级全部写入对应 modeID 的隔离空间。
 func (pm *ProgressManager) RecordGameResultFull(params GameResultParams) []string {
 	p := pm.progress
 	p.TotalGames++
 	p.TotalKills += params.Kills
 	p.TotalPlayTime += params.ElapsedSecs
 
-	// 图鉴: 敌人击杀
+	// 图鉴统计（全局共享）
 	for archID, count := range params.EnemyKills {
 		p.Bestiary.EnemyKills[archID] += count
 	}
-	// 图鉴: 能力选择
 	for _, abilityType := range params.AbilityPicks {
 		p.Bestiary.AbilityPicks[abilityType]++
 	}
-	// 图鉴: 战灵使用
 	if params.WardenKey != "" && params.WardenKey != "none" {
 		p.Bestiary.WardenGames[params.WardenKey]++
 	}
@@ -294,18 +336,25 @@ func (pm *ProgressManager) RecordGameResultFull(params GameResultParams) []strin
 	var newUnlocks []string
 	if params.Won {
 		p.TotalWins++
-		// 旧版高分（向后兼容）
-		scoreKey := params.ModeID + "_" + params.MapID
+		mode := params.ModeID
+
+		// 高分（按模式隔离）
+		scoreKey := mode + "_" + params.MapID
+		if params.Kills > p.ModeScores[scoreKey] {
+			p.ModeScores[scoreKey] = params.Kills
+		}
+		// 旧字段同步（向后兼容）
 		if params.Kills > p.HighScores[scoreKey] {
 			p.HighScores[scoreKey] = params.Kills
 		}
-		// 新版 MapRecord
+
+		// 星级记录（按模式隔离）
 		if params.DifficultyID != "" {
-			recordKey := params.DifficultyID + "_" + params.MapID
-			rec := p.MapRecords[recordKey]
+			recordKey := mode + "_" + params.DifficultyID + "_" + params.MapID
+			rec := p.ModeRecords[recordKey]
 			if rec == nil {
 				rec = &MapRecord{}
-				p.MapRecords[recordKey] = rec
+				p.ModeRecords[recordKey] = rec
 			}
 			rec.Cleared = true
 			if params.Stars > rec.Stars {
@@ -318,46 +367,189 @@ func (pm *ProgressManager) RecordGameResultFull(params GameResultParams) []strin
 				rec.BestKills = params.Kills
 			}
 		}
-		// 解锁
-		pm.unlockNext(params.MapID)
-		newUnlocks = pm.applyUnlockRules(params.MapID)
+
+		// 解锁（按模式隔离）
+		pm.unlockNext(mode, params.MapID)
+		newUnlocks = pm.applyUnlockRules(mode, params.MapID)
 	}
 	pm.save()
 	return newUnlocks
 }
 
+// IsMapUnlocked 检查关卡在指定模式下是否已解锁。
+func (pm *ProgressManager) IsMapUnlocked(modeID, mapID string) bool {
+	ud := pm.modeUnlockData(modeID)
+	return ud.Maps[mapID]
+}
+
+// IsTowerUnlocked 检查塔类型是否已解锁（任意模式解锁即可用）。
+func (pm *ProgressManager) IsTowerUnlocked(towerKey string) bool {
+	for _, ud := range pm.progress.ModeUnlocks {
+		if ud.Towers[towerKey] {
+			return true
+		}
+	}
+	return false
+}
+
+// IsWardenUnlocked 检查战灵类型是否已解锁（任意模式解锁即可用）。
+func (pm *ProgressManager) IsWardenUnlocked(wardenKey string) bool {
+	if wardenKey == "none" {
+		return true
+	}
+	for _, ud := range pm.progress.ModeUnlocks {
+		if ud.Wardens[wardenKey] {
+			return true
+		}
+	}
+	return false
+}
+
+// LoadBestScore 加载最高分（按模式隔离）。
+func (pm *ProgressManager) LoadBestScore(modeID, mapID string) int {
+	key := modeID + "_" + mapID
+	if score, ok := pm.progress.ModeScores[key]; ok {
+		return score
+	}
+	// 旧键兼容
+	if score, ok := pm.progress.HighScores[key]; ok {
+		return score
+	}
+	if score, ok := pm.progress.HighScores[mapID]; ok {
+		return score
+	}
+	return 0
+}
+
+// GetMapRecord 获取指定模式+难度+地图的成绩记录。
+func (pm *ProgressManager) GetMapRecord(modeID, diffID, mapID string) *MapRecord {
+	return pm.progress.ModeRecords[modeID+"_"+diffID+"_"+mapID]
+}
+
+// SetTutorialDone 标记教程完成。
+func (pm *ProgressManager) SetTutorialDone() {
+	pm.progress.TutorialDone = true
+	pm.save()
+}
+
+// MascotShownIDs 返回吉祥物已展示对话 ID 集合。
+func (pm *ProgressManager) MascotShownIDs() map[string]bool {
+	if pm.progress.MascotShown == nil {
+		pm.progress.MascotShown = make(map[string]bool)
+	}
+	return pm.progress.MascotShown
+}
+
+// SaveMascotShown 持久化吉祥物已展示对话 ID。
+func (pm *ProgressManager) SaveMascotShown(ids map[string]bool) {
+	pm.progress.MascotShown = ids
+	pm.save()
+}
+
+// Progress 返回当前进度快照。
+func (pm *ProgressManager) Progress() *Progress {
+	return pm.progress
+}
+
+// GetBestiary 返回图鉴统计数据。
+func (pm *ProgressManager) GetBestiary() BestiaryData {
+	return pm.progress.Bestiary
+}
+
+// SetFirstRunDone 标记首次运行已完成。
+func (pm *ProgressManager) SetFirstRunDone() {
+	pm.progress.FirstRunDone = true
+	pm.save()
+}
+
+// IsFirstRunDone 检查首次运行是否已完成。
+func (pm *ProgressManager) IsFirstRunDone() bool {
+	return pm.progress.FirstRunDone
+}
+
+// ── 内部方法 ──
+
+// unlockNext 通关后解锁下一关（按模式隔离）。
+func (pm *ProgressManager) unlockNext(modeID, mapID string) {
+	if len(mapID) < 5 {
+		return
+	}
+	prefix := mapID[:len(mapID)-2]
+	numStr := mapID[len(mapID)-2:]
+	num := 0
+	for _, c := range numStr {
+		num = num*10 + int(c-'0')
+	}
+	next := prefix + fmt.Sprintf("%02d", num+1)
+
+	ud := pm.modeUnlockData(modeID)
+	ud.Maps[next] = true
+}
+
 // applyUnlockRules 根据通关地图应用解锁规则，返回新解锁项的显示名。
-func (pm *ProgressManager) applyUnlockRules(clearedMapID string) []string {
+func (pm *ProgressManager) applyUnlockRules(modeID, clearedMapID string) []string {
 	var newUnlocks []string
 	for _, rule := range unlockRules {
 		if rule.Requires != clearedMapID {
 			continue
 		}
 		for _, item := range rule.Unlocks {
-			if pm.isAlreadyUnlocked(item) {
+			if pm.isAlreadyUnlocked(modeID, item) {
 				continue
 			}
-			pm.applyUnlock(item)
+			pm.applyUnlockToMode(modeID, item)
 			newUnlocks = append(newUnlocks, unlockDisplayName(item))
 		}
 	}
 	return newUnlocks
 }
 
-// isAlreadyUnlocked 检查某项是否已解锁。
-func (pm *ProgressManager) isAlreadyUnlocked(item string) bool {
+// isAlreadyUnlocked 检查某项在指定模式下是否已解锁。
+func (pm *ProgressManager) isAlreadyUnlocked(modeID, item string) bool {
 	parts := strings.SplitN(item, ":", 2)
 	if len(parts) != 2 {
 		return false
 	}
+	ud := pm.modeUnlockData(modeID)
 	prefix, key := parts[0], parts[1]
 	switch prefix {
 	case "map":
-		return pm.progress.Unlocks.Maps[key]
+		return ud.Maps[key]
 	case "tower":
-		return pm.progress.Unlocks.Towers[key]
+		return ud.Towers[key]
 	case "warden":
-		return pm.progress.Unlocks.Wardens[key]
+		return ud.Wardens[key]
+	}
+	return false
+}
+
+// applyUnlockToMode 将解锁项应用到指定模式。
+func (pm *ProgressManager) applyUnlockToMode(modeID, item string) {
+	parts := strings.SplitN(item, ":", 2)
+	if len(parts) != 2 {
+		return
+	}
+	ud := pm.modeUnlockData(modeID)
+	prefix, key := parts[0], parts[1]
+	switch prefix {
+	case "map":
+		ud.Maps[key] = true
+	case "tower":
+		ud.Towers[key] = true
+	case "warden":
+		ud.Wardens[key] = true
+	}
+}
+
+// isMapCleared 检查某地图在指定模式下是否曾通关。
+func (pm *ProgressManager) isMapCleared(modeID, mapID string) bool {
+	key := modeID + "_" + mapID
+	if _, ok := pm.progress.ModeScores[key]; ok {
+		return true
+	}
+	// 旧数据兼容
+	if _, ok := pm.progress.HighScores[key]; ok {
+		return true
 	}
 	return false
 }
@@ -378,114 +570,6 @@ func unlockDisplayName(item string) string {
 		return i18n.TF("progress.unlock.warden", i18n.T("progress.warden."+key+".name"))
 	}
 	return item
-}
-
-// LoadBestScore 加载最高分。优先查新键（modeID_mapID），回退旧键（mapID）。
-func (pm *ProgressManager) LoadBestScore(modeID, mapID string) int {
-	// 新键：modeID_mapID
-	newKey := modeID + "_" + mapID
-	if score, ok := pm.progress.HighScores[newKey]; ok {
-		return score
-	}
-	// 旧键兼容：纯 mapID
-	if score, ok := pm.progress.HighScores[mapID]; ok {
-		return score
-	}
-	return 0
-}
-
-// SetTutorialDone 标记教程完成。
-func (pm *ProgressManager) SetTutorialDone() {
-	pm.progress.TutorialDone = true
-	pm.save()
-}
-
-// IsMapUnlocked 检查关卡是否已解锁。
-func (pm *ProgressManager) IsMapUnlocked(mapID string) bool {
-	// 优先检查新版 Unlocks
-	if pm.progress.Unlocks.Maps[mapID] {
-		return true
-	}
-	// 向后兼容旧版列表
-	for _, id := range pm.progress.UnlockedMaps {
-		if id == mapID {
-			return true
-		}
-	}
-	return false
-}
-
-// IsTowerUnlocked 检查塔类型是否已解锁。
-func (pm *ProgressManager) IsTowerUnlocked(towerKey string) bool {
-	return pm.progress.Unlocks.Towers[towerKey]
-}
-
-// IsWardenUnlocked 检查战灵类型是否已解锁。
-func (pm *ProgressManager) IsWardenUnlocked(wardenKey string) bool {
-	// "none" 选项始终可用
-	if wardenKey == "none" {
-		return true
-	}
-	return pm.progress.Unlocks.Wardens[wardenKey]
-}
-
-// MascotShownIDs returns the set of mascot dialog IDs already shown.
-func (pm *ProgressManager) MascotShownIDs() map[string]bool {
-	if pm.progress.MascotShown == nil {
-		pm.progress.MascotShown = make(map[string]bool)
-	}
-	return pm.progress.MascotShown
-}
-
-// SaveMascotShown persists the set of mascot dialog IDs that have been shown.
-func (pm *ProgressManager) SaveMascotShown(ids map[string]bool) {
-	pm.progress.MascotShown = ids
-	pm.save()
-}
-
-// unlockNext 通关后解锁下一关（旧逻辑，保持向后兼容）。
-func (pm *ProgressManager) unlockNext(mapID string) {
-	// map_01 → map_02, map_02 → map_03, etc.
-	if len(mapID) < 5 {
-		return
-	}
-	prefix := mapID[:len(mapID)-2]
-	numStr := mapID[len(mapID)-2:]
-	num := 0
-	for _, c := range numStr {
-		num = num*10 + int(c-'0')
-	}
-	next := prefix + fmt.Sprintf("%02d", num+1)
-
-	// 检查是否已解锁
-	for _, id := range pm.progress.UnlockedMaps {
-		if id == next {
-			return
-		}
-	}
-	pm.progress.UnlockedMaps = append(pm.progress.UnlockedMaps, next)
-	pm.progress.Unlocks.Maps[next] = true
-}
-
-// GetMapRecord 获取指定难度+地图的成绩记录，无记录时返回 nil。
-func (pm *ProgressManager) GetMapRecord(diffID, mapID string) *MapRecord {
-	return pm.progress.MapRecords[diffID+"_"+mapID]
-}
-
-// GetBestiary 返回图鉴统计数据的只读副本。
-func (pm *ProgressManager) GetBestiary() BestiaryData {
-	return pm.progress.Bestiary
-}
-
-// SetFirstRunDone 标记首次运行（语言选择）已完成。
-func (pm *ProgressManager) SetFirstRunDone() {
-	pm.progress.FirstRunDone = true
-	pm.save()
-}
-
-// IsFirstRunDone 检查首次运行是否已完成。
-func (pm *ProgressManager) IsFirstRunDone() bool {
-	return pm.progress.FirstRunDone
 }
 
 func (pm *ProgressManager) save() {
