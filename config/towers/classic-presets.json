@@ -32,7 +32,8 @@
         "cost": 50,
         "amount": 50,
         "maxPurchases": 4
-      }
+      },
+      "specialty": "damage"
     },
     {
       "key": "cl_railgun",
@@ -56,7 +57,8 @@
         "cost": 50,
         "amount": 50,
         "maxPurchases": 4
-      }
+      },
+      "specialty": "damage"
     },
     {
       "key": "cl_gatling",
@@ -80,7 +82,8 @@
         "cost": 50,
         "amount": 50,
         "maxPurchases": 4
-      }
+      },
+      "specialty": "damage"
     },
     {
       "key": "cl_shotgun",
@@ -104,7 +107,8 @@
         "cost": 50,
         "amount": 50,
         "maxPurchases": 4
-      }
+      },
+      "specialty": "atkSpeed"
     },
     {
       "key": "cl_cyclone",
@@ -128,7 +132,8 @@
         "cost": 50,
         "amount": 50,
         "maxPurchases": 4
-      }
+      },
+      "specialty": "atkSpeed"
     },
     {
       "key": "cl_nova",
@@ -152,7 +157,8 @@
         "cost": 50,
         "amount": 50,
         "maxPurchases": 4
-      }
+      },
+      "specialty": "atkSpeed"
     },
     {
       "key": "cl_mortar",
@@ -176,7 +182,8 @@
         "cost": 50,
         "amount": 50,
         "maxPurchases": 4
-      }
+      },
+      "specialty": "atkSpeed"
     },
     {
       "key": "cl_prism",
@@ -200,7 +207,8 @@
         "cost": 50,
         "amount": 50,
         "maxPurchases": 4
-      }
+      },
+      "specialty": "range"
     },
     {
       "key": "cl_fortress",
@@ -224,7 +232,8 @@
         "cost": 50,
         "amount": 50,
         "maxPurchases": 4
-      }
+      },
+      "specialty": "range"
     },
     {
       "key": "cl_ricochet",
@@ -248,7 +257,8 @@
         "cost": 50,
         "amount": 50,
         "maxPurchases": 4
-      }
+      },
+      "specialty": "range"
     },
     {
       "key": "cl_hydra",
@@ -272,7 +282,8 @@
         "cost": 50,
         "amount": 50,
         "maxPurchases": 4
-      }
+      },
+      "specialty": "range"
     }
   ]
 }

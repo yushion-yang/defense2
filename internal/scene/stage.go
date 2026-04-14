@@ -3708,11 +3708,11 @@ func loadClassicTowerDefs() []tower.TowerDef {
 
 			// 从 tier 查表设置 Base/Potential
 			CfgBaseDamage:   dmgTier.Base,
-			PotentialDamage: dmgTier.Potential + tp.Damage.BasePotential,
+			PotentialDamage: dmgTier.Potential,
 			CfgBaseSpeed:    spdTier.Base,
-			PotentialSpeed:  spdTier.Potential + tp.AttackSpeed.BasePotential,
+			PotentialSpeed:  spdTier.Potential,
 			CfgBaseRange:    rngTier.Base,
-			PotentialRange:  rngTier.Potential + tp.Range.BasePotential,
+			PotentialRange:  rngTier.Potential,
 
 			// 行为规则（从配置读取）
 			AbilityAcquireMode: p.AbilityMode,
@@ -3722,13 +3722,37 @@ func loadClassicTowerDefs() []tower.TowerDef {
 
 			// 扩展标记
 			FixedTiers:        true,
+			FixedSpecialty:    parseSpecialty(p.Specialty),
 			PresetAbilities:   p.Abilities,
 			Category:          p.Category,
 			SpriteKeyOverride: p.SpriteKey,
 		}
+		// 专精加成：只有专精属性的 Potential 额外加 basePotential
+		switch def.FixedSpecialty {
+		case 0:
+			def.PotentialDamage += tp.Damage.BasePotential
+		case 1:
+			def.PotentialSpeed += tp.AttackSpeed.BasePotential
+		case 2:
+			def.PotentialRange += tp.Range.BasePotential
+		}
 		defs = append(defs, def)
 	}
 	return defs
+}
+
+// parseSpecialty 将配置字符串转为专精索引。
+func parseSpecialty(s string) int {
+	switch s {
+	case "damage":
+		return 0
+	case "atkSpeed":
+		return 1
+	case "range":
+		return 2
+	default:
+		return -1
+	}
 }
 
 // towerLightColor maps a tower attack style to a light color for dynamic lighting.

@@ -27,6 +27,7 @@ type ClassicPreset struct {
 	Category    string            `json:"category"`    // 角色分类: dps / aoe / support
 	Abilities   []string          `json:"abilities"`   // 预设能力列表（第 1 个=攻击能力）
 	AbilityMode string            `json:"abilityMode"` // 能力获取方式: preset/paid/byWave/allUnlocked
+	Specialty   string            `json:"specialty"`   // 专精属性: damage/atkSpeed/range
 	Tiers       map[string]string `json:"tiers"`       // 属性档位
 	Strength    StrengthConfig    `json:"strength"`    // 强度升级规则
 	SpriteKey   string            `json:"spriteKey"`   // 精灵键名

@@ -114,16 +114,19 @@ func (p *Pool) Place(row, col int, cx, cy float64, def TowerDef) *Tower {
 			initTower(t, row, col, cx, cy, def)
 
 			if def.FixedTiers {
-				// 经典模式：使用 TowerDef 中预设的 Base/Potential，不做随机 roll
+				// 经典模式：使用 TowerDef 中预设的 Base/Potential + 固定专精
 				t.BaseDamage = def.CfgBaseDamage
 				t.PotentialDamage = def.PotentialDamage
 				t.BaseSpeed = def.CfgBaseSpeed
 				t.PotentialSpeed = def.PotentialSpeed
 				t.BaseRange = def.CfgBaseRange
 				t.PotentialRange = def.PotentialRange
-				t.DamageTier = "B" // 显示用默认值
+				t.DamageTier = "B"
 				t.SpeedTier = "B"
 				t.RangeTier = "B"
+				if def.FixedSpecialty >= 0 {
+					t.Specialty = def.FixedSpecialty
+				}
 				t.RecalcStats()
 			} else {
 				// 娱乐模式：独立 roll 三档(S/B/D) + 专精
@@ -274,6 +277,7 @@ type TowerDef struct {
 
 	// ── 扩展字段 ──
 	FixedTiers        bool     // true=跳过 RollTowerStats，直接使用 CfgBase*/Potential* 值
+	FixedSpecialty    int      // 固定专精（0=damage,1=speed,2=range，-1=无）
 	PresetAbilities   []string // 预设能力列表（abilityMode=preset 时出厂即生效）
 	Category          string   // 角色分类（dps/aoe/support），用于建造菜单分组
 	SpriteKeyOverride string   // 强制精灵键（覆盖 AddAbility 推断的结果）
