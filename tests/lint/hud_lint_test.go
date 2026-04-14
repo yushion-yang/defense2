@@ -36,10 +36,6 @@ var hudForbidden = []hudForbiddenPattern{
 // hudExemptFiles 尚未迁移的 hud 文件豁免清单。
 // 每迁移一个文件就从此清单移除，最终清空。
 var hudExemptFiles = map[string]bool{
-	"wave_panel.go":            true,
-	"item_panel.go":            true,
-	"warden_panel.go":          true,
-	"debug_panel.go":           true,
 	"choice_panel.go":          true,
 	"spawn_menu.go":            true,
 	"info_panel.go":            true,

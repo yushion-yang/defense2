@@ -5,11 +5,10 @@ package hud
 import (
 	"image/color"
 
-	"defense2/internal/core/game"
 	"defense2/internal/i18n"
-	"defense2/internal/render"
 	"defense2/internal/render/draw"
 	"defense2/internal/render/theme"
+	"defense2/internal/render/ui"
 
 	"github.com/hajimehoshi/ebiten/v2"
 )
@@ -27,9 +26,7 @@ type DebugPanelData struct {
 }
 
 const (
-	debugPanelW    = float32(190)
 	debugPanelPad  = float32(8)
-	debugBtnH      = float32(22)
 	debugSecH      = float32(18) // 分区标题高度
 	debugBtnGap    = float32(3)
 	debugBtnR      = float32(5)
@@ -56,7 +53,7 @@ func debugContentHeight(actions []DebugAction) float32 {
 		if act.IsSection {
 			h += debugSecH + debugBtnGap
 		} else {
-			h += debugBtnH + debugBtnGap
+			h += float32(theme.DebugBtnH) + debugBtnGap
 		}
 	}
 	return h
@@ -64,17 +61,16 @@ func debugContentHeight(actions []DebugAction) float32 {
 
 // debugPanelRect 返回面板可见区域。
 func debugPanelRect() (panelX, panelY, panelW, panelH float32) {
-	panelX = float32(game.ScreenWidth) - debugPanelW - 8
+	panelX = float32(theme.CanvasW) - float32(theme.DebugPanelW) - 8
 	panelY = debugPanelTop
-	panelW = debugPanelW
-	panelH = float32(game.ScreenHeight) - debugPanelTop - 75 // 预留 minimap(55px) + 间距
+	panelW = float32(theme.DebugPanelW)
+	panelH = float32(theme.CanvasH) - debugPanelTop - 75 // 预留 minimap(55px) + 间距
 	return
 }
 
 // DrawDebugPanel 渲染右侧调试面板（支持滚动）。
 func DrawDebugPanel(screen *ebiten.Image, d DebugPanelData) {
-	fm := render.GlobalFont()
-	if fm == nil || len(d.Actions) == 0 {
+	if len(d.Actions) == 0 {
 		return
 	}
 
@@ -91,18 +87,31 @@ func DrawDebugPanel(screen *ebiten.Image, d DebugPanelData) {
 	}
 
 	// Background
-	draw.RoundRect(screen, panelX, panelY, panelW, panelH, 10, color.RGBA{R: 15, G: 20, B: 35, A: 230})
-	draw.StrokeRoundRect(screen, panelX, panelY, panelW, panelH, 10, 1, color.RGBA{R: 60, G: 80, B: 120, A: 200})
+	ui.Panel(screen, panelX, panelY, panelW, panelH, ui.PanelStyle{
+		BgColor:     color.RGBA{R: 15, G: 20, B: 35, A: 230},
+		BorderColor: color.RGBA{R: 60, G: 80, B: 120, A: 200},
+		Radius:      10,
+	})
 
 	// Title + close button（固定在顶部，不滚动）
 	ix := float64(panelX) + float64(debugPanelPad)
 	iy := float64(panelY) + float64(debugPanelPad)
-	fm.DrawBoldText(screen, i18n.T("hud.debug.panel_title"), ix, iy, theme.FontMD, color.RGBA{R: 120, G: 180, B: 255, A: 255})
+	titleMaxW := float64(panelW) - float64(debugPanelPad)*2 - float64(debugCloseSize) - 4
+	ui.Label(screen, i18n.T("hud.debug.panel_title"), ix, iy, titleMaxW, ui.LabelStyle{
+		Font: theme.FontMD, Color: color.RGBA{R: 120, G: 180, B: 255, A: 255}, Bold: true,
+	})
 
 	closeX := float64(panelX) + float64(panelW) - float64(debugPanelPad) - float64(debugCloseSize)
 	closeY := iy
-	draw.RoundRect(screen, float32(closeX), float32(closeY), debugCloseSize, debugCloseSize, 4, color.RGBA{R: 60, G: 40, B: 40, A: 200})
-	fm.DrawCenteredVText(screen, "x", closeX+float64(debugCloseSize)/2, closeY+float64(debugCloseSize)/2, 11, color.White)
+	ui.Panel(screen, float32(closeX), float32(closeY), debugCloseSize, debugCloseSize, ui.PanelStyle{
+		BgColor: color.RGBA{R: 60, G: 40, B: 40, A: 200},
+		Radius:  4,
+	})
+	ui.LabelV(screen, "x",
+		closeX+float64(debugCloseSize)/2, closeY+float64(debugCloseSize)/2,
+		float64(debugCloseSize)-4, ui.LabelStyle{
+			Font: theme.FontDebugClose, Color: color.White,
+		})
 
 	// 滚动指示（右侧小条）
 	if maxScroll > 0 {
@@ -113,7 +122,7 @@ func DrawDebugPanel(screen *ebiten.Image, d DebugPanelData) {
 			thumbH = 10
 		}
 		thumbY := panelY + debugPanelPad + debugTitleH + (trackH-thumbH)*scrollRatio
-		draw.FilledRect(screen, panelX+panelW-4, thumbY, 3, thumbH, color.RGBA{R: 80, G: 100, B: 140, A: 120}, false)
+		draw.FilledRect(screen, panelX+panelW-4, thumbY, 3, thumbH, color.RGBA{R: 80, G: 100, B: 140, A: 120}, false) //nolint:hud — scrollbar indicator
 	}
 
 	// Items（带滚动偏移，裁切到面板区域）
@@ -129,18 +138,26 @@ func DrawDebugPanel(screen *ebiten.Image, d DebugPanelData) {
 		if act.IsSection {
 			h = debugSecH + debugBtnGap
 		} else {
-			h = debugBtnH + debugBtnGap
+			h = float32(theme.DebugBtnH) + debugBtnGap
 		}
 
 		// 裁切：只画在可见区域内的条目
 		if itemY+h > contentTop && itemY < panelY+panelH-debugPanelPad {
 			if act.IsSection {
-				fm.DrawText(screen, "── "+act.Label+" ──", float64(bx), float64(itemY)+1, theme.FontXS, sectionClr)
+				ui.Label(screen, "\u2500\u2500 "+act.Label+" \u2500\u2500",
+					float64(bx), float64(itemY)+1, float64(btnW), ui.LabelStyle{
+						Font: theme.FontXS, Color: sectionClr,
+					})
 			} else {
-				draw.RoundRect(screen, bx, itemY, btnW, debugBtnH, debugBtnR, btnBg)
+				ui.Panel(screen, bx, itemY, btnW, float32(theme.DebugBtnH), ui.PanelStyle{
+					BgColor: btnBg,
+					Radius:  debugBtnR,
+				})
 				cx := float64(bx) + float64(btnW)/2
-				cy := float64(itemY) + float64(debugBtnH)/2
-				fm.DrawCenteredVText(screen, act.Label, cx, cy, theme.FontXS, color.White)
+				cy := float64(itemY) + float64(theme.DebugBtnH)/2
+				ui.LabelV(screen, act.Label, cx, cy, float64(btnW)-8, ui.LabelStyle{
+					Font: theme.FontXS, Color: color.White,
+				})
 			}
 		}
 		itemY += h
@@ -179,12 +196,12 @@ func DebugPanelHitTest(px, py float32, actions []DebugAction) int {
 			continue
 		}
 		// 可见区域内才响应点击
-		if itemY+debugBtnH > contentTop && itemY < panelY+panelH-debugPanelPad {
-			if px >= bx && px <= bx+btnW && py >= itemY && py <= itemY+debugBtnH {
+		if itemY+float32(theme.DebugBtnH) > contentTop && itemY < panelY+panelH-debugPanelPad {
+			if px >= bx && px <= bx+btnW && py >= itemY && py <= itemY+float32(theme.DebugBtnH) {
 				return i
 			}
 		}
-		itemY += debugBtnH + debugBtnGap
+		itemY += float32(theme.DebugBtnH) + debugBtnGap
 	}
 	return -1
 }
