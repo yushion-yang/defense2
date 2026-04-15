@@ -24,6 +24,8 @@ const (
 	EffTypeSelfBuff                     // 自我增益
 	EffTypeGold                         // 获得金币
 	EffTypeModifyStat                   // 修改属性倍率
+	EffTypeCrit                         // 独立暴击效果
+	EffTypePurge                        // 净化（移除敌人 buff）
 )
 
 // DamageMode 伤害模式。
@@ -71,6 +73,9 @@ type EffectResult struct {
 
 	// ── ModifyStat ──
 	StatMult float64 // 属性倍率
+
+	// ── Purge ──
+	PurgeCount int // 净化移除的 buff 数量
 }
 
 // EffectCtx 效果执行上下文。

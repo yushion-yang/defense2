@@ -1,7 +1,8 @@
-// effect.go — 效果接口及 11 种具体效果实现。
+// effect.go — 效果接口及 13 种具体效果实现。
 //
 // Effect 决定选中目标受到什么影响。每种 Effect 的 Apply 方法
 // 读取 EffectCtx 中的运行时数据，返回扁平的 EffectResult。
+// Phase 2 新增：CritEffect（独立暴击）、PurgeEffect（净化）。
 //
 // 类型定义和枚举常量在 effect_result.go 中，本文件只包含接口和实现。
 package descriptor
@@ -165,5 +166,33 @@ func (e ModifyStatEffect) Apply(_ EffectCtx) EffectResult {
 		Type:     EffTypeModifyStat,
 		BuffStat: e.Stat,
 		StatMult: e.Multiplier,
+	}
+}
+
+// CritEffect 独立暴击效果。
+// 与 DamageEffect 的 IsCrit 标记不同，CritEffect 是一个独立效果类型，
+// 可在条件管线中单独控制（如仅对 Boss 暴击）。
+type CritEffect struct {
+	Multiplier float64
+}
+
+func (e CritEffect) Apply(_ EffectCtx) EffectResult {
+	return EffectResult{
+		Type:     EffTypeCrit,
+		IsCrit:   true,
+		CritMult: e.Multiplier,
+	}
+}
+
+// PurgeEffect 净化效果（移除敌人身上的 buff）。
+// Count 指定最多移除多少个 buff，实际移除数量由战斗管线决定。
+type PurgeEffect struct {
+	Count int
+}
+
+func (e PurgeEffect) Apply(_ EffectCtx) EffectResult {
+	return EffectResult{
+		Type:       EffTypePurge,
+		PurgeCount: e.Count,
 	}
 }

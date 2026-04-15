@@ -240,9 +240,46 @@ func parseCondition(data json.RawMessage) (Condition, error) {
 		}
 		return NoNearbyTowerCondition{Radius: raw.Radius}, nil
 
+	case "isBoss":
+		return IsBossCondition{}, nil
+
+	case "notBoss":
+		return NotBossCondition{}, nil
+
+	case "every":
+		var raw conditionEveryRaw
+		if err := json.Unmarshal(data, &raw); err != nil {
+			return nil, fmt.Errorf("parse every condition: %w", err)
+		}
+		return NewEveryCondition(raw.N), nil
+
+	case "buffActive":
+		var raw conditionBuffRaw
+		if err := json.Unmarshal(data, &raw); err != nil {
+			return nil, fmt.Errorf("parse buffActive condition: %w", err)
+		}
+		return BuffActiveCondition{BuffID: raw.BuffID}, nil
+
+	case "buffAbsent":
+		var raw conditionBuffRaw
+		if err := json.Unmarshal(data, &raw); err != nil {
+			return nil, fmt.Errorf("parse buffAbsent condition: %w", err)
+		}
+		return BuffAbsentCondition{BuffID: raw.BuffID}, nil
+
 	default:
 		return nil, fmt.Errorf("unknown condition type: %q", env.Type)
 	}
+}
+
+// conditionEveryRaw every 条件的 JSON 参数。
+type conditionEveryRaw struct {
+	N int `json:"n"`
+}
+
+// conditionBuffRaw buffActive/buffAbsent 条件的 JSON 参数。
+type conditionBuffRaw struct {
+	BuffID string `json:"buffId"`
 }
 
 // ── Selector 解析 ──────────────────────────────────────────
@@ -313,9 +350,59 @@ func parseSelector(data json.RawMessage) (Selector, error) {
 	case "selfTower":
 		return SelfTowerSelector{}, nil
 
+	case "cone":
+		var raw selectorConeRaw
+		if err := json.Unmarshal(data, &raw); err != nil {
+			return nil, fmt.Errorf("parse cone selector: %w", err)
+		}
+		radius, err := ParseScaler(raw.Radius)
+		if err != nil {
+			return nil, fmt.Errorf("cone.radius: %w", err)
+		}
+		return ConeSelector{Angle: raw.Angle, Radius: radius}, nil
+
+	case "ring360":
+		var raw selectorRing360Raw
+		if err := json.Unmarshal(data, &raw); err != nil {
+			return nil, fmt.Errorf("parse ring360 selector: %w", err)
+		}
+		count, err := ParseScaler(raw.Count)
+		if err != nil {
+			return nil, fmt.Errorf("ring360.count: %w", err)
+		}
+		return Ring360Selector{Count: count}, nil
+
+	case "random":
+		var raw selectorRandomRaw
+		if err := json.Unmarshal(data, &raw); err != nil {
+			return nil, fmt.Errorf("parse random selector: %w", err)
+		}
+		count, err := ParseScaler(raw.Count)
+		if err != nil {
+			return nil, fmt.Errorf("random.count: %w", err)
+		}
+		return RandomSelector{Count: count, Radius: raw.Radius}, nil
+
 	default:
 		return nil, fmt.Errorf("unknown selector type: %q", env.Type)
 	}
+}
+
+// selectorConeRaw cone 选择器的 JSON 参数。
+type selectorConeRaw struct {
+	Angle  float64         `json:"angle"`
+	Radius json.RawMessage `json:"radius"`
+}
+
+// selectorRing360Raw ring360 选择器的 JSON 参数。
+type selectorRing360Raw struct {
+	Count json.RawMessage `json:"count"`
+}
+
+// selectorRandomRaw random 选择器的 JSON 参数。
+type selectorRandomRaw struct {
+	Count  json.RawMessage `json:"count"`
+	Radius float64         `json:"radius"`
 }
 
 // ── Effect 解析 ─────────────────────────────────────────────
@@ -397,6 +484,10 @@ func parseEffect(data json.RawMessage) (Effect, error) {
 		return parseGoldEffect(data)
 	case "modifyStat":
 		return parseModifyStatEffect(data)
+	case "crit":
+		return parseCritEffect(data)
+	case "purge":
+		return parsePurgeEffect(data)
 	default:
 		return nil, fmt.Errorf("unknown effect type: %q", env.Type)
 	}
@@ -541,6 +632,32 @@ func parseModifyStatEffect(data json.RawMessage) (Effect, error) {
 		return nil, fmt.Errorf("parse modifyStat effect: %w", err)
 	}
 	return ModifyStatEffect{Stat: raw.Stat, Multiplier: raw.Multiplier}, nil
+}
+
+// effectCritRaw crit 效果的 JSON 参数。
+type effectCritRaw struct {
+	Multiplier float64 `json:"multiplier"`
+}
+
+func parseCritEffect(data json.RawMessage) (Effect, error) {
+	var raw effectCritRaw
+	if err := json.Unmarshal(data, &raw); err != nil {
+		return nil, fmt.Errorf("parse crit effect: %w", err)
+	}
+	return CritEffect{Multiplier: raw.Multiplier}, nil
+}
+
+// effectPurgeRaw purge 效果的 JSON 参数。
+type effectPurgeRaw struct {
+	Count int `json:"count"`
+}
+
+func parsePurgeEffect(data json.RawMessage) (Effect, error) {
+	var raw effectPurgeRaw
+	if err := json.Unmarshal(data, &raw); err != nil {
+		return nil, fmt.Errorf("parse purge effect: %w", err)
+	}
+	return PurgeEffect{Count: raw.Count}, nil
 }
 
 // ── DamageMode 解析 ─────────────────────────────────────────

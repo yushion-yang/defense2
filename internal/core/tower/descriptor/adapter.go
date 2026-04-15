@@ -69,6 +69,15 @@ func AdaptToHitResult(results []EffectResult) *tower.HitResult {
 			// poison 等其他 DoT 子类型暂无 HitResult 对应字段，跳过
 			}
 
+		case EffTypeCrit:
+			hasEffect = true
+			hr.IsCrit = true
+
+		// Purge 暂时不进入 HitResult（需要战斗管线后续支持），
+		// 但标记 hasEffect 以确保结果不被丢弃。
+		case EffTypePurge:
+			hasEffect = true
+
 		// 以下类型不进入 HitResult，由战斗管线或 tick 系统单独处理
 		case EffTypeWeaken, EffTypeSilence:
 		case EffTypeRoot:
