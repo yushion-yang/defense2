@@ -870,7 +870,7 @@ func (s *StageScene) isCreateBtnClick(cardIdx int) bool {
 func (s *StageScene) launchBlueprintEditor() {
 	s.imode = modeIdle
 	s.audioMgr.PlayAt(gameAudio.SFXUIOpen, gameAudio.VolUI)
-	bpScene := NewBlueprintEditScene(s.switcher, nil, s, s.blueprintStore)
+	bpScene := NewBlueprintEditScene(s.switcher, nil, s, s.blueprintStore, s.abilityStore)
 	s.switcher.SwitchScene(bpScene)
 }
 
@@ -1155,7 +1155,7 @@ func (s *StageScene) blueprintCtxEdit() {
 		return
 	}
 	s.imode = modeIdle
-	bpScene := NewBlueprintEditScene(s.switcher, bp, s, s.blueprintStore)
+	bpScene := NewBlueprintEditScene(s.switcher, bp, s, s.blueprintStore, s.abilityStore)
 	s.switcher.SwitchScene(bpScene)
 }
 

@@ -79,10 +79,11 @@ type attackOption struct {
 
 // abilityOption 能力选项（步骤 3 用）。
 type abilityOption struct {
-	ID    string // 描述符 ID
-	Label string // 中文标签
-	Cost  int    // 预算费用
-	Tag   string // 首个分类标签
+	ID       string // 描述符 ID（预制能力）或自定义能力 ID（ca_xxx）
+	Label    string // 中文标签
+	Cost     int    // 预算费用
+	Tag      string // 首个分类标签
+	IsCustom bool   // true=来自 AbilityStore 的自定义能力
 }
 
 // ── BlueprintEditScene ──────────────────────────────
@@ -95,6 +96,7 @@ type BlueprintEditScene struct {
 	step           int                       // 0-3（attackStyle / tiers / abilities / preview）
 	returnScene    Scene                     // 返回时切换到的场景
 	blueprintStore *descriptor.BlueprintStore // 蓝图持久化存储
+	abilityStore   *descriptor.AbilityStore   // 自定义能力存储（编辑器可能引用自定义能力）
 
 	bgGrad *draw.CachedGradient // 背景渐变缓存
 
@@ -109,12 +111,14 @@ type BlueprintEditScene struct {
 	// tiers/specialty 直接存储在 s.blueprint 中
 
 	// ── 步骤 3 状态 ──
-	availableAbilities []abilityOption // 可选能力列表（非攻击类）
+	availableAbilities []abilityOption // 可选能力列表（自定义 + 预制）
 	scrollOffset       int            // 可选列表滚动偏移（行数）
+	lastCustomCount    int            // 上次构建时 abilityStore 中的自定义能力数量（脏检查）
 
 	// ── 步骤 3 卡片布局缓存 ──
-	step3AvailRects []ui.Rect // 可选能力卡片矩形
-	step3SelRects   []ui.Rect // 已选能力卡片矩形
+	step3AvailRects    []ui.Rect // 可选能力卡片矩形
+	step3SelRects      []ui.Rect // 已选能力卡片矩形
+	step3CreateBtnRect ui.Rect   // "+创建新能力" 按钮矩形
 
 	// ── 步骤 1 卡片布局缓存 ──
 	step1CardRects []ui.Rect // 攻击模式卡片矩形
@@ -132,13 +136,15 @@ type BlueprintEditScene struct {
 // NewBlueprintEditScene 创建蓝图编辑场景。
 // bp 为要编辑的蓝图（nil=新建空蓝图），returnTo 是按取消/完成时返回的场景。
 // store 为蓝图持久化存储（可为 nil，此时保存功能不可用）。
-func NewBlueprintEditScene(sw Switcher, bp *descriptor.TowerBlueprint, returnTo Scene, store *descriptor.BlueprintStore) *BlueprintEditScene {
+// abStore 为自定义能力存储（可为 nil）。
+func NewBlueprintEditScene(sw Switcher, bp *descriptor.TowerBlueprint, returnTo Scene, store *descriptor.BlueprintStore, abStore *descriptor.AbilityStore) *BlueprintEditScene {
 	s := &BlueprintEditScene{
 		switcher:       sw,
 		isNew:          bp == nil,
 		step:           bpStepAttackStyle,
 		returnScene:    returnTo,
 		blueprintStore: store,
+		abilityStore:   abStore,
 		bgGrad:         draw.NewCachedGradient(game.ScreenWidth, game.ScreenHeight, theme.SelectGradTop, theme.SelectGradBot),
 		budgetRules:    descriptor.DefaultBudgetRules(),
 		selectedAttack: -1,
@@ -205,34 +211,67 @@ func (s *BlueprintEditScene) buildAttackOptions() {
 	}
 }
 
-// buildAbilityOptions 从全局描述符表构建非攻击能力选项列表。
+// buildAbilityOptions 构建可选能力列表：自定义能力在前，预制能力在后。
+//
+// 自定义能力来自 abilityStore，预制能力来自全局描述符表（排除 attack 标签）。
+// 同时记录 lastCustomCount 用于后续脏检查（从能力编辑器返回后自动刷新）。
 func (s *BlueprintEditScene) buildAbilityOptions() {
+	s.availableAbilities = nil
+
+	// ── 自定义能力（来自 AbilityStore） ──
+	if s.abilityStore != nil {
+		customs := s.abilityStore.List()
+		s.lastCustomCount = len(customs)
+		for _, ca := range customs {
+			tag := "自定义"
+			if len(ca.Desc.Tags) > 0 {
+				tag = ca.Desc.Tags[0]
+			}
+			s.availableAbilities = append(s.availableAbilities, abilityOption{
+				ID:       ca.ID,
+				Label:    ca.Name,
+				Cost:     ca.Desc.Cost,
+				Tag:      tag,
+				IsCustom: true,
+			})
+		}
+	}
+
+	// ── 预制能力（来自全局描述符表，排除 attack 标签） ──
 	table := descriptor.GlobalDescriptorTable()
-	if table == nil {
+	if table != nil {
+		var ids []string
+		for id, desc := range table {
+			if !hasTag(desc.Tags, "attack") {
+				ids = append(ids, id)
+			}
+		}
+		sort.Strings(ids)
+
+		for _, id := range ids {
+			desc := table[id]
+			tag := ""
+			if len(desc.Tags) > 0 {
+				tag = desc.Tags[0]
+			}
+			s.availableAbilities = append(s.availableAbilities, abilityOption{
+				ID:    id,
+				Label: desc.Label,
+				Cost:  desc.Cost,
+				Tag:   tag,
+			})
+		}
+	}
+}
+
+// refreshAbilitiesIfNeeded 检查 abilityStore 数量变化，必要时重建可选列表。
+// 用于从能力编辑器返回后懒刷新，避免每帧重建。
+func (s *BlueprintEditScene) refreshAbilitiesIfNeeded() {
+	if s.abilityStore == nil {
 		return
 	}
-
-	var ids []string
-	for id, desc := range table {
-		if !hasTag(desc.Tags, "attack") {
-			ids = append(ids, id)
-		}
-	}
-	sort.Strings(ids)
-
-	s.availableAbilities = make([]abilityOption, 0, len(ids))
-	for _, id := range ids {
-		desc := table[id]
-		tag := ""
-		if len(desc.Tags) > 0 {
-			tag = desc.Tags[0]
-		}
-		s.availableAbilities = append(s.availableAbilities, abilityOption{
-			ID:    id,
-			Label: desc.Label,
-			Cost:  desc.Cost,
-			Tag:   tag,
-		})
+	if s.abilityStore.Count() != s.lastCustomCount {
+		s.buildAbilityOptions()
 	}
 }
 
@@ -299,8 +338,21 @@ func bpContentRect(px, py float32) ui.Rect {
 // ── 预算辅助 ──────────────────────────────────────
 
 // calcCurrentBudget 计算当前蓝图的预算使用情况。
+// 合并预制能力和自定义能力的费用表，确保两种能力的费用都被正确计算。
 func (s *BlueprintEditScene) calcCurrentBudget() descriptor.BudgetResult {
-	return descriptor.CalcBudget(s.blueprint, *s.budgetRules, descriptor.GlobalAbilityCosts())
+	return descriptor.CalcBudget(s.blueprint, *s.budgetRules, s.mergedAbilityCosts())
+}
+
+// mergedAbilityCosts 返回预制能力 + 自定义能力的合并费用表。
+// GlobalAbilityCosts 仅包含预制能力，自定义能力费用从 abilityStore 补充。
+func (s *BlueprintEditScene) mergedAbilityCosts() map[string]int {
+	costs := descriptor.GlobalAbilityCosts()
+	if s.abilityStore != nil {
+		for _, ca := range s.abilityStore.List() {
+			costs[ca.ID] = ca.Desc.Cost
+		}
+	}
+	return costs
 }
 
 // ── Update ────────────────────────────────────────

@@ -130,6 +130,7 @@ type StageScene struct {
 	selectedDef    int                      // 当前选中的塔类型索引（建塔面板）
 	selectedTower  *tower.Tower             // 点击选中的塔（显示信息面板+射程圈，nil=无选中）
 	blueprintStore *descriptor.BlueprintStore // 玩家自定义蓝图存储（Task 9 新建面板需要）
+	abilityStore   *descriptor.AbilityStore   // 自定义能力存储（运行时注册到 tower.Registry）
 
 	// ── 渲染器 ──
 	towerRenderer  *render.TowerRenderer  // 塔 SVG 渲染器（缓存 sprite 图集）
@@ -310,6 +311,11 @@ func NewStageSceneWithOpts(sw Switcher, opts StageOptions) *StageScene {
 	pm := persistence.NewProgressManager(store)
 	achTracker := achievement.NewTracker(store)
 	bpStore := descriptor.NewBlueprintStore(store)
+	abStore := descriptor.NewAbilityStore(store)
+
+	// 注册自定义能力到 tower.Registry（必须在 loadTowerDefsForMode 之前，
+	// 因为蓝图的能力引用需要在注册表中找到对应的自定义能力）
+	descriptor.RegisterCustomAbilities(abStore)
 
 	// 教程（已完成则不再显示）
 	tut := tutorial.DefaultTutorial()
@@ -418,6 +424,7 @@ func NewStageSceneWithOpts(sw Switcher, opts StageOptions) *StageScene {
 		towerDefs:        loadTowerDefsForMode(session.Ruleset(), pm, bpStore),
 		selectedDef:      0,
 		blueprintStore:   bpStore,
+		abilityStore:    abStore,
 		wardenType:       opts.WardenType,
 		wardenCfg:        wardenCfg,
 		gameSpeed:        1,
