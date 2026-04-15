@@ -161,9 +161,6 @@ func DrawTopBar(screen *ebiten.Image, d TopBarData) {
 		btns = append(btns, btnDef{"debug", i18n.T("hud.topbar.debug"), debugClr})
 	}
 
-	// 截图按钮（所有模式可用）
-	btns = append(btns, btnDef{"screenshot", i18n.T("hud.topbar.screenshot"), theme.ToneSecondary})
-
 	// Hover detection using last frame's rects
 	mx, my := draw.CursorPos()
 	tbHoverIdx := ui.HitTestButtonRow(lastTopBarBtnRects, float64(mx), float64(my))

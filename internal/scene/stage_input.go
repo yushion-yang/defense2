@@ -443,9 +443,6 @@ func (s *StageScene) handleInput() {
 	case "debug":
 		s.debugPanelOpen = !s.debugPanelOpen
 		return
-	case "screenshot":
-		// 已在 Update() 早期拦截处理，这里只需消费点击防止穿透到交互模式
-		return
 	}
 
 	// ActionBar 按钮（底部工具栏：建塔/道具两个按钮）

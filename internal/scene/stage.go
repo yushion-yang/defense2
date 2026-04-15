@@ -232,8 +232,7 @@ type StageScene struct {
 	choicePanel *hud.ChoicePanel // 能力选择覆盖层（每 2 波解锁一个，3 选 1）
 
 	// ── AutoPlay 自动对局 ──
-	autoPlayer        AutoPlayer // 自动对局驱动（nil=手动模式，非 nil=跳过渲染）
-	screenshotPending bool       // F12 截图请求标志
+	autoPlayer AutoPlayer // 自动对局驱动（nil=手动模式，非 nil=跳过渲染）
 
 	// ── 成就与统计 ──
 	achieveTracker *achievement.Tracker // 成就追踪器（持久化，跨局累计）
@@ -1022,17 +1021,6 @@ func (s *StageScene) Update() error {
 		hoveredBtn := hud.ActionBarHitTest(float32(mx), float32(my))
 		s.buildBtnState.Update(dt, hoveredBtn == "build", hoveredBtn == "build" && mouseDown)
 		s.itemBtnState.Update(dt, hoveredBtn == "items", hoveredBtn == "items" && mouseDown)
-	}
-
-	// F12 / 截图按钮：任意状态可用（不受交互模式限制）
-	if inpututil.IsKeyJustPressed(ebiten.KeyF12) {
-		s.screenshotPending = true
-	}
-	if inpututil.IsMouseButtonJustPressed(ebiten.MouseButtonLeft) {
-		mx, my := draw.CursorPos()
-		if hud.TopBarHitTest(float32(mx), float32(my)) == "screenshot" {
-			s.screenshotPending = true
-		}
 	}
 
 	// 场景命名输入（拦截所有其他输入）
@@ -2712,17 +2700,6 @@ func (s *StageScene) Draw(screen *ebiten.Image) {
 		s.drawSaveNaming(screen)
 	}
 
-	// F12 截图：渲染完成后读取像素并异步保存
-	if s.screenshotPending {
-		s.screenshotPending = false
-		if img := readScreenPixels(screen); img != nil {
-			fname := filepath.Join("docs", "bug", "pic",
-				fmt.Sprintf("screenshot_%s.png", time.Now().Format("20060102_150405")))
-			saveImageAsync(img, fname)
-			hud.ShowToast(i18n.T("game.stage.screenshot_saved"))
-			log.Printf("screenshot saved: %s", fname)
-		}
-	}
 }
 
 // drawFullScene 执行完整的场景渲染（含屏幕震动包装层）。

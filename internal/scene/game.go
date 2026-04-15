@@ -13,8 +13,10 @@
 package scene
 
 import (
+	"fmt"
 	"image/color"
 	"log"
+	"path/filepath"
 	"runtime/debug"
 	"strconv"
 	"time"
@@ -25,6 +27,7 @@ import (
 	"defense2/internal/core/game"
 	"defense2/internal/core/mascot"
 	"defense2/internal/core/tower/abilities"
+	"defense2/internal/i18n"
 	"defense2/internal/render"
 	"defense2/internal/render/anim"
 	"defense2/internal/render/draw"
@@ -33,6 +36,7 @@ import (
 	"defense2/internal/render/theme"
 
 	"github.com/hajimehoshi/ebiten/v2"
+	"github.com/hajimehoshi/ebiten/v2/inpututil"
 )
 
 // ─── 场景过渡系统 ───────────────────────────────────────────────────
@@ -80,6 +84,9 @@ type Game struct {
 	mascotTime    float64        // 累计时间（秒），用于 idle 浮动动画
 	prevSceneName string         // 上一帧的场景名，避免每帧重复调用 SetScene
 	sessionStart  time.Time      // 游戏启动时间戳，用于计算 SessionSecs（吉祥物条件判断用）
+
+	// ── 全局调试工具 ──
+	screenshotPending bool // F12 截图请求标志（全局可用，不限场景）
 }
 
 // HeadlessMode 自动对局（autoplay）模式开关。
@@ -236,6 +243,11 @@ func (g *Game) Update() error {
 	// 更新全局长按悬浮追踪器（触摸设备上长按=悬浮）
 	draw.TickHover()
 
+	// F12 全局截图（调试功能，任意场景可用）
+	if inpututil.IsKeyJustPressed(ebiten.KeyF12) {
+		g.screenshotPending = true
+	}
+
 	// 兼容旧的 next 直接切换（无过渡）
 	if g.next != nil {
 		g.current = g.next
@@ -376,6 +388,18 @@ func (g *Game) Draw(screen *ebiten.Image) {
 		b = append(b, "FPS: "...)
 		b = strconv.AppendInt(b, int64(fps), 10)
 		fm.DrawText(screen, string(b), 4, float64(game.ScreenHeight)-4-float64(theme.FontCaption), theme.FontCaption, theme.TextMuted)
+	}
+
+	// F12 截图：全部渲染完成后读取像素并异步保存
+	if g.screenshotPending {
+		g.screenshotPending = false
+		if img := readScreenPixels(screen); img != nil {
+			fname := filepath.Join("docs", "bug", "pic",
+				fmt.Sprintf("screenshot_%s.png", time.Now().Format("20060102_150405")))
+			saveImageAsync(img, fname)
+			hud.ShowToast(i18n.T("game.stage.screenshot_saved"))
+			log.Printf("screenshot saved: %s", fname)
+		}
 	}
 }
 
