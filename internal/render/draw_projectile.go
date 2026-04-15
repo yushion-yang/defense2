@@ -73,26 +73,32 @@ type deferredBody struct {
 	style  string
 }
 
+// 弹体缓冲区初始容量和安全上限。
+const (
+	bodyInitCapVs = 1024 * 4 // 4096
+	bodyInitCapIs = 1024 * 6 // 6144
+	bodyMaxVerts  = 60000    // uint16 安全上限（<65536）
+)
+
 // init 预分配弹体缓冲区，每种 1024 弹丸容量（4 顶点/弹 + 6 索引/弹）。
 // 预分配避免运行时 append 触发频繁扩容和 GC。
 func init() {
-	const cap = 1024
-	bodyBuf.tailVs = make([]ebiten.Vertex, 0, cap*4)
-	bodyBuf.tailIs = make([]uint16, 0, cap*6)
-	bodyBuf.bodyVs = make([]ebiten.Vertex, 0, cap*4)
-	bodyBuf.bodyIs = make([]uint16, 0, cap*6)
-	bodyBuf.glowVs = make([]ebiten.Vertex, 0, cap*4)
-	bodyBuf.glowIs = make([]uint16, 0, cap*6)
+	bodyBuf.tailVs = make([]ebiten.Vertex, 0, bodyInitCapVs)
+	bodyBuf.tailIs = make([]uint16, 0, bodyInitCapIs)
+	bodyBuf.bodyVs = make([]ebiten.Vertex, 0, bodyInitCapVs)
+	bodyBuf.bodyIs = make([]uint16, 0, bodyInitCapIs)
+	bodyBuf.glowVs = make([]ebiten.Vertex, 0, bodyInitCapVs)
+	bodyBuf.glowIs = make([]uint16, 0, bodyInitCapIs)
 	bodyBuf.deferred = make([]deferredBody, 0, 32)
 }
 
 func beginBodyBatch() {
-	bodyBuf.tailVs = bodyBuf.tailVs[:0]
-	bodyBuf.tailIs = bodyBuf.tailIs[:0]
-	bodyBuf.bodyVs = bodyBuf.bodyVs[:0]
-	bodyBuf.bodyIs = bodyBuf.bodyIs[:0]
-	bodyBuf.glowVs = bodyBuf.glowVs[:0]
-	bodyBuf.glowIs = bodyBuf.glowIs[:0]
+	bodyBuf.tailVs = compactVertices(bodyBuf.tailVs, bodyInitCapVs)
+	bodyBuf.tailIs = compactIndices(bodyBuf.tailIs, bodyInitCapIs)
+	bodyBuf.bodyVs = compactVertices(bodyBuf.bodyVs, bodyInitCapVs)
+	bodyBuf.bodyIs = compactIndices(bodyBuf.bodyIs, bodyInitCapIs)
+	bodyBuf.glowVs = compactVertices(bodyBuf.glowVs, bodyInitCapVs)
+	bodyBuf.glowIs = compactIndices(bodyBuf.glowIs, bodyInitCapIs)
 	bodyBuf.deferred = bodyBuf.deferred[:0]
 }
 
@@ -202,7 +208,7 @@ func flushBodyBatch(screen *ebiten.Image) {
 
 // addBodyCircle 向弹体缓冲区追加一个圆形四边形（采样圆形纹理）。
 func addBodyCircle(cx, cy, radius float32, clr color.RGBA) {
-	if clr.A == 0 {
+	if clr.A == 0 || len(bodyBuf.bodyVs) >= bodyMaxVerts {
 		return
 	}
 	sx := draw.S32(cx)
@@ -222,7 +228,7 @@ func addBodyCircle(cx, cy, radius float32, clr color.RGBA) {
 // addGlowCircle 向辉光缓冲区追加一个圆形四边形。
 // alpha 自动降至 1/4 产生柔和光晕效果，最终画到 GlowTarget 做加法混合。
 func addGlowCircle(cx, cy, radius float32, clr color.RGBA) {
-	if clr.A == 0 {
+	if clr.A == 0 || len(bodyBuf.glowVs) >= bodyMaxVerts {
 		return
 	}
 	sx := draw.S32(cx)
@@ -246,7 +252,7 @@ func addGlowCircle(cx, cy, radius float32, clr color.RGBA) {
 
 // addBodyLine 向尾线缓冲区追加一个线段四边形（沿法线方向扩展宽度）。
 func addBodyLine(x1, y1, x2, y2, width float32, clr color.RGBA) {
-	if clr.A == 0 {
+	if clr.A == 0 || len(bodyBuf.tailVs) >= bodyMaxVerts {
 		return
 	}
 	sx1, sy1 := draw.S32(x1), draw.S32(y1)
@@ -273,6 +279,9 @@ func addBodyLine(x1, y1, x2, y2, width float32, clr color.RGBA) {
 // addBodyDiamond 向弹体缓冲区追加一个菱形四边形（冰弹专用）。
 // 通过旋转 4 个顶点实现菱形，采样圆形纹理的边缘区域产生锐利菱形轮廓。
 func addBodyDiamond(cx, cy, size, angle float32, clr color.RGBA) {
+	if len(bodyBuf.bodyVs) >= bodyMaxVerts {
+		return
+	}
 	sx := draw.S32(cx)
 	sy := draw.S32(cy)
 	r := draw.S32(size)

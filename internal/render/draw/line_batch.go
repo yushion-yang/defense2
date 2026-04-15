@@ -47,11 +47,17 @@ func lbWhitePixel() *ebiten.Image {
 	return lbWhiteImage
 }
 
+// 线段缓冲区初始容量和安全上限。
+const (
+	lbInitCapVs = 4096  // 1024 条线段 × 4 顶点
+	lbInitCapIs = 6144  // 1024 条线段 × 6 索引
+	lbMaxVerts  = 60000 // uint16 安全上限（<65536）
+)
+
 // init 预分配缓冲容量，避免运行时频繁扩容。
-// 4096 顶点 = 1024 条线段，6144 索引 = 1024×6，足够覆盖单帧峰值。
 func init() {
-	lineBatch.vs = make([]ebiten.Vertex, 0, 4096)
-	lineBatch.is = make([]uint16, 0, 6144)
+	lineBatch.vs = make([]ebiten.Vertex, 0, lbInitCapVs)
+	lineBatch.is = make([]uint16, 0, lbInitCapIs)
 }
 
 // BeginLineBatch 开启线段批量化模式。
@@ -60,8 +66,9 @@ func init() {
 func BeginLineBatch(target *ebiten.Image) {
 	lineBatch.active = true
 	lineBatch.target = target
-	lineBatch.vs = lineBatch.vs[:0] // 复用底层数组，零分配
-	lineBatch.is = lineBatch.is[:0]
+	// 压缩：如果容量远超上帧使用量，重新分配释放峰值内存
+	lineBatch.vs = compactVs(lineBatch.vs, lbInitCapVs)
+	lineBatch.is = compactIs(lineBatch.is, lbInitCapIs)
 }
 
 // FlushLineBatch 将缓冲中所有线段通过一次 DrawTriangles 输出到 target。
@@ -90,7 +97,7 @@ func LineBatchActive() bool { return lineBatch.active }
 func batchStrokeLine(x1, y1, x2, y2, width float32, clr color.Color) {
 	// 解析颜色为 0~1 浮点（DrawTriangles 顶点颜色格式）
 	r, g, b, a := clr.RGBA()
-	if a == 0 {
+	if a == 0 || len(lineBatch.vs) >= lbMaxVerts {
 		return
 	}
 	af := float32(a) / 0xffff

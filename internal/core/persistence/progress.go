@@ -170,12 +170,16 @@ func NewProgressManager(s Storage) *ProgressManager {
 }
 
 // defaultFirstMap 返回指定模式的初始解锁地图 ID。
-// 经典模式使用 map_c01，其他模式使用 map_01。
+// 经典模式使用 map_c01，合作模式使用 map_co01，其他模式使用 map_01。
 func defaultFirstMap(modeID string) string {
-	if modeID == "classic" {
+	switch modeID {
+	case "classic":
 		return "map_c01"
+	case "coop":
+		return "map_co01"
+	default:
+		return "map_01"
 	}
-	return "map_01"
 }
 
 // modeUnlockData 返回指定模式的解锁数据，不存在则创建默认值。

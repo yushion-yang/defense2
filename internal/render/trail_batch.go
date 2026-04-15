@@ -127,17 +127,32 @@ func init() {
 
 // ── Batch API ────────────────────────────────────────────────────────
 
+// trailInitCapVs / trailInitCapIs 是 init() 中预分配的初始容量。
+// 压缩逻辑不会缩到比初始值更小，避免正常场景下反复分配。
+const (
+	trailInitCapCircVs = 1024 * 7 * 4 // 28672
+	trailInitCapCircIs = 1024 * 7 * 6 // 43008
+	trailInitCapLineVs = 1024 * 5 * 4 // 20480
+	trailInitCapLineIs = 1024 * 5 * 6 // 30720
+	trailMaxVerts      = 60000        // uint16 安全上限（<65536），超过则丢弃新几何
+)
+
 func beginTrailBatch() {
-	trailBatch.circVs = trailBatch.circVs[:0]
-	trailBatch.circIs = trailBatch.circIs[:0]
-	trailBatch.lineVs = trailBatch.lineVs[:0]
-	trailBatch.lineIs = trailBatch.lineIs[:0]
+	// 压缩：如果容量超过上帧使用量 4 倍且超过初始预分配，重新分配释放峰值内存
+	trailBatch.circVs = compactVertices(trailBatch.circVs, trailInitCapCircVs)
+	trailBatch.circIs = compactIndices(trailBatch.circIs, trailInitCapCircIs)
+	trailBatch.lineVs = compactVertices(trailBatch.lineVs, trailInitCapLineVs)
+	trailBatch.lineIs = compactIndices(trailBatch.lineIs, trailInitCapLineIs)
 }
 
 // addTrailDot 向批量缓冲区追加一个软边圆点（采样圆形纹理）。
 // 颜色预乘 alpha 处理后设置到四个顶点的 ColorR/G/B/A 上。
 func addTrailDot(cx, cy, radius float32, clr color.RGBA) {
 	if clr.A == 0 || radius <= 0 {
+		return
+	}
+	// uint16 索引安全上限，超过则丢弃（防止索引溢出导致渲染垃圾）
+	if len(trailBatch.circVs) >= trailMaxVerts {
 		return
 	}
 	sx := draw.S32(cx)
@@ -163,6 +178,9 @@ func addTrailDot(cx, cy, radius float32, clr color.RGBA) {
 // 计算线段法线方向并沿法线扩展半宽度，生成 4 个顶点构成矩形。
 func addTrailLine(x1, y1, x2, y2, width float32, clr color.RGBA) {
 	if clr.A == 0 || width <= 0 {
+		return
+	}
+	if len(trailBatch.lineVs) >= trailMaxVerts {
 		return
 	}
 	sx1 := draw.S32(x1)

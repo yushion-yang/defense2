@@ -115,6 +115,45 @@ func TestClassicModeUnlockChain(t *testing.T) {
 	}
 }
 
+func TestCoopModeDefaultUnlock(t *testing.T) {
+	s := newMemStorage()
+	pm := persistence.NewProgressManager(s)
+
+	// 合作模式首关 map_co01 应默认解锁
+	if !pm.IsMapUnlocked("coop", "map_co01") {
+		t.Fatal("合作模式 map_co01 应默认解锁")
+	}
+	// 合作模式 map_co02 应锁定
+	if pm.IsMapUnlocked("coop", "map_co02") {
+		t.Fatal("合作模式 map_co02 初始应锁定")
+	}
+	// 合作模式不应解锁 map_01（单人地图）
+	if pm.IsMapUnlocked("coop", "map_01") {
+		t.Fatal("合作模式不应解锁 map_01")
+	}
+}
+
+func TestCoopModeUnlockChain(t *testing.T) {
+	s := newMemStorage()
+	pm := persistence.NewProgressManager(s)
+
+	// 通关 map_co01 应解锁 map_co02
+	pm.RecordGameResult("coop", "map_co01", 40, true)
+	if !pm.IsMapUnlocked("coop", "map_co02") {
+		t.Fatal("通关 map_co01 应解锁 coop 的 map_co02")
+	}
+	// 不应影响战役模式
+	if pm.IsMapUnlocked("casual", "map_co02") {
+		t.Fatal("coop 通关不应解锁 casual 的 map_co02")
+	}
+
+	// 通关 map_co02 应解锁 map_co03
+	pm.RecordGameResult("coop", "map_co02", 60, true)
+	if !pm.IsMapUnlocked("coop", "map_co03") {
+		t.Fatal("通关 map_co02 应解锁 coop 的 map_co03")
+	}
+}
+
 // newMemStorage 创建测试用临时文件存储（每次独立目录）。
 func newMemStorage() persistence.Storage {
 	dir, _ := os.MkdirTemp("", "defense2-test-*")
