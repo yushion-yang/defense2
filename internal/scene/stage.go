@@ -172,6 +172,13 @@ type StageScene struct {
 	buildHoverIdx int                   // 建塔面板鼠标悬停索引（-1=无）
 	buildMenuTab  int                   // 建塔面板当前 tab 索引（0=全部, 1=自定义）
 	itemHoverIdx  int                   // 道具面板鼠标悬停索引（-1=无）
+
+	// ── 蓝图管理上下文菜单 ──
+	bpCtxMenuOpen  bool      // 是否显示上下文菜单
+	bpCtxMenuX     float64   // 菜单位置 X（逻辑坐标）
+	bpCtxMenuY     float64   // 菜单位置 Y
+	bpCtxMenuBpID  string    // 操作目标蓝图 ID（bp_xxx）
+	bpCtxMenuRects []ui.Rect // 菜单项 hitTest 区域（编辑/复制/删除）
 	gesture       *input.Gesture        // 统一手势识别器（桌面+触摸）
 
 	// ── 波次管理 ──
@@ -2969,6 +2976,11 @@ func (s *StageScene) drawScene(screen *ebiten.Image) {
 		hud.DrawBuildMenu(screen, s.buildBuildMenuData())
 	}
 
+	// HUD：蓝图管理上下文菜单（右键蓝图卡片弹出）
+	if s.bpCtxMenuOpen {
+		s.drawBlueprintContextMenu(screen)
+	}
+
 	// HUD：道具面板（仅面板打开时构建数据）
 	if s.imode == modeItemPanel || s.imode == modeItemDrag {
 		hud.DrawItemPanel(screen, s.buildItemPanelData())
@@ -3262,6 +3274,88 @@ func (s *StageScene) buildMenuCardToDefIdx(cardIdx int) int {
 		}
 	}
 	return cardIdx // fallback（不应到达）
+}
+
+// reloadTowerDefs 重新加载可建造塔列表。
+// 蓝图编辑/复制/删除后调用，确保建塔面板数据与蓝图存储同步。
+func (s *StageScene) reloadTowerDefs() {
+	s.towerDefs = loadTowerDefsForMode(s.ruleset, s.progressMgr, s.blueprintStore)
+}
+
+// closeBlueprintContextMenu 关闭蓝图上下文菜单。
+func (s *StageScene) closeBlueprintContextMenu() {
+	s.bpCtxMenuOpen = false
+	s.bpCtxMenuBpID = ""
+	s.bpCtxMenuRects = nil
+}
+
+// drawBlueprintContextMenu 渲染蓝图管理上下文菜单（编辑/复制/删除）。
+// 在右键蓝图卡片后调用，显示一个小浮动面板。
+func (s *StageScene) drawBlueprintContextMenu(screen *ebiten.Image) {
+	const (
+		menuW    = float32(100) // 菜单宽度
+		menuItemH = float32(28) // 每个菜单项高度
+		menuPad  = float32(6)   // 菜单内边距
+		menuR    = float32(8)   // 菜单圆角
+	)
+
+	type menuItem struct {
+		label string
+		clr   color.Color
+	}
+	items := []menuItem{
+		{"编辑", theme.TextTitle},
+		{"复制", theme.TextTitle},
+		{"删除", theme.BtnDanger},
+	}
+
+	menuH := menuPad*2 + float32(len(items))*menuItemH
+	mx := float32(s.bpCtxMenuX)
+	my := float32(s.bpCtxMenuY)
+
+	// 屏幕边界修正
+	if mx+menuW > float32(theme.CanvasW) {
+		mx = float32(theme.CanvasW) - menuW - 4
+	}
+	if my+menuH > float32(theme.CanvasH) {
+		my = float32(theme.CanvasH) - menuH - 4
+	}
+	if mx < 0 {
+		mx = 4
+	}
+	if my < 0 {
+		my = 4
+	}
+
+	// 面板背景
+	ui.Panel(screen, mx, my, menuW, menuH, ui.PanelStyle{
+		BgColor:     color.RGBA{R: 18, G: 24, B: 42, A: 245},
+		BorderColor: color.RGBA{R: 60, G: 80, B: 120, A: 200},
+		Radius:      menuR,
+	})
+
+	// 菜单项
+	s.bpCtxMenuRects = make([]ui.Rect, len(items))
+	for i, item := range items {
+		iy := my + menuPad + float32(i)*menuItemH
+		r := ui.Rect{X: mx + 2, Y: iy, W: menuW - 4, H: menuItemH}
+		s.bpCtxMenuRects[i] = r
+
+		// 悬停高亮
+		cmx, cmy := draw.CursorPos()
+		if r.Contains(cmx, cmy) {
+			draw.RoundRect(screen, r.X, r.Y, r.W, r.H, 4,
+				color.RGBA{R: 40, G: 50, B: 80, A: 180})
+		}
+
+		// 文本居中
+		ui.LabelV(screen, item.label,
+			float64(r.X)+float64(r.W)/2,
+			float64(r.Y)+float64(r.H)/2,
+			float64(r.W)-8,
+			ui.LabelStyle{Font: theme.FontBody, Color: item.clr, Bold: true},
+		)
+	}
 }
 
 func (s *StageScene) buildItemPanelData() hud.ItemPanelData {
