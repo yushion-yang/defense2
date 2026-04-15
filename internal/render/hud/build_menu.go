@@ -41,6 +41,14 @@ type BuildMenuData struct {
 	Gold           int
 	HoverIdx       int
 	Visible        bool
+	Tabs           []string // tab 标签列表（如 ["全部", "自定义"]），空或长度 ≤1 时不显示 tab 栏
+	ActiveTab      int      // 当前激活的 tab 索引
+}
+
+// BuildMenuHitResult 建塔面板点击检测结果。
+type BuildMenuHitResult struct {
+	CardIdx int // ≥0 = 可建造卡索引, -1 = 面板外部, -2 = 关闭按钮, -3 = 面板内部但无卡片命中
+	TabIdx  int // ≥0 = tab 索引, -1 = 未命中 tab
 }
 
 // Build panel constants
@@ -60,10 +68,14 @@ const (
 type buildPanelMetrics struct {
 	panelX, panelY, panelW, panelH float32
 	gridX, gridY                   float32
+	tabY                           float32 // tab 栏 Y 坐标（无 tab 时为 0）
+	tabH                           float32 // tab 栏总高度（含下方间距，无 tab 时为 0）
 	rows                           int
 }
 
-func calcBuildPanelMetrics(count int) buildPanelMetrics {
+// calcBuildPanelMetrics 计算面板几何布局。
+// tabCount: tab 数量，≤1 时不预留 tab 栏空间。
+func calcBuildPanelMetrics(count, tabCount int) buildPanelMetrics {
 	rows := (count + bpCols - 1) / bpCols
 	cols := bpCols
 	if count < cols {
@@ -73,11 +85,19 @@ func calcBuildPanelMetrics(count int) buildPanelMetrics {
 	gridW := float32(cols)*bpCardW + float32(cols-1)*bpCardGap
 	gridH := float32(rows)*bpCardH + float32(rows-1)*bpCardGap
 
+	// tab 栏高度：有多个 tab 时预留 tab 按钮高度 + 底部间距
+	var tabH float32
+	if tabCount > 1 {
+		tabH = float32(theme.BuildFactionTabH) + float32(theme.BuildFactionTabGap) + 4
+	}
+
 	panelW := gridW + bpPadX*2
-	panelH := bpTitleH + bpHeaderH + gridH + bpPadY*2
+	panelH := bpTitleH + bpHeaderH + tabH + gridH + bpPadY*2
 
 	panelX := (float32(theme.CanvasW) - panelW) / 2
 	panelY := float32(theme.CanvasH) - panelH - float32(theme.BottomMargin) - float32(theme.ActionBarH) - 4
+
+	tabY := panelY + bpTitleH + bpHeaderH - 4
 
 	return buildPanelMetrics{
 		panelX: panelX,
@@ -85,18 +105,24 @@ func calcBuildPanelMetrics(count int) buildPanelMetrics {
 		panelW: panelW,
 		panelH: panelH,
 		gridX:  panelX + bpPadX,
-		gridY:  panelY + bpTitleH + bpHeaderH,
+		gridY:  panelY + bpTitleH + bpHeaderH + tabH,
+		tabY:   tabY,
+		tabH:   tabH,
 		rows:   rows,
 	}
 }
 
+// lastTabRects 缓存上一次渲染的 tab 按钮矩形（供 hit test 使用）。
+var lastTabRects []ui.Rect
+
 // DrawBuildMenu renders the build panel popup.
 func DrawBuildMenu(screen *ebiten.Image, d BuildMenuData) {
 	if !d.Visible || len(d.Cards) == 0 {
+		lastTabRects = nil
 		return
 	}
 
-	m := calcBuildPanelMetrics(len(d.Cards))
+	m := calcBuildPanelMetrics(len(d.Cards), len(d.Tabs))
 
 	// Panel background + border
 	ui.Panel(screen, m.panelX, m.panelY, m.panelW, m.panelH, ui.PanelStyle{
@@ -116,6 +142,13 @@ func DrawBuildMenu(screen *ebiten.Image, d BuildMenuData) {
 		Font: theme.FontMD, Color: theme.TextMuted, Align: ui.AlignRight,
 	})
 
+	// Tab bar（仅多个 tab 时显示）
+	if len(d.Tabs) > 1 {
+		lastTabRects = drawBuildMenuTabs(screen, d, m)
+	} else {
+		lastTabRects = nil
+	}
+
 	for i, card := range d.Cards {
 		col := i % bpCols
 		row := i / bpCols
@@ -134,6 +167,38 @@ func DrawBuildMenu(screen *ebiten.Image, d BuildMenuData) {
 	if d.HoverIdx >= 0 && d.HoverIdx < len(d.Cards) {
 		drawBuildCardTooltip(screen, d.Cards[d.HoverIdx], m)
 	}
+}
+
+// drawBuildMenuTabs 在标题行与卡片网格之间渲染 tab 按钮行。
+// 返回每个 tab 的矩形（供 hit test 使用）。
+func drawBuildMenuTabs(screen *ebiten.Image, d BuildMenuData, m buildPanelMetrics) []ui.Rect {
+	items := make([]ui.ButtonRowItem, len(d.Tabs))
+	for i, label := range d.Tabs {
+		bgClr := theme.BtnMuted // 非激活 tab 用低调底色
+		if i == d.ActiveTab {
+			bgClr = theme.BtnPrimary // 激活 tab 用主色
+		}
+		items[i] = ui.ButtonRowItem{
+			Label: label,
+			Color: bgClr,
+			Bold:  i == d.ActiveTab,
+		}
+	}
+
+	// tab 区域：面板内容区左侧对齐，宽度与网格等宽
+	tabArea := ui.Rect{
+		X: m.gridX,
+		Y: m.tabY,
+		W: m.panelW - bpPadX*2,
+		H: float32(theme.BuildFactionTabH),
+	}
+	result := ui.DrawButtonRow(screen, tabArea, items, ui.ButtonRowStyle{
+		Height:   float32(theme.BuildFactionTabH),
+		Gap:      float32(theme.BuildFactionTabGap),
+		Radius:   float32(theme.BuildFactionTabR),
+		FontSize: theme.FontSM,
+	})
+	return result.Rects
 }
 
 // drawBuildableCard renders a normal buildable tower card.
@@ -407,26 +472,35 @@ func drawVariantTooltip(screen *ebiten.Image, card BuildCardVM, m buildPanelMetr
 	})
 }
 
-// BuildMenuHitTest returns the buildable tower card index hit by (px, py).
-// totalCount is total cards (for panel sizing), buildableCount is the clickable subset.
-// Returns: ≥0 = buildable card index, -1 = outside panel, -2 = close button, -3 = inside panel but no card hit.
-func BuildMenuHitTest(px, py float32, totalCount, buildableCount int) int {
+// BuildMenuHitTest 检测 (px, py) 在建塔面板中命中的元素。
+// totalCount 用于面板布局尺寸，buildableCount 为可点击的卡片子集，tabCount 为 tab 数量。
+// 返回 BuildMenuHitResult：CardIdx 语义同旧版本，TabIdx ≥0 表示命中了某个 tab。
+func BuildMenuHitTest(px, py float32, totalCount, buildableCount, tabCount int) BuildMenuHitResult {
+	none := BuildMenuHitResult{CardIdx: -1, TabIdx: -1}
 	if totalCount <= 0 {
-		return -1
+		return none
 	}
 
-	m := calcBuildPanelMetrics(totalCount)
+	m := calcBuildPanelMetrics(totalCount, tabCount)
 
 	// Quick panel bounds check
 	if px < m.panelX || px > m.panelX+m.panelW || py < m.panelY || py > m.panelY+m.panelH {
-		return -1 // outside panel
+		return none // outside panel
 	}
 
 	// Close button area (top-right corner)
 	closeX := m.panelX + m.panelW - bpPadX - 40
 	closeY := m.panelY + 4
 	if px >= closeX && px <= closeX+50 && py >= closeY && py <= closeY+24 {
-		return -2 // close signal
+		return BuildMenuHitResult{CardIdx: -2, TabIdx: -1}
+	}
+
+	// Tab hit test（使用 lastTabRects 缓存的矩形）
+	if len(lastTabRects) > 0 {
+		tabIdx := ui.HitTestButtonRow(lastTabRects, float64(px), float64(py))
+		if tabIdx >= 0 {
+			return BuildMenuHitResult{CardIdx: -3, TabIdx: tabIdx}
+		}
 	}
 
 	// Card hit test — only buildable cards are clickable
@@ -436,18 +510,19 @@ func BuildMenuHitTest(px, py float32, totalCount, buildableCount int) int {
 		cx := m.gridX + float32(col)*(bpCardW+bpCardGap)
 		cy := m.gridY + float32(row)*(bpCardH+bpCardGap)
 		if px >= cx && px <= cx+bpCardW && py >= cy && py <= cy+bpCardH {
-			return i
+			return BuildMenuHitResult{CardIdx: i, TabIdx: -1}
 		}
 	}
-	return -3 // inside panel but no buildable card hit (e.g. variant card, padding)
+	return BuildMenuHitResult{CardIdx: -3, TabIdx: -1}
 }
 
 // BuildMenuHoverTest returns the card index the mouse is hovering over (all cards, including variants).
-func BuildMenuHoverTest(px, py float32, count int) int {
+// tabCount 用于正确计算网格偏移（有 tab 时网格下移）。
+func BuildMenuHoverTest(px, py float32, count, tabCount int) int {
 	if count <= 0 {
 		return -1
 	}
-	m := calcBuildPanelMetrics(count)
+	m := calcBuildPanelMetrics(count, tabCount)
 
 	for i := 0; i < count; i++ {
 		col := i % bpCols
