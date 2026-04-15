@@ -49,6 +49,11 @@ type EffectResult struct {
 	IsCrit     bool
 	CritMult   float64
 
+	// ── 目标追踪（由 interpreter 在 exec 循环中填充）──
+	TargetEnemyIdx int     // 效果目标敌人索引（-1=无敌人目标）
+	TargetTowerIdx int     // 效果目标塔索引（-1=无塔目标）
+	TargetX, TargetY float64 // 效果目标坐标（用于匹配目标塔/敌人位置）
+
 	// ── CC ──
 	SlowFactor float64
 	StunDur    float64

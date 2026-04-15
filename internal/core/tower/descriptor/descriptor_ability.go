@@ -15,6 +15,7 @@
 package descriptor
 
 import (
+	"defense2/internal/core/buff"
 	"defense2/internal/core/enemy"
 	"defense2/internal/core/projectile"
 	"defense2/internal/core/tower"
@@ -49,6 +50,7 @@ func (a *descriptorAbilityBase) buildHitTriggerContext(
 			X:       e.X,
 			Y:       e.Y,
 			HpRatio: safeHpRatio(e.HP, e.MaxHP),
+			MaxHp:   e.MaxHP,
 			Active:  true,
 			Index:   e.ID,
 		}
@@ -132,6 +134,10 @@ func (a *DescriptorAbilityFull) OnHit(
 
 // OnTick 每帧调用，执行 onTick 管线。
 // Elapsed 传入 DT（帧增量），CooldownCondition 内部自行累计。
+//
+// Buff/SelfBuff 效果直接应用到目标塔（不走 TickResult），
+// 复用现有 ConfigAbility 的 0.3s 短 buff 模式。
+// Silence/Weaken/Root 等敌人 debuff 也在此直接应用到目标敌人。
 func (a *DescriptorAbilityFull) OnTick(
 	t *tower.Tower, ctx *tower.TickContext,
 ) *tower.TickResult {
@@ -141,7 +147,124 @@ func (a *DescriptorAbilityFull) OnTick(
 	if len(results) == 0 {
 		return nil
 	}
+
+	// 直接应用 buff/debuff 效果，不走 TickResult 适配
+	applyTickBuffEffects(t, ctx, results)
+
 	return AdaptToTickResult(results)
+}
+
+// buffStatToID 将描述符的 stat 名映射到塔光环 buff ID。
+var buffStatToID = map[string]string{
+	"damage": buff.IDAuraDamageAmp,
+	"speed":  buff.IDAuraPctSpeed,
+	"range":  buff.IDAuraFlatRange,
+	"crit":   buff.IDAuraCrit,
+}
+
+// applyTickBuffEffects 直接应用 tick 管线中的 Buff/SelfBuff/敌人 debuff 效果。
+//
+// SelfBuff: 以 0.3s 短 buff 形式施加到自身塔（同 ConfigAbility 光环模式）。
+// Buff: 通过 TargetX/TargetY 匹配目标塔，施加 0.3s 短 buff。
+// Silence/Weaken/Root: 通过 TargetEnemyIdx 匹配敌人，直接施加。
+func applyTickBuffEffects(self *tower.Tower, ctx *tower.TickContext, results []EffectResult) {
+	for i := range results {
+		r := &results[i]
+		switch r.Type {
+		case EffTypeSelfBuff:
+			// 自身 buff：0.3s 短时效，每帧由 tick 续期
+			buffID, ok := buffStatToID[r.BuffStat]
+			if !ok {
+				continue
+			}
+			srcKey := "desc_" + self.InstanceKey
+			self.Buffs.Add(buff.Buff{
+				ID: buffID, Category: buff.CatAura,
+				Source: srcKey, Value: r.BuffBonus,
+				Duration: 0.3, Remaining: 0.3,
+			})
+
+		case EffTypeBuff:
+			// 友方 buff：通过坐标匹配目标塔
+			if ctx.Towers == nil {
+				continue
+			}
+			buffID, ok := buffStatToID[r.BuffStat]
+			if !ok {
+				continue
+			}
+			srcKey := "desc_" + self.InstanceKey
+			tx, ty := r.TargetX, r.TargetY
+			ctx.Towers.Each(func(other *tower.Tower) {
+				if other == self || other.Selling {
+					return
+				}
+				// 坐标精确匹配（塔位置基于网格，不会有浮点误差）
+				if other.X == tx && other.Y == ty {
+					other.Buffs.Add(buff.Buff{
+						ID: buffID, Category: buff.CatAura,
+						Source: srcKey, Value: r.BuffBonus,
+						Duration: 0.3, Remaining: 0.3,
+					})
+				}
+			})
+
+		case EffTypeSilence:
+			// 沉默：设置敌人帧级标记
+			if ctx.Enemies == nil {
+				continue
+			}
+			idx := r.TargetEnemyIdx
+			ctx.Enemies.EachActive(func(e *enemy.Enemy) {
+				if e.ID == idx {
+					e.Silenced = true
+					e.AbilitySilenced = true
+				}
+			})
+
+		case EffTypeWeaken:
+			// 易伤：施加短时效 debuff
+			if ctx.Enemies == nil {
+				continue
+			}
+			idx := r.TargetEnemyIdx
+			srcKey := "desc_" + self.InstanceKey
+			ctx.Enemies.EachActive(func(e *enemy.Enemy) {
+				if e.ID == idx {
+					e.Buffs.Add(buff.Buff{
+						ID:        buff.IDWeaken,
+						Category:  buff.CatDebuff,
+						Source:    srcKey,
+						Value:     r.WeakenAmp,
+						Duration:  0.2,
+						Remaining: 0.2,
+					})
+				}
+			})
+
+		case EffTypeRoot:
+			// 定身：施加 CC buff
+			if ctx.Enemies == nil {
+				continue
+			}
+			idx := r.TargetEnemyIdx
+			srcKey := "desc_" + self.InstanceKey
+			ctx.Enemies.EachActive(func(e *enemy.Enemy) {
+				if e.ID == idx && !e.IsControlImmune && !e.HasControlImmunity() {
+					dur := r.RootDur * (1 - e.Tenacity)
+					if dur > 0 {
+						e.Buffs.Add(buff.Buff{
+							ID:        buff.IDRoot,
+							Category:  buff.CatCC,
+							Source:    srcKey,
+							Duration:  dur,
+							Remaining: dur,
+						})
+					}
+				}
+			})
+		}
+	}
 }
 
 // ── 工厂函数 ─────────────────────────────────────────────────
@@ -206,6 +329,7 @@ func enemyToRef(e *enemy.Enemy) EnemyRef {
 		X:       e.X,
 		Y:       e.Y,
 		HpRatio: safeHpRatio(e.HP, e.MaxHP),
+		MaxHp:   e.MaxHP,
 		Active:  true,
 	}
 }
