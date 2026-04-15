@@ -47,8 +47,8 @@ func TestClassicWavesCoverage(t *testing.T) {
 					t.Errorf("wave %d 缺少配置条目", w)
 					continue
 				}
-				if len(entry.Enemies) == 0 {
-					t.Errorf("wave %d enemies 为空", w)
+				if len(entry.SpawnSeq()) == 0 {
+					t.Errorf("wave %d spawnSeq 为空", w)
 				}
 			}
 		})
@@ -68,9 +68,9 @@ func TestClassicWavesArchetypesExist(t *testing.T) {
 				t.Fatalf("加载失败: %v", err)
 			}
 			for _, entry := range cwc.Waves {
-				for i, ee := range entry.Enemies {
+				for i, ee := range entry.SpawnSeq() {
 					if _, ok := archetypes[ee.Archetype]; !ok {
-						t.Errorf("wave %d enemies[%d]: 原型 %q 不存在", entry.Wave, i, ee.Archetype)
+						t.Errorf("wave %d spawnSeq[%d]: 原型 %q 不存在", entry.Wave, i, ee.Archetype)
 					}
 				}
 				if entry.Boss != nil {
@@ -98,7 +98,7 @@ func TestClassicWavesBuffsValid(t *testing.T) {
 				if entry.Buffs == nil {
 					continue
 				}
-				enemyCount := len(entry.Enemies)
+				enemyCount := len(entry.SpawnSeq())
 				for idxStr, buffIDs := range entry.Buffs {
 					var idx int
 					if _, err := fmt.Sscanf(idxStr, "%d", &idx); err != nil {

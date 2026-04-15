@@ -484,9 +484,9 @@ func (s *Spawner) NextWavePreview() (entries []WavePreviewEntry, totalCount int,
 
 // enemyCount 返回当前波的常规敌人总数（不含 Boss）。
 func (s *Spawner) enemyCount() int {
-	// 经典模式：由配置表决定每波敌人数
+	// 经典模式：由配置表决定每波敌人数（展开后的序列长度）
 	if s.classicEntry != nil {
-		return len(s.classicEntry.Enemies)
+		return len(s.classicEntry.SpawnSeq())
 	}
 	if s.FixedCount > 0 {
 		return s.FixedCount
@@ -957,7 +957,8 @@ func (s *Spawner) tickClassic(pool *Pool, dt float64) {
 		return
 	}
 
-	total := len(entry.Enemies)
+	seq := entry.SpawnSeq()
+	total := len(seq)
 	if entry.Boss != nil {
 		total++ // Boss 追加在序列末尾
 	}
@@ -969,7 +970,7 @@ func (s *Spawner) tickClassic(pool *Pool, dt float64) {
 		if isBoss {
 			pathID = entry.Boss.Path
 		} else {
-			pathID = entry.Enemies[s.SpawnIndex].Path
+			pathID = seq[s.SpawnIndex].Path
 		}
 		path := s.classicResolvePath(pathID)
 
@@ -1021,7 +1022,7 @@ func (s *Spawner) tickClassic(pool *Pool, dt float64) {
 				}
 			} else {
 				// 普通敌人：按配置表精确序列取原型
-				archetype = entry.Enemies[s.SpawnIndex].Archetype
+				archetype = seq[s.SpawnIndex].Archetype
 				cfg = s.getConfig(archetype)
 			}
 

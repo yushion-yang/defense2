@@ -10,6 +10,7 @@ package config
 import (
 	"encoding/json"
 	"fmt"
+	"slices"
 )
 
 // ClassicEnemyEntry 单个敌人的出怪配置。
@@ -49,11 +50,58 @@ type ClassicBossEntry struct {
 }
 
 // ClassicWaveEntry 单波出怪配置。
+//
+// 两种互斥的出怪格式：
+//   - 单路径: "enemies": ["normal", "runner", ...] — 所有敌人走默认路径
+//   - 多路径: "paths": {"top": ["normal", ...], "bottom": ["runner", ...]} — 按路径分组
+//
+// 多路径格式在加载时展开为 spawnSeq（round-robin 交错），spawner 统一从 spawnSeq 读取。
 type ClassicWaveEntry struct {
-	Wave    int                 `json:"wave"`    // 波次号（1-based）
-	Enemies []ClassicEnemyEntry `json:"enemies"` // 精确出怪序列，按数组顺序逐个生成
-	Boss    *ClassicBossEntry   `json:"boss"`    // Boss 配置，null=无 Boss
-	Buffs   map[string][]string `json:"buffs"`   // 按敌人索引(0-based)指定 buff，key="索引"，value=buff ID 列表
+	Wave    int                                `json:"wave"`    // 波次号（1-based）
+	Enemies []ClassicEnemyEntry                `json:"enemies"` // 单路径格式：精确出怪序列
+	Paths   map[string][]ClassicEnemyEntry     `json:"paths"`   // 多路径格式：按路径 ID 分组
+	Boss    *ClassicBossEntry                  `json:"boss"`    // Boss 配置，null=无 Boss
+	Buffs   map[string][]string                `json:"buffs"`   // 按敌人索引(0-based)指定 buff
+	spawnSeq []ClassicEnemyEntry                                // 内部：展开后的统一出怪序列
+}
+
+// SpawnSeq 返回展开后的出怪序列。
+// 单路径模式直接返回 Enemies，多路径模式返回 round-robin 交错的序列。
+func (e *ClassicWaveEntry) SpawnSeq() []ClassicEnemyEntry {
+	return e.spawnSeq
+}
+
+// buildSpawnSeq 构建统一出怪序列。
+// 单路径: 直接复用 Enemies（Path 为空，由 spawner 走默认路径）。
+// 多路径: 各路径 round-robin 交错，每个 entry 带上对应的 Path。
+//
+// 例: paths={"top":["A","B","C"], "bottom":["D","E"]}
+// → spawnSeq=[A(top), D(bottom), B(top), E(bottom), C(top)]
+func (e *ClassicWaveEntry) buildSpawnSeq(pathOrder []string) {
+	if len(e.Paths) > 0 {
+		// 多路径：round-robin 交错
+		// pathOrder 保证遍历顺序确定
+		maxLen := 0
+		for _, enemies := range e.Paths {
+			if len(enemies) > maxLen {
+				maxLen = len(enemies)
+			}
+		}
+		e.spawnSeq = make([]ClassicEnemyEntry, 0, maxLen*len(pathOrder))
+		for i := 0; i < maxLen; i++ {
+			for _, pid := range pathOrder {
+				enemies := e.Paths[pid]
+				if i < len(enemies) {
+					entry := enemies[i]
+					entry.Path = pid
+					e.spawnSeq = append(e.spawnSeq, entry)
+				}
+			}
+		}
+	} else {
+		// 单路径：直接复用
+		e.spawnSeq = e.Enemies
+	}
 }
 
 // ClassicWavesScaling 经典模式独立的数值缩放参数。
@@ -126,12 +174,35 @@ func LoadClassicWavesConfig(mapID string) (*ClassicWavesConfig, error) {
 		}
 	}
 
-	// 验证每波 enemies 非空
-	for _, entry := range cfg.Waves {
-		if len(entry.Enemies) == 0 {
-			return nil, fmt.Errorf("classic waves config: wave %d has empty enemies", entry.Wave)
+	// 验证每波出怪定义非空 + 构建 spawnSeq
+	for i := range cfg.Waves {
+		entry := &cfg.Waves[i]
+		hasPaths := len(entry.Paths) > 0
+		hasEnemies := len(entry.Enemies) > 0
+		if !hasPaths && !hasEnemies {
+			return nil, fmt.Errorf("classic waves config: wave %d has no enemies or paths", entry.Wave)
 		}
+
+		// 多路径格式：提取排序后的路径 key 列表，保证遍历顺序确定
+		var pathOrder []string
+		if hasPaths {
+			for pid := range entry.Paths {
+				pathOrder = append(pathOrder, pid)
+			}
+			slices.Sort(pathOrder)
+			// 验证每条路径非空
+			for _, pid := range pathOrder {
+				if len(entry.Paths[pid]) == 0 {
+					return nil, fmt.Errorf("classic waves config: wave %d paths[%s] is empty", entry.Wave, pid)
+				}
+			}
+		}
+
+		entry.buildSpawnSeq(pathOrder)
 	}
+
+	// 重新构建 waveMap（buildSpawnSeq 修改了 Waves 元素）
+	cfg.buildWaveMap()
 
 	return &cfg, nil
 }

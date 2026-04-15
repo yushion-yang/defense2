@@ -10,107 +10,152 @@
     {
       "wave": 1,
       "_desc": "双路分流，普通敌人探路",
-      "enemies": ["normal", "normal", "normal", "normal", "normal", "normal"],
+      "paths": {
+        "top": ["normal", "normal", "normal"],
+        "bottom": ["normal", "normal", "normal"]
+      },
       "boss": null,
       "buffs": null
     },
     {
       "wave": 2,
       "_desc": "跑者两路突进",
-      "enemies": ["runner", "normal", "runner", "normal", "runner", "normal", "runner"],
+      "paths": {
+        "top": ["runner", "runner", "normal"],
+        "bottom": ["normal", "runner", "runner", "normal"]
+      },
       "boss": null,
       "buffs": null
     },
     {
       "wave": 3,
       "_desc": "蜂群涌入，考验两路覆盖",
-      "enemies": ["swarm", "swarm", "normal", "swarm", "swarm", "runner", "normal"],
+      "paths": {
+        "top": ["swarm", "swarm", "runner"],
+        "bottom": ["swarm", "normal", "swarm", "normal"]
+      },
       "boss": null,
       "buffs": null
     },
     {
       "wave": 4,
       "_desc": "坦克Boss登场，装甲随行",
-      "enemies": ["armored", "normal", "runner", "swarm", "armored", "normal", "swarm", "runner"],
+      "paths": {
+        "top": ["normal", "swarm", "armored", "runner"],
+        "bottom": ["armored", "runner", "swarm", "normal"]
+      },
       "boss": { "archetype": "tank" },
       "buffs": null
     },
     {
       "wave": 5,
       "_desc": "护盾+幽灵双路渗透",
-      "enemies": ["shielder", "phantom", "normal", "runner", "armored", "swarm", "shielder", "normal"],
+      "paths": {
+        "top": ["shielder", "normal", "armored", "normal"],
+        "bottom": ["phantom", "runner", "swarm", "shielder"]
+      },
       "boss": null,
       "buffs": null
     },
     {
       "wave": 6,
       "_desc": "坚定者带头，治疗兵跟随",
-      "enemies": ["steadfast", "healer", "armored", "runner", "phantom", "normal", "shielder", "swarm", "normal"],
+      "paths": {
+        "top": ["healer", "runner", "shielder", "normal"],
+        "bottom": ["steadfast", "armored", "phantom", "swarm", "normal"]
+      },
       "boss": null,
       "buffs": { "0": ["damageReduce"] }
     },
     {
       "wave": 7,
       "_desc": "增益兵强化蜂群冲锋",
-      "enemies": ["buffer", "swarm", "swarm", "runner", "armored", "phantom", "healer", "normal", "swarm", "runner"],
+      "paths": {
+        "top": ["buffer", "swarm", "armored", "normal", "runner"],
+        "bottom": ["swarm", "runner", "phantom", "healer", "swarm"]
+      },
       "boss": null,
-      "buffs": { "0": ["speedAura"], "4": ["regen"] }
+      "buffs": { "1": ["speedAura"], "8": ["regen"] }
     },
     {
       "wave": 8,
       "_desc": "巨像Boss碾压，铁壁护卫",
-      "enemies": ["ironwill", "armored", "shielder", "healer", "phantom", "runner", "steadfast", "swarm", "normal", "normal"],
+      "paths": {
+        "top": ["ironwill", "shielder", "runner", "swarm", "normal"],
+        "bottom": ["armored", "healer", "phantom", "steadfast", "normal"]
+      },
       "boss": { "archetype": "colossus" },
-      "buffs": { "2": ["damageReduce"] }
+      "buffs": { "3": ["damageReduce"] }
     },
     {
       "wave": 9,
       "_desc": "分裂者登场，清理压力陡增",
-      "enemies": ["splitter", "healer", "buffer", "armored", "runner", "phantom", "shielder", "swarm", "normal", "steadfast", "runner"],
+      "paths": {
+        "top": ["splitter", "buffer", "runner", "shielder", "runner"],
+        "bottom": ["healer", "armored", "phantom", "swarm", "normal", "steadfast"]
+      },
       "boss": null,
-      "buffs": { "0": ["berserk"], "2": ["healAura"] }
+      "buffs": { "1": ["berserk"], "4": ["healAura"] }
     },
     {
       "wave": 10,
       "_desc": "相位者穿行两路，防不胜防",
-      "enemies": ["phaser", "splitter", "healer", "ironwill", "armored", "runner", "phantom", "shielder", "swarm", "normal", "runner"],
+      "paths": {
+        "top": ["phaser", "healer", "armored", "phantom", "runner"],
+        "bottom": ["splitter", "ironwill", "runner", "shielder", "swarm", "normal"]
+      },
       "boss": null,
-      "buffs": { "0": ["regen"], "3": ["damageReduce"] }
+      "buffs": { "1": ["regen"], "6": ["damageReduce"] }
     },
     {
       "wave": 11,
       "_desc": "吸血者削弱塔力量",
-      "enemies": ["drainer", "phaser", "buffer", "armored", "healer", "splitter", "runner", "phantom", "swarm", "shielder", "normal", "runner"],
+      "paths": {
+        "top": ["drainer", "buffer", "healer", "runner", "swarm", "runner"],
+        "bottom": ["phaser", "armored", "splitter", "phantom", "shielder", "normal"]
+      },
       "boss": null,
-      "buffs": { "0": ["berserk"], "2": ["speedAura"] }
+      "buffs": { "1": ["berserk"], "4": ["speedAura"] }
     },
     {
       "wave": 12,
       "_desc": "净化者Boss清除所有debuff",
-      "enemies": ["drainer", "ironwill", "healer", "phaser", "armored", "buffer", "splitter", "phantom", "runner", "swarm", "steadfast", "normal"],
+      "paths": {
+        "top": ["drainer", "healer", "armored", "splitter", "runner", "steadfast"],
+        "bottom": ["ironwill", "phaser", "buffer", "phantom", "swarm", "normal"]
+      },
       "boss": { "archetype": "purifier" },
-      "buffs": { "0": ["damageReduce"], "2": ["healAura"], "6": ["berserk"] }
+      "buffs": { "1": ["damageReduce"], "4": ["healAura"], "11": ["berserk"] }
     },
     {
       "wave": 13,
       "_desc": "召唤者增援，战场混乱",
-      "enemies": ["summoner", "drainer", "phaser", "healer", "buffer", "ironwill", "armored", "splitter", "runner", "phantom", "shielder", "swarm", "normal"],
+      "paths": {
+        "top": ["summoner", "phaser", "buffer", "armored", "runner", "shielder", "normal"],
+        "bottom": ["drainer", "healer", "ironwill", "splitter", "phantom", "swarm"]
+      },
       "boss": null,
-      "buffs": { "0": ["regen"], "1": ["berserk"], "4": ["speedAura"] }
+      "buffs": { "1": ["regen"], "2": ["berserk"], "9": ["speedAura"] }
     },
     {
       "wave": 14,
       "_desc": "精锐混编，全面压制",
-      "enemies": ["drainer", "summoner", "phaser", "healer", "buffer", "ironwill", "splitter", "armored", "phantom", "runner", "shielder", "steadfast", "swarm", "normal"],
+      "paths": {
+        "top": ["drainer", "phaser", "buffer", "splitter", "phantom", "shielder", "swarm"],
+        "bottom": ["summoner", "healer", "ironwill", "armored", "runner", "steadfast", "normal"]
+      },
       "boss": null,
-      "buffs": { "0": ["damageReduce"], "2": ["healAura"], "5": ["berserk"] }
+      "buffs": { "1": ["damageReduce"], "4": ["healAura"], "11": ["berserk"] }
     },
     {
       "wave": 15,
       "_desc": "最终决战：巨像Boss率全阵容",
-      "enemies": ["drainer", "summoner", "phaser", "healer", "buffer", "ironwill", "splitter", "armored", "phantom", "runner", "shielder", "steadfast", "swarm", "normal", "normal"],
+      "paths": {
+        "top": ["drainer", "phaser", "buffer", "splitter", "phantom", "shielder", "swarm", "normal"],
+        "bottom": ["summoner", "healer", "ironwill", "armored", "runner", "steadfast", "swarm"]
+      },
       "boss": { "archetype": "colossus" },
-      "buffs": { "0": ["berserk", "damageReduce"], "2": ["healAura"], "4": ["speedAura"], "6": ["regen"] }
+      "buffs": { "0": ["berserk", "damageReduce"], "3": ["healAura"], "7": ["speedAura"], "10": ["regen"] }
     }
   ]
 }
