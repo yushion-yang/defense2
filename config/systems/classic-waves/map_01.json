@@ -1,0 +1,95 @@
+{
+  "_meta": { "description": "经典模式 map_01 波次配置 — 新手入门，12波，单路径", "version": "1.0" },
+  "totalWaves": 12,
+  "scaling": {
+    "hpBase": 40, "hpPerWave": 65, "hpQuadratic": 2.0,
+    "speedBase": 45, "speedPerWave": 0,
+    "spawnInterval": 2.0
+  },
+  "waves": [
+    {
+      "wave": 1,
+      "_desc": "初始波：少量普通敌人试探",
+      "enemies": ["normal", "normal", "normal", "normal", "normal", "normal"],
+      "boss": null,
+      "buffs": null
+    },
+    {
+      "wave": 2,
+      "_desc": "混入快速单位，测试反应",
+      "enemies": ["normal", "normal", "runner", "normal", "normal", "runner"],
+      "boss": null,
+      "buffs": null
+    },
+    {
+      "wave": 3,
+      "_desc": "蜂群登场，数量压制",
+      "enemies": ["swarm", "swarm", "normal", "runner", "swarm", "swarm", "normal"],
+      "boss": null,
+      "buffs": null
+    },
+    {
+      "wave": 4,
+      "_desc": "首个Boss波：坦克领队",
+      "enemies": ["normal", "runner", "normal", "swarm", "swarm", "normal", "runner"],
+      "boss": { "archetype": "tank" },
+      "buffs": null
+    },
+    {
+      "wave": 5,
+      "_desc": "装甲敌人登场，需要高伤输出",
+      "enemies": ["armored", "normal", "runner", "armored", "normal", "swarm", "swarm", "runner"],
+      "boss": null,
+      "buffs": null
+    },
+    {
+      "wave": 6,
+      "_desc": "护盾兵掩护推进",
+      "enemies": ["shielder", "normal", "armored", "runner", "normal", "shielder", "swarm", "swarm"],
+      "boss": null,
+      "buffs": null
+    },
+    {
+      "wave": 7,
+      "_desc": "幽灵渗透，穿透防线",
+      "enemies": ["phantom", "normal", "runner", "phantom", "armored", "swarm", "normal", "runner", "swarm"],
+      "boss": null,
+      "buffs": null
+    },
+    {
+      "wave": 8,
+      "_desc": "巨像Boss压境，治疗兵支援",
+      "enemies": ["healer", "armored", "shielder", "normal", "runner", "phantom", "swarm", "swarm", "normal"],
+      "boss": { "archetype": "colossus" },
+      "buffs": null
+    },
+    {
+      "wave": 9,
+      "_desc": "坚定者不受控制，治疗持续恢复",
+      "enemies": ["steadfast", "healer", "armored", "runner", "phantom", "normal", "shielder", "swarm", "normal", "runner"],
+      "boss": null,
+      "buffs": { "0": ["regen"] }
+    },
+    {
+      "wave": 10,
+      "_desc": "增益兵强化队友，分裂者制造混乱",
+      "enemies": ["buffer", "splitter", "armored", "healer", "runner", "normal", "phantom", "swarm", "shielder", "normal"],
+      "boss": null,
+      "buffs": { "0": ["speedAura"], "2": ["damageReduce"] }
+    },
+    {
+      "wave": 11,
+      "_desc": "全阵容混编冲锋",
+      "enemies": ["splitter", "buffer", "healer", "armored", "phantom", "shielder", "runner", "steadfast", "swarm", "normal", "runner"],
+      "boss": null,
+      "buffs": { "1": ["berserk"], "3": ["regen"] }
+    },
+    {
+      "wave": 12,
+      "_desc": "最终波：坦克Boss率精锐收尾",
+      "enemies": ["armored", "shielder", "healer", "buffer", "phantom", "splitter", "runner", "steadfast", "swarm", "normal", "normal"],
+      "boss": { "archetype": "tank" },
+      "buffs": { "2": ["healAura"], "5": ["berserk"] }
+    }
+  ]
+}

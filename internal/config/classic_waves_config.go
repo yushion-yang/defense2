@@ -3,8 +3,8 @@
 // 经典模式要求全确定行为：每波的敌人序列、Boss 原型、附加 buff
 // 全部由配置表精确指定，不使用任何随机逻辑。
 //
-// 配置文件：config/systems/classic-waves.json
-// 关联：由 stage.go 在经典模式初始化时加载，注入 spawner.ClassicWaves。
+// 配置文件：config/systems/classic-waves/{mapID}.json（每张地图独立配置）
+// 关联：由 stage.go 在经典模式初始化时按地图 ID 加载，注入 spawner.ClassicWaves。
 package config
 
 import (
@@ -91,15 +91,16 @@ func (c *ClassicWavesConfig) buildWaveMap() {
 	}
 }
 
-// LoadClassicWavesConfig 从 config/systems/classic-waves/classic-waves.json 加载经典出怪配置。
+// LoadClassicWavesConfig 从 config/systems/classic-waves/{mapID}.json 加载指定地图的经典出怪配置。
 // 必须在 SetDataFS() 之后调用。
-func LoadClassicWavesConfig() (*ClassicWavesConfig, error) {
+func LoadClassicWavesConfig(mapID string) (*ClassicWavesConfig, error) {
 	if dataFS == nil {
 		return nil, fmt.Errorf("load classic waves config: dataFS not initialized")
 	}
-	data, err := dataFS.ReadFile("config/systems/classic-waves/classic-waves.json")
+	path := "config/systems/classic-waves/" + mapID + ".json"
+	data, err := dataFS.ReadFile(path)
 	if err != nil {
-		return nil, fmt.Errorf("load classic waves config: %w", err)
+		return nil, fmt.Errorf("load classic waves config for %s: %w", mapID, err)
 	}
 
 	var cfg ClassicWavesConfig

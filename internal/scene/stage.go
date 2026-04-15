@@ -356,7 +356,7 @@ func NewStageSceneWithOpts(sw Switcher, opts StageOptions) *StageScene {
 
 	// 经典模式：加载确定性出怪配置，覆盖随机出怪逻辑
 	if session.Ruleset().UseClassicWaves() {
-		if cwc, err := config.LoadClassicWavesConfig(); err == nil {
+		if cwc, err := config.LoadClassicWavesConfig(opts.MapID); err == nil {
 			spawner.ClassicWaves = cwc
 			spawner.MaxWaves = cwc.TotalWaves
 		} else {
@@ -3389,7 +3389,7 @@ func convertArchetypesToSpawnConfigs(archetypes map[string]*config.EnemyArchetyp
 			Radius:      a.Radius,
 			Boss:        a.Boss,
 			RewardScale: a.RewardScale,
-			// 分裂默认值（被 deathSplit 能力覆盖）。从 balance.json 读取。
+			// 分裂默认值（被 deathSplit 能力覆盖）。从 enemies/balance.json 读取。
 			SplitScale:      config.GlobalBalance().Split.HpRatio,
 			SplitHPRatio:    config.GlobalBalance().Split.HpRatio,
 			SplitSpeedScale: config.GlobalBalance().Split.SpeedScale,
