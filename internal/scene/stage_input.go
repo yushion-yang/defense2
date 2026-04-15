@@ -320,7 +320,7 @@ func (s *StageScene) handleInput() {
 
 	// ── Hover 更新（每帧） ──
 	if s.imode == modeBuildMenu {
-		s.buildHoverIdx = hud.BuildMenuHoverTest(fmx, fmy, s.buildMenuTotalCards(), 0)
+		s.buildHoverIdx = hud.BuildMenuHoverTest(fmx, fmy, s.buildMenuTotalCards(), s.buildMenuTabCount())
 	} else {
 		s.buildHoverIdx = -1
 	}
@@ -498,15 +498,17 @@ func (s *StageScene) handleInput() {
 
 	case modeBuildMenu:
 		// 建塔面板：点击卡片→进入放塔模式，点击关闭/外部→回 idle，点击 tab→切换分类
-		hit := hud.BuildMenuHitTest(ftx, fty, s.buildMenuTotalCards(), len(s.towerDefs), 0)
+		hit := hud.BuildMenuHitTest(ftx, fty, s.buildMenuTotalCards(), s.buildMenuBuildableCount(), s.buildMenuTabCount())
 		if hit.TabIdx >= 0 {
-			// tab 点击（Phase 2 Task 2 实现过滤逻辑，此处仅预留）
-			_ = hit.TabIdx
+			// tab 切换：更新当前 tab，重置 hover/选中状态，不关闭菜单
+			s.buildMenuTab = hit.TabIdx
+			s.buildHoverIdx = -1
+			s.selectedDef = -1
 		} else if hit.CardIdx == -2 || hit.CardIdx == -1 { // -2=关闭按钮, -1=面板外部
 			s.imode = modeIdle
 			s.audioMgr.PlayAt(gameAudio.SFXUIClose, gameAudio.VolUI)
 		} else if hit.CardIdx >= 0 { // buildable card
-			s.selectedDef = hit.CardIdx
+			s.selectedDef = s.buildMenuCardToDefIdx(hit.CardIdx)
 			s.selectedTower = nil
 			s.imode = modeBuildPlace
 		}
@@ -812,8 +814,10 @@ func (s *StageScene) clampCamera() {
 
 // enterBuildMode 进入建塔模式。
 // 优化: 只有一种塔型时跳过菜单直接进入放塔模式（减少一次点击）。
+// 每次打开菜单重置 tab 为"全部"（索引 0）。
 func (s *StageScene) enterBuildMode() {
-	s.selectedDef = -1 // 重置选择，避免上次选取的炮塔高亮残留
+	s.selectedDef = -1   // 重置选择，避免上次选取的炮塔高亮残留
+	s.buildMenuTab = 0   // 始终从"全部" tab 开始
 	if len(s.towerDefs) == 1 {
 		s.selectedDef = 0
 		s.imode = modeBuildPlace

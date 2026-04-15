@@ -170,6 +170,7 @@ type StageScene struct {
 	imode         interactMode          // 当前交互模式（modeIdle/modeBuildMenu/modePaused 等）
 	prePauseMode  interactMode          // 暂停前的交互模式（恢复暂停时回到此模式）
 	buildHoverIdx int                   // 建塔面板鼠标悬停索引（-1=无）
+	buildMenuTab  int                   // 建塔面板当前 tab 索引（0=全部, 1=自定义）
 	itemHoverIdx  int                   // 道具面板鼠标悬停索引（-1=无）
 	gesture       *input.Gesture        // 统一手势识别器（桌面+触摸）
 
@@ -3090,16 +3091,15 @@ func (s *StageScene) drawScene(screen *ebiten.Image) {
 
 // buildBuildMenuData 构建建塔面板的 ViewModel 数据。
 // 包含两部分卡片：可建造的塔类型(购买用) + 攻击方式变种卡片(展示用，不可购买)。
+// 有自定义蓝图时显示 tab 栏（"全部"/"自定义"），按当前 tab 过滤卡片。
 func (s *StageScene) buildBuildMenuData() hud.BuildMenuData {
-	buildableCount := len(s.towerDefs)
-	cards := make([]hud.BuildCardVM, 0, buildableCount+10)
-
-	// Buildable tower cards
 	isPreset := s.ruleset.UsePresetTowers()
 	abTable := config.GlobalAbilityTable()
+
+	// 构建全部可建造卡片
+	allBuildable := make([]hud.BuildCardVM, 0, len(s.towerDefs))
 	for _, def := range s.towerDefs {
 		roleTag, roleClr := towerRoleTags(def)
-		// 经典模式用对应 spriteKey，娱乐模式统一用 sentinel
 		spriteKey := "sentinel"
 		if isPreset {
 			spriteKey = spriteKeyFromDef(def)
@@ -3113,15 +3113,39 @@ func (s *StageScene) buildBuildMenuData() hud.BuildMenuData {
 			Buildable: true,
 			Category:  def.Category,
 		}
-		// 预设能力描述（经典模式 hover tooltip 用）
 		for _, abType := range def.PresetAbilities {
 			card.Abilities = append(card.Abilities, buildAbilityVM(abType, abTable, 100))
 		}
-		cards = append(cards, card)
+		allBuildable = append(allBuildable, card)
 	}
 
-	// 非预设模式：追加攻击方式变体卡（展示用）
-	if !isPreset {
+	// 判断是否显示 tab 栏：模式允许蓝图且有蓝图存在
+	var tabs []string
+	hasBP := s.ruleset.AllowCustomBlueprints() && s.blueprintStore != nil && s.blueprintStore.Count() > 0
+	if hasBP {
+		tabs = []string{"全部", "自定义"}
+	}
+
+	// 按 tab 过滤可建造卡片
+	var filteredBuildable []hud.BuildCardVM
+	if s.buildMenuTab == 1 && hasBP {
+		// "自定义" tab：只显示蓝图塔（Key 以 "bp_" 前缀开头）
+		for _, card := range allBuildable {
+			if strings.HasPrefix(card.Key, "bp_") {
+				filteredBuildable = append(filteredBuildable, card)
+			}
+		}
+	} else {
+		// "全部" tab 或无 tab：显示所有可建造卡
+		filteredBuildable = allBuildable
+	}
+
+	buildableCount := len(filteredBuildable)
+	cards := make([]hud.BuildCardVM, 0, buildableCount+10)
+	cards = append(cards, filteredBuildable...)
+
+	// 非预设模式且在"全部" tab 时：追加攻击方式变体卡（展示用）
+	if !isPreset && s.buildMenuTab == 0 {
 		attackAbils := tower.AbilitiesForCategory(config.AbilityCatAttack)
 		slices.SortFunc(attackAbils, func(a, b *config.AbilityDef) int {
 			return cmp.Compare(a.Type, b.Type)
@@ -3148,16 +3172,75 @@ func (s *StageScene) buildBuildMenuData() hud.BuildMenuData {
 		Gold:           s.gold,
 		HoverIdx:       s.buildHoverIdx,
 		Visible:        s.imode == modeBuildMenu,
+		Tabs:           tabs,
+		ActiveTab:      s.buildMenuTab,
 	}
 }
 
-// buildMenuTotalCards returns total card count for layout.
+// buildMenuTotalCards returns total card count for layout (受当前 tab 过滤影响)。
 // 经典模式只有可建造卡，娱乐模式还有攻击方式变体展示卡。
+// "自定义" tab 只计蓝图卡，不含变体卡。
 func (s *StageScene) buildMenuTotalCards() int {
+	hasBP := s.ruleset.AllowCustomBlueprints() && s.blueprintStore != nil && s.blueprintStore.Count() > 0
+	if s.buildMenuTab == 1 && hasBP {
+		// "自定义" tab：只有蓝图塔
+		count := 0
+		for _, def := range s.towerDefs {
+			if strings.HasPrefix(def.Key, "bp_") {
+				count++
+			}
+		}
+		return count
+	}
+	// "全部" tab
 	if s.ruleset.UsePresetTowers() {
 		return len(s.towerDefs)
 	}
 	return len(s.towerDefs) + len(tower.AbilitiesForCategory(config.AbilityCatAttack))
+}
+
+// buildMenuBuildableCount 返回当前 tab 过滤后的可建造卡数量。
+func (s *StageScene) buildMenuBuildableCount() int {
+	hasBP := s.ruleset.AllowCustomBlueprints() && s.blueprintStore != nil && s.blueprintStore.Count() > 0
+	if s.buildMenuTab == 1 && hasBP {
+		count := 0
+		for _, def := range s.towerDefs {
+			if strings.HasPrefix(def.Key, "bp_") {
+				count++
+			}
+		}
+		return count
+	}
+	return len(s.towerDefs)
+}
+
+// buildMenuTabCount 返回当前 tab 数量（用于布局计算）。
+func (s *StageScene) buildMenuTabCount() int {
+	if s.ruleset.AllowCustomBlueprints() && s.blueprintStore != nil && s.blueprintStore.Count() > 0 {
+		return 2
+	}
+	return 0
+}
+
+// buildMenuCardToDefIdx 将建塔面板中被过滤后的卡片索引映射回 s.towerDefs 的真实索引。
+// "自定义" tab 只显示 bp_ 前缀的塔，卡片索引与 towerDefs 索引不一致，需要转换。
+// "全部" tab 时卡片索引与 towerDefs 索引相同，直接返回。
+func (s *StageScene) buildMenuCardToDefIdx(cardIdx int) int {
+	hasBP := s.ruleset.AllowCustomBlueprints() && s.blueprintStore != nil && s.blueprintStore.Count() > 0
+	if s.buildMenuTab != 1 || !hasBP {
+		return cardIdx // "全部" tab：卡片顺序与 towerDefs 一致
+	}
+	// "自定义" tab：第 N 张过滤卡 → towerDefs 中第 N 个 bp_ 前缀的索引
+	n := 0
+	for i, def := range s.towerDefs {
+		if strings.HasPrefix(def.Key, "bp_") {
+			if n == cardIdx {
+				return i
+			}
+			n++
+		}
+	}
+	return cardIdx // fallback（不应到达）
 }
 
 func (s *StageScene) buildItemPanelData() hud.ItemPanelData {
