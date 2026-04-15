@@ -44,7 +44,7 @@ func LoadAbilityTable() (AbilityTable, error) {
 	if dataFS == nil {
 		return nil, fmt.Errorf("load abilities: dataFS not initialized")
 	}
-	data, err := dataFS.ReadFile("config/abilities/abilities.json")
+	data, err := dataFS.ReadFile("config/towers/abilities.json")
 	if err != nil {
 		return nil, fmt.Errorf("load abilities: %w", err)
 	}
@@ -124,4 +124,3 @@ func (d *AbilityDef) HasParam() bool {
 func (d *AbilityDef) HasParam2() bool {
 	return d != nil && d.Param2Dim != ""
 }
-

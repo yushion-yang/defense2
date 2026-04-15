@@ -536,9 +536,10 @@ func (s *StageScene) MascotSnapshot() mascot.StageSnapshot {
 		WaveActive:  s.spawner.WaveActive,
 
 		// Game state
-		Paused:  s.imode == modePaused,
-		Victory: s.state == stateVictory,
-		Defeat:  s.state == stateDefeat,
+		Paused:        s.imode == modePaused,
+		Victory:       s.state == stateVictory,
+		Defeat:        s.state == stateDefeat,
+		IsClassicMode: s.ruleset.UseClassicWaves(),
 
 		// Performance
 		FPS:        s.perfTracker.FPS,
@@ -3581,8 +3582,8 @@ func (s *StageScene) tryStartWave() {
 // 覆盖层关闭后的回调：激活战灵 → 立即开第一波 → 发波次事件。
 // WardenEnabled=false 时跳过选择，直接无战灵开波。
 func (s *StageScene) showWardenSelect() {
-	if !WardenEnabled {
-		// 功能关闭：跳过战灵选择，直接无战灵开波
+	if !WardenEnabled || !s.ruleset.WardenEnabled() {
+		// 功能关闭或模式不提供战灵：跳过选择，直接无战灵开波
 		s.activateWarden("")
 		prevWave := s.spawner.Wave
 		s.spawner.StartNextWave()

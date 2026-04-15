@@ -10,7 +10,7 @@
 | 文件 | 对照 |
 |------|------|
 | `config/towers/towers.json` ↔ `internal/config/tower_config.go` | TowerJSON struct 的 json tag |
-| `config/abilities/abilities.json` ↔ `internal/config/ability_config.go` | AbilityDef struct 的 json tag |
+| `config/towers/abilities.json` ↔ `internal/config/ability_config.go` | AbilityDef struct 的 json tag |
 | `config/enemies/enemies-core.json` ↔ `internal/config/enemy_config.go` | EnemyArchetype struct 的 json tag |
 | `config/enemies/abilities.json` ↔ `internal/config/enemy_config.go` | EnemyAbilityDef struct 的 json tag（15 种怪物能力） |
 | `config/wardens/wardens.json` ↔ `internal/config/warden_config.go` | WardenConfig struct 的 json tag |

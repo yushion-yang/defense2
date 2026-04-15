@@ -20,7 +20,7 @@ Date: 2026-04-11
 ## A. Config↔Code 一致性
 
 ### A-1. [cross-ref] 能力 JSON 与代码注册完备性
-- 提取 `config/abilities/abilities.json` 所有 `"type"` 值（31 个）
+- 提取 `config/towers/abilities.json` 所有 `"type"` 值（31 个）
 - 提取 `internal/core/tower/abilities/config_ability.go` 所有 switch case 标签
 - 提取 `internal/core/tower/abilities/scaling.go` 所有 Name() 返回值
 - 交叉比对：JSON 中每个 type 必须在代码中有处理

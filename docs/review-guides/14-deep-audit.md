@@ -53,7 +53,7 @@
 | `internal/core/tower/branch.go` | 分支属性修改 |
 | `internal/core/strength/strength.go` | Effective() 计算 |
 | `internal/core/warden/state.go` | ApplyStrength 缩放 |
-| `config/abilities/abilities.json` | 能力数值定义 |
+| `config/towers/abilities.json` | 能力数值定义 |
 | `config/towers/towers.json` | 塔 Base/Potential 定义 |
 
 ### 检查项

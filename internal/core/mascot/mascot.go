@@ -304,8 +304,9 @@ func (g *Guide) HasActiveDialog() bool {
 }
 
 // AbilityReady returns true if the mascot ability can be used.
+// 经典模式下禁用技能援助（纯靠玩家自己的塔防策略）。
 func (g *Guide) AbilityReady() bool {
-	return g.abilityCooldown <= 0 && g.lastCtx != nil && g.lastCtx.InStage
+	return g.abilityCooldown <= 0 && g.lastCtx != nil && g.lastCtx.InStage && !g.lastCtx.IsClassicMode
 }
 
 // IsAbilityHintActive returns true if the ability-hint dialog is currently showing.

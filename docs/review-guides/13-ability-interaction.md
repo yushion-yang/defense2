@@ -12,7 +12,7 @@
 | 文件 | 内容 |
 |------|------|
 | `config/enemies/abilities.json` | 15 种怪物能力配置（description/visual 字段是权威规格） |
-| `config/abilities/abilities.json` | 塔能力配置（33 种） |
+| `config/towers/abilities.json` | 塔能力配置（33 种） |
 | `internal/core/combat/apply_hit.go` | ApplyHit 统一命中：闪避→弹幕盾→装甲→冲刺→OnHit→暴击→DamageAmp→管线→击杀 |
 | `internal/core/combat/damage_pipeline.go` | ApplyDamage 8 步管线 |
 | `internal/core/enemy/behaviors.go` | TickBehaviors：冲刺/相位/削强/净化 tick |

@@ -35,12 +35,16 @@ type TowerRuleset interface {
 
 	// UseClassicWaves 是否使用经典模式确定性出怪配置（classic-waves.json）。
 	UseClassicWaves() bool
+
+	// WardenEnabled 是否提供战灵选择。经典模式不提供战灵。
+	WardenEnabled() bool
 }
 
 // baseTowerRuleset 默认实现（= campaign 行为）。
 type baseTowerRuleset struct{}
 
-func (baseTowerRuleset) UsePresetTowers() bool     { return false }
-func (baseTowerRuleset) IncludePresetTowers() bool { return false }
+func (baseTowerRuleset) UsePresetTowers() bool      { return false }
+func (baseTowerRuleset) IncludePresetTowers() bool  { return false }
 func (baseTowerRuleset) ItemDropMode() ItemDropMode { return ItemDropProbability }
-func (baseTowerRuleset) UseClassicWaves() bool     { return false }
+func (baseTowerRuleset) UseClassicWaves() bool      { return false }
+func (baseTowerRuleset) WardenEnabled() bool        { return true }

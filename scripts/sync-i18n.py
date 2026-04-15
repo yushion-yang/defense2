@@ -21,7 +21,7 @@ import re
 def extract_ability_keys():
     """从 abilities.json 提取能力 label/display。"""
     keys = {}
-    with open("config/abilities/abilities.json") as f:
+    with open("config/towers/abilities.json") as f:
         abilities = json.load(f)
     for key, val in abilities.items():
         if not isinstance(val, dict) or "label" not in val:

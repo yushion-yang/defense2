@@ -36,9 +36,12 @@ type unlockRule struct {
 // unlockRules 解锁规则表。
 var unlockRules = []unlockRule{
 	{"map_01", []string{"map:map_02", "tower:shotgun"}},
-	{"map_02", []string{"map:map_03", "map:map_04", "warden:core", "tower:prism"}},
-	{"map_04", []string{"map:map_05", "map:map_06", "warden:chain", "tower:cyclone"}},
-	{"map_06", []string{"map:map_07", "map:map_08", "warden:skystrike", "warden:envoy"}},
+	{"map_02", []string{"map:map_03", "warden:core", "tower:prism"}},
+	{"map_03", []string{"map:map_04"}},
+	{"map_04", []string{"map:map_05", "warden:chain", "tower:cyclone"}},
+	{"map_05", []string{"map:map_06"}},
+	{"map_06", []string{"map:map_07", "warden:skystrike", "warden:envoy"}},
+	{"map_07", []string{"map:map_08"}},
 }
 
 // unlockRequirementMap 锁定项 → 需要通关的地图 ID。
@@ -46,17 +49,17 @@ var unlockRequirementMap = map[string]string{
 	"map:map_02":       "map_01",
 	"tower:shotgun":    "map_01",
 	"map:map_03":       "map_02",
-	"map:map_04":       "map_02",
 	"warden:core":      "map_02",
 	"tower:prism":      "map_02",
+	"map:map_04":       "map_03",
 	"map:map_05":       "map_04",
-	"map:map_06":       "map_04",
 	"warden:chain":     "map_04",
 	"tower:cyclone":    "map_04",
+	"map:map_06":       "map_05",
 	"map:map_07":       "map_06",
-	"map:map_08":       "map_06",
 	"warden:skystrike": "map_06",
 	"warden:envoy":     "map_06",
+	"map:map_08":       "map_07",
 }
 
 // UnlockRequirement 返回指定项的解锁条件描述。

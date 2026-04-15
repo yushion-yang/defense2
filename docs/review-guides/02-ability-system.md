@@ -12,7 +12,7 @@ abilities.json 中有合并冲突（HEAD 删除了 pierce，另一分支保留�
 
 | 文件 | 读取内容 |
 |------|---------|
-| `config/abilities/abilities.json` | 塔能力配置定义（注意：文件中可能存在合并冲突标记） |
+| `config/towers/abilities.json` | 塔能力配置定义（注意：文件中可能存在合并冲突标记） |
 | `internal/config/ability_config.go` | AbilityDef struct、CalcScale()、6 类别常量 |
 | `internal/core/tower/abilities/config_ability.go` | ConfigAbility.OnHit() 的 switch 分支（核心！逐 case 审查） |
 | `internal/core/tower/ability.go` | Ability/Ticker 接口、HitResult struct、Register() |

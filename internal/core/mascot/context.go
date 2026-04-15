@@ -23,9 +23,10 @@ type StageSnapshot struct {
 	GCPauseUs  uint64
 
 	// Game state
-	Paused  bool // true when game is paused
-	Victory bool // true when stage ended in victory
-	Defeat  bool // true when stage ended in defeat
+	Paused        bool // true when game is paused
+	Victory       bool // true when stage ended in victory
+	Defeat        bool // true when stage ended in defeat
+	IsClassicMode bool // true in classic campaign mode (no mascot ability)
 
 	// UI Context
 	InteractMode       int      // 0=idle, 1=buildMenu, 3=towerSel, 7=wardenSel, 8=upgrade, 9=itemPanel
