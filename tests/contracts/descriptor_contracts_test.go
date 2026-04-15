@@ -8,14 +8,21 @@ import (
 	"testing"
 
 	"defense2/internal/config"
+	"defense2/internal/core/tower"
+	"defense2/internal/core/tower/abilities"
 	"defense2/internal/core/tower/descriptor"
 )
 
 // init 在 config_rules_test.go 中已设置 SetDataFS，
-// 此处加载描述符表（依赖 dataFS 已初始化）。
+// 此处按双轨注册顺序初始化：先 ConfigAbility，再 Descriptor 覆盖。
 func init() {
-	if err := descriptor.LoadDescriptorTable(config.GetDataFS()); err != nil {
-		panic("load descriptor table: " + err.Error())
+	// ConfigAbility 先注册（system_contracts_test.go 也会调，重复调用幂等安全）
+	if err := abilities.InitConfigAbilities(); err != nil {
+		panic("init config abilities: " + err.Error())
+	}
+	// Descriptor 覆盖注册（内部含 LoadDescriptorTable）
+	if err := descriptor.InitDescriptorAbilities(config.GetDataFS()); err != nil {
+		panic("init descriptor abilities: " + err.Error())
 	}
 }
 
@@ -132,6 +139,43 @@ func TestDescriptorLabelsMatchAbilities(t *testing.T) {
 			}
 			if desc.Label != abilityDef.Label {
 				t.Errorf("描述符 label=%q ≠ 能力 label=%q", desc.Label, abilityDef.Label)
+			}
+		})
+	}
+}
+
+// TestDualRegistration_DescriptorOverridesConfigAbility 验证双轨注册后，
+// Registry 中每个能力都是 DescriptorAbility 类型（覆盖了 ConfigAbility）。
+//
+// 注意：Go 测试 init 按文件名字母序执行，system_contracts_test.go 的 init
+// 会在本文件 init 之后再次调用 InitConfigAbilities 覆盖回 ConfigAbility。
+// 因此本测试显式重新执行双轨注册顺序以验证覆盖行为。
+func TestDualRegistration_DescriptorOverridesConfigAbility(t *testing.T) {
+	// 显式按生产顺序执行：ConfigAbility → Descriptor 覆盖
+	if err := abilities.InitConfigAbilities(); err != nil {
+		t.Fatalf("InitConfigAbilities: %v", err)
+	}
+	if err := descriptor.InitDescriptorAbilities(config.GetDataFS()); err != nil {
+		t.Fatalf("InitDescriptorAbilities: %v", err)
+	}
+
+	abilityTable := config.GlobalAbilityTable()
+	if len(abilityTable) == 0 {
+		t.Fatal("能力表为空，config 未初始化")
+	}
+
+	for name := range abilityTable {
+		t.Run(name, func(t *testing.T) {
+			ab, ok := tower.Lookup(name)
+			if !ok {
+				t.Errorf("%q 未在 Registry 中注册", name)
+				return
+			}
+			switch ab.(type) {
+			case *descriptor.DescriptorAbilityHit, *descriptor.DescriptorAbilityFull:
+				// OK — 描述符已覆盖 ConfigAbility
+			default:
+				t.Errorf("%q 类型为 %T，期望 DescriptorAbilityHit 或 DescriptorAbilityFull", name, ab)
 			}
 		})
 	}

@@ -27,6 +27,7 @@ import (
 	"defense2/internal/core/game"
 	"defense2/internal/core/mascot"
 	"defense2/internal/core/tower/abilities"
+	"defense2/internal/core/tower/descriptor"
 	"defense2/internal/i18n"
 	"defense2/internal/render"
 	"defense2/internal/render/anim"
@@ -134,6 +135,10 @@ func NewGame() *Game {
 		// HeadlessMode：同步加载全部资源（autoplay 不需要 UI）
 		render.InitGlobalIcons(config.GetAssetFS())
 		abilities.InitConfigAbilities()
+		// 描述符能力覆盖 ConfigAbility（失败时 ConfigAbility 仍作为 fallback）
+		if err := descriptor.InitDescriptorAbilities(config.GetDataFS()); err != nil {
+			log.Printf("[descriptor] warning: %v, falling back to ConfigAbility", err)
+		}
 		config.LoadBalance()
 		config.LoadPlatform()
 		config.LoadTierPresets()
