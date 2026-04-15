@@ -86,6 +86,17 @@ func (gm *GameMap) PickPath() []Point {
 	return gm.Paths[len(gm.Paths)-1].Waypoints
 }
 
+// GetPathByID 按 ID 查找多路径入口，返回该路径的路径点序列。
+// 未找到返回 nil（调用方应 fallback 到默认 Waypoints）。
+func (gm *GameMap) GetPathByID(id string) []Point {
+	for i := range gm.Paths {
+		if gm.Paths[i].ID == id {
+			return gm.Paths[i].Waypoints
+		}
+	}
+	return nil
+}
+
 // SpawnPoint 返回默认出生点（第一个路径点的像素坐标）。
 func (gm *GameMap) SpawnPoint() Point {
 	if len(gm.Waypoints) > 0 {

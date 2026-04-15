@@ -57,6 +57,7 @@ import (
 	"cmp"
 	"math/rand"
 	"slices"
+	"strconv"
 
 	"defense2/internal/config"
 	"defense2/internal/core/buff"
@@ -143,6 +144,10 @@ type Spawner struct {
 	// ── 小队系统 ──
 	squadMembers []string // 本波小队成员原型列表（startWave 时从模板池随机选取）
 	// 出怪逻辑：SpawnIndex < len(squadMembers) 时按列表顺序出，之后转加权随机
+
+	// ── 经典模式确定性出怪 ──
+	ClassicWaves *config.ClassicWavesConfig // 非 nil 时使用经典出怪序列，跳过所有随机逻辑
+	classicEntry *config.ClassicWaveEntry   // 当前波的配置条目（startWaveClassic 时设置）
 }
 
 // NewSpawner 创建出怪管理器。
@@ -179,6 +184,12 @@ func (s *Spawner) Tick(pool *Pool, dt float64) {
 	}
 	// "none" 过滤器：不生成任何敌人
 	if s.EnemyFilter == FilterNone {
+		return
+	}
+
+	// 经典模式：确定性出怪，跳过所有随机逻辑
+	if s.ClassicWaves != nil {
+		s.tickClassic(pool, dt)
 		return
 	}
 
@@ -473,6 +484,10 @@ func (s *Spawner) NextWavePreview() (entries []WavePreviewEntry, totalCount int,
 
 // enemyCount 返回当前波的常规敌人总数（不含 Boss）。
 func (s *Spawner) enemyCount() int {
+	// 经典模式：由配置表决定每波敌人数
+	if s.classicEntry != nil {
+		return len(s.classicEntry.Enemies)
+	}
 	if s.FixedCount > 0 {
 		return s.FixedCount
 	}
@@ -852,5 +867,206 @@ func ApplyAbilityPotentials(e *Enemy, cfg *SpawnConfig, wave int) {
 
 // IsBossWave 返回当前波次是否为 Boss 波。
 func (s *Spawner) IsBossWave() bool {
+	// 经典模式：由配置表决定
+	if s.classicEntry != nil {
+		return s.classicEntry.Boss != nil
+	}
 	return s.BossEveryWave || (s.Wave > 0 && s.Wave%config.GlobalSpawnerConfig().Boss.EveryNWaves == 0)
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// 经典模式确定性出怪
+// ═══════════════════════════════════════════════════════════════════
+//
+// tickClassic 是 Tick 的经典模式版本，消除所有随机逻辑：
+//   - 原型序列由 classic-waves.json 逐波精确定义
+//   - Boss 原型固定，不随机选取
+//   - Buff 按配置表显式挂载到指定索引的敌人
+//   - 不调用 pickArchetype/pickSquad/applyWaveBuffs
+//
+// 波间等待/倒计时/Boss入场延迟等状态机逻辑与标准 Tick 完全一致。
+
+// startWaveClassic 经典模式开波：从配置表查找当前波定义。
+func (s *Spawner) startWaveClassic() {
+	s.Wave++
+	s.SpawnIndex = 0
+	s.SpawnTimer = 0
+	s.WaveActive = true
+	s.SpawnInterval = s.ClassicWaves.Scaling.SpawnInterval
+
+	// 从配置表获取当前波定义
+	s.classicEntry = s.ClassicWaves.GetWave(s.Wave)
+
+	// Boss 入场延迟（沿用 spawner.json 的 Boss 配置）
+	if s.classicEntry != nil && s.classicEntry.Boss != nil {
+		sc := config.GlobalSpawnerConfig()
+		s.EntranceDelay = sc.Boss.EntranceDelay
+		s.bossQueued = true
+	} else {
+		s.EntranceDelay = 0
+		s.bossQueued = false
+	}
+}
+
+// tickClassic 经典模式每帧驱动。
+// 状态机与标准 Tick 相同，出怪逻辑替换为确定性序列。
+func (s *Spawner) tickClassic(pool *Pool, dt float64) {
+	// 波间等待（与标准 Tick 完全一致）
+	if !s.WaveActive {
+		if s.WaitingForClear {
+			s.clearWaitElapsed += dt
+			if pool.Count == 0 || s.clearWaitElapsed >= 60 {
+				s.WaitingForClear = false
+				s.WaveTimer = s.WaveInterval
+			}
+			return
+		}
+		if s.WaveTimer > 0 {
+			s.WaveTimer -= dt
+			if s.WaveTimer < 0 {
+				s.WaveTimer = 0
+			}
+		}
+		if s.ManualWave {
+			return
+		}
+		if s.WaveTimer <= 0 {
+			s.startWaveClassic()
+		}
+		return
+	}
+
+	// Boss 入场延迟
+	if s.EntranceDelay > 0 {
+		s.EntranceDelay -= dt
+		if s.EntranceDelay < 0 {
+			s.EntranceDelay = 0
+		}
+		return
+	}
+
+	// ── 波内确定性出怪 ──
+	s.SpawnTimer -= dt
+	entry := s.classicEntry
+	if entry == nil {
+		// 配置缺失，直接结束本波
+		s.WaveActive = false
+		if s.Wave >= s.MaxWaves {
+			s.AllDone = true
+		}
+		return
+	}
+
+	total := len(entry.Enemies)
+	if entry.Boss != nil {
+		total++ // Boss 追加在序列末尾
+	}
+
+	if s.SpawnTimer <= 0 && s.SpawnIndex < total {
+		// ── 路径选择：按配置表精确指定，无随机 ──
+		var pathID string
+		isBoss := entry.Boss != nil && s.SpawnIndex == total-1
+		if isBoss {
+			pathID = entry.Boss.Path
+		} else {
+			pathID = entry.Enemies[s.SpawnIndex].Path
+		}
+		path := s.classicResolvePath(pathID)
+
+		if len(path) > 0 {
+			spawn := path[0]
+			hpScale := s.HPScale
+			if hpScale <= 0 {
+				hpScale = 1.0
+			}
+			spdScale := s.SpeedScale
+			if spdScale <= 0 {
+				spdScale = 1.0
+			}
+
+			// 使用经典模式独立的缩放参数
+			cs := s.ClassicWaves.Scaling
+			w := float64(s.Wave)
+			baseHP := (cs.HpBase + w*cs.HpPerWave + cs.HpQuadratic*w*w) * hpScale
+			baseSpeed := (cs.SpeedBase + w*cs.SpeedPerWave) * spdScale
+
+			var archetype string
+			var cfg *SpawnConfig
+
+			if isBoss {
+				// 经典模式 Boss：固定原型
+				archetype = entry.Boss.Archetype
+				cfg = s.getConfig(archetype)
+				if cfg != nil {
+					bossCfg := *cfg
+					bossCfg.Boss = true
+					sc := config.GlobalSpawnerConfig()
+					bossCfg.HpScale *= sc.Boss.HpMultBase
+					bossCfg.Radius *= sc.Boss.RadiusScale
+					// Boss 必带净化能力
+					if bossCfg.PurgeInterval <= 0 {
+						if aDef := config.GlobalEnemyAbilityDef(AbilPurge); aDef != nil {
+							bossCfg.PurgeInterval = aDef.Base
+							bossCfg.PurgeImmuneDur = aDef.Param
+						} else {
+							bossCfg.PurgeInterval = 4.0
+							bossCfg.PurgeImmuneDur = 2.0
+						}
+					}
+					if !containsStr(bossCfg.AbilityIDs, AbilPurge) {
+						bossCfg.AbilityIDs = append(append([]string{}, bossCfg.AbilityIDs...), AbilPurge)
+					}
+					cfg = &bossCfg
+					tel.T.Record("boss", archetype)
+				}
+			} else {
+				// 普通敌人：按配置表精确序列取原型
+				archetype = entry.Enemies[s.SpawnIndex].Archetype
+				cfg = s.getConfig(archetype)
+			}
+
+			e := pool.Spawn(spawn.X, spawn.Y, baseHP, baseSpeed, 1, archetype, cfg)
+			if e != nil {
+				e.Path = path
+				// 能力 potential 按波次叠加（确定性，与标准模式相同）
+				ApplyAbilityPotentials(e, cfg, s.Wave)
+				// 经典模式：按配置表显式挂载 buff（不调用随机 applyWaveBuffs）
+				if !isBoss && entry.Buffs != nil {
+					if buffIDs, ok := entry.Buffs[strconv.Itoa(s.SpawnIndex)]; ok {
+						for _, bid := range buffIDs {
+							applyWaveBuff(e, bid, s.Wave)
+						}
+					}
+				}
+			}
+		}
+		s.SpawnIndex++
+		s.SpawnTimer = s.SpawnInterval
+	}
+
+	// 当前波出完
+	if s.SpawnIndex >= total {
+		s.WaveActive = false
+		s.bossQueued = false
+		s.classicEntry = nil
+		if s.Wave >= s.MaxWaves {
+			s.AllDone = true
+		} else {
+			s.WaitingForClear = true
+			s.clearWaitElapsed = 0
+		}
+	}
+}
+
+// classicResolvePath 根据配置中的路径 ID 解析实际路径点序列。
+// pathID 为空时返回默认路径（单路径地图或多路径地图的 Waypoints）。
+// pathID 非空时按 ID 查找多路径入口，未找到回退到默认路径。
+func (s *Spawner) classicResolvePath(pathID string) []gamemap.Point {
+	if pathID == "" {
+		return s.GameMap.Waypoints
+	}
+	if p := s.GameMap.GetPathByID(pathID); p != nil {
+		return p
+	}
+	return s.GameMap.Waypoints
 }

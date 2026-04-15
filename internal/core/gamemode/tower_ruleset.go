@@ -32,6 +32,9 @@ type TowerRuleset interface {
 
 	// ItemDropMode 返回道具掉落策略。
 	ItemDropMode() ItemDropMode
+
+	// UseClassicWaves 是否使用经典模式确定性出怪配置（classic-waves.json）。
+	UseClassicWaves() bool
 }
 
 // baseTowerRuleset 默认实现（= campaign 行为）。
@@ -40,3 +43,4 @@ type baseTowerRuleset struct{}
 func (baseTowerRuleset) UsePresetTowers() bool     { return false }
 func (baseTowerRuleset) IncludePresetTowers() bool { return false }
 func (baseTowerRuleset) ItemDropMode() ItemDropMode { return ItemDropProbability }
+func (baseTowerRuleset) UseClassicWaves() bool     { return false }

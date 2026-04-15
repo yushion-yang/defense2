@@ -354,6 +354,16 @@ func NewStageSceneWithOpts(sw Switcher, opts StageOptions) *StageScene {
 		spawner.BossEveryWave = true
 	}
 
+	// 经典模式：加载确定性出怪配置，覆盖随机出怪逻辑
+	if session.Ruleset().UseClassicWaves() {
+		if cwc, err := config.LoadClassicWavesConfig(); err == nil {
+			spawner.ClassicWaves = cwc
+			spawner.MaxWaves = cwc.TotalWaves
+		} else {
+			log.Printf("经典出怪配置加载失败，回退到随机模式: %v", err)
+		}
+	}
+
 	// 战灵：WardenType 为空表示需要在 Stage 内选择
 	var wardenUnit *warden.Warden
 	wardenReady := false
