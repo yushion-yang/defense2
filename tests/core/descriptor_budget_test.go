@@ -126,27 +126,8 @@ func TestCalcBudget_Zero(t *testing.T) {
 }
 
 func TestCalcBudget_ExactlyAtCap(t *testing.T) {
-	// 构造恰好 50 的组合：
-	// barrage(13) + S+S+B(4+4+2=10) + specialty(2) + splash+crit+slowPower+poison(8+7+5+4=24) + 1 未知
-	// 13+10+2+24 = 49，差 1。换个组合：
-	// scatter(12) + SSB(10) + specialty(2) + splash+crit+bounce+poison(8+7+6+4=25) + 1 剩余
-	// 12+10+2+25 = 49。再调：
-	// scatter(12) + SSS(12) + specialty(2) + splash+crit+bounce+poison(8+7+6+4=25)
-	// 但 12+12+2+25=51，多 1。
-	// 换成: barrage(13) + SSB(10) + specialty(2) + splash+crit+slowPower(8+7+5=20) + poison(4) + 1 未知
-	// 13+10+2+20+4 = 49。用 bounce 替 poison: 13+10+2+8+7+5+6=51 多了。
-	// 直接: radial(11) + SSS(12) + specialty(2) + splash+crit+slowPower(8+7+5=20)
-	// 11+12+2+20 = 45。加 poison(4) = 49。加 bounce(6) = 51。
-	// 精确 50: radial(11) + SSB(10) + specialty(2) + splash+crit+burn(8+7+9=24) + slowPower(5)
-	// 11+10+2+24+5 = 52。换: spin_aoe(10) + SBD(4+2+0=6) + specialty(2) + splash+crit+burn(8+7+9=24)
-	// 10+6+2+24 = 42。加 bounce(6)=48，加 D 不变。加 poison(4)=52。
-	// 好吧，用自定义 abilityCosts 来精确对齐。
+	// wideBeam(14) + SSS(4+4+4=12) + specialty(2) + splash+crit+abilityX(8+7+7=22) = 50
 	rules := testBudgetRules()
-	_ = map[string]int{"splash": 8, "crit": 7, "abilityX": 5} // 推演过程中的中间值
-	// scatter(12) + S+B+D(6) + specialty(2) + splash+crit+abilityX(8+7+5=20) = 40
-	// 还差 10。换: wideBeam(14) + SSB(10) + specialty(2) + splash+crit+abilityX(20) = 46
-	// 换 SSS: wideBeam(14) + SSS(12) + specialty(2) + splash+crit+abilityX(20) = 48
-	// 加 2: 用 costPerPoint 不影响预算。换 abilityX→7: 14+12+2+8+7+7=50。
 	costs := map[string]int{"splash": 8, "crit": 7, "abilityX": 7}
 	bp := descriptor.TowerBlueprint{
 		ID:          "exact",
