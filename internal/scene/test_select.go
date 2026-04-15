@@ -83,6 +83,8 @@ var testScenarios = []testScenario{
 	{"map-editor", "地图编辑", "stat-target", "塔位布局可视化编辑工具", "bench", "", 0, 0, 0, color.RGBA{R: 180, G: 200, B: 100, A: 255}, "", false, false},
 
 	{"coop-2p", "合作2人", "stat-target", "2人合作模式测试", "coop", "map_co01", 9999, 999, 15, color.RGBA{R: 100, G: 180, B: 255, A: 255}, "mixed", false, false},
+	{"coop-4p", "合作4人", "stat-target", "4人田字型合作测试", "coop", "map_co02", 9999, 999, 20, color.RGBA{R: 180, G: 100, B: 255, A: 255}, "mixed", false, false},
+	{"coop-6p", "合作6人", "stat-target", "6人阵地合作测试", "coop", "map_co03", 9999, 999, 25, color.RGBA{R: 80, G: 200, B: 120, A: 255}, "mixed", false, false},
 	{"coop-sandbox", "合作沙盒", "stat-target", "合作模式自由测试", "coop", "map_co01", 99999, 99999, 0, color.RGBA{R: 100, G: 200, B: 180, A: 255}, "none", true, false},
 }
 

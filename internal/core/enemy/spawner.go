@@ -135,7 +135,8 @@ type Spawner struct {
 	SpeedScale    float64 // 难度速度倍率（默认 1.0）
 	ManualWave    bool    // 手动开波模式：倒计时到 0 不自动开波，需外部调用 StartNextWave
 	FixedCount    int     // >0 时每波固定该数量（不随波次递增，测试模式用）
-	BossEveryWave bool    // true 时每波末尾都出 Boss（bossRush 模式用）
+	BossEveryWave    bool    // true 时每波末尾都出 Boss（bossRush 模式用）
+	CoopPlayerCount  int     // 合作模式人数（0=非合作），用于读取 coopScaling 缩放参数
 
 	// ── Boss 控制 ──
 	bossQueued    bool    // 本波是否需要在末尾追加 Boss（startWave 时计算）
@@ -254,6 +255,12 @@ func (s *Spawner) Tick(pool *Pool, dt float64) {
 			w := float64(s.Wave)
 			baseHP := (sc.Scaling.HpBase + w*sc.Scaling.HpPerWave + sc.Scaling.HpQuadratic*w*w) * hpScale
 			baseSpeed := (sc.Scaling.SpeedBase + float64(s.Wave)*sc.Scaling.SpeedPerWave) * spdScale
+			// 合作模式缩放：敌人穿越多个分区，HP 更高、速度更慢
+			if s.CoopPlayerCount > 1 {
+				cs := sc.GetCoopScaling(s.CoopPlayerCount)
+				baseHP *= cs.HPMultiplier
+				baseSpeed *= cs.SpeedMultiplier
+			}
 
 			// ── 原型选择：三层优先级 ──
 			// 1) Boss：本波最后一个，随机原型 + Boss 增强
@@ -495,7 +502,14 @@ func (s *Spawner) enemyCount() int {
 	if s.FixedCount > 0 {
 		return s.FixedCount
 	}
-	return s.EnemiesPerWave + s.Wave
+	count := s.EnemiesPerWave + s.Wave
+	// 合作模式：更多敌人让每个分区都有事做
+	if s.CoopPlayerCount > 1 {
+		sc := config.GlobalSpawnerConfig()
+		cs := sc.GetCoopScaling(s.CoopPlayerCount)
+		count = int(float64(count) * cs.CountMultiplier)
+	}
+	return count
 }
 
 // EnemyCountForWave 返回指定波次的敌人数量（契约测试用）。

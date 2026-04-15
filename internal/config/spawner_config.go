@@ -15,6 +15,8 @@
 //   - Compositions 定义各波次的敌人原型权重分布，spawner 按权重随机选取原型
 package config
 
+import "strconv"
+
 import (
 	"encoding/json"
 	"fmt"
@@ -83,13 +85,32 @@ type SquadsConfig struct {
 }
 
 // SpawnerConfig 出怪系统完整配置。
+// CoopScalingEntry 合作模式单档缩放参数。
+type CoopScalingEntry struct {
+	HPMultiplier    float64 `json:"hpMultiplier"`
+	SpeedMultiplier float64 `json:"speedMultiplier"`
+	CountMultiplier float64 `json:"countMultiplier"`
+}
+
 type SpawnerConfig struct {
-	Scaling      SpawnerScaling    `json:"scaling"`
-	Timing       SpawnerTiming     `json:"timing"`
-	Boss         SpawnerBoss       `json:"boss"`
-	Compositions []WaveComposition `json:"compositions"`
-	WaveBuffs    WaveBuffConfig    `json:"waveBuffs"`
-	Squads       SquadsConfig      `json:"squads"`
+	Scaling      SpawnerScaling               `json:"scaling"`
+	CoopScaling  map[string]CoopScalingEntry   `json:"coopScaling"` // key: "2"/"4"/"6"
+	Timing       SpawnerTiming                 `json:"timing"`
+	Boss         SpawnerBoss                   `json:"boss"`
+	Compositions []WaveComposition             `json:"compositions"`
+	WaveBuffs    WaveBuffConfig                `json:"waveBuffs"`
+	Squads       SquadsConfig                  `json:"squads"`
+}
+
+// GetCoopScaling 返回指定人数的合作缩放参数，不存在则返回默认值(1.0)。
+func (c *SpawnerConfig) GetCoopScaling(playerCount int) CoopScalingEntry {
+	if c.CoopScaling != nil {
+		key := strconv.Itoa(playerCount)
+		if e, ok := c.CoopScaling[key]; ok {
+			return e
+		}
+	}
+	return CoopScalingEntry{HPMultiplier: 1, SpeedMultiplier: 1, CountMultiplier: 1}
 }
 
 // EffectiveSpawnInterval 返回指定波次的实际出怪间隔（秒）。

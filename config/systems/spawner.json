@@ -17,6 +17,13 @@
     "spawnDecayPerWave": 0.03,       "_spawnDecayPerWave": "每波出怪间隔衰减量（interval = base - wave*decay，最低=min）"
   },
 
+  "coopScaling": {
+    "_comment": "合作模式缩放参数——敌人穿越 N 个分区，需调整 HP/速度/数量",
+    "2": { "hpMultiplier": 1.8, "speedMultiplier": 0.9, "countMultiplier": 1.2 },
+    "4": { "hpMultiplier": 3.2, "speedMultiplier": 0.85, "countMultiplier": 1.5 },
+    "6": { "hpMultiplier": 4.5, "speedMultiplier": 0.8, "countMultiplier": 1.8 }
+  },
+
   "timing": {
     "waveInterval": 10,              "_waveInterval": "波次间歇时间（秒）——上一波出完到下一波开始的等待",
     "firstWaveInterval": 20,         "_firstWaveInterval": "第1波开始前的准备时间（秒）——给玩家布置初始防御"

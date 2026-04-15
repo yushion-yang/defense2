@@ -336,6 +336,9 @@ func NewStageSceneWithOpts(sw Switcher, opts StageOptions) *StageScene {
 	// 应用难度到 spawner
 	spawner.HPScale = diff.HPScale
 	spawner.SpeedScale = diff.SpeedScale
+	if opts.CoopPlayerCount > 1 {
+		spawner.CoopPlayerCount = opts.CoopPlayerCount
+	}
 
 	// 初始金币和经济配置
 	startGold := diff.StartGold
@@ -760,7 +763,26 @@ func (s *StageScene) subscribeBus() {
 	})
 	event.OnTyped(bus, event.EvtEnemyKilled, func(p event.EnemyKilledPayload) {
 		s.kills++
-		s.gold += p.GoldValue
+		// 合作模式：击杀金币按敌人死亡位置所在分区归属
+		if s.coopZone != nil && p.EnemyX > 0 {
+			gm := s.gameMap
+			col := int((p.EnemyX - gm.OffsetX) / float64(gm.CellSize))
+			row := int((p.EnemyY - gm.OffsetY) / float64(gm.CellSize))
+			owner := s.coopZone.OwnerOf(row, col)
+			if owner > 0 {
+				// AI 分区击杀 → 金币归 AI
+				for _, ap := range s.aiPlayers {
+					if ap.OwnerID() == owner {
+						ap.AddGold(p.GoldValue)
+						break
+					}
+				}
+			} else {
+				s.gold += p.GoldValue
+			}
+		} else {
+			s.gold += p.GoldValue
+		}
 		s.gameStats.GoldEarned += p.GoldValue
 		if p.Archetype != "" {
 			s.killsByArchetype[p.Archetype]++
@@ -797,7 +819,7 @@ func (s *StageScene) unlockAchievement(id, name string) {
 
 // emitKill 统一发出击杀事件（弹射物/战灵/技能共用）。
 // rewardScale 为敌人原型奖励倍率（如 tank=1.35, runner=0.72），0 或 1 表示无缩放。
-func (s *StageScene) emitKill(isBoss bool, killerID string, rewardScale float64, archetype string) {
+func (s *StageScene) emitKill(isBoss bool, killerID string, rewardScale float64, archetype string, enemyX, enemyY float64) {
 	gold := s.econ.KillGold()
 	if rewardScale > 0 && rewardScale != 1 {
 		gold = int(float64(gold) * rewardScale)
@@ -807,6 +829,8 @@ func (s *StageScene) emitKill(isBoss bool, killerID string, rewardScale float64,
 		KillerID:  killerID,
 		GoldValue: gold,
 		Archetype: archetype,
+		EnemyX:    enemyX,
+		EnemyY:    enemyY,
 	})
 }
 
@@ -2305,7 +2329,7 @@ func (s *StageScene) updatePlaying() {
 			DT:          gameDT,
 			OnKill: func(e *enemy.Enemy) {
 				s.audioMgr.PlaySafeAt(gameAudio.SFXEnemyDeath, gameAudio.VolKill)
-				s.emitKill(e.Boss, "warden", e.RewardScale, e.Archetype)
+				s.emitKill(e.Boss, "warden", e.RewardScale, e.Archetype, e.X, e.Y)
 				s.tryItemDrop(e.X, e.Y)
 			},
 			OnFire: func() {
@@ -2538,7 +2562,7 @@ func (s *StageScene) updatePlaying() {
 			} else {
 				s.audioMgr.PlayThrottledAt(gameAudio.SFXEnemyDeath, 50, gameAudio.VolKill)
 			}
-			s.emitKill(e.Boss, "projectile", e.RewardScale, e.Archetype) // 统一击杀事件：kills/gold/session/tutorial/warden
+			s.emitKill(e.Boss, "projectile", e.RewardScale, e.Archetype, e.X, e.Y) // 统一击杀事件
 			s.tryItemDrop(e.X, e.Y)
 		} else {
 			// 命中音效：per-sound 节流，优先按敌人状态区分

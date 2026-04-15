@@ -135,10 +135,12 @@ type TowerSoldPayload struct {
 
 // EnemyKilledPayload 敌人击杀事件载荷。
 type EnemyKilledPayload struct {
-	IsBoss    bool   // 是否 Boss
-	KillerID  string // 击杀来源（"projectile"/"warden"）
-	GoldValue int    // 击杀金币（预计算）
-	Archetype string // 敌人原型 ID（图鉴统计用）
+	IsBoss    bool    // 是否 Boss
+	KillerID  string  // 击杀来源（"projectile"/"warden"）
+	GoldValue int     // 击杀金币（预计算）
+	Archetype string  // 敌人原型 ID（图鉴统计用）
+	EnemyX    float64 // 敌人死亡位置（合作模式用于金币归属判定）
+	EnemyY    float64
 }
 
 // EnemyLeakedPayload 敌人泄漏事件载荷。
