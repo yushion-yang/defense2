@@ -1059,14 +1059,21 @@ func (s *Spawner) tickClassic(pool *Pool, dt float64) {
 }
 
 // classicResolvePath 根据配置中的路径 ID 解析实际路径点序列。
-// pathID 为空时返回默认路径（单路径地图或多路径地图的 Waypoints）。
-// pathID 非空时按 ID 查找多路径入口，未找到回退到默认路径。
+//
+// 解析优先级：
+//  1. pathID 非空 → 按 ID 精确查找（配置显式指定）
+//  2. pathID 为空 + 多路径地图 → 按 SpawnIndex 轮转（round-robin），确定性且自动适配所有地图
+//  3. pathID 为空 + 单路径地图 → 返回默认 Waypoints
 func (s *Spawner) classicResolvePath(pathID string) []gamemap.Point {
-	if pathID == "" {
-		return s.GameMap.Waypoints
+	if pathID != "" {
+		if p := s.GameMap.GetPathByID(pathID); p != nil {
+			return p
+		}
 	}
-	if p := s.GameMap.GetPathByID(pathID); p != nil {
-		return p
+	// 多路径地图：按 SpawnIndex 轮转，不同敌人走不同路径
+	if s.GameMap.MultiPath && len(s.GameMap.Paths) > 0 {
+		idx := s.SpawnIndex % len(s.GameMap.Paths)
+		return s.GameMap.Paths[idx].Waypoints
 	}
 	return s.GameMap.Waypoints
 }
