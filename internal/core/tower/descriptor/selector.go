@@ -88,6 +88,9 @@ type AoeRadiusSelector struct {
 }
 
 func (s AoeRadiusSelector) Select(ctx SelectorCtx) []Target {
+	if ctx.Enemies == nil {
+		return nil
+	}
 	r := s.Radius.Calc(ctx.Strength)
 	refs := ctx.Enemies.QueryRadius(ctx.HitX, ctx.HitY, r)
 	targets := make([]Target, len(refs))
@@ -108,6 +111,9 @@ func (s AoeRadiusSelector) Select(ctx SelectorCtx) []Target {
 type AllInRangeSelector struct{}
 
 func (s AllInRangeSelector) Select(ctx SelectorCtx) []Target {
+	if ctx.Enemies == nil {
+		return nil
+	}
 	refs := ctx.Enemies.QueryRadius(ctx.TowerX, ctx.TowerY, ctx.TowerRange)
 	targets := make([]Target, len(refs))
 	for i, ref := range refs {
@@ -129,6 +135,9 @@ type NearbyAlliesSelector struct {
 }
 
 func (s NearbyAlliesSelector) Select(ctx SelectorCtx) []Target {
+	if ctx.Towers == nil {
+		return nil
+	}
 	refs := ctx.Towers.QueryRadius(ctx.TowerX, ctx.TowerY, s.Radius)
 	targets := make([]Target, len(refs))
 	for i, ref := range refs {
@@ -166,6 +175,9 @@ type ChainSelector struct {
 }
 
 func (s ChainSelector) Select(ctx SelectorCtx) []Target {
+	if ctx.Enemies == nil {
+		return nil
+	}
 	maxBounce := int(s.MaxBounce.Calc(ctx.Strength))
 	if maxBounce <= 0 {
 		return nil
