@@ -70,3 +70,17 @@ func LookupDescriptor(id string) (*AbilityDescriptor, bool) {
 	d, ok := globalDescriptorTable[id]
 	return d, ok
 }
+
+// GlobalAbilityCosts 从全局描述符表提取能力 ID→预算费用映射。
+// 描述符表未加载时返回空 map（不影响预算计算，只是所有能力费用为 0）。
+func GlobalAbilityCosts() map[string]int {
+	table := GlobalDescriptorTable()
+	if table == nil {
+		return map[string]int{}
+	}
+	costs := make(map[string]int, len(table))
+	for id, desc := range table {
+		costs[id] = desc.Cost
+	}
+	return costs
+}

@@ -59,6 +59,7 @@ import (
 	tel "defense2/internal/core/telemetry"
 	"defense2/internal/core/timescale"
 	"defense2/internal/core/tower"
+	"defense2/internal/core/tower/descriptor"
 	"defense2/internal/core/tutorial"
 	"defense2/internal/core/warden"
 	"defense2/internal/i18n"
@@ -125,9 +126,10 @@ type StageScene struct {
 	kills    int            // 累计击杀数
 
 	// ── 塔建造 ──
-	towerDefs     []tower.TowerDef // 可建造的塔类型列表（已过滤解锁）
-	selectedDef   int              // 当前选中的塔类型索引（建塔面板）
-	selectedTower *tower.Tower     // 点击选中的塔（显示信息面板+射程圈，nil=无选中）
+	towerDefs      []tower.TowerDef        // 可建造的塔类型列表（已过滤解锁）
+	selectedDef    int                      // 当前选中的塔类型索引（建塔面板）
+	selectedTower  *tower.Tower             // 点击选中的塔（显示信息面板+射程圈，nil=无选中）
+	blueprintStore *descriptor.BlueprintStore // 玩家自定义蓝图存储（Task 9 新建面板需要）
 
 	// ── 渲染器 ──
 	towerRenderer  *render.TowerRenderer  // 塔 SVG 渲染器（缓存 sprite 图集）
@@ -299,6 +301,7 @@ func NewStageSceneWithOpts(sw Switcher, opts StageOptions) *StageScene {
 	}
 	pm := persistence.NewProgressManager(store)
 	achTracker := achievement.NewTracker(store)
+	bpStore := descriptor.NewBlueprintStore(store)
 
 	// 教程（已完成则不再显示）
 	tut := tutorial.DefaultTutorial()
@@ -404,8 +407,9 @@ func NewStageSceneWithOpts(sw Switcher, opts StageOptions) *StageScene {
 		lives:            diff.StartingLives,
 		maxLives:         diff.StartingLives,
 		gold:             startGold,
-		towerDefs:        loadTowerDefsForMode(session.Ruleset(), pm),
+		towerDefs:        loadTowerDefsForMode(session.Ruleset(), pm, bpStore),
 		selectedDef:      0,
+		blueprintStore:   bpStore,
 		wardenType:       opts.WardenType,
 		wardenCfg:        wardenCfg,
 		gameSpeed:        1,
@@ -3715,8 +3719,9 @@ func filterUnlockedTowers(defs []tower.TowerDef, pm *persistence.ProgressManager
 // loadTowerDefsForMode 根据模式规则加载塔定义列表。
 //   - 经典模式(UsePresetTowers=true)：仅经典预设塔
 //   - 测试模式(IncludePresetTowers=true)：标准塔 + 经典预设塔
+//   - 支持 AllowCustomBlueprints 的模式：追加玩家自定义蓝图
 //   - 其他模式：标准塔 + 解锁过滤
-func loadTowerDefsForMode(ruleset gamemode.TowerRuleset, pm *persistence.ProgressManager) []tower.TowerDef {
+func loadTowerDefsForMode(ruleset gamemode.TowerRuleset, pm *persistence.ProgressManager, bpStore *descriptor.BlueprintStore) []tower.TowerDef {
 	if ruleset.UsePresetTowers() {
 		return loadClassicTowerDefs()
 	}
@@ -3728,6 +3733,20 @@ func loadTowerDefsForMode(ruleset gamemode.TowerRuleset, pm *persistence.Progres
 		}
 		defs = append(defs, loadClassicTowerDefs()...)
 	}
+
+	// 追加玩家自定义蓝图（仅在模式允许且有蓝图时）
+	if ruleset.AllowCustomBlueprints() && bpStore != nil && bpStore.Count() > 0 {
+		tierPresets := config.GlobalTierPresets()
+		budgetRules := descriptor.DefaultBudgetRules()
+		abilityCosts := descriptor.GlobalAbilityCosts()
+		if tierPresets != nil {
+			for _, bp := range bpStore.List() {
+				def := descriptor.BlueprintToTowerDef(&bp, tierPresets, budgetRules, abilityCosts)
+				defs = append(defs, def)
+			}
+		}
+	}
+
 	return defs
 }
 

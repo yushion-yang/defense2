@@ -63,6 +63,31 @@ func CalcBudget(bp TowerBlueprint, rules BudgetRules, abilityCosts map[string]in
 	}
 }
 
+// DefaultBudgetRules 返回默认预算规则。
+// 攻击方式费用与 classic-presets 的隐含成本对齐：projectile 免费，其余按强度递增。
+func DefaultBudgetRules() *BudgetRules {
+	return &BudgetRules{
+		BaseCap:  50,
+		MaxSlots: 6,
+		AttackStyleCosts: map[string]int{
+			"projectile": 0,
+			"scatter":    12,
+			"wideBeam":   14,
+			"spin_aoe":   10,
+			"radial":     11,
+			"barrage":    13,
+		},
+		TierCosts: map[string]int{
+			"S": 4,
+			"B": 2,
+			"D": 0,
+		},
+		SpecialtyCost: 2,
+		BaseBuildCost: 40,
+		CostPerPoint:  0.5,
+	}
+}
+
 // CalcBuildCost 根据已使用预算计算建造金币花费。
 func CalcBuildCost(usedBudget int, rules BudgetRules) int {
 	return rules.BaseBuildCost + int(float64(usedBudget)*rules.CostPerPoint)
