@@ -18,14 +18,15 @@ import (
 
 // AbilityDescriptor 一个能力的完整描述。
 type AbilityDescriptor struct {
-	ID          string     `json:"id"`
-	Label       string     `json:"label"`
-	Icon        string     `json:"icon,omitempty"`
-	Cost        int        `json:"cost"`
-	Tags        []string   `json:"tags,omitempty"`
-	AttackStyle string     `json:"attackStyle,omitempty"`
-	SpriteKey   string     `json:"spriteKey,omitempty"`
-	Pipelines   []Pipeline `json:"pipelines"`
+	ID          string            `json:"id"`
+	Label       string            `json:"label"`
+	Icon        string            `json:"icon,omitempty"`
+	Cost        int               `json:"cost"`
+	Tags        []string          `json:"tags,omitempty"`
+	AttackStyle string            `json:"attackStyle,omitempty"`
+	SpriteKey   string            `json:"spriteKey,omitempty"`
+	AttackParams json.RawMessage  `json:"attackParams,omitempty"` // 攻击参数（原始 JSON，供运行时按 attackStyle 解读）
+	Pipelines   []Pipeline        `json:"pipelines"`
 }
 
 // Pipeline 一条 触发→条件→目标→效果 管线（已编译形态）。
@@ -40,14 +41,15 @@ type Pipeline struct {
 
 // rawDescriptor 第一阶段反序列化结构，pipeline 保留为 RawMessage。
 type rawDescriptor struct {
-	ID          string            `json:"id"`
-	Label       string            `json:"label"`
-	Icon        string            `json:"icon,omitempty"`
-	Cost        int               `json:"cost"`
-	Tags        []string          `json:"tags,omitempty"`
-	AttackStyle string            `json:"attackStyle,omitempty"`
-	SpriteKey   string            `json:"spriteKey,omitempty"`
-	Pipelines   []json.RawMessage `json:"pipelines"`
+	ID           string            `json:"id"`
+	Label        string            `json:"label"`
+	Icon         string            `json:"icon,omitempty"`
+	Cost         int               `json:"cost"`
+	Tags         []string          `json:"tags,omitempty"`
+	AttackStyle  string            `json:"attackStyle,omitempty"`
+	SpriteKey    string            `json:"spriteKey,omitempty"`
+	AttackParams json.RawMessage   `json:"attackParams,omitempty"`
+	Pipelines    []json.RawMessage `json:"pipelines"`
 }
 
 // rawPipeline pipeline 的中间 JSON 结构。
@@ -75,8 +77,10 @@ func ParseDescriptor(data []byte) (*AbilityDescriptor, error) {
 		return nil, fmt.Errorf("unmarshal descriptor: %w", err)
 	}
 
-	if len(raw.Pipelines) == 0 {
-		return nil, fmt.Errorf("descriptor %q: at least one pipeline required", raw.ID)
+	// 攻击方式能力（如 scatter/spinAoe）可以没有 pipeline，
+	// 其效果完全由 attackStyle + attackParams 描述。
+	if len(raw.Pipelines) == 0 && raw.AttackStyle == "" {
+		return nil, fmt.Errorf("descriptor %q: at least one pipeline required (or set attackStyle)", raw.ID)
 	}
 
 	pipelines := make([]Pipeline, 0, len(raw.Pipelines))
@@ -89,14 +93,15 @@ func ParseDescriptor(data []byte) (*AbilityDescriptor, error) {
 	}
 
 	return &AbilityDescriptor{
-		ID:          raw.ID,
-		Label:       raw.Label,
-		Icon:        raw.Icon,
-		Cost:        raw.Cost,
-		Tags:        raw.Tags,
-		AttackStyle: raw.AttackStyle,
-		SpriteKey:   raw.SpriteKey,
-		Pipelines:   pipelines,
+		ID:           raw.ID,
+		Label:        raw.Label,
+		Icon:         raw.Icon,
+		Cost:         raw.Cost,
+		Tags:         raw.Tags,
+		AttackStyle:  raw.AttackStyle,
+		SpriteKey:    raw.SpriteKey,
+		AttackParams: raw.AttackParams,
+		Pipelines:    pipelines,
 	}, nil
 }
 
