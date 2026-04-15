@@ -865,8 +865,13 @@ func (s *BlueprintEditScene) handleTiersInput(mx, my float64) {
 
 // drawAbilitiesStep 绘制能力选择步骤。
 //
-// 布局：左侧可选列表（scrollable grid），右侧已选列表。
+// 布局：左侧可选列表（自定义能力分区 + 预制能力分区），右侧已选列表。
+// 自定义能力来自 AbilityStore，以紫色边框区分。预制能力使用标准灰色边框。
+// 自定义能力分区底部有 "+创建新能力" 按钮，点击后启动 AbilityEditScene。
 func (s *BlueprintEditScene) drawAbilitiesStep(screen *ebiten.Image, fm *render.FontManager, cr ui.Rect) {
+	// 从能力编辑器返回后，懒刷新可选列表
+	s.refreshAbilitiesIfNeeded()
+
 	// 标题
 	ui.Label(screen, "选择能力", float64(cr.X)+10, float64(cr.Y)+8, float64(cr.W)-20, ui.LabelStyle{
 		Font: theme.FontH2, Color: theme.TextTitle, Bold: true,
@@ -887,71 +892,98 @@ func (s *BlueprintEditScene) drawAbilitiesStep(screen *ebiten.Image, fm *render.
 
 	budget := s.calcCurrentBudget()
 
-	// ── 左：可选能力网格 ──
-	ui.Label(screen, "可选能力", float64(leftX), float64(bodyY), float64(leftW), ui.LabelStyle{
-		Font: theme.FontCaption, Color: theme.TextMuted, Bold: true,
-	})
+	// ── 左列：可选能力（分区布局） ──
+	s.step3AvailRects = nil
+	s.step3CreateBtnRect = ui.Rect{}
+
+	curY := bodyY
+
+	// 分离自定义能力和预制能力
+	var customOpts []int // 索引列表
+	var prebuiltOpts []int
+	for i, opt := range s.availableAbilities {
+		if opt.IsCustom {
+			customOpts = append(customOpts, i)
+		} else {
+			prebuiltOpts = append(prebuiltOpts, i)
+		}
+	}
 
 	const (
-		aCols   = 3
-		aCardW  = float32(116)
-		aCardH  = float32(50)
-		aGap    = float32(6)
+		aCols  = 3
+		aCardW = float32(116)
+		aCardH = float32(50)
+		aGap   = float32(6)
 	)
 
-	gridY := bodyY + 18
-	count := len(s.availableAbilities)
+	// ── 自定义能力分区 ──
+	hasCustomSection := s.abilityStore != nil
+	if hasCustomSection {
+		// 分区标题
+		customHeaderClr := color.RGBA{R: 147, G: 130, B: 220, A: 255} // 紫色调
+		ui.Label(screen, "我的自定义能力", float64(leftX), float64(curY), float64(leftW), ui.LabelStyle{
+			Font: theme.FontCaption, Color: customHeaderClr, Bold: true,
+		})
+		curY += 16
 
-	result := ui.CardGrid(screen, leftX, gridY, count, ui.CardGridStyle{
-		Cols: aCols, CardW: aCardW, CardH: aCardH, Gap: aGap,
-	}, func(screen *ebiten.Image, idx int, r ui.Rect) {
-		opt := s.availableAbilities[idx]
-		isSelected := s.isAbilitySelected(opt.ID)
-		overBudget := budget.Used+opt.Cost > budget.Cap && !isSelected
-		full := len(s.blueprint.Abilities) >= s.budgetRules.MaxSlots && !isSelected
-		greyed := overBudget || full || isSelected
+		// 自定义能力卡片
+		if len(customOpts) > 0 {
+			result := ui.CardGrid(screen, leftX, curY, len(customOpts), ui.CardGridStyle{
+				Cols: aCols, CardW: aCardW, CardH: aCardH, Gap: aGap,
+			}, func(screen *ebiten.Image, idx int, r ui.Rect) {
+				optIdx := customOpts[idx]
+				opt := s.availableAbilities[optIdx]
+				s.drawAbilityCard(screen, opt, r, budget, true)
+			})
 
-		// 卡片背景
-		bgClr := color.RGBA{R: 25, G: 32, B: 55, A: 220}
-		borderClr := color.RGBA{R: 60, G: 70, B: 95, A: 200}
-		if greyed {
-			bgClr = color.RGBA{R: 20, G: 22, B: 35, A: 180}
-			borderClr = color.RGBA{R: 40, G: 45, B: 60, A: 140}
+			// 记录每张卡片在 availableAbilities 中的真实索引
+			for i, r := range result.Rects {
+				_ = i
+				s.step3AvailRects = append(s.step3AvailRects, r)
+			}
+
+			// 计算卡片区域底部 Y
+			rows := (len(customOpts) + aCols - 1) / aCols
+			curY += float32(rows)*(aCardH+aGap) + 2
 		}
 
-		ui.Card(screen, r.X, r.Y, r.W, r.H, ui.CardStyle{
-			BgColor:     bgClr,
-			BorderColor: borderClr,
-			Radius:      8,
-			BorderWidth: 1,
+		// "+创建新能力" 按钮
+		const createBtnW = float32(140)
+		const createBtnH = float32(28)
+		createX := leftX
+		createY := curY
+		s.step3CreateBtnRect = ui.Rect{X: createX, Y: createY, W: createBtnW, H: createBtnH}
+
+		ui.Button(screen, createX, createY, createBtnW, createBtnH, "+ 创建新能力", ui.ButtonStyle{
+			BgColor:  color.RGBA{R: 60, G: 50, B: 90, A: 220},
+			FontSize: theme.FontCaption,
+			Radius:   8,
 		})
 
-		cx := r.CenterX()
-		textClr := color.Color(theme.TextTitle)
-		if greyed {
-			textClr = theme.TextLocked
-		}
+		curY += createBtnH + 8
+	}
 
-		// 名称 + 标签
-		nameText := opt.Label
-		ui.LabelV(screen, nameText, cx, float64(r.Y)+16, float64(r.W)-8, ui.LabelStyle{
-			Font: theme.FontCaption, Color: textClr, Bold: true,
-		})
-
-		// 标签 + 费用
-		tagCostText := fmt.Sprintf("%s | %d", bpTagLabel(opt.Tag), opt.Cost)
-		tagClr := color.Color(theme.TextMuted)
-		if greyed {
-			tagClr = theme.TextLocked
-		}
-		ui.LabelV(screen, tagCostText, cx, float64(r.Y)+34, float64(r.W)-8, ui.LabelStyle{
-			Font: 10, Color: tagClr,
-		})
+	// ── 预制能力分区 ──
+	ui.Label(screen, "预制能力", float64(leftX), float64(curY), float64(leftW), ui.LabelStyle{
+		Font: theme.FontCaption, Color: theme.TextMuted, Bold: true,
 	})
+	curY += 16
 
-	s.step3AvailRects = result.Rects
+	if len(prebuiltOpts) > 0 {
+		result := ui.CardGrid(screen, leftX, curY, len(prebuiltOpts), ui.CardGridStyle{
+			Cols: aCols, CardW: aCardW, CardH: aCardH, Gap: aGap,
+		}, func(screen *ebiten.Image, idx int, r ui.Rect) {
+			optIdx := prebuiltOpts[idx]
+			opt := s.availableAbilities[optIdx]
+			s.drawAbilityCard(screen, opt, r, budget, false)
+		})
 
-	// ── 右：已选能力列表 ──
+		for _, r := range result.Rects {
+			s.step3AvailRects = append(s.step3AvailRects, r)
+		}
+	}
+
+	// ── 右列：已选能力列表 ──
 	ui.Label(screen, "已选能力", float64(rightX), float64(bodyY), float64(rightW), ui.LabelStyle{
 		Font: theme.FontCaption, Color: theme.TextMuted, Bold: true,
 	})
@@ -972,21 +1004,23 @@ func (s *BlueprintEditScene) drawAbilitiesStep(screen *ebiten.Image, fm *render.
 			r := ui.Rect{X: rightX, Y: iy, W: rightW, H: selItemH}
 			s.step3SelRects = append(s.step3SelRects, r)
 
-			// 小卡片背景
+			// 查找名称和费用：先查预制描述符，再查自定义能力
+			label, cost := s.lookupAbilityInfo(abID)
+
+			// 小卡片背景：自定义能力用紫色调
+			bgClr := color.RGBA{R: 30, G: 50, B: 40, A: 200}
+			borderClr := color.RGBA{R: 74, G: 222, B: 128, A: 120}
+			if s.isCustomAbilityID(abID) {
+				bgClr = color.RGBA{R: 40, G: 35, B: 55, A: 200}
+				borderClr = color.RGBA{R: 147, G: 130, B: 220, A: 150}
+			}
+
 			ui.Card(screen, r.X, r.Y, r.W, r.H, ui.CardStyle{
-				BgColor:     color.RGBA{R: 30, G: 50, B: 40, A: 200},
-				BorderColor: color.RGBA{R: 74, G: 222, B: 128, A: 120},
+				BgColor:     bgClr,
+				BorderColor: borderClr,
 				Radius:      6,
 				BorderWidth: 1,
 			})
-
-			// 查找描述符
-			label := abID
-			cost := 0
-			if desc, ok := descriptor.LookupDescriptor(abID); ok {
-				label = desc.Label
-				cost = desc.Cost
-			}
 
 			// 名称
 			ui.Label(screen, label, float64(r.X)+8, float64(r.Y)+6, float64(r.W)-50, ui.LabelStyle{
@@ -1005,11 +1039,73 @@ func (s *BlueprintEditScene) drawAbilitiesStep(screen *ebiten.Image, fm *render.
 	s.drawBudgetBar(screen, fm, cr, budget)
 }
 
+// drawAbilityCard 绘制单个能力卡片（自定义能力和预制能力共用）。
+// isCustom 为 true 时使用紫色边框区分。
+func (s *BlueprintEditScene) drawAbilityCard(screen *ebiten.Image, opt abilityOption, r ui.Rect, budget descriptor.BudgetResult, isCustom bool) {
+	isSelected := s.isAbilitySelected(opt.ID)
+	overBudget := budget.Used+opt.Cost > budget.Cap && !isSelected
+	full := len(s.blueprint.Abilities) >= s.budgetRules.MaxSlots && !isSelected
+	greyed := overBudget || full || isSelected
+
+	// 卡片背景色：自定义=紫色调，预制=标准蓝灰
+	bgClr := color.RGBA{R: 25, G: 32, B: 55, A: 220}
+	borderClr := color.RGBA{R: 60, G: 70, B: 95, A: 200}
+	if isCustom {
+		bgClr = color.RGBA{R: 35, G: 28, B: 55, A: 220}
+		borderClr = color.RGBA{R: 120, G: 100, B: 180, A: 200}
+	}
+	if greyed {
+		bgClr = color.RGBA{R: 20, G: 22, B: 35, A: 180}
+		borderClr = color.RGBA{R: 40, G: 45, B: 60, A: 140}
+	}
+
+	ui.Card(screen, r.X, r.Y, r.W, r.H, ui.CardStyle{
+		BgColor:     bgClr,
+		BorderColor: borderClr,
+		Radius:      8,
+		BorderWidth: 1,
+	})
+
+	cx := r.CenterX()
+	textClr := color.Color(theme.TextTitle)
+	if greyed {
+		textClr = theme.TextLocked
+	}
+
+	// 名称
+	ui.LabelV(screen, opt.Label, cx, float64(r.Y)+16, float64(r.W)-8, ui.LabelStyle{
+		Font: theme.FontCaption, Color: textClr, Bold: true,
+	})
+
+	// 标签 + 费用
+	tagCostText := fmt.Sprintf("%s | %d", bpTagLabel(opt.Tag), opt.Cost)
+	tagClr := color.Color(theme.TextMuted)
+	if greyed {
+		tagClr = theme.TextLocked
+	}
+	ui.LabelV(screen, tagCostText, cx, float64(r.Y)+34, float64(r.W)-8, ui.LabelStyle{
+		Font: 10, Color: tagClr,
+	})
+}
+
 // handleAbilitiesInput 处理能力选择步骤的点击。
+//
+// 检查顺序：
+//  1. "+创建新能力" 按钮 → 启动 AbilityEditScene
+//  2. 已选列表 → 点击移除
+//  3. 可选列表 → 点击添加（自定义 + 预制混合索引）
 func (s *BlueprintEditScene) handleAbilitiesInput(mx, my float64) {
+	// 1. "+创建新能力" 按钮
+	if s.abilityStore != nil && s.step3CreateBtnRect.Contains(mx, my) {
+		playUIClick(s.switcher)
+		scene := NewAbilityEditScene(s.switcher, nil, s.abilityStore, s)
+		s.switcher.SwitchScene(scene)
+		return
+	}
+
 	budget := s.calcCurrentBudget()
 
-	// 点击已选列表：移除
+	// 2. 点击已选列表：移除
 	for i, r := range s.step3SelRects {
 		if r.Contains(mx, my) {
 			playUIClick(s.switcher)
@@ -1018,10 +1114,26 @@ func (s *BlueprintEditScene) handleAbilitiesInput(mx, my float64) {
 		}
 	}
 
-	// 点击可选列表：添加
+	// 3. 点击可选列表：添加
+	// step3AvailRects 的顺序与 drawAbilitiesStep 中绘制的卡片对应：
+	// 先 customOpts（自定义能力），后 prebuiltOpts（预制能力）。
+	// 需要将 rect 索引映射回 availableAbilities 的真实索引。
+	customCount, prebuiltIndices := s.splitAbilityIndices()
 	for i, r := range s.step3AvailRects {
 		if r.Contains(mx, my) {
-			opt := s.availableAbilities[i]
+			// 映射回 availableAbilities 索引
+			var optIdx int
+			if i < customCount {
+				optIdx = i // 自定义能力在 availableAbilities 前部
+			} else {
+				pIdx := i - customCount
+				if pIdx >= len(prebuiltIndices) {
+					return
+				}
+				optIdx = prebuiltIndices[pIdx]
+			}
+
+			opt := s.availableAbilities[optIdx]
 			isSelected := s.isAbilitySelected(opt.ID)
 			overBudget := budget.Used+opt.Cost > budget.Cap
 			full := len(s.blueprint.Abilities) >= s.budgetRules.MaxSlots
@@ -1035,6 +1147,19 @@ func (s *BlueprintEditScene) handleAbilitiesInput(mx, my float64) {
 	}
 }
 
+// splitAbilityIndices 返回自定义能力数量和预制能力在 availableAbilities 中的索引列表。
+// 与 drawAbilitiesStep 中的分离逻辑保持一致。
+func (s *BlueprintEditScene) splitAbilityIndices() (customCount int, prebuiltIndices []int) {
+	for i, opt := range s.availableAbilities {
+		if opt.IsCustom {
+			customCount++
+		} else {
+			prebuiltIndices = append(prebuiltIndices, i)
+		}
+	}
+	return
+}
+
 // isAbilitySelected 检查能力是否已在已选列表中。
 func (s *BlueprintEditScene) isAbilitySelected(id string) bool {
 	for _, ab := range s.blueprint.Abilities {
@@ -1043,6 +1168,31 @@ func (s *BlueprintEditScene) isAbilitySelected(id string) bool {
 		}
 	}
 	return false
+}
+
+// lookupAbilityInfo 查找能力的显示名称和费用。
+// 先查全局描述符表（预制能力），未找到则查 abilityStore（自定义能力）。
+func (s *BlueprintEditScene) lookupAbilityInfo(abID string) (label string, cost int) {
+	// 预制能力
+	if desc, ok := descriptor.LookupDescriptor(abID); ok {
+		return desc.Label, desc.Cost
+	}
+	// 自定义能力
+	if s.abilityStore != nil {
+		if ca, err := s.abilityStore.Get(abID); err == nil {
+			return ca.Name, ca.Desc.Cost
+		}
+	}
+	return abID, 0
+}
+
+// isCustomAbilityID 判断能力 ID 是否属于自定义能力。
+func (s *BlueprintEditScene) isCustomAbilityID(abID string) bool {
+	if s.abilityStore == nil {
+		return false
+	}
+	_, err := s.abilityStore.Get(abID)
+	return err == nil
 }
 
 // bpTagLabel 返回标签中文名。
@@ -1164,12 +1314,7 @@ func (s *BlueprintEditScene) drawPreviewStep(screen *ebiten.Image, fm *render.Fo
 		ry += lineH
 	} else {
 		for _, abID := range s.blueprint.Abilities {
-			label := abID
-			cost := 0
-			if desc, ok := descriptor.LookupDescriptor(abID); ok {
-				label = desc.Label
-				cost = desc.Cost
-			}
+			label, cost := s.lookupAbilityInfo(abID)
 			text := fmt.Sprintf("• %s (%d)", label, cost)
 			ui.Label(screen, text, rightX, ry, rightW-10, ui.LabelStyle{
 				Font: theme.FontCaption, Color: theme.TextBody,
@@ -1195,7 +1340,7 @@ func (s *BlueprintEditScene) drawPreviewStep(screen *ebiten.Image, fm *render.Fo
 	ry += lineH + 4
 
 	// 校验错误
-	errs := descriptor.ValidateBlueprint(s.blueprint, *s.budgetRules, descriptor.GlobalAbilityCosts())
+	errs := descriptor.ValidateBlueprint(s.blueprint, *s.budgetRules, s.mergedAbilityCosts())
 	if len(errs) > 0 {
 		ui.Label(screen, "校验问题:", rightX, ry, rightW, ui.LabelStyle{
 			Font: theme.FontCaption, Color: theme.BtnDanger, Bold: true,
@@ -1298,7 +1443,7 @@ func (s *BlueprintEditScene) drawBottomButtons(screen *ebiten.Image, px, py floa
 	} else {
 		// 保存按钮：校验失败时变灰
 		saveClr := color.Color(theme.TonePrimary)
-		errs := descriptor.ValidateBlueprint(s.blueprint, *s.budgetRules, descriptor.GlobalAbilityCosts())
+		errs := descriptor.ValidateBlueprint(s.blueprint, *s.budgetRules, s.mergedAbilityCosts())
 		if len(errs) > 0 {
 			saveClr = theme.ToneDisabled
 		}
