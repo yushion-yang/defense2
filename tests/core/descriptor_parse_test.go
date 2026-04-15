@@ -5,17 +5,13 @@
 package core_test
 
 import (
-	"math"
 	"strings"
 	"testing"
 
 	"defense2/internal/core/tower/descriptor"
 )
 
-// floatEq 浮点近似相等比较，容差 1e-9。
-func floatEq(a, b float64) bool {
-	return math.Abs(a-b) < 1e-9
-}
+// floatEq 已在 descriptor_blueprint_to_def_test.go 中定义（同包复用）。
 
 // TestParseDescriptor_StunChance 解析 onHit + chance + currentTarget + stun 管线。
 func TestParseDescriptor_StunChance(t *testing.T) {
