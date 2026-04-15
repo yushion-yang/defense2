@@ -46,6 +46,8 @@ type Pool struct {
 	activeIdx []int   // 活跃敌人的 slot 索引列表（含 dying），EachActive 只遍历此列表
 	Count     int     // 当前存活敌人数量（不含 dying）
 	nextID    int     // 递增 ID 计数器
+	// Archetypes 原型→配置映射（由 stage 层注入，死亡召唤时查找目标原型的完整配置）。
+	Archetypes map[string]*SpawnConfig
 	// OnSplit 击杀时分裂回调（可选，由 stage 层注册）。
 	OnSplit func(children []*Enemy)
 	// OnDeathSpawn 死亡召唤回调（可选，由 stage 层注册）。
@@ -254,6 +256,16 @@ func (p *Pool) Spawn(x, y, baseHP, baseSpeed float64, pathIndex int, archetype s
 	return nil
 }
 
+// archConfig 查找原型的 SpawnConfig，未找到则回退到默认配置。
+func (p *Pool) archConfig(arch string) *SpawnConfig {
+	if p.Archetypes != nil {
+		if cfg, ok := p.Archetypes[arch]; ok {
+			return cfg
+		}
+	}
+	return DefaultSpawnConfig()
+}
+
 // Kill 启动死亡动画。Count 立即减少（gameplay 视角已"死"），但 Active 保持为 true，
 // 供渲染层继续绘制死亡动画，直到 FinishDying 被调用。
 //
@@ -280,8 +292,9 @@ func (p *Pool) Kill(e *Enemy) {
 			if arch == "" {
 				arch = bal.DeathSpawn.DefaultArch
 			}
+			cfg := p.archConfig(arch)
 			for i := 0; i < e.DeathSpawnCount; i++ {
-				child := p.Spawn(e.X+float64(i)*bal.DeathSpawn.ChildOffset, e.Y, e.MaxHP*bal.DeathSpawn.HpRatio, e.BaseSpeed, e.PathIndex, arch, DefaultSpawnConfig())
+				child := p.Spawn(e.X+float64(i)*bal.DeathSpawn.ChildOffset, e.Y, e.MaxHP*bal.DeathSpawn.HpRatio, e.BaseSpeed, e.PathIndex, arch, cfg)
 				if child != nil {
 					child.Path = e.Path
 					// 召唤小怪奖励削减

@@ -419,7 +419,8 @@ func NewStageSceneWithOpts(sw Switcher, opts StageOptions) *StageScene {
 	// 初始化模式上下文闭包（只设一次，避免每帧分配）
 	s.initModeCtx()
 
-	// 死亡召唤音效回调
+	// 死亡召唤：注入原型配置（让子体继承完整能力/半径/属性）+ 音效回调
+	s.enemies.Archetypes = s.spawner.Archetypes
 	s.enemies.OnDeathSpawn = func(_ *enemy.Enemy, _ int) {
 		s.audioMgr.PlayThrottledAt("bossSummonMinions", 500, gameAudio.VolWave)
 	}
@@ -3231,10 +3232,25 @@ func towerTypeIcon(key string) string {
 }
 
 // drawUpgradeIndicators 在有待选能力的塔上方绘制脉冲金色菱形指示器。
+// 同时为经典模式可升级力量的塔绘制蓝绿色箭头指示器。
 func (s *StageScene) drawUpgradeIndicators(target *ebiten.Image, animTime float64) {
+	strCost := tower.StrengthBuyCost()
 	s.towers.Each(func(t *tower.Tower) {
+		// 能力选择优先（金色菱形）
 		if t.HasPendingUpgrade() {
 			vfx.DrawUpgradeDiamond(target, float32(t.X), float32(t.Y), animTime)
+			return
+		}
+		// 经典模式力量升级（蓝绿色箭头）
+		if t.Selling || t.BuildAnim > 0 {
+			return
+		}
+		def := s.findTowerDef(t)
+		if def.MaxStrengthBuys >= 0 && t.StrengthPurchases >= def.MaxStrengthBuys {
+			return // 已达购买上限
+		}
+		if s.gold >= strCost {
+			vfx.DrawStrengthUpgradeIndicator(target, float32(t.X), float32(t.Y), animTime)
 		}
 	})
 }
@@ -3268,13 +3284,19 @@ func (s *StageScene) buildMinimapVM() hud.MinimapVM {
 
 // buildWavePanelData 根据当前波次和出怪状态构建波次面板显示数据。
 func (s *StageScene) buildWavePanelData() hud.WavePanelData {
+	sp := s.spawner
 	d := hud.WavePanelData{
-		WaveNum:    s.spawner.Wave,
-		MaxWaves:   s.spawner.MaxWaves,
-		EnemyCount: s.enemies.Count,
-		AllDone:    s.spawner.AllDone,
+		WaveNum:         sp.Wave,
+		MaxWaves:        sp.MaxWaves,
+		EnemyCount:      s.enemies.Count,
+		AllDone:         sp.AllDone,
+		WaveActive:      sp.WaveActive,
+		WaveTimer:       sp.WaveTimer,
+		WaitingForClear: sp.WaitingForClear,
+		SpawnProgress:   sp.SpawnIndex,
+		SpawnTotal:      sp.EnemiesPerWave + sp.Wave, // 同 spawner 实际计算
 	}
-	entries, count, boss := s.spawner.NextWavePreview()
+	entries, count, boss := sp.NextWavePreview()
 	d.NextWaveCount = count
 	d.NextWaveBoss = boss
 	for _, e := range entries {

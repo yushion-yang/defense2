@@ -447,7 +447,7 @@ func TestConsistency_WardenConfigsHaveParams(t *testing.T) {
 // ═══════════════════════════════════════
 
 func TestConsistency_LevelListMapsCanLoad(t *testing.T) {
-	levels, err := config.LoadLevelList()
+	levels, err := config.LoadLevelList("")
 	if err != nil {
 		t.Fatalf("加载关卡列表失败: %v", err)
 	}
@@ -478,7 +478,7 @@ func TestConsistency_LevelListMapsCanLoad(t *testing.T) {
 }
 
 func TestConsistency_LevelListWavesMatchMapWaves(t *testing.T) {
-	levels, err := config.LoadLevelList()
+	levels, err := config.LoadLevelList("")
 	if err != nil {
 		t.Fatalf("加载关卡列表失败: %v", err)
 	}

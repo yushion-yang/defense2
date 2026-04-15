@@ -88,7 +88,7 @@ func NewMapEditorScene(sw Switcher) *MapEditorScene {
 		hoverCol: -1,
 		bgGrad:   draw.NewCachedGradient(game.ScreenWidth, game.ScreenHeight, theme.SelectGradTop, theme.SelectGradBot),
 	}
-	s.maps, _ = config.LoadLevelList()
+	s.maps, _ = config.LoadLevelList("")
 	if len(s.maps) > 0 {
 		s.loadMap(0)
 	}

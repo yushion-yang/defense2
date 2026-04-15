@@ -703,6 +703,12 @@
           "description": "有待选能力时塔上方的脉冲金色菱形"
         },
         {
+          "id": "strengthUpgradeIndicator",
+          "name": "StrengthUpgradeIndicator",
+          "label": "力量升级箭头",
+          "description": "经典模式有钱升级力量时塔上方的蓝绿色箭头指示器"
+        },
+        {
           "id": "selectionRing",
           "name": "SelectionRing",
           "label": "选中环",

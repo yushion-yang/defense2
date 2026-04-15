@@ -253,6 +253,39 @@ func DrawUpgradeDiamond(screen *ebiten.Image, cx, cy float32, animTime float64) 
 	}
 }
 
+// DrawStrengthUpgradeIndicator 绘制经典模式力量升级指示器（蓝绿色上箭头 + 呼吸动画）。
+// 用于标识有钱可升级力量的塔，区别于金色菱形（能力选择）。
+func DrawStrengthUpgradeIndicator(screen *ebiten.Image, cx, cy float32, animTime float64) {
+	const (
+		baseY    = float32(24) // 偏移（塔上方）
+		bobAmp   = float32(2)  // 上下浮动幅度
+		bobFreq  = 1.8         // 浮动频率
+		arrowW   = float32(6)  // 箭头半宽
+		arrowH   = float32(5)  // 箭头半高
+		barW     = float32(3)  // 竖条半宽
+		barH     = float32(5)  // 竖条高度
+	)
+
+	bob := bobAmp * float32(math.Sin(animTime*bobFreq*2*math.Pi))
+	dy := cy - baseY + bob
+
+	// 呼吸透明度
+	breatheA := uint8(160 + 60*math.Sin(animTime*3))
+	clr := color.RGBA{R: 50, G: 210, B: 180, A: breatheA}
+
+	// ── 上箭头（^ 形） ──
+	draw.Line(screen, cx, dy-arrowH, cx-arrowW, dy, 1.5, clr, true)
+	draw.Line(screen, cx, dy-arrowH, cx+arrowW, dy, 1.5, clr, true)
+
+	// ── 竖条（箭头下方） ──
+	draw.Line(screen, cx, dy, cx, dy+barH, 1.5, clr, true)
+
+	// ── 柔和底部光点 ──
+	dotA := uint8(80 + 40*math.Sin(animTime*4))
+	draw.FilledCircle(screen, cx, dy+barH+2, 1.5,
+		color.RGBA{R: 50, G: 210, B: 180, A: dotA})
+}
+
 // DrawSelectionRing draws the tower selection ring + range indicator.
 func DrawSelectionRing(screen *ebiten.Image, cx, cy, selectionR, selectionW float32, selClr color.RGBA, rangeR, rangeW float32, rangeClr color.RGBA) {
 	draw.CircleOutline(screen, cx, cy, selectionR, selectionW, selClr)

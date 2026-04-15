@@ -53,12 +53,16 @@ type LevelEntry struct {
 	Difficulty  string `json:"difficulty"`
 }
 
-// LoadLevelList 从 config/levels/ 目录扫描所有正式地图构建关卡列表。
-// 只包含 map_01~map_99 格式的文件，跳过 map_test/map_dummy 等测试地图。
-// 按 ID 字母序排列（embed.FS.ReadDir 保证排序，无需额外 sort）。
+// LoadLevelList 从 config/levels/ 目录扫描地图构建关卡列表，按模式过滤。
 //
-// 过滤流程：文件名长度检查 → "map_"前缀检查 → ".json"后缀检查 → 数字编号检查 → 加载验证
-func LoadLevelList() ([]LevelEntry, error) {
+// 过滤规则：
+//   - modeID == "classic": 只返回 map_cXX 前缀的经典模式专属地图
+//   - modeID == "test" 或 "": 返回所有正式地图（campaign + classic）
+//   - 其他（campaign 模式如 casual/hard/extreme）: 只返回 map_XX（纯数字编号）
+//
+// 所有模式都跳过 map_test/map_dummy 等测试地图。
+// 按 ID 字母序排列（embed.FS.ReadDir 保证排序，无需额外 sort）。
+func LoadLevelList(modeID string) ([]LevelEntry, error) {
 	if dataFS == nil {
 		return nil, fmt.Errorf("load level list: dataFS not initialized")
 	}
@@ -70,24 +74,37 @@ func LoadLevelList() ([]LevelEntry, error) {
 	var levels []LevelEntry
 	for _, entry := range entries {
 		name := entry.Name()
-		// 只加载 map_XX.json（两位数字编号的正式地图）
-		if len(name) < 11 || name[:4] != "map_" || name[len(name)-5:] != ".json" {
+		// 基础格式校验：至少 "map_X.json"（10 字符），前缀 map_，后缀 .json
+		if len(name) < 10 || name[:4] != "map_" || name[len(name)-5:] != ".json" {
 			continue
 		}
-		// 跳过非数字编号的文件（map_test, map_dummy 等）
+		id := name[:len(name)-5] // 如 "map_01" 或 "map_c01"
 		numPart := name[4 : len(name)-5]
-		isNumeric := true
-		for _, c := range numPart {
-			if c < '0' || c > '9' {
-				isNumeric = false
-				break
-			}
-		}
-		if !isNumeric {
+
+		// 判断地图类型：经典地图(map_cXX) vs 战役地图(map_XX)
+		isClassicMap := len(numPart) >= 2 && numPart[0] == 'c' && isDigits(numPart[1:])
+		isCampaignMap := isDigits(numPart)
+
+		// 跳过非正式地图（map_test, map_dummy 等）
+		if !isClassicMap && !isCampaignMap {
 			continue
 		}
 
-		id := name[:len(name)-5] // "map_01"
+		// 按模式过滤
+		switch modeID {
+		case "classic":
+			if !isClassicMap {
+				continue
+			}
+		case "test", "":
+			// 返回所有正式地图
+		default:
+			// campaign 模式：只返回战役地图
+			if !isCampaignMap {
+				continue
+			}
+		}
+
 		m, err := LoadMap(id)
 		if err != nil {
 			continue // 跳过无法加载的文件
@@ -101,8 +118,20 @@ func LoadLevelList() ([]LevelEntry, error) {
 		})
 	}
 
-	// entries 已按字母序（embed.FS.ReadDir 保证排序），无需额外排序
 	return levels, nil
+}
+
+// isDigits 检查字符串是否全为数字且非空。
+func isDigits(s string) bool {
+	if len(s) == 0 {
+		return false
+	}
+	for _, c := range s {
+		if c < '0' || c > '9' {
+			return false
+		}
+	}
+	return true
 }
 
 // ── 地图配置 ──────────────────────────────────────

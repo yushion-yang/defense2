@@ -9,10 +9,11 @@ import (
 	"defense2/internal/config"
 )
 
-// classicMapIDs 所有需要经典出怪配置的地图。
+// classicMapIDs 所有需要经典出怪配置的地图（战役地图 + 经典专属地图）。
 var classicMapIDs = []string{
 	"map_01", "map_02", "map_03", "map_04",
 	"map_05", "map_06", "map_07", "map_08",
+	"map_c01", "map_c02",
 }
 
 // TestClassicWavesLoad 验证每张地图的经典出怪配置加载成功。

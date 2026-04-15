@@ -540,6 +540,14 @@ func FormatAbilityDisplay(def *config.AbilityDef, effStr float64) string {
 			b.WriteString(fmtNum(def.Param))
 		case "p%":
 			b.WriteString(fmtNum(def.Param*100) + "%")
+		case "sh%":
+			b.WriteString(fmt.Sprintf("%.0f%%", displayTotal/2*100))
+		case "ph%":
+			b.WriteString(fmtNum(def.Param*50) + "%")
+		case "p2":
+			b.WriteString(fmtNum(def.Param2))
+		case "p2%":
+			b.WriteString(fmtNum(def.Param2*100) + "%")
 		}
 	}
 	return b.String()

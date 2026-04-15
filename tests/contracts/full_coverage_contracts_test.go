@@ -281,7 +281,7 @@ func TestDamagePipeline_HPNeverBelowZero(t *testing.T) {
 // ═══════════════════════════════════════
 
 func TestAllMapsHaveBuildableCells(t *testing.T) {
-	list, err := config.LoadLevelList()
+	list, err := config.LoadLevelList("")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -309,7 +309,7 @@ func TestAllMapsHaveBuildableCells(t *testing.T) {
 }
 
 func TestAllMapsHavePathCells(t *testing.T) {
-	list, err := config.LoadLevelList()
+	list, err := config.LoadLevelList("")
 	if err != nil {
 		t.Fatal(err)
 	}

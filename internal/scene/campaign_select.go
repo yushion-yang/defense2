@@ -88,8 +88,7 @@ func NewCampaignSelectScene(sw Switcher, modeIDs ...string) *CampaignSelectScene
 	if len(modeIDs) > 0 && modeIDs[0] != "" {
 		modeID = modeIDs[0]
 	}
-	_ = modeID // 下方赋值
-	levels, err := config.LoadLevelList()
+	levels, err := config.LoadLevelList(modeID)
 	if err != nil {
 		levels = nil
 	}

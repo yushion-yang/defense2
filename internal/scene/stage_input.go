@@ -238,6 +238,11 @@ func (s *StageScene) handleInput() {
 		s.tryUpgradeTower()
 		return
 	}
+	// W 键: 切换波次预览面板
+	if inpututil.IsKeyJustPressed(ebiten.KeyW) {
+		s.wavePanelOpen = !s.wavePanelOpen
+		return
+	}
 	// S 键: 开始下一波（仅在空闲/选塔模式且当前没有活跃波次时）
 	if inpututil.IsKeyJustPressed(ebiten.KeyS) && (s.imode == modeIdle || s.imode == modeTowerSel) {
 		if !s.spawner.WaveActive && !s.spawner.AllDone {
@@ -806,6 +811,7 @@ func (s *StageScene) clampCamera() {
 // enterBuildMode 进入建塔模式。
 // 优化: 只有一种塔型时跳过菜单直接进入放塔模式（减少一次点击）。
 func (s *StageScene) enterBuildMode() {
+	s.selectedDef = -1 // 重置选择，避免上次选取的炮塔高亮残留
 	if len(s.towerDefs) == 1 {
 		s.selectedDef = 0
 		s.imode = modeBuildPlace

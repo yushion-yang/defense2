@@ -64,7 +64,7 @@ func TestAllConfigsLoadWithoutError(t *testing.T) {
 		{"LoadEnemyAbilities", func() error { _, err := config.LoadEnemyAbilities(); return err }},
 		{"LoadAbilityTable", func() error { _, err := config.LoadAbilityTable(); return err }},
 		{"LoadWardenConfigs", func() error { _, err := config.LoadWardenConfigs(); return err }},
-		{"LoadLevelList", func() error { _, err := config.LoadLevelList(); return err }},
+		{"LoadLevelList", func() error { _, err := config.LoadLevelList(""); return err }},
 		{"LoadTierPresets", func() error { _, err := config.LoadTierPresets(); return err }},
 		{"LoadVFXCatalog", func() error { _, err := config.LoadVFXCatalog(); return err }},
 		{"LoadScenarios", func() error { _, err := config.LoadScenarios(); return err }},

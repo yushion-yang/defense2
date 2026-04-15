@@ -79,7 +79,7 @@ func NewWavePreviewScene(sw Switcher) *WavePreviewScene {
 }
 
 func (s *WavePreviewScene) loadMaps() {
-	levels, err := config.LoadLevelList()
+	levels, err := config.LoadLevelList("")
 	if err != nil || len(levels) == 0 {
 		return
 	}

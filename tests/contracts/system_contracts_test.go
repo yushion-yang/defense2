@@ -255,7 +255,7 @@ func TestWardenConfigRanges(t *testing.T) {
 
 // TestAllMapsLoadable 验证所有地图可加载。
 func TestAllMapsLoadable(t *testing.T) {
-	list, err := config.LoadLevelList()
+	list, err := config.LoadLevelList("")
 	if err != nil {
 		t.Fatalf("加载地图列表失败: %v", err)
 	}
