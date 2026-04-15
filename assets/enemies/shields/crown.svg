@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 80 80" width="80" height="80">
+  <!-- 皇冠主体 -->
+  <polygon points="10,55 15,25 25,40 40,15 55,40 65,25 70,55"
+    fill="#FFD700" stroke="#B8860B" stroke-width="3" stroke-linejoin="round"/>
+  <!-- 底座 -->
+  <rect x="8" y="53" width="64" height="12" rx="3"
+    fill="#FFD700" stroke="#B8860B" stroke-width="3"/>
+  <!-- 三颗宝石 -->
+  <circle cx="25" cy="46" r="5" fill="#FF4444"/>
+  <circle cx="40" cy="40" r="5" fill="#44AAFF"/>
+  <circle cx="55" cy="46" r="5" fill="#44FF44"/>
+</svg>

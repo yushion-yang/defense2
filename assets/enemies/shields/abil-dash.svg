@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 80 80" width="80" height="80">
+  <!-- 闪电：表示受击冲刺 -->
+  <polygon points="48,8 22,38 36,38 28,72 58,36 42,36"
+    fill="#FFAA33" stroke="#DD8800" stroke-width="2.5" stroke-linejoin="round"/>
+  <!-- 高光 -->
+  <polygon points="44,16 30,38 38,38 34,58 50,36 42,36"
+    fill="#FFCC66" opacity="0.5"/>
+</svg>

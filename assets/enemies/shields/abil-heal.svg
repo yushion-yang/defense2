@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 80 80" width="80" height="80">
+  <!-- 绿色十字：表示治疗光环 -->
+  <rect x="30" y="12" width="20" height="56" rx="4" fill="#44DD44" stroke="#22AA22" stroke-width="3"/>
+  <rect x="12" y="30" width="56" height="20" rx="4" fill="#44DD44" stroke="#22AA22" stroke-width="3"/>
+  <!-- 内部高光 -->
+  <rect x="35" y="18" width="10" height="44" rx="2" fill="#66FF66" opacity="0.4"/>
+  <rect x="18" y="35" width="44" height="10" rx="2" fill="#66FF66" opacity="0.4"/>
+</svg>

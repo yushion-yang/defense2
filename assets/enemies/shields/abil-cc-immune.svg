@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 80 80" width="80" height="80">
+  <!-- 断链：表示免控 -->
+  <!-- 左半链环 -->
+  <path d="M 15,30 A 12,12 0 0 1 15,54" fill="none" stroke="#FF4444" stroke-width="6" stroke-linecap="round"/>
+  <line x1="15" y1="30" x2="30" y2="25" stroke="#FF4444" stroke-width="5" stroke-linecap="round"/>
+  <line x1="15" y1="54" x2="30" y2="58" stroke="#FF4444" stroke-width="5" stroke-linecap="round"/>
+  <!-- 右半链环 -->
+  <path d="M 65,26 A 12,12 0 0 1 65,50" fill="none" stroke="#FF4444" stroke-width="6" stroke-linecap="round"/>
+  <line x1="65" y1="26" x2="50" y2="22" stroke="#FF4444" stroke-width="5" stroke-linecap="round"/>
+  <line x1="65" y1="50" x2="50" y2="54" stroke="#FF4444" stroke-width="5" stroke-linecap="round"/>
+  <!-- 断裂闪光 -->
+  <line x1="34" y1="32" x2="46" y2="48" stroke="#FFAAAA" stroke-width="3" stroke-linecap="round"/>
+  <line x1="46" y1="32" x2="34" y2="48" stroke="#FFAAAA" stroke-width="3" stroke-linecap="round"/>
+</svg>

@@ -142,9 +142,13 @@ func (p *Pool) Spawn(x, y, baseHP, baseSpeed float64, pathIndex int, archetype s
 			// 原型可同时拥有多个行为 buff（如 tank 同时有 damageReduce + berserk）。
 			e.Behavior = cfg.Behavior
 			if cfg.StealthDuration > 0 {
+				alpha := cfg.StealthAlpha
+				if alpha <= 0 {
+					alpha = 0.15
+				}
 				e.Buffs.Add(buff.Buff{
 					ID: buff.IDStealth, Category: buff.CatBehavior,
-					Source: "archetype", Value: 1,
+					Source: "archetype", Value: alpha,
 					Duration: cfg.StealthDuration, Remaining: cfg.StealthDuration,
 				})
 			}

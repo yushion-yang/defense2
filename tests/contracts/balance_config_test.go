@@ -119,8 +119,8 @@ func TestBalanceItemsComplete(t *testing.T) {
 func TestSpawnerConfigFormula(t *testing.T) {
 	sc := config.GlobalSpawnerConfig()
 
-	// HP at wave 1 = HpBase + 1*HpPerWave
-	hpWave1 := sc.Scaling.HpBase + 1*sc.Scaling.HpPerWave
+	// HP at wave 1 = HpBase + 1*HpPerWave + HpQuadratic*1²
+	hpWave1 := sc.Scaling.HpBase + 1*sc.Scaling.HpPerWave + sc.Scaling.HpQuadratic*1
 	if hpWave1 <= 0 {
 		t.Errorf("HP at wave 1 = %.1f, want > 0", hpWave1)
 	}
@@ -131,8 +131,8 @@ func TestSpawnerConfigFormula(t *testing.T) {
 		t.Errorf("Speed at wave 10 = %.1f, want > 0", speedWave10)
 	}
 
-	// HP should grow with waves
-	hpWave20 := sc.Scaling.HpBase + 20*sc.Scaling.HpPerWave
+	// HP should grow with waves (quadratic term makes it grow faster)
+	hpWave20 := sc.Scaling.HpBase + 20*sc.Scaling.HpPerWave + sc.Scaling.HpQuadratic*400
 	if hpWave20 <= hpWave1 {
 		t.Errorf("HP at wave 20 (%.1f) should > HP at wave 1 (%.1f)", hpWave20, hpWave1)
 	}

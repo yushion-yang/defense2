@@ -22,11 +22,12 @@ import (
 
 // SpawnerScaling 敌人数值缩放参数。
 // 控制每波敌人的基础属性如何随波次增长。
-// HP 公式：enemyHP = (HpBase + HpPerWave * wave) * archetype.HpScale
+// HP 公式：enemyHP = (HpBase + HpPerWave * wave + HpQuadratic * wave²) * archetype.HpScale
 // 速度公式：enemySpeed = SpeedBase + SpeedPerWave * wave（当前 SpeedPerWave=0，速度不随波次增长）
 type SpawnerScaling struct {
 	HpBase            float64 `json:"hpBase"`            // 血量基准值
-	HpPerWave         float64 `json:"hpPerWave"`         // 每波血量增量
+	HpPerWave         float64 `json:"hpPerWave"`         // 每波血量线性增量
+	HpQuadratic       float64 `json:"hpQuadratic"`       // 每波血量二次项系数（wave² 系数，让后期 HP 上翘）
 	SpeedBase         float64 `json:"speedBase"`         // 速度基准值（像素/秒）
 	SpeedPerWave      float64 `json:"speedPerWave"`      // 每波速度增量（当前为 0）
 	EnemiesPerWave    int     `json:"enemiesPerWave"`    // 每波基础出怪数
@@ -150,7 +151,7 @@ func LoadSpawnerConfig() error {
 func defaultSpawnerConfig() *SpawnerConfig {
 	return &SpawnerConfig{
 		Scaling: SpawnerScaling{
-			HpBase: 80, HpPerWave: 60, SpeedBase: 50, SpeedPerWave: 0,
+			HpBase: 80, HpPerWave: 60, HpQuadratic: 0, SpeedBase: 50, SpeedPerWave: 0,
 			EnemiesPerWave: 5, SpawnInterval: 0.6,
 			SpawnBaseInterval: 0.92, SpawnMinInterval: 0.18, SpawnDecayPerWave: 0.03,
 		},

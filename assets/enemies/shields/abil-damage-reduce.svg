@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 80 80" width="80" height="80">
+  <!-- 铠甲胸甲：表示减伤 -->
+  <path d="M 40,10 L 18,22 L 18,50 Q 18,65 40,72 Q 62,65 62,50 L 62,22 Z"
+    fill="#888899" stroke="#555566" stroke-width="3" stroke-linejoin="round"/>
+  <!-- 中线 -->
+  <line x1="40" y1="18" x2="40" y2="65" stroke="#666677" stroke-width="2.5"/>
+  <!-- 横条装饰 -->
+  <line x1="26" y1="35" x2="54" y2="35" stroke="#AAAABB" stroke-width="2.5" stroke-linecap="round"/>
+  <line x1="28" y1="48" x2="52" y2="48" stroke="#AAAABB" stroke-width="2.5" stroke-linecap="round"/>
+  <!-- 30% 数字 -->
+  <text x="40" y="60" text-anchor="middle" font-size="14" font-weight="bold" fill="#CCCCDD" font-family="sans-serif">30%</text>
+</svg>

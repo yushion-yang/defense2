@@ -11,6 +11,7 @@ type MascotVM struct {
 	CanClick         bool // true = click to advance
 	AbilityReady     bool
 	AbilityHintShown bool    // true when ability-hint bubble is visible (click = use ability)
+	AbilityHintText  string  // 独立于普通对话的技能提示文本（可与 Text 同时存在）
 	CooldownPct      float64 // 0.0 = ready, 1.0 = full cooldown
 }
 
@@ -39,6 +40,11 @@ type Guide struct {
 	pendingAction      *MascotAction
 	abilityHinted      bool // true after hint dialog was shown this cooldown cycle
 	abilityHintActive  bool // true while the hint dialog is being displayed
+
+	// 独立技能提示气泡（不占用 active 对话槽，可与普通对话共存）
+	abilityHintText  string  // 当前显示的技能提示文本（空=不显示）
+	abilityHintTimer float64 // 提示周期计时器
+	abilityHintLines []Line  // 缓存的技能提示文案（从 dialogs 预筛选）
 }
 
 // NewGuide creates a Guide preloaded with dialogs.
@@ -48,17 +54,30 @@ func NewGuide(dialogs []Dialog, shownIDs map[string]bool) *Guide {
 	if shown == nil {
 		shown = make(map[string]bool)
 	}
-	return &Guide{
+	guide := &Guide{
 		dialogs:            dialogs,
 		shownIDs:           shown,
 		evalInterval:       5.0,
 		abilityCooldownMax: 30.0,
 	}
+	guide.cacheAbilityHintLines()
+	return guide
 }
 
 // SetLocale 设置当前语言，影响对话文本的选择。
 func (g *Guide) SetLocale(locale string) {
 	g.locale = locale
+}
+
+// cacheAbilityHintLines 从已加载的 dialogs 中筛选 mascot_ability_hint 触发器的文案，
+// 缓存到 abilityHintLines 供独立提示气泡使用。
+func (g *Guide) cacheAbilityHintLines() {
+	for i := range g.dialogs {
+		d := &g.dialogs[i]
+		if d.Trigger == "mascot_ability_hint" && len(d.Lines) > 0 {
+			g.abilityHintLines = append(g.abilityHintLines, d.Lines[0])
+		}
+	}
 }
 
 // resolveText 根据当前 locale 从多语言映射中选择文本。
@@ -90,6 +109,12 @@ func (g *Guide) Trigger(event string) {
 	g.tryTrigger(event)
 }
 
+// 技能提示气泡周期常量（独立于普通对话，不占用 active 槽）
+const (
+	abilityHintShowDur float64 = 8.0 // 提示显示时长
+	abilityHintHideDur float64 = 5.0 // 提示隐藏间隔
+)
+
 // Tick advances auto-advance timers and decrements ability cooldown. dt is in seconds.
 func (g *Guide) Tick(dt float64) {
 	// Decrement ability cooldown.
@@ -100,14 +125,10 @@ func (g *Guide) Tick(dt float64) {
 		}
 	}
 
-	// Auto-show ability hint when ready and idle.
-	// Skip auto-advance this frame so the hint is visible for at least one tick.
-	if g.AbilityReady() && !g.abilityHinted && g.active == nil {
-		g.abilityHinted = true
-		g.abilityHintActive = true
-		g.ForceTrigger("mascot_ability_hint")
-		return
-	}
+	// ── 独立技能提示气泡管理 ──
+	// 技能就绪时循环显示提示（显示 8s → 隐藏 5s → 换一条再显示），
+	// 不占用 active 对话槽，可与普通对话同时存在。
+	g.tickAbilityHint(dt)
 
 	// Decrement condition eval timer.
 	if g.condFuncs != nil {
@@ -127,6 +148,47 @@ func (g *Guide) Tick(dt float64) {
 	}
 }
 
+// tickAbilityHint 管理独立技能提示气泡的显隐循环。
+// 冷却结束后立即显示第一条提示，之后按 显示8s → 隐藏5s 循环。
+func (g *Guide) tickAbilityHint(dt float64) {
+	if !g.AbilityReady() || len(g.abilityHintLines) == 0 {
+		// 技能未就绪或无文案 → 清空提示，重置 hinted 标记
+		g.abilityHintText = ""
+		g.abilityHintActive = false
+		g.abilityHinted = false
+		return
+	}
+
+	// 冷却刚结束 → 立即显示第一条提示（不等 hideDur）
+	if !g.abilityHinted {
+		g.abilityHinted = true
+		pick := g.abilityHintLines[rand.Intn(len(g.abilityHintLines))]
+		g.abilityHintText = g.resolveText(pick.Text)
+		g.abilityHintActive = true
+		g.abilityHintTimer = 0
+		return
+	}
+
+	g.abilityHintTimer += dt
+
+	if g.abilityHintText != "" {
+		// 正在显示 → 到时间则隐藏
+		if g.abilityHintTimer >= abilityHintShowDur {
+			g.abilityHintText = ""
+			g.abilityHintActive = false
+			g.abilityHintTimer = 0
+		}
+	} else {
+		// 正在隐藏 → 到时间则随机选一条显示
+		if g.abilityHintTimer >= abilityHintHideDur {
+			pick := g.abilityHintLines[rand.Intn(len(g.abilityHintLines))]
+			g.abilityHintText = g.resolveText(pick.Text)
+			g.abilityHintActive = true
+			g.abilityHintTimer = 0
+		}
+	}
+}
+
 // ClickAdvance manually advances to the next line (or finishes the dialog).
 // Works on any line, including auto-advance lines.
 func (g *Guide) ClickAdvance() {
@@ -142,6 +204,7 @@ func (g *Guide) VM() MascotVM {
 		Visible:          true,
 		AbilityReady:     g.AbilityReady(),
 		AbilityHintShown: g.abilityHintActive,
+		AbilityHintText:  g.abilityHintText,
 	}
 	if g.abilityCooldownMax > 0 && g.abilityCooldown > 0 {
 		vm.CooldownPct = g.abilityCooldown / g.abilityCooldownMax
@@ -264,6 +327,8 @@ func (g *Guide) RequestHelp() *MascotAction {
 	g.abilityCooldown = g.abilityCooldownMax
 	g.abilityHinted = false
 	g.abilityHintActive = false
+	g.abilityHintText = ""
+	g.abilityHintTimer = 0
 	g.ForceTrigger("mascot_help")
 	return action
 }
@@ -360,9 +425,6 @@ func (g *Guide) advance() {
 func (g *Guide) finishDialog() {
 	if g.active.Once {
 		g.shownIDs[g.active.ID] = true
-	}
-	if g.active.Trigger == "mascot_ability_hint" {
-		g.abilityHintActive = false
 	}
 	g.active = nil
 	g.lineIdx = 0

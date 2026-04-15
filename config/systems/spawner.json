@@ -5,12 +5,13 @@
   },
 
   "scaling": {
-    "hpBase": 50,                    "_hpBase": "敌人基础生命值（第1波）",
-    "hpPerWave": 60,                 "_hpPerWave": "每波生命值递增量",
-    "speedBase": 30,                 "_speedBase": "敌人基础移动速度（像素/秒）",
+    "hpBase": 40,                    "_hpBase": "敌人基础生命值（第1波）",
+    "hpPerWave": 65,                 "_hpPerWave": "每波生命值线性递增量",
+    "hpQuadratic": 2.0,              "_hpQuadratic": "每波生命值二次项系数（HP += hpQuadratic * wave²，让后期HP上翘）",
+    "speedBase": 45,                 "_speedBase": "敌人基础移动速度（像素/秒）",
     "speedPerWave": 0,               "_speedPerWave": "每波移动速度递增量（0=不增长）",
     "enemiesPerWave": 5,             "_enemiesPerWave": "每波基础敌人数（实际数量=base+wave）",
-    "spawnInterval": 1.6,            "_spawnInterval": "固定出怪间隔（秒）——仅当 spawnBaseInterval=0 时生效，作为兜底值；正常情况被下方衰减系统取代",
+    "spawnInterval": 2.0,            "_spawnInterval": "固定出怪间隔（秒）——仅当 spawnBaseInterval=0 时生效，作为兜底值；正常情况被下方衰减系统取代",
     "spawnBaseInterval": 0,       "_spawnBaseInterval": "出怪间隔基础值（第1波的间隔）",
     "spawnMinInterval": 0.18,        "_spawnMinInterval": "出怪间隔最小值（衰减下限，不会比这更快）",
     "spawnDecayPerWave": 0.03,       "_spawnDecayPerWave": "每波出怪间隔衰减量（interval = base - wave*decay，最低=min）"
@@ -24,7 +25,7 @@
   "boss": {
     "_desc": "Boss规则：每N波出现一个Boss，从所有原型中随机选取，必带净化(purge)能力",
     "everyNWaves": 4,                "_everyNWaves": "每隔N波出现一次Boss（第4/8/12/16...波）",
-    "hpMultBase": 3,                 "_hpMultBase": "Boss HP固定倍率（Boss血量 = 原型HP × 3，不随波次增长）",
+    "hpMultBase": 6,                 "_hpMultBase": "Boss HP固定倍率（Boss血量 = 原型HP × 6，不随波次增长）",
     "radiusScale": 1.5,              "_radiusScale": "Boss体型缩放（1.5=比普通大50%）",
     "entranceDelay": 3.0,            "_entranceDelay": "Boss波开始前额外延迟（秒）——给玩家准备时间",
     "rewardMultiplier": 5,           "_rewardMultiplier": "Boss击杀金币奖励倍率（普通奖励×5）",
@@ -52,7 +53,8 @@
       "phaser":    "相位者——可短暂进入无敌状态",
       "drainer":   "削弱者——削减塔的力量值(strength)",
       "summoner":  "召唤者——死亡时召唤新敌人",
-      "purifier":  "净化者——定期清除自身负面效果并短暂免疫"
+      "purifier":  "净化者——定期清除自身负面效果并短暂免疫",
+      "warper":    "跃迁者——定时传送跳过路径段，快速接近终点"
     }
   },
   "compositions": [
@@ -76,22 +78,22 @@
     },
     {
       "maxWave": 9,
-      "_desc": "第7~9波（中期）：14种原型，加入行为型敌人（治疗/加速/分裂/相位），难度跃升",
+      "_desc": "第7~9波（中期）：15种原型，加入行为型敌人（治疗/加速/分裂/相位/跃迁），难度跃升",
       "enemies": {
         "normal": 20, "runner": 10, "tank": 8, "armored": 8,
         "swarm": 8, "shielder": 6, "phantom": 6, "steadfast": 5,
         "healer": 6, "buffer": 5, "ironwill": 5, "colossus": 3,
-        "splitter": 5, "phaser": 5
+        "splitter": 5, "phaser": 5, "warper": 4
       }
     },
     {
       "maxWave": 0,
-      "_desc": "第10波+（后期）：全部17种原型登场，包括削弱者/召唤者/净化者等高威胁敌人",
+      "_desc": "第10波+（后期）：全部18种原型登场，包括削弱者/召唤者/净化者/跃迁者等高威胁敌人",
       "enemies": {
         "normal": 12, "runner": 8, "tank": 7, "armored": 7,
         "swarm": 6, "shielder": 5, "phantom": 5, "steadfast": 4,
         "healer": 6, "buffer": 5, "ironwill": 5, "colossus": 5,
-        "splitter": 5, "phaser": 5, "drainer": 5, "summoner": 5, "purifier": 5
+        "splitter": 5, "phaser": 5, "drainer": 5, "summoner": 5, "purifier": 5, "warper": 5
       }
     }
   ],

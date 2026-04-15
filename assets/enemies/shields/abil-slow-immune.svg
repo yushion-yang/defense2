@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 80 80" width="80" height="80">
+  <!-- 带翼靴子：表示免减速 -->
+  <!-- 靴子主体 -->
+  <path d="M 25,20 L 25,55 L 20,60 L 20,68 L 60,68 L 60,60 L 40,55 L 40,20 Z"
+    fill="#44BBFF" stroke="#2288CC" stroke-width="3" stroke-linejoin="round"/>
+  <!-- 翅膀（左侧） -->
+  <path d="M 24,30 Q 8,25 10,15" fill="none" stroke="#AADDFF" stroke-width="3" stroke-linecap="round"/>
+  <path d="M 24,36 Q 6,32 6,22" fill="none" stroke="#AADDFF" stroke-width="3" stroke-linecap="round"/>
+  <!-- 翅膀（右侧，小） -->
+  <path d="M 41,30 Q 55,22 58,15" fill="none" stroke="#AADDFF" stroke-width="2.5" stroke-linecap="round"/>
+  <path d="M 41,36 Q 58,28 62,20" fill="none" stroke="#AADDFF" stroke-width="2.5" stroke-linecap="round"/>
+</svg>

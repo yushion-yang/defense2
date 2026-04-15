@@ -26,15 +26,16 @@ var mascotPlaceholderClr = theme.PanelBg
 
 // MascotOverlayVM is the view-model for the mascot overlay.
 type MascotOverlayVM struct {
-	Visible      bool
-	HasDialog    bool
-	Text         string
-	Expression   string
-	CanClick     bool
-	Sprite       *ebiten.Image // current frame (nil = use placeholder)
-	AnimTime     float64       // for idle bob
-	AbilityReady bool          // true when mascot ability is usable
-	CooldownPct  float64       // 0.0 = ready, 1.0 = full cooldown
+	Visible         bool
+	HasDialog       bool
+	Text            string
+	Expression      string
+	CanClick        bool
+	Sprite          *ebiten.Image // current frame (nil = use placeholder)
+	AnimTime        float64       // for idle bob
+	AbilityReady    bool          // true when mascot ability is usable
+	AbilityHintText string        // 独立技能提示文本（可与 Text 同时显示）
+	CooldownPct     float64       // 0.0 = ready, 1.0 = full cooldown
 }
 
 // mascotBasePos returns the mascot center-bottom position in logical coordinates.
@@ -94,14 +95,35 @@ func DrawMascotOverlay(screen *ebiten.Image, vm MascotOverlayVM) {
 		})
 	}
 
-	// Speech bubble above mascot.
+	// ── 双气泡渲染 ──
+	// 普通对话气泡（白色）在萌妹头顶，技能提示气泡（粉色）在更上方。
+	// 两者可同时存在，互不干扰。
+	anchorX := cx
+	anchorY := bottomY - mascotSpriteH + float32(bobY)
+
+	// 普通对话气泡
+	var dialogBubbleH float32
 	if vm.HasDialog && vm.Text != "" {
-		anchorX := cx
-		anchorY := bottomY - mascotSpriteH + float32(bobY)
+		dialogBubbleH = measureBubbleHeight(screen, vm.Text, mascotBubbleMaxW)
 		DrawSpeechBubble(screen, SpeechBubbleVM{
 			Text:    vm.Text,
-			AnchorX: float32(anchorX),
-			AnchorY: float32(anchorY),
+			AnchorX: anchorX,
+			AnchorY: anchorY,
+			MaxW:    mascotBubbleMaxW,
+		})
+	}
+
+	// 技能提示气泡（独立通道，粉紫配色）
+	if vm.AbilityHintText != "" {
+		hintAnchorY := anchorY
+		if dialogBubbleH > 0 {
+			// 有普通对话时，技能提示在普通气泡上方
+			hintAnchorY = anchorY - dialogBubbleH - bubbleGap*2
+		}
+		DrawAbilityHintBubble(screen, SpeechBubbleVM{
+			Text:    vm.AbilityHintText,
+			AnchorX: anchorX,
+			AnchorY: hintAnchorY,
 			MaxW:    mascotBubbleMaxW,
 		})
 	}

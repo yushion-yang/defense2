@@ -24,7 +24,7 @@
 //   - Boss 波有入场延迟（EntranceDelay），给玩家准备时间
 //
 // 4. 【数值缩放】
-//   - baseHP = HpBase + wave * HpPerWave（线性增长）
+//   - baseHP = HpBase + wave * HpPerWave + HpQuadratic * wave²（二次增长，后期上翘）
 //   - baseSpeed = SpeedBase + wave * SpeedPerWave
 //   - 出怪间隔逐波衰减：EffectiveSpawnInterval(wave)
 //   - 每波敌人数 = EnemiesPerWave + wave
@@ -240,7 +240,8 @@ func (s *Spawner) Tick(pool *Pool, dt float64) {
 				spdScale = 1.0
 			}
 			sc := config.GlobalSpawnerConfig()
-			baseHP := (sc.Scaling.HpBase + float64(s.Wave)*sc.Scaling.HpPerWave) * hpScale
+			w := float64(s.Wave)
+			baseHP := (sc.Scaling.HpBase + w*sc.Scaling.HpPerWave + sc.Scaling.HpQuadratic*w*w) * hpScale
 			baseSpeed := (sc.Scaling.SpeedBase + float64(s.Wave)*sc.Scaling.SpeedPerWave) * spdScale
 
 			// ── 原型选择：三层优先级 ──

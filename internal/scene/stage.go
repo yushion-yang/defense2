@@ -95,18 +95,18 @@ type itemDrop struct {
 // 字段按逻辑分组，生命周期与一局游戏绑定（场景切换时整体重建）。
 type StageScene struct {
 	// ── 基础设施 ──
-	switcher      Switcher           // 场景切换器引用（切换场景/获取 AudioMgr/EventBus）
-	bus           *event.Bus         // 事件总线（从 Switcher 获取，延迟订阅）
-	busSubscribed bool               // Bus 订阅是否已完成（延迟到首次 Update，避免被 bus.Clear 清掉）
-	session       *gamemode.Session        // 游戏模式会话（跟踪模式状态、胜负条件、计时器）
-	ruleset       gamemode.TowerRuleset   // 塔建造规则策略（从 session.Ruleset() 缓存，避免每帧虚调用）
-	modeCtx       gamemode.Context        // 缓存的模式上下文（闭包 initModeCtx 设一次，每帧只更新值字段，零分配）
-	modeID        string             // 模式 ID（campaign/endless/test 等，用于重玩和持久化）
-	diffID        string             // 难度 ID（easy/normal/hard/extreme，用于重玩和持久化）
-	frame         int                // 当前帧计数（用于动画计时和周期性任务）
-	state         stageState         // 当前游戏状态（statePlaying/stateVictory/stateDefeat）
-	initOpts      StageOptions       // 保存原始创建配置（重新开始用）
-	audioMgr      *gameAudio.Manager // 音效管理器（从 Switcher 获取，全局共享）
+	switcher      Switcher              // 场景切换器引用（切换场景/获取 AudioMgr/EventBus）
+	bus           *event.Bus            // 事件总线（从 Switcher 获取，延迟订阅）
+	busSubscribed bool                  // Bus 订阅是否已完成（延迟到首次 Update，避免被 bus.Clear 清掉）
+	session       *gamemode.Session     // 游戏模式会话（跟踪模式状态、胜负条件、计时器）
+	ruleset       gamemode.TowerRuleset // 塔建造规则策略（从 session.Ruleset() 缓存，避免每帧虚调用）
+	modeCtx       gamemode.Context      // 缓存的模式上下文（闭包 initModeCtx 设一次，每帧只更新值字段，零分配）
+	modeID        string                // 模式 ID（campaign/endless/test 等，用于重玩和持久化）
+	diffID        string                // 难度 ID（easy/normal/hard/extreme，用于重玩和持久化）
+	frame         int                   // 当前帧计数（用于动画计时和周期性任务）
+	state         stageState            // 当前游戏状态（statePlaying/stateVictory/stateDefeat）
+	initOpts      StageOptions          // 保存原始创建配置（重新开始用）
+	audioMgr      *gameAudio.Manager    // 音效管理器（从 Switcher 获取，全局共享）
 
 	// ── 核心实体池 ──
 	gameMap     *gamemap.GameMap // 运行时地图（路径、格子、建造位）
@@ -3456,6 +3456,10 @@ func applyEnemyAbilityToSpawnConfig(sc *enemy.SpawnConfig, def *config.EnemyAbil
 	// ── movement ──
 	case enemy.AbilStealth:
 		sc.StealthDuration = def.Base
+		sc.StealthAlpha = def.Param
+		if sc.StealthAlpha <= 0 {
+			sc.StealthAlpha = 0.15 // 兜底默认值
+		}
 		sc.Behavior = "stealth"
 	case enemy.AbilDashOnHit:
 		sc.DashSpeedBoost = def.Base // base=速度提升比例

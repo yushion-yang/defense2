@@ -295,6 +295,19 @@ func (e *Enemy) StealthRemaining() float64 {
 	return 0
 }
 
+// StealthAlpha 返回隐身渲染透明度（0~1）。
+// 值来源于 abilities.json 的 param 字段，存储在 stealth buff 的 Value 中。
+// 未隐身时返回 1.0（完全不透明）。
+func (e *Enemy) StealthAlpha() float64 {
+	if e.Buffs == nil {
+		return 1
+	}
+	if b, ok := e.Buffs.Get(buff.IDStealth); ok && b.Value > 0 {
+		return b.Value
+	}
+	return 1
+}
+
 // GetSlowFactor returns the slow factor from BuffList (1.0 = no slow).
 func (e *Enemy) GetSlowFactor() float64 {
 	if e.Buffs == nil {

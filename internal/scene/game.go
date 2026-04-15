@@ -269,8 +269,8 @@ func (g *Game) Update() error {
 	if MascotEnabled && g.mascot != nil && isTapJustPressed() {
 		mx, my := draw.CursorPos()
 		if hud.MascotHitTest(mx, my) {
-			if g.mascot.IsAbilityHintActive() {
-				// Hint 气泡显示时点击 → 触发技能
+			if g.mascot.AbilityReady() {
+				// 技能就绪时点击 → 触发技能（不管提示气泡是否显示）
 				g.mascot.RequestHelp()
 			} else if g.mascot.HasActiveDialog() {
 				g.mascot.ClickAdvance()
@@ -341,14 +341,15 @@ func (g *Game) Draw(screen *ebiten.Image) {
 	if MascotEnabled && g.mascot != nil {
 		coreVM := g.mascot.VM()
 		overlayVM := hud.MascotOverlayVM{
-			Visible:      coreVM.Visible,
-			HasDialog:    coreVM.HasDialog,
-			Text:         coreVM.Text,
-			Expression:   coreVM.Expression,
-			CanClick:     coreVM.CanClick,
-			AnimTime:     g.mascotTime,
-			AbilityReady: coreVM.AbilityReady,
-			CooldownPct:  coreVM.CooldownPct,
+			Visible:         coreVM.Visible,
+			HasDialog:       coreVM.HasDialog,
+			Text:            coreVM.Text,
+			Expression:      coreVM.Expression,
+			CanClick:        coreVM.CanClick,
+			AnimTime:        g.mascotTime,
+			AbilityReady:    coreVM.AbilityReady,
+			AbilityHintText: coreVM.AbilityHintText,
+			CooldownPct:     coreVM.CooldownPct,
 		}
 		if g.mascotAnim != nil {
 			if g.mascotAnim.HasAnim(coreVM.Expression) {

@@ -17,6 +17,7 @@ type SpawnConfig struct {
 	// ── 行为配置 ──
 	Behavior        string  // 行为类型标识（"healer"/"stealth"/"splitter"/"buffer"/"regenerator"/""）
 	StealthDuration float64 // 隐身持续时间（秒）
+	StealthAlpha    float64 // 隐身渲染透明度（0~1，从 abilities.json param 读取）
 	SplitCount      int     // 分裂子体数量
 	SplitScale      float64 // 子体血量倍率
 	SplitHPRatio    float64 // 子体 HP 占父体 MaxHP 的比例（默认 0.3）
@@ -54,10 +55,10 @@ type SpawnConfig struct {
 	PurgeInterval         float64 // 净化间隔
 	PurgeImmuneDur        float64 // 净化免疫时间
 	// ── 行为 buff（原型级）──
-	DamageReduceRatio  float64 // 减伤比例（0~1，0=无减伤）
-	BerserkThreshold   float64 // 狂暴触发血线（0.5=50% HP）
-	BerserkSpeedScale  float64 // 狂暴速度倍率
-	RegenRatio         float64 // 回血比例（占 MaxHP/秒）
+	DamageReduceRatio float64 // 减伤比例（0~1，0=无减伤）
+	BerserkThreshold  float64 // 狂暴触发血线（0.5=50% HP）
+	BerserkSpeedScale float64 // 狂暴速度倍率
+	RegenRatio        float64 // 回血比例（占 MaxHP/秒）
 
 	// 免疫
 	CCImmune   bool // 全控制免疫

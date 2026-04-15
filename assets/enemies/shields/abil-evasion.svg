@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 80 80" width="80" height="80">
+  <!-- 风/闪避：三道弧形速度线 -->
+  <path d="M 55,15 Q 30,25 55,40" fill="none" stroke="#DDDDFF" stroke-width="5" stroke-linecap="round"/>
+  <path d="M 60,25 Q 38,35 60,50" fill="none" stroke="#BBBBEE" stroke-width="4" stroke-linecap="round"/>
+  <path d="M 50,42 Q 28,50 50,62" fill="none" stroke="#DDDDFF" stroke-width="5" stroke-linecap="round"/>
+  <!-- 人影轮廓 -->
+  <circle cx="22" cy="28" r="7" fill="none" stroke="white" stroke-width="2.5" opacity="0.7"/>
+  <line x1="22" y1="35" x2="22" y2="55" stroke="white" stroke-width="2.5" stroke-linecap="round" opacity="0.7"/>
+  <line x1="22" y1="42" x2="14" y2="50" stroke="white" stroke-width="2.5" stroke-linecap="round" opacity="0.7"/>
+  <line x1="22" y1="42" x2="30" y2="50" stroke="white" stroke-width="2.5" stroke-linecap="round" opacity="0.7"/>
+</svg>

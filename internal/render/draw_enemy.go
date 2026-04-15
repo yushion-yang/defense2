@@ -204,7 +204,7 @@ func (er *EnemyRenderer) DrawEnemies(screen *ebiten.Image, pool *enemy.Pool, ani
 			// 计算 alpha（隐身/相位）
 			bodyAlpha := 1.0
 			if e.IsStealthed() {
-				bodyAlpha = 0.15
+				bodyAlpha = e.StealthAlpha()
 			} else if e.PhaseActive && !e.AbilitySilenced {
 				bodyAlpha = 0.35
 			}
@@ -263,7 +263,7 @@ func (er *EnemyRenderer) DrawEnemies(screen *ebiten.Image, pool *enemy.Pool, ani
 				bodyColor = theme.EnemyFallbackBoss
 			}
 			if e.IsStealthed() {
-				bodyColor.A = 38
+				bodyColor.A = uint8(e.StealthAlpha() * 255)
 			} else if e.PhaseActive && !e.AbilitySilenced {
 				bodyColor.A = 90
 			}

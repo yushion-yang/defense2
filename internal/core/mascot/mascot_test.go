@@ -620,7 +620,7 @@ func TestAbilityHintAutoTrigger(t *testing.T) {
 		t.Fatal("expected no hint before Tick")
 	}
 
-	// Tick triggers the hint dialog.
+	// Tick 后技能提示走独立通道（不占用 active 对话槽）
 	g.Tick(0.016)
 	if !g.IsAbilityHintActive() {
 		t.Fatal("expected hint active after Tick with ability ready")
@@ -629,18 +629,28 @@ func TestAbilityHintAutoTrigger(t *testing.T) {
 	if !vm.AbilityHintShown {
 		t.Fatal("expected AbilityHintShown=true in VM")
 	}
-	if vm.Text != "Click me to help!" {
-		t.Fatalf("expected hint text, got %q", vm.Text)
+	// 提示文本在 AbilityHintText 中，不在 Text 中（双气泡独立通道）
+	if vm.AbilityHintText != "Click me to help!" {
+		t.Fatalf("expected ability hint text, got %q", vm.AbilityHintText)
+	}
+	if vm.HasDialog {
+		t.Fatal("expected no active dialog (hint uses independent channel)")
 	}
 
-	// Second Tick should NOT re-trigger (abilityHinted=true).
-	g.ClickAdvance() // dismiss hint
-	if g.IsAbilityHintActive() {
-		t.Fatal("expected hint inactive after dismiss")
+	// 提示显示 8 秒后自动隐藏
+	for i := 0; i < 500; i++ { // 500 * 0.016 = 8s
+		g.Tick(0.016)
 	}
-	g.Tick(0.016) // should not re-trigger
-	if g.HasActiveDialog() {
-		t.Fatal("expected no re-trigger of hint in same cycle")
+	if g.IsAbilityHintActive() {
+		t.Fatal("expected hint hidden after 8s")
+	}
+
+	// 隐藏 5 秒后重新显示（循环）
+	for i := 0; i < 320; i++ { // 320 * 0.016 ≈ 5.1s
+		g.Tick(0.016)
+	}
+	if !g.IsAbilityHintActive() {
+		t.Fatal("expected hint to cycle back after hide interval")
 	}
 }
 
@@ -674,14 +684,55 @@ func TestAbilityHintClickTriggersAbility(t *testing.T) {
 		t.Fatalf("expected ActionKillWeakEnemy, got %q", action.Type)
 	}
 
-	// Hint should be cleared.
+	// Hint should be cleared, mascot_help dialog should be active.
 	if g.IsAbilityHintActive() {
 		t.Fatal("expected hint cleared after RequestHelp")
 	}
-	// mascot_help dialog should be active instead.
 	vm := g.VM()
+	if vm.AbilityHintText != "" {
+		t.Fatalf("expected empty ability hint text after RequestHelp, got %q", vm.AbilityHintText)
+	}
 	if vm.Text != "Leave it to me!" {
 		t.Fatalf("expected help dialog, got %q", vm.Text)
+	}
+}
+
+func TestAbilityReadyClickWithoutHintBubble(t *testing.T) {
+	// 验证：技能就绪但提示气泡已隐藏时，AbilityReady() 仍返回 true，
+	// 确保点击萌妹能触发技能（不走闲聊分支）。
+	g := newConditionTestGuide()
+	g.InitConditions(nil)
+
+	ctx := GameContext{
+		SceneName:   "stage",
+		SessionSecs: 100,
+		InStage:     true,
+		StageSnapshot: StageSnapshot{
+			Lives:      10,
+			MaxLives:   20,
+			EnemyCount: 5,
+		},
+	}
+	g.UpdateContext(ctx)
+	g.Tick(0.016) // 第一次 Tick → 显示提示
+
+	// 等待提示消失（8秒后）
+	for i := 0; i < 500; i++ {
+		g.Tick(0.016)
+	}
+	if g.IsAbilityHintActive() {
+		t.Fatal("expected hint hidden after 8s")
+	}
+
+	// 技能仍然就绪
+	if !g.AbilityReady() {
+		t.Fatal("expected ability still ready even after hint hidden")
+	}
+
+	// RequestHelp 仍能成功
+	action := g.RequestHelp()
+	if action == nil {
+		t.Fatal("expected action from RequestHelp when hint hidden but ability ready")
 	}
 }
 
