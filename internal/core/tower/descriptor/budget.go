@@ -18,9 +18,9 @@ type BudgetRules struct {
 
 // BudgetResult 预算计算结果。
 type BudgetResult struct {
-	Cap       int            // 预算上限
-	Used      int            // 已使用预算
-	Breakdown map[string]int // 各项预算明细
+	Cap       int            `json:"cap"`       // 预算上限
+	Used      int            `json:"used"`      // 已使用预算
+	Breakdown map[string]int `json:"breakdown"` // 各项预算明细
 }
 
 // CalcBudget 计算蓝图的预算使用量。
