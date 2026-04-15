@@ -62,8 +62,9 @@ const (
 	aeParamBtnH = float32(18) // +/- 按钮高度
 
 	// Badge 布局
-	aeBadgeH   = float32(18) // Badge 高度
-	aeBadgeGap = float32(4)  // Badge 间距
+	aeBadgeH    = float32(18) // Badge 高度
+	aeBadgeGap  = float32(4)  // Badge 间距
+	aeBadgeDelW = float32(14) // Badge 删除按钮宽度
 )
 
 // ── Badge 颜色 ──────────────────────────────────────
@@ -153,9 +154,10 @@ type AbilityEditScene struct {
 	effectBtnRects []ui.Rect // 每条管线的 +效果 按钮区域
 
 	// ── 动态点击区域（每帧重建） ──
-	badgeRects  []condEffectBadgeRect // 条件/效果 badge 点击区域
-	paramBtns   []paramBtnRect        // 参数 +/- 按钮区域
-	scalerToggles []scalerToggleRect  // scaler mode toggle 区域
+	badgeRects    []condEffectBadgeRect // 条件/效果 badge 点击区域
+	badgeDelRects []condEffectBadgeRect // badge 删除按钮（右上角 "×"）区域
+	paramBtns     []paramBtnRect        // 参数 +/- 按钮区域
+	scalerToggles []scalerToggleRect    // scaler mode toggle 区域
 
 	// ── 名称编辑 ──
 	nameEditing bool   // true=名称编辑模式
@@ -371,11 +373,13 @@ func (s *AbilityEditScene) Update() error {
 //  1. Picker 弹窗（最顶层，优先消费）
 //  2. 参数 +/- 按钮
 //  3. Scaler mode toggle
-//  4. 条件/效果 badge 点击
+//  4a. 条件/效果 badge 删除按钮（×）
+//  4b. 条件/效果 badge 点击（展开参数面板）
 //  5. 管线删除按钮（[x]）
 //  6. 添加管线按钮
 //  7. 管线内各槽位（触发器、选择器、+条件、+效果）
-//  8. 底部按钮（取消/保存）
+//  8. 名称标签点击 → 进入编辑模式
+//  9. 底部按钮（取消/保存）
 func (s *AbilityEditScene) handleInput(mx, my float64) {
 	// 1. Picker 弹窗命中检测（如果可见）
 	if s.picker.Visible {
@@ -413,7 +417,16 @@ func (s *AbilityEditScene) handleInput(mx, my float64) {
 		}
 	}
 
-	// 4. 条件/效果 badge 点击 → 展开/收起参数面板或打开 picker 替换
+	// 4a. 条件/效果 badge 删除按钮 → 移除组件
+	for _, dr := range s.badgeDelRects {
+		if dr.Rect.Contains(mx, my) {
+			playUIClick(s.switcher)
+			s.handleBadgeDelete(dr)
+			return
+		}
+	}
+
+	// 4b. 条件/效果 badge 点击 → 展开/收起参数面板或打开 picker 替换
 	for _, br := range s.badgeRects {
 		if br.Rect.Contains(mx, my) {
 			playUIClick(s.switcher)
@@ -468,7 +481,15 @@ func (s *AbilityEditScene) handleInput(mx, my float64) {
 		}
 	}
 
-	// 8. 底部按钮
+	// 8. 名称标签点击 → 进入编辑模式
+	if s.nameRect.W > 0 && s.nameRect.Contains(mx, my) {
+		playUIClick(s.switcher)
+		s.nameBackup = s.ability.Name
+		s.nameEditing = true
+		return
+	}
+
+	// 9. 底部按钮
 	for i, r := range s.btnRects {
 		if r.Contains(mx, my) {
 			s.handleBtnClick(i)
@@ -590,6 +611,32 @@ func (s *AbilityEditScene) handleBadgeClick(br condEffectBadgeRect) {
 	s.expandedPipe = br.PipeIdx
 	s.expandedSlot = br.SlotType
 	s.expandedComp = br.CompIdx
+}
+
+// handleBadgeDelete 处理条件/效果 badge 删除。
+// 从对应管线中移除指定索引的条件或效果。
+func (s *AbilityEditScene) handleBadgeDelete(dr condEffectBadgeRect) {
+	if dr.PipeIdx < 0 || dr.PipeIdx >= len(s.pipelines) {
+		return
+	}
+	pipe := &s.pipelines[dr.PipeIdx]
+
+	switch dr.SlotType {
+	case "condition":
+		if dr.CompIdx >= 0 && dr.CompIdx < len(pipe.Conditions) {
+			pipe.Conditions = append(pipe.Conditions[:dr.CompIdx], pipe.Conditions[dr.CompIdx+1:]...)
+		}
+	case "effect":
+		if dr.CompIdx >= 0 && dr.CompIdx < len(pipe.Effects) {
+			pipe.Effects = append(pipe.Effects[:dr.CompIdx], pipe.Effects[dr.CompIdx+1:]...)
+		}
+	}
+
+	// 如果删除的组件正在展开参数面板，收起
+	if s.expandedPipe == dr.PipeIdx && s.expandedSlot == dr.SlotType && s.expandedComp == dr.CompIdx {
+		s.expandedPipe = -1
+	}
+	s.dirty = true
 }
 
 // ── 参数调整 ──────────────────────────────────────
@@ -747,6 +794,52 @@ func (s *AbilityEditScene) handleBtnClick(idx int) {
 	}
 }
 
+// ── 名称编辑 ──────────────────────────────────────
+
+const aeNameMaxLen = 20 // 名称最大字符数
+
+// updateNameEditing 处理名称编辑模式的键盘输入。
+// 使用 ebiten.AppendInputChars 支持 IME/中文输入。
+func (s *AbilityEditScene) updateNameEditing() {
+	// Enter：确认
+	if inpututil.IsKeyJustPressed(ebiten.KeyEnter) {
+		s.nameEditing = false
+		s.dirty = true
+		return
+	}
+
+	// ESC：还原并退出
+	if inpututil.IsKeyJustPressed(ebiten.KeyEscape) {
+		s.ability.Name = s.nameBackup
+		s.nameEditing = false
+		return
+	}
+
+	// 点击名称区域外：确认并退出
+	if isTapJustPressed() {
+		mx, my := draw.CursorPos()
+		if !s.nameRect.Contains(mx, my) {
+			s.nameEditing = false
+			s.dirty = true
+			return
+		}
+	}
+
+	// Backspace：删除末尾字符
+	if inpututil.IsKeyJustPressed(ebiten.KeyBackspace) && len(s.ability.Name) > 0 {
+		runes := []rune(s.ability.Name)
+		s.ability.Name = string(runes[:len(runes)-1])
+	}
+
+	// 追加输入字符
+	chars := ebiten.AppendInputChars(nil)
+	for _, ch := range chars {
+		if len([]rune(s.ability.Name)) < aeNameMaxLen {
+			s.ability.Name += string(ch)
+		}
+	}
+}
+
 // addPipeline 添加一条新的空管线。
 func (s *AbilityEditScene) addPipeline() {
 	s.pipelines = append(s.pipelines, aeNewEmptyPipeline())
@@ -876,17 +969,37 @@ func (s *AbilityEditScene) Draw(screen *ebiten.Image) {
 	}
 }
 
-// drawTitleBar 绘制标题栏：能力名称 + 实时费用。
+// drawTitleBar 绘制标题栏：能力名称（可点击编辑） + 实时费用。
 func (s *AbilityEditScene) drawTitleBar(screen *ebiten.Image, fm *render.FontManager, px, py float32) {
 	// 标题区背景分隔线
 	divY := py + aeTitleH - 1
 	ui.Divider(screen, px+20, divY, aePanelW-40, nil)
 
-	// 左侧：能力名称
-	nameLabel := fmt.Sprintf("能力名称: %s", s.ability.Name)
-	ui.Label(screen, nameLabel, float64(px)+24, float64(py)+14, float64(aePanelW)/2-30, ui.LabelStyle{
-		Font: theme.FontH2, Color: theme.TextTitle, Bold: true,
-	})
+	// 左侧：能力名称（点击可编辑）
+	nameX := float64(px) + 24
+	nameY := float64(py) + 14
+	nameW := float64(aePanelW)/2 - 30
+	s.nameRect = ui.Rect{X: float32(nameX), Y: float32(nameY) - 2, W: float32(nameW), H: aeTitleH - 10}
+
+	if s.nameEditing {
+		// 编辑模式：高亮背景 + 光标闪烁
+		draw.RoundRect(screen, float32(nameX)-2, float32(nameY)-4, float32(nameW)+4, aeTitleH-8, 4,
+			color.RGBA{R: 15, G: 18, B: 30, A: 255}) //nolint:hud
+		draw.StrokeRoundRect(screen, float32(nameX)-2, float32(nameY)-4, float32(nameW)+4, aeTitleH-8, 4, 1,
+			color.RGBA{R: 60, G: 80, B: 140, A: 200})
+		display := s.ability.Name
+		if int(time.Now().UnixMilli()/500)%2 == 0 {
+			display += "|"
+		}
+		ui.Label(screen, display, nameX, nameY, nameW, ui.LabelStyle{
+			Font: theme.FontH2, Color: theme.TextTitle, Bold: true,
+		})
+	} else {
+		nameLabel := fmt.Sprintf("能力: %s", s.ability.Name)
+		ui.Label(screen, nameLabel, nameX, nameY, nameW, ui.LabelStyle{
+			Font: theme.FontH2, Color: theme.TextTitle, Bold: true,
+		})
+	}
 
 	// 右侧：实时费用
 	cost := s.aeTotalCost()
@@ -910,6 +1023,7 @@ func (s *AbilityEditScene) drawPipelineList(screen *ebiten.Image, fm *render.Fon
 	s.condBtnRects = s.condBtnRects[:0]
 	s.effectBtnRects = s.effectBtnRects[:0]
 	s.badgeRects = s.badgeRects[:0]
+	s.badgeDelRects = s.badgeDelRects[:0]
 	s.paramBtns = s.paramBtns[:0]
 	s.scalerToggles = s.scalerToggles[:0]
 
@@ -1041,7 +1155,7 @@ func (s *AbilityEditScene) drawConditionRow(screen *ebiten.Image, fm *render.Fon
 		// 附加主要参数值的缩写
 		label = aeCompactBadgeLabel(label, cond.Params)
 
-		bw := aeMeasureBadgeWidth(fm, label)
+		bw := aeMeasureBadgeWidth(fm, label) + aeBadgeDelW // 额外预留删除按钮宽度
 		if badgeX+bw > contentX+contentW-64 {
 			break // 超出可用宽度，不再画
 		}
@@ -1057,9 +1171,20 @@ func (s *AbilityEditScene) drawConditionRow(screen *ebiten.Image, fm *render.Fon
 			bg = color.RGBA{R: 50, G: 75, B: 110, A: 230}
 		}
 		draw.RoundRect(screen, badgeX, rowY+1, bw, aeBadgeH, aeBadgeH/2, bg) //nolint:hud
-		ui.Label(screen, label, float64(badgeX)+4, float64(rowY)+3, float64(bw)-8, ui.LabelStyle{
+		ui.Label(screen, label, float64(badgeX)+4, float64(rowY)+3, float64(bw-aeBadgeDelW)-4, ui.LabelStyle{
 			Font: theme.FontXS, Color: aeBadgeTextClr,
 		})
+
+		// "×" 删除按钮（badge 右侧）
+		delX := badgeX + bw - aeBadgeDelW
+		delRect := ui.Rect{X: delX, Y: rowY + 1, W: aeBadgeDelW, H: aeBadgeH}
+		s.badgeDelRects = append(s.badgeDelRects, condEffectBadgeRect{
+			Rect: delRect, PipeIdx: pipeIdx, SlotType: "condition", CompIdx: ci,
+		})
+		ui.Label(screen, "×", float64(delX)+1, float64(rowY)+3, float64(aeBadgeDelW)-2, ui.LabelStyle{
+			Font: theme.FontXS, Color: color.RGBA{R: 200, G: 100, B: 100, A: 220},
+		})
+
 		badgeX += bw + aeBadgeGap
 	}
 
@@ -1109,7 +1234,7 @@ func (s *AbilityEditScene) drawEffectRow(screen *ebiten.Image, fm *render.FontMa
 		label := aeMetaLabel(effMetas, eff.TypeID)
 		label = aeCompactBadgeLabel(label, eff.Params)
 
-		bw := aeMeasureBadgeWidth(fm, label)
+		bw := aeMeasureBadgeWidth(fm, label) + aeBadgeDelW // 额外预留删除按钮宽度
 		if badgeX+bw > contentX+contentW-64 {
 			break
 		}
@@ -1124,9 +1249,20 @@ func (s *AbilityEditScene) drawEffectRow(screen *ebiten.Image, fm *render.FontMa
 			bg = color.RGBA{R: 50, G: 75, B: 110, A: 230}
 		}
 		draw.RoundRect(screen, badgeX, rowY+1, bw, aeBadgeH, aeBadgeH/2, bg) //nolint:hud
-		ui.Label(screen, label, float64(badgeX)+4, float64(rowY)+3, float64(bw)-8, ui.LabelStyle{
+		ui.Label(screen, label, float64(badgeX)+4, float64(rowY)+3, float64(bw-aeBadgeDelW)-4, ui.LabelStyle{
 			Font: theme.FontXS, Color: aeBadgeTextClr,
 		})
+
+		// "×" 删除按钮（badge 右侧）
+		delX := badgeX + bw - aeBadgeDelW
+		delRect := ui.Rect{X: delX, Y: rowY + 1, W: aeBadgeDelW, H: aeBadgeH}
+		s.badgeDelRects = append(s.badgeDelRects, condEffectBadgeRect{
+			Rect: delRect, PipeIdx: pipeIdx, SlotType: "effect", CompIdx: ei,
+		})
+		ui.Label(screen, "×", float64(delX)+1, float64(rowY)+3, float64(aeBadgeDelW)-2, ui.LabelStyle{
+			Font: theme.FontXS, Color: color.RGBA{R: 200, G: 100, B: 100, A: 220},
+		})
+
 		badgeX += bw + aeBadgeGap
 	}
 

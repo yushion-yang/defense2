@@ -181,16 +181,20 @@ func buildEffectCtx(ctx TriggerContext, tgt Target) EffectCtx {
 	return effCtx
 }
 
+// maxAllyCheckRadius 友方塔搜索半径上限（像素）。
+// 500px 大于任何塔的射程（最大约 300px），
+// 足以覆盖地图上相邻塔位的距离。
+const maxAllyCheckRadius = 500.0
+
 // findNearestAllyDist 查找最近友方塔的距离。
-// 使用一个足够大的搜索半径查询所有附近的塔，
+// 在 maxAllyCheckRadius 范围内搜索友方塔，
 // 无友方塔时返回 math.MaxFloat64。
 func findNearestAllyDist(towers TowerQuerier, tx, ty float64) float64 {
 	if towers == nil {
 		return math.MaxFloat64
 	}
 
-	// 用一个很大的半径获取所有可能的友方塔
-	refs := towers.QueryRadius(tx, ty, math.MaxFloat64)
+	refs := towers.QueryRadius(tx, ty, maxAllyCheckRadius)
 	minDist := math.MaxFloat64
 
 	for _, ref := range refs {
