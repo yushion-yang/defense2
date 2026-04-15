@@ -1,0 +1,8 @@
+[
+  {"kind": "baseDamage",      "label": "攻击磨石", "boost": 5,    "startCount": 0, "description": "基础伤害+{v}"},
+  {"kind": "baseSpeed",       "label": "速射齿轮", "boost": 0.1,  "startCount": 0, "description": "基础攻速+{v}"},
+  {"kind": "baseRange",       "label": "瞄准镜片", "boost": 5,    "startCount": 0, "description": "基础射程+{v}"},
+  {"kind": "potentialDamage",  "label": "攻击秘卷", "boost": 2,    "startCount": 0, "description": "潜力伤害+{v}"},
+  {"kind": "potentialSpeed",   "label": "速射秘卷", "boost": 0.02, "startCount": 0, "description": "潜力攻速+{v}"},
+  {"kind": "potentialRange",   "label": "瞄准秘卷", "boost": 2,    "startCount": 0, "description": "潜力射程+{v}"}
+]

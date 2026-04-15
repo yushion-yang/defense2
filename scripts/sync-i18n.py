@@ -81,11 +81,11 @@ def extract_tower_keys():
 
 
 def extract_item_keys():
-    """从 balance.json items 区段提取道具显示文本。"""
+    """从 config/towers/items.json 提取道具显示文本。"""
     keys = {}
-    with open("config/balance.json") as f:
-        bal = json.load(f)
-    for item in bal.get("items", []):
+    with open("config/towers/items.json") as f:
+        items = json.load(f)
+    for item in items:
         if "kind" not in item:
             continue
         if item.get("label"):

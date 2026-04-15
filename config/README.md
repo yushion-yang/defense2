@@ -11,18 +11,23 @@ All JSON configuration files and their roles.
 
 | File | Loader | Purpose |
 |------|--------|---------|
-| `balance.json` | `config.LoadBalance()` | Central balance parameters |
 | `settings.json` | `config.LoadDifficultyModes()` | Difficulty modes |
 | `level-list.json` | `config.LoadLevelList()` | Map list |
 | `levels/map_*.json` | `config.LoadMap(id)` | Map definitions (11 maps) |
 | `towers/towers.json` | `config.LoadAllTowers()` | Tower definitions |
 | `towers/tier-presets.json` | `config.LoadTierPresets()` | S/A/B/C/D attribute presets |
 | `towers/abilities.json` | `config.LoadAbilityTable()` | 31 tower abilities |
+| `towers/balance.json` | `config.LoadBalance()` | Tower + chain balance params |
+| `towers/items.json` | `config.LoadBalance()` | 6 item definitions |
 | `enemies/enemies-core.json` | `config.LoadEnemyArchetypes()` | 18+1 enemy archetypes |
 | `enemies/abilities.json` | `config.LoadEnemyAbilities()` | 15 enemy abilities |
+| `enemies/balance.json` | `config.LoadBalance()` | Split / deathSpawn / dying params |
 | `wardens/wardens.json` | `config.LoadWardenConfigs()` | 5 wardens |
+| `wardens/balance.json` | `config.LoadBalance()` | Warden default params |
 | `systems/buff-stack.json` | `config.LoadBuffRules()` | Buff stacking rules |
+| `systems/combat.json` | `config.LoadBalance()` | Combat balance params |
 | `systems/economy.json` | `config.GlobalEconomySpec()` | Mode economy formulas |
+| `systems/gameplay.json` | `config.LoadBalance()` | Gameplay + item drop params |
 | `visuals/vfx.json` | `config.LoadVFXCatalog()` | VFX effect catalog (105 effects) |
 | `scenarios/*.json` | `config.LoadScenarios()` | Test scenarios |
 | `llm/vocab.json` | `tokenizer.LoadVocab()` | LLM tokenizer vocabulary |

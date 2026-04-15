@@ -1,0 +1,13 @@
+{
+  "tower": {
+    "strengthBuyCost": 50,                 "_strengthBuyCost": "购买强度的金币费用（每次+50强度）",
+    "strengthBuyAmount": 50,               "_strengthBuyAmount": "每次购买增加的强度值",
+    "wavesPerUnlock": 2,                   "_wavesPerUnlock": "每隔N波解锁一个能力槽位（测试模式用）",
+    "choicesPerUnlock": 3,                 "_choicesPerUnlock": "每次解锁提供的候选能力数（3选1）",
+    "attackSpeedFloor": 0.1,               "_attackSpeedFloor": "炮塔攻速下限（次/秒，防止攻速降到0）"
+  },
+  "chain": {
+    "distance": 150,                       "_distance": "链接检测距离（像素，塔间距小于此值可链接）",
+    "strengthPerTower": 10,                "_strengthPerTower": "每个链接邻居提供的临时强度加成"
+  }
+}

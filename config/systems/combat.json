@@ -1,0 +1,8 @@
+{
+  "minSpeedRatio": 0.2,                  "_minSpeedRatio": "减速最低速度比例（不低于基础速度的20%）",
+  "dotTickInterval": 0.5,                "_dotTickInterval": "持续伤害默认触发间隔（秒）",
+  "critMultiplier": 2,                   "_critMultiplier": "默认暴击伤害倍率",
+  "defaultProjectileSpeed": 300,         "_defaultProjectileSpeed": "弹射物默认飞行速度（像素/秒）",
+  "defaultProjectileRadius": 4,          "_defaultProjectileRadius": "弹射物默认碰撞半径（像素）",
+  "wardenMechProjectileSpeed": 400,      "_wardenMechProjectileSpeed": "机甲战灵弹射物速度（像素/秒）"
+}

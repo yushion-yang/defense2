@@ -1,0 +1,19 @@
+{
+  "split": {
+    "hpRatio": 0.3,                        "_hpRatio": "分裂子体生命值比例（父体的30%）",
+    "speedScale": 1.4,                     "_speedScale": "分裂子体速度倍率（比父体快40%）",
+    "radiusRatio": 0.7,                    "_radiusRatio": "分裂子体体型缩放（父体的70%）",
+    "childOffset": 6,                      "_childOffset": "分裂子体出生偏移距离（像素）",
+    "rewardScale": 0.2,                    "_rewardScale": "分裂子体击杀奖励比例（父体的20%）"
+  },
+  "deathSpawn": {
+    "hpRatio": 0.2,                        "_hpRatio": "死亡召唤子体生命值比例（父体的20%）",
+    "defaultArch": "normal",               "_defaultArch": "死亡召唤子体默认原型",
+    "childOffset": 8,                      "_childOffset": "死亡召唤子体出生偏移距离（像素）",
+    "rewardScale": 0.3,                    "_rewardScale": "死亡召唤子体击杀奖励比例（父体的30%）"
+  },
+  "dying": {
+    "normalDuration": 0.3,                 "_normalDuration": "普通敌人死亡动画时长（秒）",
+    "bossDuration": 0.5,                   "_bossDuration": "Boss死亡动画时长（秒）"
+  }
+}

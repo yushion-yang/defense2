@@ -1,19 +1,23 @@
-// balance_config.go — 中央平衡配置（config/balance.json）的 Go 映射。
+// balance_config.go — 游戏平衡配置的 Go 映射。
 //
-// balance.json 是全局数值调优的唯一入口，涵盖 10 个子系统：
+// 配置分布在 5 个 JSON 文件中，按子系统归属到对应子目录：
 //
-//	战斗(combat) / 塔(tower) / 连锁(chain) / 道具(items) /
-//	分裂(split) / 死亡召唤(deathSpawn) / 死亡动画(dying) / 战灵(warden) /
-//	游戏性(gameplay) / 道具掉落(itemDrop)
+//	config/systems/combat.json    — 战斗参数（减速/DoT/暴击/弹道）
+//	config/towers/balance.json    — 塔(tower) + 连锁(chain)
+//	config/towers/items.json      — 道具定义（6 种）
+//	config/enemies/balance.json   — 分裂(split) / 死亡召唤(deathSpawn) / 死亡动画(dying)
+//	config/wardens/balance.json   — 战灵默认参数
+//	config/systems/gameplay.json  — 游戏性(gameplay) + 道具掉落(itemDrop)
 //
-// 已迁移的子系统：
-//   - 经济(economy) → config/systems/economy.json，通过 GlobalEconomySpec() 访问
-//   - 出怪(spawner) → config/systems/spawner.json，通过 GlobalSpawnerConfig() 访问
+// 独立子系统（各自有 GlobalXxx() 访问器）：
+//   - 经济(economy) → config/systems/economy.json
+//   - 出怪(spawner) → config/systems/spawner.json
 //
 // 设计决策：
 //   - 每个子系统一个独立 struct，方便按模块传递
 //   - defaultBalance() 提供完整的硬编码默认值，确保 JSON 缺字段时不会零值崩溃
 //   - globalBalance 全局缓存 + GlobalBalance() 访问器模式，与 spawner/enemy 配置一致
+//   - LoadBalance() 从多个文件加载合并，消费方通过 GlobalBalance() 统一访问，无感知
 package config
 
 import (
@@ -137,22 +141,137 @@ func GlobalBalance() *BalanceConfig {
 	return globalBalance
 }
 
-// LoadBalance 从 config/balance.json 加载平衡配置。
+// LoadBalance 从多个配置文件加载平衡参数，合并到统一的 BalanceConfig。
 func LoadBalance() (*BalanceConfig, error) {
 	if dataFS == nil {
 		return nil, fmt.Errorf("load balance: dataFS not initialized")
 	}
-	data, err := dataFS.ReadFile("config/balance.json")
-	if err != nil {
-		return nil, fmt.Errorf("load balance: %w", err)
-	}
 
 	bal := defaultBalance()
-	if err := json.Unmarshal(data, bal); err != nil {
-		return nil, fmt.Errorf("parse balance: %w", err)
+
+	if err := loadCombatBalance(bal); err != nil {
+		return nil, err
 	}
+	if err := loadTowerBalance(bal); err != nil {
+		return nil, err
+	}
+	if err := loadItemsBalance(bal); err != nil {
+		return nil, err
+	}
+	if err := loadEnemyBalance(bal); err != nil {
+		return nil, err
+	}
+	if err := loadWardenBalance(bal); err != nil {
+		return nil, err
+	}
+	if err := loadGameplayBalance(bal); err != nil {
+		return nil, err
+	}
+
 	globalBalance = bal
 	return bal, nil
+}
+
+// loadCombatBalance 加载 config/systems/combat.json → bal.Combat。
+func loadCombatBalance(bal *BalanceConfig) error {
+	data, err := dataFS.ReadFile("config/systems/combat.json")
+	if err != nil {
+		return fmt.Errorf("load combat balance: %w", err)
+	}
+	if err := json.Unmarshal(data, &bal.Combat); err != nil {
+		return fmt.Errorf("parse combat balance: %w", err)
+	}
+	return nil
+}
+
+// towerChainFile 辅助结构：config/towers/balance.json 的顶层布局。
+type towerChainFile struct {
+	Tower TowerBalance `json:"tower"`
+	Chain ChainBalance `json:"chain"`
+}
+
+// loadTowerBalance 加载 config/towers/balance.json → bal.Tower + bal.Chain。
+func loadTowerBalance(bal *BalanceConfig) error {
+	data, err := dataFS.ReadFile("config/towers/balance.json")
+	if err != nil {
+		return fmt.Errorf("load tower balance: %w", err)
+	}
+	// 先用默认值填充，再让 JSON 覆盖
+	tmp := towerChainFile{Tower: bal.Tower, Chain: bal.Chain}
+	if err := json.Unmarshal(data, &tmp); err != nil {
+		return fmt.Errorf("parse tower balance: %w", err)
+	}
+	bal.Tower = tmp.Tower
+	bal.Chain = tmp.Chain
+	return nil
+}
+
+// loadItemsBalance 加载 config/towers/items.json → bal.Items。
+func loadItemsBalance(bal *BalanceConfig) error {
+	data, err := dataFS.ReadFile("config/towers/items.json")
+	if err != nil {
+		return fmt.Errorf("load items: %w", err)
+	}
+	if err := json.Unmarshal(data, &bal.Items); err != nil {
+		return fmt.Errorf("parse items: %w", err)
+	}
+	return nil
+}
+
+// enemyBalanceFile 辅助结构：config/enemies/balance.json 的顶层布局。
+type enemyBalanceFile struct {
+	Split      SplitBalance      `json:"split"`
+	DeathSpawn DeathSpawnBalance `json:"deathSpawn"`
+	Dying      DyingBalance      `json:"dying"`
+}
+
+// loadEnemyBalance 加载 config/enemies/balance.json → bal.Split + DeathSpawn + Dying。
+func loadEnemyBalance(bal *BalanceConfig) error {
+	data, err := dataFS.ReadFile("config/enemies/balance.json")
+	if err != nil {
+		return fmt.Errorf("load enemy balance: %w", err)
+	}
+	tmp := enemyBalanceFile{Split: bal.Split, DeathSpawn: bal.DeathSpawn, Dying: bal.Dying}
+	if err := json.Unmarshal(data, &tmp); err != nil {
+		return fmt.Errorf("parse enemy balance: %w", err)
+	}
+	bal.Split = tmp.Split
+	bal.DeathSpawn = tmp.DeathSpawn
+	bal.Dying = tmp.Dying
+	return nil
+}
+
+// loadWardenBalance 加载 config/wardens/balance.json → bal.Warden。
+func loadWardenBalance(bal *BalanceConfig) error {
+	data, err := dataFS.ReadFile("config/wardens/balance.json")
+	if err != nil {
+		return fmt.Errorf("load warden balance: %w", err)
+	}
+	if err := json.Unmarshal(data, &bal.Warden); err != nil {
+		return fmt.Errorf("parse warden balance: %w", err)
+	}
+	return nil
+}
+
+// gameplayFile 辅助结构：config/systems/gameplay.json 的顶层布局。
+type gameplayFile struct {
+	Gameplay GameplayBalance `json:"gameplay"`
+	ItemDrop ItemDropBalance `json:"itemDrop"`
+}
+
+// loadGameplayBalance 加载 config/systems/gameplay.json → bal.Gameplay + bal.ItemDrop。
+func loadGameplayBalance(bal *BalanceConfig) error {
+	data, err := dataFS.ReadFile("config/systems/gameplay.json")
+	if err != nil {
+		return fmt.Errorf("load gameplay balance: %w", err)
+	}
+	tmp := gameplayFile{Gameplay: bal.Gameplay, ItemDrop: bal.ItemDrop}
+	if err := json.Unmarshal(data, &tmp); err != nil {
+		return fmt.Errorf("parse gameplay balance: %w", err)
+	}
+	bal.Gameplay = tmp.Gameplay
+	bal.ItemDrop = tmp.ItemDrop
+	return nil
 }
 
 // defaultBalance 返回所有参数的硬编码默认值。

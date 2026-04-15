@@ -1,0 +1,5 @@
+{
+  "initialStrength": 100,                "_initialStrength": "战灵初始强度值",
+  "defaultGrowthOnKill": 2,              "_defaultGrowthOnKill": "战灵每次击杀成长强度",
+  "defaultGrowthOnWaveClear": 5,         "_defaultGrowthOnWaveClear": "战灵每波通关成长强度"
+}

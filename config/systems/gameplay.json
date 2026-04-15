@@ -1,0 +1,13 @@
+{
+  "gameplay": {
+    "starRatingThreshold": 0.8,            "_starRatingThreshold": "星级评定阈值（保留80%以上生命得满星）",
+    "multiKillWindow": 1.5,                "_multiKillWindow": "连杀判定时间窗口（秒）"
+  },
+  "itemDrop": {
+    "cycleWaves": 3,                       "_cycleWaves": "每N波为一个掉落周期",
+    "dropChance": 0.08,                    "_dropChance": "每次击杀的掉落概率（8%）",
+    "maxPerCycle": 3,                      "_maxPerCycle": "每周期最多掉落数",
+    "groundSec": 1.0,                      "_groundSec": "掉落物在地面停留时长（秒）",
+    "flySec": 0.6,                         "_flySec": "飞行动画时长（秒）"
+  }
+}
