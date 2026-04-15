@@ -22,6 +22,7 @@ var i18nAllowedPaths = []string{
 	filepath.Join("internal", "config"),          // config loader（JSON 注释字段）
 	filepath.Join("internal", "core", "mascot"),  // 萌妹系统从 JSON 加载
 	filepath.Join("internal", "autoplay"),         // autoplay 测试报告
+	filepath.Join("internal", "core", "aiplayer"), // AI 玩家本地文案模板（Phase 3 改为 JSON 加载）
 	filepath.Join("internal", "scene", "map_editor.go"),   // 开发工具
 	filepath.Join("internal", "scene", "audio_preview.go"),// 开发工具
 	filepath.Join("internal", "scene", "vfx_preview.go"),  // 开发工具

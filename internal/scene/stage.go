@@ -41,6 +41,7 @@ import (
 	gameAudio "defense2/internal/audio"
 	"defense2/internal/config"
 	"defense2/internal/core/achievement"
+	"defense2/internal/core/aiplayer"
 	"defense2/internal/core/combat"
 	"defense2/internal/core/debug"
 	"defense2/internal/core/economy"
@@ -233,6 +234,9 @@ type StageScene struct {
 
 	// ── AutoPlay 自动对局 ──
 	autoPlayer AutoPlayer // 自动对局驱动（nil=手动模式，非 nil=跳过渲染）
+
+	// ── AI 玩家（合作模式）──
+	aiPlayer *aiplayer.AIPlayer // AI 队友（nil=单人模式）
 
 	// ── 成就与统计 ──
 	achieveTracker *achievement.Tracker // 成就追踪器（持久化，跨局累计）
@@ -460,6 +464,17 @@ func NewStageSceneWithOpts(sw Switcher, opts StageOptions) *StageScene {
 	s.enemyFilter = opts.EnemyFilter
 	s.manualWave = opts.ManualWave
 	s.initOpts = opts
+
+	// AI 玩家初始化（合作模式）
+	if opts.AIEnabled && gm != nil {
+		zone := aiplayer.NewZone(gm.Config.Cols, gm.Config.Rows)
+		s.aiPlayer = aiplayer.New(aiplayer.Config{
+			Zone:      zone,
+			StartGold: s.gold,
+			Ops:       s,
+			CellSize:  gm.CellSize,
+		})
+	}
 
 	// 测试模式：手动开波 + 每波固定 3 个怪 + 高 HP（方便观察）
 	if opts.TestMode {
@@ -2606,6 +2621,11 @@ func (s *StageScene) updatePlaying() {
 		}
 	}
 
+	// AI 玩家决策
+	if s.aiPlayer != nil {
+		s.tickAIPlayer()
+	}
+
 	// AutoPlay 决策钩子
 	s.runAutoPlayFrame()
 }
@@ -2857,6 +2877,21 @@ func (s *StageScene) drawScene(screen *ebiten.Image) {
 					float32(base.Range), 1, 6, 4, color.RGBA{R: 180, G: 140, B: 255, A: 100})
 			}
 		}
+	}
+
+	// AI 玩家精灵 + 思维气泡
+	if s.aiPlayer != nil {
+		hud.DrawAIOverlay(worldTarget, hud.AIOverlayVM{
+			SpriteX:     s.aiPlayer.SpriteX(),
+			SpriteY:     s.aiPlayer.SpriteY(),
+			SpriteAlpha: 1.0,
+			BubbleVisible: s.aiPlayer.BubbleVisible(),
+			BubbleText:    s.aiPlayer.BubbleText(),
+			BubbleAlpha:   s.aiPlayer.BubbleAlpha(),
+			ZoneSplitX:    float64(s.gameMap.Config.Cols/2) * float64(s.gameMap.CellSize),
+			ShowZone:      true,
+			MapHeight:     s.gameMap.PixelHeight(),
+		})
 	}
 
 	// 道具拖拽目标高亮
@@ -3982,4 +4017,123 @@ func (s *StageScene) runAutoPlayFrame() {
 	for _, a := range actions {
 		s.executeAutoPlayAction(a)
 	}
+}
+
+// ── AI 玩家集成 ──────────────────────────────────────────
+
+// tickAIPlayer 构建 AI 快照并驱动 AI 玩家决策。
+func (s *StageScene) tickAIPlayer() {
+	snap := aiplayer.AISnapshot{
+		Gold:     s.aiPlayer.Gold(),
+		Wave:     s.spawner.Wave,
+		MaxWaves: s.gameMap.Config.Waves,
+		Lives:    s.lives,
+	}
+
+	// 塔快照
+	s.towers.Each(func(t *tower.Tower) {
+		snap.Towers = append(snap.Towers, aiplayer.AITower{
+			Row: t.Row, Col: t.Col,
+			Damage: t.Damage, Strength: int(t.Strength.Effective()),
+			Range: t.Range, Kills: t.Kills,
+		})
+	})
+
+	// 可建造格子（排除已有塔的位置）
+	gm := s.gameMap
+	for r := 0; r < gm.Config.Rows; r++ {
+		for c := 0; c < gm.Config.Cols; c++ {
+			if gm.Config.Grid[r][c] == 2 && s.towers.At(r, c) == nil {
+				center := gm.CellCenter(r, c)
+				snap.BuildCells = append(snap.BuildCells, aiplayer.AICell{
+					Row: r, Col: c, X: center.X, Y: center.Y,
+				})
+			}
+		}
+	}
+
+	// 塔定义
+	for i, d := range s.towerDefs {
+		snap.TowerDefs = append(snap.TowerDefs, aiplayer.AITowerDef{
+			Key: d.Key, Cost: d.Cost, Damage: d.Damage,
+			Range: d.Range, Index: i,
+		})
+	}
+
+	snap.MapCenterX = gm.PixelWidth() / 2
+	snap.MapCenterY = gm.PixelHeight() / 2
+
+	s.aiPlayer.Tick(1.0/60.0, snap)
+}
+
+// BuildTowerForAI 为 AI 造塔。实现 aiplayer.StageOps。
+func (s *StageScene) BuildTowerForAI(key string, row, col int) bool {
+	var def *tower.TowerDef
+	for i := range s.towerDefs {
+		if s.towerDefs[i].Key == key {
+			def = &s.towerDefs[i]
+			break
+		}
+	}
+	if def == nil {
+		return false
+	}
+	if s.towers.At(row, col) != nil {
+		return false
+	}
+	center := s.gameMap.CellCenter(row, col)
+	t := s.towers.Place(row, col, center.X, center.Y, *def)
+	if t == nil {
+		return false
+	}
+	t.BuildAnim = 0.3
+	// 按塔定义的 abilityMode 初始化能力（与 tryPlaceTower 逻辑一致）
+	switch def.AbilityAcquireMode {
+	case "preset":
+		tower.ApplyPresetAbilities(t, def.PresetAbilities)
+	case "allUnlocked", "byWave":
+		tower.RollAndCachePendingChoices(t, s.wavesCleared)
+	default:
+		tower.RollAndCachePendingChoices(t, 0)
+	}
+	render.InvalidateMapCache()
+	return true
+}
+
+// UpgradeTowerForAI 为 AI 升级塔。实现 aiplayer.StageOps。
+func (s *StageScene) UpgradeTowerForAI(row, col int) bool {
+	t := s.towers.At(row, col)
+	if t == nil {
+		return false
+	}
+	spent := t.BuyStrength()
+	return spent > 0
+}
+
+// SellTowerForAI 为 AI 卖塔。实现 aiplayer.StageOps。
+func (s *StageScene) SellTowerForAI(row, col int) bool {
+	t := s.towers.At(row, col)
+	if t == nil {
+		return false
+	}
+	refund := s.econ.SellRefund(t.Cost)
+	s.aiPlayer.AddGold(refund)
+	t.Selling = true
+	t.SellAnim = 0.25
+	return true
+}
+
+// TowerCost 返回塔的造价。实现 aiplayer.StageOps。
+func (s *StageScene) TowerCost(key string) int {
+	for _, d := range s.towerDefs {
+		if d.Key == key {
+			return d.Cost
+		}
+	}
+	return 0
+}
+
+// StrengthBuyCost 返回升级花费。实现 aiplayer.StageOps。
+func (s *StageScene) StrengthBuyCost() int {
+	return config.GlobalBalance().Tower.StrengthBuyCost
 }

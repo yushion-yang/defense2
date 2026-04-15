@@ -115,4 +115,5 @@ type StageOptions struct {
 	ScenarioID   string // autoplay 测试场景 ID（如 "attack-style-coverage"）
 	EnemyFilter  string // 敌人过滤器（ground-only/flying-only/elite-only/boss-only/stress/dummy 等）
 	ManualWave   bool   // 仅手动开波（禁用自动波次推进，用于调试特定波次）
+	AIEnabled    bool   // 启用 AI 玩家（合作模式，Phase 1: 右半区域自动造塔）
 }

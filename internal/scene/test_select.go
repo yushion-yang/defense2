@@ -267,6 +267,7 @@ func (s *TestSelectScene) startScenario() {
 		ScenarioID:  sc.ID,
 		EnemyFilter: sc.EnemyFilter,
 		ManualWave:  sc.ManualWave,
+		AIEnabled:   true,
 	}))
 }
 
