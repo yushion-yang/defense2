@@ -27,6 +27,8 @@ func (m *mockOps) UpgradeTowerForAI(row, col int) bool {
 func (m *mockOps) SellTowerForAI(row, col int) bool { return true }
 func (m *mockOps) TowerCost(key string) int          { return 50 }
 func (m *mockOps) StrengthBuyCost() int              { return 10 }
+func (m *mockOps) StartWave() bool                   { return true }
+func (m *mockOps) SelectWarden(key string) bool      { return true }
 
 func TestAIPlayerGold(t *testing.T) {
 	ap := aiplayer.New(aiplayer.Config{
@@ -79,8 +81,10 @@ func TestAIPlayerTickDecides(t *testing.T) {
 			{Row: 5, Col: 15, X: 930, Y: 330},
 			{Row: 7, Col: 18, X: 1110, Y: 450},
 		},
-		MapCenterX: 720,
-		MapCenterY: 390,
+		MapCenterX:  720,
+		MapCenterY:  390,
+		WardenReady: true,
+		WaveActive:  true, // 波进行中，不触发开波决策
 	}
 
 	for i := 0; i < 600; i++ {
@@ -112,6 +116,8 @@ func TestAIPlayerFiltersZone(t *testing.T) {
 			{Row: 5, Col: 3, X: 210, Y: 330},
 			{Row: 7, Col: 8, X: 510, Y: 450},
 		},
+		WardenReady: true,
+		WaveActive:  true,
 	}
 
 	for i := 0; i < 300; i++ {

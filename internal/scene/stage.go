@@ -2963,20 +2963,31 @@ func (s *StageScene) drawScene(screen *ebiten.Image) {
 		}
 	}
 
-	// AI 玩家精灵 + 思维气泡
-	for _, ap := range s.aiPlayers {
-		hud.DrawAIOverlay(worldTarget, hud.AIOverlayVM{
-			SpriteX:       ap.SpriteX(),
-			SpriteY:       ap.SpriteY(),
-			SpriteAlpha:   1.0,
-			BubbleVisible: ap.BubbleVisible(),
-			BubbleText:    ap.BubbleText(),
-			BubbleAlpha:   ap.BubbleAlpha(),
-			ZoneSplitX:    float64(s.gameMap.Config.Cols/2) * float64(s.gameMap.CellSize),
-			ShowZone:      true,
-			MapHeight:     s.gameMap.PixelHeight(),
-			OwnerIndex:    ap.OwnerID(),
-		})
+	// AI 玩家精灵 + 思维气泡 + 分区边界
+	if len(s.aiPlayers) > 0 {
+		// 计算分区边界线（只画一次，不跟着每个 AI 重复画）
+		var boundaries []float64
+		if s.coopZone != nil {
+			boundaries = s.coopZone.SectionBoundaries(s.gameMap.CellSize)
+		} else {
+			// fallback: 单条中线
+			boundaries = []float64{float64(s.gameMap.Config.Cols/2) * float64(s.gameMap.CellSize)}
+		}
+		for i, ap := range s.aiPlayers {
+			showZone := i == 0 // 边界线只在第一个 AI 的 overlay 中画，避免重复
+			hud.DrawAIOverlay(worldTarget, hud.AIOverlayVM{
+				SpriteX:        ap.SpriteX(),
+				SpriteY:        ap.SpriteY(),
+				SpriteAlpha:    1.0,
+				BubbleVisible:  ap.BubbleVisible(),
+				BubbleText:     ap.BubbleText(),
+				BubbleAlpha:    ap.BubbleAlpha(),
+				ZoneBoundaries: boundaries,
+				ShowZone:       showZone,
+				MapHeight:      s.gameMap.PixelHeight(),
+				OwnerIndex:     ap.OwnerID(),
+			})
+		}
 	}
 
 	// 道具拖拽目标高亮
@@ -4327,10 +4338,12 @@ func (s *StageScene) runAutoPlayFrame() {
 // tickAIPlayerOne 构建 AI 快照并驱动单个 AI 玩家决策。
 func (s *StageScene) tickAIPlayerOne(ap *aiplayer.AIPlayer) {
 	snap := aiplayer.AISnapshot{
-		Gold:     ap.Gold(),
-		Wave:     s.spawner.Wave,
-		MaxWaves: s.gameMap.Config.Waves,
-		Lives:    s.lives,
+		Gold:        ap.Gold(),
+		Wave:        s.spawner.Wave,
+		MaxWaves:    s.gameMap.Config.Waves,
+		WaveActive:  s.spawner.WaveActive,
+		Lives:       s.lives,
+		WardenReady: s.wardenReady,
 	}
 
 	// 塔快照（含 Owner 字段，AI 内部按 Owner 过滤）
@@ -4362,6 +4375,22 @@ func (s *StageScene) tickAIPlayerOne(ap *aiplayer.AIPlayer) {
 			Key: d.Key, Cost: d.Cost, Damage: d.Damage,
 			Range: d.Range, Index: i,
 		})
+	}
+
+	// 敌人快照（AI 用于威胁评估）
+	s.enemies.EachActive(func(e *enemy.Enemy) {
+		snap.Enemies = append(snap.Enemies, aiplayer.AIEnemy{
+			X: e.X, Y: e.Y,
+			HP: e.HP, MaxHP: e.MaxHP,
+			Speed:  e.Speed,
+			Boss:   e.Boss,
+			Active: e.Active,
+		})
+	})
+
+	// 路径点快照（AI 用于位置评分）
+	for _, wp := range gm.Waypoints {
+		snap.PathPoints = append(snap.PathPoints, aiplayer.AIPathPoint{X: wp.X, Y: wp.Y})
 	}
 
 	snap.MapCenterX = gm.PixelWidth() / 2
@@ -4449,4 +4478,35 @@ func (s *StageScene) TowerCost(key string) int {
 // StrengthBuyCost 返回升级花费。实现 aiplayer.StageOps。
 func (s *StageScene) StrengthBuyCost() int {
 	return config.GlobalBalance().Tower.StrengthBuyCost
+}
+
+// StartWave AI 请求开始下一波。实现 aiplayer.StageOps。
+// 仅在波未激活且未全部完成时生效。
+func (s *StageScene) StartWave() bool {
+	if s.spawner.WaveActive || s.spawner.AllDone {
+		return false
+	}
+	prevWave := s.spawner.Wave
+	s.spawner.StartNextWave()
+	if s.spawner.Wave > prevWave {
+		s.onWaveTransition(prevWave)
+		return true
+	}
+	return false
+}
+
+// SelectWarden AI 请求选择战灵。实现 aiplayer.StageOps。
+// 仅在战灵尚未选择时生效。
+func (s *StageScene) SelectWarden(key string) bool {
+	if s.wardenReady {
+		return false
+	}
+	s.activateWarden(key)
+	// 选完后立即开第一波
+	prevWave := s.spawner.Wave
+	s.spawner.StartNextWave()
+	if s.spawner.Wave > prevWave {
+		s.onWaveTransition(prevWave)
+	}
+	return true
 }

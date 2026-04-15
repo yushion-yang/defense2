@@ -235,6 +235,8 @@
   "game.debug.warden_str100": "战灵强度+100",
   "game.item.drag_to_tower": "拖拽道具到目标塔上",
   "game.item.wave_drop": "获得一组道具！",
+  "game.ping.sent": "已发送建议",
+  "game.ping.cooldown": "建议冷却中",
   "game.map.base": "基地",
   "game.map.entrance": "入口",
   "game.role.aoe": "范围",

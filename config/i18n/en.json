@@ -235,6 +235,8 @@
   "game.debug.warden_str100": "Warden Str +100",
   "game.item.drag_to_tower": "Drag item to a tower",
   "game.item.wave_drop": "Items received!",
+  "game.ping.sent": "Ping sent",
+  "game.ping.cooldown": "Ping on cooldown",
   "game.map.base": "Base",
   "game.map.entrance": "Entrance",
   "game.role.aoe": "AOE",

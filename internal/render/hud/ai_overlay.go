@@ -27,10 +27,10 @@ type AIOverlayVM struct {
 	BubbleAlpha   float64
 
 	// 区域
-	ZoneSplitX float64 // 区域分界线 X（世界坐标）
-	ShowZone   bool
-	MapHeight  float64 // 地图像素高度（画分界线用）
-	OwnerIndex int     // AI 所有者编号（用于区分多个 AI 的颜色/位置）
+	ZoneBoundaries []float64 // 分区边界线 X 坐标列表（世界坐标）
+	ShowZone       bool
+	MapHeight      float64 // 地图像素高度（画分界线用）
+	OwnerIndex     int     // AI 所有者编号（用于区分多个 AI 的颜色/位置）
 }
 
 const (
@@ -47,14 +47,16 @@ func DrawAIOverlay(screen *ebiten.Image, vm AIOverlayVM) {
 		return
 	}
 
-	// ── 区域分界虚线 ──
-	if vm.ShowZone && vm.ZoneSplitX > 0 {
+	// ── 区域分界虚线（多条）──
+	if vm.ShowZone && len(vm.ZoneBoundaries) > 0 {
 		h := float32(vm.MapHeight)
 		if h <= 0 {
 			h = 780
 		}
 		lineClr := color.NRGBA{R: 100, G: 180, B: 255, A: 35}
-		draw.DashedLine(screen, float32(vm.ZoneSplitX), 0, float32(vm.ZoneSplitX), h, 1, 8, 6, lineClr) //nolint:hud
+		for _, bx := range vm.ZoneBoundaries {
+			draw.DashedLine(screen, float32(bx), 0, float32(bx), h, 1, 8, 6, lineClr) //nolint:hud
+		}
 	}
 
 	cx, cy := vm.SpriteX, vm.SpriteY

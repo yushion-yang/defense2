@@ -507,7 +507,7 @@ func (s *StageScene) handleInput() {
 	// 到达此处的 Tap 没有被任何 UI 组件消费，交由状态机处理。
 	switch s.imode {
 	case modeIdle:
-		// 空闲状态：点击塔→选中，点击空地→关闭战灵面板
+		// 空闲状态：点击塔→选中，点击 AI 区域空地→ ping，点击空地→关闭战灵面板
 		clicked := s.towerAtPixel(wtx, wty)
 		if clicked != nil {
 			s.selectedTower = clicked
@@ -515,6 +515,8 @@ func (s *StageScene) handleInput() {
 			hud.ResetInfoPanelScroll()
 			s.audioMgr.PlayAt(gameAudio.SFXUIOpen, gameAudio.VolUI)
 			s.tutorial.Trigger("tower_select")
+		} else if s.tryPingAI(wtx, wty) {
+			// ping 已处理（tryPingAI 内部显示反馈）
 		} else if s.wardenPanelOpen {
 			s.wardenPanelOpen = false
 		}
@@ -1062,6 +1064,58 @@ func (s *StageScene) enemyAtPixel(px, py float64) *enemy.Enemy {
 		}
 	})
 	return best
+}
+
+// tryPingAI 尝试向 AI 发送 ping。
+// 检查点击位置是否在 AI 区域的可建造格子上（无塔），若是则发送 ping。
+// 返回 true 表示点击被 ping 系统消费。
+func (s *StageScene) tryPingAI(worldX, worldY float64) bool {
+	if s.coopZone == nil || len(s.aiPlayers) == 0 {
+		return false
+	}
+
+	gm := s.gameMap
+	cs := float64(gm.CellSize)
+	fx := (worldX - gm.OffsetX) / cs
+	fy := (worldY - gm.OffsetY) / cs
+	if fx < 0 || fy < 0 {
+		return false
+	}
+	col, row := int(fx), int(fy)
+	if row < 0 || row >= gm.Config.Rows || col < 0 || col >= gm.Config.Cols {
+		return false
+	}
+
+	// 必须是可建造格子（grid 值 2）且无塔
+	if gm.Config.Grid[row][col] != 2 {
+		return false
+	}
+	if s.towers.At(row, col) != nil {
+		return false
+	}
+
+	// 必须在 AI 区域（owner != 0）
+	owner := s.coopZone.OwnerOf(row, col)
+	if owner == 0 {
+		return false
+	}
+
+	// 找到对应的 AI 玩家
+	for _, ap := range s.aiPlayers {
+		if ap.OwnerID() == owner {
+			center := gm.CellCenter(row, col)
+			if ap.PingOnCooldown() {
+				hud.ShowToast(i18n.T("game.ping.cooldown"))
+				return true
+			}
+			if ap.SendPing(row, col, center.X, center.Y) {
+				s.audioMgr.PlayAt(gameAudio.SFXUIClick, gameAudio.VolUI)
+				hud.ShowToast(i18n.T("game.ping.sent"))
+			}
+			return true
+		}
+	}
+	return false
 }
 
 // towerAtPixel 返回像素位置上的塔，无塔返回 nil。
