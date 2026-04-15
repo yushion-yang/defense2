@@ -78,6 +78,11 @@ func AdaptToHitResult(results []EffectResult) *tower.HitResult {
 		case EffTypePurge:
 			hasEffect = true
 
+		// Teleport 暂时不进入 HitResult（实际路径回推由战斗管线后续实现），
+		// 标记 hasEffect 以确保结果不被丢弃。
+		case EffTypeTeleport:
+			hasEffect = true
+
 		// 以下类型不进入 HitResult，由战斗管线或 tick 系统单独处理
 		case EffTypeWeaken, EffTypeSilence:
 		case EffTypeRoot:

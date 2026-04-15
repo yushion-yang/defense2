@@ -26,6 +26,7 @@ const (
 	EffTypeModifyStat                   // 修改属性倍率
 	EffTypeCrit                         // 独立暴击效果
 	EffTypePurge                        // 净化（移除敌人 buff）
+	EffTypeTeleport                     // 传送/回推（沿路径回推敌人）
 )
 
 // DamageMode 伤害模式。
@@ -76,6 +77,9 @@ type EffectResult struct {
 
 	// ── Purge ──
 	PurgeCount int // 净化移除的 buff 数量
+
+	// ── Teleport ──
+	TeleportDist float64 // 传送/回推距离
 }
 
 // EffectCtx 效果执行上下文。

@@ -488,6 +488,8 @@ func parseEffect(data json.RawMessage) (Effect, error) {
 		return parseCritEffect(data)
 	case "purge":
 		return parsePurgeEffect(data)
+	case "teleport":
+		return parseTeleportEffect(data)
 	default:
 		return nil, fmt.Errorf("unknown effect type: %q", env.Type)
 	}
@@ -658,6 +660,23 @@ func parsePurgeEffect(data json.RawMessage) (Effect, error) {
 		return nil, fmt.Errorf("parse purge effect: %w", err)
 	}
 	return PurgeEffect{Count: raw.Count}, nil
+}
+
+// effectTeleportRaw teleport 效果的 JSON 参数。
+type effectTeleportRaw struct {
+	Distance json.RawMessage `json:"distance"`
+}
+
+func parseTeleportEffect(data json.RawMessage) (Effect, error) {
+	var raw effectTeleportRaw
+	if err := json.Unmarshal(data, &raw); err != nil {
+		return nil, fmt.Errorf("parse teleport effect: %w", err)
+	}
+	distance, err := ParseScaler(raw.Distance)
+	if err != nil {
+		return nil, fmt.Errorf("teleport.distance: %w", err)
+	}
+	return TeleportEffect{Distance: distance}, nil
 }
 
 // ── DamageMode 解析 ─────────────────────────────────────────

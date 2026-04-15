@@ -72,6 +72,44 @@ func (c CappedScaler) Calc(strength float64) float64 {
 	return v
 }
 
+// StepThreshold 分段缩放器的一个断点（strength → value 映射）。
+type StepThreshold struct {
+	Strength float64 `json:"strength"`
+	Value    float64 `json:"value"`
+}
+
+// SteppedScaler 按阈值分段的缩放器。
+// 给定一组 (strength, value) 断点（升序排列），在断点之间线性插值。
+// strength 低于首个断点时钳制为首值，高于末尾断点时钳制为末值。
+type SteppedScaler struct {
+	Steps []StepThreshold `json:"steps"`
+}
+
+func (s SteppedScaler) Calc(strength float64) float64 {
+	n := len(s.Steps)
+	if n == 0 {
+		return 0
+	}
+	// 低于首个断点 → 钳制
+	if strength <= s.Steps[0].Strength {
+		return s.Steps[0].Value
+	}
+	// 高于末尾断点 → 钳制
+	if strength >= s.Steps[n-1].Strength {
+		return s.Steps[n-1].Value
+	}
+	// 查找所在区间并线性插值
+	for i := 1; i < n; i++ {
+		if strength <= s.Steps[i].Strength {
+			lo := s.Steps[i-1]
+			hi := s.Steps[i]
+			t := (strength - lo.Strength) / (hi.Strength - lo.Strength)
+			return lo.Value + (hi.Value-lo.Value)*t
+		}
+	}
+	return s.Steps[n-1].Value
+}
+
 // scalerEnvelope 是 JSON 解析的中间结构，先提取 scaler 类型字段。
 type scalerEnvelope struct {
 	Scaler string `json:"scaler"`
@@ -114,6 +152,12 @@ func ParseScaler(data []byte) (Scaler, error) {
 		var s CappedScaler
 		if err := json.Unmarshal(data, &s); err != nil {
 			return nil, fmt.Errorf("parse capped scaler: %w", err)
+		}
+		return s, nil
+	case "stepped":
+		var s SteppedScaler
+		if err := json.Unmarshal(data, &s); err != nil {
+			return nil, fmt.Errorf("parse stepped scaler: %w", err)
 		}
 		return s, nil
 	case "":

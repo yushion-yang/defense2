@@ -196,3 +196,16 @@ func (e PurgeEffect) Apply(_ EffectCtx) EffectResult {
 		PurgeCount: e.Count,
 	}
 }
+
+// TeleportEffect 传送/回推效果（将敌人沿路径回推指定距离）。
+// 实际路径回推逻辑由战斗管线处理，这里只计算距离值。
+type TeleportEffect struct {
+	Distance Scaler
+}
+
+func (e TeleportEffect) Apply(ctx EffectCtx) EffectResult {
+	return EffectResult{
+		Type:         EffTypeTeleport,
+		TeleportDist: e.Distance.Calc(ctx.Strength),
+	}
+}
