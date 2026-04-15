@@ -507,10 +507,15 @@ func (s *StageScene) handleInput() {
 		} else if hit.CardIdx == -2 || hit.CardIdx == -1 { // -2=关闭按钮, -1=面板外部
 			s.imode = modeIdle
 			s.audioMgr.PlayAt(gameAudio.SFXUIClose, gameAudio.VolUI)
-		} else if hit.CardIdx >= 0 { // buildable card
-			s.selectedDef = s.buildMenuCardToDefIdx(hit.CardIdx)
-			s.selectedTower = nil
-			s.imode = modeBuildPlace
+		} else if hit.CardIdx >= 0 { // buildable card or "+新建" button
+			// "+新建" 按钮：位于可点击卡片的最后一个位置（AllowCustomBlueprints 时追加）
+			if s.isCreateBtnClick(hit.CardIdx) {
+				s.launchBlueprintEditor()
+			} else {
+				s.selectedDef = s.buildMenuCardToDefIdx(hit.CardIdx)
+				s.selectedTower = nil
+				s.imode = modeBuildPlace
+			}
 		}
 
 	case modeBuildPlace:
@@ -824,6 +829,24 @@ func (s *StageScene) enterBuildMode() {
 	} else {
 		s.imode = modeBuildMenu
 	}
+}
+
+// isCreateBtnClick 判断建塔面板中点击的卡片是否是 "+新建" 按钮。
+// "+新建" 按钮始终是可点击卡片列表中的最后一个（AllowCustomBlueprints 时追加）。
+func (s *StageScene) isCreateBtnClick(cardIdx int) bool {
+	if !s.ruleset.AllowCustomBlueprints() || s.blueprintStore == nil {
+		return false
+	}
+	return cardIdx == s.buildMenuBuildableCount()-1
+}
+
+// launchBlueprintEditor 从建塔面板启动蓝图编辑场景。
+// 传入 nil 蓝图表示新建，returnTo 为当前 StageScene（编辑完成后返回）。
+func (s *StageScene) launchBlueprintEditor() {
+	s.imode = modeIdle
+	s.audioMgr.PlayAt(gameAudio.SFXUIOpen, gameAudio.VolUI)
+	bpScene := NewBlueprintEditScene(s.switcher, nil, s, s.blueprintStore)
+	s.switcher.SwitchScene(bpScene)
 }
 
 // needsCamera 返回地图是否需要相机平移（地图尺寸超出屏幕时返回 true）。

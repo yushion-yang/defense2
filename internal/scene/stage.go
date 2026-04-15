@@ -3119,16 +3119,16 @@ func (s *StageScene) buildBuildMenuData() hud.BuildMenuData {
 		allBuildable = append(allBuildable, card)
 	}
 
-	// 判断是否显示 tab 栏：模式允许蓝图且有蓝图存在
+	// 判断是否显示 tab 栏：模式允许蓝图时始终显示（即使还没有蓝图，也需要"+新建"入口）
+	allowBP := s.ruleset.AllowCustomBlueprints() && s.blueprintStore != nil
 	var tabs []string
-	hasBP := s.ruleset.AllowCustomBlueprints() && s.blueprintStore != nil && s.blueprintStore.Count() > 0
-	if hasBP {
+	if allowBP {
 		tabs = []string{"全部", "自定义"}
 	}
 
 	// 按 tab 过滤可建造卡片
 	var filteredBuildable []hud.BuildCardVM
-	if s.buildMenuTab == 1 && hasBP {
+	if s.buildMenuTab == 1 && allowBP {
 		// "自定义" tab：只显示蓝图塔（Key 以 "bp_" 前缀开头）
 		for _, card := range allBuildable {
 			if strings.HasPrefix(card.Key, "bp_") {
@@ -3143,6 +3143,18 @@ func (s *StageScene) buildBuildMenuData() hud.BuildMenuData {
 	buildableCount := len(filteredBuildable)
 	cards := make([]hud.BuildCardVM, 0, buildableCount+10)
 	cards = append(cards, filteredBuildable...)
+
+	// "+新建" 卡片：允许自定义蓝图时追加在可建造卡末尾。
+	// 标记 Buildable=true 让 hit test 可点击，IsCreateBtn=true 触发特殊渲染和点击处理。
+	if allowBP {
+		cards = append(cards, hud.BuildCardVM{
+			Key:         "__new_blueprint__",
+			Label:       "+新建",
+			IsCreateBtn: true,
+			Buildable:   true,
+		})
+		buildableCount++ // "+新建" 计入可点击区域
+	}
 
 	// 非预设模式且在"全部" tab 时：追加攻击方式变体卡（展示用）
 	if !isPreset && s.buildMenuTab == 0 {
@@ -3179,44 +3191,52 @@ func (s *StageScene) buildBuildMenuData() hud.BuildMenuData {
 
 // buildMenuTotalCards returns total card count for layout (受当前 tab 过滤影响)。
 // 经典模式只有可建造卡，娱乐模式还有攻击方式变体展示卡。
-// "自定义" tab 只计蓝图卡，不含变体卡。
+// "自定义" tab 只计蓝图卡（+ "+新建"按钮），不含变体卡。
 func (s *StageScene) buildMenuTotalCards() int {
-	hasBP := s.ruleset.AllowCustomBlueprints() && s.blueprintStore != nil && s.blueprintStore.Count() > 0
-	if s.buildMenuTab == 1 && hasBP {
-		// "自定义" tab：只有蓝图塔
+	allowBP := s.ruleset.AllowCustomBlueprints() && s.blueprintStore != nil
+	createBtn := 0
+	if allowBP {
+		createBtn = 1 // "+新建" 按钮
+	}
+	if s.buildMenuTab == 1 && allowBP {
+		// "自定义" tab：蓝图塔 + "+新建"
 		count := 0
 		for _, def := range s.towerDefs {
 			if strings.HasPrefix(def.Key, "bp_") {
 				count++
 			}
 		}
-		return count
+		return count + createBtn
 	}
 	// "全部" tab
 	if s.ruleset.UsePresetTowers() {
-		return len(s.towerDefs)
+		return len(s.towerDefs) + createBtn
 	}
-	return len(s.towerDefs) + len(tower.AbilitiesForCategory(config.AbilityCatAttack))
+	return len(s.towerDefs) + createBtn + len(tower.AbilitiesForCategory(config.AbilityCatAttack))
 }
 
-// buildMenuBuildableCount 返回当前 tab 过滤后的可建造卡数量。
+// buildMenuBuildableCount 返回当前 tab 过滤后的可点击卡数量（含 "+新建" 按钮）。
 func (s *StageScene) buildMenuBuildableCount() int {
-	hasBP := s.ruleset.AllowCustomBlueprints() && s.blueprintStore != nil && s.blueprintStore.Count() > 0
-	if s.buildMenuTab == 1 && hasBP {
+	allowBP := s.ruleset.AllowCustomBlueprints() && s.blueprintStore != nil
+	createBtn := 0
+	if allowBP {
+		createBtn = 1 // "+新建" 按钮计入可点击区域
+	}
+	if s.buildMenuTab == 1 && allowBP {
 		count := 0
 		for _, def := range s.towerDefs {
 			if strings.HasPrefix(def.Key, "bp_") {
 				count++
 			}
 		}
-		return count
+		return count + createBtn
 	}
-	return len(s.towerDefs)
+	return len(s.towerDefs) + createBtn
 }
 
 // buildMenuTabCount 返回当前 tab 数量（用于布局计算）。
 func (s *StageScene) buildMenuTabCount() int {
-	if s.ruleset.AllowCustomBlueprints() && s.blueprintStore != nil && s.blueprintStore.Count() > 0 {
+	if s.ruleset.AllowCustomBlueprints() && s.blueprintStore != nil {
 		return 2
 	}
 	return 0
@@ -3225,9 +3245,10 @@ func (s *StageScene) buildMenuTabCount() int {
 // buildMenuCardToDefIdx 将建塔面板中被过滤后的卡片索引映射回 s.towerDefs 的真实索引。
 // "自定义" tab 只显示 bp_ 前缀的塔，卡片索引与 towerDefs 索引不一致，需要转换。
 // "全部" tab 时卡片索引与 towerDefs 索引相同，直接返回。
+// 注意："+新建" 按钮的索引不应到达此函数（由调用方提前拦截）。
 func (s *StageScene) buildMenuCardToDefIdx(cardIdx int) int {
-	hasBP := s.ruleset.AllowCustomBlueprints() && s.blueprintStore != nil && s.blueprintStore.Count() > 0
-	if s.buildMenuTab != 1 || !hasBP {
+	allowBP := s.ruleset.AllowCustomBlueprints() && s.blueprintStore != nil
+	if s.buildMenuTab != 1 || !allowBP {
 		return cardIdx // "全部" tab：卡片顺序与 towerDefs 一致
 	}
 	// "自定义" tab：第 N 张过滤卡 → towerDefs 中第 N 个 bp_ 前缀的索引
