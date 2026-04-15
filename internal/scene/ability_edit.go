@@ -1,25 +1,30 @@
-// ability_edit.go — 自定义能力编辑场景（管线列表管理）。
+// ability_edit.go — 自定义能力编辑场景（完整管线编辑器）。
 //
-// 用于创建和编辑自定义能力。核心交互：管线的增删，每条管线包含
-// 触发器、条件列表、目标选择器、效果列表 四个槽位。
-// 本阶段仅实现骨架：管线增删 + 占位文本，触发/条件/选择/效果的
-// 实际选择在后续 Task 中实现。
+// 用于创建和编辑自定义能力。核心交互：管线增删，每条管线包含
+// 触发器、条件列表、目标选择器、效果列表四个槽位。
+// 支持 PrimitivePicker 选择组件、Badge 显示已选条件/效果、
+// +/- 按钮调参、实时费用计算、保存到 AbilityStore。
 //
 // 关联：
-//   - descriptor.CustomAbility: 自定义能力数据结构
+//   - descriptor.PipelineEditState / ComponentEditState: 管线编辑状态
 //   - descriptor.AbilityStore: 能力持久化存储
-//   - game.go currentSceneName: 需同步注册场景名
+//   - hud.PrimitivePickerData / DrawPrimitivePicker / PrimitivePickerHitTest: 选择器弹窗
+//   - descriptor.AllTriggerMeta / AllConditionMeta / AllSelectorMeta / AllEffectMeta: 元数据
 package scene
 
 import (
 	"fmt"
 	"image/color"
 	"log"
+	"math"
+	"strconv"
+	"time"
 
 	"defense2/internal/core/game"
 	"defense2/internal/core/tower/descriptor"
 	"defense2/internal/render"
 	"defense2/internal/render/draw"
+	"defense2/internal/render/hud"
 	"defense2/internal/render/theme"
 	"defense2/internal/render/ui"
 
@@ -50,24 +55,63 @@ const (
 	aeAddPipeBtnH = float32(32)  // +添加管线按钮高度
 
 	aeDelBtnSize = float32(24) // 删除按钮尺寸（方形）
+
+	// 参数编辑区布局
+	aeParamRowH = float32(20) // 参数行高度
+	aeParamBtnW = float32(20) // +/- 按钮宽度
+	aeParamBtnH = float32(18) // +/- 按钮高度
+
+	// Badge 布局
+	aeBadgeH   = float32(18) // Badge 高度
+	aeBadgeGap = float32(4)  // Badge 间距
 )
 
-// ── 编辑状态类型 ──────────────────────────────────
+// ── Badge 颜色 ──────────────────────────────────────
 
-// pipelineEditState 单条管线的编辑状态。
-// 存储用户在 UI 中选择的各组件类型 ID 和参数值。
-type pipelineEditState struct {
-	TriggerID      string             // 触发器类型 ID（如 "onHit"），空=未选择
-	Conditions     []componentEditState // 条件列表
-	SelectorID     string             // 目标选择器类型 ID（如 "currentTarget"），空=未选择
-	SelectorParams map[string]float64 // 选择器参数
-	Effects        []componentEditState // 效果列表
+var (
+	aeBadgeBg       = color.RGBA{R: 45, G: 55, B: 80, A: 220}
+	aeBadgeTextClr  = color.RGBA{R: 200, G: 210, B: 230, A: 255}
+	aeParamBtnBg    = color.RGBA{R: 50, G: 60, B: 90, A: 220}
+	aeParamLabelClr = color.RGBA{R: 160, G: 170, B: 200, A: 255}
+	aeParamValueClr = color.RGBA{R: 220, G: 230, B: 245, A: 255}
+)
+
+// ── Picker 目标信息 ──────────────────────────────────
+
+// pickerTargetInfo 记录 picker 打开时的目标（点击了哪个管线的哪个槽位）。
+type pickerTargetInfo struct {
+	pipeIdx  int    // 管线索引
+	slotType string // "trigger"/"condition"/"selector"/"effect"
+	compIdx  int    // 条件/效果列表中的索引，-1=新增
 }
 
-// componentEditState 单个条件或效果组件的编辑状态。
-type componentEditState struct {
-	TypeID string             // 组件类型 ID
-	Params map[string]float64 // 可调参数
+// ── 参数按钮点击区域 ──────────────────────────────────
+
+// paramBtnRect 记录参数 +/- 按钮的位置和关联信息。
+type paramBtnRect struct {
+	Rect     ui.Rect
+	PipeIdx  int    // 管线索引
+	SlotType string // "condition"/"selector"/"effect"
+	CompIdx  int    // 组件索引（selector 固定 0）
+	ParamKey string // 参数键名
+	Delta    int    // +1 或 -1
+}
+
+// condEffectBadgeRect 记录条件/效果 badge 的点击区域。
+type condEffectBadgeRect struct {
+	Rect     ui.Rect
+	PipeIdx  int
+	SlotType string // "condition"/"effect"
+	CompIdx  int
+}
+
+// scalerToggleRect 记录 scaler mode toggle 的点击区域。
+type scalerToggleRect struct {
+	Rect     ui.Rect
+	PipeIdx  int
+	SlotType string
+	CompIdx  int
+	ParamKey string
 }
 
 // ── AbilityEditScene ──────────────────────────────
@@ -80,8 +124,20 @@ type AbilityEditScene struct {
 	isNew        bool                     // true=新建, false=编辑已有
 	returnScene  Scene                    // 返回时切换到的场景
 
-	// ── 管线编辑状态 ──
-	pipelines []pipelineEditState
+	// ── 管线编辑状态（使用 descriptor 包导出类型，避免类型重复） ──
+	pipelines []descriptor.PipelineEditState
+
+	// ── Picker 状态 ──
+	picker       hud.PrimitivePickerData // 原语选择器弹窗数据
+	pickerRects  []ui.Rect              // picker 各选项的点击区域
+	pickerTarget pickerTargetInfo        // picker 打开时的目标上下文
+
+	// ── 展开的参数编辑面板 ──
+	// expandedComp 记录当前展开参数编辑的组件，
+	// 同一时刻只展开一个（点击 badge 切换）。
+	expandedPipe int    // 管线索引，-1=无展开
+	expandedSlot string // "condition"/"selector"/"effect"
+	expandedComp int    // 组件索引
 
 	// ── UI 状态 ──
 	scrollY      float64   // 管线列表滚动偏移
@@ -90,11 +146,16 @@ type AbilityEditScene struct {
 	addPipeRect  ui.Rect   // +添加管线按钮区域
 	delPipeRects []ui.Rect // 每条管线的删除按钮区域
 
-	// ── 管线内各槽位的点击区域（为后续 Task 预留） ──
-	triggerRects  []ui.Rect // 每条管线的触发器区域
-	selectorRects []ui.Rect // 每条管线的选择器区域
-	condBtnRects  []ui.Rect // 每条管线的 +条件 按钮区域
+	// ── 管线内各槽位的点击区域 ──
+	triggerRects   []ui.Rect // 每条管线的触发器区域
+	selectorRects  []ui.Rect // 每条管线的选择器区域
+	condBtnRects   []ui.Rect // 每条管线的 +条件 按钮区域
 	effectBtnRects []ui.Rect // 每条管线的 +效果 按钮区域
+
+	// ── 动态点击区域（每帧重建） ──
+	badgeRects  []condEffectBadgeRect // 条件/效果 badge 点击区域
+	paramBtns   []paramBtnRect        // 参数 +/- 按钮区域
+	scalerToggles []scalerToggleRect  // scaler mode toggle 区域
 
 	bgGrad *draw.CachedGradient // 背景渐变缓存
 }
@@ -107,13 +168,14 @@ func NewAbilityEditScene(sw Switcher, ca *descriptor.CustomAbility, store *descr
 		abilityStore: store,
 		isNew:        ca == nil,
 		returnScene:  returnTo,
+		expandedPipe: -1,
 		bgGrad:       draw.NewCachedGradient(game.ScreenWidth, game.ScreenHeight, theme.SelectGradTop, theme.SelectGradBot),
 	}
 
 	if ca != nil {
 		s.ability = *ca // 值拷贝
 		// 从已有能力的 descriptor 还原管线编辑状态
-		s.pipelines = pipelinesFromDescriptor(ca.Desc)
+		s.pipelines = descriptor.DescriptorToEditState(&ca.Desc)
 	} else {
 		// 新建：生成默认名称，初始化一条空管线
 		count := 0
@@ -123,52 +185,53 @@ func NewAbilityEditScene(sw Switcher, ca *descriptor.CustomAbility, store *descr
 		s.ability = descriptor.CustomAbility{
 			Name: fmt.Sprintf("自定义能力-%03d", count+1),
 		}
-		s.pipelines = []pipelineEditState{newEmptyPipeline()}
+		s.pipelines = []descriptor.PipelineEditState{aeNewEmptyPipeline()}
 	}
 
 	return s
 }
 
-// newEmptyPipeline 创建一条空管线（所有字段为零值/空）。
-func newEmptyPipeline() pipelineEditState {
-	return pipelineEditState{
+// aeNewEmptyPipeline 创建一条空管线（所有字段为零值/空）。
+func aeNewEmptyPipeline() descriptor.PipelineEditState {
+	return descriptor.PipelineEditState{
 		SelectorParams: map[string]float64{},
 	}
 }
 
-// pipelinesFromDescriptor 从 AbilityDescriptor 还原管线编辑状态。
-// 将已编译的 Pipeline 结构反序列化回编辑器可用的字符串 ID 形式。
-func pipelinesFromDescriptor(desc descriptor.AbilityDescriptor) []pipelineEditState {
-	if len(desc.Pipelines) == 0 {
-		return []pipelineEditState{newEmptyPipeline()}
+// ── 元数据查找辅助 ──────────────────────────────────
+
+// aeFindMeta 从元数据列表中按 ID 查找。未找到返回 nil。
+func aeFindMeta(metas []descriptor.PrimitiveMeta, id string) *descriptor.PrimitiveMeta {
+	for i := range metas {
+		if metas[i].ID == id {
+			return &metas[i]
+		}
 	}
-	result := make([]pipelineEditState, len(desc.Pipelines))
-	for i, p := range desc.Pipelines {
-		pe := pipelineEditState{
-			TriggerID:      p.Trigger.String(),
-			SelectorParams: map[string]float64{},
-		}
-		// 条件
-		for _, c := range p.Conditions {
-			pe.Conditions = append(pe.Conditions, componentEditState{
-				TypeID: fmt.Sprintf("%T", c),
-				Params: map[string]float64{},
-			})
-		}
-		// 选择器：用类型名作为占位 ID
-		if p.Selector != nil {
-			pe.SelectorID = fmt.Sprintf("%T", p.Selector)
-		}
-		// 效果
-		for _, e := range p.Effects {
-			pe.Effects = append(pe.Effects, componentEditState{
-				TypeID: fmt.Sprintf("%T", e),
-				Params: map[string]float64{},
-			})
-		}
-		result[i] = pe
+	return nil
+}
+
+// aeMetaLabel 返回元数据的中文标签，未找到时返回原始 ID。
+func aeMetaLabel(metas []descriptor.PrimitiveMeta, id string) string {
+	if m := aeFindMeta(metas, id); m != nil {
+		return m.Label
 	}
-	return result
+	return id
+}
+
+// aeDefaultParams 从参数元数据列表生成默认参数 map。
+// 对 scaler 类型参数，生成 "value" 键（fixed 模式）。
+func aeDefaultParams(params []descriptor.ParamMeta) map[string]float64 {
+	m := make(map[string]float64, len(params))
+	for _, p := range params {
+		switch p.Type {
+		case "scaler":
+			// 默认 fixed 模式：只有 value 键
+			m["value"] = p.Default
+		case "float", "int":
+			m[p.Key] = p.Default
+		}
+	}
+	return m
 }
 
 // ── 坐标辅助 ──────────────────────────────────────
@@ -190,12 +253,74 @@ func aeContentRect(px, py float32) ui.Rect {
 	}
 }
 
+// ── 费用计算 ──────────────────────────────────────
+
+// aeTotalCost 计算所有管线的总费用。
+// 从各组件的 PrimitiveMeta.Cost 中累加。
+func (s *AbilityEditScene) aeTotalCost() int {
+	cost := 0
+	condMetas := descriptor.AllConditionMeta()
+	selMetas := descriptor.AllSelectorMeta()
+	effMetas := descriptor.AllEffectMeta()
+
+	for _, p := range s.pipelines {
+		// 条件费用
+		for _, c := range p.Conditions {
+			if m := aeFindMeta(condMetas, c.TypeID); m != nil {
+				cost += m.Cost
+			}
+		}
+		// 选择器费用
+		if m := aeFindMeta(selMetas, p.SelectorID); m != nil {
+			cost += m.Cost
+		}
+		// 效果费用
+		for _, e := range p.Effects {
+			if m := aeFindMeta(effMetas, e.TypeID); m != nil {
+				cost += m.Cost
+			}
+		}
+	}
+	return cost
+}
+
+// ── 参数调整步长 ──────────────────────────────────
+
+// aeParamStep 根据 min/max 计算合理步长。
+// step = (max-min)/20, 然后对齐到 nice values。
+func aeParamStep(pm descriptor.ParamMeta) float64 {
+	if pm.Max <= pm.Min {
+		return 1
+	}
+	raw := (pm.Max - pm.Min) / 20
+	if pm.Type == "int" {
+		// 整数参数步长至少 1
+		s := math.Round(raw)
+		if s < 1 {
+			s = 1
+		}
+		return s
+	}
+	// 浮点数：对齐到 0.01/0.05/0.1/0.5/1/5/10 等
+	niceSteps := []float64{0.01, 0.02, 0.05, 0.1, 0.2, 0.5, 1, 2, 5, 10, 50, 100}
+	for _, ns := range niceSteps {
+		if raw <= ns*1.5 {
+			return ns
+		}
+	}
+	return raw
+}
+
 // ── Update ────────────────────────────────────────
 
 func (s *AbilityEditScene) Update() error {
-	// ESC 返回
+	// ESC：picker 打开时先关闭 picker；否则返回上层场景
 	if inpututil.IsKeyJustPressed(ebiten.KeyEscape) {
 		playUIClick(s.switcher)
+		if s.picker.Visible {
+			s.picker.Visible = false
+			return nil
+		}
 		s.switcher.SwitchScene(s.returnScene)
 		return nil
 	}
@@ -205,6 +330,12 @@ func (s *AbilityEditScene) Update() error {
 	if wy != 0 {
 		s.scrollY -= wy * 20
 		s.clampScroll()
+	}
+
+	// Picker hover 更新
+	if s.picker.Visible && len(s.pickerRects) > 0 {
+		mx, my := draw.CursorPos()
+		s.picker.HoverIdx = hud.PrimitivePickerHoverTest(mx, my, s.pickerRects)
 	}
 
 	// 点击检测
@@ -219,12 +350,61 @@ func (s *AbilityEditScene) Update() error {
 // handleInput 处理点击事件。
 //
 // 检查顺序：
-//  1. 管线删除按钮（[x]）
-//  2. 添加管线按钮
-//  3. 管线内各槽位（为后续 Task 预留，当前无操作）
-//  4. 底部按钮（取消/保存）
+//  1. Picker 弹窗（最顶层，优先消费）
+//  2. 参数 +/- 按钮
+//  3. Scaler mode toggle
+//  4. 条件/效果 badge 点击
+//  5. 管线删除按钮（[x]）
+//  6. 添加管线按钮
+//  7. 管线内各槽位（触发器、选择器、+条件、+效果）
+//  8. 底部按钮（取消/保存）
 func (s *AbilityEditScene) handleInput(mx, my float64) {
-	// 1. 检查删除管线按钮
+	// 1. Picker 弹窗命中检测（如果可见）
+	if s.picker.Visible {
+		hit := hud.PrimitivePickerHitTest(mx, my, s.pickerRects, s.picker)
+		if hit >= 0 {
+			// 选中某个选项
+			playUIClick(s.switcher)
+			s.handlePickerSelect(hit)
+			return
+		}
+		if hit == -2 {
+			// 点击在弹窗内但不在选项上（标题栏区域），忽略
+			return
+		}
+		// hit == -1：点击弹窗外，关闭 picker
+		s.picker.Visible = false
+		// 不 return，允许点击穿透到下层
+	}
+
+	// 2. 参数 +/- 按钮
+	for _, pb := range s.paramBtns {
+		if pb.Rect.Contains(mx, my) {
+			playUIClick(s.switcher)
+			s.handleParamAdjust(pb)
+			return
+		}
+	}
+
+	// 3. Scaler mode toggle
+	for _, st := range s.scalerToggles {
+		if st.Rect.Contains(mx, my) {
+			playUIClick(s.switcher)
+			s.handleScalerToggle(st)
+			return
+		}
+	}
+
+	// 4. 条件/效果 badge 点击 → 展开/收起参数面板或打开 picker 替换
+	for _, br := range s.badgeRects {
+		if br.Rect.Contains(mx, my) {
+			playUIClick(s.switcher)
+			s.handleBadgeClick(br)
+			return
+		}
+	}
+
+	// 5. 检查删除管线按钮
 	for i, r := range s.delPipeRects {
 		if r.Contains(mx, my) {
 			playUIClick(s.switcher)
@@ -233,17 +413,44 @@ func (s *AbilityEditScene) handleInput(mx, my float64) {
 		}
 	}
 
-	// 2. 检查添加管线按钮
+	// 6. 检查添加管线按钮
 	if s.addPipeRect.Contains(mx, my) {
 		playUIClick(s.switcher)
 		s.addPipeline()
 		return
 	}
 
-	// 3. 管线内槽位点击（预留：触发器、选择器、+条件、+效果）
-	// 后续 Task 5-7 实现
+	// 7. 管线内槽位点击
+	for i, r := range s.triggerRects {
+		if r.Contains(mx, my) {
+			playUIClick(s.switcher)
+			s.openPicker(i, "trigger", -1, r)
+			return
+		}
+	}
+	for i, r := range s.selectorRects {
+		if r.Contains(mx, my) {
+			playUIClick(s.switcher)
+			s.openPicker(i, "selector", -1, r)
+			return
+		}
+	}
+	for i, r := range s.condBtnRects {
+		if r.Contains(mx, my) {
+			playUIClick(s.switcher)
+			s.openPicker(i, "condition", -1, r)
+			return
+		}
+	}
+	for i, r := range s.effectBtnRects {
+		if r.Contains(mx, my) {
+			playUIClick(s.switcher)
+			s.openPicker(i, "effect", -1, r)
+			return
+		}
+	}
 
-	// 4. 底部按钮
+	// 8. 底部按钮
 	for i, r := range s.btnRects {
 		if r.Contains(mx, my) {
 			s.handleBtnClick(i)
@@ -251,6 +458,256 @@ func (s *AbilityEditScene) handleInput(mx, my float64) {
 		}
 	}
 }
+
+// ── Picker 管理 ──────────────────────────────────
+
+// openPicker 打开原语选择器弹窗。
+// slotRect 用于定位弹窗（紧贴槽位右下方）。
+func (s *AbilityEditScene) openPicker(pipeIdx int, slotType string, compIdx int, slotRect ui.Rect) {
+	var title string
+	var options []descriptor.PrimitiveMeta
+	var current string
+
+	pipe := s.pipelines[pipeIdx]
+	switch slotType {
+	case "trigger":
+		title = "选择触发器"
+		options = descriptor.AllTriggerMeta()
+		current = pipe.TriggerID
+	case "condition":
+		title = "选择条件"
+		options = descriptor.AllConditionMeta()
+		if compIdx >= 0 && compIdx < len(pipe.Conditions) {
+			current = pipe.Conditions[compIdx].TypeID
+		}
+	case "selector":
+		title = "选择目标"
+		options = descriptor.AllSelectorMeta()
+		current = pipe.SelectorID
+	case "effect":
+		title = "选择效果"
+		options = descriptor.AllEffectMeta()
+		if compIdx >= 0 && compIdx < len(pipe.Effects) {
+			current = pipe.Effects[compIdx].TypeID
+		}
+	}
+
+	s.picker = hud.PrimitivePickerData{
+		Title:    title,
+		Options:  options,
+		Current:  current,
+		X:        slotRect.X + slotRect.W + 4,
+		Y:        slotRect.Y,
+		Visible:  true,
+		HoverIdx: -1,
+	}
+	s.pickerTarget = pickerTargetInfo{
+		pipeIdx:  pipeIdx,
+		slotType: slotType,
+		compIdx:  compIdx,
+	}
+}
+
+// handlePickerSelect 处理 picker 选择结果。
+func (s *AbilityEditScene) handlePickerSelect(optionIdx int) {
+	if optionIdx < 0 || optionIdx >= len(s.picker.Options) {
+		s.picker.Visible = false
+		return
+	}
+
+	meta := s.picker.Options[optionIdx]
+	pt := s.pickerTarget
+	pipe := &s.pipelines[pt.pipeIdx]
+
+	switch pt.slotType {
+	case "trigger":
+		pipe.TriggerID = meta.ID
+
+	case "selector":
+		pipe.SelectorID = meta.ID
+		pipe.SelectorParams = aeDefaultParams(meta.Params)
+
+	case "condition":
+		comp := descriptor.ComponentEditState{
+			TypeID: meta.ID,
+			Params: aeDefaultParams(meta.Params),
+		}
+		if pt.compIdx >= 0 && pt.compIdx < len(pipe.Conditions) {
+			// 替换已有条件
+			pipe.Conditions[pt.compIdx] = comp
+		} else {
+			// 新增条件
+			pipe.Conditions = append(pipe.Conditions, comp)
+		}
+
+	case "effect":
+		comp := descriptor.ComponentEditState{
+			TypeID: meta.ID,
+			Params: aeDefaultParams(meta.Params),
+		}
+		if pt.compIdx >= 0 && pt.compIdx < len(pipe.Effects) {
+			// 替换已有效果
+			pipe.Effects[pt.compIdx] = comp
+		} else {
+			// 新增效果
+			pipe.Effects = append(pipe.Effects, comp)
+		}
+	}
+
+	s.picker.Visible = false
+}
+
+// ── Badge 点击处理 ──────────────────────────────────
+
+// handleBadgeClick 处理条件/效果 badge 点击。
+// 如果已展开该组件的参数面板则收起，否则展开。
+func (s *AbilityEditScene) handleBadgeClick(br condEffectBadgeRect) {
+	// 已展开同一个组件 → 收起
+	if s.expandedPipe == br.PipeIdx && s.expandedSlot == br.SlotType && s.expandedComp == br.CompIdx {
+		s.expandedPipe = -1
+		return
+	}
+	// 展开新的组件
+	s.expandedPipe = br.PipeIdx
+	s.expandedSlot = br.SlotType
+	s.expandedComp = br.CompIdx
+}
+
+// ── 参数调整 ──────────────────────────────────────
+
+// handleParamAdjust 处理参数 +/- 按钮点击。
+func (s *AbilityEditScene) handleParamAdjust(pb paramBtnRect) {
+	pipe := &s.pipelines[pb.PipeIdx]
+
+	// 获取参数 map
+	var params map[string]float64
+	var paramMetas []descriptor.ParamMeta
+
+	switch pb.SlotType {
+	case "condition":
+		if pb.CompIdx < 0 || pb.CompIdx >= len(pipe.Conditions) {
+			return
+		}
+		params = pipe.Conditions[pb.CompIdx].Params
+		if params == nil {
+			params = map[string]float64{}
+			pipe.Conditions[pb.CompIdx].Params = params
+		}
+		paramMetas = aeGetParamMetas(descriptor.AllConditionMeta(), pipe.Conditions[pb.CompIdx].TypeID)
+	case "selector":
+		params = pipe.SelectorParams
+		if params == nil {
+			params = map[string]float64{}
+			pipe.SelectorParams = params
+		}
+		paramMetas = aeGetParamMetas(descriptor.AllSelectorMeta(), pipe.SelectorID)
+	case "effect":
+		if pb.CompIdx < 0 || pb.CompIdx >= len(pipe.Effects) {
+			return
+		}
+		params = pipe.Effects[pb.CompIdx].Params
+		if params == nil {
+			params = map[string]float64{}
+			pipe.Effects[pb.CompIdx].Params = params
+		}
+		paramMetas = aeGetParamMetas(descriptor.AllEffectMeta(), pipe.Effects[pb.CompIdx].TypeID)
+	}
+
+	// 查找对应参数的元数据。
+	// 对 scaler 参数，ParamKey 是 "value"/"base"/"potential"，
+	// 需要匹配 scaler 类型的 ParamMeta（而非按 key 精确匹配）。
+	var pm *descriptor.ParamMeta
+	isScalerSubKey := pb.ParamKey == "value" || pb.ParamKey == "base" || pb.ParamKey == "potential"
+
+	for i := range paramMetas {
+		if isScalerSubKey && paramMetas[i].Type == "scaler" {
+			pm = &paramMetas[i]
+			break
+		}
+		if paramMetas[i].Key == pb.ParamKey {
+			pm = &paramMetas[i]
+			break
+		}
+	}
+	if pm == nil {
+		return
+	}
+
+	step := aeParamStep(*pm)
+	val := params[pb.ParamKey]
+	val += step * float64(pb.Delta)
+
+	// 钳制到 [min, max]（potential 允许 0~max 范围）
+	minVal := pm.Min
+	maxVal := pm.Max
+	if pb.ParamKey == "potential" {
+		minVal = 0
+	}
+	if val < minVal {
+		val = minVal
+	}
+	if val > maxVal {
+		val = maxVal
+	}
+
+	// 整数类型取整
+	if pm.Type == "int" {
+		val = math.Round(val)
+	}
+
+	params[pb.ParamKey] = val
+}
+
+// handleScalerToggle 处理 scaler mode 切换。
+// fixed ↔ linear 循环切换。
+func (s *AbilityEditScene) handleScalerToggle(st scalerToggleRect) {
+	pipe := &s.pipelines[st.PipeIdx]
+
+	var params map[string]float64
+	switch st.SlotType {
+	case "condition":
+		if st.CompIdx >= 0 && st.CompIdx < len(pipe.Conditions) {
+			params = pipe.Conditions[st.CompIdx].Params
+		}
+	case "selector":
+		params = pipe.SelectorParams
+	case "effect":
+		if st.CompIdx >= 0 && st.CompIdx < len(pipe.Effects) {
+			params = pipe.Effects[st.CompIdx].Params
+		}
+	}
+	if params == nil {
+		return
+	}
+
+	// 检查当前模式
+	_, hasValue := params["value"]
+	_, hasBase := params["base"]
+
+	if hasValue && !hasBase {
+		// fixed → linear: value → base, 新增 potential=0
+		base := params["value"]
+		delete(params, "value")
+		params["base"] = base
+		params["potential"] = 0
+	} else if hasBase {
+		// linear → fixed: base → value, 删除 potential
+		val := params["base"]
+		delete(params, "base")
+		delete(params, "potential")
+		params["value"] = val
+	}
+}
+
+// aeGetParamMetas 从元数据列表中查找指定 typeID 的参数定义。
+func aeGetParamMetas(metas []descriptor.PrimitiveMeta, typeID string) []descriptor.ParamMeta {
+	if m := aeFindMeta(metas, typeID); m != nil {
+		return m.Params
+	}
+	return nil
+}
+
+// ── 管线增删 ──────────────────────────────────────
 
 // handleBtnClick 处理底部按钮点击。
 // 按钮布局：[取消(0)] [保存(1)]
@@ -261,14 +718,14 @@ func (s *AbilityEditScene) handleBtnClick(idx int) {
 		// 取消
 		s.switcher.SwitchScene(s.returnScene)
 	case 1:
-		// 保存（当前为占位，仅日志输出）
+		// 保存
 		s.saveAbility()
 	}
 }
 
 // addPipeline 添加一条新的空管线。
 func (s *AbilityEditScene) addPipeline() {
-	s.pipelines = append(s.pipelines, newEmptyPipeline())
+	s.pipelines = append(s.pipelines, aeNewEmptyPipeline())
 }
 
 // deletePipeline 删除指定索引的管线。至少保留一条。
@@ -280,12 +737,52 @@ func (s *AbilityEditScene) deletePipeline(idx int) {
 		return
 	}
 	s.pipelines = append(s.pipelines[:idx], s.pipelines[idx+1:]...)
+	// 如果展开的参数面板所属管线被删，收起
+	if s.expandedPipe == idx {
+		s.expandedPipe = -1
+	} else if s.expandedPipe > idx {
+		s.expandedPipe--
+	}
 }
 
-// saveAbility 保存能力（Task 9 实现完整逻辑，当前仅日志占位）。
+// ── 保存 ──────────────────────────────────────────
+
+// saveAbility 将编辑状态转换为 AbilityDescriptor 并保存。
+//
+// 流程：
+//  1. 生成或复用 ID
+//  2. EditStateToDescriptor 编译管线
+//  3. 构造 CustomAbility 保存到 AbilityStore
+//  4. 成功则切回上层场景
 func (s *AbilityEditScene) saveAbility() {
-	log.Printf("[AbilityEditScene] save placeholder: name=%q, pipelines=%d", s.ability.Name, len(s.pipelines))
-	// TODO(Task 9): 将 pipelineEditState 转换为 descriptor.Pipeline 并保存到 AbilityStore
+	id := s.ability.ID
+	if id == "" {
+		id = fmt.Sprintf("ca_%d", time.Now().UnixMilli())
+	}
+	name := s.ability.Name
+
+	desc, err := descriptor.EditStateToDescriptor(id, name, s.pipelines)
+	if err != nil {
+		log.Printf("[AbilityEditScene] save error: %v", err)
+		return
+	}
+
+	ca := descriptor.CustomAbility{
+		ID:        id,
+		Name:      name,
+		Desc:      *desc,
+		CreatedAt: time.Now().Format(time.RFC3339),
+	}
+
+	if s.abilityStore != nil {
+		if err := s.abilityStore.Save(ca); err != nil {
+			log.Printf("[AbilityEditScene] store.Save error: %v", err)
+			return
+		}
+	}
+
+	log.Printf("[AbilityEditScene] saved ability %q (id=%s, pipelines=%d)", name, id, len(s.pipelines))
+	s.switcher.SwitchScene(s.returnScene)
 }
 
 // clampScroll 将滚动偏移限制在合法范围内。
@@ -338,9 +835,19 @@ func (s *AbilityEditScene) Draw(screen *ebiten.Image) {
 
 	// ── 底部按钮 ──
 	s.drawBottomButtons(screen, px, py)
+
+	// ── 展开的参数编辑面板（浮动在卡片上方） ──
+	if s.expandedPipe >= 0 {
+		s.drawExpandedParamPanel(screen, fm)
+	}
+
+	// ── Picker 弹窗（最顶层绘制） ──
+	if s.picker.Visible {
+		s.pickerRects = hud.DrawPrimitivePicker(screen, s.picker)
+	}
 }
 
-// drawTitleBar 绘制标题栏：能力名称 + 费用。
+// drawTitleBar 绘制标题栏：能力名称 + 实时费用。
 func (s *AbilityEditScene) drawTitleBar(screen *ebiten.Image, fm *render.FontManager, px, py float32) {
 	// 标题区背景分隔线
 	divY := py + aeTitleH - 1
@@ -352,20 +859,15 @@ func (s *AbilityEditScene) drawTitleBar(screen *ebiten.Image, fm *render.FontMan
 		Font: theme.FontH2, Color: theme.TextTitle, Bold: true,
 	})
 
-	// 右侧：费用（占位）
-	costLabel := "费用: --"
+	// 右侧：实时费用
+	cost := s.aeTotalCost()
+	costLabel := fmt.Sprintf("费用: %d", cost)
 	ui.Label(screen, costLabel, float64(px)+24, float64(py)+14, float64(aePanelW)-48, ui.LabelStyle{
 		Font: theme.FontBody, Color: theme.TextMuted, Align: ui.AlignRight,
 	})
 }
 
 // drawPipelineList 绘制管线列表区域（带滚动裁剪）。
-//
-// 每条管线渲染为一个卡片，内含 4 行：
-//   1. 触发: [触发器名称 或 "未选择"]
-//   2. 条件: [条件列表 或 "(未设置)"]  [+条件]
-//   3. 目标: [选择器名称 或 "未选择"]
-//   4. 效果: [效果列表 或 "(未设置)"]  [+效果]
 func (s *AbilityEditScene) drawPipelineList(screen *ebiten.Image, fm *render.FontManager, cr ui.Rect) {
 	// 内容区背景（略深于面板，区分层次）
 	draw.RoundRect(screen, cr.X, cr.Y, cr.W, cr.H, 10,
@@ -378,6 +880,9 @@ func (s *AbilityEditScene) drawPipelineList(screen *ebiten.Image, fm *render.Fon
 	s.selectorRects = s.selectorRects[:0]
 	s.condBtnRects = s.condBtnRects[:0]
 	s.effectBtnRects = s.effectBtnRects[:0]
+	s.badgeRects = s.badgeRects[:0]
+	s.paramBtns = s.paramBtns[:0]
+	s.scalerToggles = s.scalerToggles[:0]
 
 	// 管线卡片起始坐标
 	cardX := cr.X + (cr.W-aePipeCardW)/2
@@ -417,7 +922,8 @@ func (s *AbilityEditScene) drawPipelineList(screen *ebiten.Image, fm *render.Fon
 }
 
 // drawPipelineCard 绘制单条管线卡片。
-func (s *AbilityEditScene) drawPipelineCard(screen *ebiten.Image, fm *render.FontManager, idx int, pipe pipelineEditState, x, y float32) {
+// 内含触发器行、条件行（带 badge）、目标行、效果行（带 badge）。
+func (s *AbilityEditScene) drawPipelineCard(screen *ebiten.Image, fm *render.FontManager, idx int, pipe descriptor.PipelineEditState, x, y float32) {
 	// 卡片矩形
 	cardRect := ui.Rect{X: x, Y: y, W: aePipeCardW, H: aePipeCardH}
 	s.pipeRects = append(s.pipeRects, cardRect)
@@ -441,7 +947,6 @@ func (s *AbilityEditScene) drawPipelineCard(screen *ebiten.Image, fm *render.Fon
 	delRect := ui.Rect{X: delX, Y: delY, W: aeDelBtnSize, H: aeDelBtnSize}
 	s.delPipeRects = append(s.delPipeRects, delRect)
 
-	// 只有多于 1 条管线时才显示删除按钮
 	if len(s.pipelines) > 1 {
 		ui.Button(screen, delX, delY, aeDelBtnSize, aeDelBtnSize, "x", ui.ButtonStyle{
 			BgColor:  theme.BtnDanger,
@@ -456,10 +961,28 @@ func (s *AbilityEditScene) drawPipelineCard(screen *ebiten.Image, fm *render.Fon
 	rowY := y + 28 // 标题行下方
 
 	// 行 1: 触发器
+	s.drawTriggerRow(screen, fm, idx, pipe, contentX, contentW, rowY)
+	rowY += aePipeRowH
+
+	// 行 2: 条件
+	s.drawConditionRow(screen, fm, idx, pipe, contentX, contentW, rowY)
+	rowY += aePipeRowH
+
+	// 行 3: 目标选择器
+	s.drawSelectorRow(screen, fm, idx, pipe, contentX, contentW, rowY)
+	rowY += aePipeRowH
+
+	// 行 4: 效果
+	s.drawEffectRow(screen, fm, idx, pipe, contentX, contentW, rowY)
+}
+
+// ── 行渲染：触发器 ──────────────────────────────────
+
+func (s *AbilityEditScene) drawTriggerRow(screen *ebiten.Image, fm *render.FontManager, pipeIdx int, pipe descriptor.PipelineEditState, contentX, contentW, rowY float32) {
 	triggerLabel := "未选择"
 	triggerClr := color.Color(theme.TextLocked)
 	if pipe.TriggerID != "" {
-		triggerLabel = pipe.TriggerID
+		triggerLabel = aeMetaLabel(descriptor.AllTriggerMeta(), pipe.TriggerID)
 		triggerClr = theme.TextBody
 	}
 	ui.Label(screen, "触发:", float64(contentX), float64(rowY), 40, ui.LabelStyle{
@@ -472,37 +995,63 @@ func (s *AbilityEditScene) drawPipelineCard(screen *ebiten.Image, fm *render.Fon
 	ui.Label(screen, fmt.Sprintf("[%s]", triggerLabel), float64(triggerSlotX), float64(rowY), float64(triggerSlotW), ui.LabelStyle{
 		Font: theme.FontCaption, Color: triggerClr,
 	})
-	rowY += aePipeRowH
+}
 
-	// 行 2: 条件
-	condLabel := "(未设置)"
-	condClr := color.Color(theme.TextLocked)
-	if len(pipe.Conditions) > 0 {
-		condLabel = fmt.Sprintf("%d 个条件", len(pipe.Conditions))
-		condClr = theme.TextBody
-	}
+// ── 行渲染：条件 ──────────────────────────────────
+
+func (s *AbilityEditScene) drawConditionRow(screen *ebiten.Image, fm *render.FontManager, pipeIdx int, pipe descriptor.PipelineEditState, contentX, contentW, rowY float32) {
 	ui.Label(screen, "条件:", float64(contentX), float64(rowY), 40, ui.LabelStyle{
 		Font: theme.FontCaption, Color: theme.TextMuted,
 	})
-	ui.Label(screen, condLabel, float64(contentX+42), float64(rowY), float64(contentW-120), ui.LabelStyle{
-		Font: theme.FontCaption, Color: condClr,
-	})
+
+	// 已有条件 badge 列表
+	condMetas := descriptor.AllConditionMeta()
+	badgeX := contentX + 42
+	for ci, cond := range pipe.Conditions {
+		label := aeMetaLabel(condMetas, cond.TypeID)
+		// 附加主要参数值的缩写
+		label = aeCompactBadgeLabel(label, cond.Params)
+
+		bw := aeMeasureBadgeWidth(fm, label)
+		if badgeX+bw > contentX+contentW-64 {
+			break // 超出可用宽度，不再画
+		}
+
+		badgeRect := ui.Rect{X: badgeX, Y: rowY + 1, W: bw, H: aeBadgeH}
+		s.badgeRects = append(s.badgeRects, condEffectBadgeRect{
+			Rect: badgeRect, PipeIdx: pipeIdx, SlotType: "condition", CompIdx: ci,
+		})
+
+		// 高亮当前展开的 badge
+		bg := aeBadgeBg
+		if s.expandedPipe == pipeIdx && s.expandedSlot == "condition" && s.expandedComp == ci {
+			bg = color.RGBA{R: 50, G: 75, B: 110, A: 230}
+		}
+		draw.RoundRect(screen, badgeX, rowY+1, bw, aeBadgeH, aeBadgeH/2, bg) //nolint:hud
+		ui.Label(screen, label, float64(badgeX)+4, float64(rowY)+3, float64(bw)-8, ui.LabelStyle{
+			Font: theme.FontXS, Color: aeBadgeTextClr,
+		})
+		badgeX += bw + aeBadgeGap
+	}
+
 	// +条件 按钮（右侧）
-	condBtnX := contentX + contentW - 60
-	condBtnRect := ui.Rect{X: condBtnX, Y: rowY, W: 56, H: aePipeRowH - 2}
+	condBtnX := contentX + contentW - 56
+	condBtnRect := ui.Rect{X: condBtnX, Y: rowY, W: 52, H: aePipeRowH - 2}
 	s.condBtnRects = append(s.condBtnRects, condBtnRect)
-	ui.Button(screen, condBtnX, rowY, 56, aePipeRowH-2, "+条件", ui.ButtonStyle{
+	ui.Button(screen, condBtnX, rowY, 52, aePipeRowH-2, "+条件", ui.ButtonStyle{
 		BgColor:  color.RGBA{R: 40, G: 50, B: 75, A: 200},
 		FontSize: 10,
 		Radius:   6,
 	})
-	rowY += aePipeRowH
+}
 
-	// 行 3: 目标选择器
+// ── 行渲染：选择器 ──────────────────────────────────
+
+func (s *AbilityEditScene) drawSelectorRow(screen *ebiten.Image, fm *render.FontManager, pipeIdx int, pipe descriptor.PipelineEditState, contentX, contentW, rowY float32) {
 	selectorLabel := "未选择"
 	selectorClr := color.Color(theme.TextLocked)
 	if pipe.SelectorID != "" {
-		selectorLabel = pipe.SelectorID
+		selectorLabel = aeMetaLabel(descriptor.AllSelectorMeta(), pipe.SelectorID)
 		selectorClr = theme.TextBody
 	}
 	ui.Label(screen, "目标:", float64(contentX), float64(rowY), 40, ui.LabelStyle{
@@ -515,33 +1064,360 @@ func (s *AbilityEditScene) drawPipelineCard(screen *ebiten.Image, fm *render.Fon
 	ui.Label(screen, fmt.Sprintf("[%s]", selectorLabel), float64(selectorSlotX), float64(rowY), float64(selectorSlotW), ui.LabelStyle{
 		Font: theme.FontCaption, Color: selectorClr,
 	})
-	rowY += aePipeRowH
+}
 
-	// 行 4: 效果
-	effectLabel := "(未设置)"
-	effectClr := color.Color(theme.TextLocked)
-	if len(pipe.Effects) > 0 {
-		effectLabel = fmt.Sprintf("%d 个效果", len(pipe.Effects))
-		effectClr = theme.TextBody
-	}
+// ── 行渲染：效果 ──────────────────────────────────
+
+func (s *AbilityEditScene) drawEffectRow(screen *ebiten.Image, fm *render.FontManager, pipeIdx int, pipe descriptor.PipelineEditState, contentX, contentW, rowY float32) {
 	ui.Label(screen, "效果:", float64(contentX), float64(rowY), 40, ui.LabelStyle{
 		Font: theme.FontCaption, Color: theme.TextMuted,
 	})
-	ui.Label(screen, effectLabel, float64(contentX+42), float64(rowY), float64(contentW-120), ui.LabelStyle{
-		Font: theme.FontCaption, Color: effectClr,
-	})
+
+	// 已有效果 badge 列表
+	effMetas := descriptor.AllEffectMeta()
+	badgeX := contentX + 42
+	for ei, eff := range pipe.Effects {
+		label := aeMetaLabel(effMetas, eff.TypeID)
+		label = aeCompactBadgeLabel(label, eff.Params)
+
+		bw := aeMeasureBadgeWidth(fm, label)
+		if badgeX+bw > contentX+contentW-64 {
+			break
+		}
+
+		badgeRect := ui.Rect{X: badgeX, Y: rowY + 1, W: bw, H: aeBadgeH}
+		s.badgeRects = append(s.badgeRects, condEffectBadgeRect{
+			Rect: badgeRect, PipeIdx: pipeIdx, SlotType: "effect", CompIdx: ei,
+		})
+
+		bg := aeBadgeBg
+		if s.expandedPipe == pipeIdx && s.expandedSlot == "effect" && s.expandedComp == ei {
+			bg = color.RGBA{R: 50, G: 75, B: 110, A: 230}
+		}
+		draw.RoundRect(screen, badgeX, rowY+1, bw, aeBadgeH, aeBadgeH/2, bg) //nolint:hud
+		ui.Label(screen, label, float64(badgeX)+4, float64(rowY)+3, float64(bw)-8, ui.LabelStyle{
+			Font: theme.FontXS, Color: aeBadgeTextClr,
+		})
+		badgeX += bw + aeBadgeGap
+	}
+
 	// +效果 按钮（右侧）
-	effectBtnX := contentX + contentW - 60
-	effectBtnRect := ui.Rect{X: effectBtnX, Y: rowY, W: 56, H: aePipeRowH - 2}
+	effectBtnX := contentX + contentW - 56
+	effectBtnRect := ui.Rect{X: effectBtnX, Y: rowY, W: 52, H: aePipeRowH - 2}
 	s.effectBtnRects = append(s.effectBtnRects, effectBtnRect)
-	ui.Button(screen, effectBtnX, rowY, 56, aePipeRowH-2, "+效果", ui.ButtonStyle{
+	ui.Button(screen, effectBtnX, rowY, 52, aePipeRowH-2, "+效果", ui.ButtonStyle{
 		BgColor:  color.RGBA{R: 40, G: 50, B: 75, A: 200},
 		FontSize: 10,
 		Radius:   6,
 	})
 }
 
-// drawBottomButtons 绘制底部按钮行并缓存布局结果。
+// ── Badge 辅助 ──────────────────────────────────────
+
+// aeCompactBadgeLabel 在标签后附加主要参数值的缩写。
+// 例如 "概率" + {value:0.3} → "概率 0.3"
+func aeCompactBadgeLabel(label string, params map[string]float64) string {
+	if len(params) == 0 {
+		return label
+	}
+	// 取第一个有意义的值
+	if v, ok := params["value"]; ok {
+		return label + " " + aeFormatFloat(v)
+	}
+	if v, ok := params["base"]; ok {
+		return label + " " + aeFormatFloat(v)
+	}
+	// 从 params 中取任意第一个值
+	for _, v := range params {
+		return label + " " + aeFormatFloat(v)
+	}
+	return label
+}
+
+// aeFormatFloat 格式化浮点数用于显示，去除不必要的尾零。
+func aeFormatFloat(v float64) string {
+	if v == math.Floor(v) && math.Abs(v) < 10000 {
+		return strconv.Itoa(int(v))
+	}
+	s := strconv.FormatFloat(v, 'f', 2, 64)
+	// 去除尾零：1.50 → 1.5, 1.00 → 1
+	for len(s) > 1 && s[len(s)-1] == '0' && s[len(s)-2] != '.' {
+		s = s[:len(s)-1]
+	}
+	if len(s) > 1 && s[len(s)-1] == '0' && s[len(s)-2] == '.' {
+		s = s[:len(s)-2]
+	}
+	return s
+}
+
+// aeMeasureBadgeWidth 测量 badge 所需宽度。
+func aeMeasureBadgeWidth(fm *render.FontManager, label string) float32 {
+	if fm == nil {
+		return 50
+	}
+	tw := fm.MeasureText(label, theme.FontXS)
+	w := float32(tw) + 12
+	if w < 30 {
+		w = 30
+	}
+	return w
+}
+
+// ── 展开参数编辑面板 ──────────────────────────────
+
+// drawExpandedParamPanel 绘制当前展开的条件/效果/选择器参数面板。
+// 浮动在对应 badge 下方，显示参数名称 + 当前值 + [-][+] 按钮。
+// 对 scaler 类型参数，额外显示 mode toggle（fixed/linear）。
+func (s *AbilityEditScene) drawExpandedParamPanel(screen *ebiten.Image, fm *render.FontManager) {
+	if s.expandedPipe < 0 || s.expandedPipe >= len(s.pipelines) {
+		return
+	}
+	pipe := &s.pipelines[s.expandedPipe]
+
+	// 确定参数来源和元数据
+	var params map[string]float64
+	var paramMetas []descriptor.ParamMeta
+	var typeID string
+
+	switch s.expandedSlot {
+	case "condition":
+		if s.expandedComp < 0 || s.expandedComp >= len(pipe.Conditions) {
+			return
+		}
+		c := &pipe.Conditions[s.expandedComp]
+		params = c.Params
+		typeID = c.TypeID
+		paramMetas = aeGetParamMetas(descriptor.AllConditionMeta(), typeID)
+	case "selector":
+		params = pipe.SelectorParams
+		typeID = pipe.SelectorID
+		paramMetas = aeGetParamMetas(descriptor.AllSelectorMeta(), typeID)
+	case "effect":
+		if s.expandedComp < 0 || s.expandedComp >= len(pipe.Effects) {
+			return
+		}
+		e := &pipe.Effects[s.expandedComp]
+		params = e.Params
+		typeID = e.TypeID
+		paramMetas = aeGetParamMetas(descriptor.AllEffectMeta(), typeID)
+	default:
+		return
+	}
+
+	if len(paramMetas) == 0 {
+		return
+	}
+
+	// 查找对应 badge 的位置，作为面板锚点
+	var anchorRect ui.Rect
+	found := false
+	for _, br := range s.badgeRects {
+		if br.PipeIdx == s.expandedPipe && br.SlotType == s.expandedSlot && br.CompIdx == s.expandedComp {
+			anchorRect = br.Rect
+			found = true
+			break
+		}
+	}
+	if !found {
+		// 对 selector 无 badge，使用 selector rect 作为锚点
+		if s.expandedSlot == "selector" && s.expandedPipe < len(s.selectorRects) {
+			anchorRect = s.selectorRects[s.expandedPipe]
+			found = true
+		}
+	}
+	if !found {
+		return
+	}
+
+	// 计算面板尺寸和位置
+	panelW := float32(280)
+	rowCount := 0
+	for _, pm := range paramMetas {
+		if pm.Type == "string" || pm.Type == "bool" {
+			continue // 暂不支持字符串/布尔参数编辑
+		}
+		if pm.Type == "scaler" {
+			// scaler: mode toggle 行 + value 行（fixed）或 base+potential 行（linear）
+			_, hasBase := params["base"]
+			if hasBase {
+				rowCount += 3 // mode + base + potential
+			} else {
+				rowCount += 2 // mode + value
+			}
+		} else {
+			rowCount++
+		}
+	}
+	if rowCount == 0 {
+		return
+	}
+
+	panelH := float32(rowCount)*aeParamRowH + 12 // 上下 6px padding
+	panelX := anchorRect.X
+	panelY := anchorRect.Y + anchorRect.H + 4
+
+	// 屏幕边界修正
+	if panelX+panelW > float32(theme.CanvasW)-4 {
+		panelX = float32(theme.CanvasW) - panelW - 4
+	}
+	if panelY+panelH > float32(theme.CanvasH)-4 {
+		panelY = anchorRect.Y - panelH - 4 // 上方弹出
+	}
+
+	// 面板背景
+	ui.Panel(screen, panelX, panelY, panelW, panelH, ui.PanelStyle{
+		BgColor:     color.RGBA{R: 15, G: 22, B: 42, A: 245},
+		BorderColor: color.RGBA{R: 70, G: 85, B: 120, A: 200},
+		Radius:      8,
+		BorderWidth: 1,
+	})
+
+	// 逐行绘制参数
+	curY := panelY + 6
+	for _, pm := range paramMetas {
+		if pm.Type == "string" || pm.Type == "bool" {
+			continue
+		}
+
+		if pm.Type == "scaler" {
+			curY = s.drawScalerParamRows(screen, fm, panelX, curY, panelW, pm, params)
+		} else {
+			s.drawSimpleParamRow(screen, fm, panelX, curY, panelW, pm, params)
+			curY += aeParamRowH
+		}
+	}
+}
+
+// drawSimpleParamRow 绘制一个简单参数行：标签 + 值 + [-] [+]
+func (s *AbilityEditScene) drawSimpleParamRow(screen *ebiten.Image, fm *render.FontManager, panelX, rowY, panelW float32, pm descriptor.ParamMeta, params map[string]float64) {
+	padX := float32(8)
+	val := params[pm.Key]
+
+	// 标签
+	ui.Label(screen, pm.Label+":", float64(panelX+padX), float64(rowY)+2, 80, ui.LabelStyle{
+		Font: theme.FontXS, Color: aeParamLabelClr,
+	})
+
+	// 值
+	valStr := aeFormatFloat(val)
+	ui.Label(screen, valStr, float64(panelX)+100, float64(rowY)+2, 60, ui.LabelStyle{
+		Font: theme.FontXS, Color: aeParamValueClr, Bold: true,
+	})
+
+	// [-] 按钮
+	minusBtnX := panelX + panelW - padX - aeParamBtnW*2 - 6
+	minusRect := ui.Rect{X: minusBtnX, Y: rowY + 1, W: aeParamBtnW, H: aeParamBtnH}
+	s.paramBtns = append(s.paramBtns, paramBtnRect{
+		Rect: minusRect, PipeIdx: s.expandedPipe, SlotType: s.expandedSlot,
+		CompIdx: s.expandedComp, ParamKey: pm.Key, Delta: -1,
+	})
+	ui.Button(screen, minusBtnX, rowY+1, aeParamBtnW, aeParamBtnH, "-", ui.ButtonStyle{
+		BgColor: aeParamBtnBg, FontSize: theme.FontXS, Radius: 4,
+	})
+
+	// [+] 按钮
+	plusBtnX := panelX + panelW - padX - aeParamBtnW
+	plusRect := ui.Rect{X: plusBtnX, Y: rowY + 1, W: aeParamBtnW, H: aeParamBtnH}
+	s.paramBtns = append(s.paramBtns, paramBtnRect{
+		Rect: plusRect, PipeIdx: s.expandedPipe, SlotType: s.expandedSlot,
+		CompIdx: s.expandedComp, ParamKey: pm.Key, Delta: 1,
+	})
+	ui.Button(screen, plusBtnX, rowY+1, aeParamBtnW, aeParamBtnH, "+", ui.ButtonStyle{
+		BgColor: aeParamBtnBg, FontSize: theme.FontXS, Radius: 4,
+	})
+}
+
+// drawScalerParamRows 绘制 scaler 类型参数行：mode toggle + value/base+potential。
+// 返回绘制后的 Y 坐标。
+func (s *AbilityEditScene) drawScalerParamRows(screen *ebiten.Image, fm *render.FontManager, panelX, startY, panelW float32, pm descriptor.ParamMeta, params map[string]float64) float32 {
+	padX := float32(8)
+	curY := startY
+
+	// 判断当前模式
+	_, hasBase := params["base"]
+	isLinear := hasBase
+	modeLabel := "fixed"
+	if isLinear {
+		modeLabel = "linear"
+	}
+
+	// 行 1: 参数名 + mode toggle
+	ui.Label(screen, pm.Label+":", float64(panelX+padX), float64(curY)+2, 80, ui.LabelStyle{
+		Font: theme.FontXS, Color: aeParamLabelClr,
+	})
+
+	// Mode toggle 按钮
+	toggleX := panelX + 100
+	toggleW := float32(54)
+	toggleRect := ui.Rect{X: toggleX, Y: curY + 1, W: toggleW, H: aeParamBtnH}
+	s.scalerToggles = append(s.scalerToggles, scalerToggleRect{
+		Rect: toggleRect, PipeIdx: s.expandedPipe, SlotType: s.expandedSlot,
+		CompIdx: s.expandedComp, ParamKey: pm.Key,
+	})
+	toggleBg := color.RGBA{R: 40, G: 55, B: 80, A: 220}
+	ui.Button(screen, toggleX, curY+1, toggleW, aeParamBtnH, modeLabel, ui.ButtonStyle{
+		BgColor: toggleBg, FontSize: theme.FontXS, Radius: 4,
+	})
+	curY += aeParamRowH
+
+	if isLinear {
+		// 行 2: base
+		s.drawScalerValueRow(screen, fm, panelX, curY, panelW, "base", params["base"], pm)
+		curY += aeParamRowH
+
+		// 行 3: potential
+		s.drawScalerValueRow(screen, fm, panelX, curY, panelW, "potential", params["potential"], pm)
+		curY += aeParamRowH
+	} else {
+		// 行 2: value
+		s.drawScalerValueRow(screen, fm, panelX, curY, panelW, "value", params["value"], pm)
+		curY += aeParamRowH
+	}
+
+	return curY
+}
+
+// drawScalerValueRow 绘制 scaler 的单个值行（base/potential/value）。
+func (s *AbilityEditScene) drawScalerValueRow(screen *ebiten.Image, fm *render.FontManager, panelX, rowY, panelW float32, paramKey string, val float64, pm descriptor.ParamMeta) {
+	padX := float32(8)
+
+	// 缩进的标签
+	keyLabel := "  " + paramKey + ":"
+	ui.Label(screen, keyLabel, float64(panelX+padX), float64(rowY)+2, 80, ui.LabelStyle{
+		Font: theme.FontXS, Color: aeParamLabelClr,
+	})
+
+	// 值
+	valStr := aeFormatFloat(val)
+	ui.Label(screen, valStr, float64(panelX)+100, float64(rowY)+2, 60, ui.LabelStyle{
+		Font: theme.FontXS, Color: aeParamValueClr, Bold: true,
+	})
+
+	// [-] 按钮
+	minusBtnX := panelX + panelW - padX - aeParamBtnW*2 - 6
+	minusRect := ui.Rect{X: minusBtnX, Y: rowY + 1, W: aeParamBtnW, H: aeParamBtnH}
+	s.paramBtns = append(s.paramBtns, paramBtnRect{
+		Rect: minusRect, PipeIdx: s.expandedPipe, SlotType: s.expandedSlot,
+		CompIdx: s.expandedComp, ParamKey: paramKey, Delta: -1,
+	})
+	ui.Button(screen, minusBtnX, rowY+1, aeParamBtnW, aeParamBtnH, "-", ui.ButtonStyle{
+		BgColor: aeParamBtnBg, FontSize: theme.FontXS, Radius: 4,
+	})
+
+	// [+] 按钮
+	plusBtnX := panelX + panelW - padX - aeParamBtnW
+	plusRect := ui.Rect{X: plusBtnX, Y: rowY + 1, W: aeParamBtnW, H: aeParamBtnH}
+	s.paramBtns = append(s.paramBtns, paramBtnRect{
+		Rect: plusRect, PipeIdx: s.expandedPipe, SlotType: s.expandedSlot,
+		CompIdx: s.expandedComp, ParamKey: paramKey, Delta: 1,
+	})
+	ui.Button(screen, plusBtnX, rowY+1, aeParamBtnW, aeParamBtnH, "+", ui.ButtonStyle{
+		BgColor: aeParamBtnBg, FontSize: theme.FontXS, Radius: 4,
+	})
+}
+
+// ── drawBottomButtons ──────────────────────────────
+
 func (s *AbilityEditScene) drawBottomButtons(screen *ebiten.Image, px, py float32) {
 	btnY := py + aePanelH - aeBtnAreaH - 4
 
