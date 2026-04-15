@@ -91,13 +91,13 @@ func (c *ClassicWavesConfig) buildWaveMap() {
 	}
 }
 
-// LoadClassicWavesConfig 从 config/systems/classic-waves.json 加载经典出怪配置。
+// LoadClassicWavesConfig 从 config/systems/classic-waves/classic-waves.json 加载经典出怪配置。
 // 必须在 SetDataFS() 之后调用。
 func LoadClassicWavesConfig() (*ClassicWavesConfig, error) {
 	if dataFS == nil {
 		return nil, fmt.Errorf("load classic waves config: dataFS not initialized")
 	}
-	data, err := dataFS.ReadFile("config/systems/classic-waves.json")
+	data, err := dataFS.ReadFile("config/systems/classic-waves/classic-waves.json")
 	if err != nil {
 		return nil, fmt.Errorf("load classic waves config: %w", err)
 	}
