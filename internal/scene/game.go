@@ -490,6 +490,8 @@ func (g *Game) currentSceneName() string {
 		return "bestiary"
 	case *BlueprintEditScene:
 		return "blueprint_edit"
+	case *AbilityEditScene:
+		return "ability_edit"
 	default:
 		return "other"
 	}
