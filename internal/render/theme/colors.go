@@ -156,6 +156,7 @@ var (
 
 var (
 	TowerSelectionRing = rgba(253, 224, 71, 184) // 0.72 * 255 ≈ 184
+	AITowerOwnerRing   = rgba(100, 180, 255, 100) // AI 塔淡蓝底圈标识
 	TowerRangeFill     = rgba(245, 158, 11, 20)  // 0.08 * 255 ≈ 20
 	TowerRangeStroke   = rgba(245, 158, 11, 89)  // 0.35 * 255 ≈ 89
 	TowerFallbackSel   = hex(0xf59e0b)

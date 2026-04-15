@@ -89,6 +89,10 @@ type InfoPanelVM struct {
 	UpgradeButtonText     string // e.g. "强度+10 $10"
 	SellButtonText        string // e.g. "卖60"
 	CanAffordUpgrade      bool   // true if player can afford single upgrade
+
+	// 所有权（AI 塔只显示信息，不显示操作按钮）
+	HideActions bool   // true=隐藏升级/卖出/能力按钮（非自己的塔）
+	OwnerLabel  string // 非空时显示在标题旁（如 "AI 的塔"）
 }
 
 // SlotVM 能力槽展示数据。
@@ -321,9 +325,9 @@ func DrawInfoPanel(screen *ebiten.Image, vm InfoPanelVM) {
 		})
 	}
 
-	// "选择能力(N)" 按钮
+	// "选择能力(N)" 按钮（AI 的塔不显示）
 	lastAbilityBtnRect = ui.Rect{}
-	if vm.PendingCount > 0 {
+	if vm.PendingCount > 0 && !vm.HideActions {
 		panel.AddSpace(detailGap)
 		panel.AddRow(32, func(screen *ebiten.Image, x, y float64, w float64) {
 			btnRect := ui.Rect{X: float32(x), Y: float32(y), W: float32(w), H: 30}
@@ -345,9 +349,9 @@ func DrawInfoPanel(screen *ebiten.Image, vm InfoPanelVM) {
 		})
 	}
 
-	// "解锁能力 $XX" 按钮（战役模式）
+	// "解锁能力 $XX" 按钮（战役模式，AI 的塔不显示）
 	lastUnlockBtnRect = ui.Rect{}
-	if vm.CanUnlockSlot {
+	if vm.CanUnlockSlot && !vm.HideActions {
 		panel.AddSpace(detailGap)
 		panel.AddRow(32, func(screen *ebiten.Image, x, y float64, w float64) {
 			btnRect := ui.Rect{X: float32(x), Y: float32(y), W: float32(w), H: 30}
@@ -379,33 +383,43 @@ func DrawInfoPanel(screen *ebiten.Image, vm InfoPanelVM) {
 		})
 	}
 
-	// 操作按钮：强度+10 / 卖出
-	panel.AddSpace(detailGap)
+	// 操作按钮：强度+10 / 卖出（AI 的塔不显示）
 	lastUpgradeRect = ui.Rect{}
 	lastSellRect = ui.Rect{}
 
-	panel.AddRow(btnH, func(screen *ebiten.Image, x, y float64, w float64) {
-		area := ui.Rect{X: float32(x), Y: float32(y), W: float32(w), H: btnH}
+	if !vm.HideActions {
+		panel.AddSpace(detailGap)
+		panel.AddRow(btnH, func(screen *ebiten.Image, x, y float64, w float64) {
+			area := ui.Rect{X: float32(x), Y: float32(y), W: float32(w), H: btnH}
 
-		upgradeClr := theme.ToneDisabled
-		if vm.CanAffordUpgrade {
-			upgradeClr = theme.TonePrimary
-		}
+			upgradeClr := theme.ToneDisabled
+			if vm.CanAffordUpgrade {
+				upgradeClr = theme.TonePrimary
+			}
 
-		result := ui.DrawButtonRow(screen, area, []ui.ButtonRowItem{
-			{Label: vm.UpgradeButtonText, Color: upgradeClr},
-			{Label: vm.SellButtonText, Color: theme.BtnDanger},
-		}, ui.ButtonRowStyle{
-			Height:   btnH,
-			Gap:      btnGap,
-			Radius:   float32(theme.ButtonRadius),
-			FontSize: theme.FontSM,
+			result := ui.DrawButtonRow(screen, area, []ui.ButtonRowItem{
+				{Label: vm.UpgradeButtonText, Color: upgradeClr},
+				{Label: vm.SellButtonText, Color: theme.BtnDanger},
+			}, ui.ButtonRowStyle{
+				Height:   btnH,
+				Gap:      btnGap,
+				Radius:   float32(theme.ButtonRadius),
+				FontSize: theme.FontSM,
+			})
+			if len(result.Rects) == 2 {
+				lastUpgradeRect = result.Rects[0]
+				lastSellRect = result.Rects[1]
+			}
 		})
-		if len(result.Rects) == 2 {
-			lastUpgradeRect = result.Rects[0]
-			lastSellRect = result.Rects[1]
-		}
-	})
+	} else if vm.OwnerLabel != "" {
+		// AI 的塔：显示所有者标签替代按钮
+		panel.AddSpace(detailGap)
+		panel.AddRow(btnH, func(screen *ebiten.Image, x, y float64, w float64) {
+			ui.LabelV(screen, vm.OwnerLabel, x+w/2, y+float64(btnH)/2, w, ui.LabelStyle{
+				Font: theme.FontSM, Color: theme.TextMuted, Align: ui.AlignCenter,
+			})
+		})
+	}
 
 	panel.AddSpace(botPad - innerPad)
 

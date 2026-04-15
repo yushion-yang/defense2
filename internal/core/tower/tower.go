@@ -56,6 +56,7 @@ type Tower struct {
 	SpriteKeyOverride string // 经典模式：配置强制的精灵键（覆盖 AddAbility 推断）
 	Active      bool     // 是否存活（对象池复用标记，false 表示槽位空闲可回收）
 	Color       [3]uint8 // 显示颜色 RGB（建造时从 TowerDef 复制）
+	Owner       int      // 所有者：0=Human, 1=AI（多人模式区分塔归属，默认 0）
 
 	// ── 战斗属性（RecalcStats 计算的最终值，直接用于战斗逻辑）──
 	Range       float64 // 攻击范围（像素，索敌和 UI 显示都读此值）

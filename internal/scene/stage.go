@@ -2974,6 +2974,10 @@ func (s *StageScene) drawScene(screen *ebiten.Image) {
 		// 塔选中时显示塔信息面板（底部中央）
 		sellValue := s.econ.SellRefund(s.selectedTower.Cost)
 		vm := BuildInfoPanelVM(s.selectedTower, sellValue, s.findTowerDef(s.selectedTower), s.gold)
+		if s.selectedTower.Owner != 0 {
+			vm.HideActions = true
+			vm.OwnerLabel = "AI 的塔"
+		}
 		hud.DrawInfoPanel(screen, vm)
 		// Hover 在面板上时显示升级详情浮窗
 		mx, my := draw.CursorPos()
@@ -3576,6 +3580,12 @@ func (s *StageScene) onWaveTransition(prevWave int) {
 		ctx := s.buildModeCtx()
 		result := s.session.OnWaveCleared(prevWave, ctx)
 		totalBonus := result.BonusGold + result.PerfectBonus
+		// AI 玩家模式：波次奖励对半分
+		if s.aiPlayer != nil {
+			aiShare := totalBonus / 2
+			s.aiPlayer.AddGold(aiShare)
+			totalBonus -= aiShare
+		}
 		s.gold += totalBonus
 		s.gameStats.GoldEarned += totalBonus
 		perfect := s.lives == s.waveLivesSnapshot && result.PerfectBonus > 0
@@ -4086,6 +4096,7 @@ func (s *StageScene) BuildTowerForAI(key string, row, col int) bool {
 	if t == nil {
 		return false
 	}
+	t.Owner = 1 // AI 的塔
 	t.BuildAnim = 0.3
 	// 按塔定义的 abilityMode 初始化能力（与 tryPlaceTower 逻辑一致）
 	switch def.AbilityAcquireMode {

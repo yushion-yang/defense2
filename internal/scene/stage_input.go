@@ -82,7 +82,7 @@ func (s *StageScene) handleInput() {
 		}
 		if released {
 			target := s.dragHoverTower
-			if target != nil && !target.Selling {
+			if target != nil && !target.Selling && target.Owner == 0 {
 				item.ApplyItem(target, s.dragItemKind)
 				s.inventory.Use(s.dragItemKind)
 				s.gameStats.ItemsUsed++
@@ -234,7 +234,7 @@ func (s *StageScene) handleInput() {
 		return
 	}
 	// U 键: 快捷升级（+10 强度），仅在 modeTowerSel 时可用
-	if inpututil.IsKeyJustPressed(ebiten.KeyU) && s.imode == modeTowerSel {
+	if inpututil.IsKeyJustPressed(ebiten.KeyU) && s.imode == modeTowerSel && s.selectedTower != nil && s.selectedTower.Owner == 0 {
 		s.tryUpgradeTower()
 		return
 	}
@@ -269,7 +269,7 @@ func (s *StageScene) handleInput() {
 	}
 	// Delete/Backspace: 快捷卖塔（仅在选中塔时）
 	if inpututil.IsKeyJustPressed(ebiten.KeyDelete) || inpututil.IsKeyJustPressed(ebiten.KeyBackspace) {
-		if s.imode == modeTowerSel && s.selectedTower != nil {
+		if s.imode == modeTowerSel && s.selectedTower != nil && s.selectedTower.Owner == 0 {
 			s.trySellTower(s.selectedTower.X, s.selectedTower.Y)
 			s.imode = modeIdle
 			return
@@ -582,14 +582,16 @@ func (s *StageScene) handleInput() {
 	case modeTowerSel:
 		// 塔选中状态：信息面板上的多个按钮 hitTest（按优先级）：
 		// 选择能力 → 解锁槽位 → 升级强度 → 批量升级 → 卖出 → 点击其他塔/空地
+		// AI 的塔（Owner!=0）只允许查看，不允许操作
+		isOwned := s.selectedTower != nil && s.selectedTower.Owner == 0
 		// "选择能力(N)" 按钮点击 → 打开 ChoicePanel
-		if hud.HitTestAbilityBtn(ftx, fty) && s.selectedTower != nil {
+		if hud.HitTestAbilityBtn(ftx, fty) && isOwned {
 			s.openAbilityChoicePanel()
-		} else if hud.HitTestUnlockBtn(ftx, fty) && s.selectedTower != nil {
+		} else if hud.HitTestUnlockBtn(ftx, fty) && isOwned {
 			s.tryUnlockAbilitySlot()
-		} else if hud.InfoPanelUpgradeHitTest(ftx, fty, s.selectedTower != nil) {
+		} else if hud.InfoPanelUpgradeHitTest(ftx, fty, isOwned) {
 			s.tryUpgradeTower()
-		} else if hud.InfoPanelSellHitTest(ftx, fty, s.selectedTower != nil) {
+		} else if hud.InfoPanelSellHitTest(ftx, fty, isOwned) {
 			s.trySellTower(s.selectedTower.X, s.selectedTower.Y)
 			s.imode = modeIdle
 			s.audioMgr.PlayAt(gameAudio.SFXUIClose, gameAudio.VolUI)
