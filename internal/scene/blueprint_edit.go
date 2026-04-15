@@ -114,7 +114,6 @@ type BlueprintEditScene struct {
 
 	// ── 步骤 3 状态 ──
 	availableAbilities []abilityOption // 可选能力列表（自定义 + 预制）
-	scrollOffset       int            // 可选列表滚动偏移（行数）
 	lastCustomCount    int            // 上次构建时 abilityStore 中的自定义能力数量（脏检查）
 
 	// ── 步骤 3 卡片布局缓存 ──
@@ -131,8 +130,16 @@ type BlueprintEditScene struct {
 	step2NoSpecBtnRect    ui.Rect       // 无专精按钮矩形
 	step2TierBtnsReady    bool          // 按钮矩形是否已计算
 
+	// ── 名称编辑 ──
+	nameEditing bool   // true=名称编辑模式
+	nameBackup  string // 编辑前名称（ESC 还原用）
+
+	// ── 步骤 4 布局缓存 ──
+	step4NameRect ui.Rect // 名称标签的点击区域
+
 	// ── 共享 ──
 	budgetRules *descriptor.BudgetRules // 预算规则
+	dirty       bool                    // true=有未保存的更改（任何编辑操作后置 true）
 }
 
 // NewBlueprintEditScene 创建蓝图编辑场景。
@@ -360,9 +367,18 @@ func (s *BlueprintEditScene) mergedAbilityCosts() map[string]int {
 // ── Update ────────────────────────────────────────
 
 func (s *BlueprintEditScene) Update() error {
-	// ESC 返回
+	// 名称编辑模式：优先处理文本输入
+	if s.nameEditing {
+		s.updateNameEditing()
+		return nil
+	}
+
+	// ESC 返回（有未保存更改时提示）
 	if inpututil.IsKeyJustPressed(ebiten.KeyEscape) {
 		playUIClick(s.switcher)
+		if s.dirty {
+			hud.ShowToast("未保存的更改已丢弃") // TODO: i18n — blueprint.unsaved_discard
+		}
 		s.switcher.SwitchScene(s.returnScene)
 		return nil
 	}
@@ -415,7 +431,10 @@ func (s *BlueprintEditScene) handleBtnClick(idx int) {
 	btnCount := len(s.btnRects)
 	switch {
 	case idx == 0:
-		// 取消
+		// 取消（有未保存更改时提示）
+		if s.dirty {
+			hud.ShowToast("未保存的更改已丢弃") // TODO: i18n — blueprint.unsaved_discard
+		}
 		s.switcher.SwitchScene(s.returnScene)
 	case idx == btnCount-1:
 		// 最后一个按钮：下一步 / 保存
@@ -431,7 +450,15 @@ func (s *BlueprintEditScene) handleBtnClick(idx int) {
 }
 
 // saveBlueprint 执行蓝图保存逻辑。
+// 保存前必须通过校验门控，校验未通过时阻止保存并提示用户。
 func (s *BlueprintEditScene) saveBlueprint() {
+	// 校验门控：保存前验证蓝图合法性
+	errs := descriptor.ValidateBlueprint(s.blueprint, *s.budgetRules, s.mergedAbilityCosts())
+	if len(errs) > 0 {
+		hud.ShowToast("校验未通过，请检查") // TODO: i18n — blueprint.validation_failed
+		return
+	}
+
 	// 生成 ID 和元数据（新建时）
 	if s.isNew {
 		s.blueprint.ID = fmt.Sprintf("bp_%d", time.Now().UnixMilli())
@@ -463,6 +490,52 @@ func (s *BlueprintEditScene) saveBlueprint() {
 	hud.ShowToast("蓝图已保存") // TODO: i18n — blueprint.saved
 
 	s.switcher.SwitchScene(s.returnScene)
+}
+
+// ── 名称编辑 ──────────────────────────────────────
+
+const bpNameMaxLen = 20 // 名称最大字符数
+
+// updateNameEditing 处理名称编辑模式的键盘输入。
+// 使用 ebiten.AppendInputChars 支持 IME/中文输入。
+func (s *BlueprintEditScene) updateNameEditing() {
+	// Enter：确认
+	if inpututil.IsKeyJustPressed(ebiten.KeyEnter) {
+		s.nameEditing = false
+		s.dirty = true
+		return
+	}
+
+	// ESC：还原并退出
+	if inpututil.IsKeyJustPressed(ebiten.KeyEscape) {
+		s.blueprint.Name = s.nameBackup
+		s.nameEditing = false
+		return
+	}
+
+	// 点击名称区域外：确认并退出
+	if isTapJustPressed() {
+		mx, my := draw.CursorPos()
+		if !s.step4NameRect.Contains(mx, my) {
+			s.nameEditing = false
+			s.dirty = true
+			return
+		}
+	}
+
+	// Backspace：删除末尾字符
+	if inpututil.IsKeyJustPressed(ebiten.KeyBackspace) && len(s.blueprint.Name) > 0 {
+		runes := []rune(s.blueprint.Name)
+		s.blueprint.Name = string(runes[:len(runes)-1])
+	}
+
+	// 追加输入字符
+	chars := ebiten.AppendInputChars(nil)
+	for _, ch := range chars {
+		if len([]rune(s.blueprint.Name)) < bpNameMaxLen {
+			s.blueprint.Name += string(ch)
+		}
+	}
 }
 
 // generateBlueprintName 根据攻击方式自动生成蓝图名称。
@@ -676,6 +749,7 @@ func (s *BlueprintEditScene) handleAttackStyleInput(mx, my float64) {
 			s.selectedAttack = i
 			opt := s.attackOptions[i]
 			s.blueprint.AttackStyle = opt.Style
+			s.dirty = true
 			break
 		}
 	}
@@ -847,6 +921,7 @@ func (s *BlueprintEditScene) handleTiersInput(mx, my float64) {
 					s.blueprint.Tiers = map[string]string{}
 				}
 				s.blueprint.Tiers[attr] = bpTierLabels[col]
+				s.dirty = true
 				return
 			}
 		}
@@ -857,6 +932,7 @@ func (s *BlueprintEditScene) handleTiersInput(mx, my float64) {
 		if s.step2SpecBtnRects[i].Contains(mx, my) {
 			playUIClick(s.switcher)
 			s.blueprint.Specialty = bpAttrKeys[i]
+			s.dirty = true
 			return
 		}
 	}
@@ -865,6 +941,7 @@ func (s *BlueprintEditScene) handleTiersInput(mx, my float64) {
 	if s.step2NoSpecBtnRect.Contains(mx, my) {
 		playUIClick(s.switcher)
 		s.blueprint.Specialty = ""
+		s.dirty = true
 	}
 }
 
@@ -944,8 +1021,7 @@ func (s *BlueprintEditScene) drawAbilitiesStep(screen *ebiten.Image, fm *render.
 			})
 
 			// 记录每张卡片在 availableAbilities 中的真实索引
-			for i, r := range result.Rects {
-				_ = i
+			for _, r := range result.Rects {
 				s.step3AvailRects = append(s.step3AvailRects, r)
 			}
 
@@ -1091,7 +1167,7 @@ func (s *BlueprintEditScene) drawAbilityCard(screen *ebiten.Image, opt abilityOp
 		tagClr = theme.TextLocked
 	}
 	ui.LabelV(screen, tagCostText, cx, float64(r.Y)+34, float64(r.W)-8, ui.LabelStyle{
-		Font: 10, Color: tagClr,
+		Font: theme.FontCaption, Color: tagClr,
 	})
 }
 
@@ -1117,6 +1193,7 @@ func (s *BlueprintEditScene) handleAbilitiesInput(mx, my float64) {
 		if r.Contains(mx, my) {
 			playUIClick(s.switcher)
 			s.blueprint.Abilities = append(s.blueprint.Abilities[:i], s.blueprint.Abilities[i+1:]...)
+			s.dirty = true
 			return
 		}
 	}
@@ -1148,9 +1225,28 @@ func (s *BlueprintEditScene) handleAbilitiesInput(mx, my float64) {
 			if !isSelected && !overBudget && !full {
 				playUIClick(s.switcher)
 				s.blueprint.Abilities = append(s.blueprint.Abilities, opt.ID)
+				s.dirty = true
 			}
 			return
 		}
+	}
+}
+
+// handlePreviewInput 处理预览步骤的点击。
+// 名称标签可点击进入编辑模式。
+func (s *BlueprintEditScene) handlePreviewInput(mx, my float64) {
+	if s.step4NameRect.Contains(mx, my) {
+		playUIClick(s.switcher)
+		// 进入名称编辑模式前，若名称为空则先填充自动名称
+		if s.blueprint.Name == "" {
+			count := 0
+			if s.blueprintStore != nil {
+				count = s.blueprintStore.Count()
+			}
+			s.blueprint.Name = generateBlueprintName(s.blueprint.AttackStyle, count)
+		}
+		s.nameBackup = s.blueprint.Name
+		s.nameEditing = true
 	}
 }
 
@@ -1242,7 +1338,7 @@ func (s *BlueprintEditScene) drawPreviewStep(screen *ebiten.Image, fm *render.Fo
 
 	// ── 左列 ──
 
-	// 蓝图名称
+	// 蓝图名称（点击可编辑）
 	name := s.blueprint.Name
 	if name == "" {
 		count := 0
@@ -1251,13 +1347,33 @@ func (s *BlueprintEditScene) drawPreviewStep(screen *ebiten.Image, fm *render.Fo
 		}
 		name = generateBlueprintName(s.blueprint.AttackStyle, count)
 	}
-	ui.Label(screen, "名称", leftX, y, leftW, ui.LabelStyle{
+	ui.Label(screen, "名称（点击编辑）", leftX, y, leftW, ui.LabelStyle{
 		Font: theme.FontCaption, Color: theme.TextMuted,
 	})
 	y += lineH - 4
-	ui.Label(screen, name, leftX, y, leftW-10, ui.LabelStyle{
-		Font: theme.FontBody, Color: theme.TextTitle, Bold: true,
-	})
+
+	nameFieldW := leftW - 10
+	nameFieldH := lineH + 2
+	s.step4NameRect = ui.Rect{X: float32(leftX), Y: float32(y - 2), W: float32(nameFieldW), H: float32(nameFieldH)}
+
+	if s.nameEditing {
+		// 编辑模式：高亮背景 + 光标闪烁
+		draw.RoundRect(screen, float32(leftX)-2, float32(y)-3, float32(nameFieldW)+4, float32(nameFieldH)+2, 4,
+			color.RGBA{R: 15, G: 18, B: 30, A: 255}) //nolint:hud
+		draw.StrokeRoundRect(screen, float32(leftX)-2, float32(y)-3, float32(nameFieldW)+4, float32(nameFieldH)+2, 4, 1,
+			color.RGBA{R: 60, G: 80, B: 140, A: 200})
+		display := s.blueprint.Name
+		if int(time.Now().UnixMilli()/500)%2 == 0 {
+			display += "|"
+		}
+		ui.Label(screen, display, leftX, y, nameFieldW, ui.LabelStyle{
+			Font: theme.FontBody, Color: theme.TextTitle, Bold: true,
+		})
+	} else {
+		ui.Label(screen, name, leftX, y, nameFieldW, ui.LabelStyle{
+			Font: theme.FontBody, Color: theme.TextTitle, Bold: true,
+		})
+	}
 	y += lineH
 
 	// 攻击方式
@@ -1355,7 +1471,7 @@ func (s *BlueprintEditScene) drawPreviewStep(screen *ebiten.Image, fm *render.Fo
 		ry += lineH - 4
 		for _, e := range errs {
 			ui.Label(screen, "• "+e.Error(), rightX, ry, rightW-10, ui.LabelStyle{
-				Font: 10, Color: theme.BtnDanger,
+				Font: theme.FontCaption, Color: theme.BtnDanger,
 			})
 			ry += lineH - 4
 		}

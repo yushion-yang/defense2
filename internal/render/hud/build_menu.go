@@ -5,6 +5,7 @@ package hud
 import (
 	"image/color"
 	"strconv"
+	"strings"
 
 	"defense2/internal/i18n"
 	"defense2/internal/render"
@@ -219,15 +220,22 @@ func drawBuildableCard(screen *ebiten.Image, card BuildCardVM, d BuildMenuData, 
 		cardBg.A = cardBg.A / 2
 	}
 
+	isBlueprint := strings.HasPrefix(card.Key, "bp_")
+
 	// Card background
 	ui.Panel(screen, cx, cy, bpCardW, bpCardH, ui.PanelStyle{
 		BgColor: cardBg, Radius: bpCardR,
 	})
 
-	// Selected card border
+	// Selected card border / blueprint accent border
 	if selected {
 		ui.Panel(screen, cx, cy, bpCardW, bpCardH, ui.PanelStyle{
 			BgColor: color.RGBA{A: 0}, BorderColor: theme.BuildCardSelBorder, Radius: bpCardR, BorderWidth: 2,
+		})
+	} else if isBlueprint {
+		// 蓝图卡片用强调色边框区分（紫/蓝色调）
+		ui.Panel(screen, cx, cy, bpCardW, bpCardH, ui.PanelStyle{
+			BgColor: color.RGBA{A: 0}, BorderColor: theme.ToneAccent, Radius: bpCardR, BorderWidth: 1.5,
 		})
 	}
 
@@ -239,6 +247,21 @@ func drawBuildableCard(screen *ebiten.Image, card BuildCardVM, d BuildMenuData, 
 	ui.Label(screen, card.Label, nameX, nameY, 60, ui.LabelStyle{
 		Font: theme.FontMD, Bold: true,
 	})
+
+	// 蓝图卡片右上角 "自定义" 标记
+	if isBlueprint {
+		badgeLabel := "自定义"
+		badgeW := float32(36)
+		badgeH := float32(12)
+		badgeX := cx + bpCardW - badgeW - 4
+		badgeY := cy + 3
+		draw.RoundRect(screen, badgeX, badgeY, badgeW, badgeH, 3,
+			color.RGBA{R: 59, G: 130, B: 246, A: 160})
+		fm := render.GlobalFont()
+		if fm != nil {
+			fm.DrawCenteredText(screen, badgeLabel, float64(badgeX)+float64(badgeW)/2, float64(badgeY)+1, 8, color.RGBA{R: 220, G: 230, B: 255, A: 240})
+		}
+	}
 
 	// Cost
 	costTxt := strconv.Itoa(card.Cost) + "G"

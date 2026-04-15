@@ -157,7 +157,13 @@ type AbilityEditScene struct {
 	paramBtns   []paramBtnRect        // 参数 +/- 按钮区域
 	scalerToggles []scalerToggleRect  // scaler mode toggle 区域
 
+	// ── 名称编辑 ──
+	nameEditing bool   // true=名称编辑模式
+	nameBackup  string // 编辑前名称（ESC 还原用）
+	nameRect    ui.Rect // 名称标签的点击区域
+
 	bgGrad *draw.CachedGradient // 背景渐变缓存
+	dirty  bool                  // true=有未保存的更改（任何编辑操作后置 true）
 }
 
 // NewAbilityEditScene 创建能力编辑场景。
@@ -314,18 +320,30 @@ func aeParamStep(pm descriptor.ParamMeta) float64 {
 // ── Update ────────────────────────────────────────
 
 func (s *AbilityEditScene) Update() error {
-	// ESC：picker 打开时先关闭 picker；否则返回上层场景
+	// 名称编辑模式：优先处理文本输入
+	if s.nameEditing {
+		s.updateNameEditing()
+		return nil
+	}
+
+	// ESC：picker 打开时先关闭 picker；否则返回上层场景（有未保存更改时提示）
 	if inpututil.IsKeyJustPressed(ebiten.KeyEscape) {
 		playUIClick(s.switcher)
 		if s.picker.Visible {
 			s.picker.Visible = false
 			return nil
 		}
+		if s.dirty {
+			hud.ShowToast("未保存的更改已丢弃") // TODO: i18n — ability.unsaved_discard
+		}
 		s.switcher.SwitchScene(s.returnScene)
 		return nil
 	}
 
-	// 鼠标滚轮滚动管线列表
+	// 鼠标滚轮滚动管线列表。
+	// 直接使用 ebiten.Wheel() 而非 input.Gesture.ScrollDelta()，
+	// 因为 AbilityEditScene 不持有 Gesture 实例。
+	// 这与 vfx_preview.go/audio_preview.go/wave_preview.go 保持一致。
 	_, wy := ebiten.Wheel()
 	if wy != 0 {
 		s.scrollY -= wy * 20
@@ -555,6 +573,7 @@ func (s *AbilityEditScene) handlePickerSelect(optionIdx int) {
 	}
 
 	s.picker.Visible = false
+	s.dirty = true
 }
 
 // ── Badge 点击处理 ──────────────────────────────────
@@ -656,6 +675,7 @@ func (s *AbilityEditScene) handleParamAdjust(pb paramBtnRect) {
 	}
 
 	params[pb.ParamKey] = val
+	s.dirty = true
 }
 
 // handleScalerToggle 处理 scaler mode 切换。
@@ -697,6 +717,7 @@ func (s *AbilityEditScene) handleScalerToggle(st scalerToggleRect) {
 		delete(params, "potential")
 		params["value"] = val
 	}
+	s.dirty = true
 }
 
 // aeGetParamMetas 从元数据列表中查找指定 typeID 的参数定义。
@@ -715,7 +736,10 @@ func (s *AbilityEditScene) handleBtnClick(idx int) {
 	playUIClick(s.switcher)
 	switch idx {
 	case 0:
-		// 取消
+		// 取消（有未保存更改时提示）
+		if s.dirty {
+			hud.ShowToast("未保存的更改已丢弃") // TODO: i18n — ability.unsaved_discard
+		}
 		s.switcher.SwitchScene(s.returnScene)
 	case 1:
 		// 保存
@@ -726,6 +750,7 @@ func (s *AbilityEditScene) handleBtnClick(idx int) {
 // addPipeline 添加一条新的空管线。
 func (s *AbilityEditScene) addPipeline() {
 	s.pipelines = append(s.pipelines, aeNewEmptyPipeline())
+	s.dirty = true
 }
 
 // deletePipeline 删除指定索引的管线。至少保留一条。
@@ -737,6 +762,7 @@ func (s *AbilityEditScene) deletePipeline(idx int) {
 		return
 	}
 	s.pipelines = append(s.pipelines[:idx], s.pipelines[idx+1:]...)
+	s.dirty = true
 	// 如果展开的参数面板所属管线被删，收起
 	if s.expandedPipe == idx {
 		s.expandedPipe = -1

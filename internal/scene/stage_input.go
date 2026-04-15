@@ -1084,6 +1084,13 @@ func (s *StageScene) towerAtPixel(px, py float64) *tower.Tower {
 
 // ─── 蓝图管理上下文菜单 ─────────────────────────────────────────────
 
+// 蓝图上下文菜单项索引（与 drawBlueprintContextMenu 中的 items 顺序一致）。
+const (
+	ctxMenuEdit   = 0 // 编辑蓝图
+	ctxMenuCopy   = 1 // 复制蓝图
+	ctxMenuDelete = 2 // 删除蓝图
+)
+
 // handleBlueprintRightClick 处理建塔面板中的右键点击。
 // 仅对蓝图卡片（Key 以 "bp_" 开头）弹出上下文菜单。
 // 标准塔、变体卡、"+新建" 按钮不受影响。
@@ -1138,11 +1145,11 @@ func (s *StageScene) handleBlueprintContextMenuClick(tapX, tapY float64) {
 	s.audioMgr.PlaySafe(gameAudio.SFXUIClick)
 
 	switch hitIdx {
-	case 0: // 编辑
+	case ctxMenuEdit:
 		s.blueprintCtxEdit()
-	case 1: // 复制
+	case ctxMenuCopy:
 		s.blueprintCtxCopy()
-	case 2: // 删除
+	case ctxMenuDelete:
 		s.blueprintCtxDelete()
 	}
 }
