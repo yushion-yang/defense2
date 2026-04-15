@@ -51,6 +51,10 @@ func Init(dataFS fs.FS, locale string) error {
 			continue
 		}
 		code := strings.TrimSuffix(entry.Name(), ".json")
+		// 跳过非语言文件（如 translation-sync.json），语言代码为 2 字母
+		if len(code) != 2 {
+			continue
+		}
 		data, err := fs.ReadFile(dataFS, filepath.Join("config/i18n", entry.Name()))
 		if err != nil {
 			return fmt.Errorf("i18n: read %s: %w", entry.Name(), err)
