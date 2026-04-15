@@ -349,8 +349,8 @@ func (s *SettingsScene) Draw(screen *ebiten.Image) {
 		Bold:      true,
 	})
 
-	// ── 作者联系方式（面板底部） ──
-	contactY := float64(bky) + float64(bkh) + 12
+	// ── 作者联系方式（面板下方） ──
+	contactY := float64(py) + float64(settingsPanelH) + 16
 	contactAddr := "892544825@qq.com"
 	fm.DrawCenteredText(screen, i18n.TF("settings.contact_info", contactAddr), cx, contactY, 10, theme.TextMuted)
 }
