@@ -1,7 +1,7 @@
 {
   "_meta": {
     "description": "经典模式预设炮塔表 — 11 种固定塔型，每塔 2 个能力，按角色分三大类",
-    "version": "3.0",
+    "version": "3.1",
     "categories": {
       "dps": "输出型 — 高伤害，无 CC/AOE，需要控制塔配合",
       "aoe": "范围型 — 有 CC/DoT，缺爆发，需要输出塔收割",
@@ -9,270 +9,27 @@
     },
     "abilities_note": "每塔 2 个能力，可以无攻击类能力（使用默认弹射物攻击）"
   },
-  "towers": [
-    {
-      "key": "cl_sentinel",
-      "name": "猎隼",
-      "category": "dps",
-      "abilities": [
-        "crit",
-        "momentum"
-      ],
-      "tiers": {
-        "damage": "S",
-        "range": "B",
-        "atkSpeed": "B"
-      },
-      "spriteKey": "cl_sentinel",
-      "buildCost": 50,
-      "description": "暴击+动量叠加",
-      "abilityMode": "preset",
-      "strength": {
-        "cost": 50,
-        "amount": 50,
-        "maxPurchases": 4
-      },
-      "specialty": "damage"
-    },
-    {
-      "key": "cl_railgun",
-      "name": "穿甲者",
-      "category": "dps",
-      "abilities": [
-        "wideBeam",
-        "distanceDamage"
-      ],
-      "tiers": {
-        "damage": "S",
-        "range": "B",
-        "atkSpeed": "B"
-      },
-      "spriteKey": "cl_railgun",
-      "buildCost": 50,
-      "description": "贯穿光束+距离加伤",
-      "abilityMode": "preset",
-      "strength": {
-        "cost": 50,
-        "amount": 50,
-        "maxPurchases": 4
-      },
-      "specialty": "damage"
-    },
-    {
-      "key": "cl_gatling",
-      "name": "弹雨",
-      "category": "dps",
-      "abilities": [
-        "barrage",
-        "enhance"
-      ],
-      "tiers": {
-        "damage": "S",
-        "range": "B",
-        "atkSpeed": "B"
-      },
-      "spriteKey": "cl_gatling",
-      "buildCost": 50,
-      "description": "连射弹幕+永久强化",
-      "abilityMode": "preset",
-      "strength": {
-        "cost": 50,
-        "amount": 50,
-        "maxPurchases": 4
-      },
-      "specialty": "damage"
-    },
-    {
-      "key": "cl_shotgun",
-      "name": "铁蜂",
-      "category": "aoe",
-      "abilities": [
-        "scatter",
-        "slowPower"
-      ],
-      "tiers": {
-        "damage": "B",
-        "range": "B",
-        "atkSpeed": "S"
-      },
-      "spriteKey": "cl_shotgun",
-      "buildCost": 50,
-      "description": "扇形散射+减速",
-      "abilityMode": "preset",
-      "strength": {
-        "cost": 50,
-        "amount": 50,
-        "maxPurchases": 4
-      },
-      "specialty": "atkSpeed"
-    },
-    {
-      "key": "cl_cyclone",
-      "name": "涡轮",
-      "category": "aoe",
-      "abilities": [
-        "spinAoe",
-        "weakenZone"
-      ],
-      "tiers": {
-        "damage": "B",
-        "range": "B",
-        "atkSpeed": "S"
-      },
-      "spriteKey": "cl_cyclone",
-      "buildCost": 50,
-      "description": "涡旋范围攻击+削弱",
-      "abilityMode": "preset",
-      "strength": {
-        "cost": 50,
-        "amount": 50,
-        "maxPurchases": 4
-      },
-      "specialty": "atkSpeed"
-    },
-    {
-      "key": "cl_nova",
-      "name": "脉冲",
-      "category": "aoe",
-      "abilities": [
-        "radial",
-        "stunChance"
-      ],
-      "tiers": {
-        "damage": "B",
-        "range": "B",
-        "atkSpeed": "S"
-      },
-      "spriteKey": "cl_nova",
-      "buildCost": 50,
-      "description": "全方位脉冲+眩晕",
-      "abilityMode": "preset",
-      "strength": {
-        "cost": 50,
-        "amount": 50,
-        "maxPurchases": 4
-      },
-      "specialty": "atkSpeed"
-    },
-    {
-      "key": "cl_mortar",
-      "name": "轰鸣",
-      "category": "aoe",
-      "abilities": [
-        "splash",
-        "bleedDot"
-      ],
-      "tiers": {
-        "damage": "B",
-        "range": "B",
-        "atkSpeed": "S"
-      },
-      "spriteKey": "cl_mortar",
-      "buildCost": 50,
-      "description": "溅射+流血",
-      "abilityMode": "preset",
-      "strength": {
-        "cost": 50,
-        "amount": 50,
-        "maxPurchases": 4
-      },
-      "specialty": "atkSpeed"
-    },
-    {
-      "key": "cl_prism",
-      "name": "三叉戟",
-      "category": "support",
-      "abilities": [
-        "multiTarget",
-        "damageUpAura"
-      ],
-      "tiers": {
-        "damage": "D",
-        "range": "S",
-        "atkSpeed": "B"
-      },
-      "spriteKey": "cl_prism",
-      "buildCost": 50,
-      "description": "多目标攻击+增伤光环",
-      "abilityMode": "preset",
-      "strength": {
-        "cost": 50,
-        "amount": 50,
-        "maxPurchases": 4
-      },
-      "specialty": "range"
-    },
-    {
-      "key": "cl_fortress",
-      "name": "回响",
-      "category": "support",
-      "abilities": [
-        "bounce",
-        "rangeAura"
-      ],
-      "tiers": {
-        "damage": "D",
-        "range": "B",
-        "atkSpeed": "S"
-      },
-      "spriteKey": "cl_fortress",
-      "buildCost": 50,
-      "description": "弹射连锁+眩晕",
-      "abilityMode": "preset",
-      "strength": {
-        "cost": 50,
-        "amount": 50,
-        "maxPurchases": 4
-      },
-      "specialty": "range"
-    },
-    {
-      "key": "cl_ricochet",
-      "name": "弹弓",
-      "category": "support",
-      "abilities": [
-        "attackSpeedAura",
-        "goldPassive"
-      ],
-      "tiers": {
-        "damage": "D",
-        "range": "S",
-        "atkSpeed": "B"
-      },
-      "spriteKey": "cl_ricochet",
-      "buildCost": 50,
-      "description": "攻速光环+被动产金",
-      "abilityMode": "preset",
-      "strength": {
-        "cost": 50,
-        "amount": 50,
-        "maxPurchases": 4
-      },
-      "specialty": "range"
-    },
-    {
-      "key": "cl_hydra",
-      "name": "蜘蛛",
-      "category": "support",
-      "abilities": [
-        "critAura",
-        "rangeAura"
-      ],
-      "tiers": {
-        "damage": "D",
-        "range": "S",
-        "atkSpeed": "B"
-      },
-      "spriteKey": "cl_hydra",
-      "buildCost": 50,
-      "description": "暴击光环+增距光环",
-      "abilityMode": "preset",
-      "strength": {
-        "cost": 50,
-        "amount": 50,
-        "maxPurchases": 4
-      },
-      "specialty": "range"
+  "defaults": {
+    "buildCost": 50,
+    "abilityMode": "preset",
+    "strength": {
+      "cost": 50,
+      "amount": 50,
+      "maxPurchases": 4
     }
+  },
+  "_columns":  "key              | name   | category | abilities                          | dmg | rng | spd | specialty | description",
+  "towers": [
+    { "key": "cl_sentinel",  "name": "猎隼",   "category": "dps",     "abilities": ["crit",           "momentum"      ], "tiers": { "damage": "S", "range": "B", "atkSpeed": "B" }, "specialty": "damage",   "description": "暴击+动量叠加"     },
+    { "key": "cl_railgun",   "name": "穿甲者", "category": "dps",     "abilities": ["wideBeam",       "distanceDamage"], "tiers": { "damage": "S", "range": "B", "atkSpeed": "B" }, "specialty": "damage",   "description": "贯穿光束+距离加伤" },
+    { "key": "cl_gatling",   "name": "弹雨",   "category": "dps",     "abilities": ["barrage",        "enhance"       ], "tiers": { "damage": "S", "range": "B", "atkSpeed": "B" }, "specialty": "damage",   "description": "连射弹幕+永久强化" },
+    { "key": "cl_shotgun",   "name": "铁蜂",   "category": "aoe",     "abilities": ["scatter",        "slowPower"     ], "tiers": { "damage": "B", "range": "B", "atkSpeed": "S" }, "specialty": "atkSpeed", "description": "扇形散射+减速"     },
+    { "key": "cl_cyclone",   "name": "涡轮",   "category": "aoe",     "abilities": ["spinAoe",        "weakenZone"    ], "tiers": { "damage": "B", "range": "B", "atkSpeed": "S" }, "specialty": "atkSpeed", "description": "涡旋范围攻击+削弱" },
+    { "key": "cl_nova",      "name": "脉冲",   "category": "aoe",     "abilities": ["radial",         "stunChance"    ], "tiers": { "damage": "B", "range": "B", "atkSpeed": "S" }, "specialty": "atkSpeed", "description": "全方位脉冲+眩晕"   },
+    { "key": "cl_mortar",    "name": "轰鸣",   "category": "aoe",     "abilities": ["splash",         "bleedDot"      ], "tiers": { "damage": "B", "range": "B", "atkSpeed": "S" }, "specialty": "atkSpeed", "description": "溅射+流血"         },
+    { "key": "cl_prism",     "name": "三叉戟", "category": "support", "abilities": ["multiTarget",    "damageUpAura"  ], "tiers": { "damage": "D", "range": "S", "atkSpeed": "B" }, "specialty": "range",   "description": "多目标攻击+增伤光环"},
+    { "key": "cl_fortress",  "name": "回响",   "category": "support", "abilities": ["bounce",         "rangeAura"     ], "tiers": { "damage": "D", "range": "B", "atkSpeed": "S" }, "specialty": "range",   "description": "弹射连锁+眩晕"     },
+    { "key": "cl_ricochet",  "name": "弹弓",   "category": "support", "abilities": ["attackSpeedAura","goldPassive"   ], "tiers": { "damage": "D", "range": "S", "atkSpeed": "B" }, "specialty": "range",   "description": "攻速光环+被动产金" },
+    { "key": "cl_hydra",     "name": "蜘蛛",   "category": "support", "abilities": ["critAura",       "rangeAura"     ], "tiers": { "damage": "D", "range": "S", "atkSpeed": "B" }, "specialty": "range",   "description": "暴击光环+增距光环" }
   ]
 }

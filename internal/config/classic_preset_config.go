@@ -35,6 +35,20 @@ type ClassicPreset struct {
 	Description string            `json:"description"` // 简短描述
 }
 
+// classicPresetsDefaults JSON 中 defaults 区段的映射。
+// 塔未指定的字段会从此处继承。
+type classicPresetsDefaults struct {
+	BuildCost   int            `json:"buildCost"`
+	AbilityMode string         `json:"abilityMode"`
+	Strength    StrengthConfig `json:"strength"`
+}
+
+// classicPresetsFile JSON 顶层结构（含 defaults + towers）。
+type classicPresetsFile struct {
+	Defaults classicPresetsDefaults `json:"defaults"`
+	Towers   []ClassicPreset        `json:"towers"`
+}
+
 // ClassicPresetsConfig 经典模式预设表。
 type ClassicPresetsConfig struct {
 	Towers []ClassicPreset `json:"towers"`
@@ -48,6 +62,7 @@ func GlobalClassicPresets() *ClassicPresetsConfig {
 }
 
 // LoadClassicPresets 从 config/towers/classic-presets.json 加载经典模式预设。
+// JSON 中 defaults 区段的公共字段会合并到每个塔（塔自身显式指定的值优先）。
 func LoadClassicPresets() error {
 	if dataFS == nil {
 		return fmt.Errorf("load classic-presets: dataFS not initialized")
@@ -56,12 +71,31 @@ func LoadClassicPresets() error {
 	if err != nil {
 		return fmt.Errorf("load classic-presets: %w", err)
 	}
-	var cfg ClassicPresetsConfig
-	if err := json.Unmarshal(data, &cfg); err != nil {
+	var file classicPresetsFile
+	if err := json.Unmarshal(data, &file); err != nil {
 		return fmt.Errorf("parse classic-presets: %w", err)
 	}
-	globalClassicPresets = &cfg
-	log.Printf("[config] loaded %d classic tower presets", len(cfg.Towers))
+
+	// 将 defaults 合并到每个塔（塔自身值为零值时取 defaults）
+	for i := range file.Towers {
+		t := &file.Towers[i]
+		if t.BuildCost == 0 {
+			t.BuildCost = file.Defaults.BuildCost
+		}
+		if t.AbilityMode == "" {
+			t.AbilityMode = file.Defaults.AbilityMode
+		}
+		if t.Strength == (StrengthConfig{}) {
+			t.Strength = file.Defaults.Strength
+		}
+		// spriteKey 默认与 key 相同
+		if t.SpriteKey == "" {
+			t.SpriteKey = t.Key
+		}
+	}
+
+	globalClassicPresets = &ClassicPresetsConfig{Towers: file.Towers}
+	log.Printf("[config] loaded %d classic tower presets", len(file.Towers))
 	return nil
 }
 

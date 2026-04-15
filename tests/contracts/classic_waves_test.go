@@ -84,9 +84,17 @@ func TestClassicWavesArchetypesExist(t *testing.T) {
 }
 
 // TestClassicWavesBuffsValid 验证 buff 索引不越界且 buff ID 合法。
+// 支持两种格式：Buffs（全局索引）和 PathBuffs（路径内局部索引）。
 func TestClassicWavesBuffsValid(t *testing.T) {
 	config.LoadEnemyAbilities()
 	abilTable := config.GlobalEnemyAbilityTable()
+
+	checkBuffID := func(t *testing.T, wave int, context, bid string) {
+		t.Helper()
+		if abilTable != nil && abilTable[bid] == nil {
+			t.Errorf("wave %d %s: buff ID %q 不存在", wave, context, bid)
+		}
+	}
 
 	for _, mapID := range classicMapIDs {
 		t.Run(mapID, func(t *testing.T) {
@@ -95,22 +103,36 @@ func TestClassicWavesBuffsValid(t *testing.T) {
 				t.Fatalf("加载失败: %v", err)
 			}
 			for _, entry := range cwc.Waves {
-				if entry.Buffs == nil {
-					continue
-				}
-				enemyCount := len(entry.SpawnSeq())
+				// 检查 Buffs（单路径格式：全局索引）
+				seqLen := len(entry.SpawnSeq())
 				for idxStr, buffIDs := range entry.Buffs {
 					var idx int
 					if _, err := fmt.Sscanf(idxStr, "%d", &idx); err != nil {
 						t.Errorf("wave %d buffs key %q 不是合法整数", entry.Wave, idxStr)
 						continue
 					}
-					if idx < 0 || idx >= enemyCount {
-						t.Errorf("wave %d buffs[%d]: 索引越界 (enemies 长度=%d)", entry.Wave, idx, enemyCount)
+					if idx < 0 || idx >= seqLen {
+						t.Errorf("wave %d buffs[%d]: 索引越界 (spawnSeq 长度=%d)", entry.Wave, idx, seqLen)
 					}
 					for _, bid := range buffIDs {
-						if abilTable != nil && abilTable[bid] == nil {
-							t.Errorf("wave %d buffs[%d]: buff ID %q 不存在", entry.Wave, idx, bid)
+						checkBuffID(t, entry.Wave, fmt.Sprintf("buffs[%d]", idx), bid)
+					}
+				}
+				// 检查 PathBuffs（多路径格式：路径内局部索引）
+				for pid, pathMap := range entry.PathBuffs {
+					pathEnemies := entry.Paths[pid]
+					pathLen := len(pathEnemies)
+					for idxStr, buffIDs := range pathMap {
+						var idx int
+						if _, err := fmt.Sscanf(idxStr, "%d", &idx); err != nil {
+							t.Errorf("wave %d pathBuffs[%s] key %q 不是合法整数", entry.Wave, pid, idxStr)
+							continue
+						}
+						if idx < 0 || idx >= pathLen {
+							t.Errorf("wave %d pathBuffs[%s][%d]: 索引越界 (path 长度=%d)", entry.Wave, pid, idx, pathLen)
+						}
+						for _, bid := range buffIDs {
+							checkBuffID(t, entry.Wave, fmt.Sprintf("pathBuffs[%s][%d]", pid, idx), bid)
 						}
 					}
 				}

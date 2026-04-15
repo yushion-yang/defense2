@@ -1032,12 +1032,8 @@ func (s *Spawner) tickClassic(pool *Pool, dt float64) {
 				// 能力 potential 按波次叠加（确定性，与标准模式相同）
 				ApplyAbilityPotentials(e, cfg, s.Wave)
 				// 经典模式：按配置表显式挂载 buff（不调用随机 applyWaveBuffs）
-				if !isBoss && entry.Buffs != nil {
-					if buffIDs, ok := entry.Buffs[strconv.Itoa(s.SpawnIndex)]; ok {
-						for _, bid := range buffIDs {
-							applyWaveBuff(e, bid, s.Wave)
-						}
-					}
+				if !isBoss {
+					s.applyClassicBuffs(e, entry, s.SpawnIndex)
 				}
 			}
 		}
@@ -1077,4 +1073,37 @@ func (s *Spawner) classicResolvePath(pathID string) []gamemap.Point {
 		return s.GameMap.Paths[idx].Waypoints
 	}
 	return s.GameMap.Waypoints
+}
+
+// applyClassicBuffs 按配置表为敌人挂载 buff。
+// 支持两种格式：
+//   - PathBuffs（多路径）: 按路径 ID + 路径内局部索引查找
+//   - Buffs（单路径）: 按全局 SpawnIndex 查找
+func (s *Spawner) applyClassicBuffs(e *Enemy, entry *config.ClassicWaveEntry, spawnIdx int) {
+	seq := entry.SpawnSeq()
+	if spawnIdx >= len(seq) {
+		return
+	}
+	ee := seq[spawnIdx]
+
+	// 优先使用 PathBuffs（多路径格式）
+	if len(entry.PathBuffs) > 0 && ee.Path != "" {
+		if pathMap, ok := entry.PathBuffs[ee.Path]; ok {
+			if buffIDs, ok := pathMap[strconv.Itoa(ee.PathIndex)]; ok {
+				for _, bid := range buffIDs {
+					applyWaveBuff(e, bid, s.Wave)
+				}
+			}
+		}
+		return
+	}
+
+	// 回退到 Buffs（单路径格式）
+	if len(entry.Buffs) > 0 {
+		if buffIDs, ok := entry.Buffs[strconv.Itoa(spawnIdx)]; ok {
+			for _, bid := range buffIDs {
+				applyWaveBuff(e, bid, s.Wave)
+			}
+		}
+	}
 }
