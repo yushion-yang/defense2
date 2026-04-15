@@ -59,6 +59,7 @@ import (
 	tel "defense2/internal/core/telemetry"
 	"defense2/internal/core/timescale"
 	"defense2/internal/core/tower"
+	"defense2/internal/core/tower/descriptor"
 	"defense2/internal/core/tutorial"
 	"defense2/internal/core/warden"
 	"defense2/internal/i18n"
@@ -125,9 +126,11 @@ type StageScene struct {
 	kills    int            // 累计击杀数
 
 	// ── 塔建造 ──
-	towerDefs     []tower.TowerDef // 可建造的塔类型列表（已过滤解锁）
-	selectedDef   int              // 当前选中的塔类型索引（建塔面板）
-	selectedTower *tower.Tower     // 点击选中的塔（显示信息面板+射程圈，nil=无选中）
+	towerDefs      []tower.TowerDef        // 可建造的塔类型列表（已过滤解锁）
+	selectedDef    int                      // 当前选中的塔类型索引（建塔面板）
+	selectedTower  *tower.Tower             // 点击选中的塔（显示信息面板+射程圈，nil=无选中）
+	blueprintStore *descriptor.BlueprintStore // 玩家自定义蓝图存储（Task 9 新建面板需要）
+	abilityStore   *descriptor.AbilityStore   // 自定义能力存储（运行时注册到 tower.Registry）
 
 	// ── 渲染器 ──
 	towerRenderer  *render.TowerRenderer  // 塔 SVG 渲染器（缓存 sprite 图集）
@@ -168,7 +171,15 @@ type StageScene struct {
 	imode         interactMode          // 当前交互模式（modeIdle/modeBuildMenu/modePaused 等）
 	prePauseMode  interactMode          // 暂停前的交互模式（恢复暂停时回到此模式）
 	buildHoverIdx int                   // 建塔面板鼠标悬停索引（-1=无）
+	buildMenuTab  int                   // 建塔面板当前 tab 索引（0=全部, 1=自定义）
 	itemHoverIdx  int                   // 道具面板鼠标悬停索引（-1=无）
+
+	// ── 蓝图管理上下文菜单 ──
+	bpCtxMenuOpen  bool      // 是否显示上下文菜单
+	bpCtxMenuX     float64   // 菜单位置 X（逻辑坐标）
+	bpCtxMenuY     float64   // 菜单位置 Y
+	bpCtxMenuBpID  string    // 操作目标蓝图 ID（bp_xxx）
+	bpCtxMenuRects []ui.Rect // 菜单项 hitTest 区域（编辑/复制/删除）
 	gesture       *input.Gesture        // 统一手势识别器（桌面+触摸）
 
 	// ── 波次管理 ──
@@ -300,6 +311,12 @@ func NewStageSceneWithOpts(sw Switcher, opts StageOptions) *StageScene {
 	}
 	pm := persistence.NewProgressManager(store)
 	achTracker := achievement.NewTracker(store)
+	bpStore := descriptor.NewBlueprintStore(store)
+	abStore := descriptor.NewAbilityStore(store)
+
+	// 注册自定义能力到 tower.Registry（必须在 loadTowerDefsForMode 之前，
+	// 因为蓝图的能力引用需要在注册表中找到对应的自定义能力）
+	descriptor.RegisterCustomAbilities(abStore)
 
 	// 教程（已完成则不再显示）
 	tut := tutorial.DefaultTutorial()
@@ -408,8 +425,10 @@ func NewStageSceneWithOpts(sw Switcher, opts StageOptions) *StageScene {
 		lives:            diff.StartingLives,
 		maxLives:         diff.StartingLives,
 		gold:             startGold,
-		towerDefs:        loadTowerDefsForMode(session.Ruleset(), pm),
+		towerDefs:        loadTowerDefsForMode(session.Ruleset(), pm, bpStore),
 		selectedDef:      0,
+		blueprintStore:   bpStore,
+		abilityStore:    abStore,
 		wardenType:       opts.WardenType,
 		wardenCfg:        wardenCfg,
 		gameSpeed:        1,
@@ -3030,6 +3049,11 @@ func (s *StageScene) drawScene(screen *ebiten.Image) {
 		hud.DrawBuildMenu(screen, s.buildBuildMenuData())
 	}
 
+	// HUD：蓝图管理上下文菜单（右键蓝图卡片弹出）
+	if s.bpCtxMenuOpen {
+		s.drawBlueprintContextMenu(screen)
+	}
+
 	// HUD：道具面板（仅面板打开时构建数据）
 	if s.imode == modeItemPanel || s.imode == modeItemDrag {
 		hud.DrawItemPanel(screen, s.buildItemPanelData())
@@ -3152,16 +3176,15 @@ func (s *StageScene) drawScene(screen *ebiten.Image) {
 
 // buildBuildMenuData 构建建塔面板的 ViewModel 数据。
 // 包含两部分卡片：可建造的塔类型(购买用) + 攻击方式变种卡片(展示用，不可购买)。
+// 有自定义蓝图时显示 tab 栏（"全部"/"自定义"），按当前 tab 过滤卡片。
 func (s *StageScene) buildBuildMenuData() hud.BuildMenuData {
-	buildableCount := len(s.towerDefs)
-	cards := make([]hud.BuildCardVM, 0, buildableCount+10)
-
-	// Buildable tower cards
 	isPreset := s.ruleset.UsePresetTowers()
 	abTable := config.GlobalAbilityTable()
+
+	// 构建全部可建造卡片
+	allBuildable := make([]hud.BuildCardVM, 0, len(s.towerDefs))
 	for _, def := range s.towerDefs {
 		roleTag, roleClr := towerRoleTags(def)
-		// 经典模式用对应 spriteKey，娱乐模式统一用 sentinel
 		spriteKey := "sentinel"
 		if isPreset {
 			spriteKey = spriteKeyFromDef(def)
@@ -3175,15 +3198,51 @@ func (s *StageScene) buildBuildMenuData() hud.BuildMenuData {
 			Buildable: true,
 			Category:  def.Category,
 		}
-		// 预设能力描述（经典模式 hover tooltip 用）
 		for _, abType := range def.PresetAbilities {
 			card.Abilities = append(card.Abilities, buildAbilityVM(abType, abTable, 100))
 		}
-		cards = append(cards, card)
+		allBuildable = append(allBuildable, card)
 	}
 
-	// 非预设模式：追加攻击方式变体卡（展示用）
-	if !isPreset {
+	// 判断是否显示 tab 栏：模式允许蓝图时始终显示（即使还没有蓝图，也需要"+新建"入口）
+	allowBP := s.ruleset.AllowCustomBlueprints() && s.blueprintStore != nil
+	var tabs []string
+	if allowBP {
+		tabs = []string{"全部", "自定义"}
+	}
+
+	// 按 tab 过滤可建造卡片
+	var filteredBuildable []hud.BuildCardVM
+	if s.buildMenuTab == 1 && allowBP {
+		// "自定义" tab：只显示蓝图塔（Key 以 "bp_" 前缀开头）
+		for _, card := range allBuildable {
+			if strings.HasPrefix(card.Key, "bp_") {
+				filteredBuildable = append(filteredBuildable, card)
+			}
+		}
+	} else {
+		// "全部" tab 或无 tab：显示所有可建造卡
+		filteredBuildable = allBuildable
+	}
+
+	buildableCount := len(filteredBuildable)
+	cards := make([]hud.BuildCardVM, 0, buildableCount+10)
+	cards = append(cards, filteredBuildable...)
+
+	// "+新建" 卡片：允许自定义蓝图时追加在可建造卡末尾。
+	// 标记 Buildable=true 让 hit test 可点击，IsCreateBtn=true 触发特殊渲染和点击处理。
+	if allowBP {
+		cards = append(cards, hud.BuildCardVM{
+			Key:         "__new_blueprint__",
+			Label:       "+新建",
+			IsCreateBtn: true,
+			Buildable:   true,
+		})
+		buildableCount++ // "+新建" 计入可点击区域
+	}
+
+	// 非预设模式且在"全部" tab 时：追加攻击方式变体卡（展示用）
+	if !isPreset && s.buildMenuTab == 0 {
 		attackAbils := tower.AbilitiesForCategory(config.AbilityCatAttack)
 		slices.SortFunc(attackAbils, func(a, b *config.AbilityDef) int {
 			return cmp.Compare(a.Type, b.Type)
@@ -3210,16 +3269,166 @@ func (s *StageScene) buildBuildMenuData() hud.BuildMenuData {
 		Gold:           s.gold,
 		HoverIdx:       s.buildHoverIdx,
 		Visible:        s.imode == modeBuildMenu,
+		Tabs:           tabs,
+		ActiveTab:      s.buildMenuTab,
 	}
 }
 
-// buildMenuTotalCards returns total card count for layout.
+// buildMenuTotalCards returns total card count for layout (受当前 tab 过滤影响)。
 // 经典模式只有可建造卡，娱乐模式还有攻击方式变体展示卡。
+// "自定义" tab 只计蓝图卡（+ "+新建"按钮），不含变体卡。
 func (s *StageScene) buildMenuTotalCards() int {
-	if s.ruleset.UsePresetTowers() {
-		return len(s.towerDefs)
+	allowBP := s.ruleset.AllowCustomBlueprints() && s.blueprintStore != nil
+	createBtn := 0
+	if allowBP {
+		createBtn = 1 // "+新建" 按钮
 	}
-	return len(s.towerDefs) + len(tower.AbilitiesForCategory(config.AbilityCatAttack))
+	if s.buildMenuTab == 1 && allowBP {
+		// "自定义" tab：蓝图塔 + "+新建"
+		count := 0
+		for _, def := range s.towerDefs {
+			if strings.HasPrefix(def.Key, "bp_") {
+				count++
+			}
+		}
+		return count + createBtn
+	}
+	// "全部" tab
+	if s.ruleset.UsePresetTowers() {
+		return len(s.towerDefs) + createBtn
+	}
+	return len(s.towerDefs) + createBtn + len(tower.AbilitiesForCategory(config.AbilityCatAttack))
+}
+
+// buildMenuBuildableCount 返回当前 tab 过滤后的可点击卡数量（含 "+新建" 按钮）。
+func (s *StageScene) buildMenuBuildableCount() int {
+	allowBP := s.ruleset.AllowCustomBlueprints() && s.blueprintStore != nil
+	createBtn := 0
+	if allowBP {
+		createBtn = 1 // "+新建" 按钮计入可点击区域
+	}
+	if s.buildMenuTab == 1 && allowBP {
+		count := 0
+		for _, def := range s.towerDefs {
+			if strings.HasPrefix(def.Key, "bp_") {
+				count++
+			}
+		}
+		return count + createBtn
+	}
+	return len(s.towerDefs) + createBtn
+}
+
+// buildMenuTabCount 返回当前 tab 数量（用于布局计算）。
+func (s *StageScene) buildMenuTabCount() int {
+	if s.ruleset.AllowCustomBlueprints() && s.blueprintStore != nil {
+		return 2
+	}
+	return 0
+}
+
+// buildMenuCardToDefIdx 将建塔面板中被过滤后的卡片索引映射回 s.towerDefs 的真实索引。
+// "自定义" tab 只显示 bp_ 前缀的塔，卡片索引与 towerDefs 索引不一致，需要转换。
+// "全部" tab 时卡片索引与 towerDefs 索引相同，直接返回。
+// 注意："+新建" 按钮的索引不应到达此函数（由调用方提前拦截）。
+func (s *StageScene) buildMenuCardToDefIdx(cardIdx int) int {
+	allowBP := s.ruleset.AllowCustomBlueprints() && s.blueprintStore != nil
+	if s.buildMenuTab != 1 || !allowBP {
+		return cardIdx // "全部" tab：卡片顺序与 towerDefs 一致
+	}
+	// "自定义" tab：第 N 张过滤卡 → towerDefs 中第 N 个 bp_ 前缀的索引
+	n := 0
+	for i, def := range s.towerDefs {
+		if strings.HasPrefix(def.Key, "bp_") {
+			if n == cardIdx {
+				return i
+			}
+			n++
+		}
+	}
+	return cardIdx // fallback（不应到达）
+}
+
+// reloadTowerDefs 重新加载可建造塔列表。
+// 蓝图编辑/复制/删除后调用，确保建塔面板数据与蓝图存储同步。
+func (s *StageScene) reloadTowerDefs() {
+	s.towerDefs = loadTowerDefsForMode(s.ruleset, s.progressMgr, s.blueprintStore)
+}
+
+// closeBlueprintContextMenu 关闭蓝图上下文菜单。
+func (s *StageScene) closeBlueprintContextMenu() {
+	s.bpCtxMenuOpen = false
+	s.bpCtxMenuBpID = ""
+	s.bpCtxMenuRects = nil
+}
+
+// drawBlueprintContextMenu 渲染蓝图管理上下文菜单（编辑/复制/删除）。
+// 在右键蓝图卡片后调用，显示一个小浮动面板。
+func (s *StageScene) drawBlueprintContextMenu(screen *ebiten.Image) {
+	const (
+		menuW    = float32(100) // 菜单宽度
+		menuItemH = float32(28) // 每个菜单项高度
+		menuPad  = float32(6)   // 菜单内边距
+		menuR    = float32(8)   // 菜单圆角
+	)
+
+	type menuItem struct {
+		label string
+		clr   color.Color
+	}
+	items := []menuItem{
+		{"编辑", theme.TextTitle},
+		{"复制", theme.TextTitle},
+		{"删除", theme.BtnDanger},
+	}
+
+	menuH := menuPad*2 + float32(len(items))*menuItemH
+	mx := float32(s.bpCtxMenuX)
+	my := float32(s.bpCtxMenuY)
+
+	// 屏幕边界修正
+	if mx+menuW > float32(theme.CanvasW) {
+		mx = float32(theme.CanvasW) - menuW - 4
+	}
+	if my+menuH > float32(theme.CanvasH) {
+		my = float32(theme.CanvasH) - menuH - 4
+	}
+	if mx < 0 {
+		mx = 4
+	}
+	if my < 0 {
+		my = 4
+	}
+
+	// 面板背景
+	ui.Panel(screen, mx, my, menuW, menuH, ui.PanelStyle{
+		BgColor:     color.RGBA{R: 18, G: 24, B: 42, A: 245},
+		BorderColor: color.RGBA{R: 60, G: 80, B: 120, A: 200},
+		Radius:      menuR,
+	})
+
+	// 菜单项
+	s.bpCtxMenuRects = make([]ui.Rect, len(items))
+	for i, item := range items {
+		iy := my + menuPad + float32(i)*menuItemH
+		r := ui.Rect{X: mx + 2, Y: iy, W: menuW - 4, H: menuItemH}
+		s.bpCtxMenuRects[i] = r
+
+		// 悬停高亮
+		cmx, cmy := draw.CursorPos()
+		if r.Contains(cmx, cmy) {
+			draw.RoundRect(screen, r.X, r.Y, r.W, r.H, 4,
+				color.RGBA{R: 40, G: 50, B: 80, A: 180})
+		}
+
+		// 文本居中
+		ui.LabelV(screen, item.label,
+			float64(r.X)+float64(r.W)/2,
+			float64(r.Y)+float64(r.H)/2,
+			float64(r.W)-8,
+			ui.LabelStyle{Font: theme.FontBody, Color: item.clr, Bold: true},
+		)
+	}
 }
 
 func (s *StageScene) buildItemPanelData() hud.ItemPanelData {
@@ -3784,8 +3993,9 @@ func filterUnlockedTowers(defs []tower.TowerDef, pm *persistence.ProgressManager
 // loadTowerDefsForMode 根据模式规则加载塔定义列表。
 //   - 经典模式(UsePresetTowers=true)：仅经典预设塔
 //   - 测试模式(IncludePresetTowers=true)：标准塔 + 经典预设塔
+//   - 支持 AllowCustomBlueprints 的模式：追加玩家自定义蓝图
 //   - 其他模式：标准塔 + 解锁过滤
-func loadTowerDefsForMode(ruleset gamemode.TowerRuleset, pm *persistence.ProgressManager) []tower.TowerDef {
+func loadTowerDefsForMode(ruleset gamemode.TowerRuleset, pm *persistence.ProgressManager, bpStore *descriptor.BlueprintStore) []tower.TowerDef {
 	if ruleset.UsePresetTowers() {
 		return loadClassicTowerDefs()
 	}
@@ -3797,6 +4007,20 @@ func loadTowerDefsForMode(ruleset gamemode.TowerRuleset, pm *persistence.Progres
 		}
 		defs = append(defs, loadClassicTowerDefs()...)
 	}
+
+	// 追加玩家自定义蓝图（仅在模式允许且有蓝图时）
+	if ruleset.AllowCustomBlueprints() && bpStore != nil && bpStore.Count() > 0 {
+		tierPresets := config.GlobalTierPresets()
+		budgetRules := descriptor.DefaultBudgetRules()
+		abilityCosts := descriptor.GlobalAbilityCosts()
+		if tierPresets != nil {
+			for _, bp := range bpStore.List() {
+				def := descriptor.BlueprintToTowerDef(&bp, tierPresets, budgetRules, abilityCosts)
+				defs = append(defs, def)
+			}
+		}
+	}
+
 	return defs
 }
 

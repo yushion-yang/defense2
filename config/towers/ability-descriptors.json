@@ -1,0 +1,585 @@
+{
+  "_meta": {
+    "_doc": "能力描述符表。每个能力用 pipeline 模式描述其完整行为链。",
+    "format": "数组形式，每项为一个 AbilityDescriptor",
+    "fields": {
+      "id":          "能力唯一标识，与 abilities.json 的 type 一一对应",
+      "label":       "中文显示名",
+      "cost":        "解锁费用",
+      "tags":        "分类标签（attack/cc/damage/buff/dot/zone）",
+      "attackStyle": "攻击方式覆盖（仅 attack 类能力）",
+      "spriteKey":   "攻击方式对应的精灵键名（仅 attack 类能力）",
+      "attackParams":"攻击方式参数（仅 attack 类能力，内含 scaler）",
+      "pipelines":   "触发→条件→选择器→效果 管线数组"
+    },
+    "scalerTypes": {
+      "fixed":  "固定值 {\"scaler\":\"fixed\",\"value\":N}",
+      "linear": "线性缩放 {\"scaler\":\"linear\",\"base\":B,\"potential\":P}，公式: base + potential × (strength / 100)"
+    }
+  },
+
+  "descriptors": [
+    {
+      "id": "enhance",
+      "label": "强化",
+      "cost": 12,
+      "tags": ["attack"],
+      "attackStyle": "projectile",
+      "spriteKey": "fortress",
+      "pipelines": [
+        {
+          "trigger": "onPlace",
+          "conditions": [],
+          "selector": {"type": "selfTower"},
+          "effects": [
+            {"type": "modifyStat", "stat": "damage", "multiplier": 1.8},
+            {"type": "modifyStat", "stat": "speed", "multiplier": 1.8},
+            {"type": "modifyStat", "stat": "range", "multiplier": 1.2}
+          ]
+        }
+      ]
+    },
+    {
+      "id": "scatter",
+      "label": "散射",
+      "cost": 12,
+      "tags": ["attack"],
+      "attackStyle": "scatter",
+      "spriteKey": "shotgun",
+      "attackParams": {
+        "pellets": {"scaler": "linear", "base": 3, "potential": 0.5},
+        "coneAngle": {"scaler": "fixed", "value": 60}
+      },
+      "pipelines": []
+    },
+    {
+      "id": "wideBeam",
+      "label": "贯穿光束",
+      "cost": 14,
+      "tags": ["attack"],
+      "attackStyle": "wideBeam",
+      "spriteKey": "prism",
+      "attackParams": {
+        "beamWidth": {"scaler": "linear", "base": 6, "potential": 1}
+      },
+      "pipelines": []
+    },
+    {
+      "id": "spinAoe",
+      "label": "旋风",
+      "cost": 10,
+      "tags": ["attack"],
+      "attackStyle": "spin_aoe",
+      "spriteKey": "cyclone",
+      "attackParams": {
+        "damageRatio": {"scaler": "fixed", "value": 0.5}
+      },
+      "pipelines": []
+    },
+    {
+      "id": "bounce",
+      "label": "弹射",
+      "cost": 11,
+      "tags": ["attack"],
+      "attackStyle": "projectile",
+      "spriteKey": "ricochet",
+      "pipelines": [
+        {
+          "trigger": "onHit",
+          "conditions": [],
+          "selector": {
+            "type": "chain",
+            "maxBounce": {"scaler": "linear", "base": 1, "potential": 1},
+            "range": 80,
+            "decayRatio": 0.8
+          },
+          "effects": [
+            {"type": "damage", "mode": "ratio", "value": {"scaler": "fixed", "value": 0.8}}
+          ]
+        }
+      ]
+    },
+    {
+      "id": "splash",
+      "label": "溅射",
+      "cost": 11,
+      "tags": ["attack"],
+      "attackStyle": "projectile",
+      "spriteKey": "mortar",
+      "pipelines": [
+        {
+          "trigger": "onHit",
+          "conditions": [],
+          "selector": {
+            "type": "aoeRadius",
+            "radius": {"scaler": "fixed", "value": 50}
+          },
+          "effects": [
+            {"type": "damage", "mode": "ratio", "value": {"scaler": "linear", "base": 0.75, "potential": 0.05}}
+          ]
+        }
+      ]
+    },
+    {
+      "id": "multiTarget",
+      "label": "多目标",
+      "cost": 11,
+      "tags": ["attack"],
+      "attackStyle": "projectile",
+      "spriteKey": "hydra",
+      "attackParams": {
+        "targets": {"scaler": "linear", "base": 1, "potential": 1}
+      },
+      "pipelines": []
+    },
+    {
+      "id": "radial",
+      "label": "环射",
+      "cost": 11,
+      "tags": ["attack"],
+      "attackStyle": "radial",
+      "spriteKey": "nova",
+      "attackParams": {
+        "shots": {"scaler": "linear", "base": 4, "potential": 1}
+      },
+      "pipelines": []
+    },
+    {
+      "id": "barrage",
+      "label": "连击",
+      "cost": 13,
+      "tags": ["attack"],
+      "attackStyle": "barrage",
+      "spriteKey": "gatling",
+      "attackParams": {
+        "bullets": {"scaler": "linear", "base": 2, "potential": 1}
+      },
+      "pipelines": []
+    },
+
+    {
+      "id": "slowPower",
+      "label": "凝滞",
+      "cost": 8,
+      "tags": ["cc"],
+      "pipelines": [
+        {
+          "trigger": "onHit",
+          "conditions": [],
+          "selector": {"type": "currentTarget"},
+          "effects": [
+            {
+              "type": "slow",
+              "factor": {"scaler": "linear", "base": 0.20, "potential": 0.05},
+              "duration": {"scaler": "fixed", "value": 1.0}
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "slowDuration",
+      "label": "冰封",
+      "cost": 8,
+      "tags": ["cc"],
+      "pipelines": [
+        {
+          "trigger": "onHit",
+          "conditions": [],
+          "selector": {"type": "currentTarget"},
+          "effects": [
+            {
+              "type": "slow",
+              "factor": {"scaler": "fixed", "value": 0.35},
+              "duration": {"scaler": "linear", "base": 0.5, "potential": 0.1}
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "stunChance",
+      "label": "震慑",
+      "cost": 8,
+      "tags": ["cc"],
+      "pipelines": [
+        {
+          "trigger": "onHit",
+          "conditions": [
+            {"type": "chance", "rate": {"scaler": "linear", "base": 0.10, "potential": 0.05}}
+          ],
+          "selector": {"type": "currentTarget"},
+          "effects": [
+            {"type": "stun", "duration": {"scaler": "fixed", "value": 0.5}}
+          ]
+        }
+      ]
+    },
+    {
+      "id": "stunDuration",
+      "label": "麻痹",
+      "cost": 8,
+      "tags": ["cc"],
+      "pipelines": [
+        {
+          "trigger": "onHit",
+          "conditions": [
+            {"type": "chance", "rate": {"scaler": "fixed", "value": 0.25}}
+          ],
+          "selector": {"type": "currentTarget"},
+          "effects": [
+            {"type": "stun", "duration": {"scaler": "linear", "base": 0.2, "potential": 0.1}}
+          ]
+        }
+      ]
+    },
+
+    {
+      "id": "crit",
+      "label": "暴击",
+      "cost": 8,
+      "tags": ["damage"],
+      "pipelines": [
+        {
+          "trigger": "onHit",
+          "conditions": [
+            {"type": "chance", "rate": {"scaler": "linear", "base": 0.10, "potential": 0.05}}
+          ],
+          "selector": {"type": "currentTarget"},
+          "effects": [
+            {"type": "damage", "mode": "ratio", "value": {"scaler": "fixed", "value": 1.0}}
+          ]
+        }
+      ]
+    },
+    {
+      "id": "distanceDamage",
+      "label": "距离伤害",
+      "cost": 10,
+      "tags": ["damage"],
+      "pipelines": [
+        {
+          "trigger": "onHit",
+          "conditions": [],
+          "selector": {"type": "currentTarget"},
+          "effects": [
+            {"type": "damage", "mode": "ratio", "value": {"scaler": "linear", "base": 0.10, "potential": 0.05}}
+          ]
+        }
+      ]
+    },
+    {
+      "id": "executionBonus",
+      "label": "斩杀",
+      "cost": 10,
+      "tags": ["damage"],
+      "pipelines": [
+        {
+          "trigger": "onHit",
+          "conditions": [
+            {"type": "hpBelow", "threshold": {"scaler": "fixed", "value": 0.5}}
+          ],
+          "selector": {"type": "currentTarget"},
+          "effects": [
+            {"type": "damage", "mode": "ratio", "value": {"scaler": "linear", "base": 0.20, "potential": 0.05}}
+          ]
+        }
+      ]
+    },
+    {
+      "id": "flatDamage",
+      "label": "固伤",
+      "cost": 10,
+      "tags": ["damage"],
+      "pipelines": [
+        {
+          "trigger": "onHit",
+          "conditions": [],
+          "selector": {"type": "currentTarget"},
+          "effects": [
+            {"type": "damage", "mode": "flat", "value": {"scaler": "linear", "base": 2, "potential": 5}}
+          ]
+        }
+      ]
+    },
+    {
+      "id": "momentum",
+      "label": "蓄势",
+      "cost": 9,
+      "tags": ["damage"],
+      "pipelines": [
+        {
+          "trigger": "onHit",
+          "conditions": [],
+          "selector": {"type": "currentTarget"},
+          "effects": [
+            {"type": "damage", "mode": "ratio", "value": {"scaler": "linear", "base": 0.05, "potential": 0.05}}
+          ]
+        }
+      ]
+    },
+
+    {
+      "id": "damageUpAura",
+      "label": "伤害光环",
+      "cost": 8,
+      "tags": ["buff"],
+      "pipelines": [
+        {
+          "trigger": "onTick",
+          "conditions": [],
+          "selector": {"type": "nearbyAllies", "radius": 150},
+          "effects": [
+            {"type": "buff", "stat": "damage", "bonus": {"scaler": "linear", "base": 0.05, "potential": 0.02}}
+          ]
+        }
+      ]
+    },
+    {
+      "id": "attackSpeedAura",
+      "label": "攻速光环",
+      "cost": 8,
+      "tags": ["buff"],
+      "pipelines": [
+        {
+          "trigger": "onTick",
+          "conditions": [],
+          "selector": {"type": "nearbyAllies", "radius": 150},
+          "effects": [
+            {"type": "buff", "stat": "speed", "bonus": {"scaler": "linear", "base": 0.08, "potential": 0.02}}
+          ]
+        }
+      ]
+    },
+    {
+      "id": "rangeAura",
+      "label": "射程光环",
+      "cost": 7,
+      "tags": ["buff"],
+      "pipelines": [
+        {
+          "trigger": "onTick",
+          "conditions": [],
+          "selector": {"type": "nearbyAllies", "radius": 150},
+          "effects": [
+            {"type": "buff", "stat": "range", "bonus": {"scaler": "linear", "base": 10, "potential": 2}}
+          ]
+        }
+      ]
+    },
+    {
+      "id": "critAura",
+      "label": "暴击光环",
+      "cost": 7,
+      "tags": ["buff"],
+      "pipelines": [
+        {
+          "trigger": "onTick",
+          "conditions": [],
+          "selector": {"type": "nearbyAllies", "radius": 150},
+          "effects": [
+            {"type": "buff", "stat": "crit", "bonus": {"scaler": "linear", "base": 0.04, "potential": 0.02}}
+          ]
+        }
+      ]
+    },
+    {
+      "id": "soloBoost",
+      "label": "独行加成",
+      "cost": 5,
+      "tags": ["buff"],
+      "pipelines": [
+        {
+          "trigger": "onTick",
+          "conditions": [
+            {"type": "noNearbyTower", "radius": 120}
+          ],
+          "selector": {"type": "selfTower"},
+          "effects": [
+            {"type": "selfBuff", "stat": "damage", "bonus": {"scaler": "linear", "base": 0.05, "potential": 0.05}}
+          ]
+        }
+      ]
+    },
+    {
+      "id": "goldPassive",
+      "label": "被动产金",
+      "cost": 5,
+      "tags": ["buff"],
+      "pipelines": [
+        {
+          "trigger": "onTick",
+          "conditions": [
+            {"type": "cooldown", "seconds": 3}
+          ],
+          "selector": {"type": "selfTower"},
+          "effects": [
+            {"type": "gold", "amount": {"scaler": "linear", "base": 1, "potential": 1}}
+          ]
+        }
+      ]
+    },
+
+    {
+      "id": "burn",
+      "label": "灼烧",
+      "cost": 8,
+      "tags": ["dot"],
+      "pipelines": [
+        {
+          "trigger": "onHit",
+          "conditions": [],
+          "selector": {"type": "currentTarget"},
+          "effects": [
+            {
+              "type": "dot",
+              "subtype": "burn",
+              "mode": "ratio",
+              "value": {"scaler": "linear", "base": 0.10, "potential": 0.05},
+              "duration": {"scaler": "fixed", "value": 2.0}
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "bleedDot",
+      "label": "流血",
+      "cost": 8,
+      "tags": ["dot"],
+      "pipelines": [
+        {
+          "trigger": "onHit",
+          "conditions": [],
+          "selector": {"type": "currentTarget"},
+          "effects": [
+            {
+              "type": "dot",
+              "subtype": "bleed",
+              "mode": "hpPercent",
+              "value": {"scaler": "linear", "base": 0.01, "potential": 0.004},
+              "duration": {"scaler": "fixed", "value": 3.0}
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "poison",
+      "label": "中毒",
+      "cost": 5,
+      "tags": ["dot"],
+      "pipelines": [
+        {
+          "trigger": "onHit",
+          "conditions": [],
+          "selector": {"type": "currentTarget"},
+          "effects": [
+            {
+              "type": "dot",
+              "subtype": "poison",
+              "mode": "flat",
+              "value": {"scaler": "linear", "base": 3, "potential": 5},
+              "duration": {"scaler": "fixed", "value": 4.0}
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "weaken",
+      "label": "虚弱",
+      "cost": 9,
+      "tags": ["dot"],
+      "pipelines": [
+        {
+          "trigger": "onHit",
+          "conditions": [],
+          "selector": {"type": "currentTarget"},
+          "effects": [
+            {
+              "type": "weaken",
+              "amplify": {"scaler": "linear", "base": 0.15, "potential": 0.05},
+              "duration": {"scaler": "fixed", "value": 3.0}
+            }
+          ]
+        }
+      ]
+    },
+
+    {
+      "id": "poisonZone",
+      "label": "毒区",
+      "cost": 10,
+      "tags": ["zone"],
+      "pipelines": [
+        {
+          "trigger": "onTick",
+          "conditions": [],
+          "selector": {"type": "allInRange"},
+          "effects": [
+            {
+              "type": "dot",
+              "subtype": "poison",
+              "mode": "flat",
+              "value": {"scaler": "linear", "base": 3, "potential": 5},
+              "duration": {"scaler": "fixed", "value": 1.0}
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "silenceZone",
+      "label": "沉默区",
+      "cost": 12,
+      "tags": ["zone"],
+      "pipelines": [
+        {
+          "trigger": "onTick",
+          "conditions": [],
+          "selector": {"type": "allInRange"},
+          "effects": [
+            {"type": "silence"}
+          ]
+        }
+      ]
+    },
+    {
+      "id": "curseZone",
+      "label": "诅咒区",
+      "cost": 11,
+      "tags": ["zone"],
+      "pipelines": [
+        {
+          "trigger": "onTick",
+          "conditions": [],
+          "selector": {"type": "allInRange"},
+          "effects": [
+            {"type": "damage", "mode": "hpPercent", "value": {"scaler": "linear", "base": 0.01, "potential": 0.002}}
+          ]
+        }
+      ]
+    },
+    {
+      "id": "weakenZone",
+      "label": "脆弱区",
+      "cost": 10,
+      "tags": ["zone"],
+      "pipelines": [
+        {
+          "trigger": "onTick",
+          "conditions": [],
+          "selector": {"type": "allInRange"},
+          "effects": [
+            {
+              "type": "weaken",
+              "amplify": {"scaler": "linear", "base": 0.05, "potential": 0.05},
+              "duration": {"scaler": "fixed", "value": 1.0}
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

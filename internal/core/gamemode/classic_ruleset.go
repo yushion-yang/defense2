@@ -8,3 +8,4 @@ func (ClassicRuleset) UsePresetTowers() bool      { return true }
 func (ClassicRuleset) UseClassicWaves() bool      { return true }
 func (ClassicRuleset) ItemDropMode() ItemDropMode { return ItemDropByWave }
 func (ClassicRuleset) WardenEnabled() bool        { return false }
+func (ClassicRuleset) AllowCustomBlueprints() bool { return false }

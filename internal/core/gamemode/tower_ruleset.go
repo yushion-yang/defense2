@@ -38,6 +38,12 @@ type TowerRuleset interface {
 
 	// WardenEnabled 是否提供战灵选择。经典模式不提供战灵。
 	WardenEnabled() bool
+
+	// AllowCustomBlueprints 是否允许使用玩家自定义蓝图。
+	AllowCustomBlueprints() bool
+
+	// CustomBudgetCap 自定义蓝图的预算上限覆盖（-1 = 用默认值）。
+	CustomBudgetCap() int
 }
 
 // baseTowerRuleset 默认实现（= campaign 行为）。
@@ -48,3 +54,5 @@ func (baseTowerRuleset) IncludePresetTowers() bool  { return false }
 func (baseTowerRuleset) ItemDropMode() ItemDropMode { return ItemDropProbability }
 func (baseTowerRuleset) UseClassicWaves() bool      { return false }
 func (baseTowerRuleset) WardenEnabled() bool        { return true }
+func (baseTowerRuleset) AllowCustomBlueprints() bool { return true }
+func (baseTowerRuleset) CustomBudgetCap() int        { return -1 }

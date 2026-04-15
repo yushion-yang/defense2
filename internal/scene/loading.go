@@ -16,6 +16,7 @@ import (
 	"defense2/internal/core/mascot"
 	"defense2/internal/core/persistence"
 	"defense2/internal/core/tower/abilities"
+	"defense2/internal/core/tower/descriptor"
 	"defense2/internal/i18n"
 	"defense2/internal/render"
 	"defense2/internal/render/draw"
@@ -84,6 +85,10 @@ func (s *LoadingScene) Update() error {
 		}
 		render.InitGlobalIcons(config.GetAssetFS())
 		abilities.InitConfigAbilities()
+		// 描述符能力覆盖 ConfigAbility（失败时 ConfigAbility 仍作为 fallback）
+		if err := descriptor.InitDescriptorAbilities(config.GetDataFS()); err != nil {
+			log.Printf("[descriptor] warning: %v, falling back to ConfigAbility", err)
+		}
 		config.LoadBalance()
 		config.LoadPlatform()
 		config.LoadTierPresets()

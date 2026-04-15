@@ -1,0 +1,24 @@
+{
+  "_meta": {
+    "description": "定制炮塔预算规则 — 控制自定义塔的强度上限",
+    "version": "1.0"
+  },
+  "baseCap": 50,
+  "maxSlots": 6,
+  "attackStyleCosts": {
+    "projectile": 0,
+    "scatter": 12,
+    "wideBeam": 14,
+    "spin_aoe": 10,
+    "radial": 11,
+    "barrage": 13
+  },
+  "tierCosts": {
+    "S": 4,
+    "B": 2,
+    "D": 0
+  },
+  "specialtyCost": 2,
+  "baseBuildCost": 40,
+  "costPerPoint": 0.5
+}
