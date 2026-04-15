@@ -14,8 +14,7 @@
         "top": ["normal", "normal", "normal"],
         "bottom": ["normal", "normal", "normal"]
       },
-      "boss": null,
-      "buffs": null
+      "boss": null
     },
     {
       "wave": 2,
@@ -24,8 +23,7 @@
         "top": ["runner", "runner", "normal"],
         "bottom": ["normal", "runner", "runner", "normal"]
       },
-      "boss": null,
-      "buffs": null
+      "boss": null
     },
     {
       "wave": 3,
@@ -34,8 +32,7 @@
         "top": ["swarm", "swarm", "runner"],
         "bottom": ["swarm", "normal", "swarm", "normal"]
       },
-      "boss": null,
-      "buffs": null
+      "boss": null
     },
     {
       "wave": 4,
@@ -44,8 +41,7 @@
         "top": ["normal", "swarm", "armored", "runner"],
         "bottom": ["armored", "runner", "swarm", "normal"]
       },
-      "boss": { "archetype": "tank" },
-      "buffs": null
+      "boss": { "archetype": "tank" }
     },
     {
       "wave": 5,
@@ -54,8 +50,7 @@
         "top": ["shielder", "normal", "armored", "normal"],
         "bottom": ["phantom", "runner", "swarm", "shielder"]
       },
-      "boss": null,
-      "buffs": null
+      "boss": null
     },
     {
       "wave": 6,
@@ -65,7 +60,9 @@
         "bottom": ["steadfast", "armored", "phantom", "swarm", "normal"]
       },
       "boss": null,
-      "buffs": { "0": ["damageReduce"] }
+      "pathBuffs": {
+        "bottom": { "0": ["damageReduce"] }
+      }
     },
     {
       "wave": 7,
@@ -75,7 +72,10 @@
         "bottom": ["swarm", "runner", "phantom", "healer", "swarm"]
       },
       "boss": null,
-      "buffs": { "1": ["speedAura"], "8": ["regen"] }
+      "pathBuffs": {
+        "top": { "0": ["speedAura"] },
+        "bottom": { "3": ["regen"] }
+      }
     },
     {
       "wave": 8,
@@ -85,7 +85,9 @@
         "bottom": ["armored", "healer", "phantom", "steadfast", "normal"]
       },
       "boss": { "archetype": "colossus" },
-      "buffs": { "3": ["damageReduce"] }
+      "pathBuffs": {
+        "top": { "0": ["damageReduce"] }
+      }
     },
     {
       "wave": 9,
@@ -95,7 +97,10 @@
         "bottom": ["healer", "armored", "phantom", "swarm", "normal", "steadfast"]
       },
       "boss": null,
-      "buffs": { "1": ["berserk"], "4": ["healAura"] }
+      "pathBuffs": {
+        "top": { "1": ["berserk"] },
+        "bottom": { "0": ["healAura"] }
+      }
     },
     {
       "wave": 10,
@@ -105,7 +110,10 @@
         "bottom": ["splitter", "ironwill", "runner", "shielder", "swarm", "normal"]
       },
       "boss": null,
-      "buffs": { "1": ["regen"], "6": ["damageReduce"] }
+      "pathBuffs": {
+        "top": { "1": ["regen"] },
+        "bottom": { "1": ["damageReduce"] }
+      }
     },
     {
       "wave": 11,
@@ -115,7 +123,10 @@
         "bottom": ["phaser", "armored", "splitter", "phantom", "shielder", "normal"]
       },
       "boss": null,
-      "buffs": { "1": ["berserk"], "4": ["speedAura"] }
+      "pathBuffs": {
+        "top": { "0": ["berserk"] },
+        "bottom": { "0": ["speedAura"] }
+      }
     },
     {
       "wave": 12,
@@ -125,7 +136,10 @@
         "bottom": ["ironwill", "phaser", "buffer", "phantom", "swarm", "normal"]
       },
       "boss": { "archetype": "purifier" },
-      "buffs": { "1": ["damageReduce"], "4": ["healAura"], "11": ["berserk"] }
+      "pathBuffs": {
+        "top": { "0": ["damageReduce"], "1": ["healAura"] },
+        "bottom": { "1": ["berserk"] }
+      }
     },
     {
       "wave": 13,
@@ -135,7 +149,10 @@
         "bottom": ["drainer", "healer", "ironwill", "splitter", "phantom", "swarm"]
       },
       "boss": null,
-      "buffs": { "1": ["regen"], "2": ["berserk"], "9": ["speedAura"] }
+      "pathBuffs": {
+        "top": { "1": ["regen"] },
+        "bottom": { "0": ["berserk"], "3": ["speedAura"] }
+      }
     },
     {
       "wave": 14,
@@ -145,7 +162,10 @@
         "bottom": ["summoner", "healer", "ironwill", "armored", "runner", "steadfast", "normal"]
       },
       "boss": null,
-      "buffs": { "1": ["damageReduce"], "4": ["healAura"], "11": ["berserk"] }
+      "pathBuffs": {
+        "top": { "0": ["damageReduce"] },
+        "bottom": { "1": ["healAura"], "2": ["berserk"] }
+      }
     },
     {
       "wave": 15,
@@ -155,7 +175,10 @@
         "bottom": ["summoner", "healer", "ironwill", "armored", "runner", "steadfast", "swarm"]
       },
       "boss": { "archetype": "colossus" },
-      "buffs": { "0": ["berserk", "damageReduce"], "3": ["healAura"], "7": ["speedAura"], "10": ["regen"] }
+      "pathBuffs": {
+        "top": { "0": ["berserk", "damageReduce"], "3": ["speedAura"] },
+        "bottom": { "1": ["healAura"], "2": ["regen"] }
+      }
     }
   ]
 }

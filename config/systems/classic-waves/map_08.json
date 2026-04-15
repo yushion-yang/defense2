@@ -16,8 +16,7 @@
         "botLeft": ["normal", "runner"],
         "botRight": ["normal", "runner", "normal"]
       },
-      "boss": null,
-      "buffs": null
+      "boss": null
     },
     {
       "wave": 2,
@@ -28,8 +27,7 @@
         "botLeft": ["swarm", "runner", "swarm"],
         "botRight": ["swarm", "normal", "runner"]
       },
-      "boss": null,
-      "buffs": null
+      "boss": null
     },
     {
       "wave": 3,
@@ -41,7 +39,9 @@
         "botRight": ["phantom", "runner", "normal"]
       },
       "boss": null,
-      "buffs": { "0": ["damageReduce"] }
+      "pathBuffs": {
+        "botLeft": { "0": ["damageReduce"] }
+      }
     },
     {
       "wave": 4,
@@ -53,7 +53,10 @@
         "botRight": ["armored", "runner", "normal"]
       },
       "boss": { "archetype": "tank" },
-      "buffs": { "0": ["berserk"], "1": ["damageReduce"] }
+      "pathBuffs": {
+        "botLeft": { "0": ["berserk"] },
+        "botRight": { "0": ["damageReduce"] }
+      }
     },
     {
       "wave": 5,
@@ -65,7 +68,11 @@
         "botRight": ["buffer", "phantom", "steadfast"]
       },
       "boss": null,
-      "buffs": { "0": ["healAura"], "1": ["speedAura"], "2": ["berserk"] }
+      "pathBuffs": {
+        "topLeft": { "0": ["berserk"] },
+        "botLeft": { "0": ["healAura"] },
+        "botRight": { "0": ["speedAura"] }
+      }
     },
     {
       "wave": 6,
@@ -77,7 +84,11 @@
         "botRight": ["phaser", "ironwill", "swarm"]
       },
       "boss": null,
-      "buffs": { "0": ["berserk", "damageReduce"], "5": ["regen"], "8": ["speedAura"] }
+      "pathBuffs": {
+        "topRight": { "0": ["regen"] },
+        "botLeft": { "0": ["berserk", "damageReduce"] },
+        "botRight": { "0": ["speedAura"] }
+      }
     },
     {
       "wave": 7,
@@ -89,7 +100,11 @@
         "botRight": ["warper", "phaser", "phantom"]
       },
       "boss": null,
-      "buffs": { "0": ["regen"], "1": ["berserk"], "6": ["healAura"], "11": ["damageReduce"] }
+      "pathBuffs": {
+        "topLeft": { "0": ["healAura"] },
+        "botLeft": { "0": ["regen"] },
+        "botRight": { "0": ["berserk"], "2": ["damageReduce"] }
+      }
     },
     {
       "wave": 8,
@@ -101,7 +116,12 @@
         "botRight": ["warper", "phaser", "runner", "swarm"]
       },
       "boss": { "archetype": "colossus" },
-      "buffs": { "0": ["berserk", "damageReduce"], "4": ["healAura"], "9": ["regen"], "12": ["speedAura"] }
+      "pathBuffs": {
+        "topLeft": { "0": ["healAura"] },
+        "topRight": { "0": ["speedAura"] },
+        "botLeft": { "0": ["berserk", "damageReduce"] },
+        "botRight": { "0": ["regen"] }
+      }
     },
     {
       "wave": 9,
@@ -113,7 +133,12 @@
         "botRight": ["drainer", "summoner", "phaser", "swarm"]
       },
       "boss": null,
-      "buffs": { "0": ["damageReduce", "regen"], "3": ["berserk"], "8": ["healAura"], "13": ["speedAura"] }
+      "pathBuffs": {
+        "topLeft": { "0": ["healAura"] },
+        "topRight": { "0": ["speedAura"] },
+        "botLeft": { "0": ["damageReduce", "regen"] },
+        "botRight": { "0": ["berserk"] }
+      }
     },
     {
       "wave": 10,
@@ -125,7 +150,12 @@
         "botRight": ["drainer", "purifier", "summoner", "phaser"]
       },
       "boss": null,
-      "buffs": { "0": ["berserk", "damageReduce"], "1": ["berserk"], "5": ["healAura"], "10": ["regen"], "14": ["speedAura"] }
+      "pathBuffs": {
+        "topLeft": { "0": ["healAura"] },
+        "topRight": { "0": ["regen"] },
+        "botLeft": { "0": ["berserk", "damageReduce"] },
+        "botRight": { "0": ["berserk"], "2": ["speedAura"] }
+      }
     },
     {
       "wave": 11,
@@ -137,7 +167,12 @@
         "botRight": ["warper", "phaser", "steadfast"]
       },
       "boss": null,
-      "buffs": { "0": ["deathSplit", "berserk"], "1": ["deathSplit"], "2": ["deathSplit"], "8": ["healAura"], "12": ["damageReduce"], "15": ["regen"] }
+      "pathBuffs": {
+        "topLeft": { "0": ["deathSplit"], "1": ["healAura"] },
+        "topRight": { "0": ["deathSplit"] },
+        "botLeft": { "0": ["deathSplit", "berserk"] },
+        "botRight": { "0": ["damageReduce"], "2": ["regen"] }
+      }
     },
     {
       "wave": 12,
@@ -149,7 +184,12 @@
         "botRight": ["drainer", "warper", "purifier", "runner"]
       },
       "boss": { "archetype": "purifier" },
-      "buffs": { "0": ["berserk", "damageReduce"], "4": ["regen"], "7": ["healAura"], "11": ["speedAura"], "15": ["berserk"] }
+      "pathBuffs": {
+        "topLeft": { "0": ["healAura"] },
+        "topRight": { "1": ["regen"] },
+        "botLeft": { "0": ["berserk", "damageReduce"] },
+        "botRight": { "0": ["speedAura"], "1": ["berserk"] }
+      }
     },
     {
       "wave": 13,
@@ -161,7 +201,12 @@
         "botRight": ["drainer", "purifier", "phaser", "runner"]
       },
       "boss": null,
-      "buffs": { "0": ["berserk", "speedAura"], "4": ["damageReduce"], "8": ["healAura"], "12": ["regen"], "16": ["berserk"] }
+      "pathBuffs": {
+        "topLeft": { "0": ["healAura"] },
+        "topRight": { "1": ["damageReduce"] },
+        "botLeft": { "0": ["berserk", "speedAura"] },
+        "botRight": { "0": ["regen"], "1": ["berserk"] }
+      }
     },
     {
       "wave": 14,
@@ -173,7 +218,12 @@
         "botRight": ["drainer", "purifier", "phaser", "phantom"]
       },
       "boss": null,
-      "buffs": { "0": ["berserk", "damageReduce"], "1": ["regen"], "5": ["healAura"], "7": ["damageReduce"], "12": ["speedAura"], "17": ["berserk"] }
+      "pathBuffs": {
+        "topLeft": { "1": ["healAura"] },
+        "topRight": { "0": ["damageReduce"] },
+        "botLeft": { "0": ["berserk", "damageReduce"], "2": ["speedAura"] },
+        "botRight": { "0": ["regen"], "3": ["berserk"] }
+      }
     },
     {
       "wave": 15,
@@ -185,7 +235,12 @@
         "botRight": ["swarm", "warper", "phantom", "swarm"]
       },
       "boss": null,
-      "buffs": { "0": ["berserk"], "2": ["speedAura"], "8": ["damageReduce"], "11": ["healAura"], "15": ["regen"] }
+      "pathBuffs": {
+        "topLeft": { "1": ["speedAura"] },
+        "topRight": { "1": ["healAura"] },
+        "botLeft": { "1": ["berserk"], "3": ["regen"] },
+        "botRight": { "1": ["damageReduce"] }
+      }
     },
     {
       "wave": 16,
@@ -197,7 +252,12 @@
         "botRight": ["drainer", "phaser", "runner", "normal"]
       },
       "boss": { "archetype": "colossus" },
-      "buffs": { "0": ["berserk", "damageReduce"], "4": ["regen"], "7": ["healAura"], "10": ["speedAura"], "14": ["berserk"], "18": ["regen"] }
+      "pathBuffs": {
+        "topLeft": { "1": ["healAura"] },
+        "topRight": { "0": ["regen"] },
+        "botLeft": { "0": ["berserk", "damageReduce"], "1": ["berserk"] },
+        "botRight": { "0": ["speedAura"], "1": ["regen"] }
+      }
     },
     {
       "wave": 17,
@@ -209,7 +269,12 @@
         "botRight": ["drainer", "phaser", "runner", "normal"]
       },
       "boss": null,
-      "buffs": { "0": ["berserk", "damageReduce"], "1": ["regen"], "2": ["berserk"], "3": ["damageReduce"], "8": ["healAura"], "13": ["speedAura"], "17": ["regen"] }
+      "pathBuffs": {
+        "topLeft": { "0": ["berserk"], "2": ["healAura"] },
+        "topRight": { "0": ["damageReduce"], "1": ["speedAura"] },
+        "botLeft": { "0": ["berserk", "damageReduce"], "1": ["regen"] },
+        "botRight": { "0": ["regen"] }
+      }
     },
     {
       "wave": 18,
@@ -221,7 +286,12 @@
         "botRight": ["splitter", "warper", "phaser", "swarm", "normal"]
       },
       "boss": null,
-      "buffs": { "0": ["deathSplit", "berserk"], "1": ["deathSplit", "regen"], "2": ["deathSplit"], "3": ["deathSplit"], "8": ["healAura"], "12": ["damageReduce"], "16": ["speedAura"] }
+      "pathBuffs": {
+        "topLeft": { "0": ["deathSplit"], "1": ["healAura"] },
+        "topRight": { "0": ["deathSplit"] },
+        "botLeft": { "0": ["deathSplit", "berserk"], "1": ["damageReduce"] },
+        "botRight": { "0": ["deathSplit", "regen"], "1": ["speedAura"] }
+      }
     },
     {
       "wave": 19,
@@ -233,7 +303,12 @@
         "botRight": ["drainer", "phaser", "swarm", "runner", "normal"]
       },
       "boss": null,
-      "buffs": { "0": ["berserk", "damageReduce"], "2": ["regen"], "5": ["speedAura"], "8": ["healAura"], "12": ["berserk"], "16": ["damageReduce"], "19": ["regen"], "21": ["speedAura"] }
+      "pathBuffs": {
+        "topLeft": { "0": ["regen"], "2": ["damageReduce"] },
+        "topRight": { "0": ["speedAura"], "2": ["regen"] },
+        "botLeft": { "0": ["berserk", "damageReduce"], "1": ["healAura"] },
+        "botRight": { "0": ["berserk"], "1": ["speedAura"] }
+      }
     },
     {
       "wave": 20,
@@ -245,7 +320,12 @@
         "botRight": ["drainer", "drainer", "phaser", "runner", "normal"]
       },
       "boss": { "archetype": "purifier" },
-      "buffs": { "0": ["berserk", "damageReduce"], "1": ["regen"], "2": ["berserk"], "5": ["speedAura"], "9": ["healAura"], "13": ["damageReduce"], "17": ["berserk"], "20": ["regen"] }
+      "pathBuffs": {
+        "topLeft": { "0": ["berserk"], "2": ["regen"] },
+        "topRight": { "1": ["speedAura"], "2": ["damageReduce"] },
+        "botLeft": { "0": ["berserk", "damageReduce"], "1": ["healAura"] },
+        "botRight": { "0": ["regen"], "1": ["berserk"] }
+      }
     },
     {
       "wave": 21,
@@ -257,7 +337,12 @@
         "botRight": ["summoner", "phaser", "runner", "swarm", "normal"]
       },
       "boss": null,
-      "buffs": { "0": ["berserk", "regen"], "1": ["speedAura"], "2": ["berserk"], "3": ["damageReduce"], "8": ["healAura"], "13": ["berserk"], "17": ["regen"], "20": ["speedAura"], "22": ["damageReduce"] }
+      "pathBuffs": {
+        "topLeft": { "0": ["berserk"], "1": ["healAura"] },
+        "topRight": { "0": ["damageReduce"], "1": ["berserk"] },
+        "botLeft": { "0": ["berserk", "regen"], "2": ["regen"] },
+        "botRight": { "0": ["speedAura"], "2": ["speedAura"], "3": ["damageReduce"] }
+      }
     },
     {
       "wave": 22,
@@ -269,7 +354,12 @@
         "botRight": ["drainer", "warper", "purifier", "phantom", "swarm"]
       },
       "boss": null,
-      "buffs": { "0": ["berserk", "damageReduce"], "1": ["regen", "speedAura"], "2": ["berserk"], "3": ["damageReduce"], "4": ["regen"], "9": ["healAura"], "14": ["berserk"], "18": ["damageReduce"], "21": ["regen"] }
+      "pathBuffs": {
+        "topLeft": { "0": ["berserk"], "2": ["healAura"] },
+        "topRight": { "0": ["damageReduce"], "2": ["berserk"] },
+        "botLeft": { "0": ["berserk", "damageReduce"], "1": ["regen"] },
+        "botRight": { "0": ["regen", "speedAura"], "1": ["damageReduce"] }
+      }
     },
     {
       "wave": 23,
@@ -281,7 +371,12 @@
         "botRight": ["phaser", "phantom", "steadfast", "swarm", "normal"]
       },
       "boss": null,
-      "buffs": { "0": ["berserk", "damageReduce"], "2": ["regen"], "3": ["healAura"], "6": ["berserk"], "8": ["speedAura"], "12": ["damageReduce"], "16": ["regen"], "19": ["berserk"], "22": ["speedAura"] }
+      "pathBuffs": {
+        "topLeft": { "0": ["regen"], "2": ["healAura"] },
+        "topRight": { "0": ["healAura"], "1": ["speedAura"] },
+        "botLeft": { "0": ["berserk", "damageReduce"], "1": ["berserk"] },
+        "botRight": { "0": ["damageReduce"], "2": ["berserk"], "3": ["speedAura"] }
+      }
     },
     {
       "wave": 24,
@@ -293,7 +388,12 @@
         "botRight": ["drainer", "purifier", "phantom", "steadfast", "swarm", "normal"]
       },
       "boss": { "archetype": "colossus" },
-      "buffs": { "0": ["berserk", "damageReduce"], "2": ["regen"], "3": ["berserk"], "6": ["speedAura"], "8": ["healAura"], "11": ["damageReduce"], "12": ["regen"], "16": ["berserk"], "19": ["damageReduce"], "22": ["regen"], "24": ["speedAura"] }
+      "pathBuffs": {
+        "topLeft": { "0": ["regen"], "2": ["speedAura"], "3": ["damageReduce"] },
+        "topRight": { "0": ["berserk"], "2": ["healAura"], "3": ["regen"] },
+        "botLeft": { "0": ["berserk", "damageReduce"], "2": ["regen"], "3": ["speedAura"] },
+        "botRight": { "0": ["damageReduce"], "1": ["berserk"], "2": ["regen"] }
+      }
     },
     {
       "wave": 25,
@@ -305,7 +405,12 @@
         "botRight": ["drainer", "drainer", "purifier", "runner", "swarm"]
       },
       "boss": { "archetype": "purifier" },
-      "buffs": { "0": ["berserk", "damageReduce"], "1": ["regen", "speedAura"], "2": ["berserk"], "3": ["damageReduce"], "6": ["healAura"], "8": ["regen"], "11": ["berserk"], "13": ["damageReduce"], "16": ["speedAura"], "19": ["regen"], "22": ["berserk"], "24": ["damageReduce"] }
+      "pathBuffs": {
+        "topLeft": { "0": ["berserk"], "2": ["healAura"], "3": ["speedAura"] },
+        "topRight": { "0": ["damageReduce"], "2": ["regen"], "3": ["regen"] },
+        "botLeft": { "0": ["berserk", "damageReduce"], "2": ["berserk"], "4": ["berserk"] },
+        "botRight": { "0": ["regen", "speedAura"], "1": ["damageReduce"], "2": ["damageReduce"] }
+      }
     }
   ]
 }
