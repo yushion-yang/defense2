@@ -559,5 +559,9 @@
   "tutorial.step_5": "Tap a placed tower to view its details.",
   "tutorial.step_6": "Select \"Strengthen\" to boost the tower's stats.",
   "tutorial.step_7": "Use items to further enhance your towers.",
-  "tutorial.step_8": "You're ready! Defend your base!"
+  "tutorial.step_8": "You're ready! Defend your base!",
+
+  "blueprint.not_found": "Blueprint not found",
+  "blueprint.copied": "Copied: %s",
+  "blueprint.deleted": "Blueprint deleted"
 }

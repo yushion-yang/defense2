@@ -14,6 +14,7 @@ package scene
 import (
 	"fmt"
 	"image/color"
+	"log"
 	"sort"
 	"time"
 
@@ -21,6 +22,7 @@ import (
 	"defense2/internal/core/tower/descriptor"
 	"defense2/internal/render"
 	"defense2/internal/render/draw"
+	"defense2/internal/render/hud"
 	"defense2/internal/render/theme"
 	"defense2/internal/render/ui"
 
@@ -452,8 +454,13 @@ func (s *BlueprintEditScene) saveBlueprint() {
 
 	// 保存
 	if s.blueprintStore != nil {
-		_ = s.blueprintStore.Save(s.blueprint)
+		if err := s.blueprintStore.Save(s.blueprint); err != nil {
+			hud.ShowToast("保存失败") // TODO: i18n — blueprint.save_error
+			log.Printf("[BlueprintEdit] save error: %v", err)
+			return
+		}
 	}
+	hud.ShowToast("蓝图已保存") // TODO: i18n — blueprint.saved
 
 	s.switcher.SwitchScene(s.returnScene)
 }

@@ -763,7 +763,8 @@ func (s *AbilityEditScene) saveAbility() {
 
 	desc, err := descriptor.EditStateToDescriptor(id, name, s.pipelines)
 	if err != nil {
-		log.Printf("[AbilityEditScene] save error: %v", err)
+		hud.ShowToast("保存失败") // TODO: i18n — ability.save_error
+		log.Printf("[AbilityEdit] save error: %v", err)
 		return
 	}
 
@@ -776,12 +777,14 @@ func (s *AbilityEditScene) saveAbility() {
 
 	if s.abilityStore != nil {
 		if err := s.abilityStore.Save(ca); err != nil {
-			log.Printf("[AbilityEditScene] store.Save error: %v", err)
+			hud.ShowToast("保存失败") // TODO: i18n — ability.save_error
+			log.Printf("[AbilityEdit] store.Save error: %v", err)
 			return
 		}
 	}
 
-	log.Printf("[AbilityEditScene] saved ability %q (id=%s, pipelines=%d)", name, id, len(s.pipelines))
+	hud.ShowToast("能力已保存") // TODO: i18n — ability.saved
+	log.Printf("[AbilityEdit] saved ability %q (id=%s, pipelines=%d)", name, id, len(s.pipelines))
 	s.switcher.SwitchScene(s.returnScene)
 }
 

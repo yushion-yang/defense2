@@ -559,5 +559,9 @@
   "tutorial.step_5": "点击已放置的塔可以查看详情。",
   "tutorial.step_6": "选择「强化」来提升塔的属性。",
   "tutorial.step_7": "使用道具可以进一步强化塔。",
-  "tutorial.step_8": "准备就绪！保护好你的基地吧！"
+  "tutorial.step_8": "准备就绪！保护好你的基地吧！",
+
+  "blueprint.not_found": "蓝图不存在",
+  "blueprint.copied": "已复制: %s",
+  "blueprint.deleted": "蓝图已删除"
 }

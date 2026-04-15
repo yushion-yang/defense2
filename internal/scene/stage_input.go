@@ -1151,7 +1151,7 @@ func (s *StageScene) handleBlueprintContextMenuClick(tapX, tapY float64) {
 func (s *StageScene) blueprintCtxEdit() {
 	bp, err := s.blueprintStore.Get(s.bpCtxMenuBpID)
 	if err != nil || bp == nil {
-		hud.ShowToast("蓝图不存在")
+		hud.ShowToast(i18n.T("blueprint.not_found"))
 		return
 	}
 	s.imode = modeIdle
@@ -1163,7 +1163,7 @@ func (s *StageScene) blueprintCtxEdit() {
 func (s *StageScene) blueprintCtxCopy() {
 	bp, err := s.blueprintStore.Get(s.bpCtxMenuBpID)
 	if err != nil || bp == nil {
-		hud.ShowToast("蓝图不存在")
+		hud.ShowToast(i18n.T("blueprint.not_found"))
 		return
 	}
 	clone := *bp
@@ -1177,7 +1177,7 @@ func (s *StageScene) blueprintCtxCopy() {
 	}
 
 	s.reloadTowerDefs()
-	hud.ShowToast(fmt.Sprintf("已复制: %s", clone.Name))
+	hud.ShowToast(i18n.TF("blueprint.copied", clone.Name))
 }
 
 // blueprintCtxDelete 删除蓝图：从存储中移除，刷新建塔面板。
@@ -1192,7 +1192,7 @@ func (s *StageScene) blueprintCtxDelete() {
 	if s.selectedDef >= len(s.towerDefs) {
 		s.selectedDef = -1
 	}
-	hud.ShowToast("蓝图已删除")
+	hud.ShowToast(i18n.T("blueprint.deleted"))
 }
 
 
