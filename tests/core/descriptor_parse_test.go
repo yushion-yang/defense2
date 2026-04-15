@@ -631,7 +631,7 @@ func TestParseDescriptor_Errors(t *testing.T) {
 				"pipelines": [{
 					"trigger": "onHit",
 					"selector": {"type": "currentTarget"},
-					"effects": [{"type": "teleport"}]
+					"effects": [{"type": "nonexistent_xyz"}]
 				}]
 			}`,
 			wantErr: "unknown effect type",
