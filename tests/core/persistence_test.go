@@ -78,6 +78,43 @@ func TestProgressManagerTutorial(t *testing.T) {
 	}
 }
 
+func TestClassicModeDefaultUnlock(t *testing.T) {
+	s := newMemStorage()
+	pm := persistence.NewProgressManager(s)
+
+	// 经典模式首关 map_c01 应默认解锁
+	if !pm.IsMapUnlocked("classic", "map_c01") {
+		t.Fatal("经典模式 map_c01 应默认解锁")
+	}
+	// 经典模式 map_c02 应锁定
+	if pm.IsMapUnlocked("classic", "map_c02") {
+		t.Fatal("经典模式 map_c02 初始应锁定")
+	}
+	// 战役模式 map_01 仍应默认解锁
+	if !pm.IsMapUnlocked("casual", "map_01") {
+		t.Fatal("战役模式 map_01 应默认解锁")
+	}
+	// 经典模式不应有 map_01 解锁
+	if pm.IsMapUnlocked("classic", "map_01") {
+		t.Fatal("经典模式不应解锁 map_01")
+	}
+}
+
+func TestClassicModeUnlockChain(t *testing.T) {
+	s := newMemStorage()
+	pm := persistence.NewProgressManager(s)
+
+	// 通关 map_c01 应解锁 map_c02
+	pm.RecordGameResult("classic", "map_c01", 40, true)
+	if !pm.IsMapUnlocked("classic", "map_c02") {
+		t.Fatal("通关 map_c01 应解锁 classic 的 map_c02")
+	}
+	// 不应影响战役模式
+	if pm.IsMapUnlocked("casual", "map_c02") {
+		t.Fatal("classic 通关不应解锁 casual 的 map_c02")
+	}
+}
+
 // newMemStorage 创建测试用临时文件存储（每次独立目录）。
 func newMemStorage() persistence.Storage {
 	dir, _ := os.MkdirTemp("", "defense2-test-*")

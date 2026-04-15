@@ -37,6 +37,7 @@ func initTestCategories() {
 		{"ability", i18n.T("scene.test.cat.ability")},
 		{"dps", i18n.T("scene.test.cat.dps")},
 		{"bench", i18n.T("scene.test.cat.bench")},
+		{"coop", i18n.T("scene.test.cat.coop")},
 		{"custom", i18n.T("scene.test.cat.custom")},
 	}
 }
@@ -54,30 +55,35 @@ type testScenario struct {
 	Color       color.RGBA // card accent color
 	EnemyFilter string     // ground-only/flying-only/elite-only/boss-only/all-static/mixed/stress/dummy/none
 	ManualWave  bool       // 仅手动开波
+	AIEnabled   bool       // 启用 AI 队友
 }
 
 var testScenarios = []testScenario{
-	{"tower-core", "核心炮塔", "tower-laser", "全部核心炮塔，基础战斗测试", "tower", "map_test_large", 9999, 999, 10, color.RGBA{R: 100, G: 150, B: 220, A: 255}, "mixed", false},
-	{"enemy-ground", "地面怪物", "stat-movspd", "仅出地面普通怪，路径测试", "enemy", "map_test_large", 9999, 999, 10, color.RGBA{R: 220, G: 120, B: 80, A: 255}, "ground-only", false},
-	{"enemy-flying", "飞行怪物", "stat-range", "仅出飞行怪，防空能力测试", "enemy", "map_test_large", 9999, 999, 10, color.RGBA{R: 100, G: 180, B: 220, A: 255}, "flying-only", false},
-	{"enemy-boss", "Boss 怪物", "execute", "仅出Boss，机制和伤害上限", "enemy", "map_test_large", 99999, 999, 8, color.RGBA{R: 220, G: 80, B: 80, A: 255}, "boss-only", false},
+	{"tower-core", "核心炮塔", "tower-laser", "全部核心炮塔，基础战斗测试", "tower", "map_test_large", 9999, 999, 10, color.RGBA{R: 100, G: 150, B: 220, A: 255}, "mixed", false, false},
+	{"enemy-ground", "地面怪物", "stat-movspd", "仅出地面普通怪，路径测试", "enemy", "map_test_large", 9999, 999, 10, color.RGBA{R: 220, G: 120, B: 80, A: 255}, "ground-only", false, false},
+	{"enemy-flying", "飞行怪物", "stat-range", "仅出飞行怪，防空能力测试", "enemy", "map_test_large", 9999, 999, 10, color.RGBA{R: 100, G: 180, B: 220, A: 255}, "flying-only", false, false},
+	{"enemy-boss", "Boss 怪物", "execute", "仅出Boss，机制和伤害上限", "enemy", "map_test_large", 99999, 999, 8, color.RGBA{R: 220, G: 80, B: 80, A: 255}, "boss-only", false, false},
 
-	{"combo-static", "全怪静止展示", "stat-target", "所有怪物静止排列展示", "combo", "map_test_large", 9999, 999, 0, color.RGBA{R: 80, G: 180, B: 120, A: 255}, "all-static", false},
-	{"combo-mixed", "混合波次", "bounce", "地面+飞行+精英混合波次", "combo", "map_test_large", 9999, 999, 12, color.RGBA{R: 80, G: 140, B: 200, A: 255}, "mixed", false},
-	{"combo-stress", "压力测试", "stat-splash", "大量怪物高速刷出，性能极限", "combo", "map_test_large", 99999, 99999, 5, color.RGBA{R: 220, G: 100, B: 60, A: 255}, "stress", false},
-	{"combo-sandbox", "沙盒模式", "multishot", "无限金币，手动开波，自由测试", "combo", "map_test_large", 99999, 99999, 0, color.RGBA{R: 200, G: 180, B: 80, A: 255}, "none", true},
+	{"combo-static", "全怪静止展示", "stat-target", "所有怪物静止排列展示", "combo", "map_test_large", 9999, 999, 0, color.RGBA{R: 80, G: 180, B: 120, A: 255}, "all-static", false, false},
+	{"combo-mixed", "混合波次", "bounce", "地面+飞行+精英混合波次", "combo", "map_test_large", 9999, 999, 12, color.RGBA{R: 80, G: 140, B: 200, A: 255}, "mixed", false, false},
+	{"combo-stress", "压力测试", "stat-splash", "大量怪物高速刷出，性能极限", "combo", "map_test_large", 99999, 99999, 5, color.RGBA{R: 220, G: 100, B: 60, A: 255}, "stress", false, false},
+	{"combo-sandbox", "沙盒模式", "multishot", "无限金币，手动开波，自由测试", "combo", "map_test_large", 99999, 99999, 0, color.RGBA{R: 200, G: 180, B: 80, A: 255}, "none", true, false},
+	{"combo-ai", "AI队友", "tower-aura", "AI队友协作，左右分区建塔", "combo", "map_test_large", 9999, 999, 12, color.RGBA{R: 80, G: 200, B: 180, A: 255}, "mixed", false, true},
 
-	{"ability-zone", "区域控制塔", "slow", "减速/范围DOT效果测试", "ability", "map_test_large", 9999, 999, 8, color.RGBA{R: 120, G: 160, B: 200, A: 255}, "mixed", false},
-	{"ability-periodic", "周期释放塔", "thunder", "周期AoE/增益/变异效果测试", "ability", "map_test_large", 9999, 999, 8, color.RGBA{R: 180, G: 120, B: 180, A: 255}, "mixed", false},
-	{"ability-aura", "光环体系", "tower-aura", "多种光环叠加效果测试", "ability", "map_test_large", 9999, 999, 10, color.RGBA{R: 220, G: 180, B: 80, A: 255}, "mixed", false},
-	{"ability-silence", "沉默 vs Boss", "stun", "沉默塔对Boss伤害上限影响", "ability", "map_test_large", 99999, 999, 5, color.RGBA{R: 180, G: 100, B: 100, A: 255}, "boss-only", false},
+	{"ability-zone", "区域控制塔", "slow", "减速/范围DOT效果测试", "ability", "map_test_large", 9999, 999, 8, color.RGBA{R: 120, G: 160, B: 200, A: 255}, "mixed", false, false},
+	{"ability-periodic", "周期释放塔", "thunder", "周期AoE/增益/变异效果测试", "ability", "map_test_large", 9999, 999, 8, color.RGBA{R: 180, G: 120, B: 180, A: 255}, "mixed", false, false},
+	{"ability-aura", "光环体系", "tower-aura", "多种光环叠加效果测试", "ability", "map_test_large", 9999, 999, 10, color.RGBA{R: 220, G: 180, B: 80, A: 255}, "mixed", false, false},
+	{"ability-silence", "沉默 vs Boss", "stun", "沉默塔对Boss伤害上限影响", "ability", "map_test_large", 99999, 999, 5, color.RGBA{R: 180, G: 100, B: 100, A: 255}, "boss-only", false, false},
 
-	{"dps-dummy", "木桩靶场", "hunterInstinct", "超高HP木桩怪，DPS输出测试", "dps", "map_test_large", 99999, 999, 99, color.RGBA{R: 220, G: 160, B: 60, A: 255}, "dummy", false},
-	{"bench-lineup", "阵容编辑器", "armorPen", "手动放塔升级，保存阵容仿真", "bench", "map_test_large", 99999, 20, 12, color.RGBA{R: 140, G: 160, B: 180, A: 255}, "mixed", false},
-	{"vfx-preview", "特效预览", "stat-splash", "VFX 特效预览与调试工具", "bench", "", 0, 0, 0, color.RGBA{R: 200, G: 100, B: 255, A: 255}, "", false},
-	{"audio-preview", "音效预览", "stat-splash", "音效(SFX+BGM)预览与试听工具", "bench", "", 0, 0, 0, color.RGBA{R: 100, G: 200, B: 255, A: 255}, "", false},
-	{"wave-preview", "波次预览", "stat-target", "各地图波次出怪组合查看工具", "bench", "", 0, 0, 0, color.RGBA{R: 120, G: 200, B: 160, A: 255}, "", false},
-	{"map-editor", "地图编辑", "stat-target", "塔位布局可视化编辑工具", "bench", "", 0, 0, 0, color.RGBA{R: 180, G: 200, B: 100, A: 255}, "", false},
+	{"dps-dummy", "木桩靶场", "hunterInstinct", "超高HP木桩怪，DPS输出测试", "dps", "map_test_large", 99999, 999, 99, color.RGBA{R: 220, G: 160, B: 60, A: 255}, "dummy", false, false},
+	{"bench-lineup", "阵容编辑器", "armorPen", "手动放塔升级，保存阵容仿真", "bench", "map_test_large", 99999, 20, 12, color.RGBA{R: 140, G: 160, B: 180, A: 255}, "mixed", false, false},
+	{"vfx-preview", "特效预览", "stat-splash", "VFX 特效预览与调试工具", "bench", "", 0, 0, 0, color.RGBA{R: 200, G: 100, B: 255, A: 255}, "", false, false},
+	{"audio-preview", "音效预览", "stat-splash", "音效(SFX+BGM)预览与试听工具", "bench", "", 0, 0, 0, color.RGBA{R: 100, G: 200, B: 255, A: 255}, "", false, false},
+	{"wave-preview", "波次预览", "stat-target", "各地图波次出怪组合查看工具", "bench", "", 0, 0, 0, color.RGBA{R: 120, G: 200, B: 160, A: 255}, "", false, false},
+	{"map-editor", "地图编辑", "stat-target", "塔位布局可视化编辑工具", "bench", "", 0, 0, 0, color.RGBA{R: 180, G: 200, B: 100, A: 255}, "", false, false},
+
+	{"coop-2p", "合作2人", "stat-target", "2人合作模式测试", "coop", "map_co01", 9999, 999, 15, color.RGBA{R: 100, G: 180, B: 255, A: 255}, "mixed", false, false},
+	{"coop-sandbox", "合作沙盒", "stat-target", "合作模式自由测试", "coop", "map_co01", 99999, 99999, 0, color.RGBA{R: 100, G: 200, B: 180, A: 255}, "none", true, false},
 }
 
 // ── 布局常量 ────────────────────────────────────
@@ -257,7 +263,7 @@ func (s *TestSelectScene) startScenario() {
 		s.switcher.SwitchScene(NewMapEditorScene(s.switcher))
 		return
 	}
-	s.switcher.SwitchScene(NewStageSceneWithOpts(s.switcher, StageOptions{
+	opts := StageOptions{
 		MapID:       sc.MapID,
 		WardenType:  "", // 在 Stage 内第一次开波时选择战灵
 		Gold:        sc.Gold,
@@ -267,8 +273,17 @@ func (s *TestSelectScene) startScenario() {
 		ScenarioID:  sc.ID,
 		EnemyFilter: sc.EnemyFilter,
 		ManualWave:  sc.ManualWave,
-		AIEnabled:   true,
-	}))
+		AIEnabled:   sc.AIEnabled,
+	}
+	// 合作场景：设置模式和人数
+	if sc.Category == "coop" {
+		opts.ModeID = "coop"
+		opts.AIEnabled = true
+		if m, err := config.LoadMap(sc.MapID); err == nil && m.Coop != nil {
+			opts.CoopPlayerCount = m.Coop.PlayerCount
+		}
+	}
+	s.switcher.SwitchScene(NewStageSceneWithOpts(s.switcher, opts))
 }
 
 // ── 碰撞检测 ────────────────────────────────────

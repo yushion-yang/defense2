@@ -25,7 +25,7 @@
   "boss": {
     "_desc": "Boss规则：每N波出现一个Boss，从所有原型中随机选取，必带净化(purge)能力",
     "everyNWaves": 4,                "_everyNWaves": "每隔N波出现一次Boss（第4/8/12/16...波）",
-    "hpMultBase": 6,                 "_hpMultBase": "Boss HP固定倍率（Boss血量 = 原型HP × 6，不随波次增长）",
+    "hpMultBase": 4,                 "_hpMultBase": "Boss HP固定倍率（Boss血量 = 原型HP × 6，不随波次增长）",
     "radiusScale": 1.5,              "_radiusScale": "Boss体型缩放（1.5=比普通大50%）",
     "entranceDelay": 3.0,            "_entranceDelay": "Boss波开始前额外延迟（秒）——给玩家准备时间",
     "rewardMultiplier": 5,           "_rewardMultiplier": "Boss击杀金币奖励倍率（普通奖励×5）",

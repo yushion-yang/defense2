@@ -12,31 +12,40 @@ import (
 // StageOps AI 可用的游戏操作接口。
 // 由 StageScene 实现，避免 AI 直接依赖 scene 包。
 type StageOps interface {
-	BuildTowerForAI(key string, row, col int) bool
+	BuildTowerForAI(key string, row, col, ownerID int) bool
 	UpgradeTowerForAI(row, col int) bool
 	SellTowerForAI(row, col int) bool
 	TowerCost(key string) int
 	StrengthBuyCost() int
 }
 
+// ZoneProvider 区域查询接口。Zone 和 CoopZone 都实现此接口。
+type ZoneProvider interface {
+	OwnerOf(row, col int) int
+}
+
 // Config AI 玩家配置。
 type Config struct {
-	Zone      *Zone
-	StartGold int
-	Ops       StageOps
-	CellSize  int // 网格像素尺寸，用于精灵初始位置计算
+	ZoneProvider ZoneProvider // 区域查询（Zone 或 CoopZone）
+	OwnerID      int          // 此 AI 的 owner ID（1..N-1）
+	StartGold    int
+	Ops          StageOps
+	CellSize     int // 网格像素尺寸
+	SpawnX       float64 // 精灵初始 X（0=自动计算）
+	SpawnY       float64 // 精灵初始 Y（0=自动计算）
 }
 
 // AIPlayer AI 玩家。
 type AIPlayer struct {
-	gold     int
-	zone     *Zone
-	ops      StageOps
-	sprite   *Sprite
-	bubble   *BubbleManager
-	actions  *ActionQueue
-	engine   *DecisionEngine
-	dialogue *DialogueBank
+	gold         int
+	ownerID      int // 此 AI 的 owner ID（1..N-1）
+	zoneProvider ZoneProvider
+	ops          StageOps
+	sprite       *Sprite
+	bubble       *BubbleManager
+	actions      *ActionQueue
+	engine       *DecisionEngine
+	dialogue     *DialogueBank
 
 	// 决策节奏
 	decisionTimer    float64
@@ -50,19 +59,28 @@ func New(cfg Config) *AIPlayer {
 		cellSize = 60
 	}
 
-	// 精灵初始位置：AI 区域中心
-	spawnX := float64(cfg.Zone.SplitCol+cfg.Zone.cols/4) * float64(cellSize)
-	spawnY := float64(cfg.Zone.rows/2) * float64(cellSize)
+	spawnX, spawnY := cfg.SpawnX, cfg.SpawnY
+	if spawnX == 0 && spawnY == 0 {
+		// fallback: 地图中心偏右
+		spawnX = float64(18 * cellSize)
+		spawnY = float64(6 * cellSize)
+	}
+
+	ownerID := cfg.OwnerID
+	if ownerID == 0 {
+		ownerID = 1 // 默认 AI owner = 1
+	}
 
 	ap := &AIPlayer{
-		gold:     cfg.StartGold,
-		zone:     cfg.Zone,
-		ops:      cfg.Ops,
-		sprite:   NewSprite(spawnX, spawnY),
-		bubble:   NewBubbleManager(),
-		actions:  NewActionQueue(),
-		engine:   NewDecisionEngine(),
-		dialogue: DefaultDialogueBank(),
+		gold:         cfg.StartGold,
+		ownerID:      ownerID,
+		zoneProvider: cfg.ZoneProvider,
+		ops:          cfg.Ops,
+		sprite:       NewSprite(spawnX, spawnY),
+		bubble:       NewBubbleManager(),
+		actions:      NewActionQueue(),
+		engine:       NewDecisionEngine(),
+		dialogue:     DefaultDialogueBank(),
 	}
 	ap.rollNextInterval()
 
@@ -72,6 +90,9 @@ func New(cfg Config) *AIPlayer {
 
 	return ap
 }
+
+// OwnerID 返回此 AI 的 owner ID。
+func (ap *AIPlayer) OwnerID() int { return ap.ownerID }
 
 // ── 只读访问器 ──
 
@@ -139,7 +160,7 @@ func (ap *AIPlayer) Tick(dt float64, snap AISnapshot) {
 func (ap *AIPlayer) filterAICells(cells []AICell) []AICell {
 	var result []AICell
 	for _, c := range cells {
-		if ap.zone.OwnerOf(c.Row, c.Col) == ZoneAI {
+		if ap.zoneProvider != nil && ap.zoneProvider.OwnerOf(c.Row, c.Col) == ap.ownerID {
 			result = append(result, c)
 		}
 	}
@@ -149,7 +170,7 @@ func (ap *AIPlayer) filterAICells(cells []AICell) []AICell {
 func (ap *AIPlayer) filterAITowers(towers []AITower) []AITower {
 	var result []AITower
 	for _, t := range towers {
-		if ap.zone.OwnerOf(t.Row, t.Col) == ZoneAI {
+		if t.Owner == ap.ownerID {
 			result = append(result, t)
 		}
 	}
@@ -182,7 +203,7 @@ func (ap *AIPlayer) executeDecision(d Decision) {
 					ap.bubble.Show(ap.dialogue.Random("low_gold"), BubbleEmotion, 1.0)
 					return
 				}
-				if ap.ops != nil && ap.ops.BuildTowerForAI(towerKey, row, col) {
+				if ap.ops != nil && ap.ops.BuildTowerForAI(towerKey, row, col, ap.ownerID) {
 					ap.gold -= cost
 					ap.bubble.Show(ap.dialogue.Random("build_done"), BubbleAction, 1.0)
 				}

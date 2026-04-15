@@ -35,6 +35,7 @@ type unlockRule struct {
 
 // unlockRules 解锁规则表。
 var unlockRules = []unlockRule{
+	// ── 战役模式 ──
 	{"map_01", []string{"map:map_02", "tower:shotgun"}},
 	{"map_02", []string{"map:map_03", "warden:core", "tower:prism"}},
 	{"map_03", []string{"map:map_04"}},
@@ -42,10 +43,13 @@ var unlockRules = []unlockRule{
 	{"map_05", []string{"map:map_06"}},
 	{"map_06", []string{"map:map_07", "warden:skystrike", "warden:envoy"}},
 	{"map_07", []string{"map:map_08"}},
+	// ── 经典模式 ──
+	{"map_c01", []string{"map:map_c02"}},
 }
 
 // unlockRequirementMap 锁定项 → 需要通关的地图 ID。
 var unlockRequirementMap = map[string]string{
+	// ── 战役模式 ──
 	"map:map_02":       "map_01",
 	"tower:shotgun":    "map_01",
 	"map:map_03":       "map_02",
@@ -60,6 +64,8 @@ var unlockRequirementMap = map[string]string{
 	"warden:skystrike": "map_06",
 	"warden:envoy":     "map_06",
 	"map:map_08":       "map_07",
+	// ── 经典模式 ──
+	"map:map_c02": "map_c01",
 }
 
 // UnlockRequirement 返回指定项的解锁条件描述。
@@ -163,6 +169,15 @@ func NewProgressManager(s Storage) *ProgressManager {
 	return pm
 }
 
+// defaultFirstMap 返回指定模式的初始解锁地图 ID。
+// 经典模式使用 map_c01，其他模式使用 map_01。
+func defaultFirstMap(modeID string) string {
+	if modeID == "classic" {
+		return "map_c01"
+	}
+	return "map_01"
+}
+
 // modeUnlockData 返回指定模式的解锁数据，不存在则创建默认值。
 func (pm *ProgressManager) modeUnlockData(modeID string) *UnlockData {
 	if pm.progress.ModeUnlocks == nil {
@@ -171,13 +186,18 @@ func (pm *ProgressManager) modeUnlockData(modeID string) *UnlockData {
 	ud, ok := pm.progress.ModeUnlocks[modeID]
 	if !ok {
 		d := NewUnlockData()
+		// 经典模式默认解锁 map_c01 而非 map_01
+		firstMap := defaultFirstMap(modeID)
+		d.Maps = map[string]bool{firstMap: true}
 		ud = &d
 		pm.progress.ModeUnlocks[modeID] = ud
 	}
 	// 保证子 map 非 nil
 	if ud.Maps == nil {
-		ud.Maps = map[string]bool{"map_01": true}
+		ud.Maps = map[string]bool{defaultFirstMap(modeID): true}
 	}
+	// 确保首关始终解锁
+	ud.Maps[defaultFirstMap(modeID)] = true
 	if ud.Towers == nil {
 		ud.Towers = map[string]bool{"basic": true}
 	}

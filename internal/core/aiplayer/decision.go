@@ -50,6 +50,7 @@ type AITower struct {
 	AttackSpeed float64
 	Range       float64
 	Kills       int
+	Owner       int // 塔所有者 ID
 }
 
 // AICell 可建造格子。

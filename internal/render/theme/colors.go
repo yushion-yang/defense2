@@ -156,7 +156,16 @@ var (
 
 var (
 	TowerSelectionRing = rgba(253, 224, 71, 184) // 0.72 * 255 ≈ 184
-	AITowerOwnerRing   = rgba(100, 180, 255, 100) // AI 塔淡蓝底圈标识
+	AITowerOwnerRing   = rgba(100, 180, 255, 100) // AI 塔淡蓝底圈标识（单 AI fallback）
+
+	// 多 AI 所有者色板（owner 1-5），用于精灵光球和塔底圈
+	AIOwnerColors = [5]color.NRGBA{
+		{80, 160, 255, 180},  // owner 1: 蓝
+		{180, 100, 255, 180}, // owner 2: 紫
+		{80, 200, 120, 180},  // owner 3: 绿
+		{255, 160, 60, 180},  // owner 4: 橙
+		{255, 120, 180, 180}, // owner 5: 粉
+	}
 	TowerRangeFill     = rgba(245, 158, 11, 20)  // 0.08 * 255 ≈ 20
 	TowerRangeStroke   = rgba(245, 158, 11, 89)  // 0.35 * 255 ≈ 89
 	TowerFallbackSel   = hex(0xf59e0b)

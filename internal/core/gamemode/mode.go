@@ -164,6 +164,7 @@ func init() {
 	Register(NewTimedMode())
 	Register(NewBossRushMode())
 	Register(NewChallengeMode())
+	Register(NewCoopMode())
 	Register(NewTestMode())
 	Register(NewAutoPlayMode())
 	Register(NewSimulationMode())

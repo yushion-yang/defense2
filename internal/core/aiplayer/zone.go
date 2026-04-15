@@ -37,17 +37,17 @@ func NewZone(cols, rows int) *Zone {
 // Rows 返回地图行数。
 func (z *Zone) Rows() int { return z.rows }
 
-// OwnerOf 返回指定格子的所有者。
-func (z *Zone) OwnerOf(row, col int) ZoneOwner {
+// OwnerOf 返回指定格子的所有者 ID（实现 ZoneProvider 接口）。
+func (z *Zone) OwnerOf(row, col int) int {
 	if col < z.SplitCol {
-		return ZoneHuman
+		return int(ZoneHuman)
 	}
-	return ZoneAI
+	return int(ZoneAI)
 }
 
 // BuildableCells 返回指定所有者区域内的所有可建造格子。
 // grid 值: 2=CellBuildable
-func (z *Zone) BuildableCells(grid [][]int, owner ZoneOwner) []GridCell {
+func (z *Zone) BuildableCells(grid [][]int, owner int) []GridCell {
 	var cells []GridCell
 	for r, row := range grid {
 		for c, v := range row {

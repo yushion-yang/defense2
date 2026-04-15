@@ -56,6 +56,7 @@ func initGameModes() {
 		{"timedDefense", i18n.T("scene.select.mode.timed"), "stat-atkspd", i18n.T("scene.select.mode.timed_desc"), "map_02", true},
 		{"bossRush", i18n.T("scene.select.mode.boss"), "execute", i18n.T("scene.select.mode.boss_desc"), "map_03", true},
 		{"challenge", i18n.T("scene.select.mode.challenge"), "★", i18n.T("scene.select.mode.challenge_desc"), "map_04", true},
+		{"coop", i18n.T("scene.select.mode.coop"), "👥", i18n.T("scene.select.mode.coop_desc"), "map_co01", false},
 	}
 	if game.DevMode {
 		gameModes = append(gameModes, gameModeUI{
@@ -307,7 +308,7 @@ func (s *SelectScene) startGame() {
 	mode := gameModes[s.selectedMode]
 	diff := s.difficulties[s.selectedDiff]
 	// 战役/经典模式进入关卡选择
-	if mode.ID == "casual" || mode.ID == "classic" {
+	if mode.ID == "casual" || mode.ID == "classic" || mode.ID == "coop" {
 		s.switcher.SwitchScene(NewCampaignSelectScene(s.switcher, mode.ID))
 		return
 	}

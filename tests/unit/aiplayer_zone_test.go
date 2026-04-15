@@ -9,18 +9,17 @@ import (
 )
 
 func TestZoneSplit(t *testing.T) {
-	// 24 列地图，中点=12，左半 0-11=玩家，右半 12-23=AI
 	z := aiplayer.NewZone(24, 13)
 
 	tests := []struct {
 		name     string
 		row, col int
-		want     aiplayer.ZoneOwner
+		want     int
 	}{
-		{"player left edge", 5, 0, aiplayer.ZoneHuman},
-		{"player right boundary", 5, 11, aiplayer.ZoneHuman},
-		{"ai left boundary", 5, 12, aiplayer.ZoneAI},
-		{"ai right edge", 5, 23, aiplayer.ZoneAI},
+		{"player left edge", 5, 0, int(aiplayer.ZoneHuman)},
+		{"player right boundary", 5, 11, int(aiplayer.ZoneHuman)},
+		{"ai left boundary", 5, 12, int(aiplayer.ZoneAI)},
+		{"ai right edge", 5, 23, int(aiplayer.ZoneAI)},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -39,17 +38,17 @@ func TestZoneBuildCells(t *testing.T) {
 		grid[r] = make([]int, 24)
 		for c := range grid[r] {
 			if c%3 == 0 {
-				grid[r][c] = 2 // CellBuildable
+				grid[r][c] = 2
 			}
 		}
 	}
-	aiCells := z.BuildableCells(grid, aiplayer.ZoneAI)
+	aiCells := z.BuildableCells(grid, int(aiplayer.ZoneAI))
 	for _, c := range aiCells {
 		if c.Col < 12 {
 			t.Errorf("AI buildable cell at col %d, should be >= 12", c.Col)
 		}
 	}
-	humanCells := z.BuildableCells(grid, aiplayer.ZoneHuman)
+	humanCells := z.BuildableCells(grid, int(aiplayer.ZoneHuman))
 	for _, c := range humanCells {
 		if c.Col >= 12 {
 			t.Errorf("Human buildable cell at col %d, should be < 12", c.Col)

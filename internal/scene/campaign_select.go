@@ -203,11 +203,17 @@ func (s *CampaignSelectScene) startGame() {
 	}
 	level := s.levels[s.selectedMap]
 	diff := s.difficulties[s.selectedDiff]
-	s.switcher.SwitchScene(NewStageSceneWithOpts(s.switcher, StageOptions{
+	opts := StageOptions{
 		MapID:        level.ID,
 		ModeID:       s.modeID,
 		DifficultyID: diff.ID,
-	}))
+	}
+	// 合作模式：设置人数和 AI
+	if level.CoopPlayerCount > 0 {
+		opts.AIEnabled = true
+		opts.CoopPlayerCount = level.CoopPlayerCount
+	}
+	s.switcher.SwitchScene(NewStageSceneWithOpts(s.switcher, opts))
 }
 
 // ── 碰撞检测 ────────────────────────────────────

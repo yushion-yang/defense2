@@ -108,10 +108,15 @@ func (tr *TowerRenderer) DrawTowers(screen *ebiten.Image, pool *tower.Pool, sele
 			vfx.DrawBuildRipple(screen, cx, cy, 1.0-t.BuildAnim/0.3)
 		}
 
-		// --- AI 塔所有权标识（淡蓝底圈）---
-		if t.Owner == 1 && !t.Selling && t.BuildAnim <= 0 {
-			draw.CircleOutline(screen, cx, cy, theme.TowerSelectionRingR+1, 1.5,
-				theme.AITowerOwnerRing)
+		// --- AI 塔所有权标识（多色底圈）---
+		if t.Owner >= 1 && !t.Selling && t.BuildAnim <= 0 {
+			idx := t.Owner - 1
+			if idx >= len(theme.AIOwnerColors) {
+				idx = 0
+			}
+			clr := theme.AIOwnerColors[idx]
+			clr.A = 100 // 底圈半透明
+			draw.CircleOutline(screen, cx, cy, theme.TowerSelectionRingR+1, 1.5, clr)
 		}
 
 		// --- Selection ring & range indicator (selected tower only, skip during sell) ---

@@ -30,6 +30,7 @@ type AIOverlayVM struct {
 	ZoneSplitX float64 // 区域分界线 X（世界坐标）
 	ShowZone   bool
 	MapHeight  float64 // 地图像素高度（画分界线用）
+	OwnerIndex int     // AI 所有者编号（用于区分多个 AI 的颜色/位置）
 }
 
 const (
@@ -63,11 +64,16 @@ func DrawAIOverlay(screen *ebiten.Image, vm AIOverlayVM) {
 		scale := float64(aiSpriteR) * 2 / float64(vm.SpriteImg.Bounds().Dx())
 		draw.SpriteScaledRotatedAlpha(screen, vm.SpriteImg, cx, cy, scale, 0, vm.SpriteAlpha) //nolint:hud
 	} else {
-		// 默认：半透明蓝色光球 + 外圈
-		a := uint8(180 * vm.SpriteAlpha)
+		// 默认光球：颜色由 OwnerIndex 决定
+		baseClr := theme.AIOwnerColors[0] // fallback 蓝色
+		if vm.OwnerIndex >= 1 && vm.OwnerIndex <= len(theme.AIOwnerColors) {
+			baseClr = theme.AIOwnerColors[vm.OwnerIndex-1]
+		}
+		a := uint8(float64(baseClr.A) * vm.SpriteAlpha)
 		fcx, fcy := float32(cx), float32(cy)
-		draw.FilledCircle(screen, fcx, fcy, aiSpriteR, color.NRGBA{R: 80, G: 160, B: 255, A: a})                   //nolint:hud
-		draw.CircleOutline(screen, fcx, fcy, aiSpriteR+3, 1, color.NRGBA{R: 120, G: 200, B: 255, A: uint8(a / 2)}) //nolint:hud
+		draw.FilledCircle(screen, fcx, fcy, aiSpriteR, color.NRGBA{R: baseClr.R, G: baseClr.G, B: baseClr.B, A: a}) //nolint:hud
+		outA := uint8(float64(a) * 0.5)
+		draw.CircleOutline(screen, fcx, fcy, aiSpriteR+3, 1, color.NRGBA{R: baseClr.R, G: baseClr.G, B: baseClr.B, A: outA}) //nolint:hud
 	}
 
 	// ── 思维气泡 ──

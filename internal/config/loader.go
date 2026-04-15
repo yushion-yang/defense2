@@ -46,11 +46,12 @@ func GetAssetFS() *embed.FS {
 
 // LevelEntry 关卡列表条目（从 levels/map_*.json 动态构建）。
 type LevelEntry struct {
-	ID          string `json:"id"`
-	Name        string `json:"name"`
-	Description string `json:"description"`
-	Waves       int    `json:"waves"`
-	Difficulty  string `json:"difficulty"`
+	ID              string `json:"id"`
+	Name            string `json:"name"`
+	Description     string `json:"description"`
+	Waves           int    `json:"waves"`
+	Difficulty      string `json:"difficulty"`
+	CoopPlayerCount int    `json:"coopPlayerCount,omitempty"` // 合作模式人数（0=非合作）
 }
 
 // LoadLevelList 从 config/levels/ 目录扫描地图构建关卡列表，按模式过滤。
@@ -84,9 +85,10 @@ func LoadLevelList(modeID string) ([]LevelEntry, error) {
 		// 判断地图类型：经典地图(map_cXX) vs 战役地图(map_XX)
 		isClassicMap := len(numPart) >= 2 && numPart[0] == 'c' && isDigits(numPart[1:])
 		isCampaignMap := isDigits(numPart)
+		isCoopMap := len(numPart) >= 3 && numPart[:2] == "co" && isDigits(numPart[2:])
 
 		// 跳过非正式地图（map_test, map_dummy 等）
-		if !isClassicMap && !isCampaignMap {
+		if !isClassicMap && !isCampaignMap && !isCoopMap {
 			continue
 		}
 
@@ -94,6 +96,10 @@ func LoadLevelList(modeID string) ([]LevelEntry, error) {
 		switch modeID {
 		case "classic":
 			if !isClassicMap {
+				continue
+			}
+		case "coop":
+			if !isCoopMap {
 				continue
 			}
 		case "test", "":
@@ -109,13 +115,17 @@ func LoadLevelList(modeID string) ([]LevelEntry, error) {
 		if err != nil {
 			continue // 跳过无法加载的文件
 		}
-		levels = append(levels, LevelEntry{
+		entry := LevelEntry{
 			ID:          m.ID,
 			Name:        m.Name,
 			Description: m.Description,
 			Waves:       m.Waves,
 			Difficulty:  m.Difficulty,
-		})
+		}
+		if m.Coop != nil {
+			entry.CoopPlayerCount = m.Coop.PlayerCount
+		}
+		levels = append(levels, entry)
 	}
 
 	return levels, nil
@@ -151,6 +161,24 @@ type MapConfig struct {
 	PathOrder   [][2]int            `json:"pathOrder"`            // 敌人行进路径（[row, col] 序列）
 	Entries     []MapEntry          `json:"entries,omitempty"`    // 多入口配置（可选）
 	PathOrders  map[string][][2]int `json:"pathOrders,omitempty"` // 多路径配置（可选，按入口 ID 索引）
+	Coop        *CoopConfig         `json:"coop,omitempty"`       // 合作模式分区配置（可选）
+}
+
+// CoopConfig 合作模式地图配置。
+type CoopConfig struct {
+	PlayerCount int           `json:"playerCount"` // 玩家人数（2/4/6）
+	Sections    []CoopSection `json:"sections"`    // 分区列表
+}
+
+// CoopSection 合作模式分区定义。
+type CoopSection struct {
+	ID       string `json:"id"`       // 分区标识（"A"/"B"/...）
+	ColStart int    `json:"colStart"` // 列范围起始（含）
+	ColEnd   int    `json:"colEnd"`   // 列范围结束（不含）
+	RowStart int    `json:"rowStart"` // 行范围起始（含），0=从第0行开始
+	RowEnd   int    `json:"rowEnd"`   // 行范围结束（不含），0=到最后一行
+	Theme    string `json:"theme"`    // 分区主题（可与地图主题不同）
+	Owner    int    `json:"owner"`    // 所有者：0=human, 1..N-1=AI
 }
 
 // MapEntry 出怪入口，用于多路径地图。

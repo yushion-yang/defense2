@@ -236,7 +236,8 @@ type StageScene struct {
 	autoPlayer AutoPlayer // 自动对局驱动（nil=手动模式，非 nil=跳过渲染）
 
 	// ── AI 玩家（合作模式）──
-	aiPlayer *aiplayer.AIPlayer // AI 队友（nil=单人模式）
+	aiPlayers []*aiplayer.AIPlayer // AI 队友列表（nil/empty=单人模式）
+	coopZone  *aiplayer.CoopZone   // 合作分区（nil=非合作模式）
 
 	// ── 成就与统计 ──
 	achieveTracker *achievement.Tracker // 成就追踪器（持久化，跨局累计）
@@ -465,15 +466,55 @@ func NewStageSceneWithOpts(sw Switcher, opts StageOptions) *StageScene {
 	s.manualWave = opts.ManualWave
 	s.initOpts = opts
 
-	// AI 玩家初始化（合作模式）
+	// AI 玩家初始化（合作模式：从地图 Coop 配置或按列均分创建 N-1 个 AI）
 	if opts.AIEnabled && gm != nil {
-		zone := aiplayer.NewZone(gm.Config.Cols, gm.Config.Rows)
-		s.aiPlayer = aiplayer.New(aiplayer.Config{
-			Zone:      zone,
-			StartGold: s.gold,
-			Ops:       s,
-			CellSize:  gm.CellSize,
-		})
+		playerCount := 2
+		if opts.CoopPlayerCount > 0 {
+			playerCount = opts.CoopPlayerCount
+		}
+
+		var coopZone *aiplayer.CoopZone
+		if gm.Config.Coop != nil {
+			sections := make([]aiplayer.ZoneSection, len(gm.Config.Coop.Sections))
+			for i, cs := range gm.Config.Coop.Sections {
+				sections[i] = aiplayer.ZoneSection{
+					ID: cs.ID, ColStart: cs.ColStart, ColEnd: cs.ColEnd,
+					RowStart: cs.RowStart, RowEnd: cs.RowEnd,
+					Owner: cs.Owner, Theme: cs.Theme,
+				}
+			}
+			coopZone = aiplayer.NewCoopZone(gm.Config.Cols, gm.Config.Rows, sections)
+		} else {
+			colPer := gm.Config.Cols / playerCount
+			var sections []aiplayer.ZoneSection
+			for i := 0; i < playerCount; i++ {
+				end := (i + 1) * colPer
+				if i == playerCount-1 {
+					end = gm.Config.Cols
+				}
+				sections = append(sections, aiplayer.ZoneSection{
+					ID: string(rune('A' + i)), ColStart: i * colPer, ColEnd: end, Owner: i,
+				})
+			}
+			coopZone = aiplayer.NewCoopZone(gm.Config.Cols, gm.Config.Rows, sections)
+		}
+		s.coopZone = coopZone
+
+		for i := 1; i < playerCount; i++ {
+			sec := coopZone.Sections()[i]
+			spawnX := float64((sec.ColStart+sec.ColEnd)/2) * float64(gm.CellSize)
+			spawnY := float64(gm.Config.Rows/2) * float64(gm.CellSize)
+			ap := aiplayer.New(aiplayer.Config{
+				ZoneProvider: coopZone,
+				OwnerID:      i,
+				StartGold:    s.gold,
+				Ops:          s,
+				CellSize:     gm.CellSize,
+				SpawnX:       spawnX,
+				SpawnY:       spawnY,
+			})
+			s.aiPlayers = append(s.aiPlayers, ap)
+		}
 	}
 
 	// 测试模式：手动开波 + 每波固定 3 个怪 + 高 HP（方便观察）
@@ -2622,8 +2663,8 @@ func (s *StageScene) updatePlaying() {
 	}
 
 	// AI 玩家决策
-	if s.aiPlayer != nil {
-		s.tickAIPlayer()
+	for _, ap := range s.aiPlayers {
+		s.tickAIPlayerOne(ap)
 	}
 
 	// AutoPlay 决策钩子
@@ -2880,17 +2921,18 @@ func (s *StageScene) drawScene(screen *ebiten.Image) {
 	}
 
 	// AI 玩家精灵 + 思维气泡
-	if s.aiPlayer != nil {
+	for _, ap := range s.aiPlayers {
 		hud.DrawAIOverlay(worldTarget, hud.AIOverlayVM{
-			SpriteX:     s.aiPlayer.SpriteX(),
-			SpriteY:     s.aiPlayer.SpriteY(),
-			SpriteAlpha: 1.0,
-			BubbleVisible: s.aiPlayer.BubbleVisible(),
-			BubbleText:    s.aiPlayer.BubbleText(),
-			BubbleAlpha:   s.aiPlayer.BubbleAlpha(),
+			SpriteX:       ap.SpriteX(),
+			SpriteY:       ap.SpriteY(),
+			SpriteAlpha:   1.0,
+			BubbleVisible: ap.BubbleVisible(),
+			BubbleText:    ap.BubbleText(),
+			BubbleAlpha:   ap.BubbleAlpha(),
 			ZoneSplitX:    float64(s.gameMap.Config.Cols/2) * float64(s.gameMap.CellSize),
 			ShowZone:      true,
 			MapHeight:     s.gameMap.PixelHeight(),
+			OwnerIndex:    ap.OwnerID(),
 		})
 	}
 
@@ -2976,7 +3018,7 @@ func (s *StageScene) drawScene(screen *ebiten.Image) {
 		vm := BuildInfoPanelVM(s.selectedTower, sellValue, s.findTowerDef(s.selectedTower), s.gold)
 		if s.selectedTower.Owner != 0 {
 			vm.HideActions = true
-			vm.OwnerLabel = "AI 的塔"
+			vm.OwnerLabel = i18n.T("hud.info.ai_owner")
 		}
 		hud.DrawInfoPanel(screen, vm)
 		// Hover 在面板上时显示升级详情浮窗
@@ -3580,11 +3622,14 @@ func (s *StageScene) onWaveTransition(prevWave int) {
 		ctx := s.buildModeCtx()
 		result := s.session.OnWaveCleared(prevWave, ctx)
 		totalBonus := result.BonusGold + result.PerfectBonus
-		// AI 玩家模式：波次奖励对半分
-		if s.aiPlayer != nil {
-			aiShare := totalBonus / 2
-			s.aiPlayer.AddGold(aiShare)
-			totalBonus -= aiShare
+		// AI 玩家模式：波次奖励按人头均分
+		if len(s.aiPlayers) > 0 {
+			playerCount := len(s.aiPlayers) + 1
+			aiShareEach := totalBonus / playerCount
+			for _, ap := range s.aiPlayers {
+				ap.AddGold(aiShareEach)
+			}
+			totalBonus -= aiShareEach * len(s.aiPlayers)
 		}
 		s.gold += totalBonus
 		s.gameStats.GoldEarned += totalBonus
@@ -3658,6 +3703,11 @@ func (s *StageScene) activateWarden(key string) {
 	s.wardenReady = true
 	s.imode = modeIdle
 
+	// 非手动模式下，恢复自动开波（无论是否选择战灵都需要执行）
+	if !s.testMode && !s.manualWave {
+		s.spawner.ManualWave = false
+	}
+
 	if key == "" {
 		// "不选" — wardenUnit 保持 nil
 		return
@@ -3674,11 +3724,6 @@ func (s *StageScene) activateWarden(key string) {
 	if wc := config.GlobalWardenConfig(key); wc != nil {
 		cfg := *wc
 		s.wardenCfg = &cfg
-	}
-
-	// 非手动模式下，恢复自动开波
-	if !s.testMode && !s.manualWave {
-		s.spawner.ManualWave = false
 	}
 }
 
@@ -4031,21 +4076,22 @@ func (s *StageScene) runAutoPlayFrame() {
 
 // ── AI 玩家集成 ──────────────────────────────────────────
 
-// tickAIPlayer 构建 AI 快照并驱动 AI 玩家决策。
-func (s *StageScene) tickAIPlayer() {
+// tickAIPlayerOne 构建 AI 快照并驱动单个 AI 玩家决策。
+func (s *StageScene) tickAIPlayerOne(ap *aiplayer.AIPlayer) {
 	snap := aiplayer.AISnapshot{
-		Gold:     s.aiPlayer.Gold(),
+		Gold:     ap.Gold(),
 		Wave:     s.spawner.Wave,
 		MaxWaves: s.gameMap.Config.Waves,
 		Lives:    s.lives,
 	}
 
-	// 塔快照
+	// 塔快照（含 Owner 字段，AI 内部按 Owner 过滤）
 	s.towers.Each(func(t *tower.Tower) {
 		snap.Towers = append(snap.Towers, aiplayer.AITower{
 			Row: t.Row, Col: t.Col,
 			Damage: t.Damage, Strength: int(t.Strength.Effective()),
 			Range: t.Range, Kills: t.Kills,
+			Owner: t.Owner,
 		})
 	})
 
@@ -4073,11 +4119,12 @@ func (s *StageScene) tickAIPlayer() {
 	snap.MapCenterX = gm.PixelWidth() / 2
 	snap.MapCenterY = gm.PixelHeight() / 2
 
-	s.aiPlayer.Tick(1.0/60.0, snap)
+	ap.Tick(1.0/60.0, snap)
 }
 
 // BuildTowerForAI 为 AI 造塔。实现 aiplayer.StageOps。
-func (s *StageScene) BuildTowerForAI(key string, row, col int) bool {
+// ownerID 标识造塔的 AI 玩家编号（1..N-1）。
+func (s *StageScene) BuildTowerForAI(key string, row, col, ownerID int) bool {
 	var def *tower.TowerDef
 	for i := range s.towerDefs {
 		if s.towerDefs[i].Key == key {
@@ -4096,7 +4143,7 @@ func (s *StageScene) BuildTowerForAI(key string, row, col int) bool {
 	if t == nil {
 		return false
 	}
-	t.Owner = 1 // AI 的塔
+	t.Owner = ownerID
 	t.BuildAnim = 0.3
 	// 按塔定义的 abilityMode 初始化能力（与 tryPlaceTower 逻辑一致）
 	switch def.AbilityAcquireMode {
@@ -4122,13 +4169,20 @@ func (s *StageScene) UpgradeTowerForAI(row, col int) bool {
 }
 
 // SellTowerForAI 为 AI 卖塔。实现 aiplayer.StageOps。
+// 退款按塔的 Owner 找到对应 AI 玩家。
 func (s *StageScene) SellTowerForAI(row, col int) bool {
 	t := s.towers.At(row, col)
 	if t == nil {
 		return false
 	}
 	refund := s.econ.SellRefund(t.Cost)
-	s.aiPlayer.AddGold(refund)
+	// 按 owner 找到对应 AI 玩家发放退款
+	for _, ap := range s.aiPlayers {
+		if ap.OwnerID() == t.Owner {
+			ap.AddGold(refund)
+			break
+		}
+	}
 	t.Selling = true
 	t.SellAnim = 0.25
 	return true

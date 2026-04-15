@@ -344,7 +344,11 @@ func (s *Spawner) StartNextWave() {
 	}
 	s.WaitingForClear = false
 	s.WaveTimer = 0
-	s.startWave()
+	if s.ClassicWaves != nil {
+		s.startWaveClassic()
+	} else {
+		s.startWave()
+	}
 }
 
 // startWave 内部开始下一波。
