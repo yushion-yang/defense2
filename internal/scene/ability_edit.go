@@ -5,6 +5,13 @@
 // 支持 PrimitivePicker 选择组件、Badge 显示已选条件/效果、
 // +/- 按钮调参、实时费用计算、保存到 AbilityStore。
 //
+// 导航流：
+//   - returnScene 存储调用方场景，ESC/取消/保存完成后切回。
+//   - 从 BlueprintEditScene 步骤 3 的「+创建新能力」进入时，
+//     returnScene = BlueprintEditScene（返回蓝图编辑器继续选能力）。
+//   - 从工坊（TowerWorkshopScene）直接进入时，
+//     returnScene = TowerWorkshopScene（返回工坊）。
+//
 // 关联：
 //   - descriptor.PipelineEditState / ComponentEditState: 管线编辑状态
 //   - descriptor.AbilityStore: 能力持久化存储
@@ -123,7 +130,7 @@ type AbilityEditScene struct {
 	abilityStore *descriptor.AbilityStore // 能力持久化存储（可为 nil）
 	ability      descriptor.CustomAbility // 正在编辑的能力（值拷贝）
 	isNew        bool                     // true=新建, false=编辑已有
-	returnScene  Scene                    // 返回时切换到的场景
+	returnScene  Scene                    // 调用方场景（ESC/取消/保存后切回），由构造函数注入
 
 	// ── 管线编辑状态（使用 descriptor 包导出类型，避免类型重复） ──
 	pipelines []descriptor.PipelineEditState
