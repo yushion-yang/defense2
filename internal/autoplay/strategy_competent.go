@@ -148,7 +148,7 @@ type CompetentStrategy struct {
 // NewCompetentStrategy 创建合理玩家策略。
 func NewCompetentStrategy(opts ...CompetentOpt) *CompetentStrategy {
 	s := &CompetentStrategy{
-		wardenKey: "prince",
+		wardenKey: "chain",
 		seed:      42,
 	}
 	for _, opt := range opts {
@@ -285,12 +285,11 @@ func (s *CompetentStrategy) decidePlaying(state *GameState) []Action {
 			}
 		}
 
-		// 2. Boss 前策略：不建新塔，集中升级 carry
+		// 2. Boss 前策略：不建新塔，集中升级 carry（批量升级花光金币）
 		if preBoss {
 			if state.Gold >= upgCost && len(state.Towers) > 0 {
-				if action, ok := s.tryUpgrade(state, false); ok {
-					actions = append(actions, action)
-					return actions
+				if ups := s.tryMultiUpgrade(state, 5); len(ups) > 0 {
+					return ups
 				}
 			}
 			// 旧式能力分配（兼容）
@@ -299,7 +298,7 @@ func (s *CompetentStrategy) decidePlaying(state *GameState) []Action {
 				return actions
 			}
 		} else {
-			// 非 Boss 前：建塔优先，然后升级
+			// 非 Boss 前：建塔优先，然后批量升级
 			if s.builtCount < target && s.canAffordBuild(state) {
 				if action, ok := s.tryBuild(state); ok {
 					actions = append(actions, action)
@@ -307,9 +306,8 @@ func (s *CompetentStrategy) decidePlaying(state *GameState) []Action {
 				}
 			}
 			if state.Gold >= upgCost && len(state.Towers) > 0 {
-				if action, ok := s.tryUpgrade(state, false); ok {
-					actions = append(actions, action)
-					return actions
+				if ups := s.tryMultiUpgrade(state, 5); len(ups) > 0 {
+					return ups
 				}
 			}
 			// 旧式能力分配（兼容）
@@ -355,11 +353,10 @@ func (s *CompetentStrategy) decideDesperate(state *GameState) []Action {
 			return abilActions
 		}
 
-		// 紧急模式：升级已验证的塔（最多击杀）> 建新塔 > 开波
+		// 紧急模式：批量升级已验证的塔（最多击杀）> 建新塔 > 开波
 		if state.Gold >= upgCost && len(state.Towers) > 0 {
-			if action, ok := s.tryUpgrade(state, false); ok {
-				actions = append(actions, action)
-				return actions
+			if ups := s.tryMultiUpgrade(state, 5); len(ups) > 0 {
+				return ups
 			}
 		}
 		// 卖掉无效塔
@@ -403,8 +400,12 @@ func (s *CompetentStrategy) tryBuild(state *GameState) (Action, bool) {
 	if s.maxTowers > 0 && s.builtCount >= s.maxTowers {
 		return Action{}, false
 	}
-	// 节流：每 10 tick 最多建一座
-	if state.Tick-s.lastBuildTick < 10 {
+	// 节流：setup 阶段 2 tick（快速铺设初始防线），其他阶段 10 tick
+	buildThrottle := 10
+	if s.phase == phaseSetup {
+		buildThrottle = 2
+	}
+	if state.Tick-s.lastBuildTick < buildThrottle {
 		return Action{}, false
 	}
 
@@ -445,6 +446,36 @@ func (s *CompetentStrategy) tryBuild(state *GameState) (Action, bool) {
 	}, true
 }
 
+// tryMultiUpgrade 在波间歇期连续升级同一座塔（最多 maxCount 次），
+// 确保金币在开波前全部转化为 DPS。返回多个 ActionUpgrade。
+func (s *CompetentStrategy) tryMultiUpgrade(state *GameState, maxCount int) []Action {
+	if len(state.Towers) == 0 || maxCount <= 0 {
+		return nil
+	}
+	upgCost := config.GlobalBalance().Tower.StrengthBuyCost
+	if state.Gold < upgCost {
+		return nil
+	}
+
+	var actions []Action
+	gold := state.Gold
+	for range maxCount {
+		if gold < upgCost {
+			break
+		}
+		action, ok := s.pickUpgradeTarget(state, false)
+		if !ok {
+			break
+		}
+		actions = append(actions, action)
+		gold -= upgCost
+	}
+	if len(actions) > 0 {
+		s.lastUpgradeTick = state.Tick
+	}
+	return actions
+}
+
 // tryUpgrade 选择最值得升级的塔。
 //
 // 核心原则：carry 系统 — 资源高度集中到 carry 塔。
@@ -456,8 +487,26 @@ func (s *CompetentStrategy) tryUpgrade(state *GameState, preferActive bool) (Act
 	if len(state.Towers) == 0 {
 		return Action{}, false
 	}
-	// 节流：每 5 tick 最多升一次
-	if state.Tick-s.lastUpgradeTick < 5 {
+	// 节流：波中每 5 tick 最多升一次，波间无限制
+	if preferActive && state.Tick-s.lastUpgradeTick < 5 {
+		return Action{}, false
+	}
+	action, ok := s.pickUpgradeTarget(state, preferActive)
+	if ok {
+		s.lastUpgradeTick = state.Tick
+	}
+	return action, ok
+}
+
+// pickUpgradeTarget 选择最值得升级的塔（纯选择，不修改节流状态）。
+//
+// 核心原则：carry 系统 — 资源高度集中到 carry 塔。
+//   - carry str < carryStrCap(300) 时：100% 升级 carry
+//   - carry str >= carryStrCap 后：按效能评分选最高分塔
+//   - 波中 (preferActive=true)：优先升级正在攻击的 carry / 最强塔
+//   - 紧急模式：按击杀数选（已验证的表现者）
+func (s *CompetentStrategy) pickUpgradeTarget(state *GameState, preferActive bool) (Action, bool) {
+	if len(state.Towers) == 0 {
 		return Action{}, false
 	}
 
@@ -469,7 +518,6 @@ func (s *CompetentStrategy) tryUpgrade(state *GameState, preferActive bool) (Act
 		if carry != nil && carry.Strength < s.carryStrCap {
 			// 波中模式下，carry 必须有目标才升级
 			if !preferActive || carry.HasTarget {
-				s.lastUpgradeTick = state.Tick
 				return Action{Type: ActionUpgrade, Row: carry.Row, Col: carry.Col}, true
 			}
 		}
@@ -513,7 +561,6 @@ func (s *CompetentStrategy) tryUpgrade(state *GameState, preferActive bool) (Act
 		return Action{}, false
 	}
 
-	s.lastUpgradeTick = state.Tick
 	return Action{
 		Type: ActionUpgrade,
 		Row:  best.Row,
@@ -521,7 +568,12 @@ func (s *CompetentStrategy) tryUpgrade(state *GameState, preferActive bool) (Act
 	}, true
 }
 
-// trySell 卖掉无效塔（0 击杀、波次 >= sellCheckWave）。
+// trySell 卖掉无效塔或 bad-tier 塔。
+//
+// 两种情况会触发卖出：
+//   1. 0 击杀塔（wave >= sellCheckWave）：位置评分最低者优先
+//   2. Bad-tier 塔（wave >= 3）：BaseDamage < 平均的 60%，说明 roll 到了差 tier
+//
 // 卖出后 builtCount 减一，让后续帧可以在更好位置重建。
 func (s *CompetentStrategy) trySell(state *GameState) (Action, bool) {
 	if len(state.Towers) <= 1 {
@@ -548,6 +600,44 @@ func (s *CompetentStrategy) trySell(state *GameState) (Action, bool) {
 		if posScore < worstPosScore {
 			worstPosScore = posScore
 			worst = t
+		}
+	}
+
+	// Bad-tier carry 检测：wave 2 时如果 carry 的 BaseDamage 太低，也卖掉重建
+	if worst == nil && state.Wave >= 2 && s.hasCarry && len(state.Towers) >= 2 {
+		carry := s.findCarry(state)
+		if carry != nil && carry.Kills == 0 {
+			var totalDmg float64
+			for i := range state.Towers {
+				totalDmg += state.Towers[i].BaseDamage
+			}
+			avgDmg := totalDmg / float64(len(state.Towers))
+			if carry.BaseDamage < avgDmg*0.7 {
+				worst = carry
+				s.hasCarry = false // 卖掉后重新指定 carry
+			}
+		}
+	}
+
+	// Bad-tier 检测：wave 3+ 时，BaseDamage 显著低于平均的非 carry 塔
+	if worst == nil && state.Wave >= 3 && len(state.Towers) >= 2 {
+		var totalDmg float64
+		for i := range state.Towers {
+			totalDmg += state.Towers[i].BaseDamage
+		}
+		avgDmg := totalDmg / float64(len(state.Towers))
+		threshold := avgDmg * 0.6
+
+		worstDmg := math.MaxFloat64
+		for i := range state.Towers {
+			t := &state.Towers[i]
+			if s.isCarry(t) {
+				continue
+			}
+			if t.BaseDamage < threshold && t.BaseDamage < worstDmg {
+				worstDmg = t.BaseDamage
+				worst = t
+			}
 		}
 	}
 
@@ -899,6 +989,7 @@ func (s *CompetentStrategy) isPreBossWave(nextWave int) bool {
 // 不开波的情况：
 //   - 没有任何塔
 //   - 金币差一点就能再建一座（nearAffordMargin 内）
+//   - 还有金币可以用来升级（波前花光金币 = 更多 DPS）
 //
 // 其他情况尽快开波（更快 = 更高 perfect bonus 概率）。
 func (s *CompetentStrategy) shouldStartWave(state *GameState) bool {
@@ -915,6 +1006,12 @@ func (s *CompetentStrategy) shouldStartWave(state *GameState) bool {
 		if deficit > 0 && deficit <= nearAffordMargin {
 			return false
 		}
+	}
+
+	// 还能升级时不开波 — 波前花光金币转化为 DPS
+	upgCost := config.GlobalBalance().Tower.StrengthBuyCost
+	if state.Gold >= upgCost && len(state.Towers) > 0 {
+		return false
 	}
 
 	return true

@@ -67,6 +67,10 @@ const (
 	wsBackBtnH   = float32(30)
 	wsCreateBtnW = float32(120)
 	wsCreateBtnH = float32(32)
+
+	// 删除按钮（卡片右上角）
+	wsDelBtnSize = float32(20) // 正方形边长
+	wsDelBtnPad  = float32(4)  // 距卡片右上角的内边距
 )
 
 // ── TowerWorkshopScene ──────────────────────────
@@ -87,6 +91,7 @@ type TowerWorkshopScene struct {
 
 	// ── 布局缓存（每帧重建） ──
 	cardRects     []ui.Rect // 卡片矩形（用于点击检测）
+	delBtnRects   []ui.Rect // 删除按钮矩形（仅自定义 Tab 有值，与 cardRects 对应）
 	createBtnRect ui.Rect   // 「新建」按钮矩形
 
 	bgGrad *draw.CachedGradient
@@ -217,7 +222,16 @@ func (s *TowerWorkshopScene) handleInput(mx, my float64) {
 		return
 	}
 
-	// 4. 卡片点击（编辑）
+	// 4. 删除按钮（仅自定义 Tab）
+	for i, r := range s.delBtnRects {
+		if r.W > 0 && r.Contains(mx, my) {
+			playUIClick(s.switcher)
+			s.handleDelete(i)
+			return
+		}
+	}
+
+	// 5. 卡片点击（编辑）
 	for i, r := range s.cardRects {
 		if r.Contains(mx, my) {
 			playUIClick(s.switcher)
@@ -274,6 +288,32 @@ func (s *TowerWorkshopScene) handleCardClick(idx int) {
 			s.switcher.SwitchScene(scene)
 		}
 	}
+}
+
+// handleDelete 删除自定义能力或蓝图（仅自定义 Tab 可用）。
+func (s *TowerWorkshopScene) handleDelete(idx int) {
+	switch s.tab {
+	case wsTabCustomAbilities:
+		cas := s.abilityStore.List()
+		if idx >= 0 && idx < len(cas) {
+			if err := s.abilityStore.Delete(cas[idx].ID); err != nil {
+				hud.ShowToast("删除失败: " + err.Error())
+			} else {
+				hud.ShowToast("能力已删除")
+			}
+		}
+	case wsTabCustomBlueprints:
+		bps := s.blueprintStore.List()
+		if idx >= 0 && idx < len(bps) {
+			if err := s.blueprintStore.Delete(bps[idx].ID); err != nil {
+				hud.ShowToast("删除失败: " + err.Error())
+			} else {
+				hud.ShowToast("蓝图已删除")
+			}
+		}
+	}
+	// 重置 hover，删除后索引可能失效
+	s.hover = -1
 }
 
 // copyAbilityToCustom 复制预制能力为自定义能力。
@@ -415,6 +455,7 @@ func (s *TowerWorkshopScene) Draw(screen *ebiten.Image) {
 
 	// 绘制卡片列表
 	s.cardRects = s.cardRects[:0]
+	s.delBtnRects = s.delBtnRects[:0]
 	s.createBtnRect = ui.Rect{}
 
 	switch s.tab {
@@ -465,8 +506,10 @@ func (s *TowerWorkshopScene) drawBlueprintCards(screen *ebiten.Image, fm *render
 		r := ui.Rect{X: x, Y: y, W: wsCardW, H: wsCardH}
 		s.cardRects = append(s.cardRects, r)
 
-		// 裁剪检查
-		if float64(y+wsCardH) < float64(cr.Y) || float64(y) > float64(cr.Y+cr.H) {
+		// 裁剪检查：不可见的卡片仍需占位 delBtnRects
+		visible := float64(y+wsCardH) >= float64(cr.Y) && float64(y) <= float64(cr.Y+cr.H)
+		if !visible {
+			s.delBtnRects = append(s.delBtnRects, ui.Rect{}) // 占位
 			continue
 		}
 
@@ -513,6 +556,10 @@ func (s *TowerWorkshopScene) drawBlueprintCards(screen *ebiten.Image, fm *render
 		ui.LabelV(screen, abText, cx, float64(y)+70, float64(wsCardW)-16, ui.LabelStyle{
 			Font: theme.FontXS, Color: theme.TextLocked,
 		})
+
+		// 删除按钮（右上角）
+		delR := s.drawCardDeleteBtn(screen, x, y, hovered)
+		s.delBtnRects = append(s.delBtnRects, delR)
 	}
 
 	// 「新建蓝图」按钮
@@ -540,8 +587,10 @@ func (s *TowerWorkshopScene) drawAbilityCards(screen *ebiten.Image, fm *render.F
 		r := ui.Rect{X: x, Y: y, W: wsCardW, H: wsCardH}
 		s.cardRects = append(s.cardRects, r)
 
-		// 裁剪检查
-		if float64(y+wsCardH) < float64(cr.Y) || float64(y) > float64(cr.Y+cr.H) {
+		// 裁剪检查：不可见的卡片仍需占位 delBtnRects
+		visible := float64(y+wsCardH) >= float64(cr.Y) && float64(y) <= float64(cr.Y+cr.H)
+		if !visible {
+			s.delBtnRects = append(s.delBtnRects, ui.Rect{}) // 占位
 			continue
 		}
 
@@ -587,6 +636,10 @@ func (s *TowerWorkshopScene) drawAbilityCards(screen *ebiten.Image, fm *render.F
 		ui.LabelV(screen, pipeText, cx, float64(y)+74, float64(wsCardW)-16, ui.LabelStyle{
 			Font: theme.FontXS, Color: theme.TextLocked,
 		})
+
+		// 删除按钮（右上角）
+		delR := s.drawCardDeleteBtn(screen, x, y, hovered)
+		s.delBtnRects = append(s.delBtnRects, delR)
 	}
 
 	// 「新建能力」按钮
@@ -621,6 +674,29 @@ func (s *TowerWorkshopScene) drawCreateButton(screen *ebiten.Image, cr ui.Rect, 
 			Font: theme.FontBody, Color: theme.TextLocked,
 		})
 	}
+}
+
+// drawCardDeleteBtn 在卡片右上角绘制 "×" 删除按钮，并记录 hitRect。
+// 返回按钮的 Rect（用于调用方追加到 delBtnRects）。
+func (s *TowerWorkshopScene) drawCardDeleteBtn(screen *ebiten.Image, cardX, cardY float32, hovered bool) ui.Rect {
+	bx := cardX + wsCardW - wsDelBtnSize - wsDelBtnPad
+	by := cardY + wsDelBtnPad
+	r := ui.Rect{X: bx, Y: by, W: wsDelBtnSize, H: wsDelBtnSize}
+
+	// 半透明背景圆角 + "×" 文字
+	bgClr := color.RGBA{R: 180, G: 60, B: 60, A: 160}
+	if hovered {
+		bgClr = color.RGBA{R: 220, G: 70, B: 70, A: 200}
+	}
+	draw.RoundRect(screen, bx, by, wsDelBtnSize, wsDelBtnSize, wsDelBtnSize/2, bgClr)
+
+	fm := render.GlobalFont()
+	if fm != nil {
+		cx := float64(bx) + float64(wsDelBtnSize)/2
+		cy := float64(by) + float64(wsDelBtnSize)/2
+		fm.DrawCenteredVBoldText(screen, "×", cx, cy, theme.FontCaption, color.White)
+	}
+	return r
 }
 
 // ── 预制能力卡片列表 ─────────────────────────────

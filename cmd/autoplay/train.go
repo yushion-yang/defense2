@@ -70,7 +70,7 @@ func runTraining(cfg trainConfig) {
 		cfg.Difficulty = "normal"
 	}
 	if cfg.Warden == "" {
-		cfg.Warden = "prince"
+		cfg.Warden = "chain"
 	}
 
 	coopMaps := []string{"map_co01", "map_co02", "map_co03"}
