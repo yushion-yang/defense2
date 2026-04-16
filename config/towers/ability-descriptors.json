@@ -3,84 +3,133 @@
     "_doc": "能力描述符表。每个能力用 pipeline 模式描述其完整行为链。",
     "format": "数组形式，每项为一个 AbilityDescriptor",
     "fields": {
-      "id":          "能力唯一标识，与 abilities.json 的 type 一一对应",
-      "label":       "中文显示名",
-      "cost":        "解锁费用",
-      "tags":        "分类标签（attack/cc/damage/buff/dot/zone）",
+      "id": "能力唯一标识，与 abilities.json 的 type 一一对应",
+      "label": "中文显示名",
+      "cost": "解锁费用",
+      "tags": "分类标签（attack/cc/damage/buff/dot/zone）",
       "attackStyle": "攻击方式覆盖（仅 attack 类能力）",
-      "spriteKey":   "攻击方式对应的精灵键名（仅 attack 类能力）",
-      "attackParams":"攻击方式参数（仅 attack 类能力，内含 scaler）",
-      "pipelines":   "触发→条件→选择器→效果 管线数组"
+      "spriteKey": "攻击方式对应的精灵键名（仅 attack 类能力）",
+      "attackParams": "攻击方式参数（仅 attack 类能力，内含 scaler）",
+      "pipelines": "触发→条件→选择器→效果 管线数组"
     },
     "scalerTypes": {
-      "fixed":  "固定值 {\"scaler\":\"fixed\",\"value\":N}",
+      "fixed": "固定值 {\"scaler\":\"fixed\",\"value\":N}",
       "linear": "线性缩放 {\"scaler\":\"linear\",\"base\":B,\"potential\":P}，公式: base + potential × (strength / 100)"
     }
   },
-
   "descriptors": [
     {
       "id": "enhance",
       "label": "强化",
       "cost": 12,
-      "tags": ["attack"],
+      "tags": [
+        "attack"
+      ],
       "attackStyle": "projectile",
       "spriteKey": "fortress",
       "pipelines": [
         {
           "trigger": "onPlace",
           "conditions": [],
-          "selector": {"type": "selfTower"},
+          "selector": {
+            "type": "selfTower"
+          },
           "effects": [
-            {"type": "modifyStat", "stat": "damage", "multiplier": 1.8},
-            {"type": "modifyStat", "stat": "speed", "multiplier": 1.8},
-            {"type": "modifyStat", "stat": "range", "multiplier": 1.2}
+            {
+              "type": "modifyStat",
+              "stat": "damage",
+              "multiplier": 1.8
+            },
+            {
+              "type": "modifyStat",
+              "stat": "speed",
+              "multiplier": 1.8
+            },
+            {
+              "type": "modifyStat",
+              "stat": "range",
+              "multiplier": 1.2
+            }
           ]
         }
-      ]
+      ],
+      "icon": "enhance",
+      "display": "一次性永久提升基础+潜力: 伤害/攻速+{p%}, 射程+{p2%}",
+      "prebuilt": true
     },
     {
       "id": "scatter",
       "label": "散射",
       "cost": 12,
-      "tags": ["attack"],
+      "tags": [
+        "attack"
+      ],
       "attackStyle": "scatter",
       "spriteKey": "shotgun",
       "attackParams": {
-        "pellets": {"scaler": "linear", "base": 3, "potential": 0.5},
-        "coneAngle": {"scaler": "fixed", "value": 60}
+        "pellets": {
+          "scaler": "linear",
+          "base": 3,
+          "potential": 0.5
+        },
+        "coneAngle": {
+          "scaler": "fixed",
+          "value": 60
+        }
       },
-      "pipelines": []
+      "pipelines": [],
+      "icon": "scatter",
+      "display": "攻击朝{p}度扇形区域发射{si}颗弹丸",
+      "prebuilt": true
     },
     {
       "id": "wideBeam",
       "label": "贯穿光束",
       "cost": 14,
-      "tags": ["attack"],
+      "tags": [
+        "attack"
+      ],
       "attackStyle": "wideBeam",
       "spriteKey": "prism",
       "attackParams": {
-        "beamWidth": {"scaler": "linear", "base": 6, "potential": 1}
+        "beamWidth": {
+          "scaler": "linear",
+          "base": 6,
+          "potential": 1
+        }
       },
-      "pipelines": []
+      "pipelines": [],
+      "icon": "wideBeam",
+      "display": "攻击发射宽{s}的激光穿透所有敌人, 激光距离为射程×{p}",
+      "prebuilt": true
     },
     {
       "id": "spinAoe",
       "label": "旋风",
       "cost": 10,
-      "tags": ["attack"],
+      "tags": [
+        "attack"
+      ],
       "attackStyle": "spin_aoe",
       "spriteKey": "cyclone",
       "attackParams": {
-        "damageRatio": {"scaler": "fixed", "value": 0.5}
+        "damageRatio": {
+          "scaler": "fixed",
+          "value": 0.5
+        }
       },
-      "pipelines": []
+      "pipelines": [],
+      "icon": "spinAoe",
+      "display": "攻击对射程范围内的敌人造成{p%}伤害",
+      "prebuilt": true
     },
     {
       "id": "bounce",
       "label": "弹射",
       "cost": 11,
-      "tags": ["attack"],
+      "tags": [
+        "attack"
+      ],
       "attackStyle": "projectile",
       "spriteKey": "ricochet",
       "pipelines": [
@@ -89,21 +138,37 @@
           "conditions": [],
           "selector": {
             "type": "chain",
-            "maxBounce": {"scaler": "linear", "base": 1, "potential": 1},
+            "maxBounce": {
+              "scaler": "linear",
+              "base": 1,
+              "potential": 1
+            },
             "range": 80,
             "decayRatio": 0.8
           },
           "effects": [
-            {"type": "damage", "mode": "ratio", "value": {"scaler": "fixed", "value": 0.8}}
+            {
+              "type": "damage",
+              "mode": "ratio",
+              "value": {
+                "scaler": "fixed",
+                "value": 0.8
+              }
+            }
           ]
         }
-      ]
+      ],
+      "icon": "bounce",
+      "display": "攻击会弹射敌人，弹射{si}个敌人, 造成{p%}伤害, 弹射半径为{p2}",
+      "prebuilt": true
     },
     {
       "id": "splash",
       "label": "溅射",
       "cost": 11,
-      "tags": ["attack"],
+      "tags": [
+        "attack"
+      ],
       "attackStyle": "projectile",
       "spriteKey": "mortar",
       "pipelines": [
@@ -112,474 +177,872 @@
           "conditions": [],
           "selector": {
             "type": "aoeRadius",
-            "radius": {"scaler": "fixed", "value": 50}
+            "radius": {
+              "scaler": "fixed",
+              "value": 50
+            }
           },
           "effects": [
-            {"type": "damage", "mode": "ratio", "value": {"scaler": "linear", "base": 0.75, "potential": 0.05}}
+            {
+              "type": "damage",
+              "mode": "ratio",
+              "value": {
+                "scaler": "linear",
+                "base": 0.75,
+                "potential": 0.05
+              }
+            }
           ]
         }
-      ]
+      ],
+      "icon": "splash",
+      "display": "攻击命中时对半径{p}内敌人造成{s%}的溅射伤害",
+      "prebuilt": true
     },
     {
       "id": "multiTarget",
       "label": "多目标",
       "cost": 11,
-      "tags": ["attack"],
+      "tags": [
+        "attack"
+      ],
       "attackStyle": "projectile",
       "spriteKey": "hydra",
       "attackParams": {
-        "targets": {"scaler": "linear", "base": 1, "potential": 1}
+        "targets": {
+          "scaler": "linear",
+          "base": 1,
+          "potential": 1
+        }
       },
-      "pipelines": []
+      "pipelines": [],
+      "icon": "multiTarget",
+      "display": "同时攻击{si}个目标",
+      "prebuilt": true
     },
     {
       "id": "radial",
       "label": "环射",
       "cost": 11,
-      "tags": ["attack"],
+      "tags": [
+        "attack"
+      ],
       "attackStyle": "radial",
       "spriteKey": "nova",
       "attackParams": {
-        "shots": {"scaler": "linear", "base": 4, "potential": 1}
+        "shots": {
+          "scaler": "linear",
+          "base": 4,
+          "potential": 1
+        }
       },
-      "pipelines": []
+      "pipelines": [],
+      "icon": "radial",
+      "display": "攻击时向四周发射{si}颗穿透弹, 单体飞行距离为射程×{p}",
+      "prebuilt": true
     },
     {
       "id": "barrage",
       "label": "连击",
       "cost": 13,
-      "tags": ["attack"],
+      "tags": [
+        "attack"
+      ],
       "attackStyle": "barrage",
       "spriteKey": "gatling",
       "attackParams": {
-        "bullets": {"scaler": "linear", "base": 2, "potential": 1}
+        "bullets": {
+          "scaler": "linear",
+          "base": 2,
+          "potential": 1
+        }
       },
-      "pipelines": []
+      "pipelines": [],
+      "icon": "barrage",
+      "display": "连射{si}颗子弹, 每颗造成{p%}伤害(独立受伤害上限限制)",
+      "prebuilt": true
     },
-
     {
       "id": "slowPower",
       "label": "凝滞",
       "cost": 8,
-      "tags": ["cc"],
+      "tags": [
+        "cc"
+      ],
       "pipelines": [
         {
           "trigger": "onHit",
           "conditions": [],
-          "selector": {"type": "currentTarget"},
+          "selector": {
+            "type": "currentTarget"
+          },
           "effects": [
             {
               "type": "slow",
-              "factor": {"scaler": "linear", "base": 0.20, "potential": 0.05},
-              "duration": {"scaler": "fixed", "value": 1.0}
+              "factor": {
+                "scaler": "linear",
+                "base": 0.2,
+                "potential": 0.05
+              },
+              "duration": {
+                "scaler": "fixed",
+                "value": 1.0
+              }
             }
           ]
         }
-      ]
+      ],
+      "icon": "slowPower",
+      "display": "攻击命中对敌人减速{s%}, 持续{p}秒",
+      "prebuilt": true
     },
     {
       "id": "slowDuration",
       "label": "冰封",
       "cost": 8,
-      "tags": ["cc"],
+      "tags": [
+        "cc"
+      ],
       "pipelines": [
         {
           "trigger": "onHit",
           "conditions": [],
-          "selector": {"type": "currentTarget"},
+          "selector": {
+            "type": "currentTarget"
+          },
           "effects": [
             {
               "type": "slow",
-              "factor": {"scaler": "fixed", "value": 0.35},
-              "duration": {"scaler": "linear", "base": 0.5, "potential": 0.1}
+              "factor": {
+                "scaler": "fixed",
+                "value": 0.35
+              },
+              "duration": {
+                "scaler": "linear",
+                "base": 0.5,
+                "potential": 0.1
+              }
             }
           ]
         }
-      ]
+      ],
+      "icon": "slowDuration",
+      "display": "攻击命中对敌人减速{p%}, 持续{s}秒",
+      "prebuilt": true
     },
     {
       "id": "stunChance",
       "label": "震慑",
       "cost": 8,
-      "tags": ["cc"],
+      "tags": [
+        "cc"
+      ],
       "pipelines": [
         {
           "trigger": "onHit",
           "conditions": [
-            {"type": "chance", "rate": {"scaler": "linear", "base": 0.10, "potential": 0.05}}
+            {
+              "type": "chance",
+              "rate": {
+                "scaler": "linear",
+                "base": 0.1,
+                "potential": 0.05
+              }
+            }
           ],
-          "selector": {"type": "currentTarget"},
+          "selector": {
+            "type": "currentTarget"
+          },
           "effects": [
-            {"type": "stun", "duration": {"scaler": "fixed", "value": 0.5}}
+            {
+              "type": "stun",
+              "duration": {
+                "scaler": "fixed",
+                "value": 0.5
+              }
+            }
           ]
         }
-      ]
+      ],
+      "icon": "stunChance",
+      "display": "攻击命中时有{s%}概率眩晕敌人{p}秒",
+      "prebuilt": true
     },
     {
       "id": "stunDuration",
       "label": "麻痹",
       "cost": 8,
-      "tags": ["cc"],
+      "tags": [
+        "cc"
+      ],
       "pipelines": [
         {
           "trigger": "onHit",
           "conditions": [
-            {"type": "chance", "rate": {"scaler": "fixed", "value": 0.25}}
+            {
+              "type": "chance",
+              "rate": {
+                "scaler": "fixed",
+                "value": 0.25
+              }
+            }
           ],
-          "selector": {"type": "currentTarget"},
+          "selector": {
+            "type": "currentTarget"
+          },
           "effects": [
-            {"type": "stun", "duration": {"scaler": "linear", "base": 0.2, "potential": 0.1}}
+            {
+              "type": "stun",
+              "duration": {
+                "scaler": "linear",
+                "base": 0.2,
+                "potential": 0.1
+              }
+            }
           ]
         }
-      ]
+      ],
+      "icon": "stunDuration",
+      "display": "攻击命中时有{p%}概率眩晕敌人{s}秒",
+      "prebuilt": true
     },
-
     {
       "id": "crit",
       "label": "暴击",
       "cost": 8,
-      "tags": ["damage"],
+      "tags": [
+        "damage"
+      ],
       "pipelines": [
         {
           "trigger": "onHit",
           "conditions": [
-            {"type": "chance", "rate": {"scaler": "linear", "base": 0.10, "potential": 0.05}}
+            {
+              "type": "chance",
+              "rate": {
+                "scaler": "linear",
+                "base": 0.1,
+                "potential": 0.05
+              }
+            }
           ],
-          "selector": {"type": "currentTarget"},
+          "selector": {
+            "type": "currentTarget"
+          },
           "effects": [
-            {"type": "damage", "mode": "ratio", "value": {"scaler": "fixed", "value": 1.0}}
+            {
+              "type": "damage",
+              "mode": "ratio",
+              "value": {
+                "scaler": "fixed",
+                "value": 1.0
+              }
+            }
           ]
         }
-      ]
+      ],
+      "icon": "crit",
+      "display": "提升{s%}暴击概率，造成{p}倍暴击",
+      "prebuilt": true
     },
     {
       "id": "distanceDamage",
       "label": "距离伤害",
       "cost": 10,
-      "tags": ["damage"],
+      "tags": [
+        "damage"
+      ],
       "pipelines": [
         {
           "trigger": "onHit",
           "conditions": [],
-          "selector": {"type": "currentTarget"},
+          "selector": {
+            "type": "currentTarget"
+          },
           "effects": [
-            {"type": "damage", "mode": "ratio", "value": {"scaler": "linear", "base": 0.10, "potential": 0.05}}
+            {
+              "type": "damage",
+              "mode": "ratio",
+              "value": {
+                "scaler": "linear",
+                "base": 0.1,
+                "potential": 0.05
+              }
+            }
           ]
         }
-      ]
+      ],
+      "icon": "distanceDamage",
+      "display": "目标越远伤害越高, 每{p}距离增加{s%}伤害",
+      "prebuilt": true
     },
     {
       "id": "executionBonus",
       "label": "斩杀",
       "cost": 10,
-      "tags": ["damage"],
+      "tags": [
+        "damage"
+      ],
       "pipelines": [
         {
           "trigger": "onHit",
           "conditions": [
-            {"type": "hpBelow", "threshold": {"scaler": "fixed", "value": 0.5}}
+            {
+              "type": "hpBelow",
+              "threshold": {
+                "scaler": "fixed",
+                "value": 0.5
+              }
+            }
           ],
-          "selector": {"type": "currentTarget"},
+          "selector": {
+            "type": "currentTarget"
+          },
           "effects": [
-            {"type": "damage", "mode": "ratio", "value": {"scaler": "linear", "base": 0.20, "potential": 0.05}}
+            {
+              "type": "damage",
+              "mode": "ratio",
+              "value": {
+                "scaler": "linear",
+                "base": 0.2,
+                "potential": 0.05
+              }
+            }
           ]
         }
-      ]
+      ],
+      "icon": "executionBonus",
+      "display": "敌人生命≤{p%}时增加{s%}伤害",
+      "prebuilt": true
     },
     {
       "id": "flatDamage",
       "label": "固伤",
       "cost": 10,
-      "tags": ["damage"],
+      "tags": [
+        "damage"
+      ],
       "pipelines": [
         {
           "trigger": "onHit",
           "conditions": [],
-          "selector": {"type": "currentTarget"},
+          "selector": {
+            "type": "currentTarget"
+          },
           "effects": [
-            {"type": "damage", "mode": "flat", "value": {"scaler": "linear", "base": 2, "potential": 5}}
+            {
+              "type": "damage",
+              "mode": "flat",
+              "value": {
+                "scaler": "linear",
+                "base": 2,
+                "potential": 5
+              }
+            }
           ]
         }
-      ]
+      ],
+      "icon": "flatDamage",
+      "display": "每次攻击额外造成{s}伤害",
+      "prebuilt": true
     },
     {
       "id": "momentum",
       "label": "蓄势",
       "cost": 9,
-      "tags": ["damage"],
+      "tags": [
+        "damage"
+      ],
       "pipelines": [
         {
           "trigger": "onHit",
           "conditions": [],
-          "selector": {"type": "currentTarget"},
+          "selector": {
+            "type": "currentTarget"
+          },
           "effects": [
-            {"type": "damage", "mode": "ratio", "value": {"scaler": "linear", "base": 0.05, "potential": 0.05}}
+            {
+              "type": "damage",
+              "mode": "ratio",
+              "value": {
+                "scaler": "linear",
+                "base": 0.05,
+                "potential": 0.05
+              }
+            }
           ]
         }
-      ]
+      ],
+      "icon": "momentum",
+      "display": "攻击伤害提升{s%}",
+      "prebuilt": true
     },
-
     {
       "id": "damageUpAura",
       "label": "伤害光环",
       "cost": 8,
-      "tags": ["buff"],
+      "tags": [
+        "buff"
+      ],
       "pipelines": [
         {
           "trigger": "onTick",
           "conditions": [],
-          "selector": {"type": "nearbyAllies", "radius": 150},
+          "selector": {
+            "type": "nearbyAllies",
+            "radius": 150
+          },
           "effects": [
-            {"type": "buff", "stat": "damage", "bonus": {"scaler": "linear", "base": 0.05, "potential": 0.02}}
+            {
+              "type": "buff",
+              "stat": "damage",
+              "bonus": {
+                "scaler": "linear",
+                "base": 0.05,
+                "potential": 0.02
+              }
+            }
           ]
         }
-      ]
+      ],
+      "icon": "damageUpAura",
+      "display": "半径{p}内炮塔所有伤害增加{s%}",
+      "prebuilt": true
     },
     {
       "id": "attackSpeedAura",
       "label": "攻速光环",
       "cost": 8,
-      "tags": ["buff"],
+      "tags": [
+        "buff"
+      ],
       "pipelines": [
         {
           "trigger": "onTick",
           "conditions": [],
-          "selector": {"type": "nearbyAllies", "radius": 150},
+          "selector": {
+            "type": "nearbyAllies",
+            "radius": 150
+          },
           "effects": [
-            {"type": "buff", "stat": "speed", "bonus": {"scaler": "linear", "base": 0.08, "potential": 0.02}}
+            {
+              "type": "buff",
+              "stat": "speed",
+              "bonus": {
+                "scaler": "linear",
+                "base": 0.08,
+                "potential": 0.02
+              }
+            }
           ]
         }
-      ]
+      ],
+      "icon": "attackSpeedAura",
+      "display": "半径{p}内炮塔攻速增加{s%}",
+      "prebuilt": true
     },
     {
       "id": "rangeAura",
       "label": "射程光环",
       "cost": 7,
-      "tags": ["buff"],
+      "tags": [
+        "buff"
+      ],
       "pipelines": [
         {
           "trigger": "onTick",
           "conditions": [],
-          "selector": {"type": "nearbyAllies", "radius": 150},
+          "selector": {
+            "type": "nearbyAllies",
+            "radius": 150
+          },
           "effects": [
-            {"type": "buff", "stat": "range", "bonus": {"scaler": "linear", "base": 10, "potential": 2}}
+            {
+              "type": "buff",
+              "stat": "range",
+              "bonus": {
+                "scaler": "linear",
+                "base": 10,
+                "potential": 2
+              }
+            }
           ]
         }
-      ]
+      ],
+      "icon": "rangeAura",
+      "display": "半径{p}内炮塔射程增加{s}",
+      "prebuilt": true
     },
     {
       "id": "critAura",
       "label": "暴击光环",
       "cost": 7,
-      "tags": ["buff"],
+      "tags": [
+        "buff"
+      ],
       "pipelines": [
         {
           "trigger": "onTick",
           "conditions": [],
-          "selector": {"type": "nearbyAllies", "radius": 150},
+          "selector": {
+            "type": "nearbyAllies",
+            "radius": 150
+          },
           "effects": [
-            {"type": "buff", "stat": "crit", "bonus": {"scaler": "linear", "base": 0.04, "potential": 0.02}}
+            {
+              "type": "buff",
+              "stat": "crit",
+              "bonus": {
+                "scaler": "linear",
+                "base": 0.04,
+                "potential": 0.02
+              }
+            }
           ]
         }
-      ]
+      ],
+      "icon": "critAura",
+      "display": "半径{p}内炮塔暴击率增加{s%}",
+      "prebuilt": true
     },
     {
       "id": "soloBoost",
       "label": "独行加成",
       "cost": 5,
-      "tags": ["buff"],
+      "tags": [
+        "buff"
+      ],
       "pipelines": [
         {
           "trigger": "onTick",
           "conditions": [
-            {"type": "noNearbyTower", "radius": 120}
+            {
+              "type": "noNearbyTower",
+              "radius": 120
+            }
           ],
-          "selector": {"type": "selfTower"},
+          "selector": {
+            "type": "selfTower"
+          },
           "effects": [
-            {"type": "selfBuff", "stat": "damage", "bonus": {"scaler": "linear", "base": 0.05, "potential": 0.05}}
+            {
+              "type": "selfBuff",
+              "stat": "damage",
+              "bonus": {
+                "scaler": "linear",
+                "base": 0.05,
+                "potential": 0.05
+              }
+            }
           ]
         }
-      ]
+      ],
+      "icon": "soloBoost",
+      "display": "半径{p}内无其他炮塔时自身伤害增加{s%}",
+      "prebuilt": true
     },
     {
       "id": "goldPassive",
       "label": "被动产金",
       "cost": 5,
-      "tags": ["buff"],
+      "tags": [
+        "buff"
+      ],
       "pipelines": [
         {
           "trigger": "onTick",
           "conditions": [
-            {"type": "cooldown", "seconds": 3}
+            {
+              "type": "cooldown",
+              "seconds": 3
+            }
           ],
-          "selector": {"type": "selfTower"},
+          "selector": {
+            "type": "selfTower"
+          },
           "effects": [
-            {"type": "gold", "amount": {"scaler": "linear", "base": 1, "potential": 1}}
+            {
+              "type": "gold",
+              "amount": {
+                "scaler": "linear",
+                "base": 1,
+                "potential": 1
+              }
+            }
           ]
         }
-      ]
+      ],
+      "icon": "gold",
+      "display": "每{p}秒自动产生{s}金币",
+      "prebuilt": true
     },
-
     {
       "id": "burn",
       "label": "灼烧",
       "cost": 8,
-      "tags": ["dot"],
+      "tags": [
+        "dot"
+      ],
       "pipelines": [
         {
           "trigger": "onHit",
           "conditions": [],
-          "selector": {"type": "currentTarget"},
+          "selector": {
+            "type": "currentTarget"
+          },
           "effects": [
             {
               "type": "dot",
               "subtype": "burn",
               "mode": "ratio",
-              "value": {"scaler": "linear", "base": 0.10, "potential": 0.05},
-              "duration": {"scaler": "fixed", "value": 2.0}
+              "value": {
+                "scaler": "linear",
+                "base": 0.1,
+                "potential": 0.05
+              },
+              "duration": {
+                "scaler": "fixed",
+                "value": 2.0
+              }
             }
           ]
         }
-      ]
+      ],
+      "icon": "burn",
+      "display": "攻击命中后灼烧敌人, 每秒造成{s%}伤害, 持续{p}秒",
+      "prebuilt": true
     },
     {
       "id": "bleedDot",
       "label": "流血",
       "cost": 8,
-      "tags": ["dot"],
+      "tags": [
+        "dot"
+      ],
       "pipelines": [
         {
           "trigger": "onHit",
           "conditions": [],
-          "selector": {"type": "currentTarget"},
+          "selector": {
+            "type": "currentTarget"
+          },
           "effects": [
             {
               "type": "dot",
               "subtype": "bleed",
               "mode": "hpPercent",
-              "value": {"scaler": "linear", "base": 0.01, "potential": 0.004},
-              "duration": {"scaler": "fixed", "value": 3.0}
+              "value": {
+                "scaler": "linear",
+                "base": 0.01,
+                "potential": 0.004
+              },
+              "duration": {
+                "scaler": "fixed",
+                "value": 3.0
+              }
             }
           ]
         }
-      ]
+      ],
+      "icon": "bleed",
+      "display": "攻击使敌人流血, 每秒损失{s%}生命, 持续{p}秒(Boss免疫)",
+      "prebuilt": true
     },
     {
       "id": "poison",
       "label": "中毒",
       "cost": 5,
-      "tags": ["dot"],
+      "tags": [
+        "dot"
+      ],
       "pipelines": [
         {
           "trigger": "onHit",
           "conditions": [],
-          "selector": {"type": "currentTarget"},
+          "selector": {
+            "type": "currentTarget"
+          },
           "effects": [
             {
               "type": "dot",
               "subtype": "poison",
               "mode": "flat",
-              "value": {"scaler": "linear", "base": 3, "potential": 5},
-              "duration": {"scaler": "fixed", "value": 4.0}
+              "value": {
+                "scaler": "linear",
+                "base": 3,
+                "potential": 5
+              },
+              "duration": {
+                "scaler": "fixed",
+                "value": 4.0
+              }
             }
           ]
         }
-      ]
+      ],
+      "icon": "poison",
+      "display": "攻击使敌人中毒, 每秒造成{s}伤害, 持续{p}秒",
+      "prebuilt": true
     },
     {
       "id": "weaken",
       "label": "虚弱",
       "cost": 9,
-      "tags": ["dot"],
+      "tags": [
+        "dot"
+      ],
       "pipelines": [
         {
           "trigger": "onHit",
           "conditions": [],
-          "selector": {"type": "currentTarget"},
+          "selector": {
+            "type": "currentTarget"
+          },
           "effects": [
             {
               "type": "weaken",
-              "amplify": {"scaler": "linear", "base": 0.15, "potential": 0.05},
-              "duration": {"scaler": "fixed", "value": 3.0}
+              "amplify": {
+                "scaler": "linear",
+                "base": 0.15,
+                "potential": 0.05
+              },
+              "duration": {
+                "scaler": "fixed",
+                "value": 3.0
+              }
             }
           ]
         }
-      ]
+      ],
+      "icon": "weaken",
+      "display": "攻击使敌人变脆弱, 受到所有伤害增加{s%}, 持续{p}秒",
+      "prebuilt": true
     },
-
     {
       "id": "poisonZone",
       "label": "毒区",
       "cost": 10,
-      "tags": ["zone"],
+      "tags": [
+        "zone"
+      ],
       "pipelines": [
         {
           "trigger": "onTick",
           "conditions": [],
-          "selector": {"type": "allInRange"},
+          "selector": {
+            "type": "allInRange"
+          },
           "effects": [
             {
               "type": "dot",
               "subtype": "poison",
               "mode": "flat",
-              "value": {"scaler": "linear", "base": 3, "potential": 5},
-              "duration": {"scaler": "fixed", "value": 1.0}
+              "value": {
+                "scaler": "linear",
+                "base": 3,
+                "potential": 5
+              },
+              "duration": {
+                "scaler": "fixed",
+                "value": 1.0
+              }
             }
           ]
         }
-      ]
+      ],
+      "icon": "poisonZone",
+      "display": "射程内敌人持续受到每秒{s}毒伤",
+      "prebuilt": true
     },
     {
       "id": "silenceZone",
       "label": "沉默区",
       "cost": 12,
-      "tags": ["zone"],
+      "tags": [
+        "zone"
+      ],
       "pipelines": [
         {
           "trigger": "onTick",
           "conditions": [],
-          "selector": {"type": "allInRange"},
+          "selector": {
+            "type": "allInRange"
+          },
           "effects": [
-            {"type": "silence"}
+            {
+              "type": "silence"
+            }
           ]
         }
-      ]
+      ],
+      "icon": "silenceZone",
+      "display": "射程内敌人被沉默，禁用敌人能力（无视沉默的能力除外）",
+      "prebuilt": true
     },
     {
       "id": "curseZone",
       "label": "诅咒区",
       "cost": 11,
-      "tags": ["zone"],
+      "tags": [
+        "zone"
+      ],
       "pipelines": [
         {
           "trigger": "onTick",
           "conditions": [],
-          "selector": {"type": "allInRange"},
+          "selector": {
+            "type": "allInRange"
+          },
           "effects": [
-            {"type": "damage", "mode": "hpPercent", "value": {"scaler": "linear", "base": 0.01, "potential": 0.002}}
+            {
+              "type": "damage",
+              "mode": "hpPercent",
+              "value": {
+                "scaler": "linear",
+                "base": 0.01,
+                "potential": 0.002
+              }
+            }
           ]
         }
-      ]
+      ],
+      "icon": "curseZone",
+      "display": "射程内敌人每秒损失{s%}生命",
+      "prebuilt": true
     },
     {
       "id": "weakenZone",
       "label": "脆弱区",
       "cost": 10,
-      "tags": ["zone"],
+      "tags": [
+        "zone"
+      ],
       "pipelines": [
         {
           "trigger": "onTick",
           "conditions": [],
-          "selector": {"type": "allInRange"},
+          "selector": {
+            "type": "allInRange"
+          },
           "effects": [
             {
               "type": "weaken",
-              "amplify": {"scaler": "linear", "base": 0.05, "potential": 0.05},
-              "duration": {"scaler": "fixed", "value": 1.0}
+              "amplify": {
+                "scaler": "linear",
+                "base": 0.05,
+                "potential": 0.05
+              },
+              "duration": {
+                "scaler": "fixed",
+                "value": 1.0
+              }
             }
           ]
         }
-      ]
+      ],
+      "icon": "weakenZone",
+      "display": "射程内敌人受到所有伤害增加{s%}",
+      "prebuilt": true
     }
   ]
 }
