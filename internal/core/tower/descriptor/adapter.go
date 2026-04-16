@@ -10,7 +10,9 @@
 //   - Ratio 伤害 → BonusDamage（已由 Effect.Apply 预乘 TowerDamage）
 //   - 同类效果累加（多个 damage 求和）
 //   - CC/DoT 取最后一个（last wins）
-//   - Buff/SelfBuff/Gold/ModifyStat/Weaken/Silence 不进入 HitResult
+//   - Root/Weaken/Silence/Poison → HitResult 新字段（combat 管线施加）
+//   - Buff/SelfBuff → tick 管线由 applyTickBuffEffects 直接处理（不走 TickResult）
+//   - Gold → TickResult.GoldEarned
 package descriptor
 
 import "defense2/internal/core/tower"
@@ -66,12 +68,29 @@ func AdaptToHitResult(results []EffectResult) *tower.HitResult {
 			case "burn":
 				hasEffect = true
 				hr.Burn = eff
-			// poison 等其他 DoT 子类型暂无 HitResult 对应字段，跳过
+			case "poison":
+				hasEffect = true
+				hr.Poison = eff
 			}
 
 		case EffTypeCrit:
 			hasEffect = true
 			hr.IsCrit = true
+
+		case EffTypeRoot:
+			hasEffect = true
+			hr.Root = &tower.RootEffect{Duration: r.RootDur}
+
+		case EffTypeWeaken:
+			hasEffect = true
+			hr.Weaken = &tower.WeakenEffect{
+				Amplify:  r.WeakenAmp,
+				Duration: r.WeakenDur,
+			}
+
+		case EffTypeSilence:
+			hasEffect = true
+			hr.Silence = true
 
 		// Purge 暂时不进入 HitResult（需要战斗管线后续支持），
 		// 但标记 hasEffect 以确保结果不被丢弃。
@@ -83,9 +102,7 @@ func AdaptToHitResult(results []EffectResult) *tower.HitResult {
 		case EffTypeTeleport:
 			hasEffect = true
 
-		// 以下类型不进入 HitResult，由战斗管线或 tick 系统单独处理
-		case EffTypeWeaken, EffTypeSilence:
-		case EffTypeRoot:
+		// 以下类型不进入 HitResult，由 tick 系统单独处理
 		case EffTypeBuff, EffTypeSelfBuff:
 		case EffTypeGold:
 		case EffTypeModifyStat:
@@ -99,7 +116,9 @@ func AdaptToHitResult(results []EffectResult) *tower.HitResult {
 }
 
 // AdaptToTickResult 将描述符引擎的效果列表转为 tick 管线的 TickResult。
-// 当前仅提取 Gold 效果，其他 tick 效果（buff/zone）由管线直接应用。
+// Gold 通过 TickResult 传递给管线。
+// Buff/SelfBuff/Silence/Weaken/Root 等效果由 applyTickBuffEffects 直接应用，
+// 不走 TickResult 适配（避免目标信息丢失）。
 // 返回 nil 如果没有任何 tick 相关效果。
 func AdaptToTickResult(results []EffectResult) *tower.TickResult {
 	if len(results) == 0 {
@@ -111,9 +130,13 @@ func AdaptToTickResult(results []EffectResult) *tower.TickResult {
 
 	for i := range results {
 		r := &results[i]
-		if r.Type == EffTypeGold {
+		switch r.Type {
+		case EffTypeGold:
 			hasEffect = true
 			tr.GoldEarned += int(r.GoldAmount)
+		// Buff/SelfBuff/Silence/Weaken/Root 由 OnTick 的 applyTickBuffEffects 直接处理
+		case EffTypeBuff, EffTypeSelfBuff, EffTypeSilence, EffTypeWeaken, EffTypeRoot:
+			hasEffect = true
 		}
 	}
 

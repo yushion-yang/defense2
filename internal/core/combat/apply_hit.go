@@ -293,6 +293,59 @@ func applyHitEffectsUnified(r *tower.HitResult, target *enemy.Enemy, p *projecti
 			onCC(target.X, target.Y, CCBurn)
 		}
 	}
+	if r.Poison != nil {
+		wasPoisoned := target.Buffs.Has(buff.IDPoison)
+		target.Buffs.Add(buff.Buff{
+			ID:        buff.IDPoison,
+			Category:  buff.CatDoT,
+			Source:    p.SourceTowerKey,
+			Value:     r.Poison.DPS,
+			Duration:  r.Poison.Duration,
+			Remaining: r.Poison.Duration,
+		})
+		if !wasPoisoned {
+			target.SetFloatText(i18n.T("combat.poison"), 100, 200, 60)
+		}
+		tel.T.Record("ability", "poison")
+	}
+	if r.Root != nil {
+		// 定身通过 BuffList 施加（复用 CC 免疫检查逻辑）
+		if !target.IsControlImmune && !target.HasControlImmunity() {
+			dur := r.Root.Duration * (1 - target.Tenacity)
+			if dur > 0 {
+				target.Buffs.Add(buff.Buff{
+					ID:        buff.IDRoot,
+					Category:  buff.CatCC,
+					Source:    p.SourceTowerKey,
+					Duration:  dur,
+					Remaining: dur,
+				})
+				tel.T.Record("ability", "root")
+			}
+		}
+	}
+	if r.Weaken != nil {
+		wasWeakened := target.Buffs.Has(buff.IDWeaken)
+		target.Buffs.Add(buff.Buff{
+			ID:        buff.IDWeaken,
+			Category:  buff.CatDebuff,
+			Source:    p.SourceTowerKey,
+			Value:     r.Weaken.Amplify,
+			Duration:  r.Weaken.Duration,
+			Remaining: r.Weaken.Duration,
+		})
+		if !wasWeakened {
+			target.SetFloatText(i18n.T("combat.weaken"), 180, 100, 220)
+		}
+		tel.T.Record("ability", "weaken")
+	}
+	if r.Silence {
+		// 沉默是帧级标记（每帧由 tick_abilities.go Phase 1.5 重置），
+		// onHit 沉默只生效一帧——持续沉默由 SilenceZone tick 能力实现。
+		target.Silenced = true
+		target.AbilitySilenced = true
+		tel.T.Record("ability", "silence")
+	}
 	// 溅射 AoE：以命中目标为圆心，半径内所有敌人受到比例伤害。
 	// enemies != nil 是递归防护——splash 命中的敌人再次走 ApplyHit 时 Enemies=nil，
 	// 到这里 enemies==nil 就不会再触发新的溅射。

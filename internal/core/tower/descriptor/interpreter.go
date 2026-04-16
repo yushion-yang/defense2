@@ -107,10 +107,16 @@ func (interp *Interpreter) exec(ctx TriggerContext) []EffectResult {
 		targets := p.Selector.Select(selCtx)
 
 		// 步骤 4: 对每个 target 应用所有 effect
+		// 目标索引和坐标附加到 EffectResult，供适配层识别 buff 应该作用于哪个目标。
 		for _, tgt := range targets {
 			effCtx := buildEffectCtx(ctx, tgt)
 			for _, eff := range p.Effects {
-				results = append(results, eff.Apply(effCtx))
+				r := eff.Apply(effCtx)
+				r.TargetEnemyIdx = tgt.EnemyIdx
+				r.TargetTowerIdx = tgt.TowerIdx
+				r.TargetX = tgt.X
+				r.TargetY = tgt.Y
+				results = append(results, r)
 			}
 		}
 	}
@@ -138,42 +144,57 @@ func buildConditionCtx(ctx TriggerContext) ConditionCtx {
 // buildSelectorCtx 从 TriggerContext 构建选择器上下文。
 func buildSelectorCtx(ctx TriggerContext) SelectorCtx {
 	idx := -1
+	var maxHp float64
 	if ctx.TargetEnemy != nil {
 		idx = ctx.TargetEnemy.Index
+		maxHp = ctx.TargetEnemy.MaxHp
 	}
 	return SelectorCtx{
-		CurrentEnemyIdx: idx,
-		HitX:            ctx.HitX,
-		HitY:            ctx.HitY,
-		TowerX:          ctx.TowerX,
-		TowerY:          ctx.TowerY,
-		TowerRange:      ctx.TowerRange,
-		Strength:        ctx.Strength,
-		Enemies:         ctx.Enemies,
-		Towers:          ctx.Towers,
+		CurrentEnemyIdx:   idx,
+		CurrentEnemyMaxHp: maxHp,
+		HitX:              ctx.HitX,
+		HitY:              ctx.HitY,
+		TowerX:            ctx.TowerX,
+		TowerY:            ctx.TowerY,
+		TowerRange:        ctx.TowerRange,
+		Strength:          ctx.Strength,
+		Enemies:           ctx.Enemies,
+		Towers:            ctx.Towers,
 	}
 }
 
 // buildEffectCtx 从 TriggerContext + Target 构建效果上下文。
-// TargetMaxHp 暂时为 0（EnemyRef 不携带 MaxHp，后续可扩展）。
-func buildEffectCtx(ctx TriggerContext, _ Target) EffectCtx {
-	return EffectCtx{
+// TargetMaxHp 优先使用 Target 携带的 MaxHp（AOE/连锁等多目标场景），
+// 回退到 TriggerContext 中的主目标 MaxHp（CurrentTargetSelector 场景）。
+func buildEffectCtx(ctx TriggerContext, tgt Target) EffectCtx {
+	effCtx := EffectCtx{
 		Strength:    ctx.Strength,
 		TowerDamage: ctx.TowerDamage,
-		TargetMaxHp: 0,
 	}
+	// 优先使用 target 自身携带的 MaxHp（AOE/连锁等选择器会填充每个目标的 MaxHp）
+	if tgt.MaxHp > 0 {
+		effCtx.TargetMaxHp = tgt.MaxHp
+	} else if ctx.TargetEnemy != nil {
+		// 回退到主目标的 MaxHp（CurrentTargetSelector 传递路径）
+		effCtx.TargetMaxHp = ctx.TargetEnemy.MaxHp
+	}
+	return effCtx
 }
 
+// maxAllyCheckRadius 友方塔搜索半径上限（像素）。
+// 500px 大于任何塔的射程（最大约 300px），
+// 足以覆盖地图上相邻塔位的距离。
+const maxAllyCheckRadius = 500.0
+
 // findNearestAllyDist 查找最近友方塔的距离。
-// 使用一个足够大的搜索半径查询所有附近的塔，
+// 在 maxAllyCheckRadius 范围内搜索友方塔，
 // 无友方塔时返回 math.MaxFloat64。
 func findNearestAllyDist(towers TowerQuerier, tx, ty float64) float64 {
 	if towers == nil {
 		return math.MaxFloat64
 	}
 
-	// 用一个很大的半径获取所有可能的友方塔
-	refs := towers.QueryRadius(tx, ty, math.MaxFloat64)
+	refs := towers.QueryRadius(tx, ty, maxAllyCheckRadius)
 	minDist := math.MaxFloat64
 
 	for _, ref := range refs {

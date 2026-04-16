@@ -3364,6 +3364,8 @@ func (s *StageScene) buildMenuCardToDefIdx(cardIdx int) int {
 // 蓝图编辑/复制/删除后调用，确保建塔面板数据与蓝图存储同步。
 func (s *StageScene) reloadTowerDefs() {
 	s.towerDefs = loadTowerDefsForMode(s.ruleset, s.progressMgr, s.blueprintStore)
+	s.selectedDef = -1    // 重置塔选择，避免索引越界
+	s.buildHoverIdx = -1  // 重置悬停状态，强制下一帧重新计算
 }
 
 // closeBlueprintContextMenu 关闭蓝图上下文菜单。

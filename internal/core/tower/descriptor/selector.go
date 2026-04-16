@@ -14,10 +14,12 @@ import (
 
 // EnemyRef 敌人引用，轻量值类型用于 Selector 查询。
 // HpRatio 用于优先级选择（如连锁优先低血量目标）。
+// MaxHp 用于 %HP 伤害计算（DmgHpPercent 模式）。
 type EnemyRef struct {
 	Index   int
 	X, Y    float64
 	HpRatio float64
+	MaxHp   float64
 	Active  bool
 }
 
@@ -45,22 +47,25 @@ type TowerQuerier interface {
 
 // SelectorCtx 选择器执行上下文。
 type SelectorCtx struct {
-	CurrentEnemyIdx int
-	HitX, HitY      float64
-	TowerX, TowerY   float64
-	TowerRange       float64
-	Strength         float64
-	Enemies          EnemyQuerier
-	Towers           TowerQuerier
+	CurrentEnemyIdx   int
+	CurrentEnemyMaxHp float64 // 当前命中目标的 MaxHp（供 CurrentTargetSelector 传递）
+	HitX, HitY        float64
+	TowerX, TowerY     float64
+	TowerRange         float64
+	Strength           float64
+	Enemies            EnemyQuerier
+	Towers             TowerQuerier
 }
 
 // ── 目标结果 ─────────────────────────────────────────────
 
 // Target 选择器返回的单个目标。
+// MaxHp 携带敌人最大血量，供 %HP 伤害效果使用。
 type Target struct {
 	EnemyIdx int
 	TowerIdx int
 	X, Y     float64
+	MaxHp    float64
 }
 
 // ── Selector 接口 ────────────────────────────────────────
@@ -81,6 +86,7 @@ func (s CurrentTargetSelector) Select(ctx SelectorCtx) []Target {
 		TowerIdx: -1,
 		X:        ctx.HitX,
 		Y:        ctx.HitY,
+		MaxHp:    ctx.CurrentEnemyMaxHp,
 	}}
 }
 
@@ -104,6 +110,7 @@ func (s AoeRadiusSelector) Select(ctx SelectorCtx) []Target {
 			TowerIdx: -1,
 			X:        ref.X,
 			Y:        ref.Y,
+			MaxHp:    ref.MaxHp,
 		}
 	}
 	return targets
@@ -126,6 +133,7 @@ func (s AllInRangeSelector) Select(ctx SelectorCtx) []Target {
 			TowerIdx: -1,
 			X:        ref.X,
 			Y:        ref.Y,
+			MaxHp:    ref.MaxHp,
 		}
 	}
 	return targets
@@ -221,6 +229,7 @@ func (s ChainSelector) Select(ctx SelectorCtx) []Target {
 			TowerIdx: -1,
 			X:        bestRef.X,
 			Y:        bestRef.Y,
+			MaxHp:    bestRef.MaxHp,
 		})
 		curX, curY = bestRef.X, bestRef.Y
 	}
@@ -265,7 +274,7 @@ func (s ConeSelector) Select(ctx SelectorCtx) []Target {
 		// 在塔位置上的敌人总是被选中
 		if dist < 1e-9 {
 			targets = append(targets, Target{
-				EnemyIdx: ref.Index, TowerIdx: -1, X: ref.X, Y: ref.Y,
+				EnemyIdx: ref.Index, TowerIdx: -1, X: ref.X, Y: ref.Y, MaxHp: ref.MaxHp,
 			})
 			continue
 		}
@@ -288,7 +297,7 @@ func (s ConeSelector) Select(ctx SelectorCtx) []Target {
 		}
 
 		targets = append(targets, Target{
-			EnemyIdx: ref.Index, TowerIdx: -1, X: ref.X, Y: ref.Y,
+			EnemyIdx: ref.Index, TowerIdx: -1, X: ref.X, Y: ref.Y, MaxHp: ref.MaxHp,
 		})
 	}
 
@@ -368,6 +377,7 @@ func (s RandomSelector) Select(ctx SelectorCtx) []Target {
 			TowerIdx: -1,
 			X:        shuffled[i].X,
 			Y:        shuffled[i].Y,
+			MaxHp:    shuffled[i].MaxHp,
 		}
 	}
 
