@@ -418,7 +418,6 @@ func (s *VFXPreviewScene) Update() error {
 		render.UpdateSplashVFX(effectiveDT)
 		render.UpdateFloatTexts(effectiveDT)
 		s.waveAnnounce.Update(effectiveDT)
-		hud.UpdateToast(effectiveDT)
 	}
 
 	// Desaturation / daynight auto-reset.
@@ -713,7 +712,6 @@ func (s *VFXPreviewScene) Draw(screen *ebiten.Image) {
 
 	// ── Wave announce overlay (topmost) ──
 	s.waveAnnounce.Draw(screen)
-	hud.DrawToast(screen)
 }
 
 // drawCatalog renders the left panel category/effect list.

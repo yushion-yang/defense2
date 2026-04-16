@@ -309,13 +309,9 @@ scene.ChooseAbility → t.AddAbility
 **上游影响链**（修改此函数，以下调用者受影响）：
 
 ```
-item.ApplyItem → t.RecalcStats
-item.ApplyItem → t.RecalcStats
-tower.ApplyRandomStats → t.RecalcStats
+scene.UseItemForAI → item.ApplyItem → t.RecalcStats
 tower.ApplyRandomStats → t.RecalcStats
 tower.BuyStrength → t.RecalcStats
-tower.BuyStrength → t.RecalcStats
-tower.Place → t.RecalcStats
 tower.Place → t.RecalcStats
 ```
 

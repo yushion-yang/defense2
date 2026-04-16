@@ -26,11 +26,14 @@ func (m *mockOps) UpgradeTowerForAI(row, col int) bool {
 	return true
 }
 
-func (m *mockOps) SellTowerForAI(row, col int) bool                        { return true }
-func (m *mockOps) TowerCost(key string) int                                { return 50 }
-func (m *mockOps) StrengthBuyCost() int                                    { return 10 }
-func (m *mockOps) StartWave() bool                                         { return true }
-func (m *mockOps) SelectWarden(key string) bool                            { return true }
+func (m *mockOps) SellTowerForAI(row, col int) bool                           { return true }
+func (m *mockOps) TowerCost(key string) int                                   { return 50 }
+func (m *mockOps) StrengthBuyCost() int                                       { return 10 }
+func (m *mockOps) StartWave() bool                                            { return true }
+func (m *mockOps) SelectWarden(key string) bool                               { return true }
+func (m *mockOps) UseItemForAI(itemKind int, towerRow, towerCol int) bool     { return true }
+func (m *mockOps) UnlockAbilitySlotForAI(row, col int) (int, bool)           { return 10, true }
+func (m *mockOps) SellRefundAmount(row, col int) int                          { return 35 }
 func (m *mockOps) ChooseAbility(row, col int, slotIndex int, abilityName string) bool {
 	m.abilityCount++
 	m.lastAbility = abilityName

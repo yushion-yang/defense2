@@ -253,6 +253,9 @@ func (g *Game) Update() error {
 		g.screenshotPending = true
 	}
 
+	// 全局 Toast 更新（截图提示等需要在任意场景显示）
+	hud.UpdateToast(1.0 / 60.0)
+
 	// 兼容旧的 next 直接切换（无过渡）
 	if g.next != nil {
 		g.current = g.next
@@ -395,7 +398,10 @@ func (g *Game) Draw(screen *ebiten.Image) {
 		fm.DrawText(screen, string(b), 4, float64(game.ScreenHeight)-4-float64(theme.FontCaption), theme.FontCaption, theme.TextMuted)
 	}
 
-	// F12 截图：全部渲染完成后读取像素并异步保存
+	// 全局 Toast 绘制（截图提示等需要在任意场景显示）
+	hud.DrawToast(screen)
+
+	// F12 截图：全部渲染完成后读取像素并异步保存（在 Toast 之后，截图包含提示）
 	if g.screenshotPending {
 		g.screenshotPending = false
 		if img := readScreenPixels(screen); img != nil {

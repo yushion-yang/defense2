@@ -7,105 +7,106 @@
 
 | 函数 | 被调用次数 | 调用者 |
 |------|-----------|--------|
-| `i18n.T` | 87 | abilities.OnHit, achievement.All, achievement.NameByID, combat.ApplyDamage, combat.ApplyHit, comb... |
-| `fmt.Sprintf` | 57 | descriptor.Error, descriptor.String, descriptor.ValidateBlueprint, llm.BuildPrompt, scene.BuildIn... |
+| `i18n.T` | 88 | abilities.OnHit, achievement.All, achievement.NameByID, combat.ApplyDamage, combat.ApplyHit, comb... |
+| `fmt.Sprintf` | 61 | descriptor.Error, descriptor.String, descriptor.ValidateBlueprint, llm.BuildPrompt, llm.BuildStra... |
 | `inpututil.IsKeyJustPressed` | 36 | scene.Update |
-| `fmt.Errorf` | 35 | buff.LoadRules, descriptor.Delete, descriptor.EditStateToDescriptor, descriptor.Get, descriptor.I... |
+| `fmt.Errorf` | 36 | buff.LoadRules, descriptor.Delete, descriptor.EditStateToDescriptor, descriptor.Get, descriptor.I... |
 | `math.Hypot` | 30 | abilities.OnHit, abilities.OnTick, combat.Fire, combat.Tick, enemy.MoveAlongPath, pipeline.TickPr... |
 | `fm.DrawCenteredText` | 27 | scene.Draw |
 | `warden.ParamOr` | 26 | types.Init |
-| `log.Printf` | 25 | descriptor.InitDescriptorAbilities, descriptor.RegisterCustomAbilities, gamemode.LoadDifficulty, ... |
 | `config.GlobalBalance` | 24 | combat.ApplyHit, combat.ApplySlow, combat.Fire, combat.MinSpeedRatio, combat.Tick, enemy.DotTickI... |
+| `log.Printf` | 23 | descriptor.InitDescriptorAbilities, descriptor.RegisterCustomAbilities, gamemode.LoadDifficulty, ... |
 | `draw.FilledRect` | 19 | scene.Draw |
-| `draw.CursorPos` | 18 | scene.Update |
 | `render.GlobalFont` | 18 | scene.Draw, scene.NewCampaignSelectScene, scene.NewLoadingScene, scene.NewSelectScene, scene.NewT... |
+| `draw.CursorPos` | 18 | scene.Update |
 | `rand.Float64` | 17 | abilities.OnHit, aiplayer.Tick, combat.ApplyHit, descriptor.Eval, gamemap.PickPath, warden.Wander |
 | `e.IsDying` | 17 | abilities.OnTick, combat.ApplyHit, combat.Fire, combat.Tick, descriptor.AllActive, descriptor.Que... |
-| `json.Unmarshal` | 15 | buff.LoadRules, descriptor.LoadDescriptorTable, descriptor.ParseDescriptor, descriptor.ParseScale... |
+| `draw.RoundRect` | 16 | scene.Draw |
+| `json.Unmarshal` | 16 | buff.LoadRules, descriptor.LoadDescriptorTable, descriptor.ParseDescriptor, descriptor.ParseScale... |
 | `e.IsSpawning` | 15 | abilities.OnTick, combat.Fire, combat.Tick, descriptor.AllActive, descriptor.QueryRadius, enemy.T... |
-| `draw.RoundRect` | 15 | scene.Draw |
-| `NewSelectScene` | 13 | scene.Update |
+| `sb.WriteString` | 13 | llm.BuildPrompt, llm.BuildStrategicPrompt |
+| `ui.Button` | 13 | scene.Draw |
 | `e.SetFloatText` | 12 | abilities.OnHit, combat.ApplyDamage, combat.ApplyHit, combat.ApplySlow, combat.ApplyStun |
+| `NewSelectScene` | 12 | scene.Update |
 | `draw.NewCachedGradient` | 11 | scene.NewAbilityEditScene, scene.NewBestiaryScene, scene.NewBlueprintEditScene, scene.NewCampaign... |
-| `dialogue.Random` | 11 | aiplayer.Tick |
 | `b.WriteString` | 11 | scene.FormatAbilityDisplay |
-| `ui.Button` | 10 | scene.Draw |
+| `dialogue.Random` | 11 | aiplayer.Tick |
 | `config.GlobalSpawnerConfig` | 10 | combat.ApplyDamage, enemy.IsBossWave, enemy.Kill, enemy.NewSpawner, enemy.NextWavePreview, enemy.... |
+| `fm.DrawCenteredBoldText` | 10 | scene.Draw |
 | `config.GetAssetFS` | 9 | scene.NewGame, scene.NewStageSceneWithOpts, scene.NewWardenSelectScene, scene.Update |
-| `fm.DrawCenteredBoldText` | 9 | scene.Draw |
+| `draw.HoverPos` | 9 | scene.Update |
 | `i18n.TF` | 9 | gamemode.OnWaveCleared, persistence.UnlockRequirement, scene.BuildInfoPanelVM, scene.Draw |
-| `draw.Line` | 8 | scene.Draw |
 | `math.Sin` | 8 | aiplayer.DrawY, combat.Fire, descriptor.Select, scene.Draw, warden.MoveOrbit |
-| `sb.WriteString` | 8 | llm.BuildPrompt |
-| `hud.ShowToast` | 8 | scene.Draw, scene.Update |
-| `draw.HoverPos` | 8 | scene.Update |
-| `rand.Intn` | 7 | aiplayer.Evaluate, aiplayer.Random, mascot.ForceTrigger, tower.RollTowerStats |
-| `fm.DrawText` | 7 | scene.Draw |
+| `draw.Line` | 8 | scene.Draw |
 | `towers.Each` | 7 | pipeline.TickTowerAbilities, pipeline.TickTowerCombat, warden.CalcStrength |
+| `fm.DrawText` | 7 | scene.Draw |
+| `rand.Intn` | 7 | aiplayer.Evaluate, aiplayer.Random, mascot.ForceTrigger, tower.RollTowerStats |
 | `config.GlobalAbilityTable` | 7 | combat.Tick, scene.BuildInfoPanelVM, scene.NewBestiaryScene, tower.AbilitiesForCategory, tower.Ad... |
-| `time.Now` | 6 | debug.BeginDraw, debug.BeginUpdate, debug.NewPerfTracker, scene.Draw, scene.NewGame, scene.Update |
-| `ebiten.IsKeyPressed` | 6 | scene.Update |
 | `bubble.Show` | 6 | aiplayer.Tick |
-| `r.Contains` | 5 | scene.Update |
-| `s.ApplyStrength` | 5 | types.Tick |
+| `hud.ShowToast` | 6 | scene.Draw, scene.Update |
+| `time.Now` | 6 | debug.BeginDraw, debug.BeginUpdate, debug.NewPerfTracker, scene.Draw, scene.NewGame, scene.Update |
+| `ebiten.Wheel` | 6 | scene.Update |
+| `ebiten.IsKeyPressed` | 6 | scene.Update |
 | `config.GetDataFS` | 5 | gamemode.LoadModeConfigs, scene.NewGame, scene.Update |
-| `NewTestSelectScene` | 5 | scene.Update |
-| `math.Floor` | 5 | abilities.OnHit, combat.Fire, combat.Tick, scene.FormatAbilityDisplay |
-| `s.Wander` | 5 | types.Tick |
-| `t.Trigger` | 5 | tutorial.OnEvent |
-| `ebiten.IsMouseButtonPressed` | 5 | scene.Update |
+| `s.ApplyStrength` | 5 | types.Tick |
 | `UFFind` | 5 | strength.RebuildChainNetwork, strength.UFFind, strength.UFUnion |
-| `warden.ComputeClusterCenter` | 5 | types.Tick |
-| `s.DecayShootTimer` | 5 | types.Tick |
-| `math.Atan2` | 5 | combat.Fire, combat.Tick, pipeline.TickTowerCombat |
-| `enemies.Each` | 5 | pipeline.TickEnemyStatusEffects, pipeline.TickProjectileHits, warden.ComputeClusterCenter, warden... |
-| `ebiten.Wheel` | 5 | scene.Update |
+| `s.Wander` | 5 | types.Tick |
 | `persistence.DefaultStorage` | 5 | scene.NewCampaignSelectScene, scene.NewSelectScene, scene.NewStageSceneWithOpts, scene.NewTowerWo... |
+| `s.DecayShootTimer` | 5 | types.Tick |
 | `s.MoveOrbit` | 5 | types.Tick |
-| `time.Since` | 4 | debug.EndDraw, debug.EndUpdate, scene.Update |
+| `enemies.Each` | 5 | pipeline.TickEnemyStatusEffects, pipeline.TickProjectileHits, warden.ComputeClusterCenter, warden... |
+| `ebiten.IsMouseButtonPressed` | 5 | scene.Update |
+| `t.Trigger` | 5 | tutorial.OnEvent |
+| `math.Floor` | 5 | abilities.OnHit, combat.Fire, combat.Tick, scene.FormatAbilityDisplay |
+| `math.Atan2` | 5 | combat.Fire, combat.Tick, pipeline.TickTowerCombat |
+| `NewTestSelectScene` | 5 | scene.Update |
+| `warden.ComputeClusterCenter` | 5 | types.Tick |
 | `persistence.NewProgressManager` | 4 | scene.NewCampaignSelectScene, scene.NewSelectScene, scene.NewStageSceneWithOpts, scene.Update |
+| `time.Since` | 4 | debug.EndDraw, debug.EndUpdate, scene.Update |
+| `t.CurrentStep` | 4 | tutorial.ClickAdvance, tutorial.CurrentMessage, tutorial.Tick, tutorial.Trigger |
+| `s.BasicAttack` | 4 | types.Tick |
+| `sw.AudioManager` | 4 | scene.NewAudioPreviewScene, scene.NewSelectScene, scene.NewSettingsScene, scene.NewStageSceneWith... |
+| `math.Cos` | 4 | combat.Fire, descriptor.Select, warden.MoveOrbit |
+| `warden.ParamOrInt` | 4 | types.Init |
+| `persistence.NewMemoryStorage` | 4 | scene.NewCampaignSelectScene, scene.NewSelectScene, scene.NewStageSceneWithOpts, scene.NewTowerWo... |
+| `ctx.OnFire` | 4 | combat.Tick, warden.BasicAttack |
+| `inpututil.IsMouseButtonJustPressed` | 4 | scene.Update |
+| `particle.NewPool` | 4 | scene.NewCampaignSelectScene, scene.NewSelectScene, scene.NewStageSceneWithOpts, scene.NewVFXPrev... |
+| `config.GlobalWardenConfig` | 4 | scene.NewBestiaryScene, scene.NewStageSceneWithOpts, warden.NewWarden |
 | `math.Sqrt` | 4 | descriptor.Select, strength.RebuildChainNetwork |
 | `i18n.Locale` | 4 | scene.Draw, scene.Update |
-| `warden.ParamOrInt` | 4 | types.Init |
-| `ctx.OnFire` | 4 | combat.Tick, warden.BasicAttack |
-| `s.BasicAttack` | 4 | types.Tick |
-| `t.CurrentStep` | 4 | tutorial.ClickAdvance, tutorial.CurrentMessage, tutorial.Tick, tutorial.Trigger |
-| `particle.NewPool` | 4 | scene.NewCampaignSelectScene, scene.NewSelectScene, scene.NewStageSceneWithOpts, scene.NewVFXPrev... |
-| `sw.AudioManager` | 4 | scene.NewAudioPreviewScene, scene.NewSelectScene, scene.NewSettingsScene, scene.NewStageSceneWith... |
-| `t.RecalcStats` | 4 | item.ApplyItem, tower.ApplyRandomStats, tower.BuyStrength, tower.Place |
-| `config.GlobalWardenConfig` | 4 | scene.NewBestiaryScene, scene.NewStageSceneWithOpts, warden.NewWarden |
-| `math.Cos` | 4 | combat.Fire, descriptor.Select, warden.MoveOrbit |
 | `screen.Fill` | 4 | scene.Draw |
-| `inpututil.IsMouseButtonJustPressed` | 4 | scene.Update |
 | `screen.Bounds` | 4 | scene.Draw |
-| `persistence.UnlockRequirement` | 3 | scene.BuildWardenOptions, scene.Draw, scene.Update |
-| `gm.PixelHeight` | 3 | scene.NewStageSceneWithOpts |
-| `ctx.OnSpecial` | 3 | types.Tick |
-| `g.ForceTrigger` | 3 | mascot.NotifyActionComplete, mascot.RequestHelp |
-| `session.Ruleset` | 3 | scene.NewStageSceneWithOpts |
-| `NewPool` | 3 | enemy.DefaultPool, projectile.DefaultPool, tower.DefaultPool |
-| `draw.StrokeRoundRect` | 3 | scene.Draw |
-| `math.Max` | 3 | gamemode.EndExtra, gamemode.HUDExtra, gamemode.TimeScore |
-| `gameAudio.NewManager` | 3 | scene.NewGame, scene.NewGameLite, scene.Update |
-| `sprite.MoveTo` | 3 | aiplayer.Tick |
-| `pool.EachActive` | 3 | enemy.TickBehaviors, tower.FindExtraTargets, tower.FindNearestEnemy |
-| `LoadSettings` | 3 | scene.NewSettingsScene, scene.Update |
-| `ApplyDamage` | 3 | combat.ApplyHit, combat.QuickDamage |
-| `s.Get` | 3 | descriptor.NewAbilityStore, descriptor.NewBlueprintStore, persistence.NewProgressManager |
-| `e.HasControlImmunity` | 3 | combat.ApplySlow, combat.ApplyStun |
-| `tower.Register` | 3 | abilities.RegisterConfigAbilities, descriptor.InitDescriptorAbilities, descriptor.RegisterCustomA... |
-| `ui.Panel` | 3 | scene.Draw |
-| `i18n.OnChange` | 3 | scene.Update |
-| `i18n.Available` | 3 | scene.Draw, scene.NewLangSelectScene, scene.Update |
-| `NewTitleScene` | 3 | scene.Update |
-| `def.CalcScale` | 3 | combat.Fire, combat.Tick |
+| `t.RecalcStats` | 4 | item.ApplyItem, tower.ApplyRandomStats, tower.BuyStrength, tower.Place |
 | `gm.PixelWidth` | 3 | scene.NewStageSceneWithOpts |
-| `persistence.NewMemoryStorage` | 3 | scene.NewCampaignSelectScene, scene.NewSelectScene, scene.NewStageSceneWithOpts |
+| `ctx.OnSpecial` | 3 | types.Tick |
+| `gm.PixelHeight` | 3 | scene.NewStageSceneWithOpts |
+| `e.HasControlImmunity` | 3 | combat.ApplySlow, combat.ApplyStun |
+| `persistence.UnlockRequirement` | 3 | scene.BuildWardenOptions, scene.Draw, scene.Update |
+| `json.Marshal` | 3 | descriptor.MarshalJSON, persistence.Set |
+| `gameAudio.NewManager` | 3 | scene.NewGame, scene.NewGameLite, scene.Update |
+| `s.Get` | 3 | descriptor.NewAbilityStore, descriptor.NewBlueprintStore, persistence.NewProgressManager |
+| `ui.Panel` | 3 | scene.Draw |
+| `sprite.MoveTo` | 3 | aiplayer.Tick |
 | `bubble.Visible` | 3 | aiplayer.Tick |
+| `c.Enabled` | 3 | llm.Tick, llm.TickStrategic, llm.TriggerImmediate |
+| `LoadSettings` | 3 | scene.NewSettingsScene, scene.Update |
+| `math.Max` | 3 | gamemode.EndExtra, gamemode.HUDExtra, gamemode.TimeScore |
+| `NewPool` | 3 | enemy.DefaultPool, projectile.DefaultPool, tower.DefaultPool |
+| `s.Has` | 3 | descriptor.NewAbilityStore, descriptor.NewBlueprintStore, persistence.NewProgressManager |
+| `i18n.Available` | 3 | scene.Draw, scene.NewLangSelectScene, scene.Update |
+| `def.CalcScale` | 3 | combat.Fire, combat.Tick |
+| `pool.EachActive` | 3 | enemy.TickBehaviors, tower.FindExtraTargets, tower.FindNearestEnemy |
+| `draw.StrokeRoundRect` | 3 | scene.Draw |
+| `i18n.OnChange` | 3 | scene.Update |
 | `inpututil.JustPressedTouchIDs` | 3 | scene.Update |
+| `session.Ruleset` | 3 | scene.NewStageSceneWithOpts |
 | `IgnoresReduction` | 3 | combat.ApplyDamage |
 | `t.EffectiveStrength` | 3 | combat.Fire, combat.Tick |
-| `s.Has` | 3 | descriptor.NewAbilityStore, descriptor.NewBlueprintStore, persistence.NewProgressManager |
+| `NewTitleScene` | 3 | scene.Update |
+| `tower.Register` | 3 | abilities.RegisterConfigAbilities, descriptor.InitDescriptorAbilities, descriptor.RegisterCustomA... |
+| `g.ForceTrigger` | 3 | mascot.NotifyActionComplete, mascot.RequestHelp |
+| `ApplyDamage` | 3 | combat.ApplyHit, combat.QuickDamage |
 
 ## abilities
 
@@ -179,6 +180,20 @@
 
 ## aiplayer
 
+### AnalyzeCooperation
+
+📍 `internal/core/aiplayer/cooperation.go:45`
+
+**← 被调用**
+- `aiplayer.Evaluate` (`internal/core/aiplayer/decision.go`)
+
+### AnalyzeThreats
+
+📍 `internal/core/aiplayer/awareness.go:30`
+
+**← 被调用**
+- `aiplayer.Evaluate` (`internal/core/aiplayer/decision.go`)
+
 ### (*CoopZone) BuildCellsForOwner
 
 📍 `internal/core/aiplayer/coop_zone.go:52`
@@ -193,12 +208,26 @@
 **调用 →**
 - `z.OwnerOf`
 
+### CoopDescription
+
+📍 `internal/core/aiplayer/cooperation.go:214`
+
+**调用 →**
+- `strings.Join`
+
 ### DefaultDialogueBank
 
 📍 `internal/core/aiplayer/bubble.go:80`
 
 **← 被调用**
 - `aiplayer.New` (`internal/core/aiplayer/aiplayer.go`)
+
+### DetectDefenseGaps
+
+📍 `internal/core/aiplayer/awareness.go:133`
+
+**← 被调用**
+- `aiplayer.Evaluate` (`internal/core/aiplayer/decision.go`)
 
 ### (*Sprite) DrawY
 
@@ -209,14 +238,33 @@
 
 ### (*DecisionEngine) Evaluate
 
-📍 `internal/core/aiplayer/decision.go:156`
+📍 `internal/core/aiplayer/decision.go:171`
 
 **调用 →**
 - `rand.Intn`
+- `AnalyzeThreats`
+- `DetectDefenseGaps`
+- `GenerateAdvice`
+- `AnalyzeCooperation`
+- `MergeCoopWithAdvice`
+
+### GenerateAdvice
+
+📍 `internal/core/aiplayer/awareness.go:255`
+
+**← 被调用**
+- `aiplayer.Evaluate` (`internal/core/aiplayer/decision.go`)
+
+### MergeCoopWithAdvice
+
+📍 `internal/core/aiplayer/cooperation.go:115`
+
+**← 被调用**
+- `aiplayer.Evaluate` (`internal/core/aiplayer/decision.go`)
 
 ### New
 
-📍 `internal/core/aiplayer/aiplayer.go:69`
+📍 `internal/core/aiplayer/aiplayer.go:71`
 
 **调用 →**
 - `RandomPersonality`
@@ -264,7 +312,7 @@
 
 ### NewDecisionEngine
 
-📍 `internal/core/aiplayer/decision.go:128`
+📍 `internal/core/aiplayer/decision.go:138`
 
 **← 被调用**
 - `aiplayer.New` (`internal/core/aiplayer/aiplayer.go`)
@@ -292,14 +340,14 @@
 
 ### NewWithPersonality
 
-📍 `internal/core/aiplayer/aiplayer.go:125`
+📍 `internal/core/aiplayer/aiplayer.go:136`
 
 **调用 →**
 - `New`
 
 ### (*DialogueBank) Random
 
-📍 `internal/core/aiplayer/bubble.go:209`
+📍 `internal/core/aiplayer/bubble.go:253`
 
 **调用 →**
 - `rand.Intn`
@@ -329,6 +377,21 @@
 ### (*SpectatorState) Tick
 
 📍 `internal/core/aiplayer/spectator.go:46`
+
+**调用 →**
+- `sprite.MoveTo`
+- `bubble.Show`
+- `dialogue.Random`
+- `rand.Float64`
+- `sprite.X`
+- `sprite.Y`
+- `bubble.Visible`
+- `sprite.SetThinking`
+- `sprite.State`
+
+### (*BehaviorState) Tick
+
+📍 `internal/core/aiplayer/behavior.go:72`
 
 **调用 →**
 - `sprite.MoveTo`
@@ -371,24 +434,9 @@
 - `sprite.SetThinking`
 - `sprite.State`
 
-### (*BehaviorState) Tick
-
-📍 `internal/core/aiplayer/behavior.go:72`
-
-**调用 →**
-- `sprite.MoveTo`
-- `bubble.Show`
-- `dialogue.Random`
-- `rand.Float64`
-- `sprite.X`
-- `sprite.Y`
-- `bubble.Visible`
-- `sprite.SetThinking`
-- `sprite.State`
-
 ### (*AIPlayer) Tick
 
-📍 `internal/core/aiplayer/aiplayer.go:187`
+📍 `internal/core/aiplayer/aiplayer.go:204`
 
 **调用 →**
 - `sprite.MoveTo`
@@ -418,7 +466,7 @@
 
 ### (*AIPlayer) TriggerLLMEvent
 
-📍 `internal/core/aiplayer/aiplayer.go:473`
+📍 `internal/core/aiplayer/aiplayer.go:576`
 
 **调用 →**
 - `llm.BuildPrompt`
@@ -940,16 +988,16 @@
 **调用 →**
 - `rand.Float64`
 
-### (BuffAbsentCondition) Eval
+### (*EveryCondition) Eval
 
-📍 `internal/core/tower/descriptor/condition.go:214`
+📍 `internal/core/tower/descriptor/condition.go:179`
 
 **调用 →**
 - `rand.Float64`
 
-### (NotBossCondition) Eval
+### (ChanceCondition) Eval
 
-📍 `internal/core/tower/descriptor/condition.go:161`
+📍 `internal/core/tower/descriptor/condition.go:59`
 
 **调用 →**
 - `rand.Float64`
@@ -957,13 +1005,6 @@
 ### (*CooldownCondition) Eval
 
 📍 `internal/core/tower/descriptor/condition.go:87`
-
-**调用 →**
-- `rand.Float64`
-
-### (IsBossCondition) Eval
-
-📍 `internal/core/tower/descriptor/condition.go:152`
 
 **调用 →**
 - `rand.Float64`
@@ -982,9 +1023,30 @@
 **调用 →**
 - `rand.Float64`
 
-### (*EveryCondition) Eval
+### (NoNearbyTowerCondition) Eval
 
-📍 `internal/core/tower/descriptor/condition.go:179`
+📍 `internal/core/tower/descriptor/condition.go:143`
+
+**调用 →**
+- `rand.Float64`
+
+### (IsBossCondition) Eval
+
+📍 `internal/core/tower/descriptor/condition.go:152`
+
+**调用 →**
+- `rand.Float64`
+
+### (NotBossCondition) Eval
+
+📍 `internal/core/tower/descriptor/condition.go:161`
+
+**调用 →**
+- `rand.Float64`
+
+### (BuffAbsentCondition) Eval
+
+📍 `internal/core/tower/descriptor/condition.go:214`
 
 **调用 →**
 - `rand.Float64`
@@ -996,20 +1058,6 @@
 **调用 →**
 - `rand.Float64`
 
-### (NoNearbyTowerCondition) Eval
-
-📍 `internal/core/tower/descriptor/condition.go:143`
-
-**调用 →**
-- `rand.Float64`
-
-### (ChanceCondition) Eval
-
-📍 `internal/core/tower/descriptor/condition.go:59`
-
-**调用 →**
-- `rand.Float64`
-
 ### EvalAll
 
 📍 `internal/core/tower/descriptor/condition.go:42`
@@ -1017,16 +1065,16 @@
 **调用 →**
 - `c.Eval`
 
-### (*BlueprintStore) Get
+### (*AbilityStore) Get
 
-📍 `internal/core/tower/descriptor/blueprint_store.go:78`
+📍 `internal/core/tower/descriptor/ability_store.go:88`
 
 **调用 →**
 - `fmt.Errorf`
 
-### (*AbilityStore) Get
+### (*BlueprintStore) Get
 
-📍 `internal/core/tower/descriptor/ability_store.go:88`
+📍 `internal/core/tower/descriptor/blueprint_store.go:78`
 
 **调用 →**
 - `fmt.Errorf`
@@ -1074,6 +1122,14 @@
 
 **← 被调用**
 - `descriptor.InitDescriptorAbilities` (`internal/core/tower/descriptor/init.go`)
+
+### (AbilityDescriptor) MarshalJSON
+
+📍 `internal/core/tower/descriptor/marshal.go:23`
+
+**调用 →**
+- `fmt.Errorf`
+- `json.Marshal`
 
 ### NewAbilityStore
 
@@ -1149,6 +1205,7 @@
 
 **← 被调用**
 - `descriptor.LoadDescriptorTable` (`internal/core/tower/descriptor/loader.go`)
+- `descriptor.UnmarshalJSON` (`internal/core/tower/descriptor/marshal.go`)
 
 ### ParseScaler
 
@@ -1165,17 +1222,17 @@
 **调用 →**
 - `fmt.Errorf`
 
-### (*poolTowerQuerier) QueryRadius
+### (*poolEnemyQuerier) QueryRadius
 
-📍 `internal/core/tower/descriptor/descriptor_ability.go:351`
+📍 `internal/core/tower/descriptor/descriptor_ability.go:298`
 
 **调用 →**
 - `e.IsDying`
 - `e.IsSpawning`
 
-### (*poolEnemyQuerier) QueryRadius
+### (*poolTowerQuerier) QueryRadius
 
-📍 `internal/core/tower/descriptor/descriptor_ability.go:298`
+📍 `internal/core/tower/descriptor/descriptor_ability.go:351`
 
 **调用 →**
 - `e.IsDying`
@@ -1313,6 +1370,13 @@
 
 **调用 →**
 - `fmt.Sprintf`
+
+### (*AbilityDescriptor) UnmarshalJSON
+
+📍 `internal/core/tower/descriptor/marshal.go:51`
+
+**调用 →**
+- `ParseDescriptor`
 
 ### ValidateBlueprint
 
@@ -1906,7 +1970,7 @@
 
 ### BuildPrompt
 
-📍 `internal/core/aiplayer/llm/prompt.go:79`
+📍 `internal/core/aiplayer/llm/prompt.go:83`
 
 **调用 →**
 - `sb.WriteString`
@@ -1917,6 +1981,15 @@
 
 **← 被调用**
 - `aiplayer.TriggerLLMEvent` (`internal/core/aiplayer/aiplayer.go`)
+
+### BuildStrategicPrompt
+
+📍 `internal/core/aiplayer/llm/prompt.go:154`
+
+**调用 →**
+- `sb.WriteString`
+- `fmt.Sprintf`
+- `sb.String`
 
 ### DefaultConfig
 
@@ -1930,7 +2003,7 @@
 
 ### NewConnector
 
-📍 `internal/core/aiplayer/llm/connector.go:60`
+📍 `internal/core/aiplayer/llm/connector.go:74`
 
 **调用 →**
 - `NewMemory`
@@ -1940,21 +2013,35 @@
 
 ### NewMemory
 
-📍 `internal/core/aiplayer/llm/prompt.go:45`
+📍 `internal/core/aiplayer/llm/prompt.go:49`
 
 **← 被调用**
 - `llm.NewConnector` (`internal/core/aiplayer/llm/connector.go`)
 
+### ParseLLMDecision
+
+📍 `internal/core/aiplayer/llm/connector.go:249`
+
+**调用 →**
+- `json.Unmarshal`
+
 ### (*Connector) Tick
 
-📍 `internal/core/aiplayer/llm/connector.go:99`
+📍 `internal/core/aiplayer/llm/connector.go:114`
+
+**调用 →**
+- `c.Enabled`
+
+### (*Connector) TickStrategic
+
+📍 `internal/core/aiplayer/llm/connector.go:164`
 
 **调用 →**
 - `c.Enabled`
 
 ### (*Connector) TriggerImmediate
 
-📍 `internal/core/aiplayer/llm/connector.go:78`
+📍 `internal/core/aiplayer/llm/connector.go:93`
 
 **调用 →**
 - `c.Enabled`
@@ -2185,6 +2272,7 @@
 - `scene.NewCampaignSelectScene` (`internal/scene/campaign_select.go`)
 - `scene.NewSelectScene` (`internal/scene/select.go`)
 - `scene.NewStageSceneWithOpts` (`internal/scene/stage.go`)
+- `scene.NewTowerWorkshopScene` (`internal/scene/tower_workshop.go`)
 
 ### NewProgress
 
@@ -2737,7 +2825,7 @@
 
 ### (*StageScene) BuildTowerForAI
 
-📍 `internal/scene/stage.go:4423`
+📍 `internal/scene/stage.go:4309`
 
 **调用 →**
 - `tower.ApplyPresetAbilities`
@@ -2760,7 +2848,7 @@
 
 ### (*StageScene) ChooseAbility
 
-📍 `internal/scene/stage.go:4535`
+📍 `internal/scene/stage.go:4421`
 
 **调用 →**
 - `t.AddAbility`
@@ -2815,874 +2903,7 @@
 - `im.Get`
 - `draw.Sprite`
 - `fm.DrawBoldText`
-- `ui.Divider`
-- `render.ShakeOffset`
-- `draw.BeginGlowPass`
-- `render.DrawBeams`
-- `draw.EndGlowPass`
-- `render.DrawImpactVFX`
-- `render.DrawSplashVFX`
-- `render.DrawFloatTexts`
-- `hud.DrawToast`
-
-### (*SettingsScene) Draw
-
-📍 `internal/scene/settings.go:274`
-
-**调用 →**
-- `render.GlobalFont`
-- `ui.Panel`
-- `hud.DrawPrimitivePicker`
-- `draw.FilledRect`
-- `fm.DrawCenteredBoldText`
-- `i18n.T`
-- `ui.Button`
-- `draw.RoundRect`
-- `fm.DrawCenteredText`
-- `persistence.UnlockRequirement`
-- `hud.DrawMascotOverlay`
-- `screen.Bounds`
-- `ebiten.ActualFPS`
-- `strconv.AppendInt`
-- `fm.DrawText`
-- `filepath.Join`
-- `fmt.Sprintf`
-- `time.Now`
-- `hud.ShowToast`
-- `log.Printf`
-- `i18n.TFromLocale`
-- `screen.Fill`
-- `draw.Line`
-- `strconv.Itoa`
-- `math.Sin`
-- `image.Rect`
-- `screen.SubImage`
-- `ui.IconCard`
-- `draw.StrokeRoundRect`
-- `i18n.Available`
-- `i18n.Locale`
-- `i18n.TF`
-- `render.GlobalIcons`
-- `im.Get`
-- `draw.Sprite`
-- `fm.DrawBoldText`
-- `ui.Divider`
-- `render.ShakeOffset`
-- `draw.BeginGlowPass`
-- `render.DrawBeams`
-- `draw.EndGlowPass`
-- `render.DrawImpactVFX`
-- `render.DrawSplashVFX`
-- `render.DrawFloatTexts`
-- `hud.DrawToast`
-
-### (*TestSelectScene) Draw
-
-📍 `internal/scene/test_select.go:338`
-
-**调用 →**
-- `render.GlobalFont`
-- `ui.Panel`
-- `hud.DrawPrimitivePicker`
-- `draw.FilledRect`
-- `fm.DrawCenteredBoldText`
-- `i18n.T`
-- `ui.Button`
-- `draw.RoundRect`
-- `fm.DrawCenteredText`
-- `persistence.UnlockRequirement`
-- `hud.DrawMascotOverlay`
-- `screen.Bounds`
-- `ebiten.ActualFPS`
-- `strconv.AppendInt`
-- `fm.DrawText`
-- `filepath.Join`
-- `fmt.Sprintf`
-- `time.Now`
-- `hud.ShowToast`
-- `log.Printf`
-- `i18n.TFromLocale`
-- `screen.Fill`
-- `draw.Line`
-- `strconv.Itoa`
-- `math.Sin`
-- `image.Rect`
-- `screen.SubImage`
-- `ui.IconCard`
-- `draw.StrokeRoundRect`
-- `i18n.Available`
-- `i18n.Locale`
-- `i18n.TF`
-- `render.GlobalIcons`
-- `im.Get`
-- `draw.Sprite`
-- `fm.DrawBoldText`
-- `ui.Divider`
-- `render.ShakeOffset`
-- `draw.BeginGlowPass`
-- `render.DrawBeams`
-- `draw.EndGlowPass`
-- `render.DrawImpactVFX`
-- `render.DrawSplashVFX`
-- `render.DrawFloatTexts`
-- `hud.DrawToast`
-
-### (*TitleScene) Draw
-
-📍 `internal/scene/title.go:96`
-
-**调用 →**
-- `render.GlobalFont`
-- `ui.Panel`
-- `hud.DrawPrimitivePicker`
-- `draw.FilledRect`
-- `fm.DrawCenteredBoldText`
-- `i18n.T`
-- `ui.Button`
-- `draw.RoundRect`
-- `fm.DrawCenteredText`
-- `persistence.UnlockRequirement`
-- `hud.DrawMascotOverlay`
-- `screen.Bounds`
-- `ebiten.ActualFPS`
-- `strconv.AppendInt`
-- `fm.DrawText`
-- `filepath.Join`
-- `fmt.Sprintf`
-- `time.Now`
-- `hud.ShowToast`
-- `log.Printf`
-- `i18n.TFromLocale`
-- `screen.Fill`
-- `draw.Line`
-- `strconv.Itoa`
-- `math.Sin`
-- `image.Rect`
-- `screen.SubImage`
-- `ui.IconCard`
-- `draw.StrokeRoundRect`
-- `i18n.Available`
-- `i18n.Locale`
-- `i18n.TF`
-- `render.GlobalIcons`
-- `im.Get`
-- `draw.Sprite`
-- `fm.DrawBoldText`
-- `ui.Divider`
-- `render.ShakeOffset`
-- `draw.BeginGlowPass`
-- `render.DrawBeams`
-- `draw.EndGlowPass`
-- `render.DrawImpactVFX`
-- `render.DrawSplashVFX`
-- `render.DrawFloatTexts`
-- `hud.DrawToast`
-
-### (*BlueprintEditScene) Draw
-
-📍 `internal/scene/blueprint_edit.go:560`
-
-**调用 →**
-- `render.GlobalFont`
-- `ui.Panel`
-- `hud.DrawPrimitivePicker`
-- `draw.FilledRect`
-- `fm.DrawCenteredBoldText`
-- `i18n.T`
-- `ui.Button`
-- `draw.RoundRect`
-- `fm.DrawCenteredText`
-- `persistence.UnlockRequirement`
-- `hud.DrawMascotOverlay`
-- `screen.Bounds`
-- `ebiten.ActualFPS`
-- `strconv.AppendInt`
-- `fm.DrawText`
-- `filepath.Join`
-- `fmt.Sprintf`
-- `time.Now`
-- `hud.ShowToast`
-- `log.Printf`
-- `i18n.TFromLocale`
-- `screen.Fill`
-- `draw.Line`
-- `strconv.Itoa`
-- `math.Sin`
-- `image.Rect`
-- `screen.SubImage`
-- `ui.IconCard`
-- `draw.StrokeRoundRect`
-- `i18n.Available`
-- `i18n.Locale`
-- `i18n.TF`
-- `render.GlobalIcons`
-- `im.Get`
-- `draw.Sprite`
-- `fm.DrawBoldText`
-- `ui.Divider`
-- `render.ShakeOffset`
-- `draw.BeginGlowPass`
-- `render.DrawBeams`
-- `draw.EndGlowPass`
-- `render.DrawImpactVFX`
-- `render.DrawSplashVFX`
-- `render.DrawFloatTexts`
-- `hud.DrawToast`
-
-### (*TowerWorkshopScene) Draw
-
-📍 `internal/scene/tower_workshop.go:213`
-
-**调用 →**
-- `render.GlobalFont`
-- `ui.Panel`
-- `hud.DrawPrimitivePicker`
-- `draw.FilledRect`
-- `fm.DrawCenteredBoldText`
-- `i18n.T`
-- `ui.Button`
-- `draw.RoundRect`
-- `fm.DrawCenteredText`
-- `persistence.UnlockRequirement`
-- `hud.DrawMascotOverlay`
-- `screen.Bounds`
-- `ebiten.ActualFPS`
-- `strconv.AppendInt`
-- `fm.DrawText`
-- `filepath.Join`
-- `fmt.Sprintf`
-- `time.Now`
-- `hud.ShowToast`
-- `log.Printf`
-- `i18n.TFromLocale`
-- `screen.Fill`
-- `draw.Line`
-- `strconv.Itoa`
-- `math.Sin`
-- `image.Rect`
-- `screen.SubImage`
-- `ui.IconCard`
-- `draw.StrokeRoundRect`
-- `i18n.Available`
-- `i18n.Locale`
-- `i18n.TF`
-- `render.GlobalIcons`
-- `im.Get`
-- `draw.Sprite`
-- `fm.DrawBoldText`
-- `ui.Divider`
-- `render.ShakeOffset`
-- `draw.BeginGlowPass`
-- `render.DrawBeams`
-- `draw.EndGlowPass`
-- `render.DrawImpactVFX`
-- `render.DrawSplashVFX`
-- `render.DrawFloatTexts`
-- `hud.DrawToast`
-
-### (*AudioPreviewScene) Draw
-
-📍 `internal/scene/audio_preview.go:476`
-
-**调用 →**
-- `render.GlobalFont`
-- `ui.Panel`
-- `hud.DrawPrimitivePicker`
-- `draw.FilledRect`
-- `fm.DrawCenteredBoldText`
-- `i18n.T`
-- `ui.Button`
-- `draw.RoundRect`
-- `fm.DrawCenteredText`
-- `persistence.UnlockRequirement`
-- `hud.DrawMascotOverlay`
-- `screen.Bounds`
-- `ebiten.ActualFPS`
-- `strconv.AppendInt`
-- `fm.DrawText`
-- `filepath.Join`
-- `fmt.Sprintf`
-- `time.Now`
-- `hud.ShowToast`
-- `log.Printf`
-- `i18n.TFromLocale`
-- `screen.Fill`
-- `draw.Line`
-- `strconv.Itoa`
-- `math.Sin`
-- `image.Rect`
-- `screen.SubImage`
-- `ui.IconCard`
-- `draw.StrokeRoundRect`
-- `i18n.Available`
-- `i18n.Locale`
-- `i18n.TF`
-- `render.GlobalIcons`
-- `im.Get`
-- `draw.Sprite`
-- `fm.DrawBoldText`
-- `ui.Divider`
-- `render.ShakeOffset`
-- `draw.BeginGlowPass`
-- `render.DrawBeams`
-- `draw.EndGlowPass`
-- `render.DrawImpactVFX`
-- `render.DrawSplashVFX`
-- `render.DrawFloatTexts`
-- `hud.DrawToast`
-
-### (*LoadingScene) Draw
-
-📍 `internal/scene/loading.go:224`
-
-**调用 →**
-- `render.GlobalFont`
-- `ui.Panel`
-- `hud.DrawPrimitivePicker`
-- `draw.FilledRect`
-- `fm.DrawCenteredBoldText`
-- `i18n.T`
-- `ui.Button`
-- `draw.RoundRect`
-- `fm.DrawCenteredText`
-- `persistence.UnlockRequirement`
-- `hud.DrawMascotOverlay`
-- `screen.Bounds`
-- `ebiten.ActualFPS`
-- `strconv.AppendInt`
-- `fm.DrawText`
-- `filepath.Join`
-- `fmt.Sprintf`
-- `time.Now`
-- `hud.ShowToast`
-- `log.Printf`
-- `i18n.TFromLocale`
-- `screen.Fill`
-- `draw.Line`
-- `strconv.Itoa`
-- `math.Sin`
-- `image.Rect`
-- `screen.SubImage`
-- `ui.IconCard`
-- `draw.StrokeRoundRect`
-- `i18n.Available`
-- `i18n.Locale`
-- `i18n.TF`
-- `render.GlobalIcons`
-- `im.Get`
-- `draw.Sprite`
-- `fm.DrawBoldText`
-- `ui.Divider`
-- `render.ShakeOffset`
-- `draw.BeginGlowPass`
-- `render.DrawBeams`
-- `draw.EndGlowPass`
-- `render.DrawImpactVFX`
-- `render.DrawSplashVFX`
-- `render.DrawFloatTexts`
-- `hud.DrawToast`
-
-### (*VFXPreviewScene) Draw
-
-📍 `internal/scene/vfx_preview.go:648`
-
-**调用 →**
-- `render.GlobalFont`
-- `ui.Panel`
-- `hud.DrawPrimitivePicker`
-- `draw.FilledRect`
-- `fm.DrawCenteredBoldText`
-- `i18n.T`
-- `ui.Button`
-- `draw.RoundRect`
-- `fm.DrawCenteredText`
-- `persistence.UnlockRequirement`
-- `hud.DrawMascotOverlay`
-- `screen.Bounds`
-- `ebiten.ActualFPS`
-- `strconv.AppendInt`
-- `fm.DrawText`
-- `filepath.Join`
-- `fmt.Sprintf`
-- `time.Now`
-- `hud.ShowToast`
-- `log.Printf`
-- `i18n.TFromLocale`
-- `screen.Fill`
-- `draw.Line`
-- `strconv.Itoa`
-- `math.Sin`
-- `image.Rect`
-- `screen.SubImage`
-- `ui.IconCard`
-- `draw.StrokeRoundRect`
-- `i18n.Available`
-- `i18n.Locale`
-- `i18n.TF`
-- `render.GlobalIcons`
-- `im.Get`
-- `draw.Sprite`
-- `fm.DrawBoldText`
-- `ui.Divider`
-- `render.ShakeOffset`
-- `draw.BeginGlowPass`
-- `render.DrawBeams`
-- `draw.EndGlowPass`
-- `render.DrawImpactVFX`
-- `render.DrawSplashVFX`
-- `render.DrawFloatTexts`
-- `hud.DrawToast`
-
-### (*StageScene) Draw
-
-📍 `internal/scene/stage.go:2782`
-
-**调用 →**
-- `render.GlobalFont`
-- `ui.Panel`
-- `hud.DrawPrimitivePicker`
-- `draw.FilledRect`
-- `fm.DrawCenteredBoldText`
-- `i18n.T`
-- `ui.Button`
-- `draw.RoundRect`
-- `fm.DrawCenteredText`
-- `persistence.UnlockRequirement`
-- `hud.DrawMascotOverlay`
-- `screen.Bounds`
-- `ebiten.ActualFPS`
-- `strconv.AppendInt`
-- `fm.DrawText`
-- `filepath.Join`
-- `fmt.Sprintf`
-- `time.Now`
-- `hud.ShowToast`
-- `log.Printf`
-- `i18n.TFromLocale`
-- `screen.Fill`
-- `draw.Line`
-- `strconv.Itoa`
-- `math.Sin`
-- `image.Rect`
-- `screen.SubImage`
-- `ui.IconCard`
-- `draw.StrokeRoundRect`
-- `i18n.Available`
-- `i18n.Locale`
-- `i18n.TF`
-- `render.GlobalIcons`
-- `im.Get`
-- `draw.Sprite`
-- `fm.DrawBoldText`
-- `ui.Divider`
-- `render.ShakeOffset`
-- `draw.BeginGlowPass`
-- `render.DrawBeams`
-- `draw.EndGlowPass`
-- `render.DrawImpactVFX`
-- `render.DrawSplashVFX`
-- `render.DrawFloatTexts`
-- `hud.DrawToast`
-
-### (*WardenSelectScene) Draw
-
-📍 `internal/scene/warden_select.go:161`
-
-**调用 →**
-- `render.GlobalFont`
-- `ui.Panel`
-- `hud.DrawPrimitivePicker`
-- `draw.FilledRect`
-- `fm.DrawCenteredBoldText`
-- `i18n.T`
-- `ui.Button`
-- `draw.RoundRect`
-- `fm.DrawCenteredText`
-- `persistence.UnlockRequirement`
-- `hud.DrawMascotOverlay`
-- `screen.Bounds`
-- `ebiten.ActualFPS`
-- `strconv.AppendInt`
-- `fm.DrawText`
-- `filepath.Join`
-- `fmt.Sprintf`
-- `time.Now`
-- `hud.ShowToast`
-- `log.Printf`
-- `i18n.TFromLocale`
-- `screen.Fill`
-- `draw.Line`
-- `strconv.Itoa`
-- `math.Sin`
-- `image.Rect`
-- `screen.SubImage`
-- `ui.IconCard`
-- `draw.StrokeRoundRect`
-- `i18n.Available`
-- `i18n.Locale`
-- `i18n.TF`
-- `render.GlobalIcons`
-- `im.Get`
-- `draw.Sprite`
-- `fm.DrawBoldText`
-- `ui.Divider`
-- `render.ShakeOffset`
-- `draw.BeginGlowPass`
-- `render.DrawBeams`
-- `draw.EndGlowPass`
-- `render.DrawImpactVFX`
-- `render.DrawSplashVFX`
-- `render.DrawFloatTexts`
-- `hud.DrawToast`
-
-### (*MapEditorScene) Draw
-
-📍 `internal/scene/map_editor.go:496`
-
-**调用 →**
-- `render.GlobalFont`
-- `ui.Panel`
-- `hud.DrawPrimitivePicker`
-- `draw.FilledRect`
-- `fm.DrawCenteredBoldText`
-- `i18n.T`
-- `ui.Button`
-- `draw.RoundRect`
-- `fm.DrawCenteredText`
-- `persistence.UnlockRequirement`
-- `hud.DrawMascotOverlay`
-- `screen.Bounds`
-- `ebiten.ActualFPS`
-- `strconv.AppendInt`
-- `fm.DrawText`
-- `filepath.Join`
-- `fmt.Sprintf`
-- `time.Now`
-- `hud.ShowToast`
-- `log.Printf`
-- `i18n.TFromLocale`
-- `screen.Fill`
-- `draw.Line`
-- `strconv.Itoa`
-- `math.Sin`
-- `image.Rect`
-- `screen.SubImage`
-- `ui.IconCard`
-- `draw.StrokeRoundRect`
-- `i18n.Available`
-- `i18n.Locale`
-- `i18n.TF`
-- `render.GlobalIcons`
-- `im.Get`
-- `draw.Sprite`
-- `fm.DrawBoldText`
-- `ui.Divider`
-- `render.ShakeOffset`
-- `draw.BeginGlowPass`
-- `render.DrawBeams`
-- `draw.EndGlowPass`
-- `render.DrawImpactVFX`
-- `render.DrawSplashVFX`
-- `render.DrawFloatTexts`
-- `hud.DrawToast`
-
-### (*AbilityEditScene) Draw
-
-📍 `internal/scene/ability_edit.go:933`
-
-**调用 →**
-- `render.GlobalFont`
-- `ui.Panel`
-- `hud.DrawPrimitivePicker`
-- `draw.FilledRect`
-- `fm.DrawCenteredBoldText`
-- `i18n.T`
-- `ui.Button`
-- `draw.RoundRect`
-- `fm.DrawCenteredText`
-- `persistence.UnlockRequirement`
-- `hud.DrawMascotOverlay`
-- `screen.Bounds`
-- `ebiten.ActualFPS`
-- `strconv.AppendInt`
-- `fm.DrawText`
-- `filepath.Join`
-- `fmt.Sprintf`
-- `time.Now`
-- `hud.ShowToast`
-- `log.Printf`
-- `i18n.TFromLocale`
-- `screen.Fill`
-- `draw.Line`
-- `strconv.Itoa`
-- `math.Sin`
-- `image.Rect`
-- `screen.SubImage`
-- `ui.IconCard`
-- `draw.StrokeRoundRect`
-- `i18n.Available`
-- `i18n.Locale`
-- `i18n.TF`
-- `render.GlobalIcons`
-- `im.Get`
-- `draw.Sprite`
-- `fm.DrawBoldText`
-- `ui.Divider`
-- `render.ShakeOffset`
-- `draw.BeginGlowPass`
-- `render.DrawBeams`
-- `draw.EndGlowPass`
-- `render.DrawImpactVFX`
-- `render.DrawSplashVFX`
-- `render.DrawFloatTexts`
-- `hud.DrawToast`
-
-### (*LangSelectScene) Draw
-
-📍 `internal/scene/lang_select.go:94`
-
-**调用 →**
-- `render.GlobalFont`
-- `ui.Panel`
-- `hud.DrawPrimitivePicker`
-- `draw.FilledRect`
-- `fm.DrawCenteredBoldText`
-- `i18n.T`
-- `ui.Button`
-- `draw.RoundRect`
-- `fm.DrawCenteredText`
-- `persistence.UnlockRequirement`
-- `hud.DrawMascotOverlay`
-- `screen.Bounds`
-- `ebiten.ActualFPS`
-- `strconv.AppendInt`
-- `fm.DrawText`
-- `filepath.Join`
-- `fmt.Sprintf`
-- `time.Now`
-- `hud.ShowToast`
-- `log.Printf`
-- `i18n.TFromLocale`
-- `screen.Fill`
-- `draw.Line`
-- `strconv.Itoa`
-- `math.Sin`
-- `image.Rect`
-- `screen.SubImage`
-- `ui.IconCard`
-- `draw.StrokeRoundRect`
-- `i18n.Available`
-- `i18n.Locale`
-- `i18n.TF`
-- `render.GlobalIcons`
-- `im.Get`
-- `draw.Sprite`
-- `fm.DrawBoldText`
-- `ui.Divider`
-- `render.ShakeOffset`
-- `draw.BeginGlowPass`
-- `render.DrawBeams`
-- `draw.EndGlowPass`
-- `render.DrawImpactVFX`
-- `render.DrawSplashVFX`
-- `render.DrawFloatTexts`
-- `hud.DrawToast`
-
-### (*Game) Draw
-
-📍 `internal/scene/game.go:354`
-
-**调用 →**
-- `render.GlobalFont`
-- `ui.Panel`
-- `hud.DrawPrimitivePicker`
-- `draw.FilledRect`
-- `fm.DrawCenteredBoldText`
-- `i18n.T`
-- `ui.Button`
-- `draw.RoundRect`
-- `fm.DrawCenteredText`
-- `persistence.UnlockRequirement`
-- `hud.DrawMascotOverlay`
-- `screen.Bounds`
-- `ebiten.ActualFPS`
-- `strconv.AppendInt`
-- `fm.DrawText`
-- `filepath.Join`
-- `fmt.Sprintf`
-- `time.Now`
-- `hud.ShowToast`
-- `log.Printf`
-- `i18n.TFromLocale`
-- `screen.Fill`
-- `draw.Line`
-- `strconv.Itoa`
-- `math.Sin`
-- `image.Rect`
-- `screen.SubImage`
-- `ui.IconCard`
-- `draw.StrokeRoundRect`
-- `i18n.Available`
-- `i18n.Locale`
-- `i18n.TF`
-- `render.GlobalIcons`
-- `im.Get`
-- `draw.Sprite`
-- `fm.DrawBoldText`
-- `ui.Divider`
-- `render.ShakeOffset`
-- `draw.BeginGlowPass`
-- `render.DrawBeams`
-- `draw.EndGlowPass`
-- `render.DrawImpactVFX`
-- `render.DrawSplashVFX`
-- `render.DrawFloatTexts`
-- `hud.DrawToast`
-
-### (*WavePreviewScene) Draw
-
-📍 `internal/scene/wave_preview.go:261`
-
-**调用 →**
-- `render.GlobalFont`
-- `ui.Panel`
-- `hud.DrawPrimitivePicker`
-- `draw.FilledRect`
-- `fm.DrawCenteredBoldText`
-- `i18n.T`
-- `ui.Button`
-- `draw.RoundRect`
-- `fm.DrawCenteredText`
-- `persistence.UnlockRequirement`
-- `hud.DrawMascotOverlay`
-- `screen.Bounds`
-- `ebiten.ActualFPS`
-- `strconv.AppendInt`
-- `fm.DrawText`
-- `filepath.Join`
-- `fmt.Sprintf`
-- `time.Now`
-- `hud.ShowToast`
-- `log.Printf`
-- `i18n.TFromLocale`
-- `screen.Fill`
-- `draw.Line`
-- `strconv.Itoa`
-- `math.Sin`
-- `image.Rect`
-- `screen.SubImage`
-- `ui.IconCard`
-- `draw.StrokeRoundRect`
-- `i18n.Available`
-- `i18n.Locale`
-- `i18n.TF`
-- `render.GlobalIcons`
-- `im.Get`
-- `draw.Sprite`
-- `fm.DrawBoldText`
-- `ui.Divider`
-- `render.ShakeOffset`
-- `draw.BeginGlowPass`
-- `render.DrawBeams`
-- `draw.EndGlowPass`
-- `render.DrawImpactVFX`
-- `render.DrawSplashVFX`
-- `render.DrawFloatTexts`
-- `hud.DrawToast`
-
-### (*BestiaryScene) Draw
-
-📍 `internal/scene/bestiary.go:238`
-
-**调用 →**
-- `render.GlobalFont`
-- `ui.Panel`
-- `hud.DrawPrimitivePicker`
-- `draw.FilledRect`
-- `fm.DrawCenteredBoldText`
-- `i18n.T`
-- `ui.Button`
-- `draw.RoundRect`
-- `fm.DrawCenteredText`
-- `persistence.UnlockRequirement`
-- `hud.DrawMascotOverlay`
-- `screen.Bounds`
-- `ebiten.ActualFPS`
-- `strconv.AppendInt`
-- `fm.DrawText`
-- `filepath.Join`
-- `fmt.Sprintf`
-- `time.Now`
-- `hud.ShowToast`
-- `log.Printf`
-- `i18n.TFromLocale`
-- `screen.Fill`
-- `draw.Line`
-- `strconv.Itoa`
-- `math.Sin`
-- `image.Rect`
-- `screen.SubImage`
-- `ui.IconCard`
-- `draw.StrokeRoundRect`
-- `i18n.Available`
-- `i18n.Locale`
-- `i18n.TF`
-- `render.GlobalIcons`
-- `im.Get`
-- `draw.Sprite`
-- `fm.DrawBoldText`
-- `ui.Divider`
-- `render.ShakeOffset`
-- `draw.BeginGlowPass`
-- `render.DrawBeams`
-- `draw.EndGlowPass`
-- `render.DrawImpactVFX`
-- `render.DrawSplashVFX`
-- `render.DrawFloatTexts`
-- `hud.DrawToast`
-
-### (*SelectScene) Draw
-
-📍 `internal/scene/select.go:432`
-
-**调用 →**
-- `render.GlobalFont`
-- `ui.Panel`
-- `hud.DrawPrimitivePicker`
-- `draw.FilledRect`
-- `fm.DrawCenteredBoldText`
-- `i18n.T`
-- `ui.Button`
-- `draw.RoundRect`
-- `fm.DrawCenteredText`
-- `persistence.UnlockRequirement`
-- `hud.DrawMascotOverlay`
-- `screen.Bounds`
-- `ebiten.ActualFPS`
-- `strconv.AppendInt`
-- `fm.DrawText`
-- `filepath.Join`
-- `fmt.Sprintf`
-- `time.Now`
-- `hud.ShowToast`
-- `log.Printf`
-- `i18n.TFromLocale`
-- `screen.Fill`
-- `draw.Line`
-- `strconv.Itoa`
-- `math.Sin`
-- `image.Rect`
-- `screen.SubImage`
-- `ui.IconCard`
-- `draw.StrokeRoundRect`
-- `i18n.Available`
-- `i18n.Locale`
-- `i18n.TF`
-- `render.GlobalIcons`
-- `im.Get`
-- `draw.Sprite`
-- `fm.DrawBoldText`
-- `ui.Divider`
+- `color.Color`
 - `render.ShakeOffset`
 - `draw.BeginGlowPass`
 - `render.DrawBeams`
@@ -3733,7 +2954,874 @@
 - `im.Get`
 - `draw.Sprite`
 - `fm.DrawBoldText`
-- `ui.Divider`
+- `color.Color`
+- `render.ShakeOffset`
+- `draw.BeginGlowPass`
+- `render.DrawBeams`
+- `draw.EndGlowPass`
+- `render.DrawImpactVFX`
+- `render.DrawSplashVFX`
+- `render.DrawFloatTexts`
+- `hud.DrawToast`
+
+### (*SettingsScene) Draw
+
+📍 `internal/scene/settings.go:274`
+
+**调用 →**
+- `render.GlobalFont`
+- `ui.Panel`
+- `hud.DrawPrimitivePicker`
+- `draw.FilledRect`
+- `fm.DrawCenteredBoldText`
+- `i18n.T`
+- `ui.Button`
+- `draw.RoundRect`
+- `fm.DrawCenteredText`
+- `persistence.UnlockRequirement`
+- `hud.DrawMascotOverlay`
+- `screen.Bounds`
+- `ebiten.ActualFPS`
+- `strconv.AppendInt`
+- `fm.DrawText`
+- `filepath.Join`
+- `fmt.Sprintf`
+- `time.Now`
+- `hud.ShowToast`
+- `log.Printf`
+- `i18n.TFromLocale`
+- `screen.Fill`
+- `draw.Line`
+- `strconv.Itoa`
+- `math.Sin`
+- `image.Rect`
+- `screen.SubImage`
+- `ui.IconCard`
+- `draw.StrokeRoundRect`
+- `i18n.Available`
+- `i18n.Locale`
+- `i18n.TF`
+- `render.GlobalIcons`
+- `im.Get`
+- `draw.Sprite`
+- `fm.DrawBoldText`
+- `color.Color`
+- `render.ShakeOffset`
+- `draw.BeginGlowPass`
+- `render.DrawBeams`
+- `draw.EndGlowPass`
+- `render.DrawImpactVFX`
+- `render.DrawSplashVFX`
+- `render.DrawFloatTexts`
+- `hud.DrawToast`
+
+### (*TowerWorkshopScene) Draw
+
+📍 `internal/scene/tower_workshop.go:297`
+
+**调用 →**
+- `render.GlobalFont`
+- `ui.Panel`
+- `hud.DrawPrimitivePicker`
+- `draw.FilledRect`
+- `fm.DrawCenteredBoldText`
+- `i18n.T`
+- `ui.Button`
+- `draw.RoundRect`
+- `fm.DrawCenteredText`
+- `persistence.UnlockRequirement`
+- `hud.DrawMascotOverlay`
+- `screen.Bounds`
+- `ebiten.ActualFPS`
+- `strconv.AppendInt`
+- `fm.DrawText`
+- `filepath.Join`
+- `fmt.Sprintf`
+- `time.Now`
+- `hud.ShowToast`
+- `log.Printf`
+- `i18n.TFromLocale`
+- `screen.Fill`
+- `draw.Line`
+- `strconv.Itoa`
+- `math.Sin`
+- `image.Rect`
+- `screen.SubImage`
+- `ui.IconCard`
+- `draw.StrokeRoundRect`
+- `i18n.Available`
+- `i18n.Locale`
+- `i18n.TF`
+- `render.GlobalIcons`
+- `im.Get`
+- `draw.Sprite`
+- `fm.DrawBoldText`
+- `color.Color`
+- `render.ShakeOffset`
+- `draw.BeginGlowPass`
+- `render.DrawBeams`
+- `draw.EndGlowPass`
+- `render.DrawImpactVFX`
+- `render.DrawSplashVFX`
+- `render.DrawFloatTexts`
+- `hud.DrawToast`
+
+### (*BlueprintEditScene) Draw
+
+📍 `internal/scene/blueprint_edit.go:566`
+
+**调用 →**
+- `render.GlobalFont`
+- `ui.Panel`
+- `hud.DrawPrimitivePicker`
+- `draw.FilledRect`
+- `fm.DrawCenteredBoldText`
+- `i18n.T`
+- `ui.Button`
+- `draw.RoundRect`
+- `fm.DrawCenteredText`
+- `persistence.UnlockRequirement`
+- `hud.DrawMascotOverlay`
+- `screen.Bounds`
+- `ebiten.ActualFPS`
+- `strconv.AppendInt`
+- `fm.DrawText`
+- `filepath.Join`
+- `fmt.Sprintf`
+- `time.Now`
+- `hud.ShowToast`
+- `log.Printf`
+- `i18n.TFromLocale`
+- `screen.Fill`
+- `draw.Line`
+- `strconv.Itoa`
+- `math.Sin`
+- `image.Rect`
+- `screen.SubImage`
+- `ui.IconCard`
+- `draw.StrokeRoundRect`
+- `i18n.Available`
+- `i18n.Locale`
+- `i18n.TF`
+- `render.GlobalIcons`
+- `im.Get`
+- `draw.Sprite`
+- `fm.DrawBoldText`
+- `color.Color`
+- `render.ShakeOffset`
+- `draw.BeginGlowPass`
+- `render.DrawBeams`
+- `draw.EndGlowPass`
+- `render.DrawImpactVFX`
+- `render.DrawSplashVFX`
+- `render.DrawFloatTexts`
+- `hud.DrawToast`
+
+### (*VFXPreviewScene) Draw
+
+📍 `internal/scene/vfx_preview.go:648`
+
+**调用 →**
+- `render.GlobalFont`
+- `ui.Panel`
+- `hud.DrawPrimitivePicker`
+- `draw.FilledRect`
+- `fm.DrawCenteredBoldText`
+- `i18n.T`
+- `ui.Button`
+- `draw.RoundRect`
+- `fm.DrawCenteredText`
+- `persistence.UnlockRequirement`
+- `hud.DrawMascotOverlay`
+- `screen.Bounds`
+- `ebiten.ActualFPS`
+- `strconv.AppendInt`
+- `fm.DrawText`
+- `filepath.Join`
+- `fmt.Sprintf`
+- `time.Now`
+- `hud.ShowToast`
+- `log.Printf`
+- `i18n.TFromLocale`
+- `screen.Fill`
+- `draw.Line`
+- `strconv.Itoa`
+- `math.Sin`
+- `image.Rect`
+- `screen.SubImage`
+- `ui.IconCard`
+- `draw.StrokeRoundRect`
+- `i18n.Available`
+- `i18n.Locale`
+- `i18n.TF`
+- `render.GlobalIcons`
+- `im.Get`
+- `draw.Sprite`
+- `fm.DrawBoldText`
+- `color.Color`
+- `render.ShakeOffset`
+- `draw.BeginGlowPass`
+- `render.DrawBeams`
+- `draw.EndGlowPass`
+- `render.DrawImpactVFX`
+- `render.DrawSplashVFX`
+- `render.DrawFloatTexts`
+- `hud.DrawToast`
+
+### (*TitleScene) Draw
+
+📍 `internal/scene/title.go:96`
+
+**调用 →**
+- `render.GlobalFont`
+- `ui.Panel`
+- `hud.DrawPrimitivePicker`
+- `draw.FilledRect`
+- `fm.DrawCenteredBoldText`
+- `i18n.T`
+- `ui.Button`
+- `draw.RoundRect`
+- `fm.DrawCenteredText`
+- `persistence.UnlockRequirement`
+- `hud.DrawMascotOverlay`
+- `screen.Bounds`
+- `ebiten.ActualFPS`
+- `strconv.AppendInt`
+- `fm.DrawText`
+- `filepath.Join`
+- `fmt.Sprintf`
+- `time.Now`
+- `hud.ShowToast`
+- `log.Printf`
+- `i18n.TFromLocale`
+- `screen.Fill`
+- `draw.Line`
+- `strconv.Itoa`
+- `math.Sin`
+- `image.Rect`
+- `screen.SubImage`
+- `ui.IconCard`
+- `draw.StrokeRoundRect`
+- `i18n.Available`
+- `i18n.Locale`
+- `i18n.TF`
+- `render.GlobalIcons`
+- `im.Get`
+- `draw.Sprite`
+- `fm.DrawBoldText`
+- `color.Color`
+- `render.ShakeOffset`
+- `draw.BeginGlowPass`
+- `render.DrawBeams`
+- `draw.EndGlowPass`
+- `render.DrawImpactVFX`
+- `render.DrawSplashVFX`
+- `render.DrawFloatTexts`
+- `hud.DrawToast`
+
+### (*AudioPreviewScene) Draw
+
+📍 `internal/scene/audio_preview.go:476`
+
+**调用 →**
+- `render.GlobalFont`
+- `ui.Panel`
+- `hud.DrawPrimitivePicker`
+- `draw.FilledRect`
+- `fm.DrawCenteredBoldText`
+- `i18n.T`
+- `ui.Button`
+- `draw.RoundRect`
+- `fm.DrawCenteredText`
+- `persistence.UnlockRequirement`
+- `hud.DrawMascotOverlay`
+- `screen.Bounds`
+- `ebiten.ActualFPS`
+- `strconv.AppendInt`
+- `fm.DrawText`
+- `filepath.Join`
+- `fmt.Sprintf`
+- `time.Now`
+- `hud.ShowToast`
+- `log.Printf`
+- `i18n.TFromLocale`
+- `screen.Fill`
+- `draw.Line`
+- `strconv.Itoa`
+- `math.Sin`
+- `image.Rect`
+- `screen.SubImage`
+- `ui.IconCard`
+- `draw.StrokeRoundRect`
+- `i18n.Available`
+- `i18n.Locale`
+- `i18n.TF`
+- `render.GlobalIcons`
+- `im.Get`
+- `draw.Sprite`
+- `fm.DrawBoldText`
+- `color.Color`
+- `render.ShakeOffset`
+- `draw.BeginGlowPass`
+- `render.DrawBeams`
+- `draw.EndGlowPass`
+- `render.DrawImpactVFX`
+- `render.DrawSplashVFX`
+- `render.DrawFloatTexts`
+- `hud.DrawToast`
+
+### (*SelectScene) Draw
+
+📍 `internal/scene/select.go:449`
+
+**调用 →**
+- `render.GlobalFont`
+- `ui.Panel`
+- `hud.DrawPrimitivePicker`
+- `draw.FilledRect`
+- `fm.DrawCenteredBoldText`
+- `i18n.T`
+- `ui.Button`
+- `draw.RoundRect`
+- `fm.DrawCenteredText`
+- `persistence.UnlockRequirement`
+- `hud.DrawMascotOverlay`
+- `screen.Bounds`
+- `ebiten.ActualFPS`
+- `strconv.AppendInt`
+- `fm.DrawText`
+- `filepath.Join`
+- `fmt.Sprintf`
+- `time.Now`
+- `hud.ShowToast`
+- `log.Printf`
+- `i18n.TFromLocale`
+- `screen.Fill`
+- `draw.Line`
+- `strconv.Itoa`
+- `math.Sin`
+- `image.Rect`
+- `screen.SubImage`
+- `ui.IconCard`
+- `draw.StrokeRoundRect`
+- `i18n.Available`
+- `i18n.Locale`
+- `i18n.TF`
+- `render.GlobalIcons`
+- `im.Get`
+- `draw.Sprite`
+- `fm.DrawBoldText`
+- `color.Color`
+- `render.ShakeOffset`
+- `draw.BeginGlowPass`
+- `render.DrawBeams`
+- `draw.EndGlowPass`
+- `render.DrawImpactVFX`
+- `render.DrawSplashVFX`
+- `render.DrawFloatTexts`
+- `hud.DrawToast`
+
+### (*StageScene) Draw
+
+📍 `internal/scene/stage.go:2776`
+
+**调用 →**
+- `render.GlobalFont`
+- `ui.Panel`
+- `hud.DrawPrimitivePicker`
+- `draw.FilledRect`
+- `fm.DrawCenteredBoldText`
+- `i18n.T`
+- `ui.Button`
+- `draw.RoundRect`
+- `fm.DrawCenteredText`
+- `persistence.UnlockRequirement`
+- `hud.DrawMascotOverlay`
+- `screen.Bounds`
+- `ebiten.ActualFPS`
+- `strconv.AppendInt`
+- `fm.DrawText`
+- `filepath.Join`
+- `fmt.Sprintf`
+- `time.Now`
+- `hud.ShowToast`
+- `log.Printf`
+- `i18n.TFromLocale`
+- `screen.Fill`
+- `draw.Line`
+- `strconv.Itoa`
+- `math.Sin`
+- `image.Rect`
+- `screen.SubImage`
+- `ui.IconCard`
+- `draw.StrokeRoundRect`
+- `i18n.Available`
+- `i18n.Locale`
+- `i18n.TF`
+- `render.GlobalIcons`
+- `im.Get`
+- `draw.Sprite`
+- `fm.DrawBoldText`
+- `color.Color`
+- `render.ShakeOffset`
+- `draw.BeginGlowPass`
+- `render.DrawBeams`
+- `draw.EndGlowPass`
+- `render.DrawImpactVFX`
+- `render.DrawSplashVFX`
+- `render.DrawFloatTexts`
+- `hud.DrawToast`
+
+### (*WardenSelectScene) Draw
+
+📍 `internal/scene/warden_select.go:161`
+
+**调用 →**
+- `render.GlobalFont`
+- `ui.Panel`
+- `hud.DrawPrimitivePicker`
+- `draw.FilledRect`
+- `fm.DrawCenteredBoldText`
+- `i18n.T`
+- `ui.Button`
+- `draw.RoundRect`
+- `fm.DrawCenteredText`
+- `persistence.UnlockRequirement`
+- `hud.DrawMascotOverlay`
+- `screen.Bounds`
+- `ebiten.ActualFPS`
+- `strconv.AppendInt`
+- `fm.DrawText`
+- `filepath.Join`
+- `fmt.Sprintf`
+- `time.Now`
+- `hud.ShowToast`
+- `log.Printf`
+- `i18n.TFromLocale`
+- `screen.Fill`
+- `draw.Line`
+- `strconv.Itoa`
+- `math.Sin`
+- `image.Rect`
+- `screen.SubImage`
+- `ui.IconCard`
+- `draw.StrokeRoundRect`
+- `i18n.Available`
+- `i18n.Locale`
+- `i18n.TF`
+- `render.GlobalIcons`
+- `im.Get`
+- `draw.Sprite`
+- `fm.DrawBoldText`
+- `color.Color`
+- `render.ShakeOffset`
+- `draw.BeginGlowPass`
+- `render.DrawBeams`
+- `draw.EndGlowPass`
+- `render.DrawImpactVFX`
+- `render.DrawSplashVFX`
+- `render.DrawFloatTexts`
+- `hud.DrawToast`
+
+### (*LoadingScene) Draw
+
+📍 `internal/scene/loading.go:224`
+
+**调用 →**
+- `render.GlobalFont`
+- `ui.Panel`
+- `hud.DrawPrimitivePicker`
+- `draw.FilledRect`
+- `fm.DrawCenteredBoldText`
+- `i18n.T`
+- `ui.Button`
+- `draw.RoundRect`
+- `fm.DrawCenteredText`
+- `persistence.UnlockRequirement`
+- `hud.DrawMascotOverlay`
+- `screen.Bounds`
+- `ebiten.ActualFPS`
+- `strconv.AppendInt`
+- `fm.DrawText`
+- `filepath.Join`
+- `fmt.Sprintf`
+- `time.Now`
+- `hud.ShowToast`
+- `log.Printf`
+- `i18n.TFromLocale`
+- `screen.Fill`
+- `draw.Line`
+- `strconv.Itoa`
+- `math.Sin`
+- `image.Rect`
+- `screen.SubImage`
+- `ui.IconCard`
+- `draw.StrokeRoundRect`
+- `i18n.Available`
+- `i18n.Locale`
+- `i18n.TF`
+- `render.GlobalIcons`
+- `im.Get`
+- `draw.Sprite`
+- `fm.DrawBoldText`
+- `color.Color`
+- `render.ShakeOffset`
+- `draw.BeginGlowPass`
+- `render.DrawBeams`
+- `draw.EndGlowPass`
+- `render.DrawImpactVFX`
+- `render.DrawSplashVFX`
+- `render.DrawFloatTexts`
+- `hud.DrawToast`
+
+### (*TestSelectScene) Draw
+
+📍 `internal/scene/test_select.go:338`
+
+**调用 →**
+- `render.GlobalFont`
+- `ui.Panel`
+- `hud.DrawPrimitivePicker`
+- `draw.FilledRect`
+- `fm.DrawCenteredBoldText`
+- `i18n.T`
+- `ui.Button`
+- `draw.RoundRect`
+- `fm.DrawCenteredText`
+- `persistence.UnlockRequirement`
+- `hud.DrawMascotOverlay`
+- `screen.Bounds`
+- `ebiten.ActualFPS`
+- `strconv.AppendInt`
+- `fm.DrawText`
+- `filepath.Join`
+- `fmt.Sprintf`
+- `time.Now`
+- `hud.ShowToast`
+- `log.Printf`
+- `i18n.TFromLocale`
+- `screen.Fill`
+- `draw.Line`
+- `strconv.Itoa`
+- `math.Sin`
+- `image.Rect`
+- `screen.SubImage`
+- `ui.IconCard`
+- `draw.StrokeRoundRect`
+- `i18n.Available`
+- `i18n.Locale`
+- `i18n.TF`
+- `render.GlobalIcons`
+- `im.Get`
+- `draw.Sprite`
+- `fm.DrawBoldText`
+- `color.Color`
+- `render.ShakeOffset`
+- `draw.BeginGlowPass`
+- `render.DrawBeams`
+- `draw.EndGlowPass`
+- `render.DrawImpactVFX`
+- `render.DrawSplashVFX`
+- `render.DrawFloatTexts`
+- `hud.DrawToast`
+
+### (*MapEditorScene) Draw
+
+📍 `internal/scene/map_editor.go:496`
+
+**调用 →**
+- `render.GlobalFont`
+- `ui.Panel`
+- `hud.DrawPrimitivePicker`
+- `draw.FilledRect`
+- `fm.DrawCenteredBoldText`
+- `i18n.T`
+- `ui.Button`
+- `draw.RoundRect`
+- `fm.DrawCenteredText`
+- `persistence.UnlockRequirement`
+- `hud.DrawMascotOverlay`
+- `screen.Bounds`
+- `ebiten.ActualFPS`
+- `strconv.AppendInt`
+- `fm.DrawText`
+- `filepath.Join`
+- `fmt.Sprintf`
+- `time.Now`
+- `hud.ShowToast`
+- `log.Printf`
+- `i18n.TFromLocale`
+- `screen.Fill`
+- `draw.Line`
+- `strconv.Itoa`
+- `math.Sin`
+- `image.Rect`
+- `screen.SubImage`
+- `ui.IconCard`
+- `draw.StrokeRoundRect`
+- `i18n.Available`
+- `i18n.Locale`
+- `i18n.TF`
+- `render.GlobalIcons`
+- `im.Get`
+- `draw.Sprite`
+- `fm.DrawBoldText`
+- `color.Color`
+- `render.ShakeOffset`
+- `draw.BeginGlowPass`
+- `render.DrawBeams`
+- `draw.EndGlowPass`
+- `render.DrawImpactVFX`
+- `render.DrawSplashVFX`
+- `render.DrawFloatTexts`
+- `hud.DrawToast`
+
+### (*Game) Draw
+
+📍 `internal/scene/game.go:354`
+
+**调用 →**
+- `render.GlobalFont`
+- `ui.Panel`
+- `hud.DrawPrimitivePicker`
+- `draw.FilledRect`
+- `fm.DrawCenteredBoldText`
+- `i18n.T`
+- `ui.Button`
+- `draw.RoundRect`
+- `fm.DrawCenteredText`
+- `persistence.UnlockRequirement`
+- `hud.DrawMascotOverlay`
+- `screen.Bounds`
+- `ebiten.ActualFPS`
+- `strconv.AppendInt`
+- `fm.DrawText`
+- `filepath.Join`
+- `fmt.Sprintf`
+- `time.Now`
+- `hud.ShowToast`
+- `log.Printf`
+- `i18n.TFromLocale`
+- `screen.Fill`
+- `draw.Line`
+- `strconv.Itoa`
+- `math.Sin`
+- `image.Rect`
+- `screen.SubImage`
+- `ui.IconCard`
+- `draw.StrokeRoundRect`
+- `i18n.Available`
+- `i18n.Locale`
+- `i18n.TF`
+- `render.GlobalIcons`
+- `im.Get`
+- `draw.Sprite`
+- `fm.DrawBoldText`
+- `color.Color`
+- `render.ShakeOffset`
+- `draw.BeginGlowPass`
+- `render.DrawBeams`
+- `draw.EndGlowPass`
+- `render.DrawImpactVFX`
+- `render.DrawSplashVFX`
+- `render.DrawFloatTexts`
+- `hud.DrawToast`
+
+### (*LangSelectScene) Draw
+
+📍 `internal/scene/lang_select.go:94`
+
+**调用 →**
+- `render.GlobalFont`
+- `ui.Panel`
+- `hud.DrawPrimitivePicker`
+- `draw.FilledRect`
+- `fm.DrawCenteredBoldText`
+- `i18n.T`
+- `ui.Button`
+- `draw.RoundRect`
+- `fm.DrawCenteredText`
+- `persistence.UnlockRequirement`
+- `hud.DrawMascotOverlay`
+- `screen.Bounds`
+- `ebiten.ActualFPS`
+- `strconv.AppendInt`
+- `fm.DrawText`
+- `filepath.Join`
+- `fmt.Sprintf`
+- `time.Now`
+- `hud.ShowToast`
+- `log.Printf`
+- `i18n.TFromLocale`
+- `screen.Fill`
+- `draw.Line`
+- `strconv.Itoa`
+- `math.Sin`
+- `image.Rect`
+- `screen.SubImage`
+- `ui.IconCard`
+- `draw.StrokeRoundRect`
+- `i18n.Available`
+- `i18n.Locale`
+- `i18n.TF`
+- `render.GlobalIcons`
+- `im.Get`
+- `draw.Sprite`
+- `fm.DrawBoldText`
+- `color.Color`
+- `render.ShakeOffset`
+- `draw.BeginGlowPass`
+- `render.DrawBeams`
+- `draw.EndGlowPass`
+- `render.DrawImpactVFX`
+- `render.DrawSplashVFX`
+- `render.DrawFloatTexts`
+- `hud.DrawToast`
+
+### (*BestiaryScene) Draw
+
+📍 `internal/scene/bestiary.go:238`
+
+**调用 →**
+- `render.GlobalFont`
+- `ui.Panel`
+- `hud.DrawPrimitivePicker`
+- `draw.FilledRect`
+- `fm.DrawCenteredBoldText`
+- `i18n.T`
+- `ui.Button`
+- `draw.RoundRect`
+- `fm.DrawCenteredText`
+- `persistence.UnlockRequirement`
+- `hud.DrawMascotOverlay`
+- `screen.Bounds`
+- `ebiten.ActualFPS`
+- `strconv.AppendInt`
+- `fm.DrawText`
+- `filepath.Join`
+- `fmt.Sprintf`
+- `time.Now`
+- `hud.ShowToast`
+- `log.Printf`
+- `i18n.TFromLocale`
+- `screen.Fill`
+- `draw.Line`
+- `strconv.Itoa`
+- `math.Sin`
+- `image.Rect`
+- `screen.SubImage`
+- `ui.IconCard`
+- `draw.StrokeRoundRect`
+- `i18n.Available`
+- `i18n.Locale`
+- `i18n.TF`
+- `render.GlobalIcons`
+- `im.Get`
+- `draw.Sprite`
+- `fm.DrawBoldText`
+- `color.Color`
+- `render.ShakeOffset`
+- `draw.BeginGlowPass`
+- `render.DrawBeams`
+- `draw.EndGlowPass`
+- `render.DrawImpactVFX`
+- `render.DrawSplashVFX`
+- `render.DrawFloatTexts`
+- `hud.DrawToast`
+
+### (*AbilityEditScene) Draw
+
+📍 `internal/scene/ability_edit.go:940`
+
+**调用 →**
+- `render.GlobalFont`
+- `ui.Panel`
+- `hud.DrawPrimitivePicker`
+- `draw.FilledRect`
+- `fm.DrawCenteredBoldText`
+- `i18n.T`
+- `ui.Button`
+- `draw.RoundRect`
+- `fm.DrawCenteredText`
+- `persistence.UnlockRequirement`
+- `hud.DrawMascotOverlay`
+- `screen.Bounds`
+- `ebiten.ActualFPS`
+- `strconv.AppendInt`
+- `fm.DrawText`
+- `filepath.Join`
+- `fmt.Sprintf`
+- `time.Now`
+- `hud.ShowToast`
+- `log.Printf`
+- `i18n.TFromLocale`
+- `screen.Fill`
+- `draw.Line`
+- `strconv.Itoa`
+- `math.Sin`
+- `image.Rect`
+- `screen.SubImage`
+- `ui.IconCard`
+- `draw.StrokeRoundRect`
+- `i18n.Available`
+- `i18n.Locale`
+- `i18n.TF`
+- `render.GlobalIcons`
+- `im.Get`
+- `draw.Sprite`
+- `fm.DrawBoldText`
+- `color.Color`
+- `render.ShakeOffset`
+- `draw.BeginGlowPass`
+- `render.DrawBeams`
+- `draw.EndGlowPass`
+- `render.DrawImpactVFX`
+- `render.DrawSplashVFX`
+- `render.DrawFloatTexts`
+- `hud.DrawToast`
+
+### (*WavePreviewScene) Draw
+
+📍 `internal/scene/wave_preview.go:261`
+
+**调用 →**
+- `render.GlobalFont`
+- `ui.Panel`
+- `hud.DrawPrimitivePicker`
+- `draw.FilledRect`
+- `fm.DrawCenteredBoldText`
+- `i18n.T`
+- `ui.Button`
+- `draw.RoundRect`
+- `fm.DrawCenteredText`
+- `persistence.UnlockRequirement`
+- `hud.DrawMascotOverlay`
+- `screen.Bounds`
+- `ebiten.ActualFPS`
+- `strconv.AppendInt`
+- `fm.DrawText`
+- `filepath.Join`
+- `fmt.Sprintf`
+- `time.Now`
+- `hud.ShowToast`
+- `log.Printf`
+- `i18n.TFromLocale`
+- `screen.Fill`
+- `draw.Line`
+- `strconv.Itoa`
+- `math.Sin`
+- `image.Rect`
+- `screen.SubImage`
+- `ui.IconCard`
+- `draw.StrokeRoundRect`
+- `i18n.Available`
+- `i18n.Locale`
+- `i18n.TF`
+- `render.GlobalIcons`
+- `im.Get`
+- `draw.Sprite`
+- `fm.DrawBoldText`
+- `color.Color`
 - `render.ShakeOffset`
 - `draw.BeginGlowPass`
 - `render.DrawBeams`
@@ -3783,16 +3871,13 @@
 
 ### NewAbilityEditScene
 
-📍 `internal/scene/ability_edit.go:173`
+📍 `internal/scene/ability_edit.go:180`
 
 **调用 →**
 - `draw.NewCachedGradient`
 - `descriptor.DescriptorToEditState`
 - `store.Count`
 - `fmt.Sprintf`
-
-**← 被调用**
-- `scene.Update` (`internal/scene/tower_workshop.go`)
 
 ### NewAudioPreviewScene
 
@@ -3820,14 +3905,11 @@
 
 ### NewBlueprintEditScene
 
-📍 `internal/scene/blueprint_edit.go:149`
+📍 `internal/scene/blueprint_edit.go:155`
 
 **调用 →**
 - `draw.NewCachedGradient`
 - `descriptor.DefaultBudgetRules`
-
-**← 被调用**
-- `scene.Update` (`internal/scene/tower_workshop.go`)
 
 ### NewCampaignSelectScene
 
@@ -3943,7 +4025,7 @@
 
 ### NewStageSceneWithOpts
 
-📍 `internal/scene/stage.go:279`
+📍 `internal/scene/stage.go:273`
 
 **调用 →**
 - `render.ClearFloatTexts`
@@ -4035,13 +4117,17 @@
 
 ### NewTowerWorkshopScene
 
-📍 `internal/scene/tower_workshop.go:93`
+📍 `internal/scene/tower_workshop.go:92`
 
 **调用 →**
 - `persistence.DefaultStorage`
+- `persistence.NewMemoryStorage`
 - `descriptor.NewBlueprintStore`
 - `descriptor.NewAbilityStore`
 - `draw.NewCachedGradient`
+
+**← 被调用**
+- `scene.Update` (`internal/scene/select.go`)
 
 ### NewVFXPreviewScene
 
@@ -4081,7 +4167,7 @@
 
 ### (*StageScene) SellTowerForAI
 
-📍 `internal/scene/stage.go:4469`
+📍 `internal/scene/stage.go:4355`
 
 **调用 →**
 - `ap.OwnerID`
@@ -4089,172 +4175,10 @@
 
 ### (*StageScene) StrengthBuyCost
 
-📍 `internal/scene/stage.go:4498`
+📍 `internal/scene/stage.go:4384`
 
 **调用 →**
 - `config.GlobalBalance`
-
-### (*BestiaryScene) Update
-
-📍 `internal/scene/bestiary.go:178`
-
-**调用 →**
-- `inpututil.IsKeyJustPressed`
-- `hud.ShowToast`
-- `ebiten.Wheel`
-- `draw.CursorPos`
-- `hud.PrimitivePickerHoverTest`
-- `NewTestSelectScene`
-- `draw.HoverPos`
-- `inpututil.IsMouseButtonJustPressed`
-- `inpututil.JustPressedTouchIDs`
-- `NewSelectScene`
-- `r.Contains`
-- `particle.EmitAmbient`
-- `persistence.UnlockRequirement`
-- `i18n.T`
-- `draw.TickHover`
-- `hud.MascotHitTest`
-- `time.Now`
-- `time.Since`
-- `provider.MascotSnapshot`
-- `executor.ExecuteMascotAction`
-- `i18n.SetLocale`
-- `SaveSettings`
-- `persistence.DefaultProgressManager`
-- `pm.SetFirstRunDone`
-- `NewTitleScene`
-- `LoadSettings`
-- `i18n.Init`
-- `config.GetDataFS`
-- `log.Printf`
-- `render.InitGlobalIcons`
-- `config.GetAssetFS`
-- `abilities.InitConfigAbilities`
-- `descriptor.InitDescriptorAbilities`
-- `config.LoadBalance`
-- `config.LoadPlatform`
-- `config.LoadTierPresets`
-- `config.LoadClassicPresets`
-- `config.LoadAndCacheWardenConfigs`
-- `config.LoadBuffRules`
-- `config.LoadSpawnerConfig`
-- `config.ResolveConfigLabels`
-- `i18n.OnChange`
-- `postprocess.InitShaders`
-- `gameAudio.NewManager`
-- `fmt.Sprintf`
-- `mascot.LoadAllDialogs`
-- `mascot.NewGuide`
-- `i18n.Locale`
-- `mascot.DefaultConditions`
-- `render.LoadMascotSprites`
-- `game.QualityLevel`
-- `persistence.DefaultStorage`
-- `persistence.NewProgressManager`
-- `pm.IsFirstRunDone`
-- `NewLangSelectScene`
-- `ebiten.IsKeyPressed`
-- `ebiten.IsMouseButtonPressed`
-- `NewStageSceneWithOpts`
-- `NewSettingsScene`
-- `NewBestiaryScene`
-- `draw.TouchPos`
-- `i18n.Available`
-- `inpututil.IsTouchJustReleased`
-- `am.SetVolume`
-- `am.SetBGMVolume`
-- `hud.ActionBarHitTest`
-- `NewResultScene`
-- `hud.UpdateToast`
-- `game.Settings`
-- `NewBlueprintEditScene`
-- `NewAbilityEditScene`
-- `render.UpdateShake`
-- `render.UpdateImpactVFX`
-- `render.UpdateSplashVFX`
-- `render.UpdateFloatTexts`
-
-### (*LangSelectScene) Update
-
-📍 `internal/scene/lang_select.go:53`
-
-**调用 →**
-- `inpututil.IsKeyJustPressed`
-- `hud.ShowToast`
-- `ebiten.Wheel`
-- `draw.CursorPos`
-- `hud.PrimitivePickerHoverTest`
-- `NewTestSelectScene`
-- `draw.HoverPos`
-- `inpututil.IsMouseButtonJustPressed`
-- `inpututil.JustPressedTouchIDs`
-- `NewSelectScene`
-- `r.Contains`
-- `particle.EmitAmbient`
-- `persistence.UnlockRequirement`
-- `i18n.T`
-- `draw.TickHover`
-- `hud.MascotHitTest`
-- `time.Now`
-- `time.Since`
-- `provider.MascotSnapshot`
-- `executor.ExecuteMascotAction`
-- `i18n.SetLocale`
-- `SaveSettings`
-- `persistence.DefaultProgressManager`
-- `pm.SetFirstRunDone`
-- `NewTitleScene`
-- `LoadSettings`
-- `i18n.Init`
-- `config.GetDataFS`
-- `log.Printf`
-- `render.InitGlobalIcons`
-- `config.GetAssetFS`
-- `abilities.InitConfigAbilities`
-- `descriptor.InitDescriptorAbilities`
-- `config.LoadBalance`
-- `config.LoadPlatform`
-- `config.LoadTierPresets`
-- `config.LoadClassicPresets`
-- `config.LoadAndCacheWardenConfigs`
-- `config.LoadBuffRules`
-- `config.LoadSpawnerConfig`
-- `config.ResolveConfigLabels`
-- `i18n.OnChange`
-- `postprocess.InitShaders`
-- `gameAudio.NewManager`
-- `fmt.Sprintf`
-- `mascot.LoadAllDialogs`
-- `mascot.NewGuide`
-- `i18n.Locale`
-- `mascot.DefaultConditions`
-- `render.LoadMascotSprites`
-- `game.QualityLevel`
-- `persistence.DefaultStorage`
-- `persistence.NewProgressManager`
-- `pm.IsFirstRunDone`
-- `NewLangSelectScene`
-- `ebiten.IsKeyPressed`
-- `ebiten.IsMouseButtonPressed`
-- `NewStageSceneWithOpts`
-- `NewSettingsScene`
-- `NewBestiaryScene`
-- `draw.TouchPos`
-- `i18n.Available`
-- `inpututil.IsTouchJustReleased`
-- `am.SetVolume`
-- `am.SetBGMVolume`
-- `hud.ActionBarHitTest`
-- `NewResultScene`
-- `hud.UpdateToast`
-- `game.Settings`
-- `NewBlueprintEditScene`
-- `NewAbilityEditScene`
-- `render.UpdateShake`
-- `render.UpdateImpactVFX`
-- `render.UpdateSplashVFX`
-- `render.UpdateFloatTexts`
 
 ### (*TestSelectScene) Update
 
@@ -4321,6 +4245,7 @@
 - `NewStageSceneWithOpts`
 - `NewSettingsScene`
 - `NewBestiaryScene`
+- `NewTowerWorkshopScene`
 - `draw.TouchPos`
 - `i18n.Available`
 - `inpututil.IsTouchJustReleased`
@@ -4330,413 +4255,6 @@
 - `NewResultScene`
 - `hud.UpdateToast`
 - `game.Settings`
-- `NewBlueprintEditScene`
-- `NewAbilityEditScene`
-- `render.UpdateShake`
-- `render.UpdateImpactVFX`
-- `render.UpdateSplashVFX`
-- `render.UpdateFloatTexts`
-
-### (*SettingsScene) Update
-
-📍 `internal/scene/settings.go:151`
-
-**调用 →**
-- `inpututil.IsKeyJustPressed`
-- `hud.ShowToast`
-- `ebiten.Wheel`
-- `draw.CursorPos`
-- `hud.PrimitivePickerHoverTest`
-- `NewTestSelectScene`
-- `draw.HoverPos`
-- `inpututil.IsMouseButtonJustPressed`
-- `inpututil.JustPressedTouchIDs`
-- `NewSelectScene`
-- `r.Contains`
-- `particle.EmitAmbient`
-- `persistence.UnlockRequirement`
-- `i18n.T`
-- `draw.TickHover`
-- `hud.MascotHitTest`
-- `time.Now`
-- `time.Since`
-- `provider.MascotSnapshot`
-- `executor.ExecuteMascotAction`
-- `i18n.SetLocale`
-- `SaveSettings`
-- `persistence.DefaultProgressManager`
-- `pm.SetFirstRunDone`
-- `NewTitleScene`
-- `LoadSettings`
-- `i18n.Init`
-- `config.GetDataFS`
-- `log.Printf`
-- `render.InitGlobalIcons`
-- `config.GetAssetFS`
-- `abilities.InitConfigAbilities`
-- `descriptor.InitDescriptorAbilities`
-- `config.LoadBalance`
-- `config.LoadPlatform`
-- `config.LoadTierPresets`
-- `config.LoadClassicPresets`
-- `config.LoadAndCacheWardenConfigs`
-- `config.LoadBuffRules`
-- `config.LoadSpawnerConfig`
-- `config.ResolveConfigLabels`
-- `i18n.OnChange`
-- `postprocess.InitShaders`
-- `gameAudio.NewManager`
-- `fmt.Sprintf`
-- `mascot.LoadAllDialogs`
-- `mascot.NewGuide`
-- `i18n.Locale`
-- `mascot.DefaultConditions`
-- `render.LoadMascotSprites`
-- `game.QualityLevel`
-- `persistence.DefaultStorage`
-- `persistence.NewProgressManager`
-- `pm.IsFirstRunDone`
-- `NewLangSelectScene`
-- `ebiten.IsKeyPressed`
-- `ebiten.IsMouseButtonPressed`
-- `NewStageSceneWithOpts`
-- `NewSettingsScene`
-- `NewBestiaryScene`
-- `draw.TouchPos`
-- `i18n.Available`
-- `inpututil.IsTouchJustReleased`
-- `am.SetVolume`
-- `am.SetBGMVolume`
-- `hud.ActionBarHitTest`
-- `NewResultScene`
-- `hud.UpdateToast`
-- `game.Settings`
-- `NewBlueprintEditScene`
-- `NewAbilityEditScene`
-- `render.UpdateShake`
-- `render.UpdateImpactVFX`
-- `render.UpdateSplashVFX`
-- `render.UpdateFloatTexts`
-
-### (*LoadingScene) Update
-
-📍 `internal/scene/loading.go:75`
-
-**调用 →**
-- `inpututil.IsKeyJustPressed`
-- `hud.ShowToast`
-- `ebiten.Wheel`
-- `draw.CursorPos`
-- `hud.PrimitivePickerHoverTest`
-- `NewTestSelectScene`
-- `draw.HoverPos`
-- `inpututil.IsMouseButtonJustPressed`
-- `inpututil.JustPressedTouchIDs`
-- `NewSelectScene`
-- `r.Contains`
-- `particle.EmitAmbient`
-- `persistence.UnlockRequirement`
-- `i18n.T`
-- `draw.TickHover`
-- `hud.MascotHitTest`
-- `time.Now`
-- `time.Since`
-- `provider.MascotSnapshot`
-- `executor.ExecuteMascotAction`
-- `i18n.SetLocale`
-- `SaveSettings`
-- `persistence.DefaultProgressManager`
-- `pm.SetFirstRunDone`
-- `NewTitleScene`
-- `LoadSettings`
-- `i18n.Init`
-- `config.GetDataFS`
-- `log.Printf`
-- `render.InitGlobalIcons`
-- `config.GetAssetFS`
-- `abilities.InitConfigAbilities`
-- `descriptor.InitDescriptorAbilities`
-- `config.LoadBalance`
-- `config.LoadPlatform`
-- `config.LoadTierPresets`
-- `config.LoadClassicPresets`
-- `config.LoadAndCacheWardenConfigs`
-- `config.LoadBuffRules`
-- `config.LoadSpawnerConfig`
-- `config.ResolveConfigLabels`
-- `i18n.OnChange`
-- `postprocess.InitShaders`
-- `gameAudio.NewManager`
-- `fmt.Sprintf`
-- `mascot.LoadAllDialogs`
-- `mascot.NewGuide`
-- `i18n.Locale`
-- `mascot.DefaultConditions`
-- `render.LoadMascotSprites`
-- `game.QualityLevel`
-- `persistence.DefaultStorage`
-- `persistence.NewProgressManager`
-- `pm.IsFirstRunDone`
-- `NewLangSelectScene`
-- `ebiten.IsKeyPressed`
-- `ebiten.IsMouseButtonPressed`
-- `NewStageSceneWithOpts`
-- `NewSettingsScene`
-- `NewBestiaryScene`
-- `draw.TouchPos`
-- `i18n.Available`
-- `inpututil.IsTouchJustReleased`
-- `am.SetVolume`
-- `am.SetBGMVolume`
-- `hud.ActionBarHitTest`
-- `NewResultScene`
-- `hud.UpdateToast`
-- `game.Settings`
-- `NewBlueprintEditScene`
-- `NewAbilityEditScene`
-- `render.UpdateShake`
-- `render.UpdateImpactVFX`
-- `render.UpdateSplashVFX`
-- `render.UpdateFloatTexts`
-
-### (*TitleScene) Update
-
-📍 `internal/scene/title.go:82`
-
-**调用 →**
-- `inpututil.IsKeyJustPressed`
-- `hud.ShowToast`
-- `ebiten.Wheel`
-- `draw.CursorPos`
-- `hud.PrimitivePickerHoverTest`
-- `NewTestSelectScene`
-- `draw.HoverPos`
-- `inpututil.IsMouseButtonJustPressed`
-- `inpututil.JustPressedTouchIDs`
-- `NewSelectScene`
-- `r.Contains`
-- `particle.EmitAmbient`
-- `persistence.UnlockRequirement`
-- `i18n.T`
-- `draw.TickHover`
-- `hud.MascotHitTest`
-- `time.Now`
-- `time.Since`
-- `provider.MascotSnapshot`
-- `executor.ExecuteMascotAction`
-- `i18n.SetLocale`
-- `SaveSettings`
-- `persistence.DefaultProgressManager`
-- `pm.SetFirstRunDone`
-- `NewTitleScene`
-- `LoadSettings`
-- `i18n.Init`
-- `config.GetDataFS`
-- `log.Printf`
-- `render.InitGlobalIcons`
-- `config.GetAssetFS`
-- `abilities.InitConfigAbilities`
-- `descriptor.InitDescriptorAbilities`
-- `config.LoadBalance`
-- `config.LoadPlatform`
-- `config.LoadTierPresets`
-- `config.LoadClassicPresets`
-- `config.LoadAndCacheWardenConfigs`
-- `config.LoadBuffRules`
-- `config.LoadSpawnerConfig`
-- `config.ResolveConfigLabels`
-- `i18n.OnChange`
-- `postprocess.InitShaders`
-- `gameAudio.NewManager`
-- `fmt.Sprintf`
-- `mascot.LoadAllDialogs`
-- `mascot.NewGuide`
-- `i18n.Locale`
-- `mascot.DefaultConditions`
-- `render.LoadMascotSprites`
-- `game.QualityLevel`
-- `persistence.DefaultStorage`
-- `persistence.NewProgressManager`
-- `pm.IsFirstRunDone`
-- `NewLangSelectScene`
-- `ebiten.IsKeyPressed`
-- `ebiten.IsMouseButtonPressed`
-- `NewStageSceneWithOpts`
-- `NewSettingsScene`
-- `NewBestiaryScene`
-- `draw.TouchPos`
-- `i18n.Available`
-- `inpututil.IsTouchJustReleased`
-- `am.SetVolume`
-- `am.SetBGMVolume`
-- `hud.ActionBarHitTest`
-- `NewResultScene`
-- `hud.UpdateToast`
-- `game.Settings`
-- `NewBlueprintEditScene`
-- `NewAbilityEditScene`
-- `render.UpdateShake`
-- `render.UpdateImpactVFX`
-- `render.UpdateSplashVFX`
-- `render.UpdateFloatTexts`
-
-### (*BlueprintEditScene) Update
-
-📍 `internal/scene/blueprint_edit.go:369`
-
-**调用 →**
-- `inpututil.IsKeyJustPressed`
-- `hud.ShowToast`
-- `ebiten.Wheel`
-- `draw.CursorPos`
-- `hud.PrimitivePickerHoverTest`
-- `NewTestSelectScene`
-- `draw.HoverPos`
-- `inpututil.IsMouseButtonJustPressed`
-- `inpututil.JustPressedTouchIDs`
-- `NewSelectScene`
-- `r.Contains`
-- `particle.EmitAmbient`
-- `persistence.UnlockRequirement`
-- `i18n.T`
-- `draw.TickHover`
-- `hud.MascotHitTest`
-- `time.Now`
-- `time.Since`
-- `provider.MascotSnapshot`
-- `executor.ExecuteMascotAction`
-- `i18n.SetLocale`
-- `SaveSettings`
-- `persistence.DefaultProgressManager`
-- `pm.SetFirstRunDone`
-- `NewTitleScene`
-- `LoadSettings`
-- `i18n.Init`
-- `config.GetDataFS`
-- `log.Printf`
-- `render.InitGlobalIcons`
-- `config.GetAssetFS`
-- `abilities.InitConfigAbilities`
-- `descriptor.InitDescriptorAbilities`
-- `config.LoadBalance`
-- `config.LoadPlatform`
-- `config.LoadTierPresets`
-- `config.LoadClassicPresets`
-- `config.LoadAndCacheWardenConfigs`
-- `config.LoadBuffRules`
-- `config.LoadSpawnerConfig`
-- `config.ResolveConfigLabels`
-- `i18n.OnChange`
-- `postprocess.InitShaders`
-- `gameAudio.NewManager`
-- `fmt.Sprintf`
-- `mascot.LoadAllDialogs`
-- `mascot.NewGuide`
-- `i18n.Locale`
-- `mascot.DefaultConditions`
-- `render.LoadMascotSprites`
-- `game.QualityLevel`
-- `persistence.DefaultStorage`
-- `persistence.NewProgressManager`
-- `pm.IsFirstRunDone`
-- `NewLangSelectScene`
-- `ebiten.IsKeyPressed`
-- `ebiten.IsMouseButtonPressed`
-- `NewStageSceneWithOpts`
-- `NewSettingsScene`
-- `NewBestiaryScene`
-- `draw.TouchPos`
-- `i18n.Available`
-- `inpututil.IsTouchJustReleased`
-- `am.SetVolume`
-- `am.SetBGMVolume`
-- `hud.ActionBarHitTest`
-- `NewResultScene`
-- `hud.UpdateToast`
-- `game.Settings`
-- `NewBlueprintEditScene`
-- `NewAbilityEditScene`
-- `render.UpdateShake`
-- `render.UpdateImpactVFX`
-- `render.UpdateSplashVFX`
-- `render.UpdateFloatTexts`
-
-### (*Game) Update
-
-📍 `internal/scene/game.go:234`
-
-**调用 →**
-- `inpututil.IsKeyJustPressed`
-- `hud.ShowToast`
-- `ebiten.Wheel`
-- `draw.CursorPos`
-- `hud.PrimitivePickerHoverTest`
-- `NewTestSelectScene`
-- `draw.HoverPos`
-- `inpututil.IsMouseButtonJustPressed`
-- `inpututil.JustPressedTouchIDs`
-- `NewSelectScene`
-- `r.Contains`
-- `particle.EmitAmbient`
-- `persistence.UnlockRequirement`
-- `i18n.T`
-- `draw.TickHover`
-- `hud.MascotHitTest`
-- `time.Now`
-- `time.Since`
-- `provider.MascotSnapshot`
-- `executor.ExecuteMascotAction`
-- `i18n.SetLocale`
-- `SaveSettings`
-- `persistence.DefaultProgressManager`
-- `pm.SetFirstRunDone`
-- `NewTitleScene`
-- `LoadSettings`
-- `i18n.Init`
-- `config.GetDataFS`
-- `log.Printf`
-- `render.InitGlobalIcons`
-- `config.GetAssetFS`
-- `abilities.InitConfigAbilities`
-- `descriptor.InitDescriptorAbilities`
-- `config.LoadBalance`
-- `config.LoadPlatform`
-- `config.LoadTierPresets`
-- `config.LoadClassicPresets`
-- `config.LoadAndCacheWardenConfigs`
-- `config.LoadBuffRules`
-- `config.LoadSpawnerConfig`
-- `config.ResolveConfigLabels`
-- `i18n.OnChange`
-- `postprocess.InitShaders`
-- `gameAudio.NewManager`
-- `fmt.Sprintf`
-- `mascot.LoadAllDialogs`
-- `mascot.NewGuide`
-- `i18n.Locale`
-- `mascot.DefaultConditions`
-- `render.LoadMascotSprites`
-- `game.QualityLevel`
-- `persistence.DefaultStorage`
-- `persistence.NewProgressManager`
-- `pm.IsFirstRunDone`
-- `NewLangSelectScene`
-- `ebiten.IsKeyPressed`
-- `ebiten.IsMouseButtonPressed`
-- `NewStageSceneWithOpts`
-- `NewSettingsScene`
-- `NewBestiaryScene`
-- `draw.TouchPos`
-- `i18n.Available`
-- `inpututil.IsTouchJustReleased`
-- `am.SetVolume`
-- `am.SetBGMVolume`
-- `hud.ActionBarHitTest`
-- `NewResultScene`
-- `hud.UpdateToast`
-- `game.Settings`
-- `NewBlueprintEditScene`
-- `NewAbilityEditScene`
 - `render.UpdateShake`
 - `render.UpdateImpactVFX`
 - `render.UpdateSplashVFX`
@@ -4744,7 +4262,7 @@
 
 ### (*TowerWorkshopScene) Update
 
-📍 `internal/scene/tower_workshop.go:122`
+📍 `internal/scene/tower_workshop.go:129`
 
 **调用 →**
 - `inpututil.IsKeyJustPressed`
@@ -4807,6 +4325,7 @@
 - `NewStageSceneWithOpts`
 - `NewSettingsScene`
 - `NewBestiaryScene`
+- `NewTowerWorkshopScene`
 - `draw.TouchPos`
 - `i18n.Available`
 - `inpututil.IsTouchJustReleased`
@@ -4816,8 +4335,6 @@
 - `NewResultScene`
 - `hud.UpdateToast`
 - `game.Settings`
-- `NewBlueprintEditScene`
-- `NewAbilityEditScene`
 - `render.UpdateShake`
 - `render.UpdateImpactVFX`
 - `render.UpdateSplashVFX`
@@ -4888,6 +4405,7 @@
 - `NewStageSceneWithOpts`
 - `NewSettingsScene`
 - `NewBestiaryScene`
+- `NewTowerWorkshopScene`
 - `draw.TouchPos`
 - `i18n.Available`
 - `inpututil.IsTouchJustReleased`
@@ -4897,16 +4415,14 @@
 - `NewResultScene`
 - `hud.UpdateToast`
 - `game.Settings`
-- `NewBlueprintEditScene`
-- `NewAbilityEditScene`
 - `render.UpdateShake`
 - `render.UpdateImpactVFX`
 - `render.UpdateSplashVFX`
 - `render.UpdateFloatTexts`
 
-### (*ResultScene) Update
+### (*LangSelectScene) Update
 
-📍 `internal/scene/result.go:128`
+📍 `internal/scene/lang_select.go:53`
 
 **调用 →**
 - `inpututil.IsKeyJustPressed`
@@ -4969,6 +4485,7 @@
 - `NewStageSceneWithOpts`
 - `NewSettingsScene`
 - `NewBestiaryScene`
+- `NewTowerWorkshopScene`
 - `draw.TouchPos`
 - `i18n.Available`
 - `inpututil.IsTouchJustReleased`
@@ -4978,16 +4495,14 @@
 - `NewResultScene`
 - `hud.UpdateToast`
 - `game.Settings`
-- `NewBlueprintEditScene`
-- `NewAbilityEditScene`
 - `render.UpdateShake`
 - `render.UpdateImpactVFX`
 - `render.UpdateSplashVFX`
 - `render.UpdateFloatTexts`
 
-### (*AbilityEditScene) Update
+### (*LoadingScene) Update
 
-📍 `internal/scene/ability_edit.go:324`
+📍 `internal/scene/loading.go:75`
 
 **调用 →**
 - `inpututil.IsKeyJustPressed`
@@ -5050,6 +4565,7 @@
 - `NewStageSceneWithOpts`
 - `NewSettingsScene`
 - `NewBestiaryScene`
+- `NewTowerWorkshopScene`
 - `draw.TouchPos`
 - `i18n.Available`
 - `inpututil.IsTouchJustReleased`
@@ -5059,16 +4575,14 @@
 - `NewResultScene`
 - `hud.UpdateToast`
 - `game.Settings`
-- `NewBlueprintEditScene`
-- `NewAbilityEditScene`
 - `render.UpdateShake`
 - `render.UpdateImpactVFX`
 - `render.UpdateSplashVFX`
 - `render.UpdateFloatTexts`
 
-### (*VFXPreviewScene) Update
+### (*SettingsScene) Update
 
-📍 `internal/scene/vfx_preview.go:364`
+📍 `internal/scene/settings.go:151`
 
 **调用 →**
 - `inpututil.IsKeyJustPressed`
@@ -5131,6 +4645,7 @@
 - `NewStageSceneWithOpts`
 - `NewSettingsScene`
 - `NewBestiaryScene`
+- `NewTowerWorkshopScene`
 - `draw.TouchPos`
 - `i18n.Available`
 - `inpututil.IsTouchJustReleased`
@@ -5140,16 +4655,14 @@
 - `NewResultScene`
 - `hud.UpdateToast`
 - `game.Settings`
-- `NewBlueprintEditScene`
-- `NewAbilityEditScene`
 - `render.UpdateShake`
 - `render.UpdateImpactVFX`
 - `render.UpdateSplashVFX`
 - `render.UpdateFloatTexts`
 
-### (*AudioPreviewScene) Update
+### (*TitleScene) Update
 
-📍 `internal/scene/audio_preview.go:218`
+📍 `internal/scene/title.go:82`
 
 **调用 →**
 - `inpututil.IsKeyJustPressed`
@@ -5212,6 +4725,7 @@
 - `NewStageSceneWithOpts`
 - `NewSettingsScene`
 - `NewBestiaryScene`
+- `NewTowerWorkshopScene`
 - `draw.TouchPos`
 - `i18n.Available`
 - `inpututil.IsTouchJustReleased`
@@ -5221,251 +4735,6 @@
 - `NewResultScene`
 - `hud.UpdateToast`
 - `game.Settings`
-- `NewBlueprintEditScene`
-- `NewAbilityEditScene`
-- `render.UpdateShake`
-- `render.UpdateImpactVFX`
-- `render.UpdateSplashVFX`
-- `render.UpdateFloatTexts`
-
-### (*StageScene) Update
-
-📍 `internal/scene/stage.go:1097`
-
-**调用 →**
-- `inpututil.IsKeyJustPressed`
-- `hud.ShowToast`
-- `ebiten.Wheel`
-- `draw.CursorPos`
-- `hud.PrimitivePickerHoverTest`
-- `NewTestSelectScene`
-- `draw.HoverPos`
-- `inpututil.IsMouseButtonJustPressed`
-- `inpututil.JustPressedTouchIDs`
-- `NewSelectScene`
-- `r.Contains`
-- `particle.EmitAmbient`
-- `persistence.UnlockRequirement`
-- `i18n.T`
-- `draw.TickHover`
-- `hud.MascotHitTest`
-- `time.Now`
-- `time.Since`
-- `provider.MascotSnapshot`
-- `executor.ExecuteMascotAction`
-- `i18n.SetLocale`
-- `SaveSettings`
-- `persistence.DefaultProgressManager`
-- `pm.SetFirstRunDone`
-- `NewTitleScene`
-- `LoadSettings`
-- `i18n.Init`
-- `config.GetDataFS`
-- `log.Printf`
-- `render.InitGlobalIcons`
-- `config.GetAssetFS`
-- `abilities.InitConfigAbilities`
-- `descriptor.InitDescriptorAbilities`
-- `config.LoadBalance`
-- `config.LoadPlatform`
-- `config.LoadTierPresets`
-- `config.LoadClassicPresets`
-- `config.LoadAndCacheWardenConfigs`
-- `config.LoadBuffRules`
-- `config.LoadSpawnerConfig`
-- `config.ResolveConfigLabels`
-- `i18n.OnChange`
-- `postprocess.InitShaders`
-- `gameAudio.NewManager`
-- `fmt.Sprintf`
-- `mascot.LoadAllDialogs`
-- `mascot.NewGuide`
-- `i18n.Locale`
-- `mascot.DefaultConditions`
-- `render.LoadMascotSprites`
-- `game.QualityLevel`
-- `persistence.DefaultStorage`
-- `persistence.NewProgressManager`
-- `pm.IsFirstRunDone`
-- `NewLangSelectScene`
-- `ebiten.IsKeyPressed`
-- `ebiten.IsMouseButtonPressed`
-- `NewStageSceneWithOpts`
-- `NewSettingsScene`
-- `NewBestiaryScene`
-- `draw.TouchPos`
-- `i18n.Available`
-- `inpututil.IsTouchJustReleased`
-- `am.SetVolume`
-- `am.SetBGMVolume`
-- `hud.ActionBarHitTest`
-- `NewResultScene`
-- `hud.UpdateToast`
-- `game.Settings`
-- `NewBlueprintEditScene`
-- `NewAbilityEditScene`
-- `render.UpdateShake`
-- `render.UpdateImpactVFX`
-- `render.UpdateSplashVFX`
-- `render.UpdateFloatTexts`
-
-### (*WardenSelectScene) Update
-
-📍 `internal/scene/warden_select.go:74`
-
-**调用 →**
-- `inpututil.IsKeyJustPressed`
-- `hud.ShowToast`
-- `ebiten.Wheel`
-- `draw.CursorPos`
-- `hud.PrimitivePickerHoverTest`
-- `NewTestSelectScene`
-- `draw.HoverPos`
-- `inpututil.IsMouseButtonJustPressed`
-- `inpututil.JustPressedTouchIDs`
-- `NewSelectScene`
-- `r.Contains`
-- `particle.EmitAmbient`
-- `persistence.UnlockRequirement`
-- `i18n.T`
-- `draw.TickHover`
-- `hud.MascotHitTest`
-- `time.Now`
-- `time.Since`
-- `provider.MascotSnapshot`
-- `executor.ExecuteMascotAction`
-- `i18n.SetLocale`
-- `SaveSettings`
-- `persistence.DefaultProgressManager`
-- `pm.SetFirstRunDone`
-- `NewTitleScene`
-- `LoadSettings`
-- `i18n.Init`
-- `config.GetDataFS`
-- `log.Printf`
-- `render.InitGlobalIcons`
-- `config.GetAssetFS`
-- `abilities.InitConfigAbilities`
-- `descriptor.InitDescriptorAbilities`
-- `config.LoadBalance`
-- `config.LoadPlatform`
-- `config.LoadTierPresets`
-- `config.LoadClassicPresets`
-- `config.LoadAndCacheWardenConfigs`
-- `config.LoadBuffRules`
-- `config.LoadSpawnerConfig`
-- `config.ResolveConfigLabels`
-- `i18n.OnChange`
-- `postprocess.InitShaders`
-- `gameAudio.NewManager`
-- `fmt.Sprintf`
-- `mascot.LoadAllDialogs`
-- `mascot.NewGuide`
-- `i18n.Locale`
-- `mascot.DefaultConditions`
-- `render.LoadMascotSprites`
-- `game.QualityLevel`
-- `persistence.DefaultStorage`
-- `persistence.NewProgressManager`
-- `pm.IsFirstRunDone`
-- `NewLangSelectScene`
-- `ebiten.IsKeyPressed`
-- `ebiten.IsMouseButtonPressed`
-- `NewStageSceneWithOpts`
-- `NewSettingsScene`
-- `NewBestiaryScene`
-- `draw.TouchPos`
-- `i18n.Available`
-- `inpututil.IsTouchJustReleased`
-- `am.SetVolume`
-- `am.SetBGMVolume`
-- `hud.ActionBarHitTest`
-- `NewResultScene`
-- `hud.UpdateToast`
-- `game.Settings`
-- `NewBlueprintEditScene`
-- `NewAbilityEditScene`
-- `render.UpdateShake`
-- `render.UpdateImpactVFX`
-- `render.UpdateSplashVFX`
-- `render.UpdateFloatTexts`
-
-### (*MapEditorScene) Update
-
-📍 `internal/scene/map_editor.go:119`
-
-**调用 →**
-- `inpututil.IsKeyJustPressed`
-- `hud.ShowToast`
-- `ebiten.Wheel`
-- `draw.CursorPos`
-- `hud.PrimitivePickerHoverTest`
-- `NewTestSelectScene`
-- `draw.HoverPos`
-- `inpututil.IsMouseButtonJustPressed`
-- `inpututil.JustPressedTouchIDs`
-- `NewSelectScene`
-- `r.Contains`
-- `particle.EmitAmbient`
-- `persistence.UnlockRequirement`
-- `i18n.T`
-- `draw.TickHover`
-- `hud.MascotHitTest`
-- `time.Now`
-- `time.Since`
-- `provider.MascotSnapshot`
-- `executor.ExecuteMascotAction`
-- `i18n.SetLocale`
-- `SaveSettings`
-- `persistence.DefaultProgressManager`
-- `pm.SetFirstRunDone`
-- `NewTitleScene`
-- `LoadSettings`
-- `i18n.Init`
-- `config.GetDataFS`
-- `log.Printf`
-- `render.InitGlobalIcons`
-- `config.GetAssetFS`
-- `abilities.InitConfigAbilities`
-- `descriptor.InitDescriptorAbilities`
-- `config.LoadBalance`
-- `config.LoadPlatform`
-- `config.LoadTierPresets`
-- `config.LoadClassicPresets`
-- `config.LoadAndCacheWardenConfigs`
-- `config.LoadBuffRules`
-- `config.LoadSpawnerConfig`
-- `config.ResolveConfigLabels`
-- `i18n.OnChange`
-- `postprocess.InitShaders`
-- `gameAudio.NewManager`
-- `fmt.Sprintf`
-- `mascot.LoadAllDialogs`
-- `mascot.NewGuide`
-- `i18n.Locale`
-- `mascot.DefaultConditions`
-- `render.LoadMascotSprites`
-- `game.QualityLevel`
-- `persistence.DefaultStorage`
-- `persistence.NewProgressManager`
-- `pm.IsFirstRunDone`
-- `NewLangSelectScene`
-- `ebiten.IsKeyPressed`
-- `ebiten.IsMouseButtonPressed`
-- `NewStageSceneWithOpts`
-- `NewSettingsScene`
-- `NewBestiaryScene`
-- `draw.TouchPos`
-- `i18n.Available`
-- `inpututil.IsTouchJustReleased`
-- `am.SetVolume`
-- `am.SetBGMVolume`
-- `hud.ActionBarHitTest`
-- `NewResultScene`
-- `hud.UpdateToast`
-- `game.Settings`
-- `NewBlueprintEditScene`
-- `NewAbilityEditScene`
 - `render.UpdateShake`
 - `render.UpdateImpactVFX`
 - `render.UpdateSplashVFX`
@@ -5536,6 +4805,7 @@
 - `NewStageSceneWithOpts`
 - `NewSettingsScene`
 - `NewBestiaryScene`
+- `NewTowerWorkshopScene`
 - `draw.TouchPos`
 - `i18n.Available`
 - `inpututil.IsTouchJustReleased`
@@ -5545,8 +4815,806 @@
 - `NewResultScene`
 - `hud.UpdateToast`
 - `game.Settings`
-- `NewBlueprintEditScene`
-- `NewAbilityEditScene`
+- `render.UpdateShake`
+- `render.UpdateImpactVFX`
+- `render.UpdateSplashVFX`
+- `render.UpdateFloatTexts`
+
+### (*StageScene) Update
+
+📍 `internal/scene/stage.go:1091`
+
+**调用 →**
+- `inpututil.IsKeyJustPressed`
+- `hud.ShowToast`
+- `ebiten.Wheel`
+- `draw.CursorPos`
+- `hud.PrimitivePickerHoverTest`
+- `NewTestSelectScene`
+- `draw.HoverPos`
+- `inpututil.IsMouseButtonJustPressed`
+- `inpututil.JustPressedTouchIDs`
+- `NewSelectScene`
+- `r.Contains`
+- `particle.EmitAmbient`
+- `persistence.UnlockRequirement`
+- `i18n.T`
+- `draw.TickHover`
+- `hud.MascotHitTest`
+- `time.Now`
+- `time.Since`
+- `provider.MascotSnapshot`
+- `executor.ExecuteMascotAction`
+- `i18n.SetLocale`
+- `SaveSettings`
+- `persistence.DefaultProgressManager`
+- `pm.SetFirstRunDone`
+- `NewTitleScene`
+- `LoadSettings`
+- `i18n.Init`
+- `config.GetDataFS`
+- `log.Printf`
+- `render.InitGlobalIcons`
+- `config.GetAssetFS`
+- `abilities.InitConfigAbilities`
+- `descriptor.InitDescriptorAbilities`
+- `config.LoadBalance`
+- `config.LoadPlatform`
+- `config.LoadTierPresets`
+- `config.LoadClassicPresets`
+- `config.LoadAndCacheWardenConfigs`
+- `config.LoadBuffRules`
+- `config.LoadSpawnerConfig`
+- `config.ResolveConfigLabels`
+- `i18n.OnChange`
+- `postprocess.InitShaders`
+- `gameAudio.NewManager`
+- `fmt.Sprintf`
+- `mascot.LoadAllDialogs`
+- `mascot.NewGuide`
+- `i18n.Locale`
+- `mascot.DefaultConditions`
+- `render.LoadMascotSprites`
+- `game.QualityLevel`
+- `persistence.DefaultStorage`
+- `persistence.NewProgressManager`
+- `pm.IsFirstRunDone`
+- `NewLangSelectScene`
+- `ebiten.IsKeyPressed`
+- `ebiten.IsMouseButtonPressed`
+- `NewStageSceneWithOpts`
+- `NewSettingsScene`
+- `NewBestiaryScene`
+- `NewTowerWorkshopScene`
+- `draw.TouchPos`
+- `i18n.Available`
+- `inpututil.IsTouchJustReleased`
+- `am.SetVolume`
+- `am.SetBGMVolume`
+- `hud.ActionBarHitTest`
+- `NewResultScene`
+- `hud.UpdateToast`
+- `game.Settings`
+- `render.UpdateShake`
+- `render.UpdateImpactVFX`
+- `render.UpdateSplashVFX`
+- `render.UpdateFloatTexts`
+
+### (*Game) Update
+
+📍 `internal/scene/game.go:234`
+
+**调用 →**
+- `inpututil.IsKeyJustPressed`
+- `hud.ShowToast`
+- `ebiten.Wheel`
+- `draw.CursorPos`
+- `hud.PrimitivePickerHoverTest`
+- `NewTestSelectScene`
+- `draw.HoverPos`
+- `inpututil.IsMouseButtonJustPressed`
+- `inpututil.JustPressedTouchIDs`
+- `NewSelectScene`
+- `r.Contains`
+- `particle.EmitAmbient`
+- `persistence.UnlockRequirement`
+- `i18n.T`
+- `draw.TickHover`
+- `hud.MascotHitTest`
+- `time.Now`
+- `time.Since`
+- `provider.MascotSnapshot`
+- `executor.ExecuteMascotAction`
+- `i18n.SetLocale`
+- `SaveSettings`
+- `persistence.DefaultProgressManager`
+- `pm.SetFirstRunDone`
+- `NewTitleScene`
+- `LoadSettings`
+- `i18n.Init`
+- `config.GetDataFS`
+- `log.Printf`
+- `render.InitGlobalIcons`
+- `config.GetAssetFS`
+- `abilities.InitConfigAbilities`
+- `descriptor.InitDescriptorAbilities`
+- `config.LoadBalance`
+- `config.LoadPlatform`
+- `config.LoadTierPresets`
+- `config.LoadClassicPresets`
+- `config.LoadAndCacheWardenConfigs`
+- `config.LoadBuffRules`
+- `config.LoadSpawnerConfig`
+- `config.ResolveConfigLabels`
+- `i18n.OnChange`
+- `postprocess.InitShaders`
+- `gameAudio.NewManager`
+- `fmt.Sprintf`
+- `mascot.LoadAllDialogs`
+- `mascot.NewGuide`
+- `i18n.Locale`
+- `mascot.DefaultConditions`
+- `render.LoadMascotSprites`
+- `game.QualityLevel`
+- `persistence.DefaultStorage`
+- `persistence.NewProgressManager`
+- `pm.IsFirstRunDone`
+- `NewLangSelectScene`
+- `ebiten.IsKeyPressed`
+- `ebiten.IsMouseButtonPressed`
+- `NewStageSceneWithOpts`
+- `NewSettingsScene`
+- `NewBestiaryScene`
+- `NewTowerWorkshopScene`
+- `draw.TouchPos`
+- `i18n.Available`
+- `inpututil.IsTouchJustReleased`
+- `am.SetVolume`
+- `am.SetBGMVolume`
+- `hud.ActionBarHitTest`
+- `NewResultScene`
+- `hud.UpdateToast`
+- `game.Settings`
+- `render.UpdateShake`
+- `render.UpdateImpactVFX`
+- `render.UpdateSplashVFX`
+- `render.UpdateFloatTexts`
+
+### (*BlueprintEditScene) Update
+
+📍 `internal/scene/blueprint_edit.go:375`
+
+**调用 →**
+- `inpututil.IsKeyJustPressed`
+- `hud.ShowToast`
+- `ebiten.Wheel`
+- `draw.CursorPos`
+- `hud.PrimitivePickerHoverTest`
+- `NewTestSelectScene`
+- `draw.HoverPos`
+- `inpututil.IsMouseButtonJustPressed`
+- `inpututil.JustPressedTouchIDs`
+- `NewSelectScene`
+- `r.Contains`
+- `particle.EmitAmbient`
+- `persistence.UnlockRequirement`
+- `i18n.T`
+- `draw.TickHover`
+- `hud.MascotHitTest`
+- `time.Now`
+- `time.Since`
+- `provider.MascotSnapshot`
+- `executor.ExecuteMascotAction`
+- `i18n.SetLocale`
+- `SaveSettings`
+- `persistence.DefaultProgressManager`
+- `pm.SetFirstRunDone`
+- `NewTitleScene`
+- `LoadSettings`
+- `i18n.Init`
+- `config.GetDataFS`
+- `log.Printf`
+- `render.InitGlobalIcons`
+- `config.GetAssetFS`
+- `abilities.InitConfigAbilities`
+- `descriptor.InitDescriptorAbilities`
+- `config.LoadBalance`
+- `config.LoadPlatform`
+- `config.LoadTierPresets`
+- `config.LoadClassicPresets`
+- `config.LoadAndCacheWardenConfigs`
+- `config.LoadBuffRules`
+- `config.LoadSpawnerConfig`
+- `config.ResolveConfigLabels`
+- `i18n.OnChange`
+- `postprocess.InitShaders`
+- `gameAudio.NewManager`
+- `fmt.Sprintf`
+- `mascot.LoadAllDialogs`
+- `mascot.NewGuide`
+- `i18n.Locale`
+- `mascot.DefaultConditions`
+- `render.LoadMascotSprites`
+- `game.QualityLevel`
+- `persistence.DefaultStorage`
+- `persistence.NewProgressManager`
+- `pm.IsFirstRunDone`
+- `NewLangSelectScene`
+- `ebiten.IsKeyPressed`
+- `ebiten.IsMouseButtonPressed`
+- `NewStageSceneWithOpts`
+- `NewSettingsScene`
+- `NewBestiaryScene`
+- `NewTowerWorkshopScene`
+- `draw.TouchPos`
+- `i18n.Available`
+- `inpututil.IsTouchJustReleased`
+- `am.SetVolume`
+- `am.SetBGMVolume`
+- `hud.ActionBarHitTest`
+- `NewResultScene`
+- `hud.UpdateToast`
+- `game.Settings`
+- `render.UpdateShake`
+- `render.UpdateImpactVFX`
+- `render.UpdateSplashVFX`
+- `render.UpdateFloatTexts`
+
+### (*MapEditorScene) Update
+
+📍 `internal/scene/map_editor.go:119`
+
+**调用 →**
+- `inpututil.IsKeyJustPressed`
+- `hud.ShowToast`
+- `ebiten.Wheel`
+- `draw.CursorPos`
+- `hud.PrimitivePickerHoverTest`
+- `NewTestSelectScene`
+- `draw.HoverPos`
+- `inpututil.IsMouseButtonJustPressed`
+- `inpututil.JustPressedTouchIDs`
+- `NewSelectScene`
+- `r.Contains`
+- `particle.EmitAmbient`
+- `persistence.UnlockRequirement`
+- `i18n.T`
+- `draw.TickHover`
+- `hud.MascotHitTest`
+- `time.Now`
+- `time.Since`
+- `provider.MascotSnapshot`
+- `executor.ExecuteMascotAction`
+- `i18n.SetLocale`
+- `SaveSettings`
+- `persistence.DefaultProgressManager`
+- `pm.SetFirstRunDone`
+- `NewTitleScene`
+- `LoadSettings`
+- `i18n.Init`
+- `config.GetDataFS`
+- `log.Printf`
+- `render.InitGlobalIcons`
+- `config.GetAssetFS`
+- `abilities.InitConfigAbilities`
+- `descriptor.InitDescriptorAbilities`
+- `config.LoadBalance`
+- `config.LoadPlatform`
+- `config.LoadTierPresets`
+- `config.LoadClassicPresets`
+- `config.LoadAndCacheWardenConfigs`
+- `config.LoadBuffRules`
+- `config.LoadSpawnerConfig`
+- `config.ResolveConfigLabels`
+- `i18n.OnChange`
+- `postprocess.InitShaders`
+- `gameAudio.NewManager`
+- `fmt.Sprintf`
+- `mascot.LoadAllDialogs`
+- `mascot.NewGuide`
+- `i18n.Locale`
+- `mascot.DefaultConditions`
+- `render.LoadMascotSprites`
+- `game.QualityLevel`
+- `persistence.DefaultStorage`
+- `persistence.NewProgressManager`
+- `pm.IsFirstRunDone`
+- `NewLangSelectScene`
+- `ebiten.IsKeyPressed`
+- `ebiten.IsMouseButtonPressed`
+- `NewStageSceneWithOpts`
+- `NewSettingsScene`
+- `NewBestiaryScene`
+- `NewTowerWorkshopScene`
+- `draw.TouchPos`
+- `i18n.Available`
+- `inpututil.IsTouchJustReleased`
+- `am.SetVolume`
+- `am.SetBGMVolume`
+- `hud.ActionBarHitTest`
+- `NewResultScene`
+- `hud.UpdateToast`
+- `game.Settings`
+- `render.UpdateShake`
+- `render.UpdateImpactVFX`
+- `render.UpdateSplashVFX`
+- `render.UpdateFloatTexts`
+
+### (*VFXPreviewScene) Update
+
+📍 `internal/scene/vfx_preview.go:364`
+
+**调用 →**
+- `inpututil.IsKeyJustPressed`
+- `hud.ShowToast`
+- `ebiten.Wheel`
+- `draw.CursorPos`
+- `hud.PrimitivePickerHoverTest`
+- `NewTestSelectScene`
+- `draw.HoverPos`
+- `inpututil.IsMouseButtonJustPressed`
+- `inpututil.JustPressedTouchIDs`
+- `NewSelectScene`
+- `r.Contains`
+- `particle.EmitAmbient`
+- `persistence.UnlockRequirement`
+- `i18n.T`
+- `draw.TickHover`
+- `hud.MascotHitTest`
+- `time.Now`
+- `time.Since`
+- `provider.MascotSnapshot`
+- `executor.ExecuteMascotAction`
+- `i18n.SetLocale`
+- `SaveSettings`
+- `persistence.DefaultProgressManager`
+- `pm.SetFirstRunDone`
+- `NewTitleScene`
+- `LoadSettings`
+- `i18n.Init`
+- `config.GetDataFS`
+- `log.Printf`
+- `render.InitGlobalIcons`
+- `config.GetAssetFS`
+- `abilities.InitConfigAbilities`
+- `descriptor.InitDescriptorAbilities`
+- `config.LoadBalance`
+- `config.LoadPlatform`
+- `config.LoadTierPresets`
+- `config.LoadClassicPresets`
+- `config.LoadAndCacheWardenConfigs`
+- `config.LoadBuffRules`
+- `config.LoadSpawnerConfig`
+- `config.ResolveConfigLabels`
+- `i18n.OnChange`
+- `postprocess.InitShaders`
+- `gameAudio.NewManager`
+- `fmt.Sprintf`
+- `mascot.LoadAllDialogs`
+- `mascot.NewGuide`
+- `i18n.Locale`
+- `mascot.DefaultConditions`
+- `render.LoadMascotSprites`
+- `game.QualityLevel`
+- `persistence.DefaultStorage`
+- `persistence.NewProgressManager`
+- `pm.IsFirstRunDone`
+- `NewLangSelectScene`
+- `ebiten.IsKeyPressed`
+- `ebiten.IsMouseButtonPressed`
+- `NewStageSceneWithOpts`
+- `NewSettingsScene`
+- `NewBestiaryScene`
+- `NewTowerWorkshopScene`
+- `draw.TouchPos`
+- `i18n.Available`
+- `inpututil.IsTouchJustReleased`
+- `am.SetVolume`
+- `am.SetBGMVolume`
+- `hud.ActionBarHitTest`
+- `NewResultScene`
+- `hud.UpdateToast`
+- `game.Settings`
+- `render.UpdateShake`
+- `render.UpdateImpactVFX`
+- `render.UpdateSplashVFX`
+- `render.UpdateFloatTexts`
+
+### (*BestiaryScene) Update
+
+📍 `internal/scene/bestiary.go:178`
+
+**调用 →**
+- `inpututil.IsKeyJustPressed`
+- `hud.ShowToast`
+- `ebiten.Wheel`
+- `draw.CursorPos`
+- `hud.PrimitivePickerHoverTest`
+- `NewTestSelectScene`
+- `draw.HoverPos`
+- `inpututil.IsMouseButtonJustPressed`
+- `inpututil.JustPressedTouchIDs`
+- `NewSelectScene`
+- `r.Contains`
+- `particle.EmitAmbient`
+- `persistence.UnlockRequirement`
+- `i18n.T`
+- `draw.TickHover`
+- `hud.MascotHitTest`
+- `time.Now`
+- `time.Since`
+- `provider.MascotSnapshot`
+- `executor.ExecuteMascotAction`
+- `i18n.SetLocale`
+- `SaveSettings`
+- `persistence.DefaultProgressManager`
+- `pm.SetFirstRunDone`
+- `NewTitleScene`
+- `LoadSettings`
+- `i18n.Init`
+- `config.GetDataFS`
+- `log.Printf`
+- `render.InitGlobalIcons`
+- `config.GetAssetFS`
+- `abilities.InitConfigAbilities`
+- `descriptor.InitDescriptorAbilities`
+- `config.LoadBalance`
+- `config.LoadPlatform`
+- `config.LoadTierPresets`
+- `config.LoadClassicPresets`
+- `config.LoadAndCacheWardenConfigs`
+- `config.LoadBuffRules`
+- `config.LoadSpawnerConfig`
+- `config.ResolveConfigLabels`
+- `i18n.OnChange`
+- `postprocess.InitShaders`
+- `gameAudio.NewManager`
+- `fmt.Sprintf`
+- `mascot.LoadAllDialogs`
+- `mascot.NewGuide`
+- `i18n.Locale`
+- `mascot.DefaultConditions`
+- `render.LoadMascotSprites`
+- `game.QualityLevel`
+- `persistence.DefaultStorage`
+- `persistence.NewProgressManager`
+- `pm.IsFirstRunDone`
+- `NewLangSelectScene`
+- `ebiten.IsKeyPressed`
+- `ebiten.IsMouseButtonPressed`
+- `NewStageSceneWithOpts`
+- `NewSettingsScene`
+- `NewBestiaryScene`
+- `NewTowerWorkshopScene`
+- `draw.TouchPos`
+- `i18n.Available`
+- `inpututil.IsTouchJustReleased`
+- `am.SetVolume`
+- `am.SetBGMVolume`
+- `hud.ActionBarHitTest`
+- `NewResultScene`
+- `hud.UpdateToast`
+- `game.Settings`
+- `render.UpdateShake`
+- `render.UpdateImpactVFX`
+- `render.UpdateSplashVFX`
+- `render.UpdateFloatTexts`
+
+### (*ResultScene) Update
+
+📍 `internal/scene/result.go:128`
+
+**调用 →**
+- `inpututil.IsKeyJustPressed`
+- `hud.ShowToast`
+- `ebiten.Wheel`
+- `draw.CursorPos`
+- `hud.PrimitivePickerHoverTest`
+- `NewTestSelectScene`
+- `draw.HoverPos`
+- `inpututil.IsMouseButtonJustPressed`
+- `inpututil.JustPressedTouchIDs`
+- `NewSelectScene`
+- `r.Contains`
+- `particle.EmitAmbient`
+- `persistence.UnlockRequirement`
+- `i18n.T`
+- `draw.TickHover`
+- `hud.MascotHitTest`
+- `time.Now`
+- `time.Since`
+- `provider.MascotSnapshot`
+- `executor.ExecuteMascotAction`
+- `i18n.SetLocale`
+- `SaveSettings`
+- `persistence.DefaultProgressManager`
+- `pm.SetFirstRunDone`
+- `NewTitleScene`
+- `LoadSettings`
+- `i18n.Init`
+- `config.GetDataFS`
+- `log.Printf`
+- `render.InitGlobalIcons`
+- `config.GetAssetFS`
+- `abilities.InitConfigAbilities`
+- `descriptor.InitDescriptorAbilities`
+- `config.LoadBalance`
+- `config.LoadPlatform`
+- `config.LoadTierPresets`
+- `config.LoadClassicPresets`
+- `config.LoadAndCacheWardenConfigs`
+- `config.LoadBuffRules`
+- `config.LoadSpawnerConfig`
+- `config.ResolveConfigLabels`
+- `i18n.OnChange`
+- `postprocess.InitShaders`
+- `gameAudio.NewManager`
+- `fmt.Sprintf`
+- `mascot.LoadAllDialogs`
+- `mascot.NewGuide`
+- `i18n.Locale`
+- `mascot.DefaultConditions`
+- `render.LoadMascotSprites`
+- `game.QualityLevel`
+- `persistence.DefaultStorage`
+- `persistence.NewProgressManager`
+- `pm.IsFirstRunDone`
+- `NewLangSelectScene`
+- `ebiten.IsKeyPressed`
+- `ebiten.IsMouseButtonPressed`
+- `NewStageSceneWithOpts`
+- `NewSettingsScene`
+- `NewBestiaryScene`
+- `NewTowerWorkshopScene`
+- `draw.TouchPos`
+- `i18n.Available`
+- `inpututil.IsTouchJustReleased`
+- `am.SetVolume`
+- `am.SetBGMVolume`
+- `hud.ActionBarHitTest`
+- `NewResultScene`
+- `hud.UpdateToast`
+- `game.Settings`
+- `render.UpdateShake`
+- `render.UpdateImpactVFX`
+- `render.UpdateSplashVFX`
+- `render.UpdateFloatTexts`
+
+### (*WardenSelectScene) Update
+
+📍 `internal/scene/warden_select.go:74`
+
+**调用 →**
+- `inpututil.IsKeyJustPressed`
+- `hud.ShowToast`
+- `ebiten.Wheel`
+- `draw.CursorPos`
+- `hud.PrimitivePickerHoverTest`
+- `NewTestSelectScene`
+- `draw.HoverPos`
+- `inpututil.IsMouseButtonJustPressed`
+- `inpututil.JustPressedTouchIDs`
+- `NewSelectScene`
+- `r.Contains`
+- `particle.EmitAmbient`
+- `persistence.UnlockRequirement`
+- `i18n.T`
+- `draw.TickHover`
+- `hud.MascotHitTest`
+- `time.Now`
+- `time.Since`
+- `provider.MascotSnapshot`
+- `executor.ExecuteMascotAction`
+- `i18n.SetLocale`
+- `SaveSettings`
+- `persistence.DefaultProgressManager`
+- `pm.SetFirstRunDone`
+- `NewTitleScene`
+- `LoadSettings`
+- `i18n.Init`
+- `config.GetDataFS`
+- `log.Printf`
+- `render.InitGlobalIcons`
+- `config.GetAssetFS`
+- `abilities.InitConfigAbilities`
+- `descriptor.InitDescriptorAbilities`
+- `config.LoadBalance`
+- `config.LoadPlatform`
+- `config.LoadTierPresets`
+- `config.LoadClassicPresets`
+- `config.LoadAndCacheWardenConfigs`
+- `config.LoadBuffRules`
+- `config.LoadSpawnerConfig`
+- `config.ResolveConfigLabels`
+- `i18n.OnChange`
+- `postprocess.InitShaders`
+- `gameAudio.NewManager`
+- `fmt.Sprintf`
+- `mascot.LoadAllDialogs`
+- `mascot.NewGuide`
+- `i18n.Locale`
+- `mascot.DefaultConditions`
+- `render.LoadMascotSprites`
+- `game.QualityLevel`
+- `persistence.DefaultStorage`
+- `persistence.NewProgressManager`
+- `pm.IsFirstRunDone`
+- `NewLangSelectScene`
+- `ebiten.IsKeyPressed`
+- `ebiten.IsMouseButtonPressed`
+- `NewStageSceneWithOpts`
+- `NewSettingsScene`
+- `NewBestiaryScene`
+- `NewTowerWorkshopScene`
+- `draw.TouchPos`
+- `i18n.Available`
+- `inpututil.IsTouchJustReleased`
+- `am.SetVolume`
+- `am.SetBGMVolume`
+- `hud.ActionBarHitTest`
+- `NewResultScene`
+- `hud.UpdateToast`
+- `game.Settings`
+- `render.UpdateShake`
+- `render.UpdateImpactVFX`
+- `render.UpdateSplashVFX`
+- `render.UpdateFloatTexts`
+
+### (*AudioPreviewScene) Update
+
+📍 `internal/scene/audio_preview.go:218`
+
+**调用 →**
+- `inpututil.IsKeyJustPressed`
+- `hud.ShowToast`
+- `ebiten.Wheel`
+- `draw.CursorPos`
+- `hud.PrimitivePickerHoverTest`
+- `NewTestSelectScene`
+- `draw.HoverPos`
+- `inpututil.IsMouseButtonJustPressed`
+- `inpututil.JustPressedTouchIDs`
+- `NewSelectScene`
+- `r.Contains`
+- `particle.EmitAmbient`
+- `persistence.UnlockRequirement`
+- `i18n.T`
+- `draw.TickHover`
+- `hud.MascotHitTest`
+- `time.Now`
+- `time.Since`
+- `provider.MascotSnapshot`
+- `executor.ExecuteMascotAction`
+- `i18n.SetLocale`
+- `SaveSettings`
+- `persistence.DefaultProgressManager`
+- `pm.SetFirstRunDone`
+- `NewTitleScene`
+- `LoadSettings`
+- `i18n.Init`
+- `config.GetDataFS`
+- `log.Printf`
+- `render.InitGlobalIcons`
+- `config.GetAssetFS`
+- `abilities.InitConfigAbilities`
+- `descriptor.InitDescriptorAbilities`
+- `config.LoadBalance`
+- `config.LoadPlatform`
+- `config.LoadTierPresets`
+- `config.LoadClassicPresets`
+- `config.LoadAndCacheWardenConfigs`
+- `config.LoadBuffRules`
+- `config.LoadSpawnerConfig`
+- `config.ResolveConfigLabels`
+- `i18n.OnChange`
+- `postprocess.InitShaders`
+- `gameAudio.NewManager`
+- `fmt.Sprintf`
+- `mascot.LoadAllDialogs`
+- `mascot.NewGuide`
+- `i18n.Locale`
+- `mascot.DefaultConditions`
+- `render.LoadMascotSprites`
+- `game.QualityLevel`
+- `persistence.DefaultStorage`
+- `persistence.NewProgressManager`
+- `pm.IsFirstRunDone`
+- `NewLangSelectScene`
+- `ebiten.IsKeyPressed`
+- `ebiten.IsMouseButtonPressed`
+- `NewStageSceneWithOpts`
+- `NewSettingsScene`
+- `NewBestiaryScene`
+- `NewTowerWorkshopScene`
+- `draw.TouchPos`
+- `i18n.Available`
+- `inpututil.IsTouchJustReleased`
+- `am.SetVolume`
+- `am.SetBGMVolume`
+- `hud.ActionBarHitTest`
+- `NewResultScene`
+- `hud.UpdateToast`
+- `game.Settings`
+- `render.UpdateShake`
+- `render.UpdateImpactVFX`
+- `render.UpdateSplashVFX`
+- `render.UpdateFloatTexts`
+
+### (*AbilityEditScene) Update
+
+📍 `internal/scene/ability_edit.go:331`
+
+**调用 →**
+- `inpututil.IsKeyJustPressed`
+- `hud.ShowToast`
+- `ebiten.Wheel`
+- `draw.CursorPos`
+- `hud.PrimitivePickerHoverTest`
+- `NewTestSelectScene`
+- `draw.HoverPos`
+- `inpututil.IsMouseButtonJustPressed`
+- `inpututil.JustPressedTouchIDs`
+- `NewSelectScene`
+- `r.Contains`
+- `particle.EmitAmbient`
+- `persistence.UnlockRequirement`
+- `i18n.T`
+- `draw.TickHover`
+- `hud.MascotHitTest`
+- `time.Now`
+- `time.Since`
+- `provider.MascotSnapshot`
+- `executor.ExecuteMascotAction`
+- `i18n.SetLocale`
+- `SaveSettings`
+- `persistence.DefaultProgressManager`
+- `pm.SetFirstRunDone`
+- `NewTitleScene`
+- `LoadSettings`
+- `i18n.Init`
+- `config.GetDataFS`
+- `log.Printf`
+- `render.InitGlobalIcons`
+- `config.GetAssetFS`
+- `abilities.InitConfigAbilities`
+- `descriptor.InitDescriptorAbilities`
+- `config.LoadBalance`
+- `config.LoadPlatform`
+- `config.LoadTierPresets`
+- `config.LoadClassicPresets`
+- `config.LoadAndCacheWardenConfigs`
+- `config.LoadBuffRules`
+- `config.LoadSpawnerConfig`
+- `config.ResolveConfigLabels`
+- `i18n.OnChange`
+- `postprocess.InitShaders`
+- `gameAudio.NewManager`
+- `fmt.Sprintf`
+- `mascot.LoadAllDialogs`
+- `mascot.NewGuide`
+- `i18n.Locale`
+- `mascot.DefaultConditions`
+- `render.LoadMascotSprites`
+- `game.QualityLevel`
+- `persistence.DefaultStorage`
+- `persistence.NewProgressManager`
+- `pm.IsFirstRunDone`
+- `NewLangSelectScene`
+- `ebiten.IsKeyPressed`
+- `ebiten.IsMouseButtonPressed`
+- `NewStageSceneWithOpts`
+- `NewSettingsScene`
+- `NewBestiaryScene`
+- `NewTowerWorkshopScene`
+- `draw.TouchPos`
+- `i18n.Available`
+- `inpututil.IsTouchJustReleased`
+- `am.SetVolume`
+- `am.SetBGMVolume`
+- `hud.ActionBarHitTest`
+- `NewResultScene`
+- `hud.UpdateToast`
+- `game.Settings`
 - `render.UpdateShake`
 - `render.UpdateImpactVFX`
 - `render.UpdateSplashVFX`
@@ -5617,6 +5685,7 @@
 - `NewStageSceneWithOpts`
 - `NewSettingsScene`
 - `NewBestiaryScene`
+- `NewTowerWorkshopScene`
 - `draw.TouchPos`
 - `i18n.Available`
 - `inpututil.IsTouchJustReleased`
@@ -5626,8 +5695,6 @@
 - `NewResultScene`
 - `hud.UpdateToast`
 - `game.Settings`
-- `NewBlueprintEditScene`
-- `NewAbilityEditScene`
 - `render.UpdateShake`
 - `render.UpdateImpactVFX`
 - `render.UpdateSplashVFX`
@@ -5635,7 +5702,7 @@
 
 ### (*StageScene) UpgradeTowerForAI
 
-📍 `internal/scene/stage.go:4458`
+📍 `internal/scene/stage.go:4344`
 
 **调用 →**
 - `t.BuyStrength`

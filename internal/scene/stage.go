@@ -1169,9 +1169,6 @@ func (s *StageScene) Update() error {
 		}
 	}
 
-	// Toast 通知更新
-	hud.UpdateToast(dt)
-
 	// 教程自动推进计时器
 	s.tutorial.Tick(dt)
 	if s.tutorial.Done && !s.tutorialSaved {
@@ -3137,9 +3134,6 @@ func (s *StageScene) drawScene(screen *ebiten.Image) {
 		hud.DrawDragItem(screen, float32(mx), float32(my), def.Color, def.Name, int(s.dragItemKind), def.Icon)
 	}
 
-	// Toast 通知
-	hud.DrawToast(screen)
-
 	// 战灵选择覆盖层
 	if s.wardenOverlay != nil {
 		s.wardenOverlay.Draw(screen)
@@ -4225,14 +4219,22 @@ func (s *StageScene) runAutoPlayFrame() {
 
 // tickAIPlayerOne 构建 AI 快照并驱动单个 AI 玩家决策。
 func (s *StageScene) tickAIPlayerOne(ap *aiplayer.AIPlayer) {
+	// 判断下一波是否为 Boss 波
+	nextWave := s.spawner.Wave + 1
+	nextWaveIsBoss := false
+	if bossEvery := config.GlobalSpawnerConfig().Boss.EveryNWaves; bossEvery > 0 && nextWave > 0 {
+		nextWaveIsBoss = nextWave%bossEvery == 0
+	}
+
 	snap := aiplayer.AISnapshot{
-		Gold:        ap.Gold(),
-		Wave:        s.spawner.Wave,
-		MaxWaves:    s.gameMap.Config.Waves,
-		WaveActive:  s.spawner.WaveActive,
-		Lives:       s.lives,
-		WardenReady: s.wardenReady,
-		HumanGold:   s.gold, // 人类玩家金币（观战评论用）
+		Gold:           ap.Gold(),
+		Wave:           s.spawner.Wave,
+		MaxWaves:       s.gameMap.Config.Waves,
+		WaveActive:     s.spawner.WaveActive,
+		Lives:          s.lives,
+		WardenReady:    s.wardenReady,
+		HumanGold:      s.gold, // 人类玩家金币（观战评论用）
+		NextWaveIsBoss: nextWaveIsBoss,
 	}
 
 	// 塔快照（含 Owner 字段和待选能力，AI 内部按 Owner 过滤）
@@ -4242,13 +4244,19 @@ func (s *StageScene) tickAIPlayerOne(ap *aiplayer.AIPlayer) {
 		if t.Owner == 0 {
 			humanTowerCount++
 		}
+		def := s.findTowerDef(t)
 		aiTower := aiplayer.AITower{
 			Row: t.Row, Col: t.Col,
 			Damage: t.Damage, Strength: int(t.Strength.Effective()),
 			AttackSpeed: t.AttackSpeed,
 			Range: t.Range, Kills: t.Kills,
+			Cost:      t.Cost,
 			Owner:     t.Owner,
 			Abilities: t.AllAbilities(),
+			CanUnlock: tower.CanUnlockMore(t),
+		}
+		if aiTower.CanUnlock {
+			aiTower.UnlockCost = tower.NextUpgradeCost(t, def)
 		}
 		// 传递待选能力槽位数据（PendingChoices map[int][]config.AbilityDef）
 		for slotIdx, choices := range t.PendingChoices {
@@ -4440,4 +4448,49 @@ func (s *StageScene) ChooseAbility(row, col int, slotIndex int, abilityName stri
 	tower.ApplyEnhanceIfPresent(t)
 	tower.ClearPendingChoice(t, slotIndex)
 	return true
+}
+
+// UseItemForAI AI 请求使用道具。实现 aiplayer.StageOps。
+// 道具直接应用到目标塔（等同于玩家拖拽道具到塔上）。
+func (s *StageScene) UseItemForAI(itemKind int, towerRow, towerCol int) bool {
+	t := s.towers.At(towerRow, towerCol)
+	if t == nil {
+		return false
+	}
+	k := item.Kind(itemKind)
+	if k < 0 || k >= item.KindCount {
+		return false
+	}
+	item.ApplyItem(t, k)
+	return true
+}
+
+// UnlockAbilitySlotForAI AI 请求付费解锁塔的下一个能力槽。实现 aiplayer.StageOps。
+// 返回实际花费金额和是否成功。金币从 AI 背包扣除（由 aiplayer 层处理）。
+func (s *StageScene) UnlockAbilitySlotForAI(row, col int) (cost int, ok bool) {
+	t := s.towers.At(row, col)
+	if t == nil {
+		return 0, false
+	}
+	if !tower.CanUnlockMore(t) {
+		return 0, false
+	}
+	def := s.findTowerDef(t)
+	unlockCost := tower.NextUpgradeCost(t, def)
+	cat := tower.UnlockNextSlot(t)
+	if cat < 0 {
+		return 0, false
+	}
+	t.Cost += unlockCost // 累计到塔总投资
+	t.PaidUnlocks++
+	return unlockCost, true
+}
+
+// SellRefundAmount 返回卖塔的退款金额（不实际执行卖出）。实现 aiplayer.StageOps。
+func (s *StageScene) SellRefundAmount(row, col int) int {
+	t := s.towers.At(row, col)
+	if t == nil {
+		return 0
+	}
+	return s.econ.SellRefund(t.Cost)
 }

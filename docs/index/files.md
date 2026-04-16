@@ -2,7 +2,7 @@
 
 > 自动生成，勿手动编辑。运行 `make index` 更新。
 
-共 282 个文件, 69009 行代码, 47 个包。
+共 283 个文件, 70016 行代码, 47 个包。
 
 ## abilities (346 行)
 
@@ -16,18 +16,18 @@
 |------|------|------|
 | `achievement.go` | 215 | Achievement tracking and persistence. |
 
-## aiplayer (2908 行)
+## aiplayer (3464 行)
 
 | 文件 | 行数 | 职责 |
 |------|------|------|
 | `action.go` | 64 | 延迟行动队列。 |
-| `aiplayer.go` | 666 | AI 玩家主结构体。 |
+| `aiplayer.go` | 785 | AI 玩家主结构体。 |
 | `awareness.go` | 332 | 局势感知系统。 |
 | `behavior.go` | 176 | - |
-| `bubble.go` | 259 | 思维气泡数据模型。 |
+| `bubble.go` | 287 | 思维气泡数据模型。 |
 | `coop_zone.go` | 93 | N 分区 Zone 系统。 |
 | `cooperation.go` | 245 | 协作意识系统。 |
-| `decision.go` | 656 | AI 决策引擎。 |
+| `decision.go` | 1065 | AI 决策引擎。 |
 | `personality.go` | 38 | AI 个性系统。 |
 | `ping.go` | 65 | - |
 | `spectator.go` | 138 | - |
@@ -132,7 +132,7 @@
 |------|------|------|
 | `perf.go` | 162 | frame time + GC performance tracker. |
 
-## descriptor (4703 行)
+## descriptor (4974 行)
 
 | 文件 | 行数 | 职责 |
 |------|------|------|
@@ -143,6 +143,7 @@
 | `blueprint_to_def.go` | 128 | 蓝图→塔定义转换。 |
 | `budget.go` | 94 | 预算计算系统。 |
 | `condition.go` | 221 | 条件门接口及 11 种内置条件类型。 |
+| `describe.go` | 271 | 从能力描述符生成人类可读的中文描述。 |
 | `descriptor.go` | 696 | 能力描述符 JSON 模式与解析器。 |
 | `descriptor_ability.go` | 375 | 描述符驱动能力的 tower.Ability/Ticker 适配器。 |
 | `edit_state.go` | 626 | EditState ↔ AbilityDescriptor 双向转换。 |
@@ -392,17 +393,17 @@
 | `splash_vfx.go` | 115 | splash ability impact ring VFX. |
 | `trail_batch.go` | 286 | 弹道尾迹批量渲染器。 |
 
-## scene (18269 行)
+## scene (18449 行)
 
 | 文件 | 行数 | 职责 |
 |------|------|------|
-| `ability_edit.go` | 1616 | 自定义能力编辑场景（完整管线编辑器）。 |
+| `ability_edit.go` | 1709 | 自定义能力编辑场景（完整管线编辑器）。 |
 | `audio_preview.go` | 762 | Audio preview scene. |
 | `autoplay_types.go` | 163 | AutoPlayer 接口和数据类型定义。 |
 | `bestiary.go` | 472 | 图鉴场景。 |
 | `blueprint_edit.go` | 1603 | 蓝图编辑场景（4步向导）。 |
 | `campaign_select.go` | 499 | 战役模式关卡选择场景。 |
-| `game.go` | 500 | 顶层游戏管理器，实现 Ebitengine 的 ebiten.Game 接口。 |
+| `game.go` | 506 | 顶层游戏管理器，实现 Ebitengine 的 ebiten.Game 接口。 |
 | `lang_select.go` | 126 | 首次语言选择场景。 |
 | `loading.go` | 293 | 加载场景。 |
 | `map_editor.go` | 808 | Map Editor scene (tower slot editor). |
@@ -411,15 +412,15 @@
 | `select.go` | 576 | 模式选择场景（卡片式 UI）。 |
 | `settings.go` | 390 | 设置场景。 |
 | `settings_persist.go` | 80 | 设置持久化（音量/画质）。 |
-| `stage.go` | 4432 | 游戏主战斗场景（~3600行，本项目最核心的文件）。 |
-| `stage_info_vm.go` | 667 | 塔信息面板的 ViewModel 构建器。 |
+| `stage.go` | 4496 | 游戏主战斗场景（~3600行，本项目最核心的文件）。 |
+| `stage_info_vm.go` | 686 | 塔信息面板的 ViewModel 构建器。 |
 | `stage_input.go` | 1091 | StageScene 的输入处理和交互状态机（11 种模式）。 |
 | `stage_types.go` | 120 | StageScene 的类型定义和常量。 |
 | `stage_warden_vm.go` | 179 | 战灵选择数据构建（从 config 加载并转为 hud.WardenOption）。 |
 | `test_select.go` | 490 | 测试模式场景选择器。 |
 | `title.go` | 145 | 标题场景（游戏启动首屏）。 |
 | `tower_workshop.go` | 550 | 炮塔工坊场景（蓝图 + 自定义能力管理中心）。 |
-| `vfx_preview.go` | 1129 | VFX preview scene. |
+| `vfx_preview.go` | 1127 | VFX preview scene. |
 | `warden_select.go` | 365 | 战灵选择场景。 |
 | `wave_preview.go` | 458 | Wave Preview scene. |
 

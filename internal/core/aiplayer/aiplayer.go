@@ -18,9 +18,12 @@ type StageOps interface {
 	SellTowerForAI(row, col int) bool
 	TowerCost(key string) int
 	StrengthBuyCost() int
-	StartWave() bool                                          // 开始下一波
-	SelectWarden(key string) bool                             // 选择战灵
+	StartWave() bool                                                    // 开始下一波
+	SelectWarden(key string) bool                                       // 选择战灵
 	ChooseAbility(row, col int, slotIndex int, abilityName string) bool // 选择能力
+	UseItemForAI(itemKind int, towerRow, towerCol int) bool             // 使用道具
+	UnlockAbilitySlotForAI(row, col int) (cost int, ok bool)           // 付费解锁能力槽
+	SellRefundAmount(row, col int) int                                  // 查询卖塔退款金额
 }
 
 // ZoneProvider 区域查询接口。Zone 和 CoopZone 都实现此接口。
@@ -61,6 +64,10 @@ type AIPlayer struct {
 	// ── Phase 2-3: 拟人行为 + 观战评论 ──
 	behavior  *BehaviorState  // 拟人行为状态（漏怪/连杀/焦虑/巡视/发呆）
 	spectator *SpectatorState // 观战评论状态（评论人类玩家行为）
+
+	// ── AI 道具背包 ──
+	// AI 区域掉落的道具进入此背包，使用时从此背包扣除。
+	inventory map[int]int // itemKind → count
 
 	// 决策节奏
 	decisionTimer    float64
@@ -103,6 +110,7 @@ func New(cfg Config) *AIPlayer {
 		lastAction:   "idle",
 		behavior:     NewBehaviorState(20), // 默认 20 生命
 		spectator:    NewSpectatorState(20),
+		inventory:    make(map[int]int),
 	}
 	ap.engine.SetPersonality(personality)
 	ap.engine.SetOwnerID(ownerID)
@@ -154,6 +162,16 @@ func (ap *AIPlayer) Gold() int { return ap.gold }
 
 // AddGold 增加金币（击杀收入等）。
 func (ap *AIPlayer) AddGold(amount int) { ap.gold += amount }
+
+// AddItem 向 AI 背包添加一个道具（掉落拾取时调用）。
+func (ap *AIPlayer) AddItem(kind int) {
+	ap.inventory[kind]++
+}
+
+// ItemCount 返回指定道具数量。
+func (ap *AIPlayer) ItemCount(kind int) int {
+	return ap.inventory[kind]
+}
 
 // SpriteX 精灵 X 坐标。
 func (ap *AIPlayer) SpriteX() float64 { return ap.sprite.X() }
@@ -237,6 +255,9 @@ func (ap *AIPlayer) Tick(dt float64, snap AISnapshot) {
 	// 注入 AI 当前金币到快照
 	snap.Gold = ap.gold
 
+	// 注入 AI 道具背包到快照
+	snap.Items = ap.buildItemSnapshot()
+
 	// 保存全量塔数据（协作分析需要看到人类+AI 的全部塔）
 	snap.AllTowers = snap.Towers
 
@@ -282,6 +303,37 @@ func (ap *AIPlayer) filterAITowers(towers []AITower) []AITower {
 	return result
 }
 
+// itemCategoryNames 将 item.Kind 映射到类别名称。
+// 保持与 item 包 kindFromString 一致的命名。
+var itemCategoryNames = [...]string{
+	0: "baseDamage",
+	1: "potentialDamage",
+	2: "baseSpeed",
+	3: "potentialSpeed",
+	4: "baseRange",
+	5: "potentialRange",
+}
+
+// buildItemSnapshot 将 AI 背包转为快照格式。
+func (ap *AIPlayer) buildItemSnapshot() []AIItem {
+	var items []AIItem
+	for kind, count := range ap.inventory {
+		if count <= 0 {
+			continue
+		}
+		cat := ""
+		if kind >= 0 && kind < len(itemCategoryNames) {
+			cat = itemCategoryNames[kind]
+		}
+		items = append(items, AIItem{
+			Kind:     kind,
+			Category: cat,
+			Count:    count,
+		})
+	}
+	return items
+}
+
 func (ap *AIPlayer) executeDecision(d Decision) {
 	// 记录行动标签供 LLM prompt 使用
 	switch d.Type {
@@ -295,6 +347,12 @@ func (ap *AIPlayer) executeDecision(d Decision) {
 		ap.lastAction = "selected warden"
 	case DecisionChooseAbility:
 		ap.lastAction = "chose ability"
+	case DecisionSell:
+		ap.lastAction = "sold tower"
+	case DecisionUseItem:
+		ap.lastAction = "used item"
+	case DecisionUnlockSlot:
+		ap.lastAction = "unlocked slot"
 	default:
 		ap.lastAction = "idle"
 	}
@@ -363,7 +421,14 @@ func (ap *AIPlayer) executeDecision(d Decision) {
 		})
 
 	case DecisionStartWave:
-		ap.bubble.Show(ap.dialogue.Random("wave_start"), BubbleAction, 1.2)
+		// 根据 Reason 选择对应的文案类别
+		dialogueKey := "wave_start"
+		if d.Reason == "wave_early" {
+			dialogueKey = "wave_early"
+		} else if d.Reason == "boss_prepare" {
+			dialogueKey = "boss_prepare"
+		}
+		ap.bubble.Show(ap.dialogue.Random(dialogueKey), BubbleAction, 1.2)
 		ap.actions.Enqueue(DelayedAction{
 			Delay: 0.3 + rand.Float64()*0.3,
 			Label: "start_wave",
@@ -397,6 +462,60 @@ func (ap *AIPlayer) executeDecision(d Decision) {
 			Execute: func() {
 				if ap.ops != nil {
 					ap.ops.ChooseAbility(row, col, slotIdx, abilityName)
+				}
+			},
+		})
+
+	case DecisionSell:
+		row, col := d.Row, d.Col
+		ap.bubble.Show(ap.dialogue.Random("sell_thinking"), BubbleThink, 1.0)
+		ap.actions.Enqueue(DelayedAction{
+			Delay: 0.8 + rand.Float64()*0.5,
+			Label: "sell",
+			Execute: func() {
+				if ap.ops == nil {
+					return
+				}
+				// SellTowerForAI 内部已按 Owner 发放退款到对应 AI 玩家
+				if ap.ops.SellTowerForAI(row, col) {
+					ap.bubble.Show(ap.dialogue.Random("sell_done"), BubbleAction, 1.0)
+				}
+			},
+		})
+
+	case DecisionUseItem:
+		row, col := d.Row, d.Col
+		itemKind := d.ItemKind
+		ap.bubble.Show(ap.dialogue.Random("item_use"), BubbleAction, 1.5)
+		ap.actions.Enqueue(DelayedAction{
+			Delay: 0.5 + rand.Float64()*0.3,
+			Label: "use_item",
+			Execute: func() {
+				if ap.ops == nil {
+					return
+				}
+				if ap.inventory[itemKind] <= 0 {
+					return
+				}
+				if ap.ops.UseItemForAI(itemKind, row, col) {
+					ap.inventory[itemKind]--
+				}
+			},
+		})
+
+	case DecisionUnlockSlot:
+		row, col := d.Row, d.Col
+		ap.bubble.Show(ap.dialogue.Random("unlock_slot"), BubbleThink, 1.5)
+		ap.actions.Enqueue(DelayedAction{
+			Delay: 0.6 + rand.Float64()*0.4,
+			Label: "unlock_slot",
+			Execute: func() {
+				if ap.ops == nil {
+					return
+				}
+				cost, ok := ap.ops.UnlockAbilitySlotForAI(row, col)
+				if ok {
+					ap.gold -= cost
 				}
 			},
 		})
