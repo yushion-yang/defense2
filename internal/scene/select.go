@@ -295,6 +295,10 @@ func (s *SelectScene) Update() error {
 			playUIClick(s.switcher)
 			s.switcher.SwitchScene(NewBestiaryScene(s.switcher))
 		}
+		if s.hitTestWorkshopButton(mxf, myf) {
+			playUIClick(s.switcher)
+			s.switcher.SwitchScene(NewTowerWorkshopScene(s.switcher))
+		}
 	}
 
 	return nil
@@ -379,6 +383,19 @@ const (
 func (s *SelectScene) hitTestBestiaryButton(mx, my float64) bool {
 	return mx >= bestiaryBtnX && mx <= bestiaryBtnX+bestiaryBtnW &&
 		my >= bestiaryBtnY && my <= bestiaryBtnY+bestiaryBtnH
+}
+
+// workshopBtn 布局常量（左下角，与图鉴按钮对称）。
+const (
+	workshopBtnW = 70.0
+	workshopBtnH = 40.0
+	workshopBtnX = 16.0
+	workshopBtnY = scH - workshopBtnH - 16
+)
+
+func (s *SelectScene) hitTestWorkshopButton(mx, my float64) bool {
+	return mx >= workshopBtnX && mx <= workshopBtnX+workshopBtnW &&
+		my >= workshopBtnY && my <= workshopBtnY+workshopBtnH
 }
 
 // ── Draw ────────────────────────────────────────
@@ -500,6 +517,14 @@ func (s *SelectScene) Draw(screen *ebiten.Image) {
 
 	// ── 图鉴按钮（右下角） ──
 	ui.Button(screen, float32(bestiaryBtnX), float32(bestiaryBtnY), float32(bestiaryBtnW), float32(bestiaryBtnH), i18n.T("scene.title.bestiary"), ui.ButtonStyle{
+		BgColor:   theme.BtnSecondary,
+		TextColor: textGray,
+		FontSize:  12,
+		Radius:    8,
+	})
+
+	// ── 工坊按钮（左下角） ──
+	ui.Button(screen, float32(workshopBtnX), float32(workshopBtnY), float32(workshopBtnW), float32(workshopBtnH), i18n.T("scene.title.workshop"), ui.ButtonStyle{
 		BgColor:   theme.BtnSecondary,
 		TextColor: textGray,
 		FontSize:  12,
