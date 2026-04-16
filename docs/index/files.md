@@ -2,7 +2,7 @@
 
 > 自动生成，勿手动编辑。运行 `make index` 更新。
 
-共 284 个文件, 70546 行代码, 47 个包。
+共 288 个文件, 71454 行代码, 48 个包。
 
 ## abilities (346 行)
 
@@ -16,18 +16,18 @@
 |------|------|------|
 | `achievement.go` | 215 | Achievement tracking and persistence. |
 
-## aiplayer (3740 行)
+## aiplayer (3792 行)
 
 | 文件 | 行数 | 职责 |
 |------|------|------|
 | `action.go` | 64 | 延迟行动队列。 |
-| `aiplayer.go` | 1061 | AI 玩家主结构体。 |
+| `aiplayer.go` | 1116 | AI 玩家主结构体。 |
 | `awareness.go` | 332 | 局势感知系统。 |
 | `behavior.go` | 176 | - |
 | `bubble.go` | 287 | 思维气泡数据模型。 |
 | `coop_zone.go` | 93 | N 分区 Zone 系统。 |
 | `cooperation.go` | 245 | 协作意识系统。 |
-| `decision.go` | 1065 | AI 决策引擎。 |
+| `decision.go` | 1062 | AI 决策引擎。 |
 | `personality.go` | 38 | AI 个性系统。 |
 | `ping.go` | 65 | - |
 | `spectator.go` | 138 | - |
@@ -280,6 +280,15 @@
 | 文件 | 行数 | 职责 |
 |------|------|------|
 | `item.go` | 187 | 道具系统。 |
+
+## learning (856 行)
+
+| 文件 | 行数 | 职责 |
+|------|------|------|
+| `features.go` | 346 | 特征提取系统。 |
+| `loader.go` | 24 | 权重模型加载器。 |
+| `trainer.go` | 322 | 在线学习训练器。 |
+| `weights.go` | 164 | 权重模型与线性评分。 |
 
 ## llm (754 行)
 

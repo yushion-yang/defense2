@@ -490,3 +490,60 @@ func TestIsCC(t *testing.T) {
 		t.Error("scatter should not be CC")
 	}
 }
+
+// ── AverageModels 测试 ──────────────────────────────────────────
+
+func TestAverageModels_Empty(t *testing.T) {
+	m := AverageModels(nil)
+	d := DefaultModel()
+	if m.Version != d.Version {
+		t.Errorf("empty average should return default, got version %d", m.Version)
+	}
+}
+
+func TestAverageModels_Single(t *testing.T) {
+	m := DefaultModel()
+	m.Weights.Build[0] = 0.99
+	m.Version = 5
+	m.Episodes = 10
+
+	avg := AverageModels([]*Model{m})
+	if math.Abs(avg.Weights.Build[0]-0.99) > 1e-9 {
+		t.Errorf("single model average should preserve weights, got %f", avg.Weights.Build[0])
+	}
+	// Clone 不应共享底层数组
+	avg.Weights.Build[0] = 0
+	if m.Weights.Build[0] == 0 {
+		t.Error("AverageModels should return independent copy")
+	}
+}
+
+func TestAverageModels_TwoModels(t *testing.T) {
+	m1 := DefaultModel()
+	m1.Weights.Build[0] = 0.40
+	m1.Weights.Upgrade[0] = 0.50
+	m1.Weights.Econ[0] = -0.20
+	m1.Episodes = 5
+
+	m2 := DefaultModel()
+	m2.Weights.Build[0] = 0.60
+	m2.Weights.Upgrade[0] = 0.30
+	m2.Weights.Econ[0] = 0.20
+	m2.Episodes = 10
+
+	avg := AverageModels([]*Model{m1, m2})
+
+	if math.Abs(avg.Weights.Build[0]-0.50) > 1e-9 {
+		t.Errorf("build[0] average: expected 0.50, got %f", avg.Weights.Build[0])
+	}
+	if math.Abs(avg.Weights.Upgrade[0]-0.40) > 1e-9 {
+		t.Errorf("upgrade[0] average: expected 0.40, got %f", avg.Weights.Upgrade[0])
+	}
+	if math.Abs(avg.Weights.Econ[0]-0.00) > 1e-9 {
+		t.Errorf("econ[0] average: expected 0.00, got %f", avg.Weights.Econ[0])
+	}
+	// Episodes 应是累计
+	if avg.Episodes != 15 {
+		t.Errorf("episodes should be sum: expected 15, got %d", avg.Episodes)
+	}
+}

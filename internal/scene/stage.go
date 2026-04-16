@@ -42,6 +42,7 @@ import (
 	"defense2/internal/config"
 	"defense2/internal/core/achievement"
 	"defense2/internal/core/aiplayer"
+	"defense2/internal/core/aiplayer/learning"
 	"defense2/internal/core/combat"
 	"defense2/internal/core/debug"
 	"defense2/internal/core/economy"
@@ -178,6 +179,7 @@ type StageScene struct {
 
 	// ── 波次管理 ──
 	waveLivesSnapshot int // 波开始时的生命快照（波结束时比较，无损失=完美波次）
+	waveKillsSnapshot int // 波开始时的击杀快照（波结束时差值=本波击杀数，供学习系统使用）
 	wavesCleared      int // 已清除波次数（驱动能力槽位解锁）
 
 	// ── 图鉴数据收集 ──
@@ -516,13 +518,15 @@ func NewStageSceneWithOpts(sw Switcher, opts StageOptions) *StageScene {
 			spawnX := float64((sec.ColStart+sec.ColEnd)/2) * float64(gm.CellSize)
 			spawnY := float64(gm.Config.Rows/2) * float64(gm.CellSize)
 			ap := aiplayer.New(aiplayer.Config{
-				ZoneProvider: coopZone,
-				OwnerID:      i,
-				StartGold:    s.gold,
-				Ops:          s,
-				CellSize:     gm.CellSize,
-				SpawnX:       spawnX,
-				SpawnY:       spawnY,
+				ZoneProvider:    coopZone,
+				OwnerID:         i,
+				StartGold:       s.gold,
+				Ops:             s,
+				CellSize:        gm.CellSize,
+				SpawnX:          spawnX,
+				SpawnY:          spawnY,
+				DataFS:          config.GetDataFS(),
+				LearningEnabled: opts.LearningEnabled,
 			})
 			s.aiPlayers = append(s.aiPlayers, ap)
 		}
@@ -2685,6 +2689,12 @@ func (s *StageScene) updatePlaying() {
 		if s.choicePanel != nil {
 			s.choicePanel.Close()
 		}
+		// AI 学习系统回调：通知各 AI 玩家游戏结束
+		won := s.state == stateVictory
+		for _, ap := range s.aiPlayers {
+			ap.OnGameEnd(won, s.spawner.Wave, s.spawner.MaxWaves,
+				s.lives, s.maxLives, s.kills)
+		}
 	}
 
 	// AI 玩家决策
@@ -3758,10 +3768,17 @@ func (s *StageScene) onWaveTransition(prevWave int) {
 		s.bus.Emit(event.EvtWaveCleared, event.WaveClearedPayload{
 			Wave: prevWave, Perfect: perfect,
 		})
+
+		// AI 学习系统回调：通知各 AI 玩家本波结束的统计
+		killsThisWave := s.kills - s.waveKillsSnapshot
+		for _, ap := range s.aiPlayers {
+			ap.OnWaveEnd(prevWave, killsThisWave, s.waveLivesSnapshot, s.lives)
+		}
 	}
 
 	// 新波开始：更新快照 + 发事件
 	s.waveLivesSnapshot = s.lives
+	s.waveKillsSnapshot = s.kills
 	s.bus.Emit(event.EvtWaveStarted, event.WaveStartedPayload{
 		Wave: s.spawner.Wave, IsBoss: s.spawner.IsBossWave(),
 	})
@@ -4015,6 +4032,21 @@ func towerLightColor(style string) color.RGBA {
 // 设为 nil 恢复手动模式。非 nil 时 Draw() 直接跳过，GPU 开销≈0。
 func (s *StageScene) SetAutoPlayer(ap AutoPlayer) {
 	s.autoPlayer = ap
+}
+
+// LearningModels 返回所有 AI 玩家的学习模型（用于训练管线导出权重）。
+// 游戏结束后调用，返回 nil 表示无 AI 玩家或学习系统未启用。
+func (s *StageScene) LearningModels() []*learning.Model {
+	if len(s.aiPlayers) == 0 {
+		return nil
+	}
+	var models []*learning.Model
+	for _, ap := range s.aiPlayers {
+		if m := ap.LearningModel(); m != nil {
+			models = append(models, m)
+		}
+	}
+	return models
 }
 
 // buildAutoPlaySnapshot 构建当前游戏状态的完整快照（纯值复制，无引用）。

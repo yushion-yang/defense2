@@ -43,6 +43,7 @@ type Controller struct {
 	prevKills     int // 上一帧累计击杀数（用于增量检测）
 	gameStarted   bool
 	done          bool
+	won           bool     // 游戏是否胜利（OnGameEnd 后有效）
 	resultDrawn   bool     // 结果画面已绘制
 	startTime     time.Time
 	cachedMapInfo *MapInfo // 地图静态数据缓存（首帧后复用）
@@ -223,12 +224,18 @@ func (c *Controller) OnGameEnd(snap scene.AutoPlaySnapshot, won bool) {
 			record.TotalKills, len(record.Anomalies))
 	}
 
+	c.won = won
 	c.done = true
 }
 
 // Done 返回是否已完成。实现 scene.AutoPlayer。
 func (c *Controller) Done() bool {
 	return c.done
+}
+
+// Won 返回游戏是否胜利（OnGameEnd 后有效）。
+func (c *Controller) Won() bool {
+	return c.won
 }
 
 // snapshotToGameState 将 scene.AutoPlaySnapshot 转换为 autoplay.GameState。

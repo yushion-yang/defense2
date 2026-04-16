@@ -117,4 +117,5 @@ type StageOptions struct {
 	ManualWave      bool   // 仅手动开波（禁用自动波次推进，用于调试特定波次）
 	AIEnabled       bool   // 启用 AI 玩家（合作模式）
 	CoopPlayerCount int    // 合作模式人数（0=非合作，2/4/6=合作）
+	LearningEnabled bool   // AI 在线学习（实时微调权重）
 }

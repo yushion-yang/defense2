@@ -148,6 +148,60 @@ func padWeights(loaded, defaults []float64) []float64 {
 	return result
 }
 
+// AverageModels 将多个模型的权重取平均，返回新模型。
+// 用于训练管线：收集多局 winning model，平均后导出。
+// 空输入返回 DefaultModel。
+func AverageModels(models []*Model) *Model {
+	if len(models) == 0 {
+		return DefaultModel()
+	}
+	if len(models) == 1 {
+		return models[0].Clone()
+	}
+
+	base := DefaultModel()
+	n := float64(len(models))
+
+	// 清零 base 权重（用于累加）
+	for i := range base.Weights.Build {
+		base.Weights.Build[i] = 0
+	}
+	for i := range base.Weights.Upgrade {
+		base.Weights.Upgrade[i] = 0
+	}
+	for i := range base.Weights.Econ {
+		base.Weights.Econ[i] = 0
+	}
+
+	// 累加所有模型的权重
+	for _, m := range models {
+		for i := 0; i < len(base.Weights.Build) && i < len(m.Weights.Build); i++ {
+			base.Weights.Build[i] += m.Weights.Build[i]
+		}
+		for i := 0; i < len(base.Weights.Upgrade) && i < len(m.Weights.Upgrade); i++ {
+			base.Weights.Upgrade[i] += m.Weights.Upgrade[i]
+		}
+		for i := 0; i < len(base.Weights.Econ) && i < len(m.Weights.Econ); i++ {
+			base.Weights.Econ[i] += m.Weights.Econ[i]
+		}
+		base.Episodes += m.Episodes
+	}
+
+	// 取平均
+	for i := range base.Weights.Build {
+		base.Weights.Build[i] /= n
+	}
+	for i := range base.Weights.Upgrade {
+		base.Weights.Upgrade[i] /= n
+	}
+	for i := range base.Weights.Econ {
+		base.Weights.Econ[i] /= n
+	}
+
+	base.Version = models[0].Version + 1
+	return base
+}
+
 // Clone 深拷贝权重模型。
 func (m *Model) Clone() *Model {
 	c := &Model{

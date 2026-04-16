@@ -3,7 +3,7 @@
 > 自动生成，勿手动编辑。运行 `make index` 更新。
 > 修改函数前查此表，评估影响范围。
 
-共 25 个跨包函数有影响链。
+共 26 个跨包函数有影响链。
 
 ## i18n.T
 
@@ -219,6 +219,15 @@ combat.Tick → ctx.OnFire
 combat.Tick → ctx.OnFire
 warden.BasicAttack → ctx.OnFire
 warden.BasicAttack → ctx.OnFire
+```
+
+## dataFS.ReadFile
+
+**上游影响链**（修改此函数，以下调用者受影响）：
+
+```
+aiplayer.New → learning.LoadFromFS → dataFS.ReadFile
+descriptor.LoadDescriptorTable → dataFS.ReadFile
 ```
 
 ## e.SetFloatText

@@ -66,10 +66,25 @@ func main() {
 	marathon := flag.Bool("marathon", false, "run N random games with random map/difficulty/warden/strategy")
 	games := flag.Int("games", 100, "number of games in marathon mode")
 	heapStats := flag.Bool("heap-stats", false, "print heap statistics every 10 games in marathon mode")
+	learn := flag.Bool("learn", false, "run AI learning training pipeline (N coop games with learning enabled)")
+	learnGames := flag.Int("learn-games", 50, "number of training games in --learn mode")
+	learnOutput := flag.String("learn-output", "config/ai/weights.json", "output path for trained weights")
 	flag.Parse()
 
 	if *sessionJSON != "" {
 		runSingleSession(*sessionJSON)
+		return
+	}
+
+	if *learn {
+		runTraining(trainConfig{
+			Games:      *learnGames,
+			MapID:      *mapID,
+			Difficulty: *difficulty,
+			Warden:     *warden,
+			Seed:       *seed,
+			OutputPath: *learnOutput,
+		})
 		return
 	}
 
