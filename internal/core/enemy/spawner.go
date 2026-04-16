@@ -130,13 +130,13 @@ type Spawner struct {
 	Archetypes map[string]*SpawnConfig // 原型名 → 生成配置（由 stage 层从 enemies-core.json 加载后注入）
 
 	// ── 难度与模式 ──
-	EnemyFilter   string  // 敌人过滤器（ground-only/boss-only/dummy/stress/none/mixed/""）
-	HPScale       float64 // 难度 HP 倍率（默认 1.0，由 gamemode 设置）
-	SpeedScale    float64 // 难度速度倍率（默认 1.0）
-	ManualWave    bool    // 手动开波模式：倒计时到 0 不自动开波，需外部调用 StartNextWave
-	FixedCount    int     // >0 时每波固定该数量（不随波次递增，测试模式用）
-	BossEveryWave    bool    // true 时每波末尾都出 Boss（bossRush 模式用）
-	CoopPlayerCount  int     // 合作模式人数（0=非合作），用于读取 coopScaling 缩放参数
+	EnemyFilter     string  // 敌人过滤器（ground-only/boss-only/dummy/stress/none/mixed/""）
+	HPScale         float64 // 难度 HP 倍率（默认 1.0，由 gamemode 设置）
+	SpeedScale      float64 // 难度速度倍率（默认 1.0）
+	ManualWave      bool    // 手动开波模式：倒计时到 0 不自动开波，需外部调用 StartNextWave
+	FixedCount      int     // >0 时每波固定该数量（不随波次递增，测试模式用）
+	BossEveryWave   bool    // true 时每波末尾都出 Boss
+	CoopPlayerCount int     // 合作模式人数（0=非合作），用于读取 coopScaling 缩放参数
 
 	// ── Boss 控制 ──
 	bossQueued    bool    // 本波是否需要在末尾追加 Boss（startWave 时计算）

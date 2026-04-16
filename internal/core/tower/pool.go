@@ -84,8 +84,8 @@ func initTower(t *Tower, row, col int, cx, cy float64, def TowerDef) {
 	t.AttackStyleID = def.AttackStyleID
 	t.ProjectileSpeed = def.ProjectileSpeed
 	t.Level = 1
-	t.SpriteKey = spriteKeyForStyle(def.AttackStyleID)       // 初始精灵（通常是 "sentinel"）
-	t.SpriteKeyOverride = def.SpriteKeyOverride              // 经典模式精灵覆盖
+	t.SpriteKey = spriteKeyForStyle(def.AttackStyleID) // 初始精灵（通常是 "sentinel"）
+	t.SpriteKeyOverride = def.SpriteKeyOverride        // 经典模式精灵覆盖
 	t.UnlockOrder = RollUnlockOrder()                  // 随机生成 6 个能力类别的解锁顺序（[0] 始终是攻击模式）
 
 	// 战力系统初始化：Strength 基础值 100，BuffList 空容器

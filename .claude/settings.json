@@ -1,0 +1,34 @@
+{
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Write|Edit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "jq -r '.tool_input.file_path // .tool_response.filePath' | { read -r f; if [[ \"$f\" == *.go ]]; then gofmt -w \"$f\"; fi; } 2>/dev/null || true",
+            "statusMessage": "gofmt"
+          }
+        ]
+      },
+      {
+        "matcher": "Write|Edit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "jq -r '.tool_input.file_path // .tool_response.filePath' | { read -r f; if [[ \"$f\" == */config/*.json ]] || [[ \"$f\" == */config/**/*.json ]]; then echo \"{\\\"hookSpecificOutput\\\":{\\\"hookEventName\\\":\\\"PostToolUse\\\",\\\"additionalContext\\\":\\\"[Hook] 配置文件已修改。请查阅 docs/index/configmap.md 确认所有消费者已适配。\\\"}}\"; fi; } 2>/dev/null || true"
+          }
+        ]
+      },
+      {
+        "matcher": "Write|Edit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "jq -r '.tool_input.file_path // .tool_response.filePath' | { read -r f; if [[ \"$f\" == */internal/render/vfx/*.go ]]; then echo \"{\\\"hookSpecificOutput\\\":{\\\"hookEventName\\\":\\\"PostToolUse\\\",\\\"additionalContext\\\":\\\"[Hook] VFX 文件已修改。请同步更新：(1) config/visuals/vfx.json 元数据 (2) vfx_preview.go trigger registry\\\"}}\"; fi; } 2>/dev/null || true"
+          }
+        ]
+      }
+    ]
+  }
+}

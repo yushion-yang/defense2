@@ -41,9 +41,11 @@ type SlowEffect struct {
 }
 
 func (e SlowEffect) Apply(ctx EffectCtx) EffectResult {
+	// factor 语义：JSON 中的值表示"减速量"（0.25 = 减速 25%），
+	// 需转换为速度倍率（1 - 0.25 = 0.75），与传统能力系统一致。
 	return EffectResult{
 		Type:       EffTypeSlow,
-		SlowFactor: e.Factor.Calc(ctx.Strength),
+		SlowFactor: 1 - e.Factor.Calc(ctx.Strength),
 		Duration:   e.Duration.Calc(ctx.Strength),
 	}
 }

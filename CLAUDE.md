@@ -9,6 +9,7 @@ Go/Ebitengine tower defense game. Full port from JS version.
 - `make lint` — golangci-lint
 - `make check-all` — lint + test
 - `make build-wasm` — WASM build
+- `make index` — 重建项目索引（docs/index/）
 
 ## Architecture
 
@@ -29,6 +30,18 @@ Go/Ebitengine tower defense game. Full port from JS version.
 - `config/` — JSON data files
 - `assets/` — SVG models, audio, fonts
 - `tests/` — unit / integration / design tests
+- `tools/indexer/` — 项目索引生成器
+- `docs/index/` — AI 辅助开发索引（自动生成，`make index` 更新）
+
+## 项目索引（AI 必读）
+
+开发前先查阅索引，减少盲搜：
+
+- **[docs/index/files.md](docs/index/files.md)** — 文件职责表（包/文件/行数/头注释摘要）。找文件时先查这里。
+- **[docs/index/callgraph.md](docs/index/callgraph.md)** — 核心调用图（热点函数 + 谁调用谁）。改函数前先查直接调用者。
+- **[docs/index/impact.md](docs/index/impact.md)** — 影响链分析（2 层间接调用）。**改核心函数前必查**，评估跨模块影响。
+- **[docs/index/configmap.md](docs/index/configmap.md)** — JSON 配置字段 → Go 代码消费者映射。改配置时先查消费者。
+- **[docs/index/summary.md](docs/index/summary.md)** — 索引元信息（文件数/行数/覆盖率）。
 
 ## Rendering (HiDPI)
 

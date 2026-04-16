@@ -52,10 +52,6 @@ func initGameModes() {
 	gameModes = []gameModeUI{
 		{"casual", i18n.T("scene.select.mode.casual"), "stat-damage", i18n.T("scene.select.mode.casual_desc"), "map_01", true},
 		{"classic", i18n.T("scene.select.mode.classic"), "★", i18n.T("scene.select.mode.classic_desc"), "map_01", false},
-		{"endless", i18n.T("scene.select.mode.endless"), "∞", i18n.T("scene.select.mode.endless_desc"), "map_01", true},
-		{"timedDefense", i18n.T("scene.select.mode.timed"), "stat-atkspd", i18n.T("scene.select.mode.timed_desc"), "map_02", true},
-		{"bossRush", i18n.T("scene.select.mode.boss"), "execute", i18n.T("scene.select.mode.boss_desc"), "map_03", true},
-		{"challenge", i18n.T("scene.select.mode.challenge"), "★", i18n.T("scene.select.mode.challenge_desc"), "map_04", true},
 		{"coop", i18n.T("scene.select.mode.coop"), "👥", i18n.T("scene.select.mode.coop_desc"), "map_co01", false},
 	}
 	if game.DevMode {

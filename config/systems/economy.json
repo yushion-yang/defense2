@@ -13,27 +13,6 @@
       "perfectBonus": {"base": 2, "perWave": 2},
       "score": {"formula": "wavesCleared*100 + kills*10 - leaked*50", "description": "战役评分：波次×100 + 击杀×10 - 泄漏×50"},
       "description": "标准战役模式：固定波次，通关即胜"
-    },
-    "endless": {
-      "waveBonus": {"base": 15, "perWave": 6},
-      "perfectBonus": {"base": 10, "perWave": 3},
-      "score": {"formula": "wave*100 + kills*10", "description": "无尽评分：波次×100 + 击杀×10"},
-      "description": "无尽模式：波次无上限，奖金递增更快以补偿难度增长"
-    },
-    "timed": {
-      "waveBonus": {"base": 8, "perWave": 3},
-      "perfectBonus": {"base": 6, "perWave": 2},
-      "score": {"formula": "kills*5 + lives*50", "description": "限时评分：击杀×5 + 剩余生命×50"},
-      "targetSeconds": 300,
-      "description": "限时模式：5 分钟内尽可能多杀"
-    },
-    "bossRush": {
-      "waveBonus": {"base": 20, "perWave": 10},
-      "perfectBonus": {"base": 15, "perWave": 5},
-      "score": {"formula": "max(0, 10000-elapsed*10) + kills*20", "description": "竞速评分：时间越短越高 + 击杀×20"},
-      "totalBosses": 5,
-      "intermissionSecs": 15,
-      "description": "Boss 竞速：每波出 Boss，击败指定数量即胜"
     }
   }
 }

@@ -70,148 +70,13 @@ func TestCampaignWaveClearBonus(t *testing.T) {
 	m := gamemode.NewCampaignMode()
 	ctx := testCtx(5, 12, 20, 0, 0)
 	result := m.OnWaveCleared(5, ctx)
-	expectedBonus := 12 + 5*4 // = 32 (economy.json campaign.waveBonus)
+	expectedBonus := 12 + 5*4  // = 32 (economy.json campaign.waveBonus)
 	expectedPerfect := 2 + 5*2 // = 12 (economy.json campaign.perfectBonus base=2)
 	if result.BonusGold != expectedBonus {
 		t.Errorf("bonus = %d, want %d", result.BonusGold, expectedBonus)
 	}
 	if result.PerfectBonus != expectedPerfect {
 		t.Errorf("perfect = %d, want %d", result.PerfectBonus, expectedPerfect)
-	}
-}
-
-// ── Endless ──
-
-func TestEndlessNeverWins(t *testing.T) {
-	m := gamemode.NewEndlessMode()
-	ctx := testCtx(9999, 9999, 20, 1000, 0)
-	ctx.Spawning = false
-	if m.CheckVictory(ctx) {
-		t.Error("endless should never win")
-	}
-}
-
-func TestEndlessScore(t *testing.T) {
-	m := gamemode.NewEndlessMode()
-	ctx := testCtx(50, 9999, 5, 200, 10)
-	score := m.GetScore(ctx)
-	expected := 50*100 + 200*10
-	if score != expected {
-		t.Errorf("score = %d, want %d", score, expected)
-	}
-}
-
-func TestEndlessOnInit(t *testing.T) {
-	m := gamemode.NewEndlessMode()
-	var maxWaves int
-	ctx := &gamemode.Context{
-		SetMaxWaves: func(v int) { maxWaves = v },
-	}
-	m.OnInit(ctx)
-	if maxWaves != 9999 {
-		t.Errorf("maxWaves = %d, want 9999", maxWaves)
-	}
-}
-
-// ── Timed ──
-
-func TestTimedVictory(t *testing.T) {
-	m := gamemode.NewTimedMode()
-	ctx := &gamemode.Context{
-		Lives:       20,
-		SetMaxWaves: func(int) {},
-	}
-	m.OnInit(ctx)
-
-	// Countdown 300 seconds
-	for i := 0; i < 300; i++ {
-		m.OnTick(1.0, ctx)
-	}
-	if !m.CheckVictory(ctx) {
-		t.Error("timed: should win when time runs out and lives > 0")
-	}
-}
-
-func TestTimedDefeat(t *testing.T) {
-	m := gamemode.NewTimedMode()
-	ctx := &gamemode.Context{
-		Lives:       0,
-		SetMaxWaves: func(int) {},
-	}
-	m.OnInit(ctx)
-	if !m.CheckDefeat(ctx) {
-		t.Error("timed: should lose when lives <= 0")
-	}
-}
-
-func TestTimedScore(t *testing.T) {
-	m := gamemode.NewTimedMode()
-	ctx := testCtx(10, 9999, 15, 100, 5)
-	// score = kills*5 + lives*50
-	expected := 100*5 + 15*50
-	if m.GetScore(ctx) != expected {
-		t.Errorf("score = %d, want %d", m.GetScore(ctx), expected)
-	}
-}
-
-// ── BossRush ──
-
-func TestBossRushVictory(t *testing.T) {
-	m := gamemode.NewBossRushMode()
-	ctx := &gamemode.Context{
-		SetMaxWaves: func(int) {},
-	}
-	m.OnInit(ctx)
-
-	// Kill 5 bosses
-	for i := 0; i < 5; i++ {
-		m.OnEnemyKilled(true, ctx)
-	}
-	if !m.CheckVictory(ctx) {
-		t.Error("boss rush: should win after killing 5 bosses")
-	}
-}
-
-func TestBossRushNonBossKillsIgnored(t *testing.T) {
-	m := gamemode.NewBossRushMode()
-	ctx := &gamemode.Context{
-		SetMaxWaves: func(int) {},
-	}
-	m.OnInit(ctx)
-
-	// Kill 100 non-boss enemies
-	for i := 0; i < 100; i++ {
-		m.OnEnemyKilled(false, ctx)
-	}
-	if m.CheckVictory(ctx) {
-		t.Error("boss rush: should not win from non-boss kills")
-	}
-}
-
-func TestBossRushScore(t *testing.T) {
-	m := gamemode.NewBossRushMode()
-	// Fast game (100s elapsed) with 10 kills:
-	// score = max(0, 10000-100*10) + 10*20 = 9000 + 200 = 9200
-	ctx := testCtx(5, 5, 20, 10, 0)
-	ctx.ElapsedTime = 100
-	score := m.GetScore(ctx)
-	if score != 9200 {
-		t.Errorf("score = %d, want 9200", score)
-	}
-}
-
-// ── Challenge ──
-
-func TestChallengeScoreMultiplier(t *testing.T) {
-	m := gamemode.NewChallengeMode()
-	m.GoldMultiplier = 0.5 // low gold → +0.5 multiplier
-	ctx := testCtx(12, 12, 10, 40, 2)
-	baseScore := m.CampaignMode.GetScore(ctx)
-	challengeScore := m.GetScore(ctx)
-	expectedMultiplier := 1.5 // 1.0 + 0.5 for low gold
-	expected := int(float64(baseScore) * expectedMultiplier)
-	if challengeScore != expected {
-		t.Errorf("score = %d, want %d (base=%d * %.1f)", challengeScore, expected, baseScore, expectedMultiplier)
 	}
 }
 
@@ -359,10 +224,7 @@ func TestModeRegistry(t *testing.T) {
 	expected := map[string]bool{
 		"casual":     true,
 		"classic":    true,
-		"endless":    true,
-		"timed":      true,
-		"bossRush":   true,
-		"challenge":  true,
+		"coop":       true,
 		"test":       true,
 		"autoplay":   true,
 		"simulation": true,
@@ -382,33 +244,5 @@ func TestGetOrDefault(t *testing.T) {
 	m := gamemode.GetOrDefault("nonexistent")
 	if m.ID() != "casual" {
 		t.Errorf("fallback ID = %s, want casual", m.ID())
-	}
-}
-
-// ── HUD Config ──
-
-func TestTimedHUDConfig(t *testing.T) {
-	m := gamemode.NewTimedMode()
-	ctx := &gamemode.Context{SetMaxWaves: func(int) {}}
-	m.OnInit(ctx)
-	hud := m.GetHUDConfig(ctx)
-	if !hud.ShowTimer {
-		t.Error("timed mode should show timer")
-	}
-	if hud.TimerSeconds < 299 { // ~300 after init
-		t.Errorf("timer = %f, want ~300", hud.TimerSeconds)
-	}
-}
-
-func TestBossRushHUDConfig(t *testing.T) {
-	m := gamemode.NewBossRushMode()
-	ctx := &gamemode.Context{SetMaxWaves: func(int) {}}
-	m.OnInit(ctx)
-	hud := m.GetHUDConfig(ctx)
-	if !hud.ShowBossCount {
-		t.Error("boss rush should show boss count")
-	}
-	if hud.TotalBosses != 5 {
-		t.Errorf("total = %d, want 5", hud.TotalBosses)
 	}
 }

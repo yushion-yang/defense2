@@ -103,7 +103,7 @@ type StageScene struct {
 	session       *gamemode.Session     // 游戏模式会话（跟踪模式状态、胜负条件、计时器）
 	ruleset       gamemode.TowerRuleset // 塔建造规则策略（从 session.Ruleset() 缓存，避免每帧虚调用）
 	modeCtx       gamemode.Context      // 缓存的模式上下文（闭包 initModeCtx 设一次，每帧只更新值字段，零分配）
-	modeID        string                // 模式 ID（campaign/endless/test 等，用于重玩和持久化）
+	modeID        string                // 模式 ID（casual/classic/coop/test 等，用于重玩和持久化）
 	diffID        string                // 难度 ID（easy/normal/hard/extreme，用于重玩和持久化）
 	frame         int                   // 当前帧计数（用于动画计时和周期性任务）
 	state         stageState            // 当前游戏状态（statePlaying/stateVictory/stateDefeat）
@@ -126,9 +126,9 @@ type StageScene struct {
 	kills    int            // 累计击杀数
 
 	// ── 塔建造 ──
-	towerDefs      []tower.TowerDef        // 可建造的塔类型列表（已过滤解锁）
-	selectedDef    int                      // 当前选中的塔类型索引（建塔面板）
-	selectedTower  *tower.Tower             // 点击选中的塔（显示信息面板+射程圈，nil=无选中）
+	towerDefs      []tower.TowerDef           // 可建造的塔类型列表（已过滤解锁）
+	selectedDef    int                        // 当前选中的塔类型索引（建塔面板）
+	selectedTower  *tower.Tower               // 点击选中的塔（显示信息面板+射程圈，nil=无选中）
 	blueprintStore *descriptor.BlueprintStore // 玩家自定义蓝图存储（Task 9 新建面板需要）
 	abilityStore   *descriptor.AbilityStore   // 自定义能力存储（运行时注册到 tower.Registry）
 
@@ -175,12 +175,12 @@ type StageScene struct {
 	itemHoverIdx  int                   // 道具面板鼠标悬停索引（-1=无）
 
 	// ── 蓝图管理上下文菜单 ──
-	bpCtxMenuOpen  bool      // 是否显示上下文菜单
-	bpCtxMenuX     float64   // 菜单位置 X（逻辑坐标）
-	bpCtxMenuY     float64   // 菜单位置 Y
-	bpCtxMenuBpID  string    // 操作目标蓝图 ID（bp_xxx）
-	bpCtxMenuRects []ui.Rect // 菜单项 hitTest 区域（编辑/复制/删除）
-	gesture       *input.Gesture        // 统一手势识别器（桌面+触摸）
+	bpCtxMenuOpen  bool           // 是否显示上下文菜单
+	bpCtxMenuX     float64        // 菜单位置 X（逻辑坐标）
+	bpCtxMenuY     float64        // 菜单位置 Y
+	bpCtxMenuBpID  string         // 操作目标蓝图 ID（bp_xxx）
+	bpCtxMenuRects []ui.Rect      // 菜单项 hitTest 区域（编辑/复制/删除）
+	gesture        *input.Gesture // 统一手势识别器（桌面+触摸）
 
 	// ── 波次管理 ──
 	waveLivesSnapshot int // 波开始时的生命快照（波结束时比较，无损失=完美波次）
@@ -373,11 +373,6 @@ func NewStageSceneWithOpts(sw Switcher, opts StageOptions) *StageScene {
 	mode := gamemode.GetOrDefault(modeID)
 	session := gamemode.NewSession(mode)
 
-	// bossRush 模式：每波都出 Boss
-	if modeID == "bossRush" {
-		spawner.BossEveryWave = true
-	}
-
 	// 经典模式：加载确定性出怪配置，覆盖随机出怪逻辑
 	if session.Ruleset().UseClassicWaves() {
 		if cwc, err := config.LoadClassicWavesConfig(opts.MapID); err == nil {
@@ -428,7 +423,7 @@ func NewStageSceneWithOpts(sw Switcher, opts StageOptions) *StageScene {
 		towerDefs:        loadTowerDefsForMode(session.Ruleset(), pm, bpStore),
 		selectedDef:      0,
 		blueprintStore:   bpStore,
-		abilityStore:    abStore,
+		abilityStore:     abStore,
 		wardenType:       opts.WardenType,
 		wardenCfg:        wardenCfg,
 		gameSpeed:        1,
@@ -561,7 +556,7 @@ func NewStageSceneWithOpts(sw Switcher, opts StageOptions) *StageScene {
 		spawner.ManualWave = true
 	}
 
-	// 模式初始化（endless → 设置 maxWaves=9999, timed → 初始化计时器）
+	// 模式初始化
 	session.Mode.OnInit(s.buildModeCtx())
 
 	// all-static 模式：一次性生成所有原型静止展示
@@ -768,10 +763,6 @@ func (s *StageScene) subscribeBus() {
 		// BGM: 波次清除后恢复战斗音乐（Boss 波结束时从 BGMBoss 切回）
 		s.audioMgr.PlayBGM(gameAudio.BGMBattle)
 		s.tutorial.OnEvent("waveCleared")
-		// 成就: Endless 模式 50 波
-		if s.modeID == "endless" && p.Wave >= achievement.ThresholdOf("endless_50") {
-			s.unlockAchievement("endless_50", i18n.T("game.achieve.endless_50"))
-		}
 	})
 
 	// ── 敌人事件 ─────────────────────────────────
@@ -3364,8 +3355,8 @@ func (s *StageScene) buildMenuCardToDefIdx(cardIdx int) int {
 // 蓝图编辑/复制/删除后调用，确保建塔面板数据与蓝图存储同步。
 func (s *StageScene) reloadTowerDefs() {
 	s.towerDefs = loadTowerDefsForMode(s.ruleset, s.progressMgr, s.blueprintStore)
-	s.selectedDef = -1    // 重置塔选择，避免索引越界
-	s.buildHoverIdx = -1  // 重置悬停状态，强制下一帧重新计算
+	s.selectedDef = -1   // 重置塔选择，避免索引越界
+	s.buildHoverIdx = -1 // 重置悬停状态，强制下一帧重新计算
 }
 
 // closeBlueprintContextMenu 关闭蓝图上下文菜单。
@@ -3379,10 +3370,10 @@ func (s *StageScene) closeBlueprintContextMenu() {
 // 在右键蓝图卡片后调用，显示一个小浮动面板。
 func (s *StageScene) drawBlueprintContextMenu(screen *ebiten.Image) {
 	const (
-		menuW    = float32(100) // 菜单宽度
-		menuItemH = float32(28) // 每个菜单项高度
-		menuPad  = float32(6)   // 菜单内边距
-		menuR    = float32(8)   // 菜单圆角
+		menuW     = float32(100) // 菜单宽度
+		menuItemH = float32(28)  // 每个菜单项高度
+		menuPad   = float32(6)   // 菜单内边距
+		menuR     = float32(8)   // 菜单圆角
 	)
 
 	type menuItem struct {

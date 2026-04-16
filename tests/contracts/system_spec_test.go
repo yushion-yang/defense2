@@ -18,7 +18,7 @@ func TestEconomySpec_ModesExist(t *testing.T) {
 	if spec == nil || spec.Modes == nil {
 		t.Fatal("经济规格加载失败")
 	}
-	required := []string{"casual", "endless", "timed", "bossRush"}
+	required := []string{"casual"}
 	for _, m := range required {
 		if _, ok := spec.Modes[m]; !ok {
 			t.Errorf("缺少模式 %q 的经济配置", m)
@@ -37,18 +37,6 @@ func TestEconomySpec_CampaignBonus(t *testing.T) {
 	expectedPerfect := c.PerfectBonus.Base + c.PerfectBonus.PerWave*5
 	if got := c.PerfectBonus.Calc(5); got != expectedPerfect {
 		t.Errorf("casual wave 5 perfect = %d, want %d", got, expectedPerfect)
-	}
-}
-
-func TestEconomySpec_EndlessHigherThanCasual(t *testing.T) {
-	spec := config.GlobalEconomySpec()
-	c := spec.Modes["casual"]
-	e := spec.Modes["endless"]
-	for _, wave := range []int{5, 10, 15, 20} {
-		if e.WaveBonus.Calc(wave) <= c.WaveBonus.Calc(wave) {
-			t.Errorf("wave %d: endless bonus (%d) should > casual (%d)",
-				wave, e.WaveBonus.Calc(wave), c.WaveBonus.Calc(wave))
-		}
 	}
 }
 
@@ -80,33 +68,6 @@ func TestEconomySpec_AllModesSelfConsistentFormula(t *testing.T) {
 				}
 			}
 		})
-	}
-}
-
-// TestEconomySpec_BossRushHasFields 验证 bossRush 模式有特有字段。
-func TestEconomySpec_BossRushHasFields(t *testing.T) {
-	spec := config.GlobalEconomySpec()
-	br, ok := spec.Modes["bossRush"]
-	if !ok {
-		t.Fatal("缺少 bossRush 模式")
-	}
-	if br.TotalBosses <= 0 {
-		t.Errorf("bossRush.TotalBosses = %d, want > 0", br.TotalBosses)
-	}
-	if br.IntermissionSecs <= 0 {
-		t.Errorf("bossRush.IntermissionSecs = %.1f, want > 0", br.IntermissionSecs)
-	}
-}
-
-// TestEconomySpec_TimedHasTargetSeconds 验证 timed 模式有目标时长。
-func TestEconomySpec_TimedHasTargetSeconds(t *testing.T) {
-	spec := config.GlobalEconomySpec()
-	tm, ok := spec.Modes["timed"]
-	if !ok {
-		t.Fatal("缺少 timed 模式")
-	}
-	if tm.TargetSeconds <= 0 {
-		t.Errorf("timed.TargetSeconds = %.1f, want > 0", tm.TargetSeconds)
 	}
 }
 
@@ -271,4 +232,3 @@ func TestProjectileSpec_DefaultsPositive(t *testing.T) {
 		t.Error("defaultProjectileRadius should > 0")
 	}
 }
-

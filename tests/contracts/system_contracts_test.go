@@ -152,7 +152,7 @@ func TestSellRefundPositive(t *testing.T) {
 
 // TestGameModeRegistered 验证所有预期模式已注册。
 func TestGameModeRegistered(t *testing.T) {
-	modes := []string{"casual", "endless", "timed", "bossRush", "challenge", "test", "autoplay"}
+	modes := []string{"casual", "classic", "coop", "test", "autoplay"}
 	for _, id := range modes {
 		if m := gamemode.Get(id); m == nil {
 			t.Errorf("游戏模式 %q 未注册", id)

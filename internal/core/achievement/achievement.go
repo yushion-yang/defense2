@@ -53,7 +53,6 @@ var allDefs = []struct {
 	{"speedrun", TierGold, 600},
 	{"extreme_master", TierDiamond, 0},
 	{"extreme_perfect", TierDiamond, 0},
-	{"endless_50", TierDiamond, 50},
 }
 
 // All returns the full list of achievements with i18n-resolved names and descriptions.

@@ -1,4 +1,4 @@
-.PHONY: run build test test-cover vet lint check-all build-wasm serve-web android android-aar autoplay autoplay-quick clean arch generate-wardens generate-assets
+.PHONY: run build test test-cover vet lint check-all build-wasm serve-web android android-aar autoplay autoplay-quick clean arch generate-wardens generate-assets index
 
 # Desktop development
 run:
@@ -75,6 +75,10 @@ autoplay:
 # Autoplay: quick smoke test (1 game, ~30s)
 autoplay-quick:
 	go run cmd/autoplay/main.go --scenario attack-style-coverage
+
+# Project index for AI-assisted development (files/callgraph/configmap)
+index:
+	go run ./tools/indexer/ -out docs/index
 
 # Clean
 clean:

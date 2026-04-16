@@ -155,15 +155,10 @@ func List() []string {
 }
 
 // init 注册所有内置模式。
-// campaign 是当前唯一可正常游玩的模式，其余处于"敬请期待"状态。
 // test/autoPlay/simulation 为开发和自动化测试用。
 func init() {
 	Register(NewCampaignMode())
 	Register(NewClassicMode())
-	Register(NewEndlessMode())
-	Register(NewTimedMode())
-	Register(NewBossRushMode())
-	Register(NewChallengeMode())
 	Register(NewCoopMode())
 	Register(NewTestMode())
 	Register(NewAutoPlayMode())

@@ -104,17 +104,17 @@ type GameStats struct {
 // 由 CampaignSelectScene/TestSelectScene/autoplay 构建，传入 NewStageSceneWithOpts()。
 // 零值字段使用合理默认值，方便 autoplay 快速构建测试场景。
 type StageOptions struct {
-	MapID        string // 地图 ID（如 "map_01"），必填
-	WardenType   string // 战灵类型（如 "guardian"），空串=不使用战灵
-	ModeID       string // 游戏模式 ID（默认 "casual"；可选 "endless"/"timed"/...）
-	DifficultyID string // 难度 ID（默认 "normal"；可选 "easy"/"hard"/"extreme"）
-	Gold         int    // 初始金币，0 = 由难度配置决定
-	Lives        int    // 初始生命，0 = 由难度配置决定（easy=25/normal=20/hard=15/extreme=10）
-	Waves        int    // 波次数，0 = 地图默认；-1 = 无波次（纯测试沙盒）
-	TestMode     bool   // 测试模式：启用调试面板(D键)、造怪菜单、无限金币等
-	ScenarioID   string // autoplay 测试场景 ID（如 "attack-style-coverage"）
-	EnemyFilter  string // 敌人过滤器（ground-only/flying-only/elite-only/boss-only/stress/dummy 等）
-	ManualWave   bool   // 仅手动开波（禁用自动波次推进，用于调试特定波次）
-	AIEnabled       bool // 启用 AI 玩家（合作模式）
-	CoopPlayerCount int  // 合作模式人数（0=非合作，2/4/6=合作）
+	MapID           string // 地图 ID（如 "map_01"），必填
+	WardenType      string // 战灵类型（如 "guardian"），空串=不使用战灵
+	ModeID          string // 游戏模式 ID（默认 "casual"；可选 "classic"/"coop"/...）
+	DifficultyID    string // 难度 ID（默认 "normal"；可选 "easy"/"hard"/"extreme"）
+	Gold            int    // 初始金币，0 = 由难度配置决定
+	Lives           int    // 初始生命，0 = 由难度配置决定（easy=25/normal=20/hard=15/extreme=10）
+	Waves           int    // 波次数，0 = 地图默认；-1 = 无波次（纯测试沙盒）
+	TestMode        bool   // 测试模式：启用调试面板(D键)、造怪菜单、无限金币等
+	ScenarioID      string // autoplay 测试场景 ID（如 "attack-style-coverage"）
+	EnemyFilter     string // 敌人过滤器（ground-only/flying-only/elite-only/boss-only/stress/dummy 等）
+	ManualWave      bool   // 仅手动开波（禁用自动波次推进，用于调试特定波次）
+	AIEnabled       bool   // 启用 AI 玩家（合作模式）
+	CoopPlayerCount int    // 合作模式人数（0=非合作，2/4/6=合作）
 }
