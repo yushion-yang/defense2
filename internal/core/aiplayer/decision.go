@@ -7,6 +7,7 @@
 package aiplayer
 
 import (
+	"defense2/internal/core/aiplayer/learning"
 	"math"
 	"math/rand"
 )
@@ -159,15 +160,36 @@ type DecisionEngine struct {
 	// 局势感知结果（每次 Evaluate 更新，供外部读取）
 	LatestAdvice StrategicAdvice
 	LatestCoop   CoopAnalysis
+
+	// ── 学习系统 ──
+	model   *learning.Model   // 权重模型（评分用）
+	trainer *learning.Trainer // 在线学习训练器（可选）
 }
 
 // NewDecisionEngine 创建决策引擎。
+// 使用默认权重模型，可通过 SetModel / SetTrainer 注入自定义权重或训练器。
 func NewDecisionEngine() *DecisionEngine {
 	return &DecisionEngine{
 		strengthBuyCost: 10,
 		personality:     Personality{Aggression: 0.5, Economy: 0.5, Risk: 0.5, Reaction: 0.5, Compliance: 0.5},
+		model:           learning.DefaultModel(),
 	}
 }
+
+// SetModel 注入权重模型（替换默认模型）。
+func (e *DecisionEngine) SetModel(m *learning.Model) {
+	if m != nil {
+		e.model = m
+	}
+}
+
+// SetTrainer 注入在线学习训练器（可选，nil 表示禁用在线学习）。
+func (e *DecisionEngine) SetTrainer(t *learning.Trainer) {
+	e.trainer = t
+}
+
+// Trainer 返回训练器引用（供外部调用 OnWaveEnd/OnGameEnd）。
+func (e *DecisionEngine) Trainer() *learning.Trainer { return e.trainer }
 
 // SetOwnerID 设置 AI owner ID（协作分析用）。
 func (e *DecisionEngine) SetOwnerID(id int) {
@@ -327,6 +349,7 @@ func (e *DecisionEngine) tryStartWave(snap AISnapshot) (Decision, bool) {
 }
 
 // pickEconomicAction 根据经济状况、个性和局势建议选择造塔/升级/idle。
+// 造塔 vs 升级偏好由权重模型评分驱动。
 func (e *DecisionEngine) pickEconomicAction(snap AISnapshot, advice StrategicAdvice) Decision {
 	progress := 0.0
 	if snap.MaxWaves > 0 {
@@ -334,14 +357,12 @@ func (e *DecisionEngine) pickEconomicAction(snap AISnapshot, advice StrategicAdv
 	}
 
 	// 金币保留缓冲：根据威胁等级和个性动态调整
-	// 低威胁 → 保留 10%，中威胁 → 20%，高威胁 → 0%（全力投入），Boss 来 → 保留升级费
 	reserveRatio := 0.20 * (1.0 - e.personality.Risk)
 	if advice.Urgency > 0.8 {
-		reserveRatio = 0 // 紧急状况下花光
+		reserveRatio = 0
 	} else if advice.Urgency < 0.4 {
-		reserveRatio = 0.10 // 低威胁少保留
+		reserveRatio = 0.10
 	}
-	// Boss 准备：保留至少一次升级费用
 	if snap.NextWaveIsBoss && reserveRatio*float64(snap.Gold) < float64(e.strengthBuyCost) {
 		reserveRatio = float64(e.strengthBuyCost) / float64(snap.Gold+1)
 	}
@@ -364,31 +385,36 @@ func (e *DecisionEngine) pickEconomicAction(snap AISnapshot, advice StrategicAdv
 		return Decision{Type: DecisionIdle}
 	}
 
-	// 造塔 vs 升级的偏好。
-	// 基础偏好：高 Economy → 偏升级，低 Economy → 偏造塔，高 Aggression → 偏造塔。
-	buildPreference := 0.5 + e.personality.Aggression*0.2 - e.personality.Economy*0.2
+	// ── 权重模型驱动的造塔 vs 升级偏好 ──
+	// econScore > 0 偏造塔，< 0 偏升级
+	econIn := learning.EconInput{
+		Progress:       progress,
+		TowerCount:     len(snap.Towers),
+		Gold:           availableGold,
+		TotalGold:      snap.Gold,
+		Urgency:        advice.Urgency,
+		ThreatLevel:    e.threatLevelNumeric(),
+		Aggression:     e.personality.Aggression,
+		Economy:        e.personality.Economy,
+		AdvicePriority: advice.Priority,
+		BossNext:       snap.NextWaveIsBoss,
+	}
+	econFeatures := learning.ExtractEconFeatures(econIn)
+	econScore := e.model.ScoreEcon(econFeatures)
 
-	// 早期（<40%进度）更偏造塔，后期更偏升级
-	if progress < 0.4 {
-		buildPreference += 0.2
-	} else {
-		buildPreference -= 0.2
+	if e.trainer != nil {
+		e.trainer.RecordEcon(econFeatures, econScore)
 	}
 
-	// 塔太少时强制偏造塔
+	// 将 econScore 映射到 buildPreference [0.1, 0.9]
+	// sigmoid-like mapping: 0.5 + 0.4 * tanh(econScore * 2)
+	buildPreference := 0.5 + 0.4*math.Tanh(econScore*2.0)
+
+	// 塔太少时强制偏造塔（硬规则，不受学习影响）
 	if len(snap.Towers) < 2 && canBuild && len(snap.BuildCells) > 0 {
 		buildPreference = 0.9
 	}
 
-	// 局势建议影响偏好
-	switch advice.Priority {
-	case "build_cc", "build_dps", "build_aoe":
-		// 建议造塔 → 提高建造偏好（urgency 越高影响越大）
-		buildPreference += advice.Urgency * 0.3
-	case "upgrade":
-		// 建议升级 → 降低建造偏好
-		buildPreference -= advice.Urgency * 0.3
-	}
 	// 钳制到合理范围
 	if buildPreference < 0.1 {
 		buildPreference = 0.1
@@ -601,111 +627,71 @@ func (e *DecisionEngine) pickBuild(snap AISnapshot, availableGold int) Decision 
 	}
 }
 
-// scoreBuildCell 对单个建造格子评分。
+// scoreBuildCell 对单个建造格子评分（权重模型驱动）。
 //
-// 评分维度（权重调整后更智能）:
-//   - 路径覆盖(30%): 射程内能覆盖多少路径点 → DPS 投射效率
-//   - 路径距离(20%): 离最近路径点越近越好
-//   - 塔间距(15%): 与现有塔保持距离以分散覆盖
-//   - 冗余惩罚(15%): 已有塔覆盖同区域则降分
-//   - 协同加成(10%): 附近有 CC 塔则 DPS 塔额外加分
-//   - 随机噪声(10%): 拟人化
+// 通过 learning 包提取特征向量，使用权重模型内积评分。
+// 权重可通过在线学习或离线训练更新，替代手工调参。
 func (e *DecisionEngine) scoreBuildCell(c AICell, snap AISnapshot, towerRange float64) float64 {
-	// ── 1. 路径距离分(20%): 离最近路径点越近越好 ──
-	pathDistScore := 0.0
-	if len(snap.PathPoints) > 0 {
-		minDist := math.MaxFloat64
-		for _, p := range snap.PathPoints {
-			d := math.Hypot(c.X-p.X, c.Y-p.Y)
-			if d < minDist {
-				minDist = d
-			}
-		}
-		pathDistScore = math.Max(0, 1.0-minDist/500.0)
-	} else {
-		cx, cy := snap.MapCenterX, snap.MapCenterY
-		if cx == 0 && cy == 0 {
-			cx, cy = 600, 270
-		}
-		dist := math.Hypot(c.X-cx, c.Y-cy)
-		pathDistScore = math.Max(0, 1.0-dist/400.0)
+	// 构建特征提取输入
+	in := e.buildCellInput(c, snap, towerRange)
+
+	// 提取特征向量
+	features := learning.ExtractBuildFeatures(in)
+
+	// 权重模型评分
+	score := e.model.ScoreBuild(features)
+
+	// 记录到训练器（在线学习用）
+	if e.trainer != nil {
+		e.trainer.RecordBuild(features, score)
 	}
 
-	// ── 2. 路径覆盖分(30%): 射程内能覆盖多少路径点（DPS 投射效率）──
-	coverageScore := 0.0
-	if len(snap.PathPoints) > 0 {
-		covered := 0
-		for _, p := range snap.PathPoints {
-			if math.Hypot(c.X-p.X, c.Y-p.Y) <= towerRange {
-				covered++
-			}
-		}
-		coverageScore = math.Min(1.0, float64(covered)/10.0)
+	return score
+}
+
+// buildCellInput 将快照数据转换为 learning.BuildCellInput（纯值转换）。
+func (e *DecisionEngine) buildCellInput(c AICell, snap AISnapshot, towerRange float64) learning.BuildCellInput {
+	// 转换路径点
+	pathPts := make([]learning.PathPt, len(snap.PathPoints))
+	for i, p := range snap.PathPoints {
+		pathPts[i] = learning.PathPt{X: p.X, Y: p.Y}
 	}
 
-	// ── 3. 塔间距分(15%): 与现有塔保持距离 ──
-	spreadScore := 1.0
-	if len(snap.Towers) > 0 {
-		minTowerDist := math.MaxFloat64
-		for _, t := range snap.Towers {
-			dr := float64(c.Row - t.Row)
-			dc := float64(c.Col - t.Col)
-			d := math.Sqrt(dr*dr + dc*dc)
-			if d < minTowerDist {
-				minTowerDist = d
-			}
-		}
-		spreadScore = math.Min(1.0, minTowerDist/5.0)
+	// 转换现有塔
+	towers := make([]learning.TowerInfo, len(snap.Towers))
+	for i, t := range snap.Towers {
+		towers[i] = aiTowerToTowerInfo(t)
 	}
 
-	// ── 4. 冗余惩罚(15%): 已有塔覆盖相同路径区域则降分 ──
-	redundancyPenalty := 0.0
-	if len(snap.PathPoints) > 0 && len(snap.Towers) > 0 {
-		// 统计候选位置射程内的路径点中，已被现有塔覆盖的比例
-		coveredByCandidate := 0
-		coveredByBoth := 0
-		for _, p := range snap.PathPoints {
-			if math.Hypot(c.X-p.X, c.Y-p.Y) <= towerRange {
-				coveredByCandidate++
-				for _, t := range snap.Towers {
-					if math.Hypot(float64(t.Col)*60+30-p.X, float64(t.Row)*60+30-p.Y) <= t.Range {
-						coveredByBoth++
-						break
-					}
-				}
-			}
-		}
-		if coveredByCandidate > 0 {
-			redundancyPenalty = float64(coveredByBoth) / float64(coveredByCandidate)
-		}
+	// 计算进度
+	progress := 0.0
+	if snap.MaxWaves > 0 {
+		progress = float64(snap.Wave) / float64(snap.MaxWaves)
 	}
-	redundancyScore := 1.0 - redundancyPenalty // 冗余越高分越低
 
-	// ── 5. 协同加成(10%): 附近有 CC 塔则 DPS 位置更优 ──
-	synergyScore := 0.0
-	for _, t := range snap.Towers {
-		dr := float64(c.Row - t.Row)
-		dc := float64(c.Col - t.Col)
-		gridDist := math.Sqrt(dr*dr + dc*dc)
-		if gridDist <= 4 { // 4 格内视为"附近"
-			for _, ab := range t.Abilities {
-				if ccAbilities[ab] {
-					// 附近有 CC 塔 → 新塔 DPS 效率更高（减速后敌人在射程内停留更久）
-					synergyScore = 1.0
-					break
-				}
-			}
-		}
-		if synergyScore > 0 {
+	// 塔成本
+	towerCost := 50
+	for _, d := range snap.TowerDefs {
+		if d.Cost <= snap.Gold {
+			towerCost = d.Cost
 			break
 		}
 	}
 
-	// ── 6. 随机噪声(10%) ──
-	noiseScore := rand.Float64()
-
-	return pathDistScore*0.20 + coverageScore*0.30 + spreadScore*0.15 +
-		redundancyScore*0.15 + synergyScore*0.10 + noiseScore*0.10
+	return learning.BuildCellInput{
+		CellX: c.X, CellY: c.Y,
+		CellRow: c.Row, CellCol: c.Col,
+		PathPoints: pathPts,
+		MapCenterX: snap.MapCenterX,
+		MapCenterY: snap.MapCenterY,
+		TowerRange: towerRange,
+		ExistingTowers: towers,
+		Gold:       snap.Gold,
+		TowerCost:  towerCost,
+		Progress:   progress,
+		TowerCount: len(snap.Towers),
+		Noise:      rand.Float64(),
+	}
 }
 
 // ── 升级评分 ──
@@ -743,57 +729,51 @@ func (e *DecisionEngine) pickUpgrade(snap AISnapshot) Decision {
 	}
 }
 
-// scoreUpgradeTower 对单座塔评分。
+// scoreUpgradeTower 对单座塔评分（权重模型驱动）。
 //
-// 评分维度（优化后更注重 ROI）：
-//   - ROI 估算(25%): (预期伤害提升) / cost
-//   - 路径覆盖重要性(25%): 覆盖路径点越多的塔升级价值越高（咽喉要塔）
-//   - 收益递减惩罚(20%): 高 strength 塔每次升级边际收益低
-//   - 击杀贡献(15%): 有击杀的塔证明位置有效
-//   - 能力协同(15%): 有多能力的塔升级收益更高（能力效果受属性缩放）
+// 通过 learning 包提取特征向量，使用权重模型内积评分。
 func (e *DecisionEngine) scoreUpgradeTower(t AITower, snap AISnapshot) float64 {
-	// ── 1. ROI 估算(25%): 升级后预期 DPS 提升 ──
-	// 伤害公式: Base + Potential * (Strength/100)
-	// 升级 +10 strength → DPS 变化 ≈ Potential * 10/100 * AttackSpeed
-	// 粗略估算：damage_after ≈ damage * (strength+10) / strength
-	str := float64(t.Strength)
-	if str <= 0 {
-		str = 100
-	}
-	expectedImprovement := t.Damage * 10.0 / str // 近似 DPS 提升
-	cost := float64(e.strengthBuyCost)
-	if cost <= 0 {
-		cost = 10
-	}
-	roiScore := math.Min(1.0, expectedImprovement/cost*0.5)
-
-	// ── 2. 路径覆盖重要性(25%): 咽喉塔优先升级 ──
-	posScore := 0.0
-	if len(snap.PathPoints) > 0 {
-		tx := float64(t.Col)*60 + 30
-		ty := float64(t.Row)*60 + 30
-		covered := 0
-		for _, p := range snap.PathPoints {
-			if math.Hypot(tx-p.X, ty-p.Y) <= t.Range {
-				covered++
-			}
-		}
-		posScore = math.Min(1.0, float64(covered)/10.0)
-	} else {
-		posScore = 0.5
+	// 转换路径点
+	pathPts := make([]learning.PathPt, len(snap.PathPoints))
+	for i, p := range snap.PathPoints {
+		pathPts[i] = learning.PathPt{X: p.X, Y: p.Y}
 	}
 
-	// ── 3. 收益递减惩罚(20%): 高 strength 塔升级价值低 ──
-	// strength 100 → 1.0，300+ → 0.0
-	headroom := math.Max(0, 1.0-float64(t.Strength-100)/200.0)
+	// 计算进度
+	progress := 0.0
+	if snap.MaxWaves > 0 {
+		progress = float64(snap.Wave) / float64(snap.MaxWaves)
+	}
 
-	// ── 4. 击杀贡献(15%): 有击杀证明位置有效 ──
-	killScore := math.Min(1.0, float64(t.Kills)/10.0)
+	// 威胁等级转数值
+	threatLevel := e.threatLevelNumeric()
 
-	// ── 5. 能力协同(15%): 能力越多升级收益越高（属性缩放效果更好）──
-	abilityScore := math.Min(1.0, float64(len(t.Abilities))/4.0)
+	in := learning.UpgradeTowerInput{
+		Tower:       aiTowerToTowerInfo(t),
+		PathPoints:  pathPts,
+		UpgCost:     e.strengthBuyCost,
+		Progress:    progress,
+		ThreatLevel: threatLevel,
+	}
 
-	return roiScore*0.25 + posScore*0.25 + headroom*0.20 + killScore*0.15 + abilityScore*0.15
+	features := learning.ExtractUpgradeFeatures(in)
+	score := e.model.ScoreUpgrade(features)
+
+	if e.trainer != nil {
+		e.trainer.RecordUpgrade(features, score)
+	}
+
+	return score
+}
+
+// threatLevelNumeric 将最近的威胁等级转为数值 [0,1]。
+func (e *DecisionEngine) threatLevelNumeric() float64 {
+	switch e.LatestAdvice.Urgency {
+	case 0:
+		return 0
+	default:
+		return e.LatestAdvice.Urgency
+	}
 }
 
 // ForceBuild 强制执行造塔决策（被 LLM 战略覆盖调用）。
@@ -1062,4 +1042,21 @@ func (e *DecisionEngine) pickUnlockSlot(snap AISnapshot, advice StrategicAdvice)
 		Col:    best.tower.Col,
 		Reason: "解锁新能力",
 	}, true
+}
+
+// ── 类型转换辅助 ──────────────────────────────────────────
+
+// aiTowerToTowerInfo 将 AITower 快照转换为 learning.TowerInfo。
+func aiTowerToTowerInfo(t AITower) learning.TowerInfo {
+	return learning.TowerInfo{
+		Row: t.Row, Col: t.Col,
+		X: float64(t.Col)*60 + 30, Y: float64(t.Row)*60 + 30,
+		Range:       t.Range,
+		Damage:      t.Damage,
+		Strength:    t.Strength,
+		AttackSpeed: t.AttackSpeed,
+		Kills:       t.Kills,
+		Abilities:   t.Abilities,
+		Cost:        t.Cost,
+	}
 }

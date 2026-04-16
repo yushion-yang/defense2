@@ -6,7 +6,9 @@
 package aiplayer
 
 import (
+	"defense2/internal/core/aiplayer/learning"
 	"defense2/internal/core/aiplayer/llm"
+	"embed"
 	"math/rand"
 )
 
@@ -42,6 +44,8 @@ type Config struct {
 	SpawnY             float64 // 精灵初始 Y（0=自动计算）
 	LLMEnabled         bool    // 是否启用 LLM 弹幕（或 ANTHROPIC_API_KEY 存在时自动启用）
 	LLMOverrideEnabled bool    // LLM 战略决策是否可覆盖本地启发式（默认 true when LLM enabled）
+	DataFS             *embed.FS // 嵌入式配置文件系统（用于加载 AI 权重，nil=使用默认权重）
+	LearningEnabled    bool      // 是否启用在线学习（实时权重更新）
 }
 
 // AIPlayer AI 玩家。
@@ -114,6 +118,22 @@ func New(cfg Config) *AIPlayer {
 	}
 	ap.engine.SetPersonality(personality)
 	ap.engine.SetOwnerID(ownerID)
+
+	// ── 学习系统初始化 ──
+	// 从嵌入式配置加载预训练权重（fallback 到硬编码默认值）
+	model := learning.LoadFromFS(cfg.DataFS)
+	ap.engine.SetModel(model)
+
+	// 在线学习训练器（可选）
+	if cfg.LearningEnabled {
+		trainer := learning.NewTrainer(learning.TrainerConfig{
+			Model:   model,
+			LR:      0.01,
+			Enabled: true,
+		})
+		ap.engine.SetTrainer(trainer)
+	}
+
 	ap.rollNextInterval()
 
 	// LLM 弹幕连接器：显式启用或环境变量 ANTHROPIC_API_KEY 存在时创建
@@ -205,6 +225,41 @@ func (ap *AIPlayer) SendPing(row, col int, x, y float64) bool {
 // PingOnCooldown 返回 ping 是否在冷却中。
 func (ap *AIPlayer) PingOnCooldown() bool {
 	return ap.ping.OnCooldown()
+}
+
+// ── 学习系统回调 ──
+
+// OnWaveEnd 通知学习系统一波结束，用于在线权重更新。
+// 由 Stage 在波次结束时调用。
+func (ap *AIPlayer) OnWaveEnd(waveNum, killsThisWave, livesBefore, livesAfter int) {
+	if t := ap.engine.Trainer(); t != nil {
+		t.OnWaveEnd(learning.WaveStats{
+			WaveNum:       waveNum,
+			KillsThisWave: killsThisWave,
+			LivesBefore:   livesBefore,
+			LivesAfter:    livesAfter,
+		})
+	}
+}
+
+// OnGameEnd 通知学习系统游戏结束，用于全局权重微调。
+// 由 Stage 在游戏结束时调用。
+func (ap *AIPlayer) OnGameEnd(won bool, wavesReached, maxWaves, livesLeft, maxLives, totalKills int) {
+	if t := ap.engine.Trainer(); t != nil {
+		t.OnGameEnd(learning.GameResult{
+			Won:          won,
+			WavesReached: wavesReached,
+			MaxWaves:     maxWaves,
+			LivesLeft:    livesLeft,
+			MaxLives:     maxLives,
+			TotalKills:   totalKills,
+		})
+	}
+}
+
+// LearningModel 返回当前学习模型（用于导出训练后的权重）。
+func (ap *AIPlayer) LearningModel() *learning.Model {
+	return ap.engine.model
 }
 
 // ── 主循环 ──
