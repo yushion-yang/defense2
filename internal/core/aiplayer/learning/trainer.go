@@ -3,10 +3,12 @@
 // 职责：追踪 AI 每次决策及其后续结果，用 reward signal 更新权重。
 // 设计：轻量级 online learning，不依赖外部 ML 框架。
 //
-// 学习算法：简化版策略梯度（REINFORCE 变体）。
-// 每个决策记录 (features, action, score)，结局后根据 reward 调整权重：
-//   weight[i] += lr * reward * feature[i] * direction
-// 其中 direction = +1 表示好决策应加强，-1 表示坏决策应减弱。
+// 支持两种更新模式：
+//   1. 线性模式：weight[i] += lr * reward * feature[i]（旧版）
+//   2. 神经网络模式：Network.Backward(input, lr * reward)（新版）
+//
+// 当模型包含 Networks 时自动切换到神经网络模式，
+// 同时也更新线性权重（向后兼容双写）。
 //
 // Reward 信号来源:
 //   - 击杀效率: kills_gained / time_elapsed
@@ -15,9 +17,9 @@
 //   - 波次进度: wave_reached / max_waves
 //
 // 在线学习循环:
-//   1. 每次决策时调用 RecordDecision(features, decisionType)
-//   2. 每波结束时调用 OnWaveEnd(waveStats) → 用本波 reward 更新权重
-//   3. 游戏结束时调用 OnGameEnd(result) → 全局 reward 微调
+//  1. 每次决策时调用 RecordDecision(features, decisionType)
+//  2. 每波结束时调用 OnWaveEnd(waveStats) → 用本波 reward 更新权重
+//  3. 游戏结束时调用 OnGameEnd(result) → 全局 reward 微调
 package learning
 
 import "math"
@@ -26,10 +28,10 @@ import "math"
 
 // Trainer 在线学习训练器。
 type Trainer struct {
-	model      *Model
-	lr         float64 // 学习率
-	enabled    bool    // 是否启用在线学习
-	decayRate  float64 // 学习率衰减（每局衰减倍率）
+	model     *Model
+	lr        float64 // 学习率
+	enabled   bool    // 是否启用在线学习
+	decayRate float64 // 学习率衰减（每局衰减倍率）
 
 	// 当前局的决策记录
 	buildRecords   []decisionRecord
@@ -37,9 +39,9 @@ type Trainer struct {
 	econRecords    []decisionRecord
 
 	// 当前局统计
-	waveKills  int     // 本波击杀
-	waveLives  int     // 本波开始时生命
-	totalWaves int     // 已完成的波数
+	waveKills  int // 本波击杀
+	waveLives  int // 本波开始时生命
+	totalWaves int // 已完成的波数
 }
 
 // decisionRecord 单次决策的记录（特征 + 结果）。
@@ -51,16 +53,21 @@ type decisionRecord struct {
 // TrainerConfig 训练器配置。
 type TrainerConfig struct {
 	Model     *Model
-	LR        float64 // 学习率（默认 0.01）
+	LR        float64 // 学习率（默认: 线性 0.01, 神经网络 0.001）
 	Enabled   bool    // 是否启用在线学习
 	DecayRate float64 // 学习率衰减（默认 0.995）
 }
 
 // NewTrainer 创建训练器。
+// 学习率默认值：神经网络模式 0.001，线性模式 0.01。
 func NewTrainer(cfg TrainerConfig) *Trainer {
 	lr := cfg.LR
 	if lr <= 0 {
-		lr = 0.01
+		if cfg.Model != nil && cfg.Model.UseNeural() {
+			lr = 0.001 // 神经网络需要更小的学习率
+		} else {
+			lr = 0.01
+		}
 	}
 	decay := cfg.DecayRate
 	if decay <= 0 || decay > 1 {
@@ -117,7 +124,7 @@ func (t *Trainer) RecordEcon(features FeatureVec, score float64) {
 
 // WaveStats 单波结束时的统计数据。
 type WaveStats struct {
-	WaveNum    int
+	WaveNum       int
 	KillsThisWave int
 	LivesBefore   int
 	LivesAfter    int
@@ -215,8 +222,8 @@ func (t *Trainer) OnGameEnd(result GameResult) {
 
 	// 学习率衰减
 	t.lr *= t.decayRate
-	if t.lr < 0.001 {
-		t.lr = 0.001 // 下限
+	if t.lr < 0.0001 {
+		t.lr = 0.0001 // 下限（神经网络需要更小的下限）
 	}
 }
 
@@ -234,22 +241,36 @@ func (t *Trainer) Reset() {
 
 // applyReward 将 reward 反向传播到本波的所有决策记录。
 //
-// 更新公式: weight[i] += lr * reward * feature[i]
-// 正 reward → 强化高分特征的权重
-// 负 reward → 削弱高分特征的权重
+// 双模式更新：
+//   - 有神经网络 → Network.Backward(input, lr * reward)
+//   - 始终更新线性权重（向后兼容双写）
 func (t *Trainer) applyReward(reward float64) {
+	gradient := t.lr * reward
+
 	// 造塔权重更新
+	buildNet := t.model.GetNetwork("build")
 	for _, rec := range t.buildRecords {
+		if buildNet != nil {
+			buildNet.Backward(rec.features.Values[:rec.features.Len], gradient)
+		}
 		updateWeights(t.model.Weights.Build, rec.features, t.lr, reward)
 	}
 
 	// 升级权重更新
+	upgradeNet := t.model.GetNetwork("upgrade")
 	for _, rec := range t.upgradeRecords {
+		if upgradeNet != nil {
+			upgradeNet.Backward(rec.features.Values[:rec.features.Len], gradient)
+		}
 		updateWeights(t.model.Weights.Upgrade, rec.features, t.lr, reward)
 	}
 
 	// 经济决策权重更新
+	econNet := t.model.GetNetwork("econ")
 	for _, rec := range t.econRecords {
+		if econNet != nil {
+			econNet.Backward(rec.features.Values[:rec.features.Len], gradient)
+		}
 		updateWeights(t.model.Weights.Econ, rec.features, t.lr, reward)
 	}
 }
@@ -257,22 +278,45 @@ func (t *Trainer) applyReward(reward float64) {
 // applyGlobalAdjustment 全局微调权重。
 // 赢了 → 所有权重乘以 (1 + lr*reward*0.1)，略微加强当前模式。
 // 输了 → 权重向默认值回归（避免发散）。
+// 神经网络模式下缩放因子更保守（0.01 vs 0.1）。
 func (t *Trainer) applyGlobalAdjustment(reward float64) {
 	if reward >= 0 {
 		// 赢了：略微加强当前权重模式
-		scale := 1.0 + t.lr*reward*0.1
-		scaleWeights(t.model.Weights.Build, scale)
-		scaleWeights(t.model.Weights.Upgrade, scale)
-		scaleWeights(t.model.Weights.Econ, scale)
+		scaleFactor := 0.1
+		if t.model.UseNeural() {
+			scaleFactor = 0.01 // 神经网络更保守
+		}
+		scale := 1.0 + t.lr*reward*scaleFactor
+
+		// 线性权重缩放
+		scaleWeightsVec(t.model.Weights.Build, scale)
+		scaleWeightsVec(t.model.Weights.Upgrade, scale)
+		scaleWeightsVec(t.model.Weights.Econ, scale)
+
+		// 神经网络缩放
+		for _, net := range t.model.Networks {
+			scaleNetwork(net, scale)
+		}
 	} else {
 		// 输了：权重向默认值回归（防止过拟合失败模式）
 		defaults := DefaultModel()
-		regressRate := t.lr * math.Abs(reward) * 0.2 // 回归强度
+		regressRate := t.lr * math.Abs(reward) * 0.2
+
+		// 线性权重回归
 		regressWeights(t.model.Weights.Build, defaults.Weights.Build, regressRate)
 		regressWeights(t.model.Weights.Upgrade, defaults.Weights.Upgrade, regressRate)
 		regressWeights(t.model.Weights.Econ, defaults.Weights.Econ, regressRate)
+
+		// 神经网络回归
+		for name, net := range t.model.Networks {
+			if defNet, ok := defaults.Networks[name]; ok {
+				regressNetwork(net, defNet, regressRate)
+			}
+		}
 	}
 }
+
+// ── 线性权重更新辅助 ──────────────────────────────────────────
 
 // updateWeights 根据特征和 reward 更新权重向量。
 // weight[i] += lr * reward * feature[i]
@@ -289,8 +333,8 @@ func updateWeights(weights []float64, features FeatureVec, lr, reward float64) {
 	}
 }
 
-// scaleWeights 缩放权重向量。
-func scaleWeights(weights []float64, scale float64) {
+// scaleWeightsVec 缩放权重向量。
+func scaleWeightsVec(weights []float64, scale float64) {
 	for i := range weights {
 		weights[i] *= scale
 		weights[i] = clampWeight(weights[i])
@@ -307,6 +351,27 @@ func regressWeights(weights, targets []float64, rate float64) {
 	for i := 0; i < n; i++ {
 		weights[i] += rate * (targets[i] - weights[i])
 		weights[i] = clampWeight(weights[i])
+	}
+}
+
+// ── 神经网络回归辅助 ──────────────────────────────────────────
+
+// regressNetwork 将网络权重向目标网络回归。
+func regressNetwork(net, target *Network, rate float64) {
+	regressLayer(&net.Hidden, &target.Hidden, rate)
+	regressLayer(&net.Output, &target.Output, rate)
+}
+
+func regressLayer(l, target *Layer, rate float64) {
+	for i := 0; i < len(l.Biases) && i < len(target.Biases); i++ {
+		l.Biases[i] += rate * (target.Biases[i] - l.Biases[i])
+		l.Biases[i] = clampWeight(l.Biases[i])
+	}
+	for i := 0; i < len(l.Weights) && i < len(target.Weights); i++ {
+		for j := 0; j < len(l.Weights[i]) && j < len(target.Weights[i]); j++ {
+			l.Weights[i][j] += rate * (target.Weights[i][j] - l.Weights[i][j])
+			l.Weights[i][j] = clampWeight(l.Weights[i][j])
+		}
 	}
 }
 

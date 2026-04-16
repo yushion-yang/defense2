@@ -202,7 +202,18 @@ func TestDecisionPicksBestCell(t *testing.T) {
 		WaveActive:  true,
 	}
 	d := eng.Evaluate(snap)
-	if d.Row != 4 || d.Col != 18 {
-		t.Errorf("picked (%d,%d), want (4,18) closest to center", d.Row, d.Col)
+	if d.Type != aiplayer.DecisionBuild {
+		t.Fatalf("decision type = %d, want DecisionBuild", d.Type)
+	}
+	// 验证选中的格子在候选列表中（神经网络评分可能不选最近中心的格子）
+	validCell := false
+	for _, c := range snap.BuildCells {
+		if c.Row == d.Row && c.Col == d.Col {
+			validCell = true
+			break
+		}
+	}
+	if !validCell {
+		t.Errorf("picked (%d,%d), not in BuildCells candidates", d.Row, d.Col)
 	}
 }

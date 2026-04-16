@@ -41,6 +41,8 @@ func testSnap() AISnapshot {
 
 func testEngine() *DecisionEngine {
 	e := NewDecisionEngine()
+	// 使用线性模型（移除网络），保证评分行为可预测
+	e.model.Networks = nil
 	e.SetPersonality(Personality{Aggression: 0.5, Economy: 0.5, Risk: 0.5, Reaction: 0.5, Compliance: 0.5})
 	e.SetStrengthBuyCost(10)
 	e.SetOwnerID(1)

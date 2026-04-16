@@ -196,6 +196,8 @@ gamemode.LoadModeConfigs → config.GetDataFS
 gamemode.LoadModeConfigs → config.GetDataFS
 scene.NewGame → config.GetDataFS
 scene.NewGame → config.GetDataFS
+scene.NewStageSceneWithOpts → config.GetDataFS
+scene.NewStageSceneWithOpts → config.GetDataFS
 scene.Update → config.GetDataFS
 scene.Update → config.GetDataFS
 ```

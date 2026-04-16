@@ -164,6 +164,11 @@ type DecisionEngine struct {
 	// ── 学习系统 ──
 	model   *learning.Model   // 权重模型（评分用）
 	trainer *learning.Trainer // 在线学习训练器（可选）
+
+	// ── 神经网络额外状态追踪 ──
+	WavesSinceLastBuild int     // 自上次造塔以来的波数
+	LastWaveAvgHP       float64 // 上波敌人平均 HP（用于 HP 趋势）
+	PerfectWaveStreak   int     // 连续完美通过的波数
 }
 
 // NewDecisionEngine 创建决策引擎。
@@ -385,19 +390,61 @@ func (e *DecisionEngine) pickEconomicAction(snap AISnapshot, advice StrategicAdv
 		return Decision{Type: DecisionIdle}
 	}
 
+	// ── 计算辅助特征 ──
+	// 当前波敌人平均 HP
+	var currentAvgHP float64
+	activeCount := 0
+	for _, en := range snap.Enemies {
+		if en.Active {
+			currentAvgHP += en.MaxHP
+			activeCount++
+		}
+	}
+	if activeCount > 0 {
+		currentAvgHP /= float64(activeCount)
+	}
+
+	// HP 趋势（本波/上波）
+	hpTrend := 1.0
+	if e.LastWaveAvgHP > 0 && currentAvgHP > 0 {
+		hpTrend = currentAvgHP / e.LastWaveAvgHP
+	}
+
+	// 全塔 DPS 和敌人总 HP
+	var totalDPS, waveEnemyTotalHP float64
+	for _, t := range snap.Towers {
+		as := t.AttackSpeed
+		if as <= 0 {
+			as = 1.0
+		}
+		totalDPS += t.Damage * as
+	}
+	for _, en := range snap.Enemies {
+		if en.Active {
+			waveEnemyTotalHP += en.HP
+		}
+	}
+
 	// ── 权重模型驱动的造塔 vs 升级偏好 ──
 	// econScore > 0 偏造塔，< 0 偏升级
 	econIn := learning.EconInput{
-		Progress:       progress,
-		TowerCount:     len(snap.Towers),
-		Gold:           availableGold,
-		TotalGold:      snap.Gold,
-		Urgency:        advice.Urgency,
-		ThreatLevel:    e.threatLevelNumeric(),
-		Aggression:     e.personality.Aggression,
-		Economy:        e.personality.Economy,
-		AdvicePriority: advice.Priority,
-		BossNext:       snap.NextWaveIsBoss,
+		Progress:            progress,
+		TowerCount:          len(snap.Towers),
+		Gold:                availableGold,
+		TotalGold:           snap.Gold,
+		Urgency:             advice.Urgency,
+		ThreatLevel:         e.threatLevelNumeric(),
+		Aggression:          e.personality.Aggression,
+		Economy:             e.personality.Economy,
+		AdvicePriority:      advice.Priority,
+		BossNext:            snap.NextWaveIsBoss,
+		WavesSinceLastBuild: e.WavesSinceLastBuild,
+		EnemyHPTrend:        hpTrend,
+		Lives:               snap.Lives,
+		MaxLives:            20, // 合理默认值，实际由难度决定
+		TotalTowerDPS:       totalDPS,
+		WaveEnemyTotalHP:    waveEnemyTotalHP,
+		PerfectWaveStreak:   e.PerfectWaveStreak,
 	}
 	econFeatures := learning.ExtractEconFeatures(econIn)
 	econScore := e.model.ScoreEcon(econFeatures)
@@ -681,16 +728,18 @@ func (e *DecisionEngine) buildCellInput(c AICell, snap AISnapshot, towerRange fl
 	return learning.BuildCellInput{
 		CellX: c.X, CellY: c.Y,
 		CellRow: c.Row, CellCol: c.Col,
-		PathPoints: pathPts,
-		MapCenterX: snap.MapCenterX,
-		MapCenterY: snap.MapCenterY,
-		TowerRange: towerRange,
+		PathPoints:     pathPts,
+		MapCenterX:     snap.MapCenterX,
+		MapCenterY:     snap.MapCenterY,
+		TowerRange:     towerRange,
 		ExistingTowers: towers,
-		Gold:       snap.Gold,
-		TowerCost:  towerCost,
-		Progress:   progress,
-		TowerCount: len(snap.Towers),
-		Noise:      rand.Float64(),
+		Gold:           snap.Gold,
+		TowerCost:      towerCost,
+		Progress:       progress,
+		TowerCount:     len(snap.Towers),
+		Noise:          rand.Float64(),
+		BossNext:       snap.NextWaveIsBoss,
+		CellSize:       60,
 	}
 }
 
@@ -754,6 +803,8 @@ func (e *DecisionEngine) scoreUpgradeTower(t AITower, snap AISnapshot) float64 {
 		UpgCost:     e.strengthBuyCost,
 		Progress:    progress,
 		ThreatLevel: threatLevel,
+		Gold:        snap.Gold,
+		CellSize:    60,
 	}
 
 	features := learning.ExtractUpgradeFeatures(in)
