@@ -32,7 +32,6 @@ type BuildCardVM struct {
 	AbilityDesc string        // 变体卡的能力描述文本
 	Abilities   []AbilityVM   // 预设能力描述（经典模式 hover 时展示）
 	Category    string        // 角色分类（经典模式用：dps/aoe/support），空=不分组
-	IsCreateBtn bool          // true = "+新建" 特殊按钮（不是真正的塔卡片）
 }
 
 // BuildMenuData holds the runtime data the build menu needs to render.
@@ -158,9 +157,7 @@ func DrawBuildMenu(screen *ebiten.Image, d BuildMenuData) {
 		cy := m.gridY + float32(row)*(bpCardH+bpCardGap)
 		hovered := i == d.HoverIdx
 
-		if card.IsCreateBtn {
-			drawCreateBtnCard(screen, cx, cy, hovered)
-		} else if card.Buildable {
+		if card.Buildable {
 			drawBuildableCard(screen, card, d, i, cx, cy, hovered)
 		} else {
 			drawVariantCard(screen, card, cx, cy, hovered)
@@ -336,50 +333,9 @@ func drawVariantCard(screen *ebiten.Image, card BuildCardVM, cx, cy float32, hov
 	}
 }
 
-// drawCreateBtnCard 渲染 "+新建" 特殊按钮卡片。
-// 用虚线边框和居中的 "+" 符号标识这是一个创建入口，而非真正的塔卡片。
-func drawCreateBtnCard(screen *ebiten.Image, cx, cy float32, hovered bool) {
-	// 卡片背景：半透明深色，悬停时略亮
-	cardBg := color.RGBA{R: 18, G: 25, B: 45, A: 180}
-	if hovered {
-		cardBg = color.RGBA{R: 28, G: 40, B: 65, A: 220}
-	}
-	ui.Panel(screen, cx, cy, bpCardW, bpCardH, ui.PanelStyle{
-		BgColor: cardBg, Radius: bpCardR,
-	})
-
-	// 虚线边框（强调色）
-	borderClr := color.RGBA{R: 59, G: 130, B: 246, A: 140}
-	if hovered {
-		borderClr = color.RGBA{R: 59, G: 130, B: 246, A: 220}
-	}
-	draw.StrokeRoundRect(screen, cx, cy, bpCardW, bpCardH, bpCardR, 1.5, borderClr)
-
-	// 居中 "+" 符号（大字号）
-	plusX := float64(cx) + float64(bpCardW)/2
-	plusY := float64(cy) + float64(bpCardH)/2 - 10
-	plusClr := color.Color(color.RGBA{R: 120, G: 170, B: 240, A: 220})
-	if hovered {
-		plusClr = color.RGBA{R: 160, G: 200, B: 255, A: 255}
-	}
-	fm := render.GlobalFont()
-	if fm != nil {
-		fm.DrawCenteredBoldText(screen, "+", plusX, plusY, theme.FontOverlayTitle, plusClr)
-		// "新建蓝图" 文本（居中，小字号）
-		labelClr := color.Color(theme.TextMuted)
-		if hovered {
-			labelClr = theme.TextBody
-		}
-		fm.DrawCenteredText(screen, "新建蓝图", plusX, plusY+24, theme.FontXS, labelClr)
-	}
-}
-
 // drawBuildCardTooltip renders a small stats tooltip above the build panel.
 // 有预设能力时动态增高，展示每个能力的图标+标签+数值描述。
 func drawBuildCardTooltip(screen *ebiten.Image, card BuildCardVM, m buildPanelMetrics) {
-	if card.IsCreateBtn {
-		return // "+新建" 按钮不显示 tooltip
-	}
 	if !card.Buildable {
 		drawVariantTooltip(screen, card, m)
 		return
