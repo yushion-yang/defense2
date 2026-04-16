@@ -273,7 +273,7 @@ func AllEffectMeta() []PrimitiveMeta {
 			ID:    "stun",
 			Label: "眩晕",
 			Desc:  "使目标无法移动和行动",
-			Cost:  4,
+			Cost:  6,
 			Params: []ParamMeta{
 				{Key: "duration", Label: "持续时间", Type: "scaler", Default: 0.5, Min: 0.1, Max: 3},
 			},
@@ -282,7 +282,7 @@ func AllEffectMeta() []PrimitiveMeta {
 			ID:    "root",
 			Label: "定身",
 			Desc:  "使目标无法移动但仍可行动",
-			Cost:  3,
+			Cost:  5,
 			Params: []ParamMeta{
 				{Key: "duration", Label: "持续时间", Type: "scaler", Default: 1, Min: 0.1, Max: 5},
 			},
@@ -313,7 +313,7 @@ func AllEffectMeta() []PrimitiveMeta {
 			ID:    "silence",
 			Label: "沉默",
 			Desc:  "禁用目标的特殊能力",
-			Cost:  4,
+			Cost:  6,
 		},
 		{
 			ID:    "buff",
