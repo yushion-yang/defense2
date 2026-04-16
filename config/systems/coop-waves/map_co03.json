@@ -1,0 +1,34 @@
+{
+  "_description": "6人合作地图 Boss波覆盖",
+  "overrides": [
+    {
+      "wave": 5,
+      "boss": { "archetype": "tank" },
+      "composition": ["tank", "tank", "runner", "runner", "runner", "swarm", "swarm", "swarm", "swarm", "normal"]
+    },
+    {
+      "wave": 10,
+      "boss": { "archetype": "armored" },
+      "composition": ["armored", "armored", "healer", "shielder", "shielder", "runner", "runner", "swarm", "swarm", "swarm", "swarm", "swarm"],
+      "buffs": ["regen"]
+    },
+    {
+      "wave": 15,
+      "boss": { "archetype": "splitter" },
+      "composition": ["splitter", "splitter", "splitter", "buffer", "phantom", "stealth", "healer", "tank", "runner", "swarm", "swarm", "swarm"],
+      "buffs": ["berserk", "speedUp"]
+    },
+    {
+      "wave": 20,
+      "boss": { "archetype": "drainer" },
+      "composition": ["drainer", "purifier", "summoner", "splitter", "buffer", "healer", "tank", "armored", "shielder", "phantom", "runner", "runner", "swarm", "swarm"],
+      "buffs": ["berserk", "damageReduce"]
+    },
+    {
+      "wave": 25,
+      "boss": { "archetype": "summoner" },
+      "composition": ["summoner", "drainer", "purifier", "splitter", "splitter", "buffer", "buffer", "healer", "tank", "armored", "shielder", "phantom", "stealth", "runner", "runner", "swarm", "swarm", "swarm"],
+      "buffs": ["berserk", "damageReduce", "regen"]
+    }
+  ]
+}

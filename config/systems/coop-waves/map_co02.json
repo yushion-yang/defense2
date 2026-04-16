@@ -1,0 +1,28 @@
+{
+  "_description": "4人合作地图 Boss波覆盖",
+  "overrides": [
+    {
+      "wave": 5,
+      "boss": { "archetype": "tank" },
+      "composition": ["tank", "tank", "normal", "runner", "runner", "swarm", "swarm", "swarm"]
+    },
+    {
+      "wave": 10,
+      "boss": { "archetype": "armored" },
+      "composition": ["armored", "healer", "healer", "shielder", "runner", "runner", "swarm", "swarm", "swarm", "swarm"],
+      "buffs": ["regen", "speedUp"]
+    },
+    {
+      "wave": 15,
+      "boss": { "archetype": "splitter" },
+      "composition": ["splitter", "splitter", "buffer", "phantom", "stealth", "tank", "normal", "swarm", "swarm", "swarm"],
+      "buffs": ["berserk"]
+    },
+    {
+      "wave": 20,
+      "boss": { "archetype": "summoner" },
+      "composition": ["summoner", "drainer", "purifier", "splitter", "healer", "buffer", "tank", "armored", "runner", "runner", "swarm", "swarm"],
+      "buffs": ["berserk", "damageReduce", "regen"]
+    }
+  ]
+}

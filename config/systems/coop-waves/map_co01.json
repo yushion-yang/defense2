@@ -1,0 +1,25 @@
+{
+  "_description": "2人合作地图 Boss波覆盖（其余波次程序生成）",
+  "overrides": [
+    {
+      "wave": 5,
+      "boss": { "archetype": "tank" },
+      "composition": ["tank", "normal", "normal", "runner", "runner", "swarm", "swarm"],
+      "_note": "首个Boss波：坦克Boss + 混合小兵，测试双人基础防线"
+    },
+    {
+      "wave": 10,
+      "boss": { "archetype": "armored" },
+      "composition": ["armored", "healer", "normal", "runner", "runner", "shielder", "swarm", "swarm", "swarm"],
+      "buffs": ["regen"],
+      "_note": "中期Boss：装甲+治疗组合，需要集火 + CC 控制"
+    },
+    {
+      "wave": 15,
+      "boss": { "archetype": "summoner" },
+      "composition": ["summoner", "splitter", "buffer", "phantom", "runner", "tank", "normal", "normal", "swarm", "swarm"],
+      "buffs": ["berserk", "damageReduce"],
+      "_note": "终波Boss：召唤者+分裂+强化buff，全面考验双人协作"
+    }
+  ]
+}
