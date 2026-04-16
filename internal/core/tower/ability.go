@@ -43,7 +43,9 @@ type HitResult struct {
 	Bleed   *BleedEffect   // 流血 DoT：持续物理伤害（tick 间隔由 balance.json combat.dotTickInterval.bleed 控制）
 	Burn    *BleedEffect   // 灼烧 DoT：持续火焰伤害（结构同 Bleed 但独立计时和 tick 间隔）
 	Poison  *BleedEffect   // 中毒 DoT：独立于 Bleed/Burn（结构同 Bleed）
-	Bounce  *BounceEffect  // 弹射链：弹射物跳跃到附近敌人（每次跳跃伤害递减）
+	Bounce   *BounceEffect   // 弹射链：弹射物跳跃到附近敌人（每次跳跃伤害递减）
+	Purge    *PurgeEffect    // 净化：移除目标敌人身上的增益 buff
+	Teleport *TeleportEffect // 回推：沿路径将目标敌人推回一段距离
 }
 
 // SplashEffect 范围溅射伤害。
@@ -88,6 +90,18 @@ type BounceEffect struct {
 	Range       float64 // 弹射搜索范围（像素，从当前命中点搜索下一个目标）
 	DamageRatio float64 // 弹射伤害比例（相对来源塔伤害，0.8 = 80%）
 	SrcDamage   float64 // 来源塔的当前伤害（快照值，弹射期间塔属性变化不影响已发射的弹射链）
+}
+
+// PurgeEffect 净化效果（移除目标敌人身上的增益 buff）。
+// 优先移除对敌人最有利的 buff（damageReduce > regen > speedUp > berserk 等）。
+type PurgeEffect struct {
+	Count int // 移除的 buff 数量
+}
+
+// TeleportEffect 回推效果（沿路径将敌人推回一段距离）。
+// 不改变敌人的路径点列表，仅回退 PathIndex 和位置坐标。
+type TeleportEffect struct {
+	Distance float64 // 回推距离（像素）
 }
 
 // Ability 塔能力接口（所有能力必须实现）。

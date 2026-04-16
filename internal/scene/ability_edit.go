@@ -1017,6 +1017,16 @@ func (s *AbilityEditScene) saveAbility() {
 		return
 	}
 
+	// 平衡性校验：阻止 OP 组合（如 onTick+CC 无冷却）
+	if balanceErrs := descriptor.ValidateCustomAbility(desc); len(balanceErrs) > 0 {
+		hud.ShowToast(balanceErrs[0].Message) // TODO: i18n — ability.balance_error
+		log.Printf("[AbilityEdit] balance validation failed: %v", balanceErrs)
+		return
+	}
+
+	// 自动计算费用（基元费用 + 多管线加成）
+	desc.Cost = descriptor.CalcAbilityCost(desc)
+
 	ca := descriptor.CustomAbility{
 		ID:        id,
 		Name:      name,
@@ -1033,7 +1043,7 @@ func (s *AbilityEditScene) saveAbility() {
 	}
 
 	hud.ShowToast("能力已保存") // TODO: i18n — ability.saved
-	log.Printf("[AbilityEdit] saved ability %q (id=%s, pipelines=%d)", name, id, len(s.pipelines))
+	log.Printf("[AbilityEdit] saved ability %q (id=%s, pipelines=%d, cost=%d)", name, id, len(s.pipelines), desc.Cost)
 	s.switcher.SwitchScene(s.returnScene)
 }
 
