@@ -16,6 +16,7 @@ import (
 	"io/fs"
 	"log"
 
+	"defense2/internal/config"
 	"defense2/internal/core/tower"
 )
 
@@ -32,6 +33,10 @@ func RegisterCustomAbilities(store *AbilityStore) int {
 		desc.ID = ca.ID // 确保 ID 一致
 		ability := NewDescriptorAbility(&desc)
 		tower.Register(ability)
+		// 同步注入 AbilityTable，使 AddAbility 能识别自定义能力
+		config.MergeAbilityTable(config.AbilityTable{
+			ca.ID: DeriveAbilityDefFromDescriptor(&desc),
+		})
 		registered++
 	}
 	if registered > 0 {
@@ -55,6 +60,10 @@ func InitDescriptorAbilities(dataFS fs.ReadFileFS) error {
 		registered++
 	}
 
-	log.Printf("[descriptor] registered %d descriptor abilities (overriding ConfigAbility)", registered)
+	// 派生 AbilityTable 并注入到全局表，使 AddAbility 能识别所有描述符能力
+	derived := DeriveAbilityTable()
+	config.MergeAbilityTable(derived)
+
+	log.Printf("[descriptor] registered %d descriptor abilities (overriding ConfigAbility), merged %d into AbilityTable", registered, len(derived))
 	return nil
 }
