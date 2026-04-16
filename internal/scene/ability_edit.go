@@ -237,11 +237,24 @@ func aeMetaLabel(metas []descriptor.PrimitiveMeta, id string) string {
 // 对 scaler 类型参数，生成 "value" 键（fixed 模式）。
 func aeDefaultParams(params []descriptor.ParamMeta) map[string]float64 {
 	m := make(map[string]float64, len(params))
+	// 统计 scaler 类型参数数量，决定是否需要前缀
+	scalerCount := 0
+	for _, p := range params {
+		if p.Type == "scaler" {
+			scalerCount++
+		}
+	}
 	for _, p := range params {
 		switch p.Type {
 		case "scaler":
-			// 默认 fixed 模式：只有 value 键
-			m["value"] = p.Default
+			if scalerCount == 1 {
+				// 单 scaler：直接用 value 键（与 buildScaler 的 FixedScaler 解析兼容）
+				m["value"] = p.Default
+			} else {
+				// 多 scaler：用 Key 作前缀（与 extractPrefixParams 兼容）
+				// 例如 slow 的 factor + duration → factor_value=0.3, duration_value=1.0
+				m[p.Key+"_value"] = p.Default
+			}
 		case "float", "int":
 			m[p.Key] = p.Default
 		}
@@ -754,24 +767,38 @@ func (s *AbilityEditScene) handleScalerToggle(st scalerToggleRect) {
 		return
 	}
 
-	// 检查当前模式
-	_, hasValue := params["value"]
-	_, hasBase := params["base"]
+	// 多 scaler 效果用 Key 前缀（factor_value / duration_base 等）
+	prefix := aeScalerPrefix(params, st.ParamKey)
+
+	_, hasValue := params[prefix+"value"]
+	_, hasBase := params[prefix+"base"]
 
 	if hasValue && !hasBase {
 		// fixed → linear: value → base, 新增 potential=0
-		base := params["value"]
-		delete(params, "value")
-		params["base"] = base
-		params["potential"] = 0
+		base := params[prefix+"value"]
+		delete(params, prefix+"value")
+		params[prefix+"base"] = base
+		params[prefix+"potential"] = 0
 	} else if hasBase {
 		// linear → fixed: base → value, 删除 potential
-		val := params["base"]
-		delete(params, "base")
-		delete(params, "potential")
-		params["value"] = val
+		val := params[prefix+"base"]
+		delete(params, prefix+"base")
+		delete(params, prefix+"potential")
+		params[prefix+"value"] = val
 	}
 	s.dirty = true
+}
+
+// aeScalerPrefix 判断给定 params 中 scaler 是否使用前缀模式。
+// 如果 params 中有 "key_value" 或 "key_base" 形式的 key，返回 "key_"；否则返回 ""。
+func aeScalerPrefix(params map[string]float64, paramKey string) string {
+	prefix := paramKey + "_"
+	for k := range params {
+		if len(k) > len(prefix) && k[:len(prefix)] == prefix {
+			return prefix
+		}
+	}
+	return "" // 单 scaler，无前缀
 }
 
 // aeGetParamMetas 从元数据列表中查找指定 typeID 的参数定义。
@@ -1410,7 +1437,8 @@ func (s *AbilityEditScene) drawExpandedParamPanel(screen *ebiten.Image, fm *rend
 		}
 		if pm.Type == "scaler" {
 			// scaler: mode toggle 行 + value 行（fixed）或 base+potential 行（linear）
-			_, hasBase := params["base"]
+			prefix := aeScalerPrefix(params, pm.Key)
+			_, hasBase := params[prefix+"base"]
 			if hasBase {
 				rowCount += 3 // mode + base + potential
 			} else {
@@ -1505,8 +1533,13 @@ func (s *AbilityEditScene) drawScalerParamRows(screen *ebiten.Image, fm *render.
 	padX := float32(8)
 	curY := startY
 
+	// 多 scaler 效果（slow/dot/weaken）用 Key 前缀区分参数。
+	// 例如 slow 有 factor + duration 两个 scaler，存储为 factor_value / duration_base 等。
+	// 单 scaler 效果直接用 value/base/potential。
+	prefix := s.scalerKeyPrefix(pm.Key)
+
 	// 判断当前模式
-	_, hasBase := params["base"]
+	_, hasBase := params[prefix+"base"]
 	isLinear := hasBase
 	modeLabel := "fixed"
 	if isLinear {
@@ -1533,20 +1566,80 @@ func (s *AbilityEditScene) drawScalerParamRows(screen *ebiten.Image, fm *render.
 	curY += aeParamRowH
 
 	if isLinear {
-		// 行 2: base
-		s.drawScalerValueRow(screen, fm, panelX, curY, panelW, "base", params["base"], pm)
+		s.drawScalerValueRow(screen, fm, panelX, curY, panelW, prefix+"base", params[prefix+"base"], pm)
 		curY += aeParamRowH
-
-		// 行 3: potential
-		s.drawScalerValueRow(screen, fm, panelX, curY, panelW, "potential", params["potential"], pm)
+		s.drawScalerValueRow(screen, fm, panelX, curY, panelW, prefix+"potential", params[prefix+"potential"], pm)
 		curY += aeParamRowH
 	} else {
-		// 行 2: value
-		s.drawScalerValueRow(screen, fm, panelX, curY, panelW, "value", params["value"], pm)
+		s.drawScalerValueRow(screen, fm, panelX, curY, panelW, prefix+"value", params[prefix+"value"], pm)
 		curY += aeParamRowH
 	}
 
 	return curY
+}
+
+// scalerKeyPrefix 返回 scaler 参数的 key 前缀。
+// 多 scaler 效果（如 slow 的 factor/duration）用 "factor_"/"duration_" 前缀。
+// 单 scaler 效果无前缀（空字符串）。
+func (s *AbilityEditScene) scalerKeyPrefix(paramKey string) string {
+	// 获取当前展开组件的 meta 信息
+	meta := s.expandedMeta()
+	if meta == nil {
+		return ""
+	}
+	scalerCount := 0
+	for _, p := range meta.Params {
+		if p.Type == "scaler" {
+			scalerCount++
+		}
+	}
+	if scalerCount <= 1 {
+		return "" // 单 scaler，无前缀
+	}
+	return paramKey + "_" // 多 scaler，用 key 作前缀
+}
+
+// expandedMeta 返回当前展开的组件对应的 PrimitiveMeta。
+func (s *AbilityEditScene) expandedMeta() *descriptor.PrimitiveMeta {
+	if s.expandedPipe < 0 || s.expandedPipe >= len(s.pipelines) {
+		return nil
+	}
+	p := &s.pipelines[s.expandedPipe]
+	var typeID string
+	switch s.expandedSlot {
+	case "condition":
+		if s.expandedComp >= 0 && s.expandedComp < len(p.Conditions) {
+			typeID = p.Conditions[s.expandedComp].TypeID
+		}
+	case "effect":
+		if s.expandedComp >= 0 && s.expandedComp < len(p.Effects) {
+			typeID = p.Effects[s.expandedComp].TypeID
+		}
+	case "selector":
+		typeID = p.SelectorID
+	default:
+		return nil
+	}
+	for _, m := range s.metaForSlot(s.expandedSlot) {
+		if m.ID == typeID {
+			return &m
+		}
+	}
+	return nil
+}
+
+// metaForSlot 返回指定槽位类型的所有元数据。
+func (s *AbilityEditScene) metaForSlot(slot string) []descriptor.PrimitiveMeta {
+	switch slot {
+	case "condition":
+		return descriptor.AllConditionMeta()
+	case "effect":
+		return descriptor.AllEffectMeta()
+	case "selector":
+		return descriptor.AllSelectorMeta()
+	default:
+		return nil
+	}
 }
 
 // drawScalerValueRow 绘制 scaler 的单个值行（base/potential/value）。

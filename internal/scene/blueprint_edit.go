@@ -418,7 +418,7 @@ func (s *BlueprintEditScene) handleStepInput(mx, my float64) {
 	case bpStepAbilities:
 		s.handleAbilitiesInput(mx, my)
 	case bpStepPreview:
-		// 预览步骤无交互（保存按钮在底部按钮行处理）
+		s.handlePreviewInput(mx, my)
 	}
 }
 
