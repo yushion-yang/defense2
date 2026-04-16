@@ -122,6 +122,16 @@ type scalerToggleRect struct {
 	ParamKey string
 }
 
+// stringEnumRect 记录字符串枚举参数的点击区域（click-to-cycle）。
+type stringEnumRect struct {
+	Rect     ui.Rect
+	PipeIdx  int
+	SlotType string
+	CompIdx  int
+	ParamKey string // 参数键名（如 "mode"/"stat"/"buffID"）
+	TypeID   string // 所属组件类型 ID（如 "damage"/"buff"），用于查表
+}
+
 // ── AbilityEditScene ──────────────────────────────
 
 // AbilityEditScene 自定义能力编辑场景。
@@ -161,10 +171,11 @@ type AbilityEditScene struct {
 	effectBtnRects []ui.Rect // 每条管线的 +效果 按钮区域
 
 	// ── 动态点击区域（每帧重建） ──
-	badgeRects    []condEffectBadgeRect // 条件/效果 badge 点击区域
-	badgeDelRects []condEffectBadgeRect // badge 删除按钮（右上角 "×"）区域
-	paramBtns     []paramBtnRect        // 参数 +/- 按钮区域
-	scalerToggles []scalerToggleRect    // scaler mode toggle 区域
+	badgeRects      []condEffectBadgeRect // 条件/效果 badge 点击区域
+	badgeDelRects   []condEffectBadgeRect // badge 删除按钮（右上角 "×"）区域
+	paramBtns       []paramBtnRect        // 参数 +/- 按钮区域
+	scalerToggles   []scalerToggleRect    // scaler mode toggle 区域
+	stringEnumBtns  []stringEnumRect      // 字符串枚举参数 click-to-cycle 区域
 
 	// ── 名称编辑 ──
 	nameEditing bool   // true=名称编辑模式
@@ -257,6 +268,8 @@ func aeDefaultParams(params []descriptor.ParamMeta) map[string]float64 {
 			}
 		case "float", "int":
 			m[p.Key] = p.Default
+		case "string":
+			m[p.Key] = 0 // 默认选第一个枚举选项
 		}
 	}
 	return m
@@ -437,6 +450,15 @@ func (s *AbilityEditScene) handleInput(mx, my float64) {
 		}
 	}
 
+	// 3b. 字符串枚举参数 click-to-cycle
+	for _, se := range s.stringEnumBtns {
+		if se.Rect.Contains(mx, my) {
+			playUIClick(s.switcher)
+			s.handleStringEnumCycle(se)
+			return
+		}
+	}
+
 	// 4a. 条件/效果 badge 删除按钮 → 移除组件
 	for _, dr := range s.badgeDelRects {
 		if dr.Rect.Contains(mx, my) {
@@ -482,6 +504,30 @@ func (s *AbilityEditScene) handleInput(mx, my float64) {
 	for i, r := range s.selectorRects {
 		if r.Contains(mx, my) {
 			playUIClick(s.switcher)
+			pipe := s.pipelines[i]
+			// 选择器已设置且有参数：检查点击位置区分「展开参数」和「更换选择器」
+			if pipe.SelectorID != "" {
+				selMeta := aeFindMeta(descriptor.AllSelectorMeta(), pipe.SelectorID)
+				if selMeta != nil && len(selMeta.Params) > 0 {
+					// 右侧 50px 区域为更换按钮，其余为参数展开
+					changeX := r.X + r.W - 50
+					if mx >= float64(changeX) {
+						s.openPicker(i, "selector", -1, r)
+					} else {
+						// 切换参数面板展开
+						if s.expandedSlot == "selector" && s.expandedPipe == i {
+							s.expandedPipe = -1
+							s.expandedSlot = ""
+						} else {
+							s.expandedSlot = "selector"
+							s.expandedPipe = i
+							s.expandedComp = 0
+						}
+					}
+					return
+				}
+			}
+			// 选择器未设置或无参数：直接打开 picker
 			s.openPicker(i, "selector", -1, r)
 			return
 		}
@@ -700,10 +746,23 @@ func (s *AbilityEditScene) handleParamAdjust(pb paramBtnRect) {
 	}
 
 	// 查找对应参数的元数据。
-	// 对 scaler 参数，ParamKey 是 "value"/"base"/"potential"，
+	// 对 scaler 参数，ParamKey 可能是 "value"/"base"/"potential"/"k"/"cap"，
+	// 也可能带前缀如 "factor_base"/"duration_k"。
 	// 需要匹配 scaler 类型的 ParamMeta（而非按 key 精确匹配）。
 	var pm *descriptor.ParamMeta
-	isScalerSubKey := pb.ParamKey == "value" || pb.ParamKey == "base" || pb.ParamKey == "potential"
+	scalerSuffixes := []string{"value", "base", "potential", "k", "cap"}
+	isScalerSubKey := false
+	for _, sfx := range scalerSuffixes {
+		if pb.ParamKey == sfx {
+			isScalerSubKey = true
+			break
+		}
+		// 检查带前缀的形式（如 "factor_base"）
+		if len(pb.ParamKey) > len(sfx)+1 && pb.ParamKey[len(pb.ParamKey)-len(sfx)-1] == '_' && pb.ParamKey[len(pb.ParamKey)-len(sfx):] == sfx {
+			isScalerSubKey = true
+			break
+		}
+	}
 
 	for i := range paramMetas {
 		if isScalerSubKey && paramMetas[i].Type == "scaler" {
@@ -723,11 +782,30 @@ func (s *AbilityEditScene) handleParamAdjust(pb paramBtnRect) {
 	val := params[pb.ParamKey]
 	val += step * float64(pb.Delta)
 
-	// 钳制到 [min, max]（potential 允许 0~max 范围）
+	// 钳制到 [min, max]（potential/k/cap 有自定义范围）
+	// 支持带前缀的键名（如 "factor_potential"、"duration_k"）
 	minVal := pm.Min
 	maxVal := pm.Max
-	if pb.ParamKey == "potential" {
+	keySuffix := pb.ParamKey
+	if idx := len(pb.ParamKey) - 1; idx > 0 {
+		for _, sfx := range []string{"potential", "k", "cap"} {
+			if len(pb.ParamKey) > len(sfx) && pb.ParamKey[len(pb.ParamKey)-len(sfx):] == sfx {
+				keySuffix = sfx
+				break
+			}
+		}
+	}
+	switch keySuffix {
+	case "potential":
 		minVal = 0
+	case "k":
+		// diminishing k 参数：值越大衰减越缓，合理范围 1~500
+		minVal = 1
+		maxVal = 500
+	case "cap":
+		// capped 上限：最小为 min，最大为 max*10
+		minVal = pm.Min
+		maxVal = pm.Max * 10
 	}
 	if val < minVal {
 		val = minVal
@@ -746,7 +824,7 @@ func (s *AbilityEditScene) handleParamAdjust(pb paramBtnRect) {
 }
 
 // handleScalerToggle 处理 scaler mode 切换。
-// fixed ↔ linear 循环切换。
+// fixed → linear → diminishing → capped → fixed 循环。
 func (s *AbilityEditScene) handleScalerToggle(st scalerToggleRect) {
 	pipe := &s.pipelines[st.PipeIdx]
 
@@ -772,18 +850,36 @@ func (s *AbilityEditScene) handleScalerToggle(st scalerToggleRect) {
 
 	_, hasValue := params[prefix+"value"]
 	_, hasBase := params[prefix+"base"]
+	_, hasK := params[prefix+"k"]
+	_, hasCap := params[prefix+"cap"]
 
-	if hasValue && !hasBase {
+	switch {
+	case hasValue && !hasBase:
 		// fixed → linear: value → base, 新增 potential=0
 		base := params[prefix+"value"]
 		delete(params, prefix+"value")
 		params[prefix+"base"] = base
 		params[prefix+"potential"] = 0
-	} else if hasBase {
-		// linear → fixed: base → value, 删除 potential
+
+	case hasBase && !hasK && !hasCap:
+		// linear → diminishing: 保留 base/potential, 新增 k=50
+		params[prefix+"k"] = 50
+
+	case hasBase && hasK:
+		// diminishing → capped: 删除 k, 新增 cap=base*3
+		capVal := params[prefix+"base"] * 3
+		if capVal < 1 {
+			capVal = 1
+		}
+		delete(params, prefix+"k")
+		params[prefix+"cap"] = capVal
+
+	case hasBase && hasCap:
+		// capped → fixed: base → value, 删除 potential/cap
 		val := params[prefix+"base"]
 		delete(params, prefix+"base")
 		delete(params, prefix+"potential")
+		delete(params, prefix+"cap")
 		params[prefix+"value"] = val
 	}
 	s.dirty = true
@@ -1060,6 +1156,7 @@ func (s *AbilityEditScene) drawPipelineList(screen *ebiten.Image, fm *render.Fon
 	s.badgeDelRects = s.badgeDelRects[:0]
 	s.paramBtns = s.paramBtns[:0]
 	s.scalerToggles = s.scalerToggles[:0]
+	s.stringEnumBtns = s.stringEnumBtns[:0]
 
 	// 管线卡片起始坐标
 	cardX := cr.X + (cr.W-aePipeCardW)/2
@@ -1236,11 +1333,15 @@ func (s *AbilityEditScene) drawConditionRow(screen *ebiten.Image, fm *render.Fon
 // ── 行渲染：选择器 ──────────────────────────────────
 
 func (s *AbilityEditScene) drawSelectorRow(screen *ebiten.Image, fm *render.FontManager, pipeIdx int, pipe descriptor.PipelineEditState, contentX, contentW, rowY float32) {
-	selectorLabel := "未选择"
-	selectorClr := color.Color(theme.TextLocked)
+	selLabel := "未选择"
+	selClr := color.Color(theme.TextLocked)
+	hasParams := false
 	if pipe.SelectorID != "" {
-		selectorLabel = aeMetaLabel(descriptor.AllSelectorMeta(), pipe.SelectorID)
-		selectorClr = theme.TextBody
+		selLabel = aeMetaLabel(descriptor.AllSelectorMeta(), pipe.SelectorID)
+		selClr = theme.TextBody
+		if m := aeFindMeta(descriptor.AllSelectorMeta(), pipe.SelectorID); m != nil && len(m.Params) > 0 {
+			hasParams = true
+		}
 	}
 	ui.Label(screen, "目标:", float64(contentX), float64(rowY), 40, ui.LabelStyle{
 		Font: theme.FontCaption, Color: theme.TextMuted,
@@ -1249,9 +1350,25 @@ func (s *AbilityEditScene) drawSelectorRow(screen *ebiten.Image, fm *render.Font
 	selectorSlotW := contentW - 42
 	selectorRect := ui.Rect{X: selectorSlotX, Y: rowY, W: selectorSlotW, H: aePipeRowH}
 	s.selectorRects = append(s.selectorRects, selectorRect)
-	ui.Label(screen, fmt.Sprintf("[%s]", selectorLabel), float64(selectorSlotX), float64(rowY), float64(selectorSlotW), ui.LabelStyle{
-		Font: theme.FontCaption, Color: selectorClr,
+
+	// 高亮当前展开参数的选择器
+	displayLabel := fmt.Sprintf("[%s]", selLabel)
+	if hasParams && s.expandedPipe == pipeIdx && s.expandedSlot == "selector" {
+		displayLabel = fmt.Sprintf("[%s] ▲", selLabel)
+	} else if hasParams {
+		displayLabel = fmt.Sprintf("[%s] ▼", selLabel)
+	}
+	ui.Label(screen, displayLabel, float64(selectorSlotX), float64(rowY), float64(selectorSlotW)-54, ui.LabelStyle{
+		Font: theme.FontCaption, Color: selClr,
 	})
+
+	// 有参数时，右侧显示「换」按钮区域提示
+	if hasParams {
+		changeBtnX := selectorSlotX + selectorSlotW - 50
+		ui.Label(screen, "[换]", float64(changeBtnX), float64(rowY), 46, ui.LabelStyle{
+			Font: theme.FontXS, Color: theme.TextMuted,
+		})
+	}
 }
 
 // ── 行渲染：效果 ──────────────────────────────────
@@ -1432,15 +1549,25 @@ func (s *AbilityEditScene) drawExpandedParamPanel(screen *ebiten.Image, fm *rend
 	panelW := float32(280)
 	rowCount := 0
 	for _, pm := range paramMetas {
-		if pm.Type == "string" || pm.Type == "bool" {
-			continue // 暂不支持字符串/布尔参数编辑
+		if pm.Type == "bool" {
+			continue // 暂不支持布尔参数编辑
+		}
+		if pm.Type == "string" {
+			rowCount++ // 字符串枚举选择行
+			continue
 		}
 		if pm.Type == "scaler" {
-			// scaler: mode toggle 行 + value 行（fixed）或 base+potential 行（linear）
+			// scaler: mode toggle 行 + value 行（fixed）或 base+potential+[k|cap] 行（linear/diminishing/capped）
 			prefix := aeScalerPrefix(params, pm.Key)
 			_, hasBase := params[prefix+"base"]
+			_, hasK := params[prefix+"k"]
+			_, hasCap := params[prefix+"cap"]
 			if hasBase {
-				rowCount += 3 // mode + base + potential
+				rows := 3 // mode + base + potential
+				if hasK || hasCap {
+					rows = 4 // mode + base + potential + k/cap
+				}
+				rowCount += rows
 			} else {
 				rowCount += 2 // mode + value
 			}
@@ -1475,7 +1602,13 @@ func (s *AbilityEditScene) drawExpandedParamPanel(screen *ebiten.Image, fm *rend
 	// 逐行绘制参数
 	curY := panelY + 6
 	for _, pm := range paramMetas {
-		if pm.Type == "string" || pm.Type == "bool" {
+		if pm.Type == "bool" {
+			continue
+		}
+
+		if pm.Type == "string" {
+			s.drawStringParamRow(screen, fm, panelX, curY, panelW, pm, params, typeID)
+			curY += aeParamRowH
 			continue
 		}
 
@@ -1527,7 +1660,7 @@ func (s *AbilityEditScene) drawSimpleParamRow(screen *ebiten.Image, fm *render.F
 	})
 }
 
-// drawScalerParamRows 绘制 scaler 类型参数行：mode toggle + value/base+potential。
+// drawScalerParamRows 绘制 scaler 类型参数行：mode toggle + value/base+potential+[k|cap]。
 // 返回绘制后的 Y 坐标。
 func (s *AbilityEditScene) drawScalerParamRows(screen *ebiten.Image, fm *render.FontManager, panelX, startY, panelW float32, pm descriptor.ParamMeta, params map[string]float64) float32 {
 	padX := float32(8)
@@ -1538,11 +1671,17 @@ func (s *AbilityEditScene) drawScalerParamRows(screen *ebiten.Image, fm *render.
 	// 单 scaler 效果直接用 value/base/potential。
 	prefix := s.scalerKeyPrefix(pm.Key)
 
-	// 判断当前模式
+	// 判断当前模式：fixed / linear / diminishing / capped
 	_, hasBase := params[prefix+"base"]
-	isLinear := hasBase
+	_, hasK := params[prefix+"k"]
+	_, hasCap := params[prefix+"cap"]
+
 	modeLabel := "fixed"
-	if isLinear {
+	if hasBase && hasK {
+		modeLabel = "diminish"
+	} else if hasBase && hasCap {
+		modeLabel = "capped"
+	} else if hasBase {
 		modeLabel = "linear"
 	}
 
@@ -1553,7 +1692,7 @@ func (s *AbilityEditScene) drawScalerParamRows(screen *ebiten.Image, fm *render.
 
 	// Mode toggle 按钮
 	toggleX := panelX + 100
-	toggleW := float32(54)
+	toggleW := float32(62)
 	toggleRect := ui.Rect{X: toggleX, Y: curY + 1, W: toggleW, H: aeParamBtnH}
 	s.scalerToggles = append(s.scalerToggles, scalerToggleRect{
 		Rect: toggleRect, PipeIdx: s.expandedPipe, SlotType: s.expandedSlot,
@@ -1565,12 +1704,24 @@ func (s *AbilityEditScene) drawScalerParamRows(screen *ebiten.Image, fm *render.
 	})
 	curY += aeParamRowH
 
-	if isLinear {
+	if hasBase {
+		// linear/diminishing/capped: base + potential + 可选 k 或 cap
 		s.drawScalerValueRow(screen, fm, panelX, curY, panelW, prefix+"base", params[prefix+"base"], pm)
 		curY += aeParamRowH
 		s.drawScalerValueRow(screen, fm, panelX, curY, panelW, prefix+"potential", params[prefix+"potential"], pm)
 		curY += aeParamRowH
+
+		if hasK {
+			// diminishing 模式额外显示 k 参数行
+			s.drawScalerValueRow(screen, fm, panelX, curY, panelW, prefix+"k", params[prefix+"k"], pm)
+			curY += aeParamRowH
+		} else if hasCap {
+			// capped 模式额外显示 cap 参数行
+			s.drawScalerValueRow(screen, fm, panelX, curY, panelW, prefix+"cap", params[prefix+"cap"], pm)
+			curY += aeParamRowH
+		}
 	} else {
+		// fixed: 仅 value 行
 		s.drawScalerValueRow(screen, fm, panelX, curY, panelW, prefix+"value", params[prefix+"value"], pm)
 		curY += aeParamRowH
 	}
@@ -1679,6 +1830,80 @@ func (s *AbilityEditScene) drawScalerValueRow(screen *ebiten.Image, fm *render.F
 	ui.Button(screen, plusBtnX, rowY+1, aeParamBtnW, aeParamBtnH, "+", ui.ButtonStyle{
 		BgColor: aeParamBtnBg, FontSize: theme.FontXS, Radius: 4,
 	})
+}
+
+// drawStringParamRow 绘制字符串枚举参数行：标签 + [当前值 ▼]（点击循环切换）。
+func (s *AbilityEditScene) drawStringParamRow(screen *ebiten.Image, fm *render.FontManager, panelX, rowY, panelW float32, pm descriptor.ParamMeta, params map[string]float64, typeID string) {
+	padX := float32(8)
+
+	// 标签
+	ui.Label(screen, pm.Label+":", float64(panelX+padX), float64(rowY)+2, 80, ui.LabelStyle{
+		Font: theme.FontXS, Color: aeParamLabelClr,
+	})
+
+	// 获取当前选中的枚举标签
+	lookupKey := typeID + ":" + pm.Key
+	opts := descriptor.StringParamOptions[lookupKey]
+	idx := int(params[pm.Key])
+	displayLabel := "?"
+	if idx >= 0 && idx < len(opts) {
+		displayLabel = opts[idx].Label
+	}
+	displayLabel += " ▼"
+
+	// 可点击的枚举值区域
+	enumX := panelX + 100
+	enumW := panelW - 100 - padX
+	enumRect := ui.Rect{X: enumX, Y: rowY + 1, W: enumW, H: aeParamBtnH}
+	s.stringEnumBtns = append(s.stringEnumBtns, stringEnumRect{
+		Rect:     enumRect,
+		PipeIdx:  s.expandedPipe,
+		SlotType: s.expandedSlot,
+		CompIdx:  s.expandedComp,
+		ParamKey: pm.Key,
+		TypeID:   typeID,
+	})
+
+	// 渲染为按钮样式
+	ui.Button(screen, enumX, rowY+1, enumW, aeParamBtnH, displayLabel, ui.ButtonStyle{
+		BgColor:  color.RGBA{R: 40, G: 55, B: 80, A: 220},
+		FontSize: theme.FontXS,
+		Radius:   4,
+	})
+}
+
+// handleStringEnumCycle 处理字符串枚举参数的 click-to-cycle。
+// 点击后索引 +1，超出范围回到 0。
+func (s *AbilityEditScene) handleStringEnumCycle(se stringEnumRect) {
+	pipe := &s.pipelines[se.PipeIdx]
+
+	var params map[string]float64
+	switch se.SlotType {
+	case "condition":
+		if se.CompIdx >= 0 && se.CompIdx < len(pipe.Conditions) {
+			params = pipe.Conditions[se.CompIdx].Params
+		}
+	case "selector":
+		params = pipe.SelectorParams
+	case "effect":
+		if se.CompIdx >= 0 && se.CompIdx < len(pipe.Effects) {
+			params = pipe.Effects[se.CompIdx].Params
+		}
+	}
+	if params == nil {
+		return
+	}
+
+	lookupKey := se.TypeID + ":" + se.ParamKey
+	opts := descriptor.StringParamOptions[lookupKey]
+	if len(opts) == 0 {
+		return
+	}
+
+	cur := int(params[se.ParamKey])
+	next := (cur + 1) % len(opts)
+	params[se.ParamKey] = float64(next)
+	s.dirty = true
 }
 
 // ── drawBottomButtons ──────────────────────────────

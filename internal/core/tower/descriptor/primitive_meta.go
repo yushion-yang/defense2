@@ -246,7 +246,7 @@ func AllSelectorMeta() []PrimitiveMeta {
 
 // ── Effect 元数据 ───────────────────────────────────────────
 
-// AllEffectMeta 返回全部 13 种效果的元数据。
+// AllEffectMeta 返回全部 14 种效果的元数据。
 func AllEffectMeta() []PrimitiveMeta {
 	return []PrimitiveMeta{
 		{
@@ -370,6 +370,15 @@ func AllEffectMeta() []PrimitiveMeta {
 			Cost:  4,
 			Params: []ParamMeta{
 				{Key: "count", Label: "净化数量", Type: "int", Default: 1, Min: 1, Max: 5},
+			},
+		},
+		{
+			ID:    "teleport",
+			Label: "传送回推",
+			Desc:  "将目标沿路径回推指定距离",
+			Cost:  3,
+			Params: []ParamMeta{
+				{Key: "distance", Label: "回推距离", Type: "scaler", Default: 100, Min: 10, Max: 500},
 			},
 		},
 	}

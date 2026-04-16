@@ -196,14 +196,22 @@ func TestAdaptToHitResult_Burn(t *testing.T) {
 }
 
 func TestAdaptToHitResult_Poison(t *testing.T) {
-	// poison 目前不映射到 HitResult（无对应字段），应被忽略
+	// poison 现在映射到 HitResult.Poison（Batch 1a 修复）
 	results := []descriptor.EffectResult{
 		{Type: descriptor.EffTypeDot, DotSubtype: "poison", DotValue: 3, DotDuration: 5},
 	}
 	hr := descriptor.AdaptToHitResult(results)
-	// poison 单独出现且无其他 hit 效果时返回 nil
-	if hr != nil {
-		t.Errorf("expected nil for poison-only results, got %+v", hr)
+	if hr == nil {
+		t.Fatal("expected non-nil HitResult for poison")
+	}
+	if hr.Poison == nil {
+		t.Fatal("expected Poison != nil")
+	}
+	if hr.Poison.DPS != 3 {
+		t.Errorf("Poison.DPS = %v, want 3", hr.Poison.DPS)
+	}
+	if hr.Poison.Duration != 5 {
+		t.Errorf("Poison.Duration = %v, want 5", hr.Poison.Duration)
 	}
 }
 
@@ -261,15 +269,27 @@ func TestAdaptToHitResult_SkipsTickEffects(t *testing.T) {
 	}
 }
 
-func TestAdaptToHitResult_SkipsWeakenAndSilence(t *testing.T) {
-	// weaken 和 silence 由战斗管线单独处理，不进入 HitResult
+func TestAdaptToHitResult_WeakenAndSilence(t *testing.T) {
+	// weaken 和 silence 现在映射到 HitResult（Batch 1a 修复）
 	results := []descriptor.EffectResult{
 		{Type: descriptor.EffTypeWeaken, WeakenAmp: 0.3, WeakenDur: 2},
 		{Type: descriptor.EffTypeSilence, Duration: 3},
 	}
 	hr := descriptor.AdaptToHitResult(results)
-	if hr != nil {
-		t.Errorf("expected nil for weaken/silence only, got %+v", hr)
+	if hr == nil {
+		t.Fatal("expected non-nil HitResult for weaken+silence")
+	}
+	if hr.Weaken == nil {
+		t.Fatal("expected Weaken != nil")
+	}
+	if hr.Weaken.Amplify != 0.3 {
+		t.Errorf("Weaken.Amplify = %v, want 0.3", hr.Weaken.Amplify)
+	}
+	if hr.Weaken.Duration != 2 {
+		t.Errorf("Weaken.Duration = %v, want 2", hr.Weaken.Duration)
+	}
+	if !hr.Silence {
+		t.Error("expected Silence = true")
 	}
 }
 
@@ -318,16 +338,32 @@ func TestAdaptToTickResult_Empty(t *testing.T) {
 	}
 }
 
-func TestAdaptToTickResult_IgnoresNonGold(t *testing.T) {
-	// 非 gold 效果在 tick 适配器中被忽略
+func TestAdaptToTickResult_IgnoresNonTickEffects(t *testing.T) {
+	// Damage 和 Slow 不是 tick 效果，应被忽略。
+	// Buff 现在由 tick 适配器标记 hasEffect（由 applyTickBuffEffects 处理），
+	// 所以只测试纯非 tick 类型（damage/slow）返回 nil。
 	results := []descriptor.EffectResult{
 		{Type: descriptor.EffTypeDamage, Damage: 10, DamageMode: descriptor.DmgFlat},
 		{Type: descriptor.EffTypeSlow, SlowFactor: 0.5, Duration: 1},
-		{Type: descriptor.EffTypeBuff, BuffStat: "range", BuffBonus: 0.1},
 	}
 	tr := descriptor.AdaptToTickResult(results)
 	if tr != nil {
-		t.Errorf("expected nil for non-gold effects, got %+v", tr)
+		t.Errorf("expected nil for non-tick effects, got %+v", tr)
+	}
+}
+
+func TestAdaptToTickResult_BuffSetsHasEffect(t *testing.T) {
+	// Buff 类型现在由 tick 适配器识别（applyTickBuffEffects 直接处理），
+	// 返回非 nil TickResult（GoldEarned=0）。
+	results := []descriptor.EffectResult{
+		{Type: descriptor.EffTypeBuff, BuffStat: "range", BuffBonus: 0.1},
+	}
+	tr := descriptor.AdaptToTickResult(results)
+	if tr == nil {
+		t.Fatal("expected non-nil TickResult for buff effect")
+	}
+	if tr.GoldEarned != 0 {
+		t.Errorf("GoldEarned = %v, want 0", tr.GoldEarned)
 	}
 }
 

@@ -58,11 +58,11 @@ func TestAllSelectorMeta(t *testing.T) {
 	}
 }
 
-// TestAllEffectMeta 验证效果元数据返回 13 项。
+// TestAllEffectMeta 验证效果元数据返回 14 项（含 teleport）。
 func TestAllEffectMeta(t *testing.T) {
 	metas := descriptor.AllEffectMeta()
-	if len(metas) != 13 {
-		t.Fatalf("AllEffectMeta() returned %d items, want 13", len(metas))
+	if len(metas) != 14 {
+		t.Fatalf("AllEffectMeta() returned %d items, want 14", len(metas))
 	}
 	for _, m := range metas {
 		if m.ID == "" {

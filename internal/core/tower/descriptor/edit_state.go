@@ -139,11 +139,12 @@ func buildCondition(cs ComponentEditState) (Condition, error) {
 		return NewEveryCondition(int(cs.Params["n"])), nil
 
 	case "buffActive":
-		// buffId 是字符串，float map 无法直接存储；由 UI 层另行管理
-		return BuffActiveCondition{}, nil
+		buffID := DecodeStringParam("buffActive", "buffID", cs.Params["buffID"])
+		return BuffActiveCondition{BuffID: buffID}, nil
 
 	case "buffAbsent":
-		return BuffAbsentCondition{}, nil
+		buffID := DecodeStringParam("buffAbsent", "buffID", cs.Params["buffID"])
+		return BuffAbsentCondition{BuffID: buffID}, nil
 
 	default:
 		return nil, fmt.Errorf("unknown condition type: %q", cs.TypeID)
@@ -262,18 +263,20 @@ func buildEffect(es ComponentEditState) (Effect, error) {
 		return SilenceEffect{}, nil
 
 	case "buff":
-		stat := "" // string 字段需外部设置，float map 无法表示
-		return BuffEffect{Stat: stat, Bonus: buildScaler(es.Params)}, nil
+		stat := DecodeStringParam("buff", "stat", es.Params["stat"])
+		bonusParams := extractScalerParams(es.Params)
+		return BuffEffect{Stat: stat, Bonus: buildScaler(bonusParams)}, nil
 
 	case "selfBuff":
-		stat := ""
-		return SelfBuffEffect{Stat: stat, Bonus: buildScaler(es.Params)}, nil
+		stat := DecodeStringParam("selfBuff", "stat", es.Params["stat"])
+		bonusParams := extractScalerParams(es.Params)
+		return SelfBuffEffect{Stat: stat, Bonus: buildScaler(bonusParams)}, nil
 
 	case "gold":
 		return GoldEffect{Amount: buildScaler(es.Params)}, nil
 
 	case "modifyStat":
-		stat := ""
+		stat := DecodeStringParam("modifyStat", "stat", es.Params["stat"])
 		return ModifyStatEffect{Stat: stat, Multiplier: es.Params["multiplier"]}, nil
 
 	case "crit":
@@ -366,10 +369,14 @@ func conditionToEditState(c Condition) ComponentEditState {
 		return ComponentEditState{TypeID: "every", Params: map[string]float64{"n": float64(v.N)}}
 
 	case BuffActiveCondition:
-		return ComponentEditState{TypeID: "buffActive", Params: map[string]float64{}}
+		return ComponentEditState{TypeID: "buffActive", Params: map[string]float64{
+			"buffID": EncodeStringParam("buffActive", "buffID", v.BuffID),
+		}}
 
 	case BuffAbsentCondition:
-		return ComponentEditState{TypeID: "buffAbsent", Params: map[string]float64{}}
+		return ComponentEditState{TypeID: "buffAbsent", Params: map[string]float64{
+			"buffID": EncodeStringParam("buffAbsent", "buffID", v.BuffID),
+		}}
 
 	default:
 		return ComponentEditState{TypeID: fmt.Sprintf("unknown:%T", c), Params: map[string]float64{}}
@@ -460,16 +467,23 @@ func effectToEditState(e Effect) ComponentEditState {
 		return ComponentEditState{TypeID: "silence", Params: map[string]float64{}}
 
 	case BuffEffect:
-		return ComponentEditState{TypeID: "buff", Params: scalerToParams(v.Bonus)}
+		params := scalerToParams(v.Bonus)
+		params["stat"] = EncodeStringParam("buff", "stat", v.Stat)
+		return ComponentEditState{TypeID: "buff", Params: params}
 
 	case SelfBuffEffect:
-		return ComponentEditState{TypeID: "selfBuff", Params: scalerToParams(v.Bonus)}
+		params := scalerToParams(v.Bonus)
+		params["stat"] = EncodeStringParam("selfBuff", "stat", v.Stat)
+		return ComponentEditState{TypeID: "selfBuff", Params: params}
 
 	case GoldEffect:
 		return ComponentEditState{TypeID: "gold", Params: scalerToParams(v.Amount)}
 
 	case ModifyStatEffect:
-		return ComponentEditState{TypeID: "modifyStat", Params: map[string]float64{"multiplier": v.Multiplier}}
+		return ComponentEditState{TypeID: "modifyStat", Params: map[string]float64{
+			"stat":       EncodeStringParam("modifyStat", "stat", v.Stat),
+			"multiplier": v.Multiplier,
+		}}
 
 	case CritEffect:
 		return ComponentEditState{TypeID: "crit", Params: map[string]float64{"multiplier": v.Multiplier}}
@@ -581,11 +595,11 @@ func extractSubParams(params map[string]float64, keys ...string) map[string]floa
 	return result
 }
 
-// extractScalerParams 从效果 params 中提取 scaler 相关的 key（排除 mode 等元数据）。
+// extractScalerParams 从效果 params 中提取 scaler 相关的 key（排除 mode/subtype/stat 等字符串元数据）。
 func extractScalerParams(params map[string]float64) map[string]float64 {
 	result := map[string]float64{}
 	for k, v := range params {
-		if k == "mode" || k == "subtype" {
+		if k == "mode" || k == "subtype" || k == "stat" || k == "buffID" {
 			continue
 		}
 		result[k] = v
@@ -593,34 +607,125 @@ func extractScalerParams(params map[string]float64) map[string]float64 {
 	return result
 }
 
-// ── DoT subtype 编码 ────────────────────────────────
+// ── 字符串参数枚举编码 ────────────────────────────────
+//
+// 由于 params 是 map[string]float64，字符串参数需编码为 float 索引。
+// StringParamOptions 定义每个 "typeID:paramKey" 的合法选项列表，
+// 索引 0 对应第一个选项。UI 层和 buildEffect/buildCondition 共用此表。
+
+// StringOption 字符串参数选项（值+中文标签）。
+type StringOption struct {
+	Value string
+	Label string
+}
+
+// StringParamOptions 所有字符串类型参数的枚举选项。
+// key 格式为 "typeID:paramKey"（如 "damage:mode"、"buff:stat"）。
+var StringParamOptions = map[string][]StringOption{
+	// ── effect: damage — mode ──
+	"damage:mode": {
+		{Value: "flat", Label: "固定伤害"},
+		{Value: "ratio", Label: "比例伤害"},
+		{Value: "hpPercent", Label: "生命百分比"},
+	},
+	// ── effect: dot — subtype ──
+	"dot:subtype": {
+		{Value: "burn", Label: "灼烧"},
+		{Value: "bleed", Label: "流血"},
+		{Value: "poison", Label: "中毒"},
+	},
+	// ── effect: dot — mode ──
+	"dot:mode": {
+		{Value: "flat", Label: "固定伤害"},
+		{Value: "ratio", Label: "比例伤害"},
+		{Value: "hpPercent", Label: "生命百分比"},
+	},
+	// ── effect: buff — stat ──
+	"buff:stat": {
+		{Value: "damage", Label: "伤害"},
+		{Value: "speed", Label: "攻速"},
+		{Value: "range", Label: "射程"},
+		{Value: "crit", Label: "暴击"},
+	},
+	// ── effect: selfBuff — stat ──
+	"selfBuff:stat": {
+		{Value: "damage", Label: "伤害"},
+		{Value: "speed", Label: "攻速"},
+		{Value: "range", Label: "射程"},
+		{Value: "crit", Label: "暴击"},
+	},
+	// ── effect: modifyStat — stat ──
+	"modifyStat:stat": {
+		{Value: "damage", Label: "伤害"},
+		{Value: "speed", Label: "攻速"},
+		{Value: "range", Label: "射程"},
+	},
+	// ── condition: buffActive — buffID ──
+	"buffActive:buffID": {
+		{Value: "stun", Label: "眩晕"},
+		{Value: "slow", Label: "减速"},
+		{Value: "root", Label: "定身"},
+		{Value: "burn", Label: "灼烧"},
+		{Value: "bleed", Label: "流血"},
+		{Value: "poison", Label: "中毒"},
+		{Value: "weaken", Label: "易伤"},
+		{Value: "berserk", Label: "狂暴"},
+		{Value: "regen", Label: "再生"},
+		{Value: "damageReduce", Label: "减伤"},
+	},
+	// ── condition: buffAbsent — buffID（与 buffActive 相同选项）──
+	"buffAbsent:buffID": {
+		{Value: "stun", Label: "眩晕"},
+		{Value: "slow", Label: "减速"},
+		{Value: "root", Label: "定身"},
+		{Value: "burn", Label: "灼烧"},
+		{Value: "bleed", Label: "流血"},
+		{Value: "poison", Label: "中毒"},
+		{Value: "weaken", Label: "易伤"},
+		{Value: "berserk", Label: "狂暴"},
+		{Value: "regen", Label: "再生"},
+		{Value: "damageReduce", Label: "减伤"},
+	},
+}
+
+// EncodeStringParam 将字符串值编码为 float64 索引。
+// 未找到返回 0（第一个选项）。
+func EncodeStringParam(typeID, paramKey, value string) float64 {
+	key := typeID + ":" + paramKey
+	opts := StringParamOptions[key]
+	for i, o := range opts {
+		if o.Value == value {
+			return float64(i)
+		}
+	}
+	return 0
+}
+
+// DecodeStringParam 将 float64 索引解码为字符串值。
+// 索引越界返回第一个选项的值（或空字符串）。
+func DecodeStringParam(typeID, paramKey string, index float64) string {
+	key := typeID + ":" + paramKey
+	opts := StringParamOptions[key]
+	idx := int(index)
+	if idx >= 0 && idx < len(opts) {
+		return opts[idx].Value
+	}
+	if len(opts) > 0 {
+		return opts[0].Value
+	}
+	return ""
+}
+
+// ── DoT subtype 编码（兼容旧接口）────────────────────
 
 // dotSubtypeToFloat 将 DoT 子类型字符串编码为 float64。
-// burn=0, bleed=1, poison=2
+// burn=0, bleed=1, poison=2（与 StringParamOptions["dot:subtype"] 顺序一致）
 func dotSubtypeToFloat(s string) float64 {
-	switch s {
-	case "burn":
-		return 0
-	case "bleed":
-		return 1
-	case "poison":
-		return 2
-	default:
-		return 0
-	}
+	return EncodeStringParam("dot", "subtype", s)
 }
 
 // dotSubtypeFromFloat 将 float64 解码为 DoT 子类型字符串。
 func dotSubtypeFromFloat(f float64) string {
-	switch int(f) {
-	case 0:
-		return "burn"
-	case 1:
-		return "bleed"
-	case 2:
-		return "poison"
-	default:
-		return "burn"
-	}
+	return DecodeStringParam("dot", "subtype", f)
 }
 
