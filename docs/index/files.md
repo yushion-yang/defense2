@@ -2,7 +2,7 @@
 
 > 自动生成，勿手动编辑。运行 `make index` 更新。
 
-共 280 个文件, 66009 行代码, 47 个包。
+共 276 个文件, 66827 行代码, 47 个包。
 
 ## abilities (346 行)
 
@@ -212,24 +212,19 @@
 |------|------|------|
 | `gamemap.go` | 156 | 运行时地图状态。 |
 
-## gamemode (844 行)
+## gamemode (1101 行)
 
 | 文件 | 行数 | 职责 |
 |------|------|------|
-| `autoplay.go` | 60 | 自动对局游戏模式。 |
 | `base.go` | 85 | Mode 接口的默认空实现（Null Object 模式）。 |
-| `campaign.go` | 76 | 战役模式（当前唯一可正常游玩的模式）。 |
-| `campaign_ruleset.go` | 5 | 战役模式塔加载规则。 |
-| `classic.go` | 39 | 经典战役模式。 |
-| `classic_ruleset.go` | 11 | 经典模式塔加载规则。 |
-| `coop.go` | 55 | 合作模式。 |
+| `config_ruleset.go` | 47 | 配置驱动的 TowerRuleset 实现。 |
 | `difficulty.go` | 54 | 难度配置加载。 |
-| `mode.go` | 166 | 游戏模式框架。 |
+| `hook.go` | 173 | 模式钩子系统（运行时扩展点）。 |
+| `mode.go` | 183 | 游戏模式框架。 |
+| `mode_config.go` | 126 | 配置驱动模式系统的 JSON 数据结构与加载。 |
 | `session.go` | 113 | 游戏会话运行时容器。 |
-| `simulation.go` | 60 | 仿真测试模式。 |
-| `test_ruleset.go` | 8 | 测试模式塔加载规则。 |
-| `testmode.go` | 54 | 测试模式。 |
 | `tower_ruleset.go` | 58 | 模式级塔加载规则。 |
+| `universal.go` | 262 | 配置驱动的通用游戏模式。 |
 
 ## hud (5085 行)
 
@@ -391,7 +386,7 @@
 | `splash_vfx.go` | 115 | splash ability impact ring VFX. |
 | `trail_batch.go` | 286 | 弹道尾迹批量渲染器。 |
 
-## scene (17887 行)
+## scene (18448 行)
 
 | 文件 | 行数 | 职责 |
 |------|------|------|
@@ -401,13 +396,13 @@
 | `bestiary.go` | 472 | 图鉴场景。 |
 | `blueprint_edit.go` | 1597 | 蓝图编辑场景（4步向导）。 |
 | `campaign_select.go` | 499 | 战役模式关卡选择场景。 |
-| `game.go` | 498 | 顶层游戏管理器，实现 Ebitengine 的 ebiten.Game 接口。 |
+| `game.go` | 500 | 顶层游戏管理器，实现 Ebitengine 的 ebiten.Game 接口。 |
 | `lang_select.go` | 126 | 首次语言选择场景。 |
 | `loading.go` | 293 | 加载场景。 |
 | `map_editor.go` | 808 | Map Editor scene (tower slot editor). |
 | `result.go` | 703 | 结算场景（游戏结束后的统计与评价画面）。 |
 | `scene.go` | 52 | 场景系统的核心接口定义。 |
-| `select.go` | 518 | 模式选择场景（卡片式 UI）。 |
+| `select.go` | 551 | 模式选择场景（卡片式 UI）。 |
 | `settings.go` | 390 | 设置场景。 |
 | `settings_persist.go` | 80 | 设置持久化（音量/画质）。 |
 | `stage.go` | 4505 | 游戏主战斗场景（~3600行，本项目最核心的文件）。 |
@@ -417,6 +412,7 @@
 | `stage_warden_vm.go` | 179 | 战灵选择数据构建（从 config 加载并转为 hud.WardenOption）。 |
 | `test_select.go` | 490 | 测试模式场景选择器。 |
 | `title.go` | 145 | 标题场景（游戏启动首屏）。 |
+| `tower_workshop.go` | 526 | 炮塔工坊场景（游戏外蓝图管理中心）。 |
 | `vfx_preview.go` | 1129 | VFX preview scene. |
 | `warden_select.go` | 365 | 战灵选择场景。 |
 | `wave_preview.go` | 458 | Wave Preview scene. |

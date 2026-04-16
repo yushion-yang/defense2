@@ -3,7 +3,7 @@
 > 自动生成，勿手动编辑。运行 `make index` 更新。
 > 修改函数前查此表，评估影响范围。
 
-共 22 个跨包函数有影响链。
+共 24 个跨包函数有影响链。
 
 ## i18n.T
 
@@ -194,6 +194,19 @@ combat.ApplyDamage → i18n.T
 combat.ApplyDamage → i18n.T
 ```
 
+## config.GetDataFS
+
+**上游影响链**（修改此函数，以下调用者受影响）：
+
+```
+gamemode.LoadModeConfigs → config.GetDataFS
+gamemode.LoadModeConfigs → config.GetDataFS
+scene.NewGame → config.GetDataFS
+scene.NewGame → config.GetDataFS
+scene.Update → config.GetDataFS
+scene.Update → config.GetDataFS
+```
+
 ## config.GlobalWardenConfig
 
 **上游影响链**（修改此函数，以下调用者受影响）：
@@ -240,6 +253,15 @@ warden.FindDensestEnemy → enemies.Each
 warden.FindNearest → enemies.Each
 ```
 
+## fs.ReadFile
+
+**上游影响链**（修改此函数，以下调用者受影响）：
+
+```
+gamemode.LoadModeConfigs → fs.ReadFile
+scene.Update → mascot.LoadAllDialogs → fs.ReadFile
+```
+
 ## pool.EachActive
 
 **上游影响链**（修改此函数，以下调用者受影响）：
@@ -260,6 +282,8 @@ scene.NewSelectScene → persistence.NewProgressManager → s.Get
 scene.NewStageSceneWithOpts → descriptor.NewAbilityStore → s.Get
 scene.NewStageSceneWithOpts → descriptor.NewBlueprintStore → s.Get
 scene.NewStageSceneWithOpts → persistence.NewProgressManager → s.Get
+scene.NewTowerWorkshopScene → descriptor.NewAbilityStore → s.Get
+scene.NewTowerWorkshopScene → descriptor.NewBlueprintStore → s.Get
 scene.Update → persistence.NewProgressManager → s.Get
 ```
 
@@ -273,6 +297,8 @@ scene.NewSelectScene → persistence.NewProgressManager → s.Has
 scene.NewStageSceneWithOpts → descriptor.NewAbilityStore → s.Has
 scene.NewStageSceneWithOpts → descriptor.NewBlueprintStore → s.Has
 scene.NewStageSceneWithOpts → persistence.NewProgressManager → s.Has
+scene.NewTowerWorkshopScene → descriptor.NewAbilityStore → s.Has
+scene.NewTowerWorkshopScene → descriptor.NewBlueprintStore → s.Has
 scene.Update → persistence.NewProgressManager → s.Has
 ```
 
