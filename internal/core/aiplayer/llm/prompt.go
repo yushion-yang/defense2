@@ -24,6 +24,10 @@ type Situation struct {
 	// ── Phase 2-3 新增字段 ──
 	PersonalityDesc string // 个性描述（如 "你性格激进，喜欢DPS塔"）
 	Mood            string // 当前情绪（如 "excited" / "worried" / "calm"）
+
+	// ── 协作+策略 字段 ──
+	CoopDesc       string // 协作分析描述（如 "队友有控制，全队缺输出"）
+	AdvicePriority string // 策略建议方向（如 "build_cc" / "build_dps"）
 }
 
 // ── 短期记忆系统 ──
@@ -121,9 +125,58 @@ func BuildPrompt(s Situation, memory *Memory) string {
 		s.ThreatLevel,
 	))
 
+	// 协作和策略上下文
+	if s.CoopDesc != "" {
+		sb.WriteString(fmt.Sprintf("- 队友配置: %s\n", s.CoopDesc))
+	}
+	if s.AdvicePriority != "" {
+		sb.WriteString(fmt.Sprintf("- 建议策略: %s\n", s.AdvicePriority))
+	}
+
 	// ── 输出要求 ──
 	sb.WriteString(`用一句话（15字以内）表达你当前的想法或对局势的反应。
 要求：口语化中文、有个性、偶尔吐槽。不要用emoji。只输出这一句话，不要任何解释。`)
 
 	return sb.String()
 }
+
+// BuildStrategicPrompt 构建结构化战略决策 prompt。
+// 与 BuildPrompt 不同，此 prompt 要求 LLM 返回严格 JSON，用于覆盖本地启发式决策。
+//
+// 输入：
+//   - s: 局势摘要
+//   - advicePriority: 局势感知的建议方向（如 "build_cc"）
+//   - coopDesc: 协作分析描述
+//
+// 输出 prompt 要求 LLM 返回格式：
+//
+//	{"action":"build|upgrade|wait","reason":"一句话(15字内)","priority":"cc|dps|aoe","target":"strongest|weakest"}
+func BuildStrategicPrompt(s Situation, advicePriority, coopDesc string) string {
+	var sb strings.Builder
+
+	sb.WriteString("你是塔防游戏 AI 玩家。根据局势决定下一步操作。\n\n")
+
+	sb.WriteString(fmt.Sprintf(`局势：
+- 第 %d/%d 波
+- 金币: %d
+- 威胁等级: %s
+- 队友配置: %s
+- 建议策略: %s
+`,
+		s.Wave, s.MaxWaves,
+		s.AIGold,
+		s.ThreatLevel,
+		coopDesc,
+		advicePriority,
+	))
+
+	sb.WriteString(`
+请返回 JSON（严格格式，不要其他文字）：
+{"action":"build|upgrade|wait","reason":"一句话原因(15字内)"}
+
+如果action=build，加上 "priority":"cc|dps|aoe"
+如果action=upgrade，加上 "target":"strongest|weakest"`)
+
+	return sb.String()
+}
+

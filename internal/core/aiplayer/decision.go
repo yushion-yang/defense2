@@ -33,6 +33,7 @@ type Decision struct {
 	WardenKey   string // 战灵类型键名（SelectWarden 时使用）
 	AbilityName string // ChooseAbility: 选中的能力 ID
 	SlotIndex   int    // ChooseAbility: 对应的槽位类别索引
+	Reason      string // 策略原因（用于气泡文案，由局势感知系统生成）
 }
 
 // ── 快照数据类型 ──
@@ -57,6 +58,9 @@ type AISnapshot struct {
 	HumanTowerCount int // 人类玩家的塔数量
 	HumanGold       int // 人类玩家的金币
 	TotalKills      int // 所有塔的总击杀数（含人类 + AI）
+
+	// ── 协作意识：全量塔数据（含人类 + AI，未按 Owner 过滤）──
+	AllTowers []AITower
 }
 
 // AITower 塔快照。
@@ -68,6 +72,7 @@ type AITower struct {
 	Range        float64
 	Kills        int
 	Owner        int              // 塔所有者 ID
+	Abilities    []string         // 该塔已拥有的能力名称列表
 	PendingSlots []AIPendingSlot  // 待选能力槽位（有候选选项的）
 }
 
@@ -119,9 +124,14 @@ type AIPathPoint struct {
 type DecisionEngine struct {
 	strengthBuyCost int
 	personality     Personality
+	ownerID         int // AI 的 owner ID，用于协作分析时区分人类/AI 塔
 
 	// 开波延迟计时器（避免波结束后立即开下一波）
 	waveStartDelay float64
+
+	// 局势感知结果（每次 Evaluate 更新，供外部读取）
+	LatestAdvice StrategicAdvice
+	LatestCoop   CoopAnalysis
 }
 
 // NewDecisionEngine 创建决策引擎。
@@ -130,6 +140,11 @@ func NewDecisionEngine() *DecisionEngine {
 		strengthBuyCost: 10,
 		personality:     Personality{Aggression: 0.5, Economy: 0.5, Risk: 0.5, Reaction: 0.5, Compliance: 0.5},
 	}
+}
+
+// SetOwnerID 设置 AI owner ID（协作分析用）。
+func (e *DecisionEngine) SetOwnerID(id int) {
+	e.ownerID = id
 }
 
 // SetStrengthBuyCost 设置升级花费。
@@ -170,8 +185,19 @@ func (e *DecisionEngine) Evaluate(snap AISnapshot) Decision {
 		return waveDecision
 	}
 
-	// ── 经济决策（造塔 / 升级）──
-	return e.pickEconomicAction(snap)
+	// ── 局势感知 ──
+	threats := AnalyzeThreats(snap.Enemies)
+	gaps := DetectDefenseGaps(snap.Towers, threats, len(snap.PathPoints))
+	advice := GenerateAdvice(gaps, threats, snap.Towers, e.personality)
+
+	// ── 协作意识（分析全队配置，合并建议）──
+	coop := AnalyzeCooperation(snap.AllTowers, e.ownerID)
+	e.LatestCoop = coop
+	advice = MergeCoopWithAdvice(coop, advice)
+	e.LatestAdvice = advice
+
+	// ── 经济决策（造塔 / 升级，受局势+协作建议影响）──
+	return e.pickEconomicAction(snap, advice)
 }
 
 // TickWaveDelay 每帧递减开波延迟。由 AIPlayer.Tick 调用。
@@ -213,15 +239,20 @@ func (e *DecisionEngine) tryStartWave(snap AISnapshot) (Decision, bool) {
 	return Decision{Type: DecisionStartWave}, true
 }
 
-// pickEconomicAction 根据经济状况和个性选择造塔/升级/idle。
-func (e *DecisionEngine) pickEconomicAction(snap AISnapshot) Decision {
+// pickEconomicAction 根据经济状况、个性和局势建议选择造塔/升级/idle。
+func (e *DecisionEngine) pickEconomicAction(snap AISnapshot, advice StrategicAdvice) Decision {
 	progress := 0.0
 	if snap.MaxWaves > 0 {
 		progress = float64(snap.Wave) / float64(snap.MaxWaves)
 	}
 
 	// 金币保留缓冲：低 Risk → 保留 30%，高 Risk → 花光
-	goldReserve := int(float64(snap.Gold) * 0.30 * (1.0 - e.personality.Risk))
+	// 高 urgency 时减少保留（紧急状况下不惜代价）
+	reserveRatio := 0.30 * (1.0 - e.personality.Risk)
+	if advice.Urgency > 0.8 {
+		reserveRatio *= 0.5
+	}
+	goldReserve := int(float64(snap.Gold) * reserveRatio)
 	availableGold := snap.Gold - goldReserve
 	if availableGold < 0 {
 		availableGold = 0
@@ -241,8 +272,7 @@ func (e *DecisionEngine) pickEconomicAction(snap AISnapshot) Decision {
 	}
 
 	// 造塔 vs 升级的偏好。
-	// 高 Economy → 偏升级(ROI 更高)，低 Economy → 偏造塔(铺量)。
-	// 高 Aggression → 偏造塔(早铺火力)。
+	// 基础偏好：高 Economy → 偏升级，低 Economy → 偏造塔，高 Aggression → 偏造塔。
 	buildPreference := 0.5 + e.personality.Aggression*0.2 - e.personality.Economy*0.2
 
 	// 早期（<40%进度）更偏造塔，后期更偏升级
@@ -257,26 +287,48 @@ func (e *DecisionEngine) pickEconomicAction(snap AISnapshot) Decision {
 		buildPreference = 0.9
 	}
 
+	// 局势建议影响偏好
+	switch advice.Priority {
+	case "build_cc", "build_dps", "build_aoe":
+		// 建议造塔 → 提高建造偏好（urgency 越高影响越大）
+		buildPreference += advice.Urgency * 0.3
+	case "upgrade":
+		// 建议升级 → 降低建造偏好
+		buildPreference -= advice.Urgency * 0.3
+	}
+	// 钳制到合理范围
+	if buildPreference < 0.1 {
+		buildPreference = 0.1
+	}
+	if buildPreference > 0.95 {
+		buildPreference = 0.95
+	}
+
 	preferBuild := rand.Float64() < buildPreference
 
 	var bestDecision, secondDecision Decision
 
 	if preferBuild && canBuild && len(snap.BuildCells) > 0 {
 		bestDecision = e.pickBuild(snap, availableGold)
+		bestDecision.Reason = advice.Reason
 		if canUpgrade {
 			secondDecision = e.pickUpgrade(snap)
+			secondDecision.Reason = advice.Reason
 		} else {
 			secondDecision = bestDecision
 		}
 	} else if canUpgrade {
 		bestDecision = e.pickUpgrade(snap)
+		bestDecision.Reason = advice.Reason
 		if canBuild && len(snap.BuildCells) > 0 {
 			secondDecision = e.pickBuild(snap, availableGold)
+			secondDecision.Reason = advice.Reason
 		} else {
 			secondDecision = bestDecision
 		}
 	} else if canBuild && len(snap.BuildCells) > 0 {
 		bestDecision = e.pickBuild(snap, availableGold)
+		bestDecision.Reason = advice.Reason
 		secondDecision = bestDecision
 	} else {
 		return Decision{Type: DecisionIdle}
@@ -589,4 +641,16 @@ func (e *DecisionEngine) scoreUpgradeTower(t AITower, snap AISnapshot) float64 {
 	headroom := math.Max(0, 1.0-float64(t.Strength-100)/200.0)
 
 	return effScore*0.40 + posScore*0.30 + headroom*0.30
+}
+
+// ForceBuild 强制执行造塔决策（被 LLM 战略覆盖调用）。
+// 使用全部可用金币选择最佳位置和塔类型。
+func (e *DecisionEngine) ForceBuild(snap AISnapshot) Decision {
+	return e.pickBuild(snap, snap.Gold)
+}
+
+// ForceUpgrade 强制执行升级决策（被 LLM 战略覆盖调用）。
+// 选择评分最高的塔进行升级。
+func (e *DecisionEngine) ForceUpgrade(snap AISnapshot) Decision {
+	return e.pickUpgrade(snap)
 }

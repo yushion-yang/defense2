@@ -2,7 +2,7 @@
 
 > 自动生成，勿手动编辑。运行 `make index` 更新。
 
-共 278 个文件, 67592 行代码, 47 个包。
+共 282 个文件, 69009 行代码, 47 个包。
 
 ## abilities (346 行)
 
@@ -16,16 +16,18 @@
 |------|------|------|
 | `achievement.go` | 215 | Achievement tracking and persistence. |
 
-## aiplayer (2115 行)
+## aiplayer (2908 行)
 
 | 文件 | 行数 | 职责 |
 |------|------|------|
 | `action.go` | 64 | 延迟行动队列。 |
-| `aiplayer.go` | 558 | AI 玩家主结构体。 |
+| `aiplayer.go` | 666 | AI 玩家主结构体。 |
+| `awareness.go` | 332 | 局势感知系统。 |
 | `behavior.go` | 176 | - |
-| `bubble.go` | 215 | 思维气泡数据模型。 |
+| `bubble.go` | 259 | 思维气泡数据模型。 |
 | `coop_zone.go` | 93 | N 分区 Zone 系统。 |
-| `decision.go` | 592 | AI 决策引擎。 |
+| `cooperation.go` | 245 | 协作意识系统。 |
+| `decision.go` | 656 | AI 决策引擎。 |
 | `personality.go` | 38 | AI 个性系统。 |
 | `ping.go` | 65 | - |
 | `spectator.go` | 138 | - |
@@ -130,7 +132,7 @@
 |------|------|------|
 | `perf.go` | 162 | frame time + GC performance tracker. |
 
-## descriptor (4369 行)
+## descriptor (4703 行)
 
 | 文件 | 行数 | 职责 |
 |------|------|------|
@@ -149,6 +151,7 @@
 | `init.go` | 60 | 描述符能力的双轨注册初始化。 |
 | `interpreter.go` | 218 | 描述符运行时解释器。 |
 | `loader.go` | 86 | 能力描述符表加载器。 |
+| `marshal.go` | 334 | AbilityDescriptor 的 JSON 序列化/反序列化。 |
 | `primitive_meta.go` | 376 | 基元元数据注册表，供能力编辑器 UI 使用。 |
 | `scaler.go` | 168 | 数值缩放器接口及基础实现。 |
 | `selector.go` | 385 | 目标选择器接口及 9 种实现。 |
@@ -228,14 +231,14 @@
 | `tower_ruleset.go` | 58 | 模式级塔加载规则。 |
 | `universal.go` | 262 | 配置驱动的通用游戏模式。 |
 
-## hud (5085 行)
+## hud (5041 行)
 
 | 文件 | 行数 | 职责 |
 |------|------|------|
 | `ability_helpers.go` | 60 | 能力显示相关的共享工具。 |
 | `action_bar.go` | 166 | Bottom-center pill-shaped action toolbar. |
 | `ai_overlay.go` | 106 | AI 玩家精灵和思维气泡渲染。 |
-| `build_menu.go` | 604 | Build tower popup panel. |
+| `build_menu.go` | 560 | Build tower popup panel. |
 | `choice_panel.go` | 329 | 通用选择面板（N 选 1）。 |
 | `debug_overlay.go` | 106 | 调试覆盖层（F2 切换）。 |
 | `debug_panel.go` | 207 | 调试面板（仅测试模式）。 |
@@ -277,12 +280,12 @@
 |------|------|------|
 | `item.go` | 187 | 道具系统。 |
 
-## llm (330 行)
+## llm (500 行)
 
 | 文件 | 行数 | 职责 |
 |------|------|------|
-| `connector.go` | 201 | - |
-| `prompt.go` | 129 | - |
+| `connector.go` | 318 | - |
+| `prompt.go` | 182 | - |
 
 ## loader (132 行)
 
@@ -290,12 +293,13 @@
 |------|------|------|
 | `tower_loader.go` | 132 | 塔配置→运行时定义转换器。 |
 
-## main (519 行)
+## main (903 行)
 
 | 文件 | 行数 | 职责 |
 |------|------|------|
 | `main.go` | 477 | AutoPlay 自动对局工具入口（无头模式批量跑关卡）。 |
 | `main.go` | 42 | 游戏入口（桌面 + WASM 通用）。 |
+| `main.go` | 384 | 写入 OP 测试用自定义能力和蓝图到 ~/.defense2/。 |
 
 ## mascot (1151 行)
 
@@ -388,15 +392,15 @@
 | `splash_vfx.go` | 115 | splash ability impact ring VFX. |
 | `trail_batch.go` | 286 | 弹道尾迹批量渲染器。 |
 
-## scene (18489 行)
+## scene (18269 行)
 
 | 文件 | 行数 | 职责 |
 |------|------|------|
-| `ability_edit.go` | 1609 | 自定义能力编辑场景（完整管线编辑器）。 |
+| `ability_edit.go` | 1616 | 自定义能力编辑场景（完整管线编辑器）。 |
 | `audio_preview.go` | 762 | Audio preview scene. |
 | `autoplay_types.go` | 163 | AutoPlayer 接口和数据类型定义。 |
 | `bestiary.go` | 472 | 图鉴场景。 |
-| `blueprint_edit.go` | 1597 | 蓝图编辑场景（4步向导）。 |
+| `blueprint_edit.go` | 1603 | 蓝图编辑场景（4步向导）。 |
 | `campaign_select.go` | 499 | 战役模式关卡选择场景。 |
 | `game.go` | 500 | 顶层游戏管理器，实现 Ebitengine 的 ebiten.Game 接口。 |
 | `lang_select.go` | 126 | 首次语言选择场景。 |
@@ -404,17 +408,17 @@
 | `map_editor.go` | 808 | Map Editor scene (tower slot editor). |
 | `result.go` | 703 | 结算场景（游戏结束后的统计与评价画面）。 |
 | `scene.go` | 52 | 场景系统的核心接口定义。 |
-| `select.go` | 551 | 模式选择场景（卡片式 UI）。 |
+| `select.go` | 576 | 模式选择场景（卡片式 UI）。 |
 | `settings.go` | 390 | 设置场景。 |
 | `settings_persist.go` | 80 | 设置持久化（音量/画质）。 |
-| `stage.go` | 4546 | 游戏主战斗场景（~3600行，本项目最核心的文件）。 |
+| `stage.go` | 4432 | 游戏主战斗场景（~3600行，本项目最核心的文件）。 |
 | `stage_info_vm.go` | 667 | 塔信息面板的 ViewModel 构建器。 |
-| `stage_input.go` | 1259 | StageScene 的输入处理和交互状态机（11 种模式）。 |
+| `stage_input.go` | 1091 | StageScene 的输入处理和交互状态机（11 种模式）。 |
 | `stage_types.go` | 120 | StageScene 的类型定义和常量。 |
 | `stage_warden_vm.go` | 179 | 战灵选择数据构建（从 config 加载并转为 hud.WardenOption）。 |
 | `test_select.go` | 490 | 测试模式场景选择器。 |
 | `title.go` | 145 | 标题场景（游戏启动首屏）。 |
-| `tower_workshop.go` | 526 | 炮塔工坊场景（游戏外蓝图管理中心）。 |
+| `tower_workshop.go` | 550 | 炮塔工坊场景（蓝图 + 自定义能力管理中心）。 |
 | `vfx_preview.go` | 1129 | VFX preview scene. |
 | `warden_select.go` | 365 | 战灵选择场景。 |
 | `wave_preview.go` | 458 | Wave Preview scene. |

@@ -30,14 +30,15 @@ type ZoneProvider interface {
 
 // Config AI 玩家配置。
 type Config struct {
-	ZoneProvider ZoneProvider // 区域查询（Zone 或 CoopZone）
-	OwnerID      int          // 此 AI 的 owner ID（1..N-1）
-	StartGold    int
-	Ops          StageOps
-	CellSize     int     // 网格像素尺寸
-	SpawnX       float64 // 精灵初始 X（0=自动计算）
-	SpawnY       float64 // 精灵初始 Y（0=自动计算）
-	LLMEnabled   bool    // 是否启用 LLM 弹幕（或 ANTHROPIC_API_KEY 存在时自动启用）
+	ZoneProvider       ZoneProvider // 区域查询（Zone 或 CoopZone）
+	OwnerID            int          // 此 AI 的 owner ID（1..N-1）
+	StartGold          int
+	Ops                StageOps
+	CellSize           int     // 网格像素尺寸
+	SpawnX             float64 // 精灵初始 X（0=自动计算）
+	SpawnY             float64 // 精灵初始 Y（0=自动计算）
+	LLMEnabled         bool    // 是否启用 LLM 弹幕（或 ANTHROPIC_API_KEY 存在时自动启用）
+	LLMOverrideEnabled bool    // LLM 战略决策是否可覆盖本地启发式（默认 true when LLM enabled）
 }
 
 // AIPlayer AI 玩家。
@@ -53,8 +54,9 @@ type AIPlayer struct {
 	engine       *DecisionEngine
 	dialogue     *DialogueBank
 	ping         *PingState
-	llmConn      *llm.Connector // LLM 弹幕连接器（nil 表示禁用）
-	lastAction   string         // 上一次执行的行动标签（供 LLM prompt 使用）
+	llmConn            *llm.Connector // LLM 弹幕连接器（nil 表示禁用）
+	llmOverrideEnabled bool            // LLM 战略决策是否可覆盖本地启发式
+	lastAction         string          // 上一次执行的行动标签（供 LLM prompt 使用）
 
 	// ── Phase 2-3: 拟人行为 + 观战评论 ──
 	behavior  *BehaviorState  // 拟人行为状态（漏怪/连杀/焦虑/巡视/发呆）
@@ -103,6 +105,7 @@ func New(cfg Config) *AIPlayer {
 		spectator:    NewSpectatorState(20),
 	}
 	ap.engine.SetPersonality(personality)
+	ap.engine.SetOwnerID(ownerID)
 	ap.rollNextInterval()
 
 	// LLM 弹幕连接器：显式启用或环境变量 ANTHROPIC_API_KEY 存在时创建
@@ -112,6 +115,14 @@ func New(cfg Config) *AIPlayer {
 	}
 	if llmCfg.Enabled {
 		ap.llmConn = llm.NewConnector(llmCfg)
+		// LLM 战略覆盖：默认启用（除非显式配置为 false 且配置了 LLMOverrideEnabled 字段）
+		ap.llmOverrideEnabled = true
+		if cfg.LLMEnabled && !cfg.LLMOverrideEnabled {
+			// 显式 LLMEnabled=true 但 LLMOverrideEnabled 默认零值 false
+			// → 需要区分"未设置"和"设置为 false"。Go 零值无法区分，
+			// 因此当 LLMEnabled=true 时默认启用 override。
+			ap.llmOverrideEnabled = true
+		}
 	}
 
 	if cfg.Ops != nil {
@@ -161,6 +172,12 @@ func (ap *AIPlayer) BubbleText() string { return ap.bubble.Text() }
 
 // BubbleAlpha 气泡透明度。
 func (ap *AIPlayer) BubbleAlpha() float64 { return ap.bubble.Alpha() }
+
+// LatestAdvice 返回最近一次局势感知建议（只读）。
+func (ap *AIPlayer) LatestAdvice() StrategicAdvice { return ap.engine.LatestAdvice }
+
+// LatestCoop 返回最近一次协作分析结果（只读）。
+func (ap *AIPlayer) LatestCoop() CoopAnalysis { return ap.engine.LatestCoop }
 
 // SendPing 玩家向 AI 发送 ping 建议（冷却中返回 false）。
 func (ap *AIPlayer) SendPing(row, col int, x, y float64) bool {
@@ -220,11 +237,18 @@ func (ap *AIPlayer) Tick(dt float64, snap AISnapshot) {
 	// 注入 AI 当前金币到快照
 	snap.Gold = ap.gold
 
+	// 保存全量塔数据（协作分析需要看到人类+AI 的全部塔）
+	snap.AllTowers = snap.Towers
+
 	// 过滤出 AI 区域的可建造格子和塔
 	snap.BuildCells = ap.filterAICells(snap.BuildCells)
 	snap.Towers = ap.filterAITowers(snap.Towers)
 
 	decision := ap.engine.Evaluate(snap)
+
+	// LLM 战略覆盖：如果 LLM 有新的战略决策，可覆盖本地启发式
+	decision = ap.applyLLMStrategicOverride(dt, snap, decision)
+
 	ap.executeDecision(decision)
 
 	// 通知行为系统做了决策（重置 idle 时间）
@@ -284,7 +308,11 @@ func (ap *AIPlayer) executeDecision(d Decision) {
 
 	case DecisionBuild:
 		ap.sprite.MoveTo(d.CenterX, d.CenterY)
-		ap.bubble.Show(ap.dialogue.Random("build_thinking"), BubbleThink, 1.5)
+		if d.Reason != "" {
+			ap.bubble.Show(d.Reason, BubbleThink, 2.0)
+		} else {
+			ap.bubble.Show(ap.dialogue.Random("build_thinking"), BubbleThink, 1.5)
+		}
 
 		cost := 50
 		if ap.ops != nil {
@@ -310,7 +338,11 @@ func (ap *AIPlayer) executeDecision(d Decision) {
 
 	case DecisionUpgrade:
 		row, col := d.Row, d.Col
-		ap.bubble.Show(ap.dialogue.Random("upgrade_thinking"), BubbleThink, 1.0)
+		if d.Reason != "" {
+			ap.bubble.Show(d.Reason, BubbleThink, 1.5)
+		} else {
+			ap.bubble.Show(ap.dialogue.Random("upgrade_thinking"), BubbleThink, 1.0)
+		}
 
 		ap.actions.Enqueue(DelayedAction{
 			Delay: 0.5 + rand.Float64()*0.5,
@@ -468,6 +500,77 @@ func (ap *AIPlayer) tickLLM(dt float64, snap AISnapshot) {
 	}
 }
 
+// applyLLMStrategicOverride 检查 LLM 战略决策，可能覆盖本地启发式决策。
+//
+// 覆盖规则：
+//   - LLM 未启用或未返回决策 → 保持原决策
+//   - LLM 说 "wait" → 覆盖为 Idle
+//   - LLM 说 "build" + priority → 覆盖 build 决策的偏好方向
+//   - LLM 说 "upgrade" → 覆盖为 Upgrade
+//   - LLM 的 reason 用作气泡文案
+func (ap *AIPlayer) applyLLMStrategicOverride(dt float64, snap AISnapshot, local Decision) Decision {
+	if ap.llmConn == nil || !ap.llmOverrideEnabled {
+		return local
+	}
+
+	// 构建战略 prompt
+	coopDesc := CoopDescription(ap.engine.LatestCoop)
+	situation := ap.buildSituation(snap)
+	prompt := llm.BuildStrategicPrompt(situation, ap.engine.LatestAdvice.Priority, coopDesc)
+
+	// 驱动战略决策通道（异步，非阻塞）
+	decision := ap.llmConn.TickStrategic(dt, prompt)
+	if decision == nil {
+		return local
+	}
+
+	// LLM 决策可用 → 覆盖本地决策
+	switch decision.Action {
+	case "wait":
+		return Decision{Type: DecisionIdle, Reason: decision.Reason}
+
+	case "build":
+		// 覆盖建造偏好方向（通过修改 advice 间接影响）
+		if decision.Priority != "" {
+			// 将 LLM priority 映射到 advice priority
+			priorityMap := map[string]string{
+				"cc": "build_cc", "dps": "build_dps", "aoe": "build_aoe",
+			}
+			if p, ok := priorityMap[decision.Priority]; ok {
+				ap.engine.LatestAdvice.Priority = p
+			}
+		}
+		// 如果本地已经是 build → 保留位置选择，只更新 reason
+		if local.Type == DecisionBuild {
+			local.Reason = decision.Reason
+			return local
+		}
+		// 本地不是 build → 强制切换为 build（重新评分选位）
+		if len(snap.BuildCells) > 0 && len(snap.TowerDefs) > 0 {
+			forced := ap.engine.ForceBuild(snap)
+			forced.Reason = decision.Reason
+			return forced
+		}
+		return local
+
+	case "upgrade":
+		// 如果本地已经是 upgrade → 保留目标，更新 reason
+		if local.Type == DecisionUpgrade {
+			local.Reason = decision.Reason
+			return local
+		}
+		// 本地不是 upgrade → 强制切换为 upgrade
+		if len(snap.Towers) > 0 {
+			forced := ap.engine.ForceUpgrade(snap)
+			forced.Reason = decision.Reason
+			return forced
+		}
+		return local
+	}
+
+	return local
+}
+
 // TriggerLLMEvent 触发 LLM 即时调用（用于重要事件）。
 // 事件如：Boss 来袭、连续漏怪、玩家 ping 等。
 func (ap *AIPlayer) TriggerLLMEvent(event string, snap AISnapshot) {
@@ -517,6 +620,9 @@ func (ap *AIPlayer) buildSituation(snap AISnapshot) llm.Situation {
 	// 个性描述
 	personalityDesc := ap.buildPersonalityDesc()
 
+	// 协作分析描述
+	coopDesc := CoopDescription(ap.engine.LatestCoop)
+
 	return llm.Situation{
 		Wave:            snap.Wave,
 		MaxWaves:        snap.MaxWaves,
@@ -530,6 +636,8 @@ func (ap *AIPlayer) buildSituation(snap AISnapshot) llm.Situation {
 		ThreatLevel:     threatLevel,
 		PersonalityDesc: personalityDesc,
 		Mood:            mood,
+		CoopDesc:        coopDesc,
+		AdvicePriority:  ap.engine.LatestAdvice.Priority,
 	}
 }
 

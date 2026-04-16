@@ -2,7 +2,7 @@
 
 > 自动生成，勿手动编辑。运行 `make index` 更新。
 
-扫描 64 个 JSON 配置文件，找到 678 条映射。
+扫描 64 个 JSON 配置文件，找到 634 条映射。
 
 ## config/audio/bgm.json
 
@@ -170,17 +170,6 @@
 | `autoplay.perfectBonus` | `internal/core/gamemode/mode_config.go` | 27 | PerfectBonus bool          `json:"perfectBonus"` |
 | `autoplay.ruleset` | `internal/core/gamemode/mode_config.go` | 29 | Ruleset      RulesetConfig `json:"ruleset"` |
 | `autoplay.victory` | `internal/core/gamemode/mode_config.go` | 23 | Victory      string        `json:"victory"`      // allWa... |
-| `bossRush.autoStart` | `internal/core/gamemode/mode_config.go` | 20 | AutoStart    bool          `json:"autoStart"` |
-| `bossRush.coopEnabled` | `internal/core/gamemode/mode_config.go` | 28 | CoopEnabled  bool          `json:"coopEnabled"` |
-| `bossRush.defeat` | `internal/core/gamemode/mode_config.go` | 24 | Defeat       string        `json:"defeat"`       // lives... |
-| `bossRush.econID` | `internal/core/gamemode/mode_config.go` | 26 | EconID       string        `json:"econID"` |
-| `bossRush.enableEvents` | `internal/core/gamemode/mode_config.go` | 25 | EnableEvents bool          `json:"enableEvents"` |
-| `bossRush.endFields` | `internal/core/gamemode/mode_config.go` | 32 | EndFields    []string      `json:"endFields"` |
-| `bossRush.initMaxWaves` | `internal/core/gamemode/mode_config.go` | 22 | InitMaxWaves int           `json:"initMaxWaves"` // 0 = �... |
-| `bossRush.intermission` | `internal/core/gamemode/mode_config.go` | 21 | Intermission float64       `json:"intermission"` // 0 = �... |
-| `bossRush.perfectBonus` | `internal/core/gamemode/mode_config.go` | 27 | PerfectBonus bool          `json:"perfectBonus"` |
-| `bossRush.ruleset` | `internal/core/gamemode/mode_config.go` | 29 | Ruleset      RulesetConfig `json:"ruleset"` |
-| `bossRush.victory` | `internal/core/gamemode/mode_config.go` | 23 | Victory      string        `json:"victory"`      // allWa... |
 | `casual.autoStart` | `internal/core/gamemode/mode_config.go` | 20 | AutoStart    bool          `json:"autoStart"` |
 | `casual.coopEnabled` | `internal/core/gamemode/mode_config.go` | 28 | CoopEnabled  bool          `json:"coopEnabled"` |
 | `casual.defeat` | `internal/core/gamemode/mode_config.go` | 24 | Defeat       string        `json:"defeat"`       // lives... |
@@ -192,17 +181,6 @@
 | `casual.perfectBonus` | `internal/core/gamemode/mode_config.go` | 27 | PerfectBonus bool          `json:"perfectBonus"` |
 | `casual.ruleset` | `internal/core/gamemode/mode_config.go` | 29 | Ruleset      RulesetConfig `json:"ruleset"` |
 | `casual.victory` | `internal/core/gamemode/mode_config.go` | 23 | Victory      string        `json:"victory"`      // allWa... |
-| `challenge.autoStart` | `internal/core/gamemode/mode_config.go` | 20 | AutoStart    bool          `json:"autoStart"` |
-| `challenge.coopEnabled` | `internal/core/gamemode/mode_config.go` | 28 | CoopEnabled  bool          `json:"coopEnabled"` |
-| `challenge.defeat` | `internal/core/gamemode/mode_config.go` | 24 | Defeat       string        `json:"defeat"`       // lives... |
-| `challenge.econID` | `internal/core/gamemode/mode_config.go` | 26 | EconID       string        `json:"econID"` |
-| `challenge.enableEvents` | `internal/core/gamemode/mode_config.go` | 25 | EnableEvents bool          `json:"enableEvents"` |
-| `challenge.endFields` | `internal/core/gamemode/mode_config.go` | 32 | EndFields    []string      `json:"endFields"` |
-| `challenge.initMaxWaves` | `internal/core/gamemode/mode_config.go` | 22 | InitMaxWaves int           `json:"initMaxWaves"` // 0 = �... |
-| `challenge.intermission` | `internal/core/gamemode/mode_config.go` | 21 | Intermission float64       `json:"intermission"` // 0 = �... |
-| `challenge.perfectBonus` | `internal/core/gamemode/mode_config.go` | 27 | PerfectBonus bool          `json:"perfectBonus"` |
-| `challenge.ruleset` | `internal/core/gamemode/mode_config.go` | 29 | Ruleset      RulesetConfig `json:"ruleset"` |
-| `challenge.victory` | `internal/core/gamemode/mode_config.go` | 23 | Victory      string        `json:"victory"`      // allWa... |
 | `classic` | `internal/config/loader.go` | 60 | //   - modeID == "classic": 只返回 map_cXX 前缀的�... |
 | `classic.autoStart` | `internal/core/gamemode/mode_config.go` | 20 | AutoStart    bool          `json:"autoStart"` |
 | `classic.coopEnabled` | `internal/core/gamemode/mode_config.go` | 28 | CoopEnabled  bool          `json:"coopEnabled"` |
@@ -226,17 +204,6 @@
 | `coop.perfectBonus` | `internal/core/gamemode/mode_config.go` | 27 | PerfectBonus bool          `json:"perfectBonus"` |
 | `coop.ruleset` | `internal/core/gamemode/mode_config.go` | 29 | Ruleset      RulesetConfig `json:"ruleset"` |
 | `coop.victory` | `internal/core/gamemode/mode_config.go` | 23 | Victory      string        `json:"victory"`      // allWa... |
-| `endless.autoStart` | `internal/core/gamemode/mode_config.go` | 20 | AutoStart    bool          `json:"autoStart"` |
-| `endless.coopEnabled` | `internal/core/gamemode/mode_config.go` | 28 | CoopEnabled  bool          `json:"coopEnabled"` |
-| `endless.defeat` | `internal/core/gamemode/mode_config.go` | 24 | Defeat       string        `json:"defeat"`       // lives... |
-| `endless.econID` | `internal/core/gamemode/mode_config.go` | 26 | EconID       string        `json:"econID"` |
-| `endless.enableEvents` | `internal/core/gamemode/mode_config.go` | 25 | EnableEvents bool          `json:"enableEvents"` |
-| `endless.endFields` | `internal/core/gamemode/mode_config.go` | 32 | EndFields    []string      `json:"endFields"` |
-| `endless.initMaxWaves` | `internal/core/gamemode/mode_config.go` | 22 | InitMaxWaves int           `json:"initMaxWaves"` // 0 = �... |
-| `endless.intermission` | `internal/core/gamemode/mode_config.go` | 21 | Intermission float64       `json:"intermission"` // 0 = �... |
-| `endless.perfectBonus` | `internal/core/gamemode/mode_config.go` | 27 | PerfectBonus bool          `json:"perfectBonus"` |
-| `endless.ruleset` | `internal/core/gamemode/mode_config.go` | 29 | Ruleset      RulesetConfig `json:"ruleset"` |
-| `endless.victory` | `internal/core/gamemode/mode_config.go` | 23 | Victory      string        `json:"victory"`      // allWa... |
 | `simulation.autoStart` | `internal/core/gamemode/mode_config.go` | 20 | AutoStart    bool          `json:"autoStart"` |
 | `simulation.coopEnabled` | `internal/core/gamemode/mode_config.go` | 28 | CoopEnabled  bool          `json:"coopEnabled"` |
 | `simulation.defeat` | `internal/core/gamemode/mode_config.go` | 24 | Defeat       string        `json:"defeat"`       // lives... |
@@ -259,17 +226,6 @@
 | `test.perfectBonus` | `internal/core/gamemode/mode_config.go` | 27 | PerfectBonus bool          `json:"perfectBonus"` |
 | `test.ruleset` | `internal/core/gamemode/mode_config.go` | 29 | Ruleset      RulesetConfig `json:"ruleset"` |
 | `test.victory` | `internal/core/gamemode/mode_config.go` | 23 | Victory      string        `json:"victory"`      // allWa... |
-| `timed.autoStart` | `internal/core/gamemode/mode_config.go` | 20 | AutoStart    bool          `json:"autoStart"` |
-| `timed.coopEnabled` | `internal/core/gamemode/mode_config.go` | 28 | CoopEnabled  bool          `json:"coopEnabled"` |
-| `timed.defeat` | `internal/core/gamemode/mode_config.go` | 24 | Defeat       string        `json:"defeat"`       // lives... |
-| `timed.econID` | `internal/core/gamemode/mode_config.go` | 26 | EconID       string        `json:"econID"` |
-| `timed.enableEvents` | `internal/core/gamemode/mode_config.go` | 25 | EnableEvents bool          `json:"enableEvents"` |
-| `timed.endFields` | `internal/core/gamemode/mode_config.go` | 32 | EndFields    []string      `json:"endFields"` |
-| `timed.initMaxWaves` | `internal/core/gamemode/mode_config.go` | 22 | InitMaxWaves int           `json:"initMaxWaves"` // 0 = �... |
-| `timed.intermission` | `internal/core/gamemode/mode_config.go` | 21 | Intermission float64       `json:"intermission"` // 0 = �... |
-| `timed.perfectBonus` | `internal/core/gamemode/mode_config.go` | 27 | PerfectBonus bool          `json:"perfectBonus"` |
-| `timed.ruleset` | `internal/core/gamemode/mode_config.go` | 29 | Ruleset      RulesetConfig `json:"ruleset"` |
-| `timed.victory` | `internal/core/gamemode/mode_config.go` | 23 | Victory      string        `json:"victory"`      // allWa... |
 
 ## config/levels/map_01.json
 

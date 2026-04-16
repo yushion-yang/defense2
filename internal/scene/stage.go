@@ -4234,8 +4234,10 @@ func (s *StageScene) tickAIPlayerOne(ap *aiplayer.AIPlayer) {
 		aiTower := aiplayer.AITower{
 			Row: t.Row, Col: t.Col,
 			Damage: t.Damage, Strength: int(t.Strength.Effective()),
+			AttackSpeed: t.AttackSpeed,
 			Range: t.Range, Kills: t.Kills,
-			Owner: t.Owner,
+			Owner:     t.Owner,
+			Abilities: t.AllAbilities(),
 		}
 		// 传递待选能力槽位数据（PendingChoices map[int][]config.AbilityDef）
 		for slotIdx, choices := range t.PendingChoices {

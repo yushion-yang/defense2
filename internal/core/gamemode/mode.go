@@ -14,7 +14,7 @@ import "sync"
 // Mode 游戏模式接口。
 // 每种模式实现自己的胜负判定、经济规则、HUD 提示和分数计算。
 type Mode interface {
-	// ID 返回模式标识（"casual", "endless", "timed", "bossRush", "challenge", "test"）。
+	// ID 返回模式标识（"casual", "classic", "coop", "test" 等）。
 	ID() string
 
 	// OnInit 模式初始化（Session 创建后调用，可通过 ctx 修改初始状态）。

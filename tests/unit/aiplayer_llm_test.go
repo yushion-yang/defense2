@@ -131,6 +131,115 @@ func TestAIPlayerLLMBuildPromptWithoutMemory(t *testing.T) {
 	}
 }
 
+// ── LLM Decision Parsing 测试 ──
+
+func TestLLMDecisionParsingBuild(t *testing.T) {
+	input := `{"action":"build","reason":"补个控制塔","priority":"cc"}`
+	d := llm.ParseLLMDecision(input)
+	if d == nil {
+		t.Fatal("ParseLLMDecision returned nil for valid JSON")
+	}
+	if d.Action != "build" {
+		t.Errorf("Action = %q, want build", d.Action)
+	}
+	if d.Priority != "cc" {
+		t.Errorf("Priority = %q, want cc", d.Priority)
+	}
+	if d.Reason != "补个控制塔" {
+		t.Errorf("Reason = %q, want '补个控制塔'", d.Reason)
+	}
+}
+
+func TestLLMDecisionParsingUpgrade(t *testing.T) {
+	input := `{"action":"upgrade","reason":"加强主力","target":"strongest"}`
+	d := llm.ParseLLMDecision(input)
+	if d == nil {
+		t.Fatal("ParseLLMDecision returned nil for valid JSON")
+	}
+	if d.Action != "upgrade" {
+		t.Errorf("Action = %q, want upgrade", d.Action)
+	}
+	if d.Target != "strongest" {
+		t.Errorf("Target = %q, want strongest", d.Target)
+	}
+}
+
+func TestLLMDecisionParsingWait(t *testing.T) {
+	input := `{"action":"wait","reason":"等等看"}`
+	d := llm.ParseLLMDecision(input)
+	if d == nil {
+		t.Fatal("ParseLLMDecision returned nil for valid JSON")
+	}
+	if d.Action != "wait" {
+		t.Errorf("Action = %q, want wait", d.Action)
+	}
+}
+
+func TestLLMDecisionParseErrorNonJSON(t *testing.T) {
+	// LLM 返回了非 JSON 文本
+	inputs := []string{
+		"我觉得应该造个塔",
+		"",
+		"   ",
+		"not json at all",
+		"{invalid json}",
+		"```json\n{\"action\":\"build\"}\n```", // markdown 包裹
+	}
+	for _, input := range inputs {
+		d := llm.ParseLLMDecision(input)
+		if d != nil {
+			t.Errorf("ParseLLMDecision(%q) should return nil for invalid input, got %+v", input, d)
+		}
+	}
+}
+
+func TestLLMDecisionParseErrorInvalidAction(t *testing.T) {
+	// JSON 有效但 action 不在白名单
+	input := `{"action":"sell","reason":"卖掉"}`
+	d := llm.ParseLLMDecision(input)
+	if d != nil {
+		t.Errorf("ParseLLMDecision should return nil for invalid action 'sell', got %+v", d)
+	}
+}
+
+func TestLLMDecisionParseErrorMissingAction(t *testing.T) {
+	// JSON 有效但缺少 action 字段
+	input := `{"reason":"做点什么"}`
+	d := llm.ParseLLMDecision(input)
+	if d != nil {
+		t.Errorf("ParseLLMDecision should return nil for missing action, got %+v", d)
+	}
+}
+
+// ── BuildStrategicPrompt 测试 ──
+
+func TestBuildStrategicPrompt(t *testing.T) {
+	situation := llm.Situation{
+		Wave: 5, MaxWaves: 12,
+		AIGold:      200,
+		ThreatLevel: "high",
+	}
+	prompt := llm.BuildStrategicPrompt(situation, "build_cc", "队友有输出，全队缺控制")
+
+	checks := []struct {
+		name    string
+		content string
+	}{
+		{"wave", "第 5/12 波"},
+		{"gold", "金币: 200"},
+		{"threat", "high"},
+		{"coop", "队友有输出，全队缺控制"},
+		{"advice", "build_cc"},
+		{"json format", `"action"`},
+	}
+
+	for _, check := range checks {
+		if !containsStr(prompt, check.content) {
+			t.Errorf("strategic prompt missing %s: should contain %q\nprompt:\n%s", check.name, check.content, prompt)
+		}
+	}
+}
+
 // containsStr 简单子串检查。
 func containsStr(s, substr string) bool {
 	return len(s) >= len(substr) && searchStr(s, substr)
