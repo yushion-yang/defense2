@@ -140,7 +140,6 @@ func NewGame() *Game {
 		config.LoadBalance()
 		config.LoadPlatform()
 		config.LoadTierPresets()
-		config.LoadClassicPresets()
 		config.LoadAndCacheWardenConfigs()
 		config.LoadBuffRules()
 		config.LoadSpawnerConfig()
