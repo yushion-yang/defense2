@@ -239,7 +239,8 @@ type StageScene struct {
 	choicePanel *hud.ChoicePanel // 能力选择覆盖层（每 2 波解锁一个，3 选 1）
 
 	// ── AutoPlay 自动对局 ──
-	autoPlayer AutoPlayer // 自动对局驱动（nil=手动模式，非 nil=跳过渲染）
+	autoPlayer     AutoPlayer // 自动对局驱动（nil=手动模式，非 nil=跳过渲染）
+	visualAutoPlay bool       // 可视化自动对局（autoplay 运行但保留渲染）
 
 	// ── AI 玩家（合作模式）──
 	aiPlayers []*aiplayer.AIPlayer // AI 队友列表（nil/empty=单人模式）
@@ -480,6 +481,7 @@ func NewStageSceneWithOpts(sw Switcher, opts StageOptions) *StageScene {
 	s.enemyFilter = opts.EnemyFilter
 	s.manualWave = opts.ManualWave
 	s.initOpts = opts
+	s.visualAutoPlay = opts.VisualAutoPlay
 
 	// AI 玩家初始化（合作模式：从地图 Coop 配置或按列均分创建 N-1 个 AI）
 	if opts.AIEnabled && gm != nil {
@@ -2791,7 +2793,8 @@ func (s *StageScene) Draw(screen *ebiten.Image) {
 	defer s.perfTracker.EndDraw()
 
 	// AutoPlay 无头模式：跳过全部渲染，GPU 开销≈0
-	if s.autoPlayer != nil {
+	// VisualAutoPlay 时保留渲染（观战模式）
+	if s.autoPlayer != nil && !s.visualAutoPlay {
 		return
 	}
 

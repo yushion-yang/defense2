@@ -70,7 +70,13 @@ func main() {
 	learnGames := flag.Int("learn-games", 50, "number of training games in --learn mode")
 	learnOutput := flag.String("learn-output", "config/ai/weights.json", "output path for trained weights")
 	learnHPScale := flag.Float64("hp-scale", 0, "override HP scale for training (0=use difficulty default)")
+	visual := flag.Bool("visual", false, "run one visual game (window mode, watch AI play)")
 	flag.Parse()
+
+	if *visual {
+		runVisualGame(*mapID, *difficulty, *warden, *seed, *learnHPScale)
+		return
+	}
 
 	if *sessionJSON != "" {
 		runSingleSession(*sessionJSON)

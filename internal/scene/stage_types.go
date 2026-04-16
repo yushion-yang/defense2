@@ -119,4 +119,5 @@ type StageOptions struct {
 	CoopPlayerCount int    // 合作模式人数（0=非合作，2/4/6=合作）
 	LearningEnabled  bool    // AI 在线学习（实时微调权重）
 	HPScaleOverride  float64 // >0 时覆盖难度 HPScale（训练用）
+	VisualAutoPlay   bool    // 可视化自动对局（autoplay 运行但不跳过渲染）
 }

@@ -4,6 +4,7 @@ package scene
 
 import (
 	"image/color"
+	"strings"
 
 	"defense2/internal/config"
 	"defense2/internal/core/game"
@@ -86,6 +87,9 @@ var testScenarios = []testScenario{
 	{"coop-4p", "合作4人", "stat-target", "4人田字型合作测试", "coop", "map_co02", 9999, 999, 20, color.RGBA{R: 180, G: 100, B: 255, A: 255}, "mixed", false, false},
 	{"coop-6p", "合作6人", "stat-target", "6人阵地合作测试", "coop", "map_co03", 9999, 999, 25, color.RGBA{R: 80, G: 200, B: 120, A: 255}, "mixed", false, false},
 	{"coop-sandbox", "合作沙盒", "stat-target", "合作模式自由测试", "coop", "map_co01", 99999, 99999, 0, color.RGBA{R: 100, G: 200, B: 180, A: 255}, "none", true, false},
+
+	{"ai-watch-classic", "AI观战(经典)", "stat-target", "观看AI全自动通关经典模式", "bench", "map_c01", 0, 0, 0, color.RGBA{R: 255, G: 200, B: 60, A: 255}, "mixed", false, false},
+	{"ai-watch-casual", "AI观战(娱乐)", "stat-target", "观看AI全自动通关娱乐模式", "bench", "map_01", 0, 0, 0, color.RGBA{R: 255, G: 180, B: 80, A: 255}, "mixed", false, false},
 }
 
 // ── 布局常量 ────────────────────────────────────
@@ -283,6 +287,24 @@ func (s *TestSelectScene) startScenario() {
 		opts.AIEnabled = true
 		if m, err := config.LoadMap(sc.MapID); err == nil && m.Coop != nil {
 			opts.CoopPlayerCount = m.Coop.PlayerCount
+		}
+	}
+	// AI 观战场景：使用 AIPlayer 控制全图（不分区）
+	isAIWatch := strings.HasPrefix(sc.ID, "ai-watch-")
+	if isAIWatch {
+		opts.TestMode = false
+		opts.Gold = 0
+		opts.Lives = 0
+		opts.Waves = 0
+		opts.AIEnabled = true
+		opts.LearningEnabled = true
+		opts.VisualAutoPlay = true
+		if strings.Contains(sc.ID, "classic") {
+			opts.ModeID = "classic"
+			opts.DifficultyID = "normal"
+		} else {
+			opts.ModeID = "casual"
+			opts.DifficultyID = "easy"
 		}
 	}
 	s.switcher.SwitchScene(NewStageSceneWithOpts(s.switcher, opts))
