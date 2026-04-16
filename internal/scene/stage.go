@@ -3897,15 +3897,26 @@ func loadTowerDefsForMode(ruleset gamemode.TowerRuleset, pm *persistence.Progres
 	}
 
 	// 追加玩家自定义蓝图（仅在模式允许且有蓝图时）
-	if ruleset.AllowCustomBlueprints() && bpStore != nil && bpStore.Count() > 0 {
+	bpCount := 0
+	if bpStore != nil {
+		bpCount = bpStore.Count()
+	}
+	log.Printf("[stage] loadTowerDefsForMode: allowBP=%v bpCount=%d", ruleset.AllowCustomBlueprints(), bpCount)
+
+	if ruleset.AllowCustomBlueprints() && bpStore != nil && bpCount > 0 {
 		tierPresets := config.GlobalTierPresets()
 		budgetRules := descriptor.DefaultBudgetRules()
 		abilityCosts := descriptor.GlobalAbilityCosts()
-		if tierPresets != nil {
+		if tierPresets == nil {
+			log.Printf("[stage] WARNING: tierPresets is nil, skipping %d blueprint(s)", bpCount)
+		} else {
+			loaded := 0
 			for _, bp := range bpStore.List() {
 				def := descriptor.BlueprintToTowerDef(&bp, tierPresets, budgetRules, abilityCosts)
 				defs = append(defs, def)
+				loaded++
 			}
+			log.Printf("[stage] loaded %d blueprint tower defs", loaded)
 		}
 	}
 

@@ -34,6 +34,7 @@ import (
 	"defense2/internal/core/buff"
 	"defense2/internal/core/strength"
 	"defense2/internal/core/tower"
+	"defense2/internal/core/tower/descriptor"
 	"defense2/internal/i18n"
 	"defense2/internal/render/hud"
 	"defense2/internal/render/theme"
@@ -130,6 +131,14 @@ func BuildInfoPanelVM(t *tower.Tower, sellValue int, def tower.TowerDef, gold in
 			if def, ok := abTable[abilType]; ok {
 				slot.AbilityLabel = def.Label
 				slot.AbilityIcon = def.Icon
+			} else if desc, found := descriptor.LookupDescriptor(abilType); found {
+				// 自定义能力：从描述符获取标签和图标
+				if desc.Label != "" {
+					slot.AbilityLabel = desc.Label
+				}
+				if desc.Icon != "" {
+					slot.AbilityIcon = desc.Icon
+				}
 			}
 		}
 		vm.Slots = append(vm.Slots, slot)
@@ -460,6 +469,7 @@ var (
 
 // buildAbilityVM 为单个能力类型构建 AbilityVM。
 // 优先从 AbilityTable 取定义（图标/标签/Display模板），不存在则走 fallback 映射。
+// 对于自定义能力（不在 AbilityTable 中），尝试从描述符表生成管线描述。
 func buildAbilityVM(abilityType string, abTable config.AbilityTable, effStr float64) hud.AbilityVM {
 	def := abTable[abilityType]
 
@@ -484,10 +494,19 @@ func buildAbilityVM(abilityType string, abTable config.AbilityTable, effStr floa
 		Label: label,
 	}
 
-	// No AbilityDef → use fallback description
+	// No AbilityDef → 尝试从描述符表获取自定义能力的标签和描述
 	if def == nil {
 		if key, ok := fallbackDescKeys[abilityType]; ok {
 			vm.Fallback = i18n.T(key)
+		} else if desc, found := descriptor.LookupDescriptor(abilityType); found {
+			// 自定义能力：从描述符获取标签，并自动生成管线描述
+			if desc.Label != "" {
+				vm.Label = desc.Label
+			}
+			if desc.Icon != "" && vm.Icon == "" {
+				vm.Icon = desc.Icon
+			}
+			vm.Fallback = descriptor.GenerateDescription(desc)
 		}
 		return vm
 	}
