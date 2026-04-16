@@ -2,7 +2,13 @@
 //
 // 用于创建和编辑自定义炮塔蓝图。
 // 4 个步骤：1.攻击模式 2.属性档位+专精 3.能力选择 4.预览+保存。
-// 由建塔面板「+新建」或蓝图管理菜单进入。
+// 由工坊（TowerWorkshopScene）或建塔面板「+新建」进入。
+//
+// 导航流：
+//   - returnScene 存储调用方场景（通常是工坊），ESC/取消/保存完成后切回。
+//   - 步骤 3 的「+创建新能力」按钮会启动 AbilityEditScene，
+//     并将自身（BlueprintEditScene）作为 returnTo 传入，
+//     确保能力编辑完成后返回蓝图编辑器而非工坊。
 //
 // 关联：
 //   - descriptor.TowerBlueprint: 蓝图数据结构
@@ -96,7 +102,7 @@ type BlueprintEditScene struct {
 	blueprint      descriptor.TowerBlueprint
 	isNew          bool                      // true=新建, false=编辑已有
 	step           int                       // 0-3（attackStyle / tiers / abilities / preview）
-	returnScene    Scene                     // 返回时切换到的场景
+	returnScene    Scene                     // 调用方场景（ESC/取消/保存后切回），由构造函数注入
 	blueprintStore *descriptor.BlueprintStore // 蓝图持久化存储
 	abilityStore   *descriptor.AbilityStore   // 自定义能力存储（编辑器可能引用自定义能力）
 
@@ -1178,7 +1184,7 @@ func (s *BlueprintEditScene) drawAbilityCard(screen *ebiten.Image, opt abilityOp
 //  2. 已选列表 → 点击移除
 //  3. 可选列表 → 点击添加（自定义 + 预制混合索引）
 func (s *BlueprintEditScene) handleAbilitiesInput(mx, my float64) {
-	// 1. "+创建新能力" 按钮
+	// 1. "+创建新能力" 按钮 → 启动能力编辑器，returnTo=自身（编辑完返回蓝图编辑器继续选能力）
 	if s.abilityStore != nil && s.step3CreateBtnRect.Contains(mx, my) {
 		playUIClick(s.switcher)
 		scene := NewAbilityEditScene(s.switcher, nil, s.abilityStore, s)

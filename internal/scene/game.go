@@ -488,12 +488,12 @@ func (g *Game) currentSceneName() string {
 		return "lang_select"
 	case *BestiaryScene:
 		return "bestiary"
+	case *TowerWorkshopScene:
+		return "tower_workshop"
 	case *BlueprintEditScene:
 		return "blueprint_edit"
 	case *AbilityEditScene:
 		return "ability_edit"
-	case *TowerWorkshopScene:
-		return "tower_workshop"
 	default:
 		return "other"
 	}

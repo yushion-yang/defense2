@@ -22,10 +22,7 @@
 package scene
 
 import (
-	"fmt"
 	"math"
-	"strings"
-	"time"
 
 	gameAudio "defense2/internal/audio"
 	"defense2/internal/core/achievement"
@@ -164,15 +161,9 @@ func (s *StageScene) handleInput() {
 	}
 
 	// ESC 键行为随交互模式变化（从"关闭面板"到"进入暂停"）：
-	// - 蓝图上下文菜单打开 → 仅关闭菜单
 	// - 有面板打开 → 关闭面板，回到上一级模式
 	// - 空闲状态 → 记住当前模式，进入暂停菜单
 	if inpututil.IsKeyJustPressed(ebiten.KeyEscape) {
-		// 蓝图上下文菜单打开时，ESC 仅关闭菜单
-		if s.bpCtxMenuOpen {
-			s.closeBlueprintContextMenu()
-			return
-		}
 		switch s.imode {
 		case modeBuildMenu, modeBuildPlace:
 			s.selectedTower = nil
@@ -355,13 +346,6 @@ func (s *StageScene) handleInput() {
 		}
 	}
 
-	// ── 蓝图上下文菜单：右键触发 ──
-	// 在建塔面板(modeBuildMenu)中右键蓝图卡片弹出管理菜单（编辑/复制/删除）。
-	// 仅对 Key 以 "bp_" 前缀开头的蓝图卡片生效，标准塔和"+新建"按钮不弹出。
-	if s.imode == modeBuildMenu && inpututil.IsMouseButtonJustPressed(ebiten.MouseButtonRight) {
-		s.handleBlueprintRightClick(fmx, fmy)
-	}
-
 	// ── Tap 分发 ──
 	// 以下所有逻辑只在"刚点击"（JustTapped）时执行。
 	// JustTapped 由手势识别器在松手时触发，自动排除了拖拽操作（拖拽不产生 Tap）。
@@ -371,13 +355,6 @@ func (s *StageScene) handleInput() {
 	tapX, tapY := g.TapPos()                 // Tap 的逻辑坐标（屏幕空间）
 	ftx, fty := float32(tapX), float32(tapY) // float32 版本（hud hitTest 用）
 	wtx, wty := s.screenToWorld(tapX, tapY)  // 世界坐标（加上相机偏移）
-
-	// ── 蓝图上下文菜单点击处理 ──
-	// 菜单打开时拦截所有点击：命中菜单项→执行操作，否则→关闭菜单。
-	if s.bpCtxMenuOpen {
-		s.handleBlueprintContextMenuClick(tapX, tapY)
-		return
-	}
 
 	// 教程点击推进（无事件要求的步骤可任意点击推进）
 	if s.tutorial.ClickAdvance() {
@@ -525,24 +502,17 @@ func (s *StageScene) handleInput() {
 		// 建塔面板：点击卡片→进入放塔模式，点击关闭/外部→回 idle，点击 tab→切换分类
 		hit := hud.BuildMenuHitTest(ftx, fty, s.buildMenuTotalCards(), s.buildMenuBuildableCount(), s.buildMenuTabCount())
 		if hit.TabIdx >= 0 {
-			// tab 切换：更新当前 tab，重置 hover/选中状态，关闭上下文菜单
+			// tab 切换：更新当前 tab，重置 hover/选中状态
 			s.buildMenuTab = hit.TabIdx
 			s.buildHoverIdx = -1
 			s.selectedDef = -1
-			s.closeBlueprintContextMenu()
 		} else if hit.CardIdx == -2 || hit.CardIdx == -1 { // -2=关闭按钮, -1=面板外部
 			s.imode = modeIdle
-			s.closeBlueprintContextMenu()
 			s.audioMgr.PlayAt(gameAudio.SFXUIClose, gameAudio.VolUI)
-		} else if hit.CardIdx >= 0 { // buildable card or "+新建" button
-			// "+新建" 按钮：位于可点击卡片的最后一个位置（AllowCustomBlueprints 时追加）
-			if s.isCreateBtnClick(hit.CardIdx) {
-				s.launchBlueprintEditor()
-			} else {
-				s.selectedDef = s.buildMenuCardToDefIdx(hit.CardIdx)
-				s.selectedTower = nil
-				s.imode = modeBuildPlace
-			}
+		} else if hit.CardIdx >= 0 {
+			s.selectedDef = s.buildMenuCardToDefIdx(hit.CardIdx)
+			s.selectedTower = nil
+			s.imode = modeBuildPlace
 		}
 
 	case modeBuildPlace:
@@ -858,24 +828,6 @@ func (s *StageScene) enterBuildMode() {
 	}
 }
 
-// isCreateBtnClick 判断建塔面板中点击的卡片是否是 "+新建" 按钮。
-// "+新建" 按钮始终是可点击卡片列表中的最后一个（AllowCustomBlueprints 时追加）。
-func (s *StageScene) isCreateBtnClick(cardIdx int) bool {
-	if !s.ruleset.AllowCustomBlueprints() || s.blueprintStore == nil {
-		return false
-	}
-	return cardIdx == s.buildMenuBuildableCount()-1
-}
-
-// launchBlueprintEditor 从建塔面板启动蓝图编辑场景。
-// 传入 nil 蓝图表示新建，returnTo 为当前 StageScene（编辑完成后返回）。
-func (s *StageScene) launchBlueprintEditor() {
-	s.imode = modeIdle
-	s.audioMgr.PlayAt(gameAudio.SFXUIOpen, gameAudio.VolUI)
-	bpScene := NewBlueprintEditScene(s.switcher, nil, s, s.blueprintStore, s.abilityStore)
-	s.switcher.SwitchScene(bpScene)
-}
-
 // needsCamera 返回地图是否需要相机平移（地图尺寸超出屏幕时返回 true）。
 func (s *StageScene) needsCamera() bool {
 	mapW := s.gameMap.PixelWidth() + s.gameMap.OffsetX*2
@@ -1134,126 +1086,6 @@ func (s *StageScene) towerAtPixel(px, py float64) *tower.Tower {
 		return nil
 	}
 	return t
-}
-
-// ─── 蓝图管理上下文菜单 ─────────────────────────────────────────────
-
-// 蓝图上下文菜单项索引（与 drawBlueprintContextMenu 中的 items 顺序一致）。
-const (
-	ctxMenuEdit   = 0 // 编辑蓝图
-	ctxMenuCopy   = 1 // 复制蓝图
-	ctxMenuDelete = 2 // 删除蓝图
-)
-
-// handleBlueprintRightClick 处理建塔面板中的右键点击。
-// 仅对蓝图卡片（Key 以 "bp_" 开头）弹出上下文菜单。
-// 标准塔、变体卡、"+新建" 按钮不受影响。
-func (s *StageScene) handleBlueprintRightClick(px, py float32) {
-	// 模式不允许自定义蓝图时不处理
-	if !s.ruleset.AllowCustomBlueprints() || s.blueprintStore == nil {
-		return
-	}
-
-	// 用 HoverTest 找到右键位置对应的卡片索引
-	idx := hud.BuildMenuHoverTest(px, py, s.buildMenuTotalCards(), s.buildMenuTabCount())
-	if idx < 0 {
-		return
-	}
-
-	// 构建当前 tab 过滤后的卡片列表，获取卡片 Key
-	data := s.buildBuildMenuData()
-	if idx >= len(data.Cards) {
-		return
-	}
-	card := data.Cards[idx]
-
-	// 仅蓝图卡片弹出上下文菜单（排除标准塔、变体卡、"+新建" 按钮）
-	if !strings.HasPrefix(card.Key, "bp_") || card.IsCreateBtn {
-		return
-	}
-
-	s.bpCtxMenuOpen = true
-	s.bpCtxMenuX = float64(px)
-	s.bpCtxMenuY = float64(py)
-	s.bpCtxMenuBpID = card.Key
-}
-
-// handleBlueprintContextMenuClick 处理蓝图上下文菜单中的点击。
-// 命中菜单项时执行对应操作（编辑/复制/删除），否则关闭菜单。
-func (s *StageScene) handleBlueprintContextMenuClick(tapX, tapY float64) {
-	hitIdx := -1
-	for i, r := range s.bpCtxMenuRects {
-		if r.Contains(tapX, tapY) {
-			hitIdx = i
-			break
-		}
-	}
-
-	// 关闭菜单（无论是否命中，操作完成后都需要关闭）
-	defer s.closeBlueprintContextMenu()
-
-	if hitIdx < 0 {
-		return // 点击在菜单外，仅关闭
-	}
-
-	s.audioMgr.PlaySafe(gameAudio.SFXUIClick)
-
-	switch hitIdx {
-	case ctxMenuEdit:
-		s.blueprintCtxEdit()
-	case ctxMenuCopy:
-		s.blueprintCtxCopy()
-	case ctxMenuDelete:
-		s.blueprintCtxDelete()
-	}
-}
-
-// blueprintCtxEdit 编辑蓝图：启动蓝图编辑场景，传入已有蓝图数据。
-func (s *StageScene) blueprintCtxEdit() {
-	bp, err := s.blueprintStore.Get(s.bpCtxMenuBpID)
-	if err != nil || bp == nil {
-		hud.ShowToast(i18n.T("blueprint.not_found"))
-		return
-	}
-	s.imode = modeIdle
-	bpScene := NewBlueprintEditScene(s.switcher, bp, s, s.blueprintStore, s.abilityStore)
-	s.switcher.SwitchScene(bpScene)
-}
-
-// blueprintCtxCopy 复制蓝图：深拷贝蓝图并以新 ID 保存。
-func (s *StageScene) blueprintCtxCopy() {
-	bp, err := s.blueprintStore.Get(s.bpCtxMenuBpID)
-	if err != nil || bp == nil {
-		hud.ShowToast(i18n.T("blueprint.not_found"))
-		return
-	}
-	clone := *bp
-	clone.ID = fmt.Sprintf("bp_%d", time.Now().UnixMilli())
-	clone.Name = bp.Name + " (副本)"
-	clone.CreatedAt = time.Now().Format(time.RFC3339)
-
-	if saveErr := s.blueprintStore.Save(clone); saveErr != nil {
-		hud.ShowToast(saveErr.Error())
-		return
-	}
-
-	s.reloadTowerDefs()
-	hud.ShowToast(i18n.TF("blueprint.copied", clone.Name))
-}
-
-// blueprintCtxDelete 删除蓝图：从存储中移除，刷新建塔面板。
-func (s *StageScene) blueprintCtxDelete() {
-	if err := s.blueprintStore.Delete(s.bpCtxMenuBpID); err != nil {
-		hud.ShowToast(err.Error())
-		return
-	}
-
-	s.reloadTowerDefs()
-	// 如果删除后选中索引越界，重置
-	if s.selectedDef >= len(s.towerDefs) {
-		s.selectedDef = -1
-	}
-	hud.ShowToast(i18n.T("blueprint.deleted"))
 }
 
 
