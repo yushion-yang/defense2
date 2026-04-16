@@ -76,7 +76,8 @@ func TestDamageEffect_LinearScaler(t *testing.T) {
 // ── SlowEffect ───────────────────────────────────────────────
 
 func TestSlowEffect_LinearScaler(t *testing.T) {
-	// factor: base=0.3, potential=0.05, str=200 → 0.3 + 0.05*(200/100) = 0.4
+	// factor: base=0.3, potential=0.05, str=200 → raw = 0.3 + 0.05*(200/100) = 0.4
+	// SlowEffect.Apply 返回速度倍率 = 1 - raw = 0.6
 	eff := descriptor.SlowEffect{
 		Factor:   descriptor.LinearScaler{Base: 0.3, Potential: 0.05},
 		Duration: descriptor.FixedScaler{Value: 2.0},
@@ -87,8 +88,8 @@ func TestSlowEffect_LinearScaler(t *testing.T) {
 	if r.Type != descriptor.EffTypeSlow {
 		t.Errorf("type = %v, want EffTypeSlow", r.Type)
 	}
-	if r.SlowFactor != 0.4 {
-		t.Errorf("slowFactor = %v, want 0.4", r.SlowFactor)
+	if r.SlowFactor != 0.6 {
+		t.Errorf("slowFactor = %v, want 0.6 (speed multiplier = 1 - 0.4)", r.SlowFactor)
 	}
 	if r.Duration != 2.0 {
 		t.Errorf("duration = %v, want 2.0", r.Duration)
