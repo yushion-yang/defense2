@@ -183,7 +183,8 @@ func TestCompetentStrategy_StartsWaveAfterSetup(t *testing.T) {
 		BuildCells:  []Cell{{Row: 3, Col: 5, X: 330, Y: 210}},
 		TowerDefs:   []TowerDefInfo{{Key: "basic", Cost: 30, Range: 100, Damage: 10}},
 		Towers: []TowerInfo{
-			{Key: "basic", Row: 1, Col: 2, X: 150, Y: 90, Damage: 10, Range: 100, AttackSpeed: 1.0},
+			{Key: "basic", Row: 1, Col: 2, X: 150, Y: 90, Damage: 10, Range: 100, AttackSpeed: 1.0,
+				Abilities: []string{"scatter"}}, // 已有攻击能力，不触发自动分配
 		},
 		MapInfo: &MapInfo{
 			Waypoints: []PathPoint{{300, 200}},
@@ -195,15 +196,19 @@ func TestCompetentStrategy_StartsWaveAfterSetup(t *testing.T) {
 	s.builtCount = 2
 	actions := s.Decide(state)
 
-	// 有塔但买不起新塔 → 应开波
+	// 有塔但买不起新塔 → 应开波（或先分配能力，然后开波）
 	hasWave := false
+	hasAbility := false
 	for _, a := range actions {
 		if a.Type == ActionStartWave {
 			hasWave = true
 		}
+		if a.Type == ActionAddAbility {
+			hasAbility = true
+		}
 	}
-	if !hasWave {
-		t.Error("should start wave when can't afford to build but has towers")
+	if !hasWave && !hasAbility {
+		t.Error("should start wave or assign ability when can't afford to build but has towers")
 	}
 }
 

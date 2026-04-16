@@ -1,7 +1,10 @@
 // strategy_competent.go — 仿真测试"合理玩家"策略。
 //
-// 目标：模拟有经验的玩家行为，不依赖元知识或最优解，
-// 但会做出合理的经济决策（集中升级、Boss 前攒钱、卖低效塔）。
+// 目标：模拟有经验的玩家行为，实现人类玩家的 3 大关键协同：
+//   1. 能力选择（slow + DPS 的乘法效应）
+//   2. 资源集中到 1-2 座核心塔（carry 系统）
+//   3. 火力交叉覆盖（chokepoint 重叠放塔）
+//
 // 路径感知放塔、分阶段经济管理、Boss 波意识、自主控制开波时机。
 // 用于 simulation 模式下的数值平衡验证。
 package autoplay
@@ -31,6 +34,44 @@ const (
 	nearAffordMargin  = 20 // 差多少金币就能再建一座时延迟开波
 	sellCheckWave     = 5  // 从第几波开始检查卖塔
 	bossEveryFallback = 4  // Boss 间隔默认值（配置读取失败时）
+)
+
+// ── 能力分配优先列表 ─────────────────────────────
+// 按类别索引组织，每个 slice 内按优先级降序排列。
+// 策略遍历候选列表，选第一个对应 slot 为空的能力。
+
+var (
+	// cat 0: 攻击方式 — scatter 覆盖面广适合大多数情况
+	abilityPriorityAttack = []string{"scatter", "barrage", "spinAoe", "radial", "wideBeam"}
+	// cat 1: CC — slowPower 是最关键的协同（减速 = 更长驻留 = 更多伤害）
+	abilityPriorityCC = []string{"slowPower", "stunChance", "slowDuration"}
+	// cat 2: 伤害 — crit 提供乘法伤害加成
+	abilityPriorityDamage = []string{"crit", "splash", "flatDamage", "momentum"}
+	// cat 3: 光环 — damageUpAura 对 chokepoint 内的塔群有乘法效应
+	abilityPriorityBuff = []string{"damageUpAura", "attackSpeedAura", "rangeAura"}
+	// cat 4: DoT — bleedDot 对高血量敌人持续输出
+	abilityPriorityDoT = []string{"bleedDot", "burn", "poison"}
+	// cat 5: 区域 — poisonZone 持续范围伤害
+	abilityPriorityZone = []string{"poisonZone", "silenceZone", "weakenZone"}
+)
+
+// abilityPriorities 按波次解锁顺序排列的能力优先列表。
+// 索引 0 = cat 0(攻击)，索引 1 = cat 1(CC)，...
+// 策略根据 wavesCleared 推算已解锁 slot 数，逐 slot 分配。
+var abilityPriorities = [6][]string{
+	abilityPriorityAttack,
+	abilityPriorityCC,
+	abilityPriorityDamage,
+	abilityPriorityBuff,
+	abilityPriorityDoT,
+	abilityPriorityZone,
+}
+
+// abilityAssignOrder 定义各 slot 分配给 carry 和 support 的顺序。
+// carry 优先拿攻击 + 伤害 + CC；support 优先拿 CC + 攻击 + 光环。
+var (
+	carrySlotOrder   = []int{0, 2, 1, 4, 3, 5} // 攻击→伤害→CC→DoT→光环→区域
+	supportSlotOrder = []int{0, 1, 3, 4, 2, 5}  // 攻击→CC→光环→DoT→伤害→区域
 )
 
 // ── 函数式选项 ──────────────────────────────────
@@ -63,14 +104,16 @@ func WithCompetentSeed(seed int64) CompetentOpt {
 // CompetentStrategy 模拟有经验玩家的策略。
 //
 // 核心理念：
-//   - 集中资源到最强塔（Potential 缩放的乘法效应）
+//   - 集中资源到 carry 塔（Potential 缩放的乘法效应）
+//   - slow + DPS 在同一 chokepoint = 乘法伤害
+//   - 主动分配能力（攻击→CC→伤害→光环→DoT→区域）
 //   - Boss 波前攒钱、Boss 后激进扩张
 //   - 卖掉无效塔回收金币
 //   - 开波不磨蹭，但也不在准备不足时冒进
 type CompetentStrategy struct {
 	wardenKey  string
 	maxTowers  int
-	abilities  []string
+	abilities  []string // 旧式手动能力列表（保留兼容，为空时启用自动分配）
 	seed       int64
 	rng        *rand.Rand
 	phase      competentPhase
@@ -82,12 +125,21 @@ type CompetentStrategy struct {
 	placementScore []float64 // 对应评分
 	buildIdx       int       // 下一个要建造的位置索引
 	builtCount     int       // 已建造塔数
-	abilityIdx     int       // 下一个要分配的能力索引
+	abilityIdx     int       // 下一个要分配的能力索引（旧式）
+
+	// ── carry 塔系统 ──
+	// 第一座塔自动成为 carry；后续塔为 support。
+	// carry 获得 70%+ 的升级金币，support 只在 carry 强度足够后才升级。
+	carryRow    int
+	carryCol    int
+	hasCarry    bool
+	carryStrCap int // carry 强度达到此值后才考虑升级 support（默认 300）
 
 	// 节流
-	lastBuildTick   int
-	lastUpgradeTick int
-	lastSellTick    int
+	lastBuildTick    int
+	lastUpgradeTick  int
+	lastSellTick     int
+	lastAbilityTick  int // 能力分配节流（防止同帧多次请求）
 
 	// Boss 波感知
 	bossEvery int // Boss 出现间隔波数
@@ -115,6 +167,9 @@ func (s *CompetentStrategy) Init(state *GameState) {
 	s.lastBuildTick = -100 // 允许首帧立即建造
 	s.lastUpgradeTick = -100
 	s.lastSellTick = -100
+	s.lastAbilityTick = -100
+	s.hasCarry = false
+	s.carryStrCap = 300 // carry 强度达到 300 后才考虑升级 support
 
 	// 从配置读取 Boss 间隔
 	s.bossEvery = config.GlobalSpawnerConfig().Boss.EveryNWaves
@@ -188,7 +243,14 @@ func (s *CompetentStrategy) updatePhase(state *GameState) {
 }
 
 func (s *CompetentStrategy) decideSetup(state *GameState) []Action {
-	// Setup 阶段：建塔，不开波
+	// Setup 阶段：建塔优先，同时尽早分配能力（免费操作）
+	s.updateCarry(state)
+
+	// 给已建好的塔分配能力（不消耗金币，越早越好）
+	if abilActions := s.tryAutoAbilities(state); len(abilActions) > 0 {
+		return abilActions
+	}
+
 	if action, ok := s.tryBuild(state); ok {
 		return []Action{action}
 	}
@@ -204,8 +266,16 @@ func (s *CompetentStrategy) decidePlaying(state *GameState) []Action {
 	nextWave := state.Wave + 1
 	preBoss := s.isPreBossWave(nextWave)
 
+	// 每帧都尝试维护 carry 标记
+	s.updateCarry(state)
+
 	if !state.WaveActive {
 		// ── 波间歇期决策 ──
+
+		// 0. 能力分配优先（免费，不消耗金币，必须尽早执行）
+		if abilActions := s.tryAutoAbilities(state); len(abilActions) > 0 {
+			return abilActions
+		}
 
 		// 1. 卖掉无效塔（wave 5+ 且有 0 击杀塔）
 		if state.Wave >= sellCheckWave {
@@ -215,7 +285,7 @@ func (s *CompetentStrategy) decidePlaying(state *GameState) []Action {
 			}
 		}
 
-		// 2. Boss 前策略：不建新塔，集中升级已有塔
+		// 2. Boss 前策略：不建新塔，集中升级 carry
 		if preBoss {
 			if state.Gold >= upgCost && len(state.Towers) > 0 {
 				if action, ok := s.tryUpgrade(state, false); ok {
@@ -223,7 +293,7 @@ func (s *CompetentStrategy) decidePlaying(state *GameState) []Action {
 					return actions
 				}
 			}
-			// 分配能力
+			// 旧式能力分配（兼容）
 			if action, ok := s.tryAssignAbility(state); ok {
 				actions = append(actions, action)
 				return actions
@@ -242,7 +312,7 @@ func (s *CompetentStrategy) decidePlaying(state *GameState) []Action {
 					return actions
 				}
 			}
-			// 分配能力
+			// 旧式能力分配（兼容）
 			if action, ok := s.tryAssignAbility(state); ok {
 				actions = append(actions, action)
 				return actions
@@ -258,7 +328,12 @@ func (s *CompetentStrategy) decidePlaying(state *GameState) []Action {
 	} else {
 		// ── 波进行中 ──
 
-		// 升级当前正在攻击的最强塔（保留 goldReserve 应急）
+		// 能力分配（免费，波中也可以做）
+		if abilActions := s.tryAutoAbilities(state); len(abilActions) > 0 {
+			return abilActions
+		}
+
+		// 升级当前正在攻击的 carry（保留 goldReserve 应急）
 		if state.Gold >= upgCost+goldReserve {
 			if action, ok := s.tryUpgrade(state, true); ok {
 				actions = append(actions, action)
@@ -272,8 +347,14 @@ func (s *CompetentStrategy) decidePlaying(state *GameState) []Action {
 func (s *CompetentStrategy) decideDesperate(state *GameState) []Action {
 	var actions []Action
 	upgCost := config.GlobalBalance().Tower.StrengthBuyCost
+	s.updateCarry(state)
 
 	if !state.WaveActive {
+		// 紧急模式下也要尽量分配能力
+		if abilActions := s.tryAutoAbilities(state); len(abilActions) > 0 {
+			return abilActions
+		}
+
 		// 紧急模式：升级已验证的塔（最多击杀）> 建新塔 > 开波
 		if state.Gold >= upgCost && len(state.Towers) > 0 {
 			if action, ok := s.tryUpgrade(state, false); ok {
@@ -298,6 +379,10 @@ func (s *CompetentStrategy) decideDesperate(state *GameState) []Action {
 			actions = append(actions, Action{Type: ActionStartWave})
 		}
 	} else {
+		// 战斗中也尝试分配能力
+		if abilActions := s.tryAutoAbilities(state); len(abilActions) > 0 {
+			return abilActions
+		}
 		// 战斗中：有金就升级，不留储备
 		if state.Gold >= upgCost {
 			if action, ok := s.tryUpgrade(state, true); ok {
@@ -329,8 +414,15 @@ func (s *CompetentStrategy) tryBuild(state *GameState) (Action, bool) {
 		return Action{}, false
 	}
 
-	// 选位置：从预计算排名中找到仍可用的最佳位置
-	cell, found := s.pickBestAvailableCell(state)
+	// 选位置：carry 建后，后续塔优先在 carry 附近（chokepoint 火力重叠）
+	var cell Cell
+	var found bool
+	if s.hasCarry && s.builtCount >= 1 {
+		cell, found = s.pickNearCarryCell(state)
+	}
+	if !found {
+		cell, found = s.pickBestAvailableCell(state)
+	}
 	if !found {
 		return Action{}, false
 	}
@@ -338,6 +430,14 @@ func (s *CompetentStrategy) tryBuild(state *GameState) (Action, bool) {
 	s.builtCount++
 	s.buildIdx++
 	s.lastBuildTick = state.Tick
+
+	// 第一座塔自动成为 carry
+	if !s.hasCarry {
+		s.carryRow = cell.Row
+		s.carryCol = cell.Col
+		s.hasCarry = true
+	}
+
 	return Action{
 		Type:     ActionBuild,
 		TowerKey: bestDef.Key,
@@ -347,10 +447,11 @@ func (s *CompetentStrategy) tryBuild(state *GameState) (Action, bool) {
 
 // tryUpgrade 选择最值得升级的塔。
 //
-// 核心原则：集中资源到最强/最有效的塔（Potential 缩放的乘法效应）。
-//   - 正常模式：按效能评分（damage * attackSpeed * kills_weight）选最高分塔
+// 核心原则：carry 系统 — 资源高度集中到 carry 塔。
+//   - carry str < carryStrCap(300) 时：100% 升级 carry
+//   - carry str >= carryStrCap 后：按效能评分选最高分塔
+//   - 波中：优先升级正在攻击的 carry / 最强塔
 //   - 紧急模式：按击杀数选（已验证的表现者）
-//   - 波中：优先升级正在攻击的最高分塔
 func (s *CompetentStrategy) tryUpgrade(state *GameState, preferActive bool) (Action, bool) {
 	if len(state.Towers) == 0 {
 		return Action{}, false
@@ -361,6 +462,20 @@ func (s *CompetentStrategy) tryUpgrade(state *GameState, preferActive bool) (Act
 	}
 
 	desperate := s.phase == phaseDesperate
+
+	// carry 集中升级：carry 强度未达上限时，只升 carry
+	if s.hasCarry && !desperate {
+		carry := s.findCarry(state)
+		if carry != nil && carry.Strength < s.carryStrCap {
+			// 波中模式下，carry 必须有目标才升级
+			if !preferActive || carry.HasTarget {
+				s.lastUpgradeTick = state.Tick
+				return Action{Type: ActionUpgrade, Row: carry.Row, Col: carry.Col}, true
+			}
+		}
+	}
+
+	// carry 已满或紧急模式 → 按效能评分选最佳塔
 	var best *TowerInfo
 	bestScore := -1.0
 
@@ -370,6 +485,10 @@ func (s *CompetentStrategy) tryUpgrade(state *GameState, preferActive bool) (Act
 			continue
 		}
 		score := s.towerEffectivenessScore(t, desperate)
+		// carry 塔始终有轻微加分（打破平局）
+		if s.isCarry(t) {
+			score *= 1.2
+		}
 		if score > bestScore {
 			bestScore = score
 			best = t
@@ -381,6 +500,9 @@ func (s *CompetentStrategy) tryUpgrade(state *GameState, preferActive bool) (Act
 		for i := range state.Towers {
 			t := &state.Towers[i]
 			score := s.towerEffectivenessScore(t, desperate)
+			if s.isCarry(t) {
+				score *= 1.2
+			}
 			if score > bestScore {
 				bestScore = score
 				best = t
@@ -410,7 +532,7 @@ func (s *CompetentStrategy) trySell(state *GameState) (Action, bool) {
 		return Action{}, false
 	}
 
-	// 找 0 击杀且位置评分最低的塔
+	// 找 0 击杀且位置评分最低的塔（永不卖 carry）
 	var worst *TowerInfo
 	worstPosScore := math.MaxFloat64
 
@@ -418,6 +540,9 @@ func (s *CompetentStrategy) trySell(state *GameState) (Action, bool) {
 		t := &state.Towers[i]
 		if t.Kills > 0 {
 			continue // 有击杀的留着
+		}
+		if s.isCarry(t) {
+			continue // 永不卖 carry
 		}
 		posScore := s.cellPlacementScore(t.Row, t.Col)
 		if posScore < worstPosScore {
@@ -462,6 +587,222 @@ func (s *CompetentStrategy) tryAssignAbility(state *GameState) (Action, bool) {
 		Col:         t.Col,
 		AbilityName: abilityName,
 	}, true
+}
+
+// ── carry 塔系统 ──────────────────────────────
+
+// updateCarry 维护 carry 塔标记。
+// 如果 carry 塔被卖掉（不在 Towers 列表中），重新选择击杀最多的塔作为 carry。
+func (s *CompetentStrategy) updateCarry(state *GameState) {
+	if !s.hasCarry || len(state.Towers) == 0 {
+		return
+	}
+	// 检查 carry 是否还存在
+	if s.findCarry(state) != nil {
+		return
+	}
+	// carry 被卖了 → 重新选择击杀最多的塔
+	var best *TowerInfo
+	bestKills := -1
+	for i := range state.Towers {
+		t := &state.Towers[i]
+		if t.Kills > bestKills {
+			bestKills = t.Kills
+			best = t
+		}
+	}
+	if best != nil {
+		s.carryRow = best.Row
+		s.carryCol = best.Col
+	}
+}
+
+// findCarry 在当前塔列表中找到 carry 塔，找不到返回 nil。
+func (s *CompetentStrategy) findCarry(state *GameState) *TowerInfo {
+	for i := range state.Towers {
+		if state.Towers[i].Row == s.carryRow && state.Towers[i].Col == s.carryCol {
+			return &state.Towers[i]
+		}
+	}
+	return nil
+}
+
+// isCarry 判断塔是否是 carry。
+func (s *CompetentStrategy) isCarry(t *TowerInfo) bool {
+	return s.hasCarry && t.Row == s.carryRow && t.Col == s.carryCol
+}
+
+// pickNearCarryCell 在 carry 附近（200px 内）找到路径评分最高的可建位置。
+// 这实现了 chokepoint 火力重叠策略：多塔射程重叠在同一 kill zone。
+func (s *CompetentStrategy) pickNearCarryCell(state *GameState) (Cell, bool) {
+	if !s.hasCarry || len(state.BuildCells) == 0 {
+		return Cell{}, false
+	}
+
+	// 找到 carry 的像素位置
+	var carryX, carryY float64
+	carryFound := false
+	for i := range state.Towers {
+		if state.Towers[i].Row == s.carryRow && state.Towers[i].Col == s.carryCol {
+			carryX = state.Towers[i].X
+			carryY = state.Towers[i].Y
+			carryFound = true
+			break
+		}
+	}
+	if !carryFound {
+		return Cell{}, false
+	}
+
+	// 在 carry 附近 200px 内找路径评分最高的格子
+	const maxDist = 200.0
+	var bestCell Cell
+	bestScore := -1.0
+	found := false
+
+	for _, c := range state.BuildCells {
+		dist := math.Hypot(c.X-carryX, c.Y-carryY)
+		if dist > maxDist {
+			continue
+		}
+		// 路径评分 * 距离权重（越近越好，但不能太近以免浪费覆盖面）
+		pathScore := s.cellPlacementScore(c.Row, c.Col)
+		// 距离 60-120px 是理想范围（射程重叠但不完全重合）
+		distWeight := 1.0
+		if dist < 60 {
+			distWeight = 0.5 // 太近了
+		} else if dist < 150 {
+			distWeight = 1.5 // 理想距离
+		}
+		score := pathScore * distWeight
+		if score > bestScore {
+			bestScore = score
+			bestCell = c
+			found = true
+		}
+	}
+
+	return bestCell, found
+}
+
+// ── 自动能力分配 ──────────────────────────────
+
+// tryAutoAbilities 自动为需要能力的塔分配能力。
+//
+// 核心逻辑：
+//   - 根据 wavesCleared 推算已解锁的 slot 数
+//   - 遍历每座塔，检查已有能力数 vs 可解锁 slot 数
+//   - carry 优先分配攻击/伤害/CC，support 优先分配 CC/攻击/光环
+//   - 每次只返回 1 个 action（节流，避免爆发请求）
+//
+// 如果旧式 abilities 列表非空，跳过自动分配（保持兼容）。
+func (s *CompetentStrategy) tryAutoAbilities(state *GameState) []Action {
+	// 旧式手动列表存在时，不启用自动分配
+	if len(s.abilities) > 0 {
+		return nil
+	}
+	if len(state.Towers) == 0 {
+		return nil
+	}
+	// 节流：每 8 tick 最多分配一个能力
+	if state.Tick-s.lastAbilityTick < 8 {
+		return nil
+	}
+
+	// 计算当前可解锁 slot 数（基于已完成的波次）
+	wpu := config.GlobalBalance().Tower.WavesPerUnlock
+	if wpu <= 0 {
+		wpu = 2
+	}
+	maxSlots := 1 + state.WavesCleared/wpu
+	if maxSlots > 6 {
+		maxSlots = 6
+	}
+
+	// carry 优先分配
+	if s.hasCarry {
+		carry := s.findCarry(state)
+		if carry != nil {
+			if action, ok := s.pickAbilityForTower(carry, maxSlots, true); ok {
+				s.lastAbilityTick = state.Tick
+				return []Action{action}
+			}
+		}
+	}
+
+	// 然后 support 塔
+	for i := range state.Towers {
+		t := &state.Towers[i]
+		if s.isCarry(t) {
+			continue // carry 已处理
+		}
+		if action, ok := s.pickAbilityForTower(t, maxSlots, false); ok {
+			s.lastAbilityTick = state.Tick
+			return []Action{action}
+		}
+	}
+
+	return nil
+}
+
+// pickAbilityForTower 为指定塔选择下一个应分配的能力。
+//
+// 逻辑：遍历 slot 分配顺序（carry/support 不同），
+// 找到第一个 (1) 已解锁 (2) 尚未填充 的 slot，从对应优先列表中选第一个可用能力。
+func (s *CompetentStrategy) pickAbilityForTower(t *TowerInfo, maxSlots int, isCarry bool) (Action, bool) {
+	filledSlots := s.countFilledSlots(t)
+
+	// 如果已有能力数 >= 可解锁 slot 数，无需分配
+	if filledSlots >= maxSlots {
+		return Action{}, false
+	}
+
+	// 根据角色选择 slot 分配顺序
+	order := supportSlotOrder
+	if isCarry {
+		order = carrySlotOrder
+	}
+
+	// 构建已有能力集合（快速查重）
+	abilitySet := make(map[string]bool, len(t.Abilities))
+	for _, a := range t.Abilities {
+		abilitySet[a] = true
+	}
+
+	// 遍历分配顺序，找第一个可填充的 slot
+	for _, slotIdx := range order {
+		if slotIdx >= maxSlots {
+			continue // 该 slot 尚未解锁
+		}
+		// 检查该类别是否已有能力（通过遍历优先列表对比）
+		slotFilled := false
+		for _, candidate := range abilityPriorities[slotIdx] {
+			if abilitySet[candidate] {
+				slotFilled = true
+				break
+			}
+		}
+		if slotFilled {
+			continue
+		}
+
+		// 该 slot 空闲 → 从优先列表中选第一个候选
+		for _, candidate := range abilityPriorities[slotIdx] {
+			return Action{
+				Type:        ActionAddAbility,
+				Row:         t.Row,
+				Col:         t.Col,
+				AbilityName: candidate,
+			}, true
+		}
+	}
+
+	return Action{}, false
+}
+
+// countFilledSlots 统计塔已填充的能力 slot 数（通过 Abilities 列表长度推断）。
+func (s *CompetentStrategy) countFilledSlots(t *TowerInfo) int {
+	return len(t.Abilities)
 }
 
 // ── 辅助函数 ──────────────────────────────────
