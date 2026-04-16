@@ -3,14 +3,13 @@
 > 自动生成，勿手动编辑。运行 `make index` 更新。
 > 修改函数前查此表，评估影响范围。
 
-共 26 个跨包函数有影响链。
+共 25 个跨包函数有影响链。
 
 ## i18n.T
 
 **上游影响链**（修改此函数，以下调用者受影响）：
 
 ```
-abilities.OnHit → i18n.T
 achievement.All → i18n.T
 achievement.NameByID → i18n.T
 combat.ApplyHit → i18n.T
@@ -29,49 +28,6 @@ scene.Update → i18n.T
 scene.Update → persistence.UnlockRequirement → i18n.T
 tower.SpriteLabelFor → i18n.T
 warden.ApplyDamage → combat.ApplyDamage → i18n.T
-```
-
-## e.IsDying
-
-**上游影响链**（修改此函数，以下调用者受影响）：
-
-```
-abilities.OnTick → e.IsDying
-combat.ApplyHit → e.IsDying
-combat.Fire → e.IsDying
-combat.Tick → e.IsDying
-combat.Tick → tower.FindNearestEnemy → e.IsDying
-descriptor.AllActive → e.IsDying
-descriptor.QueryRadius → e.IsDying
-enemy.TickBehaviors → e.IsDying
-pipeline.Tick → e.IsDying
-pipeline.TickEnemyStatusEffects → e.IsDying
-pipeline.TickProjectileHits → e.IsDying
-pipeline.TickTowerCombat → tower.FindExtraTargets → e.IsDying
-types.Tick → warden.ComputeClusterCenter → e.IsDying
-warden.ApplyDamage → e.IsDying
-warden.FindNearest → e.IsDying
-```
-
-## e.IsSpawning
-
-**上游影响链**（修改此函数，以下调用者受影响）：
-
-```
-abilities.OnTick → e.IsSpawning
-combat.Fire → e.IsSpawning
-combat.Tick → e.IsSpawning
-combat.Tick → tower.FindNearestEnemy → e.IsSpawning
-descriptor.AllActive → e.IsSpawning
-descriptor.QueryRadius → e.IsSpawning
-enemy.TickBehaviors → e.IsSpawning
-pipeline.Tick → e.IsSpawning
-pipeline.TickEnemyStatusEffects → e.IsSpawning
-pipeline.TickProjectileHits → e.IsSpawning
-pipeline.TickTowerCombat → tower.FindExtraTargets → e.IsSpawning
-types.Tick → warden.ComputeClusterCenter → e.IsSpawning
-warden.ApplyDamage → e.IsSpawning
-warden.FindNearest → e.IsSpawning
 ```
 
 ## config.GlobalBalance
@@ -101,6 +57,47 @@ tower.WavesPerUnlock → config.GlobalBalance
 warden.BasicAttack → config.GlobalBalance
 ```
 
+## e.IsDying
+
+**上游影响链**（修改此函数，以下调用者受影响）：
+
+```
+combat.ApplyHit → e.IsDying
+combat.Fire → e.IsDying
+combat.Tick → e.IsDying
+combat.Tick → tower.FindNearestEnemy → e.IsDying
+descriptor.AllActive → e.IsDying
+descriptor.QueryRadius → e.IsDying
+enemy.TickBehaviors → e.IsDying
+pipeline.Tick → e.IsDying
+pipeline.TickEnemyStatusEffects → e.IsDying
+pipeline.TickProjectileHits → e.IsDying
+pipeline.TickTowerCombat → tower.FindExtraTargets → e.IsDying
+types.Tick → warden.ComputeClusterCenter → e.IsDying
+warden.ApplyDamage → e.IsDying
+warden.FindNearest → e.IsDying
+```
+
+## e.IsSpawning
+
+**上游影响链**（修改此函数，以下调用者受影响）：
+
+```
+combat.Fire → e.IsSpawning
+combat.Tick → e.IsSpawning
+combat.Tick → tower.FindNearestEnemy → e.IsSpawning
+descriptor.AllActive → e.IsSpawning
+descriptor.QueryRadius → e.IsSpawning
+enemy.TickBehaviors → e.IsSpawning
+pipeline.Tick → e.IsSpawning
+pipeline.TickEnemyStatusEffects → e.IsSpawning
+pipeline.TickProjectileHits → e.IsSpawning
+pipeline.TickTowerCombat → tower.FindExtraTargets → e.IsSpawning
+types.Tick → warden.ComputeClusterCenter → e.IsSpawning
+warden.ApplyDamage → e.IsSpawning
+warden.FindNearest → e.IsSpawning
+```
+
 ## config.GlobalSpawnerConfig
 
 **上游影响链**（修改此函数，以下调用者受影响）：
@@ -128,6 +125,18 @@ scene.NewStageSceneWithOpts → projectile.DefaultPool → NewPool
 scene.NewStageSceneWithOpts → tower.DefaultPool → NewPool
 ```
 
+## config.GetDataFS
+
+**上游影响链**（修改此函数，以下调用者受影响）：
+
+```
+gamemode.LoadModeConfigs → config.GetDataFS
+scene.NewGame → config.GetDataFS
+scene.NewStageSceneWithOpts → config.GetDataFS
+scene.NewTowerWorkshopScene → descriptor.LoadPrebuiltBlueprints → config.GetDataFS
+scene.Update → config.GetDataFS
+```
+
 ## config.GlobalAbilityTable
 
 **上游影响链**（修改此函数，以下调用者受影响）：
@@ -140,6 +149,16 @@ scene.NewBestiaryScene → config.GlobalAbilityTable
 tower.AbilitiesForCategory → config.GlobalAbilityTable
 tower.AddAbility → config.GlobalAbilityTable
 tower.EnhanceFactors → config.GlobalAbilityTable
+```
+
+## fs.ReadFile
+
+**上游影响链**（修改此函数，以下调用者受影响）：
+
+```
+gamemode.LoadModeConfigs → fs.ReadFile
+scene.NewTowerWorkshopScene → descriptor.LoadPrebuiltBlueprints → fs.ReadFile
+scene.Update → mascot.LoadAllDialogs → fs.ReadFile
 ```
 
 ## i18n.TF
@@ -187,19 +206,17 @@ combat.ApplyDamage → i18n.T
 combat.ApplyDamage → i18n.T
 ```
 
-## config.GetDataFS
+## config.GlobalTierPresets
 
 **上游影响链**（修改此函数，以下调用者受影响）：
 
 ```
-gamemode.LoadModeConfigs → config.GetDataFS
-gamemode.LoadModeConfigs → config.GetDataFS
-scene.NewGame → config.GetDataFS
-scene.NewGame → config.GetDataFS
-scene.NewStageSceneWithOpts → config.GetDataFS
-scene.NewStageSceneWithOpts → config.GetDataFS
-scene.Update → config.GetDataFS
-scene.Update → config.GetDataFS
+descriptor.LoadPrebuiltBlueprintDefs → config.GlobalTierPresets
+descriptor.LoadPrebuiltBlueprintDefs → config.GlobalTierPresets
+tower.ApplyRandomStats → config.GlobalTierPresets
+tower.ApplyRandomStats → config.GlobalTierPresets
+tower.RollTowerStats → config.GlobalTierPresets
+tower.RollTowerStats → config.GlobalTierPresets
 ```
 
 ## config.GlobalWardenConfig
@@ -232,19 +249,6 @@ aiplayer.New → learning.LoadFromFS → dataFS.ReadFile
 descriptor.LoadDescriptorTable → dataFS.ReadFile
 ```
 
-## e.SetFloatText
-
-**上游影响链**（修改此函数，以下调用者受影响）：
-
-```
-abilities.OnHit → e.SetFloatText
-combat.ApplyHit → e.SetFloatText
-combat.ApplySlow → e.SetFloatText
-combat.ApplyStun → e.SetFloatText
-pipeline.TickEnemyStatusEffects → combat.ApplyDamage → e.SetFloatText
-warden.ApplyDamage → combat.ApplyDamage → e.SetFloatText
-```
-
 ## enemies.Each
 
 **上游影响链**（修改此函数，以下调用者受影响）：
@@ -255,15 +259,6 @@ pipeline.TickProjectileHits → enemies.Each
 types.Tick → warden.ComputeClusterCenter → enemies.Each
 warden.FindDensestEnemy → enemies.Each
 warden.FindNearest → enemies.Each
-```
-
-## fs.ReadFile
-
-**上游影响链**（修改此函数，以下调用者受影响）：
-
-```
-gamemode.LoadModeConfigs → fs.ReadFile
-scene.Update → mascot.LoadAllDialogs → fs.ReadFile
 ```
 
 ## pool.EachActive
@@ -366,24 +361,6 @@ combat.ApplyHit → tower.Lookup
 combat.ApplyHit → tower.Lookup
 pipeline.TickTowerAbilities → tower.Lookup
 pipeline.TickTowerAbilities → tower.Lookup
-```
-
-## tower.Register
-
-**上游影响链**（修改此函数，以下调用者受影响）：
-
-```
-abilities.RegisterConfigAbilities → tower.Register
-scene.NewGame → descriptor.InitDescriptorAbilities → tower.Register
-scene.NewStageSceneWithOpts → descriptor.RegisterCustomAbilities → tower.Register
-scene.Update → descriptor.InitDescriptorAbilities → tower.Register
-```
-
-**下游依赖链**（此函数依赖以下函数）：
-
-```
-tower.Register → a.Name
-tower.Register → a.Name
 ```
 
 ## towers.Each

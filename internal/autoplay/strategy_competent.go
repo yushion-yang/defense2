@@ -1,5 +1,8 @@
 // strategy_competent.go — 仿真测试"合理玩家"策略。
-// 路径感知放塔、分阶段经济管理、自主控制开波时机。
+//
+// 目标：模拟有经验的玩家行为，不依赖元知识或最优解，
+// 但会做出合理的经济决策（集中升级、Boss 前攒钱、卖低效塔）。
+// 路径感知放塔、分阶段经济管理、Boss 波意识、自主控制开波时机。
 // 用于 simulation 模式下的数值平衡验证。
 package autoplay
 
@@ -19,6 +22,15 @@ const (
 	phaseSetup    competentPhase = iota // 开波前初始建造
 	phasePlaying                        // 常规阶段
 	phaseDesperate                      // 低生命紧急阶段
+)
+
+// ── 经济常量 ──────────────────────────────────
+
+const (
+	goldReserve       = 10 // 波中保留的应急升级储备金
+	nearAffordMargin  = 20 // 差多少金币就能再建一座时延迟开波
+	sellCheckWave     = 5  // 从第几波开始检查卖塔
+	bossEveryFallback = 4  // Boss 间隔默认值（配置读取失败时）
 )
 
 // ── 函数式选项 ──────────────────────────────────
@@ -48,8 +60,13 @@ func WithCompetentSeed(seed int64) CompetentOpt {
 
 // ── 策略实现 ──────────────────────────────────
 
-// CompetentStrategy 模拟合理玩家的策略。
-// 基于路径亲和度评分放塔，分阶段管理经济，自控开波时机。
+// CompetentStrategy 模拟有经验玩家的策略。
+//
+// 核心理念：
+//   - 集中资源到最强塔（Potential 缩放的乘法效应）
+//   - Boss 波前攒钱、Boss 后激进扩张
+//   - 卖掉无效塔回收金币
+//   - 开波不磨蹭，但也不在准备不足时冒进
 type CompetentStrategy struct {
 	wardenKey  string
 	maxTowers  int
@@ -70,6 +87,10 @@ type CompetentStrategy struct {
 	// 节流
 	lastBuildTick   int
 	lastUpgradeTick int
+	lastSellTick    int
+
+	// Boss 波感知
+	bossEvery int // Boss 出现间隔波数
 }
 
 // NewCompetentStrategy 创建合理玩家策略。
@@ -93,6 +114,14 @@ func (s *CompetentStrategy) Init(state *GameState) {
 	s.initDone = false
 	s.lastBuildTick = -100 // 允许首帧立即建造
 	s.lastUpgradeTick = -100
+	s.lastSellTick = -100
+
+	// 从配置读取 Boss 间隔
+	s.bossEvery = config.GlobalSpawnerConfig().Boss.EveryNWaves
+	if s.bossEvery <= 0 {
+		s.bossEvery = bossEveryFallback
+	}
+
 	// 如果 MapInfo 已可用（测试场景），立即初始化放塔排名
 	if state.MapInfo != nil {
 		s.initPlacement(state)
@@ -137,9 +166,14 @@ func (s *CompetentStrategy) Decide(state *GameState) []Action {
 
 func (s *CompetentStrategy) updatePhase(state *GameState) {
 	if s.phase == phaseSetup {
-		// 建了至少 2 塔或金币不够再建 → 开始打
-		minSetup := 2
-		if s.builtCount >= minSetup || (len(state.BuildCells) == 0) || !s.canAffordBuild(state) {
+		// 建了至少 3 塔 或 金币不够再建且已有 2 塔 → 开始打
+		minSetup := 3
+		if s.builtCount >= minSetup {
+			s.phase = phasePlaying
+			return
+		}
+		// 至少有 2 塔且无法再建时也进入 playing
+		if s.builtCount >= 2 && (len(state.BuildCells) == 0 || !s.canAffordBuild(state)) {
 			s.phase = phasePlaying
 		}
 		return
@@ -167,33 +201,65 @@ func (s *CompetentStrategy) decidePlaying(state *GameState) []Action {
 	var actions []Action
 	target := s.targetTowers(state)
 	upgCost := config.GlobalBalance().Tower.StrengthBuyCost
+	nextWave := state.Wave + 1
+	preBoss := s.isPreBossWave(nextWave)
 
 	if !state.WaveActive {
-		// 波间歇期：建/升 → 然后开波
-		if s.builtCount < target && s.canAffordBuild(state) {
-			if action, ok := s.tryBuild(state); ok {
-				actions = append(actions, action)
-				return actions // 建完这帧再决定
-			}
-		}
-		if state.Gold >= upgCost && len(state.Towers) > 0 {
-			if action, ok := s.tryUpgrade(state, false); ok {
+		// ── 波间歇期决策 ──
+
+		// 1. 卖掉无效塔（wave 5+ 且有 0 击杀塔）
+		if state.Wave >= sellCheckWave {
+			if action, ok := s.trySell(state); ok {
 				actions = append(actions, action)
 				return actions
 			}
 		}
-		// 分配能力
-		if action, ok := s.tryAssignAbility(state); ok {
-			actions = append(actions, action)
-			return actions
+
+		// 2. Boss 前策略：不建新塔，集中升级已有塔
+		if preBoss {
+			if state.Gold >= upgCost && len(state.Towers) > 0 {
+				if action, ok := s.tryUpgrade(state, false); ok {
+					actions = append(actions, action)
+					return actions
+				}
+			}
+			// 分配能力
+			if action, ok := s.tryAssignAbility(state); ok {
+				actions = append(actions, action)
+				return actions
+			}
+		} else {
+			// 非 Boss 前：建塔优先，然后升级
+			if s.builtCount < target && s.canAffordBuild(state) {
+				if action, ok := s.tryBuild(state); ok {
+					actions = append(actions, action)
+					return actions
+				}
+			}
+			if state.Gold >= upgCost && len(state.Towers) > 0 {
+				if action, ok := s.tryUpgrade(state, false); ok {
+					actions = append(actions, action)
+					return actions
+				}
+			}
+			// 分配能力
+			if action, ok := s.tryAssignAbility(state); ok {
+				actions = append(actions, action)
+				return actions
+			}
 		}
-		// 准备就绪 → 开波
+
+		// 3. 开波时机判断
 		if state.Wave < state.MaxWaves {
-			actions = append(actions, Action{Type: ActionStartWave})
+			if s.shouldStartWave(state) {
+				actions = append(actions, Action{Type: ActionStartWave})
+			}
 		}
 	} else {
-		// 波进行中：金币充裕时升级有目标的塔
-		if state.Gold >= upgCost*2 {
+		// ── 波进行中 ──
+
+		// 升级当前正在攻击的最强塔（保留 goldReserve 应急）
+		if state.Gold >= upgCost+goldReserve {
 			if action, ok := s.tryUpgrade(state, true); ok {
 				actions = append(actions, action)
 			}
@@ -208,12 +274,17 @@ func (s *CompetentStrategy) decideDesperate(state *GameState) []Action {
 	upgCost := config.GlobalBalance().Tower.StrengthBuyCost
 
 	if !state.WaveActive {
-		// 紧急模式：优先升级，不急着开波
+		// 紧急模式：升级已验证的塔（最多击杀）> 建新塔 > 开波
 		if state.Gold >= upgCost && len(state.Towers) > 0 {
 			if action, ok := s.tryUpgrade(state, false); ok {
 				actions = append(actions, action)
 				return actions
 			}
+		}
+		// 卖掉无效塔
+		if action, ok := s.trySell(state); ok {
+			actions = append(actions, action)
+			return actions
 		}
 		// 金币足够且有好位置 → 建塔
 		if s.canAffordBuild(state) {
@@ -227,7 +298,7 @@ func (s *CompetentStrategy) decideDesperate(state *GameState) []Action {
 			actions = append(actions, Action{Type: ActionStartWave})
 		}
 	} else {
-		// 战斗中升级
+		// 战斗中：有金就升级，不留储备
 		if state.Gold >= upgCost {
 			if action, ok := s.tryUpgrade(state, true); ok {
 				actions = append(actions, action)
@@ -274,6 +345,12 @@ func (s *CompetentStrategy) tryBuild(state *GameState) (Action, bool) {
 	}, true
 }
 
+// tryUpgrade 选择最值得升级的塔。
+//
+// 核心原则：集中资源到最强/最有效的塔（Potential 缩放的乘法效应）。
+//   - 正常模式：按效能评分（damage * attackSpeed * kills_weight）选最高分塔
+//   - 紧急模式：按击杀数选（已验证的表现者）
+//   - 波中：优先升级正在攻击的最高分塔
 func (s *CompetentStrategy) tryUpgrade(state *GameState, preferActive bool) (Action, bool) {
 	if len(state.Towers) == 0 {
 		return Action{}, false
@@ -283,22 +360,29 @@ func (s *CompetentStrategy) tryUpgrade(state *GameState, preferActive bool) (Act
 		return Action{}, false
 	}
 
-	// 找最弱的塔（优先有目标的）
+	desperate := s.phase == phaseDesperate
 	var best *TowerInfo
+	bestScore := -1.0
+
 	for i := range state.Towers {
 		t := &state.Towers[i]
 		if preferActive && !t.HasTarget {
 			continue
 		}
-		if best == nil || t.Strength < best.Strength {
+		score := s.towerEffectivenessScore(t, desperate)
+		if score > bestScore {
+			bestScore = score
 			best = t
 		}
 	}
-	// 如果 preferActive 没找到，退而求其次
+
+	// 如果 preferActive 没找到有目标的塔，退而求其次选所有塔中最强的
 	if best == nil && preferActive {
 		for i := range state.Towers {
 			t := &state.Towers[i]
-			if best == nil || t.Strength < best.Strength {
+			score := s.towerEffectivenessScore(t, desperate)
+			if score > bestScore {
+				bestScore = score
 				best = t
 			}
 		}
@@ -312,6 +396,49 @@ func (s *CompetentStrategy) tryUpgrade(state *GameState, preferActive bool) (Act
 		Type: ActionUpgrade,
 		Row:  best.Row,
 		Col:  best.Col,
+	}, true
+}
+
+// trySell 卖掉无效塔（0 击杀、波次 >= sellCheckWave）。
+// 卖出后 builtCount 减一，让后续帧可以在更好位置重建。
+func (s *CompetentStrategy) trySell(state *GameState) (Action, bool) {
+	if len(state.Towers) <= 1 {
+		return Action{}, false // 至少保留 1 座塔
+	}
+	// 节流：每 60 tick 最多卖一座
+	if state.Tick-s.lastSellTick < 60 {
+		return Action{}, false
+	}
+
+	// 找 0 击杀且位置评分最低的塔
+	var worst *TowerInfo
+	worstPosScore := math.MaxFloat64
+
+	for i := range state.Towers {
+		t := &state.Towers[i]
+		if t.Kills > 0 {
+			continue // 有击杀的留着
+		}
+		posScore := s.cellPlacementScore(t.Row, t.Col)
+		if posScore < worstPosScore {
+			worstPosScore = posScore
+			worst = t
+		}
+	}
+
+	if worst == nil {
+		return Action{}, false
+	}
+
+	s.lastSellTick = state.Tick
+	s.builtCount--
+	if s.builtCount < 0 {
+		s.builtCount = 0
+	}
+	return Action{
+		Type: ActionSell,
+		Row:  worst.Row,
+		Col:  worst.Col,
 	}, true
 }
 
@@ -352,14 +479,44 @@ func (s *CompetentStrategy) canAffordBuild(state *GameState) bool {
 	return state.Gold >= cheapest
 }
 
+// cheapestTowerCost 返回最便宜的塔造价。
+func (s *CompetentStrategy) cheapestTowerCost(state *GameState) int {
+	if len(state.TowerDefs) == 0 {
+		return math.MaxInt32
+	}
+	cheapest := state.TowerDefs[0].Cost
+	for _, d := range state.TowerDefs[1:] {
+		if d.Cost < cheapest {
+			cheapest = d.Cost
+		}
+	}
+	return cheapest
+}
+
+// targetTowers 根据波次计算目标塔数。
+//
+// 早期激进建塔（wave 1-3: 2~3 塔），中后期稳步扩张（3 + wave/4）。
+// 上限为可用槽位的一半（留空间给位置优化）。
 func (s *CompetentStrategy) targetTowers(state *GameState) int {
-	// 随波次递增：2 + wave/3，但不超过可用位置的一半
 	maxBuild := len(state.BuildCells) + s.builtCount // 总可用位置
 	halfSlots := maxBuild / 2
 	if halfSlots < 3 {
 		halfSlots = 3
 	}
-	target := 2 + state.Wave/3
+
+	var target int
+	switch {
+	case state.Wave <= 3:
+		// 早期：2~3 塔，用好起始金
+		target = 2 + (state.Wave+1)/2 // wave0=2, wave1=3, wave2=3, wave3=3
+		if target > 3 {
+			target = 3
+		}
+	default:
+		// 中后期：更激进的扩张
+		target = 3 + state.Wave/4
+	}
+
 	if s.maxTowers > 0 && target > s.maxTowers {
 		target = s.maxTowers
 	}
@@ -367,6 +524,70 @@ func (s *CompetentStrategy) targetTowers(state *GameState) int {
 		target = halfSlots
 	}
 	return target
+}
+
+// towerEffectivenessScore 计算塔的效能评分，用于升级优先级。
+//
+// 正常模式：damage * attackSpeed * (1 + kills*0.1)
+//   — 高伤害高攻速的塔从升级中获益最多（Potential 乘法效应）
+//   — kills 提供经验加权但不主导
+//
+// 紧急模式：纯击杀数（已验证的实战表现者）
+func (s *CompetentStrategy) towerEffectivenessScore(t *TowerInfo, desperate bool) float64 {
+	if desperate {
+		// 紧急模式：最多击杀的塔是已验证的表现者
+		return float64(t.Kills) + 0.001 // +0.001 避免全零时无法区分
+	}
+	// 正常模式：damage * attackSpeed，击杀数作为经验权重
+	killsWeight := 1.0 + float64(t.Kills)*0.1
+	return t.Damage * math.Max(t.AttackSpeed, 0.1) * killsWeight
+}
+
+// isPreBossWave 判断 nextWave 的前一波是否应该攒钱。
+// Boss 出现在 wave % bossEvery == 0 的波次（如 4, 8, 12...）。
+// 在 Boss 前一波（如 3, 7, 11...）节约金币，为 Boss 波准备。
+func (s *CompetentStrategy) isPreBossWave(nextWave int) bool {
+	if nextWave <= 0 {
+		return false
+	}
+	return nextWave%s.bossEvery == 0
+}
+
+// shouldStartWave 判断是否应该开波。
+//
+// 不开波的情况：
+//   - 没有任何塔
+//   - 金币差一点就能再建一座（nearAffordMargin 内）
+//
+// 其他情况尽快开波（更快 = 更高 perfect bonus 概率）。
+func (s *CompetentStrategy) shouldStartWave(state *GameState) bool {
+	// 安全检查：没塔不开
+	if len(state.Towers) == 0 {
+		return false
+	}
+
+	// 快要够钱建新塔时延迟开波
+	target := s.targetTowers(state)
+	if s.builtCount < target {
+		cheapest := s.cheapestTowerCost(state)
+		deficit := cheapest - state.Gold
+		if deficit > 0 && deficit <= nearAffordMargin {
+			return false
+		}
+	}
+
+	return true
+}
+
+// cellPlacementScore 查询格子在预计算排名中的评分。
+// 用于 trySell 判断哪座塔的位置最差。
+func (s *CompetentStrategy) cellPlacementScore(row, col int) float64 {
+	for i, c := range s.placementOrder {
+		if c.Row == row && c.Col == col {
+			return s.placementScore[i]
+		}
+	}
+	return 0 // 未在排名中 = 最低分
 }
 
 func (s *CompetentStrategy) pickBestTowerDef(state *GameState) *TowerDefInfo {
@@ -468,7 +689,7 @@ func (s *CompetentStrategy) initPlacement(state *GameState) {
 	}
 }
 
-// findCorners 识别路径上的拐角点（方向变化 > 30°）。
+// findCorners 识别路径上的拐角点（方向变化 > 30 度）。
 func findCorners(wps []PathPoint) []bool {
 	corners := make([]bool, len(wps))
 	if len(wps) < 3 {
@@ -477,7 +698,7 @@ func findCorners(wps []PathPoint) []bool {
 	const angleThresh = 30.0 * math.Pi / 180.0
 
 	for i := 1; i < len(wps)-1; i++ {
-		// 向量: prev→curr, curr→next
+		// 向量: prev->curr, curr->next
 		dx1 := wps[i].X - wps[i-1].X
 		dy1 := wps[i].Y - wps[i-1].Y
 		dx2 := wps[i+1].X - wps[i].X
@@ -507,7 +728,7 @@ func findCorners(wps []PathPoint) []bool {
 }
 
 // scoreCell 计算建造格子的路径亲和度评分。
-// 拐角处权重 ×2，多路径交汇处额外加分。
+// 拐角处权重 x2，多路径交汇处额外加分。
 func scoreCell(c Cell, allPaths [][]PathPoint, allCorners [][]bool) float64 {
 	const maxRange = 200.0 // 最大考虑距离
 	score := 0.0

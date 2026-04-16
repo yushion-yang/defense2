@@ -2,13 +2,7 @@
 
 > 自动生成，勿手动编辑。运行 `make index` 更新。
 
-共 291 个文件, 73510 行代码, 48 个包。
-
-## abilities (346 行)
-
-| 文件 | 行数 | 职责 |
-|------|------|------|
-| `config_ability.go` | 346 | 数据驱动的统一能力实现。 |
+共 291 个文件, 73397 行代码, 47 个包。
 
 ## achievement (215 行)
 
@@ -101,11 +95,11 @@
 | `handler_spinaoe.go` | 124 | 旋转范围伤害攻击方式（自管理）。 |
 | `handler_widebeam.go` | 99 | 宽光束攻击方式（贯穿路径所有敌人）。 |
 
-## config (2468 行)
+## config (2479 行)
 
 | 文件 | 行数 | 职责 |
 |------|------|------|
-| `ability_config.go` | 126 | 能力配置数据结构与加载。 |
+| `ability_config.go` | 137 | 能力配置数据结构与加载。 |
 | `audit.go` | 56 | 配置审计工具。 |
 | `balance_config.go` | 307 | 游戏平衡配置的 Go 映射。 |
 | `buff_config.go` | 25 | buff 堆叠规则配置加载。 |
@@ -132,28 +126,29 @@
 |------|------|------|
 | `perf.go` | 162 | frame time + GC performance tracker. |
 
-## descriptor (5650 行)
+## descriptor (5758 行)
 
 | 文件 | 行数 | 职责 |
 |------|------|------|
 | `ability_store.go` | 158 | 自定义能力持久化存储（CRUD）。 |
 | `adapter.go` | 145 | EffectResult → HitResult/TickResult 适配层。 |
-| `blueprint.go` | 129 | 定制炮塔蓝图数据结构与校验。 |
+| `blueprint.go` | 134 | 定制炮塔蓝图数据结构与校验。 |
 | `blueprint_store.go` | 146 | 蓝图持久化存储（CRUD）。 |
 | `blueprint_to_def.go` | 128 | 蓝图→塔定义转换。 |
 | `budget.go` | 94 | 预算计算系统。 |
 | `condition.go` | 221 | 条件门接口及 11 种内置条件类型。 |
-| `derive_ability_table.go` | 317 | 从描述符自动派生 AbilityDef 元数据表。 |
+| `derive_ability_table.go` | 324 | 从描述符自动派生 AbilityDef 元数据表。 |
 | `describe.go` | 271 | 从能力描述符生成人类可读的中文描述。 |
 | `descriptor.go` | 702 | 能力描述符 JSON 模式与解析器。 |
 | `descriptor_ability.go` | 375 | 描述符驱动能力的 tower.Ability/Ticker 适配器。 |
 | `edit_state.go` | 731 | EditState ↔ AbilityDescriptor 双向转换。 |
 | `effect.go` | 213 | 效果接口及 13 种具体效果实现。 |
 | `effect_result.go` | 96 | 统一效果输出结构与上下文。 |
-| `init.go` | 60 | 描述符能力的双轨注册初始化。 |
+| `init.go` | 69 | 描述符能力的双轨注册初始化。 |
 | `interpreter.go` | 218 | 描述符运行时解释器。 |
 | `loader.go` | 86 | 能力描述符表加载器。 |
 | `marshal.go` | 336 | AbilityDescriptor 的 JSON 序列化/反序列化。 |
+| `prebuilt_blueprints.go` | 87 | 预制蓝图加载器。 |
 | `primitive_meta.go` | 385 | 基元元数据注册表，供能力编辑器 UI 使用。 |
 | `scaler.go` | 168 | 数值缩放器接口及基础实现。 |
 | `selector.go` | 385 | 目标选择器接口及 9 种实现。 |
@@ -406,7 +401,7 @@
 | `splash_vfx.go` | 115 | splash ability impact ring VFX. |
 | `trail_batch.go` | 286 | 弹道尾迹批量渲染器。 |
 
-## scene (18725 行)
+## scene (18839 行)
 
 | 文件 | 行数 | 职责 |
 |------|------|------|
@@ -416,23 +411,23 @@
 | `bestiary.go` | 472 | 图鉴场景。 |
 | `blueprint_edit.go` | 1603 | 蓝图编辑场景（4步向导）。 |
 | `campaign_select.go` | 499 | 战役模式关卡选择场景。 |
-| `game.go` | 506 | 顶层游戏管理器，实现 Ebitengine 的 ebiten.Game 接口。 |
+| `game.go` | 503 | 顶层游戏管理器，实现 Ebitengine 的 ebiten.Game 接口。 |
 | `lang_select.go` | 126 | 首次语言选择场景。 |
-| `loading.go` | 293 | 加载场景。 |
+| `loading.go` | 290 | 加载场景。 |
 | `map_editor.go` | 808 | Map Editor scene (tower slot editor). |
 | `result.go` | 703 | 结算场景（游戏结束后的统计与评价画面）。 |
 | `scene.go` | 52 | 场景系统的核心接口定义。 |
 | `select.go` | 576 | 模式选择场景（卡片式 UI）。 |
 | `settings.go` | 390 | 设置场景。 |
 | `settings_persist.go` | 80 | 设置持久化（音量/画质）。 |
-| `stage.go` | 4535 | 游戏主战斗场景（~3600行，本项目最核心的文件）。 |
+| `stage.go` | 4459 | 游戏主战斗场景（~3600行，本项目最核心的文件）。 |
 | `stage_info_vm.go` | 686 | 塔信息面板的 ViewModel 构建器。 |
 | `stage_input.go` | 1091 | StageScene 的输入处理和交互状态机（11 种模式）。 |
 | `stage_types.go` | 122 | StageScene 的类型定义和常量。 |
 | `stage_warden_vm.go` | 179 | 战灵选择数据构建（从 config 加载并转为 hud.WardenOption）。 |
 | `test_select.go` | 490 | 测试模式场景选择器。 |
 | `title.go` | 145 | 标题场景（游戏启动首屏）。 |
-| `tower_workshop.go` | 550 | 炮塔工坊场景（蓝图 + 自定义能力管理中心）。 |
+| `tower_workshop.go` | 746 | 炮塔工坊场景（预制/自定义 能力+蓝图 四 Tab 管理中心）。 |
 | `vfx_preview.go` | 1127 | VFX preview scene. |
 | `warden_select.go` | 365 | 战灵选择场景。 |
 | `wave_preview.go` | 458 | Wave Preview scene. |

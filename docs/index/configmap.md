@@ -2,7 +2,7 @@
 
 > 自动生成，勿手动编辑。运行 `make index` 更新。
 
-扫描 68 个 JSON 配置文件，找到 640 条映射。
+扫描 69 个 JSON 配置文件，找到 643 条映射。
 
 ## config/ai/weights.json
 
@@ -634,7 +634,7 @@
 
 | JSON 字段 | Go 文件 | 行 | 上下文 |
 |-----------|---------|-----|--------|
-| `formula.potential` | `internal/core/tower/descriptor/derive_ability_table.go` | 256 | Potential float64 `json:"potential"` |
+| `formula.potential` | `internal/core/tower/descriptor/derive_ability_table.go` | 252 | Potential float64 `json:"potential"` |
 | `formula.potential` | `internal/core/tower/descriptor/scaler.go` | 39 | Potential float64 `json:"potential"` |
 | `specialty` | `internal/config/scenario_config.go` | 43 | Specialty       int       `json:"specialty,omitempty"` //... |
 | `specialty` | `internal/core/tower/descriptor/blueprint.go` | 39 | Specialty string `json:"specialty"` |
@@ -847,6 +847,14 @@
 | `defaults.buildCost` | `internal/config/classic_preset_config.go` | 34 | BuildCost   int               `json:"buildCost"`   // 建... |
 | `defaults.strength` | `internal/config/classic_preset_config.go` | 32 | Strength    StrengthConfig    `json:"strength"`    // 强... |
 | `towers` | `internal/config/classic_preset_config.go` | 49 | Towers   []ClassicPreset        `json:"towers"` |
+
+## config/towers/prebuilt-blueprints.json
+
+| JSON 字段 | Go 文件 | 行 | 上下文 |
+|-----------|---------|-----|--------|
+| `blueprints` | `internal/core/gamemode/mode_config.go` | 43 | Blueprints     bool   `json:"blueprints"`     // 允许�... |
+| `blueprints` | `internal/core/tower/descriptor/blueprint_store.go` | 23 | Blueprints []TowerBlueprint `json:"blueprints"` |
+| `blueprints` | `internal/core/tower/descriptor/prebuilt_blueprints.go` | 23 | Blueprints []TowerBlueprint `json:"blueprints"` |
 
 ## config/towers/tier-presets.json
 
