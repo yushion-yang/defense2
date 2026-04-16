@@ -621,12 +621,18 @@ func (ap *AIPlayer) tickLLM(dt float64, snap AISnapshot) {
 
 // applyLLMStrategicOverride 检查 LLM 战略决策，可能覆盖本地启发式决策。
 //
-// 覆盖规则：
+// 支持多步操作链：LLM 返回最多 3 个操作，第一个立即执行，
+// 后续操作以交错延迟入队到 ActionQueue。
+//
+// 覆盖规则（基于第一个操作）：
 //   - LLM 未启用或未返回决策 → 保持原决策
-//   - LLM 说 "wait" → 覆盖为 Idle
-//   - LLM 说 "build" + priority → 覆盖 build 决策的偏好方向
-//   - LLM 说 "upgrade" → 覆盖为 Upgrade
-//   - LLM 的 reason 用作气泡文案
+//   - wait → 覆盖为 Idle
+//   - build + priority → 覆盖 build 决策的偏好方向
+//   - upgrade → 覆盖为 Upgrade
+//   - sell → 强制卖塔（选最弱的）
+//   - ability → 设置能力偏好
+//   - item → 使用道具
+//   - LLM 的 say 用作气泡文案（优先于 reason）
 func (ap *AIPlayer) applyLLMStrategicOverride(dt float64, snap AISnapshot, local Decision) Decision {
 	if ap.llmConn == nil || !ap.llmOverrideEnabled {
 		return local
@@ -643,51 +649,168 @@ func (ap *AIPlayer) applyLLMStrategicOverride(dt float64, snap AISnapshot, local
 		return local
 	}
 
-	// LLM 决策可用 → 覆盖本地决策
-	switch decision.Action {
+	// 弹幕文案（如果 LLM 提供了）
+	if decision.Say != "" {
+		ap.bubble.Show(decision.Say, BubbleAction, 2.5)
+	}
+
+	// 处理多步操作链：第一个操作覆盖本地决策，
+	// 后续操作入队到 ActionQueue（交错延迟）
+	if len(decision.Actions) > 1 {
+		ap.enqueueFollowUpActions(decision.Actions[1:], snap)
+	}
+
+	// 用第一个操作覆盖本地决策
+	first := decision.FirstAction()
+	reason := first.Reason
+	if reason == "" {
+		reason = decision.Say
+	}
+
+	return ap.applyLLMAction(first, reason, local, snap)
+}
+
+// applyLLMAction 将单个 LLM 操作转换为游戏决策。
+func (ap *AIPlayer) applyLLMAction(action llm.LLMAction, reason string, local Decision, snap AISnapshot) Decision {
+	switch action.Type {
 	case "wait":
-		return Decision{Type: DecisionIdle, Reason: decision.Reason}
+		return Decision{Type: DecisionIdle, Reason: reason}
 
 	case "build":
-		// 覆盖建造偏好方向（通过修改 advice 间接影响）
-		if decision.Priority != "" {
-			// 将 LLM priority 映射到 advice priority
+		// 覆盖建造偏好方向
+		if action.Priority != "" {
 			priorityMap := map[string]string{
 				"cc": "build_cc", "dps": "build_dps", "aoe": "build_aoe",
 			}
-			if p, ok := priorityMap[decision.Priority]; ok {
+			if p, ok := priorityMap[action.Priority]; ok {
 				ap.engine.LatestAdvice.Priority = p
 			}
 		}
-		// 如果本地已经是 build → 保留位置选择，只更新 reason
 		if local.Type == DecisionBuild {
-			local.Reason = decision.Reason
+			local.Reason = reason
 			return local
 		}
-		// 本地不是 build → 强制切换为 build（重新评分选位）
 		if len(snap.BuildCells) > 0 && len(snap.TowerDefs) > 0 {
 			forced := ap.engine.ForceBuild(snap)
-			forced.Reason = decision.Reason
+			forced.Reason = reason
 			return forced
 		}
 		return local
 
 	case "upgrade":
-		// 如果本地已经是 upgrade → 保留目标，更新 reason
 		if local.Type == DecisionUpgrade {
-			local.Reason = decision.Reason
+			local.Reason = reason
 			return local
 		}
-		// 本地不是 upgrade → 强制切换为 upgrade
 		if len(snap.Towers) > 0 {
 			forced := ap.engine.ForceUpgrade(snap)
-			forced.Reason = decision.Reason
+			forced.Reason = reason
 			return forced
+		}
+		return local
+
+	case "sell":
+		// 强制卖塔：选评分最低的（复用引擎逻辑）
+		if len(snap.Towers) >= 3 {
+			if d, ok := ap.engine.pickSell(snap); ok {
+				d.Reason = reason
+				return d
+			}
+		}
+		return local
+
+	case "ability":
+		// 设置能力偏好方向（影响下次 pickAbility 评分）
+		// ability 操作本身不直接执行，而是影响评分偏好
+		return local
+
+	case "item":
+		// 强制使用道具
+		if d, ok := ap.engine.pickItemUse(snap); ok {
+			d.Reason = reason
+			return d
 		}
 		return local
 	}
 
 	return local
+}
+
+// enqueueFollowUpActions 将后续 LLM 操作以交错延迟入队到 ActionQueue。
+// 每个后续操作延迟 2-3 秒（给前一个操作执行和视觉反馈的时间）。
+func (ap *AIPlayer) enqueueFollowUpActions(actions []llm.LLMAction, snap AISnapshot) {
+	for i, action := range actions {
+		// 捕获循环变量
+		act := action
+		delay := float64(i+1)*2.0 + rand.Float64()
+
+		ap.actions.Enqueue(DelayedAction{
+			Delay: delay,
+			Label: "llm_followup_" + act.Type,
+			Execute: func() {
+				ap.executeLLMFollowUp(act, snap)
+			},
+		})
+	}
+}
+
+// executeLLMFollowUp 执行 LLM 后续操作。
+// 每个操作独立检查前置条件（金币、库存等），条件不满足时静默跳过。
+func (ap *AIPlayer) executeLLMFollowUp(action llm.LLMAction, snap AISnapshot) {
+	switch action.Type {
+	case "build":
+		// 检查金币是否足够
+		cost := 50
+		if ap.ops != nil && len(snap.TowerDefs) > 0 {
+			cost = ap.ops.TowerCost(snap.TowerDefs[0].Key)
+		}
+		if ap.gold < cost || len(snap.BuildCells) == 0 {
+			return
+		}
+		// 使用引擎选最佳位置
+		d := ap.engine.ForceBuild(snap)
+		if ap.ops != nil && ap.ops.BuildTowerForAI(d.TowerKey, d.Row, d.Col, ap.ownerID) {
+			ap.gold -= cost
+			if action.Reason != "" {
+				ap.bubble.Show(action.Reason, BubbleAction, 1.5)
+			}
+		}
+
+	case "upgrade":
+		buyCost := 10
+		if ap.ops != nil {
+			buyCost = ap.ops.StrengthBuyCost()
+		}
+		if ap.gold < buyCost || len(snap.Towers) == 0 {
+			return
+		}
+		d := ap.engine.ForceUpgrade(snap)
+		if ap.ops != nil && ap.ops.UpgradeTowerForAI(d.Row, d.Col) {
+			ap.gold -= buyCost
+		}
+
+	case "sell":
+		if len(snap.Towers) < 3 {
+			return
+		}
+		if d, ok := ap.engine.pickSell(snap); ok {
+			if ap.ops != nil {
+				ap.ops.SellTowerForAI(d.Row, d.Col)
+			}
+		}
+
+	case "item":
+		if d, ok := ap.engine.pickItemUse(snap); ok {
+			if ap.inventory[d.ItemKind] > 0 && ap.ops != nil {
+				if ap.ops.UseItemForAI(d.ItemKind, d.Row, d.Col) {
+					ap.inventory[d.ItemKind]--
+				}
+			}
+		}
+
+	case "wait":
+		// 什么都不做
+	}
 }
 
 // TriggerLLMEvent 触发 LLM 即时调用（用于重要事件）。
@@ -702,13 +825,13 @@ func (ap *AIPlayer) TriggerLLMEvent(event string, snap AISnapshot) {
 	ap.llmConn.TriggerImmediate(llm.BuildPrompt(situation, memory))
 }
 
-// buildSituation 从快照构建 LLM 局势摘要。
+// buildSituation 从快照构建 LLM 局势摘要（含详细塔/敌人/道具数据）。
 func (ap *AIPlayer) buildSituation(snap AISnapshot) llm.Situation {
 	// 威胁评估：基于敌人 HP 占比和 Boss 存在
 	threatLevel := "low"
 	hasBoss := false
+	activeCount := 0
 	if len(snap.Enemies) > 0 {
-		activeCount := 0
 		for _, e := range snap.Enemies {
 			if e.Active {
 				activeCount++
@@ -742,6 +865,38 @@ func (ap *AIPlayer) buildSituation(snap AISnapshot) llm.Situation {
 	// 协作分析描述
 	coopDesc := CoopDescription(ap.engine.LatestCoop)
 
+	// ── 构建详细塔描述 ──
+	aiTowers := ap.buildTowerDescs(snap)
+
+	// ── 构建敌人分组 ──
+	enemyGroups := buildEnemyGroups(snap.Enemies)
+
+	// ── 构建可用道具列表 ──
+	var availItems []string
+	for _, it := range snap.Items {
+		if it.Count > 0 {
+			availItems = append(availItems, it.Category)
+		}
+	}
+
+	// ── 统计待选能力的塔数量 ──
+	pendingAbilities := 0
+	for _, t := range snap.Towers {
+		if len(t.PendingSlots) > 0 {
+			pendingAbilities++
+		}
+	}
+
+	// ── 判断可用操作 ──
+	canBuild := false
+	for _, d := range snap.TowerDefs {
+		if d.Cost <= ap.gold {
+			canBuild = true
+			break
+		}
+	}
+	canUpgrade := len(snap.Towers) > 0 && ap.gold >= ap.engine.strengthBuyCost
+
 	return llm.Situation{
 		Wave:            snap.Wave,
 		MaxWaves:        snap.MaxWaves,
@@ -757,7 +912,128 @@ func (ap *AIPlayer) buildSituation(snap AISnapshot) llm.Situation {
 		Mood:            mood,
 		CoopDesc:        coopDesc,
 		AdvicePriority:  ap.engine.LatestAdvice.Priority,
+
+		// ── 深度知识字段 ──
+		AITowers:         aiTowers,
+		EnemyGroups:      enemyGroups,
+		AvailableItems:   availItems,
+		PendingAbilities: pendingAbilities,
+		NextWaveBoss:     snap.NextWaveIsBoss,
+		CanBuild:         canBuild,
+		CanUpgrade:       canUpgrade,
 	}
+}
+
+// buildTowerDescs 将 AI 塔快照转为 LLM 可读的描述列表。
+// 使用路径点数据估算每座塔在路径上的位置（entrance/middle/exit）。
+func (ap *AIPlayer) buildTowerDescs(snap AISnapshot) []llm.TowerDesc {
+	descs := make([]llm.TowerDesc, 0, len(snap.Towers))
+	pathLen := len(snap.PathPoints)
+
+	for _, t := range snap.Towers {
+		// 估算位置区段
+		pos := estimateTowerPosition(t, pathLen)
+
+		// 提取攻击方式（从能力列表中找 attack 类）
+		style := ""
+		for _, ab := range t.Abilities {
+			if attackStyles[ab] {
+				style = ab
+				break
+			}
+		}
+
+		descs = append(descs, llm.TowerDesc{
+			Position:  pos,
+			Abilities: t.Abilities,
+			Damage:    t.Damage,
+			Range:     t.Range,
+			Kills:     t.Kills,
+			Style:     style,
+			Strength:  t.Strength,
+		})
+	}
+	return descs
+}
+
+// attackStyles 攻击方式能力集合，用于识别塔的主要攻击方式。
+var attackStyles = map[string]bool{
+	"projectile": true, "scatter": true, "wideBeam": true,
+	"spinAoe": true, "radial": true, "barrage": true,
+}
+
+// estimateTowerPosition 根据塔的列位置估算其在路径上的区段。
+// 简单三分法：前 1/3 路径 = entrance，中间 = middle，后 1/3 = exit。
+func estimateTowerPosition(t AITower, pathLen int) string {
+	if pathLen == 0 {
+		return "middle"
+	}
+	// 用列位置粗略估计路径进度（假设地图宽度约 20 列）
+	maxCol := 20.0
+	progress := float64(t.Col) / maxCol
+	switch {
+	case progress < 0.33:
+		return "entrance"
+	case progress > 0.66:
+		return "exit"
+	default:
+		return "middle"
+	}
+}
+
+// buildEnemyGroups 将敌人快照按类型聚合为分组（tank/runner/boss/swarm/normal）。
+func buildEnemyGroups(enemies []AIEnemy) []llm.EnemyGroup {
+	if len(enemies) == 0 {
+		return nil
+	}
+
+	// 先统计活跃敌人和均值
+	var active []AIEnemy
+	var totalHP, totalSpeed float64
+	for _, e := range enemies {
+		if e.Active {
+			active = append(active, e)
+			totalHP += e.HP
+			totalSpeed += e.Speed
+		}
+	}
+	if len(active) == 0 {
+		return nil
+	}
+	avgHP := totalHP / float64(len(active))
+	avgSpeed := totalSpeed / float64(len(active))
+
+	// 按类型分组
+	groups := map[string]*llm.EnemyGroup{}
+	for _, e := range active {
+		typ := "normal"
+		switch {
+		case e.Boss:
+			typ = "boss"
+		case e.HP > avgHP*1.5:
+			typ = "tank"
+		case e.Speed > avgSpeed*1.2:
+			typ = "runner"
+		}
+		if g, ok := groups[typ]; ok {
+			g.Count++
+			// 滚动平均
+			g.AvgHP = (g.AvgHP*float64(g.Count-1) + e.HP) / float64(g.Count)
+		} else {
+			groups[typ] = &llm.EnemyGroup{Type: typ, Count: 1, AvgHP: e.HP}
+		}
+	}
+
+	// 总数 > 10 且 normal 占多数 → 标记为 swarm
+	if g, ok := groups["normal"]; ok && g.Count > 10 && float64(g.Count) > float64(len(active))*0.6 {
+		g.Type = "swarm"
+	}
+
+	result := make([]llm.EnemyGroup, 0, len(groups))
+	for _, g := range groups {
+		result = append(result, *g)
+	}
+	return result
 }
 
 // buildPersonalityDesc 根据个性参数生成自然语言描述。

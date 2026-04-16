@@ -1,8 +1,9 @@
 // connector.go -- LLM 连接器。
 //
-// 异步调用 Claude Haiku API 生成 AI 玩家弹幕。
+// 异步调用 Claude Haiku API 生成 AI 玩家弹幕和战略决策。
 // 设计：非阻塞，游戏循环不等待 API 响应。
 // 支持定时触发（30s 间隔）和事件即时触发（Boss来袭、漏怪等）。
+// 战略决策支持多步操作链（sell/build/upgrade/ability/item/wait）。
 // 关联：由 aiplayer.go Tick() 每帧调用，bubble.go 消费生成文本。
 package llm
 
@@ -37,12 +38,44 @@ func DefaultConfig() Config {
 	}
 }
 
+// LLMAction 单个 LLM 操作（多步操作链中的一步）。
+type LLMAction struct {
+	Type       string `json:"type"`                 // "sell" / "build" / "upgrade" / "ability" / "item" / "wait"
+	Position   string `json:"position,omitempty"`    // "entrance" / "middle" / "exit"（build 时使用）
+	Priority   string `json:"priority,omitempty"`    // "cc" / "dps" / "aoe"（build/ability 时使用）
+	Target     string `json:"target,omitempty"`      // "strongest" / "weakest"（upgrade/sell/item 时使用）
+	ItemType   string `json:"itemType,omitempty"`    // "BaseDamage" / "Speed" / "Range"（item 时使用）
+	Preference string `json:"preference,omitempty"`  // "cc" / "damage" / "aoe" / "dot"（ability 时使用）
+	Reason     string `json:"reason,omitempty"`
+}
+
 // LLMDecision LLM 返回的战略决策（结构化 JSON）。
+// 支持多步操作链和弹幕文案。
 type LLMDecision struct {
-	Action   string `json:"action"`   // "build" / "upgrade" / "wait"
-	Reason   string `json:"reason"`   // 一句话原因（15 字内）
-	Priority string `json:"priority"` // build 时: "cc" / "dps" / "aoe"
-	Target   string `json:"target"`   // upgrade 时: "strongest" / "weakest"
+	// ── 新版多操作格式 ──
+	Actions []LLMAction `json:"actions,omitempty"`
+	Say     string      `json:"say,omitempty"` // 弹幕文案（15 字内）
+
+	// ── 旧版兼容字段（单操作格式）──
+	Action   string `json:"action,omitempty"`   // "build" / "upgrade" / "wait"
+	Reason   string `json:"reason,omitempty"`   // 一句话原因（15 字内）
+	Priority string `json:"priority,omitempty"` // build 时: "cc" / "dps" / "aoe"
+	Target   string `json:"target,omitempty"`   // upgrade 时: "strongest" / "weakest"
+}
+
+// FirstAction 返回决策中的第一个操作。
+// 兼容旧版单操作和新版多操作格式。
+func (d *LLMDecision) FirstAction() LLMAction {
+	if len(d.Actions) > 0 {
+		return d.Actions[0]
+	}
+	// 旧版格式兼容：将单操作转为 LLMAction
+	return LLMAction{
+		Type:     d.Action,
+		Priority: d.Priority,
+		Target:   d.Target,
+		Reason:   d.Reason,
+	}
 }
 
 // Connector 异步 LLM 连接器。
@@ -186,12 +219,13 @@ func (c *Connector) TickStrategic(dt float64, prompt string) *LLMDecision {
 }
 
 // callStrategicAPI 在 goroutine 中调用 LLM 获取结构化战略决策。
-// 使用 JSON 输出模式的系统 prompt，解析失败时静默忽略。
+// 注入压缩版游戏知识作为 system prompt，使 LLM 理解游戏机制。
+// 使用 JSON 输出模式，解析失败时静默忽略。
 func (c *Connector) callStrategicAPI(prompt string) {
 	reqBody := map[string]any{
 		"model":      c.cfg.Model,
-		"max_tokens": 100, // JSON 响应需要比弹幕更多 token
-		"system":     "你是塔防游戏AI。只返回JSON，不要其他文字。",
+		"max_tokens": 200, // 多操作 JSON 需要更多 token
+		"system":     CondensedKnowledge,
 		"messages": []map[string]string{
 			{"role": "user", "content": prompt},
 		},
@@ -244,19 +278,59 @@ func (c *Connector) callStrategicAPI(prompt string) {
 }
 
 // ParseLLMDecision 解析 LLM 返回的 JSON 决策。
-// 解析失败（非 JSON、缺少 action 字段等）返回 nil。
+// 支持新版多操作格式和旧版单操作格式，解析失败返回 nil。
 // 导出供测试直接调用。
 func ParseLLMDecision(text string) *LLMDecision {
 	var d LLMDecision
 	if err := json.Unmarshal([]byte(text), &d); err != nil {
 		return nil
 	}
-	// action 必须是有效值
-	switch d.Action {
-	case "build", "upgrade", "wait":
+
+	// 新版格式：有 actions 数组
+	if len(d.Actions) > 0 {
+		// 过滤无效 action
+		valid := d.Actions[:0]
+		for _, a := range d.Actions {
+			if isValidActionType(a.Type) {
+				valid = append(valid, a)
+			}
+		}
+		if len(valid) == 0 {
+			return nil
+		}
+		d.Actions = valid
+		// 钳制最多 3 个操作
+		if len(d.Actions) > 3 {
+			d.Actions = d.Actions[:3]
+		}
 		return &d
+	}
+
+	// 旧版格式兼容：单 action 字段
+	if isValidActionType(d.Action) {
+		// 转换为新格式以统一处理
+		d.Actions = []LLMAction{{
+			Type:     d.Action,
+			Priority: d.Priority,
+			Target:   d.Target,
+			Reason:   d.Reason,
+		}}
+		if d.Say == "" {
+			d.Say = d.Reason
+		}
+		return &d
+	}
+
+	return nil
+}
+
+// isValidActionType 检查操作类型是否有效。
+func isValidActionType(t string) bool {
+	switch t {
+	case "build", "upgrade", "sell", "ability", "item", "wait":
+		return true
 	default:
-		return nil
+		return false
 	}
 }
 

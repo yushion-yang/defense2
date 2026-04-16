@@ -194,11 +194,11 @@ func TestLLMDecisionParseErrorNonJSON(t *testing.T) {
 }
 
 func TestLLMDecisionParseErrorInvalidAction(t *testing.T) {
-	// JSON 有效但 action 不在白名单
-	input := `{"action":"sell","reason":"卖掉"}`
+	// JSON 有效但 action 不在白名单（"explode" 不是有效操作）
+	input := `{"action":"explode","reason":"boom"}`
 	d := llm.ParseLLMDecision(input)
 	if d != nil {
-		t.Errorf("ParseLLMDecision should return nil for invalid action 'sell', got %+v", d)
+		t.Errorf("ParseLLMDecision should return nil for invalid action 'explode', got %+v", d)
 	}
 }
 
@@ -225,12 +225,12 @@ func TestBuildStrategicPrompt(t *testing.T) {
 		name    string
 		content string
 	}{
-		{"wave", "第 5/12 波"},
-		{"gold", "金币: 200"},
+		{"wave", "5/12"},
+		{"gold", "200"},
 		{"threat", "high"},
 		{"coop", "队友有输出，全队缺控制"},
 		{"advice", "build_cc"},
-		{"json format", `"action"`},
+		{"json format", `"actions"`},
 	}
 
 	for _, check := range checks {

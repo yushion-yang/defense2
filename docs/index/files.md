@@ -2,7 +2,7 @@
 
 > 自动生成，勿手动编辑。运行 `make index` 更新。
 
-共 283 个文件, 70016 行代码, 47 个包。
+共 284 个文件, 70546 行代码, 47 个包。
 
 ## abilities (346 行)
 
@@ -16,12 +16,12 @@
 |------|------|------|
 | `achievement.go` | 215 | Achievement tracking and persistence. |
 
-## aiplayer (3464 行)
+## aiplayer (3740 行)
 
 | 文件 | 行数 | 职责 |
 |------|------|------|
 | `action.go` | 64 | 延迟行动队列。 |
-| `aiplayer.go` | 785 | AI 玩家主结构体。 |
+| `aiplayer.go` | 1061 | AI 玩家主结构体。 |
 | `awareness.go` | 332 | 局势感知系统。 |
 | `behavior.go` | 176 | - |
 | `bubble.go` | 287 | 思维气泡数据模型。 |
@@ -281,12 +281,13 @@
 |------|------|------|
 | `item.go` | 187 | 道具系统。 |
 
-## llm (500 行)
+## llm (754 行)
 
 | 文件 | 行数 | 职责 |
 |------|------|------|
-| `connector.go` | 318 | - |
-| `prompt.go` | 182 | - |
+| `connector.go` | 392 | - |
+| `knowledge.go` | 75 | - |
+| `prompt.go` | 287 | - |
 
 ## loader (132 行)
 
