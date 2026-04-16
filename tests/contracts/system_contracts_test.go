@@ -14,16 +14,8 @@ import (
 	"defense2/internal/core/enemy"
 	"defense2/internal/core/gamemode"
 	"defense2/internal/core/tower"
-	"defense2/internal/core/tower/abilities"
 	"defense2/internal/core/warden"
 )
-
-func init() {
-	// 加载能力配置并注册到 tower.Registry（需要 DataFS 已设置，由 config_rules_test.go 的 init 完成）
-	if err := abilities.InitConfigAbilities(); err != nil {
-		panic("加载能力配置失败: " + err.Error())
-	}
-}
 
 // ═══════════════════════════════════════
 // 能力系统契约

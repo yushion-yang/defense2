@@ -35,7 +35,6 @@ import (
 	"sync"
 	"time"
 
-	_ "defense2/internal/core/tower/abilities" // blank import: 通过 init() 注册 32 种塔能力到全局注册表
 	_ "defense2/internal/core/warden/types"    // blank import: 通过 init() 注册 5 种战灵类型到全局注册表
 
 	gameAudio "defense2/internal/audio"
@@ -3903,7 +3902,10 @@ func filterUnlockedTowers(defs []tower.TowerDef, pm *persistence.ProgressManager
 //   - 其他模式：标准塔 + 解锁过滤
 func loadTowerDefsForMode(ruleset gamemode.TowerRuleset, pm *persistence.ProgressManager, bpStore *descriptor.BlueprintStore) []tower.TowerDef {
 	if ruleset.UsePresetTowers() {
-		return loadClassicTowerDefs()
+		if defs := descriptor.LoadPrebuiltBlueprintDefs(); len(defs) > 0 {
+			return defs
+		}
+		return loadTowerDefsOrFallback() // fallback：预制蓝图加载失败时用标准塔
 	}
 	defs := filterUnlockedTowers(loadTowerDefsOrFallback(), pm)
 	if ruleset.IncludePresetTowers() {
@@ -3911,7 +3913,7 @@ func loadTowerDefsForMode(ruleset gamemode.TowerRuleset, pm *persistence.Progres
 		for i := range defs {
 			defs[i].AbilityAcquireMode = "allUnlocked"
 		}
-		defs = append(defs, loadClassicTowerDefs()...)
+		defs = append(defs, descriptor.LoadPrebuiltBlueprintDefs()...)
 	}
 
 	// 追加玩家自定义蓝图（仅在模式允许且有蓝图时）
@@ -3939,84 +3941,6 @@ func loadTowerDefsForMode(ruleset gamemode.TowerRuleset, pm *persistence.Progres
 	}
 
 	return defs
-}
-
-// loadClassicTowerDefs 从 classic-presets.json 构建经典模式塔定义。
-// 每种预设塔的属性根据 tiers 字段从 tier-presets.json 查表，
-// FixedTiers=true 使 Pool.Place 跳过随机 roll。
-func loadClassicTowerDefs() []tower.TowerDef {
-	presets := config.GlobalClassicPresets()
-	if presets == nil {
-		log.Printf("[classic] presets not loaded, fallback to standard towers")
-		return loadTowerDefsOrFallback()
-	}
-	tp := config.GlobalTierPresets()
-	if tp == nil {
-		log.Printf("[classic] tier-presets not loaded, fallback to standard towers")
-		return loadTowerDefsOrFallback()
-	}
-
-	defs := make([]tower.TowerDef, 0, len(presets.Towers))
-	for _, p := range presets.Towers {
-		// 从 tier-presets.json 查表获取 Base/Potential
-		dmgTier := tp.Damage.Tiers[p.Tiers["damage"]]
-		spdTier := tp.AttackSpeed.Tiers[p.Tiers["atkSpeed"]]
-		rngTier := tp.Range.Tiers[p.Tiers["range"]]
-
-		def := tower.TowerDef{
-			Key:       p.Key,
-			Label:     p.Name,
-			Cost:      p.BuildCost,
-			Abilities: p.Abilities,
-			// AttackStyleID 和 ProjectileSpeed 由 ApplyPresetAbilities 中的攻击能力自动设置
-
-			// 从 tier 查表设置 Base/Potential
-			CfgBaseDamage:   dmgTier.Base,
-			PotentialDamage: dmgTier.Potential,
-			CfgBaseSpeed:    spdTier.Base,
-			PotentialSpeed:  spdTier.Potential,
-			CfgBaseRange:    rngTier.Base,
-			PotentialRange:  rngTier.Potential,
-
-			// 行为规则（从配置读取）
-			AbilityAcquireMode: p.AbilityMode,
-			StrengthCost:       p.Strength.Cost,
-			StrengthAmount:     p.Strength.Amount,
-			MaxStrengthBuys:    p.Strength.MaxPurchases,
-
-			// 扩展标记
-			FixedTiers:        true,
-			FixedSpecialty:    parseSpecialty(p.Specialty),
-			PresetAbilities:   p.Abilities,
-			Category:          p.Category,
-			SpriteKeyOverride: p.SpriteKey,
-		}
-		// 专精加成：只有专精属性的 Potential 额外加 basePotential
-		switch def.FixedSpecialty {
-		case 0:
-			def.PotentialDamage += tp.Damage.BasePotential
-		case 1:
-			def.PotentialSpeed += tp.AttackSpeed.BasePotential
-		case 2:
-			def.PotentialRange += tp.Range.BasePotential
-		}
-		defs = append(defs, def)
-	}
-	return defs
-}
-
-// parseSpecialty 将配置字符串转为专精索引。
-func parseSpecialty(s string) int {
-	switch s {
-	case "damage":
-		return 0
-	case "atkSpeed":
-		return 1
-	case "range":
-		return 2
-	default:
-		return -1
-	}
 }
 
 // towerLightColor maps a tower attack style to a light color for dynamic lighting.

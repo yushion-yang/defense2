@@ -39,6 +39,17 @@ func GlobalAbilityTable() AbilityTable {
 	return globalAbilityTable
 }
 
+// MergeAbilityTable 将 entries 合并到全局能力表（覆盖同 key）。
+// 用于将描述符派生的 AbilityDef 和自定义能力注入到全局表中。
+func MergeAbilityTable(entries AbilityTable) {
+	if globalAbilityTable == nil {
+		globalAbilityTable = AbilityTable{}
+	}
+	for k, v := range entries {
+		globalAbilityTable[k] = v
+	}
+}
+
 // LoadAbilityTable 从 abilities.json 加载能力定义表。
 func LoadAbilityTable() (AbilityTable, error) {
 	if dataFS == nil {

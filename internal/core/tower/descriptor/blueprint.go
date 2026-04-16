@@ -44,6 +44,11 @@ type TowerBlueprint struct {
 	// ── 经济 ──
 	BuildCost int            `json:"buildCost"`
 	Strength  StrengthConfig `json:"strength"`
+
+	// ── 元信息（预制蓝图专用） ──
+	Prebuilt    bool   `json:"prebuilt,omitempty"`    // true=预制蓝图（只读）
+	Category    string `json:"category,omitempty"`    // 角色分类（dps/aoe/support）
+	Description string `json:"description,omitempty"` // 简短描述
 }
 
 // ValidationError 校验错误条目。
