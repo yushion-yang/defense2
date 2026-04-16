@@ -26,6 +26,8 @@ func (d AbilityDescriptor) MarshalJSON() ([]byte, error) {
 		ID:           d.ID,
 		Label:        d.Label,
 		Icon:         d.Icon,
+		Display:      d.Display,
+		Prebuilt:     d.Prebuilt,
 		Cost:         d.Cost,
 		Tags:         d.Tags,
 		AttackStyle:  d.AttackStyle,

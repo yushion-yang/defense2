@@ -21,6 +21,8 @@ type AbilityDescriptor struct {
 	ID          string            `json:"id"`
 	Label       string            `json:"label"`
 	Icon        string            `json:"icon,omitempty"`
+	Display     string            `json:"display,omitempty"`  // HUD 展示模板（{s}=缩放值 {p}=参数 等）
+	Prebuilt    bool              `json:"prebuilt,omitempty"` // true=预制能力（只读）
 	Cost        int               `json:"cost"`
 	Tags        []string          `json:"tags,omitempty"`
 	AttackStyle string            `json:"attackStyle,omitempty"`
@@ -44,6 +46,8 @@ type rawDescriptor struct {
 	ID           string            `json:"id"`
 	Label        string            `json:"label"`
 	Icon         string            `json:"icon,omitempty"`
+	Display      string            `json:"display,omitempty"`
+	Prebuilt     bool              `json:"prebuilt,omitempty"`
 	Cost         int               `json:"cost"`
 	Tags         []string          `json:"tags,omitempty"`
 	AttackStyle  string            `json:"attackStyle,omitempty"`
@@ -96,6 +100,8 @@ func ParseDescriptor(data []byte) (*AbilityDescriptor, error) {
 		ID:           raw.ID,
 		Label:        raw.Label,
 		Icon:         raw.Icon,
+		Display:      raw.Display,
+		Prebuilt:     raw.Prebuilt,
 		Cost:         raw.Cost,
 		Tags:         raw.Tags,
 		AttackStyle:  raw.AttackStyle,
