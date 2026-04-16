@@ -29,12 +29,13 @@ import (
 
 // trainConfig 训练管线配置。
 type trainConfig struct {
-	Games      int    // 训练局数
-	MapID      string // 地图 ID（支持 coop 的地图）
-	Difficulty string // 难度
-	Warden     string // 战灵
-	Seed       int64  // 主种子（0=随机）
-	OutputPath string // 权重导出路径
+	Games      int     // 训练局数
+	MapID      string  // 地图 ID
+	Difficulty string  // 难度
+	Warden     string  // 战灵
+	Seed       int64   // 主种子（0=随机）
+	OutputPath string  // 权重导出路径
+	HPScale    float64 // HP 缩放覆盖（0=使用难度默认值）
 }
 
 // runTraining 离线训练管线主函数。
@@ -116,6 +117,7 @@ func runTraining(cfg trainConfig) {
 			DifficultyID:    cfg.Difficulty,
 			AIEnabled:       true,
 			LearningEnabled: true,
+			HPScaleOverride: cfg.HPScale,
 		})
 
 		// 使用 competent 策略驱动全图（AI 学习系统通过 autoplay 挂钩观察并学习）

@@ -69,6 +69,7 @@ func main() {
 	learn := flag.Bool("learn", false, "run AI learning training pipeline (N coop games with learning enabled)")
 	learnGames := flag.Int("learn-games", 50, "number of training games in --learn mode")
 	learnOutput := flag.String("learn-output", "config/ai/weights.json", "output path for trained weights")
+	learnHPScale := flag.Float64("hp-scale", 0, "override HP scale for training (0=use difficulty default)")
 	flag.Parse()
 
 	if *sessionJSON != "" {
@@ -84,6 +85,7 @@ func main() {
 			Warden:     *warden,
 			Seed:       *seed,
 			OutputPath: *learnOutput,
+			HPScale:    *learnHPScale,
 		})
 		return
 	}

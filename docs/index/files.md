@@ -2,7 +2,7 @@
 
 > 自动生成，勿手动编辑。运行 `make index` 更新。
 
-共 289 个文件, 72754 行代码, 48 个包。
+共 291 个文件, 73510 行代码, 48 个包。
 
 ## abilities (346 行)
 
@@ -73,7 +73,7 @@
 | `strategy_simulation.go` | 221 | 仿真测试场景矩阵。 |
 | `strategy_visual.go` | 88 | 视觉目录策略。 |
 
-## buff (598 行)
+## buff (668 行)
 
 | 文件 | 行数 | 职责 |
 |------|------|------|
@@ -81,17 +81,17 @@
 | `dot.go` | 61 | 持续伤害（DoT）计时与伤害计算。 |
 | `ids.go` | 43 | Buff ID 唯一标识符常量。 |
 | `init.go` | 55 | 全局堆叠规则单例管理。 |
-| `list.go` | 303 | BuffList 核心容器，管理活跃 buff 的增删查改和持续时间衰�... |
+| `list.go` | 373 | BuffList 核心容器，管理活跃 buff 的增删查改和持续时间衰�... |
 | `rules.go` | 67 | 堆叠规则定义与 JSON 配置加载。 |
 
-## combat (1581 行)
+## combat (1604 行)
 
 | 文件 | 行数 | 职责 |
 |------|------|------|
-| `apply_hit.go` | 422 | 统一命中处理（战斗系统的核心枢纽）。 |
+| `apply_hit.go` | 443 | 统一命中处理（战斗系统的核心枢纽）。 |
 | `attack.go` | 130 | 攻击方式分发框架。 |
 | `beam.go` | 72 | 光束数据与对象池。 |
-| `cc_ids.go` | 12 | CC 回调类型唯一标识符常量。 |
+| `cc_ids.go` | 14 | CC 回调类型唯一标识符常量。 |
 | `crowd_control.go` | 118 | 控制效果（CC）韧性系统。 |
 | `damage_pipeline.go` | 235 | 8步伤害管线（战斗系统的最终伤害计算层）。 |
 | `damage_type.go` | 24 | 伤害类型系统。 |
@@ -132,19 +132,20 @@
 |------|------|------|
 | `perf.go` | 162 | frame time + GC performance tracker. |
 
-## descriptor (5088 行)
+## descriptor (5650 行)
 
 | 文件 | 行数 | 职责 |
 |------|------|------|
 | `ability_store.go` | 158 | 自定义能力持久化存储（CRUD）。 |
-| `adapter.go` | 147 | EffectResult → HitResult/TickResult 适配层。 |
+| `adapter.go` | 145 | EffectResult → HitResult/TickResult 适配层。 |
 | `blueprint.go` | 129 | 定制炮塔蓝图数据结构与校验。 |
 | `blueprint_store.go` | 146 | 蓝图持久化存储（CRUD）。 |
 | `blueprint_to_def.go` | 128 | 蓝图→塔定义转换。 |
 | `budget.go` | 94 | 预算计算系统。 |
 | `condition.go` | 221 | 条件门接口及 11 种内置条件类型。 |
+| `derive_ability_table.go` | 317 | 从描述符自动派生 AbilityDef 元数据表。 |
 | `describe.go` | 271 | 从能力描述符生成人类可读的中文描述。 |
-| `descriptor.go` | 696 | 能力描述符 JSON 模式与解析器。 |
+| `descriptor.go` | 702 | 能力描述符 JSON 模式与解析器。 |
 | `descriptor_ability.go` | 375 | 描述符驱动能力的 tower.Ability/Ticker 适配器。 |
 | `edit_state.go` | 731 | EditState ↔ AbilityDescriptor 双向转换。 |
 | `effect.go` | 213 | 效果接口及 13 种具体效果实现。 |
@@ -152,11 +153,12 @@
 | `init.go` | 60 | 描述符能力的双轨注册初始化。 |
 | `interpreter.go` | 218 | 描述符运行时解释器。 |
 | `loader.go` | 86 | 能力描述符表加载器。 |
-| `marshal.go` | 334 | AbilityDescriptor 的 JSON 序列化/反序列化。 |
+| `marshal.go` | 336 | AbilityDescriptor 的 JSON 序列化/反序列化。 |
 | `primitive_meta.go` | 385 | 基元元数据注册表，供能力编辑器 UI 使用。 |
 | `scaler.go` | 168 | 数值缩放器接口及基础实现。 |
 | `selector.go` | 385 | 目标选择器接口及 9 种实现。 |
 | `trigger.go` | 47 | 触发器类型定义及解析。 |
+| `validate_ability.go` | 239 | 自定义能力平衡性校验与费用计算。 |
 
 ## draw (1135 行)
 
@@ -184,7 +186,7 @@
 |------|------|------|
 | `economy.go` | 41 | 经济系统。 |
 
-## enemy (2949 行)
+## enemy (3012 行)
 
 | 文件 | 行数 | 职责 |
 |------|------|------|
@@ -194,7 +196,7 @@
 | `events.go` | 47 | 波次敌人事件系统。 |
 | `ids.go` | 32 | 敌人子系统唯一标识符常量。 |
 | `lifecycle.go` | 132 | 敌人生命周期钩子系统（观察者模式）。 |
-| `movement.go` | 91 | 敌人沿路径点列表移动。 |
+| `movement.go` | 154 | 敌人沿路径点列表移动。 |
 | `pool.go` | 404 | 敌人对象池：生成、击杀、遍历。 |
 | `spawn_config.go` | 84 | 敌人生成配置。 |
 | `spawner.go` | 1127 | 波次出怪管理器（753 行，本项目最复杂的单文件）。 |
@@ -304,12 +306,12 @@
 |------|------|------|
 | `tower_loader.go` | 132 | 塔配置→运行时定义转换器。 |
 
-## main (1123 行)
+## main (1129 行)
 
 | 文件 | 行数 | 职责 |
 |------|------|------|
-| `main.go` | 492 | AutoPlay 自动对局工具入口（无头模式批量跑关卡）。 |
-| `train.go` | 205 | AI 学习系统离线训练管线。 |
+| `main.go` | 494 | AutoPlay 自动对局工具入口（无头模式批量跑关卡）。 |
+| `train.go` | 209 | AI 学习系统离线训练管线。 |
 | `main.go` | 42 | 游戏入口（桌面 + WASM 通用）。 |
 | `main.go` | 384 | 写入 OP 测试用自定义能力和蓝图到 ~/.defense2/。 |
 
@@ -404,11 +406,11 @@
 | `splash_vfx.go` | 115 | splash ability impact ring VFX. |
 | `trail_batch.go` | 286 | 弹道尾迹批量渲染器。 |
 
-## scene (18707 行)
+## scene (18725 行)
 
 | 文件 | 行数 | 职责 |
 |------|------|------|
-| `ability_edit.go` | 1934 | 自定义能力编辑场景（完整管线编辑器）。 |
+| `ability_edit.go` | 1944 | 自定义能力编辑场景（完整管线编辑器）。 |
 | `audio_preview.go` | 762 | Audio preview scene. |
 | `autoplay_types.go` | 163 | AutoPlayer 接口和数据类型定义。 |
 | `bestiary.go` | 472 | 图鉴场景。 |
@@ -423,10 +425,10 @@
 | `select.go` | 576 | 模式选择场景（卡片式 UI）。 |
 | `settings.go` | 390 | 设置场景。 |
 | `settings_persist.go` | 80 | 设置持久化（音量/画质）。 |
-| `stage.go` | 4528 | 游戏主战斗场景（~3600行，本项目最核心的文件）。 |
+| `stage.go` | 4535 | 游戏主战斗场景（~3600行，本项目最核心的文件）。 |
 | `stage_info_vm.go` | 686 | 塔信息面板的 ViewModel 构建器。 |
 | `stage_input.go` | 1091 | StageScene 的输入处理和交互状态机（11 种模式）。 |
-| `stage_types.go` | 121 | StageScene 的类型定义和常量。 |
+| `stage_types.go` | 122 | StageScene 的类型定义和常量。 |
 | `stage_warden_vm.go` | 179 | 战灵选择数据构建（从 config 加载并转为 hud.WardenOption）。 |
 | `test_select.go` | 490 | 测试模式场景选择器。 |
 | `title.go` | 145 | 标题场景（游戏启动首屏）。 |
@@ -469,11 +471,11 @@
 |------|------|------|
 | `timescale.go` | 105 | - |
 
-## tower (1659 行)
+## tower (1673 行)
 
 | 文件 | 行数 | 职责 |
 |------|------|------|
-| `ability.go` | 156 | 塔能力系统核心接口与注册表。 |
+| `ability.go` | 170 | 塔能力系统核心接口与注册表。 |
 | `ability_ids.go` | 69 | 能力类型唯一标识符常量。 |
 | `lifecycle.go` | 85 | 塔生命周期钩子系统（观察者模式）。 |
 | `pool.go` | 301 | 塔对象池与空间索引。 |
