@@ -1,27 +1,24 @@
-// tower_workshop.go — 炮塔工坊场景（蓝图 + 自定义能力管理中心）。
+// tower_workshop.go — 炮塔工坊场景（预制/自定义 能力+蓝图 四 Tab 管理中心）。
 //
 // 职责：
-//   - 展示玩家已保存的蓝图列表和自定义能力列表（两个 Tab 页）
-//   - 提供「新建蓝图」「新建能力」入口，跳转到对应编辑场景
-//   - 提供蓝图/能力的编辑、删除功能
+//   - 展示预制能力/预制塔的原语组成（只读，可复制为自定义）
+//   - 展示玩家自定义能力和蓝图列表（可新建/编辑/删除）
 //
 // 导航流：
-//   Select → 炮塔工坊 → TowerWorkshopScene → (ESC) → Select
-//                      → 新建蓝图 → BlueprintEditScene → (Save/Cancel) → TowerWorkshopScene
-//                      → 编辑蓝图 → BlueprintEditScene → (Save/Cancel) → TowerWorkshopScene
-//                      → 新建能力 → AbilityEditScene → (Save/Cancel) → TowerWorkshopScene
-//                      → 编辑能力 → AbilityEditScene → (Save/Cancel) → TowerWorkshopScene
+//   Select → TowerWorkshopScene → (ESC) → Select
+//          → 新建/编辑蓝图 → BlueprintEditScene → TowerWorkshopScene
+//          → 新建/编辑能力 → AbilityEditScene → TowerWorkshopScene
 //
 // 关联：
-//   - descriptor.BlueprintStore: 蓝图持久化
-//   - descriptor.AbilityStore: 能力持久化
+//   - descriptor.BlueprintStore/AbilityStore: 自定义数据持久化
+//   - descriptor.LoadPrebuiltBlueprints/GlobalDescriptorTable: 预制数据
 //   - blueprint_edit.go / ability_edit.go: 编辑场景
-//   - game.go currentSceneName: 需同步注册场景名
 package scene
 
 import (
 	"fmt"
 	"image/color"
+	"time"
 
 	"defense2/internal/core/game"
 	"defense2/internal/core/persistence"
@@ -39,8 +36,11 @@ import (
 // ── Tab 枚举 ─────────────────────────────────────
 
 const (
-	wsTabBlueprints = 0 // 蓝图列表
-	wsTabAbilities  = 1 // 自定义能力列表
+	wsTabPrebuiltAbilities = 0 // 预制能力（只读）
+	wsTabCustomAbilities   = 1 // 我的自定义能力
+	wsTabPrebuiltTowers    = 2 // 预制塔（只读）
+	wsTabCustomBlueprints  = 3 // 我的自定义蓝图
+	wsTabCount             = 4
 )
 
 // ── 布局常量 ─────────────────────────────────────
@@ -52,9 +52,9 @@ const (
 	wsPanelRadius = float32(14)
 
 	// Tab 按钮
-	wsTabW   = float32(120)
+	wsTabW   = float32(100)
 	wsTabH   = float32(32)
-	wsTabGap = float32(12)
+	wsTabGap = float32(8)
 
 	// 卡片网格
 	wsCardW   = float32(180)
@@ -71,13 +71,17 @@ const (
 
 // ── TowerWorkshopScene ──────────────────────────
 
-// TowerWorkshopScene 炮塔工坊场景，管理蓝图和自定义能力。
+// TowerWorkshopScene 炮塔工坊场景，管理预制/自定义 能力和蓝图。
 type TowerWorkshopScene struct {
 	switcher       Switcher
 	blueprintStore *descriptor.BlueprintStore
 	abilityStore   *descriptor.AbilityStore
 
-	tab     int // 当前 Tab（0=蓝图，1=能力）
+	// 预制数据（只读，从配置加载）
+	prebuiltAbilities  []*descriptor.AbilityDescriptor
+	prebuiltBlueprints []descriptor.TowerBlueprint
+
+	tab     int // 当前 Tab（0~3，见 wsTab* 常量）
 	hover   int // 悬停卡片索引，-1=无
 	scrollY float64
 
@@ -95,13 +99,23 @@ func NewTowerWorkshopScene(sw Switcher) *TowerWorkshopScene {
 		store = persistence.NewMemoryStorage()
 	}
 
+	// 加载预制能力（从描述符表过滤 Prebuilt=true）
+	var prebuiltAbs []*descriptor.AbilityDescriptor
+	for _, desc := range descriptor.GlobalDescriptorTable() {
+		if desc.Prebuilt {
+			prebuiltAbs = append(prebuiltAbs, desc)
+		}
+	}
+
 	return &TowerWorkshopScene{
-		switcher:       sw,
-		blueprintStore: descriptor.NewBlueprintStore(store),
-		abilityStore:   descriptor.NewAbilityStore(store),
-		tab:            wsTabBlueprints,
-		hover:          -1,
-		bgGrad:         draw.NewCachedGradient(game.ScreenWidth, game.ScreenHeight, theme.SelectGradTop, theme.SelectGradBot),
+		switcher:           sw,
+		blueprintStore:     descriptor.NewBlueprintStore(store),
+		abilityStore:       descriptor.NewAbilityStore(store),
+		prebuiltAbilities:  prebuiltAbs,
+		prebuiltBlueprints: descriptor.LoadPrebuiltBlueprints(),
+		tab:                wsTabPrebuiltAbilities,
+		hover:              -1,
+		bgGrad:             draw.NewCachedGradient(game.ScreenWidth, game.ScreenHeight, theme.SelectGradTop, theme.SelectGradBot),
 	}
 }
 
@@ -182,7 +196,7 @@ func (s *TowerWorkshopScene) handleInput(mx, my float64) {
 	}
 
 	// 2. Tab 按钮
-	for i := 0; i < 2; i++ {
+	for i := 0; i < wsTabCount; i++ {
 		tx, ty := s.tabGeom(i)
 		if mx >= float64(tx) && mx <= float64(tx+wsTabW) &&
 			my >= float64(ty) && my <= float64(ty+wsTabH) {
@@ -213,17 +227,17 @@ func (s *TowerWorkshopScene) handleInput(mx, my float64) {
 	}
 }
 
-// handleCreate 根据当前 Tab 创建新蓝图或新能力。
+// handleCreate 根据当前 Tab 创建新蓝图或新能力（仅自定义 Tab 可用）。
 func (s *TowerWorkshopScene) handleCreate() {
 	switch s.tab {
-	case wsTabBlueprints:
+	case wsTabCustomBlueprints:
 		if s.blueprintStore.Count() >= 20 {
 			hud.ShowToast("蓝图数量已达上限 (20)")
 			return
 		}
 		scene := NewBlueprintEditScene(s.switcher, nil, s, s.blueprintStore, s.abilityStore)
 		s.switcher.SwitchScene(scene)
-	case wsTabAbilities:
+	case wsTabCustomAbilities:
 		if s.abilityStore.Count() >= 50 {
 			hud.ShowToast("自定义能力已达上限 (50)")
 			return
@@ -233,32 +247,80 @@ func (s *TowerWorkshopScene) handleCreate() {
 	}
 }
 
-// handleCardClick 处理卡片点击 — 打开编辑器。
+// handleCardClick 处理卡片点击。
+// 预制 Tab：复制为自定义。自定义 Tab：打开编辑器。
 func (s *TowerWorkshopScene) handleCardClick(idx int) {
 	switch s.tab {
-	case wsTabBlueprints:
-		bps := s.blueprintStore.List()
-		if idx < 0 || idx >= len(bps) {
-			return
+	case wsTabPrebuiltAbilities:
+		if idx >= 0 && idx < len(s.prebuiltAbilities) {
+			s.copyAbilityToCustom(s.prebuiltAbilities[idx])
 		}
-		bp := bps[idx]
-		scene := NewBlueprintEditScene(s.switcher, &bp, s, s.blueprintStore, s.abilityStore)
-		s.switcher.SwitchScene(scene)
-	case wsTabAbilities:
+	case wsTabCustomAbilities:
 		cas := s.abilityStore.List()
-		if idx < 0 || idx >= len(cas) {
-			return
+		if idx >= 0 && idx < len(cas) {
+			ca := cas[idx]
+			scene := NewAbilityEditScene(s.switcher, &ca, s.abilityStore, s)
+			s.switcher.SwitchScene(scene)
 		}
-		ca := cas[idx]
-		scene := NewAbilityEditScene(s.switcher, &ca, s.abilityStore, s)
-		s.switcher.SwitchScene(scene)
+	case wsTabPrebuiltTowers:
+		if idx >= 0 && idx < len(s.prebuiltBlueprints) {
+			s.copyBlueprintToCustom(&s.prebuiltBlueprints[idx])
+		}
+	case wsTabCustomBlueprints:
+		bps := s.blueprintStore.List()
+		if idx >= 0 && idx < len(bps) {
+			bp := bps[idx]
+			scene := NewBlueprintEditScene(s.switcher, &bp, s, s.blueprintStore, s.abilityStore)
+			s.switcher.SwitchScene(scene)
+		}
 	}
+}
+
+// copyAbilityToCustom 复制预制能力为自定义能力。
+func (s *TowerWorkshopScene) copyAbilityToCustom(desc *descriptor.AbilityDescriptor) {
+	if s.abilityStore.Count() >= 50 {
+		hud.ShowToast("自定义能力已达上限")
+		return
+	}
+	ca := descriptor.CustomAbility{
+		ID:   fmt.Sprintf("ca_%d", time.Now().UnixMilli()),
+		Name: desc.Label + "（副本）",
+		Desc: *desc,
+	}
+	ca.Desc.Prebuilt = false
+	ca.Desc.ID = ca.ID
+	if err := s.abilityStore.Save(ca); err != nil {
+		hud.ShowToast("保存失败: " + err.Error())
+		return
+	}
+	s.tab = wsTabCustomAbilities
+	s.scrollY = 0
+	hud.ShowToast("已复制到我的能力")
+}
+
+// copyBlueprintToCustom 复制预制塔为自定义蓝图。
+func (s *TowerWorkshopScene) copyBlueprintToCustom(bp *descriptor.TowerBlueprint) {
+	if s.blueprintStore.Count() >= 20 {
+		hud.ShowToast("蓝图数量已达上限")
+		return
+	}
+	cp := *bp
+	cp.ID = fmt.Sprintf("bp_%d", time.Now().UnixMilli())
+	cp.Name = bp.Name + "（副本）"
+	cp.Prebuilt = false
+	if err := s.blueprintStore.Save(cp); err != nil {
+		hud.ShowToast("保存失败: " + err.Error())
+		return
+	}
+	s.tab = wsTabCustomBlueprints
+	s.scrollY = 0
+	hud.ShowToast("已复制到我的蓝图")
 }
 
 // tabGeom 返回 Tab 按钮的 (x, y) 坐标。
 func (s *TowerWorkshopScene) tabGeom(idx int) (float32, float32) {
 	px, py := wsPanelOrigin()
-	totalW := 2*wsTabW + wsTabGap
+	totalW := float32(wsTabCount)*wsTabW + float32(wsTabCount-1)*wsTabGap
 	startX := px + (wsPanelW-totalW)/2
 	return startX + float32(idx)*(wsTabW+wsTabGap), py + 50
 }
@@ -267,10 +329,14 @@ func (s *TowerWorkshopScene) tabGeom(idx int) (float32, float32) {
 func (s *TowerWorkshopScene) clampScroll() {
 	var count int
 	switch s.tab {
-	case wsTabBlueprints:
-		count = s.blueprintStore.Count()
-	case wsTabAbilities:
+	case wsTabPrebuiltAbilities:
+		count = len(s.prebuiltAbilities)
+	case wsTabCustomAbilities:
 		count = s.abilityStore.Count()
+	case wsTabPrebuiltTowers:
+		count = len(s.prebuiltBlueprints)
+	case wsTabCustomBlueprints:
+		count = s.blueprintStore.Count()
 	}
 
 	rows := (count + wsCols - 1) / wsCols
@@ -324,8 +390,8 @@ func (s *TowerWorkshopScene) Draw(screen *ebiten.Image) {
 	})
 
 	// ── Tab 按钮 ──
-	tabLabels := [2]string{"蓝图", "自定义能力"}
-	for i := 0; i < 2; i++ {
+	tabLabels := [wsTabCount]string{"预制能力", "我的能力", "预制塔", "我的蓝图"}
+	for i := 0; i < wsTabCount; i++ {
 		tx, ty := s.tabGeom(i)
 		btnClr := color.Color(theme.ToneSecondary)
 		if i == s.tab {
@@ -352,20 +418,28 @@ func (s *TowerWorkshopScene) Draw(screen *ebiten.Image) {
 	s.createBtnRect = ui.Rect{}
 
 	switch s.tab {
-	case wsTabBlueprints:
-		s.drawBlueprintCards(screen, fm, cr)
-	case wsTabAbilities:
+	case wsTabPrebuiltAbilities:
+		s.drawPrebuiltAbilityCards(screen, fm, cr)
+	case wsTabCustomAbilities:
 		s.drawAbilityCards(screen, fm, cr)
+	case wsTabPrebuiltTowers:
+		s.drawPrebuiltTowerCards(screen, fm, cr)
+	case wsTabCustomBlueprints:
+		s.drawBlueprintCards(screen, fm, cr)
 	}
 }
 
 // tabCount 返回指定 Tab 的项目数量。
 func (s *TowerWorkshopScene) tabCount(tab int) int {
 	switch tab {
-	case wsTabBlueprints:
-		return s.blueprintStore.Count()
-	case wsTabAbilities:
+	case wsTabPrebuiltAbilities:
+		return len(s.prebuiltAbilities)
+	case wsTabCustomAbilities:
 		return s.abilityStore.Count()
+	case wsTabPrebuiltTowers:
+		return len(s.prebuiltBlueprints)
+	case wsTabCustomBlueprints:
+		return s.blueprintStore.Count()
 	}
 	return 0
 }
@@ -545,6 +619,128 @@ func (s *TowerWorkshopScene) drawCreateButton(screen *ebiten.Image, cr ui.Rect, 
 		tipY := float64(cr.Y) + float64(cr.H)/2 - 30
 		ui.LabelV(screen, "暂无内容，点击下方按钮创建", float64(cr.X)+float64(cr.W)/2, tipY, float64(cr.W)-40, ui.LabelStyle{
 			Font: theme.FontBody, Color: theme.TextLocked,
+		})
+	}
+}
+
+// ── 预制能力卡片列表 ─────────────────────────────
+
+func (s *TowerWorkshopScene) drawPrebuiltAbilityCards(screen *ebiten.Image, fm *render.FontManager, cr ui.Rect) {
+	items := s.prebuiltAbilities
+
+	startY := float32(float64(cr.Y) + 8 - s.scrollY)
+	gridW, _ := ui.CardGridSize(len(items), ui.CardGridStyle{Cols: wsCols, CardW: wsCardW, CardH: wsCardH, Gap: wsCardGap})
+	cardX := cr.X + (cr.W-gridW)/2
+	if len(items) < wsCols {
+		cardX = cr.X + 12
+	}
+
+	for i, desc := range items {
+		col := i % wsCols
+		row := i / wsCols
+		x := cardX + float32(col)*(wsCardW+wsCardGap)
+		y := startY + float32(row)*(wsCardH+wsCardGap)
+
+		r := ui.Rect{X: x, Y: y, W: wsCardW, H: wsCardH}
+		s.cardRects = append(s.cardRects, r)
+
+		if float64(y+wsCardH) < float64(cr.Y) || float64(y) > float64(cr.Y+cr.H) {
+			continue
+		}
+
+		hovered := i == s.hover
+		// 预制能力用蓝灰色调
+		bgClr := color.RGBA{R: 20, G: 30, B: 50, A: 220}
+		borderClr := color.RGBA{R: 60, G: 80, B: 120, A: 200}
+		if hovered {
+			bgClr = color.RGBA{R: 30, G: 42, B: 65, A: 230}
+			borderClr = color.RGBA{R: 80, G: 110, B: 160, A: 220}
+		}
+
+		ui.Card(screen, x, y, wsCardW, wsCardH, ui.CardStyle{
+			BgColor: bgClr, BorderColor: borderClr, Radius: 10, BorderWidth: 1.5,
+		})
+
+		cx := float64(x) + float64(wsCardW)/2
+
+		ui.LabelV(screen, desc.Label, cx, float64(y)+18, float64(wsCardW)-16, ui.LabelStyle{
+			Font: theme.FontBody, Color: theme.TextTitle, Bold: true,
+		})
+
+		tag := "—"
+		if len(desc.Tags) > 0 {
+			tag = desc.Tags[0]
+		}
+		ui.LabelV(screen, tag, cx, float64(y)+38, float64(wsCardW)-16, ui.LabelStyle{
+			Font: theme.FontCaption, Color: color.RGBA{R: 100, G: 150, B: 220, A: 255},
+		})
+
+		ui.LabelV(screen, fmt.Sprintf("管线: %d", len(desc.Pipelines)), cx, float64(y)+55, float64(wsCardW)-16, ui.LabelStyle{
+			Font: theme.FontCaption, Color: theme.TextMuted,
+		})
+
+		// 只读标记
+		ui.LabelV(screen, "点击复制", cx, float64(y)+72, float64(wsCardW)-16, ui.LabelStyle{
+			Font: theme.FontXS, Color: theme.TextLocked,
+		})
+	}
+}
+
+// ── 预制塔卡片列表 ─────────────────────────────
+
+func (s *TowerWorkshopScene) drawPrebuiltTowerCards(screen *ebiten.Image, fm *render.FontManager, cr ui.Rect) {
+	items := s.prebuiltBlueprints
+
+	startY := float32(float64(cr.Y) + 8 - s.scrollY)
+	gridW, _ := ui.CardGridSize(len(items), ui.CardGridStyle{Cols: wsCols, CardW: wsCardW, CardH: wsCardH, Gap: wsCardGap})
+	cardX := cr.X + (cr.W-gridW)/2
+	if len(items) < wsCols {
+		cardX = cr.X + 12
+	}
+
+	for i, bp := range items {
+		col := i % wsCols
+		row := i / wsCols
+		x := cardX + float32(col)*(wsCardW+wsCardGap)
+		y := startY + float32(row)*(wsCardH+wsCardGap)
+
+		r := ui.Rect{X: x, Y: y, W: wsCardW, H: wsCardH}
+		s.cardRects = append(s.cardRects, r)
+
+		if float64(y+wsCardH) < float64(cr.Y) || float64(y) > float64(cr.Y+cr.H) {
+			continue
+		}
+
+		hovered := i == s.hover
+		// 预制塔用深蓝色调
+		bgClr := color.RGBA{R: 20, G: 28, B: 48, A: 220}
+		borderClr := color.RGBA{R: 55, G: 75, B: 110, A: 200}
+		if hovered {
+			bgClr = color.RGBA{R: 28, G: 38, B: 60, A: 230}
+			borderClr = color.RGBA{R: 75, G: 100, B: 150, A: 220}
+		}
+
+		ui.Card(screen, x, y, wsCardW, wsCardH, ui.CardStyle{
+			BgColor: bgClr, BorderColor: borderClr, Radius: 10, BorderWidth: 1.5,
+		})
+
+		cx := float64(x) + float64(wsCardW)/2
+
+		ui.LabelV(screen, bp.Name, cx, float64(y)+18, float64(wsCardW)-16, ui.LabelStyle{
+			Font: theme.FontBody, Color: theme.TextTitle, Bold: true,
+		})
+
+		ui.LabelV(screen, bp.Category, cx, float64(y)+38, float64(wsCardW)-16, ui.LabelStyle{
+			Font: theme.FontCaption, Color: color.RGBA{R: 100, G: 180, B: 140, A: 255},
+		})
+
+		tierText := fmt.Sprintf("伤:%s 速:%s 距:%s", bp.Tiers["damage"], bp.Tiers["atkSpeed"], bp.Tiers["range"])
+		ui.LabelV(screen, tierText, cx, float64(y)+55, float64(wsCardW)-16, ui.LabelStyle{
+			Font: theme.FontCaption, Color: theme.TextMuted,
+		})
+
+		ui.LabelV(screen, "点击复制", cx, float64(y)+72, float64(wsCardW)-16, ui.LabelStyle{
+			Font: theme.FontXS, Color: theme.TextLocked,
 		})
 	}
 }
