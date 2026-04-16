@@ -1,0 +1,336 @@
+{
+  "casual": {
+    "autoStart": true,
+    "intermission": 0,
+    "initMaxWaves": 0,
+    "victory": "allWaves",
+    "defeat": "livesZero",
+    "enableEvents": true,
+    "econID": "casual",
+    "perfectBonus": true,
+    "coopEnabled": false,
+    "ruleset": {
+      "presetTowers": false,
+      "includePresets": false,
+      "classicWaves": false,
+      "wardenEnabled": true,
+      "itemDrop": "probability",
+      "blueprints": true,
+      "budgetCap": -1
+    },
+    "score": { "wave": 100, "kill": 10, "leaked": -50 },
+    "hooks": [],
+    "endFields": ["waves", "maxWaves", "kills", "leaked", "goldEarned"],
+    "ui": {
+      "nameKey": "mode.casual.name",
+      "descKey": "mode.casual.desc",
+      "icon": "stat-damage",
+      "defaultMap": "map_01",
+      "flow": "campaignSelect",
+      "comingSoon": true,
+      "devOnly": false,
+      "order": 1
+    }
+  },
+  "classic": {
+    "autoStart": true,
+    "intermission": 0,
+    "initMaxWaves": 0,
+    "victory": "allWaves",
+    "defeat": "livesZero",
+    "enableEvents": true,
+    "econID": "classic",
+    "perfectBonus": true,
+    "coopEnabled": false,
+    "ruleset": {
+      "presetTowers": true,
+      "includePresets": false,
+      "classicWaves": true,
+      "wardenEnabled": false,
+      "itemDrop": "byWave",
+      "blueprints": false,
+      "budgetCap": -1
+    },
+    "score": { "wave": 100, "kill": 10, "leaked": -50 },
+    "hooks": [],
+    "endFields": ["waves", "maxWaves", "kills", "leaked", "goldEarned"],
+    "ui": {
+      "nameKey": "mode.classic.name",
+      "descKey": "mode.classic.desc",
+      "icon": "★",
+      "defaultMap": "map_01",
+      "flow": "campaignSelect",
+      "comingSoon": false,
+      "devOnly": false,
+      "order": 2
+    }
+  },
+  "coop": {
+    "autoStart": false,
+    "intermission": 15,
+    "initMaxWaves": 0,
+    "victory": "allWaves",
+    "defeat": "livesZero",
+    "enableEvents": true,
+    "econID": "coop",
+    "perfectBonus": true,
+    "coopEnabled": true,
+    "ruleset": {
+      "presetTowers": false,
+      "includePresets": false,
+      "classicWaves": false,
+      "wardenEnabled": true,
+      "itemDrop": "probability",
+      "blueprints": true,
+      "budgetCap": -1
+    },
+    "score": { "wave": 100, "kill": 10, "leaked": -50 },
+    "hooks": [],
+    "endFields": ["waves", "maxWaves", "kills", "leaked"],
+    "ui": {
+      "nameKey": "mode.coop.name",
+      "descKey": "mode.coop.desc",
+      "icon": "👥",
+      "defaultMap": "map_co01",
+      "flow": "campaignSelect",
+      "comingSoon": false,
+      "devOnly": false,
+      "order": 7
+    }
+  },
+  "endless": {
+    "autoStart": true,
+    "intermission": 0,
+    "initMaxWaves": 9999,
+    "victory": "never",
+    "defeat": "livesZero",
+    "enableEvents": true,
+    "econID": "endless",
+    "perfectBonus": true,
+    "coopEnabled": false,
+    "ruleset": {
+      "presetTowers": false,
+      "includePresets": false,
+      "classicWaves": false,
+      "wardenEnabled": true,
+      "itemDrop": "probability",
+      "blueprints": true,
+      "budgetCap": -1
+    },
+    "score": { "wave": 100, "kill": 10 },
+    "hooks": [],
+    "endFields": ["wavesReached", "kills", "leaked"],
+    "ui": {
+      "nameKey": "mode.endless.name",
+      "descKey": "mode.endless.desc",
+      "icon": "∞",
+      "defaultMap": "map_01",
+      "flow": "campaignSelect",
+      "comingSoon": true,
+      "devOnly": false,
+      "order": 3
+    }
+  },
+  "timed": {
+    "autoStart": true,
+    "intermission": 3,
+    "initMaxWaves": 9999,
+    "victory": "hook:countdown",
+    "defeat": "livesZero",
+    "enableEvents": true,
+    "econID": "timed",
+    "perfectBonus": true,
+    "coopEnabled": false,
+    "ruleset": {
+      "presetTowers": false,
+      "includePresets": false,
+      "classicWaves": false,
+      "wardenEnabled": true,
+      "itemDrop": "probability",
+      "blueprints": true,
+      "budgetCap": -1
+    },
+    "score": { "kill": 5, "lives": 50 },
+    "hooks": [
+      { "type": "countdown", "targetSeconds": 300 }
+    ],
+    "endFields": ["survivedSeconds", "targetSeconds", "kills", "leaked", "livesRemaining"],
+    "ui": {
+      "nameKey": "mode.timed.name",
+      "descKey": "mode.timed.desc",
+      "icon": "stat-atkspd",
+      "defaultMap": "map_02",
+      "flow": "campaignSelect",
+      "comingSoon": true,
+      "devOnly": false,
+      "order": 4
+    }
+  },
+  "bossRush": {
+    "autoStart": true,
+    "intermission": 15,
+    "initMaxWaves": 0,
+    "victory": "hook:bossCounter",
+    "defeat": "livesZero",
+    "enableEvents": true,
+    "econID": "bossRush",
+    "perfectBonus": true,
+    "coopEnabled": false,
+    "ruleset": {
+      "presetTowers": false,
+      "includePresets": false,
+      "classicWaves": false,
+      "wardenEnabled": true,
+      "itemDrop": "probability",
+      "blueprints": true,
+      "budgetCap": -1
+    },
+    "score": { "kill": 20 },
+    "hooks": [
+      { "type": "bossCounter", "totalBosses": 5, "timeBase": 10000, "timeDecay": 10 }
+    ],
+    "endFields": ["bossesKilled", "totalBosses", "totalTime", "kills"],
+    "ui": {
+      "nameKey": "mode.bossrush.name",
+      "descKey": "mode.bossrush.desc",
+      "icon": "execute",
+      "defaultMap": "map_03",
+      "flow": "campaignSelect",
+      "comingSoon": true,
+      "devOnly": false,
+      "order": 5
+    }
+  },
+  "challenge": {
+    "autoStart": true,
+    "intermission": 0,
+    "initMaxWaves": 0,
+    "victory": "allWaves",
+    "defeat": "livesZero",
+    "enableEvents": true,
+    "econID": "challenge",
+    "perfectBonus": true,
+    "coopEnabled": false,
+    "ruleset": {
+      "presetTowers": false,
+      "includePresets": false,
+      "classicWaves": false,
+      "wardenEnabled": true,
+      "itemDrop": "probability",
+      "blueprints": true,
+      "budgetCap": -1
+    },
+    "score": { "wave": 100, "kill": 10, "leaked": -50 },
+    "hooks": [],
+    "endFields": ["waves", "maxWaves", "kills", "leaked", "goldEarned"],
+    "ui": {
+      "nameKey": "mode.challenge.name",
+      "descKey": "mode.challenge.desc",
+      "icon": "★",
+      "defaultMap": "map_04",
+      "flow": "campaignSelect",
+      "comingSoon": true,
+      "devOnly": false,
+      "order": 6
+    }
+  },
+  "test": {
+    "autoStart": true,
+    "intermission": 5,
+    "initMaxWaves": 0,
+    "victory": "allWaves",
+    "defeat": "never",
+    "enableEvents": false,
+    "econID": "test",
+    "perfectBonus": false,
+    "coopEnabled": false,
+    "ruleset": {
+      "presetTowers": false,
+      "includePresets": true,
+      "classicWaves": false,
+      "wardenEnabled": true,
+      "itemDrop": "everyKill",
+      "blueprints": true,
+      "budgetCap": -1
+    },
+    "score": {},
+    "hooks": [],
+    "endFields": ["waves", "kills"],
+    "ui": {
+      "nameKey": "mode.test.name",
+      "descKey": "mode.test.desc",
+      "icon": "⚙",
+      "defaultMap": "map_01",
+      "flow": "testSelect",
+      "comingSoon": false,
+      "devOnly": true,
+      "order": 100
+    }
+  },
+  "autoplay": {
+    "autoStart": true,
+    "intermission": 2,
+    "initMaxWaves": 0,
+    "victory": "allWaves",
+    "defeat": "never",
+    "enableEvents": false,
+    "econID": "autoplay",
+    "perfectBonus": false,
+    "coopEnabled": false,
+    "ruleset": {
+      "presetTowers": false,
+      "includePresets": false,
+      "classicWaves": false,
+      "wardenEnabled": true,
+      "itemDrop": "probability",
+      "blueprints": true,
+      "budgetCap": -1
+    },
+    "score": {},
+    "hooks": [],
+    "endFields": ["waves", "kills"],
+    "ui": {
+      "nameKey": "mode.autoplay.name",
+      "descKey": "mode.autoplay.desc",
+      "icon": "robot",
+      "defaultMap": "map_01",
+      "flow": "direct",
+      "comingSoon": false,
+      "devOnly": true,
+      "order": 101
+    }
+  },
+  "simulation": {
+    "autoStart": false,
+    "intermission": 3,
+    "initMaxWaves": 0,
+    "victory": "allWaves",
+    "defeat": "livesZero",
+    "enableEvents": false,
+    "econID": "simulation",
+    "perfectBonus": false,
+    "coopEnabled": false,
+    "ruleset": {
+      "presetTowers": false,
+      "includePresets": false,
+      "classicWaves": false,
+      "wardenEnabled": true,
+      "itemDrop": "probability",
+      "blueprints": true,
+      "budgetCap": -1
+    },
+    "score": {},
+    "hooks": [],
+    "endFields": ["waves", "kills", "leaked", "lives"],
+    "ui": {
+      "nameKey": "mode.simulation.name",
+      "descKey": "mode.simulation.desc",
+      "icon": "chart",
+      "defaultMap": "map_01",
+      "flow": "direct",
+      "comingSoon": false,
+      "devOnly": true,
+      "order": 102
+    }
+  }
+}

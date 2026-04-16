@@ -13,10 +13,12 @@ package scene
 import (
 	"image/color"
 	"math"
+	"sort"
 
 	gameAudio "defense2/internal/audio"
 	"defense2/internal/config"
 	"defense2/internal/core/game"
+	"defense2/internal/core/gamemode"
 	"defense2/internal/core/persistence"
 	"defense2/internal/i18n"
 	"defense2/internal/render"
@@ -45,19 +47,46 @@ type gameModeUI struct {
 var gameModes []gameModeUI
 var gameModesLocale string // 缓存构建时的语言，语言变化时重建
 
+// initGameModes 从 gamemodes.json 配置构建模式卡片列表。
+// 非 DevOnly 模式按 order 排序显示，DevMode 下追加 devOnly 模式。
 func initGameModes() {
 	if len(gameModes) > 0 && gameModesLocale == i18n.Locale() {
 		return
 	}
-	gameModes = []gameModeUI{
-		{"casual", i18n.T("scene.select.mode.casual"), "stat-damage", i18n.T("scene.select.mode.casual_desc"), "map_01", true},
-		{"classic", i18n.T("scene.select.mode.classic"), "★", i18n.T("scene.select.mode.classic_desc"), "map_01", false},
-		{"coop", i18n.T("scene.select.mode.coop"), "👥", i18n.T("scene.select.mode.coop_desc"), "map_co01", false},
+	configs, err := gamemode.LoadModeConfigs()
+	if err != nil {
+		// 配置加载失败时保留空列表
+		gameModes = nil
+		gameModesLocale = i18n.Locale()
+		return
 	}
-	if game.DevMode {
+
+	// 收集待排序的条目（id + order）
+	type entry struct {
+		id    string
+		order int
+		cfg   gamemode.ModeConfig
+	}
+	var entries []entry
+	for id, cfg := range configs {
+		if cfg.UI.DevOnly && !game.DevMode {
+			continue
+		}
+		entries = append(entries, entry{id: id, order: cfg.UI.Order, cfg: cfg})
+	}
+	sort.Slice(entries, func(i, j int) bool {
+		return entries[i].order < entries[j].order
+	})
+
+	gameModes = nil
+	for _, e := range entries {
 		gameModes = append(gameModes, gameModeUI{
-			ID: "test", Name: i18n.T("mode.test.name"), Icon: "⚙", Description: i18n.T("scene.test.title"),
-			DefaultMap: "map_01", ComingSoon: false,
+			ID:          e.id,
+			Name:        i18n.T(e.cfg.UI.NameKey),
+			Icon:        e.cfg.UI.Icon,
+			Description: i18n.T(e.cfg.UI.DescKey),
+			DefaultMap:  e.cfg.UI.DefaultMap,
+			ComingSoon:  e.cfg.UI.ComingSoon,
 		})
 	}
 	gameModesLocale = i18n.Locale()
@@ -296,29 +325,33 @@ func (s *SelectScene) Update() error {
 	return nil
 }
 
-// startGame 根据选中的模式执行跳转：
-//   - casual → CampaignSelectScene（关卡选择）
-//   - test → TestSelectScene（测试场景选择器）
-//   - 其他模式 → 直接创建 StageScene（战灵在 Stage 内第一波倒计时时选择）
+// startGame 根据配置的 ui.flow 路由跳转：
+//   - "campaignSelect" → CampaignSelectScene（关卡选择）
+//   - "testSelect"     → TestSelectScene（测试场景选择器）
+//   - "direct" 或其他  → 直接创建 StageScene
 func (s *SelectScene) startGame() {
 	mode := gameModes[s.selectedMode]
 	diff := s.difficulties[s.selectedDiff]
-	// 战役/经典模式进入关卡选择
-	if mode.ID == "casual" || mode.ID == "classic" || mode.ID == "coop" {
+
+	// 从配置获取 flow 路由
+	cfg, ok := gamemode.GetModeConfig(mode.ID)
+	flow := "direct"
+	if ok {
+		flow = cfg.UI.Flow
+	}
+
+	switch flow {
+	case "campaignSelect":
 		s.switcher.SwitchScene(NewCampaignSelectScene(s.switcher, mode.ID))
-		return
-	}
-	// 测试模式进入测试场景选择器
-	if mode.ID == "test" {
+	case "testSelect":
 		s.switcher.SwitchScene(NewTestSelectScene(s.switcher))
-		return
+	default:
+		s.switcher.SwitchScene(NewStageSceneWithOpts(s.switcher, StageOptions{
+			MapID:        mode.DefaultMap,
+			ModeID:       mode.ID,
+			DifficultyID: diff.ID,
+		}))
 	}
-	// 其他模式直接进入 Stage（战灵在 Stage 内第一波倒计时结束时选择）
-	s.switcher.SwitchScene(NewStageSceneWithOpts(s.switcher, StageOptions{
-		MapID:        mode.DefaultMap,
-		ModeID:       mode.ID,
-		DifficultyID: diff.ID,
-	}))
 }
 
 // ── 碰撞检测（UI 元素矩形命中判定）────────────────

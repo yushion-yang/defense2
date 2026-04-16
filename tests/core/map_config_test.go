@@ -5,10 +5,14 @@ import (
 
 	defense2 "defense2"
 	"defense2/internal/config"
+	"defense2/internal/core/gamemode"
 )
 
 func init() {
 	config.SetDataFS(&defense2.DataFS)
+	// dataFS 就绪后重置配置缓存，确保 gamemode 延迟加载能正确读取 gamemodes.json
+	gamemode.ResetModeConfigCache()
+	gamemode.ResetRegistry()
 }
 
 func TestLoadMap01(t *testing.T) {

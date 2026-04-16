@@ -7,19 +7,22 @@ import (
 )
 
 // ── AllowCustomBlueprints ──
+// 通过 GetOrDefault 获取已注册的 UniversalMode，测试其 Ruleset 行为。
 
-func TestCampaignRuleset_AllowCustomBlueprints(t *testing.T) {
-	r := gamemode.CampaignRuleset{}
+func TestCasualRuleset_AllowCustomBlueprints(t *testing.T) {
+	m := gamemode.GetOrDefault("casual")
+	r := m.Ruleset()
 	if !r.AllowCustomBlueprints() {
-		t.Error("campaign should allow custom blueprints")
+		t.Error("casual should allow custom blueprints")
 	}
 	if r.CustomBudgetCap() != -1 {
-		t.Errorf("campaign budget cap should be -1, got %d", r.CustomBudgetCap())
+		t.Errorf("casual budget cap should be -1, got %d", r.CustomBudgetCap())
 	}
 }
 
 func TestTestRuleset_AllowCustomBlueprints(t *testing.T) {
-	r := gamemode.TestRuleset{}
+	m := gamemode.GetOrDefault("test")
+	r := m.Ruleset()
 	if !r.AllowCustomBlueprints() {
 		t.Error("test should allow custom blueprints")
 	}
@@ -29,11 +32,11 @@ func TestTestRuleset_AllowCustomBlueprints(t *testing.T) {
 }
 
 func TestClassicRuleset_DisallowCustomBlueprints(t *testing.T) {
-	r := gamemode.ClassicRuleset{}
+	m := gamemode.GetOrDefault("classic")
+	r := m.Ruleset()
 	if r.AllowCustomBlueprints() {
 		t.Error("classic should NOT allow custom blueprints")
 	}
-	// CustomBudgetCap 继承 base 默认值 -1
 	if r.CustomBudgetCap() != -1 {
 		t.Errorf("classic budget cap should be -1, got %d", r.CustomBudgetCap())
 	}

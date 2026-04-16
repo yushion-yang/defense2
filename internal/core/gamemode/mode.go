@@ -1,15 +1,15 @@
 // mode.go — 游戏模式框架。
 //
 // 游戏模式系统是本游戏的核心扩展点之一。通过 Mode 接口定义了
-// 七种不同的游戏玩法（战役、无尽、限时、Boss 竞速、挑战、测试、自动化）。
+// 十种游戏玩法，全部由 gamemodes.json 配置驱动。
 //
 // 设计决策：
-//   - 接口而非继承：Go 无类继承，采用组合模式（embed baseMode）减少样板
+//   - 配置驱动：所有模式通过 UniversalMode + JSON 配置实现，无需独立 Go 文件
 //   - Context 注入：回调时传入快照+修改器，避免模式直接依赖 Stage
-//   - 全局注册表：init() 自动注册，Get(id) 获取，支持运行时扩展
-//
-// 当前状态：仅娱乐模式(casual)可正常游玩，其他模式显示"敬请期待"。
+//   - 延迟加载注册表：首次访问时从 gamemodes.json 加载，兼容测试环境的 dataFS 初始化时序
 package gamemode
+
+import "sync"
 
 // Mode 游戏模式接口。
 // 每种模式实现自己的胜负判定、经济规则、HUD 提示和分数计算。
@@ -117,25 +117,46 @@ type EndData struct {
 }
 
 // ── 全局模式注册表 ───────────────────────────────────
-// 采用 init() 自注册模式，各模式文件在 init 中调用 Register()。
-// 这样新增模式只需添加文件，无需修改已有代码。
+// 延迟初始化：首次访问时从 gamemodes.json 加载配置并注册所有模式。
+// 延迟初始化是必须的——测试环境中 config.SetDataFS() 在 init() 之后才被调用，
+// 如果在 init() 中加载会因 dataFS=nil 而失败。
 
-var registry = map[string]Mode{}
+var (
+	registry     = map[string]Mode{}
+	registryOnce sync.Once
+)
 
-// Register 注册一种游戏模式。
+// ensureRegistry 确保注册表已初始化（懒加载）。
+func ensureRegistry() {
+	registryOnce.Do(func() {
+		configs, err := LoadModeConfigs()
+		if err != nil {
+			// 配置加载失败时注册一个最小可用的 casual 模式
+			registry["casual"] = &UniversalMode{id: "casual"}
+			return
+		}
+		for id, cfg := range configs {
+			registry[id] = NewUniversalMode(id, cfg)
+		}
+	})
+}
+
+// Register 注册一种游戏模式（仅用于测试覆盖）。
 func Register(m Mode) {
+	ensureRegistry()
 	registry[m.ID()] = m
 }
 
 // Get 获取指定 ID 的模式，未找到返回 nil。
 func Get(id string) Mode {
+	ensureRegistry()
 	return registry[id]
 }
 
-// GetOrDefault 获取指定 ID 的模式，未找到返回 campaign。
+// GetOrDefault 获取指定 ID 的模式，未找到返回 casual。
 // 三级回退保证始终返回有效模式：指定ID → casual 实例 → 临时 baseMode。
-// 最后一级是防御性代码——正常情况下 init() 已注册 casual。
 func GetOrDefault(id string) Mode {
+	ensureRegistry()
 	if m := registry[id]; m != nil {
 		return m
 	}
@@ -147,6 +168,7 @@ func GetOrDefault(id string) Mode {
 
 // List 返回所有已注册模式的 ID。
 func List() []string {
+	ensureRegistry()
 	names := make([]string, 0, len(registry))
 	for name := range registry {
 		names = append(names, name)
@@ -154,13 +176,8 @@ func List() []string {
 	return names
 }
 
-// init 注册所有内置模式。
-// test/autoPlay/simulation 为开发和自动化测试用。
-func init() {
-	Register(NewCampaignMode())
-	Register(NewClassicMode())
-	Register(NewCoopMode())
-	Register(NewTestMode())
-	Register(NewAutoPlayMode())
-	Register(NewSimulationMode())
+// ResetRegistry 重置注册表（仅用于测试）。
+func ResetRegistry() {
+	registryOnce = sync.Once{}
+	registry = map[string]Mode{}
 }

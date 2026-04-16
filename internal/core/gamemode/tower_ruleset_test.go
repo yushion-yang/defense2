@@ -2,8 +2,9 @@ package gamemode
 
 import "testing"
 
-func TestCampaignRuleset(t *testing.T) {
-	r := CampaignRuleset{}
+// TestConfigRuleset_Campaign 验证零值 ConfigRuleset 等价于旧 CampaignRuleset（全部默认值）。
+func TestConfigRuleset_Campaign(t *testing.T) {
+	r := ConfigRuleset{}
 	if r.UsePresetTowers() {
 		t.Error("UsePresetTowers: want false")
 	}
@@ -15,8 +16,12 @@ func TestCampaignRuleset(t *testing.T) {
 	}
 }
 
-func TestTestRuleset(t *testing.T) {
-	r := TestRuleset{}
+// TestConfigRuleset_Test 验证 test 模式的 ConfigRuleset。
+func TestConfigRuleset_Test(t *testing.T) {
+	r := NewConfigRuleset(RulesetConfig{
+		IncludePresets: true,
+		ItemDrop:       "everyKill",
+	})
 	if r.UsePresetTowers() {
 		t.Error("UsePresetTowers: want false")
 	}
@@ -28,8 +33,13 @@ func TestTestRuleset(t *testing.T) {
 	}
 }
 
-func TestClassicRuleset(t *testing.T) {
-	r := ClassicRuleset{}
+// TestConfigRuleset_Classic 验证 classic 模式的 ConfigRuleset。
+func TestConfigRuleset_Classic(t *testing.T) {
+	r := NewConfigRuleset(RulesetConfig{
+		PresetTowers: true,
+		ClassicWaves: true,
+		ItemDrop:     "byWave",
+	})
 	if !r.UsePresetTowers() {
 		t.Error("UsePresetTowers: want true")
 	}

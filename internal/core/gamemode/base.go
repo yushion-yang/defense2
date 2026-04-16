@@ -3,11 +3,11 @@
 // baseMode 提供所有接口方法的合理默认行为：
 //   - 胜利条件：波次打完且无存活敌人
 //   - 失败条件：生命值归零
-//   - 波间休息：从 balance.json spawner.waveInterval 读取（默认 10 秒）
-//   - 经济奖励：从 economy.json 读取对应模式配置，无则回退 campaign
+//   - 波间休息：从 spawner.json waveInterval 读取（默认 10 秒）
+//   - 经济奖励：从 economy.json 读取对应模式配置，无则回退 casual
 //
-// 具体模式（如 CampaignMode）通过 embed baseMode 继承默认行为，
-// 只需覆写差异化方法，符合"组合优于继承"原则。
+// 作为 GetOrDefault 的最终回退，当 UniversalMode 配置加载失败时使用。
+// modeEcon() 函数同时被 UniversalMode.OnWaveCleared 复用。
 package gamemode
 
 import (
@@ -39,7 +39,7 @@ func (b *baseMode) CheckDefeat(ctx *Context) bool  { return ctx.Lives <= 0 }
 func (b *baseMode) GetScore(_ *Context) int        { return 0 }
 func (b *baseMode) VictoryWaveTarget() int         { return -1 }
 func (b *baseMode) EnableEvents() bool             { return false }
-func (b *baseMode) Ruleset() TowerRuleset          { return CampaignRuleset{} }
+func (b *baseMode) Ruleset() TowerRuleset          { return ConfigRuleset{} }
 
 // OnWaveCleared 返回波次通关奖励。
 // 默认不发放完美波次奖励（PerfectBonus=0），需要此功能的模式应覆写。
