@@ -20,6 +20,7 @@ const (
 	DecisionUpgrade                           // 升级
 	DecisionStartWave                         // 开始下一波
 	DecisionSelectWarden                      // 选择战灵
+	DecisionChooseAbility                     // 选择能力（3 选 1）
 )
 
 // Decision 决策结果。
@@ -29,7 +30,9 @@ type Decision struct {
 	TowerKey  string  // 塔类型（Build 时使用）/ 战灵键名（SelectWarden 时使用）
 	CenterX   float64 // 目标像素中心
 	CenterY   float64
-	WardenKey string // 战灵类型键名（SelectWarden 时使用）
+	WardenKey   string // 战灵类型键名（SelectWarden 时使用）
+	AbilityName string // ChooseAbility: 选中的能力 ID
+	SlotIndex   int    // ChooseAbility: 对应的槽位类别索引
 }
 
 // ── 快照数据类型 ──
@@ -49,17 +52,36 @@ type AISnapshot struct {
 	MapCenterX float64
 	MapCenterY float64
 	WardenReady bool // 战灵是否已选择
+
+	// ── Phase 2-3: 人类玩家数据（观战评论用）──
+	HumanTowerCount int // 人类玩家的塔数量
+	HumanGold       int // 人类玩家的金币
+	TotalKills      int // 所有塔的总击杀数（含人类 + AI）
 }
 
 // AITower 塔快照。
 type AITower struct {
-	Row, Col    int
-	Damage      float64
-	Strength    int
-	AttackSpeed float64
-	Range       float64
-	Kills       int
-	Owner       int // 塔所有者 ID
+	Row, Col     int
+	Damage       float64
+	Strength     int
+	AttackSpeed  float64
+	Range        float64
+	Kills        int
+	Owner        int              // 塔所有者 ID
+	PendingSlots []AIPendingSlot  // 待选能力槽位（有候选选项的）
+}
+
+// AIPendingSlot 一个待选的能力槽位。
+type AIPendingSlot struct {
+	SlotIndex int               // 类别索引（0=attack, 1=cc, 2=damage, 3=buff, 4=dot, 5=zone）
+	Choices   []AIAbilityChoice // 候选能力列表（通常 3 个）
+}
+
+// AIAbilityChoice 单个候选能力。
+type AIAbilityChoice struct {
+	Name     string // 能力 ID（如 "scatter", "stun"）
+	Label    string // 显示名称
+	Category string // 所属类别（"attack"/"cc"/"damage"/"buff"/"dot"/"zone"）
 }
 
 // AICell 可建造格子。
@@ -127,14 +149,20 @@ var wardenOptions = []string{"prince", "core", "chain", "skystrike", "envoy"}
 //
 // 决策优先级:
 //   1. 战灵未选择 → 选战灵
-//   2. 波间歇期 + 满足条件 → 开波
-//   3. 根据进度和个性：造塔 / 升级 / idle
-//   4. 12% 概率选次优选项（拟人化）
+//   2. 有待选能力 → 选能力（3 选 1）
+//   3. 波间歇期 + 满足条件 → 开波
+//   4. 根据进度和个性：造塔 / 升级 / idle
+//   5. 12% 概率选次优选项（拟人化）
 func (e *DecisionEngine) Evaluate(snap AISnapshot) Decision {
 	// ── 战灵选择（最高优先级）──
 	if !snap.WardenReady {
 		key := wardenOptions[rand.Intn(len(wardenOptions))]
 		return Decision{Type: DecisionSelectWarden, WardenKey: key}
+	}
+
+	// ── 能力选择（优先于经济决策，防止积压待选槽位）──
+	if d, ok := e.pickAbility(snap); ok {
+		return d
 	}
 
 	// ── 开波判定 ──
@@ -259,6 +287,98 @@ func (e *DecisionEngine) pickEconomicAction(snap AISnapshot) Decision {
 		return secondDecision
 	}
 	return bestDecision
+}
+
+// ── 能力选择 ──
+
+// pickAbility 检查是否有塔存在待选能力，如有则评分选择最佳能力。
+//
+// 策略：
+//   - attack 类别（slot 0）：随机选择（决定塔身份，无明确好坏）
+//   - cc 类别：防御型 AI（低 Aggression）偏好 +30
+//   - damage 类别：进攻型 AI（高 Aggression）偏好 +30
+//   - buff 类别：+20 基础分
+//   - dot 类别：+25 基础分
+//   - zone 类别：+20 基础分
+//   - 每个候选加 ±10 随机噪声
+//   - 12% 概率选次优（拟人化）
+func (e *DecisionEngine) pickAbility(snap AISnapshot) (Decision, bool) {
+	// 找第一个有待选槽位的塔
+	for _, t := range snap.Towers {
+		if len(t.PendingSlots) == 0 {
+			continue
+		}
+		// 取第一个待选槽位
+		slot := t.PendingSlots[0]
+		if len(slot.Choices) == 0 {
+			continue
+		}
+
+		// 对每个候选能力评分
+		type scored struct {
+			choice AIAbilityChoice
+			score  float64
+		}
+		candidates := make([]scored, 0, len(slot.Choices))
+		for _, c := range slot.Choices {
+			score := e.scoreAbilityChoice(c)
+			candidates = append(candidates, scored{choice: c, score: score})
+		}
+
+		// 找最高分和次高分
+		best := candidates[0]
+		second := candidates[0]
+		for _, s := range candidates[1:] {
+			if s.score > best.score {
+				second = best
+				best = s
+			} else if s.score > second.score {
+				second = s
+			}
+		}
+
+		// 12% 概率选次优（拟人化）
+		chosen := best
+		if len(candidates) > 1 && rand.Float64() < 0.12 {
+			chosen = second
+		}
+
+		return Decision{
+			Type:        DecisionChooseAbility,
+			Row:         t.Row,
+			Col:         t.Col,
+			AbilityName: chosen.choice.Name,
+			SlotIndex:   slot.SlotIndex,
+		}, true
+	}
+	return Decision{}, false
+}
+
+// scoreAbilityChoice 对单个候选能力评分（基于类别偏好 + 个性 + 噪声）。
+func (e *DecisionEngine) scoreAbilityChoice(c AIAbilityChoice) float64 {
+	var base float64
+	switch c.Category {
+	case "attack":
+		// 攻击类别决定塔身份，无明确偏好，纯随机
+		base = 50 + rand.Float64()*20
+	case "cc":
+		// 防御型 AI 偏好控制
+		base = 20 + 30*(1.0-e.personality.Aggression)
+	case "damage":
+		// 进攻型 AI 偏好伤害
+		base = 20 + 30*e.personality.Aggression
+	case "buff", "aura":
+		base = 20
+	case "dot":
+		base = 25
+	case "zone":
+		base = 20
+	default:
+		base = 15
+	}
+	// 随机噪声 ±10
+	noise := (rand.Float64() - 0.5) * 20
+	return base + noise
 }
 
 // ── 造塔评分 ──

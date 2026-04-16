@@ -4337,17 +4337,43 @@ func (s *StageScene) tickAIPlayerOne(ap *aiplayer.AIPlayer) {
 		WaveActive:  s.spawner.WaveActive,
 		Lives:       s.lives,
 		WardenReady: s.wardenReady,
+		HumanGold:   s.gold, // 人类玩家金币（观战评论用）
 	}
 
-	// 塔快照（含 Owner 字段，AI 内部按 Owner 过滤）
+	// 塔快照（含 Owner 字段和待选能力，AI 内部按 Owner 过滤）
+	// 同时统计人类塔数量
+	humanTowerCount := 0
 	s.towers.Each(func(t *tower.Tower) {
-		snap.Towers = append(snap.Towers, aiplayer.AITower{
+		if t.Owner == 0 {
+			humanTowerCount++
+		}
+		aiTower := aiplayer.AITower{
 			Row: t.Row, Col: t.Col,
 			Damage: t.Damage, Strength: int(t.Strength.Effective()),
 			Range: t.Range, Kills: t.Kills,
 			Owner: t.Owner,
-		})
+		}
+		// 传递待选能力槽位数据（PendingChoices map[int][]config.AbilityDef）
+		for slotIdx, choices := range t.PendingChoices {
+			if t.AbilitySlots[slotIdx] != "" || len(choices) == 0 {
+				continue // 已选择或无候选
+			}
+			var aiChoices []aiplayer.AIAbilityChoice
+			for _, c := range choices {
+				aiChoices = append(aiChoices, aiplayer.AIAbilityChoice{
+					Name:     c.Type,
+					Label:    c.Label,
+					Category: c.Category,
+				})
+			}
+			aiTower.PendingSlots = append(aiTower.PendingSlots, aiplayer.AIPendingSlot{
+				SlotIndex: slotIdx,
+				Choices:   aiChoices,
+			})
+		}
+		snap.Towers = append(snap.Towers, aiTower)
 	})
+	snap.HumanTowerCount = humanTowerCount
 
 	// 可建造格子（排除已有塔的位置）
 	gm := s.gameMap
@@ -4501,5 +4527,20 @@ func (s *StageScene) SelectWarden(key string) bool {
 	if s.spawner.Wave > prevWave {
 		s.onWaveTransition(prevWave)
 	}
+	return true
+}
+
+// ChooseAbility AI 请求为塔选择能力。实现 aiplayer.StageOps。
+// 执行与玩家手动选择能力相同的流程：AddAbility + ApplyEnhance + ClearPendingChoice。
+func (s *StageScene) ChooseAbility(row, col int, slotIndex int, abilityName string) bool {
+	t := s.towers.At(row, col)
+	if t == nil {
+		return false
+	}
+	if !t.AddAbility(abilityName) {
+		return false
+	}
+	tower.ApplyEnhanceIfPresent(t)
+	tower.ClearPendingChoice(t, slotIndex)
 	return true
 }

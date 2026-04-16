@@ -12,6 +12,8 @@ import (
 type mockOps struct {
 	builtCount    int
 	upgradedCount int
+	abilityCount  int
+	lastAbility   string
 }
 
 func (m *mockOps) BuildTowerForAI(key string, row, col, ownerID int) bool {
@@ -24,11 +26,16 @@ func (m *mockOps) UpgradeTowerForAI(row, col int) bool {
 	return true
 }
 
-func (m *mockOps) SellTowerForAI(row, col int) bool { return true }
-func (m *mockOps) TowerCost(key string) int          { return 50 }
-func (m *mockOps) StrengthBuyCost() int              { return 10 }
-func (m *mockOps) StartWave() bool                   { return true }
-func (m *mockOps) SelectWarden(key string) bool      { return true }
+func (m *mockOps) SellTowerForAI(row, col int) bool                        { return true }
+func (m *mockOps) TowerCost(key string) int                                { return 50 }
+func (m *mockOps) StrengthBuyCost() int                                    { return 10 }
+func (m *mockOps) StartWave() bool                                         { return true }
+func (m *mockOps) SelectWarden(key string) bool                            { return true }
+func (m *mockOps) ChooseAbility(row, col int, slotIndex int, abilityName string) bool {
+	m.abilityCount++
+	m.lastAbility = abilityName
+	return true
+}
 
 func TestAIPlayerGold(t *testing.T) {
 	ap := aiplayer.New(aiplayer.Config{
@@ -93,6 +100,58 @@ func TestAIPlayerTickDecides(t *testing.T) {
 
 	if ops.builtCount == 0 {
 		t.Error("AI never built a tower after 10s of ticking")
+	}
+}
+
+func TestAIPlayerChoosesAbility(t *testing.T) {
+	ops := &mockOps{}
+	ap := aiplayer.New(aiplayer.Config{
+		ZoneProvider: aiplayer.NewZone(24, 13),
+		OwnerID:      1,
+		StartGold:    200,
+		Ops:          ops,
+		CellSize:     60,
+	})
+
+	snap := aiplayer.AISnapshot{
+		Wave:     1,
+		MaxWaves: 12,
+		TowerDefs: []aiplayer.AITowerDef{
+			{Key: "basic", Cost: 50, Damage: 10, Range: 100, Index: 0},
+		},
+		// 一座 AI 区域的塔（col >= 12 for 24-col map），有待选能力
+		Towers: []aiplayer.AITower{
+			{
+				Row: 5, Col: 15, Damage: 30, Strength: 100, Owner: 1,
+				PendingSlots: []aiplayer.AIPendingSlot{
+					{
+						SlotIndex: 0,
+						Choices: []aiplayer.AIAbilityChoice{
+							{Name: "scatter", Label: "Scatter", Category: "attack"},
+							{Name: "wideBeam", Label: "Prism", Category: "attack"},
+							{Name: "bounce", Label: "Ricochet", Category: "attack"},
+						},
+					},
+				},
+			},
+		},
+		MapCenterX:  720,
+		MapCenterY:  390,
+		WardenReady: true,
+		WaveActive:  true, // 波进行中，不触发开波
+	}
+
+	// tick 足够多帧让决策和延迟行动执行完
+	for i := 0; i < 600; i++ {
+		ap.Tick(1.0/60.0, snap)
+	}
+
+	if ops.abilityCount == 0 {
+		t.Error("AI never chose an ability after 10s of ticking with pending slots")
+	}
+	validChoices := map[string]bool{"scatter": true, "wideBeam": true, "bounce": true}
+	if !validChoices[ops.lastAbility] {
+		t.Errorf("lastAbility = %q, want one of scatter/wideBeam/bounce", ops.lastAbility)
 	}
 }
 

@@ -3,7 +3,7 @@
 > 自动生成，勿手动编辑。运行 `make index` 更新。
 > 修改函数前查此表，评估影响范围。
 
-共 24 个跨包函数有影响链。
+共 25 个跨包函数有影响链。
 
 ## i18n.T
 
@@ -134,18 +134,11 @@ scene.NewStageSceneWithOpts → tower.DefaultPool → NewPool
 
 ```
 combat.Tick → config.GlobalAbilityTable
-combat.Tick → config.GlobalAbilityTable
 scene.BuildInfoPanelVM → config.GlobalAbilityTable
-scene.BuildInfoPanelVM → config.GlobalAbilityTable
-scene.NewBestiaryScene → config.GlobalAbilityTable
+scene.ChooseAbility → tower.ApplyEnhanceIfPresent → config.GlobalAbilityTable
 scene.NewBestiaryScene → config.GlobalAbilityTable
 tower.AbilitiesForCategory → config.GlobalAbilityTable
-tower.AbilitiesForCategory → config.GlobalAbilityTable
 tower.AddAbility → config.GlobalAbilityTable
-tower.AddAbility → config.GlobalAbilityTable
-tower.ApplyEnhanceIfPresent → config.GlobalAbilityTable
-tower.ApplyEnhanceIfPresent → config.GlobalAbilityTable
-tower.EnhanceFactors → config.GlobalAbilityTable
 tower.EnhanceFactors → config.GlobalAbilityTable
 ```
 
@@ -300,6 +293,15 @@ scene.NewStageSceneWithOpts → persistence.NewProgressManager → s.Has
 scene.NewTowerWorkshopScene → descriptor.NewAbilityStore → s.Has
 scene.NewTowerWorkshopScene → descriptor.NewBlueprintStore → s.Has
 scene.Update → persistence.NewProgressManager → s.Has
+```
+
+## t.AddAbility
+
+**上游影响链**（修改此函数，以下调用者受影响）：
+
+```
+scene.BuildTowerForAI → tower.ApplyPresetAbilities → t.AddAbility
+scene.ChooseAbility → t.AddAbility
 ```
 
 ## t.RecalcStats

@@ -2,7 +2,7 @@
 
 > 自动生成，勿手动编辑。运行 `make index` 更新。
 
-共 276 个文件, 66827 行代码, 47 个包。
+共 278 个文件, 67592 行代码, 47 个包。
 
 ## abilities (346 行)
 
@@ -16,17 +16,19 @@
 |------|------|------|
 | `achievement.go` | 215 | Achievement tracking and persistence. |
 
-## aiplayer (1530 行)
+## aiplayer (2115 行)
 
 | 文件 | 行数 | 职责 |
 |------|------|------|
 | `action.go` | 64 | 延迟行动队列。 |
-| `aiplayer.go` | 469 | AI 玩家主结构体。 |
-| `bubble.go` | 153 | 思维气泡数据模型。 |
+| `aiplayer.go` | 558 | AI 玩家主结构体。 |
+| `behavior.go` | 176 | - |
+| `bubble.go` | 215 | 思维气泡数据模型。 |
 | `coop_zone.go` | 93 | N 分区 Zone 系统。 |
-| `decision.go` | 472 | AI 决策引擎。 |
+| `decision.go` | 592 | AI 决策引擎。 |
 | `personality.go` | 38 | AI 个性系统。 |
 | `ping.go` | 65 | - |
+| `spectator.go` | 138 | - |
 | `sprite.go` | 116 | AI 精灵状态机。 |
 | `zone.go` | 60 | 区域划分逻辑。 |
 
@@ -275,12 +277,12 @@
 |------|------|------|
 | `item.go` | 187 | 道具系统。 |
 
-## llm (191 行)
+## llm (330 行)
 
 | 文件 | 行数 | 职责 |
 |------|------|------|
-| `connector.go` | 148 | LLM 连接器。 |
-| `prompt.go` | 43 | 局势摘要 -> LLM prompt 构建。 |
+| `connector.go` | 201 | - |
+| `prompt.go` | 129 | - |
 
 ## loader (132 行)
 
@@ -386,7 +388,7 @@
 | `splash_vfx.go` | 115 | splash ability impact ring VFX. |
 | `trail_batch.go` | 286 | 弹道尾迹批量渲染器。 |
 
-## scene (18448 行)
+## scene (18489 行)
 
 | 文件 | 行数 | 职责 |
 |------|------|------|
@@ -405,7 +407,7 @@
 | `select.go` | 551 | 模式选择场景（卡片式 UI）。 |
 | `settings.go` | 390 | 设置场景。 |
 | `settings_persist.go` | 80 | 设置持久化（音量/画质）。 |
-| `stage.go` | 4505 | 游戏主战斗场景（~3600行，本项目最核心的文件）。 |
+| `stage.go` | 4546 | 游戏主战斗场景（~3600行，本项目最核心的文件）。 |
 | `stage_info_vm.go` | 667 | 塔信息面板的 ViewModel 构建器。 |
 | `stage_input.go` | 1259 | StageScene 的输入处理和交互状态机（11 种模式）。 |
 | `stage_types.go` | 120 | StageScene 的类型定义和常量。 |

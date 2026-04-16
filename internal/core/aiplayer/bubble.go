@@ -80,6 +80,7 @@ type DialogueBank struct {
 func DefaultDialogueBank() *DialogueBank {
 	return &DialogueBank{
 		entries: map[string][]string{
+			// ── 基础决策文案 ──
 			"build_thinking": {
 				"这里放个塔？",
 				"嗯...这个位置不错",
@@ -137,6 +138,67 @@ func DefaultDialogueBank() *DialogueBank {
 			"ping_received": {
 				"嗯？",
 				"收到~",
+			},
+
+			// ── Phase 2-3: 拟人行为文案 ──
+			"leak_reaction": {
+				"啊！漏了！",
+				"糟糕...",
+				"那边失守了",
+			},
+			"kill_streak": {
+				"打得不错！",
+				"连杀！",
+				"火力全开",
+			},
+			"kill_streak_big": {
+				"太强了！",
+				"无人能挡！",
+			},
+			"economy_worry": {
+				"缺钱了...",
+				"金币告急",
+				"得省着点",
+			},
+			"idle_patrol": {
+				"巡视一下...",
+				"四处看看",
+			},
+			"daydream": {
+				"...",
+				"嗯...",
+				"",
+			},
+
+			// ── Phase 2-3: 观战评论文案 ──
+			"player_build": {
+				"那个位置不错啊",
+				"你也在补塔？",
+				"好主意",
+			},
+			"player_sell": {
+				"哦？要调整布局？",
+				"卖掉了？",
+			},
+			"player_leak": {
+				"那边漏了！",
+				"小心！",
+				"注意防守",
+			},
+			"player_rich": {
+				"你还在攒钱？",
+				"金币够了吧...",
+			},
+			"player_afk": {
+				"你还在吗？",
+				"需要帮忙吗？",
+			},
+
+			// ── Phase 2-3: LLM 事件触发文案 ──
+			"boss_incoming": {
+				"Boss来了！",
+				"小心Boss！",
+				"准备迎战",
 			},
 		},
 	}

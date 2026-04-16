@@ -18,8 +18,9 @@ type StageOps interface {
 	SellTowerForAI(row, col int) bool
 	TowerCost(key string) int
 	StrengthBuyCost() int
-	StartWave() bool              // 开始下一波
-	SelectWarden(key string) bool // 选择战灵
+	StartWave() bool                                          // 开始下一波
+	SelectWarden(key string) bool                             // 选择战灵
+	ChooseAbility(row, col int, slotIndex int, abilityName string) bool // 选择能力
 }
 
 // ZoneProvider 区域查询接口。Zone 和 CoopZone 都实现此接口。
@@ -54,6 +55,10 @@ type AIPlayer struct {
 	ping         *PingState
 	llmConn      *llm.Connector // LLM 弹幕连接器（nil 表示禁用）
 	lastAction   string         // 上一次执行的行动标签（供 LLM prompt 使用）
+
+	// ── Phase 2-3: 拟人行为 + 观战评论 ──
+	behavior  *BehaviorState  // 拟人行为状态（漏怪/连杀/焦虑/巡视/发呆）
+	spectator *SpectatorState // 观战评论状态（评论人类玩家行为）
 
 	// 决策节奏
 	decisionTimer    float64
@@ -94,6 +99,8 @@ func New(cfg Config) *AIPlayer {
 		dialogue:     DefaultDialogueBank(),
 		ping:         NewPingState(),
 		lastAction:   "idle",
+		behavior:     NewBehaviorState(20), // 默认 20 生命
+		spectator:    NewSpectatorState(20),
 	}
 	ap.engine.SetPersonality(personality)
 	ap.rollNextInterval()
@@ -173,14 +180,23 @@ func (ap *AIPlayer) PingOnCooldown() bool {
 //  3. 气泡更新
 //  4. Ping 冷却递减
 //  5. 引擎波间延迟递减
-//  6. Ping 响应（优先于正常决策）
-//  7. 决策评估（按间隔）
+//  6. 拟人行为 + 观战评论（每帧）
+//  7. Ping 响应（优先于正常决策）
+//  8. 决策评估（按间隔）
+//  9. LLM 弹幕
 func (ap *AIPlayer) Tick(dt float64, snap AISnapshot) {
 	ap.actions.Tick(dt)
 	ap.sprite.Tick(dt)
 	ap.bubble.Tick(dt)
 	ap.ping.Tick(dt)
 	ap.engine.TickWaveDelay(dt)
+
+	// ── 拟人行为（每帧，不受 actionsBusy 完全阻断）──
+	ap.behavior.Tick(dt, snap, ap.gold,
+		ap.sprite, ap.bubble, ap.dialogue, ap.actions.Busy())
+
+	// ── 观战评论（每帧，内部有 3s 检查间隔 + 8s 评论冷却）──
+	ap.spectator.Tick(dt, snap, ap.bubble, ap.dialogue)
 
 	// 有待执行行动时不做新决策
 	if ap.actions.Busy() {
@@ -210,6 +226,11 @@ func (ap *AIPlayer) Tick(dt float64, snap AISnapshot) {
 
 	decision := ap.engine.Evaluate(snap)
 	ap.executeDecision(decision)
+
+	// 通知行为系统做了决策（重置 idle 时间）
+	if decision.Type != DecisionIdle {
+		ap.behavior.NotifyDecision()
+	}
 
 	// LLM 弹幕：异步获取自然语言评论，不阻塞游戏循环
 	ap.tickLLM(dt, snap)
@@ -248,6 +269,8 @@ func (ap *AIPlayer) executeDecision(d Decision) {
 		ap.lastAction = "started wave"
 	case DecisionSelectWarden:
 		ap.lastAction = "selected warden"
+	case DecisionChooseAbility:
+		ap.lastAction = "chose ability"
 	default:
 		ap.lastAction = "idle"
 	}
@@ -328,6 +351,20 @@ func (ap *AIPlayer) executeDecision(d Decision) {
 			Execute: func() {
 				if ap.ops != nil {
 					ap.ops.SelectWarden(wardenKey)
+				}
+			},
+		})
+
+	case DecisionChooseAbility:
+		row, col := d.Row, d.Col
+		slotIdx, abilityName := d.SlotIndex, d.AbilityName
+		ap.bubble.Show(ap.dialogue.Random("ability_choose"), BubbleThink, 1.5)
+		ap.actions.Enqueue(DelayedAction{
+			Delay: 0.8 + rand.Float64()*0.5,
+			Label: "ability",
+			Execute: func() {
+				if ap.ops != nil {
+					ap.ops.ChooseAbility(row, col, slotIdx, abilityName)
 				}
 			},
 		})
@@ -422,19 +459,34 @@ func (ap *AIPlayer) tickLLM(dt float64, snap AISnapshot) {
 		return
 	}
 	situation := ap.buildSituation(snap)
-	text := ap.llmConn.Tick(dt, llm.BuildPrompt(situation))
+	memory := ap.llmConn.GetMemory()
+	text := ap.llmConn.Tick(dt, llm.BuildPrompt(situation, memory))
 	if text != "" && !ap.bubble.Visible() {
 		ap.bubble.Show(text, BubbleAction, 3.0)
+		// 记录到短期记忆
+		ap.llmConn.RecordMemory(ap.lastAction, text)
 	}
+}
+
+// TriggerLLMEvent 触发 LLM 即时调用（用于重要事件）。
+// 事件如：Boss 来袭、连续漏怪、玩家 ping 等。
+func (ap *AIPlayer) TriggerLLMEvent(event string, snap AISnapshot) {
+	if ap.llmConn == nil {
+		return
+	}
+	situation := ap.buildSituation(snap)
+	situation.Mood = event // 用事件作为情绪上下文
+	memory := ap.llmConn.GetMemory()
+	ap.llmConn.TriggerImmediate(llm.BuildPrompt(situation, memory))
 }
 
 // buildSituation 从快照构建 LLM 局势摘要。
 func (ap *AIPlayer) buildSituation(snap AISnapshot) llm.Situation {
 	// 威胁评估：基于敌人 HP 占比和 Boss 存在
 	threatLevel := "low"
+	hasBoss := false
 	if len(snap.Enemies) > 0 {
 		activeCount := 0
-		hasBoss := false
 		for _, e := range snap.Enemies {
 			if e.Active {
 				activeCount++
@@ -450,20 +502,57 @@ func (ap *AIPlayer) buildSituation(snap AISnapshot) llm.Situation {
 		}
 	}
 
-	// 人类塔数 = 快照中总塔数 - AI 自己的塔数
-	// （快照在 filterAITowers 之前的原始数据已被过滤，
-	//   这里用 snap.Towers 是 AI 过滤后的，需要额外信息。
-	//   简化处理：人类塔数暂用 0，不影响 prompt 质量。）
+	// 情绪推断：基于最近事件
+	mood := "calm"
+	if snap.Lives < ap.behavior.prevLives {
+		mood = "worried"
+	} else if ap.behavior.killStreak >= killStreakSmall {
+		mood = "excited"
+	} else if ap.gold < economyWorryGold {
+		mood = "anxious"
+	} else if hasBoss {
+		mood = "tense"
+	}
+
+	// 个性描述
+	personalityDesc := ap.buildPersonalityDesc()
+
 	return llm.Situation{
 		Wave:            snap.Wave,
 		MaxWaves:        snap.MaxWaves,
 		AIGold:          ap.gold,
-		HumanGold:       0, // AI 不可见人类金币
+		HumanGold:       snap.HumanGold,
 		Lives:           snap.Lives,
-		MaxLives:        20, // 默认最大生命
+		MaxLives:        20,
 		AITowerCount:    len(snap.Towers),
-		HumanTowerCount: 0, // AI 不可见人类塔数
+		HumanTowerCount: snap.HumanTowerCount,
 		LastAction:      ap.lastAction,
 		ThreatLevel:     threatLevel,
+		PersonalityDesc: personalityDesc,
+		Mood:            mood,
 	}
+}
+
+// buildPersonalityDesc 根据个性参数生成自然语言描述。
+func (ap *AIPlayer) buildPersonalityDesc() string {
+	p := ap.personality
+	desc := "你的性格: "
+	if p.Aggression > 0.65 {
+		desc += "激进，喜欢DPS塔，追求火力输出。"
+	} else if p.Aggression < 0.35 {
+		desc += "稳健，喜欢控制塔，注重防守。"
+	} else {
+		desc += "均衡，攻防兼顾。"
+	}
+	if p.Economy > 0.65 {
+		desc += "精打细算，喜欢攒钱。"
+	} else if p.Economy < 0.35 {
+		desc += "大手大脚，有钱就花。"
+	}
+	if p.Risk > 0.65 {
+		desc += "胆子大，敢冒险。"
+	} else if p.Risk < 0.35 {
+		desc += "谨慎保守。"
+	}
+	return desc
 }
