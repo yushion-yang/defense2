@@ -2,7 +2,7 @@
 
 > 自动生成，勿手动编辑。运行 `make index` 更新。
 
-共 289 个文件, 72107 行代码, 48 个包。
+共 289 个文件, 72754 行代码, 48 个包。
 
 ## abilities (346 行)
 
@@ -16,7 +16,7 @@
 |------|------|------|
 | `achievement.go` | 215 | Achievement tracking and persistence. |
 
-## aiplayer (3792 行)
+## aiplayer (3843 行)
 
 | 文件 | 行数 | 职责 |
 |------|------|------|
@@ -27,7 +27,7 @@
 | `bubble.go` | 287 | 思维气泡数据模型。 |
 | `coop_zone.go` | 93 | N 分区 Zone 系统。 |
 | `cooperation.go` | 245 | 协作意识系统。 |
-| `decision.go` | 1062 | AI 决策引擎。 |
+| `decision.go` | 1113 | AI 决策引擎。 |
 | `personality.go` | 38 | AI 个性系统。 |
 | `ping.go` | 65 | - |
 | `spectator.go` | 138 | - |
@@ -281,14 +281,14 @@
 |------|------|------|
 | `item.go` | 187 | 道具系统。 |
 
-## learning (910 行)
+## learning (1506 行)
 
 | 文件 | 行数 | 职责 |
 |------|------|------|
-| `features.go` | 346 | 特征提取系统。 |
+| `features.go` | 544 | 特征提取系统。 |
 | `loader.go` | 24 | 权重模型加载器。 |
-| `trainer.go` | 322 | 在线学习训练器。 |
-| `weights.go` | 218 | 权重模型与线性评分。 |
+| `trainer.go` | 387 | 在线学习训练器。 |
+| `weights.go` | 551 | 权重模型与神经网络评分。 |
 
 ## llm (754 行)
 

@@ -63,7 +63,7 @@ func runTraining(cfg trainConfig) {
 		cfg.OutputPath = "config/ai/weights.json"
 	}
 	if cfg.MapID == "" {
-		cfg.MapID = "map_co01" // 默认使用第一个合作地图
+		cfg.MapID = "map_01" // 默认使用简单战役地图（AI 控制全图训练）
 	}
 	if cfg.Difficulty == "" {
 		cfg.Difficulty = "normal"
@@ -91,11 +91,12 @@ func runTraining(cfg trainConfig) {
 			mapID = coopMaps[rng.Intn(len(coopMaps))]
 		}
 
-		// 检查地图是否支持 coop 并获取 playerCount
-		playerCount := 2 // 默认 2 人
+		// 检查地图是否支持 coop（如果是 coop 地图则设置人数）
+		coopPlayerCount := 0
 		if m, err := config.LoadMap(mapID); err == nil && m.Coop != nil {
-			playerCount = m.Coop.PlayerCount
+			coopPlayerCount = m.Coop.PlayerCount
 		}
+		_ = coopPlayerCount // 训练模式暂不使用 coop 分区
 
 		var g *scene.Game
 		if !gameInitDone {
@@ -106,17 +107,18 @@ func runTraining(cfg trainConfig) {
 		}
 
 		// 创建带学习模式的 Stage
+		// 训练模式使用普通战役地图（非 coop），AI 通过 autoplay 策略控制全图
+		// 这样训练结果纯粹反映决策质量，不受分区限制
 		stage := scene.NewStageSceneWithOpts(g, scene.StageOptions{
 			MapID:           mapID,
 			WardenType:      cfg.Warden,
-			ModeID:          "coop",
+			ModeID:          "casual",
 			DifficultyID:    cfg.Difficulty,
 			AIEnabled:       true,
-			CoopPlayerCount: playerCount,
 			LearningEnabled: true,
 		})
 
-		// 使用 competent 策略驱动人类玩家（给 AI 一个合理的队友）
+		// 使用 competent 策略驱动全图（AI 学习系统通过 autoplay 挂钩观察并学习）
 		strategy := autoplay.NewCompetentStrategy(autoplay.WithCompetentSeed(sessionSeed))
 		ctrl := autoplay.NewController(autoplay.ControllerConfig{
 			Strategy:   strategy,
