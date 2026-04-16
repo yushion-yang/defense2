@@ -1218,6 +1218,10 @@ func (s *StageScene) tryPlaceTower(px, py float64) bool {
 		return false // 池满，不扣金
 	}
 	placed.BuildAnim = 0.3
+	// 自定义蓝图塔放置日志（bp_ 前缀标识蓝图塔）
+	if strings.HasPrefix(def.Key, "bp_") {
+		log.Printf("[stage] placed custom tower %q at (%d,%d) with abilities %v", def.Key, row, col, def.PresetAbilities)
+	}
 	// 按塔自身的 abilityMode 初始化能力
 	switch def.AbilityAcquireMode {
 	case "preset":
