@@ -352,8 +352,10 @@ func TestRoundtrip_AllConditionTypes(t *testing.T) {
 		{"isBoss", descriptor.ComponentEditState{TypeID: "isBoss", Params: map[string]float64{}}},
 		{"notBoss", descriptor.ComponentEditState{TypeID: "notBoss", Params: map[string]float64{}}},
 		{"every", descriptor.ComponentEditState{TypeID: "every", Params: map[string]float64{"n": 3}}},
-		{"buffActive", descriptor.ComponentEditState{TypeID: "buffActive", Params: map[string]float64{}}},
-		{"buffAbsent", descriptor.ComponentEditState{TypeID: "buffAbsent", Params: map[string]float64{}}},
+		{"buffActive", descriptor.ComponentEditState{TypeID: "buffActive", Params: map[string]float64{"buffID": 0}}},
+		{"buffAbsent", descriptor.ComponentEditState{TypeID: "buffAbsent", Params: map[string]float64{"buffID": 0}}},
+		{"buffActive-slow", descriptor.ComponentEditState{TypeID: "buffActive", Params: map[string]float64{"buffID": 1}}},   // slow(idx=1)
+		{"buffAbsent-weaken", descriptor.ComponentEditState{TypeID: "buffAbsent", Params: map[string]float64{"buffID": 6}}}, // weaken(idx=6)
 	}
 
 	for _, tc := range tests {
@@ -461,13 +463,21 @@ func TestRoundtrip_AllEffectTypes(t *testing.T) {
 			"duration_base": 2, "duration_potential": 0.5,
 		}}},
 		{"silence", descriptor.ComponentEditState{TypeID: "silence", Params: map[string]float64{}}},
-		{"buff", descriptor.ComponentEditState{TypeID: "buff", Params: map[string]float64{"base": 10, "potential": 5}}},
-		{"selfBuff", descriptor.ComponentEditState{TypeID: "selfBuff", Params: map[string]float64{"value": 15}}},
+		{"buff", descriptor.ComponentEditState{TypeID: "buff", Params: map[string]float64{"stat": 0, "base": 10, "potential": 5}}},
+		{"selfBuff", descriptor.ComponentEditState{TypeID: "selfBuff", Params: map[string]float64{"stat": 0, "value": 15}}},
 		{"gold", descriptor.ComponentEditState{TypeID: "gold", Params: map[string]float64{"base": 10, "potential": 2}}},
-		{"modifyStat", descriptor.ComponentEditState{TypeID: "modifyStat", Params: map[string]float64{"multiplier": 1.5}}},
+		{"modifyStat", descriptor.ComponentEditState{TypeID: "modifyStat", Params: map[string]float64{"stat": 0, "multiplier": 1.5}}},
 		{"crit", descriptor.ComponentEditState{TypeID: "crit", Params: map[string]float64{"multiplier": 2.0}}},
 		{"purge", descriptor.ComponentEditState{TypeID: "purge", Params: map[string]float64{"count": 2}}},
 		{"teleport", descriptor.ComponentEditState{TypeID: "teleport", Params: map[string]float64{"base": 50, "potential": 10}}},
+		// 字符串字段非默认值 roundtrip 验证
+		{"buff-speed", descriptor.ComponentEditState{TypeID: "buff", Params: map[string]float64{"stat": 1, "value": 0.2}}},      // stat=speed(idx=1)
+		{"modifyStat-range", descriptor.ComponentEditState{TypeID: "modifyStat", Params: map[string]float64{"stat": 2, "multiplier": 2.0}}}, // stat=range(idx=2)
+		{"damage-hpPercent-mode", descriptor.ComponentEditState{TypeID: "damage", Params: map[string]float64{"mode": 2, "value": 0.1}}},     // mode=hpPercent(idx=2)
+		{"dot-bleed", descriptor.ComponentEditState{TypeID: "dot", Params: map[string]float64{
+			"subtype": 1, "mode": 0,
+			"value_value": 10, "duration_value": 5,
+		}}}, // subtype=bleed(idx=1)
 	}
 
 	for _, tc := range tests {
