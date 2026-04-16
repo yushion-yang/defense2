@@ -348,6 +348,9 @@ func NewStageSceneWithOpts(sw Switcher, opts StageOptions) *StageScene {
 
 	// 应用难度到 spawner
 	spawner.HPScale = diff.HPScale
+	if opts.HPScaleOverride > 0 {
+		spawner.HPScale = opts.HPScaleOverride
+	}
 	spawner.SpeedScale = diff.SpeedScale
 	if opts.CoopPlayerCount > 1 {
 		spawner.CoopPlayerCount = opts.CoopPlayerCount
