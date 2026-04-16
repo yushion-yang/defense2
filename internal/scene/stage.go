@@ -35,7 +35,6 @@ import (
 	"sync"
 	"time"
 
-	_ "defense2/internal/core/tower/abilities" // blank import: 通过 init() 注册 32 种塔能力到全局注册表
 	_ "defense2/internal/core/warden/types"    // blank import: 通过 init() 注册 5 种战灵类型到全局注册表
 
 	gameAudio "defense2/internal/audio"

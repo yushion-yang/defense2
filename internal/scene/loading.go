@@ -15,7 +15,6 @@ import (
 	"defense2/internal/core/game"
 	"defense2/internal/core/mascot"
 	"defense2/internal/core/persistence"
-	"defense2/internal/core/tower/abilities"
 	"defense2/internal/core/tower/descriptor"
 	"defense2/internal/i18n"
 	"defense2/internal/render"
@@ -84,10 +83,9 @@ func (s *LoadingScene) Update() error {
 			log.Printf("i18n init: %v (continuing with fallback)", err)
 		}
 		render.InitGlobalIcons(config.GetAssetFS())
-		abilities.InitConfigAbilities()
-		// 描述符能力覆盖 ConfigAbility（失败时 ConfigAbility 仍作为 fallback）
+		// 描述符引擎是能力系统的唯一权威源（同时填充 tower.Registry 和 AbilityTable）
 		if err := descriptor.InitDescriptorAbilities(config.GetDataFS()); err != nil {
-			log.Printf("[descriptor] warning: %v, falling back to ConfigAbility", err)
+			log.Printf("[descriptor] CRITICAL: %v — abilities will not work", err)
 		}
 		config.LoadBalance()
 		config.LoadPlatform()

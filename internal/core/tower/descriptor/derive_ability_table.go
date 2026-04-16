@@ -83,17 +83,20 @@ func extractPipelineParams(p *Pipeline, def *config.AbilityDef) {
 // extractEffectParams 从 effect 提取 base/potential 到 AbilityDef。
 func extractEffectParams(eff Effect, def *config.AbilityDef) {
 	switch e := eff.(type) {
-	case *DamageEffect:
-		extractScaler(e.Value, def, true)
-		switch e.Mode {
-		case DmgFlat:
-			def.ScaleDim = "damage"
-		case DmgRatio:
-			def.ScaleDim = "ratio"
-		case DmgHpPercent:
-			def.ScaleDim = "hpPercent"
+	case DamageEffect:
+		// 仅在 scaleDim 未被 selector/condition 设置时填充
+		if def.ScaleDim == "" {
+			extractScaler(e.Value, def, true)
+			switch e.Mode {
+			case DmgFlat:
+				def.ScaleDim = "damage"
+			case DmgRatio:
+				def.ScaleDim = "ratio"
+			case DmgHpPercent:
+				def.ScaleDim = "hpPercent"
+			}
 		}
-	case *SlowEffect:
+	case SlowEffect:
 		// slowPower: factor 是主 scaler，duration 是参数
 		// slowDuration: duration 是主 scaler，factor 是参数
 		// 用 LinearScaler 判断哪个是主 scaler
@@ -108,13 +111,13 @@ func extractEffectParams(eff Effect, def *config.AbilityDef) {
 			extractScaler(e.Factor, def, false)
 			def.ParamDim = "factor"
 		}
-	case *StunEffect:
+	case StunEffect:
 		extractScaler(e.Duration, def, true)
 		def.ScaleDim = "duration"
-	case *RootEffect:
+	case RootEffect:
 		extractScaler(e.Duration, def, true)
 		def.ScaleDim = "duration"
-	case *DotEffect:
+	case DotEffect:
 		extractScaler(e.Value, def, true)
 		switch e.Mode {
 		case DmgFlat:
@@ -126,30 +129,30 @@ func extractEffectParams(eff Effect, def *config.AbilityDef) {
 		}
 		extractScaler(e.Duration, def, false)
 		def.ParamDim = "duration"
-	case *WeakenEffect:
+	case WeakenEffect:
 		extractScaler(e.Amplify, def, true)
 		def.ScaleDim = "amplify"
 		extractScaler(e.Duration, def, false)
 		def.ParamDim = "duration"
-	case *SilenceEffect:
+	case SilenceEffect:
 		def.ScaleDim = "none"
-	case *BuffEffect:
+	case BuffEffect:
 		extractScaler(e.Bonus, def, true)
 		def.ScaleDim = "bonus"
-	case *SelfBuffEffect:
+	case SelfBuffEffect:
 		extractScaler(e.Bonus, def, true)
 		def.ScaleDim = "bonus"
-	case *GoldEffect:
+	case GoldEffect:
 		extractScaler(e.Amount, def, true)
 		def.ScaleDim = "amount"
-	case *CritEffect:
+	case CritEffect:
 		// crit: chance 在 condition 中，multiplier 在 effect 中
 		def.Param = e.Multiplier
 		def.ParamDim = "multiplier"
-	case *ModifyStatEffect:
+	case ModifyStatEffect:
 		def.Param = e.Multiplier
 		def.ParamDim = "statBoost"
-	case *TeleportEffect:
+	case TeleportEffect:
 		extractScaler(e.Distance, def, true)
 		def.ScaleDim = "distance"
 	}
@@ -158,7 +161,7 @@ func extractEffectParams(eff Effect, def *config.AbilityDef) {
 // extractConditionParams 从 condition 提取参数。
 func extractConditionParams(cond Condition, def *config.AbilityDef) {
 	switch c := cond.(type) {
-	case *ChanceCondition:
+	case ChanceCondition:
 		// chance 通常是主 scaler（如 crit、stunChance）
 		// 但如果 effect 已设置了主 scaler，则放到 param
 		if def.Base == 0 && def.Potential == 0 {
@@ -171,7 +174,7 @@ func extractConditionParams(cond Condition, def *config.AbilityDef) {
 	case *CooldownCondition:
 		def.Param = c.Seconds
 		def.ParamDim = "interval"
-	case *NoNearbyTowerCondition:
+	case NoNearbyTowerCondition:
 		def.Param = c.Radius
 		def.ParamDim = "checkRadius"
 	}
@@ -180,18 +183,18 @@ func extractConditionParams(cond Condition, def *config.AbilityDef) {
 // extractSelectorParams 从 selector 提取参数。
 func extractSelectorParams(sel Selector, def *config.AbilityDef) {
 	switch s := sel.(type) {
-	case *NearbyAlliesSelector:
+	case NearbyAlliesSelector:
 		// aura 类能力的 radius 放到 param
 		if def.Param == 0 {
 			def.Param = s.Radius
 			def.ParamDim = "radius"
 		}
-	case *AoeRadiusSelector:
+	case AoeRadiusSelector:
 		if def.Param == 0 {
 			extractScaler(s.Radius, def, false)
 			def.ParamDim = "radius"
 		}
-	case *ChainSelector:
+	case ChainSelector:
 		// bounce 类：maxBounce 是主 scaler
 		extractScaler(s.MaxBounce, def, true)
 		def.ScaleDim = "maxBounces"
@@ -209,25 +212,25 @@ func extractScaler(s Scaler, def *config.AbilityDef, primary bool) {
 		return
 	}
 	switch sc := s.(type) {
-	case *FixedScaler:
+	case FixedScaler:
 		if primary {
 			def.Base = sc.Value
 		} else {
 			def.Param = sc.Value
 		}
-	case *LinearScaler:
+	case LinearScaler:
 		if primary {
 			def.Base = sc.Base
 			def.Potential = sc.Potential
 		} else {
 			def.Param = sc.Base
 		}
-	case *DiminishingScaler:
+	case DiminishingScaler:
 		if primary {
 			def.Base = sc.Base
 			def.Potential = sc.Potential
 		}
-	case *CappedScaler:
+	case CappedScaler:
 		if primary {
 			def.Base = sc.Base
 			def.Potential = sc.Potential
@@ -237,8 +240,16 @@ func extractScaler(s Scaler, def *config.AbilityDef, primary bool) {
 
 // isLinear 判断 scaler 是否是 LinearScaler。
 func isLinear(s Scaler) bool {
-	_, ok := s.(*LinearScaler)
+	_, ok := s.(LinearScaler)
 	return ok
+}
+
+// atkParamScaler attackParams 中单个参数的 JSON 结构。
+type atkParamScaler struct {
+	Scaler    string  `json:"scaler"`
+	Value     float64 `json:"value"`
+	Base      float64 `json:"base"`
+	Potential float64 `json:"potential"`
 }
 
 // extractAttackParamsScaler 从攻击参数 JSON 中提取主 scaler。
@@ -247,23 +258,14 @@ func extractAttackParamsScaler(desc *AbilityDescriptor, def *config.AbilityDef) 
 	if desc.AttackParams == nil {
 		return
 	}
-	// attackParams 中的 scaler 已在描述符加载时以 json.RawMessage 存储，
-	// 需要手动解析。每种 attackStyle 有不同的主参数。
-	type scalerJSON struct {
-		Scaler    string  `json:"scaler"`
-		Value     float64 `json:"value"`
-		Base      float64 `json:"base"`
-		Potential float64 `json:"potential"`
-	}
-	type attackParamsMap map[string]scalerJSON
 
-	var params attackParamsMap
+	var params map[string]atkParamScaler
 	if err := jsonUnmarshal(desc.AttackParams, &params); err != nil {
 		return
 	}
 
 	// 按 attackStyle 确定主参数名
-	mainParam := attackStyleMainParam(desc.AttackStyle)
+	mainParam := attackStyleMainParam(desc.AttackStyle, params)
 	if mainParam == "" {
 		return
 	}
@@ -299,7 +301,8 @@ func extractAttackParamsScaler(desc *AbilityDescriptor, def *config.AbilityDef) 
 }
 
 // attackStyleMainParam 返回攻击方式的主参数名。
-func attackStyleMainParam(style string) string {
+// 当 style 无特定主参数时，返回 attackParams 中的第一个 key。
+func attackStyleMainParam(style string, params map[string]atkParamScaler) string {
 	switch style {
 	case "scatter":
 		return "pellets"
@@ -312,6 +315,10 @@ func attackStyleMainParam(style string) string {
 	case "barrage":
 		return "bullets"
 	default:
+		// multiTarget 等：取 attackParams 中唯一/第一个 key 作为主参数
+		for k := range params {
+			return k
+		}
 		return ""
 	}
 }

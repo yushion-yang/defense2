@@ -6,7 +6,7 @@ import (
 	defense2 "defense2"
 	"defense2/internal/config"
 	"defense2/internal/core/buff"
-	"defense2/internal/core/tower/abilities"
+	"defense2/internal/core/tower/descriptor"
 
 	"defense2/internal/core/enemy"
 	"defense2/internal/core/pipeline"
@@ -106,7 +106,7 @@ func TestTickTowerCombatFires(t *testing.T) {
 
 func TestAbilityRegistry(t *testing.T) {
 	config.SetDataFS(&defense2.DataFS)
-	abilities.InitConfigAbilities()
+	descriptor.InitDescriptorAbilities(config.GetDataFS())
 	expected := []string{"splash", "crit", "slowPower", "bleedDot"}
 	for _, name := range expected {
 		if _, ok := tower.Registry[name]; !ok {
