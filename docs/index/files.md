@@ -2,7 +2,7 @@
 
 > 自动生成，勿手动编辑。运行 `make index` 更新。
 
-共 291 个文件, 73959 行代码, 47 个包。
+共 291 个文件, 74132 行代码, 47 个包。
 
 ## achievement (215 行)
 
@@ -44,7 +44,7 @@
 | `manager.go` | 416 | 音效管理器。 |
 | `resample.go` | 64 | PCM pitch shifting via linear-interpolation resampling. |
 
-## autoplay (7548 行)
+## autoplay (7645 行)
 
 | 文件 | 行数 | 职责 |
 |------|------|------|
@@ -59,7 +59,7 @@
 | `strategy.go` | 178 | AutoPlay 核心类型与策略接口定义。 |
 | `strategy_balance.go` | 525 | 数值平衡测试策略与场景。 |
 | `strategy_champion.go` | 276 | "最强玩法"策略。 |
-| `strategy_competent.go` | 1104 | 仿真测试"合理玩家"策略。 |
+| `strategy_competent.go` | 1201 | 仿真测试"合理玩家"策略。 |
 | `strategy_focus.go` | 86 | 单塔极限策略。 |
 | `strategy_greedy.go` | 152 | 贪心启发策略。 |
 | `strategy_random.go` | 90 | 随机模糊策略。 |
@@ -401,7 +401,7 @@
 | `splash_vfx.go` | 115 | splash ability impact ring VFX. |
 | `trail_batch.go` | 286 | 弹道尾迹批量渲染器。 |
 
-## scene (18839 行)
+## scene (18915 行)
 
 | 文件 | 行数 | 职责 |
 |------|------|------|
@@ -427,7 +427,7 @@
 | `stage_warden_vm.go` | 179 | 战灵选择数据构建（从 config 加载并转为 hud.WardenOption）。 |
 | `test_select.go` | 490 | 测试模式场景选择器。 |
 | `title.go` | 145 | 标题场景（游戏启动首屏）。 |
-| `tower_workshop.go` | 746 | 炮塔工坊场景（预制/自定义 能力+蓝图 四 Tab 管理中心）。 |
+| `tower_workshop.go` | 822 | 炮塔工坊场景（预制/自定义 能力+蓝图 四 Tab 管理中心）。 |
 | `vfx_preview.go` | 1127 | VFX preview scene. |
 | `warden_select.go` | 365 | 战灵选择场景。 |
 | `wave_preview.go` | 458 | Wave Preview scene. |

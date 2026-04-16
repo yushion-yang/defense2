@@ -64,7 +64,7 @@ func runTraining(cfg trainConfig) {
 		cfg.OutputPath = "config/ai/weights.json"
 	}
 	if cfg.MapID == "" {
-		cfg.MapID = "map_01" // 默认使用简单战役地图（AI 控制全图训练）
+		cfg.MapID = "map_c01" // 默认使用经典模式地图（确定性，零随机）
 	}
 	if cfg.Difficulty == "" {
 		cfg.Difficulty = "normal"
@@ -108,12 +108,12 @@ func runTraining(cfg trainConfig) {
 		}
 
 		// 创建带学习模式的 Stage
-		// 训练模式使用普通战役地图（非 coop），AI 通过 autoplay 策略控制全图
-		// 这样训练结果纯粹反映决策质量，不受分区限制
+		// 训练模式使用经典战役地图：确定性塔/波次，零随机性
+		// 策略成败完全取决于决策质量
 		stage := scene.NewStageSceneWithOpts(g, scene.StageOptions{
 			MapID:           mapID,
-			WardenType:      cfg.Warden,
-			ModeID:          "casual",
+			WardenType:      "",
+			ModeID:          "classic",
 			DifficultyID:    cfg.Difficulty,
 			AIEnabled:       true,
 			LearningEnabled: true,
