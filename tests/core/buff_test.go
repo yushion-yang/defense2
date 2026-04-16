@@ -319,6 +319,115 @@ func TestBuffList_SumByID(t *testing.T) {
 }
 
 // ============================================================
+// PurgeN 测试
+// ============================================================
+
+func TestPurgeN_RemovesBeneficialBuffs(t *testing.T) {
+	bl := buff.NewBuffList(map[string]buff.StackRule{})
+	// 添加 2 个对敌人有利的 buff + 1 个 debuff
+	bl.Add(buff.Buff{ID: buff.IDDamageReduce, Category: buff.CatBehavior, Value: 0.5, Duration: 10, Remaining: 10})
+	bl.Add(buff.Buff{ID: buff.IDRegen, Category: buff.CatBehavior, Value: 0.02, Duration: -1, Remaining: -1})
+	bl.Add(buff.Buff{ID: buff.IDStun, Category: buff.CatCC, Value: 1, Duration: 2, Remaining: 2})
+
+	removed := bl.PurgeN(1)
+	if removed != 1 {
+		t.Errorf("PurgeN(1) removed=%d, want 1", removed)
+	}
+	// damageReduce 优先级最高，应被移除
+	if bl.Has(buff.IDDamageReduce) {
+		t.Error("damageReduce should be purged (highest priority)")
+	}
+	// regen 应保留
+	if !bl.Has(buff.IDRegen) {
+		t.Error("regen should still exist")
+	}
+	// stun(debuff) 不应被净化
+	if !bl.Has(buff.IDStun) {
+		t.Error("stun (debuff) should not be purged")
+	}
+}
+
+func TestPurgeN_RemovesMultiple(t *testing.T) {
+	bl := buff.NewBuffList(map[string]buff.StackRule{})
+	bl.Add(buff.Buff{ID: buff.IDDamageReduce, Category: buff.CatBehavior, Value: 0.5, Duration: 10, Remaining: 10})
+	bl.Add(buff.Buff{ID: buff.IDRegen, Category: buff.CatBehavior, Value: 0.02, Duration: -1, Remaining: -1})
+	bl.Add(buff.Buff{ID: buff.IDSpeedUp, Category: buff.CatBehavior, Value: 0.3, Duration: 5, Remaining: 5})
+
+	removed := bl.PurgeN(2)
+	if removed != 2 {
+		t.Errorf("PurgeN(2) removed=%d, want 2", removed)
+	}
+	// damageReduce(100) 和 regen(70) 优先级最高，应被移除
+	if bl.Has(buff.IDDamageReduce) {
+		t.Error("damageReduce should be purged")
+	}
+	if bl.Has(buff.IDRegen) {
+		t.Error("regen should be purged")
+	}
+	// speedUp 应保留（优先级 40，排第三）
+	if !bl.Has(buff.IDSpeedUp) {
+		t.Error("speedUp should remain")
+	}
+}
+
+func TestPurgeN_MoreThanAvailable(t *testing.T) {
+	bl := buff.NewBuffList(map[string]buff.StackRule{})
+	bl.Add(buff.Buff{ID: buff.IDSpeedUp, Category: buff.CatBehavior, Value: 0.3, Duration: 5, Remaining: 5})
+	bl.Add(buff.Buff{ID: buff.IDStun, Category: buff.CatCC, Value: 1, Duration: 2, Remaining: 2})
+
+	removed := bl.PurgeN(5)
+	if removed != 1 {
+		t.Errorf("PurgeN(5) with only 1 purgeable: removed=%d, want 1", removed)
+	}
+	// speedUp 被移除
+	if bl.Has(buff.IDSpeedUp) {
+		t.Error("speedUp should be purged")
+	}
+	// stun 保留
+	if !bl.Has(buff.IDStun) {
+		t.Error("stun should remain")
+	}
+}
+
+func TestPurgeN_NoPurgeableBuffs(t *testing.T) {
+	bl := buff.NewBuffList(map[string]buff.StackRule{})
+	// 只有 debuff
+	bl.Add(buff.Buff{ID: buff.IDStun, Category: buff.CatCC, Value: 1, Duration: 2, Remaining: 2})
+	bl.Add(buff.Buff{ID: buff.IDBleed, Category: buff.CatDoT, Value: 10, Duration: 3, Remaining: 3})
+
+	removed := bl.PurgeN(3)
+	if removed != 0 {
+		t.Errorf("PurgeN with no purgeable: removed=%d, want 0", removed)
+	}
+	if bl.Count() != 2 {
+		t.Errorf("count=%d, want 2 (nothing should be removed)", bl.Count())
+	}
+}
+
+func TestPurgeN_ZeroOrNegative(t *testing.T) {
+	bl := buff.NewBuffList(map[string]buff.StackRule{})
+	bl.Add(buff.Buff{ID: buff.IDDamageReduce, Category: buff.CatBehavior, Value: 0.5, Duration: 10, Remaining: 10})
+
+	if removed := bl.PurgeN(0); removed != 0 {
+		t.Errorf("PurgeN(0) removed=%d, want 0", removed)
+	}
+	if removed := bl.PurgeN(-1); removed != 0 {
+		t.Errorf("PurgeN(-1) removed=%d, want 0", removed)
+	}
+	if bl.Count() != 1 {
+		t.Error("nothing should be removed for n<=0")
+	}
+}
+
+func TestPurgeN_EmptyList(t *testing.T) {
+	bl := buff.NewBuffList(map[string]buff.StackRule{})
+	removed := bl.PurgeN(3)
+	if removed != 0 {
+		t.Errorf("PurgeN on empty list: removed=%d, want 0", removed)
+	}
+}
+
+// ============================================================
 // DoT Tick 测试
 // ============================================================
 

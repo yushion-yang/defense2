@@ -27,6 +27,69 @@ import (
 	"defense2/internal/core/gamemap"
 )
 
+// PushBack 沿路径将敌人回推 dist 像素。
+// 从当前位置向前一个路径点方向回退，跨越路径段时递减 PathIndex。
+// 不会推到路径起点之前（PathIndex 最低为 1，位置停在第一个路径点）。
+//
+// 设计：不修改 Path 本身，仅回退 PathIndex 和坐标位置，
+// 下一帧 MoveAlongPath 正常推进即可。
+func PushBack(e *Enemy, fallbackWaypoints []gamemap.Point, dist float64) {
+	if dist <= 0 || e.IsDummy {
+		return
+	}
+
+	waypoints := e.Path
+	if len(waypoints) == 0 {
+		waypoints = fallbackWaypoints
+	}
+	if len(waypoints) == 0 {
+		return
+	}
+
+	remaining := dist
+	for remaining > 0 {
+		// 确定"上一个路径点"——即敌人来自的方向
+		prevIdx := e.PathIndex - 1
+		if prevIdx < 0 {
+			// 已在路径起点，无法再后退
+			e.X = waypoints[0].X
+			e.Y = waypoints[0].Y
+			e.PathIndex = 1 // 下一帧重新朝 waypoints[1] 前进
+			if e.PathIndex >= len(waypoints) {
+				e.PathIndex = len(waypoints) - 1
+			}
+			return
+		}
+
+		prev := waypoints[prevIdx]
+		dx := prev.X - e.X
+		dy := prev.Y - e.Y
+		segDist := math.Hypot(dx, dy)
+
+		if segDist < 0.001 {
+			// 恰好在路径点上，回退到上一段
+			e.PathIndex = prevIdx
+			// 放在上一个路径点的位置上
+			e.X = prev.X
+			e.Y = prev.Y
+			continue
+		}
+
+		if remaining <= segDist {
+			// 在当前段内回退 remaining 距离
+			e.X += (dx / segDist) * remaining
+			e.Y += (dy / segDist) * remaining
+			return
+		}
+
+		// 回退超过当前段，跳到上一个路径点继续
+		remaining -= segDist
+		e.X = prev.X
+		e.Y = prev.Y
+		e.PathIndex = prevIdx
+	}
+}
+
 // MoveAlongPath 驱动敌人向下一个路径点移动。
 // 到达路径终点时返回 true（表示该敌人抵达基地，stage 层应扣除生命值并 KillImmediate）。
 // fallbackWaypoints 是默认路径（单路径地图使用），多路径地图时 e.Path 已在 Spawn 后赋值。

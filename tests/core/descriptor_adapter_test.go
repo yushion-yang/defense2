@@ -293,6 +293,61 @@ func TestAdaptToHitResult_WeakenAndSilence(t *testing.T) {
 	}
 }
 
+// ── AdaptToHitResult: Purge / Teleport ──────────────────────
+
+func TestAdaptToHitResult_Purge(t *testing.T) {
+	results := []descriptor.EffectResult{
+		{Type: descriptor.EffTypePurge, PurgeCount: 3},
+	}
+	hr := descriptor.AdaptToHitResult(results)
+	if hr == nil {
+		t.Fatal("expected non-nil HitResult for purge")
+	}
+	if hr.Purge == nil {
+		t.Fatal("expected Purge != nil")
+	}
+	if hr.Purge.Count != 3 {
+		t.Errorf("Purge.Count = %d, want 3", hr.Purge.Count)
+	}
+}
+
+func TestAdaptToHitResult_Teleport(t *testing.T) {
+	results := []descriptor.EffectResult{
+		{Type: descriptor.EffTypeTeleport, TeleportDist: 120.5},
+	}
+	hr := descriptor.AdaptToHitResult(results)
+	if hr == nil {
+		t.Fatal("expected non-nil HitResult for teleport")
+	}
+	if hr.Teleport == nil {
+		t.Fatal("expected Teleport != nil")
+	}
+	if hr.Teleport.Distance != 120.5 {
+		t.Errorf("Teleport.Distance = %v, want 120.5", hr.Teleport.Distance)
+	}
+}
+
+func TestAdaptToHitResult_PurgePlusTeleport(t *testing.T) {
+	results := []descriptor.EffectResult{
+		{Type: descriptor.EffTypePurge, PurgeCount: 2},
+		{Type: descriptor.EffTypeTeleport, TeleportDist: 80},
+		{Type: descriptor.EffTypeDamage, Damage: 15, DamageMode: descriptor.DmgFlat},
+	}
+	hr := descriptor.AdaptToHitResult(results)
+	if hr == nil {
+		t.Fatal("expected non-nil HitResult")
+	}
+	if hr.Purge == nil || hr.Purge.Count != 2 {
+		t.Errorf("Purge = %v, want Count=2", hr.Purge)
+	}
+	if hr.Teleport == nil || hr.Teleport.Distance != 80 {
+		t.Errorf("Teleport = %v, want Distance=80", hr.Teleport)
+	}
+	if hr.SeparateDamage != 15 {
+		t.Errorf("SeparateDamage = %v, want 15", hr.SeparateDamage)
+	}
+}
+
 // ── AdaptToTickResult: 金币 ──────────────────────────────────
 
 func TestAdaptToTickResult_Gold(t *testing.T) {

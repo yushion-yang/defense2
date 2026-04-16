@@ -92,15 +92,13 @@ func AdaptToHitResult(results []EffectResult) *tower.HitResult {
 			hasEffect = true
 			hr.Silence = true
 
-		// Purge 暂时不进入 HitResult（需要战斗管线后续支持），
-		// 但标记 hasEffect 以确保结果不被丢弃。
 		case EffTypePurge:
 			hasEffect = true
+			hr.Purge = &tower.PurgeEffect{Count: r.PurgeCount}
 
-		// Teleport 暂时不进入 HitResult（实际路径回推由战斗管线后续实现），
-		// 标记 hasEffect 以确保结果不被丢弃。
 		case EffTypeTeleport:
 			hasEffect = true
+			hr.Teleport = &tower.TeleportEffect{Distance: r.TeleportDist}
 
 		// 以下类型不进入 HitResult，由 tick 系统单独处理
 		case EffTypeBuff, EffTypeSelfBuff:

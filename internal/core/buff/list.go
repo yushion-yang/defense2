@@ -232,6 +232,76 @@ func (bl *BuffList) RemoveByID(id string) {
 	bl.active = bl.active[:n]
 }
 
+// purgePriority 定义净化优先级（数值越高越先被移除）。
+// 对敌人越有利的 buff 越优先净化，CC/DoT 等 debuff 不会被净化。
+var purgePriority = map[string]int{
+	IDDamageReduce:  100, // 减伤：对敌人防御收益最高
+	IDControlImmune: 90,  // 控制免疫：让敌人无法被控
+	IDPhaseShift:    80,  // 相位偏移：免伤机制
+	IDRegen:         70,  // 回血：持续治疗
+	IDHealAura:      60,  // 治疗光环：群体治疗
+	IDBufferAura:    50,  // 旗手光环：群体加速
+	IDSpeedUp:       40,  // 加速：提升移动速度
+	IDBerserk:       30,  // 狂暴：提升速度和伤害
+	IDStealth:       20,  // 隐身：不可被选中
+}
+
+// PurgeN 移除最多 n 个对敌人有利的 buff，返回实际移除数量。
+// 优先移除 purgePriority 中定义的高优先级 buff。
+// CC(stun/slow/root) 和 DoT(bleed/burn/poison) 等对敌人不利的 debuff 不会被净化。
+func (bl *BuffList) PurgeN(n int) int {
+	if n <= 0 || len(bl.active) == 0 {
+		return 0
+	}
+
+	// 收集可净化的 buff 索引及其优先级
+	type candidate struct {
+		idx      int
+		priority int
+	}
+	var candidates []candidate
+	for i := range bl.active {
+		if p, ok := purgePriority[bl.active[i].ID]; ok {
+			candidates = append(candidates, candidate{idx: i, priority: p})
+		}
+	}
+
+	if len(candidates) == 0 {
+		return 0
+	}
+
+	// 按优先级降序排序（高优先级先移除）
+	for i := 0; i < len(candidates)-1; i++ {
+		for j := i + 1; j < len(candidates); j++ {
+			if candidates[j].priority > candidates[i].priority {
+				candidates[i], candidates[j] = candidates[j], candidates[i]
+			}
+		}
+	}
+
+	// 标记要移除的索引
+	removeCount := n
+	if removeCount > len(candidates) {
+		removeCount = len(candidates)
+	}
+	removeSet := make(map[int]bool, removeCount)
+	for i := 0; i < removeCount; i++ {
+		removeSet[candidates[i].idx] = true
+	}
+
+	// swap-compact 移除
+	k := 0
+	for i := range bl.active {
+		if removeSet[i] {
+			continue
+		}
+		bl.active[k] = bl.active[i]
+		k++
+	}
+	bl.active = bl.active[:k]
+	return removeCount
+}
+
 // ClearByCategory 移除所有属于指定分类的 buff。
 // 典型用例：净化技能清除所有 CC（ClearByCategory(CatCC)），
 // 或控制免疫触发时清除所有控制类 buff。

@@ -346,6 +346,27 @@ func applyHitEffectsUnified(r *tower.HitResult, target *enemy.Enemy, p *projecti
 		target.AbilitySilenced = true
 		tel.T.Record("ability", "silence")
 	}
+	// 净化：移除目标身上最多 N 个对敌人有利的 buff（damageReduce/regen/speedUp 等）。
+	// 优先级由 buff.PurgeN 内部的 purgePriority 表决定。
+	if r.Purge != nil && r.Purge.Count > 0 && target.Buffs != nil {
+		removed := target.Buffs.PurgeN(r.Purge.Count)
+		if removed > 0 {
+			target.PurgeFlash = 0.3
+			if onCC != nil {
+				onCC(target.X, target.Y, CCPurge)
+			}
+		}
+		tel.T.Record("ability", "purge")
+	}
+	// 回推：沿路径将敌人往回推一段距离。
+	// 使用敌人自身的 Path（多路径地图时各敌人路径不同），无 Path 时跳过。
+	if r.Teleport != nil && r.Teleport.Distance > 0 {
+		enemy.PushBack(target, nil, r.Teleport.Distance)
+		if onCC != nil {
+			onCC(target.X, target.Y, CCTeleport)
+		}
+		tel.T.Record("ability", "teleport")
+	}
 	// 溅射 AoE：以命中目标为圆心，半径内所有敌人受到比例伤害。
 	// enemies != nil 是递归防护——splash 命中的敌人再次走 ApplyHit 时 Enemies=nil，
 	// 到这里 enemies==nil 就不会再触发新的溅射。

@@ -3,10 +3,12 @@
 package combat
 
 const (
-	CCDodge  = "dodge"
-	CCFreeze = "freeze"
-	CCSlow   = "slow"
-	CCStun   = "stun"
-	CCBurn   = "burn"
-	CCSplash = "splash"
+	CCDodge    = "dodge"
+	CCFreeze   = "freeze"
+	CCSlow     = "slow"
+	CCStun     = "stun"
+	CCBurn     = "burn"
+	CCSplash   = "splash"
+	CCPurge    = "purge"
+	CCTeleport = "teleport"
 )
