@@ -2,7 +2,7 @@
 
 > 自动生成，勿手动编辑。运行 `make index` 更新。
 
-共 292 个文件, 74252 行代码, 47 个包。
+共 292 个文件, 74180 行代码, 47 个包。
 
 ## achievement (215 行)
 
@@ -44,7 +44,7 @@
 | `manager.go` | 416 | 音效管理器。 |
 | `resample.go` | 64 | PCM pitch shifting via linear-interpolation resampling. |
 
-## autoplay (7645 行)
+## autoplay (7567 行)
 
 | 文件 | 行数 | 职责 |
 |------|------|------|
@@ -59,7 +59,7 @@
 | `strategy.go` | 178 | AutoPlay 核心类型与策略接口定义。 |
 | `strategy_balance.go` | 525 | 数值平衡测试策略与场景。 |
 | `strategy_champion.go` | 276 | "最强玩法"策略。 |
-| `strategy_competent.go` | 1201 | 仿真测试"合理玩家"策略。 |
+| `strategy_competent.go` | 1123 | 仿真测试"合理玩家"策略。 |
 | `strategy_focus.go` | 86 | 单塔极限策略。 |
 | `strategy_greedy.go` | 152 | 贪心启发策略。 |
 | `strategy_random.go` | 90 | 随机模糊策略。 |
@@ -301,12 +301,12 @@
 |------|------|------|
 | `tower_loader.go` | 132 | 塔配置→运行时定义转换器。 |
 
-## main (1213 行)
+## main (1219 行)
 
 | 文件 | 行数 | 职责 |
 |------|------|------|
 | `main.go` | 500 | AutoPlay 自动对局工具入口（无头模式批量跑关卡）。 |
-| `train.go` | 209 | AI 学习系统离线训练管线。 |
+| `train.go` | 215 | AI 学习系统离线训练管线。 |
 | `visual.go` | 78 | 可视化自动对局模式。 |
 | `main.go` | 42 | 游戏入口（桌面 + WASM 通用）。 |
 | `main.go` | 384 | 写入 OP 测试用自定义能力和蓝图到 ~/.defense2/。 |
