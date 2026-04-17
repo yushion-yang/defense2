@@ -355,7 +355,7 @@ func (s *CompetentStrategy) decidePlaying(state *GameState) []Action {
 				return actions
 			}
 		} else {
-			// 非 Boss 前：建塔优先，然后批量升级
+			// 非 Boss 前：建塔优先，然后批量升级，满级后多建塔
 			if s.builtCount < target && s.canAffordBuild(state) {
 				if action, ok := s.tryBuild(state); ok {
 					actions = append(actions, action)
@@ -365,6 +365,13 @@ func (s *CompetentStrategy) decidePlaying(state *GameState) []Action {
 			if state.Gold >= upgCost && len(state.Towers) > 0 {
 				if ups := s.tryMultiUpgrade(state, 5); len(ups) > 0 {
 					return ups
+				}
+				// 所有塔都满级 → 用闲钱继续建塔（不受 target 限制）
+				if s.canAffordBuild(state) && len(state.BuildCells) > 0 {
+					if action, ok := s.tryBuild(state); ok {
+						actions = append(actions, action)
+						return actions
+					}
 				}
 			}
 			// 旧式能力分配（兼容）
@@ -669,12 +676,19 @@ func (s *CompetentStrategy) pickUpgradeTarget(state *GameState, preferActive boo
 	}
 
 	// carry 已满或紧急模式 → 按效能评分选最佳塔
+	// 跳过已达升级上限的塔（经典模式 maxPurchases×amount 后不能再升）
+	maxStr := s.maxTowerStr()
+
 	var best *TowerInfo
 	bestScore := -1.0
 
 	for i := range state.Towers {
 		t := &state.Towers[i]
 		if preferActive && !t.HasTarget {
+			continue
+		}
+		// 已达上限的塔跳过
+		if maxStr > 0 && t.Strength >= maxStr {
 			continue
 		}
 		score := s.towerEffectivenessScore(t, desperate)
@@ -1116,6 +1130,17 @@ func (s *CompetentStrategy) targetTowers(state *GameState) int {
 //   — 高伤害高攻速的塔从升级中获益最多（Potential 乘法效应）
 //   — kills 提供经验加权但不主导
 //
+// maxTowerStr 返回经典模式塔的强度上限（100 + maxPurchases×amount）。
+// 非经典模式返回 0（无上限）。
+func (s *CompetentStrategy) maxTowerStr() int {
+	if !s.classicMode {
+		return 0
+	}
+	// 经典模式: maxPurchases=4, amount=50 → max str=300
+	// 从 classic-presets.json defaults.strength 读取
+	return 300 // 100 + 4*50
+}
+
 // 紧急模式：纯击杀数（已验证的实战表现者）
 func (s *CompetentStrategy) towerEffectivenessScore(t *TowerInfo, desperate bool) float64 {
 	if desperate {
