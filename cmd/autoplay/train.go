@@ -81,6 +81,7 @@ func runTraining(cfg trainConfig) {
 
 	var winModels, allModels []*learning.Model
 	wins, losses := 0, 0
+	var g *scene.Game // 复用同一个 Game 实例避免 GPU 资源泄漏
 
 	for i := 0; i < cfg.Games; i++ {
 		sessionSeed := cfg.Seed + int64(i)
@@ -100,12 +101,10 @@ func runTraining(cfg trainConfig) {
 		}
 		_ = coopPlayerCount // 训练模式暂不使用 coop 分区
 
-		var g *scene.Game
+		// 复用同一个 Game 实例，只切换 Scene — 避免 Ebitengine GPU 资源泄漏
 		if !gameInitDone {
 			g = scene.NewGame()
 			gameInitDone = true
-		} else {
-			g = scene.NewGameLite()
 		}
 
 		// 创建带学习模式的 Stage

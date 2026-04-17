@@ -634,7 +634,7 @@
 
 | JSON 字段 | Go 文件 | 行 | 上下文 |
 |-----------|---------|-----|--------|
-| `formula.potential` | `internal/core/tower/descriptor/derive_ability_table.go` | 254 | Potential float64 `json:"potential"` |
+| `formula.potential` | `internal/core/tower/descriptor/derive_ability_table.go` | 278 | Potential float64 `json:"potential"` |
 | `formula.potential` | `internal/core/tower/descriptor/scaler.go` | 39 | Potential float64 `json:"potential"` |
 | `specialty` | `internal/config/scenario_config.go` | 43 | Specialty       int       `json:"specialty,omitempty"` //... |
 | `specialty` | `internal/core/tower/descriptor/blueprint.go` | 39 | Specialty string `json:"specialty"` |
