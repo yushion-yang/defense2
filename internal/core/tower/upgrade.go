@@ -379,10 +379,15 @@ func EnhanceFactors() (boost, rangeBoost float64) {
 
 // applyEnhance 强化能力：一次性永久提升塔的 Base 和 Potential 属性。
 // 使用 AbilityDef 的 Param/Param2 固定参数（不受强度影响），确保 UI 描述与实际效果一致。
-// 伤害和攻速使用 Param（如 0.2 = +20%），射程使用 Param2（如 0.1 = +10%）。
-// 乘法增幅（非加法），所以多次 enhance 是复利效果（1.2 × 1.2 = 1.44）。
+// 伤害和攻速使用 Param（如 0.8 = +80%），射程使用 Param2（如 0.2 = +20%）。
+// 幂等：通过 EnhanceApplied 标记防止重复 apply（多条路径都会调用 ApplyEnhanceIfPresent）。
 func applyEnhance(t *Tower, def *config.AbilityDef) {
-	boost := def.Param       // 伤害/攻速增幅比例（如 0.2 = +20%）
+	if t.EnhanceApplied {
+		return // 已应用过，跳过防止复利膨胀
+	}
+	t.EnhanceApplied = true
+
+	boost := def.Param       // 伤害/攻速增幅比例（如 0.8 = +80%）
 	rangeBoost := def.Param2 // 射程增幅比例（独立配置，通常比伤害增幅小）
 	if rangeBoost <= 0 {
 		rangeBoost = boost / 2 // 兼容旧配置：Param2 未设置时回退到 Param 的一半

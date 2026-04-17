@@ -2,7 +2,7 @@
 
 > 自动生成，勿手动编辑。运行 `make index` 更新。
 
-共 291 个文件, 74132 行代码, 47 个包。
+共 292 个文件, 74242 行代码, 47 个包。
 
 ## achievement (215 行)
 
@@ -301,12 +301,13 @@
 |------|------|------|
 | `tower_loader.go` | 132 | 塔配置→运行时定义转换器。 |
 
-## main (1129 行)
+## main (1213 行)
 
 | 文件 | 行数 | 职责 |
 |------|------|------|
-| `main.go` | 494 | AutoPlay 自动对局工具入口（无头模式批量跑关卡）。 |
+| `main.go` | 500 | AutoPlay 自动对局工具入口（无头模式批量跑关卡）。 |
 | `train.go` | 209 | AI 学习系统离线训练管线。 |
+| `visual.go` | 78 | 可视化自动对局模式。 |
 | `main.go` | 42 | 游戏入口（桌面 + WASM 通用）。 |
 | `main.go` | 384 | 写入 OP 测试用自定义能力和蓝图到 ~/.defense2/。 |
 
@@ -401,7 +402,7 @@
 | `splash_vfx.go` | 115 | splash ability impact ring VFX. |
 | `trail_batch.go` | 286 | 弹道尾迹批量渲染器。 |
 
-## scene (18915 行)
+## scene (18941 行)
 
 | 文件 | 行数 | 职责 |
 |------|------|------|
@@ -420,12 +421,12 @@
 | `select.go` | 576 | 模式选择场景（卡片式 UI）。 |
 | `settings.go` | 390 | 设置场景。 |
 | `settings_persist.go` | 80 | 设置持久化（音量/画质）。 |
-| `stage.go` | 4459 | 游戏主战斗场景（~3600行，本项目最核心的文件）。 |
+| `stage.go` | 4462 | 游戏主战斗场景（~3600行，本项目最核心的文件）。 |
 | `stage_info_vm.go` | 686 | 塔信息面板的 ViewModel 构建器。 |
 | `stage_input.go` | 1091 | StageScene 的输入处理和交互状态机（11 种模式）。 |
-| `stage_types.go` | 122 | StageScene 的类型定义和常量。 |
+| `stage_types.go` | 123 | StageScene 的类型定义和常量。 |
 | `stage_warden_vm.go` | 179 | 战灵选择数据构建（从 config 加载并转为 hud.WardenOption）。 |
-| `test_select.go` | 490 | 测试模式场景选择器。 |
+| `test_select.go` | 512 | 测试模式场景选择器。 |
 | `title.go` | 145 | 标题场景（游戏启动首屏）。 |
 | `tower_workshop.go` | 822 | 炮塔工坊场景（预制/自定义 能力+蓝图 四 Tab 管理中心）。 |
 | `vfx_preview.go` | 1127 | VFX preview scene. |

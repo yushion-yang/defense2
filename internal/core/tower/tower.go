@@ -142,6 +142,9 @@ type Tower struct {
 	SellAnim  float64 // 出售动画剩余时间（秒，初始 0.25s，动画结束后 Remove）
 	Selling   bool    // 是否正在出售动画中（true 时跳过所有游戏逻辑，仅播放消失动画）
 
+	// ── Enhance 幂等标记 ──
+	EnhanceApplied bool // enhance 能力已应用过（防止重复 apply 导致属性复利膨胀）
+
 	// ── 性能优化 ──
 	// 脏标记：仅当强度/buff 变化时标记为 true，pipeline 中检查此标记决定是否调用 RecalcStats。
 	// 避免每帧对所有塔执行属性重算（大多数帧塔的属性不变）。
