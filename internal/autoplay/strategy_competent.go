@@ -5,6 +5,12 @@
 //   2. 资源集中到 1-2 座核心塔（carry 系统）
 //   3. 火力交叉覆盖（chokepoint 重叠放塔）
 //
+// 经典模式（11 种预设塔）使用建造计划系统（BuildPlan），按协同效应
+// 排列建造顺序（CC入口→carry中段→光环support→出口清理），配合 zone
+// 放置策略确保每座塔在最优位置。
+//
+// 非经典模式（仅 basic 塔）回退到原始性价比选择逻辑。
+//
 // 路径感知放塔、分阶段经济管理、Boss 波意识、自主控制开波时机。
 // 用于 simulation 模式下的数值平衡验证。
 package autoplay
@@ -13,6 +19,7 @@ import (
 	"math"
 	"math/rand"
 	"sort"
+	"strings"
 
 	"defense2/internal/config"
 )
@@ -74,6 +81,33 @@ var (
 	supportSlotOrder = []int{0, 1, 3, 4, 2, 5}  // 攻击→CC→光环→DoT→伤害→区域
 )
 
+// ── 经典模式建造计划 ────────────────────────────────
+//
+// 经典模式 11 种预设塔型，最优建造顺序按协同效应排列：
+//   Phase 1 (wave 1-3): 入口减速 → 中段 carry → carry 旁光环
+//   Phase 2 (wave 4-7): 伤害光环 → 出口清理
+//   Phase 3 (wave 8+):  脆弱区
+//
+// 非经典模式（仅 basic 塔）回退到原始性价比选择逻辑。
+
+// buildPlanStep 经典模式建造计划的单步。
+type buildPlanStep struct {
+	towerKey    string // 要建造的塔类型
+	zone        string // "entrance" / "middle" / "exit" / "nearCarry"
+	role        string // "cc" / "carry" / "support" / "cleanup"
+	description string // 调试/日志用中文描述
+}
+
+// classicBuildPlan 经典模式最优建造顺序。
+// 顺序基于协同效应：减速→DPS→暴击光环→伤害光环→眩晕→脆弱。
+// 经典模式建造计划：极端集中 — CC 入口 + carry 中段 + 第二 DPS。
+// 核心理念：少量高投入塔 > 大量低投入塔（Potential 缩放的乘法效应）。
+var classicBuildPlan = []buildPlanStep{
+	{"cl_shotgun", "entrance", "cc", "入口减速"},
+	{"cl_sentinel", "middle", "carry", "中段主力DPS(暴击+强化)"},
+	{"cl_railgun", "middle", "dps", "中段第二DPS(贯穿+距离伤害)"},
+}
+
 // ── 函数式选项 ──────────────────────────────────
 
 // CompetentOpt 策略配置选项。
@@ -104,11 +138,13 @@ func WithCompetentSeed(seed int64) CompetentOpt {
 // CompetentStrategy 模拟有经验玩家的策略。
 //
 // 核心理念：
+//   - 经典模式：按 BuildPlan 建塔（CC入口→carry→光环support→出口清理）
+//   - 非经典模式：性价比选塔 + chokepoint 火力重叠
 //   - 集中资源到 carry 塔（Potential 缩放的乘法效应）
 //   - slow + DPS 在同一 chokepoint = 乘法伤害
 //   - 主动分配能力（攻击→CC→伤害→光环→DoT→区域）
 //   - Boss 波前攒钱、Boss 后激进扩张
-//   - 卖掉无效塔回收金币
+//   - 智能卖塔：仅卖脱离 carry 光环范围的 support 塔
 //   - 开波不磨蹭，但也不在准备不足时冒进
 type CompetentStrategy struct {
 	wardenKey  string
@@ -128,12 +164,19 @@ type CompetentStrategy struct {
 	abilityIdx     int       // 下一个要分配的能力索引（旧式）
 
 	// ── carry 塔系统 ──
-	// 第一座塔自动成为 carry；后续塔为 support。
+	// 经典模式下 carry 是 cl_sentinel；非经典模式第一座塔自动成为 carry。
 	// carry 获得 70%+ 的升级金币，support 只在 carry 强度足够后才升级。
 	carryRow    int
 	carryCol    int
 	hasCarry    bool
 	carryStrCap int // carry 强度达到此值后才考虑升级 support（默认 300）
+
+	// ── 经典模式建造计划 ──
+	classicMode bool              // 是否为经典模式（TowerDefs 含 cl_ 前缀塔）
+	planStep    int               // 当前建造计划步骤索引
+	towerDefMap map[string]int    // towerKey → TowerDefs 索引的快速查找表
+	sellCount   int               // 本局已卖塔次数（限制最多 1 次）
+	allPaths    [][]PathPoint     // 缓存的路径数据（用于 zone 计算）
 
 	// 节流
 	lastBuildTick    int
@@ -170,6 +213,17 @@ func (s *CompetentStrategy) Init(state *GameState) {
 	s.lastAbilityTick = -100
 	s.hasCarry = false
 	s.carryStrCap = 300 // carry 强度达到 300 后才考虑升级 support
+	s.planStep = 0
+	s.sellCount = 0
+
+	// 检测是否为经典模式
+	s.classicMode = s.detectClassicMode(state)
+
+	// 构建 towerDef 快速查找表
+	s.towerDefMap = make(map[string]int, len(state.TowerDefs))
+	for i, d := range state.TowerDefs {
+		s.towerDefMap[d.Key] = i
+	}
 
 	// 从配置读取 Boss 间隔
 	s.bossEvery = config.GlobalSpawnerConfig().Boss.EveryNWaves
@@ -412,7 +466,78 @@ func (s *CompetentStrategy) tryBuild(state *GameState) (Action, bool) {
 		return Action{}, false
 	}
 
-	// 选塔：性价比最高的
+	// 经典模式使用建造计划，非经典模式使用原始性价比逻辑
+	if s.classicMode {
+		return s.tryBuildClassic(state)
+	}
+	return s.tryBuildCasual(state)
+}
+
+// tryBuildClassic 经典模式按建造计划选塔和位置。
+//
+// 逻辑：
+//   1. 从 classicBuildPlan 的当前 planStep 开始，跳过不可用的塔型
+//   2. 根据计划步骤的 zone 选择建造位置
+//   3. carry 步骤（cl_sentinel）记录为 carry 塔
+func (s *CompetentStrategy) tryBuildClassic(state *GameState) (Action, bool) {
+	// 在计划中找到下一个可用步骤
+	var step *buildPlanStep
+	for s.planStep < len(classicBuildPlan) {
+		candidate := &classicBuildPlan[s.planStep]
+		if idx, ok := s.towerDefMap[candidate.towerKey]; ok {
+			def := &state.TowerDefs[idx]
+			if state.Gold >= def.Cost {
+				step = candidate
+				break
+			}
+			// 买不起当前步骤 → 等攒钱，不跳步
+			return Action{}, false
+		}
+		// 该塔型不在可用列表中 → 跳过此步骤
+		s.planStep++
+	}
+	if step == nil {
+		// 计划已完成 → 回退到性价比逻辑（可能还有空位和金币）
+		return s.tryBuildCasual(state)
+	}
+
+	// 按 zone 选位置
+	cell, found := s.pickCellInZone(state, step.zone)
+	if !found {
+		// 该 zone 没有可用位置 → 尝试任意最佳位置
+		cell, found = s.pickBestAvailableCell(state)
+	}
+	if !found {
+		return Action{}, false
+	}
+
+	towerKey := step.towerKey
+	s.planStep++
+	s.builtCount++
+	s.buildIdx++
+	s.lastBuildTick = state.Tick
+
+	// carry 指定：cl_sentinel 是 carry
+	if step.role == "carry" {
+		s.carryRow = cell.Row
+		s.carryCol = cell.Col
+		s.hasCarry = true
+	} else if !s.hasCarry {
+		// 如果 carry 还没建（比如 cl_sentinel 跳过了），第一座塔临时 carry
+		s.carryRow = cell.Row
+		s.carryCol = cell.Col
+		s.hasCarry = true
+	}
+
+	return Action{
+		Type:     ActionBuild,
+		TowerKey: towerKey,
+		Cell:     cell,
+	}, true
+}
+
+// tryBuildCasual 非经典模式（或计划用尽后的回退逻辑）：按性价比选塔，chokepoint 放置。
+func (s *CompetentStrategy) tryBuildCasual(state *GameState) (Action, bool) {
 	bestDef := s.pickBestTowerDef(state)
 	if bestDef == nil || state.Gold < bestDef.Cost {
 		return Action{}, false
@@ -503,10 +628,14 @@ func (s *CompetentStrategy) tryUpgrade(state *GameState, preferActive bool) (Act
 
 // pickUpgradeTarget 选择最值得升级的塔（纯选择，不修改节流状态）。
 //
-// 核心原则：carry 系统 — 资源高度集中到 carry 塔。
+// 经典模式升级策略：
+//   - carry（cl_sentinel）str < 300 时：100% 升级 carry
+//   - carry str >= 300 后：升级 CC 塔（cl_shotgun）直到 str 200
+//   - 之后按效能评分选最佳塔
+//
+// 非经典模式：
 //   - carry str < carryStrCap(300) 时：100% 升级 carry
 //   - carry str >= carryStrCap 后：按效能评分选最高分塔
-//   - 波中 (preferActive=true)：优先升级正在攻击的 carry / 最强塔
 //   - 紧急模式：按击杀数选（已验证的表现者）
 func (s *CompetentStrategy) pickUpgradeTarget(state *GameState, preferActive bool) (Action, bool) {
 	if len(state.Towers) == 0 {
@@ -522,6 +651,19 @@ func (s *CompetentStrategy) pickUpgradeTarget(state *GameState, preferActive boo
 			// 波中模式下，carry 必须有目标才升级
 			if !preferActive || carry.HasTarget {
 				return Action{Type: ActionUpgrade, Row: carry.Row, Col: carry.Col}, true
+			}
+		}
+
+		// 经典模式：carry 满后升 CC 塔（cl_shotgun）
+		if s.classicMode && carry != nil && carry.Strength >= s.carryStrCap {
+			ccCap := 200 // CC 塔强度上限（减速效果不需要太高强度）
+			for i := range state.Towers {
+				t := &state.Towers[i]
+				if t.Key == "cl_shotgun" && t.Strength < ccCap {
+					if !preferActive || t.HasTarget {
+						return Action{Type: ActionUpgrade, Row: t.Row, Col: t.Col}, true
+					}
+				}
 			}
 		}
 	}
@@ -571,11 +713,79 @@ func (s *CompetentStrategy) pickUpgradeTarget(state *GameState, preferActive boo
 	}, true
 }
 
-// trySell 卖塔。
-// 正常情况下不卖塔（卖塔退 70% 是纯亏钱），仅在极端情况下考虑：
-// 当一座塔长期 0 击杀且已经到后期（wave >= 8），说明位置完全无效。
+// trySell 智能卖塔。
+//
+// 经典模式下的卖塔条件（全部满足才卖）：
+//   1. 该塔是 support 角色（hydra/prism/fortress）
+//   2. 该塔距离 carry 超过 200px（光环失效）
+//   3. 有足够金币在卖后重建到正确位置
+//   4. 本局最多卖 1 次
+//   5. 永不卖 carry（cl_sentinel）和入口 CC（cl_shotgun）
+//
+// 非经典模式禁用卖塔。
 func (s *CompetentStrategy) trySell(state *GameState) (Action, bool) {
-	// 默认禁用卖塔 — 卖塔退 70% 是纯亏钱，几乎不值得
+	if !s.classicMode {
+		return Action{}, false
+	}
+	// 限制：本局最多卖 1 次
+	if s.sellCount >= 1 {
+		return Action{}, false
+	}
+	if !s.hasCarry || len(state.Towers) < 2 {
+		return Action{}, false
+	}
+
+	// 找到 carry 位置
+	carry := s.findCarry(state)
+	if carry == nil {
+		return Action{}, false
+	}
+
+	// 不可卖的塔类型
+	noSell := map[string]bool{
+		"cl_sentinel": true, // carry
+		"cl_shotgun":  true, // 入口 CC
+	}
+	// support 角色的塔才可能需要卖（它们依赖光环范围）
+	supportKeys := map[string]bool{
+		"cl_hydra":    true,
+		"cl_prism":    true,
+		"cl_fortress": true,
+	}
+
+	const maxAuraDist = 200.0 // 光环有效距离
+
+	for i := range state.Towers {
+		t := &state.Towers[i]
+		if noSell[t.Key] || !supportKeys[t.Key] {
+			continue
+		}
+		dist := math.Hypot(t.X-carry.X, t.Y-carry.Y)
+		if dist <= maxAuraDist {
+			continue // 在光环范围内，不卖
+		}
+
+		// 检查卖了之后是否能在 carry 附近重建
+		// 卖塔退 70%，需要确认 carry 附近有空位
+		sellRefund := int(float64(t.Cost) * 0.7)
+		rebuildCost := t.Cost
+		if state.Gold+sellRefund < rebuildCost {
+			continue // 卖了也买不回来
+		}
+		// 确认 carry 附近有空位
+		if _, ok := s.pickNearCarryCell(state); !ok {
+			continue
+		}
+
+		s.sellCount++
+		s.lastSellTick = state.Tick
+		return Action{
+			Type: ActionSell,
+			Row:  t.Row,
+			Col:  t.Col,
+		}, true
+	}
+
 	return Action{}, false
 }
 
@@ -604,7 +814,11 @@ func (s *CompetentStrategy) tryAssignAbility(state *GameState) (Action, bool) {
 // ── carry 塔系统 ──────────────────────────────
 
 // updateCarry 维护 carry 塔标记。
-// 如果 carry 塔被卖掉（不在 Towers 列表中），重新选择击杀最多的塔作为 carry。
+//
+// 经典模式：carry 始终是 cl_sentinel。如果 cl_sentinel 被卖掉，
+// 找到列表中第一个 cl_sentinel（可能重建了），否则退而求其次选 DPS 最高的。
+//
+// 非经典模式：carry 被卖了 → 重新选择击杀最多的塔。
 func (s *CompetentStrategy) updateCarry(state *GameState) {
 	if !s.hasCarry || len(state.Towers) == 0 {
 		return
@@ -613,7 +827,20 @@ func (s *CompetentStrategy) updateCarry(state *GameState) {
 	if s.findCarry(state) != nil {
 		return
 	}
-	// carry 被卖了 → 重新选择击杀最多的塔
+
+	// carry 不存在了 → 重新指定
+	if s.classicMode {
+		// 经典模式优先找 cl_sentinel
+		for i := range state.Towers {
+			if state.Towers[i].Key == "cl_sentinel" {
+				s.carryRow = state.Towers[i].Row
+				s.carryCol = state.Towers[i].Col
+				return
+			}
+		}
+	}
+
+	// 回退：选击杀最多的塔
 	var best *TowerInfo
 	bestKills := -1
 	for i := range state.Towers {
@@ -711,6 +938,10 @@ func (s *CompetentStrategy) pickNearCarryCell(state *GameState) (Cell, bool) {
 func (s *CompetentStrategy) tryAutoAbilities(state *GameState) []Action {
 	// 旧式手动列表存在时，不启用自动分配
 	if len(s.abilities) > 0 {
+		return nil
+	}
+	// 经典模式：能力已在建塔时通过 ApplyPresetAbilities 全部设好，无需分配
+	if s.classicMode {
 		return nil
 	}
 	if len(state.Towers) == 0 {
@@ -993,6 +1224,173 @@ func (s *CompetentStrategy) pickBestAvailableCell(state *GameState) (Cell, bool)
 	return state.BuildCells[0], true
 }
 
+// ── 经典模式检测与 zone 放置 ──────────────────────────
+
+// detectClassicMode 检测当前是否为经典模式。
+// 判据：TowerDefs 中存在 cl_ 前缀的塔型。
+func (s *CompetentStrategy) detectClassicMode(state *GameState) bool {
+	for _, d := range state.TowerDefs {
+		if strings.HasPrefix(d.Key, "cl_") {
+			return true
+		}
+	}
+	return false
+}
+
+// pickCellInZone 在指定 zone 中选择路径评分最高的可建位置。
+//
+// zone 定义：
+//   "entrance": 路径前 1/3 的路径点附近
+//   "middle":   路径中间 1/3（优先拐角处）
+//   "exit":     路径后 1/3 的路径点附近
+//   "nearCarry": carry 塔 150px 内（光环生效距离）
+func (s *CompetentStrategy) pickCellInZone(state *GameState, zone string) (Cell, bool) {
+	if len(state.BuildCells) == 0 {
+		return Cell{}, false
+	}
+
+	// nearCarry 直接复用已有方法（但用更紧凑的 150px 距离）
+	if zone == "nearCarry" {
+		return s.pickNearCarryCellTight(state)
+	}
+
+	// 计算 zone 的路径点范围
+	zonePoints := s.getZonePoints(zone)
+	if len(zonePoints) == 0 {
+		// zone 数据不可用 → 回退到全局最优
+		return s.pickBestAvailableCell(state)
+	}
+
+	// 在可用格子中找到距离 zone 路径点最近、路径评分最高的
+	var bestCell Cell
+	bestScore := -1.0
+	found := false
+
+	for _, c := range state.BuildCells {
+		// 检查格子是否在 zone 内（任一 zone 路径点 200px 内）
+		inZone := false
+		minDist := math.MaxFloat64
+		for _, zp := range zonePoints {
+			d := math.Hypot(c.X-zp.X, c.Y-zp.Y)
+			if d < minDist {
+				minDist = d
+			}
+			if d <= 200.0 {
+				inZone = true
+			}
+		}
+		if !inZone {
+			continue
+		}
+
+		// 路径评分 + 距离加权
+		pathScore := s.cellPlacementScore(c.Row, c.Col)
+		// 距离 zone 中心越近越好
+		distWeight := 1.0 / math.Max(minDist, 30.0)
+		score := pathScore + distWeight*50.0 // 距离因素占适中权重
+
+		if score > bestScore {
+			bestScore = score
+			bestCell = c
+			found = true
+		}
+	}
+
+	return bestCell, found
+}
+
+// getZonePoints 返回指定 zone 对应的路径点子集。
+// 使用缓存的 allPaths 数据，将所有路径合并后按比例切分。
+func (s *CompetentStrategy) getZonePoints(zone string) []PathPoint {
+	if len(s.allPaths) == 0 {
+		return nil
+	}
+
+	// 合并所有路径的点（多路径地图取并集）
+	var allPoints []PathPoint
+	for _, path := range s.allPaths {
+		allPoints = append(allPoints, path...)
+	}
+	if len(allPoints) == 0 {
+		return nil
+	}
+
+	n := len(allPoints)
+	third := n / 3
+	if third == 0 {
+		third = 1
+	}
+
+	switch zone {
+	case "entrance":
+		return allPoints[:third]
+	case "middle":
+		end := third * 2
+		if end > n {
+			end = n
+		}
+		return allPoints[third:end]
+	case "exit":
+		start := third * 2
+		if start >= n {
+			start = n - 1
+		}
+		return allPoints[start:]
+	default:
+		return allPoints
+	}
+}
+
+// pickNearCarryCellTight 在 carry 附近 150px 内找路径评分最高的格子。
+// 比 pickNearCarryCell 更紧凑（150px vs 200px），用于 support 光环塔。
+func (s *CompetentStrategy) pickNearCarryCellTight(state *GameState) (Cell, bool) {
+	if !s.hasCarry || len(state.BuildCells) == 0 {
+		return Cell{}, false
+	}
+
+	var carryX, carryY float64
+	carryFound := false
+	for i := range state.Towers {
+		if state.Towers[i].Row == s.carryRow && state.Towers[i].Col == s.carryCol {
+			carryX = state.Towers[i].X
+			carryY = state.Towers[i].Y
+			carryFound = true
+			break
+		}
+	}
+	if !carryFound {
+		return Cell{}, false
+	}
+
+	const maxDist = 150.0
+	var bestCell Cell
+	bestScore := -1.0
+	found := false
+
+	for _, c := range state.BuildCells {
+		dist := math.Hypot(c.X-carryX, c.Y-carryY)
+		if dist > maxDist {
+			continue
+		}
+		pathScore := s.cellPlacementScore(c.Row, c.Col)
+		// 距离 60-120px 理想（射程重叠但不完全重合）
+		distWeight := 1.0
+		if dist < 60 {
+			distWeight = 0.5
+		} else if dist < 120 {
+			distWeight = 1.5
+		}
+		score := pathScore * distWeight
+		if score > bestScore {
+			bestScore = score
+			bestCell = c
+			found = true
+		}
+	}
+
+	return bestCell, found
+}
+
 // ── 路径分析与格子评分 ────────────────────────────
 
 func (s *CompetentStrategy) initPlacement(state *GameState) {
@@ -1001,7 +1399,7 @@ func (s *CompetentStrategy) initPlacement(state *GameState) {
 		return
 	}
 
-	// 收集所有路径
+	// 收集所有路径（同时缓存到 s.allPaths 供 zone 计算使用）
 	var allPaths [][]PathPoint
 	if mi.MultiPath && len(mi.Paths) > 0 {
 		for _, p := range mi.Paths {
@@ -1011,6 +1409,7 @@ func (s *CompetentStrategy) initPlacement(state *GameState) {
 	if len(allPaths) == 0 && len(mi.Waypoints) > 0 {
 		allPaths = [][]PathPoint{mi.Waypoints}
 	}
+	s.allPaths = allPaths
 
 	// 识别拐角
 	var allCorners [][]bool
