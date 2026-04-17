@@ -74,9 +74,10 @@ func extractPipelineParams(p *Pipeline, def *config.AbilityDef) {
 	// 从 selector 提取参数（aoe radius 等）
 	extractSelectorParams(p.Selector, def)
 
-	// 从第一个 effect 提取主 scaler
-	if len(p.Effects) > 0 {
-		extractEffectParams(p.Effects[0], def)
+	// 遍历所有 effects 提取参数。
+	// 第一个 effect 填主槽（Param），后续 effect 填次要槽（Param2）。
+	for _, eff := range p.Effects {
+		extractEffectParams(eff, def)
 	}
 }
 
@@ -84,8 +85,8 @@ func extractPipelineParams(p *Pipeline, def *config.AbilityDef) {
 func extractEffectParams(eff Effect, def *config.AbilityDef) {
 	switch e := eff.(type) {
 	case DamageEffect:
-		// 仅在 scaleDim 未被 selector/condition 设置时填充
 		if def.ScaleDim == "" {
+			// 主 scaler 槽空闲：填充为主 scaler
 			extractScaler(e.Value, def, true)
 			switch e.Mode {
 			case DmgFlat:
@@ -94,6 +95,18 @@ func extractEffectParams(eff Effect, def *config.AbilityDef) {
 				def.ScaleDim = "ratio"
 			case DmgHpPercent:
 				def.ScaleDim = "hpPercent"
+			}
+		} else {
+			// 主 scaler 已被 condition/selector 占据（如 crit 的 ChanceCondition），
+			// 将 damage value 放入 Param 次要槽位，避免丢失。
+			extractScaler(e.Value, def, false)
+			switch e.Mode {
+			case DmgFlat:
+				def.ParamDim = "damage"
+			case DmgRatio:
+				def.ParamDim = "ratio"
+			case DmgHpPercent:
+				def.ParamDim = "hpPercent"
 			}
 		}
 	case SlowEffect:
@@ -150,10 +163,21 @@ func extractEffectParams(eff Effect, def *config.AbilityDef) {
 		def.Param = e.Multiplier
 		def.ParamDim = "multiplier"
 	case ModifyStatEffect:
-		// descriptor multiplier 含义是"×1.8"(=+80%)，但 applyEnhance 用 "1+param"
-		// 需要转换：param = multiplier - 1（如 1.8 → 0.8）
-		def.Param = e.Multiplier - 1
-		def.ParamDim = "statBoost"
+		// Multiplier 是总倍率（如 1.8 = ×1.8），存入时转为增量（0.8 = +80%），
+		// 使 {p%}/{p2%} 模板（Param*100）显示正确的百分比。
+		// range stat 填 Param2 槽位（对应 {p2%}），其他填 Param 槽位（对应 {p%}）。
+		inc := e.Multiplier - 1
+		if e.Stat == "range" {
+			if def.Param2 == 0 {
+				def.Param2 = inc
+				def.Param2Dim = "statBoost"
+			}
+		} else {
+			if def.Param == 0 {
+				def.Param = inc
+				def.ParamDim = "statBoost"
+			}
+		}
 	case TeleportEffect:
 		extractScaler(e.Distance, def, true)
 		def.ScaleDim = "distance"
@@ -283,9 +307,31 @@ func extractAttackParamsScaler(desc *AbilityDescriptor, def *config.AbilityDef) 
 		def.ScaleDim = mainParam
 	}
 
-	// 提取次要参数
+	// 提取次要参数，按确定顺序（避免 map 遍历的不确定性）。
+	// 先按 attackStyle 定义的参数优先级填充，再用 map 遍历补全剩余。
+	secondaryOrder := attackStyleSecondaryParams(desc.AttackStyle)
+	filled := map[string]bool{mainParam: true}
+	for _, name := range secondaryOrder {
+		s, ok := params[name]
+		if !ok {
+			continue
+		}
+		filled[name] = true
+		val := s.Value
+		if s.Scaler == "linear" {
+			val = s.Base
+		}
+		if def.Param == 0 {
+			def.Param = val
+			def.ParamDim = name
+		} else if def.Param2 == 0 {
+			def.Param2 = val
+			def.Param2Dim = name
+		}
+	}
+	// 补全未在优先级列表中的参数
 	for name, s := range params {
-		if name == mainParam {
+		if filled[name] {
 			continue
 		}
 		val := s.Value
@@ -299,6 +345,20 @@ func extractAttackParamsScaler(desc *AbilityDescriptor, def *config.AbilityDef) 
 			def.Param2 = val
 			def.Param2Dim = name
 		}
+	}
+}
+
+// attackStyleSecondaryParams 返回攻击方式的次要参数优先级列表。
+// 确保 Param/Param2 的填充顺序与运行时读取顺序一致。
+func attackStyleSecondaryParams(style string) []string {
+	switch style {
+	case "barrage":
+		// barrageParams() 读取: Param=damageRatio, Param2=burstDelay
+		return []string{"damageRatio", "burstDelay"}
+	case "radial":
+		return []string{"rangeMult"}
+	default:
+		return nil
 	}
 }
 
