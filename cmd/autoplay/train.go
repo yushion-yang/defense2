@@ -1,12 +1,15 @@
-// train.go — AI 学习系统离线训练管线。
+// train.go — AI 自我对弈训练管线。
 //
-// 通过 --learn 标志启动，在无头模式下批量运行合作局，
-// 利用 AIPlayer 的在线学习系统收集训练后的权重，
-// 最终取胜局权重平均值导出到 config/ai/weights.json。
+// 通过 --learn 标志启动，在无头模式下使用 NeuralStrategy 进行自我对弈训练。
+// 核心闭环：NeuralStrategy(model) → play → trainer 更新权重 → 下一局更好。
+//
+// 与旧版的关键区别：
+//   - 旧版：CompetentStrategy（硬编码）玩 → AIPlayer 旁观学习 → 权重无法反哺策略
+//   - 新版：NeuralStrategy（神经网络）自己玩 → 自己学 → 权重直接驱动下一局决策
 //
 // 典型用法：
 //
-//	go run cmd/autoplay/main.go --learn --learn-games 50 --map map_co01
+//	go run cmd/autoplay/main.go --learn --learn-games 50 --map map_c01
 //	go run cmd/autoplay/main.go --learn --learn-games 100 --seed 42
 package main
 
@@ -38,14 +41,14 @@ type trainConfig struct {
 	HPScale    float64 // HP 缩放覆盖（0=使用难度默认值）
 }
 
-// runTraining 离线训练管线主函数。
+// runTraining 自我对弈训练管线主函数。
 //
 // 流程：
-//  1. 运行 N 局合作模式游戏，AIPlayer 启用在线学习
-//  2. 每局结束后提取 AI 的学习模型权重
-//  3. 区分胜局/败局，分别收集
-//  4. 用胜局权重的平均值作为最终模型（无胜局则用全部局的平均）
-//  5. 导出到 config/ai/weights.json
+//  1. 加载初始模型权重（从嵌入式 JSON 或 DefaultModel）
+//  2. 每局创建 NeuralStrategy + Trainer，用当前模型权重驱动决策
+//  3. Trainer 在波次/游戏结束时通过 reward 反向传播更新权重
+//  4. 每局结束后快照模型，区分胜局/败局收集
+//  5. 最终取胜局权重平均（无胜局取全部平均），导出到 config/ai/weights.json
 func runTraining(cfg trainConfig) {
 	// 初始化嵌入式文件系统
 	config.SetDataFS(&defense2.DataFS)
@@ -76,8 +79,13 @@ func runTraining(cfg trainConfig) {
 
 	coopMaps := []string{"map_co01", "map_co02", "map_co03"}
 
-	log.Printf("[Train] Starting %d games (map=%s, difficulty=%s, warden=%s)",
-		cfg.Games, cfg.MapID, cfg.Difficulty, cfg.Warden)
+	log.Printf("[Train] Starting %d self-play games (map=%s, difficulty=%s, strategy=neural)",
+		cfg.Games, cfg.MapID, cfg.Difficulty)
+
+	// 加载初始模型（从嵌入式 JSON，加载失败用 DefaultModel）
+	model := learning.LoadFromFS(config.GetDataFS())
+	log.Printf("[Train] Initial model: v%d, ep%d, neural=%v",
+		model.Version, model.Episodes, model.UseNeural())
 
 	var winModels, allModels []*learning.Model
 	wins, losses := 0, 0
@@ -107,9 +115,7 @@ func runTraining(cfg trainConfig) {
 			gameInitDone = true
 		}
 
-		// 创建带学习模式的 Stage
-		// 训练模式使用经典战役地图：确定性塔/波次，零随机性
-		// 策略成败完全取决于决策质量
+		// 创建带学习模式的 Stage（保留 AIPlayer 在线学习作为辅助信号源）
 		stage := scene.NewStageSceneWithOpts(g, scene.StageOptions{
 			MapID:           mapID,
 			WardenType:      "",
@@ -120,8 +126,17 @@ func runTraining(cfg trainConfig) {
 			HPScaleOverride: cfg.HPScale,
 		})
 
-		// 使用 competent 策略驱动全图（AI 学习系统通过 autoplay 挂钩观察并学习）
-		strategy := autoplay.NewCompetentStrategy(autoplay.WithCompetentSeed(sessionSeed))
+		// 创建 Trainer（在线学习，直接更新 model 权重）
+		trainer := learning.NewTrainer(learning.TrainerConfig{
+			Model:   model,
+			Enabled: true,
+		})
+
+		// 使用 NeuralStrategy 自我对弈：模型既驱动决策又接收 reward
+		strategy := autoplay.NewNeuralStrategy(model,
+			autoplay.WithNeuralSeed(sessionSeed),
+			autoplay.WithNeuralTrainer(trainer),
+		)
 		ctrl := autoplay.NewController(autoplay.ControllerConfig{
 			Strategy:   strategy,
 			OutputDir:  os.TempDir(),
@@ -146,31 +161,38 @@ func runTraining(cfg trainConfig) {
 			}
 		}
 
-		// 提取学习模型
-		models := stage.LearningModels()
+		// 通知训练器游戏结束（触发全局 reward 微调）。
+		// 波次级 reward 已在 NeuralStrategy.onWaveChange 中处理，
+		// 这里补充游戏级全局 reward（赢/输加成）。
 		won := ctrl.Won()
+		trainer.OnGameEnd(learning.GameResult{
+			Won: won,
+		})
+
+		// 快照当前模型权重（Trainer 已在线更新）
+		snapshot := model.Clone()
 		if won {
 			wins++
-			for _, m := range models {
-				winModels = append(winModels, m.Clone())
-			}
+			winModels = append(winModels, snapshot)
 		} else {
 			losses++
 		}
-		for _, m := range models {
+		allModels = append(allModels, snapshot)
+
+		// 同时收集 AIPlayer 的学习模型（辅助信号源）
+		aiModels := stage.LearningModels()
+		for _, m := range aiModels {
 			allModels = append(allModels, m.Clone())
+			if won {
+				winModels = append(winModels, m.Clone())
+			}
 		}
 
-		status := "LOSS"
-		if won {
-			status = "WIN"
-		}
-		modelInfo := ""
-		if len(models) > 0 {
-			modelInfo = fmt.Sprintf(" (v%d, ep%d)", models[0].Version, models[0].Episodes)
-		}
-		log.Printf("[Train] Game %d/%d: %s%s [W:%d L:%d]",
-			i+1, cfg.Games, status, modelInfo, wins, losses)
+		// 重置 Trainer 状态准备下一局（模型权重保留）
+		trainer.Reset()
+
+		log.Printf("[Train] Game %d/%d: %s (v%d, ep%d) [W:%d L:%d]",
+			i+1, cfg.Games, statusStr(won), model.Version, model.Episodes, wins, losses)
 	}
 
 	// 选择最终模型：优先用胜局权重平均，无胜局用全部权重平均
@@ -206,6 +228,14 @@ func runTraining(cfg trainConfig) {
 		wins, cfg.Games, float64(wins)/float64(cfg.Games)*100)
 	log.Printf("[Train] Exported to %s (v%d, ep%d)",
 		cfg.OutputPath, finalModel.Version, finalModel.Episodes)
+}
+
+// statusStr 返回胜负状态字符串。
+func statusStr(won bool) string {
+	if won {
+		return "WIN"
+	}
+	return "LOSS"
 }
 
 // isClassicMap 判断是否是经典模式地图（map_cXX 前缀）。

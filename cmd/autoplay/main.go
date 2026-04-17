@@ -42,6 +42,7 @@ import (
 	defense2 "defense2"
 	"defense2/internal/autoplay"
 	"defense2/internal/config"
+	"defense2/internal/core/aiplayer/learning"
 	"defense2/internal/scene"
 )
 
@@ -470,6 +471,9 @@ func restoreStrategy(cfg sessionConfig) autoplay.Strategy {
 		return autoplay.NewBalanceGreedyStrategy()
 	case name == "competent":
 		return autoplay.NewCompetentStrategy(autoplay.WithCompetentSeed(cfg.Seed))
+	case name == "neural":
+		model := learning.LoadFromFS(config.GetDataFS())
+		return autoplay.NewNeuralStrategy(model, autoplay.WithNeuralSeed(cfg.Seed))
 	case name == "visual_catalog":
 		return autoplay.NewVisualCatalogStrategy()
 	case len(name) > 9 && name[:9] == "champion_":

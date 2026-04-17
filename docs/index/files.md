@@ -2,7 +2,7 @@
 
 > 自动生成，勿手动编辑。运行 `make index` 更新。
 
-共 292 个文件, 74663 行代码, 47 个包。
+共 292 个文件, 74684 行代码, 47 个包。
 
 ## achievement (215 行)
 
@@ -44,7 +44,7 @@
 | `manager.go` | 416 | 音效管理器。 |
 | `resample.go` | 64 | PCM pitch shifting via linear-interpolation resampling. |
 
-## autoplay (7991 行)
+## autoplay (8012 行)
 
 | 文件 | 行数 | 职责 |
 |------|------|------|
@@ -59,7 +59,7 @@
 | `strategy.go` | 178 | AutoPlay 核心类型与策略接口定义。 |
 | `strategy_balance.go` | 525 | 数值平衡测试策略与场景。 |
 | `strategy_champion.go` | 276 | "最强玩法"策略。 |
-| `strategy_competent.go` | 1547 | 仿真测试"合理玩家"策略。 |
+| `strategy_competent.go` | 1568 | 仿真测试"合理玩家"策略。 |
 | `strategy_focus.go` | 86 | 单塔极限策略。 |
 | `strategy_greedy.go` | 152 | 贪心启发策略。 |
 | `strategy_random.go` | 90 | 随机模糊策略。 |
