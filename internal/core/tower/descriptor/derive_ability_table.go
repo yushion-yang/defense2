@@ -307,9 +307,31 @@ func extractAttackParamsScaler(desc *AbilityDescriptor, def *config.AbilityDef) 
 		def.ScaleDim = mainParam
 	}
 
-	// 提取次要参数
+	// 提取次要参数，按确定顺序（避免 map 遍历的不确定性）。
+	// 先按 attackStyle 定义的参数优先级填充，再用 map 遍历补全剩余。
+	secondaryOrder := attackStyleSecondaryParams(desc.AttackStyle)
+	filled := map[string]bool{mainParam: true}
+	for _, name := range secondaryOrder {
+		s, ok := params[name]
+		if !ok {
+			continue
+		}
+		filled[name] = true
+		val := s.Value
+		if s.Scaler == "linear" {
+			val = s.Base
+		}
+		if def.Param == 0 {
+			def.Param = val
+			def.ParamDim = name
+		} else if def.Param2 == 0 {
+			def.Param2 = val
+			def.Param2Dim = name
+		}
+	}
+	// 补全未在优先级列表中的参数
 	for name, s := range params {
-		if name == mainParam {
+		if filled[name] {
 			continue
 		}
 		val := s.Value
@@ -323,6 +345,20 @@ func extractAttackParamsScaler(desc *AbilityDescriptor, def *config.AbilityDef) 
 			def.Param2 = val
 			def.Param2Dim = name
 		}
+	}
+}
+
+// attackStyleSecondaryParams 返回攻击方式的次要参数优先级列表。
+// 确保 Param/Param2 的填充顺序与运行时读取顺序一致。
+func attackStyleSecondaryParams(style string) []string {
+	switch style {
+	case "barrage":
+		// barrageParams() 读取: Param=damageRatio, Param2=burstDelay
+		return []string{"damageRatio", "burstDelay"}
+	case "radial":
+		return []string{"rangeMult"}
+	default:
+		return nil
 	}
 }
 

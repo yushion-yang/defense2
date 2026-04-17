@@ -253,8 +253,16 @@
       "attackParams": {
         "bullets": {
           "scaler": "linear",
-          "base": 2,
+          "base": 1,
           "potential": 1
+        },
+        "damageRatio": {
+          "scaler": "fixed",
+          "value": 0.5
+        },
+        "burstDelay": {
+          "scaler": "fixed",
+          "value": 0.08
         }
       },
       "pipelines": [],
