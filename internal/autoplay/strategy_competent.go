@@ -100,12 +100,12 @@ type buildPlanStep struct {
 
 // classicBuildPlan 经典模式最优建造顺序。
 // 顺序基于协同效应：减速→DPS→暴击光环→伤害光环→眩晕→脆弱。
-// 经典模式建造计划：极端集中 — CC 入口 + carry 中段 + 第二 DPS。
-// 核心理念：少量高投入塔 > 大量低投入塔（Potential 缩放的乘法效应）。
+// 经典模式建造计划：极简双塔 — 减速 + DPS 紧贴放置。
+// 玩家实测最优：2 塔全升满 > 多塔分散。carry 放在减速塔旁边确保协同。
+// carry 满级(str=300)后，闲钱自动补第三/四塔（通过 tryBuildCasual fallback）。
 var classicBuildPlan = []buildPlanStep{
 	{"cl_shotgun", "entrance", "cc", "入口减速"},
-	{"cl_sentinel", "middle", "carry", "中段主力DPS(暴击+强化)"},
-	{"cl_railgun", "middle", "dps", "中段第二DPS(贯穿+距离伤害)"},
+	{"cl_sentinel", "nearEntrance", "carry", "紧贴减速塔的主力DPS"},
 }
 
 // ── 函数式选项 ──────────────────────────────────
@@ -1274,9 +1274,30 @@ func (s *CompetentStrategy) pickCellInZone(state *GameState, zone string) (Cell,
 		return Cell{}, false
 	}
 
-	// nearCarry 直接复用已有方法（但用更紧凑的 150px 距离）
+	// nearCarry / nearEntrance 在已有塔附近找位置
 	if zone == "nearCarry" {
 		return s.pickNearCarryCellTight(state)
+	}
+	if zone == "nearEntrance" {
+		// 找入口 CC 塔（cl_shotgun），在它附近建 carry
+		for i := range state.Towers {
+			if state.Towers[i].Key == "cl_shotgun" {
+				// 临时把 carry 坐标指向 shotgun，复用 nearCarry 逻辑
+				origRow, origCol := s.carryRow, s.carryCol
+				origHas := s.hasCarry
+				s.carryRow = state.Towers[i].Row
+				s.carryCol = state.Towers[i].Col
+				s.hasCarry = true
+				cell, ok := s.pickNearCarryCellTight(state)
+				s.carryRow, s.carryCol, s.hasCarry = origRow, origCol, origHas
+				if ok {
+					return cell, true
+				}
+				break
+			}
+		}
+		// fallback 到 entrance zone
+		return s.pickCellInZone(state, "entrance")
 	}
 
 	// 计算 zone 的路径点范围
