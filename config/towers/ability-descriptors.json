@@ -38,12 +38,12 @@
             {
               "type": "modifyStat",
               "stat": "damage",
-              "multiplier": 1.8
+              "multiplier": 1.5
             },
             {
               "type": "modifyStat",
               "stat": "speed",
-              "multiplier": 1.8
+              "multiplier": 1.5
             },
             {
               "type": "modifyStat",
