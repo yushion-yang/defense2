@@ -150,7 +150,9 @@ func extractEffectParams(eff Effect, def *config.AbilityDef) {
 		def.Param = e.Multiplier
 		def.ParamDim = "multiplier"
 	case ModifyStatEffect:
-		def.Param = e.Multiplier
+		// descriptor multiplier 含义是"×1.8"(=+80%)，但 applyEnhance 用 "1+param"
+		// 需要转换：param = multiplier - 1（如 1.8 → 0.8）
+		def.Param = e.Multiplier - 1
 		def.ParamDim = "statBoost"
 	case TeleportEffect:
 		extractScaler(e.Distance, def, true)
