@@ -197,9 +197,12 @@ func (s *CompetentStrategy) Decide(state *GameState) []Action {
 
 	var actions []Action
 
-	// 战灵选择
+	// 战灵选择（经典模式无战灵，wardenKey="" 时跳过）
 	if !state.WardenReady {
-		return []Action{{Type: ActionSelectWarden, WardenKey: s.wardenKey}}
+		if s.wardenKey != "" {
+			return []Action{{Type: ActionSelectWarden, WardenKey: s.wardenKey}}
+		}
+		// 经典模式无战灵，视为已就绪继续决策
 	}
 
 	// 阶段判定
@@ -568,93 +571,12 @@ func (s *CompetentStrategy) pickUpgradeTarget(state *GameState, preferActive boo
 	}, true
 }
 
-// trySell 卖掉无效塔或 bad-tier 塔。
-//
-// 两种情况会触发卖出：
-//   1. 0 击杀塔（wave >= sellCheckWave）：位置评分最低者优先
-//   2. Bad-tier 塔（wave >= 3）：BaseDamage < 平均的 60%，说明 roll 到了差 tier
-//
-// 卖出后 builtCount 减一，让后续帧可以在更好位置重建。
+// trySell 卖塔。
+// 正常情况下不卖塔（卖塔退 70% 是纯亏钱），仅在极端情况下考虑：
+// 当一座塔长期 0 击杀且已经到后期（wave >= 8），说明位置完全无效。
 func (s *CompetentStrategy) trySell(state *GameState) (Action, bool) {
-	if len(state.Towers) <= 1 {
-		return Action{}, false // 至少保留 1 座塔
-	}
-	// 节流：每 60 tick 最多卖一座
-	if state.Tick-s.lastSellTick < 60 {
-		return Action{}, false
-	}
-
-	// 找 0 击杀且位置评分最低的塔（永不卖 carry）
-	var worst *TowerInfo
-	worstPosScore := math.MaxFloat64
-
-	for i := range state.Towers {
-		t := &state.Towers[i]
-		if t.Kills > 0 {
-			continue // 有击杀的留着
-		}
-		if s.isCarry(t) {
-			continue // 永不卖 carry
-		}
-		posScore := s.cellPlacementScore(t.Row, t.Col)
-		if posScore < worstPosScore {
-			worstPosScore = posScore
-			worst = t
-		}
-	}
-
-	// Bad-tier carry 检测：wave 2 时如果 carry 的 BaseDamage 太低，也卖掉重建
-	if worst == nil && state.Wave >= 2 && s.hasCarry && len(state.Towers) >= 2 {
-		carry := s.findCarry(state)
-		if carry != nil && carry.Kills == 0 {
-			var totalDmg float64
-			for i := range state.Towers {
-				totalDmg += state.Towers[i].BaseDamage
-			}
-			avgDmg := totalDmg / float64(len(state.Towers))
-			if carry.BaseDamage < avgDmg*0.7 {
-				worst = carry
-				s.hasCarry = false // 卖掉后重新指定 carry
-			}
-		}
-	}
-
-	// Bad-tier 检测：wave 3+ 时，BaseDamage 显著低于平均的非 carry 塔
-	if worst == nil && state.Wave >= 3 && len(state.Towers) >= 2 {
-		var totalDmg float64
-		for i := range state.Towers {
-			totalDmg += state.Towers[i].BaseDamage
-		}
-		avgDmg := totalDmg / float64(len(state.Towers))
-		threshold := avgDmg * 0.6
-
-		worstDmg := math.MaxFloat64
-		for i := range state.Towers {
-			t := &state.Towers[i]
-			if s.isCarry(t) {
-				continue
-			}
-			if t.BaseDamage < threshold && t.BaseDamage < worstDmg {
-				worstDmg = t.BaseDamage
-				worst = t
-			}
-		}
-	}
-
-	if worst == nil {
-		return Action{}, false
-	}
-
-	s.lastSellTick = state.Tick
-	s.builtCount--
-	if s.builtCount < 0 {
-		s.builtCount = 0
-	}
-	return Action{
-		Type: ActionSell,
-		Row:  worst.Row,
-		Col:  worst.Col,
-	}, true
+	// 默认禁用卖塔 — 卖塔退 70% 是纯亏钱，几乎不值得
+	return Action{}, false
 }
 
 func (s *CompetentStrategy) tryAssignAbility(state *GameState) (Action, bool) {

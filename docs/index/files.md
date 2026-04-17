@@ -2,7 +2,7 @@
 
 > 自动生成，勿手动编辑。运行 `make index` 更新。
 
-共 292 个文件, 74250 行代码, 47 个包。
+共 292 个文件, 74252 行代码, 47 个包。
 
 ## achievement (215 行)
 
@@ -126,7 +126,7 @@
 |------|------|------|
 | `perf.go` | 162 | frame time + GC performance tracker. |
 
-## descriptor (5758 行)
+## descriptor (5760 行)
 
 | 文件 | 行数 | 职责 |
 |------|------|------|
@@ -137,7 +137,7 @@
 | `blueprint_to_def.go` | 128 | 蓝图→塔定义转换。 |
 | `budget.go` | 94 | 预算计算系统。 |
 | `condition.go` | 221 | 条件门接口及 11 种内置条件类型。 |
-| `derive_ability_table.go` | 324 | 从描述符自动派生 AbilityDef 元数据表。 |
+| `derive_ability_table.go` | 326 | 从描述符自动派生 AbilityDef 元数据表。 |
 | `describe.go` | 271 | 从能力描述符生成人类可读的中文描述。 |
 | `descriptor.go` | 702 | 能力描述符 JSON 模式与解析器。 |
 | `descriptor_ability.go` | 375 | 描述符驱动能力的 tower.Ability/Ticker 适配器。 |

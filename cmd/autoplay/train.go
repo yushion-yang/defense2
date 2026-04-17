@@ -69,7 +69,8 @@ func runTraining(cfg trainConfig) {
 	if cfg.Difficulty == "" {
 		cfg.Difficulty = "normal"
 	}
-	if cfg.Warden == "" {
+	// 经典模式无战灵；其他模式默认 chain
+	if cfg.Warden == "" && !isClassicMap(cfg.MapID) {
 		cfg.Warden = "chain"
 	}
 
@@ -206,4 +207,9 @@ func runTraining(cfg trainConfig) {
 		wins, cfg.Games, float64(wins)/float64(cfg.Games)*100)
 	log.Printf("[Train] Exported to %s (v%d, ep%d)",
 		cfg.OutputPath, finalModel.Version, finalModel.Episodes)
+}
+
+// isClassicMap 判断是否是经典模式地图（map_cXX 前缀）。
+func isClassicMap(mapID string) bool {
+	return len(mapID) >= 6 && mapID[:5] == "map_c" && mapID[5] >= '0' && mapID[5] <= '9'
 }
