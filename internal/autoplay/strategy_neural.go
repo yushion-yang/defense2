@@ -77,6 +77,10 @@ type NeuralStrategy struct {
 	carryCol  int
 	hasCarry  bool
 
+	// ── 第一座塔位置（用于第二座塔就近放置） ──
+	firstTowerX float64
+	firstTowerY float64
+
 	// ── 经典模式 ──
 	classicMode bool
 	towerDefMap map[string]int // towerKey → TowerDefs 索引
@@ -215,8 +219,6 @@ func (s *NeuralStrategy) Decide(state *GameState) []Action {
 // ── 波间歇期决策 ──────────────────────────────────
 
 func (s *NeuralStrategy) decideWavePause(state *GameState) []Action {
-	upgCost := config.GlobalBalance().Tower.StrengthBuyCost
-
 	// 1. 用神经网络决定：建塔 vs 升级 vs 等待
 	econScore := s.scoreEcon(state)
 
@@ -233,18 +235,14 @@ func (s *NeuralStrategy) decideWavePause(state *GameState) []Action {
 				return []Action{action}
 			}
 		}
-		// 建不了就升级
-		if state.Gold >= upgCost && len(state.Towers) > 0 {
-			if action, ok := s.tryUpgrade(state); ok {
-				return []Action{action}
-			}
+		// 建不了就批量升级（波间歇期把金币花光）
+		if ups := s.tryMultiUpgrade(state); len(ups) > 0 {
+			return ups
 		}
 	} else if econScore < neuralEconUpgradeThreshold {
 		// 偏向升级
-		if state.Gold >= upgCost && len(state.Towers) > 0 {
-			if action, ok := s.tryUpgrade(state); ok {
-				return []Action{action}
-			}
+		if ups := s.tryMultiUpgrade(state); len(ups) > 0 {
+			return ups
 		}
 		// 升不了就建
 		if s.canAfford(state) && len(state.BuildCells) > 0 {
@@ -252,14 +250,23 @@ func (s *NeuralStrategy) decideWavePause(state *GameState) []Action {
 				return []Action{action}
 			}
 		}
+	} else {
+		// econScore 在阈值之间：仍然尝试花光金币（升级优先）
+		if ups := s.tryMultiUpgrade(state); len(ups) > 0 {
+			return ups
+		}
 	}
-	// econScore 在阈值之间 → 等待（或金币不足时开波）
 
-	// 2. 开波判断：无法建也无法升 → 开波
+	// 2. 所有塔已满级且有余钱 → 建新塔（把金币转化为额外 DPS）
+	if s.allTowersMaxed(state) && s.canAfford(state) && len(state.BuildCells) > 0 {
+		if action, ok := s.tryBuild(state); ok {
+			return []Action{action}
+		}
+	}
+
+	// 3. 开波判断
 	if state.Wave < state.MaxWaves && len(state.Towers) > 0 {
-		canBuild := s.canAfford(state) && len(state.BuildCells) > 0
-		canUpgrade := state.Gold >= upgCost
-		if !canBuild && !canUpgrade {
+		if s.shouldStartWave(state) {
 			return []Action{{Type: ActionStartWave}}
 		}
 	}
@@ -308,8 +315,20 @@ func (s *NeuralStrategy) tryBuild(state *GameState) (Action, bool) {
 	s.lastBuildTick = state.Tick
 	s.wavesSinceLastBuild = 0
 
-	// 第一座塔成为 carry
-	if !s.hasCarry {
+	// 记录第一座塔位置（供第二座塔就近放置）
+	if s.builtCount == 1 {
+		s.firstTowerX = cell.X
+		s.firstTowerY = cell.Y
+	}
+
+	// carry 应该是 cl_sentinel（DPS），不是 cl_shotgun（CC）。
+	// builtCount==2 表示刚建完第二座塔（cl_sentinel），设为 carry。
+	if s.classicMode && s.builtCount == 2 && towerDef.Key == "cl_sentinel" {
+		s.carryRow = cell.Row
+		s.carryCol = cell.Col
+		s.hasCarry = true
+	} else if !s.hasCarry && !s.classicMode {
+		// 非经典模式：第一座塔为 carry
 		s.carryRow = cell.Row
 		s.carryCol = cell.Col
 		s.hasCarry = true
@@ -448,6 +467,9 @@ func (s *NeuralStrategy) pickTowerType(state *GameState) *TowerDefInfo {
 }
 
 // pickBuildCell 用神经网络评分选择最优建造位置。
+//
+// 特殊处理：建第二座塔（cl_sentinel）时，优先选择距第一座塔（cl_shotgun）
+// 150px 以内的位置，使两塔共享同一杀伤区。
 func (s *NeuralStrategy) pickBuildCell(state *GameState, def *TowerDefInfo) (Cell, bool) {
 	if len(state.BuildCells) == 0 {
 		return Cell{}, false
@@ -466,11 +488,29 @@ func (s *NeuralStrategy) pickBuildCell(state *GameState, def *TowerDefInfo) (Cel
 		cellSize = state.MapInfo.CellSize
 	}
 
+	// builtCount==1：建第二座塔时，过滤出距第一座塔 150px 以内的候选格子
+	const nearRadius = 150.0
+	candidates := state.BuildCells
+	if s.classicMode && s.builtCount == 1 && s.firstTowerX > 0 {
+		var nearCells []Cell
+		for _, c := range state.BuildCells {
+			dx := c.X - s.firstTowerX
+			dy := c.Y - s.firstTowerY
+			if dx*dx+dy*dy <= nearRadius*nearRadius {
+				nearCells = append(nearCells, c)
+			}
+		}
+		// 有足够近的候选格 → 只从中选；否则回退到全部候选
+		if len(nearCells) > 0 {
+			candidates = nearCells
+		}
+	}
+
 	var bestCell Cell
 	bestScore := math.Inf(-1)
 	found := false
 
-	for _, c := range state.BuildCells {
+	for _, c := range candidates {
 		input := learning.BuildCellInput{
 			CellX: c.X, CellY: c.Y,
 			CellRow: c.Row, CellCol: c.Col,
@@ -596,6 +636,76 @@ func (s *NeuralStrategy) tryUpgrade(state *GameState) (Action, bool) {
 		Row:  bestTower.Row,
 		Col:  bestTower.Col,
 	}, true
+}
+
+// tryMultiUpgrade 在波间歇期连续升级（最多 10 次），把金币花光转化为 DPS。
+// 返回多个 ActionUpgrade，确保波前不浪费金币。
+func (s *NeuralStrategy) tryMultiUpgrade(state *GameState) []Action {
+	if len(state.Towers) == 0 {
+		return nil
+	}
+	upgCost := config.GlobalBalance().Tower.StrengthBuyCost
+	if state.Gold < upgCost {
+		return nil
+	}
+
+	var actions []Action
+	gold := state.Gold
+	const maxBatch = 10
+
+	for range maxBatch {
+		if gold < upgCost {
+			break
+		}
+		action, ok := s.tryUpgrade(state)
+		if !ok {
+			break // 所有塔已满级或无可升级目标
+		}
+		actions = append(actions, action)
+		gold -= upgCost
+	}
+	return actions
+}
+
+// shouldStartWave 判断是否应该开波。
+//
+// 不开波的情况：
+//   - 没有塔
+//   - 有金币可升级且有未满级的塔（波前花光金币 = 更多 DPS）
+//   - 可以负担得起建新塔
+//
+// 其他情况尽快开波。
+func (s *NeuralStrategy) shouldStartWave(state *GameState) bool {
+	if len(state.Towers) == 0 {
+		return false
+	}
+	upgCost := config.GlobalBalance().Tower.StrengthBuyCost
+
+	// 还能升级且有未满级塔 → 不开波，先花钱
+	if state.Gold >= upgCost && !s.allTowersMaxed(state) {
+		return false
+	}
+
+	// 还能建新塔 → 不开波
+	if s.canAfford(state) && len(state.BuildCells) > 0 {
+		return false
+	}
+
+	return true
+}
+
+// allTowersMaxed 检查所有塔是否已达强度上限。
+// 非经典模式无上限，始终返回 false。
+func (s *NeuralStrategy) allTowersMaxed(state *GameState) bool {
+	if !s.classicMode || len(state.Towers) == 0 {
+		return false
+	}
+	for _, t := range state.Towers {
+		if t.Strength < neuralMaxTowerStr {
+			return false
+		}
+	}
+	return true
 }
 
 // ── 经济评分 ──────────────────────────────────
