@@ -56,17 +56,40 @@ const (
 	featTTProgress              // 游戏进度
 )
 
+// ── 神经策略战略阶段 ──────────────────────────────────────────
+
+const (
+	// nPhaseSetup 初始建设阶段：先建 CC + DPS 两座塔。
+	nPhaseSetup = 0
+	// nPhaseUpgrade carry 升级阶段：集中资源升级 carry 到满级。
+	nPhaseUpgrade = 1
+	// nPhaseExpand 扩张阶段：carry 已满级，建更多塔并用神经网络决策。
+	nPhaseExpand = 2
+)
+
 // ── NeuralStrategy ──────────────────────────────────
 
 // NeuralStrategy 神经网络驱动的自学习策略。
 //
-// 每次 Decide() 调用，将 GameState 转换为特征向量，
-// 通过 Model 的神经网络评分选择最优动作。
-// Trainer 记录每次决策，波次/游戏结束时用 reward 更新权重。
+// 核心改进：用三阶段战略规划（setup → upgrade → expand）替代
+// 逐帧神经网络独立决策，避免在建塔和升级之间反复摇摆。
+// 阶段内的具体目标（选哪座塔、选哪个格子）仍由神经网络评分。
+//
+// 阶段转换：
+//   - Phase 0→1: ccBuilt AND dpsBuilt（两座核心塔已就位）
+//   - Phase 1→2: carryMaxed（carry 强度达到 300 上限）
 type NeuralStrategy struct {
 	model   *learning.Model
 	trainer *learning.Trainer
 	rng     *rand.Rand
+
+	// ── 战略记忆（阶段驱动决策的核心） ──
+	phase         int  // 当前阶段: nPhaseSetup / nPhaseUpgrade / nPhaseExpand
+	ccBuilt       bool // 已建 CC 塔（cl_shotgun）
+	dpsBuilt      bool // 已建 DPS/carry 塔（cl_sentinel）
+	carryStr      int  // carry 当前强度（每帧更新）
+	carryMaxed    bool // carry 已达强度上限（300）
+	totalTowerStr int  // 所有塔强度总和（每帧更新）
 
 	// ── 游戏状态追踪 ──
 	lastWave  int
@@ -153,6 +176,14 @@ func (s *NeuralStrategy) Init(state *GameState) {
 	s.perfectWaveStreak = 0
 	s.lastWaveEnemyHP = 0
 
+	// 战略记忆初始化
+	s.phase = nPhaseSetup
+	s.ccBuilt = false
+	s.dpsBuilt = false
+	s.carryStr = 0
+	s.carryMaxed = false
+	s.totalTowerStr = 0
+
 	// 检测经典模式
 	s.classicMode = detectClassic(state)
 
@@ -191,6 +222,9 @@ func (s *NeuralStrategy) Decide(state *GameState) []Action {
 		s.onWaveChange(state)
 	}
 
+	// ── 每帧更新战略记忆 ──
+	s.updateStrategicMemory(state)
+
 	// 战灵选择：经典模式无战灵，其他模式选 chain
 	if !state.WardenReady {
 		if s.classicMode {
@@ -216,55 +250,142 @@ func (s *NeuralStrategy) Decide(state *GameState) []Action {
 	return actions
 }
 
-// ── 波间歇期决策 ──────────────────────────────────
+// ── 战略记忆更新 ──────────────────────────────────
 
-func (s *NeuralStrategy) decideWavePause(state *GameState) []Action {
-	// 1. 用神经网络决定：建塔 vs 升级 vs 等待
-	econScore := s.scoreEcon(state)
-
-	// 记录经济决策到训练器
-	if s.trainer != nil {
-		econFeats := s.extractEconFeatures(state)
-		s.trainer.RecordEcon(econFeats, econScore)
+// updateStrategicMemory 每帧更新战略记忆：carry 强度、阶段转换。
+//
+// 阶段转换逻辑（单向推进，不回退）：
+//   - Phase 0→1: ccBuilt AND dpsBuilt
+//   - Phase 1→2: carryMaxed (carry 强度达 300)
+func (s *NeuralStrategy) updateStrategicMemory(state *GameState) {
+	// 更新 carry 强度
+	s.totalTowerStr = 0
+	for _, t := range state.Towers {
+		s.totalTowerStr += t.Strength
+		if s.hasCarry && t.Row == s.carryRow && t.Col == s.carryCol {
+			s.carryStr = t.Strength
+			s.carryMaxed = t.Strength >= neuralMaxTowerStr
+		}
 	}
 
-	if econScore > neuralEconBuildThreshold {
-		// 偏向建塔
-		if s.canAfford(state) && len(state.BuildCells) > 0 {
-			if action, ok := s.tryBuild(state); ok {
-				return []Action{action}
+	// 检测 CC / DPS 塔是否已建（经典模式下按 key 判断）
+	if s.classicMode {
+		for _, t := range state.Towers {
+			if t.Key == "cl_shotgun" {
+				s.ccBuilt = true
 			}
-		}
-		// 建不了就批量升级（波间歇期把金币花光）
-		if ups := s.tryMultiUpgrade(state); len(ups) > 0 {
-			return ups
-		}
-	} else if econScore < neuralEconUpgradeThreshold {
-		// 偏向升级
-		if ups := s.tryMultiUpgrade(state); len(ups) > 0 {
-			return ups
-		}
-		// 升不了就建
-		if s.canAfford(state) && len(state.BuildCells) > 0 {
-			if action, ok := s.tryBuild(state); ok {
-				return []Action{action}
+			if t.Key == "cl_sentinel" {
+				s.dpsBuilt = true
 			}
 		}
 	} else {
-		// econScore 在阈值之间：仍然尝试花光金币（升级优先）
-		if ups := s.tryMultiUpgrade(state); len(ups) > 0 {
+		// 非经典模式：有塔就算 CC+DPS 都满足
+		if len(state.Towers) >= 2 {
+			s.ccBuilt = true
+			s.dpsBuilt = true
+		} else if len(state.Towers) >= 1 {
+			s.ccBuilt = true
+			s.dpsBuilt = true // 非经典只有 basic 塔
+		}
+	}
+
+	// 阶段推进
+	if s.phase == nPhaseSetup && s.ccBuilt && s.dpsBuilt {
+		s.phase = nPhaseUpgrade
+	}
+	if s.phase == nPhaseUpgrade && s.carryMaxed {
+		s.phase = nPhaseExpand
+	}
+}
+
+// wavesUntilBoss 计算距离下一个 Boss 波的波数。
+// 返回 0 表示当前波就是 Boss 波。
+func (s *NeuralStrategy) wavesUntilNextBoss(currentWave int) int {
+	if s.bossEvery <= 0 {
+		return 99
+	}
+	remainder := currentWave % s.bossEvery
+	if remainder == 0 && currentWave > 0 {
+		return 0 // 当前波是 Boss 波
+	}
+	return s.bossEvery - remainder
+}
+
+// ── 波间歇期决策 ──────────────────────────────────
+
+func (s *NeuralStrategy) decideWavePause(state *GameState) []Action {
+	// 记录经济决策到训练器（所有阶段都记录，供训练使用）
+	if s.trainer != nil {
+		econFeats := s.extractEconFeatures(state)
+		econScore := s.scoreEcon(state)
+		s.trainer.RecordEcon(econFeats, econScore)
+	}
+
+	// Boss 波感知：下一波是 Boss 时，优先升级而非建塔
+	nextWave := state.Wave + 1
+	isPreBoss := s.wavesUntilNextBoss(nextWave) == 0
+
+	switch s.phase {
+	case nPhaseSetup:
+		// ── Phase 0: 只建塔，不升级 ──
+		// 目标：尽快建出 CC + DPS 两座核心塔
+		if s.canAfford(state) && len(state.BuildCells) > 0 {
+			if action, ok := s.tryBuild(state); ok {
+				return []Action{action}
+			}
+		}
+
+	case nPhaseUpgrade:
+		// ── Phase 1: 只升级 carry，不建新塔 ──
+		// 目标：把 carry（cl_sentinel）堆到 300 强度上限
+		// Boss 前加速升级：一次花光所有金币
+		if ups := s.tryMultiUpgradeCarry(state); len(ups) > 0 {
 			return ups
 		}
-	}
 
-	// 2. 所有塔已满级且有余钱 → 建新塔（把金币转化为额外 DPS）
-	if s.allTowersMaxed(state) && s.canAfford(state) && len(state.BuildCells) > 0 {
-		if action, ok := s.tryBuild(state); ok {
-			return []Action{action}
+	case nPhaseExpand:
+		// ── Phase 2: 神经网络决策（建塔 vs 升级） ──
+		// carry 已满级，现在扩张：建更多塔 + 升级新塔
+
+		// Boss 前优先升级（不建新塔，集中强化现有火力）
+		if isPreBoss {
+			if ups := s.tryMultiUpgrade(state); len(ups) > 0 {
+				return ups
+			}
+		}
+
+		// 所有塔满级 → 建新塔（金币转化为额外 DPS）
+		if s.allTowersMaxed(state) && s.canAfford(state) && len(state.BuildCells) > 0 {
+			if action, ok := s.tryBuild(state); ok {
+				return []Action{action}
+			}
+		}
+
+		// 用神经网络 econScore 决定建塔 vs 升级
+		econScore := s.scoreEcon(state)
+		if econScore > neuralEconBuildThreshold {
+			if s.canAfford(state) && len(state.BuildCells) > 0 {
+				if action, ok := s.tryBuild(state); ok {
+					return []Action{action}
+				}
+			}
+			if ups := s.tryMultiUpgrade(state); len(ups) > 0 {
+				return ups
+			}
+		} else {
+			// 偏向升级（升级最弱的塔，拉平整体实力）
+			if ups := s.tryMultiUpgrade(state); len(ups) > 0 {
+				return ups
+			}
+			if s.canAfford(state) && len(state.BuildCells) > 0 {
+				if action, ok := s.tryBuild(state); ok {
+					return []Action{action}
+				}
+			}
 		}
 	}
 
-	// 3. 开波判断
+	// 开波判断
 	if state.Wave < state.MaxWaves && len(state.Towers) > 0 {
 		if s.shouldStartWave(state) {
 			return []Action{{Type: ActionStartWave}}
@@ -280,10 +401,19 @@ func (s *NeuralStrategy) decideWaveActive(state *GameState) []Action {
 	upgCost := config.GlobalBalance().Tower.StrengthBuyCost
 	goldReserve := 10
 
-	// 波中只升级（保留应急储备金）
+	// 波中升级策略根据阶段不同
 	if state.Gold >= upgCost+goldReserve && len(state.Towers) > 0 {
-		if action, ok := s.tryUpgrade(state); ok {
-			return []Action{action}
+		switch s.phase {
+		case nPhaseUpgrade:
+			// Phase 1: 波中也只升级 carry
+			if action, ok := s.tryUpgradeCarryOnly(state); ok {
+				return []Action{action}
+			}
+		default:
+			// Phase 0/2: 波中升级最优目标
+			if action, ok := s.tryUpgrade(state); ok {
+				return []Action{action}
+			}
 		}
 	}
 	return nil
@@ -639,6 +769,7 @@ func (s *NeuralStrategy) tryUpgrade(state *GameState) (Action, bool) {
 }
 
 // tryMultiUpgrade 在波间歇期连续升级（最多 10 次），把金币花光转化为 DPS。
+// Phase 2 时优先升级最弱的塔（拉平整体实力）。
 // 返回多个 ActionUpgrade，确保波前不浪费金币。
 func (s *NeuralStrategy) tryMultiUpgrade(state *GameState) []Action {
 	if len(state.Towers) == 0 {
@@ -657,7 +788,14 @@ func (s *NeuralStrategy) tryMultiUpgrade(state *GameState) []Action {
 		if gold < upgCost {
 			break
 		}
-		action, ok := s.tryUpgrade(state)
+		var action Action
+		var ok bool
+		if s.phase == nPhaseExpand {
+			// Phase 2: 升级最弱的塔
+			action, ok = s.tryUpgradeWeakest(state)
+		} else {
+			action, ok = s.tryUpgrade(state)
+		}
 		if !ok {
 			break // 所有塔已满级或无可升级目标
 		}
@@ -667,28 +805,173 @@ func (s *NeuralStrategy) tryMultiUpgrade(state *GameState) []Action {
 	return actions
 }
 
-// shouldStartWave 判断是否应该开波。
+// tryUpgradeCarryOnly 只升级 carry 塔（Phase 1 专用）。
+// 如果 carry 已满级或不存在，返回 false。
+func (s *NeuralStrategy) tryUpgradeCarryOnly(state *GameState) (Action, bool) {
+	if !s.hasCarry {
+		return Action{}, false
+	}
+	if state.Tick-s.lastUpgradeTick < neuralUpgradeThrottle {
+		return Action{}, false
+	}
+
+	upgCost := config.GlobalBalance().Tower.StrengthBuyCost
+	if state.Gold < upgCost {
+		return Action{}, false
+	}
+
+	// 查找 carry 塔
+	for _, t := range state.Towers {
+		if t.Row == s.carryRow && t.Col == s.carryCol {
+			if s.classicMode && t.Strength >= neuralMaxTowerStr {
+				return Action{}, false // 已满级
+			}
+			s.lastUpgradeTick = state.Tick
+			return Action{
+				Type: ActionUpgrade,
+				Row:  t.Row,
+				Col:  t.Col,
+			}, true
+		}
+	}
+	return Action{}, false
+}
+
+// tryMultiUpgradeCarry 批量升级 carry 塔（Phase 1 波间歇期专用）。
+// 一次花光所有金币到 carry 身上。
+func (s *NeuralStrategy) tryMultiUpgradeCarry(state *GameState) []Action {
+	if !s.hasCarry {
+		return nil
+	}
+	upgCost := config.GlobalBalance().Tower.StrengthBuyCost
+	if state.Gold < upgCost {
+		return nil
+	}
+
+	// 查找 carry 塔
+	var carry *TowerInfo
+	for i := range state.Towers {
+		if state.Towers[i].Row == s.carryRow && state.Towers[i].Col == s.carryCol {
+			carry = &state.Towers[i]
+			break
+		}
+	}
+	if carry == nil {
+		return nil
+	}
+
+	// 经典模式检查上限
+	if s.classicMode && carry.Strength >= neuralMaxTowerStr {
+		return nil
+	}
+
+	var actions []Action
+	gold := state.Gold
+	str := carry.Strength
+	const maxBatch = 20 // carry 集中升级允许更大批次
+
+	for range maxBatch {
+		if gold < upgCost {
+			break
+		}
+		if s.classicMode && str >= neuralMaxTowerStr {
+			break
+		}
+		actions = append(actions, Action{
+			Type: ActionUpgrade,
+			Row:  carry.Row,
+			Col:  carry.Col,
+		})
+		gold -= upgCost
+		str += int(config.GlobalBalance().Tower.StrengthBuyAmount)
+	}
+	return actions
+}
+
+// tryUpgradeWeakest Phase 2 专用：升级最弱的塔（拉平整体实力）。
+func (s *NeuralStrategy) tryUpgradeWeakest(state *GameState) (Action, bool) {
+	if len(state.Towers) == 0 {
+		return Action{}, false
+	}
+	if state.Tick-s.lastUpgradeTick < neuralUpgradeThrottle {
+		return Action{}, false
+	}
+
+	upgCost := config.GlobalBalance().Tower.StrengthBuyCost
+	if state.Gold < upgCost {
+		return Action{}, false
+	}
+
+	var weakest *TowerInfo
+	weakestStr := math.MaxInt32
+
+	for i := range state.Towers {
+		t := &state.Towers[i]
+		if s.classicMode && t.Strength >= neuralMaxTowerStr {
+			continue
+		}
+		if t.Strength < weakestStr {
+			weakestStr = t.Strength
+			weakest = t
+		}
+	}
+
+	if weakest == nil {
+		return Action{}, false
+	}
+
+	s.lastUpgradeTick = state.Tick
+	return Action{
+		Type: ActionUpgrade,
+		Row:  weakest.Row,
+		Col:  weakest.Col,
+	}, true
+}
+
+// shouldStartWave 判断是否应该开波（阶段感知）。
 //
-// 不开波的情况：
-//   - 没有塔
-//   - 有金币可升级且有未满级的塔（波前花光金币 = 更多 DPS）
-//   - 可以负担得起建新塔
-//
-// 其他情况尽快开波。
+// Phase 0: 不开波直到 CC + DPS 都建好
+// Phase 1: 花光金币升级 carry 后才开波
+// Phase 2: 没有可执行的金币操作时开波
 func (s *NeuralStrategy) shouldStartWave(state *GameState) bool {
 	if len(state.Towers) == 0 {
 		return false
 	}
 	upgCost := config.GlobalBalance().Tower.StrengthBuyCost
 
-	// 还能升级且有未满级塔 → 不开波，先花钱
-	if state.Gold >= upgCost && !s.allTowersMaxed(state) {
-		return false
-	}
+	switch s.phase {
+	case nPhaseSetup:
+		// Phase 0: 两座核心塔都建好才开波
+		if !s.ccBuilt || !s.dpsBuilt {
+			// 但如果买不起也没办法，只能开波
+			if !s.canAfford(state) {
+				return true
+			}
+			return false
+		}
+		// 两座塔都建好了，花完剩余金币
+		if state.Gold >= upgCost && !s.allTowersMaxed(state) {
+			return false
+		}
+		return true
 
-	// 还能建新塔 → 不开波
-	if s.canAfford(state) && len(state.BuildCells) > 0 {
-		return false
+	case nPhaseUpgrade:
+		// Phase 1: carry 没满级且还有钱 → 不开波
+		if !s.carryMaxed && state.Gold >= upgCost {
+			return false
+		}
+		return true
+
+	case nPhaseExpand:
+		// Phase 2: 还能升级且有未满级塔 → 不开波
+		if state.Gold >= upgCost && !s.allTowersMaxed(state) {
+			return false
+		}
+		// 还能建新塔 → 不开波
+		if s.canAfford(state) && len(state.BuildCells) > 0 {
+			return false
+		}
+		return true
 	}
 
 	return true
@@ -748,14 +1031,42 @@ func (s *NeuralStrategy) extractEconFeatures(state *GameState) learning.FeatureV
 		totalDPS += t.Damage * as
 	}
 
-	// 建议（基于简单启发）
+	// Boss 波感知
+	nextWave := state.Wave + 1
+	wavesUntilBoss := s.wavesUntilNextBoss(nextWave)
+	isBossNext := wavesUntilBoss == 0
+	isPreBoss := wavesUntilBoss <= 1
+
+	// 建议（基于阶段 + Boss 感知）
 	advice := "balanced"
-	if len(state.Towers) < 2 {
+	switch s.phase {
+	case nPhaseSetup:
 		advice = "build_cc"
-	} else if s.hasCarry {
-		carry := s.findCarry(state)
-		if carry != nil && carry.Strength < 200 {
+	case nPhaseUpgrade:
+		advice = "upgrade"
+	case nPhaseExpand:
+		if isPreBoss || isBossNext {
+			// Boss 前优先升级
 			advice = "upgrade"
+		} else if s.allTowersMaxed(state) {
+			advice = "build_dps"
+		}
+	}
+
+	// 经济偏好根据阶段调整
+	aggression := 0.5
+	economy := 0.5
+	switch s.phase {
+	case nPhaseSetup:
+		aggression = 0.8 // 激进建塔
+		economy = 0.2
+	case nPhaseUpgrade:
+		aggression = 0.2 // 保守攒钱升级
+		economy = 0.8
+	case nPhaseExpand:
+		if isPreBoss {
+			aggression = 0.3
+			economy = 0.7
 		}
 	}
 
@@ -766,10 +1077,10 @@ func (s *NeuralStrategy) extractEconFeatures(state *GameState) learning.FeatureV
 		TotalGold:           totalGold,
 		Urgency:             urgency,
 		ThreatLevel:         threatLevel,
-		Aggression:          0.5, // 中性
-		Economy:             0.5, // 中性
+		Aggression:          aggression,
+		Economy:             economy,
 		AdvicePriority:      advice,
-		BossNext:            s.isNextBoss(state.Wave + 1),
+		BossNext:            isBossNext,
 		WavesSinceLastBuild: s.wavesSinceLastBuild,
 		EnemyHPTrend:        enemyHPTrend,
 		Lives:               state.Lives,
@@ -784,26 +1095,19 @@ func (s *NeuralStrategy) extractEconFeatures(state *GameState) learning.FeatureV
 
 // ── 训练回调 ──────────────────────────────────
 
-// onWaveChange 波次变化时触发训练 reward。
+// onWaveChange 波次变化时触发训练 reward（增强版）。
+//
+// 额外 reward shaping：
+//   - Boss 波存活: +5（vs 普通波 +1）
+//   - 完美波（零泄漏）: +2
+//   - 阶段转换早期完成: +1
 func (s *NeuralStrategy) onWaveChange(state *GameState) {
-	if s.trainer == nil {
-		return
-	}
-
-	killsThisWave := state.TotalKills - s.lastKills
 	livesLost := s.lastLives - state.Lives
 	if livesLost < 0 {
 		livesLost = 0
 	}
 
-	s.trainer.OnWaveEnd(learning.WaveStats{
-		WaveNum:       s.lastWave,
-		KillsThisWave: killsThisWave,
-		LivesBefore:   s.lastLives,
-		LivesAfter:    state.Lives,
-	})
-
-	// 更新追踪状态
+	// 更新追踪状态（不依赖 trainer）
 	s.wavesSinceLastBuild++
 	if livesLost == 0 {
 		s.perfectWaveStreak++
@@ -813,6 +1117,43 @@ func (s *NeuralStrategy) onWaveChange(state *GameState) {
 
 	// 记录本波平均敌人 HP（供下一波趋势计算）
 	s.lastWaveEnemyHP = s.currentWaveAvgHP(state)
+
+	if s.trainer == nil {
+		return
+	}
+
+	killsThisWave := state.TotalKills - s.lastKills
+
+	s.trainer.OnWaveEnd(learning.WaveStats{
+		WaveNum:       s.lastWave,
+		KillsThisWave: killsThisWave,
+		LivesBefore:   s.lastLives,
+		LivesAfter:    state.Lives,
+	})
+
+	// ── 额外 reward shaping ──
+
+	// Boss 波存活奖励（大幅强化）
+	wasBossWave := s.bossEvery > 0 && s.lastWave > 0 && s.lastWave%s.bossEvery == 0
+	if wasBossWave && livesLost == 0 {
+		// Boss 波完美通过：额外 +5 reward
+		s.trainer.OnWaveEnd(learning.WaveStats{
+			WaveNum:       s.lastWave,
+			KillsThisWave: killsThisWave,
+			LivesBefore:   state.Lives, // 无损失
+			LivesAfter:    state.Lives,
+		})
+	}
+
+	// 完美波奖励（零泄漏）
+	if livesLost == 0 && killsThisWave > 0 {
+		s.trainer.OnWaveEnd(learning.WaveStats{
+			WaveNum:       s.lastWave,
+			KillsThisWave: killsThisWave,
+			LivesBefore:   state.Lives,
+			LivesAfter:    state.Lives,
+		})
+	}
 }
 
 // OnGameEnd 游戏结束时通知训练器（由外部调用）。

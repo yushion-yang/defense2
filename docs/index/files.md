@@ -2,7 +2,7 @@
 
 > 自动生成，勿手动编辑。运行 `make index` 更新。
 
-共 293 个文件, 75780 行代码, 47 个包。
+共 293 个文件, 75977 行代码, 47 个包。
 
 ## achievement (215 行)
 
@@ -44,7 +44,7 @@
 | `manager.go` | 416 | 音效管理器。 |
 | `resample.go` | 64 | PCM pitch shifting via linear-interpolation resampling. |
 
-## autoplay (8887 行)
+## autoplay (9031 行)
 
 | 文件 | 行数 | 职责 |
 |------|------|------|
@@ -62,7 +62,7 @@
 | `strategy_competent.go` | 1568 | 仿真测试"合理玩家"策略。 |
 | `strategy_focus.go` | 86 | 单塔极限策略。 |
 | `strategy_greedy.go` | 152 | 贪心启发策略。 |
-| `strategy_neural.go` | 875 | 神经网络驱动的自学习策略。 |
+| `strategy_neural.go` | 1019 | 神经网络驱动的自学习策略。 |
 | `strategy_random.go` | 90 | 随机模糊策略。 |
 | `strategy_scenario.go` | 535 | 脚本化场景策略。 |
 | `strategy_simulation.go` | 221 | 仿真测试场景矩阵。 |
@@ -127,7 +127,7 @@
 |------|------|------|
 | `perf.go` | 162 | frame time + GC performance tracker. |
 
-## descriptor (5929 行)
+## descriptor (5982 行)
 
 | 文件 | 行数 | 职责 |
 |------|------|------|
@@ -138,21 +138,21 @@
 | `blueprint_to_def.go` | 128 | 蓝图→塔定义转换。 |
 | `budget.go` | 94 | 预算计算系统。 |
 | `condition.go` | 221 | 条件门接口及 11 种内置条件类型。 |
-| `derive_ability_table.go` | 412 | 从描述符自动派生 AbilityDef 元数据表。 |
+| `derive_ability_table.go` | 425 | 从描述符自动派生 AbilityDef 元数据表。 |
 | `describe.go` | 271 | 从能力描述符生成人类可读的中文描述。 |
-| `descriptor.go` | 702 | 能力描述符 JSON 模式与解析器。 |
-| `descriptor_ability.go` | 387 | 描述符驱动能力的 tower.Ability/Ticker 适配器。 |
+| `descriptor.go` | 703 | 能力描述符 JSON 模式与解析器。 |
+| `descriptor_ability.go` | 415 | 描述符驱动能力的 tower.Ability/Ticker 适配器。 |
 | `edit_state.go` | 731 | EditState ↔ AbilityDescriptor 双向转换。 |
-| `effect.go` | 217 | 效果接口及 13 种具体效果实现。 |
-| `effect_result.go` | 96 | 统一效果输出结构与上下文。 |
+| `effect.go` | 224 | 效果接口及 13 种具体效果实现。 |
+| `effect_result.go` | 97 | 统一效果输出结构与上下文。 |
 | `init.go` | 69 | 描述符能力的双轨注册初始化。 |
-| `interpreter.go` | 218 | 描述符运行时解释器。 |
+| `interpreter.go` | 220 | 描述符运行时解释器。 |
 | `loader.go` | 86 | 能力描述符表加载器。 |
 | `marshal.go` | 336 | AbilityDescriptor 的 JSON 序列化/反序列化。 |
 | `prebuilt_blueprints.go` | 87 | 预制蓝图加载器。 |
 | `primitive_meta.go` | 385 | 基元元数据注册表，供能力编辑器 UI 使用。 |
 | `scaler.go` | 168 | 数值缩放器接口及基础实现。 |
-| `selector.go` | 385 | 目标选择器接口及 9 种实现。 |
+| `selector.go` | 386 | 目标选择器接口及 9 种实现。 |
 | `trigger.go` | 47 | 触发器类型定义及解析。 |
 | `validate_ability.go` | 239 | 自定义能力平衡性校验与费用计算。 |
 
