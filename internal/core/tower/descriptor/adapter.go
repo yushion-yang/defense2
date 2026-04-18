@@ -151,6 +151,34 @@ func TrySynthSplash(desc *AbilityDescriptor, strength float64) *tower.HitResult 
 	return nil
 }
 
+// TrySynthBounce 检测描述符是否为 bounce 模式（onHit + chain selector + damage ratio），
+// 如果是则直接合成 HitResult.Bounce。与 TrySynthSplash 同理：
+// onHit 上下文没有 Enemies 池，ChainSelector 无法查询附近敌人。
+func TrySynthBounce(desc *AbilityDescriptor, strength, towerDamage float64) *tower.HitResult {
+	for _, p := range desc.Pipelines {
+		if p.Trigger != TriggerOnHit {
+			continue
+		}
+		chain, ok := p.Selector.(ChainSelector)
+		if !ok {
+			continue
+		}
+		maxBounces := int(chain.MaxBounce.Calc(strength))
+		if maxBounces < 1 {
+			maxBounces = 1
+		}
+		return &tower.HitResult{
+			Bounce: &tower.BounceEffect{
+				MaxBounces:  maxBounces,
+				Range:       chain.ChainRange,
+				DamageRatio: chain.DecayRatio,
+				SrcDamage:   towerDamage,
+			},
+		}
+	}
+	return nil
+}
+
 // AdaptToTickResult 将描述符引擎的效果列表转为 tick 管线的 TickResult。
 // Gold 通过 TickResult 传递给管线。
 // Buff/SelfBuff/Silence/Weaken/Root 等效果由 applyTickBuffEffects 直接应用，

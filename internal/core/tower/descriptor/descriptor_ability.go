@@ -106,9 +106,13 @@ type DescriptorAbilityHit struct {
 func (a *descriptorAbilityBase) onHitCommon(
 	t *tower.Tower, p *projectile.Projectile, e *enemy.Enemy,
 ) *tower.HitResult {
-	// splash 模式：aoeRadius selector 在 onHit 上下文无 Enemies 池，
-	// 直接合成 Splash 交给战斗管线处理
-	if hr := TrySynthSplash(a.desc, t.EffectiveStrength()); hr != nil {
+	// splash/bounce 模式：onHit 上下文无 Enemies 池，
+	// 空间查询类 selector 无法工作，直接合成 HitResult 交给战斗管线处理
+	str := t.EffectiveStrength()
+	if hr := TrySynthSplash(a.desc, str); hr != nil {
+		return hr
+	}
+	if hr := TrySynthBounce(a.desc, str, t.Damage); hr != nil {
 		return hr
 	}
 	ctx := a.buildHitTriggerContext(t, p, e)
