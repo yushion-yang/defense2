@@ -2,7 +2,7 @@
 
 > 自动生成，勿手动编辑。运行 `make index` 更新。
 
-共 293 个文件, 76284 行代码, 47 个包。
+共 293 个文件, 76474 行代码, 47 个包。
 
 ## achievement (215 行)
 
@@ -44,7 +44,7 @@
 | `manager.go` | 416 | 音效管理器。 |
 | `resample.go` | 64 | PCM pitch shifting via linear-interpolation resampling. |
 
-## autoplay (9338 行)
+## autoplay (9528 行)
 
 | 文件 | 行数 | 职责 |
 |------|------|------|
@@ -62,7 +62,7 @@
 | `strategy_competent.go` | 1568 | 仿真测试"合理玩家"策略。 |
 | `strategy_focus.go` | 86 | 单塔极限策略。 |
 | `strategy_greedy.go` | 152 | 贪心启发策略。 |
-| `strategy_neural.go` | 1326 | 神经网络驱动的自学习策略。 |
+| `strategy_neural.go` | 1516 | 神经网络驱动的自学习策略，融合领域知识加速收敛。 |
 | `strategy_random.go` | 90 | 随机模糊策略。 |
 | `strategy_scenario.go` | 535 | 脚本化场景策略。 |
 | `strategy_simulation.go` | 221 | 仿真测试场景矩阵。 |

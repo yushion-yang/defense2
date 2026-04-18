@@ -43,7 +43,21 @@ const (
 	neuralExploreRate = 0.1
 	// neuralMaxTowerStr 经典模式塔强度上限（100 + 4×50）。
 	neuralMaxTowerStr = 300
+	// neuralPhase2MaxTowers Phase 2 建塔上限。
+	neuralPhase2MaxTowers = 5
+	// neuralUncoveredBendRadius 判定拐点"已覆盖"的半径（像素）。
+	neuralUncoveredBendRadius = 150.0
 )
+
+// ── Phase 2 DPS 塔型优先级（经典模式） ──────────────────────────────────
+
+// phase2DPSPreference Phase 2 扩张时优先选择的 DPS 塔型。
+// 排序依据：cl_gatling（barrage+flat damage） > cl_railgun（wide beam） > cl_mortar（splash+stun）。
+var phase2DPSPreference = []string{
+	"cl_gatling",
+	"cl_railgun",
+	"cl_mortar",
+}
 
 // ── 塔型选择特征 ──────────────────────────────────
 
@@ -330,10 +344,6 @@ func (s *NeuralStrategy) decideWavePause(state *GameState) []Action {
 		s.trainer.RecordEcon(econFeats, econScore)
 	}
 
-	// Boss 波感知：下一波是 Boss 时，优先升级而非建塔
-	nextWave := state.Wave + 1
-	isPreBoss := s.wavesUntilNextBoss(nextWave) == 0
-
 	switch s.phase {
 	case nPhaseSetup:
 		// ── Phase 0: 只建塔，不升级 ──
@@ -353,43 +363,28 @@ func (s *NeuralStrategy) decideWavePause(state *GameState) []Action {
 		}
 
 	case nPhaseExpand:
-		// ── Phase 2: 神经网络决策（建塔 vs 升级） ──
-		// carry 已满级，现在扩张：建更多塔 + 升级新塔
+		// ── Phase 2: 确定性 build-then-max 循环 ──
+		// carry 已满级，激进扩张：先升满现有塔 → 再建新 DPS 塔 → 升满 → 循环。
+		//
+		// 关键洞察：100 强度的新塔 DPS 很低（约 50），而 300 强度塔 DPS 约 173。
+		// 先把现有塔升满再建新塔，确保每座塔尽快达到最大 DPS 贡献。
+		//
+		// 循环优先级：
+		//   1. 有塔未满强度 → 批量升级最弱塔到满（DPS 最大化）
+		//   2. 都满了且塔数不足 → 在未覆盖拐点建新 DPS 塔
+		//   3. 都满了/都买不起 → 开波
 
-		// Boss 前优先升级（不建新塔，集中强化现有火力）
-		if isPreBoss {
-			if ups := s.tryMultiUpgrade(state); len(ups) > 0 {
+		// 优先升级：有塔未满 → 批量升级最弱到满（花光所有金币）
+		if !s.allTowersMaxed(state) {
+			if ups := s.tryMultiUpgradeToMax(state); len(ups) > 0 {
 				return ups
 			}
 		}
 
-		// 所有塔满级 → 建新塔（金币转化为额外 DPS）
-		if s.allTowersMaxed(state) && s.canAfford(state) && len(state.BuildCells) > 0 {
-			if action, ok := s.tryBuild(state); ok {
+		// 所有塔已满或没钱升级 → 建新塔
+		if s.canAfford(state) && len(state.BuildCells) > 0 {
+			if action, ok := s.tryBuildPhase2(state); ok {
 				return []Action{action}
-			}
-		}
-
-		// 用神经网络 econScore 决定建塔 vs 升级
-		econScore := s.scoreEcon(state)
-		if econScore > neuralEconBuildThreshold {
-			if s.canAfford(state) && len(state.BuildCells) > 0 {
-				if action, ok := s.tryBuild(state); ok {
-					return []Action{action}
-				}
-			}
-			if ups := s.tryMultiUpgrade(state); len(ups) > 0 {
-				return ups
-			}
-		} else {
-			// 偏向升级（升级最弱的塔，拉平整体实力）
-			if ups := s.tryMultiUpgrade(state); len(ups) > 0 {
-				return ups
-			}
-			if s.canAfford(state) && len(state.BuildCells) > 0 {
-				if action, ok := s.tryBuild(state); ok {
-					return []Action{action}
-				}
 			}
 		}
 	}
@@ -418,8 +413,13 @@ func (s *NeuralStrategy) decideWaveActive(state *GameState) []Action {
 			if action, ok := s.tryUpgradeCarryOnly(state); ok {
 				return []Action{action}
 			}
+		case nPhaseExpand:
+			// Phase 2: 波中升级最弱塔（拉平整体实力）
+			if action, ok := s.tryUpgradeWeakest(state); ok {
+				return []Action{action}
+			}
 		default:
-			// Phase 0/2: 波中升级最优目标
+			// Phase 0: 波中升级最优目标
 			if action, ok := s.tryUpgrade(state); ok {
 				return []Action{action}
 			}
@@ -1001,6 +1001,215 @@ func (s *NeuralStrategy) tryUpgradeWeakest(state *GameState) (Action, bool) {
 		Row:  weakest.Row,
 		Col:  weakest.Col,
 	}, true
+}
+
+// ── Phase 2 专用建塔/升级 ──────────────────────────────────
+
+// tryBuildPhase2 Phase 2 建塔：优先选 DPS 塔型，放在未覆盖拐点。
+func (s *NeuralStrategy) tryBuildPhase2(state *GameState) (Action, bool) {
+	if len(state.BuildCells) == 0 || len(state.TowerDefs) == 0 {
+		return Action{}, false
+	}
+	if state.Tick-s.lastBuildTick < neuralBuildThrottle {
+		return Action{}, false
+	}
+
+	// 1. 选塔型：Phase 2 优先 DPS 偏好列表
+	towerDef := s.pickPhase2TowerType(state)
+	if towerDef == nil || state.Gold < towerDef.Cost {
+		return Action{}, false
+	}
+
+	// 2. 选位置：优先未覆盖拐点
+	cell, ok := s.pickUncoveredBend(state)
+	if !ok {
+		// 无未覆盖拐点 → 退回常规选址
+		cell, ok = s.pickBuildCell(state, towerDef)
+		if !ok {
+			return Action{}, false
+		}
+	}
+
+	s.builtCount++
+	s.lastBuildTick = state.Tick
+	s.wavesSinceLastBuild = 0
+
+	return Action{
+		Type:     ActionBuild,
+		TowerKey: towerDef.Key,
+		Cell:     cell,
+	}, true
+}
+
+// pickPhase2TowerType Phase 2 塔型选择：按 DPS 偏好列表依次选择。
+//
+// 优先级：cl_gatling > cl_railgun > cl_mortar > 其他任意可购买塔型。
+// 跳过已建过的塔型（避免重复，确保阵容多样性）。
+func (s *NeuralStrategy) pickPhase2TowerType(state *GameState) *TowerDefInfo {
+	if !s.classicMode {
+		// 非经典模式只有一种塔
+		for i := range state.TowerDefs {
+			if state.Gold >= state.TowerDefs[i].Cost {
+				return &state.TowerDefs[i]
+			}
+		}
+		return nil
+	}
+
+	// 已建塔型集合
+	builtKeys := make(map[string]bool)
+	for _, t := range state.Towers {
+		builtKeys[t.Key] = true
+	}
+
+	// 按偏好列表选择未建过的 DPS 塔
+	for _, key := range phase2DPSPreference {
+		if builtKeys[key] {
+			continue // 已有此型号，跳过
+		}
+		if idx, ok := s.towerDefMap[key]; ok {
+			d := &state.TowerDefs[idx]
+			if state.Gold >= d.Cost {
+				return d
+			}
+		}
+	}
+
+	// 偏好列表耗尽 → 选任意未建过且买得起的塔
+	for i := range state.TowerDefs {
+		d := &state.TowerDefs[i]
+		if builtKeys[d.Key] {
+			continue
+		}
+		if state.Gold >= d.Cost {
+			return d
+		}
+	}
+
+	// 全建过 → 选最便宜的（允许重复）
+	var cheapest *TowerDefInfo
+	for i := range state.TowerDefs {
+		d := &state.TowerDefs[i]
+		if state.Gold >= d.Cost {
+			if cheapest == nil || d.Cost < cheapest.Cost {
+				cheapest = d
+			}
+		}
+	}
+	return cheapest
+}
+
+// pickUncoveredBend 选择没有被现有塔覆盖的拐点，返回最近的空建造格子。
+//
+// "覆盖"定义：拐点 neuralUncoveredBendRadius (150px) 内有已建塔。
+// 优先选覆盖最少的拐点，以最大化全路径防御。
+func (s *NeuralStrategy) pickUncoveredBend(state *GameState) (Cell, bool) {
+	if len(s.pathBends) == 0 || len(state.BuildCells) == 0 {
+		return Cell{}, false
+	}
+
+	// 找出未覆盖拐点
+	var uncoveredBends []PathPoint
+	for _, bend := range s.pathBends {
+		covered := false
+		for _, t := range state.Towers {
+			if math.Hypot(t.X-bend.X, t.Y-bend.Y) < neuralUncoveredBendRadius {
+				covered = true
+				break
+			}
+		}
+		if !covered {
+			uncoveredBends = append(uncoveredBends, bend)
+		}
+	}
+
+	if len(uncoveredBends) == 0 {
+		// 全部拐点都已覆盖 → 选离所有塔最远的拐点（分散火力）
+		bestDist := -1.0
+		var farthest PathPoint
+		for _, bend := range s.pathBends {
+			minDist := math.MaxFloat64
+			for _, t := range state.Towers {
+				d := math.Hypot(t.X-bend.X, t.Y-bend.Y)
+				if d < minDist {
+					minDist = d
+				}
+			}
+			if minDist > bestDist {
+				bestDist = minDist
+				farthest = bend
+			}
+		}
+		return s.pickCellNearPoint(state.BuildCells, farthest.X, farthest.Y)
+	}
+
+	// 选第一个未覆盖拐点（路径顺序靠前 = 敌人先经过 = 更高价值）
+	target := uncoveredBends[0]
+	return s.pickCellNearPoint(state.BuildCells, target.X, target.Y)
+}
+
+// tryMultiUpgradeToMax Phase 2 专用批量升级：把最弱塔升到满（300），
+// 然后切换到下一个最弱，直到金币耗尽。
+//
+// 与 tryMultiUpgrade 的区别：
+//   - 每次迭代重新找最弱塔（因为上一轮可能已升满）
+//   - 不受 10 次批次限制，充分利用所有金币
+//   - 模拟金币和强度变化，确保循环正确终止
+func (s *NeuralStrategy) tryMultiUpgradeToMax(state *GameState) []Action {
+	if len(state.Towers) == 0 {
+		return nil
+	}
+	upgCost := config.GlobalBalance().Tower.StrengthBuyCost
+	upgAmount := int(config.GlobalBalance().Tower.StrengthBuyAmount)
+	if state.Gold < upgCost {
+		return nil
+	}
+
+	// 构建塔强度快照（模拟升级过程中的强度变化）
+	type towerSnap struct {
+		row, col int
+		str      int
+	}
+	snaps := make([]towerSnap, len(state.Towers))
+	for i, t := range state.Towers {
+		snaps[i] = towerSnap{row: t.Row, col: t.Col, str: t.Strength}
+	}
+
+	var actions []Action
+	gold := state.Gold
+	const maxBatch = 50 // Phase 2 允许大批量（花光所有金币）
+
+	for range maxBatch {
+		if gold < upgCost {
+			break
+		}
+
+		// 找当前最弱且未满的塔
+		weakestIdx := -1
+		weakestStr := math.MaxInt32
+		for i, snap := range snaps {
+			if s.classicMode && snap.str >= neuralMaxTowerStr {
+				continue
+			}
+			if snap.str < weakestStr {
+				weakestStr = snap.str
+				weakestIdx = i
+			}
+		}
+		if weakestIdx < 0 {
+			break // 所有塔已满级
+		}
+
+		actions = append(actions, Action{
+			Type: ActionUpgrade,
+			Row:  snaps[weakestIdx].row,
+			Col:  snaps[weakestIdx].col,
+		})
+		gold -= upgCost
+		snaps[weakestIdx].str += upgAmount
+	}
+
+	return actions
 }
 
 // shouldStartWave 判断是否应该开波（阶段感知，激进策略）。

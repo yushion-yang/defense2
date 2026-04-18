@@ -22,6 +22,7 @@
 package scene
 
 import (
+	"log"
 	"math"
 
 	gameAudio "defense2/internal/audio"
@@ -501,6 +502,8 @@ func (s *StageScene) handleInput() {
 	case modeBuildMenu:
 		// 建塔面板：点击卡片→进入放塔模式，点击关闭/外部→回 idle，点击 tab→切换分类
 		hit := hud.BuildMenuHitTest(ftx, fty, s.buildMenuTotalCards(), s.buildMenuBuildableCount(), s.buildMenuTabCount())
+		log.Printf("[DEBUG-BUILD] tap=(%.0f,%.0f) total=%d buildable=%d tabs=%d hit=card%d/tab%d",
+			ftx, fty, s.buildMenuTotalCards(), s.buildMenuBuildableCount(), s.buildMenuTabCount(), hit.CardIdx, hit.TabIdx)
 		if hit.TabIdx >= 0 {
 			// tab 切换：更新当前 tab，重置 hover/选中状态
 			s.buildMenuTab = hit.TabIdx
