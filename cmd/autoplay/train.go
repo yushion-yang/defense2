@@ -18,6 +18,7 @@ import (
 	"log"
 	"math/rand"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"time"
 
@@ -49,7 +50,17 @@ type trainConfig struct {
 //  3. Trainer 在波次/游戏结束时通过 reward 反向传播更新权重
 //  4. 每局结束后快照模型，区分胜局/败局收集
 //  5. 最终取胜局权重平均（无胜局取全部平均），导出到 config/ai/weights.json
+// batchSize 每个子进程跑的最大局数（防止 Ebitengine GPU 资源泄漏）。
+const batchSize = 50
+
 func runTraining(cfg trainConfig) {
+	// 大批量训练：拆成多个子进程，每个跑 batchSize 局。
+	// 子进程通过 weights.json 链式传递权重，进程退出时 OS 回收 GPU 资源。
+	if cfg.Games > batchSize {
+		runTrainingBatched(cfg)
+		return
+	}
+
 	// 初始化嵌入式文件系统
 	config.SetDataFS(&defense2.DataFS)
 	config.SetAssetFS(&defense2.AssetFS)
@@ -230,6 +241,65 @@ func runTraining(cfg trainConfig) {
 		wins, cfg.Games, float64(wins)/float64(cfg.Games)*100)
 	log.Printf("[Train] Exported to %s (v%d, ep%d)",
 		cfg.OutputPath, finalModel.Version, finalModel.Episodes)
+}
+
+// runTrainingBatched 将大批训练拆成多个子进程。
+// 每个子进程跑 batchSize 局，通过 weights.json 链式传递权重。
+// 进程退出时 OS 自动回收 GPU 资源，彻底解决 Ebitengine 内存泄漏。
+func runTrainingBatched(cfg trainConfig) {
+	totalGames := cfg.Games
+	batches := (totalGames + batchSize - 1) / batchSize
+	totalWins := 0
+
+	log.Printf("[Train] Batched mode: %d games in %d batches of %d", totalGames, batches, batchSize)
+
+	exe, err := os.Executable()
+	if err != nil {
+		log.Fatalf("[Train] Cannot find executable: %v", err)
+	}
+
+	remaining := totalGames
+	seed := cfg.Seed
+	if seed == 0 {
+		seed = time.Now().UnixNano()
+	}
+
+	for batch := 0; batch < batches; batch++ {
+		n := batchSize
+		if remaining < n {
+			n = remaining
+		}
+		remaining -= n
+
+		// 构建子进程参数
+		args := []string{
+			"--learn",
+			"--learn-games", fmt.Sprintf("%d", n),
+			"--learn-output", cfg.OutputPath,
+			"--map", cfg.MapID,
+			"--difficulty", cfg.Difficulty,
+			"--seed", fmt.Sprintf("%d", seed+int64(batch*batchSize)),
+		}
+		if cfg.HPScale > 0 {
+			args = append(args, "--hp-scale", fmt.Sprintf("%.2f", cfg.HPScale))
+		}
+		if cfg.Warden != "" {
+			args = append(args, "--warden", cfg.Warden)
+		}
+
+		cmd := exec.Command(exe, args...)
+		cmd.Stdout = os.Stdout
+		cmd.Stderr = os.Stderr
+
+		log.Printf("[Train] Batch %d/%d: starting subprocess (%d games)", batch+1, batches, n)
+		if err := cmd.Run(); err != nil {
+			log.Printf("[Train] Batch %d subprocess error: %v (continuing)", batch+1, err)
+		}
+	}
+
+	log.Printf("[Train] Batched training complete: %d total games, %d batches",
+		totalGames, batches)
+	_ = totalWins
 }
 
 // statusStr 返回胜负状态字符串。
