@@ -115,14 +115,16 @@ func runTraining(cfg trainConfig) {
 			gameInitDone = true
 		}
 
-		// 创建带学习模式的 Stage（保留 AIPlayer 在线学习作为辅助信号源）
+		// 创建 Stage — 不启用 AIPlayer（NeuralStrategy 直接控制，避免 AIPlayer 偷选战灵）
+		modeID := "classic"
+		if !isClassicMap(mapID) {
+			modeID = "casual"
+		}
 		stage := scene.NewStageSceneWithOpts(g, scene.StageOptions{
 			MapID:           mapID,
 			WardenType:      "",
-			ModeID:          "classic",
+			ModeID:          modeID,
 			DifficultyID:    cfg.Difficulty,
-			AIEnabled:       true,
-			LearningEnabled: true,
 			HPScaleOverride: cfg.HPScale,
 		})
 

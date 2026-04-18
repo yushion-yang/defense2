@@ -18,102 +18,102 @@
 | `warden.ParamOr` | 26 | types.Init |
 | `config.GlobalBalance` | 24 | combat.ApplyHit, combat.ApplySlow, combat.Fire, combat.MinSpeedRatio, combat.Tick, enemy.DotTickI... |
 | `draw.FilledRect` | 19 | scene.Draw |
-| `render.GlobalFont` | 18 | scene.Draw, scene.NewCampaignSelectScene, scene.NewLoadingScene, scene.NewSelectScene, scene.NewT... |
 | `json.Unmarshal` | 18 | buff.LoadRules, descriptor.LoadDescriptorTable, descriptor.LoadPrebuiltBlueprints, descriptor.Par... |
 | `draw.CursorPos` | 18 | scene.Update |
-| `draw.RoundRect` | 16 | scene.Draw |
+| `render.GlobalFont` | 18 | scene.Draw, scene.NewCampaignSelectScene, scene.NewLoadingScene, scene.NewSelectScene, scene.NewT... |
 | `e.IsDying` | 16 | combat.ApplyHit, combat.Fire, combat.Tick, descriptor.AllActive, descriptor.QueryRadius, enemy.Ti... |
-| `e.IsSpawning` | 14 | combat.Fire, combat.Tick, descriptor.AllActive, descriptor.QueryRadius, enemy.TickBehaviors, pipe... |
+| `draw.RoundRect` | 16 | scene.Draw |
 | `rand.Float64` | 14 | aiplayer.Tick, combat.ApplyHit, descriptor.Eval, gamemap.PickPath, warden.Wander |
+| `e.IsSpawning` | 14 | combat.Fire, combat.Tick, descriptor.AllActive, descriptor.QueryRadius, enemy.TickBehaviors, pipe... |
 | `ui.Button` | 13 | scene.Draw |
 | `NewSelectScene` | 12 | scene.Update |
 | `b.WriteString` | 11 | scene.FormatAbilityDisplay |
 | `dialogue.Random` | 11 | aiplayer.Tick |
 | `draw.NewCachedGradient` | 11 | scene.NewAbilityEditScene, scene.NewBestiaryScene, scene.NewBlueprintEditScene, scene.NewCampaign... |
-| `config.GlobalSpawnerConfig` | 10 | combat.ApplyDamage, enemy.IsBossWave, enemy.Kill, enemy.NewSpawner, enemy.NextWavePreview, enemy.... |
 | `fm.DrawCenteredBoldText` | 10 | scene.Draw |
 | `e.SetFloatText` | 10 | combat.ApplyDamage, combat.ApplyHit, combat.ApplySlow, combat.ApplyStun |
+| `config.GlobalSpawnerConfig` | 10 | combat.ApplyDamage, enemy.IsBossWave, enemy.Kill, enemy.NewSpawner, enemy.NextWavePreview, enemy.... |
 | `config.GetAssetFS` | 9 | scene.NewGame, scene.NewStageSceneWithOpts, scene.NewWardenSelectScene, scene.Update |
 | `draw.HoverPos` | 9 | scene.Update |
 | `i18n.TF` | 9 | gamemode.OnWaveCleared, persistence.UnlockRequirement, scene.BuildInfoPanelVM, scene.Draw |
-| `draw.Line` | 8 | scene.Draw |
 | `math.Sqrt` | 8 | descriptor.Select, learning.ExtractBuildFeatures, learning.NewNetwork, strength.RebuildChainNetwork |
 | `math.Sin` | 8 | aiplayer.DrawY, combat.Fire, descriptor.Select, scene.Draw, warden.MoveOrbit |
-| `fm.DrawText` | 7 | scene.Draw |
+| `draw.Line` | 8 | scene.Draw |
+| `config.GetDataFS` | 7 | descriptor.LoadPrebuiltBlueprints, gamemode.LoadModeConfigs, scene.NewGame, scene.NewStageSceneWi... |
 | `strings.Join` | 7 | aiplayer.CoopDescription, descriptor.GenerateDescription, llm.BuildPrompt, llm.BuildStrategicPrompt |
 | `config.GlobalAbilityTable` | 7 | combat.Tick, scene.BuildInfoPanelVM, scene.NewBestiaryScene, tower.AbilitiesForCategory, tower.Ad... |
-| `config.GetDataFS` | 7 | descriptor.LoadPrebuiltBlueprints, gamemode.LoadModeConfigs, scene.NewGame, scene.NewStageSceneWi... |
-| `math.Atan2` | 7 | combat.Fire, combat.Tick, learning.IsChokepoint, learning.NearestPathBendDist, pipeline.TickTower... |
 | `rand.Intn` | 7 | aiplayer.Evaluate, aiplayer.Random, mascot.ForceTrigger, tower.RollTowerStats |
+| `fm.DrawText` | 7 | scene.Draw |
 | `towers.Each` | 7 | pipeline.TickTowerAbilities, pipeline.TickTowerCombat, warden.CalcStrength |
-| `ebiten.IsKeyPressed` | 6 | scene.Update |
-| `ebiten.Wheel` | 6 | scene.Update |
+| `math.Atan2` | 7 | combat.Fire, combat.Tick, learning.IsChokepoint, learning.NearestPathBendDist, pipeline.TickTower... |
 | `time.Now` | 6 | debug.BeginDraw, debug.BeginUpdate, debug.NewPerfTracker, scene.Draw, scene.NewGame, scene.Update |
-| `hud.ShowToast` | 6 | scene.Draw, scene.Update |
 | `DefaultModel` | 6 | learning.AverageModels, learning.LoadFromFS, learning.LoadModel, learning.NewTrainer |
+| `ebiten.IsKeyPressed` | 6 | scene.Update |
 | `bubble.Show` | 6 | aiplayer.Tick |
-| `persistence.DefaultStorage` | 5 | scene.NewCampaignSelectScene, scene.NewSelectScene, scene.NewStageSceneWithOpts, scene.NewTowerWo... |
+| `hud.ShowToast` | 6 | scene.Draw, scene.Update |
+| `ebiten.Wheel` | 6 | scene.Update |
+| `UFFind` | 5 | strength.RebuildChainNetwork, strength.UFFind, strength.UFUnion |
 | `NewTestSelectScene` | 5 | scene.Update |
+| `s.Wander` | 5 | types.Tick |
 | `s.ApplyStrength` | 5 | types.Tick |
 | `t.Trigger` | 5 | tutorial.OnEvent |
-| `ebiten.IsMouseButtonPressed` | 5 | scene.Update |
-| `s.Wander` | 5 | types.Tick |
-| `s.MoveOrbit` | 5 | types.Tick |
 | `s.DecayShootTimer` | 5 | types.Tick |
-| `enemies.Each` | 5 | pipeline.TickEnemyStatusEffects, pipeline.TickProjectileHits, warden.ComputeClusterCenter, warden... |
-| `UFFind` | 5 | strength.RebuildChainNetwork, strength.UFFind, strength.UFUnion |
 | `warden.ComputeClusterCenter` | 5 | types.Tick |
-| `s.BasicAttack` | 4 | types.Tick |
-| `persistence.NewProgressManager` | 4 | scene.NewCampaignSelectScene, scene.NewSelectScene, scene.NewStageSceneWithOpts, scene.Update |
-| `time.Since` | 4 | debug.EndDraw, debug.EndUpdate, scene.Update |
-| `t.CurrentStep` | 4 | tutorial.ClickAdvance, tutorial.CurrentMessage, tutorial.Tick, tutorial.Trigger |
-| `i18n.Locale` | 4 | scene.Draw, scene.Update |
-| `math.Cos` | 4 | combat.Fire, descriptor.Select, warden.MoveOrbit |
-| `screen.Bounds` | 4 | scene.Draw |
-| `inpututil.IsMouseButtonJustPressed` | 4 | scene.Update |
-| `sw.AudioManager` | 4 | scene.NewAudioPreviewScene, scene.NewSelectScene, scene.NewSettingsScene, scene.NewStageSceneWith... |
-| `t.RecalcStats` | 4 | item.ApplyItem, tower.ApplyRandomStats, tower.BuyStrength, tower.Place |
-| `warden.ParamOrInt` | 4 | types.Init |
-| `config.GlobalWardenConfig` | 4 | scene.NewBestiaryScene, scene.NewStageSceneWithOpts, warden.NewWarden |
+| `s.MoveOrbit` | 5 | types.Tick |
+| `ebiten.IsMouseButtonPressed` | 5 | scene.Update |
+| `persistence.DefaultStorage` | 5 | scene.NewCampaignSelectScene, scene.NewSelectScene, scene.NewStageSceneWithOpts, scene.NewTowerWo... |
+| `enemies.Each` | 5 | pipeline.TickEnemyStatusEffects, pipeline.TickProjectileHits, warden.ComputeClusterCenter, warden... |
 | `ctx.OnFire` | 4 | combat.Tick, warden.BasicAttack |
-| `persistence.NewMemoryStorage` | 4 | scene.NewCampaignSelectScene, scene.NewSelectScene, scene.NewStageSceneWithOpts, scene.NewTowerWo... |
-| `math.Floor` | 4 | combat.Fire, combat.Tick, scene.FormatAbilityDisplay |
-| `screen.Fill` | 4 | scene.Draw |
 | `particle.NewPool` | 4 | scene.NewCampaignSelectScene, scene.NewSelectScene, scene.NewStageSceneWithOpts, scene.NewVFXPrev... |
-| `GlobalDescriptorTable` | 3 | descriptor.DeriveAbilityTable, descriptor.GlobalAbilityCosts, descriptor.InitDescriptorAbilities |
-| `m.GetNetwork` | 3 | learning.ScoreBuild, learning.ScoreEcon, learning.ScoreUpgrade |
-| `math.Abs` | 3 | combat.Fire, learning.IsChokepoint, learning.NearestPathBendDist |
-| `gameAudio.NewManager` | 3 | scene.NewGame, scene.NewGameLite, scene.Update |
-| `i18n.OnChange` | 3 | scene.Update |
-| `LoadSettings` | 3 | scene.NewSettingsScene, scene.Update |
-| `s.Get` | 3 | descriptor.NewAbilityStore, descriptor.NewBlueprintStore, persistence.NewProgressManager |
-| `inpututil.JustPressedTouchIDs` | 3 | scene.Update |
-| `t.EffectiveStrength` | 3 | combat.Fire, combat.Tick |
-| `ctx.OnSpecial` | 3 | types.Tick |
-| `sprite.MoveTo` | 3 | aiplayer.Tick |
-| `draw.StrokeRoundRect` | 3 | scene.Draw |
-| `NewNetwork` | 3 | learning.DefaultModel |
-| `def.CalcScale` | 3 | combat.Fire, combat.Tick |
-| `session.Ruleset` | 3 | scene.NewStageSceneWithOpts |
-| `ui.Panel` | 3 | scene.Draw |
-| `config.GlobalTierPresets` | 3 | descriptor.LoadPrebuiltBlueprintDefs, tower.ApplyRandomStats, tower.RollTowerStats |
-| `fs.ReadFile` | 3 | descriptor.LoadPrebuiltBlueprints, gamemode.LoadModeConfigs, mascot.LoadAllDialogs |
-| `gm.PixelHeight` | 3 | scene.NewStageSceneWithOpts |
-| `c.Enabled` | 3 | llm.Tick, llm.TickStrategic, llm.TriggerImmediate |
-| `ApplyDamage` | 3 | combat.ApplyHit, combat.QuickDamage |
-| `bubble.Visible` | 3 | aiplayer.Tick |
-| `NewPool` | 3 | enemy.DefaultPool, projectile.DefaultPool, tower.DefaultPool |
-| `pool.EachActive` | 3 | enemy.TickBehaviors, tower.FindExtraTargets, tower.FindNearestEnemy |
-| `json.Marshal` | 3 | descriptor.MarshalJSON, persistence.Set |
-| `math.Max` | 3 | gamemode.EndExtra, gamemode.HUDExtra, gamemode.TimeScore |
-| `s.Has` | 3 | descriptor.NewAbilityStore, descriptor.NewBlueprintStore, persistence.NewProgressManager |
-| `persistence.UnlockRequirement` | 3 | scene.BuildWardenOptions, scene.Draw, scene.Update |
-| `json.MarshalIndent` | 3 | learning.MarshalModel, persistence.Set, scene.SaveSettings |
-| `NewTitleScene` | 3 | scene.Update |
-| `IgnoresReduction` | 3 | combat.ApplyDamage |
-| `gm.PixelWidth` | 3 | scene.NewStageSceneWithOpts |
+| `math.Floor` | 4 | combat.Fire, combat.Tick, scene.FormatAbilityDisplay |
+| `warden.ParamOrInt` | 4 | types.Init |
+| `sw.AudioManager` | 4 | scene.NewAudioPreviewScene, scene.NewSelectScene, scene.NewSettingsScene, scene.NewStageSceneWith... |
+| `s.BasicAttack` | 4 | types.Tick |
+| `screen.Bounds` | 4 | scene.Draw |
+| `persistence.NewMemoryStorage` | 4 | scene.NewCampaignSelectScene, scene.NewSelectScene, scene.NewStageSceneWithOpts, scene.NewTowerWo... |
+| `i18n.Locale` | 4 | scene.Draw, scene.Update |
+| `inpututil.IsMouseButtonJustPressed` | 4 | scene.Update |
+| `config.GlobalWardenConfig` | 4 | scene.NewBestiaryScene, scene.NewStageSceneWithOpts, warden.NewWarden |
+| `time.Since` | 4 | debug.EndDraw, debug.EndUpdate, scene.Update |
+| `persistence.NewProgressManager` | 4 | scene.NewCampaignSelectScene, scene.NewSelectScene, scene.NewStageSceneWithOpts, scene.Update |
+| `screen.Fill` | 4 | scene.Draw |
+| `t.CurrentStep` | 4 | tutorial.ClickAdvance, tutorial.CurrentMessage, tutorial.Tick, tutorial.Trigger |
+| `t.RecalcStats` | 4 | item.ApplyItem, tower.ApplyRandomStats, tower.BuyStrength, tower.Place |
+| `math.Cos` | 4 | combat.Fire, descriptor.Select, warden.MoveOrbit |
 | `g.ForceTrigger` | 3 | mascot.NotifyActionComplete, mascot.RequestHelp |
+| `ctx.OnSpecial` | 3 | types.Tick |
+| `ui.Panel` | 3 | scene.Draw |
+| `gm.PixelHeight` | 3 | scene.NewStageSceneWithOpts |
+| `NewPool` | 3 | enemy.DefaultPool, projectile.DefaultPool, tower.DefaultPool |
+| `c.Enabled` | 3 | llm.Tick, llm.TickStrategic, llm.TriggerImmediate |
+| `t.EffectiveStrength` | 3 | combat.Fire, combat.Tick |
+| `draw.StrokeRoundRect` | 3 | scene.Draw |
+| `s.Has` | 3 | descriptor.NewAbilityStore, descriptor.NewBlueprintStore, persistence.NewProgressManager |
+| `i18n.OnChange` | 3 | scene.Update |
+| `IgnoresReduction` | 3 | combat.ApplyDamage |
+| `def.CalcScale` | 3 | combat.Fire, combat.Tick |
+| `json.Marshal` | 3 | descriptor.MarshalJSON, persistence.Set |
+| `math.Abs` | 3 | combat.Fire, learning.IsChokepoint, learning.NearestPathBendDist |
+| `NewTitleScene` | 3 | scene.Update |
+| `fs.ReadFile` | 3 | descriptor.LoadPrebuiltBlueprints, gamemode.LoadModeConfigs, mascot.LoadAllDialogs |
+| `m.GetNetwork` | 3 | learning.ScoreBuild, learning.ScoreEcon, learning.ScoreUpgrade |
+| `s.Get` | 3 | descriptor.NewAbilityStore, descriptor.NewBlueprintStore, persistence.NewProgressManager |
+| `sprite.MoveTo` | 3 | aiplayer.Tick |
+| `inpututil.JustPressedTouchIDs` | 3 | scene.Update |
 | `e.HasControlImmunity` | 3 | combat.ApplySlow, combat.ApplyStun |
+| `config.GlobalTierPresets` | 3 | descriptor.LoadPrebuiltBlueprintDefs, tower.ApplyRandomStats, tower.RollTowerStats |
+| `gameAudio.NewManager` | 3 | scene.NewGame, scene.NewGameLite, scene.Update |
+| `session.Ruleset` | 3 | scene.NewStageSceneWithOpts |
+| `ApplyDamage` | 3 | combat.ApplyHit, combat.QuickDamage |
+| `LoadSettings` | 3 | scene.NewSettingsScene, scene.Update |
+| `math.Max` | 3 | gamemode.EndExtra, gamemode.HUDExtra, gamemode.TimeScore |
+| `GlobalDescriptorTable` | 3 | descriptor.DeriveAbilityTable, descriptor.GlobalAbilityCosts, descriptor.InitDescriptorAbilities |
+| `json.MarshalIndent` | 3 | learning.MarshalModel, persistence.Set, scene.SaveSettings |
+| `persistence.UnlockRequirement` | 3 | scene.BuildWardenOptions, scene.Draw, scene.Update |
+| `gm.PixelWidth` | 3 | scene.NewStageSceneWithOpts |
+| `NewNetwork` | 3 | learning.DefaultModel |
+| `pool.EachActive` | 3 | enemy.TickBehaviors, tower.FindExtraTargets, tower.FindNearestEnemy |
+| `bubble.Visible` | 3 | aiplayer.Tick |
 | `i18n.Available` | 3 | scene.Draw, scene.NewLangSelectScene, scene.Update |
 
 ## achievement
