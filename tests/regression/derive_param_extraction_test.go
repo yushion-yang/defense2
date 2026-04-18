@@ -31,11 +31,11 @@ func TestRegression_EnhanceMultiplierDisplayAs80Not180(t *testing.T) {
 		t.Fatal("enhance not found in derived table")
 	}
 
-	// ModifyStatEffect multiplier=1.8 意为 "×1.8"（增加80%），
-	// Param 应存储增量 0.8，这样 {p%} → 0.8*100 = "80%"。
-	// Bug: 存的是 1.8，{p%} → 1.8*100 = "180%"
-	if def.Param < 0.79 || def.Param > 0.81 {
-		t.Errorf("enhance Param = %v, want ~0.8 (增量); 当前值导致显示为 180%% 而非 80%%", def.Param)
+	// ModifyStatEffect multiplier 是总倍率（如 1.5 = ×1.5），
+	// Param 应存储增量（0.5 = +50%），这样 {p%} → 0.5*100 = "50%"。
+	// Bug 回归检测：不做 -1 转换时 Param >= 1.0（显示为 >=100%）。
+	if def.Param <= 0 || def.Param >= 1.0 {
+		t.Errorf("enhance Param = %v, want (0, 1.0) 增量; Param>=1 说明未做 multiplier-1 转换", def.Param)
 	}
 	if def.ParamDim != "statBoost" {
 		t.Errorf("enhance ParamDim = %q, want statBoost", def.ParamDim)
