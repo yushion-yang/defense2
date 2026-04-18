@@ -60,6 +60,51 @@ func TestRegression_CritDamageParamNotZero(t *testing.T) {
 	}
 }
 
+// TestRegression_StunChanceDurationNotZero 验证 stunChance 的 Param 应为 0.5（持续秒数），不是 0。
+// 旧值: ScaleDim="chance", Base=0.1, Potential=0.05, Param=0.5, ParamDim="duration"
+func TestRegression_StunChanceDurationNotZero(t *testing.T) {
+	table := descriptor.DeriveAbilityTable()
+	def, ok := table["stunChance"]
+	if !ok {
+		t.Fatal("stunChance not found in derived table")
+	}
+
+	// stunChance: ChanceCondition(rate=linear 0.1/0.05) + StunEffect(duration=fixed 0.5)
+	// ChanceCondition 应填主 scaler（chance），StunEffect 应填 Param（duration）。
+	// Bug: StunEffect 无条件覆盖主 scaler，导致 chance 丢失、Param=0。
+	if def.ScaleDim != "chance" {
+		t.Errorf("stunChance ScaleDim = %q, want chance", def.ScaleDim)
+	}
+	if def.Param < 0.49 || def.Param > 0.51 {
+		t.Errorf("stunChance Param = %v, want ~0.5 (duration); 0 导致显示 '眩晕0秒'", def.Param)
+	}
+	if def.ParamDim != "duration" {
+		t.Errorf("stunChance ParamDim = %q, want duration", def.ParamDim)
+	}
+}
+
+// TestRegression_StunDurationChanceNotZero 验证 stunDuration 的 Param 应为 0.25（概率），不是 0。
+// 旧值: ScaleDim="duration", Base=0.2, Potential=0.1, Param=0.25, ParamDim="chance"
+func TestRegression_StunDurationChanceNotZero(t *testing.T) {
+	table := descriptor.DeriveAbilityTable()
+	def, ok := table["stunDuration"]
+	if !ok {
+		t.Fatal("stunDuration not found in derived table")
+	}
+
+	// stunDuration: ChanceCondition(rate=fixed 0.25) + StunEffect(duration=linear 0.2/0.1)
+	// StunEffect 的 duration 是主 scaler，ChanceCondition 应填 Param。
+	if def.ScaleDim != "duration" {
+		t.Errorf("stunDuration ScaleDim = %q, want duration", def.ScaleDim)
+	}
+	if def.Base < 0.19 || def.Base > 0.21 {
+		t.Errorf("stunDuration Base = %v, want ~0.2", def.Base)
+	}
+	if def.Param < 0.24 || def.Param > 0.26 {
+		t.Errorf("stunDuration Param = %v, want ~0.25 (chance); 0 导致显示 '有0%%概率'", def.Param)
+	}
+}
+
 // TestRegression_EnhanceRangeParam2NotZero 验证 enhance 的 Param2 应为 0.2（射程+20%），不是 0。
 func TestRegression_EnhanceRangeParam2NotZero(t *testing.T) {
 	table := descriptor.DeriveAbilityTable()

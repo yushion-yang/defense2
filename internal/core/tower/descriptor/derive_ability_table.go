@@ -125,11 +125,37 @@ func extractEffectParams(eff Effect, def *config.AbilityDef) {
 			def.ParamDim = "factor"
 		}
 	case StunEffect:
-		extractScaler(e.Duration, def, true)
-		def.ScaleDim = "duration"
+		// stunChance: chance(linear) 是主 scaler，duration(fixed) 是 param
+		// stunDuration: duration(linear) 是主 scaler，chance(fixed) 是 param
+		// 用 isLinear 判断谁是主 scaler：linear 意味着有成长性，应作主 scaler。
+		if def.ScaleDim == "" || isLinear(e.Duration) {
+			if def.ScaleDim != "" {
+				// 将已有的主 scaler 降级到 param（如 chance 从主→次）
+				def.Param = def.Base
+				def.ParamDim = def.ScaleDim
+				def.Base = 0
+				def.Potential = 0
+			}
+			extractScaler(e.Duration, def, true)
+			def.ScaleDim = "duration"
+		} else {
+			extractScaler(e.Duration, def, false)
+			def.ParamDim = "duration"
+		}
 	case RootEffect:
-		extractScaler(e.Duration, def, true)
-		def.ScaleDim = "duration"
+		if def.ScaleDim == "" || isLinear(e.Duration) {
+			if def.ScaleDim != "" {
+				def.Param = def.Base
+				def.ParamDim = def.ScaleDim
+				def.Base = 0
+				def.Potential = 0
+			}
+			extractScaler(e.Duration, def, true)
+			def.ScaleDim = "duration"
+		} else {
+			extractScaler(e.Duration, def, false)
+			def.ParamDim = "duration"
+		}
 	case DotEffect:
 		extractScaler(e.Value, def, true)
 		switch e.Mode {
