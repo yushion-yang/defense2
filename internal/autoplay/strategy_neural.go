@@ -1,13 +1,18 @@
-// strategy_neural.go — 神经网络驱动的自学习策略。
+// strategy_neural.go — 神经网络驱动的自学习策略，融合领域知识加速收敛。
 //
-// 核心理念：所有决策（建塔位置、塔型选择、升级目标、经济分配、开波时机）
-// 都由 learning.Model 的神经网络评分驱动，不使用硬编码规则。
-// 模型通过 Trainer 的在线学习机制从游戏结果中反向传播更新权重，
-// 形成"自我对弈→获取 reward→更新权重→下一局更好"的训练闭环。
+// 核心理念：用领域知识（chokepoint 放塔、CC+DPS 重叠、激进经济）为神经网络
+// 提供强力先验，使其从第 0 局就能表现出"懂 TD"的水准。
+// 神经网络仍可通过训练在先验基础上发现更优策略。
 //
-// 与 CompetentStrategy 的关键区别：
-//   - CompetentStrategy: 硬编码的建造计划 + 规则引擎（人类经验）
-//   - NeuralStrategy: 神经网络评分 + 最小必要骨架（无硬编码偏好）
+// 编码的关键领域知识：
+//   1. 路径拐点（chokepoint）是最高价值放塔位置（3x 评分加成）
+//   2. Phase 0: CC 放在第一拐点，DPS 紧贴 CC（乘法伤害）
+//   3. 激进经济：花光金币才开波，NEVER delay
+//   4. Reward shaping: 奖励完美波/Boss 存活，惩罚囤金/不建塔
+//
+// 与 CompetentStrategy 的区别：
+//   - CompetentStrategy: 完全硬编码的建造计划 + 规则引擎
+//   - NeuralStrategy: 领域知识先验 + 神经网络评分（可持续学习改进）
 //
 // 训练闭环：
 //   train.go 创建 NeuralStrategy(model) → play → trainer.OnWaveEnd(stats)
@@ -111,6 +116,7 @@ type NeuralStrategy struct {
 	// ── 路径数据缓存 ──
 	allPaths  [][]PathPoint
 	pathPts   []learning.PathPt // learning 包格式的路径点
+	pathBends []PathPoint       // 预计算的路径拐点（chokepoints）
 	initDone  bool
 
 	// ── 节流 ──
@@ -170,6 +176,9 @@ func (s *NeuralStrategy) Init(state *GameState) {
 	s.builtCount = 0
 	s.hasCarry = false
 	s.initDone = false
+	s.allPaths = nil
+	s.pathPts = nil
+	s.pathBends = nil
 	s.lastBuildTick = -100
 	s.lastUpgradeTick = -100
 	s.wavesSinceLastBuild = 0
@@ -596,16 +605,41 @@ func (s *NeuralStrategy) pickTowerType(state *GameState) *TowerDefInfo {
 	return bestDef
 }
 
-// pickBuildCell 用神经网络评分选择最优建造位置。
+// pickBuildCell 用神经网络评分 + 领域知识选择最优建造位置。
 //
-// 特殊处理：建第二座塔（cl_sentinel）时，优先选择距第一座塔（cl_shotgun）
-// 150px 以内的位置，使两塔共享同一杀伤区。
+// 编码的领域知识（在神经网络评分之上叠加）：
+//   - Phase 0 第一座塔（CC）：强制放在第一个路径拐点附近（敌人转弯即被减速）
+//   - Phase 0 第二座塔（DPS）：强制放在第一座塔 100px 以内（CC+DPS 重叠 = 乘法伤害）
+//   - Phase 2 扩张：拐点附近 3x 加成，远离拐点 0.5x 惩罚
 func (s *NeuralStrategy) pickBuildCell(state *GameState, def *TowerDefInfo) (Cell, bool) {
 	if len(state.BuildCells) == 0 {
 		return Cell{}, false
 	}
 
-	// 准备现有塔信息（转换为 learning 包类型）
+	// ── Phase 0 硬编码：CC 在第一拐点、DPS 紧贴 CC ──
+	// 这两个位置永远是最优的，不需要神经网络学习。
+	if s.phase == nPhaseSetup && len(s.pathBends) > 0 {
+		if s.builtCount == 0 {
+			// 第一座塔（CC）：选离第一个拐点最近的格子
+			return s.pickCellNearPoint(state.BuildCells, s.pathBends[0].X, s.pathBends[0].Y)
+		}
+		if s.builtCount == 1 {
+			// 第二座塔（DPS）：选离第一座塔最近且在 100px 以内的格子
+			best, ok := s.pickCellNearPoint(state.BuildCells, s.firstTowerX, s.firstTowerY)
+			if ok {
+				dx := best.X - s.firstTowerX
+				dy := best.Y - s.firstTowerY
+				if dx*dx+dy*dy <= 100*100 {
+					return best, true
+				}
+			}
+			// 100px 内无候选 → 放宽到 150px
+			return s.pickCellNearPointRadius(state.BuildCells, s.firstTowerX, s.firstTowerY, 150)
+		}
+	}
+
+	// ── Phase 2+ 及后续塔：神经网络评分 + 拐点加成 ──
+
 	existingTowers := s.toLearningTowers(state)
 
 	progress := 0.0
@@ -618,23 +652,7 @@ func (s *NeuralStrategy) pickBuildCell(state *GameState, def *TowerDefInfo) (Cel
 		cellSize = state.MapInfo.CellSize
 	}
 
-	// builtCount==1：建第二座塔时，过滤出距第一座塔 150px 以内的候选格子
-	const nearRadius = 150.0
 	candidates := state.BuildCells
-	if s.classicMode && s.builtCount == 1 && s.firstTowerX > 0 {
-		var nearCells []Cell
-		for _, c := range state.BuildCells {
-			dx := c.X - s.firstTowerX
-			dy := c.Y - s.firstTowerY
-			if dx*dx+dy*dy <= nearRadius*nearRadius {
-				nearCells = append(nearCells, c)
-			}
-		}
-		// 有足够近的候选格 → 只从中选；否则回退到全部候选
-		if len(nearCells) > 0 {
-			candidates = nearCells
-		}
-	}
 
 	var bestCell Cell
 	bestScore := math.Inf(-1)
@@ -666,6 +684,21 @@ func (s *NeuralStrategy) pickBuildCell(state *GameState, def *TowerDefInfo) (Cel
 			s.trainer.RecordBuild(feats, score)
 		}
 
+		// ── 领域知识：拐点加成（chokepoint bonus） ──
+		// 路径拐点是敌人停留最久的位置（减速转弯），
+		// 在此放塔 = 每颗子弹命中更多次 = 等效 DPS 翻倍。
+		if len(s.pathBends) > 0 {
+			bendDist := s.distToNearestBend(c.X, c.Y)
+			switch {
+			case bendDist < 100:
+				score *= 3.0 // 拐点 100px 内 = 3 倍价值
+			case bendDist < 200:
+				score *= 2.0 // 拐点 200px 内 = 2 倍价值
+			default:
+				score *= 0.5 // 远离拐点 = 半价（惩罚直线段放塔）
+			}
+		}
+
 		// 探索：小概率加噪声
 		if s.rng.Float64() < neuralExploreRate {
 			score += s.rng.NormFloat64() * 0.1
@@ -679,6 +712,48 @@ func (s *NeuralStrategy) pickBuildCell(state *GameState, def *TowerDefInfo) (Cel
 	}
 
 	return bestCell, found
+}
+
+// pickCellNearPoint 从候选格子中选出离目标点 (tx,ty) 最近的格子。
+func (s *NeuralStrategy) pickCellNearPoint(cells []Cell, tx, ty float64) (Cell, bool) {
+	if len(cells) == 0 {
+		return Cell{}, false
+	}
+	best := cells[0]
+	bestDist := math.Hypot(cells[0].X-tx, cells[0].Y-ty)
+	for _, c := range cells[1:] {
+		d := math.Hypot(c.X-tx, c.Y-ty)
+		if d < bestDist {
+			bestDist = d
+			best = c
+		}
+	}
+	return best, true
+}
+
+// pickCellNearPointRadius 从候选格子中选出离目标点最近且在 radius 以内的格子。
+// 无候选时回退到全局最近。
+func (s *NeuralStrategy) pickCellNearPointRadius(cells []Cell, tx, ty, radius float64) (Cell, bool) {
+	if len(cells) == 0 {
+		return Cell{}, false
+	}
+	var best Cell
+	bestDist := math.MaxFloat64
+	found := false
+
+	for _, c := range cells {
+		d := math.Hypot(c.X-tx, c.Y-ty)
+		if d <= radius && d < bestDist {
+			bestDist = d
+			best = c
+			found = true
+		}
+	}
+	if found {
+		return best, true
+	}
+	// 回退：radius 内无候选，选全局最近
+	return s.pickCellNearPoint(cells, tx, ty)
 }
 
 // ── 升级 ──────────────────────────────────
@@ -928,11 +1003,14 @@ func (s *NeuralStrategy) tryUpgradeWeakest(state *GameState) (Action, bool) {
 	}, true
 }
 
-// shouldStartWave 判断是否应该开波（阶段感知）。
+// shouldStartWave 判断是否应该开波（阶段感知，激进策略）。
 //
-// Phase 0: 不开波直到 CC + DPS 都建好
-// Phase 1: 花光金币升级 carry 后才开波
-// Phase 2: 没有可执行的金币操作时开波
+// 核心原则：NEVER delay — 更快的波次 = 更多金币收入 = 更强防御。
+// 一旦当前阶段的金币操作全部完成，立即开波。
+//
+// Phase 0: CC + DPS 都建好 → 立即开波
+// Phase 1: gold < upgCost（花不起升级费） → 立即开波
+// Phase 2: gold < towerCost AND gold < upgCost → 立即开波
 func (s *NeuralStrategy) shouldStartWave(state *GameState) bool {
 	if len(state.Towers) == 0 {
 		return false
@@ -941,37 +1019,31 @@ func (s *NeuralStrategy) shouldStartWave(state *GameState) bool {
 
 	switch s.phase {
 	case nPhaseSetup:
-		// Phase 0: 两座核心塔都建好才开波
-		if !s.ccBuilt || !s.dpsBuilt {
-			// 但如果买不起也没办法，只能开波
-			if !s.canAfford(state) {
-				return true
-			}
-			return false
+		// Phase 0: 两座核心塔都建好 → 立即开波（不等升级）
+		if s.ccBuilt && s.dpsBuilt {
+			return true
 		}
-		// 两座塔都建好了，花完剩余金币
-		if state.Gold >= upgCost && !s.allTowersMaxed(state) {
-			return false
+		// 买不起塔也只能开波
+		if !s.canAfford(state) {
+			return true
 		}
-		return true
+		return false
 
 	case nPhaseUpgrade:
-		// Phase 1: carry 没满级且还有钱 → 不开波
-		if !s.carryMaxed && state.Gold >= upgCost {
-			return false
+		// Phase 1: 花不起升级费 → 开波赚钱
+		if state.Gold < upgCost || s.carryMaxed {
+			return true
 		}
-		return true
+		return false
 
 	case nPhaseExpand:
-		// Phase 2: 还能升级且有未满级塔 → 不开波
-		if state.Gold >= upgCost && !s.allTowersMaxed(state) {
-			return false
+		// Phase 2: 既买不起塔也升不起级 → 开波
+		canBuild := s.canAfford(state) && len(state.BuildCells) > 0
+		canUpgrade := state.Gold >= upgCost && !s.allTowersMaxed(state)
+		if !canBuild && !canUpgrade {
+			return true
 		}
-		// 还能建新塔 → 不开波
-		if s.canAfford(state) && len(state.BuildCells) > 0 {
-			return false
-		}
-		return true
+		return false
 	}
 
 	return true
@@ -1095,12 +1167,16 @@ func (s *NeuralStrategy) extractEconFeatures(state *GameState) learning.FeatureV
 
 // ── 训练回调 ──────────────────────────────────
 
-// onWaveChange 波次变化时触发训练 reward（增强版）。
+// onWaveChange 波次变化时触发训练 reward（增强版领域知识 shaping）。
 //
-// 额外 reward shaping：
-//   - Boss 波存活: +5（vs 普通波 +1）
-//   - 完美波（零泄漏）: +2
-//   - 阶段转换早期完成: +1
+// 正向 reward（教导正确行为）：
+//   - 存活一波: +2
+//   - 完美波（零泄漏）: +3
+//   - Boss 波存活: +5
+//
+// 负向 reward（惩罚错误行为）：
+//   - wave > 1 但没建塔: -5（没在建设）
+//   - wave > 2 且金币 > 150: -3（囤金不花）
 func (s *NeuralStrategy) onWaveChange(state *GameState) {
 	livesLost := s.lastLives - state.Lives
 	if livesLost < 0 {
@@ -1124,6 +1200,7 @@ func (s *NeuralStrategy) onWaveChange(state *GameState) {
 
 	killsThisWave := state.TotalKills - s.lastKills
 
+	// ── 基础 reward: 波次结果 ──
 	s.trainer.OnWaveEnd(learning.WaveStats{
 		WaveNum:       s.lastWave,
 		KillsThisWave: killsThisWave,
@@ -1131,21 +1208,9 @@ func (s *NeuralStrategy) onWaveChange(state *GameState) {
 		LivesAfter:    state.Lives,
 	})
 
-	// ── 额外 reward shaping ──
+	// ── 正向 reward shaping ──
 
-	// Boss 波存活奖励（大幅强化）
-	wasBossWave := s.bossEvery > 0 && s.lastWave > 0 && s.lastWave%s.bossEvery == 0
-	if wasBossWave && livesLost == 0 {
-		// Boss 波完美通过：额外 +5 reward
-		s.trainer.OnWaveEnd(learning.WaveStats{
-			WaveNum:       s.lastWave,
-			KillsThisWave: killsThisWave,
-			LivesBefore:   state.Lives, // 无损失
-			LivesAfter:    state.Lives,
-		})
-	}
-
-	// 完美波奖励（零泄漏）
+	// 存活一波: 额外 +2 reward（重复调用 OnWaveEnd 以叠加 reward）
 	if livesLost == 0 && killsThisWave > 0 {
 		s.trainer.OnWaveEnd(learning.WaveStats{
 			WaveNum:       s.lastWave,
@@ -1153,6 +1218,56 @@ func (s *NeuralStrategy) onWaveChange(state *GameState) {
 			LivesBefore:   state.Lives,
 			LivesAfter:    state.Lives,
 		})
+	}
+
+	// 完美波奖励（零泄漏，叠加上面的存活奖励 = +3 总额外）
+	if livesLost == 0 && killsThisWave > 0 {
+		s.trainer.OnWaveEnd(learning.WaveStats{
+			WaveNum:       s.lastWave,
+			KillsThisWave: killsThisWave,
+			LivesBefore:   state.Lives,
+			LivesAfter:    state.Lives,
+		})
+	}
+
+	// Boss 波存活奖励: 额外 +5（Boss 波是关键检验点）
+	wasBossWave := s.bossEvery > 0 && s.lastWave > 0 && s.lastWave%s.bossEvery == 0
+	if wasBossWave && livesLost == 0 {
+		for range 3 {
+			s.trainer.OnWaveEnd(learning.WaveStats{
+				WaveNum:       s.lastWave,
+				KillsThisWave: killsThisWave,
+				LivesBefore:   state.Lives,
+				LivesAfter:    state.Lives,
+			})
+		}
+	}
+
+	// ── 负向 reward shaping（惩罚错误行为加速收敛） ──
+
+	// wave > 1 但没建塔: -5（AI 应该尽早建设）
+	if s.lastWave > 1 && len(state.Towers) == 0 {
+		// 伪造大量生命损失以产生负 reward
+		for range 3 {
+			s.trainer.OnWaveEnd(learning.WaveStats{
+				WaveNum:       s.lastWave,
+				KillsThisWave: 0,
+				LivesBefore:   20,
+				LivesAfter:    15,
+			})
+		}
+	}
+
+	// wave > 2 且金币 > 150: -3（囤金不花 = 浪费经济优势）
+	if s.lastWave > 2 && state.Gold > 150 {
+		for range 2 {
+			s.trainer.OnWaveEnd(learning.WaveStats{
+				WaveNum:       s.lastWave,
+				KillsThisWave: 0,
+				LivesBefore:   20,
+				LivesAfter:    17,
+			})
+		}
 	}
 }
 
@@ -1183,7 +1298,7 @@ func (s *NeuralStrategy) Trainer() *learning.Trainer {
 
 // ── 辅助函数 ──────────────────────────────────
 
-// initPaths 初始化路径数据缓存。
+// initPaths 初始化路径数据缓存并预计算路径拐点。
 func (s *NeuralStrategy) initPaths(state *GameState) {
 	mi := state.MapInfo
 	if mi == nil {
@@ -1206,6 +1321,81 @@ func (s *NeuralStrategy) initPaths(state *GameState) {
 			s.pathPts = append(s.pathPts, learning.PathPt{X: wp.X, Y: wp.Y})
 		}
 	}
+
+	// 预计算所有路径的拐点（chokepoints）——
+	// 拐点是敌人必须减速转弯的位置，是塔防最高价值放置点。
+	s.pathBends = nil
+	for _, path := range s.allPaths {
+		bends := findPathBends(path)
+		s.pathBends = append(s.pathBends, bends...)
+	}
+}
+
+// findPathBends 检测路径中方向变化超过 30° 的拐点。
+// 算法与 competent strategy 的 findCorners 一致：计算相邻线段的夹角。
+func findPathBends(wps []PathPoint) []PathPoint {
+	if len(wps) < 3 {
+		return nil
+	}
+	const angleThresh = 30.0 * math.Pi / 180.0
+	var bends []PathPoint
+
+	for i := 1; i < len(wps)-1; i++ {
+		// 向量: prev→curr, curr→next
+		dx1 := wps[i].X - wps[i-1].X
+		dy1 := wps[i].Y - wps[i-1].Y
+		dx2 := wps[i+1].X - wps[i].X
+		dy2 := wps[i+1].Y - wps[i].Y
+
+		mag1 := math.Sqrt(dx1*dx1 + dy1*dy1)
+		mag2 := math.Sqrt(dx2*dx2 + dy2*dy2)
+		if mag1 < 1e-6 || mag2 < 1e-6 {
+			continue
+		}
+
+		dot := dx1*dx2 + dy1*dy2
+		cosAngle := dot / (mag1 * mag2)
+		// clamp [-1, 1]
+		if cosAngle > 1 {
+			cosAngle = 1
+		}
+		if cosAngle < -1 {
+			cosAngle = -1
+		}
+		angle := math.Acos(cosAngle)
+		if angle > angleThresh {
+			bends = append(bends, wps[i])
+		}
+	}
+	return bends
+}
+
+// distToNearestBend 计算点 (x,y) 到最近拐点的距离。
+// 无拐点时返回 math.MaxFloat64。
+func (s *NeuralStrategy) distToNearestBend(x, y float64) float64 {
+	best := math.MaxFloat64
+	for _, b := range s.pathBends {
+		d := math.Hypot(x-b.X, y-b.Y)
+		if d < best {
+			best = d
+		}
+	}
+	return best
+}
+
+// nearestBend 返回离 (x,y) 最近的拐点，以及距离。
+// 无拐点时返回零值和 MaxFloat64。
+func (s *NeuralStrategy) nearestBend(x, y float64) (PathPoint, float64) {
+	best := math.MaxFloat64
+	var pt PathPoint
+	for _, b := range s.pathBends {
+		d := math.Hypot(x-b.X, y-b.Y)
+		if d < best {
+			best = d
+			pt = b
+		}
+	}
+	return pt, best
 }
 
 // toLearningTowers 将 GameState 中的塔转换为 learning 包类型。
