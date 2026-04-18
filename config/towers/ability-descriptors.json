@@ -439,12 +439,8 @@
           },
           "effects": [
             {
-              "type": "damage",
-              "mode": "ratio",
-              "value": {
-                "scaler": "fixed",
-                "value": 1.0
-              }
+              "type": "crit",
+              "multiplier": 2.0
             }
           ]
         }

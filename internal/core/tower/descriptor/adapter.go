@@ -76,6 +76,9 @@ func AdaptToHitResult(results []EffectResult) *tower.HitResult {
 		case EffTypeCrit:
 			hasEffect = true
 			hr.IsCrit = true
+			if r.Damage > 0 {
+				hr.BonusDamage += r.Damage
+			}
 
 		case EffTypeRoot:
 			hasEffect = true
@@ -111,6 +114,70 @@ func AdaptToHitResult(results []EffectResult) *tower.HitResult {
 		return nil
 	}
 	return &hr
+}
+
+// TrySynthSplash 检测描述符是否为 splash 模式（onHit + aoeRadius + damage ratio），
+// 如果是则直接合成 HitResult.Splash，不走 interpreter 的 per-target 路径。
+// 返回 nil 表示不是 splash 模式。
+//
+// 设计原因：onHit 上下文没有 Enemies 池（只有被命中的单个敌人），
+// aoeRadius selector 无法查询范围内敌人。而战斗管线的 applyHitEffectsUnified
+// 已有完整的溅射逻辑（递归 ApplyHit、VFX、击杀统计），
+// 合成 HitResult.Splash 复用现有管线是最安全的做法。
+func TrySynthSplash(desc *AbilityDescriptor, strength float64) *tower.HitResult {
+	for _, p := range desc.Pipelines {
+		if p.Trigger != TriggerOnHit {
+			continue
+		}
+		aoe, ok := p.Selector.(AoeRadiusSelector)
+		if !ok {
+			continue
+		}
+		// 找第一个 DamageEffect(ratio) 作为溅射比例
+		for _, eff := range p.Effects {
+			dmg, ok := eff.(DamageEffect)
+			if !ok || dmg.Mode != DmgRatio {
+				continue
+			}
+			radius := aoe.Radius.Calc(strength)
+			ratio := dmg.Value.Calc(strength)
+			return &tower.HitResult{
+				Splash: &tower.SplashEffect{
+					Radius: radius,
+					Ratio:  ratio,
+				},
+			}
+		}
+	}
+	return nil
+}
+
+// TrySynthBounce 检测描述符是否为 bounce 模式（onHit + chain selector + damage ratio），
+// 如果是则直接合成 HitResult.Bounce。与 TrySynthSplash 同理：
+// onHit 上下文没有 Enemies 池，ChainSelector 无法查询附近敌人。
+func TrySynthBounce(desc *AbilityDescriptor, strength, towerDamage float64) *tower.HitResult {
+	for _, p := range desc.Pipelines {
+		if p.Trigger != TriggerOnHit {
+			continue
+		}
+		chain, ok := p.Selector.(ChainSelector)
+		if !ok {
+			continue
+		}
+		maxBounces := int(chain.MaxBounce.Calc(strength))
+		if maxBounces < 1 {
+			maxBounces = 1
+		}
+		return &tower.HitResult{
+			Bounce: &tower.BounceEffect{
+				MaxBounces:  maxBounces,
+				Range:       chain.ChainRange,
+				DamageRatio: chain.DecayRatio,
+				SrcDamage:   towerDamage,
+			},
+		}
+	}
+	return nil
 }
 
 // AdaptToTickResult 将描述符引擎的效果列表转为 tick 管线的 TickResult。

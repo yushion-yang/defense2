@@ -296,8 +296,14 @@ func ApplyPresetAbilities(t *Tower, abilities []string) {
 			// enhance 与攻击能力同槽冲突，跳过 AddAbility；属性加成由末尾统一处理
 			continue
 		}
-		t.AddAbility(abil)
+		if !t.AddAbility(abil) {
+			// slot 冲突（同 category 已有能力），预制塔允许同 category 多能力共存，
+			// 绕过 slot 限制直接追加到 Abilities 列表。
+			t.Abilities = append(t.Abilities, abil)
+		}
 	}
+	// 刷新统一能力列表（AllAbilities 合并 slots + Abilities 去重）
+	t.Abilities = t.AllAbilities()
 	// 恢复配置中的名称和精灵（AddAbility 推断的值不适用于经典预设塔）
 	t.Label = savedLabel
 	if t.SpriteKeyOverride != "" {
