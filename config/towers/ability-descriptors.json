@@ -96,6 +96,10 @@
           "scaler": "linear",
           "base": 6,
           "potential": 1
+        },
+        "rangeMult": {
+          "scaler": "fixed",
+          "value": 3
         }
       },
       "pipelines": [],
@@ -234,6 +238,10 @@
           "scaler": "linear",
           "base": 4,
           "potential": 1
+        },
+        "rangeMult": {
+          "scaler": "fixed",
+          "value": 1.2
         }
       },
       "pipelines": [],
@@ -253,7 +261,7 @@
       "attackParams": {
         "bullets": {
           "scaler": "linear",
-          "base": 1,
+          "base": 2,
           "potential": 1
         },
         "damageRatio": {

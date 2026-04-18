@@ -109,6 +109,11 @@ func extractEffectParams(eff Effect, def *config.AbilityDef) {
 				def.ParamDim = "hpPercent"
 			}
 		}
+		// distanceDamage 的 DistanceStep 放入 Param（距离缩放步长）
+		if e.DistanceStep > 0 && def.Param == 0 {
+			def.Param = e.DistanceStep
+			def.ParamDim = "stepDist"
+		}
 	case SlowEffect:
 		// slowPower: factor 是主 scaler，duration 是参数
 		// slowDuration: duration 是主 scaler，factor 是参数
@@ -229,6 +234,12 @@ func extractConditionParams(cond Condition, def *config.AbilityDef) {
 	case NoNearbyTowerCondition:
 		def.Param = c.Radius
 		def.ParamDim = "checkRadius"
+	case HpBelowCondition:
+		// executionBonus 等能力：hpBelow 阈值放到 Param 次要槽位
+		if def.Param == 0 {
+			extractScaler(c.Threshold, def, false)
+			def.ParamDim = "hpThreshold"
+		}
 	}
 }
 
@@ -382,6 +393,8 @@ func attackStyleSecondaryParams(style string) []string {
 		// barrageParams() 读取: Param=damageRatio, Param2=burstDelay
 		return []string{"damageRatio", "burstDelay"}
 	case "radial":
+		return []string{"rangeMult"}
+	case "wideBeam":
 		return []string{"rangeMult"}
 	default:
 		return nil

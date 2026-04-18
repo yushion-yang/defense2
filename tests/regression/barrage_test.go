@@ -36,7 +36,7 @@ func TestBarrage_AbilityInAttackCategory(t *testing.T) {
 }
 
 // TestBarrage_CalcScale_Bullets verifies bullet count scaling:
-// str=100 → 2, str=200 → 3, str=300 → 4.
+// base=2, potential=1 → str=100→3, str=200→4, str=300→5, str=50→2.
 func TestBarrage_CalcScale_Bullets(t *testing.T) {
 	table := config.GlobalAbilityTable()
 	if table == nil {
@@ -51,10 +51,10 @@ func TestBarrage_CalcScale_Bullets(t *testing.T) {
 		str     float64
 		bullets int
 	}{
-		{100, 2},
-		{200, 3},
-		{300, 4},
-		{50, 1},
+		{100, 3},
+		{200, 4},
+		{300, 5},
+		{50, 2},
 	}
 	for _, tt := range tests {
 		got := int(math.Floor(def.CalcScale(tt.str)))
@@ -171,9 +171,9 @@ func TestBarrage_BurstFiresMultipleProjectiles(t *testing.T) {
 		}
 	}
 
-	// At str=100, expect 2 bullets → 2 projectiles
-	if projPool.Count < 2 {
-		t.Errorf("expected at least 2 projectiles from barrage burst, got %d", projPool.Count)
+	// At str=100, expect 3 bullets → 3 projectiles (base=2, potential=1)
+	if projPool.Count < 3 {
+		t.Errorf("expected at least 3 projectiles from barrage burst, got %d", projPool.Count)
 	}
 	t.Logf("barrage burst created %d projectiles", projPool.Count)
 }
