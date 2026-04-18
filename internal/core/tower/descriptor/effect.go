@@ -15,9 +15,12 @@ type Effect interface {
 // ── 具体效果类型 ────────────────────────────────────────
 
 // DamageEffect 直接伤害效果。
+// DistanceStep > 0 时启用距离缩放：伤害 × (距离 / DistanceStep)，
+// 用于 distanceDamage 类能力（越远伤害越高）。
 type DamageEffect struct {
-	Mode  DamageMode
-	Value Scaler
+	Mode         DamageMode
+	Value        Scaler
+	DistanceStep float64 // 距离缩放步长（像素），0 表示不缩放
 }
 
 func (e DamageEffect) Apply(ctx EffectCtx) EffectResult {
@@ -30,6 +33,10 @@ func (e DamageEffect) Apply(ctx EffectCtx) EffectResult {
 		dmg = v * ctx.TowerDamage
 	case DmgHpPercent:
 		dmg = v * ctx.TargetMaxHp
+	}
+	// 距离缩放：伤害与距离成正比（步距越大单步加成越小）
+	if e.DistanceStep > 0 && ctx.TargetDistance > 0 {
+		dmg *= ctx.TargetDistance / e.DistanceStep
 	}
 	return EffectResult{Type: EffTypeDamage, Damage: dmg, DamageMode: e.Mode}
 }

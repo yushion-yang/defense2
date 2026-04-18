@@ -53,6 +53,7 @@ func (a *descriptorAbilityBase) buildHitTriggerContext(
 			MaxHp:   e.MaxHP,
 			Active:  true,
 			Index:   e.ID,
+			IsBoss:  e.Boss,
 		}
 		ctx.TargetEnemy = &ref
 		ctx.HitX = e.X
@@ -275,6 +276,32 @@ func applyTickBuffEffects(self *tower.Tower, ctx *tower.TickContext, results []E
 					}
 				}
 			})
+
+		case EffTypeDot:
+			// 区域 DoT（poisonZone）：通过 ZoneDmgAccum 每帧累积，由 DotTick pipeline 结算。
+			// DotValue 是 DPS，每帧累积 DPS * DT。
+			if ctx.Enemies == nil {
+				continue
+			}
+			idx := r.TargetEnemyIdx
+			ctx.Enemies.EachActive(func(e *enemy.Enemy) {
+				if e.ID == idx {
+					e.ZoneDmgAccum += r.DotValue * ctx.DT
+				}
+			})
+
+		case EffTypeDamage:
+			// 区域伤害（curseZone）：通过 ZoneDmgAccum 每帧累积。
+			// Damage 已由 Effect.Apply 计算好（如 %HP 模式 = maxHP * ratio）。
+			if ctx.Enemies == nil {
+				continue
+			}
+			idx := r.TargetEnemyIdx
+			ctx.Enemies.EachActive(func(e *enemy.Enemy) {
+				if e.ID == idx {
+					e.ZoneDmgAccum += r.Damage * ctx.DT
+				}
+			})
 		}
 	}
 }
@@ -343,6 +370,7 @@ func enemyToRef(e *enemy.Enemy) EnemyRef {
 		HpRatio: safeHpRatio(e.HP, e.MaxHP),
 		MaxHp:   e.MaxHP,
 		Active:  true,
+		IsBoss:  e.Boss,
 	}
 }
 
