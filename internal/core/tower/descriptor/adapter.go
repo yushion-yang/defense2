@@ -76,6 +76,9 @@ func AdaptToHitResult(results []EffectResult) *tower.HitResult {
 		case EffTypeCrit:
 			hasEffect = true
 			hr.IsCrit = true
+			if r.Damage > 0 {
+				hr.BonusDamage += r.Damage
+			}
 
 		case EffTypeRoot:
 			hasEffect = true

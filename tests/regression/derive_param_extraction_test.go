@@ -50,13 +50,11 @@ func TestRegression_CritDamageParamNotZero(t *testing.T) {
 		t.Fatal("crit not found in derived table")
 	}
 
-	// crit 管线: ChanceCondition(rate=linear) + DamageEffect(ratio, value=1.0)
-	// ChanceCondition 填充了 ScaleDim="chance"，之后 DamageEffect 应将 value 放入 Param。
-	// Bug: DamageEffect 检查 ScaleDim != "" 后整个跳过，Param 留在 0。
-	// DamageEffect ratio value=1.0 表示额外 100% 伤害，Param 存的就是 1.0。
-	// display 模板 "造成{p}倍暴击" 中 {p}=1.0 意为"额外 1 倍伤害"（即总共 2 倍）。
-	if def.Param < 0.99 || def.Param > 1.01 {
-		t.Errorf("crit Param = %v, want ~1.0 (额外倍率); 0 导致显示 '造成0倍暴击'", def.Param)
+	// crit 管线: ChanceCondition(rate=linear) + CritEffect(multiplier=2.0)
+	// ChanceCondition 填充了 ScaleDim="chance"，CritEffect 将 multiplier 放入 Param。
+	// display 模板 "造成{p}倍暴击" 中 {p}=2.0 意为"造成 2 倍暴击伤害"。
+	if def.Param < 1.99 || def.Param > 2.01 {
+		t.Errorf("crit Param = %v, want ~2.0 (暴击倍率); 0 导致显示 '造成0倍暴击'", def.Param)
 	}
 }
 

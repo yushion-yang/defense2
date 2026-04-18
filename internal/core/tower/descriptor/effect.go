@@ -178,11 +178,15 @@ type CritEffect struct {
 	Multiplier float64
 }
 
-func (e CritEffect) Apply(_ EffectCtx) EffectResult {
+func (e CritEffect) Apply(ctx EffectCtx) EffectResult {
+	// BonusDamage = (multiplier - 1) × towerDamage，如 2.0 倍暴击 → 额外 100% 伤害
+	bonus := (e.Multiplier - 1) * ctx.TowerDamage
 	return EffectResult{
-		Type:     EffTypeCrit,
-		IsCrit:   true,
-		CritMult: e.Multiplier,
+		Type:       EffTypeCrit,
+		IsCrit:     true,
+		CritMult:   e.Multiplier,
+		Damage:     bonus,
+		DamageMode: DmgRatio,
 	}
 }
 
