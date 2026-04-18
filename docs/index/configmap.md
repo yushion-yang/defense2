@@ -2,17 +2,15 @@
 
 > 自动生成，勿手动编辑。运行 `make index` 更新。
 
-扫描 69 个 JSON 配置文件，找到 643 条映射。
+扫描 66 个 JSON 配置文件，找到 641 条映射。
 
 ## config/ai/weights.json
 
 | JSON 字段 | Go 文件 | 行 | 上下文 |
 |-----------|---------|-----|--------|
-| `episodes` | `internal/core/aiplayer/learning/weights.go` | 197 | Episodes int                    `json:"episodes"`        ... |
-| `networks` | `internal/core/aiplayer/learning/weights.go` | 195 | Networks map[string]*Network    `json:"networks,omitempty... |
-| `networks.upgrade` | `internal/core/aiplayer/learning/weights.go` | 185 | Upgrade []float64 `json:"upgrade"` // 升级评分权重 |
-| `weights` | `internal/core/aiplayer/learning/weights.go` | 28 | Weights [][]float64 `json:"weights"` // [outputSize][inpu... |
-| `weights.upgrade` | `internal/core/aiplayer/learning/weights.go` | 185 | Upgrade []float64 `json:"upgrade"` // 升级评分权重 |
+| `episodes` | `internal/core/aiplayer/learning/weights.go` | 31 | Episodes int       `json:"episodes"` // 已训练的局数 |
+| `weights` | `internal/core/aiplayer/learning/weights.go` | 29 | Weights  WeightSet `json:"weights"` |
+| `weights.upgrade` | `internal/core/aiplayer/learning/weights.go` | 23 | Upgrade []float64 `json:"upgrade"` // 升级评分权重 |
 
 ## config/audio/bgm.json
 
@@ -634,7 +632,7 @@
 
 | JSON 字段 | Go 文件 | 行 | 上下文 |
 |-----------|---------|-----|--------|
-| `formula.potential` | `internal/core/tower/descriptor/derive_ability_table.go` | 278 | Potential float64 `json:"potential"` |
+| `formula.potential` | `internal/core/tower/descriptor/derive_ability_table.go` | 304 | Potential float64 `json:"potential"` |
 | `formula.potential` | `internal/core/tower/descriptor/scaler.go` | 39 | Potential float64 `json:"potential"` |
 | `specialty` | `internal/config/scenario_config.go` | 43 | Specialty       int       `json:"specialty,omitempty"` //... |
 | `specialty` | `internal/core/tower/descriptor/blueprint.go` | 39 | Specialty string `json:"specialty"` |
