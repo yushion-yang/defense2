@@ -101,16 +101,29 @@ type DescriptorAbilityHit struct {
 	descriptorAbilityBase
 }
 
-// OnHit 在弹射物命中敌人时执行 onHit 管线。
-func (a *DescriptorAbilityHit) OnHit(
+// onHitCommon 是 OnHit 的共享实现。
+// 先检测 splash 模式（合成 HitResult.Splash），再走通用 interpreter 路径。
+func (a *descriptorAbilityBase) onHitCommon(
 	t *tower.Tower, p *projectile.Projectile, e *enemy.Enemy,
 ) *tower.HitResult {
+	// splash 模式：aoeRadius selector 在 onHit 上下文无 Enemies 池，
+	// 直接合成 Splash 交给战斗管线处理
+	if hr := TrySynthSplash(a.desc, t.EffectiveStrength()); hr != nil {
+		return hr
+	}
 	ctx := a.buildHitTriggerContext(t, p, e)
 	results := a.interp.ExecOnHit(ctx)
 	if len(results) == 0 {
 		return nil
 	}
 	return AdaptToHitResult(results)
+}
+
+// OnHit 在弹射物命中敌人时执行 onHit 管线。
+func (a *DescriptorAbilityHit) OnHit(
+	t *tower.Tower, p *projectile.Projectile, e *enemy.Enemy,
+) *tower.HitResult {
+	return a.onHitCommon(t, p, e)
 }
 
 // ── DescriptorAbilityFull（Ability + Ticker）─────────────────
@@ -124,12 +137,7 @@ type DescriptorAbilityFull struct {
 func (a *DescriptorAbilityFull) OnHit(
 	t *tower.Tower, p *projectile.Projectile, e *enemy.Enemy,
 ) *tower.HitResult {
-	ctx := a.buildHitTriggerContext(t, p, e)
-	results := a.interp.ExecOnHit(ctx)
-	if len(results) == 0 {
-		return nil
-	}
-	return AdaptToHitResult(results)
+	return a.onHitCommon(t, p, e)
 }
 
 // OnTick 每帧调用，执行 onTick 管线。

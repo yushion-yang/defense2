@@ -115,6 +115,42 @@ func AdaptToHitResult(results []EffectResult) *tower.HitResult {
 	return &hr
 }
 
+// TrySynthSplash 检测描述符是否为 splash 模式（onHit + aoeRadius + damage ratio），
+// 如果是则直接合成 HitResult.Splash，不走 interpreter 的 per-target 路径。
+// 返回 nil 表示不是 splash 模式。
+//
+// 设计原因：onHit 上下文没有 Enemies 池（只有被命中的单个敌人），
+// aoeRadius selector 无法查询范围内敌人。而战斗管线的 applyHitEffectsUnified
+// 已有完整的溅射逻辑（递归 ApplyHit、VFX、击杀统计），
+// 合成 HitResult.Splash 复用现有管线是最安全的做法。
+func TrySynthSplash(desc *AbilityDescriptor, strength float64) *tower.HitResult {
+	for _, p := range desc.Pipelines {
+		if p.Trigger != TriggerOnHit {
+			continue
+		}
+		aoe, ok := p.Selector.(AoeRadiusSelector)
+		if !ok {
+			continue
+		}
+		// 找第一个 DamageEffect(ratio) 作为溅射比例
+		for _, eff := range p.Effects {
+			dmg, ok := eff.(DamageEffect)
+			if !ok || dmg.Mode != DmgRatio {
+				continue
+			}
+			radius := aoe.Radius.Calc(strength)
+			ratio := dmg.Value.Calc(strength)
+			return &tower.HitResult{
+				Splash: &tower.SplashEffect{
+					Radius: radius,
+					Ratio:  ratio,
+				},
+			}
+		}
+	}
+	return nil
+}
+
 // AdaptToTickResult 将描述符引擎的效果列表转为 tick 管线的 TickResult。
 // Gold 通过 TickResult 传递给管线。
 // Buff/SelfBuff/Silence/Weaken/Root 等效果由 applyTickBuffEffects 直接应用，
