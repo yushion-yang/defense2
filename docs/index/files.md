@@ -2,7 +2,7 @@
 
 > 自动生成，勿手动编辑。运行 `make index` 更新。
 
-共 293 个文件, 75593 行代码, 47 个包。
+共 293 个文件, 75710 行代码, 47 个包。
 
 ## achievement (215 行)
 
@@ -127,23 +127,23 @@
 |------|------|------|
 | `perf.go` | 162 | frame time + GC performance tracker. |
 
-## descriptor (5820 行)
+## descriptor (5929 行)
 
 | 文件 | 行数 | 职责 |
 |------|------|------|
 | `ability_store.go` | 158 | 自定义能力持久化存储（CRUD）。 |
-| `adapter.go` | 145 | EffectResult → HitResult/TickResult 适配层。 |
+| `adapter.go` | 212 | EffectResult → HitResult/TickResult 适配层。 |
 | `blueprint.go` | 134 | 定制炮塔蓝图数据结构与校验。 |
 | `blueprint_store.go` | 146 | 蓝图持久化存储（CRUD）。 |
 | `blueprint_to_def.go` | 128 | 蓝图→塔定义转换。 |
 | `budget.go` | 94 | 预算计算系统。 |
 | `condition.go` | 221 | 条件门接口及 11 种内置条件类型。 |
-| `derive_ability_table.go` | 386 | 从描述符自动派生 AbilityDef 元数据表。 |
+| `derive_ability_table.go` | 412 | 从描述符自动派生 AbilityDef 元数据表。 |
 | `describe.go` | 271 | 从能力描述符生成人类可读的中文描述。 |
 | `descriptor.go` | 702 | 能力描述符 JSON 模式与解析器。 |
-| `descriptor_ability.go` | 375 | 描述符驱动能力的 tower.Ability/Ticker 适配器。 |
+| `descriptor_ability.go` | 387 | 描述符驱动能力的 tower.Ability/Ticker 适配器。 |
 | `edit_state.go` | 731 | EditState ↔ AbilityDescriptor 双向转换。 |
-| `effect.go` | 213 | 效果接口及 13 种具体效果实现。 |
+| `effect.go` | 217 | 效果接口及 13 种具体效果实现。 |
 | `effect_result.go` | 96 | 统一效果输出结构与上下文。 |
 | `init.go` | 69 | 描述符能力的双轨注册初始化。 |
 | `interpreter.go` | 218 | 描述符运行时解释器。 |
@@ -302,12 +302,12 @@
 |------|------|------|
 | `tower_loader.go` | 132 | 塔配置→运行时定义转换器。 |
 
-## main (1252 行)
+## main (1254 行)
 
 | 文件 | 行数 | 职责 |
 |------|------|------|
 | `main.go` | 504 | AutoPlay 自动对局工具入口（无头模式批量跑关卡）。 |
-| `train.go` | 244 | AI 自我对弈训练管线。 |
+| `train.go` | 246 | AI 自我对弈训练管线。 |
 | `visual.go` | 78 | 可视化自动对局模式。 |
 | `main.go` | 42 | 游戏入口（桌面 + WASM 通用）。 |
 | `main.go` | 384 | 写入 OP 测试用自定义能力和蓝图到 ~/.defense2/。 |
@@ -468,7 +468,7 @@
 |------|------|------|
 | `timescale.go` | 105 | - |
 
-## tower (1681 行)
+## tower (1687 行)
 
 | 文件 | 行数 | 职责 |
 |------|------|------|
@@ -479,7 +479,7 @@
 | `randomize.go` | 153 | 塔随机属性生成与能力解锁顺序随机化。 |
 | `targeting.go` | 110 | 塔索敌逻辑。 |
 | `tower.go` | 311 | 塔实体定义。 |
-| `upgrade.go` | 482 | 塔能力槽解锁与选择系统。 |
+| `upgrade.go` | 488 | 塔能力槽解锁与选择系统。 |
 
 ## tutorial (151 行)
 
