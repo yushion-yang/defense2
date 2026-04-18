@@ -415,8 +415,9 @@ type selectorRandomRaw struct {
 
 // effectDamageRaw damage 效果的 JSON 参数。
 type effectDamageRaw struct {
-	Mode  string          `json:"mode"`
-	Value json.RawMessage `json:"value"`
+	Mode         string          `json:"mode"`
+	Value        json.RawMessage `json:"value"`
+	DistanceStep float64         `json:"distanceStep"` // 距离缩放步长（像素），0=不缩放
 }
 
 // effectSlowRaw slow 效果的 JSON 参数。
@@ -514,7 +515,7 @@ func parseDamageEffect(data json.RawMessage) (Effect, error) {
 	if err != nil {
 		return nil, fmt.Errorf("damage.value: %w", err)
 	}
-	return DamageEffect{Mode: mode, Value: value}, nil
+	return DamageEffect{Mode: mode, Value: value, DistanceStep: raw.DistanceStep}, nil
 }
 
 func parseSlowEffect(data json.RawMessage) (Effect, error) {

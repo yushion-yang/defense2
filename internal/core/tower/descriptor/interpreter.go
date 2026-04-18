@@ -136,6 +136,7 @@ func buildConditionCtx(ctx TriggerContext) ConditionCtx {
 	if ctx.TargetEnemy != nil {
 		cc.TargetHpRatio = ctx.TargetEnemy.HpRatio
 		cc.TargetDistance = distance(ctx.TowerX, ctx.TowerY, ctx.TargetEnemy.X, ctx.TargetEnemy.Y)
+		cc.IsBoss = ctx.TargetEnemy.IsBoss
 	}
 
 	return cc
@@ -168,8 +169,9 @@ func buildSelectorCtx(ctx TriggerContext) SelectorCtx {
 // 回退到 TriggerContext 中的主目标 MaxHp（CurrentTargetSelector 场景）。
 func buildEffectCtx(ctx TriggerContext, tgt Target) EffectCtx {
 	effCtx := EffectCtx{
-		Strength:    ctx.Strength,
-		TowerDamage: ctx.TowerDamage,
+		Strength:       ctx.Strength,
+		TowerDamage:    ctx.TowerDamage,
+		TargetDistance: distance(ctx.TowerX, ctx.TowerY, tgt.X, tgt.Y),
 	}
 	// 优先使用 target 自身携带的 MaxHp（AOE/连锁等选择器会填充每个目标的 MaxHp）
 	if tgt.MaxHp > 0 {

@@ -90,7 +90,8 @@ type EffectResult struct {
 // EffectCtx 效果执行上下文。
 // 由调用方在命中/tick 时构造，提供 Effect.Apply 所需的运行时数据。
 type EffectCtx struct {
-	Strength    float64 // 塔的当前强度值
-	TowerDamage float64 // 塔的当前伤害值
-	TargetMaxHp float64 // 目标的最大生命值
+	Strength       float64 // 塔的当前强度值
+	TowerDamage    float64 // 塔的当前伤害值
+	TargetMaxHp    float64 // 目标的最大生命值
+	TargetDistance float64 // 塔到目标的距离（像素，供距离缩放效果使用）
 }

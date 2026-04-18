@@ -21,6 +21,7 @@ type EnemyRef struct {
 	HpRatio float64
 	MaxHp   float64
 	Active  bool
+	IsBoss  bool
 }
 
 // TowerRef 塔引用，轻量值类型用于 Selector 查询。

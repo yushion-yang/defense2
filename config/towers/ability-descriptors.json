@@ -471,7 +471,8 @@
                 "scaler": "linear",
                 "base": 0.1,
                 "potential": 0.05
-              }
+              },
+              "distanceStep": 150
             }
           ]
         }
@@ -826,7 +827,11 @@
       "pipelines": [
         {
           "trigger": "onHit",
-          "conditions": [],
+          "conditions": [
+            {
+              "type": "notBoss"
+            }
+          ],
           "selector": {
             "type": "currentTarget"
           },
