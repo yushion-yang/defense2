@@ -366,6 +366,35 @@ func TestAIItemFields(t *testing.T) {
 	}
 }
 
+// ── 战灵选择测试 ──
+
+func TestEvaluate_WardenReadySkipsWardenSelection(t *testing.T) {
+	e := testEngine()
+	snap := testSnap()
+	snap.WardenReady = true // 战灵已选择（或被禁用）
+	snap.AllTowers = snap.Towers
+
+	d := e.Evaluate(snap)
+	if d.Type == DecisionSelectWarden {
+		t.Fatal("AI should not select warden when WardenReady=true")
+	}
+}
+
+func TestEvaluate_WardenNotReadySelectsWarden(t *testing.T) {
+	e := testEngine()
+	snap := testSnap()
+	snap.WardenReady = false // 战灵未选择
+	snap.AllTowers = snap.Towers
+
+	d := e.Evaluate(snap)
+	if d.Type != DecisionSelectWarden {
+		t.Fatalf("AI should select warden when WardenReady=false, got type=%d", d.Type)
+	}
+	if d.WardenKey == "" {
+		t.Fatal("AI should choose a warden key")
+	}
+}
+
 // ── DecisionType 枚举测试 ──
 
 func TestDecisionTypes(t *testing.T) {

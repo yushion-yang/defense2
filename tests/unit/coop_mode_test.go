@@ -22,10 +22,17 @@ func TestCoopModeNoAutoStart(t *testing.T) {
 	}
 }
 
-func TestCoopModeWardenEnabled(t *testing.T) {
+func TestCoopModeWardenDisabled(t *testing.T) {
 	m := gamemode.GetOrDefault("coop")
-	if !m.Ruleset().WardenEnabled() {
-		t.Error("coop should enable wardens")
+	if m.Ruleset().WardenEnabled() {
+		t.Error("coop should not enable wardens (players share gold, no individual warden)")
+	}
+}
+
+func TestCoopModeGoldShareEnabled(t *testing.T) {
+	m := gamemode.GetOrDefault("coop")
+	if !m.Ruleset().GoldShare() {
+		t.Error("coop should enable gold sharing (all players receive equal gold)")
 	}
 }
 

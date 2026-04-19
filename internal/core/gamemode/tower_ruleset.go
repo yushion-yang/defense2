@@ -44,15 +44,19 @@ type TowerRuleset interface {
 
 	// CustomBudgetCap 自定义蓝图的预算上限覆盖（-1 = 用默认值）。
 	CustomBudgetCap() int
+
+	// GoldShare 是否启用金币共享（合作模式：击杀/产金所有玩家等额获得）。
+	GoldShare() bool
 }
 
 // baseTowerRuleset 默认实现（= campaign 行为）。
 type baseTowerRuleset struct{}
 
-func (baseTowerRuleset) UsePresetTowers() bool      { return false }
-func (baseTowerRuleset) IncludePresetTowers() bool  { return false }
-func (baseTowerRuleset) ItemDropMode() ItemDropMode { return ItemDropProbability }
-func (baseTowerRuleset) UseClassicWaves() bool      { return false }
-func (baseTowerRuleset) WardenEnabled() bool        { return true }
+func (baseTowerRuleset) UsePresetTowers() bool       { return false }
+func (baseTowerRuleset) IncludePresetTowers() bool   { return false }
+func (baseTowerRuleset) ItemDropMode() ItemDropMode  { return ItemDropProbability }
+func (baseTowerRuleset) UseClassicWaves() bool       { return false }
+func (baseTowerRuleset) WardenEnabled() bool         { return true }
 func (baseTowerRuleset) AllowCustomBlueprints() bool { return true }
 func (baseTowerRuleset) CustomBudgetCap() int        { return -1 }
+func (baseTowerRuleset) GoldShare() bool             { return false }

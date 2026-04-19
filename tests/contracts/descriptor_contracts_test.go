@@ -74,7 +74,8 @@ func TestDescriptorIDsMatchAbilityTypes(t *testing.T) {
 	}
 }
 
-// TestDescriptorCount 验证描述符总数恰好为 32（与 abilities.json 中非禁用能力一致）。
+// TestDescriptorCount 验证描述符总数恰好为 35（与 abilities.json 中非禁用能力一致）。
+// 32 基础 + 3 CD 能力（pulseStun, pushField, curseAura）
 func TestDescriptorCount(t *testing.T) {
 	descTable := descriptor.GlobalDescriptorTable()
 	abilityTable := config.GlobalAbilityTable()
@@ -85,8 +86,8 @@ func TestDescriptorCount(t *testing.T) {
 	if descCount != abilityCount {
 		t.Errorf("描述符数=%d ≠ 能力数=%d", descCount, abilityCount)
 	}
-	if descCount != 32 {
-		t.Errorf("描述符数=%d，期望 32", descCount)
+	if descCount != 35 {
+		t.Errorf("描述符数=%d，期望 35", descCount)
 	}
 }
 

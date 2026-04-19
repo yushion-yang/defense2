@@ -79,10 +79,11 @@
       "presetTowers": false,
       "includePresets": false,
       "classicWaves": false,
-      "wardenEnabled": true,
+      "wardenEnabled": false,
       "itemDrop": "probability",
       "blueprints": true,
-      "budgetCap": -1
+      "budgetCap": -1,
+      "goldShare": true
     },
     "score": { "wave": 100, "kill": 10, "leaked": -50 },
     "hooks": [],

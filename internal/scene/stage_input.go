@@ -22,7 +22,6 @@
 package scene
 
 import (
-	"log"
 	"math"
 
 	gameAudio "defense2/internal/audio"
@@ -502,8 +501,6 @@ func (s *StageScene) handleInput() {
 	case modeBuildMenu:
 		// 建塔面板：点击卡片→进入放塔模式，点击关闭/外部→回 idle，点击 tab→切换分类
 		hit := hud.BuildMenuHitTest(ftx, fty, s.buildMenuTotalCards(), s.buildMenuBuildableCount(), s.buildMenuTabCount())
-		log.Printf("[DEBUG-BUILD] tap=(%.0f,%.0f) total=%d buildable=%d tabs=%d hit=card%d/tab%d",
-			ftx, fty, s.buildMenuTotalCards(), s.buildMenuBuildableCount(), s.buildMenuTabCount(), hit.CardIdx, hit.TabIdx)
 		if hit.TabIdx >= 0 {
 			// tab 切换：更新当前 tab，重置 hover/选中状态
 			s.buildMenuTab = hit.TabIdx
@@ -821,8 +818,8 @@ func (s *StageScene) clampCamera() {
 // 优化: 只有一种塔型时跳过菜单直接进入放塔模式（减少一次点击）。
 // 每次打开菜单重置 tab 为"全部"（索引 0）。
 func (s *StageScene) enterBuildMode() {
-	s.selectedDef = -1   // 重置选择，避免上次选取的炮塔高亮残留
-	s.buildMenuTab = 0   // 始终从"全部" tab 开始
+	s.selectedDef = -1 // 重置选择，避免上次选取的炮塔高亮残留
+	s.buildMenuTab = 0 // 始终从"全部" tab 开始
 	if len(s.towerDefs) == 1 {
 		s.selectedDef = 0
 		s.imode = modeBuildPlace
@@ -1090,5 +1087,3 @@ func (s *StageScene) towerAtPixel(px, py float64) *tower.Tower {
 	}
 	return t
 }
-
-

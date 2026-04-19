@@ -4,11 +4,11 @@
 // ExecOnHit / ExecOnTick 两个入口执行对应触发类型的管线。
 //
 // 执行流程（每条 Pipeline）：
-//   1. 匹配 trigger type（跳过不匹配的管线）
-//   2. 构建 ConditionCtx，EvalAll conditions
-//   3. 构建 SelectorCtx，Select targets
-//   4. 对每个 target，构建 EffectCtx，Apply 每个 effect
-//   5. 收集所有 EffectResult
+//  1. 匹配 trigger type（跳过不匹配的管线）
+//  2. 构建 ConditionCtx，EvalAll conditions
+//  3. 构建 SelectorCtx，Select targets
+//  4. 对每个 target，构建 EffectCtx，Apply 每个 effect
+//  5. 收集所有 EffectResult
 //
 // 设计决策：
 //   - TriggerContext 由调用方填充，解释器不持有游戏状态
@@ -45,10 +45,11 @@ type Interpreter struct {
 	pipelines []Pipeline // 从 desc.Pipelines 直接引用
 	hasOnHit  bool
 	hasOnTick bool
+	hasOnKill bool
 }
 
 // NewInterpreter 从 AbilityDescriptor 创建解释器。
-// 预扫描 pipelines 标记 hasOnHit/hasOnTick，避免运行时重复判断。
+// 预扫描 pipelines 标记 hasOnHit/hasOnTick/hasOnKill，避免运行时重复判断。
 func NewInterpreter(desc *AbilityDescriptor) *Interpreter {
 	interp := &Interpreter{
 		desc:      desc,
@@ -60,6 +61,8 @@ func NewInterpreter(desc *AbilityDescriptor) *Interpreter {
 			interp.hasOnHit = true
 		case TriggerOnTick:
 			interp.hasOnTick = true
+		case TriggerOnKill:
+			interp.hasOnKill = true
 		}
 	}
 	return interp
@@ -71,6 +74,9 @@ func (interp *Interpreter) HasOnHit() bool { return interp.hasOnHit }
 // HasOnTick 是否包含 onTick 管线。
 func (interp *Interpreter) HasOnTick() bool { return interp.hasOnTick }
 
+// HasOnKill 是否包含 onKill 管线。
+func (interp *Interpreter) HasOnKill() bool { return interp.hasOnKill }
+
 // ExecOnHit 执行所有 onHit 管线，返回效果列表。
 func (interp *Interpreter) ExecOnHit(ctx TriggerContext) []EffectResult {
 	ctx.Type = TriggerOnHit
@@ -80,6 +86,12 @@ func (interp *Interpreter) ExecOnHit(ctx TriggerContext) []EffectResult {
 // ExecOnTick 执行所有 onTick 管线，返回效果列表。
 func (interp *Interpreter) ExecOnTick(ctx TriggerContext) []EffectResult {
 	ctx.Type = TriggerOnTick
+	return interp.exec(ctx)
+}
+
+// ExecOnKill 执行所有 onKill 管线，返回效果列表。
+func (interp *Interpreter) ExecOnKill(ctx TriggerContext) []EffectResult {
+	ctx.Type = TriggerOnKill
 	return interp.exec(ctx)
 }
 

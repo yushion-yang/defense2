@@ -393,17 +393,20 @@ func TestAdaptToTickResult_Empty(t *testing.T) {
 	}
 }
 
-func TestAdaptToTickResult_IgnoresNonTickEffects(t *testing.T) {
-	// Damage 和 Slow 不是 tick 效果，应被忽略。
-	// Buff 现在由 tick 适配器标记 hasEffect（由 applyTickBuffEffects 处理），
-	// 所以只测试纯非 tick 类型（damage/slow）返回 nil。
+func TestAdaptToTickResult_RecognizesDamageAndSlow(t *testing.T) {
+	// Damage 和 Slow 在 onTick 管线中是有意义的效果类型（区域伤害/区域减速）。
+	// 它们由 applyTickBuffEffects 直接处理，所以 AdaptToTickResult 返回非 nil。
 	results := []descriptor.EffectResult{
 		{Type: descriptor.EffTypeDamage, Damage: 10, DamageMode: descriptor.DmgFlat},
 		{Type: descriptor.EffTypeSlow, SlowFactor: 0.5, Duration: 1},
 	}
 	tr := descriptor.AdaptToTickResult(results)
-	if tr != nil {
-		t.Errorf("expected nil for non-tick effects, got %+v", tr)
+	if tr == nil {
+		t.Fatal("expected non-nil TickResult for damage/slow tick effects")
+	}
+	// GoldEarned 应该是 0（没有 gold 效果）
+	if tr.GoldEarned != 0 {
+		t.Errorf("GoldEarned = %v, want 0", tr.GoldEarned)
 	}
 }
 

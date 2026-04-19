@@ -42,6 +42,7 @@ type RulesetConfig struct {
 	ItemDrop       string `json:"itemDrop"`       // probability|everyKill|byWave|none
 	Blueprints     bool   `json:"blueprints"`     // 允许自定义蓝图
 	BudgetCap      int    `json:"budgetCap"`      // 蓝图预算上限（-1=默认）
+	GoldShare      bool   `json:"goldShare"`      // 金币共享（合作模式：击杀/产金所有玩家等额获得）
 }
 
 // ScoreConfig 分数计算权重。

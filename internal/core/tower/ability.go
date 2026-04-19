@@ -34,15 +34,15 @@ type HitResult struct {
 	IsCrit         bool    // 是否暴击（触发暴击倍率和暴击 VFX）
 
 	// ── 效果类（指针，nil=不触发）──
-	Splash  *SplashEffect  // 范围溅射：以命中点为圆心，对半径内其他敌人造成比例伤害
-	Slow    *SlowEffect    // 减速：降低敌人移动速度
-	Stun    *StunEffect    // 眩晕：冻结敌人移动
-	Root    *RootEffect    // 定身：禁止移动（不禁用能力）
-	Weaken  *WeakenEffect  // 易伤：增加目标受到的伤害
-	Silence bool           // 沉默：禁用敌人能力 + DamageCap
-	Bleed   *BleedEffect   // 流血 DoT：持续物理伤害（tick 间隔由 balance.json combat.dotTickInterval.bleed 控制）
-	Burn    *BleedEffect   // 灼烧 DoT：持续火焰伤害（结构同 Bleed 但独立计时和 tick 间隔）
-	Poison  *BleedEffect   // 中毒 DoT：独立于 Bleed/Burn（结构同 Bleed）
+	Splash   *SplashEffect   // 范围溅射：以命中点为圆心，对半径内其他敌人造成比例伤害
+	Slow     *SlowEffect     // 减速：降低敌人移动速度
+	Stun     *StunEffect     // 眩晕：冻结敌人移动
+	Root     *RootEffect     // 定身：禁止移动（不禁用能力）
+	Weaken   *WeakenEffect   // 易伤：增加目标受到的伤害
+	Silence  bool            // 沉默：禁用敌人能力 + DamageCap
+	Bleed    *BleedEffect    // 流血 DoT：持续物理伤害（tick 间隔由 balance.json combat.dotTickInterval.bleed 控制）
+	Burn     *BleedEffect    // 灼烧 DoT：持续火焰伤害（结构同 Bleed 但独立计时和 tick 间隔）
+	Poison   *BleedEffect    // 中毒 DoT：独立于 Bleed/Burn（结构同 Bleed）
 	Bounce   *BounceEffect   // 弹射链：弹射物跳跃到附近敌人（每次跳跃伤害递减）
 	Purge    *PurgeEffect    // 净化：移除目标敌人身上的增益 buff
 	Teleport *TeleportEffect // 回推：沿路径将目标敌人推回一段距离
@@ -123,6 +123,18 @@ type Ticker interface {
 	OnTick(t *Tower, ctx *TickContext) *TickResult
 }
 
+// Killer 可选接口，用于击杀敌人时触发的能力（如击杀核爆、击杀回金）。
+// combat/apply_hit.go 在击杀处理时通过类型断言检查。
+type Killer interface {
+	OnKill(t *Tower, killed *enemy.Enemy, ctx *KillContext) *HitResult
+}
+
+// KillContext 击杀时传入的上下文。
+type KillContext struct {
+	Enemies     *enemy.Pool      // 用于范围效果查询
+	Projectiles *projectile.Pool // 用于发射新弹射物
+}
+
 // TickContext tick 调用时传入的上下文。
 type TickContext struct {
 	Enemies *enemy.Pool
@@ -133,16 +145,16 @@ type TickContext struct {
 // TickResult tick 返回的临时效果。
 // 字段为零值表示无对应效果。
 type TickResult struct {
-	GoldEarned int          // 本 tick 获得的金币
+	GoldEarned  int         // 本 tick 获得的金币
 	BuffApplies []BuffApply // 需要应用的 buff 列表（描述符引擎产出）
 }
 
 // BuffApply 描述一次 buff 施加请求。
 // IsSelf=true 时作用于自身塔，否则作用于 TargetTowerIdx 指定的目标塔。
 type BuffApply struct {
-	Stat     string  // buff 的属性类型：damage/speed/range/crit
-	Bonus    float64 // 增益数值
-	IsSelf   bool    // 是否自身 buff
+	Stat   string  // buff 的属性类型：damage/speed/range/crit
+	Bonus  float64 // 增益数值
+	IsSelf bool    // 是否自身 buff
 }
 
 // Registry 全局能力注册表（能力名 → 能力实例）。

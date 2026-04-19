@@ -2,7 +2,7 @@
 
 > 自动生成，勿手动编辑。运行 `make index` 更新。
 
-共 293 个文件, 76474 行代码, 47 个包。
+共 293 个文件, 76686 行代码, 47 个包。
 
 ## achievement (215 行)
 
@@ -44,7 +44,7 @@
 | `manager.go` | 416 | 音效管理器。 |
 | `resample.go` | 64 | PCM pitch shifting via linear-interpolation resampling. |
 
-## autoplay (9528 行)
+## autoplay (9737 行)
 
 | 文件 | 行数 | 职责 |
 |------|------|------|
@@ -62,7 +62,7 @@
 | `strategy_competent.go` | 1568 | 仿真测试"合理玩家"策略。 |
 | `strategy_focus.go` | 86 | 单塔极限策略。 |
 | `strategy_greedy.go` | 152 | 贪心启发策略。 |
-| `strategy_neural.go` | 1516 | 神经网络驱动的自学习策略，融合领域知识加速收敛。 |
+| `strategy_neural.go` | 1725 | 神经网络驱动的自学习策略，融合领域知识加速收敛。 |
 | `strategy_random.go` | 90 | 随机模糊策略。 |
 | `strategy_scenario.go` | 535 | 脚本化场景策略。 |
 | `strategy_simulation.go` | 221 | 仿真测试场景矩阵。 |
@@ -403,7 +403,7 @@
 | `splash_vfx.go` | 115 | splash ability impact ring VFX. |
 | `trail_batch.go` | 286 | 弹道尾迹批量渲染器。 |
 
-## scene (18941 行)
+## scene (18944 行)
 
 | 文件 | 行数 | 职责 |
 |------|------|------|
@@ -424,7 +424,7 @@
 | `settings_persist.go` | 80 | 设置持久化（音量/画质）。 |
 | `stage.go` | 4462 | 游戏主战斗场景（~3600行，本项目最核心的文件）。 |
 | `stage_info_vm.go` | 686 | 塔信息面板的 ViewModel 构建器。 |
-| `stage_input.go` | 1091 | StageScene 的输入处理和交互状态机（11 种模式）。 |
+| `stage_input.go` | 1094 | StageScene 的输入处理和交互状态机（11 种模式）。 |
 | `stage_types.go` | 123 | StageScene 的类型定义和常量。 |
 | `stage_warden_vm.go` | 179 | 战灵选择数据构建（从 config 加载并转为 hud.WardenOption）。 |
 | `test_select.go` | 512 | 测试模式场景选择器。 |

@@ -17,12 +17,13 @@ func NewConfigRuleset(cfg RulesetConfig) ConfigRuleset {
 	return ConfigRuleset{cfg: cfg}
 }
 
-func (r ConfigRuleset) UsePresetTowers() bool     { return r.cfg.PresetTowers }
-func (r ConfigRuleset) IncludePresetTowers() bool { return r.cfg.IncludePresets }
-func (r ConfigRuleset) UseClassicWaves() bool     { return r.cfg.ClassicWaves }
-func (r ConfigRuleset) WardenEnabled() bool       { return r.cfg.WardenEnabled }
+func (r ConfigRuleset) UsePresetTowers() bool       { return r.cfg.PresetTowers }
+func (r ConfigRuleset) IncludePresetTowers() bool   { return r.cfg.IncludePresets }
+func (r ConfigRuleset) UseClassicWaves() bool       { return r.cfg.ClassicWaves }
+func (r ConfigRuleset) WardenEnabled() bool         { return r.cfg.WardenEnabled }
 func (r ConfigRuleset) AllowCustomBlueprints() bool { return r.cfg.Blueprints }
 func (r ConfigRuleset) CustomBudgetCap() int        { return r.cfg.BudgetCap }
+func (r ConfigRuleset) GoldShare() bool             { return r.cfg.GoldShare }
 
 // ItemDropMode 将 JSON 字符串映射为 ItemDropMode 枚举。
 func (r ConfigRuleset) ItemDropMode() ItemDropMode {

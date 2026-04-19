@@ -1060,6 +1060,108 @@
       "icon": "weakenZone",
       "display": "射程内敌人受到所有伤害增加{s%}",
       "prebuilt": true
+    },
+    {
+      "id": "pulseStun",
+      "label": "脉冲眩晕",
+      "cost": 12,
+      "tags": [
+        "cc"
+      ],
+      "pipelines": [
+        {
+          "trigger": "onTick",
+          "conditions": [
+            {
+              "type": "cooldown",
+              "seconds": 5
+            }
+          ],
+          "selector": {
+            "type": "allInRange"
+          },
+          "effects": [
+            {
+              "type": "stun",
+              "duration": {
+                "scaler": "linear",
+                "base": 0.3,
+                "potential": 0.1
+              }
+            }
+          ]
+        }
+      ],
+      "icon": "stunChance",
+      "display": "每{p}秒眩晕射程内所有敌人{s}秒",
+      "prebuilt": true
+    },
+    {
+      "id": "pushField",
+      "label": "斥力场",
+      "cost": 10,
+      "tags": [
+        "cc"
+      ],
+      "pipelines": [
+        {
+          "trigger": "onTick",
+          "conditions": [
+            {
+              "type": "cooldown",
+              "seconds": 4
+            }
+          ],
+          "selector": {
+            "type": "allInRange"
+          },
+          "effects": [
+            {
+              "type": "teleport",
+              "distance": {
+                "scaler": "linear",
+                "base": 50,
+                "potential": 30
+              }
+            }
+          ]
+        }
+      ],
+      "icon": "stunDuration",
+      "display": "每{p}秒将射程内敌人回推{s}距离",
+      "prebuilt": true
+    },
+    {
+      "id": "curseAura",
+      "label": "诅咒强化",
+      "cost": 8,
+      "tags": [
+        "buff"
+      ],
+      "pipelines": [
+        {
+          "trigger": "onTick",
+          "conditions": [
+            {
+              "type": "cooldown",
+              "seconds": 3
+            }
+          ],
+          "selector": {
+            "type": "selfTower"
+          },
+          "effects": [
+            {
+              "type": "modifyStat",
+              "stat": "damage",
+              "multiplier": 1.3
+            }
+          ]
+        }
+      ],
+      "icon": "flatDamage",
+      "display": "每{p}秒获得{s%}伤害加成",
+      "prebuilt": true
     }
   ]
 }

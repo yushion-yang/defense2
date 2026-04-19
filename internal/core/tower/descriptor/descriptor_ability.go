@@ -15,10 +15,14 @@
 package descriptor
 
 import (
+	"log"
+
 	"defense2/internal/core/buff"
+	"defense2/internal/core/combat"
 	"defense2/internal/core/enemy"
 	"defense2/internal/core/projectile"
 	"defense2/internal/core/tower"
+	"defense2/internal/i18n"
 )
 
 // ── 共享基类 ─────────────────────────────────────────────────
@@ -93,6 +97,57 @@ func safeHpRatio(hp, maxHp float64) float64 {
 	return hp / maxHp
 }
 
+// buildKillTriggerContext 从 tower/被击杀的敌人/KillContext 构建 TriggerContext。
+// onKill 以被击杀敌人的位置为中心，可对周围敌人施加范围效果。
+func (a *descriptorAbilityBase) buildKillTriggerContext(
+	t *tower.Tower, killed *enemy.Enemy, ctx *tower.KillContext,
+) TriggerContext {
+	tc := TriggerContext{
+		Type:        TriggerOnKill,
+		Strength:    t.EffectiveStrength(),
+		TowerDamage: t.Damage,
+		TowerX:      t.X,
+		TowerY:      t.Y,
+		TowerRange:  t.Range,
+		// 以被击杀敌人为"命中点"，供范围效果使用
+		HitX: killed.X,
+		HitY: killed.Y,
+	}
+	// 被击杀敌人作为触发目标（供条件判断使用，如 isBoss）
+	ref := EnemyRef{
+		X:       killed.X,
+		Y:       killed.Y,
+		HpRatio: 0, // 已死亡
+		MaxHp:   killed.MaxHP,
+		Active:  false, // 已死亡
+		Index:   killed.ID,
+		IsBoss:  killed.Boss,
+	}
+	tc.TargetEnemy = &ref
+	if ctx.Enemies != nil {
+		tc.Enemies = NewPoolEnemyQuerier(ctx.Enemies)
+	}
+	return tc
+}
+
+// onKillCommon 是 OnKill 的共享实现。
+// 在被击杀敌人位置执行 onKill 管线，对周围敌人施加效果。
+func (a *descriptorAbilityBase) onKillCommon(
+	t *tower.Tower, killed *enemy.Enemy, ctx *tower.KillContext,
+) *tower.HitResult {
+	if !a.interp.HasOnKill() {
+		return nil
+	}
+	trigCtx := a.buildKillTriggerContext(t, killed, ctx)
+	results := a.interp.ExecOnKill(trigCtx)
+	if len(results) == 0 {
+		return nil
+	}
+	// onKill 效果直接应用（类似 onTick），不走 HitResult 中转
+	applyKillEffects(t, killed, ctx, results)
+	return AdaptToHitResult(results)
+}
+
 // ── DescriptorAbilityHit（仅 Ability）────────────────────────
 
 // DescriptorAbilityHit 仅实现 tower.Ability（无 onTick 管线时使用）。
@@ -131,6 +186,13 @@ func (a *DescriptorAbilityHit) OnHit(
 	return a.onHitCommon(t, p, e)
 }
 
+// OnKill 在击杀敌人时执行 onKill 管线。
+func (a *DescriptorAbilityHit) OnKill(
+	t *tower.Tower, killed *enemy.Enemy, ctx *tower.KillContext,
+) *tower.HitResult {
+	return a.onKillCommon(t, killed, ctx)
+}
+
 // ── DescriptorAbilityFull（Ability + Ticker）─────────────────
 
 // DescriptorAbilityFull 实现 tower.Ability + tower.Ticker（有 onTick 管线时使用）。
@@ -143,6 +205,13 @@ func (a *DescriptorAbilityFull) OnHit(
 	t *tower.Tower, p *projectile.Projectile, e *enemy.Enemy,
 ) *tower.HitResult {
 	return a.onHitCommon(t, p, e)
+}
+
+// OnKill 在击杀敌人时执行 onKill 管线。
+func (a *DescriptorAbilityFull) OnKill(
+	t *tower.Tower, killed *enemy.Enemy, ctx *tower.KillContext,
+) *tower.HitResult {
+	return a.onKillCommon(t, killed, ctx)
 }
 
 // OnTick 每帧调用，执行 onTick 管线。
@@ -175,12 +244,19 @@ var buffStatToID = map[string]string{
 	"crit":   buff.IDAuraCrit,
 }
 
-// applyTickBuffEffects 直接应用 tick 管线中的 Buff/SelfBuff/敌人 debuff 效果。
+// applyTickBuffEffects 直接应用 tick 管线中的所有效果。
 //
-// SelfBuff: 以 0.3s 短 buff 形式施加到自身塔（同 ConfigAbility 光环模式）。
-// Buff: 通过 TargetX/TargetY 匹配目标塔，施加 0.3s 短 buff。
-// Silence/Weaken/Root: 通过 TargetEnemyIdx 匹配敌人，直接施加。
+// 按效果类型分类处理：
+//   - SelfBuff: 以 0.3s 短 buff 形式施加到自身塔
+//   - Buff: 通过 TargetX/TargetY 匹配目标塔
+//   - Silence/Weaken/Root/Stun/Slow: 通过 TargetEnemyIdx 匹配敌人
+//   - Damage/Dot: 通过 ZoneDmgAccum 每帧累积
+//   - Purge: 移除敌人增益 buff
+//   - Teleport: 通过 PushBack 沿路径回推敌人
+//   - ModifyStat: 以 0.3s 短 buff 形式施加到自身塔（用于 CD 类能力）
+//   - Crit: 仅 onHit 有意义，onTick 时记录警告
 func applyTickBuffEffects(self *tower.Tower, ctx *tower.TickContext, results []EffectResult) {
+	srcKey := "desc_" + self.InstanceKey
 	for i := range results {
 		r := &results[i]
 		switch r.Type {
@@ -190,7 +266,6 @@ func applyTickBuffEffects(self *tower.Tower, ctx *tower.TickContext, results []E
 			if !ok {
 				continue
 			}
-			srcKey := "desc_" + self.InstanceKey
 			self.Buffs.Add(buff.Buff{
 				ID: buffID, Category: buff.CatAura,
 				Source: srcKey, Value: r.BuffBonus,
@@ -206,7 +281,6 @@ func applyTickBuffEffects(self *tower.Tower, ctx *tower.TickContext, results []E
 			if !ok {
 				continue
 			}
-			srcKey := "desc_" + self.InstanceKey
 			tx, ty := r.TargetX, r.TargetY
 			ctx.Towers.Each(func(other *tower.Tower) {
 				if other == self || other.Selling {
@@ -241,7 +315,6 @@ func applyTickBuffEffects(self *tower.Tower, ctx *tower.TickContext, results []E
 				continue
 			}
 			idx := r.TargetEnemyIdx
-			srcKey := "desc_" + self.InstanceKey
 			ctx.Enemies.EachActive(func(e *enemy.Enemy) {
 				if e.ID == idx {
 					e.Buffs.Add(buff.Buff{
@@ -261,7 +334,6 @@ func applyTickBuffEffects(self *tower.Tower, ctx *tower.TickContext, results []E
 				continue
 			}
 			idx := r.TargetEnemyIdx
-			srcKey := "desc_" + self.InstanceKey
 			ctx.Enemies.EachActive(func(e *enemy.Enemy) {
 				if e.ID == idx && !e.IsControlImmune && !e.HasControlImmunity() {
 					dur := r.RootDur * (1 - e.Tenacity)
@@ -274,6 +346,30 @@ func applyTickBuffEffects(self *tower.Tower, ctx *tower.TickContext, results []E
 							Remaining: dur,
 						})
 					}
+				}
+			})
+
+		case EffTypeStun:
+			// 眩晕：复用 combat.ApplyStun 处理免疫和韧性
+			if ctx.Enemies == nil {
+				continue
+			}
+			idx := r.TargetEnemyIdx
+			ctx.Enemies.EachActive(func(e *enemy.Enemy) {
+				if e.ID == idx {
+					combat.ApplyStun(e, r.StunDur, srcKey)
+				}
+			})
+
+		case EffTypeSlow:
+			// 减速：复用 combat.ApplySlow 处理免疫、韧性和减速叠加逻辑
+			if ctx.Enemies == nil {
+				continue
+			}
+			idx := r.TargetEnemyIdx
+			ctx.Enemies.EachActive(func(e *enemy.Enemy) {
+				if e.ID == idx {
+					combat.ApplySlow(e, r.SlowFactor, r.Duration, srcKey)
 				}
 			})
 
@@ -302,6 +398,216 @@ func applyTickBuffEffects(self *tower.Tower, ctx *tower.TickContext, results []E
 					e.ZoneDmgAccum += r.Damage * ctx.DT
 				}
 			})
+
+		case EffTypePurge:
+			// 净化：移除敌人增益 buff
+			if ctx.Enemies == nil || r.PurgeCount <= 0 {
+				continue
+			}
+			idx := r.TargetEnemyIdx
+			ctx.Enemies.EachActive(func(e *enemy.Enemy) {
+				if e.ID == idx && e.Buffs != nil {
+					// 按优先级移除敌人的增益 buff：先移除护盾、再移除加速等
+					purged := 0
+					for _, id := range []string{buff.IDDamageReduce, buff.IDSpeedUp, buff.IDRegen} {
+						if purged >= r.PurgeCount {
+							break
+						}
+						if e.Buffs.Has(id) {
+							e.Buffs.RemoveByID(id)
+							purged++
+							e.SetFloatText(i18n.T("combat.purge"), 180, 100, 220)
+						}
+					}
+				}
+			})
+
+		case EffTypeTeleport:
+			// 回推：通过 PushBack 沿路径回推敌人
+			if ctx.Enemies == nil || r.TeleportDist <= 0 {
+				continue
+			}
+			idx := r.TargetEnemyIdx
+			ctx.Enemies.EachActive(func(e *enemy.Enemy) {
+				if e.ID == idx {
+					enemy.PushBack(e, nil, r.TeleportDist)
+				}
+			})
+
+		case EffTypeGold:
+			// 金币：由 AdaptToTickResult 处理，此处跳过
+
+		case EffTypeModifyStat:
+			// 属性修改：以短时效 buff 形式施加到自身塔（0.3s 续期，与 SelfBuff 模式一致）。
+			// 用于 onTick + cooldown 组合时，提供周期性属性增强。
+			buffID, ok := buffStatToID[r.BuffStat]
+			if !ok {
+				continue
+			}
+			// StatMult 是总倍率（如 1.5），转为增量（0.5）作为 buff Value
+			bonus := r.StatMult - 1
+			if bonus == 0 {
+				continue
+			}
+			self.Buffs.Add(buff.Buff{
+				ID: buffID, Category: buff.CatAura,
+				Source: srcKey, Value: bonus,
+				Duration: 0.3, Remaining: 0.3,
+			})
+
+		case EffTypeCrit:
+			// 暴击：仅在 onHit 时有意义，onTick 时记录警告
+			log.Printf("[descriptor] warning: Crit effect in onTick pipeline (tower=%s), ignored", self.InstanceKey)
+		}
+	}
+}
+
+// applyKillEffects 直接应用 onKill 管线中的所有效果。
+//
+// 与 applyTickBuffEffects 类似，但以被击杀敌人的位置为中心，
+// 对周围敌人施加范围效果（如击杀核爆的眩晕+伤害）。
+func applyKillEffects(srcTower *tower.Tower, killed *enemy.Enemy, ctx *tower.KillContext, results []EffectResult) {
+	srcKey := "desc_" + srcTower.InstanceKey
+	for i := range results {
+		r := &results[i]
+		switch r.Type {
+		case EffTypeDamage:
+			// 击杀时的范围伤害：直接对目标敌人扣血
+			if ctx.Enemies == nil {
+				continue
+			}
+			idx := r.TargetEnemyIdx
+			ctx.Enemies.EachActive(func(e *enemy.Enemy) {
+				if e.ID == idx && !e.IsDying() {
+					// 使用 QuickDamage 简化处理（不走完整 ApplyHit 管线，避免递归）
+					combat.QuickDamage(e, r.Damage, combat.DmgPhysical)
+				}
+			})
+
+		case EffTypeStun:
+			// 击杀时的范围眩晕
+			if ctx.Enemies == nil {
+				continue
+			}
+			idx := r.TargetEnemyIdx
+			ctx.Enemies.EachActive(func(e *enemy.Enemy) {
+				if e.ID == idx {
+					combat.ApplyStun(e, r.StunDur, srcKey)
+				}
+			})
+
+		case EffTypeSlow:
+			// 击杀时的范围减速
+			if ctx.Enemies == nil {
+				continue
+			}
+			idx := r.TargetEnemyIdx
+			ctx.Enemies.EachActive(func(e *enemy.Enemy) {
+				if e.ID == idx {
+					combat.ApplySlow(e, r.SlowFactor, r.Duration, srcKey)
+				}
+			})
+
+		case EffTypeRoot:
+			// 击杀时的范围定身
+			if ctx.Enemies == nil {
+				continue
+			}
+			idx := r.TargetEnemyIdx
+			ctx.Enemies.EachActive(func(e *enemy.Enemy) {
+				if e.ID == idx && !e.IsControlImmune && !e.HasControlImmunity() {
+					dur := r.RootDur * (1 - e.Tenacity)
+					if dur > 0 {
+						e.Buffs.Add(buff.Buff{
+							ID:        buff.IDRoot,
+							Category:  buff.CatCC,
+							Source:    srcKey,
+							Duration:  dur,
+							Remaining: dur,
+						})
+					}
+				}
+			})
+
+		case EffTypeWeaken:
+			// 击杀时的范围易伤
+			if ctx.Enemies == nil {
+				continue
+			}
+			idx := r.TargetEnemyIdx
+			ctx.Enemies.EachActive(func(e *enemy.Enemy) {
+				if e.ID == idx {
+					e.Buffs.Add(buff.Buff{
+						ID:        buff.IDWeaken,
+						Category:  buff.CatDebuff,
+						Source:    srcKey,
+						Value:     r.WeakenAmp,
+						Duration:  r.WeakenDur,
+						Remaining: r.WeakenDur,
+					})
+				}
+			})
+
+		case EffTypeSilence:
+			// 击杀时的范围沉默
+			if ctx.Enemies == nil {
+				continue
+			}
+			idx := r.TargetEnemyIdx
+			ctx.Enemies.EachActive(func(e *enemy.Enemy) {
+				if e.ID == idx {
+					e.Silenced = true
+					e.AbilitySilenced = true
+				}
+			})
+
+		case EffTypeDot:
+			// 击杀时的范围 DoT（直接累积到 ZoneDmgAccum，由后续帧结算）
+			if ctx.Enemies == nil {
+				continue
+			}
+			idx := r.TargetEnemyIdx
+			ctx.Enemies.EachActive(func(e *enemy.Enemy) {
+				if e.ID == idx {
+					// DoT 需要持续效果，这里只触发一次初始伤害
+					// 完整 DoT 需要走 buff 系统，暂时简化为即时伤害
+					combat.QuickDamage(e, r.DotValue*r.DotDuration, combat.DmgPhysical)
+				}
+			})
+
+		case EffTypePurge:
+			// 击杀时的范围净化
+			if ctx.Enemies == nil || r.PurgeCount <= 0 {
+				continue
+			}
+			idx := r.TargetEnemyIdx
+			ctx.Enemies.EachActive(func(e *enemy.Enemy) {
+				if e.ID == idx && e.Buffs != nil {
+					purged := 0
+					for _, id := range []string{buff.IDDamageReduce, buff.IDSpeedUp, buff.IDRegen} {
+						if purged >= r.PurgeCount {
+							break
+						}
+						if e.Buffs.Has(id) {
+							e.Buffs.RemoveByID(id)
+							purged++
+							e.SetFloatText(i18n.T("combat.purge"), 180, 100, 220)
+						}
+					}
+				}
+			})
+
+		// 以下效果在 onKill 中没有意义或需要特殊处理
+		case EffTypeGold:
+			// 金币：由 AdaptToHitResult 返回，让调用方处理
+		case EffTypeBuff, EffTypeSelfBuff:
+			// buff 类型在 onKill 中没有意义（击杀发生时塔已完成攻击）
+		case EffTypeModifyStat:
+			// 属性修改仅在 onPlace 有意义
+		case EffTypeCrit:
+			// 暴击仅在 onHit 有意义
+		case EffTypeTeleport:
+			// 回推在 onKill 中没有意义（目标已死）
 		}
 	}
 }
@@ -412,4 +718,3 @@ func (q *poolTowerQuerier) QueryRadius(cx, cy, radius float64) []TowerRef {
 	})
 	return refs
 }
-

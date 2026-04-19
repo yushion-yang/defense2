@@ -30,10 +30,38 @@ var ccEffectIDs = map[string]bool{
 	"silence": true,
 }
 
+// spatialSelectorsOnHit 在 onHit 触发时无法正常工作的空间查询选择器。
+// 这些选择器依赖 ctx.Enemies 查询范围内敌人，但 onHit 上下文中没有敌人池。
+// 特殊处理：aoeRadius 和 chain 会被合成为 HitResult.Splash/Bounce，所以不在此列表中。
+var spatialSelectorsOnHit = map[string]bool{
+	"allInRange":   true,
+	"cone":         true,
+	"ring360":      true,
+	"random":       true,
+	"nearbyAllies": true, // nearbyAllies 在 onHit 时也没有意义（应该用于 onTick）
+}
+
+// tickOnlyEffects 仅在 onTick 触发时有意义的效果。
+var tickOnlyEffects = map[string]bool{
+	"buff":       true,
+	"selfBuff":   true,
+	"gold":       true,
+	"modifyStat": true,
+}
+
+// hitOnlyEffects 仅在 onHit 触发时有意义的效果。
+var hitOnlyEffects = map[string]bool{
+	"crit": true,
+}
+
 // ValidateCustomAbility 校验自定义能力的平衡性约束。
 //
 // 检查规则：
 //  1. onTick 触发器 + CC 效果必须有 cooldown 条件
+//  2. onHit 触发器 + 空间查询选择器（除 aoeRadius/chain）会返回空目标
+//  3. onHit 触发器 + tick 专属效果（buff/gold）无效
+//  4. onTick 触发器 + hit 专属效果（crit）无效
+//  5. onKill 触发器必须使用空间查询选择器（currentTarget 指向已死敌人）
 //
 // 返回所有发现的校验错误，空 slice 表示通过校验。
 func ValidateCustomAbility(desc *AbilityDescriptor) []ValidationError {
@@ -44,11 +72,47 @@ func ValidateCustomAbility(desc *AbilityDescriptor) []ValidationError {
 	var errs []ValidationError
 
 	for i, p := range desc.Pipelines {
+		selectorID := selectorTypeID(p.Selector)
+
 		// Rule 1: onTick + CC 必须有 cooldown
 		if p.Trigger == TriggerOnTick && hasCCEffect(p) && !hasCooldownCondition(p) {
 			errs = append(errs, ValidationError{
 				Field:   fmt.Sprintf("pipeline[%d]", i),
 				Message: "持续触发的控制效果必须设置冷却时间",
+			})
+		}
+
+		// Rule 2: onHit + 空间查询选择器（除 aoeRadius/chain 被特殊处理外）
+		if p.Trigger == TriggerOnHit && spatialSelectorsOnHit[selectorID] {
+			errs = append(errs, ValidationError{
+				Field:   fmt.Sprintf("pipeline[%d].selector", i),
+				Message: fmt.Sprintf("命中时触发不支持 %s 选择器（无法查询范围内敌人），请改用 currentTarget、aoeRadius 或 chain", selectorID),
+			})
+		}
+
+		// Rule 3: onHit + tick 专属效果
+		for j, eff := range p.Effects {
+			effID := effectTypeID(eff)
+			if p.Trigger == TriggerOnHit && tickOnlyEffects[effID] {
+				errs = append(errs, ValidationError{
+					Field:   fmt.Sprintf("pipeline[%d].effects[%d]", i, j),
+					Message: fmt.Sprintf("命中时触发不支持 %s 效果（仅适用于每帧触发）", effID),
+				})
+			}
+			// Rule 4: onTick + hit 专属效果
+			if p.Trigger == TriggerOnTick && hitOnlyEffects[effID] {
+				errs = append(errs, ValidationError{
+					Field:   fmt.Sprintf("pipeline[%d].effects[%d]", i, j),
+					Message: fmt.Sprintf("每帧触发不支持 %s 效果（仅适用于命中时触发）", effID),
+				})
+			}
+		}
+
+		// Rule 5: onKill + currentTarget（目标已死，应使用空间选择器对周围敌人生效）
+		if p.Trigger == TriggerOnKill && selectorID == "currentTarget" {
+			errs = append(errs, ValidationError{
+				Field:   fmt.Sprintf("pipeline[%d].selector", i),
+				Message: "击杀时触发不应使用 currentTarget 选择器（目标已死），请改用 aoeRadius 等空间选择器",
 			})
 		}
 	}

@@ -182,8 +182,7 @@ func TrySynthBounce(desc *AbilityDescriptor, strength, towerDamage float64) *tow
 
 // AdaptToTickResult 将描述符引擎的效果列表转为 tick 管线的 TickResult。
 // Gold 通过 TickResult 传递给管线。
-// Buff/SelfBuff/Silence/Weaken/Root 等效果由 applyTickBuffEffects 直接应用，
-// 不走 TickResult 适配（避免目标信息丢失）。
+// 其他效果由 applyTickBuffEffects 直接应用，不走 TickResult 适配（避免目标信息丢失）。
 // 返回 nil 如果没有任何 tick 相关效果。
 func AdaptToTickResult(results []EffectResult) *tower.TickResult {
 	if len(results) == 0 {
@@ -199,8 +198,12 @@ func AdaptToTickResult(results []EffectResult) *tower.TickResult {
 		case EffTypeGold:
 			hasEffect = true
 			tr.GoldEarned += int(r.GoldAmount)
-		// Buff/SelfBuff/Silence/Weaken/Root 由 OnTick 的 applyTickBuffEffects 直接处理
-		case EffTypeBuff, EffTypeSelfBuff, EffTypeSilence, EffTypeWeaken, EffTypeRoot:
+		// 以下效果由 OnTick 的 applyTickBuffEffects 直接处理
+		case EffTypeBuff, EffTypeSelfBuff, EffTypeSilence, EffTypeWeaken, EffTypeRoot,
+			EffTypeStun, EffTypeSlow, EffTypeDot, EffTypeDamage, EffTypePurge, EffTypeTeleport:
+			hasEffect = true
+		// ModifyStat: 由 applyTickBuffEffects 以短时效 buff 施加；Crit: onTick 无意义但需标记
+		case EffTypeModifyStat, EffTypeCrit:
 			hasEffect = true
 		}
 	}

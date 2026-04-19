@@ -215,6 +215,8 @@ func ApplyHit(input HitInput, onHit HitCallback) HitOutput {
 	// 击杀处理
 	if killed && input.Tower != nil {
 		input.Tower.Kills++
+		// 触发 onKill 能力（如击杀核爆）
+		triggerOnKillAbilities(input.Tower, input.Target, input.Enemies, input.Projectiles)
 		if input.Enemies != nil {
 			input.Enemies.Kill(input.Target)
 		}
@@ -441,3 +443,25 @@ func applyHitEffectsUnified(r *tower.HitResult, target *enemy.Enemy, p *projecti
 	}
 }
 
+// triggerOnKillAbilities 在击杀敌人后触发塔的 onKill 能力。
+// 遍历塔的所有能力，对实现 tower.Killer 接口的能力调用 OnKill。
+func triggerOnKillAbilities(t *tower.Tower, killed *enemy.Enemy, enemies *enemy.Pool, projectiles *projectile.Pool) {
+	if t == nil || killed == nil {
+		return
+	}
+	ctx := &tower.KillContext{
+		Enemies:     enemies,
+		Projectiles: projectiles,
+	}
+	for _, aName := range t.Abilities {
+		ab, ok := tower.Lookup(aName)
+		if !ok {
+			continue
+		}
+		killer, ok := ab.(tower.Killer)
+		if !ok {
+			continue
+		}
+		killer.OnKill(t, killed, ctx)
+	}
+}

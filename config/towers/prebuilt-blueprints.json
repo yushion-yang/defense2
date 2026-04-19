@@ -10,6 +10,7 @@
       "name": "猎隼",
       "prebuilt": true,
       "attackStyle": "projectile",
+      "spriteKey": "cl_sentinel",
       "tiers": {
         "damage": "S",
         "range": "B",
@@ -34,6 +35,7 @@
       "name": "穿甲者",
       "prebuilt": true,
       "attackStyle": "projectile",
+      "spriteKey": "cl_railgun",
       "tiers": {
         "damage": "S",
         "range": "B",
@@ -58,6 +60,7 @@
       "name": "弹雨",
       "prebuilt": true,
       "attackStyle": "projectile",
+      "spriteKey": "cl_gatling",
       "tiers": {
         "damage": "S",
         "range": "B",
@@ -82,6 +85,7 @@
       "name": "铁蜂",
       "prebuilt": true,
       "attackStyle": "projectile",
+      "spriteKey": "cl_shotgun",
       "tiers": {
         "damage": "B",
         "range": "B",
@@ -106,6 +110,7 @@
       "name": "涡轮",
       "prebuilt": true,
       "attackStyle": "projectile",
+      "spriteKey": "cl_cyclone",
       "tiers": {
         "damage": "B",
         "range": "B",
@@ -130,6 +135,7 @@
       "name": "脉冲",
       "prebuilt": true,
       "attackStyle": "projectile",
+      "spriteKey": "cl_nova",
       "tiers": {
         "damage": "B",
         "range": "B",
@@ -154,6 +160,7 @@
       "name": "轰鸣",
       "prebuilt": true,
       "attackStyle": "projectile",
+      "spriteKey": "cl_mortar",
       "tiers": {
         "damage": "B",
         "range": "B",
@@ -178,6 +185,7 @@
       "name": "三叉戟",
       "prebuilt": true,
       "attackStyle": "projectile",
+      "spriteKey": "cl_prism",
       "tiers": {
         "damage": "S",
         "range": "S",
@@ -202,6 +210,7 @@
       "name": "回响",
       "prebuilt": true,
       "attackStyle": "projectile",
+      "spriteKey": "cl_fortress",
       "tiers": {
         "damage": "D",
         "range": "B",
@@ -226,6 +235,7 @@
       "name": "弹弓",
       "prebuilt": true,
       "attackStyle": "projectile",
+      "spriteKey": "cl_ricochet",
       "tiers": {
         "damage": "D",
         "range": "S",
@@ -250,6 +260,7 @@
       "name": "蜘蛛",
       "prebuilt": true,
       "attackStyle": "projectile",
+      "spriteKey": "cl_hydra",
       "tiers": {
         "damage": "D",
         "range": "S",

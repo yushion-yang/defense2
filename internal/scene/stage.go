@@ -35,7 +35,7 @@ import (
 	"sync"
 	"time"
 
-	_ "defense2/internal/core/warden/types"    // blank import: 通过 init() 注册 5 种战灵类型到全局注册表
+	_ "defense2/internal/core/warden/types" // blank import: 通过 init() 注册 5 种战灵类型到全局注册表
 
 	gameAudio "defense2/internal/audio"
 	"defense2/internal/config"
@@ -174,7 +174,7 @@ type StageScene struct {
 	buildMenuTab  int                   // 建塔面板当前 tab 索引（0=全部, 1=自定义）
 	itemHoverIdx  int                   // 道具面板鼠标悬停索引（-1=无）
 
-	gesture       *input.Gesture        // 统一手势识别器（桌面+触摸）
+	gesture *input.Gesture // 统一手势识别器（桌面+触摸）
 
 	// ── 波次管理 ──
 	waveLivesSnapshot int // 波开始时的生命快照（波结束时比较，无损失=完美波次）
@@ -775,8 +775,15 @@ func (s *StageScene) subscribeBus() {
 	})
 	event.OnTyped(bus, event.EvtEnemyKilled, func(p event.EnemyKilledPayload) {
 		s.kills++
-		// 合作模式：击杀金币按敌人死亡位置所在分区归属
-		if s.coopZone != nil && p.EnemyX > 0 {
+		// 金币分配：goldShare 模式下所有玩家等额获得，否则按分区归属
+		if s.ruleset.GoldShare() && len(s.aiPlayers) > 0 {
+			// 金币共享：所有玩家（人类+AI）等额获得
+			s.gold += p.GoldValue
+			for _, ap := range s.aiPlayers {
+				ap.AddGold(p.GoldValue)
+			}
+		} else if s.coopZone != nil && p.EnemyX > 0 {
+			// 分区模式：按敌人死亡位置所在分区归属
 			gm := s.gameMap
 			col := int((p.EnemyX - gm.OffsetX) / float64(gm.CellSize))
 			row := int((p.EnemyY - gm.OffsetY) / float64(gm.CellSize))
@@ -2330,7 +2337,15 @@ func (s *StageScene) updatePlaying() {
 	// 必须在索敌射击之前执行，确保 Range 等属性是本帧最新值
 	chainActive := s.wardenType == "chain" && s.wardenReady
 	abilityGold := pipeline.TickTowerAbilities(s.towers, s.enemies, gameDT, chainActive)
-	s.gold += abilityGold
+	// 金币共享：产金所有玩家等额获得
+	if s.ruleset.GoldShare() && len(s.aiPlayers) > 0 && abilityGold > 0 {
+		s.gold += abilityGold
+		for _, ap := range s.aiPlayers {
+			ap.AddGold(abilityGold)
+		}
+	} else {
+		s.gold += abilityGold
+	}
 	s.gameStats.GoldEarned += abilityGold
 
 	// Step 13: 战灵行为：必须在 ClearTransient 之后执行，否则 SetTemp 会被清掉
@@ -3189,10 +3204,7 @@ func (s *StageScene) buildBuildMenuData() hud.BuildMenuData {
 	allBuildable := make([]hud.BuildCardVM, 0, len(s.towerDefs))
 	for _, def := range s.towerDefs {
 		roleTag, roleClr := towerRoleTags(def)
-		spriteKey := "sentinel"
-		if isPreset {
-			spriteKey = spriteKeyFromDef(def)
-		}
+		spriteKey := spriteKeyFromDef(def)
 		card := hud.BuildCardVM{
 			Key: def.Key, Label: def.Label, Cost: def.Cost,
 			Damage: def.Damage, AttackSpeed: def.AttackSpeed, Range: def.Range,
@@ -4192,13 +4204,19 @@ func (s *StageScene) tickAIPlayerOne(ap *aiplayer.AIPlayer) {
 		nextWaveIsBoss = nextWave%bossEvery == 0
 	}
 
+	// 战灵禁用时，告知 AI "战灵已选择"（跳过选择决策）
+	wardenReadyForAI := s.wardenReady
+	if !WardenEnabled || !s.ruleset.WardenEnabled() {
+		wardenReadyForAI = true
+	}
+
 	snap := aiplayer.AISnapshot{
 		Gold:           ap.Gold(),
 		Wave:           s.spawner.Wave,
 		MaxWaves:       s.gameMap.Config.Waves,
 		WaveActive:     s.spawner.WaveActive,
 		Lives:          s.lives,
-		WardenReady:    s.wardenReady,
+		WardenReady:    wardenReadyForAI,
 		HumanGold:      s.gold, // 人类玩家金币（观战评论用）
 		NextWaveIsBoss: nextWaveIsBoss,
 	}
@@ -4215,7 +4233,7 @@ func (s *StageScene) tickAIPlayerOne(ap *aiplayer.AIPlayer) {
 			Row: t.Row, Col: t.Col,
 			Damage: t.Damage, Strength: int(t.Strength.Effective()),
 			AttackSpeed: t.AttackSpeed,
-			Range: t.Range, Kills: t.Kills,
+			Range:       t.Range, Kills: t.Kills,
 			Cost:      t.Cost,
 			Owner:     t.Owner,
 			Abilities: t.AllAbilities(),
