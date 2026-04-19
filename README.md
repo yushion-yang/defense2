@@ -1,6 +1,10 @@
- # Defense2
+# Defense2
 
   A tower defense game built with Go and Ebitengine, featuring AI player systems and reinforcement learning experiments.
+
+  ## Play Online
+
+  **[https://yushion-yang.github.io/defense2/](https://yushion-yang.github.io/defense2/)**
 
   ## Features
 
