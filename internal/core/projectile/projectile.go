@@ -32,8 +32,8 @@ type Projectile struct {
 	TrailCursor    int                  // 下一个写入位置
 
 	// 攻击方式扩展标志
-	Penetrate  bool  // 直线穿透弹（穿过所有敌人，不追踪）
-	PenHitIDs  []int // 穿透已命中敌人 ID（避免重复伤害）
+	Penetrate bool  // 直线穿透弹（穿过所有敌人，不追踪）
+	PenHitIDs []int // 穿透已命中敌人 ID（避免重复伤害）
 
 	ScatterVisual bool    // 散射视觉弹（旧版，不造成伤害）
 	ScatterGroup  int     // 散射组 ID（>0 时为散射弹，同组命中同敌人合并伤害）
@@ -41,4 +41,7 @@ type Projectile struct {
 	MaxRange      float64 // 最大飞行距离
 	StartX        float64 // 起始位置 X
 	StartY        float64 // 起始位置 Y
+
+	// 斩杀（命中时判定）
+	ExecuteHpPct float64 // 斩杀血量阈值（0=禁用，>0 时：非 Boss 且 HP < MaxHP*此值 则秒杀）
 }

@@ -108,16 +108,16 @@ func countInRange(s *CoreState, ctx *warden.TickContext) int {
 	return n
 }
 
-// coreExecDmg 计算秒杀伤害：非 Boss 且血量低于阈值时直接秒杀，否则正常伤害。
-func coreExecDmg(e *enemy.Enemy, baseDmg, execHpPct float64) float64 {
-	if !e.Boss && e.HP < e.MaxHP*execHpPct {
-		return e.HP // 秒杀：伤害 = 剩余血量
-	}
+// coreExecDmg 已废弃：斩杀判定移至弹射物命中时（tick_combat.go processHit）。
+// 保留此函数签名以便编译通过，但不再使用发射时计算的伤害值。
+// 返回基础伤害，斩杀判定由弹射物的 ExecuteHpPct 字段在命中时触发。
+func coreExecDmg(_ *enemy.Enemy, baseDmg, _ float64) float64 {
 	return baseDmg
 }
 
 // coreAttack 机甲战灵攻击：秒杀（对 Boss 无效）+ 智能 AoE 切换。
 // 单体模式发射弹射物，AoE 模式对射程内所有敌人各发射一颗弹射物。
+// 斩杀判定在命中时触发（通过 ExecuteHpPct 字段），而非发射时计算。
 func coreAttack(s *CoreState, ctx *warden.TickContext) {
 	nearest := s.FindNearest(ctx.Enemies)
 	if nearest == nil {
@@ -135,12 +135,11 @@ func coreAttack(s *CoreState, ctx *warden.TickContext) {
 	inRange := countInRange(s, ctx)
 
 	if inRange >= s.AoeThreshold {
-		// AoE 模式：对射程内每个敌人发射弹射物
+		// AoE 模式：对射程内每个敌人发射带斩杀的弹射物
 		ctx.Enemies.Each(func(e *enemy.Enemy) {
 			if math.Hypot(e.X-s.X, e.Y-s.Y) <= s.Range {
-				dmg := coreExecDmg(e, s.Damage, s.ExecHpPct)
 				if ctx.Projectiles != nil {
-					ctx.Projectiles.Fire(s.X, s.Y, e.X, e.Y, dmg, speed, 4, e, "warden")
+					ctx.Projectiles.FireWithExecute(s.X, s.Y, e.X, e.Y, s.Damage, speed, 4, e, "warden", s.ExecHpPct)
 				}
 			}
 		})
@@ -148,10 +147,9 @@ func coreAttack(s *CoreState, ctx *warden.TickContext) {
 			ctx.OnSpecial()
 		}
 	} else {
-		// 单体模式
-		dmg := coreExecDmg(nearest, s.Damage, s.ExecHpPct)
+		// 单体模式：发射带斩杀的弹射物
 		if ctx.Projectiles != nil {
-			ctx.Projectiles.Fire(s.X, s.Y, nearest.X, nearest.Y, dmg, speed, 4, nearest, "warden")
+			ctx.Projectiles.FireWithExecute(s.X, s.Y, nearest.X, nearest.Y, s.Damage, speed, 4, nearest, "warden", s.ExecHpPct)
 		}
 	}
 

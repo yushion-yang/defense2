@@ -69,7 +69,17 @@ type Pool struct {
 	projectiles []Projectile // 预分配的弹射物槽位数组（默认 1024）
 	cursor      int          // 下一个写入位置（环形递增，到末尾回绕到 0）
 	Count       int          // 当前存活弹射物数量
+
+	// 地图边界（用于弹射物出界回收）
+	mapWidth  float64 // 地图像素宽度（0=使用默认 2400）
+	mapHeight float64 // 地图像素高度（0=使用默认 1200）
 }
+
+// 默认地图边界（足够容纳最大地图）
+const (
+	defaultMapWidth  = 2400.0
+	defaultMapHeight = 1200.0
+)
 
 // NewPool 创建指定容量的弹射物对象池。
 func NewPool(cap int) *Pool {
@@ -81,6 +91,25 @@ func NewPool(cap int) *Pool {
 // DefaultPool 创建默认容量（MaxProjectiles=1024）的弹射物对象池。
 func DefaultPool() *Pool {
 	return NewPool(game.MaxProjectiles)
+}
+
+// SetMapBounds 设置地图像素边界（用于弹射物出界回收）。
+func (p *Pool) SetMapBounds(width, height float64) {
+	p.mapWidth = width
+	p.mapHeight = height
+}
+
+// MapBounds 返回当前地图边界（0 值时返回默认值）。
+func (p *Pool) MapBounds() (width, height float64) {
+	w := p.mapWidth
+	if w <= 0 {
+		w = defaultMapWidth
+	}
+	h := p.mapHeight
+	if h <= 0 {
+		h = defaultMapHeight
+	}
+	return w, h
 }
 
 // Fire 从 (sx,sy) 向 (tx,ty) 发射一颗普通追踪弹射物。
@@ -118,6 +147,43 @@ func (p *Pool) Fire(sx, sy, tx, ty, damage, speed, radius float64, target *enemy
 		proj.TargetID = target.ID
 	}
 	proj.SourceTowerKey = towerKey
+
+	p.Count++
+	p.cursor = (p.cursor + 1) % len(p.projectiles)
+}
+
+// FireWithExecute 发射带斩杀判定的弹射物（机甲战灵专用）。
+// execHpPct > 0 时：命中时若目标非 Boss 且 HP < MaxHP*execHpPct，则秒杀（伤害=当前 HP）。
+func (p *Pool) FireWithExecute(sx, sy, tx, ty, damage, speed, radius float64, target *enemy.Enemy, towerKey string, execHpPct float64) {
+	proj := &p.projectiles[p.cursor]
+	if proj.Active {
+		p.Count--
+	}
+	*proj = Projectile{}
+
+	dx := tx - sx
+	dy := ty - sy
+	dist := math.Hypot(dx, dy)
+	if dist < 1 {
+		dist = 1
+	}
+
+	proj.X = sx
+	proj.Y = sy
+	proj.VX = (dx / dist) * speed
+	proj.VY = (dy / dist) * speed
+	proj.Damage = damage
+	proj.Speed = speed
+	proj.Radius = radius
+	proj.Active = true
+	proj.MaxLife = normalProjectileMaxLife
+	proj.Life = proj.MaxLife
+	proj.Target = target
+	if target != nil {
+		proj.TargetID = target.ID
+	}
+	proj.SourceTowerKey = towerKey
+	proj.ExecuteHpPct = execHpPct
 
 	p.Count++
 	p.cursor = (p.cursor + 1) % len(p.projectiles)
@@ -219,9 +285,10 @@ func (p *Pool) Tick(dt float64) {
 			}
 		}
 
-		// 超时或飞出屏幕边界则回收
-		if proj.Life <= 0 || proj.X < -projectileBoundaryMargin || proj.X > float64(game.ScreenWidth)+projectileBoundaryMargin ||
-			proj.Y < -projectileBoundaryMargin || proj.Y > float64(game.ScreenHeight)+projectileBoundaryMargin {
+		// 超时或飞出地图边界则回收（使用动态地图尺寸而非固定 ScreenHeight）
+		mapW, mapH := p.MapBounds()
+		if proj.Life <= 0 || proj.X < -projectileBoundaryMargin || proj.X > mapW+projectileBoundaryMargin ||
+			proj.Y < -projectileBoundaryMargin || proj.Y > mapH+projectileBoundaryMargin {
 			proj.Active = false
 			proj.Target = nil
 			p.Count--

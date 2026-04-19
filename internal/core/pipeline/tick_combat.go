@@ -215,8 +215,14 @@ func processHit(p *projectile.Projectile, e *enemy.Enemy, towers *tower.Pool, en
 		hitStyle = "bounce"
 	}
 
+	// 命中时斩杀判定：非 Boss 且血量低于阈值 → 秒杀
+	baseDamage := p.Damage
+	if p.ExecuteHpPct > 0 && !e.Boss && e.HP < e.MaxHP*p.ExecuteHpPct {
+		baseDamage = e.HP // 秒杀：伤害 = 当前血量
+	}
+
 	out := combat.ApplyHit(combat.HitInput{
-		Tower: srcTower, Target: e, BaseDamage: p.Damage, Style: hitStyle,
+		Tower: srcTower, Target: e, BaseDamage: baseDamage, Style: hitStyle,
 		Enemies: enemies, Projectiles: projectiles, Projectile: p, OnCC: onCC,
 		OnSplashVFX: onSplashVFX,
 	}, onHit)
