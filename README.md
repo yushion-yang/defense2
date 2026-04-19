@@ -1,4 +1,4 @@
-# Defense2
+# Tower-Defense
 
   A tower defense game built with Go and Ebitengine, featuring AI player systems and reinforcement learning experiments.
 
